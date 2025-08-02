@@ -28,13 +28,14 @@
   "tooltip.service": "Szolgáltatáscsengő",
   "tooltip.accessibility": "Akadálymentesítés",
   "group.stages": "🎤 Színpadok",
-"group.activities": "🎪 Programok és élmények",
-"group.food": "🍽️ Étel és ital",
-"group.gates": "🚪 Be- / kijáratok",
-"group.areas": "🏛️ Főbb területek",
-"group.shops": "🛒 Boltok",
-"group.spas": "🚿 Fürdők",
-"group.services": "🧰 Szolgáltatások",
-"group.guests": "🎟️ Vendégszolgáltatások",
-"group.transport": "🚖 Közlekedés"
+  "group.activities": "🎪 Programok és élmények",
+  "group.food": "🍽️ Étel és ital",
+  "group.gates": "🚪 Be- / kijáratok",
+  "group.areas": "🏛️ Főbb területek",
+  "group.shops": "🛒 Boltok",
+  "group.spas": "🚿 Fürdők",
+  "group.services": "🧰 Szolgáltatások",
+  "group.guests": "🎟️ Vendégszolgáltatások",
+  "group.transport": "🚖 Közlekedés",
+  "group.popular": "⭐ Népszerű"
 }

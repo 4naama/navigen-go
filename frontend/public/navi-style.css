@@ -1498,39 +1498,43 @@ button:hover {
 }
 
 
-/* ──────────────── modal-action ──────────────── */
-/* Used for: Share Location, Help — actions in body only */
+/* ──────────────── Modal Layout ──────────────── */
+/* Used for: Share Location, Help — body layout and button actions */
 
-.modal-action {
+.modal-layout {
   padding: 1.5em;
 }
 
-.modal-action .modal-actions {
-  display: flex;
-  flex-direction: column;   /* Stack buttons vertically */
-  align-items: stretch;     /* Full-width buttons (optional) */
-  gap: 0.75em;              /* Space between buttons */
-  margin-top: 1.25em;       /* Space from body text */
+.modal-layout .modal-body-inner {
+  font-size: 16px;
 }
 
-.modal-content.modal-action .modal-body p {
+.modal-layout .modal-body p {
   font-size: 1.05rem;
   line-height: 1.5;
   margin-bottom: 1.5em;
-  text-align: center;
+  text-align: left; /* ⬅️ left-align paragraph text */
 }
 
-/* Normalize font baseline for modal-action layout only */
-.modal-content.modal-action .modal-body-inner {
-  font-size: 16px; /* ✅ Updated to target .modal-body-inner instead of removed padding */
+.modal-layout .form-control {
+  display: block;
+  margin-bottom: 1.5em;
+  text-align: left;
 }
 
-/* Scale paragraph font slightly for readability */
-.modal-content.modal-action .modal-body p {
-  font-size: 1.05rem;       /* = 16.8px */
-  line-height: 1.5;
-  margin-bottom: 1.5em;     /* Adds space above buttons */
-  text-align: center;
+.modal-layout .modal-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;   /* ⬅️ left-align button */
+  gap: 0.75em;
+  margin-top: 1.5em;
+}
+
+#share-location-coords {
+  font-family: monospace;
+  font-size: 1.1rem;
+  text-align: left;
+  margin: 0.5em 0;
 }
 
 /* ──────────────── modal-alert ──────────────── */
@@ -1679,12 +1683,12 @@ button:hover {
 
 
 /* ✅ Make the checkmark blue */
-.navigen-checkbox input[type="checkbox"]:checked {
+.form-control input[type="checkbox"]:checked {
   accent-color: #1a73e8;
 }
 
 /* ✅ Keep checkbox label text muted */
-.navigen-checkbox {
+.form-control {
   display: flex;
   align-items: center;
   gap: 0.5em;

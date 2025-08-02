@@ -182,15 +182,15 @@ export function createMyStuffModal() {
     document.getElementById('my-stuff-modal')?.remove();
   });
 
-  // ✅ ESC key closes the modal
-  enableEscToClose(modal);
+  // ❌ Disabled: ESC key closes the modal
+  // enableEscToClose(modal);
 
-  // ✅ Tap-out (click background) closes the modal
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.remove();
-    }
-  });
+  // ❌ Disabled: Tap-out (click background) closes the modal
+  // modal.addEventListener('click', (e) => {
+  //   if (e.target === modal) {
+  //     modal.remove();
+  //   }
+  // });
 
   // ✅ Store all ".my-stuff-item" elements for later use
   myStuffItems = Array.from(modal.querySelectorAll('.my-stuff-item'));
@@ -280,7 +280,7 @@ export function createMyStuffModal() {
           const allFlags = [
             "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
             "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS",
-            "NO", "CH", "GB", "TR", "IL", "RU", "CN", "SA", "IN", "KR", "JP"
+            "NO", "CH", "GB", "TR", "IL", "RU", "UA", "CN", "SA", "IN", "KR", "JP"
           ];
 
           // You can expand this list as translations become available
@@ -330,8 +330,6 @@ export function createMyStuffModal() {
 
                 flagList.querySelectorAll("img.flag").forEach(f => f.classList.remove("selected-flag"));
                 img.classList.add("selected-flag");
-
-                console.log(`✅ Language changed to ${langCode} (${code})`);
 
             } else {
               img.style.opacity = "0.4";
@@ -513,6 +511,49 @@ export function createAlertModal() {
   setupTapOutClose("alert-modal");
 }
 
+// 🛑 Prevents overlapping share attempts by locking during active share operation.
+// Ensures navigator.share is not called multiple times simultaneously (InvalidStateError workaround)
+let isSharing = false;
+
+
+async function handleShare() {
+  if (isSharing) {
+    console.log("[Share] Ignored — already in progress");
+    return;
+  }
+
+  isSharing = true;
+
+  const coordsRaw = document.getElementById("share-location-coords")?.textContent.trim();
+  const coords = coordsRaw?.replace(/^📍\s*/, '');
+  const includeNavigen = document.getElementById("include-navigen-link")?.checked;
+
+  if (!coords) {
+    isSharing = false;
+    return;
+  }
+
+  const text = includeNavigen
+    ? `📍 ${coords}\nhttps://navigen.pages.dev/?at=${coords}`
+    : `📍 ${coords}`;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: "My Location", text });
+      hideModal("share-location-modal");
+    } else {
+      await navigator.clipboard.writeText(text);
+      showToast("Copied to clipboard");
+    }
+  } catch (err) {
+    console.warn("❌ Share failed:", err);
+    showToast("Share canceled or failed");
+  } finally {
+    isSharing = false;
+  }
+}
+
+
 /**
  * Modal Injector: Share Location Modal
  *
@@ -527,52 +568,27 @@ export function createShareModal() {
     bodyHTML: `
       <p class="muted">You can share your current location with a friend:</p>
       <p id="share-location-coords" class="location-coords">📍 Loading…</p>
-      
-      <!-- Optional NaviGen link checkbox -->
-      <label class="navigen-checkbox">
+
+      <label class="form-control">
         <input type="checkbox" id="include-navigen-link" checked>
         Include a “What’s around me” map link
       </label>
-      
-      <!-- Share button inside modal-actions container -->
+
       <div class="modal-actions">
         <button class="modal-body-button" id="share-location-button">📤 Share</button>
       </div>
-    `,
+    `
   });
 
   const modal = document.getElementById("share-location-modal");
+  modal?.classList.add("modal", "modal-layout", "hidden");
 
-  // ✅ Apply modal layout and ensure it starts hidden
-  modal?.classList.add("modal", "modal-action", "hidden");
-
-  // ✅ Setup click logic for Share button
   const shareBtn = document.getElementById("share-location-button");
-  if (shareBtn) {
-    shareBtn.addEventListener("click", () => {
-      const coordsRaw = document.getElementById("share-location-coords")?.textContent.trim();
-      const coords = coordsRaw?.replace(/^📍\s*/, ''); // Remove 📍 for URL use
 
-      const includeNavigen = document.getElementById("include-navigen-link")?.checked;
-      if (!coords) return;
-
-      // ✅ Proper share message with pin emoji and NG link
-      let text = `📍 ${coords}`;
-      if (includeNavigen) {
-        text += `\nhttps://navigen.pages.dev/?at=${coords}`;
-      }
-
-      navigator.share?.({
-        title: "My Location",
-        text // ✅ only `text`, no `url`
-      }).then(() => {
-        hideModal("share-location-modal"); // ✅ close modal after share
-      }).catch(err => {
-        console.warn("❌ Share failed:", err);
-      });
-    });
+  if (shareBtn && !shareBtn.hasAttribute("data-bound")) {
+    shareBtn.addEventListener("click", handleShare);
+    shareBtn.setAttribute("data-bound", "true");
   }
-
 }
 
 /**
@@ -586,14 +602,16 @@ export function createShareModal() {
  */
 export function showShareModal(coords) {
   const p = document.getElementById("share-location-coords");
-  if (p) p.textContent = `📍 ${coords}`; // ✅ ensure pin stays visible
+  if (p) p.textContent = `📍 ${coords}`;
 
-  // ✅ Manually unhide and reset style for guaranteed visibility
   const modal = document.getElementById("share-location-modal");
   if (modal) {
     modal.classList.remove("hidden");
-    modal.style.display = ''; // clears any inline "display: none"
+    modal.style.display = '';
   }
+
+  // ✅ Ensure the Share button is visible even if testing code hid it
+  document.getElementById("share-location-button")?.classList.remove("hidden");
 }
 
 export function createIncomingLocationModal(coords) {
@@ -644,6 +662,7 @@ export function createIncomingLocationModal(coords) {
   
   enableEscToClose(modal);
 }
+
 
 /**
  * Enables "tap-out-to-close" behavior for a modal.

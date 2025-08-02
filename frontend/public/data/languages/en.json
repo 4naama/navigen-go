@@ -27,7 +27,6 @@
   "tooltip.alerts": "Alerts",
   "tooltip.service": "Service Bell",
   "tooltip.accessibility": "Accessibility",
-  "group.popular": "⭐ Popular",
   "group.stages": "🎤 Stages",
   "group.activities": "🎪 Activities & Experiences",
   "group.food": "🍽️ Food & Drink",
@@ -38,5 +37,6 @@
   "group.services": "🧰 Services",
   "group.guests": "🎟️ Guest Services",
   "group.transport": "🚖 Transport",
-  "group.facilities": "🚻 Facilities"
+  "group.facilities": " 🚻 Facilities",
+  "group.popular": "⭐ Popular"
 }

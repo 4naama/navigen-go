@@ -13,6 +13,24 @@ import {
   injectModals
 } from './modal-injector.js';
 
+// ✅ Determines whether app is running in standalone/PWA mode
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+// Testing
+window.createDonationModal = createDonationModal;
+window.showModal = showModal;
+window.showPinnedModal = showPinnedModal;
+window.createPinnedModal = createPinnedModal;
+window.showShareModal = showShareModal;
+
+function isInStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
 import { loadTranslations, t } from "./scripts/i18n.js";
 
 function getUserLang() {
@@ -419,52 +437,52 @@ function clearSearch() {
   const headerPin = document.querySelector('.header-pin');
   const pinnedModal = document.getElementById('pinned-modal');
 
-  function isInStandaloneMode() {
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  }
-
+  // 🧭 Handle OS install prompt when available (only if not already running as standalone)
   window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    localStorage.removeItem('pwaInstalled'); // 👈 reset install flag
+    if (isInStandaloneMode()) return; // Skip if already installed as PWA
+
+    e.preventDefault(); // prevent default mini-infobar
     deferredPrompt = e;
 
     if (headerPin) {
       headerPin.style.display = 'block';
       headerPin.textContent = '📌';
+
       headerPin.onclick = () => {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then(choiceResult => {
           if (choiceResult.outcome === 'accepted') {
-            localStorage.setItem('pwaInstalled', 'true');
-            headerPin.textContent = '👋';
-            headerPin.style.display = 'block'; // make sure it's visible again
-            headerPin.onclick = () => {
-              if (pinnedModal) {
-                showPinnedModal();
-              }
-            };
-          } else {
+            // Reload to trigger standalone mode after installation
+            setTimeout(() => location.reload(), 800);
           }
         });
       };
     }
   });
 
-  window.addEventListener('load', () => {
-    // 📌 PWA pin logic
-    if (headerPin && (isInStandaloneMode() || localStorage.getItem('pwaInstalled') === 'true')) {
-      headerPin.style.display = 'block';
-      headerPin.textContent = '👋';
-      headerPin.onclick = () => {
+  // 👋 Show post-install button if PWA is running standalone
+  if (isInStandaloneMode() && headerPin) {
+    headerPin.style.display = 'block';
+    headerPin.textContent = '👋';
+    headerPin.onclick = () => {
+      const hasDonated = localStorage.getItem("hasDonated") === "true";
+      const tapKey = "helloTapCount";
+      const count = parseInt(localStorage.getItem(tapKey) || "0", 10) + 1;
+      localStorage.setItem(tapKey, count);
+
+      if (hasDonated) {
+        // After donation → show thank-you modal content
+        createDonationModal(true);
+      } else if (count === 1) {
+        // First tap → show "You're all set" pinned modal
         showPinnedModal();
-      };
-    }
-    
-    if (window.location.search.includes("donation=success")) {
-      localStorage.setItem("hasDonated", "true");
-      showToast("💖 Thank you for supporting the vibe!");
-    }
-  });
+      } else {
+        // 2nd+ taps → show donation options
+        createDonationModal(false);
+      }
+
+    };
+  }
 
   // Remaining modals & buttons...
   const helpButton = document.getElementById("help-button");
@@ -489,43 +507,6 @@ function clearSearch() {
     createIncomingLocationModal(at);
   }  
   
-  if (shareButton && coordsDisplay && locationModal) {
-    shareButton.onclick = () => {
-      console.log("[Share] Share button clicked");
-
-      const latLon = coordsDisplay.textContent;
-      const mapUrl = `https://maps.google.com/?q=${latLon}`;
-
-      // Hide modal
-      locationModal.classList.add("hidden");
-
-      if (navigator.share && mapUrl) {
-        console.log("[Share] Using navigator.share");
-        navigator.share({
-          title: "My Location",
-          text: "Here's where I am:",
-          url: mapUrl,
-        })
-        .then(() => console.log("[Share] Done"))
-        .catch(err => {
-          console.log("[Share] Canceled or failed:", err);
-          showToast("Share canceled");
-        });
-      } else {
-        console.log("[Share] Fallback to clipboard");
-        navigator.clipboard.writeText(mapUrl)
-          .then(() => {
-            console.log("[Share] Copied");
-            showToast("Copied to clipboard");
-          })
-          .catch(err => {
-            console.log("[Share] Clipboard failed:", err);
-            showToast("Copy failed");
-          });
-      }
-    };
-  }
-    
   if (alertButton && alertModal && alertModalContent) {
     alertButton.addEventListener("click", () => {
       alertModalContent.innerHTML = "<p>Loading...</p>";
@@ -618,33 +599,40 @@ function clearSearch() {
     });
   }
 
-  if (
-    hereButton &&
-    locationModal &&
-    coordsDisplay &&
-    shareButton
-  ) {
-    hereButton.addEventListener("click", () => {
-      coordsDisplay.textContent = "Detecting your location...";
-      shareButton.classList.add("hidden");
+  createShareModal();
 
-      if (!navigator.geolocation) {
-        coordsDisplay.textContent = "Geolocation not supported.";
-        return;
-      }
+  setupTapOutClose("share-location-modal"); // keep this too
 
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const coords = `${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`;
-          showShareModal(coords);
-        },
-        () => {
-          coordsDisplay.textContent = "Unable to access location.";
-          showShareModal("Unable to detect location");  // ✅ fallback
+  // ✅ Defer setup to ensure modal elements exist
+  setTimeout(() => {
+    const hereButton = document.getElementById("here-button");
+    const locationModal = document.getElementById("share-location-modal");
+    const coordsDisplay = document.getElementById("location-coords") || document.getElementById("share-location-coords");
+    const shareButton = document.getElementById("share-location-button");
+
+    if (hereButton && locationModal && coordsDisplay && shareButton) {
+      hereButton.addEventListener("click", () => {
+        coordsDisplay.textContent = "Detecting your location...";
+        shareButton.classList.add("hidden");
+
+        if (!navigator.geolocation) {
+          coordsDisplay.textContent = "Geolocation not supported.";
+          return;
         }
-      );
-    });
-  }
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const coords = `${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`;
+            showShareModal(coords);
+          },
+          () => {
+            coordsDisplay.textContent = "Unable to access location.";
+            showShareModal("Unable to detect location");
+          }
+        );
+      });
+    }
+  }, 0); // minimal delay after modal injection
 
   const helpContinueButton = helpModal?.querySelector(".modal-continue");
   const helpCloseButtons = document.querySelectorAll(".modal-close");
@@ -713,6 +701,18 @@ function clearSearch() {
   setupTapOutClose("my-stuff-modal");
   setupTapOutClose("alert-modal");
   setupTapOutClose("help-modal"); 
+  
+  // ✅ Dev-only helper to manually trigger Share modal
+  window.debugOpenShareModal = (coords = "47.123456,19.654321") => {
+    const p = document.getElementById("share-location-coords");
+    const modal = document.getElementById("share-location-modal");
+
+    if (!p || !modal) return console.warn("❌ Modal elements missing");
+    p.textContent = `📍 ${coords}`;
+    modal.classList.remove("hidden");
+    modal.style.display = '';
+    console.log("✅ debugOpenShareModal:", coords);
+  };  
   
 });  // ✅ End of DOMContentLoaded    
   

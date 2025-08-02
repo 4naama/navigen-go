@@ -60,23 +60,6 @@
 <!-- Search Box -->
 <script type="module" src="app.js"></script>
 
-<!-- 🧪 Dev-Only Reset Logic -->
-<!-- Automatically shows the 🔁 #dev-reset button on localhost. -->
-<!-- Clears localStorage and reloads the app for quick state testing (e.g. PWA install, donation flow). -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const resetBtn = document.getElementById('dev-reset');
-    if (resetBtn && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
-      resetBtn.hidden = false;
-      resetBtn.addEventListener('click', () => {
-        localStorage.clear();
-        location.reload();
-      });
-    }
-  });
-</script>
-
-
 <!-- 🎛️ BOTTOM BAND: User Action Panel (My Stuff · Alerts · Service · Accessibility) -->
 <div id="bottom-band">
   <button id="my-stuff-toggle" title="">🗂️</button> 
