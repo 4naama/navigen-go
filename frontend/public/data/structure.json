@@ -1,0 +1,62 @@
+[
+  {
+    "Drop-down": "🎤 Stages",
+    "Group": "group.stages",
+    "Subgroup": ""
+  },
+  {
+    "Drop-down": "🎪 Activities & Experiences",
+    "Group": "group.activities",
+    "Subgroup": "🎨 Art & Creative Zones"
+  },
+  {
+    "Drop-down": "🍽️ Food & Drink",
+    "Group": "group.food",
+    "Subgroup": "🍔 Food Stalls"
+  },
+  {
+    "Drop-down": "🚻 Facilities",
+    "Group": "group.facilities",
+    "Subgroup": "🚾 Toilet Zone"
+  },
+  {
+    "Drop-down": "🚪 Exit / Entry Gates",
+    "Group": "group.gates",
+    "Subgroup": ""
+  },
+  {
+    "Drop-down": "🛒 Shops",
+    "Group": "group.shops",
+    "Subgroup": "🧢 Official Festival Shop"
+  },
+  {
+    "Drop-down": "🚖 Transport",
+    "Group": "group.transport",
+    "Subgroup": "🚈 HÉV"
+  },
+  {
+    "Drop-down": "🛁 Spas",
+    "Group": "group.spas",
+    "Subgroup": "Spas"
+  },
+  {
+    "Drop-down": "🧰 Guest Services",
+    "Group": "group.guests",
+    "Subgroup": "🛎️ Help Desk"
+  },
+  {
+    "Drop-down": "🏛️ Main Areas",
+    "Group": "group.areas",
+    "Subgroup": "Main Areas"
+  },
+  {
+    "Drop-down": "🆘 Services",
+    "Group": "group.services",
+    "Subgroup": "🏥 Medical / First Aid"
+  },
+  {
+    "Drop-down": "🌐 Social",
+    "Group": "🌐 Social",
+    "Subgroup": "Social"
+  }
+]

@@ -1,0 +1,38 @@
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Environment / Secrets
+.env
+*.env
+*.env.*
+*.secrets
+*.key
+*.pem
+*.crt
+*.pfx
+*.db
+*.sqlite
+
+# Logs
+*.log
+
+# Go build files
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+bin/
+dist/
+
+# Frontend
+/frontend/node_modules/
+
+# Backend
+/backend/

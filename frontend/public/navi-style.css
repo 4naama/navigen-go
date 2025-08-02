@@ -1,0 +1,1753 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Raleway:wght@600&display=swap');
+
+#page-title,
+h1,
+h2,
+.alert-title,
+.group-header-button {
+  font-family: 'Raleway', sans-serif;
+}
+
+.page-subtext {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  text-align: center;
+  margin: 0.2em 0 1em;
+}
+
+/* Use Raleway for all group headers and section titles */
+#popular-title,
+.group-header-button,
+.accordion-button {
+  font-family: 'Raleway', sans-serif;
+}
+
+#popular-title {
+  font-weight: bold;
+  font-size: 20px;
+  text-align: center;
+  margin: 16px 0 16px 0;
+  cursor: default;
+}
+
+/* Use Poppins for all buttons and location labels */
+.quick-button,
+button,
+#search,
+#search-box,
+#here-button,
+#alert-indicator {
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background-color: #f7f9fb;
+  color: #333;
+  height: 100vh;
+  overflow: hidden; /* important! scrolls are delegated to containers */
+}
+
+.header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 1em 0.5em 0.25em; /* ⬅️ reduced bottom padding */
+  margin: 0;
+  padding-left: max(1em, env(safe-area-inset-left));
+  padding-right: max(1em, env(safe-area-inset-right));
+}
+#logo-icon {
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-block;
+  color: inherit;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+#logo-icon:hover {
+  transform: scale(1.2) rotate(-5deg);
+}
+
+#page-title {
+  flex: 1;
+  font-size: 20px;
+  line-height: 1.2;
+  text-align: center;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.4em; /* ~matching 1.2em top & bottom padding */
+  font-weight: bold;
+}
+
+.header-pin {
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 1.2em;
+}
+
+.header-pin:hover {
+  cursor: pointer;
+  transform: scale(1.2) rotate(10deg);
+  transition: transform 0.2s ease;
+}
+
+#search-container {
+  display: flex;
+  justify-content: center;
+  margin: 4px 1em;
+}
+
+#search-container > div {
+  display: flex;
+  flex-grow: 1;
+  max-width: 420px;
+  width: 100%;
+  gap: 10px; /* More reliable spacing between search and button */
+  align-items: center;
+}
+
+#search-left {
+  position: relative;
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+#search::placeholder {
+  font-weight: 400;       /* Normal instead of bold */
+  color: #666;            /* Slightly softer than full black */
+  opacity: 1;             /* Ensure it's visible */
+  font-family: 'Poppins', sans-serif;
+}
+
+#search {
+  width: 100%;
+  height: 36px;
+  padding: 8px 14px;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  background-color: white;
+}
+
+#clear-search {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #777;
+  opacity: 0.5;
+  cursor: pointer;
+  display: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+#clear-search:hover {
+  opacity: 1;
+  color: #222;
+}
+
+#main-content {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 90px - 56px); /* minus bottom bar and header height */
+  box-sizing: border-box;
+  padding: 0 1em;
+}
+
+#quick-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 90%;
+}
+
+.hidden {
+  display: none !important;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0.5em 0 0.25em;
+}
+
+#bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  padding-left: max(1em, env(safe-area-inset-left));
+  padding-right: max(1em, env(safe-area-inset-right));
+  padding-top: 6px;
+  padding-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 999;
+  border-top: 1px solid #eee;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  font-size: 16px;       /* ensures it's slightly smaller than h2 */
+  line-height: 1.2;
+}
+
+/* 🟢 WhatsApp Button */
+#whatsapp-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #25d366;
+  font-size: 22px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  height: 40px; /* keeps it aligned with others */
+}
+
+#whatsapp-link .wa-icon {
+  height: 22px;
+  width: auto;
+}
+
+/* ♿ Accessibility Button */
+#accessibility-button {
+  display: inline-block;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 0.5em;
+}
+
+#accessibility-button:focus,
+#accessibility-button:focus-visible {
+  outline: none;
+}
+
+/* Hover effect for both buttons */
+#bottom-bar button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+#locations h3 {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  margin: 1em 0 0.5em 0;
+}
+
+#locations-scroll {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 90px;
+}
+
+#quick-buttons-wrapper {
+  display: flex;
+  justify-content: center;
+  overflow-y: auto;
+  max-height: 84px;
+  margin-bottom: 1em;
+  scroll-behavior: smooth;
+}
+
+.alert-button {
+  background-color: #e63946;
+  color: white;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.4;
+  padding: 0.75em 1em;
+  font-size: 20px;
+  pointer-events: none;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.alert-box {
+  background-color: #e63946;
+  color: white;
+  text-align: center;
+  line-height: 1.5;
+  padding: 0.75em 1em;
+  font-size: 18px;
+  width: 80%;
+  max-width: 400px;
+  margin: 1em auto;
+  border-radius: 0.5em;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  display: block;
+}
+
+.alert-card {
+  background-color: #e63946;
+  color: white;
+  width: 90%;
+  max-width: 320px;
+  margin: 0.5em auto;
+  border-radius: 0.5em;
+  padding: 0.75em 1em;
+  box-sizing: border-box;
+  text-align: left;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.alert-title {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+  font-size: 18px;
+}
+
+.alert-timestamp {
+  font-weight: normal;
+  font-size: 16px;
+  color: #fdd;
+  white-space: nowrap;
+}
+
+.alert-body {
+  font-weight: normal;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.alert-card.empty {
+  background-color: #f0f0f0;
+  color: #444;
+  font-style: italic;
+}
+
+/* ──────────────── High Contrast Mode ──────────────── */
+body.high-contrast {
+  background-color: #111;   /* Dark but not pitch-black */
+  color: #fff;
+  font-size: 110%;          /* Scales naturally with rem/em units */
+}
+
+/* Buttons: Accordion, Quick Access, Group Headers */
+body.high-contrast .accordion-button,
+body.high-contrast .quick-button,
+body.high-contrast .group-header-button {
+  background-color: #222;
+  color: #fff;
+  border-color: #888;
+}
+
+body.high-contrast .accordion-button:hover,
+body.high-contrast .quick-button:hover {
+  background-color: #333;
+}
+
+/* Alert Cards */
+body.high-contrast .alert-card {
+  background-color: #111;
+  color: #fff;
+}
+
+/* Special Case: ⭐ Popular Group */
+body.high-contrast .group-header-button[data-group="⭐ Popular"],
+body.high-contrast .quick-button[data-group="⭐ Popular"] {
+  background-color: rgba(255, 193, 7, 0.15);  /* Soft gold highlight */
+  color: #fff;
+  border-color: #ffc107;
+}
+
+body.high-contrast .quick-button[data-group="⭐ Popular"]:hover {
+  background-color: rgba(255, 193, 7, 0.25);
+}
+
+/* Optional: Large Text Mode */
+body.large-text {
+  font-size: 1.15em;
+}
+
+/* ------------------------------
+   General Icon Styles
+   ------------------------------ */
+
+/* Use for emoji, <img>, or <svg> icons inline with text or buttons */
+.icon, .icon-img, .icon-svg {
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* ------------------------------
+   Community Zone Buttons
+   ------------------------------ */
+
+.community-button {
+  display: inline-block;
+  background: #e6f7fb;
+  color: #222;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.6em 1em;
+  margin: 0.4em;
+  font-size: 1em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.community-button:hover {
+  background-color: #e6e6e6;
+  border-color: #ccc;
+}
+
+.community-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1em;
+}
+
+
+/* ------------------------------
+   Social Link Buttons
+   ------------------------------ */
+
+/* Circular social button container (e.g., for Twitter, GitHub, etc.) */
+.social-link {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 3em;
+  height: 3em;
+  margin: 0.5em;
+  border-radius: 50%;
+  background-color: #f1f1f1;
+  transition: background-color 0.2s ease;
+}
+
+.social-link:hover {
+  background-color: #ddd;
+}
+
+/* Icon inside social-link button */
+.social-link img {
+  width: 24px;
+  height: 24px;
+}
+
+
+/* ------------------------------
+   Standalone Social Icons
+   ------------------------------ */
+
+/* Container style */
+.social-link-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25em;
+  margin-top: 1em;
+}
+
+/* Each icon wrapper */
+.social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #f1f1f1;
+  transition: background-color 0.2s ease;
+}
+
+/* Icon image inside */
+.social-icon img {
+  width: 28px;
+  height: 28px;
+  transition: transform 0.2s ease;
+}
+
+/* Hover effect (desktop only) */
+@media (hover: hover) {
+  .social-icon:hover {
+    background-color: #e0e0e0;
+  }
+
+  .social-icon img:hover {
+    transform: scale(1.2);
+  }
+}
+
+/* ------------------------------
+   Language / Flag Grid
+   ------------------------------ */
+
+/* Responsive grid for flag/language selection */
+.flag-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* Max 4 per row */
+  gap: 1em;
+  justify-items: center;
+  margin-top: 1em;
+}
+
+/* Flag icon inside the grid */
+.flag-list img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+/* Desktop hover only */
+@media (hover: hover) {
+  .flag-list img:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Disabled flag style (subtle dim with grayscale) */
+.flag-list img.disabled {
+  opacity: 0.35;
+  filter: grayscale(100%);
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Selected flag */
+.flag-list img.selected-flag {
+  border: 1px solid #007aff;     /* iOS blue tone */
+  padding: 2px;                  /* space between image and border */
+  box-shadow: none;              /* no glow */
+  border-radius: 3px;            /* optional, soft corners */
+  background-clip: padding-box;  /* prevents padding overlap */
+}
+
+/* ──────────────── Modal Containers ──────────────── */
+/* All modals share these base layout rules */
+#my-stuff-modal,
+#help-modal,
+#language-modal,
+#social-modal,
+#alert-modal,
+#pinned-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 2em;
+  z-index: 1000;
+}
+
+#my-stuff-modal:not(.hidden),
+#help-modal:not(.hidden),
+#language-modal:not(.hidden),
+#social-modal:not(.hidden),
+#alert-modal:not(.hidden),
+#pinned-modal:not(.hidden) {
+  display: flex;
+}
+
+
+
+/* ──────────────── Body-Action Modal — Share Location ──────────────── */
+/* Interaction happens inside modal-body; controlled by .hidden */
+
+#share-location-modal.hidden {
+  display: none;
+}
+
+#share-location-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);  /* 👈 this gives the dark backdrop */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 2em;
+}
+
+/* ──────────────── Main Modal Container ──────────────── */
+/* Scrolls only the body — top and bottom bars stay fixed */
+.modal-content {
+  display: flex;                              /* ✅ Enables vertical stacking of children */
+  flex-direction: column;                     /* ✅ Top-to-bottom content flow */
+  background: white;                          /* ✅ White modal background */
+  border-radius: 0.5em;                       /* ✅ Rounded corners for clean visual feel */
+  padding: 1.5em;                             /* ✅ Inner spacing around content */
+
+  width: min(95vw, 720px);                    /* ✅ Responsive width: grow wider but capped */
+  max-height: calc(100vh - 6em);              /* ✅ Prevents modal from touching screen edges */
+  overflow-y: auto;                           /* ✅ Scrolls internally if content overflows */
+
+  z-index: 1001;                              /* ✅ Ensures modal sits above backdrop */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); /* ✅ Subtle elevation */
+  font-size: 18px;                            /* ✅ Base font size inside modal */
+  line-height: 1.5;                           /* ✅ Improves text legibility */
+  box-sizing: border-box;                     /* ✅ Keeps padding inside declared dimensions */
+}
+
+/* ──────────────── Scrollable Content Area ──────────────── */
+/* Ensures long content inside body scrolls properly */
+.modal-body {
+  overflow-y: auto;
+  flex-grow: 1;
+  padding: 0;              /* ⛔ Removed padding to avoid inset scrollbar */
+  scrollbar-gutter: stable; /* ✅ Keeps scrollbar flush right without shifting content */
+}
+
+/* Inner wrapper for proper spacing inside modal content */
+.modal-body-inner {
+  padding: 1.2rem;         /* ✅ Provides inner spacing without affecting scrollbar edge */
+}
+
+/* ──────────────── Modal Headers & Top Bar ──────────────── */
+/* Titles, Close button, and top layout inside modal-content */
+.modal-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* light gray */
+}
+
+.modal-top-bar h2 {
+  flex-grow: 1;
+  font-size: 20px;
+  margin: 0;
+  text-align: center;
+}
+
+/* 🧾 Paragraph styling inside modals for consistent spacing and readability */
+.modal-content p {
+  font-size: 14px;           /* Smaller, modal-friendly text size */
+  margin-bottom: 1em;        /* Spacing between paragraphs or elements */
+  text-align: center;        /* Center-align text for modals like Share */
+}
+
+/* ──────────────── Close Button (Top Right, Minimal) ──────────────── */
+/* Used in modal-top-bar for consistent UX */
+.modal-close {
+  font-size: 1.5em;
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* ──────────────── Modal Footer Layout ──────────────── */
+/* Shared footer layout for modals: My Stuff, Share, Alert, etc. */
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5em;
+  padding: 0.75em 0 0.5em;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(245, 245, 245, 0.95);
+  backdrop-filter: blur(3px);
+
+  /* Gap will be applied dynamically via JS if multiple buttons */
+  gap: 0;
+}
+
+/* ──────────────── Modal Footer Action Button ──────────────── */
+/* Style for secondary/neutral actions placed in the modal footer.
+   Use for subtle actions like “Cancel” or passive confirm (e.g., “Resolved”).
+   For prominent actions, use .modal-body-button instead. */
+.modal-footer-button {
+  background: #1a73e8;
+  color: white;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.7em 1.25em;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5em;
+  text-align: left;
+}
+.modal-footer-button:hover {
+  background: #1667cc;
+  transform: translateY(-1px);
+}
+
+.modal-footer .modal-footer-button {
+  width: auto;
+  align-self: flex-end;
+}
+
+/* ──────────────── Modal Body Buttons ──────────────── */
+/* Functional buttons inside modal body content */
+/* ──────────────── Modal Body Button ──────────────── */
+/* Used for compact single CTAs like “Got it” */
+
+.modal-body-button {
+  background: #1a73e8;
+  color: white;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: auto;             /* ✅ No more forced full width */
+  min-width: 120px;        /* ✅ Enough for tap comfort */
+  max-width: 100%;         /* ✅ Safe fallback */
+  align-self: center;      /* ✅ Keeps button centered inside modal-actions */
+}
+
+.modal-body-button:hover {
+  background: #1667cc;
+  transform: translateY(-1px);
+}
+
+/* ──────────────── Modal Body Utility Text ──────────────── */
+/* Optional muted/gray text inside modal body (e.g. instructions) */
+.modal-body .muted {
+  font-size: 0.9em;
+  color: #666;
+  margin-bottom: 0.5em;
+}
+
+/* Coordinates display formatting */
+.modal-body .location-coords {
+  font-size: 1.1em;
+  margin-bottom: 1em;
+}
+
+/* ──────────────── My Stuff Menu Cards ──────────────── */
+/* Styled like grouped quick-buttons, but tailored for modal menu use */
+/* Scalable base: can later be driven by dynamic JSON like group-buttons */
+
+.my-stuff-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0.5em 0;
+  width: 100%;
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.my-stuff-item:hover {
+  background: #f1f1f1;
+}
+
+.my-stuff-item .icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.my-stuff-item .label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.my-stuff-item .label small {
+  font-weight: 400;
+  opacity: 0.7;
+  font-size: 0.85rem;
+}
+
+/* WhatsApp */
+.wa-text {
+  font-weight: normal;
+  font-size: 20px;
+  color: #128c7e;
+}
+
+button:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  transition: background-color 0.2s ease;
+}
+
+/* Accordion Section */
+.accordion-section {
+  margin-top: 8px;
+}
+
+.accordion-body {
+  display: none;
+  padding: 0.5em 1em;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  background-color: #fafafa;
+}
+
+.accordion-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: bold;
+  color: black;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  margin-bottom: 0.5em;
+}
+
+.accordion-button > span {
+  margin-left: 1em;
+}
+
+/* Optional spacing between stacked headers */
+.accordion-button + .accordion-button {
+  margin-top: 0.5em;
+}
+
+/* Base style for ALL quick buttons */
+.quick-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 8px 14px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 6px;
+  background-color: white;
+  border: 1px solid transparent;
+  color: black;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  margin: 4px 6px;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    border-color 0.2s ease;
+}
+
+.quick-button:hover {
+  background-color: #f5f5f5;
+  border-color: #999; /* highlight border on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Optional: softer hover background for Populars only */
+.quick-button.popular-button:hover {
+  background-color: #fff3e5;
+  border-color: #e36700;
+}
+
+/* Group header buttons (category titles like "Social", "Stages", etc.) */
+.group-header-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+  height: 2.8em;
+  padding: 0 1em;
+  font-size: 18px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: none;
+  color: inherit;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  margin: 0;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.group-header-button .header-title {
+  flex-grow: 1;
+  text-align: left;
+}
+
+.group-header-button .header-meta {
+  font-size: 0.9em;
+  opacity: 0.7;
+}
+
+.group-header-button .header-arrow {
+  font-size: 1.1em;
+  opacity: 0.6;
+}
+
+.group-header-button:hover {
+  border-color: #999;
+  background-color: #f9f9f9;
+}
+
+.group-header-button .header-arrow::after {
+  content: "▸";
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+
+.group-header-button.open .header-arrow::after {
+  transform: rotate(90deg);
+}
+
+.group-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 6px; /* row gap = 4px, column gap = 6px */
+  padding: 0.2em 0 0.4em;
+  margin-top: 0.25em;
+}
+
+.group-buttons.hidden {
+  display: none;
+}
+
+/* Unified shape & spacing */
+.group-buttons button.quick-button[data-group]:not([data-group="Alerts"]):not([data-group="Social"]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 8px 14px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 6px;
+  background-color: white;
+  color: black;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  margin: 2px 4px;
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+/* Hover styling */
+.group-buttons button.quick-button[data-group]:not([data-group="Alerts"]):not([data-group="Social"]):hover {
+  background-color: #f9f9f9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 🎯 Location/group child buttons inside accordion or popular sections */
+.location-button {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 500;
+  background: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.location-button:hover {
+  box-shadow: 0 0 0 2px currentColor;
+  background-color: #fafafa;
+}
+
+/* ⭐ Force visible border for Popular group children */
+.group-header-button[data-group="group.popular"] ~ .group-buttons .location-button {
+  border-color: #ffd54f;
+  box-shadow: 0 0 0 1px #ffd54f;
+}
+ű
+/* 🎨 Group-tinted borders for location buttons */
+[data-group="group.stages"] + .accordion-body .location-button,
+[data-group="group.stages"] ~ .group-buttons .location-button {
+  border-color: #ef9a9a;
+  box-shadow: 0 0 0 1px #ef9a9a;
+}
+
+[data-group="group.activities"] + .accordion-body .location-button,
+[data-group="group.activities"] ~ .group-buttons .location-button {
+  border-color: #ffe082;
+  box-shadow: 0 0 0 1px #ffe082;
+}
+
+[data-group="group.food"] + .accordion-body .location-button,
+[data-group="group.food"] ~ .group-buttons .location-button {
+  border-color: #81c784;
+  box-shadow: 0 0 0 1px #81c784;
+}
+
+[data-group="group.gates"] + .accordion-body .location-button,
+[data-group="group.gates"] ~ .group-buttons .location-button {
+  border-color: #4dd0e1;
+  box-shadow: 0 0 0 1px #4dd0e1;
+}
+
+[data-group="group.areas"] + .accordion-body .location-button,
+[data-group="group.areas"] ~ .group-buttons .location-button {
+  border-color: #b39ddb;
+  box-shadow: 0 0 0 1px #b39ddb;
+}
+
+[data-group="group.popular"] + .accordion-body .location-button,
+[data-group="group.popular"] ~ .group-buttons .location-button {
+  border-color: #ffecb3;
+  box-shadow: 0 0 0 1px #ffecb3;
+}
+
+
+/* Per-group colored borders (text stays black) */
+.quick-button[data-group="🎤 Stages"]              { border-color: #b197fc; }
+.quick-button[data-group="🎪 Activities & Experiences"] { border-color: #5c7cfa; }
+.quick-button[data-group="🍽️ Food & Drink"]        { border-color: #fab005; }
+.quick-button[data-group="🚻 Facilities"]          { border-color: #adb5bd; }
+.quick-button[data-group="🚪 Exit / Entry Gates"]  { border-color: #20c997; }
+.quick-button[data-group="🛍️ Shops"]               { border-color: #f783ac; }
+.quick-button[data-group="🚖 Transport"]           { border-color: #339af0; }
+.quick-button[data-group="💆 Spas"]                { border-color: #74c0fc; }
+.quick-button[data-group="🛠️ Services"]            { border-color: #e03131; }
+.quick-button[data-group="👥 Guest Services"]      { border-color: #845ef7; }
+.quick-button[data-group="🗺️ Main Areas"]          { border-color: #228be6; }
+.quick-button[data-group="💬 Social"]              { border-color: #12b886; }
+.quick-button[data-group="⭐ Popular"]              { border-color: #ffc107; }
+.quick-button[data-group="🧩 Community Zone"]       { border-color: #00bcd4; }
+
+.quick-button[data-group="🎤 Stages"]               { background-color: rgba(177, 151, 252, 0.06); }
+.quick-button[data-group="🎪 Activities & Experiences"] { background-color: rgba(92, 124, 250, 0.06); }
+.quick-button[data-group="🍽️ Food & Drink"]         { background-color: rgba(250, 176, 5, 0.06); }
+.quick-button[data-group="🚻 Facilities"]           { background-color: rgba(173, 181, 189, 0.06); }
+.quick-button[data-group="🚪 Exit / Entry Gates"]   { background-color: rgba(32, 201, 151, 0.06); }
+.quick-button[data-group="🛍️ Shops"]                { background-color: rgba(247, 131, 172, 0.06); }
+.quick-button[data-group="🚖 Transport"]            { background-color: rgba(51, 154, 240, 0.06); }
+.quick-button[data-group="💆 Spas"]                 { background-color: rgba(116, 192, 252, 0.06); }
+.quick-button[data-group="🛠️ Services"]             { background-color: rgba(224, 49, 49, 0.06); }
+.quick-button[data-group="👥 Guest Services"]       { background-color: rgba(132, 94, 247, 0.06); }
+.quick-button[data-group="🗺️ Main Areas"]           { background-color: rgba(34, 139, 230, 0.06); }
+.quick-button[data-group="💬 Social"]               { background-color: rgba(18, 184, 134, 0.06); }
+.quick-button[data-group="⭐ Popular"]               { background-color: rgba(255, 193, 7, 0.06); }
+.quick-button[data-group="🧩 Community Zone"]        { background-color: rgba(0, 188, 212, 0.06); }
+
+.group-header-button[data-group="🎤 Stages"]               { background-color: rgba(177, 151, 252, 0.4); }
+.group-header-button[data-group="🎪 Activities & Experiences"] { background-color: rgba(92, 124, 250, 0.4); }
+.group-header-button[data-group="🍽️ Food & Drink"]         { background-color: rgba(250, 176, 5, 0.4); }
+.group-header-button[data-group="🚻 Facilities"]           { background-color: rgba(173, 181, 189, 0.4); }
+.group-header-button[data-group="🚪 Exit / Entry Gates"]   { background-color: rgba(32, 201, 151, 0.4); }
+.group-header-button[data-group="🛍️ Shops"]                { background-color: rgba(247, 131, 172, 0.4); }
+.group-header-button[data-group="🚖 Transport"]            { background-color: rgba(51, 154, 240, 0.4); }
+.group-header-button[data-group="💆 Spas"]                 { background-color: rgba(116, 192, 252, 0.4); }
+.group-header-button[data-group="🛠️ Services"]             { background-color: rgba(224, 49, 49, 0.4); }
+.group-header-button[data-group="👥 Guest Services"]       { background-color: rgba(132, 94, 247, 0.4); }
+.group-header-button[data-group="🗺️ Main Areas"]           { background-color: rgba(34, 139, 230, 0.4); }
+.group-header-button[data-group="💬 Social"]               { background-color: rgba(18, 184, 134, 0.4); }
+.group-header-button[data-group="⭐ Popular"]               { background-color: rgba(255, 193, 7, 0.4); }
+.group-header-button[data-group="🧩 Community Zone"]        { background-color: rgba(0, 188, 212, 0.4); }
+
+/* Optional orphan centering */
+.group-buttons:has(.quick-button:nth-last-child(1):nth-child(odd)) {
+  justify-content: center;
+}
+
+#here-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 8px 14px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 6px;
+  background-color: white;
+  border: 1px solid #e63946; /* red border */
+  color: black;
+  cursor: pointer;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  margin-left: 16px; /* ✅ replaces previous margin, adds reliable space from input */
+}
+
+#here-button:hover {
+  background-color: #ffe5e8;
+  border-color: #c92a38;
+}
+
+#search-box {
+  font-size: 16px;
+  font-weight: bold;
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  line-height: 1;
+  height: 36px;
+  box-sizing: border-box;
+  background-color: white;
+  vertical-align: middle;
+}
+
+#search-box:focus {
+  border-color: #888;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.05);
+}
+
+#alert-indicator {
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px 10px;
+  margin-left: 8px;
+  border-radius: 6px;
+  border: 1px solid #ff4d4f;
+  background-color: white;
+  color: #ff4d4f;
+  font-weight: bold;
+  line-height: 1;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+/* Flashing red effect */
+.flashing-alert {
+  animation: flash-alert 1s infinite;
+}
+
+@keyframes flash-alert {
+  0%, 100% { background-color: white; }
+  50%      { background-color: #ffe6e6; }
+}
+
+#alert-indicator.hidden {
+  display: none;
+}
+
+/* 📎 Bottom Band Layout */
+#bottom-band {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #fff;
+  border-top: 1px solid #ccc;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 999;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 🎛️ Unified Bottom Band Button Styles */
+#bottom-band button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 0.5em;
+  height: 40px;
+  width: 40px;
+}
+
+#bottom-band button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+/* Subtle group background tints */
+.group-buttons button.quick-button[data-group="Stages"]              { background-color: #b197fc0f; }
+.group-buttons button.quick-button[data-group="Activities & Experiences"] { background-color: #5c7cfa0f; }
+.group-buttons button.quick-button[data-group="Food & Drink"]        { background-color: #fab0050f; }
+.group-buttons button.quick-button[data-group="Facilities"]          { background-color: #adb5bd0f; }
+.group-buttons button.quick-button[data-group="Exit / Entry Gates"]  { background-color: #20c9970f; }
+.group-buttons button.quick-button[data-group="Shops"]               { background-color: #f783ac0f; }
+.group-buttons button.quick-button[data-group="Transport"]           { background-color: #339af00f; }
+.group-buttons button.quick-button[data-group="Spas"]                { background-color: #74c0fc0f; }
+.group-buttons button.quick-button[data-group="Services"]            { background-color: #e031310f; }
+.group-buttons button.quick-button[data-group="Guest Services"]      { background-color: #845ef70f; }
+.group-buttons button.quick-button[data-group="Main Areas"]          { background-color: #228be60f; }
+.group-buttons button.quick-button[data-group="Social"]              { background-color: #12b8860f; }
+
+.group-header-button[data-group="Stages"]              { background-color: #b197fc66; }
+.group-header-button[data-group="Activities & Experiences"] { background-color: #5c7cfa66; }
+.group-header-button[data-group="Food & Drink"]        { background-color: #fab00566; }
+.group-header-button[data-group="Facilities"]          { background-color: #adb5bd66; }
+.group-header-button[data-group="Exit / Entry Gates"]  { background-color: #20c99766; }
+.group-header-button[data-group="Shops"]               { background-color: #f783ac66; }
+.group-header-button[data-group="Transport"]           { background-color: #339af066; }
+.group-header-button[data-group="Spas"]                { background-color: #74c0fc66; }
+.group-header-button[data-group="Services"]            { background-color: #e0313166; }
+.group-header-button[data-group="Guest Services"]      { background-color: #845ef766; }
+.group-header-button[data-group="Main Areas"]          { background-color: #228be666; }
+.group-header-button[data-group="Social"]              { background-color: #12b88666; }
+
+#help-modal,
+#language-modal,
+#social-modal,
+#alert-modal,
+#pinned-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 2em;
+}
+
+@keyframes reveal-scroll-space {
+  0%   { transform: translateY(0); }
+  10%  { transform: translateY(-48px); }  /* pull up */
+  70%  { transform: translateY(-48px); }  /* hold position */
+  100% { transform: translateY(0); }      /* release */
+}
+
+.scroll-hint {
+  animation: reveal-scroll-space 2.8s ease-out;
+}
+
+.alert-block {
+  padding: 1em 0;
+}
+
+.alert-message {
+  text-align: center;
+  margin-bottom: 0.5em;
+}
+
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.alert-summary {
+  border-top: 1px solid #1b8e0d; /* soft green */
+  margin-top: 1em;
+  padding-top: 0.75em;
+  text-align: center;
+  font-size: 0.85em;
+  color: #444;
+  opacity: 0.85;
+}
+
+.community-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+#locations {
+  margin-top: 1em;
+}
+
+.quick-button[data-group="⭐ Popular"] {
+  border-color: #ffc107;
+}
+
+.quick-button[data-group="🧩 Community Zone"] {
+  border-color: #00bcd4;
+}
+
+.group-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+  margin: 6px 0 6px 0;
+}
+
+.group-title[data-group="🧩 Community Zone"] {
+  font-weight: normal;
+}
+
+#community-zone-container {
+  margin-top: 0px;
+}
+
+.quick-buttons-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0px;
+  max-height: calc(2 * (36px + 8px)); /* 2 rows: height + vertical margin */
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.quick-buttons-wrapper::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 16px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
+}
+
+.section-spacer {
+  height: 1.0em;
+}
+/* Placeholder message for empty states */
+.empty-placeholder {
+  text-align: center;
+  padding: 2em 1em;
+  color: #888;
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* ────────────── Toast Notification ────────────── */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #222;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+#scroll-zone {
+  overflow-y: auto;
+  height: calc(100vh - 400px); /* adjust this if layout shifts */
+  padding-bottom: 90px;
+}
+
+
+/*** OLD
+/* ==========================================================================
+
+   🧩 Modal Layout Variants (Structural Roles)
+
+   Each modal adopts one of the following layout roles, defined by structural
+   class modifiers. These control width, padding, and footer/header presence.
+
+   --------------------------------------------------------------------------
+
+   • Default Modal
+     Class:         .modal
+     Width:         Standard
+     Footer:        Included (.modal-footer)
+     Use Case:      General-purpose — My Stuff, Data Processing, Language
+
+   • Body-Action Modal
+     Class:         
+     Width:         Standard
+     Footer:        Not present
+     Use Case:      Primary interaction is inside body — Share Location Modal, Community Zone
+
+   • Compact Modal (optional)
+     Class:         .modal.modal--compact
+     Width:         Reduced (narrower modal-content)
+     Footer:        Optional
+     Use Case:      Lightweight prompts, quick decisions
+
+   • Bare Modal (optional)
+     Class:         .modal.modal--bare
+     Width:         Minimal
+     Footer:        None
+     Header:        None
+     Use Case:      Raw alerts, system messages, minimal overlays
+
+   --------------------------------------------------------------------------
+
+   Layout is always applied explicitly by modal creator:
+     → injectModal({ ... });
+     → document.getElementById('your-id').classList.add('modal--no-footer');
+
+   injectModal() is structure-only and does not assign layout variants.
+
+   ========================================================================= */
+
+
+/* ==========================================================================
+
+   🧩 Modal Layout Variants — CSS Roles
+
+   Each modal layout is applied via structural utility classes. These modify
+   width, padding, and the presence of modal regions (e.g. footer/header).
+
+   ========================================================================= */
+
+/* ──────────────── Default Modal (Standard Layout) ──────────────── */
+/* Applied automatically via .modal (no modifiers needed) */
+/* Used for: My Stuff, Data Processing, any general modal */
+
+.modal {
+  /* Standard width and structure */
+}
+
+
+/*** CURRENT Styles Replacing OLD ones
+/* ==========================================================================  
+   🧩 Current Modal Type Styles — Semantic Structure Layer  
+   Defines high-level layout and behavior for each modal type  
+   Migrating from legacy ID- and modifier-based styling
+   ========================================================================= */
+
+/* ──────────────── modal-menu ──────────────── */
+/* Used for: "My Stuff", Language, Social menu listings */
+.modal-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
+  padding: 1.5em;
+  background-color: #fff;
+  border-radius: 12px;
+
+  /* Fix: allow content to use full modal width */
+  width: auto;
+  max-width: none;
+  flex: 1;
+  
+/* Replaces .my-stuff-item / .modal-menu-item shared structure */
+.modal-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  width: auto;
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.modal-menu-item:hover {
+  background: #f1f1f1;
+}
+
+
+/* ──────────────── modal-action ──────────────── */
+/* Used for: Share Location, Help — actions in body only */
+
+.modal-action {
+  padding: 1.5em;
+}
+
+.modal-action .modal-actions {
+  display: flex;
+  flex-direction: column;   /* Stack buttons vertically */
+  align-items: stretch;     /* Full-width buttons (optional) */
+  gap: 0.75em;              /* Space between buttons */
+  margin-top: 1.25em;       /* Space from body text */
+}
+
+.modal-content.modal-action .modal-body p {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  margin-bottom: 1.5em;
+  text-align: center;
+}
+
+/* Normalize font baseline for modal-action layout only */
+.modal-content.modal-action .modal-body-inner {
+  font-size: 16px; /* ✅ Updated to target .modal-body-inner instead of removed padding */
+}
+
+/* Scale paragraph font slightly for readability */
+.modal-content.modal-action .modal-body p {
+  font-size: 1.05rem;       /* = 16.8px */
+  line-height: 1.5;
+  margin-bottom: 1.5em;     /* Adds space above buttons */
+  text-align: center;
+}
+
+/* ──────────────── modal-alert ──────────────── */
+/* Used for: Alert stacks — dismissable cards with footer */
+
+.modal-alert {
+  padding: 1.5em;
+}
+
+.modal-alert .alert-card {
+  background: #fff9f9;
+  border: 1px solid #ffd0d0;
+  border-radius: 8px;
+  padding: 1em 1.25em;
+  margin-bottom: 1em;
+  box-shadow: 0 0 0 1px rgba(255, 0, 0, 0.08);
+}
+
+.modal-alert .alert-card.unread {
+  background: #fff3f3;
+  border-color: #ff9999;
+}
+
+.modal-alert .alert-card .alert-action {
+  margin-top: 0.75em;
+  text-align: right;
+}
+
+/* Optional footer status bar (e.g. "Seen: 1 / 3") */
+.modal-alert-footer {
+  margin-top: 1.25em;
+  font-size: 0.85rem;
+  text-align: center;
+  opacity: 0.7;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 0.75em;
+}
+
+
+/* ──────────────── modal-footer ──────────────── */
+/* Used for: Any modal with an explicit footer (e.g. Confirm, Resolved) */
+
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5em;
+  padding: 0.75em 0 0.5em;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(245, 245, 245, 0.95);
+  backdrop-filter: blur(3px);
+  gap: 1em;
+}
+
+/* ──────────────── modal-compact ──────────────── */
+/* Used for: quick confirmations with reduced layout */
+
+.modal-compact .modal-content {
+  max-width: 360px;
+  padding: 1rem 1.25rem;
+}
+
+
+/* ──────────────── modal-bare ──────────────── */
+/* Used for: Raw overlays, onboarding steps */
+
+.modal-bare .modal-top-bar,
+.modal-bare .modal-footer {
+  display: none !important;
+}
+
+.modal-bare .modal-content {
+  padding: 0.75rem 1rem;
+  background: transparent;
+  box-shadow: none;
+}
+
+
+/* ──────────────── modal-shop-category ──────────────── */
+/* Used for: Grids of product/donation category types */
+
+.modal-shop-category {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1em;
+  padding: 1.5em;
+}
+
+
+/* ──────────────── modal-shop-bundle ──────────────── */
+/* Used for: Penultimate step — donation tiers */
+
+.modal-shop-bundle {
+  display: grid;
+  gap: 1em;
+  padding: 1.5em;
+}
+
+
+/* ──────────────── modal-shop-item ──────────────── */
+/* Used for: Final donation/product checkout */
+
+.modal-shop-item {
+  padding: 1.5em;
+}
+
+.modal-shop-item .price {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1em;
+}
+
+/* ──────────────── Donation Option Cards ──────────────── */
+/* Styled for modal-shop-item layout — visible donation tiers */
+
+.modal-shop-item .donation-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+  padding: 1em 1.25em;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  text-align: left;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.modal-shop-item .donation-option:hover {
+  border-color: #1a73e8;
+  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.12);
+}
+
+.modal-shop-item .donation-option .donation-sub {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #666;
+}
+
+/* Legacy Utility Note (for reference only):  
+   .modal--bare, .modal--compact — replaced by modal-* classes above */
+/*** End of NEW*/
+
+
+/* ✅ Make the checkmark blue */
+.navigen-checkbox input[type="checkbox"]:checked {
+  accent-color: #1a73e8;
+}
+
+/* ✅ Keep checkbox label text muted */
+.navigen-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.95rem;
+  color: #666; /* Adjust to your muted style if needed */
+}
+
+/* 📦 Wrapper around the input and the clear button */
+/* 🧠 Search input field */
+#search {
+  width: 250px;
+  padding-right: 2.5em;          /* space for ❌ */
+  height: 2.4em;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  line-height: 2.4em;
+  position: relative;
+  z-index: 1;                     /* ensures it's below ❌ */
+}
+/* 📦 Wrapper around the input and the clear button */
+#search-left {
+  position: relative;         /* Required so the button can be absolutely positioned inside */
+  display: inline-block;      /* Keeps both elements together inline */
+  width: auto;                /* Let it size to fit the input field */
+  max-width: 100%;            /* Prevent overflow in containers */
+}
+
+/* ❌ Clear button: visually sits inside the right side of the input */
+#clear-search {
+  position: absolute;
+  top: 50%;
+  right: 0.5em;
+  transform: translateY(-50%);
+  display: none;
+
+  width: 1.5em;
+  height: 1.5em;
+  border: none;
+  border-radius: 50%;
+  background: #f0f0f0;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #999;        /* lighter gray */
+  opacity: 0.7;       /* a bit more visible */
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.5em;
+  display: none; /* Default state */
+  z-index: 10;  /* ⬅️ critical: this brings ❌ above the input */
+}
+
+#clear-search:hover {
+  color: #333;        /* not full black */
+  opacity: 1;         /* fully visible */
+}
+
+#locations-scroll {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}

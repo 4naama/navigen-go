@@ -1,0 +1,17 @@
+[
+  {
+    "string": "TODO: handle \"${b.label}\"",
+    "line": 224,
+    "file": "frontend/public/app.js"
+  },
+  {
+    "string": "💖 Thank you for supporting the vibe!",
+    "line": 489,
+    "file": "frontend/public/app.js"
+  },
+  {
+    "string": "🎧 Thank you for contacting SzigetSupport. Tap send to start conversation.",
+    "line": 620,
+    "file": "frontend/public/app.js"
+  }
+]
