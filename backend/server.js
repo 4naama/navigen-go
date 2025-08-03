@@ -6,7 +6,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 
-// ? Enable CORS for dev + prod (including preflight)
+// Enable CORS for local dev and production frontend
 app.use(cors({
   origin: ["http://localhost:8000", "https://navigen-go.onrender.com", "https://navi.genuni.io"],
   methods: ["GET", "POST", "OPTIONS"],
@@ -14,21 +14,15 @@ app.use(cors({
   credentials: true
 }));
 
-// ? Handle all OPTIONS preflight requests
-app.options('*', cors());
-
-// ? Express built-ins
 app.use(express.static('public'));
 app.use(express.json());
 
-// ? Stripe price mapping
 const priceIds = {
-  3: 'price_1RnwRPFf2RZOYEdOOZI397PD',    // ?
-  5: 'price_1RnwT4Ff2RZOYEdOX9SJaDPC',    // ??
-  10: 'price_1RnwToFf2RZOYEdOWGzwmAwY'    // ??
+  3: 'price_1RnwRPFf2RZOYEdOOZI397PD',    // ☕
+  5: 'price_1RnwT4Ff2RZOYEdOX9SJaDPC',    // 🎈
+  10: 'price_1RnwToFf2RZOYEdOWGzwmAwY'    // 🚀
 };
 
-// ? Checkout session endpoint
 app.post('/create-checkout-session', async (req, res) => {
   const { amount } = req.body;
   const priceId = priceIds[amount];
@@ -36,7 +30,7 @@ app.post('/create-checkout-session', async (req, res) => {
   if (!priceId) return res.status(400).json({ error: 'Invalid donation amount' });
 
   try {
-    console.log("amount:", amount, "priceId:", priceId);
+    console.log("amount:", amount, "priceId:", priceId); // ✅ inside try
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -46,13 +40,12 @@ app.post('/create-checkout-session', async (req, res) => {
       cancel_url: 'https://navi.genuni.io/?cancel'
     });
 
-    res.json({ sessionId: session.id });  // ? Only send sessionId
+    res.json({ sessionId: session.id });
   } catch (err) {
     console.error("Stripe error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ? Start server
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`? Server listening on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server listening on port ${PORT}`));
