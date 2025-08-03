@@ -37,7 +37,7 @@ app.post('/create-checkout-session', async (req, res) => {
       cancel_url: 'https://navi.genuni.io/?cancel'
     });
 
-    res.json({ url: session.url });
+    res.json({ sessionId: session.id });
   } catch (err) {
     console.error("Stripe error:", err.message);
     res.status(500).json({ error: err.message });
