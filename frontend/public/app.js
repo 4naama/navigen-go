@@ -465,10 +465,6 @@ function clearSearch() {
     };
   }
 
-
-
-  }
-
   // Remaining modals & buttons...
   const helpButton = document.getElementById("help-button");
   const helpModal = document.getElementById("help-modal");
