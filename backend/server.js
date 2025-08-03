@@ -8,8 +8,9 @@ const app = express();
 
 // Enable CORS for local dev and production frontend
 app.use(cors({
-  origin: ["http://localhost:8000", "https://genuini.io"]
+  origin: ["http://localhost:8000", "https://navigen-go.onrender.com", "https://navi.genuni.io"]
 }));
+
 
 app.use(express.static('public'));
 app.use(express.json());
