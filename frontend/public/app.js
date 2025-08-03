@@ -8,8 +8,7 @@ import {
   showModal,
   showShareModal,
   createIncomingLocationModal,
-  showMyStuffModal,
-  injectModals
+  showMyStuffModal
 } from './modal-injector.js';
 
 // ✅ Determines whether app is running in standalone/PWA mode
@@ -31,7 +30,7 @@ function getUserLang() {
   return urlLang || navigator.language.split("-")[0] || "en"; // e.g. "fr"
 }
 
-const BACKEND_URL = "https://navigen-payment.onrender.com";
+const BACKEND_URL = "https://navigen-go.onrender.com";
 
 const state = {};
 let geoPoints = [];
@@ -376,8 +375,6 @@ function clearSearch() {
 
         clearBtn.style.display = 'none'; // Hide by default
       }
-  // 👋 Inject Pin Modal at startup
-  injectModals();
 
   // 📍 Inject Share Modal at startup
   createShareModal();            // Injects #share-location-modal into DOM

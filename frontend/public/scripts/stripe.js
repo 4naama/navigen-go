@@ -39,7 +39,7 @@ export async function handleDonation(amount, meta = {}) {
 
   try {
     // 🔄 Call backend to create Checkout Session
-    const res = await fetch("https://navigen-payment.onrender.com/create-checkout-session", {
+    const res = await fetch("https://navigen-go.onrender.com/create-checkout-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
