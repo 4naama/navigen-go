@@ -8,7 +8,6 @@ import {
   showModal,
   showShareModal,
   createIncomingLocationModal,
-  createPinnedModal,
   showMyStuffModal,
   injectModals
 } from './modal-injector.js';
@@ -18,13 +17,6 @@ function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches ||
          window.navigator.standalone === true;
 }
-
-// Testing
-window.createDonationModal = createDonationModal;
-window.showModal = showModal;
-window.showPinnedModal = showPinnedModal;
-window.createPinnedModal = createPinnedModal;
-window.showShareModal = showShareModal;
 
 function isInStandaloneMode() {
   return window.matchMedia('(display-mode: standalone)').matches ||
@@ -829,56 +821,8 @@ function trapFocus(modal) {
 
 // 📌 Show Pinned Modal (👋 Tap)
 function showPinnedModal() {
-  let modal = document.getElementById("pinned-modal");
-  if (!modal) {
-    createPinnedModal();
-    modal = document.getElementById("pinned-modal");
-  }
-
-  const content = document.getElementById("pinned-modal-content");
-  if (!content) return;
-
   const hasDonated = localStorage.getItem("hasDonated") === "true";
-  const seenPinned = localStorage.getItem("seenPinned") === "true";
-
-  // 👋 First-time tap — show "You're all set" modal
-  if (!seenPinned) {
-    const html = `
-      <h2>${t("pinned.title")}</h2>
-      <p>${t("pinned.body")}</p>
-      <div class="modal-footer">
-        <button class="modal-footer-button">${t("modal.done.resolved")}</button>
-      </div>
-    `;
-
-    localStorage.setItem("seenPinned", "true");
-    content.innerHTML = html;
-    modal.classList.remove("hidden");
-    modal.style.display = "";
-
-    modal.querySelector(".modal-footer-button")?.addEventListener("click", () => {
-      modal.classList.add("hidden");
-      modal.style.display = "none";
-    });
-
-  } else {
-    // 👋 2nd+ tap — show donation modal
-    createDonationModal(hasDonated);
-    return; // skip rest of this function, donation modal handles its own UI
-  }
-
-  // fallback close behaviors
-  modal.querySelector(".modal-close")?.addEventListener("click", () => {
-    modal.classList.add("hidden");
-    modal.style.display = "none";
-  });
-
-  modal.querySelector("#support-decline")?.addEventListener("click", () => {
-    modal.classList.add("hidden");
-    modal.style.display = "none";
-  });
-
-  setupTapOutClose("pinned-modal");
+  createDonationModal(hasDonated); // Always show donation modal
 }
 
 document.addEventListener("click", async (e) => {
