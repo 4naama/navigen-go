@@ -17,8 +17,6 @@ app.use(cors({
 // ? Handle preflight requests
 app.options('*', cors());
 
-
-app.use(express.static('public'));
 app.use(express.json());
 
 const priceIds = {
