@@ -38,8 +38,8 @@ app.post('/create-checkout-session', async (req, res) => {
       mode: 'payment',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: 'https://navi.genuni.io/?thanks',
-      cancel_url: 'https://navi.genuni.io/?cancel'
+      success_url: 'https://navigen-go.pages.dev/?thanks',
+      cancel_url: 'https://navigen-go.pages.dev/?cancel'
     });
 
     res.json({ sessionId: session.id });
@@ -49,5 +49,10 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
+app.get("/", (req, res) => {
+  res.send("? Backend is running");
+});
+
 const PORT = process.env.PORT || 8000;
+
 app.listen(PORT, () => console.log(`✅ Server listening on port ${PORT}`));
