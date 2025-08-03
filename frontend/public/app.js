@@ -40,26 +40,6 @@ function getUserLang() {
 }
 
 const BACKEND_URL = "https://navigen-payment.onrender.com";
-  
-async function handleDonation(amount) {
-  try {
-    const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount })
-    });
-
-    const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      showToast("Unable to open checkout.");
-    }
-  } catch (err) {
-    console.error("Donation error:", err);
-    showToast("Could not process donation.");
-  }
-}
 
 const state = {};
 let geoPoints = [];
@@ -460,28 +440,33 @@ function clearSearch() {
     }
   });
 
-  // 👋 Show post-install button if PWA is running standalone
+  // 👋 Show 👋 button only when running in PWA standalone mode
   if (isInStandaloneMode() && headerPin) {
     headerPin.style.display = 'block';
     headerPin.textContent = '👋';
+
+    // 👋 Handle tap: always show donation modal unless already donated
     headerPin.onclick = () => {
       const hasDonated = localStorage.getItem("hasDonated") === "true";
-      const tapKey = "helloTapCount";
-      const count = parseInt(localStorage.getItem(tapKey) || "0", 10) + 1;
-      localStorage.setItem(tapKey, count);
 
+      console.log("👋 TAP donation prompt opened", { hasDonated });
+
+      // 🧭 Log whether we show thank-you or donation modal
       if (hasDonated) {
-        // After donation → show thank-you modal content
+        console.log("🎉 Already donated → Showing thank-you modal");
         createDonationModal(true);
-      } else if (count === 1) {
-        // First tap → show "You're all set" pinned modal
-        showPinnedModal();
       } else {
-        // 2nd+ taps → show donation options
+        console.log("💸 Showing donation modal for potential supporter");
         createDonationModal(false);
       }
 
+      // 📊 Optional: Send event to analytics
+      // trackEvent("donationPromptOpened", { hasDonated });
     };
+  }
+
+
+
   }
 
   // Remaining modals & buttons...
@@ -714,7 +699,31 @@ function clearSearch() {
     console.log("✅ debugOpenShareModal:", coords);
   };  
   
-});  // ✅ End of DOMContentLoaded    
+});  // ✅ End of DOMContentLoaded  
+
+// ✅ Stripe Block
+import { initStripe, handleDonation } from "./scripts/stripe.js";
+
+// ✅ Stripe public key (from your .env, injected at build/deploy time)
+const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF"; // ⬅️ Replace securely or inject at runtime
+
+// ✅ Wait for DOM, then initialize Stripe + wire donation buttons
+document.addEventListener("DOMContentLoaded", () => {
+  initStripe(STRIPE_PUBLIC_KEY);  // 💳 Load Stripe.js client
+
+  // 🔘 Wire donation buttons by amount
+  document.querySelectorAll(".donate-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const amount = parseInt(btn.dataset.amount, 10);
+      if (!amount) return console.warn("❌ Invalid amount:", btn);
+
+      // Optional metadata can be added here
+      handleDonation(amount, {
+        source: "donation-modal"
+      });
+    });
+  });
+});
   
   const socialModal = document.getElementById("social-modal");
   const socialButton = document.getElementById("social-button");

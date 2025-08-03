@@ -1,6 +1,6 @@
 {
-  "name": "SzigetNavi",
-  "short_name": "Sziget",
+  "name": "NaviGen",
+  "short_name": "NaviGen",
   "start_url": "/",
   "display": "standalone",
   "icons": [

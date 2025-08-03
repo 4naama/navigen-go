@@ -1450,9 +1450,19 @@ button:hover {
 /* Used for: My Stuff, Data Processing, any general modal */
 
 .modal {
-  /* Standard width and structure */
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5); /* or any overlay color */
+  backdrop-filter: blur(3px);
 }
 
+.modal.visible {
+  display: flex; /* or block */
+  align-items: center;
+  justify-content: center;
+}
 
 /*** CURRENT Styles Replacing OLD ones
 /* ==========================================================================  
@@ -1613,7 +1623,7 @@ button:hover {
 }
 
 
-/* ──────────────── modal-shop-category ──────────────── */
+/* ──────────────── Modal Shop Category ──────────────── */
 /* Used for: Grids of product/donation category types */
 
 .modal-shop-category {

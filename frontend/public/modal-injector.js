@@ -20,6 +20,10 @@ export function enableEscToClose(modal) {
 // 🌐 Import translation function for localized modal titles and text
 import { t } from './scripts/i18n.js';
 
+// 💳 Stripe: Handles secure checkout setup and donation flow (modularized for reuse)
+import { initStripe, handleDonation } from "./scripts/stripe.js";
+
+
 function getLangFromCountry(code) {
   const langMap = {
     // English-speaking
@@ -125,10 +129,11 @@ export function removeModal(id) {
  */
 export function showModal(id) {
   const modal = document.getElementById(id);
-  if (modal) {
-    modal.classList.remove('hidden');
-    modal.style.display = ''; // ✅ Add this to reverse hideModal()
-  }
+  if (!modal) return;
+
+  modal.classList.remove("hidden");   // in case it's hidden
+  modal.classList.add("visible");     // ✅ show it visibly
+  modal.style.display = "";           // reset any inline hiding
 }
 
 /**
@@ -708,27 +713,31 @@ export function createDonationModal(isRepeat = false) {
     id: "donation-modal",
     title,
     bodyHTML: `
-      <p>${intro}</p>
-      <div class="donation-options">
-        <button class="donate-btn" data-amount="3">
-          ${t("donation.btn.coffee")}<br><small>${t("donation.btn.coffee.sub")}</small>
-        </button>
-        <button class="donate-btn" data-amount="5">
-          ${t("donation.btn.keep")}<br><small>${t("donation.btn.keep.sub")}</small>
-        </button>
-        <button class="donate-btn" data-amount="10">
-          ${t("donation.btn.fuel")}<br><small>${t("donation.btn.fuel.sub")}</small>
-        </button>
-      </div>
-      <div class="modal-actions">
-        <button class="modal-body-button" id="donation-decline">${declineLabel}</button>
+      <div class="modal-shop-item">
+        <p>${intro}</p>
+        <div class="donation-options">
+          <button class="donation-option donate-btn" data-amount="3">
+            ${t("donation.btn.coffee")}
+            <span class="donation-sub">${t("donation.btn.coffee.sub")}</span>
+          </button>
+          <button class="donation-option donate-btn" data-amount="5">
+            ${t("donation.btn.keep")}
+            <span class="donation-sub">${t("donation.btn.keep.sub")}</span>
+          </button>
+          <button class="donation-option donate-btn" data-amount="10">
+            ${t("donation.btn.fuel")}
+            <span class="donation-sub">${t("donation.btn.fuel.sub")}</span>
+          </button>
+        </div>
+        <div class="modal-actions">
+          <button class="modal-body-button" id="donation-decline">${declineLabel}</button>
+        </div>
       </div>
     `,
     layout: "action"
   });
 
   const modal = document.getElementById("donation-modal");
-  modal?.classList.add("hidden");
 
   modal.querySelector("#donation-decline")?.addEventListener("click", () => {
     hideModal("donation-modal");
@@ -747,7 +756,9 @@ export function createDonationModal(isRepeat = false) {
   showModal("donation-modal");
 }
 
-
+// ──────────────── Create Pinned Modal ────────────────
+// Injects a minimal pinned-modal structure with a dismissable overlay.
+// Called during app startup via injectModals(), but not shown by default.
 export function createPinnedModal() {
   injectModal({
     id: "pinned-modal",
@@ -771,8 +782,56 @@ export function createPinnedModal() {
   });
 }
 
+// ──────────────── Inject All Static Modals ────────────────
+// Called once on load to insert static modals like pinned-modal.
+// Keeps modal HTML out of index.html and allows lazy show.
 export function injectModals() {
   createPinnedModal();
+}
+
+// ──────────────── Show Pinned Modal ────────────────
+/**
+ * 👋 Displays the "You're All Set" pinned modal.
+ * Injects it if not already present, then ensures it's visible.
+ */
+export function showPinnedModal() {
+  const modalId = "pinned-modal";
+  let modal = document.getElementById(modalId);
+
+  // 🔁 Always re-inject if missing or corrupted
+  if (!modal || !modal.querySelector("#pinned-ok-button")) {
+    // Remove ghost if present
+    modal?.remove();
+
+    injectModal({
+      id: modalId,
+      title: "You're All Set!",
+      bodyHTML: `
+        <p>You’ve installed the app successfully. Explore and enjoy!</p>
+        <div class="modal-actions">
+          <button class="modal-body-button" id="pinned-ok-button">🚀 Let’s Go</button>
+        </div>
+      `,
+      layout: "action"
+    });
+
+    modal = document.getElementById(modalId);
+
+    if (!modal) {
+      console.error("❌ Failed to inject pinned modal");
+      return;
+    }
+
+    // 💡 Ensure modal closes when tapping outside or pressing ESC
+    setupTapOutClose(modalId);
+
+    modal.querySelector("#pinned-ok-button")?.addEventListener("click", () => {
+      hideModal(modalId);
+    });
+  }
+
+  // ✅ Always show the modal after confirming injection
+  showModal(modalId);
 }
 
 // Exports UI rendering functions for accordion group sections and the popular group (called from app.js)

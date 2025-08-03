@@ -1,6 +1,8 @@
+const CACHE_NAME = "navigen-go"; // ✅ renamed from "sziget-cache"
+
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open("sziget-cache").then(cache => {
+    caches.open(CACHE_NAME).then(cache => {
       return cache.addAll([
         "/",
         "/index.html",
@@ -15,6 +17,16 @@ self.addEventListener("install", event => {
         "/assets/icon-whatsapp.svg"
       ]);
     })
+  );
+});
+
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)) // ✅ remove old "sziget-cache"
+      )
+    )
   );
 });
 
