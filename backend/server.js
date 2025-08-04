@@ -57,13 +57,8 @@ const PORT = process.env.PORT || 8000;
 
 // ✅ Phase 1 backend endpoint: /stripe/session?sid=...
 
-const express = require("express");
-const router = express.Router();
-const Stripe = require("stripe");
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-
-// GET /stripe/session?sid=cs_...
-router.get("/stripe/session", async (req, res) => {
+// ✅ GET /stripe/session?sid=cs_...
+app.get("/stripe/session", async (req, res) => {
   const sessionId = req.query.sid;
   if (!sessionId) return res.status(400).json({ error: "Missing session ID" });
 
@@ -82,8 +77,5 @@ router.get("/stripe/session", async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve session" });
   }
 });
-
-module.exports = router;
-
 
 app.listen(PORT, () => console.log(`✅ Server listening on port ${PORT}`));
