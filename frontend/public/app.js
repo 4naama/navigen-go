@@ -30,7 +30,7 @@ function getUserLang() {
   return urlLang || navigator.language.split("-")[0] || "en"; // e.g. "fr"
 }
 
-const BACKEND_URL = "https://navigen-go.onrender.com";
+const res = await fetch(`${BACKEND_URL}/stripe/session?sid=${sessionId}`);
 
 const state = {};
 let geoPoints = [];
@@ -692,6 +692,9 @@ import { initStripe, handleDonation } from "./scripts/stripe.js";
 // ✅ Stripe public key (inject securely in production)
 const STRIPE_PUBLIC_KEY = "pk_test_51P45KEFf2RZOYEdOsmqtBoly5CcwH88pZjkQuGNxl7BpabdDgWtQIn8GwyyNrRsauztS8ZXJKyVPgd94ihTRyn8000NHQZM4Vs";
 
+console.log("🔑 Stripe Public Key:", STRIPE_PUBLIC_KEY);
+
+
 document.addEventListener("DOMContentLoaded", () => {
   // ✅ Initialize Stripe.js client
   initStripe(STRIPE_PUBLIC_KEY);
@@ -836,7 +839,7 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
 
   try {
     // 1. Call your backend to get Stripe session details
-    const res = await fetch(`/stripe/session?sid=${sessionId}`);
+    const res = await fetch(`https://navigen-go.onrender.com/stripe/session?sid=${sessionId}`);
     if (!res.ok) throw new Error("Failed to fetch session");
     const data = await res.json();
 
