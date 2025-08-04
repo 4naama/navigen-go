@@ -30,7 +30,7 @@ function getUserLang() {
   return urlLang || navigator.language.split("-")[0] || "en"; // e.g. "fr"
 }
 
-const res = await fetch(`${BACKEND_URL}/stripe/session?sid=${sessionId}`);
+const BACKEND_URL = "https://navigen-go.onrender.com";
 
 const state = {};
 let geoPoints = [];
