@@ -891,3 +891,8 @@ if (purchaseBtn) {
     renderPurchaseHistory();
   });
 }
+
+// ⛳ Temporary: expose for console testing only
+if (typeof window !== "undefined") {
+  window.renderPurchaseHistory = renderPurchaseHistory;
+}
