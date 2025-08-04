@@ -199,6 +199,31 @@ export function createMyStuffModal() {
 
   // ✅ Store all ".my-stuff-item" elements for later use
   myStuffItems = Array.from(modal.querySelectorAll('.my-stuff-item'));
+
+  // ✅ Inject static Purchase History list (Phase 1)
+  const historyContainer = document.createElement("div");
+  historyContainer.id = "my-history-list";
+  historyContainer.style = "margin-top: 1rem; padding: 0 1rem; font-size: 15px;";
+  modal.querySelector("#my-stuff-body")?.appendChild(historyContainer);
+
+  const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
+
+  if (purchases.length === 0) {
+    historyContainer.innerHTML = "<p style='opacity:0.6;'>No purchases yet.</p>";
+  } else {
+    purchases.sort((a, b) => b.timestamp - a.timestamp); // newest first
+    purchases.forEach(p => {
+      const div = document.createElement("div");
+      div.style = "background:#fff;padding:1rem;margin-bottom:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06);";
+      div.innerHTML = `
+        <div style="font-size:20px;">${p.icon}</div>
+        <div style="font-weight:600;margin-top:4px;">${p.label}</div>
+        <div style="font-size:14px;opacity:0.8;">${p.subtext}</div>
+      `;
+      historyContainer.appendChild(div);
+    });
+  }
+
 }
 
   export async function showMyStuffModal(state) {

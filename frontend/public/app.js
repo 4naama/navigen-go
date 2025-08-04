@@ -694,6 +694,27 @@ const STRIPE_PUBLIC_KEY = "pk_test_51P45KEFf2RZOYEdOsmqtBoly5CcwH88pZjkQuGNxl7Bp
 
 console.log("🔑 Stripe Public Key:", STRIPE_PUBLIC_KEY);
 
+// 💬 Toast shown after successful Stripe donation
+window.showThankYouToast = function () {
+  const div = document.createElement('div');
+  div.textContent = "💖 Thank you for your support!";
+  Object.assign(div.style, {
+    position: 'fixed',
+    bottom: '20px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: '#222',
+    color: '#fff',
+    padding: '12px 24px',
+    borderRadius: '8px',
+    fontSize: '16px',
+    zIndex: 9999,
+    boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+  });
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 4000);
+};
+
 
 document.addEventListener("DOMContentLoaded", () => {
   // ✅ Initialize Stripe.js client
