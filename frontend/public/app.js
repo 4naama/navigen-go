@@ -690,7 +690,7 @@ function clearSearch() {
 import { initStripe, handleDonation } from "./scripts/stripe.js";
 
 // ✅ Stripe public key (inject securely in production)
-const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
+const STRIPE_PUBLIC_KEY = "pk_test_51P45KEFf2RZOYEdOsmqtBoly5CcwH88pZjkQuGNxl7BpabdDgWtQIn8GwyyNrRsauztS8ZXJKyVPgd94ihTRyn8000NHQZM4Vs";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ✅ Initialize Stripe.js client
