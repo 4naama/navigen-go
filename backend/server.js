@@ -19,10 +19,20 @@ app.options('*', cors());
 
 app.use(express.json());
 
+// 💳 Stripe Price IDs
+
+// 🔒 Live mode (commented out)
+// const priceIds = {
+//   3: 'price_1RnwRPFf2RZOYEdOOZI397PD',    // ☕
+//   5: 'price_1RnwT4Ff2RZOYEdOX9SJaDPC',    // 🎈
+//   10: 'price_1RnwToFf2RZOYEdOWGzwmAwY'    // 🚀
+// };
+
+// 🧪 Test mode (active)
 const priceIds = {
-  3: 'price_1RnwRPFf2RZOYEdOOZI397PD',    // ☕
-  5: 'price_1RnwT4Ff2RZOYEdOX9SJaDPC',    // 🎈
-  10: 'price_1RnwToFf2RZOYEdOWGzwmAwY'    // 🚀
+  3: 'price_1RsLn1Ff2RZOYEdOjXQOitkS',    // ☕
+  5: 'price_1RsLnSFf2RZOYEdO51D1dCCM',    // 🎈
+  10: 'price_1RsLnmFf2RZOYEdOpvNnrf27'    // 🚀
 };
 
 app.post('/create-checkout-session', async (req, res) => {
