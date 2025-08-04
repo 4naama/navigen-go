@@ -844,42 +844,43 @@ export function buildAccordion(structure_data, geoPoints) {
 }
 
 // ✅ Purchase History Renderer for Donations (Phase 1)
-
 function renderPurchaseHistory() {
-  const container = document.querySelector("#purchaseHistoryContent");
-  if (!container) return;
-
-  // Clear existing content
+  const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
+  const container = document.getElementById("purchase-history");
   container.innerHTML = "";
 
-  const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
   if (purchases.length === 0) {
-    container.innerHTML = "<p style='padding:1rem;'>No purchases yet.</p>";
+    const emptyMsg = document.createElement("div");
+    emptyMsg.className = "empty-state";
+    emptyMsg.textContent = t("purchaseHistory.emptyMessage"); // 🌐 translatable
+    container.appendChild(emptyMsg);
     return;
   }
 
-  purchases.forEach(entry => {
-    // Only show donations for now
-    if (entry.icon !== "💖") return;
-
+  purchases.forEach(purchase => {
     const card = document.createElement("div");
-    card.style = "background:#fff;border-radius:10px;padding:1rem;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.1);font-size:15px;";
+    card.className = "purchase-card";
 
-    const icon = document.createElement("div");
-    icon.textContent = entry.icon;
-    icon.style = "font-size:20px;margin-bottom:6px;";
+    const emoji = document.createElement("div");
+    emoji.className = "emoji";
+    emoji.textContent = purchase.emoji || "🧾";
 
     const label = document.createElement("div");
-    label.textContent = entry.label;
-    label.style = "font-weight:600;margin-bottom:2px;";
+    label.className = "label";
+    label.textContent = t(purchase.label); // 🌐 now must be a key
 
-    const sub = document.createElement("div");
-    sub.textContent = entry.subtext;
-    sub.style = "color:#444;font-size:14px;opacity:0.9;";
+    const subtext = document.createElement("div");
+    subtext.className = "subtext";
+    subtext.textContent = t(purchase.subtext); // 🌐 now must be a key
 
-    card.appendChild(icon);
+    const timestamp = document.createElement("div");
+    timestamp.className = "timestamp";
+    timestamp.textContent = purchase.timestamp;
+
+    card.appendChild(emoji);
     card.appendChild(label);
-    card.appendChild(sub);
+    card.appendChild(subtext);
+    card.appendChild(timestamp);
     container.appendChild(card);
   });
 }

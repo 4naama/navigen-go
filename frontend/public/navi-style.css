@@ -1657,10 +1657,11 @@ button:hover {
   margin-bottom: 1em;
 }
 
-/* ──────────────── Donation Option Cards ──────────────── */
-/* Styled for modal-shop-item layout — visible donation tiers */
+/* ──────────────── Purchase History Cards ──────────────── */
+/* Used for: Rendering receipt cards inside My Stuff modal */
+/* Mirrors donation-option styling for visual consistency */
 
-.modal-shop-item .donation-option {
+.purchase-card {
   display: flex;
   flex-direction: column;
   gap: 0.25em;
@@ -1668,23 +1669,32 @@ button:hover {
   background: #f9f9f9;
   border: 1px solid #ddd;
   border-radius: 10px;
-  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   font-size: 0.95rem;
   font-weight: 500;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  text-align: left;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.modal-shop-item .donation-option:hover {
+.purchase-card:hover {
   border-color: #1a73e8;
   box-shadow: 0 2px 6px rgba(26, 115, 232, 0.12);
 }
 
-.modal-shop-item .donation-option .donation-sub {
+.purchase-card .subtext {
   font-size: 0.85rem;
   font-weight: 400;
   color: #666;
+}
+
+.purchase-card .timestamp {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+#purchase-history {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1em;
+  padding: 1.5em;
 }
 
 /* Legacy Utility Note (for reference only):  
