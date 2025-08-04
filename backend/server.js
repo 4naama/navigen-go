@@ -8,7 +8,14 @@ const app = express();
 
 // Enable CORS for local dev and production frontend
 app.use(cors({
-  origin: ["http://localhost:8000", "https://navigen-go.onrender.com", "https://navi.genuni.io"],
+  origin: [
+    "http://localhost:8000",
+    "https://navigen-go.onrender.com",
+    "https://navigen-go.pages.dev",
+    "https://navi.genuni.io",
+    "https://navigen.io",
+    "https://www.navigen.io"
+  ],
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
