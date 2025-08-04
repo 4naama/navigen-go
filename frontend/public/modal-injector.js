@@ -892,7 +892,11 @@ if (purchaseBtn) {
   });
 }
 
-// ⛳ Temporary: expose for console testing only
-if (typeof window !== "undefined") {
+// 🧪 Debug/testing only — expose modal methods
+if (typeof window !== 'undefined') {
+  import.meta?.url && console.log("🌐 modal-injector.js loaded");
+
+  window.createMyStuffModal = createMyStuffModal;
+  window.showMyStuffModal = showMyStuffModal;
   window.renderPurchaseHistory = renderPurchaseHistory;
 }
