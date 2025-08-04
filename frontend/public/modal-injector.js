@@ -817,3 +817,52 @@ export function buildAccordion(structure_data, geoPoints) {
     container.appendChild(section);
   });
 }
+
+// ✅ Purchase History Renderer for Donations (Phase 1)
+
+function renderPurchaseHistory() {
+  const container = document.querySelector("#purchaseHistoryContent");
+  if (!container) return;
+
+  // Clear existing content
+  container.innerHTML = "";
+
+  const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
+  if (purchases.length === 0) {
+    container.innerHTML = "<p style='padding:1rem;'>No purchases yet.</p>";
+    return;
+  }
+
+  purchases.forEach(entry => {
+    // Only show donations for now
+    if (entry.icon !== "💖") return;
+
+    const card = document.createElement("div");
+    card.style = "background:#fff;border-radius:10px;padding:1rem;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.1);font-size:15px;";
+
+    const icon = document.createElement("div");
+    icon.textContent = entry.icon;
+    icon.style = "font-size:20px;margin-bottom:6px;";
+
+    const label = document.createElement("div");
+    label.textContent = entry.label;
+    label.style = "font-weight:600;margin-bottom:2px;";
+
+    const sub = document.createElement("div");
+    sub.textContent = entry.subtext;
+    sub.style = "color:#444;font-size:14px;opacity:0.9;";
+
+    card.appendChild(icon);
+    card.appendChild(label);
+    card.appendChild(sub);
+    container.appendChild(card);
+  });
+}
+
+// Run when user opens Purchase History
+const purchaseBtn = document.querySelector("#purchaseHistoryBtn");
+if (purchaseBtn) {
+  purchaseBtn.addEventListener("click", () => {
+    renderPurchaseHistory();
+  });
+}

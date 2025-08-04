@@ -11,7 +11,17 @@ export function initStripe(publicKey) {
     return;
   }
 
-  stripe = Stripe(publicKey);
+  // 🎯 Supported Stripe locales only
+  const supportedLocales = [
+    "auto", "en", "fr", "de", "es", "it", "ja", "zh", "nl", "pl", "pt",
+    "sv", "da", "fi", "nb", "cs", "hu", "sk"
+  ];
+
+  const rawLang = localStorage.getItem("lang") || navigator.language.slice(0, 2).toLowerCase() || "en";
+  const stripeLocale = supportedLocales.includes(rawLang) ? rawLang : "en";
+
+  console.log("📦 Stripe locale:", stripeLocale); // For debugging
+  stripe = Stripe(publicKey, { locale: "auto" });
   console.log("✅ Stripe initialized");
 }
 
@@ -47,7 +57,7 @@ export async function handleDonation(amount, meta = {}) {
 
     const data = await res.json().catch(() => null);
 
-    if (!res.ok || !data || !data.sessionId) {
+    if (!res.ok || !data?.sessionId) {
       const fallback = await res.text().catch(() => "");
       console.error("❌ Server response error:", data || fallback);
       throw new Error("Invalid session response");

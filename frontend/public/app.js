@@ -689,27 +689,30 @@ function clearSearch() {
 // ✅ Stripe Block
 import { initStripe, handleDonation } from "./scripts/stripe.js";
 
-// ✅ Stripe public key (from your .env, injected at build/deploy time)
-const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF"; // ⬅️ Replace securely or inject at runtime
+// ✅ Stripe public key (inject securely in production)
+const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
 
-// ✅ Wait for DOM, then initialize Stripe + wire donation buttons
 document.addEventListener("DOMContentLoaded", () => {
-  initStripe(STRIPE_PUBLIC_KEY);  // 💳 Load Stripe.js client
+  // ✅ Initialize Stripe.js client
+  initStripe(STRIPE_PUBLIC_KEY);
 
-  // 🔘 Wire donation buttons by amount
+  // 🔘 Wire donation buttons
   document.querySelectorAll(".donate-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const amount = parseInt(btn.dataset.amount, 10);
       if (!amount) return console.warn("❌ Invalid amount:", btn);
 
-      // Optional metadata can be added here
       handleDonation(amount, {
         source: "donation-modal"
       });
     });
   });
+
+  // 🧹 Clean up URL
+  window.history.replaceState({}, document.title, window.location.pathname);
+
 });
-  
+
   const socialModal = document.getElementById("social-modal");
   const socialButton = document.getElementById("social-button");
   const socialCloseButtons = socialModal?.querySelectorAll(".modal-close") || [];
@@ -769,28 +772,6 @@ function setupTapOutClose(modalId) {
   });
 }
 
-function showToast(message) {
-  // Remove any existing toast first
-  const oldToast = document.querySelector(".toast");
-  if (oldToast) oldToast.remove();
-
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.textContent = message;
-
-  document.body.appendChild(toast);
-
-  // Slight delay for transition (if CSS exists)
-  requestAnimationFrame(() => {
-    toast.classList.add("visible");
-  });
-
-  setTimeout(() => {
-    toast.classList.remove("visible");
-    setTimeout(() => toast.remove(), 300); // wait for fade-out
-  }, 2500);
-}
-
 function trapFocus(modal) {
   const focusableSelectors = 'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])';
   const focusableEls = modal.querySelectorAll(focusableSelectors);
@@ -831,7 +812,6 @@ document.addEventListener("click", async (e) => {
     await handleDonation(amount);               // ✅ Await the async call
   } catch (err) {
     console.error("Donation error:", err);
-    showToast("Could not process donation.");
   }
 });
 
@@ -844,4 +824,65 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
       location.reload();
     });
   }
+}
+
+// ✅ Phase 1: Stripe session handler + localStorage storer
+
+// This should run on page load (in app.js or similar init script)
+(async function handleStripeReturn() {
+  const url = new URL(window.location.href);
+  const sessionId = url.searchParams.get("sid");
+  if (!sessionId) return;
+
+  try {
+    // 1. Call your backend to get Stripe session details
+    const res = await fetch(`/stripe/session?sid=${sessionId}`);
+    if (!res.ok) throw new Error("Failed to fetch session");
+    const data = await res.json();
+
+    // 2. Match donation tier
+    const tier = matchDonationTier(data.amount_total); // in cents
+    if (!tier) return; // skip if amount is invalid
+
+    // 3. Build purchase object
+    const purchase = {
+      session_id: sessionId,
+      icon: "💖",
+      label: tier.label,
+      subtext: tier.subtext,
+      amount: data.amount_total,
+      currency: data.currency,
+      timestamp: Date.now()
+    };
+
+    // 4. Store in localStorage (if not already there)
+    const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
+    if (!purchases.find(p => p.session_id === sessionId)) {
+      purchases.push(purchase);
+      localStorage.setItem("myPurchases", JSON.stringify(purchases));
+      showThankYouToast();
+    }
+
+  } catch (err) {
+    console.error("Stripe return handling failed:", err);
+  }
+})();
+
+// Helper: Map amount to text
+function matchDonationTier(amount) {
+  switch (amount) {
+    case 300: return { label: "You donated €3.00", subtext: "Small tip, big appreciation" };
+    case 500: return { label: "You donated €5.00", subtext: "Thank you for helping us stay free" };
+    case 1000: return { label: "You donated €10.00", subtext: "You’re fueling future features — amazing!" };
+    default: return null;
+  }
+}
+
+// Helper: Show the thank-you toast
+function showThankYouToast() {
+  const toast = document.createElement("div");
+  toast.textContent = "💖 Thank you for your support!";
+  toast.style = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#fff;border-radius:8px;padding:10px 20px;font-size:16px;box-shadow:0 2px 6px rgba(0,0,0,0.2);z-index:9999;";
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
 }
