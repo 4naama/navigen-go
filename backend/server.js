@@ -55,8 +55,8 @@ app.post('/create-checkout-session', async (req, res) => {
       mode: 'payment',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: 'https://navigen-go.pages.dev/?thanks&sid={CHECKOUT_SESSION_ID}',
-      cancel_url: 'https://navigen-go.pages.dev/?cancel'
+      success_url: 'https://navigen.io/?thanks&sid={CHECKOUT_SESSION_ID}',
+      cancel_url: 'https://navigen.io/?cancel',
     });
 
     res.json({ sessionId: session.id });
