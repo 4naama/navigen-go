@@ -23,6 +23,21 @@ import { t } from './scripts/i18n.js';
 // 💳 Stripe: Handles secure checkout setup and donation flow (modularized for reuse)
 import { initStripe, handleDonation } from "./scripts/stripe.js";
 
+// Helper: Appends a "Resolved" button to a modal's footer
+function appendResolvedButton(actions, modalId = "my-stuff-modal") {
+  if (!actions.querySelector("#my-stuff-resolved-button")) {
+    const resolvedBtn = document.createElement("button");
+    resolvedBtn.className = "modal-footer-button";
+    resolvedBtn.id = "my-stuff-resolved-button";
+    resolvedBtn.textContent = t("modal.done.resolved");
+
+    resolvedBtn.addEventListener("click", () => {
+      hideModal(modalId);
+    });
+
+    actions.appendChild(resolvedBtn);
+  }
+}
 
 function getLangFromCountry(code) {
   const langMap = {
@@ -92,6 +107,7 @@ export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [],
   modal.id = id;
 
   modal.innerHTML = `
+    ${layout === 'action' ? '<div class="modal-overlay"></div>' : ''}
     <div class="modal-content${layout ? ` modal-${layout}` : ''}">
       ${title ? `<h2 class="modal-title">${title}</h2>` : ''}
       <div class="modal-body"><div class="modal-body-inner">${bodyHTML}</div></div>
@@ -104,7 +120,14 @@ export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [],
     </div>
   `;
 
-  document.body.appendChild(modal);
+  document.body.appendChild(modal); // ✅ Keep this one
+
+  // ✅ Inject overlay if needed
+  if (layout === 'action') {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    modal.prepend(overlay);
+  }
 
   // Bind any click handlers
   footerButtons.forEach(btn => {
@@ -131,9 +154,9 @@ export function showModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
 
-  modal.classList.remove("hidden");   // in case it's hidden
-  modal.classList.add("visible");     // ✅ show it visibly
-  modal.style.display = "";           // reset any inline hiding
+  modal.classList.remove("hidden");   // For any manual .hidden
+  modal.classList.add("visible");     // ✅ Triggers CSS flex centering
+  modal.style.display = "";           // ✅ Clears any inline hiding (especially from hideModal)
 }
 
 /**
@@ -141,7 +164,11 @@ export function showModal(id) {
  */
 export function hideModal(id) {
   const modal = document.getElementById(id);
-  if (modal) modal.style.display = 'none';
+  if (!modal) return;
+
+  modal.classList.remove("visible");
+  modal.classList.add("hidden");
+  modal.style.display = ""; // ✅ Clear inline display to let CSS re-apply
 }
 
 /**
@@ -202,7 +229,7 @@ export function createMyStuffModal() {
 
   // ✅ Inject static Purchase History list (Phase 1)
   const historyContainer = document.createElement("div");
-  historyContainer.id = "my-history-list";
+  historyContainer.id = "purchase-history"; // ✅ restore canonical ID
   historyContainer.style = "margin-top: 1rem; padding: 0 1rem; font-size: 15px;";
   modal.querySelector("#my-stuff-body")?.appendChild(historyContainer);
 
@@ -226,6 +253,11 @@ export function createMyStuffModal() {
 
 }
 
+/**
+ * Shows the "My Stuff" modal.
+ * Supports multiple states like "menu", "purchases", "language", etc.
+ * Injects the right content per state.
+*/
   export async function showMyStuffModal(state) {
       if (!state) return;
 
@@ -238,6 +270,23 @@ export function createMyStuffModal() {
       
       const title = modal.querySelector("#my-stuff-title");
       const body = modal.querySelector("#my-stuff-body");
+
+      if (state === "purchases") {
+        title.textContent = "My Purchase History"; // or t("purchaseHistory.title")
+
+        // ✅ Clear previous content
+        body.innerHTML = "";
+
+        // ✅ Create and insert the container expected by renderPurchaseHistory
+        const purchaseContainer = document.createElement("div");
+        purchaseContainer.id = "purchase-history";
+        body.appendChild(purchaseContainer);
+
+        renderPurchaseHistory(); // ✅ Fill with receipts from localStorage
+        return;
+      }
+
+
       let actions = modal.querySelector(".modal-footer");
       if (!actions) {
         actions = document.createElement('div');
@@ -337,10 +386,6 @@ export function createMyStuffModal() {
             const langCode = getLangFromCountry(code);
             const isAvailable = availableLangs.has(langCode);
 
-            if (langCode === currentLang) {
-              img.classList.add("selected-flag");
-            }
-
             if (isAvailable) {
               img.style.cursor = "pointer";
 
@@ -348,18 +393,9 @@ export function createMyStuffModal() {
                 e.stopPropagation();
                 localStorage.setItem("lang", langCode);
 
-                // ✅ Update selected-flag visually before reload
-                document.querySelectorAll(".flag-list img.selected-flag").forEach(el => {
-                  el.classList.remove("selected-flag");
-                });
-                img.classList.add("selected-flag");
-
                 // ✅ Reload to apply selected language
                 location.reload();
               });
-
-                flagList.querySelectorAll("img.flag").forEach(f => f.classList.remove("selected-flag"));
-                img.classList.add("selected-flag");
 
             } else {
               img.style.opacity = "0.4";
@@ -419,7 +455,26 @@ export function createMyStuffModal() {
           
                   
         }
-            
+
+      else if (item.view === "purchases") {
+        modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
+        modal.classList.add("modal-action");
+
+        body.innerHTML = `
+          <div id="purchase-history"></div>
+        `;
+
+        actions.innerHTML = `
+          <button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>
+        `;
+
+        document.getElementById("my-stuff-resolved-button")?.addEventListener("click", () => {
+          hideModal("my-stuff-modal");
+        });
+
+        renderPurchaseHistory(); // ✅ Called AFTER container is ready
+      }
+          
       else if (item.view === "social") {
         
       modal.classList.remove("modal-menu", "modal-language", "modal-action", "modal-alert");
@@ -450,10 +505,74 @@ export function createMyStuffModal() {
             </div>
           </div>
         `;
-
       }
 
-        const viewsWithResolved = ["interests", "purchases", "language", "social"];
+      else if (item.view === "reset") {
+        modal.classList.remove("modal-menu", "modal-language", "modal-action", "modal-alert");
+        modal.classList.add("modal-action");
+
+        body.innerHTML = `
+          <p>This will clear your settings and restart the app.</p>
+          <p>This action cannot be undone.</p>
+          <div class="modal-actions">
+            <button class="modal-body-button" id="reset-confirm">✅ Reset</button>
+            <button class="modal-body-button" id="reset-cancel">❌ Cancel</button>
+          </div>
+        `;
+
+        document.getElementById("reset-confirm")?.addEventListener("click", () => {
+          localStorage.clear();
+          location.reload();
+        });
+
+        document.getElementById("reset-cancel")?.addEventListener("click", () => {
+          hideModal("my-stuff-modal");
+        });
+      }
+
+      else if (item.view === "data") {
+        modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
+        modal.classList.add("modal-action");
+
+        body.innerHTML = `
+          <p>${t("myStuff.data.bodyIntro")}</p>
+          <p>${t("myStuff.data.includes")}</p>
+          <ul>
+            <li>${t("myStuff.data.item.purchase")}</li>
+            <li>${t("myStuff.data.item.language")}</li>
+            <li>${t("myStuff.data.item.location")}</li>
+          </ul>
+          <p class="modal-warning">⚠️ ${t("myStuff.data.warning")}</p>
+          <p>${t("myStuff.data.resetPrompt")}</p>
+          <div class="modal-actions">
+            <a href="/assets/docs/navigen-privacy-policy.pdf" target="_blank" class="modal-body-button">
+              📄 ${t("data.fullLink")}
+            </a>
+          </div>
+        `;
+
+        appendResolvedButton(actions, "my-stuff-modal");
+      }
+
+      else if (item.view === "terms") {
+        modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
+        modal.classList.add("modal-action");
+
+        body.innerHTML = `
+          <p>${t("terms.body.paragraph1")}</p>
+          <p>${t("terms.body.paragraph2")}</p>
+          <div class="modal-actions">
+            <a href="/assets/docs/navigen-terms.pdf" target="_blank" class="modal-body-button">
+              📄 ${t("terms.fullLink")}
+            </a>
+          </div>
+        `;
+
+        // Add resolved button into #my-stuff-modal only if not already added
+        appendResolvedButton(actions, "my-stuff-modal");
+      }
+
+        const viewsWithResolved = ["interests", "purchases", "language", "social", "reset", "data", "terms"];
         actions.innerHTML = viewsWithResolved.includes(state)
           ? `<button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>`
           : '';
@@ -462,7 +581,7 @@ export function createMyStuffModal() {
       // Add close behavior
       const resolvedBtn = document.getElementById("my-stuff-resolved-button");
       actions.querySelector('#my-stuff-resolved-button')?.addEventListener('click', () => {
-        document.getElementById("my-stuff-modal")?.remove();
+        hideModal("my-stuff-modal");
       });
 
       showModal("my-stuff-modal");
@@ -474,27 +593,55 @@ export function createMyStuffModal() {
  */
 export function setupMyStuffModalLogic() {
   myStuffItems = [
-    { icon: "🧩", title: "Community Zone", view: "interests", desc: "Select topics you care about" },
-    { icon: "💳", title: "My Purchase History", view: "purchases", desc: "Check payment and documentation status" },
+    {
+      icon: "🧩",
+      title: "Community Zone",
+      view: "interests",
+      desc: "Select topics you care about"
+    },
+    {
+      icon: "💳",
+      title: "My Purchase History",
+      view: "purchases",
+      desc: "Check payment and documentation status"
+    },
     {
       icon: `<img src="/assets/language.svg" alt="Language" class="icon-img">`,
       title: "Language Settings",
       view: "language",
       desc: "Set preferred language"
     },
-    { icon: "📍", title: "My Location History", view: "locations", desc: "View/save recent locations (if stored)" },
+    {
+      icon: "📍",
+      title: "My Location History",
+      view: "locations",
+      desc: "View/save recent locations (if stored)"
+    },
     {
       icon: "🌐",
       title: "Social",
       view: "social",
       desc: "Connect your social accounts"
     },
-    { icon: "🔄", title: "Reset App", view: "reset", desc: "Clear settings, restart" },
-    { icon: "👁️", title: "Data We Store", view: "data", desc: "Transparent view of local data (e.g. donations, preferences)" },
-    { icon: "📜", title: "Terms & Privacy", view: "terms", desc: "View app terms of use and data privacy policy" }
+    {
+      icon: "🔄",
+      title: t("myStuff.reset.title"),
+      view: "reset",
+      desc: t("myStuff.reset.subtitle")
+    },
+    {
+      icon: "👁️",
+      title: t("myStuff.data.title"),
+      view: "data",
+      desc: t("myStuff.data.subtitle")
+    },
+    {
+      icon: "📜",
+      title: t("myStuff.terms.title"),
+      view: "terms",
+      desc: t("myStuff.terms.subtitle")
+    }
   ];
-
-  
 }
 
 // 🆘 Creates and shows the Help Modal.
@@ -583,17 +730,15 @@ async function handleShare() {
   }
 }
 
+let shareModalCreated = false;
 
-/**
- * Modal Injector: Share Location Modal
- *
- * Dynamically creates and injects the #share-location-modal into the DOM.
- * Applies structured layout (.modal-action) and default visibility (hidden).
- * Provides location display and browser share integration.
- */
 export function createShareModal() {
+  if (shareModalCreated) return;
+  shareModalCreated = true;
+
   injectModal({
     id: 'share-location-modal',
+    layout: 'action', // Ensures correct .modal-content
     title: 'Share Your Location',
     bodyHTML: `
       <p class="muted">You can share your current location with a friend:</p>
@@ -610,14 +755,10 @@ export function createShareModal() {
     `
   });
 
-  const modal = document.getElementById("share-location-modal");
-  modal?.classList.add("modal", "modal-layout", "hidden");
-
+  // Bind share button if needed
   const shareBtn = document.getElementById("share-location-button");
-
-  if (shareBtn && !shareBtn.hasAttribute("data-bound")) {
-    shareBtn.addEventListener("click", handleShare);
-    shareBtn.setAttribute("data-bound", "true");
+  if (shareBtn) {
+    shareBtn.addEventListener("click", handleShare); // assumes handleShare() exists
   }
 }
 
@@ -631,17 +772,18 @@ export function createShareModal() {
  * @param {string} coords - Latitude and longitude string
  */
 export function showShareModal(coords) {
-  const p = document.getElementById("share-location-coords");
-  if (p) p.textContent = `📍 ${coords}`;
-
   const modal = document.getElementById("share-location-modal");
-  if (modal) {
-    modal.classList.remove("hidden");
-    modal.style.display = '';
-  }
+  const coordsEl = document.getElementById("share-location-coords");
+  const shareBtn = document.getElementById("location-share-button");
 
-  // ✅ Ensure the Share button is visible even if testing code hid it
-  document.getElementById("share-location-button")?.classList.remove("hidden");
+  if (!modal || !coordsEl) return console.warn("❌ Modal or coords element missing");
+
+  coordsEl.textContent = `📍 ${coords}`;
+  if (shareBtn) shareBtn.classList.remove("hidden");
+
+  modal.classList.remove("hidden");
+  modal.classList.add("visible");
+  modal.style.display = ""; // ✅ Clear inline junk
 }
 
 export function createIncomingLocationModal(coords) {
@@ -653,6 +795,7 @@ export function createIncomingLocationModal(coords) {
   modal.id = id;
 
   modal.innerHTML = `
+    <div class="modal-overlay"></div>
     <div class="modal-content modal-action">
       <h2 class="modal-title">📍 Location Received</h2>
       <div class="modal-body">
@@ -682,8 +825,6 @@ export function createIncomingLocationModal(coords) {
     padding: "1rem"
   });
 
-  document.body.appendChild(modal);
-
   // Close logic
   modal.querySelector('#incoming-modal-resolved')?.addEventListener('click', () => modal.remove());
   modal.addEventListener('click', e => {
@@ -693,22 +834,27 @@ export function createIncomingLocationModal(coords) {
   enableEscToClose(modal);
 }
 
-
 /**
  * Enables "tap-out-to-close" behavior for a modal.
- * Expects the modal to include a `.modal-overlay` element,
- * which will close the modal when tapped.
+ * If the overlay doesn't exist yet, it waits for it.
  */
 function setupTapOutClose(modalId) {
   const modal = document.getElementById(modalId);
   if (!modal) return;
 
-  const overlay = modal.querySelector(".modal-overlay");
-  if (overlay) {
-    overlay.addEventListener("click", () => {
-      modal.classList.add("hidden");
-    });
-  }
+  const tryBindOverlay = () => {
+    const overlay = modal.querySelector(".modal-overlay");
+    if (overlay) {
+      overlay.addEventListener("click", () => {
+        modal.classList.add("hidden");
+      });
+    } else {
+      // Retry once on next frame
+      requestAnimationFrame(tryBindOverlay);
+    }
+  };
+
+  tryBindOverlay();
 }
 
 // 🎁 Creates and shows the donation modal.
@@ -843,7 +989,7 @@ export function buildAccordion(structure_data, geoPoints) {
   });
 }
 
-// ✅ Purchase History Renderer for Donations (Phase 1)
+// Renders entries stored in localStorage.myPurchases (full strings, not keys)
 function renderPurchaseHistory() {
   const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
   const container = document.getElementById("purchase-history");
@@ -852,7 +998,10 @@ function renderPurchaseHistory() {
   if (purchases.length === 0) {
     const emptyMsg = document.createElement("div");
     emptyMsg.className = "empty-state";
-    emptyMsg.textContent = t("purchaseHistory.emptyMessage"); // 🌐 translatable
+    emptyMsg.innerHTML = `
+      <p>${t("purchaseHistory.emptyMessage")}</p>
+      <p style="opacity: 0.75;">${t("purchaseHistory.empty.body")}</p>
+    `;
     container.appendChild(emptyMsg);
     return;
   }
@@ -861,28 +1010,40 @@ function renderPurchaseHistory() {
     const card = document.createElement("div");
     card.className = "purchase-card";
 
-    const emoji = document.createElement("div");
-    emoji.className = "emoji";
-    emoji.textContent = purchase.emoji || "🧾";
-
     const label = document.createElement("div");
     label.className = "label";
-    label.textContent = t(purchase.label); // 🌐 now must be a key
 
-    const subtext = document.createElement("div");
-    subtext.className = "subtext";
-    subtext.textContent = t(purchase.subtext); // 🌐 now must be a key
+    // 📝 Use translated label if available, fallback to raw key
+    label.innerHTML = `<strong>${t(purchase.label) || purchase.label}</strong>`;
 
     const timestamp = document.createElement("div");
     timestamp.className = "timestamp";
-    timestamp.textContent = purchase.timestamp;
+    timestamp.textContent = `📅 ${new Date(purchase.timestamp).toLocaleString()}`;
 
-    card.appendChild(emoji);
+    const subtext = document.createElement("div");
+    subtext.className = "subtext";
+
+    // 🔁 Resolve translated subtext (fallback to raw key if not found)
+    let rawSubtext = t(purchase.subtext) || purchase.subtext;
+
+    // 💖 If it mentions "free", inject heart emoji for flair
+    const cleaned = rawSubtext.replace("💖", "").trim();
+    subtext.textContent = cleaned.includes("free")
+      ? cleaned.replace(/free\b/i, "free 💖")
+      : cleaned;
+
     card.appendChild(label);
-    card.appendChild(subtext);
     card.appendChild(timestamp);
+    card.appendChild(subtext);
     container.appendChild(card);
+
+    // ↕️ Add vertical spacing between cards
+    const spacer = document.createElement("div");
+    spacer.style.height = "1em";
+    container.appendChild(spacer);
   });
+
+
 }
 
 // Run when user opens Purchase History
@@ -900,4 +1061,5 @@ if (typeof window !== 'undefined') {
   window.createMyStuffModal = createMyStuffModal;
   window.showMyStuffModal = showMyStuffModal;
   window.renderPurchaseHistory = renderPurchaseHistory;
+  window.setupMyStuffModalLogic = setupMyStuffModalLogic; // ✅ added
 }

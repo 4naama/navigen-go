@@ -350,6 +350,15 @@ function clearSearch() {
       document.getElementById("search").placeholder = t("search.placeholder");
       document.getElementById("here-button").textContent = t("button.here");
 
+      // 🌐 Set translated <title>
+      document.title = t("page.windowTitle");
+
+      // 🌐 Set translated <meta name="description">
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute("content", t("page.metaDescription"));
+      }
+
       // Footer button tooltips
       document.getElementById("my-stuff-toggle").title = t("tooltip.myStuff");
       document.getElementById("alert-button").title = t("tooltip.alerts");
@@ -569,31 +578,28 @@ function clearSearch() {
     });
   }
 
-  createShareModal();
-
-  setupTapOutClose("share-location-modal"); // keep this too
-
   // ✅ Defer setup to ensure modal elements exist
   setTimeout(() => {
     const hereButton = document.getElementById("here-button");
-    const locationModal = document.getElementById("share-location-modal");
-    const coordsDisplay = document.getElementById("location-coords") || document.getElementById("share-location-coords");
-    const shareButton = document.getElementById("share-location-button");
+    const coordsDisplay = document.getElementById("share-location-coords");
+    const shareModal = document.getElementById("share-location-modal");
 
-    if (hereButton && locationModal && coordsDisplay && shareButton) {
+    if (hereButton && coordsDisplay && shareModal) {
       hereButton.addEventListener("click", () => {
         coordsDisplay.textContent = "Detecting your location...";
-        shareButton.classList.add("hidden");
+        const shareBtn = document.getElementById("location-share-button");
+        if (shareBtn) shareBtn.classList.add("hidden");
 
         if (!navigator.geolocation) {
           coordsDisplay.textContent = "Geolocation not supported.";
+          shareModal.classList.remove("hidden");
           return;
         }
 
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             const coords = `${pos.coords.latitude.toFixed(6)},${pos.coords.longitude.toFixed(6)}`;
-            showShareModal(coords);
+            showShareModal(coords); // 💡 This updates modal + shows
           },
           () => {
             coordsDisplay.textContent = "Unable to access location.";
@@ -602,7 +608,7 @@ function clearSearch() {
         );
       });
     }
-  }, 0); // minimal delay after modal injection
+  }, 0);
 
   const helpContinueButton = helpModal?.querySelector(".modal-continue");
   const helpCloseButtons = document.querySelectorAll(".modal-close");
@@ -672,18 +678,6 @@ function clearSearch() {
   setupTapOutClose("alert-modal");
   setupTapOutClose("help-modal"); 
   
-  // ✅ Dev-only helper to manually trigger Share modal
-  window.debugOpenShareModal = (coords = "47.123456,19.654321") => {
-    const p = document.getElementById("share-location-coords");
-    const modal = document.getElementById("share-location-modal");
-
-    if (!p || !modal) return console.warn("❌ Modal elements missing");
-    p.textContent = `📍 ${coords}`;
-    modal.classList.remove("hidden");
-    modal.style.display = '';
-    console.log("✅ debugOpenShareModal:", coords);
-  };  
-  
 });  // ✅ End of DOMContentLoaded  
 
 // ✅ Stripe Block
@@ -714,7 +708,6 @@ window.showThankYouToast = function () {
   document.body.appendChild(div);
   setTimeout(() => div.remove(), 4000);
 };
-
 
 document.addEventListener("DOMContentLoaded", () => {
   // ✅ Initialize Stripe.js client
@@ -892,13 +885,31 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   }
 })();
 
-// Helper: Map amount to text
+// Maps Stripe donation amounts (in cents) to a known tier.
+// Returns i18n label + subtext keys and an emoji for display.
+// Used to build purchase history entries from session data.
 function matchDonationTier(amount) {
   switch (amount) {
-    case 300: return { label: "You donated €3.00", subtext: "Small tip, big appreciation" };
-    case 500: return { label: "You donated €5.00", subtext: "Thank you for helping us stay free" };
-    case 1000: return { label: "You donated €10.00", subtext: "You’re fueling future features — amazing!" };
-    default: return null;
+    case 300:
+      return {
+        label: "donation.btn.coffee",
+        subtext: "donation.btn.coffee.sub",
+        emoji: "☕"
+      };
+    case 500:
+      return {
+        label: "donation.btn.keep",
+        subtext: "donation.btn.keep.sub",
+        emoji: "🎈"
+      };
+    case 1000:
+      return {
+        label: "donation.btn.fuel",
+        subtext: "donation.btn.fuel.sub",
+        emoji: "🚀"
+      };
+    default:
+      return null;
   }
 }
 

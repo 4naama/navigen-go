@@ -355,44 +355,54 @@ h2 {
 
 /* ──────────────── High Contrast Mode ──────────────── */
 body.high-contrast {
-  background-color: #111;   /* Dark but not pitch-black */
-  color: #fff;
-  font-size: 110%;          /* Scales naturally with rem/em units */
-}
-
-/* Buttons: Accordion, Quick Access, Group Headers */
-body.high-contrast .accordion-button,
-body.high-contrast .quick-button,
-body.high-contrast .group-header-button {
-  background-color: #222;
-  color: #fff;
-  border-color: #888;
-}
-
-body.high-contrast .accordion-button:hover,
-body.high-contrast .quick-button:hover {
-  background-color: #333;
-}
-
-/* Alert Cards */
-body.high-contrast .alert-card {
   background-color: #111;
   color: #fff;
+  font-size: 110%;
 }
 
-/* Special Case: ⭐ Popular Group */
+/* General Buttons */
+body.high-contrast button,
+body.high-contrast .quick-button,
+body.high-contrast .accordion-button,
+body.high-contrast .group-header-button {
+  background-color: #222 !important;
+  color: #fff !important;
+  border: 1px solid #888 !important;
+}
+
+body.high-contrast button:hover,
+body.high-contrast .quick-button:hover,
+body.high-contrast .accordion-button:hover,
+body.high-contrast .group-header-button:hover {
+  background-color: #333 !important;
+}
+
+/* Accordion Inner Group Buttons */
+body.high-contrast .group-buttons .quick-button,
+body.high-contrast .location-button {
+  background-color: #222 !important;
+  color: #fff !important;
+  border: 1px solid #666 !important;
+}
+
+body.high-contrast .group-buttons .quick-button:hover,
+body.high-contrast .location-button:hover {
+  background-color: #333 !important;
+}
+
+/* ⭐ Special Case: Popular Group */
 body.high-contrast .group-header-button[data-group="⭐ Popular"],
 body.high-contrast .quick-button[data-group="⭐ Popular"] {
-  background-color: rgba(255, 193, 7, 0.15);  /* Soft gold highlight */
-  color: #fff;
-  border-color: #ffc107;
+  background-color: rgba(255, 193, 7, 0.2) !important;
+  color: #fff !important;
+  border-color: #ffc107 !important;
 }
 
 body.high-contrast .quick-button[data-group="⭐ Popular"]:hover {
-  background-color: rgba(255, 193, 7, 0.25);
+  background-color: rgba(255, 193, 7, 0.3) !important;
 }
 
-/* Optional: Large Text Mode */
+/* Optional: Large Text */
 body.large-text {
   font-size: 1.15em;
 }
@@ -512,10 +522,6 @@ body.large-text {
   }
 }
 
-/* ------------------------------
-   Language / Flag Grid
-   ------------------------------ */
-
 /* Responsive grid for flag/language selection */
 .flag-list {
   display: grid;
@@ -550,13 +556,13 @@ body.large-text {
   cursor: default;
 }
 
-/* Selected flag */
+/* ⛔ Removed selected-flag styling */
+/* Was used to show blue border for active language — removed by user request */
 .flag-list img.selected-flag {
-  border: 1px solid #007aff;     /* iOS blue tone */
-  padding: 2px;                  /* space between image and border */
-  box-shadow: none;              /* no glow */
-  border-radius: 3px;            /* optional, soft corners */
-  background-clip: padding-box;  /* prevents padding overlap */
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  background: none !important;
 }
 
 /* ──────────────── Modal Containers ──────────────── */
@@ -585,44 +591,32 @@ body.large-text {
   display: flex;
 }
 
-
-
-/* ──────────────── Body-Action Modal — Share Location ──────────────── */
-/* Interaction happens inside modal-body; controlled by .hidden */
-
-#share-location-modal.hidden {
-  display: none;
-}
-
-#share-location-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.25);  /* 👈 this gives the dark backdrop */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 2em;
-}
-
 /* ──────────────── Main Modal Container ──────────────── */
-/* Scrolls only the body — top and bottom bars stay fixed */
+/* Defines scrollable vertical layout — structure only; visual layout is handled by layout modifiers (e.g. .modal-action) */
 .modal-content {
   display: flex;                              /* ✅ Enables vertical stacking of children */
   flex-direction: column;                     /* ✅ Top-to-bottom content flow */
-  background: white;                          /* ✅ White modal background */
-  border-radius: 0.5em;                       /* ✅ Rounded corners for clean visual feel */
-  padding: 1.5em;                             /* ✅ Inner spacing around content */
+  background: white;                          /* ✅ White modal background (used unless overridden) */
+  border-radius: 0.5em;                       /* ✅ Rounded corners for visual clarity */
+  padding: 1.5em;                             /* ✅ Inner spacing for typical modals */
 
-  width: min(95vw, 720px);                    /* ✅ Responsive width: grow wider but capped */
-  max-height: calc(100vh - 6em);              /* ✅ Prevents modal from touching screen edges */
-  overflow-y: auto;                           /* ✅ Scrolls internally if content overflows */
+  width: min(95vw, 720px);                    /* ✅ Responsive width: stretches up to a limit */
+  max-height: calc(100vh - 6em);              /* ✅ Prevents modal from touching screen edges vertically */
+  overflow-y: auto;                           /* ✅ Enables scroll inside modal body if content overflows */
 
-  z-index: 1001;                              /* ✅ Ensures modal sits above backdrop */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); /* ✅ Subtle elevation */
+  z-index: 1001;                              /* ✅ Positions above backdrop layer */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); /* ✅ Drop shadow gives depth to modal card */
   font-size: 18px;                            /* ✅ Base font size inside modal */
-  line-height: 1.5;                           /* ✅ Improves text legibility */
-  box-sizing: border-box;                     /* ✅ Keeps padding inside declared dimensions */
+  line-height: 1.5;                           /* ✅ Ensures readable spacing for multi-line text */
+  box-sizing: border-box;                     /* ✅ Includes padding within declared width */
+}
+
+/* 🧾 Paragraph styling inside modals for consistent spacing and readability */
+/* Applies to direct <p> elements inside any modal-content container */
+.modal-content p {
+  font-size: 14px;           /* ✅ Smaller, modal-friendly text size */
+  margin-bottom: 1em;        /* ✅ Creates vertical spacing between text blocks */
+  text-align: center;        /* ✅ Center-align for modals like Share or Confirm */
 }
 
 /* ──────────────── Scrollable Content Area ──────────────── */
@@ -656,13 +650,6 @@ body.large-text {
   text-align: center;
 }
 
-/* 🧾 Paragraph styling inside modals for consistent spacing and readability */
-.modal-content p {
-  font-size: 14px;           /* Smaller, modal-friendly text size */
-  margin-bottom: 1em;        /* Spacing between paragraphs or elements */
-  text-align: center;        /* Center-align text for modals like Share */
-}
-
 /* ──────────────── Close Button (Top Right, Minimal) ──────────────── */
 /* Used in modal-top-bar for consistent UX */
 .modal-close {
@@ -691,10 +678,8 @@ body.large-text {
   gap: 0;
 }
 
-/* ──────────────── Modal Footer Action Button ──────────────── */
-/* Style for secondary/neutral actions placed in the modal footer.
-   Use for subtle actions like “Cancel” or passive confirm (e.g., “Resolved”).
-   For prominent actions, use .modal-body-button instead. */
+/* ──────────────── Modal Footer Buttons ──────────────── */
+/* Used in info-type modals like "My Stuff" with a neutral footer action */
 .modal-footer-button {
   background: #1a73e8;
   color: white;
@@ -712,21 +697,20 @@ body.large-text {
   gap: 0.5em;
   text-align: left;
 }
+
 .modal-footer-button:hover {
   background: #1667cc;
   transform: translateY(-1px);
 }
 
+/* Footer button inside modal-footer container */
 .modal-footer .modal-footer-button {
   width: auto;
   align-self: flex-end;
 }
 
-/* ──────────────── Modal Body Buttons ──────────────── */
-/* Functional buttons inside modal body content */
-/* ──────────────── Modal Body Button ──────────────── */
-/* Used for compact single CTAs like “Got it” */
-
+/* ──────────────── Modal Body Action Button ──────────────── */
+/* Used in body-action modals like "Share" */
 .modal-body-button {
   background: #1a73e8;
   color: white;
@@ -742,10 +726,9 @@ body.large-text {
   align-items: center;
   justify-content: center;
   text-align: center;
-  width: auto;             /* ✅ No more forced full width */
-  min-width: 120px;        /* ✅ Enough for tap comfort */
-  max-width: 100%;         /* ✅ Safe fallback */
-  align-self: center;      /* ✅ Keeps button centered inside modal-actions */
+  min-width: 120px;
+  max-width: 100%;
+  align-self: center;
 }
 
 .modal-body-button:hover {
@@ -753,12 +736,17 @@ body.large-text {
   transform: translateY(-1px);
 }
 
-/* ──────────────── Modal Body Utility Text ──────────────── */
-/* Optional muted/gray text inside modal body (e.g. instructions) */
+/* ──────────────── Modal Body Text Styles ──────────────── */
 .modal-body .muted {
   font-size: 0.9em;
   color: #666;
   margin-bottom: 0.5em;
+}
+
+.modal-body .location-coords {
+  font-size: 1.1em;
+  margin-bottom: 1em;
+  font-family: monospace;
 }
 
 /* Coordinates display formatting */
@@ -1540,11 +1528,36 @@ button:hover {
   margin-top: 1.5em;
 }
 
+/* ──────────────── Share Location Modal — Unified Layout ──────────────── */
+#share-location-modal.hidden {
+  display: none;
+}
+
+#share-location-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1em;
+  background: rgba(0, 0, 0, 0.25); /* ✅ unified dark backdrop */
+}
+
+/* ✅ Center contents inside modal */
+#share-location-modal .modal-body {
+  text-align: center;
+}
+
+/* ✅ Coordinates style */
 #share-location-coords {
   font-family: monospace;
   font-size: 1.1rem;
-  text-align: left;
-  margin: 0.5em 0;
+  margin: 0.75em 0;
+  text-align: center;
+}
+
+/* ✅ Space above buttons */
+#share-location-modal .modal-footer,
+#share-location-modal .modal-actions {
+  margin-top: 1.5em;
 }
 
 /* ──────────────── modal-alert ──────────────── */
@@ -1607,21 +1620,19 @@ button:hover {
   padding: 1rem 1.25rem;
 }
 
-
 /* ──────────────── modal-bare ──────────────── */
-/* Used for: Raw overlays, onboarding steps */
+/* Used for: raw overlays or onboarding steps — removes modal styling */
 
 .modal-bare .modal-top-bar,
 .modal-bare .modal-footer {
-  display: none !important;
+  display: none !important;              /* ✅ Hide header and footer elements forcibly */
 }
 
 .modal-bare .modal-content {
-  padding: 0.75rem 1rem;
-  background: transparent;
-  box-shadow: none;
+  padding: 0.75rem 1rem;                 /* ✅ Minimal padding for raw overlays */
+  background: transparent;              /* ✅ No card background — blends with backdrop */
+  box-shadow: none;                     /* ✅ Removes shadow for clean integration */
 }
-
 
 /* ──────────────── Modal Shop Category ──────────────── */
 /* Used for: Grids of product/donation category types */
@@ -1690,11 +1701,16 @@ button:hover {
   color: #999;
 }
 
+/* ──────────────── Purchase History Container ──────────────── */
+/* Hosts all rendered purchases inside the modal */
+/* Prevents height collapse and ensures cards are displayed */
+
 #purchase-history {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1em;
-  padding: 1.5em;
+  display: grid;                    /* ✅ Ensures spacing between purchase cards */
+  grid-template-columns: 1fr;      /* ✅ Single-column layout */
+  gap: 1em;                         /* ✅ Vertical spacing between cards */
+  padding: 1.5em;                   /* ✅ Modal-safe inner spacing */
+  min-height: 100px;               /* ✅ Prevents collapse when cards exist */
 }
 
 /* Legacy Utility Note (for reference only):  

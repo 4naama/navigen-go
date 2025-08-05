@@ -21,7 +21,9 @@
   "help.continue": "➡️ Continue",
   "page.title": "Hey, NaviGen here!",
   "page.tagline": "Find. Connect. Chill.",
-  "search.placeholder": "Type Destination...",
+  "page.windowTitle": "SzigetNavi – Your Compass for SzigetFesztivál",
+  "page.metaDescription": "SzigetNavi is your compass for SzigetFesztivál. Find friends, stages, and food. Works offline. Powered by NaviGen beta.",
+    "search.placeholder": "Type Destination...",
   "button.here": "📍 Here",
   "tooltip.myStuff": "My Stuff",
   "tooltip.alerts": "Alerts",
@@ -38,5 +40,35 @@
   "group.guests": "🎟️ Guest Services",
   "group.transport": "🚖 Transport",
   "group.facilities": " 🚻 Facilities",
-  "group.popular": "⭐ Popular"
+  "group.popular": "⭐ Popular",
+  "myStuff.reset.title": "Reset App",
+  "myStuff.reset.subtitle": "Clear settings, restart",
+
+  "myStuff.data.title": "Data We Store",
+  "myStuff.data.subtitle": "Transparent view of stored preferences and history",
+  "myStuff.terms.title": "Terms & Privacy",
+  "myStuff.terms.subtitle": "View app terms of use and data privacy policy",
+  "myStuff.data.bodyIntro": "Below is a summary of what’s stored locally in your browser.",
+  "myStuff.data.includes": "This may include:",
+  "myStuff.data.item.purchase": "Purchase history (if any)",
+  "purchaseHistory.emptyMessage":	"😿 No purchases yet.",
+  "purchaseHistory.empty.body": "Generously tap 👋 on the main screen to donate. ❤️ Thank you!",
+
+  "myStuff.data.title": "Data We Store",
+  "myStuff.data.subtitle": "Transparent view of stored preferences and history",
+  "myStuff.data.bodyIntro": "Below is a summary of what’s stored locally in your browser.",
+  "myStuff.data.includes": "This may include:",
+  "myStuff.data.item.purchase": "Purchase history (if any)",
+  "myStuff.data.item.language": "Language preference",
+  "myStuff.data.item.location": "Location pins you've saved",
+  "myStuff.data.warning": "No data is sent to external servers. Everything stays on your device.",
+  "myStuff.data.resetPrompt": "Want to start fresh? Use Reset App to clear all local data.",
+  "myStuff.data.viewPolicy": "View Full Privacy Policy",
+
+  "myStuff.terms.title": "Terms & Privacy",
+  "myStuff.terms.subtitle": "View app terms of use and data privacy policy",
+  "myStuff.terms.body": "This app is provided by NaviGen. By using it, you agree to the basic terms of service, including fair use and no abuse.",
+  "myStuff.terms.viewFull": "View Full Terms & Privacy Document",
+  "myStuff.terms.buttonLabel": "View Full Terms & Conditions"
+
 }
