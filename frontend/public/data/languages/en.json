@@ -75,6 +75,7 @@
   "share.cancel": "Cancel",
   "share.intro": "You can share your current location with a friend:",
   "share.includeMap": "Include a “What’s around me” map link",
+  "share.note": "📱 Works best via WhatsApp",
 
   "locationHistory.emptyMessage": "No shared locations yet",
   "locationHistory.empty.body": "You haven’t received any locations from friends.",
