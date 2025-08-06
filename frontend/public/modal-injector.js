@@ -727,6 +727,7 @@ export function createShareModal() {
     title: t('share.button'),
     bodyHTML: `
       <p class="muted">${t("share.intro") || "You can share your current location with a friend:"}</p>
+      <p class="share-note">📱 Works best via <strong>WhatsApp</strong></p>
       <p id="share-location-coords" class="location-coords">📍 Loading…</p>
 
       <label class="form-control">
