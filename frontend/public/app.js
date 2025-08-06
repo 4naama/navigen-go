@@ -2,13 +2,15 @@
 import {
   buildAccordion,
   createMyStuffModal,
+  createAlertModal,
   createDonationModal,
   setupMyStuffModalLogic,
   createShareModal,
   showModal,
   showShareModal,
   createIncomingLocationModal,
-  showMyStuffModal
+  showMyStuffModal,
+  flagStyler
 } from './modal-injector.js';
 
 // ✅ Determines whether app is running in standalone/PWA mode
@@ -301,9 +303,13 @@ function clearSearch() {
     const lang = localStorage.getItem("lang") || navigator.language.slice(0, 2).toLowerCase() || "en";
     document.documentElement.lang = lang;
     document.documentElement.dir = ["ar", "he", "fa", "ur", "ps", "ckb", "dv", "syc", "yi"].includes(lang) ? "rtl" : "ltr";
-    await loadTranslations(lang);      // ✅ Load selected language
 
+    await loadTranslations(lang);      // ✅ Load selected language
     injectStaticTranslations();        // ✅ Apply static translations
+  
+    createMyStuffModal();
+    setupMyStuffModalLogic();
+    flagStyler(); // ✅ apply titles to any flags inside modal
 
     const [actions, structure, geoPointsData] = await Promise.all([
       fetch('data/actions.json').then(res => res.json()),
@@ -388,9 +394,6 @@ function clearSearch() {
   // 📍 Inject Share Modal at startup
   createShareModal();            // Injects #share-location-modal into DOM
   setupTapOutClose("share-location-modal");
-  
-  createMyStuffModal();
-  setupMyStuffModalLogic();
   
   // 🔹 Set up tap-out-close behavior for all modals
   [
@@ -671,7 +674,38 @@ function clearSearch() {
       showMyStuffModal("menu"); // direct call, from import
     });
   }
-  
+
+  // ✅ Alert Tab Trigger (bottom band)
+  const indicator = document.getElementById("alert-indicator");
+
+  if (!indicator) {
+    console.warn("🚫 #alert-indicator not found in DOM.");
+  } else {
+    indicator.addEventListener("click", async () => {
+      console.log("✅ Alert indicator clicked");
+      createAlertModal();
+
+      requestAnimationFrame(async () => {
+        const container = document.getElementById("alert-modal-content");
+        if (!container) return;
+
+        try {
+          const res = await fetch("/data/alerts.json");
+          const alerts = await res.json();
+
+          if (!Array.isArray(alerts) || alerts.length === 0) {
+            container.innerHTML = "<p>No current alerts.</p>";
+          } else {
+            container.innerHTML = alerts.map(obj => `<p>${obj.message}</p>`).join("");
+          }
+        } catch (err) {
+          container.innerHTML = "<p>⚠️ Failed to load alerts.</p>";
+          console.error("Alert fetch error:", err);
+        }
+      });
+    });
+  }
+
   // ✅ Tap-out + ESC closing support for all front-screen modals
   setupTapOutClose("share-location-modal");
   setupTapOutClose("my-stuff-modal");

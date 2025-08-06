@@ -525,7 +525,7 @@ body.large-text {
 /* Responsive grid for flag/language selection */
 .flag-list {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* Max 4 per row */
+  grid-template-columns: repeat(3, 1fr); /* Max 4 per row */
   gap: 1em;
   justify-items: center;
   margin-top: 1em;
@@ -1463,20 +1463,23 @@ button:hover {
 /* ──────────────── Default Modal (Standard Layout) ──────────────── */
 /* Applied automatically via .modal (no modifiers needed) */
 /* Used for: My Stuff, Data Processing, any general modal */
-
 .modal {
   position: fixed;
   inset: 0;
   display: none;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.5); /* or any overlay color */
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(3px);
+  align-items: center;
+  justify-content: center;
 }
 
 .modal.visible {
-  display: flex; /* or block */
-  align-items: center;
-  justify-content: center;
+  display: flex;
+}
+
+.modal.hidden {
+  display: none !important;
 }
 
 /*** CURRENT Styles Replacing OLD ones

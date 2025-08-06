@@ -1,13 +1,22 @@
+// i18n.js
+
 let translations = {};
+let fallbackTranslations = {};
 let currentLang = "en";
 const DEFAULT_LANG = "en";
 
-// Internal reference to the translation function
-let tFunction = (key) => `[${key}]`; // Default fallback
+// Translation function (initialized after load)
+let tFunction = (key) => `[${key}]`; // default placeholder before loading
 
-// Load translation file based on lang code
+export const t = (key) => tFunction(key);
+
+export function getCurrentLanguage() {
+  return currentLang;
+}
+
 export async function loadTranslations(lang, callback) {
   currentLang = lang;
+
   try {
     const res = await fetch(`/data/languages/${lang}.json`);
     if (!res.ok) throw new Error(`Could not load ${lang}.json`);
@@ -17,37 +26,38 @@ export async function loadTranslations(lang, callback) {
     translations = {};
   }
 
-  // Define translation function after loading
-  tFunction = (key) => translations[key] || `[${key}]`;
+  // ✅ Always load fallback language (English)
+  if (lang !== DEFAULT_LANG) {
+    try {
+      const fallbackRes = await fetch(`/data/languages/${DEFAULT_LANG}.json`);
+      if (fallbackRes.ok) {
+        fallbackTranslations = await fallbackRes.json();
+      } else {
+        fallbackTranslations = {};
+      }
+    } catch (err) {
+      console.warn(`⚠️ Failed to load fallback (${DEFAULT_LANG}.json)`, err);
+      fallbackTranslations = {};
+    }
+  } else {
+    fallbackTranslations = translations;
+  }
 
-  callback?.(); // ✅ Optional: run UI after loading
+  // ✅ Updated translation function with fallback support
+  tFunction = (key) =>
+    translations[key] || fallbackTranslations[key] || `[${key}]`;
+
+  if (callback) callback();
 }
 
-// Safe translation lookup
-export function t(key) {
-  return tFunction(key);
-}
-
-// Get current language code (used after load)
-export function getCurrentLang() {
-  return currentLang;
-}
-
-// Persist language and reload to apply it
-export function setLang(lang) {
-  localStorage.setItem("lang", lang);
-  location.reload();
-}
-
-// Determine user's preferred language
-export function getUserLang() {
-  return localStorage.getItem("lang") ||
-         navigator.language.split("-")[0] ||
-         DEFAULT_LANG;
-}
-
-export function getLangFromCountry(code) {
-  return countryToLang[code] || "en"; // fallback to English
+export function injectStaticTranslations() {
+  const elements = document.querySelectorAll("[data-i18n]");
+  elements.forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    if (key) {
+      el.textContent = t(key);
+    }
+  });
 }
 
 const countryToLang = {
@@ -58,4 +68,3 @@ const countryToLang = {
   NO: "no", CH: "de", GB: "en", TR: "tr", IL: "he", RU: "ru", CN: "zh",
   SA: "ar", IN: "hi", KR: "ko", JP: "ja", US: "en", CA: "en"
 };
-

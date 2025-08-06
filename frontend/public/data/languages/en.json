@@ -69,6 +69,10 @@
   "myStuff.terms.subtitle": "View app terms of use and data privacy policy",
   "myStuff.terms.body": "This app is provided by NaviGen. By using it, you agree to the basic terms of service, including fair use and no abuse.",
   "myStuff.terms.viewFull": "View Full Terms & Privacy Document",
-  "myStuff.terms.buttonLabel": "View Full Terms & Conditions"
+  "myStuff.terms.buttonLabel": "View Full Terms & Conditions",
 
+  "share.button": "Share Location",
+  "share.cancel": "Cancel",
+  "share.intro": "You can share your current location with a friend:",
+  "share.includeMap": "Include a “What’s around me” map link"
 }

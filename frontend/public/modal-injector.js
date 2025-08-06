@@ -214,16 +214,6 @@ export function createMyStuffModal() {
     document.getElementById('my-stuff-modal')?.remove();
   });
 
-  // ❌ Disabled: ESC key closes the modal
-  // enableEscToClose(modal);
-
-  // ❌ Disabled: Tap-out (click background) closes the modal
-  // modal.addEventListener('click', (e) => {
-  //   if (e.target === modal) {
-  //     modal.remove();
-  //   }
-  // });
-
   // ✅ Store all ".my-stuff-item" elements for later use
   myStuffItems = Array.from(modal.querySelectorAll('.my-stuff-item'));
 
@@ -404,59 +394,13 @@ export function createMyStuffModal() {
               img.style.opacity = "0.4";
               img.style.pointerEvents = "none";
               img.style.cursor = "default";
-            }
+            }            
 
             flagList.appendChild(img);
-          });
+          });    
+
+          flagStyler();
           
-          window.flagStyler = function () {
-            const flags = document.querySelectorAll(".flag-list img.flag");
-            if (!flags.length) {
-              console.warn("❌ No flags found — is the modal open?");
-              return;
-            }
-
-            const activeLangs = ["en", "de", "fr", "hu"];
-            const currentLang = (localStorage.getItem("lang") || "en").toUpperCase(); // flags use upper-case codes like "DE"
-
-            flags.forEach(img => {
-              const langCode = img.getAttribute("alt"); // or use title if needed
-              const isActive = activeLangs.includes(langCode.toLowerCase());
-              const isCurrent = langCode === currentLang;
-
-              img.classList.toggle("disabled", !isActive);
-              img.classList.toggle("selected-flag", isCurrent);
-
-              console.log(`${langCode}: ${isActive ? 'active' : 'inactive'}, ${isCurrent ? 'selected' : ''}`);
-            });
-
-            console.log("✅ Flags styled using alt attribute.");
-          };
-          window.flagStyler = function () {
-            const flags = document.querySelectorAll(".flag-list img.flag");
-            if (!flags.length) {
-              console.warn("❌ No flags found — is the modal open?");
-              return;
-            }
-
-            const activeLangs = ["en", "de", "fr", "hu"];
-            const currentLang = (localStorage.getItem("lang") || "en").toUpperCase();
-
-            flags.forEach(img => {
-              const langCode = img.getAttribute("alt");
-              const isActive = activeLangs.includes(langCode.toLowerCase());
-              const isCurrent = langCode === currentLang;
-
-              img.classList.toggle("disabled", !isActive);
-              img.classList.toggle("selected-flag", isCurrent);
-
-              console.log(`${langCode}: ${isActive ? 'active' : 'inactive'}, ${isCurrent ? 'selected' : ''}`);
-            });
-
-            console.log("✅ Flags styled using alt attribute.");
-          };
-          
-                  
         }
 
       else if (item.view === "purchases") {
@@ -642,6 +586,24 @@ export function setupMyStuffModalLogic() {
   ];
 }
 
+// 🚨 Creates and shows the Alert Modal.
+// Used to display important real-time alerts or notifications.
+// Content is injected dynamically into #alert-modal-content.
+export function createAlertModal() {
+  console.log("🔥 createAlertModal called"); // 👈 add this line
+  injectModal({
+    id: "alert-modal",
+    title: t("alert.title"), // "🚨 Current Alerts"
+    bodyHTML: `<div id="alert-modal-content"></div>`,
+    layout: "action"
+  });
+
+  setupTapOutClose("alert-modal");
+
+  // ✅ Add this line to ensure visibility
+  showModal("alert-modal");
+}
+
 // 🆘 Creates and shows the Help Modal.
 // Displays a friendly message for users in need of assistance or emergencies.
 // Includes translated text and a Continue button to dismiss or trigger next steps.
@@ -670,20 +632,6 @@ export function createHelpModal() {
   });
 
   setupTapOutClose("help-modal");
-}
-
-// 🚨 Creates and shows the Alert Modal.
-// Used to display important real-time alerts or notifications.
-// Content is injected dynamically into #alert-modal-content.
-export function createAlertModal() {
-  injectModal({
-    id: "alert-modal",
-    title: t("alert.title"), // "🚨 Current Alerts"
-    bodyHTML: `<div id="alert-modal-content"></div>`,
-    layout: "action"
-  });
-
-  setupTapOutClose("alert-modal");
 }
 
 // 🛑 Prevents overlapping share attempts by locking during active share operation.
@@ -736,28 +684,37 @@ export function createShareModal() {
 
   injectModal({
     id: 'share-location-modal',
-    layout: 'action', // Ensures correct .modal-content
-    title: 'Share Your Location',
+    layout: 'action',
+    title: t('share.button'),
     bodyHTML: `
-      <p class="muted">You can share your current location with a friend:</p>
+      <p class="muted">${t("share.intro") || "You can share your current location with a friend:"}</p>
       <p id="share-location-coords" class="location-coords">📍 Loading…</p>
 
       <label class="form-control">
         <input type="checkbox" id="include-navigen-link" checked>
-        Include a “What’s around me” map link
+        ${t("share.includeMap") || 'Include a “What’s around me” map link'}
       </label>
 
       <div class="modal-actions">
-        <button class="modal-body-button" id="share-location-button">📤 Share</button>
+        <button class="modal-body-button" id="share-location-button">📤 ${t("share.button")}</button>
+        <button class="modal-body-button" id="share-location-cancel">❌ ${t("share.cancel")}</button>
       </div>
     `
   });
 
-  // Bind share button if needed
   const shareBtn = document.getElementById("share-location-button");
   if (shareBtn) {
-    shareBtn.addEventListener("click", handleShare); // assumes handleShare() exists
+    shareBtn.addEventListener("click", handleShare);
   }
+
+  const cancelBtn = document.getElementById("share-location-cancel");
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => {
+      hideModal("share-location-modal");
+    });
+  }
+
+  setupTapOutClose("share-location-modal");
 }
 
 /**
@@ -1041,8 +998,23 @@ function renderPurchaseHistory() {
     container.appendChild(spacer);
   });
 
-
 }
+
+// Styles flag icons by setting their title from 2-letter alt text.
+// Used in language/country modals for accessibility and hover info.
+export function flagStyler() {
+  const flags = document.querySelectorAll("flag-icon");
+  if (!flags.length) return;
+
+  flags.forEach((img) => {
+    const alt = img.getAttribute("alt") || "";
+    if (alt.length === 2) {
+      img.title = alt.toUpperCase();
+    }
+  });
+
+  console.log("✅ Flags styled using alt attribute.");
+}      
 
 // Run when user opens Purchase History
 const purchaseBtn = document.querySelector("#purchaseHistoryBtn");
@@ -1050,14 +1022,4 @@ if (purchaseBtn) {
   purchaseBtn.addEventListener("click", () => {
     renderPurchaseHistory();
   });
-}
-
-// 🧪 Debug/testing only — expose modal methods
-if (typeof window !== 'undefined') {
-  import.meta?.url && console.log("🌐 modal-injector.js loaded");
-
-  window.createMyStuffModal = createMyStuffModal;
-  window.showMyStuffModal = showMyStuffModal;
-  window.renderPurchaseHistory = renderPurchaseHistory;
-  window.setupMyStuffModalLogic = setupMyStuffModalLogic; // ✅ added
 }
