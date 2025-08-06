@@ -10,9 +10,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "",
-    "Latitude": 47.7473,
-    "Longitude": 19.0533,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5473,19.0533"
+    "": 48
   },
   {
     "ID": 2,
@@ -25,9 +23,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5471,
-    "Longitude": 19.0502,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5471,19.0502"
+    "": 43
   },
   {
     "ID": 3,
@@ -40,9 +36,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.558114, 19.059557",
-    "Latitude": 47.5472,
-    "Longitude": 19.0504,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5472,19.0504"
+    "": 4
   },
   {
     "ID": 4,
@@ -55,9 +49,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5473,
-    "Longitude": 19.0506,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5473,19.0506"
+    "": 49
   },
   {
     "ID": 5,
@@ -70,9 +62,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "",
-    "Latitude": 47.5495,
-    "Longitude": 19.0545,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5495,19.0545"
+    "": 68
   },
   {
     "ID": 6,
@@ -84,10 +74,8 @@
     "Group": "🎤 Stages",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5474,
-    "Longitude": 19.0508,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5474,19.0508"
+    "Coordinate Compound": "47.555703, 19.056757",
+    "": 12
   },
   {
     "ID": 7,
@@ -100,9 +88,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5475,
-    "Longitude": 19.0518,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5475,19.0518"
+    "": 45
   },
   {
     "ID": 8,
@@ -114,10 +100,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5489,
-    "Longitude": 19.0538,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5489,19.0538"
+    "Coordinate Compound": "47.554240, 19.053988",
+    "": 19
   },
   {
     "ID": 9,
@@ -129,10 +113,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5492,
-    "Longitude": 19.0544,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5492,19.0544"
+    "Coordinate Compound": "47.556152, 19.057926",
+    "": 10
   },
   {
     "ID": 10,
@@ -145,9 +127,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.546489, 19.049903",
-    "Latitude": 47.5493,
-    "Longitude": 19.0546,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5493,19.0546"
+    "": 72
   },
   {
     "ID": 11,
@@ -160,9 +140,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551416, 19.051925",
-    "Latitude": 47.5479,
-    "Longitude": 19.0521,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5479,19.0521"
+    "": 62
   },
   {
     "ID": 12,
@@ -175,9 +153,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "",
-    "Latitude": 47.5468,
-    "Longitude": 19.0486,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5468,19.0486"
+    "": 57
   },
   {
     "ID": 13,
@@ -189,10 +165,8 @@
     "Group": "🎤 Stages",
     "Subgroup": "",
     "Priority": "Yes",
-    "Coordinate Compound": "",
-    "Latitude": 47.5477,
-    "Longitude": 19.0514,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5477,19.0514"
+    "Coordinate Compound": "47.555109, 19.054922",
+    "": 16
   },
   {
     "ID": 14,
@@ -205,9 +179,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5482,
-    "Longitude": 19.0495,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5482,19.0495"
+    "": 50
   },
   {
     "ID": 15,
@@ -220,9 +192,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5459,
-    "Longitude": 19.0501,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5459,19.0501"
+    "": 46
   },
   {
     "ID": 16,
@@ -234,10 +204,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5482,
-    "Longitude": 19.0524,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5482,19.0524"
+    "Coordinate Compound": "47.553849, 19.053248",
+    "": 23
   },
   {
     "ID": 17,
@@ -250,9 +218,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5476,
-    "Longitude": 19.0512,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5476,19.0512"
+    "": 61
   },
   {
     "ID": 18,
@@ -264,10 +230,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5471,
-    "Longitude": 19.0533,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5471,19.0533"
+    "Coordinate Compound": "47.551597, 19.055244",
+    "": 36
   },
   {
     "ID": 19,
@@ -279,10 +243,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5462,
-    "Longitude": 19.052,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5462,19.0520"
+    "Coordinate Compound": "47.552502, 19.056864",
+    "": 30
   },
   {
     "ID": 20,
@@ -295,9 +257,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5494,
-    "Longitude": 19.0504,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.54904,19.0504"
+    "": 65
   },
   {
     "ID": 21,
@@ -310,9 +270,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5478,
-    "Longitude": 19.0516,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5478,19.0516"
+    "": 70
   },
   {
     "ID": 22,
@@ -324,10 +282,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "Yes",
-    "Coordinate Compound": "",
-    "Latitude": 47.5491,
-    "Longitude": 19.0542,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5491,19.0542"
+    "Coordinate Compound": "47.554197, 19.053570",
+    "": 20
   },
   {
     "ID": 23,
@@ -340,9 +296,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5476,
-    "Longitude": 19.0482,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5476,19.0482"
+    "": 44
   },
   {
     "ID": 24,
@@ -355,9 +309,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5484,
-    "Longitude": 19.0535,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5484,19.0535"
+    "": 41
   },
   {
     "ID": 25,
@@ -369,10 +321,8 @@
     "Group": "🍽️ Food & Drink",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5455,
-    "Longitude": 19.0516,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5455,19.0516"
+    "Coordinate Compound": "47.551350, 19.057186",
+    "": 38
   },
   {
     "ID": 26,
@@ -385,9 +335,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5495,
-    "Longitude": 19.0553,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5495,19.0553"
+    "": 56
   },
   {
     "ID": 27,
@@ -399,10 +347,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5512,
-    "Longitude": 19.0584,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5512,19.0584"
+    "Coordinate Compound": "47.553408, 19.052926",
+    "": 25
   },
   {
     "ID": 28,
@@ -414,10 +360,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5513,
-    "Longitude": 19.0586,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5513,19.0586"
+    "Coordinate Compound": "47.551980, 19.055319",
+    "": 35
   },
   {
     "ID": 29,
@@ -430,9 +374,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5514,
-    "Longitude": 19.0588,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5514,19.0588"
+    "": 55
   },
   {
     "ID": 30,
@@ -445,9 +387,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5517,
-    "Longitude": 19.0594,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5517,19.0594"
+    "": 40
   },
   {
     "ID": 31,
@@ -459,10 +399,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5518,
-    "Longitude": 19.0596,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5518,19.0596"
+    "Coordinate Compound": "47.554660, 19.055169",
+    "": 17
   },
   {
     "ID": 32,
@@ -474,10 +412,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5499,
-    "Longitude": 19.0558,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5499,19.0558"
+    "Coordinate Compound": "47.552872, 19.052519",
+    "": 28
   },
   {
     "ID": 33,
@@ -489,10 +425,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5497,
-    "Longitude": 19.0554,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5497,19.0554"
+    "Coordinate Compound": "47.555167, 19.054504",
+    "": 14
   },
   {
     "ID": 34,
@@ -504,10 +438,8 @@
     "Group": "🎤 Stages",
     "Subgroup": "",
     "Priority": "Yes",
-    "Coordinate Compound": "",
-    "Latitude": 47.5498,
-    "Longitude": 19.0556,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5498,19.0556"
+    "Coordinate Compound": "47.557918, 19.059246",
+    "": 5
   },
   {
     "ID": 35,
@@ -520,9 +452,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5465,
-    "Longitude": 19.0492,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5465,19.0492"
+    "": 21
   },
   {
     "ID": 36,
@@ -535,9 +465,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "",
-    "Latitude": 47.5502,
-    "Longitude": 19.0564,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5502,19.0564"
+    "": 52
   },
   {
     "ID": 37,
@@ -549,10 +477,8 @@
     "Group": "🎤 Stages",
     "Subgroup": "",
     "Priority": "Yes",
-    "Coordinate Compound": "",
-    "Latitude": 47.5503,
-    "Longitude": 19.0566,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5503,19.0566"
+    "Coordinate Compound": "47.557129, 19.059203",
+    "": 6
   },
   {
     "ID": 38,
@@ -565,9 +491,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5479,
-    "Longitude": 19.0518,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5479,19.0518"
+    "": 1
   },
   {
     "ID": 39,
@@ -579,10 +503,8 @@
     "Group": "🎤 Stages",
     "Subgroup": "",
     "Priority": "Yes",
-    "Coordinate Compound": "",
-    "Latitude": 47.5482,
-    "Longitude": 19.0522,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5482,19.0522"
+    "Coordinate Compound": "47.553349, 19.053624",
+    "": 22
   },
   {
     "ID": 40,
@@ -595,9 +517,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5481,
-    "Longitude": 19.0522,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5481,19.0522"
+    "": 54
   },
   {
     "ID": 41,
@@ -609,10 +529,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5487,
-    "Longitude": 19.0517,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5487,19.0517"
+    "Coordinate Compound": "47.555486, 19.054193",
+    "": 13
   },
   {
     "ID": 42,
@@ -624,10 +542,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5504,
-    "Longitude": 19.0568,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5504,19.0568"
+    "Coordinate Compound": "47.555116, 19.057701",
+    "": 66
   },
   {
     "ID": 43,
@@ -640,9 +556,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5576,
-    "Longitude": 19.0561,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5576,19.0561"
+    "": 64
   },
   {
     "ID": 44,
@@ -654,10 +568,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5486,
-    "Longitude": 19.0532,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5486,19.0532"
+    "Coordinate Compound": "47.551778, 19.056714",
+    "": 33
   },
   {
     "ID": 45,
@@ -669,10 +581,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5487,
-    "Longitude": 19.0534,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5487,19.0534"
+    "Coordinate Compound": "47.551741, 19.057283",
+    "": 32
   },
   {
     "ID": 46,
@@ -684,10 +594,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5488,
-    "Longitude": 19.0536,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5488,19.0536"
+    "Coordinate Compound": "47.553581, 19.052991",
+    "": 24
   },
   {
     "ID": 47,
@@ -699,10 +607,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5516,
-    "Longitude": 19.0592,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5516,19.0592"
+    "Coordinate Compound": "47.553205, 19.052765",
+    "": 26
   },
   {
     "ID": 48,
@@ -714,10 +620,8 @@
     "Group": "🎤 Stages",
     "Subgroup": "",
     "Priority": "Yes",
-    "Coordinate Compound": "",
-    "Latitude": 47.5515,
-    "Longitude": 19.0592,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5515,19.0592"
+    "Coordinate Compound": "47.553002, 19.053570",
+    "": 27
   },
   {
     "ID": 49,
@@ -729,10 +633,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5519,
-    "Longitude": 19.0598,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5519,19.0598"
+    "Coordinate Compound": "47.552075, 19.057218",
+    "": 31
   },
   {
     "ID": 50,
@@ -745,9 +647,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5483,
-    "Longitude": 19.0526,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5483,19.0526"
+    "": 71
   },
   {
     "ID": 51,
@@ -760,9 +660,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5484,
-    "Longitude": 19.0528,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5484,19.0528"
+    "": 59
   },
   {
     "ID": 52,
@@ -775,9 +673,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5485,
-    "Longitude": 19.0537,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5485,19.0537"
+    "": 3
   },
   {
     "ID": 53,
@@ -789,10 +685,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "Yes",
-    "Coordinate Compound": "",
-    "Latitude": 47.5501,
-    "Longitude": 19.0562,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5501,19.0562"
+    "Coordinate Compound": "47.554892, 19.056113",
+    "": 15
   },
   {
     "ID": 54,
@@ -805,9 +699,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5505,
-    "Longitude": 19.0571,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5505,19.0571"
+    "": 69
   },
   {
     "ID": 55,
@@ -820,9 +712,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551682, 19.052099",
-    "Latitude": 47.5506,
-    "Longitude": 19.0572,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5506,19.0572"
+    "": 29
   },
   {
     "ID": 56,
@@ -834,10 +724,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5507,
-    "Longitude": 19.0574,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5507,19.0574"
+    "Coordinate Compound": "47.556883, 19.056864",
+    "": 9
   },
   {
     "ID": 57,
@@ -850,9 +738,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5508,
-    "Longitude": 19.0576,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5508,19.0576"
+    "": 63
   },
   {
     "ID": 58,
@@ -865,9 +751,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5509,
-    "Longitude": 19.0578,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5509,19.0578"
+    "": 39
   },
   {
     "ID": 59,
@@ -879,10 +763,8 @@
     "Group": "🎤 Stages",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5517,
-    "Longitude": 19.0587,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5517,19.0587"
+    "Coordinate Compound": "47.557274, 19.057830",
+    "": 7
   },
   {
     "ID": 60,
@@ -895,9 +777,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": 47.5511,
-    "Longitude": 19.0582,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5511,19.0582"
+    "": 47
   },
   {
     "ID": 61,
@@ -909,10 +789,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": 47.5494,
-    "Longitude": 19.0548,
-    "GoogleMapsLink": "https://www.google.com/maps/search/?api=1&query=47.5494,19.0548"
+    "Coordinate Compound": "47.554552, 19.053946",
+    "": 18
   },
   {
     "ID": "",
@@ -924,10 +802,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "Coordinate Compound": "47.552205, 19.054697",
+    "": 37
   },
   {
     "ID": "",
@@ -940,9 +816,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": 58
   },
   {
     "ID": "",
@@ -955,9 +829,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": 53
   },
   {
     "ID": "",
@@ -970,9 +842,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": 51
   },
   {
     "ID": "",
@@ -985,9 +855,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": ""
   },
   {
     "ID": "",
@@ -999,10 +867,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "Coordinate Compound": "47.551350, 19.057186",
+    "": 42
   },
   {
     "ID": "",
@@ -1015,9 +881,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": 67
   },
   {
     "ID": "",
@@ -1030,9 +894,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": 60
   },
   {
     "ID": "",
@@ -1044,10 +906,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "Coordinate Compound": "47.557057, 19.057358",
+    "": 8
   },
   {
     "ID": "",
@@ -1059,10 +919,8 @@
     "Group": "🎤 Stages",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "Coordinate Compound": "47.555544, 19.056092",
+    "": 11
   },
   {
     "ID": "",
@@ -1074,10 +932,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "Coordinate Compound": "47.551770, 19.056113",
+    "": 34
   },
   {
     "ID": "",
@@ -1090,9 +946,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.550034, 19.058091",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": ""
   },
   {
     "ID": "",
@@ -1105,9 +959,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.541681, 19.047911",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": ""
   },
   {
     "ID": "",
@@ -1120,9 +972,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.552062, 19.048810",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": ""
   },
   {
     "ID": "",
@@ -1135,9 +985,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.552306, 19.046083",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": ""
   },
   {
     "ID": "",
@@ -1150,9 +998,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.518023, 19.082745",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": ""
   },
   {
     "ID": "",
@@ -1165,8 +1011,6 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.489236, 19.047960",
-    "Latitude": "",
-    "Longitude": "",
-    "GoogleMapsLink": ""
+    "": ""
   }
 ]
