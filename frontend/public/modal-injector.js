@@ -172,6 +172,39 @@ export function hideModal(id) {
 }
 
 /**
+ * ───────────────────────────────────────────────────────────────
+ * showToast(message, duration)
+ * 
+ * 🍑 Displays a soft peach toast notification centered near bottom.
+ * 
+ * - Fades in with .toast and .visible classes (CSS handles animation)
+ * - Automatically fades out and removes after given duration
+ * - Used for user-facing alerts (e.g. location saved, copied, etc.)
+ * 
+ * @param {string} message - HTML-safe message to display
+ * @param {number} duration - Duration in ms before auto-dismiss (default: 5000)
+ * ───────────────────────────────────────────────────────────────
+ */
+export function showToast(message, duration = 5000) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerHTML = message;
+
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add("visible");
+  });
+
+  setTimeout(() => {
+    toast.classList.remove("visible");
+    setTimeout(() => {
+      toast.remove();
+    }, 400);
+  }, duration);
+}
+
+/**
  * Modal Injector: My Stuff
  *
  * Dynamically creates and injects the "My Stuff" modal into the DOM.

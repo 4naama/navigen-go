@@ -10,6 +10,7 @@ import {
   showShareModal,
   createIncomingLocationModal,
   saveToLocationHistory,
+  showToast,
   showMyStuffModal,
   flagStyler
 } from './modal-injector.js';
