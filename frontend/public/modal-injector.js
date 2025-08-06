@@ -914,6 +914,14 @@ export function createDonationModal(isRepeat = false) {
     bodyHTML: `
       <div class="modal-shop-item">
         <p>${intro}</p>
+
+        <div class="donation-note-wrapper">
+          <div class="donation-note">
+            🕐 Heads up! The first payment might take a few seconds to load securely.<br />
+            <span class="smiley">Thanks for your patience.</span>
+          </div>
+        </div>
+
         <div class="donation-options">
           <button class="donation-option donate-btn" data-amount="3">
             ${t("donation.btn.coffee")}
@@ -928,11 +936,13 @@ export function createDonationModal(isRepeat = false) {
             <span class="donation-sub">${t("donation.btn.fuel.sub")}</span>
           </button>
         </div>
+
         <div class="modal-actions">
           <button class="modal-body-button" id="donation-decline">${declineLabel}</button>
         </div>
       </div>
     `,
+
     layout: "action"
   });
 
