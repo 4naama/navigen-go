@@ -329,6 +329,13 @@ function clearSearch() {
       hideStripeLoader();
     }
     
+    // 👋 Show welcome toast in standalone/PWA mode
+    if (isStandalone()) {
+      setTimeout(() => {
+        showToast("👋 Tap to begin using Navigen!", 6000);
+      }, 1200); // Slight delay for a smoother experience
+    }
+
     // 🌐 Detect and apply user's preferred language (from localStorage or browser),
     // then set <html lang="...">, text direction (LTR/RTL), load translations,
     // and inject static UI text content
