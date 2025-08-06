@@ -9,6 +9,7 @@ import {
   showModal,
   showShareModal,
   createIncomingLocationModal,
+  saveToLocationHistory,
   showMyStuffModal,
   flagStyler
 } from './modal-injector.js';
@@ -52,18 +53,6 @@ function hideStripeLoader() {
   const loader = document.getElementById("stripe-loader");
   if (loader) loader.style.display = "none";
 }
-
-// 🔄 Initialize Stripe and wire donation flow with UI loader support
-document.addEventListener("DOMContentLoaded", () => {
-  showStripeLoader();
-  try {
-    initStripe(STRIPE_PUBLIC_KEY);
-  } finally {
-    hideStripeLoader();
-  }
-
-});
-
 
 const state = {};
 let geoPoints = [];
@@ -782,30 +771,31 @@ window.showThankYouToast = function () {
   setTimeout(() => div.remove(), 4000);
 };
 
-// 🔄 Initialize Stripe and wire donation flow with UI loader support
 document.addEventListener("DOMContentLoaded", () => {
-  // ✅ Show loader while initializing Stripe
-  showStripeLoader();
+  console.log("📡 DOM loaded — checking for ?at parameter");
 
-  // ✅ Initialize Stripe.js client
-  initStripe(STRIPE_PUBLIC_KEY).finally(() => {
-    hideStripeLoader();
-  });
+  const at = new URLSearchParams(location.search).get("at");
+  console.log("🔍 URL param ?at =", at);
 
-  // 🔘 Wire donation buttons
-  document.querySelectorAll(".donate-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const amount = parseInt(btn.dataset.amount, 10);
-      if (!amount) return console.warn("❌ Invalid amount:", btn);
+  if (at) {
+    console.log("✅ Found shared location — processing");
 
-      handleDonation(amount, {
-        source: "donation-modal"
-      });
-    });
-  });
+    saveToLocationHistory(at); // 🧠 Store silently in local history
 
-  // 🧹 Clean up URL
+    const gmaps = `https://maps.google.com?q=${at}`;
+    console.log("🔗 Google Maps link:", gmaps);
+
+    showToast(
+      `📍 Friend’s location received — <a href="${gmaps}" target="_blank">open in Google Maps</a><br><span class="subtext">(You can find this later in Location History)</span>`,
+      8000
+    );
+  } else {
+    console.log("🕳️ No ?at parameter in URL");
+  }
+
+  // Optional: also log when history is cleared from URL
   window.history.replaceState({}, document.title, window.location.pathname);
+  console.log("🧹 URL cleaned");
 });
 
   const socialModal = document.getElementById("social-modal");
@@ -999,17 +989,3 @@ function showThankYouToast() {
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 4000);
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  showStripeLoader();
-
-  try {
-    initStripe(STRIPE_PUBLIC_KEY);
-  } catch (err) {
-    console.error("❌ initStripe crashed:", err);
-  } finally {
-    hideStripeLoader();
-  }
-
-  // Any other setup logic (button wiring, etc.)
-});
