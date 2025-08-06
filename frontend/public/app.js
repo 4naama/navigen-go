@@ -180,18 +180,19 @@ function showActionModal(action) {
 // 🎨 Group-specific background color (based on translation keys only)
 function colorFromGroup(groupKey) {
   const groupColors = {
-    "group.stages": "#ffe3e3",
-    "group.activities": "#fff2cc",
-    "group.food": "#d9f9d9",
-    "group.gates": "#e0f7fa",
-    "group.areas": "#ede7f6",
-    "group.shops": "#fce4ec",
-    "group.spas": "#e3f2fd",
-    "group.services": "#f8d7da",
-    "group.guests": "#ede7f6",
-    "group.transport": "#e1f5fe",
-    "group.popular": "#fff8e1" // add this!
+      "group.stages": "#ffe3e3",         // Light Red / Stages
+      "group.activities": "#fff2cc",     // Pale Yellow / Activities
+      "group.food": "#d9f9d9",           // Mint Green / Food & Drink
+      "group.gates": "#e0f7fa",          // Sky Teal / Gates
+      "group.areas": "#ede7f6",          // Lavender / Main Areas
+      "group.shops": "#fce4ec",          // Blush Pink / Shops
+      "group.spas": "#e3f2fd",           // Soft Blue / Spas
+      "group.services": "#f8d7da",       // Rose Pink / Services
+      "group.guests": "#ede7f6",         // Light Purple / Guest Services
+      "group.transport": "#8FD19E",      // Fern Green / Transport ✅ updated
+      "group.popular": "#fff8e1"         // Cream Yellow / Popular
   };
+
   return groupColors[groupKey] || "#f2f2f2";
 }
 
@@ -304,12 +305,35 @@ function clearSearch() {
     document.documentElement.lang = lang;
     document.documentElement.dir = ["ar", "he", "fa", "ur", "ps", "ckb", "dv", "syc", "yi"].includes(lang) ? "rtl" : "ltr";
 
-    await loadTranslations(lang);      // ✅ Load selected language
-    injectStaticTranslations();        // ✅ Apply static translations
-  
-    createMyStuffModal();
-    setupMyStuffModalLogic();
-    flagStyler(); // ✅ apply titles to any flags inside modal
+    await loadTranslations(lang);        // ✅ Load selected language
+    injectStaticTranslations();          // ✅ Apply static translations
+
+    createMyStuffModal();                // 🎛️ Inject the "My Stuff" modal
+
+    // 💬 Reusable toast function for short alerts
+    function showToast(htmlContent, timeout = 5000) {
+      const toast = document.createElement("div");
+      toast.className = "toaster";
+      toast.innerHTML = htmlContent;
+
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), timeout);
+    }
+
+    // 📥 Check for incoming shared location (?at=...)
+    const at = new URLSearchParams(location.search).get("at");
+    if (at) {
+      saveToLocationHistory(at); // 🧠 Store silently in local history
+
+      const gmaps = `https://maps.google.com?q=${at}`;
+      showToast(
+        `📍 Friend’s location received — <a href="${gmaps}" target="_blank">open in Google Maps</a><br><span class="subtext">(You can find this later in Location History)</span>`,
+        8000
+      );
+    }
+
+    setupMyStuffModalLogic();           // 🧩 Setup tab handling inside modal
+    flagStyler();                       // 🌐 Apply title/alt to any flag icons
 
     const [actions, structure, geoPointsData] = await Promise.all([
       fetch('data/actions.json').then(res => res.json()),
@@ -479,16 +503,8 @@ function clearSearch() {
 
   const locationModal = document.getElementById("share-location-modal");
   const coordsDisplay = document.getElementById("location-coords");
-  const shareButton = document.getElementById("location-share-button");
-  
-  // ✅ Auto-open "Received Location" modal if page was opened from a shared GPS link
-  const params = new URLSearchParams(window.location.search);
-  const at = params.get("at");
+  const shareButton = document.getElementById("location-share-button");  
 
-  if (at) {
-    createIncomingLocationModal(at);
-  }  
-  
   if (alertButton && alertModal && alertModalContent) {
     alertButton.addEventListener("click", () => {
       alertModalContent.innerHTML = "<p>Loading...</p>";

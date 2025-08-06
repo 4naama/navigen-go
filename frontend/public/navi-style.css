@@ -1068,52 +1068,67 @@ button:hover {
   box-shadow: 0 0 0 1px #ffecb3;
 }
 
-
 /* Per-group colored borders (text stays black) */
-.quick-button[data-group="🎤 Stages"]              { border-color: #b197fc; }
-.quick-button[data-group="🎪 Activities & Experiences"] { border-color: #5c7cfa; }
-.quick-button[data-group="🍽️ Food & Drink"]        { border-color: #fab005; }
-.quick-button[data-group="🚻 Facilities"]          { border-color: #adb5bd; }
-.quick-button[data-group="🚪 Exit / Entry Gates"]  { border-color: #20c997; }
-.quick-button[data-group="🛍️ Shops"]               { border-color: #f783ac; }
-.quick-button[data-group="🚖 Transport"]           { border-color: #339af0; }
-.quick-button[data-group="💆 Spas"]                { border-color: #74c0fc; }
-.quick-button[data-group="🛠️ Services"]            { border-color: #e03131; }
-.quick-button[data-group="👥 Guest Services"]      { border-color: #845ef7; }
-.quick-button[data-group="🗺️ Main Areas"]          { border-color: #228be6; }
-.quick-button[data-group="💬 Social"]              { border-color: #12b886; }
-.quick-button[data-group="⭐ Popular"]              { border-color: #ffc107; }
-.quick-button[data-group="🧩 Community Zone"]       { border-color: #00bcd4; }
+.quick-button[data-group="🎤 Stages"]              { border-color: #b197fc; }       /* Lavender */
+.quick-button[data-group="🎪 Activities & Experiences"] { border-color: #5c7cfa; }   /* Soft Indigo */
+.quick-button[data-group="🍽️ Food & Drink"]        { border-color: #fab005; }       /* Mustard */
+.quick-button[data-group="🚻 Facilities"]          { border-color: #d2d8a4; }       /* Olive pastel */
+.quick-button[data-group="🚪 Exit / Entry Gates"]  { border-color: #20c997; }       /* Emerald Mint */
+.quick-button[data-group="🛍️ Shops"]               { border-color: #e0a96d; }       /* Caramel */
+.quick-button[data-group="🚖 Transport"]           { border-color: #8FD19E; }       /* Fern Green */
+.quick-button[data-group="💆 Spas"]                { border-color: #74c0fc; }       /* Sky Blue */
+.quick-button[data-group="🛠️ Services"]            { border-color: #e03131; }       /* Coral Red */
+.quick-button[data-group="👥 Guest Services"]      { border-color: #d0a5e4; }       /* Mauve */
+.quick-button[data-group="🗺️ Main Areas"]          { border-color: #228be6; }       /* Clean Blue */
+.quick-button[data-group="💬 Social"]              { border-color: #12b886; }       /* Teal Green */
+.quick-button[data-group="⭐ Popular"]              { border-color: #ffc107; }       /* Yellow Star */
+.quick-button[data-group="🧩 Community Zone"]       { border-color: #fbb8ac; }       /* Pastel Peach */
 
 .quick-button[data-group="🎤 Stages"]               { background-color: rgba(177, 151, 252, 0.06); }
 .quick-button[data-group="🎪 Activities & Experiences"] { background-color: rgba(92, 124, 250, 0.06); }
 .quick-button[data-group="🍽️ Food & Drink"]         { background-color: rgba(250, 176, 5, 0.06); }
-.quick-button[data-group="🚻 Facilities"]           { background-color: rgba(173, 181, 189, 0.06); }
+.quick-button[data-group="🚻 Facilities"]           { background-color: rgba(210, 216, 164, 0.06); }
 .quick-button[data-group="🚪 Exit / Entry Gates"]   { background-color: rgba(32, 201, 151, 0.06); }
-.quick-button[data-group="🛍️ Shops"]                { background-color: rgba(247, 131, 172, 0.06); }
-.quick-button[data-group="🚖 Transport"]            { background-color: rgba(51, 154, 240, 0.06); }
+.quick-button[data-group="🛍️ Shops"]                { background-color: rgba(224, 169, 109, 0.06); }
+.quick-button[data-group="🚖 Transport"]            { background-color: rgba(143, 209, 158, 0.06); }
 .quick-button[data-group="💆 Spas"]                 { background-color: rgba(116, 192, 252, 0.06); }
 .quick-button[data-group="🛠️ Services"]             { background-color: rgba(224, 49, 49, 0.06); }
-.quick-button[data-group="👥 Guest Services"]       { background-color: rgba(132, 94, 247, 0.06); }
+.quick-button[data-group="👥 Guest Services"]       { background-color: rgba(208, 165, 228, 0.06); }
 .quick-button[data-group="🗺️ Main Areas"]           { background-color: rgba(34, 139, 230, 0.06); }
 .quick-button[data-group="💬 Social"]               { background-color: rgba(18, 184, 134, 0.06); }
 .quick-button[data-group="⭐ Popular"]               { background-color: rgba(255, 193, 7, 0.06); }
-.quick-button[data-group="🧩 Community Zone"]        { background-color: rgba(0, 188, 212, 0.06); }
+.quick-button[data-group="🧩 Community Zone"]        { background-color: rgba(251, 184, 172, 0.06); }
 
 .group-header-button[data-group="🎤 Stages"]               { background-color: rgba(177, 151, 252, 0.4); }
 .group-header-button[data-group="🎪 Activities & Experiences"] { background-color: rgba(92, 124, 250, 0.4); }
 .group-header-button[data-group="🍽️ Food & Drink"]         { background-color: rgba(250, 176, 5, 0.4); }
-.group-header-button[data-group="🚻 Facilities"]           { background-color: rgba(173, 181, 189, 0.4); }
+.group-header-button[data-group="🚻 Facilities"]           { background-color: rgba(210, 216, 164, 0.4); }
 .group-header-button[data-group="🚪 Exit / Entry Gates"]   { background-color: rgba(32, 201, 151, 0.4); }
-.group-header-button[data-group="🛍️ Shops"]                { background-color: rgba(247, 131, 172, 0.4); }
-.group-header-button[data-group="🚖 Transport"]            { background-color: rgba(51, 154, 240, 0.4); }
+.group-header-button[data-group="🛍️ Shops"]                { background-color: rgba(224, 169, 109, 0.4); }
+.group-header-button[data-group="🚖 Transport"]            { background-color: rgba(143, 209, 158, 0.4); }
 .group-header-button[data-group="💆 Spas"]                 { background-color: rgba(116, 192, 252, 0.4); }
 .group-header-button[data-group="🛠️ Services"]             { background-color: rgba(224, 49, 49, 0.4); }
-.group-header-button[data-group="👥 Guest Services"]       { background-color: rgba(132, 94, 247, 0.4); }
+.group-header-button[data-group="👥 Guest Services"]       { background-color: rgba(208, 165, 228, 0.4); }
 .group-header-button[data-group="🗺️ Main Areas"]           { background-color: rgba(34, 139, 230, 0.4); }
 .group-header-button[data-group="💬 Social"]               { background-color: rgba(18, 184, 134, 0.4); }
 .group-header-button[data-group="⭐ Popular"]               { background-color: rgba(255, 193, 7, 0.4); }
-.group-header-button[data-group="🧩 Community Zone"]        { background-color: rgba(0, 188, 212, 0.4); }
+.group-header-button[data-group="🧩 Community Zone"]        { background-color: rgba(251, 184, 172, 0.4); }
+
+/* Subtle group background tints */
+.group-buttons button.quick-button[data-group="Stages"]              { background-color: #b197fc0f; }
+.group-buttons button.quick-button[data-group="Activities & Experiences"] { background-color: #5c7cfa0f; }
+.group-buttons button.quick-button[data-group="Food & Drink"]        { background-color: #fab0050f; }
+.group-buttons button.quick-button[data-group="Facilities"]          { background-color: #d2d8a40f; }
+.group-buttons button.quick-button[data-group="Exit / Entry Gates"]  { background-color: #20c9970f; }
+.group-buttons button.quick-button[data-group="Shops"]               { background-color: #e0a96d0f; }
+.group-buttons button.quick-button[data-group="Transport"]           { background-color: #8fd19e0f; }
+.group-buttons button.quick-button[data-group="Spas"]                { background-color: #74c0fc0f; }
+.group-buttons button.quick-button[data-group="Services"]            { background-color: #e031310f; }
+.group-buttons button.quick-button[data-group="Guest Services"]      { background-color: #d0a5e40f; }
+.group-buttons button.quick-button[data-group="Main Areas"]          { background-color: #228be60f; }
+.group-buttons button.quick-button[data-group="Social"]              { background-color: #12b8860f; }
+.group-buttons button.quick-button[data-group="Popular"]             { background-color: #ffc1070f; }
+.group-buttons button.quick-button[data-group="Community Zone"]      { background-color: #fbb8ac0f; }
 
 /* Optional orphan centering */
 .group-buttons:has(.quick-button:nth-last-child(1):nth-child(odd)) {
@@ -1228,33 +1243,6 @@ button:hover {
   background-color: rgba(0, 0, 0, 0.05);
   transition: background-color 0.2s ease;
 }
-
-/* Subtle group background tints */
-.group-buttons button.quick-button[data-group="Stages"]              { background-color: #b197fc0f; }
-.group-buttons button.quick-button[data-group="Activities & Experiences"] { background-color: #5c7cfa0f; }
-.group-buttons button.quick-button[data-group="Food & Drink"]        { background-color: #fab0050f; }
-.group-buttons button.quick-button[data-group="Facilities"]          { background-color: #adb5bd0f; }
-.group-buttons button.quick-button[data-group="Exit / Entry Gates"]  { background-color: #20c9970f; }
-.group-buttons button.quick-button[data-group="Shops"]               { background-color: #f783ac0f; }
-.group-buttons button.quick-button[data-group="Transport"]           { background-color: #339af00f; }
-.group-buttons button.quick-button[data-group="Spas"]                { background-color: #74c0fc0f; }
-.group-buttons button.quick-button[data-group="Services"]            { background-color: #e031310f; }
-.group-buttons button.quick-button[data-group="Guest Services"]      { background-color: #845ef70f; }
-.group-buttons button.quick-button[data-group="Main Areas"]          { background-color: #228be60f; }
-.group-buttons button.quick-button[data-group="Social"]              { background-color: #12b8860f; }
-
-.group-header-button[data-group="Stages"]              { background-color: #b197fc66; }
-.group-header-button[data-group="Activities & Experiences"] { background-color: #5c7cfa66; }
-.group-header-button[data-group="Food & Drink"]        { background-color: #fab00566; }
-.group-header-button[data-group="Facilities"]          { background-color: #adb5bd66; }
-.group-header-button[data-group="Exit / Entry Gates"]  { background-color: #20c99766; }
-.group-header-button[data-group="Shops"]               { background-color: #f783ac66; }
-.group-header-button[data-group="Transport"]           { background-color: #339af066; }
-.group-header-button[data-group="Spas"]                { background-color: #74c0fc66; }
-.group-header-button[data-group="Services"]            { background-color: #e0313166; }
-.group-header-button[data-group="Guest Services"]      { background-color: #845ef766; }
-.group-header-button[data-group="Main Areas"]          { background-color: #228be666; }
-.group-header-button[data-group="Social"]              { background-color: #12b88666; }
 
 #help-modal,
 #language-modal,

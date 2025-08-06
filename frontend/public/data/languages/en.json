@@ -74,5 +74,10 @@
   "share.button": "Share Location",
   "share.cancel": "Cancel",
   "share.intro": "You can share your current location with a friend:",
-  "share.includeMap": "Include a “What’s around me” map link"
+  "share.includeMap": "Include a “What’s around me” map link",
+
+  "locationHistory.emptyMessage": "No shared locations yet",
+  "locationHistory.empty.body": "You haven’t received any locations from friends.",
+  "locationHistory.openInMaps": "Open in Google Maps"
+
 }

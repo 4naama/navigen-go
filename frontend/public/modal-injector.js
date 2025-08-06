@@ -422,6 +422,39 @@ export function createMyStuffModal() {
         renderPurchaseHistory(); // ✅ Called AFTER container is ready
       }
 
+      else if (item.view === "location-history") {
+        modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
+        modal.classList.add("modal-action");
+
+        // 🧱 Modal body container
+        body.innerHTML = `
+          <div id="location-history"></div>
+        `;
+
+        // ✅ Footer with correct style (no body buttons!)
+        actions.innerHTML = `
+          <div class="modal-footer">
+            <button class="modal-footer-button" id="my-stuff-location-close">
+              ${t("modal.mystuff.resolved")}
+            </button>
+          </div>
+        `;
+
+        // Add resolved button into #my-stuff-modal only if not already added
+        appendResolvedButton(actions, "my-stuff-modal");
+
+
+        // 🧹 Close modal on button click
+        const closeBtn = document.getElementById("my-stuff-location-close");
+        if (closeBtn) {
+          closeBtn.addEventListener("click", () => {
+            hideModal("my-stuff-modal");
+          });
+        }
+
+        renderLocationHistory(); // 📍 Inject saved locations or empty state
+      }
+
       else if (item.view === "social") {
         
       modal.classList.remove("modal-menu", "modal-language", "modal-action", "modal-alert");
@@ -519,8 +552,7 @@ export function createMyStuffModal() {
         appendResolvedButton(actions, "my-stuff-modal");
       }
 
-
-        const viewsWithResolved = ["interests", "purchases", "language", "social", "reset", "data", "terms"];
+        const viewsWithResolved = ["interests", "purchases", "location-history", "language", "social", "reset", "data", "terms"];
         actions.innerHTML = viewsWithResolved.includes(state)
           ? `<button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>`
           : '';
@@ -552,6 +584,11 @@ export function setupMyStuffModalLogic() {
       title: "My Purchase History",
       view: "purchases",
       desc: "Check payment and documentation status"
+    },
+    { icon: "📍",
+      title: "My Location History",
+      view: "location-history",
+      desc: "View locations received"
     },
     {
       icon: `<img src="/assets/language.svg" alt="Language" class="icon-img">`,
@@ -656,9 +693,11 @@ async function handleShare() {
     return;
   }
 
+  const gmaps = `https://maps.google.com?q=${coords}`;
+  const navigen = `https://navigen.pages.dev/?at=${coords}`;
   const text = includeNavigen
-    ? `📍 ${coords}\nhttps://navigen.pages.dev/?at=${coords}`
-    : `📍 ${coords}`;
+    ? `📍 ${coords}\n${gmaps}\n${navigen}`
+    : `📍 ${coords}\n${gmaps}`;
 
   try {
     if (navigator.share) {
@@ -944,6 +983,29 @@ export function buildAccordion(structure_data, geoPoints) {
   });
 }
 
+/**
+ * Saves a received coordinate into Location History.
+ * Called when a user opens a link like ?at=47.4979,19.0402
+ * Prevents immediate duplicates and stores newest first.
+ */
+export function saveToLocationHistory(coords) {
+  const key = "location-history";
+
+  const entry = {
+    coords,
+    timestamp: Date.now()
+  };
+
+  let history = JSON.parse(localStorage.getItem(key) || "[]");
+
+  // 🔁 Avoid saving same coordinate twice in a row
+  if (history.length && history[0].coords === coords) return;
+
+  history.unshift(entry); // newest at top
+  localStorage.setItem(key, JSON.stringify(history));
+}
+
+
 // Renders entries stored in localStorage.myPurchases (full strings, not keys)
 function renderPurchaseHistory() {
   const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
@@ -998,6 +1060,52 @@ function renderPurchaseHistory() {
     container.appendChild(spacer);
   });
 
+}
+
+// Renders entries stored in localStorage.location-history (coords + timestamp)
+export function renderLocationHistory() {
+  const container = document.getElementById("location-history");
+  container.innerHTML = "";
+
+  const history = JSON.parse(localStorage.getItem("location-history") || "[]");
+
+  if (history.length === 0) {
+    const emptyMsg = document.createElement("div");
+    emptyMsg.className = "empty-state";
+    emptyMsg.innerHTML = `
+      <p>${t("locationHistory.emptyMessage")}</p>
+      <p style="opacity: 0.75;">${t("locationHistory.empty.body")}</p>
+    `;
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  history.forEach(entry => {
+    const card = document.createElement("div");
+    card.className = "purchase-card"; // 📦 Reuse existing card style
+
+    const label = document.createElement("div");
+    label.className = "label";
+    label.innerHTML = `<strong>📍 ${entry.coords}</strong>`;
+
+    const timestamp = document.createElement("div");
+    timestamp.className = "timestamp";
+    timestamp.textContent = `📅 ${new Date(entry.timestamp).toLocaleString()}`;
+
+    const link = document.createElement("div");
+    link.className = "subtext";
+    link.innerHTML = `<a href="https://maps.google.com?q=${entry.coords}" target="_blank">${t("locationHistory.openInMaps")}</a>`;
+
+    card.appendChild(label);
+    card.appendChild(timestamp);
+    card.appendChild(link);
+    container.appendChild(card);
+
+    // ↕️ Add vertical spacing between cards
+    const spacer = document.createElement("div");
+    spacer.style.height = "1em";
+    container.appendChild(spacer);
+  });
 }
 
 // Styles flag icons by setting their title from 2-letter alt text.
