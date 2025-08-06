@@ -1403,22 +1403,24 @@ button:hover {
   line-height: 1.6;
 }
 
-/* ────────────── Toast Notification ────────────── */
+/* ────────────── Toast Notification (Updated) ────────────── */
 .toast {
   position: fixed;
   bottom: 100px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: #fff5e5; /* 🍑 Soft peach */
-  color: #8a4600;       /* 🍂 Warm brown/orange text */
+  background: #ffffff; /* ✅ Clean white */
+  color: #333333;       /* ✅ Standard readable dark */
   padding: 14px 24px;
   border-radius: 12px;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 500;
+  font-family: inherit; /* ✅ Match rest of app */
+  text-align: center;   /* ✅ Center all text and inline elements */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 10000;
   opacity: 0;
-  pointer-events: none;
+  pointer-events: auto; /* ✅ Enable interaction */
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
@@ -1427,12 +1429,55 @@ button:hover {
   transform: translateX(-50%) translateY(0);
 }
 
+/* 📦 Center contents inside toast */
+.toast-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 🔘 Button inside toast (matching resolved button) */
+.toast-btn {
+  margin-top: 10px;
+  background: #1976d2;     /* ✅ Resolved blue */
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.toast-btn:hover {
+  background: #125ea7;     /* Darker on hover */
+}
+
+/* 📝 Optional subtext */
+.subtext {
+  font-size: 13px;
+  color: #666;
+  margin-top: 6px;
+}
+
+.toast-link {
+  color: #1976d2; /* Resolved blue */
+  font-weight: 500;
+  text-decoration: underline;
+  margin-top: 8px;
+}
+.toast-link:hover {
+  text-decoration: none;
+}
+
 #scroll-zone {
   overflow-y: auto;
   height: calc(100vh - 400px); /* adjust this if layout shifts */
   padding-bottom: 90px;
 }
-
 
 /*** OLD
 /* ==========================================================================

@@ -16,15 +16,20 @@ export function initStripe(publicKey) {
       return;
     }
 
-    // 🎯 Detect supported locale
+    const rawLang =
+      localStorage.getItem("lang") ||
+      navigator.language.slice(0, 2).toLowerCase() ||
+      "en";
+
     const supportedLocales = [
-      "auto", "en", "fr", "de", "es", "it", "ja", "zh", "nl", "pl", "pt",
-      "sv", "da", "fi", "nb", "cs", "hu", "sk"
+      "en", "es", "fr", "de", "it", "ja", "nl", "pl", "pt", "sv", "zh"
     ];
 
-    const rawLang = localStorage.getItem("lang") || navigator.language.slice(0, 2).toLowerCase() || "en";
-    const stripeLocale = supportedLocales.includes(rawLang) ? rawLang : "en";
-    console.log("📦 Stripe locale:", stripeLocale);
+    const stripeLocale = supportedLocales.includes(rawLang)
+      ? rawLang
+      : "en";
+
+    stripe = Stripe(publicKey, { locale: stripeLocale });
 
     stripe = Stripe(publicKey, { locale: stripeLocale });
     console.log("✅ Stripe initialized");

@@ -41,7 +41,6 @@ import { initStripe, handleDonation } from "./scripts/stripe.js";
 
 // ✅ Stripe public key (inject securely in production)
 const STRIPE_PUBLIC_KEY = "pk_test_51P45KEFf2RZOYEdOsmqtBoly5CcwH88pZjkQuGNxl7BpabdDgWtQIn8GwyyNrRsauztS8ZXJKyVPgd94ihTRyn8000NHQZM4Vs";
-
 console.log("🔑 Stripe Public Key:", STRIPE_PUBLIC_KEY);
 
 // 🔄 Initialize Stripe loader overlay controls
@@ -318,6 +317,17 @@ function clearSearch() {
   document.addEventListener('DOMContentLoaded', async () => {
     // 🧹 Clean up any leftover/ghost donation modal before anything runs
     document.getElementById("donation-modal")?.remove();
+
+    // 🚀 Initialize Stripe on load
+    showStripeLoader();
+
+    try {
+      initStripe(STRIPE_PUBLIC_KEY);
+    } catch (err) {
+      console.error("❌ initStripe failed:", err);
+    } finally {
+      hideStripeLoader();
+    }
     
     // 🌐 Detect and apply user's preferred language (from localStorage or browser),
     // then set <html lang="...">, text direction (LTR/RTL), load translations,
@@ -348,7 +358,16 @@ function clearSearch() {
 
       const gmaps = `https://maps.google.com?q=${at}`;
       showToast(
-        `📍 Friend’s location received — <a href="${gmaps}" target="_blank">open in Google Maps</a><br><span class="subtext">(You can find this later in Location History)</span>`,
+        `
+        <div class="toast-content">
+          📍 Friend’s location received —
+          <a href="${gmaps}" target="_blank" rel="noopener" class="toast-link">
+            open in Google Maps
+          </a>
+          <br />
+          <span class="subtext">(You can find this later in Location History)</span>
+        </div>
+        `,
         8000
       );
     }
