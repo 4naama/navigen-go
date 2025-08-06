@@ -335,23 +335,26 @@ export function createMyStuffModal() {
         
         if (item.view === "interests") {
           modal.classList.remove("modal-menu", "modal-language", "modal-action", "modal-alert");
-          modal.classList.add("modal-social"); // reuse same layout class
+          modal.classList.add("modal-social");
 
-        body.innerHTML = `
-          <div class="modal-social-body">
-            <p class="muted">Select topics you care about:</p>
-            <div class="community-grid">
-              <button class="community-button">🏆 Vote</button>
-              <button class="community-button">💫 Wish</button>
-              <button class="community-button">🧳 Lost</button>
-              <button class="community-button">📍 Track</button>
-              <button class="community-button">❓ Quizzy</button>
+          body.innerHTML = `
+            <div class="modal-social-body">
+              <p class="muted">Select topics you care about:</p>
+              <div class="community-grid">
+                <button class="community-button">🏆 Vote</button>
+                <button class="community-button">💫 Wish</button>
+                <button class="community-button">🧳 Lost</button>
+                <button class="community-button">📍 Track</button>
+                <button class="community-button">❓ Quizzy</button>
+              </div>
+              <p>*All features coming soon</p>
             </div>
-          </div>
-        `;
+          `;
 
-        }      
-              
+          // ✅ Just call footer button appender like others
+          appendResolvedButton(actions, "my-stuff-modal");
+        }
+                  
         if (item.view === "language") {
           body.innerHTML = `<div class="modal-language-body flag-list"></div>`;
           const flagList = body.querySelector(".flag-list");
@@ -474,7 +477,7 @@ export function createMyStuffModal() {
 
         renderPurchaseHistory(); // ✅ Called AFTER container is ready
       }
-          
+
       else if (item.view === "social") {
         
       modal.classList.remove("modal-menu", "modal-language", "modal-action", "modal-alert");
@@ -546,7 +549,7 @@ export function createMyStuffModal() {
           <p>${t("myStuff.data.resetPrompt")}</p>
           <div class="modal-actions">
             <a href="/assets/docs/navigen-privacy-policy.pdf" target="_blank" class="modal-body-button">
-              📄 ${t("data.fullLink")}
+              📄 ${t("myStuff.data.viewPolicy")}
             </a>
           </div>
         `;
@@ -554,16 +557,16 @@ export function createMyStuffModal() {
         appendResolvedButton(actions, "my-stuff-modal");
       }
 
+
       else if (item.view === "terms") {
         modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
         modal.classList.add("modal-action");
 
         body.innerHTML = `
-          <p>${t("terms.body.paragraph1")}</p>
-          <p>${t("terms.body.paragraph2")}</p>
+          <p>${t("myStuff.terms.body")}</p>
           <div class="modal-actions">
             <a href="/assets/docs/navigen-terms.pdf" target="_blank" class="modal-body-button">
-              📄 ${t("terms.fullLink")}
+              📄 ${t("myStuff.terms.viewFull")}
             </a>
           </div>
         `;
@@ -571,6 +574,7 @@ export function createMyStuffModal() {
         // Add resolved button into #my-stuff-modal only if not already added
         appendResolvedButton(actions, "my-stuff-modal");
       }
+
 
         const viewsWithResolved = ["interests", "purchases", "language", "social", "reset", "data", "terms"];
         actions.innerHTML = viewsWithResolved.includes(state)
@@ -610,12 +614,6 @@ export function setupMyStuffModalLogic() {
       title: "Language Settings",
       view: "language",
       desc: "Set preferred language"
-    },
-    {
-      icon: "📍",
-      title: "My Location History",
-      view: "locations",
-      desc: "View/save recent locations (if stored)"
     },
     {
       icon: "🌐",

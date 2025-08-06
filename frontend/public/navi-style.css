@@ -619,6 +619,33 @@ body.large-text {
   text-align: center;        /* ✅ Center-align for modals like Share or Confirm */
 }
 
+/* 🎁 Styled Stripe donation buttons inside modal */
+/* Applies only to buttons used for Stripe purchases */
+.modal-content form {
+  display: flex;             /* ✅ Ensures centering horizontally */
+  justify-content: center;  /* ✅ Centers button in modal */
+  margin-bottom: 1.2rem;     /* ✅ Adds space between each button group */
+}
+
+.modal-content button[type="submit"] {
+  width: 80%;                                 /* ✅ Uniform button width (responsive) */
+  padding: 0.9rem 1.4rem;                     /* ✅ Comfortable padding */
+  font-size: 16px;                            /* ✅ Slightly smaller text than modal body */
+  font-weight: 600;                           /* ✅ Strong readable label */
+  border: none;                               /* ✅ Clean borderless look */
+  border-radius: 10px;                        /* ✅ Rounded corners to match modal style */
+  background: linear-gradient(to right, #ffeac4, #fff5e5); /* ✅ Soft pastel background */
+  color: #5a3e00;                             /* ✅ Warm, friendly text color */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);  /* ✅ Subtle shadow for depth */
+  cursor: pointer;                            /* ✅ Clickable feel */
+  transition: all 0.2s ease;                  /* ✅ Smooth hover animation */
+}
+
+.modal-content button[type="submit"]:hover {
+  background: #ffe1b0;                        /* ✅ Slight darkening on hover */
+  transform: translateY(-2px);                /* ✅ Subtle lift on hover */
+}
+
 /* ──────────────── Scrollable Content Area ──────────────── */
 /* Ensures long content inside body scrolls properly */
 .modal-body {
@@ -1350,20 +1377,20 @@ button:hover {
 /* ────────────── Toast Notification ────────────── */
 .toast {
   position: fixed;
-  bottom: 80px;
+  bottom: 100px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: #222;
-  color: #fff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: bold;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  background: #fff5e5; /* 🍑 Soft peach */
+  color: #8a4600;       /* 🍂 Warm brown/orange text */
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 10000;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .toast.visible {
@@ -1673,16 +1700,12 @@ button:hover {
 /* Mirrors donation-option styling for visual consistency */
 
 .purchase-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25em;
-  padding: 1em 1.25em;
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  font-size: 0.95rem;
-  font-weight: 500;
+  background: #f9f9fc;                  /* 🧊 Soft, clean background */
+  border: 1px solid #e5e7eb;            /* 🪟 Subtle border */
+  border-radius: 12px;                  /* 💫 Rounded edges */
+  padding: 1rem 1.2rem;                 /* 📦 Space inside */
+  margin-bottom: 1rem;                  /* 📏 Space between cards */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04); /* ✨ Soft lift */
 }
 
 .purchase-card:hover {
