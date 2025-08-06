@@ -694,7 +694,7 @@ async function handleShare() {
   }
 
   const gmaps = `https://maps.google.com?q=${coords}`;
-  const navigen = `https://navigen.pages.dev/?at=${coords}`;
+  const navigen = `https://navigen.io/?at=${coords}`;
   const text = includeNavigen
     ? `📍 ${coords}\n${gmaps}\n${navigen}`
     : `📍 ${coords}\n${gmaps}`;

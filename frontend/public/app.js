@@ -34,6 +34,37 @@ function getUserLang() {
 
 const BACKEND_URL = "https://navigen-go.onrender.com";
 
+// ✅ Stripe Block
+import { initStripe, handleDonation } from "./scripts/stripe.js";
+
+// ✅ Stripe public key (inject securely in production)
+const STRIPE_PUBLIC_KEY = "pk_test_51P45KEFf2RZOYEdOsmqtBoly5CcwH88pZjkQuGNxl7BpabdDgWtQIn8GwyyNrRsauztS8ZXJKyVPgd94ihTRyn8000NHQZM4Vs";
+
+console.log("🔑 Stripe Public Key:", STRIPE_PUBLIC_KEY);
+
+// 🔄 Initialize Stripe loader overlay controls
+function showStripeLoader() {
+  const loader = document.getElementById("stripe-loader");
+  if (loader) loader.style.display = "flex";
+}
+
+function hideStripeLoader() {
+  const loader = document.getElementById("stripe-loader");
+  if (loader) loader.style.display = "none";
+}
+
+// 🔄 Initialize Stripe and wire donation flow with UI loader support
+document.addEventListener("DOMContentLoaded", () => {
+  showStripeLoader();
+  try {
+    initStripe(STRIPE_PUBLIC_KEY);
+  } finally {
+    hideStripeLoader();
+  }
+
+});
+
+
 const state = {};
 let geoPoints = [];
 let structure_data = [];
@@ -730,14 +761,6 @@ function clearSearch() {
   
 });  // ✅ End of DOMContentLoaded  
 
-// ✅ Stripe Block
-import { initStripe, handleDonation } from "./scripts/stripe.js";
-
-// ✅ Stripe public key (inject securely in production)
-const STRIPE_PUBLIC_KEY = "pk_test_51P45KEFf2RZOYEdOsmqtBoly5CcwH88pZjkQuGNxl7BpabdDgWtQIn8GwyyNrRsauztS8ZXJKyVPgd94ihTRyn8000NHQZM4Vs";
-
-console.log("🔑 Stripe Public Key:", STRIPE_PUBLIC_KEY);
-
 // 💬 Toast shown after successful Stripe donation
 window.showThankYouToast = function () {
   const div = document.createElement('div');
@@ -759,9 +782,15 @@ window.showThankYouToast = function () {
   setTimeout(() => div.remove(), 4000);
 };
 
+// 🔄 Initialize Stripe and wire donation flow with UI loader support
 document.addEventListener("DOMContentLoaded", () => {
+  // ✅ Show loader while initializing Stripe
+  showStripeLoader();
+
   // ✅ Initialize Stripe.js client
-  initStripe(STRIPE_PUBLIC_KEY);
+  initStripe(STRIPE_PUBLIC_KEY).finally(() => {
+    hideStripeLoader();
+  });
 
   // 🔘 Wire donation buttons
   document.querySelectorAll(".donate-btn").forEach((btn) => {
@@ -777,7 +806,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 🧹 Clean up URL
   window.history.replaceState({}, document.title, window.location.pathname);
-
 });
 
   const socialModal = document.getElementById("social-modal");
@@ -971,3 +999,17 @@ function showThankYouToast() {
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 4000);
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  showStripeLoader();
+
+  try {
+    initStripe(STRIPE_PUBLIC_KEY);
+  } catch (err) {
+    console.error("❌ initStripe crashed:", err);
+  } finally {
+    hideStripeLoader();
+  }
+
+  // Any other setup logic (button wiring, etc.)
+});
