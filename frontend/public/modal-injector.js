@@ -383,9 +383,9 @@ export function createMyStuffModal() {
           const flagList = body.querySelector(".flag-list");
 
           const allFlags = [
-            "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
+            "GB", "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
             "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS",
-            "NO", "CH", "GB", "TR", "IL", "RU", "UA", "CN", "SA", "IN", "KR", "JP"
+            "NO", "CH", "TR", "IL", "RU", "UA", "CN", "SA", "IN", "KR", "JP"
           ];
 
           // You can expand this list as translations become available
@@ -650,58 +650,60 @@ export function setupMyStuffModalLogic() {
   myStuffItems = [
     {
       icon: "🧩",
-      title: "Community Zone",
+      title: t("myStuff.community.title"),
       view: "interests",
-      desc: "Select topics you care about"
+      desc: t("myStuff.community.desc")
     },
     {
       icon: "💳",
-      title: "My Purchase History",
+      title: t("myStuff.purchases.title"),
       view: "purchases",
-      desc: "Check payment and documentation status"
+      desc: t("myStuff.purchases.desc")
     },
-    { icon: "📍",
-      title: "My Location History",
+    {
+      icon: "📍",
+      title: t("myStuff.locationHistory.title"),
       view: "location-history",
-      desc: "View locations received"
+      desc: t("myStuff.locationHistory.desc")
     },
     {
       icon: `<img src="/assets/language.svg" alt="Language" class="icon-img">`,
-      title: "Language Settings",
+      title: t("myStuff.language.title"),
       view: "language",
-      desc: "Set preferred language"
+      desc: t("myStuff.language.desc")
     },
     {
       icon: "🌐",
-      title: "Social",
+      title: t("myStuff.social.title"),
       view: "social",
-      desc: "Connect your social accounts"
+      desc: t("myStuff.social.desc")
     },
     {
       icon: "🔄",
       title: t("myStuff.reset.title"),
       view: "reset",
-      desc: t("myStuff.reset.subtitle")
+      desc: t("myStuff.reset.desc")
     },
     {
       icon: "👁️",
       title: t("myStuff.data.title"),
       view: "data",
-      desc: t("myStuff.data.subtitle")
+      desc: t("myStuff.data.desc")
     },
     {
       icon: "📜",
       title: t("myStuff.terms.title"),
       view: "terms",
-      desc: t("myStuff.terms.subtitle")
+      desc: t("myStuff.terms.desc")
     },
     {
       icon: "👀",
       title: t("myStuff.noMiss.title"),
       view: "no-miss",
-      desc: t("myStuff.noMiss.subtitle")
+      desc: t("myStuff.noMiss.desc")
     }
   ];
+
 }
 
 // 🚨 Creates and shows the Alert Modal.
@@ -767,18 +769,37 @@ async function handleShare() {
 
   const coordsRaw = document.getElementById("share-location-coords")?.textContent.trim();
   const coords = coordsRaw?.replace(/^📍\s*/, '');
-  const includeNavigen = document.getElementById("include-navigen-link")?.checked;
+
+  // Toggles (safe defaults even if the checkboxes don't exist)
+  const includeGoogle  = document.getElementById("include-google-link")?.checked ?? true;
+  const includeNavigen = document.getElementById("include-navigen-link")?.checked ?? true;
+  const consoleTestOnly = document.getElementById("share-console-test")?.checked ?? false;
 
   if (!coords) {
     isSharing = false;
     return;
   }
 
-  const gmaps = `https://maps.google.com?q=${coords}`;
+  const gmaps   = `https://maps.google.com?q=${coords}`;
   const navigen = `https://navigen.io/?at=${coords}`;
-  const text = includeNavigen
-    ? `📍 ${coords}\n${gmaps}\n${navigen}`
-    : `📍 ${coords}\n${gmaps}`;
+
+  let text = `My Location :\n📍 ${coords}\n\n`;
+
+  if (includeGoogle) {
+    text += `🌍 Google Maps: ${gmaps}\n\n`;
+  }
+
+  if (includeNavigen) {
+    text += `🕴️ Navigen: ${navigen}\n`;
+  }
+
+  // Optional: console preview without sharing/clipboard
+  if (consoleTestOnly) {
+    console.log("🔎 Share preview:\n" + text);
+    showToast("Printed share text to console");
+    isSharing = false;
+    return;
+  }
 
   try {
     if (navigator.share) {
@@ -808,17 +829,12 @@ export function createShareModal() {
     title: t('share.button'),
     bodyHTML: `
       <p class="muted">${t("share.intro") || "You can share your current location with a friend:"}</p>
-      <p class="share-note">📱 Works best via <strong>WhatsApp</strong></p>
+      <p class="share-note">${t("share.note") || "📱 Works best via <strong>WhatsApp</strong>"}</p>
       <p id="share-location-coords" class="location-coords">📍 Loading…</p>
 
-      <label class="form-control">
-        <input type="checkbox" id="include-navigen-link" checked>
-        ${t("share.includeMap") || 'Include a “What’s around me” map link'}
-      </label>
-
       <div class="modal-actions">
-        <button class="modal-body-button" id="share-location-button">📤 ${t("share.button")}</button>
-        <button class="modal-body-button" id="share-location-cancel">❌ ${t("share.cancel")}</button>
+        <button class="modal-body-button" id="share-location-button">${t("share.button")}</button>
+        <button class="modal-body-button" id="share-location-cancel">${t("share.cancel")}</button>
       </div>
     `
   });
