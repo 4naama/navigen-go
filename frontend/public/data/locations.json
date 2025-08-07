@@ -10,7 +10,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.549937, 19.057174",
-    "": 48
+    "": 1
   },
   {
     "ID": 2,
@@ -23,7 +23,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551002, 19.056617",
-    "": 43
+    "": 3
   },
   {
     "ID": 3,
@@ -49,7 +49,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.550363, 19.056747",
-    "": 49
+    "": 5
   },
   {
     "ID": 5,
@@ -62,7 +62,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.550050, 19.053292",
-    "": 68
+    "": 6
   },
   {
     "ID": 6,
@@ -75,7 +75,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.555703, 19.056757",
-    "": 12
+    "": 7
   },
   {
     "ID": 7,
@@ -88,7 +88,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.550739, 19.055688",
-    "": 45
+    "": 8
   },
   {
     "ID": 8,
@@ -101,7 +101,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.554240, 19.053988",
-    "": 19
+    "": 9
   },
   {
     "ID": 9,
@@ -127,7 +127,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.546489, 19.049903",
-    "": 72
+    "": 11
   },
   {
     "ID": 11,
@@ -140,7 +140,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551416, 19.051925",
-    "": 62
+    "": 12
   },
   {
     "ID": 12,
@@ -153,7 +153,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.549648, 19.054842",
-    "": 57
+    "": 13
   },
   {
     "ID": 13,
@@ -166,7 +166,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.555109, 19.054922",
-    "": 16
+    "": 14
   },
   {
     "ID": 14,
@@ -179,7 +179,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.550075, 19.056301",
-    "": 50
+    "": 15
   },
   {
     "ID": 15,
@@ -192,7 +192,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551115, 19.054759",
-    "": 46
+    "": 16
   },
   {
     "ID": 16,
@@ -205,7 +205,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.553849, 19.053248",
-    "": 23
+    "": 17
   },
   {
     "ID": 17,
@@ -217,8 +217,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 61
+    "Coordinate Compound": "47.551528, 19.052426",
+    "": 18
   },
   {
     "ID": 18,
@@ -231,7 +231,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551597, 19.055244",
-    "": 36
+    "": 19
   },
   {
     "ID": 19,
@@ -244,7 +244,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.552502, 19.056864",
-    "": 30
+    "": 20
   },
   {
     "ID": 20,
@@ -256,8 +256,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 65
+    "Coordinate Compound": "47.550399, 19.051675",
+    "": 21
   },
   {
     "ID": 21,
@@ -269,8 +269,8 @@
     "Group": "🏛️ Main Areas",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 70
+    "Coordinate Compound": "47.558161, 19.056363",
+    "": 22
   },
   {
     "ID": 22,
@@ -283,7 +283,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.554197, 19.053570",
-    "": 20
+    "": 23
   },
   {
     "ID": 23,
@@ -296,7 +296,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.550753, 19.056476",
-    "": 44
+    "": 24
   },
   {
     "ID": 24,
@@ -308,8 +308,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 41
+    "Coordinate Compound": "47.551159, 19.056257",
+    "": 25
   },
   {
     "ID": 25,
@@ -322,7 +322,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551350, 19.057186",
-    "": 38
+    "": 26
   },
   {
     "ID": 26,
@@ -334,8 +334,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 56
+    "Coordinate Compound": "47.550582, 19.052021",
+    "": 27
   },
   {
     "ID": 27,
@@ -348,7 +348,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.553408, 19.052926",
-    "": 25
+    "": 28
   },
   {
     "ID": 28,
@@ -361,7 +361,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551980, 19.055319",
-    "": 35
+    "": 29
   },
   {
     "ID": 29,
@@ -374,7 +374,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.549930, 19.054499",
-    "": 55
+    "": 30
   },
   {
     "ID": 30,
@@ -386,8 +386,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 40
+    "Coordinate Compound": "47.551869, 19.054486",
+    "": 31
   },
   {
     "ID": 31,
@@ -400,7 +400,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.554660, 19.055169",
-    "": 17
+    "": 32
   },
   {
     "ID": 32,
@@ -413,7 +413,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.552872, 19.052519",
-    "": 28
+    "": 33
   },
   {
     "ID": 33,
@@ -426,7 +426,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.555167, 19.054504",
-    "": 14
+    "": 34
   },
   {
     "ID": 34,
@@ -439,7 +439,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.557918, 19.059246",
-    "": 5
+    "": 35
   },
   {
     "ID": 35,
@@ -451,8 +451,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 21
+    "Coordinate Compound": "47.553782, 19.056198",
+    "": 36
   },
   {
     "ID": 36,
@@ -465,7 +465,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.550082, 19.054767",
-    "": 52
+    "": 37
   },
   {
     "ID": 37,
@@ -478,7 +478,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.557129, 19.059203",
-    "": 6
+    "": 38
   },
   {
     "ID": 38,
@@ -490,8 +490,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 1
+    "Coordinate Compound": "47.559310, 19.060292",
+    "": 39
   },
   {
     "ID": 39,
@@ -504,7 +504,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.553349, 19.053624",
-    "": 22
+    "": 40
   },
   {
     "ID": 40,
@@ -517,7 +517,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.549930, 19.055518",
-    "": 54
+    "": 41
   },
   {
     "ID": 41,
@@ -530,7 +530,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.555486, 19.054193",
-    "": 13
+    "": 42
   },
   {
     "ID": 42,
@@ -543,7 +543,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.555116, 19.057701",
-    "": 66
+    "": 43
   },
   {
     "ID": 43,
@@ -555,8 +555,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 64
+    "Coordinate Compound": "47.550565, 19.052126",
+    "": 44
   },
   {
     "ID": 44,
@@ -569,7 +569,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551778, 19.056714",
-    "": 33
+    "": 45
   },
   {
     "ID": 45,
@@ -582,7 +582,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551741, 19.057283",
-    "": 32
+    "": 46
   },
   {
     "ID": 46,
@@ -595,7 +595,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.553581, 19.052991",
-    "": 24
+    "": 47
   },
   {
     "ID": 47,
@@ -608,7 +608,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.553205, 19.052765",
-    "": 26
+    "": 48
   },
   {
     "ID": 48,
@@ -621,7 +621,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.553002, 19.053570",
-    "": 27
+    "": 49
   },
   {
     "ID": 49,
@@ -634,7 +634,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.552075, 19.057218",
-    "": 31
+    "": 50
   },
   {
     "ID": 50,
@@ -646,8 +646,8 @@
     "Group": "🏛️ Main Areas",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 71
+    "Coordinate Compound": "47.559095, 19.058755",
+    "": 51
   },
   {
     "ID": 51,
@@ -659,8 +659,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 59
+    "Coordinate Compound": "47.549175, 19.055215",
+    "": 52
   },
   {
     "ID": 52,
@@ -672,8 +672,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 3
+    "Coordinate Compound": "47.558576, 19.060675",
+    "": 53
   },
   {
     "ID": 53,
@@ -686,7 +686,7 @@
     "Subgroup": "",
     "Priority": "Yes",
     "Coordinate Compound": "47.554892, 19.056113",
-    "": 15
+    "": 54
   },
   {
     "ID": 54,
@@ -698,8 +698,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 69
+    "Coordinate Compound": "47.553782, 19.056198",
+    "": 55
   },
   {
     "ID": 55,
@@ -712,7 +712,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551682, 19.052099",
-    "": 29
+    "": 56
   },
   {
     "ID": 56,
@@ -725,7 +725,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.556883, 19.056864",
-    "": 9
+    "": 57
   },
   {
     "ID": 57,
@@ -737,8 +737,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 63
+    "Coordinate Compound": "47.550884, 19.052577",
+    "": 58
   },
   {
     "ID": 58,
@@ -750,8 +750,8 @@
     "Group": "🎤 Stages",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 39
+    "Coordinate Compound": "47.551550, 19.056407",
+    "": 59
   },
   {
     "ID": 59,
@@ -764,7 +764,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.557274, 19.057830",
-    "": 7
+    "": 60
   },
   {
     "ID": 60,
@@ -777,7 +777,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551303, 19.054332",
-    "": 47
+    "": 61
   },
   {
     "ID": 61,
@@ -790,7 +790,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.554552, 19.053946",
-    "": 18
+    "": 62
   },
   {
     "ID": "",
@@ -803,7 +803,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.552205, 19.054697",
-    "": 37
+    "": 63
   },
   {
     "ID": "",
@@ -816,7 +816,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.549778, 19.054187",
-    "": 58
+    "": 64
   },
   {
     "ID": "",
@@ -828,8 +828,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 53
+    "Coordinate Compound": "47.551031, 19.052536",
+    "": 65
   },
   {
     "ID": "",
@@ -841,8 +841,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 51
+    "Coordinate Compound": "47.550347, 19.055704",
+    "": 66
   },
   {
     "ID": "",
@@ -855,7 +855,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "",
-    "": ""
+    "": 67
   },
   {
     "ID": "",
@@ -868,7 +868,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551350, 19.057186",
-    "": 42
+    "": 68
   },
   {
     "ID": "",
@@ -880,8 +880,8 @@
     "Group": "🏛️ Main Areas",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 67
+    "Coordinate Compound": "47.550521, 19.053575",
+    "": 69
   },
   {
     "ID": "",
@@ -893,8 +893,8 @@
     "Group": "🎪 Activities & Experiences",
     "Subgroup": "",
     "Priority": "No",
-    "Coordinate Compound": "",
-    "": 60
+    "Coordinate Compound": "47.550992, 19.053446",
+    "": 70
   },
   {
     "ID": "",
@@ -907,7 +907,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.557057, 19.057358",
-    "": 8
+    "": 71
   },
   {
     "ID": "",
@@ -920,7 +920,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.555544, 19.056092",
-    "": 11
+    "": 72
   },
   {
     "ID": "",
@@ -933,7 +933,7 @@
     "Subgroup": "",
     "Priority": "No",
     "Coordinate Compound": "47.551770, 19.056113",
-    "": 34
+    "": ""
   },
   {
     "ID": "",
