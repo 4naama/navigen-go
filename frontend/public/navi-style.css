@@ -893,6 +893,59 @@ body.large-text {
   font-size: 0.85rem;
 }
 
+/* ──────────────── No-Miss Info View ──────────────── */
+.no-miss-section {
+  padding: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.no-miss-section .section-header {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.no-miss-section .section-header small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: 0.2rem;
+}
+
+.no-miss-block {
+  margin-bottom: 1rem;
+}
+
+.no-miss-title {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.no-miss-body {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.no-miss-thanks {
+  margin-top: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+  font-size: 1rem;
+}
+
+/* Inline SVG logo icon replacement for 👤 */
+.inline-icon.logo-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: text-bottom;
+  background: url('/assets/logo-icon.svg') no-repeat center center;
+  background-size: contain;
+}
+
+
 /* WhatsApp */
 .wa-text {
   font-weight: normal;

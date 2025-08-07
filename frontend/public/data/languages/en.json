@@ -71,6 +71,18 @@
   "myStuff.terms.viewFull": "View Full Terms & Privacy Document",
   "myStuff.terms.buttonLabel": "View Full Terms & Conditions",
 
+  "myStuff.noMiss.title": "Do Not Miss It",
+  "myStuff.noMiss.subtitle": "Tap for secret perks & power moves",
+  "noMiss.install.title": "Install Navigen",
+  "noMiss.install.body": "Tap the pin icon in the header to add Navigen to your home screen. Once installed, 📌 becomes 👋.",
+  "noMiss.refresh.title": "App Refresh",
+  "noMiss.refresh.bodyStart": "This app updates constantly during the event. Tap",
+  "noMiss.refresh.bodyEnd": "anytime to refresh and pull in the latest magic.",
+  "noMiss.refresh.relax": "No rush — whenever it feels right.",
+  "noMiss.support.title": "Support",
+  "noMiss.support.body": "Tap 👋 to show support for the team.",
+  "noMiss.thanks": "Thank you — enjoy the ride.",
+
   "share.button": "Share Location",
   "share.cancel": "Cancel",
   "share.intro": "You can share your current location with a friend:",
@@ -80,5 +92,4 @@
   "locationHistory.emptyMessage": "No shared locations yet",
   "locationHistory.empty.body": "You haven’t received any locations from friends.",
   "locationHistory.openInMaps": "Open in Google Maps"
-
 }

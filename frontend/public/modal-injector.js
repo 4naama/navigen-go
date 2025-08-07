@@ -244,7 +244,7 @@ export function createMyStuffModal() {
   modal.querySelector('.modal-content')?.prepend(topBar);
 
   topBar.querySelector('.modal-close')?.addEventListener('click', () => {
-    document.getElementById('my-stuff-modal')?.remove();
+    hideModal("my-stuff-modal");
   });
 
   // ✅ Store all ".my-stuff-item" elements for later use
@@ -585,7 +585,49 @@ export function createMyStuffModal() {
         appendResolvedButton(actions, "my-stuff-modal");
       }
 
-        const viewsWithResolved = ["interests", "purchases", "location-history", "language", "social", "reset", "data", "terms"];
+      else if (item.view === "no-miss") {
+        modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
+        modal.classList.add("modal-action");
+
+        body.innerHTML = `
+          <div class="no-miss-section">
+            <div class="no-miss-block">
+              <div class="no-miss-title">📌 ${t("noMiss.install.title")}</div>
+              <div class="no-miss-body">${t("noMiss.install.body")}</div>
+            </div>
+
+            <div class="no-miss-block">
+              <div class="no-miss-title">💡 ${t("noMiss.refresh.title")}</div>
+              <div class="no-miss-body">
+                ${t("noMiss.refresh.bodyStart")}
+                <span class="inline-icon logo-icon"></span>
+                ${t("noMiss.refresh.bodyEnd")}
+                <br>🌀 ${t("noMiss.refresh.relax")}
+              </div>
+            </div>
+
+            <div class="no-miss-block">
+              <div class="no-miss-title">👋 ${t("noMiss.support.title")}</div>
+              <div class="no-miss-body">${t("noMiss.support.body")}</div>
+            </div>
+
+            <div class="no-miss-thanks">
+              🎉 ${t("noMiss.thanks")}
+            </div>
+          </div>
+        `;
+
+        // Try all possible scrollable targets
+        modal.scrollTop = 0;
+        body.scrollTop = 0;
+        modal.querySelector(".modal-body")?.scrollTo(0, 0);
+        modal.querySelector(".modal-content")?.scrollTo(0, 0);
+
+
+        appendResolvedButton(actions, "my-stuff-modal");
+      }
+
+        const viewsWithResolved = ["interests", "purchases", "location-history", "language", "social", "reset", "data", "terms", "no-miss"];
         actions.innerHTML = viewsWithResolved.includes(state)
           ? `<button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>`
           : '';
@@ -652,6 +694,12 @@ export function setupMyStuffModalLogic() {
       title: t("myStuff.terms.title"),
       view: "terms",
       desc: t("myStuff.terms.subtitle")
+    },
+    {
+      icon: "👀",
+      title: t("myStuff.noMiss.title"),
+      view: "no-miss",
+      desc: t("myStuff.noMiss.subtitle")
     }
   ];
 }
