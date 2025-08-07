@@ -632,6 +632,33 @@ body.large-text {
   margin-top: 0.5rem;        /* ✅ Adds vertical space between stacked forms */
 }
 
+.donation-note-wrapper {
+  text-align: center;
+  margin-bottom: 1.4rem;
+}
+
+.donation-note {
+  font-size: 15px;
+  font-weight: 500;
+  color: #444;
+  line-height: 1.5;
+}
+
+.donation-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  /* ✅ Center buttons horizontally */
+  gap: 0.6rem;          /* ✅ Space between buttons */
+  margin-bottom: 1.4rem;
+}
+
+.smiley {
+  display: block;
+  margin-top: 4px;
+  font-size: 16px;
+  color: #666;
+}
+
 #stripe-loader {
   position: fixed;
   inset: 0;
@@ -1406,21 +1433,20 @@ button:hover {
 /* ────────────── Toast Notification (Updated) ────────────── */
 .toast {
   position: fixed;
-  bottom: 100px;
+  bottom: 33vh; /* 👈 One-third from bottom */
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: #ffffff; /* ✅ Clean white */
-  color: #333333;       /* ✅ Standard readable dark */
+  background: #ffffff;
+  color: #333333;
   padding: 14px 24px;
   border-radius: 12px;
   font-size: 17px;
   font-weight: 500;
-  font-family: inherit; /* ✅ Match rest of app */
-  text-align: center;   /* ✅ Center all text and inline elements */
+  font-family: inherit;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 10000;
   opacity: 0;
-  pointer-events: auto; /* ✅ Enable interaction */
+  pointer-events: auto;
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
 

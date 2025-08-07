@@ -21,11 +21,6 @@ function isStandalone() {
          window.navigator.standalone === true;
 }
 
-function isInStandaloneMode() {
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         window.navigator.standalone === true;
-}
-
 import { loadTranslations, t } from "./scripts/i18n.js";
 
 function getUserLang() {
@@ -40,7 +35,7 @@ const BACKEND_URL = "https://navigen-go.onrender.com";
 import { initStripe, handleDonation } from "./scripts/stripe.js";
 
 // ✅ Stripe public key (inject securely in production)
-const STRIPE_PUBLIC_KEY = "pk_test_51P45KEFf2RZOYEdOsmqtBoly5CcwH88pZjkQuGNxl7BpabdDgWtQIn8GwyyNrRsauztS8ZXJKyVPgd94ihTRyn8000NHQZM4Vs";
+const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
 console.log("🔑 Stripe Public Key:", STRIPE_PUBLIC_KEY);
 
 // 🔄 Initialize Stripe loader overlay controls
@@ -131,17 +126,16 @@ header.addEventListener("click", () => {
     btn.setAttribute("data-group", groupKey);
     btn.setAttribute("data-id", loc.ID);
 
-    // ✅ Inject GPS data if available
-    if (loc.Latitude && loc.Longitude) {
-      btn.setAttribute("data-lat", loc.Latitude);
-      btn.setAttribute("data-lng", loc.Longitude);
-      btn.title = `Open in Google Maps (${loc.Latitude}, ${loc.Longitude})`;
+    // ✅ Inject GPS data if available from "Coordinate Compound"
+    if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
+      const [lat, lng] = loc["Coordinate Compound"].split(',').map(x => x.trim());
+      btn.setAttribute("data-lat", lat);
+      btn.setAttribute("data-lng", lng);
+      btn.title = `Open in Google Maps (${lat}, ${lng})`;
 
       // ✅ Click to open Google Maps
       btn.addEventListener("click", (e) => {
         e.preventDefault();
-        const lat = loc.Latitude;
-        const lng = loc.Longitude;
         const url = `https://www.google.com/maps?q=${lat},${lng}`;
         window.open(url, "_blank");
       });
@@ -328,13 +322,6 @@ function clearSearch() {
     } finally {
       hideStripeLoader();
     }
-    
-    // 👋 Show welcome toast in standalone/PWA mode
-    if (isStandalone()) {
-      setTimeout(() => {
-        showToast("👋 Tap to begin using Navigen!", 6000);
-      }, 1200); // Slight delay for a smoother experience
-    }
 
     // 🌐 Detect and apply user's preferred language (from localStorage or browser),
     // then set <html lang="...">, text direction (LTR/RTL), load translations,
@@ -491,7 +478,7 @@ function clearSearch() {
 
   // 🧭 Handle OS install prompt when available (only if not already running as standalone)
   window.addEventListener('beforeinstallprompt', (e) => {
-    if (isInStandaloneMode()) return; // Skip if already installed as PWA
+    if (isStandalone()) return; // Skip if already installed as PWA
 
     e.preventDefault(); // prevent default mini-infobar
     deferredPrompt = e;
@@ -513,7 +500,7 @@ function clearSearch() {
   });
 
   // 👋 Show 👋 button only when running in PWA standalone mode
-  if (isInStandaloneMode() && headerPin) {
+  if (isStandalone() && headerPin) {
     headerPin.style.display = 'block';
     headerPin.textContent = '👋';
 

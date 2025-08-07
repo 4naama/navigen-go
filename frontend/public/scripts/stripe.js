@@ -1,51 +1,41 @@
+// stripe.js
 let stripe;
 
 /**
  * ✅ Initializes Stripe with the public key.
- * This assumes Stripe.js is already loaded via script tag in HTML.
+ * Call once, after DOMContentLoaded.
  */
 export function initStripe(publicKey) {
-  try {
-    if (!window.Stripe) {
-      console.error("❌ Stripe.js not loaded in DOM.");
-      return;
-    }
-
-    if (!publicKey || typeof publicKey !== "string") {
-      console.warn("⚠️ No Stripe public key provided");
-      return;
-    }
-
-    const rawLang =
-      localStorage.getItem("lang") ||
-      navigator.language.slice(0, 2).toLowerCase() ||
-      "en";
-
-    const supportedLocales = [
-      "en", "es", "fr", "de", "it", "ja", "nl", "pl", "pt", "sv", "zh"
-    ];
-
-    const stripeLocale = supportedLocales.includes(rawLang)
-      ? rawLang
-      : "en";
-
-    stripe = Stripe(publicKey, { locale: stripeLocale });
-
-    stripe = Stripe(publicKey, { locale: stripeLocale });
-    console.log("✅ Stripe initialized");
-  } catch (err) {
-    console.error("❌ Stripe init failed:", err);
+  if (!window.Stripe) {
+    console.warn("❌ Stripe.js not loaded");
+    return;
   }
+
+  // 🎯 Supported Stripe locales only
+  const supportedLocales = [
+    "auto", "en", "fr", "de", "es", "it", "ja", "zh", "nl", "pl", "pt",
+    "sv", "da", "fi", "nb", "cs", "hu", "sk"
+  ];
+
+  const rawLang = localStorage.getItem("lang") || navigator.language.slice(0, 2).toLowerCase() || "en";
+  const stripeLocale = supportedLocales.includes(rawLang) ? rawLang : "en";
+
+  console.log("📦 Stripe locale:", stripeLocale); // For debugging
+  stripe = Stripe(publicKey, { locale: "auto" });
+  console.log("✅ Stripe initialized");
 }
 
+/**
+ * 💳 Handle a donation or product purchase
+ *
+ * @param {number} amount - Donation amount (in €)
+ * @param {Object} meta - Optional metadata (e.g., { type: "donation", userId: "xyz" })
+ */
 export async function handleDonation(amount, meta = {}) {
   if (!stripe) {
     console.error("❌ Stripe not initialized");
     return;
   }
-
-  // Show loader (only if available in global scope)
-  if (typeof showStripeLoader === "function") showStripeLoader();
 
   const payload = {
     amount,
@@ -58,6 +48,7 @@ export async function handleDonation(amount, meta = {}) {
   };
 
   try {
+    // 🔄 Call backend to create Checkout Session
     const res = await fetch("https://navigen-go.onrender.com/create-checkout-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -68,18 +59,19 @@ export async function handleDonation(amount, meta = {}) {
 
     if (!res.ok || !data?.sessionId) {
       const fallback = await res.text().catch(() => "");
-      console.error("❌ Server error:", data || fallback);
+      console.error("❌ Server response error:", data || fallback);
       throw new Error("Invalid session response");
     }
 
+    // 🚀 Redirect using sessionId (best practice)
     const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+
     if (result.error) {
       console.error("❌ Stripe redirect error:", result.error.message);
     }
+
   } catch (err) {
-    console.error("❌ handleDonation failed:", err);
-    alert("Something went wrong. Please try again.");
-  } finally {
-    if (typeof hideStripeLoader === "function") hideStripeLoader();
+    console.error("❌ Failed to start Stripe flow:", err);
+    alert("Error contacting payment system. Please try again.");
   }
 }
