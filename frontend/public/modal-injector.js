@@ -1044,12 +1044,27 @@ export function buildAccordion(structure_data, geoPoints) {
     content.className = "accordion-body";
     content.style.display = "none";
 
-    // Add location buttons
+    // Add location buttons with map logic
     filtered.forEach(loc => {
       const btn = document.createElement("button");
-      btn.textContent = loc.Name;
+      btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
       btn.setAttribute("data-id", loc.ID);
       btn.classList.add("location-button");
+
+      // Inject coordinates and Google Maps behavior
+      if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
+        const [lat, lng] = loc["Coordinate Compound"].split(',').map(x => x.trim());
+        btn.setAttribute("data-lat", lat);
+        btn.setAttribute("data-lng", lng);
+        btn.title = `Open in Google Maps (${lat}, ${lng})`;
+
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const url = `https://www.google.com/maps?q=${lat},${lng}`;
+          window.open(url, "_blank");
+        });
+      }
+
       content.appendChild(btn);
     });
 
