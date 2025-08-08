@@ -184,7 +184,7 @@ body {
   flex-grow: 1;           /* fill all vertical space inside #main-content */
   overflow-y: auto;       /* scroll only inside this element */
   box-sizing: border-box; /* include padding in height calculation */
-  padding-bottom: 120px;
+  padding-bottom: 180px;
   display: flex;
   flex-direction: column;
   gap: em;
