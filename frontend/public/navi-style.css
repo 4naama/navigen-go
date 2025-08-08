@@ -183,23 +183,11 @@ body {
 #locations-scroll {
   flex-grow: 1;           /* fill all vertical space inside #main-content */
   overflow-y: auto;       /* scroll only inside this element */
-  padding-bottom: 50px;   /* ensures last item doesn't hide behind bottom band */
   box-sizing: border-box; /* include padding in height calculation */
-}
-
-#locations-scroll {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding-bottom: 90px;
-}
-
-#locations-scroll {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding-bottom: 90px;
+  padding-bottom: 120px;
   display: flex;
   flex-direction: column;
-  gap: 1em;
+  gap: em;
 }
 
 #quick-buttons {
