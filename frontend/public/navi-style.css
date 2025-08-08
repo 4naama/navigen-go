@@ -170,11 +170,11 @@ body {
 #main-content {
   display: flex;
   flex-direction: column;
-  /* Full viewport height minus:
-     - fixed bottom band height (50px)
+  /* Full *visible* viewport height minus:
+     - fixed bottom band height (40px)
      - fixed header height (56px)
-     → This makes #main-content stop exactly above bottom band */
-  height: calc(100vh - 40px - 56px);
+     → Uses var(--vh) instead of 100vh so mobile browser URL bar is accounted for */
+  height: calc(var(--vh, 100vh) - 40px - 56px);
   box-sizing: border-box;
   padding: 0 1em;
   overflow: hidden; /* disable scrolling here; delegate to #locations-scroll */

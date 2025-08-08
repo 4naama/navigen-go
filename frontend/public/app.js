@@ -16,6 +16,16 @@ import {
   setupTapOutClose 
 } from './modal-injector.js';
 
+// ✅ Adjust --vh CSS variable so height works in both PWA and mobile browsers
+function updateVhVar() {
+  document.documentElement.style.setProperty('--vh', window.innerHeight + 'px');
+}
+window.addEventListener('resize', updateVhVar);
+updateVhVar();
+
+// ...rest of your app.js code below...
+
+
 // ✅ Determines whether app is running in standalone/PWA mode
 function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches ||
