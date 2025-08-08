@@ -46,25 +46,33 @@
 
 </div>
 
-<!-- Build accordion group sections from structure_data and locations — Popular is handled separately via renderPopularGroup() -->
-<div id="main-content">
-  <div class="section-spacer"></div>  
-  <div id="locations-scroll">
-    <div id="locations"></div>
-    <div id="accordion"></div> <!-- ← move inside scroll zone -->
-  </div>    
+<!-- Full-height wrapper so content never slides under the bottom band -->
+<div id="main-wrapper">
+
+  <!-- Build accordion group sections from structure_data and locations -->
+  <!-- Fills all space above the bottom band -->
+  <div id="main-content">
+    <div class="section-spacer"></div>  
+
+    <!-- The only scrollable area -->
+    <div id="locations-scroll">
+      <div id="locations"></div>
+      <div id="accordion"></div> <!-- Popular handled separately via renderPopularGroup() -->
+    </div>    
+  </div>
+
+  <!-- 🧭 BOTTOM BAND: User Action Panel -->
+  <div id="bottom-band">
+    <button id="my-stuff-toggle" title="">🏠</button> 
+    <button id="alert-button" title="">💬</button>
+    <button id="help-button" title="">🛎️</button>
+    <button id="accessibility-button" title="">♿</button>
+  </div>
+
 </div>
 
 <!-- Search Box -->
 <script type="module" src="app.js"></script>
-
-<!-- 🧭 BOTTOM BAND: User Action Panel (My Stuff · Alerts · Service · Accessibility) -->
-<div id="bottom-band">
-  <button id="my-stuff-toggle" title="">🏠</button> 
-  <button id="alert-button" title="">💬</button>
-  <button id="help-button" title="">🛎️</button>
-  <button id="accessibility-button" title="">♿</button>
-</div>
 
 <!-- 🔄 Stripe Initialization Loader -->
 <div id="stripe-loader" style="display: none;">

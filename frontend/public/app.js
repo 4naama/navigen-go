@@ -12,7 +12,8 @@ import {
   saveToLocationHistory,
   showToast,
   showMyStuffModal,
-  flagStyler
+  flagStyler,
+  setupTapOutClose 
 } from './modal-injector.js';
 
 // ✅ Determines whether app is running in standalone/PWA mode
@@ -537,7 +538,7 @@ function clearSearch() {
 
   const locationModal = document.getElementById("share-location-modal");
   const coordsDisplay = document.getElementById("location-coords");
-  const shareButton = document.getElementById("location-share-button");  
+  const shareButton = document.getElementById("share-location-button");  
 
   if (alertButton && alertModal && alertModalContent) {
     alertButton.addEventListener("click", () => {
@@ -640,7 +641,7 @@ function clearSearch() {
     if (hereButton && coordsDisplay && shareModal) {
       hereButton.addEventListener("click", () => {
         coordsDisplay.textContent = "Detecting your location...";
-        const shareBtn = document.getElementById("location-share-button");
+        const shareBtn = document.getElementById("share-location-button");
         if (shareBtn) shareBtn.classList.add("hidden");
 
         if (!navigator.geolocation) {
@@ -853,23 +854,6 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('alert-modal')?.classList.add('hidden');
     });
   });
-
-// Consolidated DOMContentLoaded + existing logic
-function setupTapOutClose(modalId) {
-  const modal = document.getElementById(modalId);
-  const overlay = modal?.querySelector(".modal-overlay");
-  if (!modal || !overlay) return;
-
-  overlay.addEventListener("click", () => {
-    modal.classList.add("hidden");
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !modal.classList.contains("hidden")) {
-      modal.classList.add("hidden");
-    }
-  });
-}
 
 function trapFocus(modal) {
   const focusableSelectors = 'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])';

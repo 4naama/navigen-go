@@ -122,13 +122,6 @@ export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [],
 
   document.body.appendChild(modal); // ✅ Keep this one
 
-  // ✅ Inject overlay if needed
-  if (layout === 'action') {
-    const overlay = document.createElement("div");
-    overlay.className = "modal-overlay";
-    modal.prepend(overlay);
-  }
-
   // Bind any click handlers
   footerButtons.forEach(btn => {
     if (btn.onClick) {
@@ -866,7 +859,7 @@ export function createShareModal() {
 export function showShareModal(coords) {
   const modal = document.getElementById("share-location-modal");
   const coordsEl = document.getElementById("share-location-coords");
-  const shareBtn = document.getElementById("location-share-button");
+  const shareBtn = document.getElementById("share-location-button");
 
   if (!modal || !coordsEl) return console.warn("❌ Modal or coords element missing");
 
@@ -924,13 +917,17 @@ export function createIncomingLocationModal(coords) {
   });
   
   enableEscToClose(modal);
+  
+  document.body.appendChild(modal);
+
 }
 
+// modal-injector.js
 /**
- * Enables "tap-out-to-close" behavior for a modal.
+ * Enables "tap-out-to-close" and Escape-to-close behavior for a modal.
  * If the overlay doesn't exist yet, it waits for it.
  */
-function setupTapOutClose(modalId) {
+export function setupTapOutClose(modalId) {
   const modal = document.getElementById(modalId);
   if (!modal) return;
 
@@ -941,12 +938,17 @@ function setupTapOutClose(modalId) {
         modal.classList.add("hidden");
       });
     } else {
-      // Retry once on next frame
       requestAnimationFrame(tryBindOverlay);
     }
   };
 
   tryBindOverlay();
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+      modal.classList.add("hidden");
+    }
+  });
 }
 
 // 🎁 Creates and shows the donation modal.
@@ -1234,7 +1236,8 @@ export function renderLocationHistory() {
 // Styles flag icons by setting their title from 2-letter alt text.
 // Used in language/country modals for accessibility and hover info.
 export function flagStyler() {
-  const flags = document.querySelectorAll("flag-icon");
+  // target the actual flag <img> elements in the language grid
+  const flags = document.querySelectorAll(".flag-list img");
   if (!flags.length) return;
 
   flags.forEach((img) => {
@@ -1245,7 +1248,7 @@ export function flagStyler() {
   });
 
   console.log("✅ Flags styled using alt attribute.");
-}      
+}
 
 // Run when user opens Purchase History
 const purchaseBtn = document.querySelector("#purchaseHistoryBtn");

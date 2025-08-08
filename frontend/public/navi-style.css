@@ -166,12 +166,40 @@ body {
   color: #222;
 }
 
+/* 📜 Main content area and scroll zone above bottom band */
 #main-content {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 90px - 56px); /* minus bottom bar and header height */
+  /* Full viewport height minus:
+     - fixed bottom band height (50px)
+     - fixed header height (56px)
+     → This makes #main-content stop exactly above bottom band */
+  height: calc(100vh - 50px - 56px);
   box-sizing: border-box;
   padding: 0 1em;
+  overflow: hidden; /* disable scrolling here; delegate to #locations-scroll */
+}
+
+#locations-scroll {
+  flex-grow: 1;           /* fill all vertical space inside #main-content */
+  overflow-y: auto;       /* scroll only inside this element */
+  padding-bottom: 50px;   /* ensures last item doesn't hide behind bottom band */
+  box-sizing: border-box; /* include padding in height calculation */
+}
+
+#locations-scroll {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 90px;
+}
+
+#locations-scroll {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
 }
 
 #quick-buttons {
@@ -262,12 +290,6 @@ h2 {
   font-weight: bold;
   text-align: center;
   margin: 1em 0 0.5em 0;
-}
-
-#locations-scroll {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding-bottom: 90px;
 }
 
 #quick-buttons-wrapper {
@@ -1151,7 +1173,7 @@ button:hover {
   border-color: #ffd54f;
   box-shadow: 0 0 0 1px #ffd54f;
 }
-ű
+
 /* 🎨 Group-tinted borders for location buttons */
 [data-group="group.stages"] + .accordion-body .location-button,
 [data-group="group.stages"] ~ .group-buttons .location-button {
@@ -1333,7 +1355,7 @@ button:hover {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 50px; /* reduced from 60px */
   background: #fff;
   border-top: 1px solid #ccc;
   display: flex;
@@ -1351,13 +1373,13 @@ button:hover {
   background: none;
   border: none;
   color: inherit;
-  font-size: 22px;
+  font-size: 20px; /* slightly smaller to match reduced band height */
   line-height: 1;
   cursor: pointer;
   padding: 0;
   border-radius: 0.5em;
-  height: 40px;
-  width: 40px;
+  height: 34px; /* reduced from 40px */
+  width: 34px;  /* keep square */
 }
 
 #bottom-band button:hover {
@@ -1960,13 +1982,4 @@ button:hover {
 #clear-search:hover {
   color: #333;        /* not full black */
   opacity: 1;         /* fully visible */
-}
-
-#locations-scroll {
-  flex-grow: 1;
-  overflow-y: auto;
-  padding-bottom: 90px;
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
 }
