@@ -204,17 +204,19 @@ function showActionModal(action) {
 // 🎨 Group-specific background color (based on translation keys only)
 function colorFromGroup(groupKey) {
   const groupColors = {
-      "group.stages": "#ffe3e3",         // Light Red / Stages
-      "group.activities": "#fff2cc",     // Pale Yellow / Activities
-      "group.food": "#d9f9d9",           // Mint Green / Food & Drink
-      "group.gates": "#e0f7fa",          // Sky Teal / Gates
-      "group.areas": "#ede7f6",          // Lavender / Main Areas
-      "group.shops": "#fce4ec",          // Blush Pink / Shops
-      "group.spas": "#e3f2fd",           // Soft Blue / Spas
-      "group.services": "#f8d7da",       // Rose Pink / Services
-      "group.guests": "#ede7f6",         // Light Purple / Guest Services
-      "group.transport": "#8FD19E",      // Fern Green / Transport ✅ updated
-      "group.popular": "#fff8e1"         // Cream Yellow / Popular
+    "group.stages": "#ffe3e3",       // Light Red / Stages
+    "group.activities": "#fff2cc",   // Pale Yellow / Activities
+    "group.food": "#d9f9d9",         // Mint Green / Food & Drink
+    "group.gates": "#e0f7fa",        // Sky Teal / Gates
+    "group.areas": "#ede7f6",        // Lavender / Main Areas
+    "group.shops": "#fce4ec",        // Blush Pink / Shops
+    "group.spas": "#e3f2fd",         // Soft Blue / Spas
+    "group.services": "#f8d7da",     // Rose Pink / Services
+    "group.guests": "#ede7f6",       // Light Purple / Guest Services
+    "group.transport": "#8FD19E",    // Fern Green / Transport ✅ updated
+    "group.facilities": "#e0f7fa",   // Sky Teal / Facilities
+    "group.social": "#e6f3ff",       // Soft Sky Blue / Social
+    "group.popular": "#fff8e1"       // Cream Yellow / Popular
   };
 
   return groupColors[groupKey] || "#f2f2f2";

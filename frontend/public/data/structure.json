@@ -55,8 +55,8 @@
     "Subgroup": "🏥 Medical / First Aid"
   },
   {
-    "Drop-down": "🌐 Social",
-    "Group": "🌐 Social",
-    "Subgroup": "Social"
+    "Drop-down": "🌐 Social Point",
+    "Group": "group.social",
+    "Subgroup": "Social Point"
   }
 ]
