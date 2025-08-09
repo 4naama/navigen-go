@@ -164,23 +164,16 @@ export function hideModal(id) {
   modal.style.display = ""; // ✅ Clear inline display to let CSS re-apply
 }
 
-/**
- * ───────────────────────────────────────────────────────────────
- * showToast(message, duration)
- * 
- * 🍑 Displays a soft peach toast notification centered near bottom.
- * 
- * - Fades in with .toast and .visible classes (CSS handles animation)
- * - Automatically fades out and removes after given duration
- * - Used for user-facing alerts (e.g. location saved, copied, etc.)
- * 
- * @param {string} message - HTML-safe message to display
- * @param {number} duration - Duration in ms before auto-dismiss (default: 5000)
- * ───────────────────────────────────────────────────────────────
- */
-export function showToast(message, duration = 5000) {
+// Toast: single instance; persistent until tapped (link doesn’t dismiss).
+// Optional auto-close via duration>0 for backward compatibility.
+export function showToast(message, duration = 0) {
+  // one at a time
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+
   const toast = document.createElement("div");
   toast.className = "toast";
+  toast.setAttribute("role", "status");
+  toast.setAttribute("aria-live", "polite");
   toast.innerHTML = message;
 
   document.body.appendChild(toast);
@@ -189,12 +182,20 @@ export function showToast(message, duration = 5000) {
     toast.classList.add("visible");
   });
 
-  setTimeout(() => {
+  // tap anywhere on toast EXCEPT the link to close
+  toast.addEventListener("click", (e) => {
+    if (e.target.closest("a")) return; // don’t close when the link is tapped
     toast.classList.remove("visible");
+    setTimeout(() => toast.remove(), 400);
+  }, { passive: true });
+
+  // optional auto-close if duration > 0 (keeps back-compat)
+  if (duration > 0) {
     setTimeout(() => {
-      toast.remove();
-    }, 400);
-  }, duration);
+      toast.classList.remove("visible");
+      setTimeout(() => toast.remove(), 400);
+    }, duration);
+  }
 }
 
 /**
@@ -776,14 +777,16 @@ async function handleShare() {
   const gmaps   = `https://maps.google.com?q=${coords}`;
   const navigen = `https://navigen.io/?at=${coords}`;
 
-  let text = `My Location :\n📍 ${coords}\n\n`;
+  // 📌 WhatsApp share layout
+  let text = `My Location :\n\n📍 ${coords}\n\n`;
 
-  if (includeGoogle) {
-    text += `🌍 Google Maps: ${gmaps}\n\n`;
+  // ✅ NaviGen first
+  if (includeNavigen) {
+    text += `🕴 NaviGen: ${navigen}\n\n`;
   }
 
-  if (includeNavigen) {
-    text += `🕴️ Navigen: ${navigen}\n`;
+  if (includeGoogle) {
+    text += `🌍 Google Maps: ${gmaps}\n`;
   }
 
   // Optional: console preview without sharing/clipboard

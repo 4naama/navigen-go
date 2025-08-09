@@ -47,7 +47,6 @@ import { initStripe, handleDonation } from "./scripts/stripe.js";
 
 // ✅ Stripe public key (inject securely in production)
 const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
-console.log("🔑 Stripe Public Key:", STRIPE_PUBLIC_KEY);
 
 // 🔄 Initialize Stripe loader overlay controls
 function showStripeLoader() {
@@ -345,37 +344,6 @@ function clearSearch() {
     injectStaticTranslations();          // ✅ Apply static translations
 
     createMyStuffModal();                // 🎛️ Inject the "My Stuff" modal
-
-    // 💬 Reusable toast function for short alerts
-    function showToast(htmlContent, timeout = 5000) {
-      const toast = document.createElement("div");
-      toast.className = "toaster";
-      toast.innerHTML = htmlContent;
-
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), timeout);
-    }
-
-    // 📥 Check for incoming shared location (?at=...)
-    const at = new URLSearchParams(location.search).get("at");
-    if (at) {
-      saveToLocationHistory(at); // 🧠 Store silently in local history
-
-      const gmaps = `https://maps.google.com?q=${at}`;
-      showToast(
-        `
-        <div class="toast-content">
-          📍 Friend’s location received —
-          <a href="${gmaps}" target="_blank" rel="noopener" class="toast-link">
-            open in Google Maps
-          </a>
-          <br />
-          <span class="subtext">(You can find this later in Location History)</span>
-        </div>
-        `,
-        8000
-      );
-    }
 
     setupMyStuffModalLogic();           // 🧩 Setup tab handling inside modal
     flagStyler();                       // 🌐 Apply title/alt to any flag icons
@@ -800,10 +768,8 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("📡 DOM loaded — checking for ?at parameter");
 
   const at = new URLSearchParams(location.search).get("at");
-  console.log("🔍 URL param ?at =", at);
 
   if (at) {
-    console.log("✅ Found shared location — processing");
 
     saveToLocationHistory(at); // 🧠 Store silently in local history
 
@@ -811,16 +777,18 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("🔗 Google Maps link:", gmaps);
 
     showToast(
-      `📍 Friend’s location received — <a href="${gmaps}" target="_blank">open in Google Maps</a><br><span class="subtext">(You can find this later in Location History)</span>`,
-      8000
+      `📍 Friend’s location received — <a href="${gmaps}" target="_blank">open in Google Maps</a><br><br>
+       📌 to save NaviGen<br>
+       🏠 → 📍 for this message<br>
+       👋 to support NaviGen<br><br>
+       <span class="subtext">Tap this message to close.</span>`
+      // no duration → persistent
     );
-  } else {
-    console.log("🕳️ No ?at parameter in URL");
-  }
+
+  } 
 
   // Optional: also log when history is cleared from URL
   window.history.replaceState({}, document.title, window.location.pathname);
-  console.log("🧹 URL cleaned");
 });
 
   const socialModal = document.getElementById("social-modal");
