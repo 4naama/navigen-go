@@ -1035,15 +1035,15 @@ export function createDonationModal(isRepeat = false) {
 }
 
 // Exports UI rendering functions for accordion group sections and the popular group (called from app.js)
-
-export function buildAccordion(structure_data, geoPoints) {
+export function buildAccordion(groupedStructure, geoPoints) {
   const container = document.getElementById("accordion");
   container.innerHTML = '';
 
-  structure_data.forEach(group => {
-    const groupKey = group.Group;
-    const label = group["Drop-down"];
+  groupedStructure.forEach(group => {
+    const groupKey = group.groupKey || group.Group;
+    const label = group.groupName || group["Drop-down"];
 
+    // All visible locations in this group
     const filtered = geoPoints.filter(loc => loc.Group === groupKey && loc.Visible === "Yes");
     if (!filtered.length) return;
 
@@ -1055,50 +1055,113 @@ export function buildAccordion(structure_data, geoPoints) {
     const header = document.createElement("button");
     header.classList.add("accordion-button");
     header.innerHTML = `
-      <span class="header-title">${group["Drop-down"]}</span>
+      <span class="header-title">${label}</span>
       <span class="header-meta">( ${filtered.length} )</span>
       <span class="header-arrow"></span>
     `;
 
-    // Accordion content area
+    // Accordion content
     const content = document.createElement("div");
     content.className = "accordion-body";
     content.style.display = "none";
 
-    // Add location buttons with map logic
-    filtered.forEach(loc => {
-      const btn = document.createElement("button");
-      btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
-      btn.setAttribute("data-id", loc.ID);
-      btn.classList.add("location-button");
+    // === SUBGROUP RENDERING START ===
+    if (Array.isArray(group.subgroups) && group.subgroups.length) {
+      // Render each subgroup
+      group.subgroups.forEach(sub => {
+        const subHeader = document.createElement('div');
+        subHeader.className = 'subheader';
+        subHeader.textContent = sub.name || sub.key;
+        content.appendChild(subHeader);
 
-      // Inject coordinates and Google Maps behavior
-      if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
-        const [lat, lng] = loc["Coordinate Compound"].split(',').map(x => x.trim());
-        btn.setAttribute("data-lat", lat);
-        btn.setAttribute("data-lng", lng);
-        btn.title = `Open in Google Maps (${lat}, ${lng})`;
+        const subLocs = filtered.filter(loc => loc["Subgroup key"] === sub.key);
+        subLocs.forEach(loc => {
+          const btn = document.createElement('button');
+          btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
+          btn.setAttribute('data-id', loc.ID);
+          btn.classList.add('location-button');
 
-        btn.addEventListener("click", (e) => {
-          e.preventDefault();
-          const url = `https://www.google.com/maps?q=${lat},${lng}`;
-          window.open(url, "_blank");
+          if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
+            const parts = loc["Coordinate Compound"].split(',');
+            const lat = parts[0].trim();
+            const lng = parts[1].trim();
+            btn.setAttribute('data-lat', lat);
+            btn.setAttribute('data-lng', lng);
+            btn.title = `Open in Google Maps (${lat}, ${lng})`;
+            btn.addEventListener('click', function(e){
+              e.preventDefault();
+              window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+            });
+          }
+
+          content.appendChild(btn);
+        });
+      });
+
+      // Leftover (no subgroup)
+      const others = filtered.filter(loc => !loc["Subgroup key"]);
+      if (others.length) {
+        const h = document.createElement('div');
+        h.className = 'subheader';
+        h.textContent = '-';
+        content.appendChild(h);
+
+        others.forEach(loc => {
+          const btn = document.createElement('button');
+          btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
+          btn.setAttribute('data-id', loc.ID);
+          btn.classList.add('location-button');
+
+          if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
+            const parts = loc["Coordinate Compound"].split(',');
+            const lat = parts[0].trim();
+            const lng = parts[1].trim();
+            btn.setAttribute('data-lat', lat);
+            btn.setAttribute('data-lng', lng);
+            btn.title = `Open in Google Maps (${lat}, ${lng})`;
+            btn.addEventListener('click', function(e){
+              e.preventDefault();
+              window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+            });
+          }
+
+          content.appendChild(btn);
         });
       }
+    } else {
+      // Fallback: flat list
+      filtered.forEach(loc => {
+        const btn = document.createElement('button');
+        btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
+        btn.setAttribute('data-id', loc.ID);
+        btn.classList.add('location-button');
 
-      content.appendChild(btn);
-    });
+        if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
+          const parts = loc["Coordinate Compound"].split(',');
+          const lat = parts[0].trim();
+          const lng = parts[1].trim();
+          btn.setAttribute('data-lat', lat);
+          btn.setAttribute('data-lng', lng);
+          btn.title = `Open in Google Maps (${lat}, ${lng})`;
+          btn.addEventListener('click', function(e){
+            e.preventDefault();
+            window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+          });
+        }
 
-    // ✅ Unified toggle logic: only one group (popular or accordion) open at a time
+        content.appendChild(btn);
+      });
+    }
+    // === SUBGROUP RENDERING END ===
+
+    // Toggle open/close logic
     header.addEventListener("click", () => {
       const isOpen = header.classList.contains("open");
 
       // Close all groups
       document.querySelectorAll('.accordion-body').forEach(b => b.style.display = 'none');
-      document.querySelectorAll('.group-buttons').forEach(b => b.classList.add('hidden'));
       document.querySelectorAll('.accordion-button, .group-header-button').forEach(btn => btn.classList.remove('open'));
 
-      // Only open this group if it wasn't already open
       if (!isOpen) {
         content.style.display = 'block';
         header.classList.add('open');
@@ -1109,6 +1172,29 @@ export function buildAccordion(structure_data, geoPoints) {
     section.appendChild(content);
     container.appendChild(section);
   });
+
+  function makeLocationButton(loc, groupKey, subKey) {
+    const btn = document.createElement("button");
+    btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
+    btn.setAttribute("data-id", loc.ID);
+    btn.dataset.group = groupKey;
+    if (subKey) btn.dataset.subgroup = subKey;
+    btn.classList.add("location-button");
+
+    if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
+      const [lat, lng] = loc["Coordinate Compound"].split(',').map(x => x.trim());
+      btn.setAttribute("data-lat", lat);
+      btn.setAttribute("data-lng", lng);
+      btn.title = `Open in Google Maps (${lat}, ${lng})`;
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const url = `https://www.google.com/maps?q=${lat},${lng}`;
+        window.open(url, "_blank");
+      });
+    }
+    return btn;
+  }
 }
 
 /**
