@@ -1151,6 +1151,7 @@ button:hover {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+
 .location-button:hover {
   box-shadow: 0 0 0 2px currentColor;
   background-color: #fafafa;
@@ -1161,6 +1162,51 @@ button:hover {
   border-color: #ffd54f;
   box-shadow: 0 0 0 1px #ffd54f;
 }
+
+/* sub headers */
+.subheader {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: 6px 8px 4px 16px;   /* extra indent */
+  font-weight: 600;            /* semi-bold subs */
+  cursor: pointer;
+  user-select: none;
+}
+
+/* chevron – show only if there are items (needs Chrome/Edge/Safari :has) */
+.subheader:has(+ .subgroup-items:not(:empty))::after {
+  content: "▸";
+  margin-left: auto;
+  opacity: .6;
+  transition: transform .18s ease, opacity .18s ease;
+}
+
+/* expanded state flips chevron */
+.subheader.is-open:has(+ .subgroup-items)::after {
+  transform: rotate(90deg);
+  opacity: .8;
+}
+
+/* optional count pill pulled from data-count */
+.subheader[data-count]::before {
+  content: attr(data-count);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.08);
+  color: rgba(0,0,0,.65);
+}
+
+/* wrapper that holds the sub’s buttons */
+.subgroup-items {
+  padding: 6px 0 8px 24px;     /* nested indent under the sub */
+}
+
+/* collapsed */
+.subgroup-items.is-collapsed { display: none; }
 
 /* 🎨 Group-tinted borders for location buttons */
 [data-group="group.stages"] + .accordion-body .location-button,
