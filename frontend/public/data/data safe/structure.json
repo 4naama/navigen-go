@@ -26,46 +26,56 @@
     ]
   },
   {
-    "groupKey": "group.guests",
-    "groupName": "🎟️ Guest Services",
-    "subgroups": [
-      {
-        "key": "sub.tickets_passes",
-        "name": "🎫 Tickets & Passes"
-      },
-      {
-        "key": "sub.info_booths",
-        "name": "💬 Info Booths"
-      },
-      {
-        "key": "sub.lockers_storage",
-        "name": "🔒 Lockers & Storage"
-      },
-      {
-        "key": "sub.lost_found",
-        "name": "🧳 Lost & Found"
-      },
-      {
-        "key": "sub.help_desk",
-        "name": "🛎️ Help Desk"
-      }
-    ]
-  },
-  {
     "groupKey": "group.stages",
     "groupName": "🎤 Stages",
     "subgroups": [
       {
-        "key": "sub.silent_disco",
-        "name": "🎧 Silent Disco"
+        "key": "sub.music_workshops",
+        "name": "🍀 Music Workshops"
+      },
+      {
+        "key": "sub.karaoke_nights",
+        "name": "🎤 Karaoke Nights"
+      },
+      {
+        "key": "sub.dj_dance",
+        "name": "🎧 DJ & Dance"
       },
       {
         "key": "sub.pop_stage",
         "name": "🎵 Pop Stage"
       },
       {
+        "key": "sub.live_music",
+        "name": "🎷 Live Music"
+      },
+      {
         "key": "sub.rock_stage",
         "name": "🎸 Rock Stage"
+      },
+      {
+        "key": "sub.piano_keys_lounge",
+        "name": "🎹 Piano & Keys Lounge"
+      },
+      {
+        "key": "sub.classical_performance 🎼 Classical Performances",
+        "name": "🎼 Classical Performances"
+      },
+      {
+        "key": "sub.vinyl_retro_beats",
+        "name": "📀 Vinyl & Retro Beats"
+      },
+      {
+        "key": "sub.silent_disco",
+        "name": "🔇 Silent Disco"
+      },
+      {
+        "key": "sub.drumming_circles",
+        "name": "🥁 Drumming Circles"
+      },
+      {
+        "key": "sub.acoustic_sessions",
+        "name": "🪕 Acoustic Sessions"
       }
     ]
   },
@@ -84,6 +94,10 @@
       {
         "key": "sub.games_fun",
         "name": "🎯 Games & Fun"
+      },
+      {
+        "key": "sub.music_rhythm",
+        "name": "🎶 Music & Rhythm"
       },
       {
         "key": "sub.photo_spots",
@@ -122,22 +136,102 @@
     "groupName": "👫 Social Points",
     "subgroups": [
       {
+        "key": "sub.chill_spots",
+        "name": "🌴 Chill Spots"
+      },
+      {
+        "key": "sub.cultural_corner",
+        "name": "🎭 Cultural Corner"
+      },
+      {
+        "key": "sub.massage",
+        "name": "👐 Massage"
+      },
+      {
+        "key": "sub.charity_point",
+        "name": "💖 Charity Point"
+      },
+      {
+        "key": "sub.group_photo_area",
+        "name": "📸 Group Photo Area"
+      },
+      {
         "key": "sub.meeting_points",
         "name": "🤝 Meeting Points"
+      },
+      {
+        "key": "sub.picnic_area",
+        "name": "🧺 Picnic Area"
       }
     ]
   },
   {
-    "groupKey": "group.services",
-    "groupName": "🧰 Services",
+    "groupKey": "group.guests",
+    "groupName": "🧰 Guest Services",
     "subgroups": [
       {
-        "key": "sub.medical_first_aid",
-        "name": "🏥 Medical / First Aid"
+        "key": "sub.weather_info",
+        "name": "☀️ Weather Info"
       },
       {
-        "key": "sub.security",
-        "name": "👮 Security"
+        "key": "sub.recycling",
+        "name": "♻️ Recycling & Waste Points"
+      },
+      {
+        "key": "sub.accessibility",
+        "name": "♿ Accessibility"
+      },
+      {
+        "key": "sub.translation_services",
+        "name": "🌐 Translation Services"
+      },
+      {
+        "key": "sub.event_payment",
+        "name": "🎟️ Event Payment Services"
+      },
+      {
+        "key": "sub.tickets_passes",
+        "name": "🎫 Tickets & Passes"
+      },
+      {
+        "key": "sub.atm",
+        "name": "🏧 ATM / Cashpoint"
+      },
+      {
+        "key": "sub.pet_services",
+        "name": "🐾 Pet Services"
+      },
+      {
+        "key": "sub.info_booths",
+        "name": "💬 Info Booths"
+      },
+      {
+        "key": "sub.wifi",
+        "name": "📶 Wi-Fi Access"
+      },
+      {
+        "key": "sub.charging_stations",
+        "name": "🔌 Charging Stations"
+      },
+      {
+        "key": "sub.lockers_storage",
+        "name": "🔒 Lockers & Storage"
+      },
+      {
+        "key": "sub.kids_zone",
+        "name": "🤹 Kids Zone"
+      },
+      {
+        "key": "sub.lost_found",
+        "name": "🧳 Lost & Found"
+      },
+      {
+        "key": "sub.health_services",
+        "name": "🩺 Health Services"
+      },
+      {
+        "key": "sub.help_desk",
+        "name": "🛎️ Help Desk"
       }
     ]
   },
@@ -146,16 +240,116 @@
     "groupName": "🚖 Transport",
     "subgroups": [
       {
-        "key": "sub.hev",
-        "name": "🚈 HÉV"
+        "key": "sub.ferry",
+        "name": "⛴️ Ferry"
+      },
+      {
+        "key": "sub.sailboat",
+        "name": "⛵ Sailboat"
+      },
+      {
+        "key": "sub.fuel_station",
+        "name": "⛽ Fuel Station"
+      },
+      {
+        "key": "sub.airport",
+        "name": "✈️ Airport"
+      },
+      {
+        "key": "sub.ticketing",
+        "name": "🎟️ Tickets & Payment"
+      },
+      {
+        "key": "sub.horse_riding",
+        "name": "🐎 Horse Riding"
+      },
+      {
+        "key": "sub.electric_charging",
+        "name": "🔋 Electric Charging"
+      },
+      {
+        "key": "sub.scenic_flight_heli",
+        "name": "🚁 Helicopter Tour"
+      },
+      {
+        "key": "sub.train",
+        "name": "🚄 Train"
+      },
+      {
+        "key": "sub.metro",
+        "name": "🚇 Metro / Underground"
+      },
+      {
+        "key": "sub.local_train",
+        "name": "🚊 Local Train"
+      },
+      {
+        "key": "sub.tram",
+        "name": "🚋 Tram"
       },
       {
         "key": "sub.bus",
         "name": "🚌 Bus"
       },
       {
+        "key": "sub.coach",
+        "name": "🚍 Coach"
+      },
+      {
+        "key": "sub.tourist_bus",
+        "name": "🚍 Sightseeing Bus"
+      },
+      {
+        "key": "sub.trolleybus",
+        "name": "🚎 Trolleybus"
+      },
+      {
+        "key": "sub.shuttle",
+        "name": "🚐 Shuttle"
+      },
+      {
         "key": "sub.taxi",
         "name": "🚕 Taxi"
+      },
+      {
+        "key": "sub.car_rental",
+        "name": "🚗 Car Rental"
+      },
+      {
+        "key": "sub.cruise_ship",
+        "name": "🚢 Cruise Ship"
+      },
+      {
+        "key": "sub.boat",
+        "name": "🚤 Boat"
+      },
+      {
+        "key": "sub.bicycle",
+        "name": "🚲 Bicycle Rental"
+      },
+      {
+        "key": "sub.tourist_boat",
+        "name": "🛥️ Sightseeing Boat"
+      },
+      {
+        "key": "sub.scenic_flight_plane",
+        "name": "🛩️ Flightseeing"
+      },
+      {
+        "key": "sub.passenger_ship",
+        "name": "🛳️ Passenger Ship"
+      },
+      {
+        "key": "sub.e_scooter",
+        "name": "🛴 E-Scooter"
+      },
+      {
+        "key": "sub.auto_rickshaw",
+        "name": "🛺 Auto Rickshaw"
+      },
+      {
+        "key": "sub.parking",
+        "name": "🅿️ Parking"
       }
     ]
   },
@@ -182,12 +376,28 @@
     "groupName": "🚻 Facilities",
     "subgroups": [
       {
+        "key": "sub.baby_changing",
+        "name": "👶 Baby Changing Facilities"
+      },
+      {
         "key": "sub.water_refill_points",
         "name": "💧 Water & Refill Points"
       },
       {
+        "key": "sub.seating_area",
+        "name": "💺 Seating Area"
+      },
+      {
+        "key": "sub.smoking_area",
+        "name": "🚬 Smoking Area"
+      },
+      {
         "key": "sub.toilet_zone",
         "name": "🚾 Toilet Zone"
+      },
+      {
+        "key": "sub.showers",
+        "name": "🚿 Showers"
       }
     ]
   },
@@ -210,12 +420,62 @@
     "groupName": "🛒 Shops",
     "subgroups": [
       {
+        "key": "sub.food_groceries",
+        "name": "🍎 Food & Groceries"
+      },
+      {
         "key": "sub.merchandise",
         "name": "🎁 Merchandise"
       },
       {
+        "key": "sub.pharmacy",
+        "name": "💊 Pharmacy"
+      },
+      {
+        "key": "sub.tobacco_shop",
+        "name": "💨 Tobacco Shop"
+      },
+      {
+        "key": "sub.convenience_store",
+        "name": "🥤 Convenience Store"
+      },
+      {
         "key": "sub.official_festival_shop",
         "name": "🧢 Official Festival Shop"
+      }
+    ]
+  },
+  {
+    "groupKey": "group.services",
+    "groupName": "🆘 Emergency Services",
+    "subgroups": [
+      {
+        "key": "sub.incident_response",
+        "name": "⚠️ Incident Response"
+      },
+      {
+        "key": "sub.medical_first_aid",
+        "name": "🏥 Medical / First Aid"
+      },
+      {
+        "key": "sub.security",
+        "name": "👮 Security"
+      },
+      {
+        "key": "sub.personal_crisis",
+        "name": "💚 Personal Crisis Response"
+      },
+      {
+        "key": "sub.emergency_response",
+        "name": "📢 Emergency Response"
+      },
+      {
+        "key": "sub.fire_safety",
+        "name": "🔥 Fire Safety"
+      },
+      {
+        "key": "sub.police_assistance",
+        "name": "🚓 Police Assistance"
       }
     ]
   }
