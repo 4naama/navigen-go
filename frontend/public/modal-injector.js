@@ -23,6 +23,16 @@ import { t } from './scripts/i18n.js';
 // 💳 Stripe: Handles secure checkout setup and donation flow (modularized for reuse)
 import { initStripe, handleDonation } from "./scripts/stripe.js";
 
+// ✅ Store Popular’s original position on page load
+let popularBaseOffset = 0;
+document.addEventListener("DOMContentLoaded", () => {
+  const scroller = document.getElementById('locations-scroll');
+  const popularHeader = document.querySelector('.group-header-button[data-group="group.popular"]');
+  if (scroller && popularHeader) {
+    popularBaseOffset = popularHeader.offsetTop;
+  }
+});
+
 export function buildAccordion(groupedStructure, geoPoints) {
   const container = document.getElementById("accordion");
   if (!container) return;
@@ -175,18 +185,51 @@ export function buildAccordion(groupedStructure, geoPoints) {
       });
     }
 
-    // group toggle (only one open at a time)
+    // group toggle (only one open at a time, with scroll correction)
     header.addEventListener("click", () => {
-      const isOpen = header.classList.contains("open");
+      const scroller = document.getElementById('locations-scroll');
+      const wasOpen = header.classList.contains("open");
 
-      document.querySelectorAll('.accordion-body').forEach(b => b.style.display = 'none');
-      document.querySelectorAll('.accordion-button, .group-header-button').forEach(btn => btn.classList.remove('open'));
+      const popularHeader = document.querySelector('.group-header-button[data-group="group.popular"]');
 
-      if (!isOpen) {
-        content.style.display = 'block';
-        header.classList.add('open');
-        header.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      // If Popular exists, get its position inside the viewport of the scroller
+      let targetScroll = null;
+      if (scroller && popularHeader) {
+        const popRect = popularHeader.getBoundingClientRect();
+        const headerRect = header.getBoundingClientRect();
+        // We want the same vertical gap from scroller's top
+        const gap = popRect.top - scroller.getBoundingClientRect().top;
+        targetScroll = scroller.scrollTop + (headerRect.top - scroller.getBoundingClientRect().top) - gap;
       }
+
+      const { top: beforeTop } = header.getBoundingClientRect();
+
+      // Close ALL groups including Popular
+      document.querySelectorAll(".accordion-body").forEach(b => b.style.display = "none");
+      document.querySelectorAll(".accordion-button, .group-header-button").forEach(b => b.classList.remove("open"));
+      document.querySelectorAll(".group-buttons").forEach(b => b.classList.add("hidden"));
+
+      // Open tapped one if closed
+      if (!wasOpen) {
+        content.style.display = "block";
+        header.classList.add("open");
+      }
+
+      // Correct micro-jump
+      if (scroller) {
+        const { top: afterTop } = header.getBoundingClientRect();
+        const delta = afterTop - beforeTop;
+        if (Math.abs(delta) > 0) scroller.scrollTop += delta;
+      }
+
+      // Scroll clicked header to same visual position as Popular
+      if (!wasOpen && scroller && popularBaseOffset > 0) {
+        scroller.scrollTo({
+          top: popularBaseOffset,
+          behavior: 'smooth'
+        });
+      }
+
     });
 
     section.appendChild(header);

@@ -16,16 +16,6 @@ import {
   setupTapOutClose 
 } from './modal-injector.js';
 
-// ✅ Adjust --vh CSS variable so height works in both PWA and mobile browsers
-function updateVhVar() {
-  document.documentElement.style.setProperty('--vh', window.innerHeight + 'px');
-}
-window.addEventListener('resize', updateVhVar);
-updateVhVar();
-
-// ...rest of your app.js code below...
-
-
 // ✅ Determines whether app is running in standalone/PWA mode
 function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches ||
@@ -59,6 +49,15 @@ function hideStripeLoader() {
   if (loader) loader.style.display = "none";
 }
 
+const setVH = () =>
+  document.documentElement.style.setProperty('--vh', window.innerHeight + 'px');
+
+setVH();
+window.addEventListener('resize', () => requestAnimationFrame(setVH));
+window.addEventListener('orientationchange', setVH);
+window.addEventListener('pageshow', (e) => { if (e.persisted) setVH(); }); // bfcache
+if (window.visualViewport) visualViewport.addEventListener('resize', setVH);
+
 const state = {};
 let geoPoints = [];
 let structure_data = [];
@@ -80,6 +79,33 @@ let acknowledgedAlerts = new Set();
       modal.querySelector('.modal-bg')?.classList.remove('hidden');
     }
   }
+
+function handleAccordionToggle(header, contentEl) {
+  const scroller = document.getElementById('locations-scroll');
+  const wasOpen = header.classList.contains("open");
+  const { top: beforeTop } = header.getBoundingClientRect();
+
+  // Close all sections
+  document.querySelectorAll(".accordion-body").forEach(b => b.style.display = "none");
+  document.querySelectorAll(".accordion-button, .group-header-button").forEach(b => b.classList.remove("open"));
+  document.querySelectorAll(".group-buttons").forEach(b => b.classList.add("hidden"));
+
+  // Open tapped section if closed
+  if (!wasOpen) {
+    if (contentEl) {
+      contentEl.classList.remove("hidden");
+      contentEl.style.display = "block";
+    }
+    header.classList.add("open");
+  }
+
+  // Adjust ONLY the internal scroller to compensate layout shift
+  if (scroller) {
+    const { top: afterTop } = header.getBoundingClientRect();
+    const delta = afterTop - beforeTop;
+    if (Math.abs(delta) > 0) scroller.scrollTop += delta;
+  }
+}
 
 // ✅ Render ⭐ Popular group
 function renderPopularGroup() {
@@ -111,21 +137,48 @@ function renderPopularGroup() {
   header.setAttribute("data-group", groupKey);
   header.style.backgroundColor = "#fff8e1";
 
-// ✅ Unified toggle logic: only one group (popular or accordion) open at a time
-header.addEventListener("click", () => {
-  const isOpen = header.classList.contains("open");
+  header.addEventListener("click", () => {
+    const scroller = document.getElementById('locations-scroll');
+    const wasOpen = header.classList.contains("open");
+    const popularHeader = document.querySelector('.group-header-button[data-group="group.popular"]');
 
-  // Close all groups first
-  document.querySelectorAll('.accordion-body').forEach(b => b.style.display = 'none');
-  document.querySelectorAll('.group-buttons').forEach(b => b.classList.add('hidden'));
-  document.querySelectorAll('.accordion-button, .group-header-button').forEach(btn => btn.classList.remove('open'));
+    // Target offset is Popular's position from top of scroller
+    let targetOffset = 0;
+    if (popularHeader && scroller) {
+      const popTop = popularHeader.getBoundingClientRect().top;
+      const scrollOffsetNow = scroller.scrollTop;
+      targetOffset = popTop - header.getBoundingClientRect().top + scrollOffsetNow;
+    }
 
-  // Re-open only if it was NOT already open
-  if (!isOpen) {
-    buttonContainer.classList.remove('hidden');
-    header.classList.add('open');
-  }
-});
+    const { top: beforeTop } = header.getBoundingClientRect();
+
+    // Close all groups
+    document.querySelectorAll(".accordion-body").forEach(b => b.style.display = "none");
+    document.querySelectorAll(".accordion-button, .group-header-button").forEach(b => b.classList.remove("open"));
+    document.querySelectorAll(".group-buttons").forEach(b => b.classList.add("hidden"));
+
+    // Open tapped one if closed
+    if (!wasOpen) {
+      buttonContainer.classList.remove("hidden");
+      buttonContainer.style.display = "block";
+      header.classList.add("open");
+    }
+
+    // Correct scroll jump inside #locations-scroll only
+    if (scroller) {
+      const { top: afterTop } = header.getBoundingClientRect();
+      const delta = afterTop - beforeTop;
+      if (Math.abs(delta) > 0) scroller.scrollTop += delta;
+    }
+
+    // Move clicked header to same spot Popular sits
+    if (!wasOpen && scroller && targetOffset !== 0) {
+      scroller.scrollTo({
+        top: targetOffset,
+        behavior: 'smooth'
+      });
+    }
+  });
 
   section.appendChild(header);
 
@@ -156,7 +209,6 @@ header.addEventListener("click", () => {
 
   section.appendChild(buttonContainer);
   container.prepend(section);
-  
 }
 
 function navigate(name, lat, lon) {
@@ -407,6 +459,18 @@ function clearSearch() {
     } else {
       console.log("✅ All location Subgroup keys are valid.");
     }
+    
+    // Disable browser's automatic scroll restoration completely
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // Always reset scroll position to top on load
+    window.addEventListener('load', () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
 
     /**
      * 5) Render: grouped → DOM (buildAccordion), flat → header styling (wireAccordionGroups)

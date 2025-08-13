@@ -101,95 +101,168 @@ body {
   transition: transform 0.2s ease;
 }
 
-#search-container {
-  display: flex;
-  justify-content: center;
-  margin: 4px 1em;
+/* ===========================
+   🔎 Search — unified styles
+   (preserves your comment blocks, de-duplicated)
+   =========================== */
+
+/* 🎛️ Theme vars (easy to tweak) */
+:root{
+  --search-border: #d6dbe1;
+  --search-focus:  #5b8def;               /* alt focus color (no black) */
+  --search-shadow: rgba(91,141,239,.15);  /* soft focus ring */
 }
 
-#search-container > div {
-  display: flex;
-  flex-grow: 1;
-  max-width: 420px;
-  width: 100%;
-  gap: 10px; /* More reliable spacing between search and button */
-  align-items: center;
-}
-
+/* 📦 Wrapper around the input and the clear button */
 #search-left {
-  position: relative;
-  flex-grow: 1;
-  min-width: 0;
-  display: flex;
+  position: relative;          /* needed for absolute clear button */
+  display: inline-flex;
   align-items: center;
+  width: 100%;
+  min-width: 0;
 }
 
-#search::placeholder {
-  font-weight: 400;       /* Normal instead of bold */
-  color: #666;            /* Slightly softer than full black */
-  opacity: 1;             /* Ensure it's visible */
-  font-family: 'Poppins', sans-serif;
-}
-
+/* 🧠 Search input field */
 #search {
   width: 100%;
   height: 36px;
   padding: 8px 14px;
-  font-size: 16px;
-  font-weight: bold;
-  line-height: 1;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  padding-right: 2.25rem;      /* space for ❌ */
   box-sizing: border-box;
-  background-color: white;
+  background: #fff;
+  border: 1px solid var(--search-border);
+  border-radius: 6px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 400;            /* keep text clean; not bold */
+  line-height: 1;
+  outline: none;
 }
 
+/* Placeholder style */
+#search::placeholder {
+  font-weight: 400;
+  color: #666;
+  opacity: 1;
+}
+
+/* Focus state — avoid default black border */
+#search:focus,
+#search:focus-visible {
+  border-color: var(--search-focus);
+  box-shadow: 0 0 0 3px var(--search-shadow);
+}
+
+/* ❌ Clear button: visually sits inside the right side of the input */
 #clear-search {
   position: absolute;
   top: 50%;
   right: 12px;
   transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 16px;
-  color: #777;
-  opacity: 0.5;
-  cursor: pointer;
-  display: none;
+  display: none;               /* shown only when there's text */
+  width: 24px;
+  height: 24px;
   padding: 0;
   margin: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;             /* capital, bold X */
+  font-weight: 700;
   line-height: 1;
+  color: #475569;
+  cursor: pointer;
+  z-index: 1;                  /* above input */
+}
+#clear-search:hover { background: #f1f5f9; color: #334155; }
+#clear-search:active { transform: translateY(-50%) scale(0.98); }
+
+/* Show ❌ when input has value (CSS-only approach) */
+#search:not(:placeholder-shown) + #clear-search {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-#clear-search:hover {
-  opacity: 1;
-  color: #222;
+/* Optional JS hook: if you toggle a wrapper class in JS, this also shows ❌ */
+#search-left.has-value #clear-search {
+  display: inline-flex;
+}
+
+/* 📦 Search container layout */
+#search-container {
+  display: flex;
+  justify-content: center;
+  margin: 4px 1em;
+}
+#search-container > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-grow: 1;
+  max-width: 420px;
+  width: 100%;
+}
+
+/* ==============================
+   📜 Main content + scroll zone
+   (aligned, de-duplicated, maintainable)
+   ============================== */
+
+/* Layout constants (edit to match your UI) */
+:root {
+  --header-h: 56px;          /* fixed header height */
+  --bottom-band-h: 50px;     /* fixed bottom band (my stuff/alert/help/acc) */
+  --end-gap: 50px;           /* visual gap above bottom band */
+  --stack-gap: 8px;          /* vertical spacing between blocks */
+  --content-pad-x: 1em;      /* horizontal padding for content */
 }
 
 /* 📜 Main content area and scroll zone above bottom band */
 #main-content {
   display: flex;
   flex-direction: column;
-  /* Full *visible* viewport height minus:
-     - fixed bottom band height (40px)
-     - fixed header height (56px)
-     → Uses var(--vh) instead of 100vh so mobile browser URL bar is accounted for */
-  height: calc(var(--vh, 100vh) - 40px - 56px);
+  /* Full *visible* viewport height minus fixed bars.
+     Uses var(--vh) (set via JS) for mobile URL bar correctness. */
+  height: calc(var(--vh, 100vh) - var(--bottom-band-h) - var(--header-h));
   box-sizing: border-box;
-  padding: 0 1em;
+  padding: 0 var(--content-pad-x);
   overflow: hidden; /* disable scrolling here; delegate to #locations-scroll */
 }
 
+/* The ONLY vertical scroller for the page’s content */
 #locations-scroll {
-  flex-grow: 1;           /* fill all vertical space inside #main-content */
-  overflow-y: auto;       /* scroll only inside this element */
-  box-sizing: border-box; /* include padding in height calculation */
-  padding-bottom: 180px;
+  flex: 1 1 auto;
+  min-block-size: 0;               /* allow scroller to shrink in flex */
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  /* overflow-anchor: auto; default when line below is removed */
+  box-sizing: border-box;
+
+  /* Keep content clear of fixed bars (top/bottom) + add visual end gap */
+  padding-top: 0; /* first item sits flush under header (header is outside) */
+  padding-bottom: calc(var(--bottom-band-h)
+                      + env(safe-area-inset-bottom, 0px)
+                      + var(--end-gap));
+  scroll-padding-bottom: calc(var(--bottom-band-h) + var(--end-gap));
+
+  /* Touch polish + stable layout on scrollbar show/hide */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scrollbar-gutter: stable both-edges;
+
+  /* Stacked layout for Popular + Accordion sections */
   display: flex;
   flex-direction: column;
-  gap: em;
+  gap: var(--stack-gap);
 }
 
+/* Remove unintended extra gaps at the very top/bottom of the list */
+#locations-scroll > :first-child { margin-top: 0; }
+#locations-scroll .accordion-section:first-child { margin-top: 0; }
+#locations-scroll .accordion-section:last-child  { margin-bottom: 0; }
+
+/* Your existing quick buttons block */
 #quick-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -198,34 +271,12 @@ body {
   max-width: 90%;
 }
 
-.hidden {
-  display: none !important;
-}
+.hidden { display: none !important; }
 
 h2 {
   font-size: 20px;
   font-weight: bold;
   margin: 0.5em 0 0.25em;
-}
-
-#bottom-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #ffffff;
-  padding-left: max(1em, env(safe-area-inset-left));
-  padding-right: max(1em, env(safe-area-inset-right));
-  padding-top: 6px;
-  padding-bottom: 6px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 999;
-  border-top: 1px solid #eee;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  font-size: 16px;       /* ensures it's slightly smaller than h2 */
-  line-height: 1.2;
 }
 
 /* 🟢 WhatsApp Button */
@@ -265,12 +316,6 @@ h2 {
 #accessibility-button:focus,
 #accessibility-button:focus-visible {
   outline: none;
-}
-
-/* Hover effect for both buttons */
-#bottom-bar button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  transition: background-color 0.2s ease;
 }
 
 #locations h3 {
@@ -971,6 +1016,7 @@ button:hover {
 /* Accordion Section */
 .accordion-section {
   margin-top: 8px;
+  scroll-margin-top: var(--header-h);
 }
 
 .accordion-body {
@@ -1968,53 +2014,3 @@ button:hover {
   color: #666; /* Adjust to your muted style if needed */
 }
 
-/* 📦 Wrapper around the input and the clear button */
-/* 🧠 Search input field */
-#search {
-  width: 250px;
-  padding-right: 2.5em;          /* space for ❌ */
-  height: 2.4em;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 1rem;
-  line-height: 2.4em;
-  position: relative;
-  z-index: 1;                     /* ensures it's below ❌ */
-}
-/* 📦 Wrapper around the input and the clear button */
-#search-left {
-  position: relative;         /* Required so the button can be absolutely positioned inside */
-  display: inline-block;      /* Keeps both elements together inline */
-  width: auto;                /* Let it size to fit the input field */
-  max-width: 100%;            /* Prevent overflow in containers */
-}
-
-/* ❌ Clear button: visually sits inside the right side of the input */
-#clear-search {
-  position: absolute;
-  top: 50%;
-  right: 0.5em;
-  transform: translateY(-50%);
-  display: none;
-
-  width: 1.5em;
-  height: 1.5em;
-  border: none;
-  border-radius: 50%;
-  background: #f0f0f0;
-  font-size: 1rem;
-  font-weight: bold;
-  color: #999;        /* lighter gray */
-  opacity: 0.7;       /* a bit more visible */
-  cursor: pointer;
-  text-align: center;
-  line-height: 1.5em;
-  display: none; /* Default state */
-  z-index: 10;  /* ⬅️ critical: this brings ❌ above the input */
-}
-
-#clear-search:hover {
-  color: #333;        /* not full black */
-  opacity: 1;         /* fully visible */
-}
