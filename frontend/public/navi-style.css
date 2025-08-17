@@ -813,7 +813,7 @@ body.large-text {
 }
 
 /* ──────────────── Modal Footer Layout ──────────────── */
-/* Shared footer layout for modals: My Stuff, Share, Alert, etc. */
+/* Shared footer layout for modals: My Stuff, Share, Alert, Confirm, Resolved, etc. */
 .modal-footer {
   display: flex;
   justify-content: center;
@@ -823,9 +823,8 @@ body.large-text {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
   background: rgba(245, 245, 245, 0.95);
   backdrop-filter: blur(3px);
-
-  /* Gap will be applied dynamically via JS if multiple buttons */
-  gap: 0;
+  gap: 1em; /* default gap; JS can override dynamically if needed */
+  flex-wrap: wrap; /* LPM: allow a second row */
 }
 
 /* ──────────────── Modal Footer Buttons ──────────────── */
@@ -856,8 +855,74 @@ body.large-text {
 /* Footer button inside modal-footer container */
 .modal-footer .modal-footer-button {
   width: auto;
-  align-self: flex-end;
+  align-self: center; /* tidy alignment */
 }
+
+/* ──────────────── LPM tweaks (no new classes) ──────────────── */
+/* push ⋮ to the right */
+#lpm-overflow {
+  margin-left: auto; /* 🎯 | ⭐ | —— space —— | ⋮ */
+}
+
+/* secondary actions container under the main row */
+#lpm-secondary-actions {
+  flex-basis: 100%;  /* clean break onto new line */
+  display: none;     /* hidden until ⋮ toggles */
+  margin-top: 0.5em;
+  gap: 0.5em;
+}
+
+/* reveal when active */
+#lpm-secondary-actions.is-open {
+  display: flex;
+  flex-wrap: wrap;   /* wrap gracefully on narrow screens */
+}
+
+/* ──────────────── LPM Image Slider ──────────────── */
+/* Container within .location-media */
+.lpm-slider {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Track simply stacks slides; we toggle visibility */
+.lpm-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Slides */
+.lpm-slide {
+  display: none;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+.lpm-slide.active {
+  display: block;
+}
+
+/* Nav buttons */
+.lpm-prev, .lpm-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-size: 2rem;
+  line-height: 1;
+  padding: 0 0.5rem;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.lpm-prev { left: 10px; }
+.lpm-next { right: 10px; }
+.lpm-prev:focus, .lpm-next:focus { outline: 2px solid rgba(255,255,255,0.6); }
+
 
 /* ──────────────── Modal Body Action Button ──────────────── */
 /* Used in body-action modals like "Share" */
@@ -1882,65 +1947,7 @@ button:hover {
   padding-top: 0.75em;
 }
 
-
-/* ──────────────── modal-footer ──────────────── */
-/* Used for: Any modal with an explicit footer (e.g. Confirm, Resolved) */
-
-.modal-footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 1.5em;
-  padding: 0.75em 0 0.5em;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(245, 245, 245, 0.95);
-  backdrop-filter: blur(3px);
-  gap: 1em;
-}
-
-/* ──────────────── modal-compact ──────────────── */
-/* Used for: quick confirmations with reduced layout */
-
-.modal-compact .modal-content {
-  max-width: 360px;
-  padding: 1rem 1.25rem;
-}
-
-/* ──────────────── modal-bare ──────────────── */
-/* Used for: raw overlays or onboarding steps — removes modal styling */
-
-.modal-bare .modal-top-bar,
-.modal-bare .modal-footer {
-  display: none !important;              /* ✅ Hide header and footer elements forcibly */
-}
-
-.modal-bare .modal-content {
-  padding: 0.75rem 1rem;                 /* ✅ Minimal padding for raw overlays */
-  background: transparent;              /* ✅ No card background — blends with backdrop */
-  box-shadow: none;                     /* ✅ Removes shadow for clean integration */
-}
-
 /* ──────────────── Modal Shop Category ──────────────── */
-/* Used for: Grids of product/donation category types */
-
-.modal-shop-category {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 1em;
-  padding: 1.5em;
-}
-
-
-/* ──────────────── modal-shop-bundle ──────────────── */
-/* Used for: Penultimate step — donation tiers */
-
-.modal-shop-bundle {
-  display: grid;
-  gap: 1em;
-  padding: 1.5em;
-}
-
-
 /* ──────────────── modal-shop-item ──────────────── */
 /* Used for: Final donation/product checkout */
 
@@ -1994,10 +2001,6 @@ button:hover {
   padding: 1.5em;                   /* ✅ Modal-safe inner spacing */
   min-height: 100px;               /* ✅ Prevents collapse when cards exist */
 }
-
-/* Legacy Utility Note (for reference only):  
-   .modal--bare, .modal--compact — replaced by modal-* classes above */
-/*** End of NEW*/
 
 
 /* ✅ Make the checkmark blue */

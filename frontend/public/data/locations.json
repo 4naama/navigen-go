@@ -270,7 +270,7 @@
     "Name": "FINLANDIA",
     "Group": "🎤 Stages",
     "Subgroup dropdown": "🎼 Classical Performances",
-    "Subgroup key": "",
+    "Subgroup key": "sub.classical_performance",
     "Priority": "Yes",
     "Coordinate Compound": "47.554197, 19.053570",
     "": 20

@@ -1,3 +1,295 @@
+/**
+ * Factory: build the Location Profile Modal (LPM) element.
+ * No event wiring here; just structure. Caller injects & wires.
+ *
+ * @param {Object} data
+ * @param {string} data.id                 // location id
+ * @param {string} data.name               // display name
+ * @param {number|string} data.lat         // latitude
+ * @param {number|string} data.lng         // longitude
+ * @param {string} [data.imageSrc]         // optional image URL
+ * @param {string} [data.description]      // optional description/teaser
+ * @returns {HTMLElement} modalEl
+ */
+export function createLocationProfileModal(data) {
+  // ▸ Modal shell
+  const modal = document.createElement('div');
+  modal.id = 'location-profile-modal';
+  modal.className = 'modal hidden';
+
+  // ▸ Content wrapper
+  const content = document.createElement('div');
+  content.className = 'modal-content';
+
+  // ▸ Header: close + title (📍 Name)
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <button class="modal-close" aria-label="Close">×</button>
+    <h2 aria-live="polite">📍 ${data?.name ?? 'Location'}</h2>
+    <span class="modal-top-spacer" aria-hidden="true"></span>
+  `;
+
+  // ▸ Body: media + description (5-line clamp + fade handled in CSS)
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  body.innerHTML = `
+    <div class="modal-body-inner">
+      <figure class="location-media" aria-label="Location image">
+        <img src="${data?.imageSrc || '/assets/placeholder-images/icon-512-green.png'}" 
+             alt="${data?.name || 'Location'} image"
+             style="width:100%;height:auto;display:block;border-radius:8px;">
+      </figure>
+
+      <section class="location-description">
+        <div class="description" data-lines="5">
+          ${data?.description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent varius lorem at nibh vulputate, non fermentum orci viverra. Sed ac volutpat erat. Cras gravida augue nec lorem egestas.'}
+        </div>
+      </section>
+    </div>
+  `;
+
+  // ▸ Footer (pinned): primary row (🎯 ⭐ ⋮) + secondary row (ℹ️ 📤 📅 📍)
+  const footer = document.createElement('div');
+  footer.className = 'modal-footer';
+  footer.innerHTML = `
+    <button class="modal-footer-button" id="lpm-route"
+            data-lat="${data?.lat ?? ''}" data-lng="${data?.lng ?? ''}" aria-label="Route">
+      🎯 <span>Route</span>
+    </button>
+    <button class="modal-footer-button" id="lpm-save" aria-label="Save">
+      ⭐ <span>Save</span>
+    </button>
+    <button class="modal-footer-button" id="lpm-overflow" aria-label="More" aria-expanded="false">
+      ⋮
+    </button>
+
+    <!-- LPM footer secondary row – toggled by ⋮ -->
+    <div id="lpm-secondary-actions" aria-hidden="true">
+      <button class="modal-footer-button" id="som-info" aria-label="Info">ℹ️ <span>Info</span></button>
+      <button class="modal-footer-button" id="som-share" aria-label="Share">📤 <span>Share</span></button>
+      <button class="modal-footer-button" id="som-plan" aria-label="Add to Plan">📅 <span>Add to Plan</span></button>
+      <button class="modal-footer-button" id="som-nearby" aria-label="Nearby Spots">📍 <span>Nearby Spots</span></button>
+    </div>
+  `;
+
+  // ▸ Assemble modal
+  content.appendChild(top);
+  content.appendChild(body);
+  content.appendChild(footer);
+  modal.appendChild(content);
+
+  return modal;
+}
+
+/**
+ * Show the Location Profile Modal (LPM).
+ * - Removes any existing instance
+ * - Creates a new one with createLocationProfileModal(data)
+ * - Injects into DOM and wires button handlers
+ *
+ * @param {Object} data  – same shape as factory
+ */
+export function showLocationProfileModal(data) {
+  // 1. Remove any existing modal
+  const old = document.getElementById('location-profile-modal');
+  if (old) old.remove();
+
+  // 2. Build fresh modal from factory
+  const modal = createLocationProfileModal(data);
+
+  // 3. Append to body (hidden by default)
+  document.body.appendChild(modal);
+  
+  // 🔁 Upgrade placeholder image → slider
+  initLpmImageSlider(modal, data);
+
+  // ————————————————————————————
+  // LPM image slider (progressive enhancement over the placeholder <img>)
+  // ————————————————————————————
+  function initLpmImageSlider(modal, data) {
+    const mediaFigure = modal.querySelector('.location-media');
+    if (!mediaFigure) return;
+
+    // 0) Find base path from the provided image or default
+    const baseSrc = String(data?.imageSrc || '/assets/placeholder-images/icon-512-green.png');
+    const dir = baseSrc.replace(/\/[^\/]*$/, '');          // folder only
+    const filename = baseSrc.split('/').pop();
+
+    // 1) Build candidate list strictly from explicit sources
+    //    a) per-location list: data.images = ["foo.png", "bar.jpg", ...]
+    //    b) fallback: all known placeholder icons from assets/placeholder-images/
+    const explicit = Array.isArray(data?.images) ? data.images : [];
+
+    // Folder for default placeholders
+    const phDir = '/assets/placeholder-images';
+    const defaults = [
+      'icon-512-green.png',
+      'icon-512-grey.png',
+      'icon-512-pink.png',
+      'icon-512-brown.png'
+    ];
+
+    // Resolve sources
+    const baseNames = explicit.length ? explicit : defaults;
+    const seen = new Set();
+    const candidates = baseNames
+      .map(n => (n.includes('/') ? n : `${phDir}/${n}`))
+      .filter(src => (seen.has(src) ? false : (seen.add(src), true)));
+
+    // 2) Create slider shell
+    const slider = document.createElement('div');
+    slider.className = 'lpm-slider';
+    slider.setAttribute('role', 'region');
+    slider.setAttribute('aria-label', 'location images');
+
+    const track = document.createElement('div');
+    track.className = 'lpm-track';
+    slider.appendChild(track);
+
+    const prev = document.createElement('button');
+    prev.type = 'button';
+    prev.className = 'lpm-prev';
+    prev.setAttribute('aria-label', 'Previous image');
+    prev.textContent = '‹';
+
+    const next = document.createElement('button');
+    next.type = 'button';
+    next.className = 'lpm-next';
+    next.setAttribute('aria-label', 'Next image');
+    next.textContent = '›';
+
+    slider.appendChild(prev);
+    slider.appendChild(next);
+
+    // 3) Replace existing <img> with slider
+    mediaFigure.innerHTML = '';
+    mediaFigure.appendChild(slider);
+
+    // 4) Load images; skip broken ones
+    const slides = [];
+    let loaded = 0;
+    let current = 0;
+
+    const show = (idx) => {
+      if (!slides.length) return;
+      current = (idx + slides.length) % slides.length;
+      slides.forEach((el, i) => el.classList.toggle('active', i === current));
+    };
+
+    const addSlide = (src) => {
+      const img = document.createElement('img');
+      img.className = 'lpm-slide';
+      img.alt = (data?.name || 'Location') + ' image';
+      img.decoding = 'async';
+      img.loading = 'lazy';
+      img.src = src;
+      img.addEventListener('load', () => {
+        loaded++;
+        if (loaded === 1) {
+          img.classList.add('active');
+        }
+      }, { once: true });
+      img.addEventListener('error', () => {
+        img.remove(); // drop broken candidate
+      }, { once: true });
+      track.appendChild(img);
+      slides.push(img);
+    };
+
+    // de-dup and add
+    candidates.forEach(src => {
+      addSlide(src);
+    });
+
+    // 5) Controls
+    prev.addEventListener('click', () => show(current - 1));
+    next.addEventListener('click', () => show(current + 1));
+
+    // 6) Keyboard and swipe
+    slider.tabIndex = 0;
+    slider.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prev.click(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); next.click(); }
+    });
+
+    // basic touch swipe
+    let startX = null;
+    slider.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    slider.addEventListener('touchend', (e) => {
+      if (startX == null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 35) (dx > 0 ? prev : next).click();
+      startX = null;
+    }, { passive: true });
+  }
+  
+    // 4. Wire up buttons (Route, Save, ⋮ toggle, Close, etc.)
+  
+  // ————————————————————————————
+  // LPM button wiring (Route / Save / ⋮ / Close)
+  // Call from showLocationProfileModal(modal, data)
+  // ————————————————————————————  
+  function wireLocationProfileModal(modal, data, originEl) {    
+
+    // 🎯 Route → open Google Maps with provided coords
+    const btnRoute = modal.querySelector('#lpm-route');
+    if (btnRoute) {
+      const lat = String(data?.lat ?? btnRoute.getAttribute('data-lat') ?? '').trim();
+      const lng = String(data?.lng ?? btnRoute.getAttribute('data-lng') ?? '').trim();
+      btnRoute.setAttribute('data-lat', lat);
+      btnRoute.setAttribute('data-lng', lng);
+      btnRoute.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!lat || !lng) return console.warn('LPM: missing coords');
+        window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+      });
+    }
+
+    // ⭐ Save → stub (hook your real flow later)
+    const btnSave = modal.querySelector('#lpm-save');
+    if (btnSave) {
+      btnSave.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('⭐ Save tapped (stub)');
+      });
+    }
+
+    // × Close → remove modal, return focus to originating trigger if provided
+    const btnClose = modal.querySelector('.modal-close');
+    if (btnClose) {
+      btnClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        modal.remove();
+        if (originEl && typeof originEl.focus === 'function') originEl.focus();
+      });
+    }
+
+    // Tap-out + ESC (use your existing helper if available)
+    if (typeof setupTapOutClose === 'function') {
+      setupTapOutClose('location-profile-modal');
+    } else {
+      modal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') btnClose?.click();
+      });
+    }
+
+    // Optional: focus management (focus first actionable)
+    (modal.querySelector('#lpm-route') ||
+     modal.querySelector('#lpm-save')  ||
+     btnClose)?.focus?.();
+  }
+
+  // call wiring + reveal
+  wireLocationProfileModal(modal, data, data?.originEl);
+  showModal('location-profile-modal');
+
+  // 5. Reveal modal (remove .hidden, add .visible, focus trap etc.)
+  // (done above via showModal)
+  
+  initLpmImageSlider(modal, data);
+
+}
 
 // modal-injector.js
 
@@ -33,10 +325,50 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+  // Utility: create a location button wired to LPM
+  function makeLocationButton(loc) {
+    const btn = document.createElement('button');
+    btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
+    btn.setAttribute('data-id', loc.ID);
+    btn.classList.add('location-button');
+
+    const cc = loc["Coordinate Compound"];
+    if (typeof cc === "string" && cc.includes(",")) {
+      const [lat, lng] = cc.split(',').map(s => s.trim());
+      btn.setAttribute('data-lat', lat);
+      btn.setAttribute('data-lng', lng);
+      btn.title = `Open profile / Route (${lat}, ${lng})`;
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLocationProfileModal({
+          id: loc.ID,
+          name: btn.textContent,
+          lat, lng,
+          imageSrc: loc.imageSrc || '/assets/placeholder-images/icon-512-green.png',
+          description: loc.description || '',
+          originEl: btn
+        });
+      });
+    }
+    return btn;
+  }
+
+
 export function buildAccordion(groupedStructure, geoPoints) {
   const container = document.getElementById("accordion");
   if (!container) return;
   container.innerHTML = '';
+
+  const scroller = document.getElementById('locations-scroll');
+  let popularTargetTop = null;
+
+  // Capture Popular's position in scroller content coordinates once
+  requestAnimationFrame(() => {
+    const popularHeader = document.querySelector('.group-header-button[data-group="group.popular"]');
+    if (scroller && popularHeader) {
+      popularTargetTop = popularHeader.offsetTop;
+    }
+  });
 
   groupedStructure.forEach(group => {
     const groupKey = group.groupKey || group.Group;
@@ -70,7 +402,7 @@ export function buildAccordion(groupedStructure, geoPoints) {
       group.subgroups.forEach((sub, sIdx) => {
         const subHeader = document.createElement('div');
         subHeader.className = 'subheader';
-        subHeader.textContent = sub.name || sub.key;
+        subHeader.textContent = sub.key ? (t(sub.key) || sub.name || sub.key) : (sub.name || sub.key);
 
         const subWrap = document.createElement('div');
         subWrap.className = 'subgroup-items';
@@ -79,24 +411,7 @@ export function buildAccordion(groupedStructure, geoPoints) {
 
         // buttons inside subgroup
         subLocs.forEach(loc => {
-          const btn = document.createElement('button');
-          btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
-          btn.setAttribute('data-id', loc.ID);
-          btn.classList.add('location-button');
-
-          const cc = loc["Coordinate Compound"];
-          if (typeof cc === "string" && cc.includes(",")) {
-            const [lat, lng] = cc.split(',').map(s => s.trim());
-            btn.setAttribute('data-lat', lat);
-            btn.setAttribute('data-lng', lng);
-            btn.title = `Open in Google Maps (${lat}, ${lng})`;
-            btn.addEventListener('click', (e) => {
-              e.preventDefault();
-              window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-            });
-          }
-
-          subWrap.appendChild(btn);
+          subWrap.appendChild(makeLocationButton(loc));
         });
 
         // initial state + persistence
@@ -137,25 +452,9 @@ export function buildAccordion(groupedStructure, geoPoints) {
         const othersWrap = document.createElement('div');
         othersWrap.className = 'subgroup-items';
 
+        // Use LPM instead of direct Google Maps for “others” buttons
         others.forEach(loc => {
-          const btn = document.createElement('button');
-          btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
-          btn.setAttribute('data-id', loc.ID);
-          btn.classList.add('location-button');
-
-          const cc = loc["Coordinate Compound"];
-          if (typeof cc === "string" && cc.includes(",")) {
-            const [lat, lng] = cc.split(',').map(s => s.trim());
-            btn.setAttribute('data-lat', lat);
-            btn.setAttribute('data-lng', lng);
-            btn.title = `Open in Google Maps (${lat}, ${lng})`;
-            btn.addEventListener('click', (e) => {
-              e.preventDefault();
-              window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-            });
-          }
-
-          othersWrap.appendChild(btn);
+          othersWrap.appendChild(makeLocationButton(loc));
         });
 
         content.appendChild(othersWrap);
@@ -163,73 +462,29 @@ export function buildAccordion(groupedStructure, geoPoints) {
 
     } else {
       // flat list (no subgroups defined)
+      // ⬇️ Added: create the container that was being used below
+      const flatWrap = document.createElement('div'); // groups without subheaders
+      flatWrap.className = 'subgroup-items';
+      content.appendChild(flatWrap);
+
       filtered.forEach(loc => {
-        const btn = document.createElement('button');
-        btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
-        btn.setAttribute('data-id', loc.ID);
-        btn.classList.add('location-button');
-
-        const cc = loc["Coordinate Compound"];
-        if (typeof cc === "string" && cc.includes(",")) {
-          const [lat, lng] = cc.split(',').map(s => s.trim());
-          btn.setAttribute('data-lat', lat);
-          btn.setAttribute('data-lng', lng);
-          btn.title = `Open in Google Maps (${lat}, ${lng})`;
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-          });
-        }
-
-        content.appendChild(btn);
+        flatWrap.appendChild(makeLocationButton(loc));
       });
     }
 
     // group toggle (only one open at a time, with scroll correction)
     header.addEventListener("click", () => {
-      const scroller = document.getElementById('locations-scroll');
       const wasOpen = header.classList.contains("open");
 
-      const popularHeader = document.querySelector('.group-header-button[data-group="group.popular"]');
-
-      // If Popular exists, get its position inside the viewport of the scroller
-      let targetScroll = null;
-      if (scroller && popularHeader) {
-        const popRect = popularHeader.getBoundingClientRect();
-        const headerRect = header.getBoundingClientRect();
-        // We want the same vertical gap from scroller's top
-        const gap = popRect.top - scroller.getBoundingClientRect().top;
-        targetScroll = scroller.scrollTop + (headerRect.top - scroller.getBoundingClientRect().top) - gap;
-      }
-
-      const { top: beforeTop } = header.getBoundingClientRect();
-
-      // Close ALL groups including Popular
+      // Close all groups
       document.querySelectorAll(".accordion-body").forEach(b => b.style.display = "none");
       document.querySelectorAll(".accordion-button, .group-header-button").forEach(b => b.classList.remove("open"));
       document.querySelectorAll(".group-buttons").forEach(b => b.classList.add("hidden"));
 
-      // Open tapped one if closed
       if (!wasOpen) {
         content.style.display = "block";
         header.classList.add("open");
       }
-
-      // Correct micro-jump
-      if (scroller) {
-        const { top: afterTop } = header.getBoundingClientRect();
-        const delta = afterTop - beforeTop;
-        if (Math.abs(delta) > 0) scroller.scrollTop += delta;
-      }
-
-      // Scroll clicked header to same visual position as Popular
-      if (!wasOpen && scroller && popularBaseOffset > 0) {
-        scroller.scrollTo({
-          top: popularBaseOffset,
-          behavior: 'smooth'
-        });
-      }
-
     });
 
     section.appendChild(header);
@@ -313,7 +568,6 @@ window.fetchTranslatedLangs = async () => {
  * Supports custom title, body, and footer buttons.
  */
 export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [], layout = '' }) {
-  // Check if modal exists
   let existing = document.getElementById(id);
   if (existing) return existing;
 
@@ -321,28 +575,40 @@ export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [],
   modal.classList.add('modal');
   modal.id = id;
 
+  const isAction = layout === 'action';
+
+  // Build footer HTML (flat)
+  const primary = Array.isArray(footerButtons) ? footerButtons : (footerButtons.primary || []);
+  const secondary = Array.isArray(footerButtons) ? [] : (footerButtons.secondary || []);
+  const allBtns = [...primary, ...secondary];
+
+  const footerHTML = allBtns.length
+    ? `
+      <div class="modal-footer">
+        ${allBtns.map(btn => `
+          <button class="${btn.className || 'modal-footer-button'}" id="${btn.id}">${btn.label}</button>
+        `).join('')}
+      </div>`
+    : '';
+
   modal.innerHTML = `
-    ${layout === 'action' ? '<div class="modal-overlay"></div>' : ''}
+    ${isAction ? '<div class="modal-overlay"></div>' : ''}
     <div class="modal-content${layout ? ` modal-${layout}` : ''}">
       ${title ? `<h2 class="modal-title">${title}</h2>` : ''}
       <div class="modal-body"><div class="modal-body-inner">${bodyHTML}</div></div>
-      ${footerButtons.length ? `
-        <div class="modal-footer">
-          ${footerButtons.map(btn => `
-            <button class="${btn.className || 'modal-body-button'}" id="${btn.id}">${btn.label}</button>
-          `).join('')}
-        </div>` : ''}
+      ${footerHTML}
     </div>
   `;
 
-  document.body.appendChild(modal); // ✅ Keep this one
+  document.body.appendChild(modal);
 
-  // Bind any click handlers
-  footerButtons.forEach(btn => {
-    if (btn.onClick) {
-      modal.querySelector(`#${btn.id}`)?.addEventListener('click', btn.onClick);
-    }
-  });
+  const bind = (btn) => { if (btn.onClick) modal.querySelector(`#${btn.id}`)?.addEventListener('click', btn.onClick); };
+  if (Array.isArray(footerButtons)) {
+    footerButtons.forEach(bind);
+  } else {
+    primary.forEach(bind);
+    secondary.forEach(bind);
+  }
 
   return modal;
 }
@@ -825,13 +1091,6 @@ export function createMyStuffModal() {
             </div>
           </div>
         `;
-
-        // Try all possible scrollable targets
-        modal.scrollTop = 0;
-        body.scrollTop = 0;
-        modal.querySelector(".modal-body")?.scrollTo(0, 0);
-        modal.querySelector(".modal-content")?.scrollTo(0, 0);
-
 
         appendResolvedButton(actions, "my-stuff-modal");
       }

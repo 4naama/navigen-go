@@ -13,7 +13,8 @@ import {
   showToast,
   showMyStuffModal,
   flagStyler,
-  setupTapOutClose 
+  setupTapOutClose,
+  showLocationProfileModal
 } from './modal-injector.js';
 
 // ✅ Determines whether app is running in standalone/PWA mode
@@ -103,7 +104,7 @@ function handleAccordionToggle(header, contentEl) {
   if (scroller) {
     const { top: afterTop } = header.getBoundingClientRect();
     const delta = afterTop - beforeTop;
-    if (Math.abs(delta) > 0) scroller.scrollTop += delta;
+    if (Math.abs(delta) > 4) scroller.scrollTop += delta;
   }
 }
 
@@ -194,16 +195,23 @@ function renderPopularGroup() {
       const [lat, lng] = loc["Coordinate Compound"].split(',').map(x => x.trim());
       btn.setAttribute("data-lat", lat);
       btn.setAttribute("data-lng", lng);
-      btn.title = `Open in Google Maps (${lat}, ${lng})`;
+      btn.title = `Open profile / Route (${lat}, ${lng})`;
 
-      // ✅ Click to open Google Maps
-      btn.addEventListener("click", (e) => {
+      // ✅ Click to open LPM (was: bare e.preventDefault(); + Maps)
+      btn.addEventListener('click', (e) => {
         e.preventDefault();
-        const url = `https://www.google.com/maps?q=${lat},${lng}`;
-        window.open(url, "_blank");
+        showLocationProfileModal({
+          id: btn.getAttribute('data-id'),
+          name: btn.textContent,
+          lat, lng,
+          imageSrc: '/assets/logo-icon.svg',
+          description: '',
+          originEl: btn
+        });
       });
     }
 
+    // ⬅ close the if-block before append
     buttonContainer.appendChild(btn);
   });
 
@@ -530,8 +538,8 @@ function clearSearch() {
 
   // 📍 Inject Share Modal at startup
   createShareModal();            // Injects #share-location-modal into DOM
-  setupTapOutClose("share-location-modal");
-  
+  setupTapOutClose("share-location-modal");  
+
   // 🔹 Set up tap-out-close behavior for all modals
   [
     "language-modal",
