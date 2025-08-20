@@ -1,9 +1,9 @@
-
 import {
   buildAccordion,
   createMyStuffModal,
   createAlertModal,
   createDonationModal,
+  createHelpModal,
   setupMyStuffModalLogic,
   createShareModal,
   showModal,
@@ -17,13 +17,22 @@ import {
   showLocationProfileModal
 } from './modal-injector.js';
 
+// 🌍 Emergency data + localization helpers
+// Served as a static ES module from /public/scripts
+import {
+  loadEmergencyData,
+  pickLocale,
+  getLabelsFor,
+  getNumbersFor
+} from '/scripts/emergency-ui.js';
+
+import { loadTranslations, t } from "./scripts/i18n.js";
+
 // ✅ Determines whether app is running in standalone/PWA mode
 function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches ||
          window.navigator.standalone === true;
 }
-
-import { loadTranslations, t } from "./scripts/i18n.js";
 
 function getUserLang() {
   // Use browser setting or override with ?lang=fr
@@ -109,14 +118,14 @@ function handleAccordionToggle(header, contentEl) {
 }
 
 // ✅ Render ⭐ Popular group
-function renderPopularGroup() {
+function renderPopularGroup(list = geoPoints) {
   const container = document.querySelector("#locations");
   if (!container) {
     console.warn('⚠️ #locations not found; skipping Popular group');
     return;
   }
 
-  const popular = geoPoints.filter(loc => loc.Priority === "Yes");
+  const popular = list.filter(loc => loc.Priority === "Yes");
   if (popular.length === 0) return;
 
   const section = document.createElement("div");
@@ -136,7 +145,7 @@ function renderPopularGroup() {
     <span class="header-arrow"></span>
   `;
   header.setAttribute("data-group", groupKey);
-  header.style.backgroundColor = "#fff8e1";
+  header.style.backgroundColor = 'var(--group-color)';
 
   header.addEventListener("click", () => {
     const scroller = document.getElementById('locations-scroll');
@@ -262,25 +271,87 @@ function showActionModal(action) {
 }
 
 // 🎨 Group-specific background color (based on translation keys only)
-function colorFromGroup(groupKey) {
-  const groupColors = {
-    "group.stages": "#ffe3e3",           // Light Red / Stages
-    "group.activities": "#fff2cc",       // Pale Yellow / Activities
-    "group.food": "#d9f9d9",             // Mint Green / Food & Drink
-    "group.gates": "#e0f7fa",            // Sky Teal / Gates
-    "group.areas": "#ede7f6",            // Lavender / Main Areas
-    "group.shops": "#fce4ec",            // Blush Pink / Shops
-    "group.spas": "#e3f2fd",             // Soft Blue / Spas
-    "group.services": "#f8d7da",         // Rose Pink / Services
-    "group.guests": "#ede7f6",           // Light Purple / Guest Services
-    "group.transport": "#8FD19E",        // Fern Green / Transport ✅ updated
-    "group.facilities": "#e0f7fa",       // Sky Teal / Facilities
-    "group.social-points": "#e6f3ff",    // Soft Sky Blue / Social
-    "group.popular": "#fff8e1"           // Cream Yellow / Popular
-  };
+// app.js
+// ---------------------------------------------------------------------
+// Palette: 15 pale hues (base + ink). No duplicates.
+// ---------------------------------------------------------------------
+const PALETTE = [
+  { base: '#F4D7D7', ink: '#EAB8B8' }, // 0
+  { base: '#F4E3D7', ink: '#EACCB8' }, // 1
+  { base: '#F4EED7', ink: '#EAE0B8' }, // 2
+  { base: '#EEF4D7', ink: '#E0EAB8' }, // 3
+  { base: '#E3F4D7', ink: '#CCEAB8' }, // 4
+  { base: '#D7F4D7', ink: '#B8EAB8' }, // 5  ← Transport (pale)
+  { base: '#D7F4E3', ink: '#B8EACC' }, // 6
+  { base: '#D7F4EE', ink: '#B8EAE0' }, // 7
+  { base: '#D7EEF4', ink: '#B8E0EA' }, // 8
+  { base: '#D7E3F4', ink: '#B8CCEA' }, // 9
+  { base: '#D7D7F4', ink: '#B8B8EA' }, // 10
+  { base: '#E3D7F4', ink: '#CCB8EA' }, // 11
+  { base: '#EED7F4', ink: '#E0B8EA' }, // 12
+  { base: '#F4D7EE', ink: '#EAB8E0' }, // 13
+  { base: '#F4D7E3', ink: '#EAB8CC' }, // 14
+];
 
-  return groupColors[groupKey] || "#f2f2f2";
+// ---------------------------------------------------------------------
+// Map each group key to a unique palette index (no repeats).
+// Adjust the keys to your actual set; keep uniqueness.
+// ---------------------------------------------------------------------
+const GROUP_COLOR_INDEX = {
+  'group.popular':        0,   // pale red
+  'group.transport':      5,   // pale green (downgraded)
+  'group.food':           2,   // pale yellow
+  'group.services':       10,  // pale indigo
+  'group.stages':         1,   // pale amber
+  'group.activities':     3,   // pale lime
+  'group.gates':          8,   // pale cyan-blue
+  'group.areas':          11,  // pale purple
+  'group.shops':          13,  // pale pink
+  'group.spas':           9,   // pale periwinkle
+  'group.guests':         4,   // pale coral / red for Emergency Services
+  'group.facilities':     7,   // pale teal
+  'group.social-points':  6,   // pale aqua-mint
+  'group.landmarks':      2,   // pale stone / beige for Landmarks
+  'group.emergency':      12  // pale violet
+
+};
+
+// ---------------------------------------------------------------------
+// Apply colors: set CSS vars on each accordion section
+// Assumes .group-header-button holds data-group and is followed by .accordion-body
+// ---------------------------------------------------------------------
+function paintAccordionColors() {
+  /** add concise comments only **/
+  document.querySelectorAll('.group-header-button[data-group]').forEach((header) => {
+    const key = header.dataset.group;
+    const idx = GROUP_COLOR_INDEX[key];
+    if (idx == null) return; // unknown group → skip without breaking anything
+
+    const { base, ink } = PALETTE[idx];
+
+    // header colors (visible + CSS custom properties for nested elements)
+    header.style.setProperty('--group-color', base);
+    header.style.setProperty('--group-color-ink', ink);
+
+    // tint the corresponding body (nested buttons live here)
+    const body = header.nextElementSibling;
+    if (body && body.classList.contains('accordion-body')) {
+      body.style.setProperty('--group-color', base);
+      body.style.setProperty('--group-color-ink', ink);
+    }
+    
+    const section = header.closest('.accordion-section');
+    if (section) {
+      section.style.setProperty('--group-color', base);
+      section.style.setProperty('--group-color-ink', ink);
+    }    
+      
+    });
 }
+
+// Call after the accordion is rendered (e.g., after your build/init)
+document.addEventListener('DOMContentLoaded', paintAccordionColors);
+// If accordion is re-rendered dynamically, call paintAccordionColors() again afterward.
 
 function wireAccordionGroups(structure_data) {
   structure_data.forEach(group => {
@@ -316,7 +387,7 @@ function wireAccordionGroups(structure_data) {
     if (metaEl) metaEl.classList.add('group-header-meta');
     if (arrowEl) arrowEl.classList.add('group-header-arrow');
 
-    matchingBtn.style.backgroundColor = colorFromGroup(groupKey);
+    matchingBtn.style.backgroundColor = 'var(--group-color)';
 
     const sibling = matchingBtn.nextElementSibling;
     if (!sibling || !sibling.classList.contains('accordion-body')) {
@@ -327,7 +398,7 @@ function wireAccordionGroups(structure_data) {
     // Apply flat 1px tinted border to group children, no background styling
     sibling.querySelectorAll('button').forEach(locBtn => {
       locBtn.classList.add('quick-button', 'location-button');
-      locBtn.style.border = `1px solid ${colorFromGroup(groupKey)}`;
+      locBtn.style.border = '1px solid var(--group-color-ink)';
       locBtn.style.backgroundColor = 'transparent';
 
       if (!locBtn.querySelector('.location-name')) {
@@ -378,6 +449,55 @@ function clearSearch() {
   if (clearBtn) clearBtn.style.display = 'none';
 }
 
+// --- Emergency block bootstrap (runs when help modal opens) ---
+// Adds concise comments per block; preserves your style.
+
+async function initEmergencyBlock(countryOverride) {
+  // 1) Load JSON (cached by browser/SW)
+  const data = await loadEmergencyData('/data/emergency.json');
+
+  // 2) Locale (no hard-coded English)
+  const supported = Object.keys(data.i18n?.labels || {});
+  const locale = pickLocale(navigator.language, supported);
+  const L = getLabelsFor(data, locale);
+
+  // 3) Country selection (CF header → global var; or user override)
+  const cc = (countryOverride || window.__CF_COUNTRY__ || localStorage.getItem('emg.country') || 'US').toUpperCase();
+
+  // 4) Build entries
+  const numbers = getNumbersFor(data, cc);
+  const entries = [];
+  if (numbers.emergency) entries.push({ key: 'emergency', num: numbers.emergency });
+  if (numbers.police)    entries.push({ key: 'police',    num: numbers.police });
+  if (numbers.fire)      entries.push({ key: 'fire',      num: numbers.fire });
+  if (numbers.ambulance) entries.push({ key: 'ambulance', num: numbers.ambulance });
+  (numbers.alt || []).forEach(n => entries.push({ key: 'alt', num: n }));
+
+  // 5) Render into the help modal placeholders
+  const regionEl  = document.getElementById('emg-region-label');
+  const buttonsEl = document.getElementById('emg-buttons');
+
+  if (regionEl)  regionEl.textContent = cc;
+  if (buttonsEl) {
+    buttonsEl.innerHTML = entries.map(e => `
+      <a class="btn btn-emergency" href="tel:${e.num}" aria-label="Call ${e.num} — ${L[e.key] || e.key}">
+        ${e.num} — ${L[e.key] || e.key}
+      </a>
+    `).join('');
+  }
+
+  // 6) Optional: country override <select> support (if you add one)
+  const select = document.getElementById('emg-country');
+  if (select && select.options.length === 0) {
+    const codes = Object.keys(data.countries).sort();
+    select.innerHTML = codes.map(code => `<option value="${code}" ${code===cc?'selected':''}>${code}</option>`).join('');
+    select.addEventListener('change', () => {
+      localStorage.setItem('emg.country', select.value);
+      initEmergencyBlock(select.value);
+    });
+  }
+}
+
   // ✅ Start of DOMContent
   // Wait until DOM is fully loaded before attaching handlers
   document.addEventListener('DOMContentLoaded', async () => {
@@ -406,6 +526,8 @@ function clearSearch() {
     injectStaticTranslations();          // ✅ Apply static translations
 
     createMyStuffModal();                // 🎛️ Inject the "My Stuff" modal
+    
+    createHelpModal();                   // 🆘 Inject the Help / Emergency modal
 
     setupMyStuffModalLogic();           // 🧩 Setup tab handling inside modal
     flagStyler();                       // 🌐 Apply title/alt to any flag icons
@@ -479,13 +601,26 @@ function clearSearch() {
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
     });
+    
+    // ——— Context filter ———
+    const ACTIVE_CONTEXT = new URLSearchParams(location.search).get('ctx') || null;
+    const geoCtx = ACTIVE_CONTEXT
+      ? geoPoints.filter(loc =>
+          loc.Visible === 'Yes' &&
+          String(loc.Context || '')
+            .split(';')
+            .map(s => s.trim())
+            .includes(ACTIVE_CONTEXT)
+        )
+      : geoPoints;        
 
     /**
      * 5) Render: grouped → DOM (buildAccordion), flat → header styling (wireAccordionGroups)
      */
-    renderPopularGroup();
-    buildAccordion(groupedStructure, geoPoints);   // <-- pass the grouped array directly
+    renderPopularGroup(geoCtx);
+    buildAccordion(groupedStructure, geoCtx);    // <-- pass the grouped array directly
     wireAccordionGroups(structure_data);
+    paintAccordionColors();
 
     /**
      * 🌐 Applies static UI translations to the main page elements.
@@ -667,7 +802,7 @@ function clearSearch() {
               const btn = document.createElement("button");
               btn.className = "modal-close";
               btn.textContent = "✅ Noted";
-              btn.style.border = `1px solid ${colorFromGroup("group.popular")}`;
+              btn.style.border = '1px solid #EACCB8';
               btn.onclick = () => {
                 acknowledgedAlerts.add(message);
 
@@ -767,12 +902,25 @@ function clearSearch() {
     });
   });
 
-  if (helpButton && helpModal) {
-    helpButton.addEventListener("click", () => {
-      helpModal.classList.remove("hidden");
-      setupTapOutClose("help-modal");
+  if (helpButton) {
+    helpButton.addEventListener("click", async () => {
+      // 🆘 Open the Help modal
+      // (ensures #emg-buttons + other placeholders are in the DOM)
+      showModal("help-modal");
+
+      // 🌍 Populate localized emergency numbers dynamically
+      // - fetches /data/emergency.json
+      // - picks browser locale (fallback: en)
+      // - detects/overrides country (CF-IPCountry or localStorage)
+      // - renders tap-to-dial buttons inside the modal
+      try {
+        await initEmergencyBlock();
+      } catch (e) {
+        // 🚨 Fail gracefully (modal still opens even if numbers not injected)
+        console.error("Emergency block init failed:", e);
+      }
     });
-  }
+  } // ← ensure this closing brace exists
 
   if (searchInput) {
     const languageButton = document.getElementById("language-button");

@@ -107,7 +107,7 @@ export function showLocationProfileModal(data) {
   // ————————————————————————————
   // LPM image slider (progressive enhancement over the placeholder <img>)
   // ————————————————————————————
-  function initLpmImageSlider(modal, data) {
+  async function initLpmImageSlider(modal, data) {
     const mediaFigure = modal.querySelector('.location-media');
     if (!mediaFigure) return;
 
@@ -124,11 +124,16 @@ export function showLocationProfileModal(data) {
     // Folder for default placeholders
     const phDir = '/assets/placeholder-images';
     const defaults = [
-      'icon-512-green.png',
-      'icon-512-grey.png',
-      'icon-512-pink.png',
-      'icon-512-brown.png'
-    ];
+          'icon-512-green.png',
+          'icon-512-dark-blue.png',
+          'icon-512-brown.png',
+          'icon-512-grey.png',
+          'icon-512-light-blue.png',
+          'icon-512-neon.png',
+          'icon-512-pink.png',
+          'icon-512-red.png',
+          'icon-512-yellow.png'
+        ];
 
     // Resolve sources
     const baseNames = explicit.length ? explicit : defaults;
@@ -166,45 +171,110 @@ export function showLocationProfileModal(data) {
     mediaFigure.innerHTML = '';
     mediaFigure.appendChild(slider);
 
-    // 4) Load images; skip broken ones
-    const slides = [];
-    let loaded = 0;
-    let current = 0;
+    // 4) Load images (reuse the list built above)
+    const images = candidates;
 
-    const show = (idx) => {
-      if (!slides.length) return;
-      current = (idx + slides.length) % slides.length;
-      slides.forEach((el, i) => el.classList.toggle('active', i === current));
-    };
+    if (!images.length) return;
 
-    const addSlide = (src) => {
-      const img = document.createElement('img');
-      img.className = 'lpm-slide';
-      img.alt = (data?.name || 'Location') + ' image';
-      img.decoding = 'async';
-      img.loading = 'lazy';
-      img.src = src;
-      img.addEventListener('load', () => {
-        loaded++;
-        if (loaded === 1) {
-          img.classList.add('active');
-        }
-      }, { once: true });
-      img.addEventListener('error', () => {
-        img.remove(); // drop broken candidate
-      }, { once: true });
-      track.appendChild(img);
-      slides.push(img);
-    };
+    // ——— double buffer canvas ———
+    const canvasA = document.createElement('img');
+    const canvasB = document.createElement('img');
+    canvasA.className = 'lpm-img active';
+    canvasB.className = 'lpm-img';
+    track.appendChild(canvasA);
+    track.appendChild(canvasB);
 
-    // de-dup and add
-    candidates.forEach(src => {
-      addSlide(src);
-    });
+    let front = canvasA;           // currently visible <img>
+    let back  = canvasB;           // offscreen buffer <img>
+    let idx   = 0;                 // current index in images[]
+    
+    function resolveStartIndex(images, data) {
+      if (Number.isInteger(data?.startIndex)) {
+        const n = images.length;
+        return ((data.startIndex % n) + n) % n; // safe wrap
+      }
+      if (data?.startImage) {
+        const i = images.findIndex(u => u === data.startImage || u.endsWith('/' + data.startImage));
+        if (i >= 0) return i;
+      }
+      if (Array.isArray(data?.media?.images)) {
+        const j = data.media.images.findIndex(m => m && typeof m === 'object' && (m.default || m.isDefault));
+        if (j >= 0) return j;
+      }
+      return 0;
+    }        
 
-    // 5) Controls
-    prev.addEventListener('click', () => show(current - 1));
-    next.addEventListener('click', () => show(current + 1));
+    // tiny LRU cache: remember which URLs we’ve decoded (no blobs kept)
+    const decoded = new Map();     // url -> true
+    const MAX_CACHE = 8;
+
+    // load into a target <img> and wait for decode before showing
+    async function loadInto(imgEl, url) {
+      if (!url) return false;
+
+      // set src first; then decode when possible
+      imgEl.src = url;
+
+      if ('decode' in imgEl) {
+        try { await imgEl.decode(); } catch (_) { /* swallow */ }
+      } else if (!imgEl.complete) {
+        await new Promise(r => { imgEl.onload = r; imgEl.onerror = r; });
+      }
+
+      decoded.set(url, true);
+      if (decoded.size > MAX_CACHE) decoded.delete(decoded.keys().next().value);
+      return true;
+    }
+
+    // keep slider box stable based on first loaded image ratio
+    function lockAspectFrom(imgEl) {
+      if (!slider.style.aspectRatio && imgEl.naturalWidth && imgEl.naturalHeight) {
+        slider.style.aspectRatio = `${imgEl.naturalWidth}/${imgEl.naturalHeight}`;
+      }
+    }
+
+    // show specific index (wraps), swapping buffers only after next is decoded
+    async function show(to) {
+      if (!images.length) return;
+      const nextIdx = (to + images.length) % images.length;
+      const nextUrl = images[nextIdx];
+
+      // decode offscreen
+      await loadInto(back, nextUrl);
+
+      // first run: lock aspect so text never jumps
+      lockAspectFrom(back);
+
+      // crossfade by swapping roles
+      back.classList.add('active');
+      front.classList.remove('active');
+      [front, back] = [back, front];
+      idx = nextIdx;
+
+      // opportunistic neighbor prefetch (no heavy preload)
+      prefetch(idx + 1);
+      prefetch(idx - 1);
+    }
+
+    function prefetch(i) {
+      const url = images[(i + images.length) % images.length];
+      if (decoded.has(url)) return;
+      const probe = new Image();
+      probe.src = url;
+      if (probe.decode) probe.decode().catch(() => {});
+      decoded.set(url, true);
+      if (decoded.size > MAX_CACHE) decoded.delete(decoded.keys().next().value);
+    }
+
+    // init: prime first frame, then neighbor
+    idx = resolveStartIndex(images, data);
+    await loadInto(front, images[idx]);
+    lockAspectFrom(front);
+    prefetch(idx + 1);
+
+    // controls
+    prev.addEventListener('click', () => show(idx - 1));
+    next.addEventListener('click', () => show(idx + 1));
 
     // 6) Keyboard and swipe
     slider.tabIndex = 0;
@@ -353,7 +423,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return btn;
   }
 
-
 export function buildAccordion(groupedStructure, geoPoints) {
   const container = document.getElementById("accordion");
   if (!container) return;
@@ -375,7 +444,10 @@ export function buildAccordion(groupedStructure, geoPoints) {
     const label = group.groupName || group["Drop-down"] || groupKey;
 
     // visible locations for this group
-    const filtered = geoPoints.filter(loc => loc.Group === groupKey && loc.Visible === "Yes");
+    const filtered = geoPoints.filter(
+      loc => loc.Group === groupKey && loc.Visible === "Yes"
+    );
+
     if (!filtered.length) return;
 
     // section
@@ -384,7 +456,9 @@ export function buildAccordion(groupedStructure, geoPoints) {
 
     // header (group button)
     const header = document.createElement("button");
-    header.classList.add("accordion-button");
+    header.className = "accordion-button group-header-button";
+    header.dataset.group = groupKey;
+
     header.innerHTML = `
       <span class="header-title">${label}</span>
       <span class="header-meta">( ${filtered.length} )</span>
@@ -1205,6 +1279,17 @@ export function createHelpModal() {
         ${t("help.body")}<br><br>
         ${t("help.tap")}
       </p>
+
+      <!-- Emergency quick-dial block -->
+      <div class="emg-wrap">
+        <h3>${t("help.emergencyTitle") || "Emergency numbers"}</h3>
+        <p class="emg-region">
+          ${t("help.detectedRegion") || "Detected region"}:
+          <span id="emg-region-label"></span>
+        </p>
+        <div id="emg-buttons"></div>
+      </div>
+
       <div class="modal-actions">
         <button class="modal-continue">${t("help.continue")}</button>
       </div>
@@ -1213,6 +1298,10 @@ export function createHelpModal() {
   });
 
   const modal = document.getElementById("help-modal");
+
+  // 🔒 Make sure it does NOT appear on load
+  modal.classList.add("hidden");     // ensure hidden class is present
+  hideModal("help-modal");           // and remove any 'open' state if your API uses it
 
   modal.querySelector(".modal-continue")?.addEventListener("click", () => {
     hideModal("help-modal");

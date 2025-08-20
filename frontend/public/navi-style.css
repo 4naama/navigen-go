@@ -446,14 +446,14 @@ body.high-contrast .location-button:hover {
 }
 
 /* ⭐ Special Case: Popular Group */
-body.high-contrast .group-header-button[data-group="⭐ Popular"],
-body.high-contrast .quick-button[data-group="⭐ Popular"] {
+body.high-contrast .group-header-button[data-group="group.popular"],        /* 💥 Popular replaced*/
+body.high-contrast .quick-button[data-group="group.popular"] {              /* 💥 Popular replaced*/
   background-color: rgba(255, 193, 7, 0.2) !important;
   color: #fff !important;
   border-color: #ffc107 !important;
 }
 
-body.high-contrast .quick-button[data-group="⭐ Popular"]:hover {
+body.high-contrast .quick-button[data-group="group.popular"]:hover {            /* 💥 Popular replaced*/
   background-color: rgba(255, 193, 7, 0.3) !important;
 }
 
@@ -830,8 +830,8 @@ body.large-text {
 /* ──────────────── Modal Footer Buttons ──────────────── */
 /* Used in info-type modals like "My Stuff" with a neutral footer action */
 .modal-footer-button {
-  background: #1a73e8;
-  color: white;
+  background: #d1e0fe;
+  color: #0f172a;
   font-weight: 500;
   font-size: 0.95rem;
   padding: 0.7em 1.25em;
@@ -880,18 +880,35 @@ body.large-text {
 
 /* ──────────────── LPM Image Slider ──────────────── */
 /* Container within .location-media */
+/* LPM slider: reserve space and crossfade (no layout shift) */
+/* LPM slider: fixed box + crossfade */
 .lpm-slider {
   position: relative;
   width: 100%;
+  aspect-ratio: 1/1;
   border-radius: 8px;
   overflow: hidden;
+  box-sizing: border-box;
+  padding-top: 8px;
 }
-
-/* Track simply stacks slides; we toggle visibility */
 .lpm-track {
   position: relative;
   width: 100%;
   height: 100%;
+}
+
+/* two-image buffer */
+.lpm-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;transition: opacity 160ms ease;
+}
+
+.lpm-img.active {
+  opacity: 1;
 }
 
 /* Slides */
@@ -923,12 +940,15 @@ body.large-text {
 .lpm-next { right: 10px; }
 .lpm-prev:focus, .lpm-next:focus { outline: 2px solid rgba(255,255,255,0.6); }
 
+.lpm-prev, .lpm-next { background: rgba(0,0,0,0.6); color:#fff; }
+.lpm-prev:hover, .lpm-next:hover { background: rgba(0,0,0,0.6); }
+
 
 /* ──────────────── Modal Body Action Button ──────────────── */
 /* Used in body-action modals like "Share" */
 .modal-body-button {
-  background: #1a73e8;
-  color: white;
+  background: #d1e0fe;
+  color: #0f172a;
   font-weight: 500;
   font-size: 0.95rem;
   padding: 0.5em 1em;
@@ -947,7 +967,7 @@ body.large-text {
 }
 
 .modal-body-button:hover {
-  background: #1667cc;
+  background: #c6dafe;
   transform: translateY(-1px);
 }
 
@@ -1149,8 +1169,8 @@ button:hover {
 }
 
 .quick-button:hover {
-  background-color: #f5f5f5;
-  border-color: #999; /* highlight border on hover */
+  background-color: var(--group-color, #f5f5f5);
+  border-color: var(--group-color-ink, #999);
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
@@ -1197,8 +1217,8 @@ button:hover {
 }
 
 .group-header-button:hover {
-  border-color: #999;
-  background-color: #f9f9f9;
+  border-color: var(--group-color-ink, #999);
+  background-color: var(--group-color, #f9f9f9);
 }
 
 .group-header-button .header-arrow::after {
@@ -1234,7 +1254,7 @@ button:hover {
   font-size: 16px;
   font-weight: bold;
   border-radius: 6px;
-  background-color: white;
+  background-color: var(--group-color, white); /* was: white */
   color: black;
   cursor: pointer;
   white-space: nowrap;
@@ -1247,31 +1267,25 @@ button:hover {
 
 /* Hover styling */
 .group-buttons button.quick-button[data-group]:not([data-group="Alerts"]):not([data-group="Social"]):hover {
-  background-color: #f9f9f9;
+  background-color: var(--group-color, #f9f9f9); /* was: #f9f9f9 */
+  border-color: var(--group-color-ink, currentColor);
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* 🎯 Location/group child buttons inside accordion or popular sections */
 .location-button {
-  border: 1px solid transparent;
+  border: 1px solid var(--group-color-ink, transparent); /* was: transparent */
   border-radius: 6px;
   padding: 6px 12px;
   font-weight: 500;
   background: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
-
 
 .location-button:hover {
-  box-shadow: 0 0 0 2px currentColor;
-  background-color: #fafafa;
-}
-
-/* ⭐ Force visible border for Popular group children */
-.group-header-button[data-group="group.popular"] ~ .group-buttons .location-button {
-  border-color: #ffd54f;
-  box-shadow: 0 0 0 1px #ffd54f;
+  box-shadow: 0 0 0 2px var(--group-color-ink, currentColor); /* was: currentColor */
+  background-color: var(--group-color, #fafafa);              /* was: #fafafa */
 }
 
 /* sub headers */
@@ -1318,110 +1332,6 @@ button:hover {
 
 /* collapsed */
 .subgroup-items.is-collapsed { display: none; }
-
-/* 🎨 Group-tinted borders for location buttons */
-[data-group="group.stages"] + .accordion-body .location-button,
-[data-group="group.stages"] ~ .group-buttons .location-button {
-  border-color: #ef9a9a;
-  box-shadow: 0 0 0 1px #ef9a9a;
-}
-
-[data-group="group.activities"] + .accordion-body .location-button,
-[data-group="group.activities"] ~ .group-buttons .location-button {
-  border-color: #ffe082;
-  box-shadow: 0 0 0 1px #ffe082;
-}
-
-[data-group="group.food"] + .accordion-body .location-button,
-[data-group="group.food"] ~ .group-buttons .location-button {
-  border-color: #81c784;
-  box-shadow: 0 0 0 1px #81c784;
-}
-
-[data-group="group.gates"] + .accordion-body .location-button,
-[data-group="group.gates"] ~ .group-buttons .location-button {
-  border-color: #4dd0e1;
-  box-shadow: 0 0 0 1px #4dd0e1;
-}
-
-[data-group="group.areas"] + .accordion-body .location-button,
-[data-group="group.areas"] ~ .group-buttons .location-button {
-  border-color: #b39ddb;
-  box-shadow: 0 0 0 1px #b39ddb;
-}
-
-[data-group="group.popular"] + .accordion-body .location-button,
-[data-group="group.popular"] ~ .group-buttons .location-button {
-  border-color: #ffecb3;
-  box-shadow: 0 0 0 1px #ffecb3;
-}
-
-/* Per-group colored borders (text stays black) */
-.quick-button[data-group="🎤 Stages"]              { border-color: #b197fc; }       /* Lavender */
-.quick-button[data-group="🎪 Activities & Experiences"] { border-color: #5c7cfa; }   /* Soft Indigo */
-.quick-button[data-group="🍽️ Food & Drink"]        { border-color: #fab005; }       /* Mustard */
-.quick-button[data-group="🚻 Facilities"]          { border-color: #d2d8a4; }       /* Olive pastel */
-.quick-button[data-group="🚪 Exit / Entry Gates"]  { border-color: #20c997; }       /* Emerald Mint */
-.quick-button[data-group="🛍️ Shops"]               { border-color: #e0a96d; }       /* Caramel */
-.quick-button[data-group="🚖 Transport"]           { border-color: #8FD19E; }       /* Fern Green */
-.quick-button[data-group="💆 Spas"]                { border-color: #74c0fc; }       /* Sky Blue */
-.quick-button[data-group="🛠️ Services"]            { border-color: #e03131; }       /* Coral Red */
-.quick-button[data-group="👥 Guest Services"]      { border-color: #d0a5e4; }       /* Mauve */
-.quick-button[data-group="🗺️ Main Areas"]          { border-color: #228be6; }       /* Clean Blue */
-.quick-button[data-group="💬 Social"]              { border-color: #12b886; }       /* Teal Green */
-.quick-button[data-group="⭐ Popular"]              { border-color: #ffc107; }       /* Yellow Star */
-.quick-button[data-group="🧩 Community Zone"]       { border-color: #fbb8ac; }       /* Pastel Peach */
-
-.quick-button[data-group="🎤 Stages"]               { background-color: rgba(177, 151, 252, 0.06); }
-.quick-button[data-group="🎪 Activities & Experiences"] { background-color: rgba(92, 124, 250, 0.06); }
-.quick-button[data-group="🍽️ Food & Drink"]         { background-color: rgba(250, 176, 5, 0.06); }
-.quick-button[data-group="🚻 Facilities"]           { background-color: rgba(210, 216, 164, 0.06); }
-.quick-button[data-group="🚪 Exit / Entry Gates"]   { background-color: rgba(32, 201, 151, 0.06); }
-.quick-button[data-group="🛍️ Shops"]                { background-color: rgba(224, 169, 109, 0.06); }
-.quick-button[data-group="🚖 Transport"]            { background-color: rgba(143, 209, 158, 0.06); }
-.quick-button[data-group="💆 Spas"]                 { background-color: rgba(116, 192, 252, 0.06); }
-.quick-button[data-group="🛠️ Services"]             { background-color: rgba(224, 49, 49, 0.06); }
-.quick-button[data-group="👥 Guest Services"]       { background-color: rgba(208, 165, 228, 0.06); }
-.quick-button[data-group="🗺️ Main Areas"]           { background-color: rgba(34, 139, 230, 0.06); }
-.quick-button[data-group="💬 Social"]               { background-color: rgba(18, 184, 134, 0.06); }
-.quick-button[data-group="⭐ Popular"]               { background-color: rgba(255, 193, 7, 0.06); }
-.quick-button[data-group="🧩 Community Zone"]        { background-color: rgba(251, 184, 172, 0.06); }
-
-.group-header-button[data-group="🎤 Stages"]               { background-color: rgba(177, 151, 252, 0.4); }
-.group-header-button[data-group="🎪 Activities & Experiences"] { background-color: rgba(92, 124, 250, 0.4); }
-.group-header-button[data-group="🍽️ Food & Drink"]         { background-color: rgba(250, 176, 5, 0.4); }
-.group-header-button[data-group="🚻 Facilities"]           { background-color: rgba(210, 216, 164, 0.4); }
-.group-header-button[data-group="🚪 Exit / Entry Gates"]   { background-color: rgba(32, 201, 151, 0.4); }
-.group-header-button[data-group="🛍️ Shops"]                { background-color: rgba(224, 169, 109, 0.4); }
-.group-header-button[data-group="🚖 Transport"]            { background-color: rgba(143, 209, 158, 0.4); }
-.group-header-button[data-group="💆 Spas"]                 { background-color: rgba(116, 192, 252, 0.4); }
-.group-header-button[data-group="🛠️ Services"]             { background-color: rgba(224, 49, 49, 0.4); }
-.group-header-button[data-group="👥 Guest Services"]       { background-color: rgba(208, 165, 228, 0.4); }
-.group-header-button[data-group="🗺️ Main Areas"]           { background-color: rgba(34, 139, 230, 0.4); }
-.group-header-button[data-group="💬 Social"]               { background-color: rgba(18, 184, 134, 0.4); }
-.group-header-button[data-group="⭐ Popular"]               { background-color: rgba(255, 193, 7, 0.4); }
-.group-header-button[data-group="🧩 Community Zone"]        { background-color: rgba(251, 184, 172, 0.4); }
-
-/* Subtle group background tints */
-.group-buttons button.quick-button[data-group="Stages"]              { background-color: #b197fc0f; }
-.group-buttons button.quick-button[data-group="Activities & Experiences"] { background-color: #5c7cfa0f; }
-.group-buttons button.quick-button[data-group="Food & Drink"]        { background-color: #fab0050f; }
-.group-buttons button.quick-button[data-group="Facilities"]          { background-color: #d2d8a40f; }
-.group-buttons button.quick-button[data-group="Exit / Entry Gates"]  { background-color: #20c9970f; }
-.group-buttons button.quick-button[data-group="Shops"]               { background-color: #e0a96d0f; }
-.group-buttons button.quick-button[data-group="Transport"]           { background-color: #8fd19e0f; }
-.group-buttons button.quick-button[data-group="Spas"]                { background-color: #74c0fc0f; }
-.group-buttons button.quick-button[data-group="Services"]            { background-color: #e031310f; }
-.group-buttons button.quick-button[data-group="Guest Services"]      { background-color: #d0a5e40f; }
-.group-buttons button.quick-button[data-group="Main Areas"]          { background-color: #228be60f; }
-.group-buttons button.quick-button[data-group="Social"]              { background-color: #12b8860f; }
-.group-buttons button.quick-button[data-group="Popular"]             { background-color: #ffc1070f; }
-.group-buttons button.quick-button[data-group="Community Zone"]      { background-color: #fbb8ac0f; }
-
-/* Optional orphan centering */
-.group-buttons:has(.quick-button:nth-last-child(1):nth-child(odd)) {
-  justify-content: center;
-}
 
 #here-button {
   display: inline-flex;
@@ -1593,29 +1503,6 @@ button:hover {
   margin-top: 1em;
 }
 
-.quick-button[data-group="⭐ Popular"] {
-  border-color: #ffc107;
-}
-
-.quick-button[data-group="🧩 Community Zone"] {
-  border-color: #00bcd4;
-}
-
-.group-title {
-  text-align: center;
-  font-weight: bold;
-  font-size: 18px;
-  margin: 6px 0 6px 0;
-}
-
-.group-title[data-group="🧩 Community Zone"] {
-  font-weight: normal;
-}
-
-#community-zone-container {
-  margin-top: 0px;
-}
-
 .quick-buttons-wrapper {
   display: flex;
   flex-wrap: wrap;
@@ -1686,8 +1573,8 @@ button:hover {
 /* 🔘 Button inside toast (matching resolved button) */
 .toast-btn {
   margin-top: 10px;
-  background: #1976d2;     /* ✅ Resolved blue */
-  color: white;
+  background: #d1e0fe;
+  color: 0f172a;
   border: none;
   padding: 8px 16px;
   border-radius: 8px;
@@ -1699,7 +1586,7 @@ button:hover {
 }
 
 .toast-btn:hover {
-  background: #125ea7;     /* Darker on hover */
+  background: #c6dafe;
 }
 
 /* 📝 Optional subtext */
@@ -2017,3 +1904,28 @@ button:hover {
   color: #666; /* Adjust to your muted style if needed */
 }
 
+/* Header tint (soft background, readable border) */
+.group-header-button[data-group] {
+  /* do not remove existing comments; add minimal ones only */
+  background-color: var(--group-color, transparent);
+  border-color: var(--group-color-ink, currentColor);
+}
+
+/* Nested buttons: read ink color from the container vars set by JS */
+.accordion-body .location-button,
+.group-buttons .location-button {
+  border-color: var(--group-color-ink, #ddd);
+  box-shadow: 0 0 0 1px var(--group-color-ink, #ddd);
+}
+
+/* Hover/focus: gentle fill using the base color */
+.location-button:hover,
+.location-button:focus {
+  background-color: var(--group-color, transparent);
+}
+
+/* Optional: quick buttons, chips, etc., if you have them */
+.quick-button[data-group] {
+  border-color: var(--group-color-ink, currentColor);
+  background-color: var(--group-color, transparent);
+}

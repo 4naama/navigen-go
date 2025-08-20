@@ -1,0 +1,240 @@
+[
+  {
+    "id": "sagrada-familia",
+    "name": { "en": "Sagrada Família", "es": "Sagrada Familia", "ca": "Sagrada Família" },
+    "shortName": { "en": "Sagrada Família" },
+    "groupKey": "Landmarks",
+    "subgroupKey": "Churches",
+    "visible": true,
+
+    "location": {
+      "lat": 41.4036,
+      "lng": 2.1744,
+      "address": {
+        "line1": "Carrer de Mallorca 401",
+        "city": "Barcelona",
+        "region": "Catalonia",
+        "country": "Spain",
+        "postalCode": "08013"
+      }
+    },
+
+    "routing": {
+      "primaryEntrance": { "lat": 41.403524 "lng": 2.174424 },
+      "accessibleEntrances": []
+    },
+
+    "descriptions": {
+      "teaser": {
+        "en": "Iconic basilica in Barcelona known for distinctive architecture.",
+        "es": "Basílica emblemática de Barcelona, conocida por su arquitectura."
+      },
+      "details": {
+        "en": "Visitor information, ticketing and hours may change. Use the official website for the latest guidance.",
+        "es": "La información de visita, entradas y horarios puede cambiar. Consulta el sitio oficial para datos actuales."
+      }
+    },
+
+    "hours": {
+      "mon": "09:00-19:00",
+      "tue": "09:00-19:00",
+      "wed": "09:00-19:00",
+      "thu": "09:00-19:00",
+      "fri": "09:00-19:00",
+      "sat": "09:00-20:00",
+      "sun": "10:30-20:00",
+      "exceptions": []
+    },
+
+    "tickets": { "required": true, "bookingUrl": "https://sagradafamilia.org/en/tickets", "priceFrom": null, "currency": "EUR" },
+
+    "amenities": ["audio-guide", "restrooms", "guided-tours"],
+    "accessibility": { "wheelchair": true, "notes": { "en": "Accessible routes available; check official guidance." } },
+    "safety": { "notices": { "en": "Large crowds at peak times." }, "crowdLevel": "high" },
+
+    "links": {
+      "official": { "en": "https://sagradafamilia.org/en/" },
+      "mapUrl": "https://maps.google.com/?q=41.4036,2.1744",
+      "phone": "+34 935 132 060",
+      "email": ""
+    },
+
+    "tags": ["architecture", "landmark", "basilica"],
+    "analytics": { "popularity": 95, "featured": true },
+    "i18n": { "availableLangs": ["en","es","ca"] },
+
+    "rights": {
+      "textOwner": "YourOrg",
+      "mediaOwner": "YourOrg",
+      "brandRestrictions": "Do not use official logos, trademarks, or copy; link to the official site for authoritative info."
+    },
+
+    "meta": { "lastUpdated": "2025-08-18T00:00:00Z", "version": 1 },
+    
+    "media": {
+      "cover": "https://commons.wikimedia.org/wiki/Special:FilePath/%CE%A3%CE%B1%CE%B3%CF%81%CE%AC%CE%B4%CE%B1%20%CE%A6%CE%B1%CE%BC%CE%AF%CE%BB%CE%AF%CE%B1%202941%20%28cropped%29.jpg",
+      "images": [
+        {
+          "src": "https://commons.wikimedia.org/wiki/Special:FilePath/%CE%A3%CE%B1%CE%B3%CF%81%CE%AC%CE%B4%CE%B1%20%CE%A6%CE%B1%CE%BC%CE%AF%CE%BB%CE%AF%CE%B1%202941%20%28cropped%29.jpg",
+          "caption": { "en": "Exterior (cropped façade)" },
+          "credit": "C messier / Wikimedia Commons",
+          "license": "CC BY-SA 4.0",
+          "default": true
+        },
+        {
+          "src": "https://commons.wikimedia.org/wiki/Special:FilePath/Sagrada%20Familia%208-12-21%20%287%29.jpg",
+          "caption": { "en": "Star of the Virgin Mary tower" },
+          "credit": "Canaan / Wikimedia Commons",
+          "license": "CC BY-SA 4.0"
+        }
+      ]
+    }
+
+  },
+
+  {
+    "id": "keves-andor-photography",
+    "name": { "en": "Kévés Andor Photography" },
+    "shortName": { "en": "Kévés Andor Photography" },
+    "groupKey": "Art",
+    "subgroupKey": "Artists",
+    "visible": true,
+    "location": { "lat": 47.583105 "lng": 19.039719 },
+    "routing": { "primaryEntrance": null, "accessibleEntrances": [] },
+    "descriptions": {
+      "teaser": { "en": "Artist portfolio." },
+      "details": { "en": "For official information and works, see the website." }
+    },
+    "hours": { "mon": null, "tue": null, "wed": null, "thu": null, "fri": null, "sat": null, "sun": null, "exceptions": [] },
+    "tickets": { "required": false, "bookingUrl": "", "priceFrom": null, "currency": "EUR" },
+    "amenities": [],
+    "accessibility": { "wheelchair": null, "notes": { "en": "" } },
+    "safety": { "notices": { "en": "" }, "crowdLevel": "low" },
+    "links": {
+      "official": { "en": "https://www.kevesandor.com/" },
+      "mapUrl": "",
+      "phone": "",
+      "email": ""
+    },
+    "tags": ["artist", "portfolio"],
+    "analytics": { "popularity": 10, "featured": false },
+    "i18n": { "availableLangs": ["en"] },
+    "rights": {
+      "textOwner": "YourOrg",
+      "mediaOwner": "YourOrg",
+      "brandRestrictions": "Only use images you own or have permission to use; do not copy protected brand materials."
+    },
+    "meta": { "lastUpdated": "2025-08-18T00:00:00Z", "version": 1 },
+    
+    "media": {
+      "cover": "/assets/location-profile-images/keves-andor/cover.jpg",
+      "images": [
+        { 
+          "src": "/assets/location-profile-images/keves-andor/NYE_2242pro-2.jpg",
+          "caption": { "en": "Cover" },
+          "credit": "YourOrg",
+          "license": "owned",
+          "default": true
+        },
+        { "src": "/assets/location-profile-images/keves-andor/0282CSA_3510.jpg","caption": { "en": "" },             "credit": "YourOrg", "license": "owned" },
+        { "src": "/assets/location-profile-images/keves-andor/DSC_6905.jpg",   "caption": { "en": "" },             "credit": "YourOrg", "license": "owned" },
+        { "src": "/assets/location-profile-images/keves-andor/DUD_5868.jpg",   "caption": { "en": "" },             "credit": "YourOrg", "license": "owned" },
+        { "src": "/assets/location-profile-images/keves-andor/KIS_4137.jpg",   "caption": { "en": "" },             "credit": "YourOrg", "license": "owned" },
+        { "src": "/assets/location-profile-images/keves-andor/NAG_7263-1.jpg", "caption": { "en": "" },             "credit": "YourOrg", "license": "owned" },
+        { "src": "/assets/location-profile-images/keves-andor/NDO_5901-1-1.jpg","caption": { "en": "" },            "credit": "YourOrg", "license": "owned" },
+        { "src": "/assets/location-profile-images/keves-andor/PAL_8764.jpg",   "caption": { "en": "" },             "credit": "YourOrg", "license": "owned" }
+      ]
+    }      
+  },
+  
+  {
+    "id": "obudai-zsinagoga",
+    "name": { "hu": "Óbudai Zsinagóga", "en": "Óbuda Synagogue" },
+    "shortName": { "hu": "Óbudai Zsinagóga", "en": "Óbuda Synag." },
+    "groupKey": "Landmarks",
+    "subgroupKey": "Synagogues",
+    "visible": true,
+
+    "location": {
+      "lat": 47.537067,
+      "lng": 19.045811,
+      "address": {
+        "line1": "Lajos utca 163",
+        "city": "Budapest",
+        "region": "Budapest (III. ker.)",
+        "country": "Hungary",
+        "postalCode": "1036"
+      }
+    },
+
+    "routing": {
+      "primaryEntrance": { "lat": 47.537067, "lng": 19.045811 },
+      "accessibleEntrances": []
+    },
+
+    "descriptions": {
+      "teaser": {
+        "en": "Neoclassical synagogue in Óbuda, restored and active.",
+        "hu": "Klasszicista zsinagóga Óbudán, felújítva és működik."
+      },
+      "details": {
+        "en": "Built in 1820–1821 to designs by András Landherr; used for non-religious purposes in the 20th century and reconsecrated in 2010. Visitor access typically by prior arrangement; check the official site for current information.",
+        "hu": "1820–1821-ben épült András Landherr tervei szerint; a 20. században profán célokra használták, 2010-ben újraszentelték. Látogatás általában előzetes egyeztetéssel; aktuális információ: hivatalos oldal."
+      }
+    },
+
+    "hours": {
+      "mon": "09:00-14:00",
+      "tue": "09:00-14:00",
+      "wed": "09:00-14:00",
+      "thu": "09:00-14:00",
+      "fri": "09:00-14:00",
+      "sat": null,
+      "sun": null,
+      "exceptions": [
+        { "date": null, "hours": null, "note": { "en": "Sunday visits by appointment", "hu": "Vasárnap: előzetes egyeztetéssel" } }
+      ]
+    },
+
+    "tickets": { "required": false, "bookingUrl": "", "priceFrom": null, "currency": "HUF" },
+
+    "amenities": ["guided-tours"],
+    "accessibility": { "wheelchair": null, "notes": { "en": "" } },
+    "safety": { "notices": { "en": "" }, "crowdLevel": "medium" },
+
+    "links": {
+      "official": { "hu": "https://obudaizsinagoga.hu/", "en": "https://obudaizsinagoga.hu/eng/" },
+      "mapUrl": "https://maps.google.com/?q=47.537067,19.045811",
+      "phone": "+36 30 396 9020",
+      "email": "info@obudaizsinagoga.hu"
+    },
+
+    "tags": ["synagogue", "neoclassical", "heritage"],
+    "analytics": { "popularity": 60, "featured": false },
+    "i18n": { "availableLangs": ["hu", "en"] },
+
+    "rights": {
+      "textOwner": "YourOrg",
+      "mediaOwner": "YourOrg",
+      "brandRestrictions": "Use neutral wording; do not copy official branded text or logos. Respect CC BY-SA licenses for Commons images with attribution."
+    },
+
+    "meta": { "lastUpdated": "2025-08-18T00:00:00Z", "version": 1
+    },
+    
+    "media": {
+      "cover": "https://commons.wikimedia.org/wiki/Special:FilePath/%C3%93buda_Synagogue_02.JPG",
+      "images": [
+        {
+          "src": "https://commons.wikimedia.org/wiki/Special:FilePath/%C3%93buda_Synagogue_02.JPG",
+          "caption": { "en": "Facade, Óbuda Synagogue" },
+          "credit": "Wikimedia Commons (see source)",
+          "license": "CC BY-SA 3.0",
+          "default": true
+        }
+      ]
+    }
+        
+  }     
+  
+]
