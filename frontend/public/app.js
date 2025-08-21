@@ -235,14 +235,13 @@ function navigate(name, lat, lon) {
 
 function showActionModal(action) {
   const modal = document.createElement("div");
-  modal.className = "custom-modal";
+  modal.className = "modal visible";
 
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.onclick = () => modal.remove();
+  // CSS-backdrop only; close on clicking container
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); }, { passive: true });
 
   const box = document.createElement("div");
-  box.className = "modal-box";
+  box.className = "modal-content";
 
   const heading = document.createElement("h2");
   heading.textContent = action.name;
@@ -265,7 +264,6 @@ function showActionModal(action) {
   });
 
   box.appendChild(buttonContainer);
-  modal.appendChild(overlay);
   modal.appendChild(box);
   document.body.appendChild(modal);
 }
@@ -281,7 +279,7 @@ const PALETTE = [
   { base: '#F4EED7', ink: '#EAE0B8' }, // 2
   { base: '#EEF4D7', ink: '#E0EAB8' }, // 3
   { base: '#E3F4D7', ink: '#CCEAB8' }, // 4
-  { base: '#D7F4D7', ink: '#B8EAB8' }, // 5  ← Transport (pale)
+  { base: '#D7F4D7', ink: '#B8EAB8' }, // 5
   { base: '#D7F4E3', ink: '#B8EACC' }, // 6
   { base: '#D7F4EE', ink: '#B8EAE0' }, // 7
   { base: '#D7EEF4', ink: '#B8E0EA' }, // 8
@@ -300,9 +298,9 @@ const PALETTE = [
 const GROUP_COLOR_INDEX = {
   'group.popular':        0,   // pale red
   'group.transport':      5,   // pale green (downgraded)
-  'group.food':           2,   // pale yellow
+  'group.food':           1,   // pale yellow
   'group.services':       10,  // pale indigo
-  'group.stages':         1,   // pale amber
+  'group.stages':         2,   // pale amber
   'group.activities':     3,   // pale lime
   'group.gates':          8,   // pale cyan-blue
   'group.areas':          11,  // pale purple
@@ -451,7 +449,6 @@ function clearSearch() {
 
 // --- Emergency block bootstrap (runs when help modal opens) ---
 // Adds concise comments per block; preserves your style.
-
 async function initEmergencyBlock(countryOverride) {
   // 1) Load JSON (cached by browser/SW)
   const data = await loadEmergencyData('/data/emergency.json');
@@ -461,40 +458,94 @@ async function initEmergencyBlock(countryOverride) {
   const locale = pickLocale(navigator.language, supported);
   const L = getLabelsFor(data, locale);
 
-  // 3) Country selection (CF header → global var; or user override)
-  const cc = (countryOverride || window.__CF_COUNTRY__ || localStorage.getItem('emg.country') || 'US').toUpperCase();
+  // 3) Country code (override → saved → CF → default)
+  const cc = (countryOverride || localStorage.getItem('emg.country') || window.__CF_COUNTRY__ || 'US').toUpperCase();
 
-  // 4) Build entries
-  const numbers = getNumbersFor(data, cc);
+  // 4) Country-name formatter (localized, robust; independent of globals)
+  const toName = ((ln) => {
+    let dn = null;
+    try { dn = new Intl.DisplayNames([ln, 'en'], { type: 'region' }); } catch {}
+    return (code) => {
+      if (!code) return '';
+      try { return dn?.of(code) || code; } catch { return code; }
+    };
+  })(locale);
+
+  // 5) Build numbers list (Emergency / Police / Fire / Ambulance)
+  const numbers = getNumbersFor(data, cc) || {};
+  const labelFallback = { emergency: 'Emergency', police: 'Police', fire: 'Fire', ambulance: 'Ambulance' };
+  const labelOf = (k) => (L && L[k]) || labelFallback[k] || k;
+
   const entries = [];
   if (numbers.emergency) entries.push({ key: 'emergency', num: numbers.emergency });
   if (numbers.police)    entries.push({ key: 'police',    num: numbers.police });
   if (numbers.fire)      entries.push({ key: 'fire',      num: numbers.fire });
   if (numbers.ambulance) entries.push({ key: 'ambulance', num: numbers.ambulance });
-  (numbers.alt || []).forEach(n => entries.push({ key: 'alt', num: n }));
 
-  // 5) Render into the help modal placeholders
-  const regionEl  = document.getElementById('emg-region-label');
-  const buttonsEl = document.getElementById('emg-buttons');
+  // 6) Render region label + numbers
+  const regionEl   = document.getElementById('emg-region-label');
+  const buttonsEl  = document.getElementById('emg-buttons');
+  const countrySel = document.getElementById('emg-country');
 
-  if (regionEl)  regionEl.textContent = cc;
+  if (regionEl) regionEl.textContent = toName(cc);
+
   if (buttonsEl) {
-    buttonsEl.innerHTML = entries.map(e => `
-      <a class="btn btn-emergency" href="tel:${e.num}" aria-label="Call ${e.num} — ${L[e.key] || e.key}">
-        ${e.num} — ${L[e.key] || e.key}
-      </a>
-    `).join('');
+    // Vertical list like the former: “112 — Emergency”, etc.
+    buttonsEl.innerHTML = entries.length
+      ? entries
+          .map(e => `<a href="tel:${e.num}" aria-label="Call ${e.num} — ${labelOf(e.key)}">${e.num} — ${labelOf(e.key)}</a>`)
+          .join('<br>')
+      : '';
   }
 
-  // 6) Optional: country override <select> support (if you add one)
-  const select = document.getElementById('emg-country');
-  if (select && select.options.length === 0) {
-    const codes = Object.keys(data.countries).sort();
-    select.innerHTML = codes.map(code => `<option value="${code}" ${code===cc?'selected':''}>${code}</option>`).join('');
-    select.addEventListener('change', () => {
-      localStorage.setItem('emg.country', select.value);
-      initEmergencyBlock(select.value);
-    });
+  // Build country dropdown (show country names; keep ISO codes as values)
+  if (countrySel) {
+    if (countrySel.options.length === 0) {
+      const codes = Object.keys(data.countries || {})
+        .sort((a, b) => toName(a).localeCompare(toName(b)));
+      countrySel.innerHTML = codes
+        .map(code => `<option value="${code}" ${code === cc ? 'selected' : ''}>${toName(code)}</option>`)
+        .join('');
+    } else if (countrySel.value !== cc) {
+      countrySel.value = cc; // keep selection in sync on re-init
+    }
+
+    if (!countrySel.dataset.bound) {
+      countrySel.addEventListener('change', () => {
+        localStorage.setItem('emg.country', countrySel.value);
+        initEmergencyBlock(countrySel.value);
+      });
+      countrySel.dataset.bound = '1';
+    }
+  }
+
+  // 7) Country dropdown (show names, keep values as ISO codes)
+  if (countrySel) {
+    if (countrySel.options.length === 0) {
+      const codes = Object.keys(data.countries || {})
+        .sort((a, b) => toName(a).localeCompare(toName(b)));
+      countrySel.innerHTML = codes
+        .map(code => `<option value="${code}" ${code === cc ? 'selected' : ''}>${toName(code)}</option>`)
+        .join('');
+    } else {
+      // Ensure selected reflects current cc
+      if (countrySel.value !== cc) countrySel.value = cc;
+      // If current cc not in options, add it (edge-case)
+      if (![...countrySel.options].some(o => o.value === cc)) {
+        const opt = document.createElement('option');
+        opt.value = cc; opt.textContent = toName(cc);
+        countrySel.appendChild(opt);
+        countrySel.value = cc;
+      }
+    }
+
+    if (!countrySel.dataset.bound) {
+      countrySel.addEventListener('change', () => {
+        localStorage.setItem('emg.country', countrySel.value);
+        initEmergencyBlock(countrySel.value);
+      });
+      countrySel.dataset.bound = '1';
+    }
   }
 }
 
@@ -746,106 +797,125 @@ async function initEmergencyBlock(countryOverride) {
     };
   }
 
-  // Remaining modals & buttons...
-  const helpButton = document.getElementById("help-button");
-  const helpModal = document.getElementById("help-modal");
-  
-  const alertButton = document.getElementById("alert-button");
-  const alertModal = document.getElementById("alert-modal");
-  const alertModalContent = document.getElementById("alert-modal-content");
+// Remaining modals & buttons… (smart: alert modal is now injected on demand; we create+open it before loading data)
+const helpButton = document.getElementById("help-button");
+const helpModal = document.getElementById("help-modal");
 
-  const socialButton = document.getElementById("social-button");
-  const hereButton = document.getElementById("here-button");
+// Button refs (no early modal refs: we create alert modal when needed)
+const alertButton = document.getElementById("alert-button");
 
-  const locationModal = document.getElementById("share-location-modal");
-  const coordsDisplay = document.getElementById("location-coords");
-  const shareButton = document.getElementById("share-location-button");  
+const socialButton = document.getElementById("social-button");
+const hereButton = document.getElementById("here-button");
 
-  if (alertButton && alertModal && alertModalContent) {
-    alertButton.addEventListener("click", () => {
-      alertModalContent.innerHTML = "<p>Loading...</p>";
-      fetch("/data/alert.json", { cache: "no-store" })
-        .then(res => res.json())
-        .then(alerts => {
-          if (!Array.isArray(alerts) || alerts.length === 0) {
-            alertModalContent.innerHTML = "<p>No current alerts.</p>";
-            return;
-          }
+// Location modal refs (kept as-is for other features)
+const locationModal = document.getElementById("share-location-modal");
+const coordsDisplay = document.getElementById("location-coords");
+const shareButton = document.getElementById("share-location-button");
 
-          alertModalContent.innerHTML = "";
+// -- Alert modal wiring: build + open on click, then fetch + render alerts
+if (alertButton) {
+  alertButton.addEventListener("click", async () => {
+    // 1) Ensure modal structure exists and is visible (createAlertModal should call showModal internally)
+    createAlertModal();
 
-          const listWrapper = document.createElement("div");
-          listWrapper.style.maxHeight = "300px";
-          listWrapper.style.overflowY = "auto";
+    // 2) Query live elements AFTER injection
+    const alertModal = document.getElementById("alert-modal");
+    const alertModalContent = document.getElementById("alert-modal-content");
+    if (!alertModal || !alertModalContent) return;
 
-          alerts.forEach(alert => {
-            const wrapper = document.createElement("div");
-            wrapper.style.borderBottom = "1px solid #ccc";
-            wrapper.style.padding = "1em 0";
+    // 3) Initial loading state
+    alertModalContent.innerHTML = "<p>Loading...</p>";
 
-            const message = alert.message || "⚠️ No message";
-            const msgEl = document.createElement("p");
-            msgEl.textContent = message;
-            msgEl.style.marginBottom = "0.5em";
-            msgEl.style.textAlign = "center";
-            wrapper.appendChild(msgEl);
+    try {
+      // 4) Fetch alerts fresh
+      const res = await fetch("/data/alert.json", { cache: "no-store" });
+      const alerts = await res.json();
 
-            const actions = document.createElement("div");
-            actions.className = "modal-actions";
+      if (!Array.isArray(alerts) || alerts.length === 0) {
+        alertModalContent.innerHTML = "<p>No current alerts.</p>";
+        setupTapOutClose("alert-modal"); // idempotent
+        return;
+      }
 
-            if (acknowledgedAlerts.has(message)) {
+      // 5) Create scrollable list container
+      const listWrapper = document.createElement("div");
+      listWrapper.style.maxHeight = "300px";
+      listWrapper.style.overflowY = "auto";
+
+      // 6) Build cards for each alert
+      alerts.forEach(alert => {
+        const wrapper = document.createElement("div");
+        wrapper.style.borderBottom = "1px solid #ccc";
+        wrapper.style.padding = "1em 0";
+
+        const message = alert?.message || "⚠️ No message";
+        const msgEl = document.createElement("p");
+        msgEl.textContent = message;
+        msgEl.style.marginBottom = "0.5em";
+        msgEl.style.textAlign = "center";
+        wrapper.appendChild(msgEl);
+
+        const actions = document.createElement("div");
+        actions.className = "modal-actions";
+
+        if (acknowledgedAlerts.has(message)) {
+          const confirm = document.createElement("p");
+          confirm.style.textAlign = "center";
+          confirm.textContent = "✅ Alert seen";
+          actions.appendChild(confirm);
+        } else {
+          const btn = document.createElement("button");
+          btn.className = "modal-close";
+          btn.textContent = "✅ Noted";
+          btn.style.border = "1px solid #EACCB8";
+
+          // Acknowledge → smooth UI swap to confirmation
+          btn.onclick = () => {
+            acknowledgedAlerts.add(message);
+
+            if (summary) {
+              summary.textContent = `Alerts: ${total} Seen: ${acknowledgedAlerts.size}`;
+            }
+
+            btn.style.transition = "opacity 0.5s";
+            btn.style.opacity = "0";
+            setTimeout(() => {
+              actions.innerHTML = "";
               const confirm = document.createElement("p");
               confirm.style.textAlign = "center";
               confirm.textContent = "✅ Alert seen";
               actions.appendChild(confirm);
-            } else {
-              const btn = document.createElement("button");
-              btn.className = "modal-close";
-              btn.textContent = "✅ Noted";
-              btn.style.border = '1px solid #EACCB8';
-              btn.onclick = () => {
-                acknowledgedAlerts.add(message);
+            }, 600);
+          };
 
-                if (summary) {
-                  summary.textContent = `Alerts: ${total} Seen: ${acknowledgedAlerts.size}`;
-                }
+          actions.appendChild(btn);
+        }
 
-                btn.style.transition = "opacity 0.5s";
-                btn.style.opacity = "0";
-                setTimeout(() => {
-                  actions.innerHTML = "";
-                  const confirm = document.createElement("p");
-                  confirm.style.textAlign = "center";
-                  confirm.textContent = "✅ Alert seen";
-                  actions.appendChild(confirm);
-                }, 600);
-              };
-              actions.appendChild(btn);
-            }
+        wrapper.appendChild(actions);
+        listWrapper.appendChild(wrapper);
+      });
 
-            wrapper.appendChild(actions);
-            listWrapper.appendChild(wrapper);
-          });
+      // 7) Mount list + summary
+      alertModalContent.innerHTML = "";
+      alertModalContent.appendChild(listWrapper);
 
-          alertModalContent.appendChild(listWrapper);
+      const summary = document.createElement("div");
+      summary.className = "alert-summary";
 
-          const summary = document.createElement("div");
-          summary.className = "alert-summary";
+      const total = alerts.length;
+      const seen = alerts.filter(a => acknowledgedAlerts.has(a.message)).length;
+      summary.textContent = `Alerts: ${total} Seen: ${seen}`;
+      alertModalContent.appendChild(summary);
 
-          const total = alerts.length;
-          const seen = alerts.filter(a => acknowledgedAlerts.has(a.message)).length;
-          summary.textContent = `Alerts: ${total} Seen: ${seen}`;
+    } catch {
+      // 8) Error fallback
+      alertModalContent.innerHTML = "<p>Error loading alerts.</p>";
+    }
 
-          alertModalContent.appendChild(summary);
-        })
-        .catch(() => {
-          alertModalContent.innerHTML = "<p>Error loading alerts.</p>";
-        });
-
-      alertModal.classList.remove("hidden");
-      setupTapOutClose("alert-modal");
-    });
-  }
+    // 9) Safety: enable tap-out/ESC close (idempotent)
+    setupTapOutClose("alert-modal");
+  });
+}
 
   if (socialButton) {
     socialButton.addEventListener("click", () => {
@@ -991,12 +1061,25 @@ async function initEmergencyBlock(countryOverride) {
     });
   }
 
-  // ✅ Tap-out + ESC closing support for all front-screen modals
   setupTapOutClose("share-location-modal");
   setupTapOutClose("my-stuff-modal");
   setupTapOutClose("alert-modal");
-  setupTapOutClose("help-modal"); 
-  
+  setupTapOutClose("help-modal");
+
+  /* Normalize any modals injected later: add 'modal' + tap-out once; don't re-hide if visible */
+  new MutationObserver((mutList) => {
+    mutList.forEach(m => m.addedNodes.forEach(node => {
+      if (!(node instanceof HTMLElement)) return;
+      if (!node.id || !node.id.endsWith("-modal")) return;
+      node.classList.add("modal");
+      // Only force hidden if not already being shown
+      if (!node.classList.contains("hidden") && !node.classList.contains("visible")) {
+        node.classList.add("hidden");
+      }
+      setupTapOutClose(node.id);
+    }));
+  }).observe(document.body, { childList: true });
+
 });  // ✅ End of DOMContentLoaded  
 
 // 💬 Toast shown after successful Stripe donation

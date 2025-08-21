@@ -127,7 +127,6 @@ export function showLocationProfileModal(data) {
           'icon-512-green.png',
           'icon-512-dark-blue.png',
           'icon-512-brown.png',
-          'icon-512-grey.png',
           'icon-512-light-blue.png',
           'icon-512-neon.png',
           'icon-512-pink.png',
@@ -641,17 +640,18 @@ window.fetchTranslatedLangs = async () => {
  * Injects a modal into the DOM if not already present.
  * Supports custom title, body, and footer buttons.
  */
+// Lead comments: hidden by default; CSS provides backdrop.
 export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [], layout = '' }) {
   let existing = document.getElementById(id);
   if (existing) return existing;
 
+  // hidden by default; CSS shows :not(.hidden)
   const modal = document.createElement('div');
-  modal.classList.add('modal');
+  modal.classList.add('modal', 'hidden');
   modal.id = id;
 
   const isAction = layout === 'action';
 
-  // Build footer HTML (flat)
   const primary = Array.isArray(footerButtons) ? footerButtons : (footerButtons.primary || []);
   const secondary = Array.isArray(footerButtons) ? [] : (footerButtons.secondary || []);
   const allBtns = [...primary, ...secondary];
@@ -665,8 +665,8 @@ export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [],
       </div>`
     : '';
 
+  // # No overlay div — CSS-only backdrop on the container
   modal.innerHTML = `
-    ${isAction ? '<div class="modal-overlay"></div>' : ''}
     <div class="modal-content${layout ? ` modal-${layout}` : ''}">
       ${title ? `<h2 class="modal-title">${title}</h2>` : ''}
       <div class="modal-body"><div class="modal-body-inner">${bodyHTML}</div></div>
@@ -1248,21 +1248,42 @@ export function setupMyStuffModalLogic() {
 
 }
 
-// 🚨 Creates and shows the Alert Modal.
-// Used to display important real-time alerts or notifications.
-// Content is injected dynamically into #alert-modal-content.
+// Alert modal — same header structure & close button as other modals (top bar outside body)
 export function createAlertModal() {
-  console.log("🔥 createAlertModal called"); // 👈 add this line
-  injectModal({
+  const existing = document.getElementById("alert-modal");
+  if (existing) { showModal("alert-modal"); return; }
+
+  // Build with identical layout to Help/Share so spacing matches
+  const modal = injectModal({
     id: "alert-modal",
-    title: t("alert.title"), // "🚨 Current Alerts"
-    bodyHTML: `<div id="alert-modal-content"></div>`,
-    layout: "action"
+    title: "",               // header added via .modal-top-bar (avoid double title)
+    layout: "action",        // match paddings/flow used by other modals
+    // Initial placeholder content; replaced on fetch if alerts load
+    bodyHTML: `
+      <div id="alert-modal-content" style="text-align:center; padding:1em;">
+        <p style="font-size:1.2em;">😌 ${t("alert.none") || "No current alerts."}</p>
+        <p style="margin-top:0.5em;">
+          ${t("alert.stayTuned") || "Stay tuned — new alerts will appear here when available."}
+        </p>
+      </div>
+    `
+
   });
 
-  setupTapOutClose("alert-modal");
+  // Top bar (prepend to .modal-content, not inside .modal-body)
+  const topBar = document.createElement("div");
+  topBar.className = "modal-top-bar";
+  topBar.innerHTML = `
+    <h2 id="alert-title" class="modal-header">${t("alert.title") || "🚨 Current Alerts"}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  modal.querySelector(".modal-content")?.prepend(topBar);
 
-  // ✅ Add this line to ensure visibility
+  // Close behavior (same as others)
+  topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("alert-modal"));
+
+  // Tap-out/ESC (idempotent) + show
+  setupTapOutClose("alert-modal");
   showModal("alert-modal");
 }
 
@@ -1270,44 +1291,72 @@ export function createAlertModal() {
 // Displays a friendly message for users in need of assistance or emergencies.
 // Includes translated text and a Continue button to dismiss or trigger next steps.
 // Injected dynamically to keep HTML clean and fully localizable.
+// Help modal: same top bar as My Stuff; no legacy overlay; no nested .modal-body-inner
 export function createHelpModal() {
-  injectModal({
+  if (document.getElementById("help-modal")) return;
+
+  const modal = injectModal({
     id: "help-modal",
+    title: "",             // header rendered via modal-top-bar
+    layout: "action",
     bodyHTML: `
-      <p>
-        👋 ${t("help.intro")}<br><br>
-        ${t("help.body")}<br><br>
-        ${t("help.tap")}
+      <p class="muted" data-i18n="help.intro">
+        Hello! We’re here to assist you. Tap an emergency number to call from your phone.
       </p>
 
-      <!-- Emergency quick-dial block -->
-      <div class="emg-wrap">
-        <h3>${t("help.emergencyTitle") || "Emergency numbers"}</h3>
-        <p class="emg-region">
-          ${t("help.detectedRegion") || "Detected region"}:
-          <span id="emg-region-label"></span>
-        </p>
-        <div id="emg-buttons"></div>
+      <p style="text-align:center;margin:0.75em 0;">
+        <span class="detected-label" data-i18n="help.detectedRegion">Detected region</span>:
+        <strong id="emg-region-label">—</strong>
+      </p>
+
+      <div id="emg-buttons" class="community-actions"></div>
+
+      <div style="text-align:center;margin-top:0.75em;">
+        <label for="emg-country" class="muted" style="display:block;margin-bottom:0.25em;" data-i18n="help.chooseCountry">
+          Choose country
+        </label>
+        <select id="emg-country" class="emg-scale" style="min-width:220px;"></select>
       </div>
 
-      <div class="modal-actions">
-        <button class="modal-continue">${t("help.continue")}</button>
+      <p class="muted" style="margin-top:1rem;" data-i18n="help.body">
+        We are committed to help you with questions regarding the application.
+      </p>
+
+      <p class="muted" style="margin:0.25rem 0 0.75rem;" data-i18n="help.tap">
+        Tap for other assistance.
+      </p>
+
+      <div style="text-align:center;">
+        <button type="button" class="modal-body-button modal-continue" data-i18n="help.continue">
+          ➡️ Continue
+        </button>
       </div>
-    `,
-    layout: "action"
+    `
   });
 
-  const modal = document.getElementById("help-modal");
+  // Top bar (match My Stuff)
+  const topBar = document.createElement("div");
+  topBar.className = "modal-top-bar";
+  topBar.innerHTML = `
+    <h2 id="help-title" style="margin:0;">${t("help.title") || "🆘 Emergency Numbers"}</h2>
+    <button type="button" class="modal-close" aria-label="Close">&times;</button>
+  `;
+  modal.querySelector(".modal-content")?.prepend(topBar);
 
-  // 🔒 Make sure it does NOT appear on load
-  modal.classList.add("hidden");     // ensure hidden class is present
-  hideModal("help-modal");           // and remove any 'open' state if your API uses it
+  // Close via red X
+  topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("help-modal"));
 
-  modal.querySelector(".modal-continue")?.addEventListener("click", () => {
-    hideModal("help-modal");
-    // or: show the next step in your help flow
-  });
+  // i18n pass
+  (function localizeHelpModal() {
+    if (typeof t !== "function") return;
+    modal.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      let v; try { v = t(key); } catch { v = null; }
+      if (v && v !== key && !/^\[[^\]]+\]$/.test(v)) el.textContent = v;
+    });
+  })();
 
+  // tap-out + ESC
   setupTapOutClose("help-modal");
 }
 
@@ -1378,6 +1427,8 @@ async function handleShare() {
 
 let shareModalCreated = false;
 
+// Lead comments: CSS-only backdrop; inject hidden; no overlay.
+// Share modal: same top bar style as My Stuff
 export function createShareModal() {
   if (shareModalCreated) return;
   shareModalCreated = true;
@@ -1385,31 +1436,36 @@ export function createShareModal() {
   injectModal({
     id: 'share-location-modal',
     layout: 'action',
-    title: t('share.button'),
+    title: "", // header rendered via modal-top-bar (avoid double title)
     bodyHTML: `
       <p class="muted">${t("share.intro") || "You can share your current location with a friend:"}</p>
       <p class="share-note">${t("share.note") || "📱 Works best via <strong>WhatsApp</strong>"}</p>
       <p id="share-location-coords" class="location-coords">📍 Loading…</p>
-
       <div class="modal-actions">
         <button class="modal-body-button" id="share-location-button">${t("share.button")}</button>
-        <button class="modal-body-button" id="share-location-cancel">${t("share.cancel")}</button>
       </div>
     `
   });
 
-  const shareBtn = document.getElementById("share-location-button");
-  if (shareBtn) {
-    shareBtn.addEventListener("click", handleShare);
-  }
+  const modal = document.getElementById("share-location-modal");
+  modal.classList.add("hidden"); // keep hidden until showShareModal()
 
-  const cancelBtn = document.getElementById("share-location-cancel");
-  if (cancelBtn) {
-    cancelBtn.addEventListener("click", () => {
-      hideModal("share-location-modal");
-    });
-  }
+  // 🔹 Top bar (match My Stuff)
+  const topBar = document.createElement("div");
+  topBar.className = "modal-top-bar";
+  topBar.innerHTML = `
+    <h2 id="share-title" class="modal-header">${t("share.button")}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  modal.querySelector(".modal-content")?.prepend(topBar);
 
+  // Close via red X
+  topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("share-location-modal"));
+
+  // Share action
+  modal.querySelector("#share-location-button")?.addEventListener("click", handleShare);
+
+  // Tap-out + ESC (uses overlay from layout:"action")
   setupTapOutClose("share-location-modal");
 }
 
@@ -1446,7 +1502,6 @@ export function createIncomingLocationModal(coords) {
   modal.id = id;
 
   modal.innerHTML = `
-    <div class="modal-overlay"></div>
     <div class="modal-content modal-action">
       <h2 class="modal-title">📍 Location Received</h2>
       <div class="modal-body">
@@ -1489,30 +1544,28 @@ export function createIncomingLocationModal(coords) {
 }
 
 // modal-injector.js
+
 /**
  * Enables "tap-out-to-close" and Escape-to-close behavior for a modal.
  * If the overlay doesn't exist yet, it waits for it.
  */
+// Lead comments: close on container click or ESC; no overlay needed.
+// tap-out closes only when clicking the container (not inner content)
 export function setupTapOutClose(modalId) {
   const modal = document.getElementById(modalId);
   if (!modal) return;
 
-  const tryBindOverlay = () => {
-    const overlay = modal.querySelector(".modal-overlay");
-    if (overlay) {
-      overlay.addEventListener("click", () => {
-        modal.classList.add("hidden");
-      });
-    } else {
-      requestAnimationFrame(tryBindOverlay);
-    }
+  const onBackdropClick = (e) => {
+    if (e.target === modal) modal.classList.add('hidden'); // click exactly on backdrop
   };
 
-  tryBindOverlay();
+  // avoid duplicate handlers on repeated calls
+  modal.removeEventListener('click', onBackdropClick);
+  modal.addEventListener('click', onBackdropClick, { passive: true });
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !modal.classList.contains("hidden")) {
-      modal.classList.add("hidden");
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+      modal.classList.add('hidden');
     }
   });
 }
@@ -1521,28 +1574,18 @@ export function setupTapOutClose(modalId) {
 // Accepts `isRepeat = true` if the user has already donated,
 // which adjusts the text to a thank-you prompt with the option to give again.
 // Reuses translation keys and handles modal injection, button actions, and close behavior.
+// Donation modal: My Stuff–style top bar + red X; unified backdrop
 export function createDonationModal(isRepeat = false) {
+  if (document.getElementById("donation-modal")) { showModal("donation-modal"); return; }
 
-  if (document.getElementById("donation-modal")) {
-    showModal("donation-modal");
-    return;
-  }
+  const title = isRepeat ? t("donation.thanks.title") : t("donation.title");
+  const intro = isRepeat ? t("donation.thanks.body")  : t("donation.intro");
+  const declineLabel = isRepeat ? t("donation.thanks.decline") : t("donation.btn.decline.first");
 
-  const title = isRepeat
-    ? t("donation.thanks.title")
-    : t("donation.title");
-
-  const intro = isRepeat
-    ? t("donation.thanks.body")
-    : t("donation.intro");
-
-  const declineLabel = isRepeat
-    ? t("donation.thanks.decline")
-    : t("donation.btn.decline.first");
-
-  injectModal({
+  const modal = injectModal({
     id: "donation-modal",
-    title,
+    title: "",                        // header rendered via modal-top-bar
+    layout: "action",
     bodyHTML: `
       <div class="modal-shop-item">
         <p>${intro}</p>
@@ -1573,17 +1616,23 @@ export function createDonationModal(isRepeat = false) {
           <button class="modal-body-button" id="donation-decline">${declineLabel}</button>
         </div>
       </div>
-    `,
-
-    layout: "action"
+    `
   });
 
-  const modal = document.getElementById("donation-modal");
+  // Top bar matching My Stuff
+  const topBar = document.createElement("div");
+  topBar.className = "modal-top-bar";
+  topBar.innerHTML = `
+    <h2 class="modal-header">${title}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  modal.querySelector(".modal-content")?.prepend(topBar);
 
-  modal.querySelector("#donation-decline")?.addEventListener("click", () => {
-    hideModal("donation-modal");
-  });
+  // Close via red X and Decline
+  topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("donation-modal"));
+  modal.querySelector("#donation-decline")?.addEventListener("click", () => hideModal("donation-modal"));
 
+  // Donate buttons
   modal.querySelectorAll(".donate-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
       const amount = parseInt(btn.dataset.amount);
@@ -1592,8 +1641,6 @@ export function createDonationModal(isRepeat = false) {
   });
 
   setupTapOutClose("donation-modal");
-
-  // ✅ Show the modal after injection
   showModal("donation-modal");
 }
 

@@ -620,21 +620,37 @@ body.large-text {
   background: none !important;
 }
 
-/* ──────────────── Modal Containers ──────────────── */
-/* All modals share these base layout rules */
+/* ──────────────────────────────────────────────────────────
+   Modal containers — unified base
+   Applies the same shell to every app modal; visibility is
+   controlled by toggling the .hidden class in JS.
+   ────────────────────────────────────────────────────────── */
+/* Modal containers — unified base */
+:root {
+  --modal-pad: 2em;
+  --modal-backdrop: rgba(0, 0, 0, 0.25);
+  --modal-blur: 1px; /* readable text behind */
+}
+
 #my-stuff-modal,
 #help-modal,
 #language-modal,
 #social-modal,
 #alert-modal,
-#pinned-modal {
+#pinned-modal,
+#share-location-modal,
+#donation-modal {
   position: fixed;
   inset: 0;
   display: none;
   justify-content: center;
   align-items: center;
-  padding: 2em;
   z-index: 1000;
+  padding: var(--modal-pad);
+  background: var(--modal-backdrop);
+  /* subtle blur; keeps chars readable behind */
+  -webkit-backdrop-filter: blur(var(--modal-blur));
+  backdrop-filter: blur(var(--modal-blur));
 }
 
 #my-stuff-modal:not(.hidden),
@@ -642,9 +658,26 @@ body.large-text {
 #language-modal:not(.hidden),
 #social-modal:not(.hidden),
 #alert-modal:not(.hidden),
-#pinned-modal:not(.hidden) {
+#pinned-modal:not(.hidden),
+#share-location-modal:not(.hidden),
+#donation-modal:not(.hidden) {
   display: flex;
 }
+
+/* Share Location compact tweak */
+#share-location-modal { padding: 1em; }
+
+/* Keep these inner rules */
+#share-location-modal .modal-body { text-align: center; }
+#share-location-coords {
+  font-family: monospace;
+  font-size: 1.1rem;
+  margin: 0.75em 0;
+  text-align: center;
+}
+#share-location-modal .modal-footer,
+#share-location-modal .modal-actions { margin-top: 1.5em; }
+
 
 /* ──────────────── Main Modal Container ──────────────── */
 /* Defines scrollable vertical layout — structure only; visual layout is handled by layout modifiers (e.g. .modal-action) */
@@ -1442,21 +1475,6 @@ button:hover {
   transition: background-color 0.2s ease;
 }
 
-#help-modal,
-#language-modal,
-#social-modal,
-#alert-modal,
-#pinned-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.25);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 2em;
-}
-
 @keyframes reveal-scroll-space {
   0%   { transform: translateY(0); }
   10%  { transform: translateY(-48px); }  /* pull up */
@@ -1763,38 +1781,6 @@ button:hover {
   flex-direction: column;
   align-items: flex-start;   /* ⬅️ left-align button */
   gap: 0.75em;
-  margin-top: 1.5em;
-}
-
-/* ──────────────── Share Location Modal — Unified Layout ──────────────── */
-#share-location-modal.hidden {
-  display: none;
-}
-
-#share-location-modal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1em;
-  background: rgba(0, 0, 0, 0.25); /* ✅ unified dark backdrop */
-}
-
-/* ✅ Center contents inside modal */
-#share-location-modal .modal-body {
-  text-align: center;
-}
-
-/* ✅ Coordinates style */
-#share-location-coords {
-  font-family: monospace;
-  font-size: 1.1rem;
-  margin: 0.75em 0;
-  text-align: center;
-}
-
-/* ✅ Space above buttons */
-#share-location-modal .modal-footer,
-#share-location-modal .modal-actions {
   margin-top: 1.5em;
 }
 
