@@ -17,6 +17,33 @@ import {
   showLocationProfileModal
 } from './modal-injector.js';
 
+// Force phones to forget old cache on new deploy; one-time per BUILD_ID.
+const BUILD_ID = '2025-08-25-01'; // bump this each deploy
+
+(async () => {
+  try {
+    const prev = localStorage.getItem('BUILD_ID');
+    if (prev !== BUILD_ID) {
+      // Unregister any service workers to stop stale responses.
+      if (navigator.serviceWorker?.getRegistrations) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister().catch(()=>{})));
+      }
+      // Purge Cache Storage.
+      if (window.caches?.keys) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      localStorage.setItem('BUILD_ID', BUILD_ID);
+      // Hard reload with a cache-busting query so mobile fetches fresh.
+      const u = new URL(window.location.href);
+      u.searchParams.set('v', BUILD_ID);
+      window.location.replace(u.toString());
+    }
+  } catch {}
+})();
+
+
 // 🌍 Emergency data + localization helpers
 // Served as a static ES module from /public/scripts
 import {
