@@ -209,14 +209,26 @@ function renderPopularGroup(list = geoPoints) {
       // ✅ Click to open LPM (was: bare e.preventDefault(); + Maps)
       btn.addEventListener('click', (e) => {
         e.preventDefault();
+        // build gallery from loc.media.images; pick cover
+        const media   = (loc && loc.media) ? loc.media : {};
+        const gallery = Array.isArray(media.images) ? media.images : [];
+        const images  = gallery.map(m => (m && typeof m === 'object') ? m.src : m).filter(Boolean);
+        const cover   = (media.cover && String(media.cover).trim()) ? media.cover : (images[0] || '/assets/logo-icon.svg');
+
         showLocationProfileModal({
           id: btn.getAttribute('data-id'),
           name: btn.textContent,
           lat, lng,
-          imageSrc: '/assets/logo-icon.svg',
-          description: '',
+          imageSrc: cover,   // first paint
+          images,            // slider sources
+          media,             // lets slider honor the default image flag
+          // lead: pass descriptions map as-is; never pass a scalar; log when empty for visibility
+          // lead: always pass a descriptions map; log when it is empty for debugging
+          descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
+
           originEl: btn
         });
+
       });
     }
 
@@ -271,24 +283,32 @@ function showActionModal(action) {
 // 🎨 Group-specific background color (based on translation keys only)
 // app.js
 // ---------------------------------------------------------------------
-// Palette: 15 pale hues (base + ink). No duplicates.
+// Palette: 22 hues, gradient from brown → yellow → green → blue → violet → red.
+// Each entry has base + ink (slightly darker). No repeats.
 // ---------------------------------------------------------------------
 const PALETTE = [
-  { base: '#F4D7D7', ink: '#EAB8B8' }, // 0
-  { base: '#F4E3D7', ink: '#EACCB8' }, // 1
-  { base: '#F4EED7', ink: '#EAE0B8' }, // 2
-  { base: '#EEF4D7', ink: '#E0EAB8' }, // 3
-  { base: '#E3F4D7', ink: '#CCEAB8' }, // 4
-  { base: '#D7F4D7', ink: '#B8EAB8' }, // 5
-  { base: '#D7F4E3', ink: '#B8EACC' }, // 6
-  { base: '#D7F4EE', ink: '#B8EAE0' }, // 7
-  { base: '#D7EEF4', ink: '#B8E0EA' }, // 8
-  { base: '#D7E3F4', ink: '#B8CCEA' }, // 9
-  { base: '#D7D7F4', ink: '#B8B8EA' }, // 10
-  { base: '#E3D7F4', ink: '#CCB8EA' }, // 11
-  { base: '#EED7F4', ink: '#E0B8EA' }, // 12
-  { base: '#F4D7EE', ink: '#EAB8E0' }, // 13
-  { base: '#F4D7E3', ink: '#EAB8CC' }, // 14
+  { base: '#EAD9C4', ink: '#D2BFA8' }, // 0 brownish sand
+  { base: '#F4E2B8', ink: '#E0CC9E' }, // 1 pale yellow-ochre
+  { base: '#F0EDB3', ink: '#D6D394' }, // 2 soft yellow
+  { base: '#E4F2B8', ink: '#CAD79C' }, // 3 yellow-green
+  { base: '#D2F2B8', ink: '#B8D89E' }, // 4 light green
+  { base: '#B8F2C2', ink: '#9ED8AA' }, // 5 mint green
+  { base: '#B8F2E4', ink: '#9ED8C9' }, // 6 aqua
+  { base: '#B8E4F2', ink: '#9EC9D8' }, // 7 sky blue
+  { base: '#B8CFF2', ink: '#9EB4D8' }, // 8 periwinkle
+  { base: '#C9B8F2', ink: '#AD9ED8' }, // 9 soft violet
+  { base: '#DDB8F2', ink: '#C19ED8' }, // 10 lavender
+  { base: '#EAB8F2', ink: '#CE9ED8' }, // 11 pink-violet
+  { base: '#F2B8E4', ink: '#D89EC9' }, // 12 rosy pink
+  { base: '#F2B8CC', ink: '#D89EB4' }, // 13 soft rose
+  { base: '#F2B8B8', ink: '#D89E9E' }, // 14 salmon
+  { base: '#F2C4B8', ink: '#D8AA9E' }, // 15 warm coral
+  { base: '#F2D0B8', ink: '#D8B69E' }, // 16 peach
+  { base: '#F2DCB8', ink: '#D8C29E' }, // 17 pale tan
+  { base: '#F2E8B8', ink: '#D8CE9E' }, // 18 sandy yellow
+  { base: '#F2E2D0', ink: '#D8C9B6' }, // 19 warm beige
+  { base: '#F2B8A8', ink: '#D89E91' }, // 20 deep coral
+  { base: '#E85C5C', ink: '#CC4C4C' }, // 21 strong red → reserved for Emergency
 ];
 
 // ---------------------------------------------------------------------
@@ -296,22 +316,26 @@ const PALETTE = [
 // Adjust the keys to your actual set; keep uniqueness.
 // ---------------------------------------------------------------------
 const GROUP_COLOR_INDEX = {
-  'group.popular':        0,   // pale red
-  'group.transport':      5,   // pale green (downgraded)
-  'group.food':           1,   // pale yellow
-  'group.services':       10,  // pale indigo
-  'group.stages':         2,   // pale amber
-  'group.activities':     3,   // pale lime
-  'group.gates':          8,   // pale cyan-blue
-  'group.areas':          11,  // pale purple
-  'group.shops':          13,  // pale pink
-  'group.spas':           9,   // pale periwinkle
-  'group.guests':         4,   // pale coral / red for Emergency Services
-  'group.facilities':     7,   // pale teal
-  'group.social-points':  6,   // pale aqua-mint
-  'group.landmarks':      2,   // pale stone / beige for Landmarks
-  'group.emergency':      12  // pale violet
-
+  'group.popular':        0,   // brownish sand
+  'group.stages':         1,   // ochre
+  'group.activities':     2,   // soft yellow
+  'group.event-food':     3,   // yellow-green
+  'group.facilities':     4,   // light green
+  'group.gates':          5,   // mint green
+  'group.transport':      6,   // aqua
+  'group.guests':         7,   // sky blue
+  'group.social-points':  8,   // periwinkle
+  'group.landmarks':      9,   // violet
+  'group.museums':        10,  // lavender
+  'group.spots':          11,  // pink-violet
+  'group.parks-nature':   12,  // rosy pink
+  'group.spas':           13,  // soft rose
+  'group.food-drink':     14,  // salmon
+  'group.shops':          15,  // warm coral
+  'group.services':       16,  // peach
+  'group.experiences':    17,  // pale tan
+  // leave 18 + 19 free for future categories if needed
+  'group.emergency':      21   // strong red
 };
 
 // ---------------------------------------------------------------------
@@ -583,15 +607,102 @@ async function initEmergencyBlock(countryOverride) {
     setupMyStuffModalLogic();           // 🧩 Setup tab handling inside modal
     flagStyler();                       // 🌐 Apply title/alt to any flag icons
 
-    // Load JSONs
-    const [actions, structure, geoPointsData] = await Promise.all([
+    // Load JSONs (profiles.json now carries locations)
+    // lead: normalize profile.locations to legacy geoPoints shape used by UI
+    const [actions, structure, profile] = await Promise.all([
       fetch('data/actions.json').then(r => r.json()),
-      fetch('data/structure.json').then(r => r.json()),   // <-- grouped shape (has .groupKey, .groupName, .subgroups[])
-      fetch('data/locations.json').then(r => r.json())
+      fetch('data/structure.json').then(r => r.json()),   // grouped shape (has .groupKey, .groupName, .subgroups[])
+      fetch('data/profiles.json').then(r => r.json())
     ]);
 
     state.actions = actions;
+
+    // helper: safe number from variants
+    const pickNum = (...vals) => {
+      for (const v of vals) {
+        const n = typeof v === "string" ? Number(v) : v;
+        if (Number.isFinite(n)) return n;
+      }
+      return undefined;
+    };
+
+    // structure → map display group name to group key (use existing top-level let)
+    structure_data = Array.isArray(structure)
+      ? structure.map(g => ({ "Group": g.groupKey, "Drop-down": g.groupName }))
+      : [];
+
+    // Normalize profile.locations → legacy geoPoints shape used by UI
+    let geoPointsData = (Array.isArray(profile?.locations) ? profile.locations : []).map(p => {
+      // i18n text → string
+      const pickText = (v) => (typeof v === 'string' ? v : (v && typeof v === 'object' ? (v[lang] || v.en || Object.values(v).find(x => typeof x === 'string') || '') : ''));
+
+      // numeric coords (supports p.coord.lat/lng)
+      const lat = pickNum(p.lat, p.latitude, p.coord?.lat, p.coords?.lat, p.coordinates?.lat);
+      const lon = pickNum(p.lon, p.longitude, p.coord?.lng, p.coord?.lon, p.coords?.lng, p.coords?.lon, p.coordinates?.lng, p.coordinates?.lon);
+
+      // coord compound
+      const coordCompound = (typeof p["Coordinate Compound"] === "string" && p["Coordinate Compound"].includes(","))
+        ? p["Coordinate Compound"].trim()
+        : (Number.isFinite(lat) && Number.isFinite(lon) ? `${lat},${lon}` : "");
+
+      // group → always resolve to a key using structure_data
+      const groupLabelOrKey = String(p.groupKey ?? p.Group ?? "").trim();
+      const hit = structure_data.find(s => s["Drop-down"] === groupLabelOrKey || s.Group === groupLabelOrKey);
+      const groupKey = hit ? hit.Group : (groupLabelOrKey.startsWith("group.") ? groupLabelOrKey : "group.uncategorized");
+
+      // subgroup: take as-is (key); mirror into both fields
+      const subkey = String(p.subgroupKey ?? p["Subgroup key"] ?? "").trim();
+
+      const nameText  = pickText(p.Name ?? p.name) || 'Unnamed';
+      const shortText = pickText(p["Short Name"] ?? p.shortName ?? p.alias) || nameText;
+
+      return {
+        ...p,                                         // keep originals
+        ID: p.ID ?? p.id ?? p._id ?? cryptoIdFallback(),
+        Name: nameText,
+        "Short Name": shortText,
+        Group: groupKey,
+        groupKey: groupKey,
+
+        "Subgroup key": subkey,
+        subgroupKey: subkey,
+        "Coordinate Compound": coordCompound,
+        Context: Array.isArray(p.Context) ? p.Context.join(";")
+                : Array.isArray(p.context) ? p.context.join(";")
+                : (typeof p.Context === "string" ? p.Context : (typeof p.context === "string" ? p.context : "")),
+        Visible: (p.Visible ?? p.visible ?? "Yes"),
+        Priority: (p.Priority ?? p.priority ?? "No")
+      };
+    });
+
     geoPoints = geoPointsData;
+
+    console.log("✅ geoPoints count:", geoPoints.length);
+    console.log("Sample record:", geoPoints[0]);
+
+    // ✅ Local debug helper (not global)
+    function debug() {
+      return {
+        total: geoPoints.length,
+        visibleYes: geoPoints.filter(x => x.Visible === "Yes").length,
+        priorityYes: geoPoints.filter(x => x.Priority === "Yes").length,
+        groupKeyPresent: geoPoints.filter(x => x.groupKey).length,
+        sample: geoPoints.slice(0,3).map(x => ({
+          id: x.id,
+          Visible: x.Visible,
+          Priority: x.Priority,
+          groupKey: x.groupKey
+        }))
+      };
+    }
+
+    // 3) keep downstream name the same
+    geoPoints = geoPointsData;
+
+    // tiny id fallback; keeps existing comments
+    function cryptoIdFallback() {
+      return `loc_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    }
 
     // ✅ Adapt grouped -> flat shape expected by your UI headers (for title/styling)
     structure_data = structure.map(g => ({

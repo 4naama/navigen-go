@@ -1,0 +1,1151 @@
+{
+  "version": "2025-08-20",
+  "default": {
+    "emergency": "112"
+  },
+  "i18n": {
+    "labels": {
+      "en": {
+        "emergency": "Emergency",
+        "police": "Police",
+        "fire": "Fire",
+        "ambulance": "Ambulance",
+        "alt": "Alternate"
+      },
+      "fr": {
+        "emergency": "Urgences",
+        "police": "Police",
+        "fire": "Pompiers",
+        "ambulance": "Ambulance",
+        "alt": "Alternatif"
+      },
+      "de": {
+        "emergency": "Notruf",
+        "police": "Polizei",
+        "fire": "Feuerwehr",
+        "ambulance": "Rettungsdienst",
+        "alt": "Alternativ"
+      },
+      "hu": {
+        "emergency": "Segélyhívó",
+        "police": "Rendőrség",
+        "fire": "Tűzoltóság",
+        "ambulance": "Mentő",
+        "alt": "Alternatív"
+      },
+      "it": {
+        "emergency": "Emergenze",
+        "police": "Polizia",
+        "fire": "Vigili del Fuoco",
+        "ambulance": "Ambulanza",
+        "alt": "Alternativo"
+      },
+      "he": {
+        "emergency": "חירום",
+        "police": "משטרה",
+        "fire": "כבאות",
+        "ambulance": "אמבולנס",
+        "alt": "חלופי"
+      },
+      "uk": {
+        "emergency": "Надзвичайні",
+        "police": "Поліція",
+        "fire": "Пожежна",
+        "ambulance": "Швидка",
+        "alt": "Альтернативний"
+      },
+      "nl": {
+        "emergency": "Noodgevallen",
+        "police": "Politie",
+        "fire": "Brandweer",
+        "ambulance": "Ambulance",
+        "alt": "Alternatief"
+      },
+      "ro": {
+        "emergency": "Urgențe",
+        "police": "Poliție",
+        "fire": "Pompieri",
+        "ambulance": "Ambulanță",
+        "alt": "Alternativ"
+      },
+      "pl": {
+        "emergency": "Alarmowe",
+        "police": "Policja",
+        "fire": "Straż pożarna",
+        "ambulance": "Pogotowie",
+        "alt": "Alternatywny"
+      },
+      "cs": {
+        "emergency": "Tísňová volání",
+        "police": "Policie",
+        "fire": "Hasiči",
+        "ambulance": "Záchranka",
+        "alt": "Alternativní"
+      },
+      "es": {
+        "emergency": "Emergencias",
+        "police": "Policía",
+        "fire": "Bomberos",
+        "ambulance": "Ambulancia",
+        "alt": "Alternativo"
+      },
+      "sk": {
+        "emergency": "Tiesňové volania",
+        "police": "Polícia",
+        "fire": "Hasiči",
+        "ambulance": "Záchranka",
+        "alt": "Alternatívny"
+      },
+      "da": {
+        "emergency": "Nødopkald",
+        "police": "Politi",
+        "fire": "Brandvæsen",
+        "ambulance": "Ambulance",
+        "alt": "Alternativ"
+      },
+      "sv": {
+        "emergency": "Nödsamtal",
+        "police": "Polis",
+        "fire": "Räddningstjänst",
+        "ambulance": "Ambulans",
+        "alt": "Alternativ"
+      },
+      "no": {
+        "emergency": "Nødnummer",
+        "police": "Politi",
+        "fire": "Brann",
+        "ambulance": "Ambulanse",
+        "alt": "Alternativ"
+      },
+      "sl": {
+        "emergency": "Nujni klici",
+        "police": "Policija",
+        "fire": "Gasilci",
+        "ambulance": "Reševalci",
+        "alt": "Alternativno"
+      },
+      "ru": {
+        "emergency": "Экстренные",
+        "police": "Полиция",
+        "fire": "Пожарная",
+        "ambulance": "Скорая",
+        "alt": "Альтернативный"
+      },
+      "pt": {
+        "emergency": "Emergência",
+        "police": "Polícia",
+        "fire": "Bombeiros",
+        "ambulance": "Ambulância",
+        "alt": "Alternativo"
+      },
+      "is": {
+        "emergency": "Neyðarnúmer",
+        "police": "Lögregla",
+        "fire": "Slökkvilið",
+        "ambulance": "Sjúkrabíll",
+        "alt": "Valkostur"
+      },
+      "tr": {
+        "emergency": "Acil",
+        "police": "Polis",
+        "fire": "İtfaiye",
+        "ambulance": "Ambulans",
+        "alt": "Alternatif"
+      },
+      "zh": {
+        "emergency": "紧急",
+        "police": "警方",
+        "fire": "消防",
+        "ambulance": "急救",
+        "alt": "备用"
+      },
+      "el": {
+        "emergency": "Έκτακτα",
+        "police": "Αστυνομία",
+        "fire": "Πυροσβεστική",
+        "ambulance": "Ασθενοφόρο",
+        "alt": "Εναλλακτικό"
+      },
+      "bg": {
+        "emergency": "Спешни",
+        "police": "Полиция",
+        "fire": "Пожарна",
+        "ambulance": "Линейка",
+        "alt": "Алтернативен"
+      },
+      "hr": {
+        "emergency": "Hitni",
+        "police": "Policija",
+        "fire": "Vatrogasci",
+        "ambulance": "Hitna pomoć",
+        "alt": "Alternativno"
+      },
+      "et": {
+        "emergency": "Hädaabinumbrid",
+        "police": "Politsei",
+        "fire": "Päästeamet",
+        "ambulance": "Kiirabi",
+        "alt": "Alternatiivne"
+      },
+      "fi": {
+        "emergency": "Hätänumerot",
+        "police": "Poliisi",
+        "fire": "Palokunta",
+        "ambulance": "Ensihoito",
+        "alt": "Vaihtoehtoinen"
+      },
+      "lv": {
+        "emergency": "Neatliekamie",
+        "police": "Policija",
+        "fire": "Ugunsdzēsēji",
+        "ambulance": "Neatliekamā",
+        "alt": "Alternatīvs"
+      },
+      "lt": {
+        "emergency": "Skubūs",
+        "police": "Policija",
+        "fire": "Gaisrininkai",
+        "ambulance": "Greitoji",
+        "alt": "Alternatyvus"
+      },
+      "mt": {
+        "emergency": "Emerġenza",
+        "police": "Pulizija",
+        "fire": "Ħaddiema tal-Faħħar",
+        "ambulance": "Ambulanza",
+        "alt": "Alternattiv"
+      },
+      "hi": {
+        "emergency": "आपातकाल",
+        "police": "पुलिस",
+        "fire": "अग्निशमन",
+        "ambulance": "एम्बुलेंस",
+        "alt": "विकल्प"
+      },
+      "ko": {
+        "emergency": "비상",
+        "police": "경찰",
+        "fire": "소방",
+        "ambulance": "구급차",
+        "alt": "대체"
+      },
+      "ja": {
+        "emergency": "緊急",
+        "police": "警察",
+        "fire": "消防",
+        "ambulance": "救急",
+        "alt": "代替"
+      },
+      "ar": {
+        "emergency": "طوارئ",
+        "police": "شرطة",
+        "fire": "إطفاء",
+        "ambulance": "إسعاف",
+        "alt": "بديل"
+      }
+    }
+  },
+  "countries": {
+    "US": {
+      "countryName": "United States",
+      "iso3": "USA",
+      "emergency": "911"
+    },
+    "CA": {
+      "countryName": "Canada",
+      "iso3": "CAN",
+      "emergency": "911"
+    },
+    "MX": {
+      "countryName": "Mexico",
+      "iso3": "MEX",
+      "emergency": "911"
+    },
+    "GB": {
+      "countryName": "United Kingdom",
+      "iso3": "GBR",
+      "emergency": "999",
+      "alt": [
+        "112"
+      ]
+    },
+    "IE": {
+      "countryName": "Ireland",
+      "iso3": "IRL",
+      "emergency": "112",
+      "alt": [
+        "999"
+      ]
+    },
+    "FR": {
+      "countryName": "France",
+      "iso3": "FRA",
+      "emergency": "112",
+      "police": "17",
+      "fire": "18",
+      "ambulance": "15"
+    },
+    "DE": {
+      "countryName": "Germany",
+      "iso3": "DEU",
+      "emergency": "112",
+      "police": "110"
+    },
+    "AT": {
+      "countryName": "Austria",
+      "iso3": "AUT",
+      "emergency": "112",
+      "police": "133"
+    },
+    "CH": {
+      "countryName": "Switzerland",
+      "iso3": "CHE",
+      "emergency": "112",
+      "police": "117",
+      "fire": "118",
+      "ambulance": "144"
+    },
+    "ES": {
+      "countryName": "Spain",
+      "iso3": "ESP",
+      "emergency": "112"
+    },
+    "PT": {
+      "countryName": "Portugal",
+      "iso3": "PRT",
+      "emergency": "112"
+    },
+    "IT": {
+      "countryName": "Italy",
+      "iso3": "ITA",
+      "emergency": "112"
+    },
+    "BE": {
+      "countryName": "Belgium",
+      "iso3": "BEL",
+      "emergency": "112"
+    },
+    "NL": {
+      "countryName": "Netherlands",
+      "iso3": "NLD",
+      "emergency": "112"
+    },
+    "LU": {
+      "countryName": "Luxembourg",
+      "iso3": "LUX",
+      "emergency": "112"
+    },
+    "DK": {
+      "countryName": "Denmark",
+      "iso3": "DNK",
+      "emergency": "112"
+    },
+    "SE": {
+      "countryName": "Sweden",
+      "iso3": "SWE",
+      "emergency": "112"
+    },
+    "NO": {
+      "countryName": "Norway",
+      "iso3": "NOR",
+      "emergency": "112"
+    },
+    "FI": {
+      "countryName": "Finland",
+      "iso3": "FIN",
+      "emergency": "112"
+    },
+    "IS": {
+      "countryName": "Iceland",
+      "iso3": "ISL",
+      "emergency": "112"
+    },
+    "PL": {
+      "countryName": "Poland",
+      "iso3": "POL",
+      "emergency": "112"
+    },
+    "CZ": {
+      "countryName": "Czechia",
+      "iso3": "CZE",
+      "emergency": "112",
+      "police": "158",
+      "fire": "150",
+      "ambulance": "155"
+    },
+    "SK": {
+      "countryName": "Slovakia",
+      "iso3": "SVK",
+      "emergency": "112",
+      "police": "158",
+      "fire": "150",
+      "ambulance": "155"
+    },
+    "HU": {
+      "countryName": "Hungary",
+      "iso3": "HUN",
+      "emergency": "112"
+    },
+    "RO": {
+      "countryName": "Romania",
+      "iso3": "ROU",
+      "emergency": "112"
+    },
+    "BG": {
+      "countryName": "Bulgaria",
+      "iso3": "BGR",
+      "emergency": "112"
+    },
+    "GR": {
+      "countryName": "Greece",
+      "iso3": "GRC",
+      "emergency": "112"
+    },
+    "CY": {
+      "countryName": "Cyprus",
+      "iso3": "CYP",
+      "emergency": "112"
+    },
+    "MT": {
+      "countryName": "Malta",
+      "iso3": "MLT",
+      "emergency": "112",
+      "alt": [
+        "999"
+      ]
+    },
+    "EE": {
+      "countryName": "Estonia",
+      "iso3": "EST",
+      "emergency": "112"
+    },
+    "LV": {
+      "countryName": "Latvia",
+      "iso3": "LVA",
+      "emergency": "112"
+    },
+    "LT": {
+      "countryName": "Lithuania",
+      "iso3": "LTU",
+      "emergency": "112"
+    },
+    "SI": {
+      "countryName": "Slovenia",
+      "iso3": "SVN",
+      "emergency": "112"
+    },
+    "HR": {
+      "countryName": "Croatia",
+      "iso3": "HRV",
+      "emergency": "112"
+    },
+    "BA": {
+      "countryName": "Bosnia and Herzegovina",
+      "iso3": "BIH",
+      "emergency": "112"
+    },
+    "RS": {
+      "countryName": "Serbia",
+      "iso3": "SRB",
+      "emergency": "112",
+      "police": "192",
+      "fire": "193",
+      "ambulance": "194"
+    },
+    "ME": {
+      "countryName": "Montenegro",
+      "iso3": "MNE",
+      "emergency": "112"
+    },
+    "MK": {
+      "countryName": "North Macedonia",
+      "iso3": "MKD",
+      "emergency": "112"
+    },
+    "AL": {
+      "countryName": "Albania",
+      "iso3": "ALB",
+      "emergency": "112"
+    },
+    "TR": {
+      "countryName": "Türkiye",
+      "iso3": "TUR",
+      "emergency": "112"
+    },
+    "UA": {
+      "countryName": "Ukraine",
+      "iso3": "UKR",
+      "emergency": "112",
+      "police": "102",
+      "fire": "101",
+      "ambulance": "103"
+    },
+    "MD": {
+      "countryName": "Moldova",
+      "iso3": "MDA",
+      "emergency": "112"
+    },
+    "RU": {
+      "countryName": "Russia",
+      "iso3": "RUS",
+      "emergency": "112",
+      "police": "102",
+      "fire": "101",
+      "ambulance": "103"
+    },
+    "BY": {
+      "countryName": "Belarus",
+      "iso3": "BLR",
+      "emergency": "112",
+      "police": "102",
+      "fire": "101",
+      "ambulance": "103"
+    },
+    "AR": {
+      "countryName": "Argentina",
+      "iso3": "ARG",
+      "emergency": "911"
+    },
+    "BO": {
+      "countryName": "Bolivia",
+      "iso3": "BOL",
+      "emergency": "911"
+    },
+    "BR": {
+      "countryName": "Brazil",
+      "iso3": "BRA",
+      "emergency": "190",
+      "fire": "193",
+      "ambulance": "192"
+    },
+    "CL": {
+      "countryName": "Chile",
+      "iso3": "CHL",
+      "police": "133",
+      "fire": "132",
+      "ambulance": "131"
+    },
+    "CO": {
+      "countryName": "Colombia",
+      "iso3": "COL",
+      "emergency": "123"
+    },
+    "EC": {
+      "countryName": "Ecuador",
+      "iso3": "ECU",
+      "emergency": "911"
+    },
+    "PE": {
+      "countryName": "Peru",
+      "iso3": "PER",
+      "police": "105",
+      "fire": "116",
+      "ambulance": "106"
+    },
+    "PY": {
+      "countryName": "Paraguay",
+      "iso3": "PRY",
+      "emergency": "911"
+    },
+    "UY": {
+      "countryName": "Uruguay",
+      "iso3": "URY",
+      "emergency": "911"
+    },
+    "VE": {
+      "countryName": "Venezuela",
+      "iso3": "VEN",
+      "emergency": "911"
+    },
+    "GT": {
+      "countryName": "Guatemala",
+      "iso3": "GTM",
+      "police": "110",
+      "fire": "122",
+      "ambulance": "128"
+    },
+    "SV": {
+      "countryName": "El Salvador",
+      "iso3": "SLV",
+      "emergency": "911"
+    },
+    "HN": {
+      "countryName": "Honduras",
+      "iso3": "HND",
+      "emergency": "911"
+    },
+    "NI": {
+      "countryName": "Nicaragua",
+      "iso3": "NIC",
+      "police": "118",
+      "fire": "115",
+      "ambulance": "128"
+    },
+    "CR": {
+      "countryName": "Costa Rica",
+      "iso3": "CRI",
+      "emergency": "911"
+    },
+    "PA": {
+      "countryName": "Panama",
+      "iso3": "PAN",
+      "emergency": "911"
+    },
+    "DO": {
+      "countryName": "Dominican Republic",
+      "iso3": "DOM",
+      "emergency": "911"
+    },
+    "HT": {
+      "countryName": "Haiti",
+      "iso3": "HTI",
+      "police": "114",
+      "fire": "115",
+      "ambulance": "116"
+    },
+    "JM": {
+      "countryName": "Jamaica",
+      "iso3": "JAM",
+      "emergency": "119"
+    },
+    "TT": {
+      "countryName": "Trinidad and Tobago",
+      "iso3": "TTO",
+      "emergency": "999",
+      "alt": [
+        "911"
+      ]
+    },
+    "AU": {
+      "countryName": "Australia",
+      "iso3": "AUS",
+      "emergency": "000",
+      "alt": [
+        "112"
+      ]
+    },
+    "NZ": {
+      "countryName": "New Zealand",
+      "iso3": "NZL",
+      "emergency": "111"
+    },
+    "PG": {
+      "countryName": "Papua New Guinea",
+      "iso3": "PNG",
+      "emergency": "111"
+    },
+    "FJ": {
+      "countryName": "Fiji",
+      "iso3": "FJI",
+      "emergency": "911"
+    },
+    "CN": {
+      "countryName": "China",
+      "iso3": "CHN",
+      "police": "110",
+      "fire": "119",
+      "ambulance": "120"
+    },
+    "HK": {
+      "countryName": "Hong Kong",
+      "iso3": "HKG",
+      "emergency": "999"
+    },
+    "MO": {
+      "countryName": "Macao",
+      "iso3": "MAC",
+      "emergency": "999"
+    },
+    "TW": {
+      "countryName": "Taiwan",
+      "iso3": "TWN",
+      "police": "110",
+      "fire": "119",
+      "ambulance": "119"
+    },
+    "JP": {
+      "countryName": "Japan",
+      "iso3": "JPN",
+      "police": "110",
+      "fire": "119",
+      "ambulance": "119"
+    },
+    "KR": {
+      "countryName": "Korea, Republic of",
+      "iso3": "KOR",
+      "emergency": "112",
+      "fire": "119",
+      "ambulance": "119"
+    },
+    "IN": {
+      "countryName": "India",
+      "iso3": "IND",
+      "emergency": "112"
+    },
+    "PK": {
+      "countryName": "Pakistan",
+      "iso3": "PAK",
+      "police": "15",
+      "ambulance": "115",
+      "fire": "16",
+      "alt": [
+        "1122"
+      ]
+    },
+    "BD": {
+      "countryName": "Bangladesh",
+      "iso3": "BGD",
+      "emergency": "999"
+    },
+    "LK": {
+      "countryName": "Sri Lanka",
+      "iso3": "LKA",
+      "police": "119",
+      "ambulance": "1990",
+      "fire": "110"
+    },
+    "NP": {
+      "countryName": "Nepal",
+      "iso3": "NPL",
+      "police": "100",
+      "fire": "101",
+      "ambulance": "102"
+    },
+    "BT": {
+      "countryName": "Bhutan",
+      "iso3": "BTN",
+      "emergency": "112"
+    },
+    "MV": {
+      "countryName": "Maldives",
+      "iso3": "MDV",
+      "emergency": "119"
+    },
+    "TH": {
+      "countryName": "Thailand",
+      "iso3": "THA",
+      "police": "191",
+      "ambulance": "1669",
+      "fire": "199"
+    },
+    "MY": {
+      "countryName": "Malaysia",
+      "iso3": "MYS",
+      "emergency": "999",
+      "alt": [
+        "112"
+      ]
+    },
+    "SG": {
+      "countryName": "Singapore",
+      "iso3": "SGP",
+      "police": "999",
+      "ambulance": "995",
+      "fire": "995"
+    },
+    "ID": {
+      "countryName": "Indonesia",
+      "iso3": "IDN",
+      "emergency": "112",
+      "police": "110",
+      "fire": "113",
+      "ambulance": "118"
+    },
+    "PH": {
+      "countryName": "Philippines",
+      "iso3": "PHL",
+      "emergency": "911"
+    },
+    "VN": {
+      "countryName": "Viet Nam",
+      "iso3": "VNM",
+      "police": "113",
+      "fire": "114",
+      "ambulance": "115"
+    },
+    "KH": {
+      "countryName": "Cambodia",
+      "iso3": "KHM",
+      "police": "117",
+      "fire": "118",
+      "ambulance": "119"
+    },
+    "LA": {
+      "countryName": "Lao PDR",
+      "iso3": "LAO",
+      "police": "191",
+      "fire": "190",
+      "ambulance": "195"
+    },
+    "IL": {
+      "countryName": "Israel",
+      "iso3": "ISR",
+      "police": "100",
+      "ambulance": "101",
+      "fire": "102"
+    },
+    "PS": {
+      "countryName": "Palestine",
+      "iso3": "PSE",
+      "police": "100",
+      "ambulance": "101",
+      "fire": "102"
+    },
+    "JO": {
+      "countryName": "Jordan",
+      "iso3": "JOR",
+      "emergency": "911"
+    },
+    "LB": {
+      "countryName": "Lebanon",
+      "iso3": "LBN",
+      "police": "112",
+      "ambulance": "140",
+      "fire": "175"
+    },
+    "SY": {
+      "countryName": "Syria",
+      "iso3": "SYR",
+      "emergency": "112"
+    },
+    "IQ": {
+      "countryName": "Iraq",
+      "iso3": "IRQ",
+      "police": "104",
+      "ambulance": "122",
+      "fire": "115"
+    },
+    "IR": {
+      "countryName": "Iran",
+      "iso3": "IRN",
+      "police": "110",
+      "ambulance": "115",
+      "fire": "125"
+    },
+    "SA": {
+      "countryName": "Saudi Arabia",
+      "iso3": "SAU",
+      "emergency": "999",
+      "ambulance": "997",
+      "fire": "998"
+    },
+    "AE": {
+      "countryName": "United Arab Emirates",
+      "iso3": "ARE",
+      "police": "999",
+      "ambulance": "998",
+      "fire": "997"
+    },
+    "QA": {
+      "countryName": "Qatar",
+      "iso3": "QAT",
+      "emergency": "999"
+    },
+    "KW": {
+      "countryName": "Kuwait",
+      "iso3": "KWT",
+      "emergency": "112"
+    },
+    "OM": {
+      "countryName": "Oman",
+      "iso3": "OMN",
+      "emergency": "9999"
+    },
+    "BH": {
+      "countryName": "Bahrain",
+      "iso3": "BHR",
+      "emergency": "999"
+    },
+    "EG": {
+      "countryName": "Egypt",
+      "iso3": "EGY",
+      "police": "122",
+      "ambulance": "123",
+      "fire": "180"
+    },
+    "MA": {
+      "countryName": "Morocco",
+      "iso3": "MAR",
+      "police": "19",
+      "ambulance": "141",
+      "fire": "15"
+    },
+    "DZ": {
+      "countryName": "Algeria",
+      "iso3": "DZA",
+      "police": "1548",
+      "ambulance": "14",
+      "fire": "14"
+    },
+    "TN": {
+      "countryName": "Tunisia",
+      "iso3": "TUN",
+      "police": "197",
+      "ambulance": "190",
+      "fire": "198"
+    },
+    "LY": {
+      "countryName": "Libya",
+      "iso3": "LBY",
+      "emergency": "1515"
+    },
+    "SD": {
+      "countryName": "Sudan",
+      "iso3": "SDN",
+      "emergency": "999"
+    },
+    "SS": {
+      "countryName": "South Sudan",
+      "iso3": "SSD",
+      "emergency": "777"
+    },
+    "ET": {
+      "countryName": "Ethiopia",
+      "iso3": "ETH",
+      "police": "991",
+      "ambulance": "907",
+      "fire": "939"
+    },
+    "ER": {
+      "countryName": "Eritrea",
+      "iso3": "ERI",
+      "emergency": "112"
+    },
+    "DJ": {
+      "countryName": "Djibouti",
+      "iso3": "DJI",
+      "emergency": "17"
+    },
+    "SO": {
+      "countryName": "Somalia",
+      "iso3": "SOM",
+      "police": "888",
+      "ambulance": "999",
+      "fire": "555"
+    },
+    "KE": {
+      "countryName": "Kenya",
+      "iso3": "KEN",
+      "emergency": "999",
+      "alt": [
+        "112"
+      ]
+    },
+    "UG": {
+      "countryName": "Uganda",
+      "iso3": "UGA",
+      "emergency": "999",
+      "alt": [
+        "112"
+      ]
+    },
+    "TZ": {
+      "countryName": "Tanzania",
+      "iso3": "TZA",
+      "emergency": "112"
+    },
+    "RW": {
+      "countryName": "Rwanda",
+      "iso3": "RWA",
+      "police": "112",
+      "ambulance": "912",
+      "fire": "111"
+    },
+    "BI": {
+      "countryName": "Burundi",
+      "iso3": "BDI",
+      "emergency": "112"
+    },
+    "CD": {
+      "countryName": "Congo, DR",
+      "iso3": "COD",
+      "emergency": "112"
+    },
+    "CG": {
+      "countryName": "Congo",
+      "iso3": "COG",
+      "emergency": "112"
+    },
+    "CM": {
+      "countryName": "Cameroon",
+      "iso3": "CMR",
+      "emergency": "112"
+    },
+    "GA": {
+      "countryName": "Gabon",
+      "iso3": "GAB",
+      "emergency": "1730"
+    },
+    "GQ": {
+      "countryName": "Equatorial Guinea",
+      "iso3": "GNQ",
+      "emergency": "112"
+    },
+    "NG": {
+      "countryName": "Nigeria",
+      "iso3": "NGA",
+      "emergency": "112"
+    },
+    "GH": {
+      "countryName": "Ghana",
+      "iso3": "GHA",
+      "police": "191",
+      "ambulance": "193",
+      "fire": "192"
+    },
+    "CI": {
+      "countryName": "Côte d’Ivoire",
+      "iso3": "CIV",
+      "emergency": "180"
+    },
+    "SN": {
+      "countryName": "Senegal",
+      "iso3": "SEN",
+      "police": "17",
+      "ambulance": "1515",
+      "fire": "18"
+    },
+    "ML": {
+      "countryName": "Mali",
+      "iso3": "MLI",
+      "police": "17",
+      "ambulance": "15",
+      "fire": "18"
+    },
+    "BF": {
+      "countryName": "Burkina Faso",
+      "iso3": "BFA",
+      "police": "17",
+      "ambulance": "1010",
+      "fire": "18"
+    },
+    "NE": {
+      "countryName": "Niger",
+      "iso3": "NER",
+      "police": "17",
+      "ambulance": "15",
+      "fire": "18"
+    },
+    "TD": {
+      "countryName": "Chad",
+      "iso3": "TCD",
+      "emergency": "2251"
+    },
+    "MR": {
+      "countryName": "Mauritania",
+      "iso3": "MRT",
+      "emergency": "117"
+    },
+    "GM": {
+      "countryName": "Gambia",
+      "iso3": "GMB",
+      "police": "117",
+      "ambulance": "116",
+      "fire": "118"
+    },
+    "GW": {
+      "countryName": "Guinea-Bissau",
+      "iso3": "GNB",
+      "emergency": "112"
+    },
+    "SL": {
+      "countryName": "Sierra Leone",
+      "iso3": "SLE",
+      "emergency": "112"
+    },
+    "LR": {
+      "countryName": "Liberia",
+      "iso3": "LBR",
+      "emergency": "911"
+    },
+    "GN": {
+      "countryName": "Guinea",
+      "iso3": "GIN",
+      "emergency": "112"
+    },
+    "BJ": {
+      "countryName": "Benin",
+      "iso3": "BEN",
+      "police": "166",
+      "ambulance": "118",
+      "fire": "118"
+    },
+    "TG": {
+      "countryName": "Togo",
+      "iso3": "TGO",
+      "police": "117",
+      "ambulance": "8200",
+      "fire": "118"
+    },
+    "ZA": {
+      "countryName": "South Africa",
+      "iso3": "ZAF",
+      "emergency": "112",
+      "police": "10111",
+      "ambulance": "10177",
+      "fire": "10177"
+    },
+    "NA": {
+      "countryName": "Namibia",
+      "iso3": "NAM",
+      "emergency": "112"
+    },
+    "BW": {
+      "countryName": "Botswana",
+      "iso3": "BWA",
+      "emergency": "999"
+    },
+    "ZW": {
+      "countryName": "Zimbabwe",
+      "iso3": "ZWE",
+      "emergency": "999"
+    },
+    "MZ": {
+      "countryName": "Mozambique",
+      "iso3": "MOZ",
+      "emergency": "119"
+    },
+    "AO": {
+      "countryName": "Angola",
+      "iso3": "AGO",
+      "emergency": "112"
+    },
+    "ZM": {
+      "countryName": "Zambia",
+      "iso3": "ZMB",
+      "emergency": "999"
+    },
+    "MW": {
+      "countryName": "Malawi",
+      "iso3": "MWI",
+      "emergency": "997"
+    },
+    "SZ": {
+      "countryName": "Eswatini",
+      "iso3": "SWZ",
+      "emergency": "999"
+    },
+    "LS": {
+      "countryName": "Lesotho",
+      "iso3": "LSO",
+      "emergency": "123"
+    },
+    "MG": {
+      "countryName": "Madagascar",
+      "iso3": "MDG",
+      "emergency": "117"
+    },
+    "MU": {
+      "countryName": "Mauritius",
+      "iso3": "MUS",
+      "police": "999",
+      "ambulance": "114",
+      "fire": "115"
+    },
+    "SC": {
+      "countryName": "Seychelles",
+      "iso3": "SYC",
+      "emergency": "999"
+    }
+  }
+}

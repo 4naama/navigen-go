@@ -21,14 +21,119 @@ export function createLocationProfileModal(data) {
   const content = document.createElement('div');
   content.className = 'modal-content';
 
-  // ▸ Header: close + title (📍 Name)
+  // Top bar: title first, then Close → places the X on the right (matches other modals)
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
   top.innerHTML = `
-    <button class="modal-close" aria-label="Close">×</button>
-    <h2 aria-live="polite">📍 ${data?.name ?? 'Location'}</h2>
-    <span class="modal-top-spacer" aria-hidden="true"></span>
+    <h2 class="modal-header" aria-live="polite">📍 ${data?.name ?? 'Location'}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
   `;
+  
+  /** format description: handle multi-line + empty lines safely */
+  function formatDescHTML(s) {
+    const esc = (x) => x
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    const norm = String(s || '').replace(/\r\n?/g, '\n').trim();
+    if (!norm) return '';
+    const paras = norm
+      .split(/\n{2,}/)                 // empty line(s) → paragraph break
+      .map(p => esc(p).replace(/\n/g, '<br>')); // single \n → <br>
+    return '<p>' + paras.join('</p><p>') + '</p>';
+  }
+
+  /** normalize a descriptions map to { langLower: nonEmptyText } */
+  function normalizeDescMap(d) {
+    const out = {};
+    if (d && typeof d === 'object') {
+      Object.keys(d).forEach(k => {
+        const kk = String(k || '').toLowerCase().trim();
+        const vv = String(d[k] ?? '').trim();
+        if (kk && vv) out[kk] = vv;
+      });
+    }
+    return out;
+  }
+
+  /** alias payload locally; fill descriptions from payload OR global geoPoints by id */
+  const payload = (typeof data === 'object' && data) ? data : {};
+  let descs = normalizeDescMap(payload.descriptions);
+
+  // lead: if caller omitted descriptions, try known globals in order.
+  // lead: keep legacy ID compatibility; do not mutate incoming objects.
+  if (!Object.keys(descs).length && payload.id) {
+    const wantId = String(payload.id);
+
+    // 1) geoPoints (may be legacy or unified)
+    if (Array.isArray(window.geoPoints)) {
+      const found = window.geoPoints.find(x => String(x?.ID || x?.id) === wantId);
+      if (found) descs = normalizeDescMap(found.descriptions);
+    }
+
+    // 2) profiles.locations (final merged dataset)
+    if (!Object.keys(descs).length && window.profiles && Array.isArray(window.profiles.locations)) {
+      const found = window.profiles.locations.find(x => String(x?.id) === wantId);
+      if (found) descs = normalizeDescMap(found.descriptions);
+    }
+
+    // 3) structure_data (if accordion feeds from here)
+    if (!Object.keys(descs).length && Array.isArray(window.structure_data)) {
+      const found = window.structure_data.find(x => String(x?.id) === wantId);
+      if (found) descs = normalizeDescMap(found.descriptions);
+    }
+  }
+
+  /** map iso code → English name; fallback to code upper */
+  function langName(code) {
+    const m = {
+      en:'English', fr:'French', de:'German', hu:'Hungarian', it:'Italian', he:'Hebrew',
+      uk:'Ukrainian', nl:'Dutch', ro:'Romanian', pl:'Polish', cs:'Czech', es:'Spanish',
+      sk:'Slovak', da:'Danish', sv:'Swedish', no:'Norwegian', sl:'Slovene', ru:'Russian',
+      pt:'Portuguese', is:'Icelandic', tr:'Turkish', zh:'Chinese', el:'Greek',
+      bg:'Bulgarian', hr:'Croatian', et:'Estonian', fi:'Finnish', lv:'Latvian',
+      lt:'Lithuanian', mt:'Maltese', hi:'Hindi', ko:'Korean', ja:'Japanese', ar:'Arabic'
+    };
+    return m[String(code || '').toLowerCase()] || String(code || '').toUpperCase();
+  }
+
+  /** pick description for current app language; fallback to first available if missing */
+  // lead: normalize lang ("en-US" → "en"); if missing, show first available language with a notice.
+  const appLangRaw = (document.documentElement?.lang || navigator.language || 'en');
+  const appLang = String(appLangRaw).toLowerCase().split('-')[0];
+
+  const allLangs = Object.keys(descs || {}).filter(Boolean);
+  const primary = String((descs && descs[appLang]) || '').trim();
+
+  let chosenText = primary;
+  let chosenLang = appLang;
+
+  if (!chosenText && allLangs.length) {
+    chosenLang = allLangs[0];
+    chosenText = String(descs[chosenLang] || '').trim();
+  }
+
+  const descKey = 'lpm.description.placeholder';
+  const fallbackPlaceholder = '⏳ Description coming soon.';
+
+  // If we still have nothing, keep the placeholder; otherwise use chosen text.
+  const usePlaceholder = !chosenText;
+  let descHTML;
+
+  if (usePlaceholder) {
+    const base = (typeof t === 'function' ? (t(descKey) || fallbackPlaceholder) : fallbackPlaceholder);
+    if (allLangs.length) {
+      const names = allLangs.map(langName);
+      descHTML = formatDescHTML(`${base}\n\nℹ️ Available languages: ${names.join(', ')}`);
+    } else {
+      descHTML = formatDescHTML(base);
+    }
+  } else {
+    // lead: show description text only; remove the "Showing …" note
+    descHTML = formatDescHTML(chosenText);
+  }
 
   // ▸ Body: media + description (5-line clamp + fade handled in CSS)
   const body = document.createElement('div');
@@ -36,16 +141,17 @@ export function createLocationProfileModal(data) {
   body.innerHTML = `
     <div class="modal-body-inner">
       <figure class="location-media" aria-label="Location image">
-        <img src="${data?.imageSrc || '/assets/placeholder-images/icon-512-green.png'}" 
-             alt="${data?.name || 'Location'} image"
+        <img src="${payload.imageSrc || '/assets/placeholder-images/icon-512-green.png'}" 
+             alt="${payload.name || 'Location'} image"
              style="width:100%;height:auto;display:block;border-radius:8px;">
       </figure>
 
       <section class="location-description">
-        <div class="description" data-lines="5">
-          ${data?.description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent varius lorem at nibh vulputate, non fermentum orci viverra. Sed ac volutpat erat. Cras gravida augue nec lorem egestas.'}
+        <div class="description" data-lines="5" data-i18n-key="${usePlaceholder ? descKey : ''}">
+          ${descHTML}
         </div>
       </section>
+
     </div>
   `;
 
@@ -124,14 +230,7 @@ export function showLocationProfileModal(data) {
     // Folder for default placeholders
     const phDir = '/assets/placeholder-images';
     const defaults = [
-          'icon-512-green.png',
-          'icon-512-dark-blue.png',
-          'icon-512-brown.png',
-          'icon-512-light-blue.png',
-          'icon-512-neon.png',
-          'icon-512-pink.png',
-          'icon-512-red.png',
-          'icon-512-yellow.png'
+          'icon-512-grey.png'
         ];
 
     // Resolve sources
@@ -207,22 +306,62 @@ export function showLocationProfileModal(data) {
     const decoded = new Map();     // url -> true
     const MAX_CACHE = 8;
 
-    // load into a target <img> and wait for decode before showing
-    async function loadInto(imgEl, url) {
-      if (!url) return false;
+    // load into a target <img>; strict candidates only (no extension/name mutations)
+    async function loadInto(imgEl, url, loc) {
+      const s = String(url || '').trim();
+      if (!s) return false;
 
-      // set src first; then decode when possible
-      imgEl.src = url;
+      // freeze the original filename so we never change extension/casing
+      const fname = s.split('/').pop();
+      if (!fname) return false;
 
-      if ('decode' in imgEl) {
-        try { await imgEl.decode(); } catch (_) { /* swallow */ }
-      } else if (!imgEl.complete) {
-        await new Promise(r => { imgEl.onload = r; imgEl.onerror = r; });
+      const cand = [];
+      const add = (u) => { if (u && !cand.includes(u)) cand.push(u); };
+
+      // — Order of attempts (exactly as specified) —
+      add(s); // (1) original string
+      try {
+        const dec = decodeURI(s);
+        if (dec !== s) add(dec);       // (2) decoded whole path
+      } catch { /* silent */ }
+      const enc = encodeURI(s);
+      if (enc !== s) add(enc);         // (3) encoded whole path
+
+      // (4) ID-folder fallback with the SAME filename only
+      const locId = loc?.id || loc?.ID;
+      if (locId) {
+        add(`/assets/location-profile-images/${locId}/${fname}`);
+        const encF = encodeURI(fname);
+        if (encF !== fname) {
+          // (5) encoded filename under the ID folder
+          add(`/assets/location-profile-images/${locId}/${encF}`);
+        }
       }
 
-      decoded.set(url, true);
-      if (decoded.size > MAX_CACHE) decoded.delete(decoded.keys().next().value);
-      return true;
+      // First success wins → probe with <img>, then set src + await decode
+      const tryUrl = async (u) => {
+        await new Promise((resolve, reject) => {
+          const probe = new Image();
+          probe.onload = resolve;
+          probe.onerror = reject;
+          probe.src = u;
+        });
+        imgEl.src = u;                 // set only after confirmed load
+        if ('decode' in imgEl) {
+          try { await imgEl.decode(); } catch { /* swallow */ }
+        } else if (!imgEl.complete) {
+          await new Promise(r => { imgEl.onload = r; imgEl.onerror = r; });
+        }
+        return true;
+      };
+
+      for (let i = 0; i < cand.length; i++) {
+        try { return await tryUrl(cand[i]); } catch { /* next */ }
+      }
+
+      // Failure fallback: green placeholder once
+      imgEl.src = '/assets/placeholder-images/icon-512-green.png';
+      return false;
     }
 
     // keep slider box stable based on first loaded image ratio
@@ -239,7 +378,7 @@ export function showLocationProfileModal(data) {
       const nextUrl = images[nextIdx];
 
       // decode offscreen
-      await loadInto(back, nextUrl);
+      await loadInto(back, nextUrl, data);
 
       // first run: lock aspect so text never jumps
       lockAspectFrom(back);
@@ -267,7 +406,7 @@ export function showLocationProfileModal(data) {
 
     // init: prime first frame, then neighbor
     idx = resolveStartIndex(images, data);
-    await loadInto(front, images[idx]);
+    await loadInto(front, images[idx], data);
     lockAspectFrom(front);
     prefetch(idx + 1);
 
@@ -355,8 +494,6 @@ export function showLocationProfileModal(data) {
 
   // 5. Reveal modal (remove .hidden, add .visible, focus trap etc.)
   // (done above via showModal)
-  
-  initLpmImageSlider(modal, data);
 
 }
 
@@ -403,24 +540,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const cc = loc["Coordinate Compound"];
     if (typeof cc === "string" && cc.includes(",")) {
+      // parse "lat,lng" from sheet-style coord
       const [lat, lng] = cc.split(',').map(s => s.trim());
       btn.setAttribute('data-lat', lat);
       btn.setAttribute('data-lng', lng);
       btn.title = `Open profile / Route (${lat}, ${lng})`;
+
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        showLocationProfileModal({
-          id: loc.ID,
-          name: btn.textContent,
-          lat, lng,
-          imageSrc: loc.imageSrc || '/assets/placeholder-images/icon-512-green.png',
-          description: loc.description || '',
-          originEl: btn
-        });
+
+        // build gallery: prefer loc.media (cover + images), else placeholder
+        const media   = (loc && loc.media) ? loc.media : {};
+        const gallery = Array.isArray(media.images) ? media.images : [];
+        const images  = gallery
+          .map(m => (m && typeof m === 'object') ? m.src : m)
+          .filter(Boolean);
+        const cover   = (media.cover && String(media.cover).trim())
+          ? media.cover
+          : (images[0] || '/assets/placeholder-images/icon-512-green.png');
+
+      /** open the Location Profile Modal (modal uses descriptions{lang}; no scalar) */
+      showLocationProfileModal({
+        // lead: prefer new id → fallback to legacy ID attribute
+        id: String(loc?.id ?? btn.getAttribute('data-id') ?? ''),
+        name: btn.textContent,
+        lat, 
+        lng,
+        imageSrc: cover,   // first paint
+        images,            // slider sources
+        media,             // preserves default flag & rightsText per image
+
+        // lead: pass the descriptions map when present; empty object otherwise
+        descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
+
+        originEl: btn
+      });
+
+
       });
     }
     return btn;
   }
+
 
 export function buildAccordion(groupedStructure, geoPoints) {
   const container = document.getElementById("accordion");

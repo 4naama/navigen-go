@@ -1,0 +1,6039 @@
+{
+  "locations": [
+    {
+      "id": "aldi-city-shop-grill-7174",
+      "name": {
+        "en": "ALDI CITY SHOP & GRILL"
+      },
+      "shortName": {
+        "en": "ALDI CITY SHOP & GRILL"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.shops",
+      "subgroupKey": "sub.food-groceries",
+      "domain": "🛒 Marketplace",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.549937,
+        "lng": 19.057174
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/aldi-city-shop-grill-7174/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/aldi-city-shop-grill-7174/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "aperol-island-of-joy-6617",
+      "name": {
+        "en": "APEROL ISLAND OF JOY"
+      },
+      "shortName": {
+        "en": "APEROL ISLAND OF JOY"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551002,
+        "lng": 19.056617
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/aperol-island-of-joy-6617/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/aperol-island-of-joy-6617/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "artgarden-9557",
+      "name": {
+        "en": "ARTGARDEN"
+      },
+      "shortName": {
+        "en": "ARTGARDEN"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.558114,
+        "lng": 19.059557
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/artgarden-9557/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/artgarden-9557/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "attax-6747",
+      "name": {
+        "en": "ATTAX"
+      },
+      "shortName": {
+        "en": "ATTAX"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.drumming-circles",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550363,
+        "lng": 19.056747
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/attax-6747/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/attax-6747/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "basic-camping-3292",
+      "name": {
+        "en": "BASIC CAMPING"
+      },
+      "shortName": {
+        "en": "BASIC CAMPING"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.spots",
+      "subgroupKey": "sub.camping-zones",
+      "domain": "📍 POI",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.55005,
+        "lng": 19.053292
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/basic-camping-3292/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/basic-camping-3292/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "boat-entrance-8091",
+      "name": {
+        "en": "BOAT ENTRANCE"
+      },
+      "shortName": {
+        "en": "BOAT ENTRANCE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.gates",
+      "subgroupKey": "sub.other-gates",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550034,
+        "lng": 19.058091
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/boat-entrance-8091/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/boat-entrance-8091/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "bolt-night-stage-6757",
+      "name": {
+        "en": "BOLT NIGHT STAGE"
+      },
+      "shortName": {
+        "en": "BOLT NIGHT STAGE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.rock-stage",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.555703,
+        "lng": 19.056757
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/bolt-night-stage-6757/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/bolt-night-stage-6757/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "bulls-bar-3988",
+      "name": {
+        "en": "BULLS BAR"
+      },
+      "shortName": {
+        "en": "BULLS BAR"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.bars-beverages",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.55424,
+        "lng": 19.053988
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/bulls-bar-3988/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/bulls-bar-3988/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "bulls-bar-at-delta-7926",
+      "name": {
+        "en": "BULLS BAR AT DELTA"
+      },
+      "shortName": {
+        "en": "BULLS BAR AT DELTA"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.bars-beverages",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.556152,
+        "lng": 19.057926
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/bulls-bar-at-delta-7926/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/bulls-bar-at-delta-7926/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "bumbu-kingdom-5688",
+      "name": {
+        "en": "BUMBU KINGDOM"
+      },
+      "shortName": {
+        "en": "BUMBU KINGDOM"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.music-workshops",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550739,
+        "lng": 19.055688
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/bumbu-kingdom-5688/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/bumbu-kingdom-5688/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "caravan-camping-9903",
+      "name": {
+        "en": "CARAVAN CAMPING"
+      },
+      "shortName": {
+        "en": "CARAVAN CAMPING"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.spots",
+      "subgroupKey": "sub.camping-zones",
+      "domain": "📍 POI",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.546489,
+        "lng": 19.049903
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/caravan-camping-9903/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/caravan-camping-9903/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "cathedral-of-freedom-1925",
+      "name": {
+        "en": "CATHEDRAL OF FREEDOM"
+      },
+      "shortName": {
+        "en": "CATHEDRAL OF FREEDOM"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.vinyl-retro-beats",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551416,
+        "lng": 19.051925
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/cathedral-of-freedom-1925/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/cathedral-of-freedom-1925/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "cirque-du-sziget-4842",
+      "name": {
+        "en": "CIRQUE DU SZIGET"
+      },
+      "shortName": {
+        "en": "CIRQUE DU SZIGET"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.549648,
+        "lng": 19.054842
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/cirque-du-sziget-4842/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/cirque-du-sziget-4842/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "coca-cola-stage-4922",
+      "name": {
+        "en": "COCA-COLA STAGE"
+      },
+      "shortName": {
+        "en": "COCA-COLA STAGE"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.pop-stage",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.555109,
+        "lng": 19.054922
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/coca-cola-stage-4922/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/coca-cola-stage-4922/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "dereszla-borbar-6301",
+      "name": {
+        "en": "DERESZLA BORBÁR"
+      },
+      "shortName": {
+        "en": "DERESZLA BORBÁR"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.bars-beverages",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550075,
+        "lng": 19.056301
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/dereszla-borbar-6301/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/dereszla-borbar-6301/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "disney-alien-earth-wreckage-site-4759",
+      "name": {
+        "en": "DISNEY+ ALIEN: EARTH WRECKAGE SITE"
+      },
+      "shortName": {
+        "en": "DISNEY+ ALIEN: EARTH WRECKAGE SITE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.piano-keys-lounge",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551115,
+        "lng": 19.054759
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/disney-alien-earth-wreckage-site-4759/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/disney-alien-earth-wreckage-site-4759/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "dreher-drops-bar-3248",
+      "name": {
+        "en": "DREHER DROPS BAR"
+      },
+      "shortName": {
+        "en": "DREHER DROPS BAR"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.bars-beverages",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.553849,
+        "lng": 19.053248
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/dreher-drops-bar-3248/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/dreher-drops-bar-3248/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "drinkiq-oasis-2426",
+      "name": {
+        "en": "DRINKIQ OASIS"
+      },
+      "shortName": {
+        "en": "DRINKIQ OASIS"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551528,
+        "lng": 19.052426
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/drinkiq-oasis-2426/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/drinkiq-oasis-2426/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "dropyard-5244",
+      "name": {
+        "en": "DROPYARD"
+      },
+      "shortName": {
+        "en": "DROPYARD"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551597,
+        "lng": 19.055244
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/dropyard-5244/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/dropyard-5244/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "e4u-pop-up-embassy-6864",
+      "name": {
+        "en": "E4U POP-UP EMBASSY"
+      },
+      "shortName": {
+        "en": "E4U POP-UP EMBASSY"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.552502,
+        "lng": 19.056864
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/e4u-pop-up-embassy-6864/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/e4u-pop-up-embassy-6864/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "eu-meeting-point-1675",
+      "name": {
+        "en": "EU MEETING POINT"
+      },
+      "shortName": {
+        "en": "EU MEETING POINT"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550399,
+        "lng": 19.051675
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/eu-meeting-point-1675/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/eu-meeting-point-1675/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "family-camping-6363",
+      "name": {
+        "en": "FAMILY CAMPING"
+      },
+      "shortName": {
+        "en": "FAMILY CAMPING"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.spots",
+      "subgroupKey": "sub.camping-zones",
+      "domain": "📍 POI",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.558161,
+        "lng": 19.056363
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/family-camping-6363/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/family-camping-6363/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "finlandia-3570",
+      "name": {
+        "en": "FINLANDIA"
+      },
+      "shortName": {
+        "en": "FINLANDIA"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.classical-performance",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.554197,
+        "lng": 19.05357
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/finlandia-3570/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/finlandia-3570/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "freshness-ship-by-old-spice-6476",
+      "name": {
+        "en": "FRESHNESS SHIP BY OLD SPICE"
+      },
+      "shortName": {
+        "en": "FRESHNESS SHIP BY OLD SPICE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550753,
+        "lng": 19.056476
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/freshness-ship-by-old-spice-6476/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/freshness-ship-by-old-spice-6476/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "friss-energy-lab-6257",
+      "name": {
+        "en": "FRISS ENERGY LAB"
+      },
+      "shortName": {
+        "en": "FRISS ENERGY LAB"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551159,
+        "lng": 19.056257
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/friss-energy-lab-6257/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/friss-energy-lab-6257/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "gallio-turkey-foodtruck-7186",
+      "name": {
+        "en": "GALLIO TURKEY FOODTRUCK"
+      },
+      "shortName": {
+        "en": "GALLIO TURKEY FOODTRUCK"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.food-stalls",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.55135,
+        "lng": 19.057186
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/gallio-turkey-foodtruck-7186/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/gallio-turkey-foodtruck-7186/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "architectural-foundation-digital-exhibition-2021",
+      "name": {
+        "en": "ARCHITECTURAL FOUNDATION DIGITAL EXHIBITION"
+      },
+      "shortName": {
+        "en": "ARCHITECTURAL FOUNDATION DIGITAL EXHIBITION"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550582,
+        "lng": 19.052021
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/architectural-foundation-digital-exhibition-2021/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/architectural-foundation-digital-exhibition-2021/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "giant-street-theatre-2926",
+      "name": {
+        "en": "GIANT STREET THEATRE"
+      },
+      "shortName": {
+        "en": "GIANT STREET THEATRE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.553408,
+        "lng": 19.052926
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/giant-street-theatre-2926/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/giant-street-theatre-2926/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "graffiti-wall-5319",
+      "name": {
+        "en": "GRAFFITI WALL"
+      },
+      "shortName": {
+        "en": "GRAFFITI WALL"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.55198,
+        "lng": 19.055319
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/graffiti-wall-5319/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/graffiti-wall-5319/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "grass-4499",
+      "name": {
+        "en": "GRASS"
+      },
+      "shortName": {
+        "en": "GRASS"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.54993,
+        "lng": 19.054499
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/grass-4499/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/grass-4499/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "h-bridge-7911",
+      "name": {
+        "en": "H-BRIDGE"
+      },
+      "shortName": {
+        "en": "H-BRIDGE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.gates",
+      "subgroupKey": "sub.southern-gates",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.541681,
+        "lng": 19.047911
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/h-bridge-7911/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/h-bridge-7911/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "hev-suburban-railway-6083",
+      "name": {
+        "en": "HÉV Suburban Railway"
+      },
+      "shortName": {
+        "en": "HÉV Suburban Railway"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.transport",
+      "subgroupKey": "sub.local-train",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.552306,
+        "lng": 19.046083
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/hev-suburban-railway-6083/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/hev-suburban-railway-6083/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "halfpipe-4486",
+      "name": {
+        "en": "HALFPIPE"
+      },
+      "shortName": {
+        "en": "HALFPIPE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551869,
+        "lng": 19.054486
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/halfpipe-4486/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/halfpipe-4486/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "johnnie-walker-liquid-light-bar-5169",
+      "name": {
+        "en": "JOHNNIE WALKER LIQUID LIGHT BAR"
+      },
+      "shortName": {
+        "en": "JOHNNIE WALKER LIQUID LIGHT BAR"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.bars-beverages",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.55466,
+        "lng": 19.055169
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/johnnie-walker-liquid-light-bar-5169/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/johnnie-walker-liquid-light-bar-5169/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "johnnie-walker-liquid-light-experience-2519",
+      "name": {
+        "en": "JOHNNIE WALKER LIQUID LIGHT EXPERIENCE"
+      },
+      "shortName": {
+        "en": "JOHNNIE WALKER LIQUID LIGHT EXPERIENCE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.552872,
+        "lng": 19.052519
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/johnnie-walker-liquid-light-experience-2519/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/johnnie-walker-liquid-light-experience-2519/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "jukebox-by-havana-club-4504",
+      "name": {
+        "en": "JUKEBOX BY HAVANA CLUB"
+      },
+      "shortName": {
+        "en": "JUKEBOX BY HAVANA CLUB"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.555167,
+        "lng": 19.054504
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/jukebox-by-havana-club-4504/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/jukebox-by-havana-club-4504/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "k-bridge-8402",
+      "name": {
+        "en": "K-BRIDGE"
+      },
+      "shortName": {
+        "en": "K-BRIDGE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.gates",
+      "subgroupKey": "sub.northern-gates",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.552368,
+        "lng": 19.048402
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/k-bridge-8402/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/k-bridge-8402/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "lightstage-9246",
+      "name": {
+        "en": "LIGHTSTAGE"
+      },
+      "shortName": {
+        "en": "LIGHTSTAGE"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.dj-dance",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.557918,
+        "lng": 19.059246
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/lightstage-9246/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/lightstage-9246/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "lipton-club-6198",
+      "name": {
+        "en": "LIPTON CLUB"
+      },
+      "shortName": {
+        "en": "LIPTON CLUB"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.553782,
+        "lng": 19.056198
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/lipton-club-6198/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/lipton-club-6198/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "living-statues-4767",
+      "name": {
+        "en": "LIVING STATUES"
+      },
+      "shortName": {
+        "en": "LIVING STATUES"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550082,
+        "lng": 19.054767
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/living-statues-4767/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/living-statues-4767/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "magic-mirror-9203",
+      "name": {
+        "en": "MAGIC MIRROR"
+      },
+      "shortName": {
+        "en": "MAGIC MIRROR"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.pop-stage",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.557129,
+        "lng": 19.059203
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/magic-mirror-9203/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/magic-mirror-9203/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "main-stage-3624",
+      "name": {
+        "en": "MAIN STAGE"
+      },
+      "shortName": {
+        "en": "MAIN STAGE"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.silent-disco",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.553349,
+        "lng": 19.053624
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/main-stage-3624/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/main-stage-3624/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "malibu-sunshine-bar-0786",
+      "name": {
+        "en": "MALIBU SUNSHINE BAR"
+      },
+      "shortName": {
+        "en": "MALIBU SUNSHINE BAR"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.bars-beverages",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.559883,
+        "lng": 19.060786
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/malibu-sunshine-bar-0786/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/malibu-sunshine-bar-0786/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "mobilis-5518",
+      "name": {
+        "en": "MOBILIS"
+      },
+      "shortName": {
+        "en": "MOBILIS"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.54993,
+        "lng": 19.055518
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/mobilis-5518/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/mobilis-5518/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "museums-booth-4193",
+      "name": {
+        "en": "MUSEUMS BOOTH"
+      },
+      "shortName": {
+        "en": "MUSEUMS BOOTH"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.555486,
+        "lng": 19.054193
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/museums-booth-4193/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/museums-booth-4193/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "mykonos-7701",
+      "name": {
+        "en": "MYKONOS"
+      },
+      "shortName": {
+        "en": "MYKONOS"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.555116,
+        "lng": 19.057701
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/mykonos-7701/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/mykonos-7701/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "ngo-sziget-2126",
+      "name": {
+        "en": "NGO SZIGET"
+      },
+      "shortName": {
+        "en": "NGO SZIGET"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550565,
+        "lng": 19.052126
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/ngo-sziget-2126/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/ngo-sziget-2126/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "notino-app-zone-6714",
+      "name": {
+        "en": "NOTINO APP ZONE"
+      },
+      "shortName": {
+        "en": "NOTINO APP ZONE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551778,
+        "lng": 19.056714
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/notino-app-zone-6714/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/notino-app-zone-6714/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "peroni-szoho-bar-7283",
+      "name": {
+        "en": "PERONI SZOHO BAR"
+      },
+      "shortName": {
+        "en": "PERONI SZOHO BAR"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.bars-beverages",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551741,
+        "lng": 19.057283
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/peroni-szoho-bar-7283/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/peroni-szoho-bar-7283/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "pharmacy-7508",
+      "name": {
+        "en": "PHARMACY"
+      },
+      "shortName": {
+        "en": "PHARMACY"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.shops",
+      "subgroupKey": "sub.pharmacy",
+      "domain": "🛒 Marketplace",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.552277,
+        "lng": 19.057508
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/pharmacy-7508/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/pharmacy-7508/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "pilsner-urquell-zone-2991",
+      "name": {
+        "en": "PILSNER URQUELL ZONE"
+      },
+      "shortName": {
+        "en": "PILSNER URQUELL ZONE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.553581,
+        "lng": 19.052991
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/pilsner-urquell-zone-2991/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/pilsner-urquell-zone-2991/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "revolut-play-tm-2765",
+      "name": {
+        "en": "REVOLUT PLAY-TM"
+      },
+      "shortName": {
+        "en": "REVOLUT PLAY-TM"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.553205,
+        "lng": 19.052765
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/revolut-play-tm-2765/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/revolut-play-tm-2765/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "revolut-stage-3570",
+      "name": {
+        "en": "REVOLUT STAGE"
+      },
+      "shortName": {
+        "en": "REVOLUT STAGE"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.rock-stage",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.553002,
+        "lng": 19.05357
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/revolut-stage-3570/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/revolut-stage-3570/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "rudas-bath-7960",
+      "name": {
+        "en": "RUDAS BATH"
+      },
+      "shortName": {
+        "en": "RUDAS BATH"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.spas",
+      "subgroupKey": "sub.wellness-relaxation",
+      "domain": "📍 POI",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.489236,
+        "lng": 19.04796
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/rudas-bath-7960/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/rudas-bath-7960/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "shell-cafe-grab-go-7218",
+      "name": {
+        "en": "SHELL CAFÉ GRAB & GO"
+      },
+      "shortName": {
+        "en": "SHELL CAFÉ GRAB & GO"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.552075,
+        "lng": 19.057218
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/shell-cafe-grab-go-7218/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/shell-cafe-grab-go-7218/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "siesta-camping-8755",
+      "name": {
+        "en": "Siesta Camping"
+      },
+      "shortName": {
+        "en": "Siesta Camping"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.spots",
+      "subgroupKey": "sub.camping-zones",
+      "domain": "📍 POI",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.559095,
+        "lng": 19.058755
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/siesta-camping-8755/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/siesta-camping-8755/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "sportzone-by-sport-tv-5215",
+      "name": {
+        "en": "SPORTZONE BY SPORT TV"
+      },
+      "shortName": {
+        "en": "SPORTZONE BY SPORT TV"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.549175,
+        "lng": 19.055215
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/sportzone-by-sport-tv-5215/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/sportzone-by-sport-tv-5215/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "szechenyi-bath-2745",
+      "name": {
+        "en": "SZECHENYI BATH"
+      },
+      "shortName": {
+        "en": "SZECHENYI BATH"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.spas",
+      "subgroupKey": "sub.thermal-bath",
+      "domain": "📍 POI",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.518023,
+        "lng": 19.082745
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/szechenyi-bath-2745/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/szechenyi-bath-2745/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "sziget-beach-8770",
+      "name": {
+        "en": "SZIGET BEACH"
+      },
+      "shortName": {
+        "en": "SZIGET BEACH"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.560216,
+        "lng": 19.05877
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/sziget-beach-8770/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/sziget-beach-8770/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "sziget-eye-by-johnnie-walker-6113",
+      "name": {
+        "en": "SZIGET EYE BY JOHNNIE WALKER"
+      },
+      "shortName": {
+        "en": "SZIGET EYE BY JOHNNIE WALKER"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.554892,
+        "lng": 19.056113
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/sziget-eye-by-johnnie-walker-6113/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/sziget-eye-by-johnnie-walker-6113/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "sziget-ville-premium-6198",
+      "name": {
+        "en": "SZIGET VILLE PREMIUM"
+      },
+      "shortName": {
+        "en": "SZIGET VILLE PREMIUM"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.553782,
+        "lng": 19.056198
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/sziget-ville-premium-6198/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/sziget-ville-premium-6198/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "tanqueray-spotlight-lounge-2099",
+      "name": {
+        "en": "TANQUERAY SPOTLIGHT LOUNGE"
+      },
+      "shortName": {
+        "en": "TANQUERAY SPOTLIGHT LOUNGE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551682,
+        "lng": 19.052099
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/tanqueray-spotlight-lounge-2099/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/tanqueray-spotlight-lounge-2099/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "tatratea-bar-6864",
+      "name": {
+        "en": "TATRATEA BAR"
+      },
+      "shortName": {
+        "en": "TATRATEA BAR"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.bars-beverages",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.556883,
+        "lng": 19.056864
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/tatratea-bar-6864/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/tatratea-bar-6864/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "tedxbudapestsalon-2577",
+      "name": {
+        "en": "TEDxBUDAPESTSALON"
+      },
+      "shortName": {
+        "en": "TEDxBUDAPESTSALON"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550884,
+        "lng": 19.052577
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/tedxbudapestsalon-2577/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/tedxbudapestsalon-2577/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "the-buzz-6407",
+      "name": {
+        "en": "THE BUZZ"
+      },
+      "shortName": {
+        "en": "THE BUZZ"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.live-music",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.55155,
+        "lng": 19.056407
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/the-buzz-6407/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/the-buzz-6407/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "the-club-by-don-julio-7830",
+      "name": {
+        "en": "THE CLUB BY DON JULIO"
+      },
+      "shortName": {
+        "en": "THE CLUB BY DON JULIO"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.karaoke-nights",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.557274,
+        "lng": 19.05783
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/the-club-by-don-julio-7830/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/the-club-by-don-julio-7830/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "the-cypher-by-friss-4332",
+      "name": {
+        "en": "THE CYPHER BY FRISS"
+      },
+      "shortName": {
+        "en": "THE CYPHER BY FRISS"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551303,
+        "lng": 19.054332
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/the-cypher-by-friss-4332/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/the-cypher-by-friss-4332/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "the-house-of-peroni-nastro-azzurro-3946",
+      "name": {
+        "en": "THE HOUSE OF PERONI NASTRO AZZURRO"
+      },
+      "shortName": {
+        "en": "THE HOUSE OF PERONI NASTRO AZZURRO"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.554552,
+        "lng": 19.053946
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/the-house-of-peroni-nastro-azzurro-3946/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/the-house-of-peroni-nastro-azzurro-3946/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "the-joker-4697",
+      "name": {
+        "en": "THE JOKER"
+      },
+      "shortName": {
+        "en": "THE JOKER"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.552205,
+        "lng": 19.054697
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/the-joker-4697/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/the-joker-4697/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "the-pit-4187",
+      "name": {
+        "en": "THE PIT"
+      },
+      "shortName": {
+        "en": "THE PIT"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.549778,
+        "lng": 19.054187
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/the-pit-4187/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/the-pit-4187/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "travelling-funfair-2536",
+      "name": {
+        "en": "TRAVELLING FUNFAIR"
+      },
+      "shortName": {
+        "en": "TRAVELLING FUNFAIR"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551031,
+        "lng": 19.052536
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/travelling-funfair-2536/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/travelling-funfair-2536/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "under-the-tree-5704",
+      "name": {
+        "en": "UNDER THE TREE"
+      },
+      "shortName": {
+        "en": "UNDER THE TREE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550347,
+        "lng": 19.055704
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/under-the-tree-5704/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/under-the-tree-5704/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "val-0162",
+      "name": {
+        "en": "VAL"
+      },
+      "shortName": {
+        "en": "VAL"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.560139,
+        "lng": 19.060162
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/val-0162/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/val-0162/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "vaseline-72h-kiss-beats-7186",
+      "name": {
+        "en": "VASELINE 72H KISS & BEATS"
+      },
+      "shortName": {
+        "en": "VASELINE 72H KISS & BEATS"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.55135,
+        "lng": 19.057186
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/vaseline-72h-kiss-beats-7186/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/vaseline-72h-kiss-beats-7186/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "xs-camping-3575",
+      "name": {
+        "en": "XS CAMPING"
+      },
+      "shortName": {
+        "en": "XS CAMPING"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.spots",
+      "subgroupKey": "sub.camping-zones",
+      "domain": "📍 POI",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550521,
+        "lng": 19.053575
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/xs-camping-3575/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/xs-camping-3575/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "xs-land-3446",
+      "name": {
+        "en": "XS LAND"
+      },
+      "shortName": {
+        "en": "XS LAND"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550992,
+        "lng": 19.053446
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/xs-land-3446/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/xs-land-3446/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "yettel-aftermovie-zone-7358",
+      "name": {
+        "en": "YETTEL AFTERMOVIE ZONE"
+      },
+      "shortName": {
+        "en": "YETTEL AFTERMOVIE ZONE"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.557057,
+        "lng": 19.057358
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/yettel-aftermovie-zone-7358/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/yettel-aftermovie-zone-7358/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "yettel-colosseum-6092",
+      "name": {
+        "en": "YETTEL COLOSSEUM"
+      },
+      "shortName": {
+        "en": "YETTEL COLOSSEUM"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.stages",
+      "subgroupKey": "sub.acoustic-sessions",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.555544,
+        "lng": 19.056092
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/yettel-colosseum-6092/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/yettel-colosseum-6092/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "ysl-beauty-light-club-6113",
+      "name": {
+        "en": "YSL BEAUTY LIGHT CLUB"
+      },
+      "shortName": {
+        "en": "YSL BEAUTY LIGHT CLUB"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.activities",
+      "subgroupKey": "sub.music-rhythm",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.55177,
+        "lng": 19.056113
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/ysl-beauty-light-club-6113/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/ysl-beauty-light-club-6113/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "bolt-taxi-9907",
+      "name": {
+        "en": "Bolt Taxi"
+      },
+      "shortName": {
+        "en": "Bolt Taxi"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.transport",
+      "subgroupKey": "sub.taxi",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551325,
+        "lng": 19.049907
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/bolt-taxi-9907/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/bolt-taxi-9907/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "bus-stop-kaszasdulo-5492",
+      "name": {
+        "en": "Bus Stop Kaszásdűlő"
+      },
+      "shortName": {
+        "en": "Bus Stop Kaszásdűlő"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.transport",
+      "subgroupKey": "sub.local-bus",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.556682,
+        "lng": 19.045492
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/bus-stop-kaszasdulo-5492/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/bus-stop-kaszasdulo-5492/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "bus-stop-bogdani-ut-3848",
+      "name": {
+        "en": "Bus Stop Bogdáni út"
+      },
+      "shortName": {
+        "en": "Bus Stop Bogdáni út"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.transport",
+      "subgroupKey": "sub.local-bus",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550171,
+        "lng": 19.043848
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/bus-stop-bogdani-ut-3848/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/bus-stop-bogdani-ut-3848/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "charity-point-order-of-malta-2318",
+      "name": {
+        "en": "Charity Point – Order of Malta"
+      },
+      "shortName": {
+        "en": "Charity Point – Order of Malta"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.social-points",
+      "subgroupKey": "sub.charity-point",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.54853,
+        "lng": 19.052318
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/charity-point-order-of-malta-2318/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/charity-point-order-of-malta-2318/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "coffee-point-1-5430",
+      "name": {
+        "en": "Coffee Point 1"
+      },
+      "shortName": {
+        "en": "Coffee Point 1"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.coffee-snacks",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.548038,
+        "lng": 19.05543
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/coffee-point-1-5430/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/coffee-point-1-5430/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "coffee-point-2-0052",
+      "name": {
+        "en": "Coffee Point 2"
+      },
+      "shortName": {
+        "en": "Coffee Point 2"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.event-food",
+      "subgroupKey": "sub.coffee-snacks",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.559175,
+        "lng": 19.060052
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/coffee-point-2-0052/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/coffee-point-2-0052/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "fotaxi-9907",
+      "name": {
+        "en": "Főtaxi"
+      },
+      "shortName": {
+        "en": "Főtaxi"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.transport",
+      "subgroupKey": "sub.taxi",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551325,
+        "lng": 19.049907
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/fotaxi-9907/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/fotaxi-9907/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "lockers-5430",
+      "name": {
+        "en": "Lockers"
+      },
+      "shortName": {
+        "en": "Lockers"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.guests",
+      "subgroupKey": "sub.lockers-storage",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.548038,
+        "lng": 19.05543
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/lockers-5430/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/lockers-5430/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "showers-5430",
+      "name": {
+        "en": "Showers"
+      },
+      "shortName": {
+        "en": "Showers"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.facilities",
+      "subgroupKey": "sub.showers",
+      "domain": "📍 POI",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.548038,
+        "lng": 19.05543
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/showers-5430/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/showers-5430/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "szitizen-care-point-1-5430",
+      "name": {
+        "en": "Szitizen Care Point 1"
+      },
+      "shortName": {
+        "en": "Szitizen Care Point 1"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.social-points",
+      "subgroupKey": "sub.chill-spots",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.548038,
+        "lng": 19.05543
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/szitizen-care-point-1-5430/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/szitizen-care-point-1-5430/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "szitizen-care-point-2-2318",
+      "name": {
+        "en": "Szitizen Care Point 2"
+      },
+      "shortName": {
+        "en": "Szitizen Care Point 2"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.social-points",
+      "subgroupKey": "sub.massage",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.54853,
+        "lng": 19.052318
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/szitizen-care-point-2-2318/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/szitizen-care-point-2-2318/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "toilet-1-7163",
+      "name": {
+        "en": "Toilet 1"
+      },
+      "shortName": {
+        "en": "Toilet 1"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.facilities",
+      "subgroupKey": "sub.toilet-zone",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.550552,
+        "lng": 19.057163
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/toilet-1-7163/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/toilet-1-7163/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "toilet-2-8098",
+      "name": {
+        "en": "Toilet 2"
+      },
+      "shortName": {
+        "en": "Toilet 2"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.facilities",
+      "subgroupKey": "sub.toilet-zone",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.551973,
+        "lng": 19.058098
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/toilet-2-8098/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/toilet-2-8098/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "toilet-3-5215",
+      "name": {
+        "en": "Toilet 3"
+      },
+      "shortName": {
+        "en": "Toilet 3"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.facilities",
+      "subgroupKey": "sub.toilet-zone",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.549175,
+        "lng": 19.055215
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/toilet-3-5215/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/toilet-3-5215/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "toilet-4-5430",
+      "name": {
+        "en": "Toilet 4"
+      },
+      "shortName": {
+        "en": "Toilet 4"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.facilities",
+      "subgroupKey": "sub.toilet-zone",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.548038,
+        "lng": 19.05543
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/toilet-4-5430/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/toilet-4-5430/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "toilet-5-2318",
+      "name": {
+        "en": "Toilet 5"
+      },
+      "shortName": {
+        "en": "Toilet 5"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.facilities",
+      "subgroupKey": "sub.toilet-zone",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.54853,
+        "lng": 19.052318
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/toilet-5-2318/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/toilet-5-2318/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "toilet-6-0298",
+      "name": {
+        "en": "Toilet 6"
+      },
+      "shortName": {
+        "en": "Toilet 6"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.facilities",
+      "subgroupKey": "sub.toilet-zone",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.559446,
+        "lng": 19.060298
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/toilet-6-0298/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/toilet-6-0298/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "yettel-free-charging-point-5430",
+      "name": {
+        "en": "Yettel Free Charging Point"
+      },
+      "shortName": {
+        "en": "Yettel Free Charging Point"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.guests",
+      "subgroupKey": "sub.electric-charging",
+      "domain": "🎉 Festival",
+      "context": "fest.sziget-2025",
+      "coord": {
+        "lat": 47.548038,
+        "lng": 19.05543
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/yettel-free-charging-point-5430/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/yettel-free-charging-point-5430/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "sagrada-familia-4424",
+      "name": {
+        "en": "Sagrada Família"
+      },
+      "shortName": {
+        "en": "Sagrada Família"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.landmarks",
+      "subgroupKey": "sub.churches",
+      "domain": "📍 POI",
+      "context": "poi.barcelona",
+      "coord": {
+        "lat": 41.403524,
+        "lng": 2.174424
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/sagrada-familia-4424/Σαγράδα_Φαμίλια_2941_(cropped).jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/sagrada-familia-4424/Sagrada_Familia_8-12-21_(7).jpg",
+            "credit": "Bernard Gagnon (Bgag)",
+            "license": "CC BY-SA 3.0",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/sagrada-familia-4424/Σαγράδα_Φαμίλια_2941_(cropped).jpg",
+            "credit": "C messier",
+            "license": "CC BY-SA 4.0",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/sagrada-familia-4424/Sagrada_Familia_01.jpg",
+            "credit": "Bernard Gagnon (Bgag)",
+            "license": "CC BY-SA 3.0",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Sagrada Família is Barcelona’s iconic basilica—Antoni Gaudí’s otherworldly, still-unfinished masterpiece.\n\nIts construction began in 1882; Gaudí took over in 1883 and radically reimagined the scheme into his Modernista vision, dedicating the rest of his life to what is now the world’s largest unfinished Catholic church. \nWikipedia\n\nFunding hiccups and the Spanish Civil War slowed progress; the basilica was consecrated by Pope Benedict XVI in 2010, and its Nativity façade and crypt form part of a UNESCO World Heritage listing. \nWikipedia\n\nA defining symbol of Barcelona, the project targets completion of the main structure in 2026—Gaudí’s centenary—with ornamental work extending beyond that date.",
+        "he": "Sagrada Família היא הבזיליקה האיקונית של ברצלונה — יצירת המופת החוץ־עולמית של אנטוני גאודי, שעדיין אינה מושלמת.\n\nהבנייה החלה בשנת 1882; גאודי קיבל את ההובלה ב־1883, עיצב מחדש את הפרויקט לפי חזונו המודרניסטי והקדיש לו את שארית חייו — והוא הפך לכנסייה הקתולית הבלתי־מושלמת הגדולה בעולם.\nויקיפדיה\n\nעיכובי מימון ומלחמת האזרחים הספרדית האטו את ההתקדמות; הבזיליקה נחנכה בידי האפיפיור בנדיקטוס השישה עשר בשנת 2010, וחזית המולד והקריפטה שלה נכללות ברשימת אתרי המורשת העולמית של אונסק״ו.\nויקיפדיה\n\nסמל מובהק של ברצלונה, היעד הוא להשלים את המבנה הראשי בשנת 2026 — מאה שנה למותו של גאודי — בעוד העבודות הדקורטיביות יימשכו מעבר לכך.",
+        "hu": "A Sagrada Família Barcelona ikonikus bazilikája – Antoni Gaudí földöntúli, máig be nem fejezett remekműve.\n\nÉpítése 1882-ben kezdődött; Gaudí 1883-ban vette át, modernista víziója szerint radikálisan újratervezte, és élete végéig ennek szentelte magát – a világ legnagyobb befejezetlen katolikus templomává nőtt.\nWikipédia\n\nA finanszírozási fennakadások és a spanyol polgárháború lassították az előrehaladást; a bazilikát XVI. Benedek pápa szentelte fel 2010-ben, Nativity-homlokzata és kriptája pedig az UNESCO Világörökség része.\nWikipédia\n\nBarcelona meghatározó jelképe; a fő szerkezeti elemek befejezését 2026-ra – Gaudí halálának századik évfordulójára – tűzték ki, a díszítő munkák pedig azon túl is folytatódnak."
+      },
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": [
+          "en",
+          "he",
+          "hu"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "keves-andor-photography-9719",
+      "name": {
+        "en": "Kévés Andor Photography"
+      },
+      "shortName": {
+        "en": "Kévés Andor Photography"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.services",
+      "subgroupKey": "sub.photo-video",
+      "domain": "🛒 Marketplace",
+      "context": "mp.soltvadkert",
+      "coord": {
+        "lat": 47.583105,
+        "lng": 19.039719
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/keves-andor-photography-9719/NYE_2242pro-2.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/keves-andor-photography-9719/NYE_2242pro-2.jpg",
+            "credit": "Kévés Andor Photography",
+            "license": "All rights reserved",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/keves-andor-photography-9719/0282CSA_3510.jpg",
+            "credit": "Kévés Andor Photography",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/keves-andor-photography-9719/DSC_6905.jpg",
+            "credit": "Kévés Andor Photography",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/keves-andor-photography-9719/DUD_5868.jpg",
+            "credit": "Kévés Andor Photography",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/keves-andor-photography-9719/KIS_4137.jpg",
+            "credit": "Kévés Andor Photography",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/keves-andor-photography-9719/NAG_7263-1.jpg",
+            "credit": "Kévés Andor Photography",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/keves-andor-photography-9719/NDO_5901-1-1.jpg",
+            "credit": "Kévés Andor Photography",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/keves-andor-photography-9719/PAL_8764.jpg",
+            "credit": "Kévés Andor Photography",
+            "license": "All rights reserved",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {
+        "hu": "Művészi esküvő, család, divat, Glamour, Boudoir, Portréfotózás érzelemgazdag helyszíneken:\nEz az én specialitásom.\n\nHa lázba hoznak a képeim és velem szeretnél dolgozni – örömmel segítek Neked!"
+      },
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": [
+          "hu"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "obuda-synagogue-5811",
+      "name": {
+        "en": "Óbuda Synagogue"
+      },
+      "shortName": {
+        "en": "Óbuda Synagogue"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.landmarks",
+      "subgroupKey": "sub.synagogues",
+      "domain": "📍 POI",
+      "context": "poi.budapest",
+      "coord": {
+        "lat": 47.537067,
+        "lng": 19.045811
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/obuda-synagogue-5811/Óbuda_Synagogue_02.jpeg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/obuda-synagogue-5811/Óbuda_Synagogue_02.jpeg",
+            "credit": "VinceB",
+            "license": "CC BY-SA 3.0",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "In Budapest’s Óbuda district, the Óbuda Synagogue—an Empire-style Neoclassical building designed by András Landherr—was completed in 1821. Long regarded as a landmark of Hungarian classicism, it was among the Habsburg era’s largest and most imposing synagogues, fronted by a six-Corinthian-column portico and a pedimented façade. Today it serves an Orthodox Chabad congregation led by Rabbi Slomó Köves, following the Nusach Ari rite.",
+        "he": "בית הכנסת אובודה, שבשכונת אובודה בבודפשט, הוא מבנה נאו־קלאסי בסגנון אמפייר שתוכנן בידי אנדראש לנדהר והושלם בשנת 1821. הוא נחשב זה שנים לאבן דרך של הקלסיציזם ההונגרי והיה מן בתי הכנסת הגדולים והמכובדים בתקופת האימפריה ההבסבורגית, עם אכסדרה הנתמכת בשישה עמודים קורינתיים וחזית גמלונית. כיום הוא משרת קהילה אורתודוקסית של חב״ד בראשות הרב שלמה קובש, לפי נוסח אר״י.",
+        "hu": "Budapest Óbuda városrészében áll az Óbudai zsinagóga, András Landherr által tervezett, empire stílusú neoklasszicista épület, amely 1821-ben készült el. A magyar klasszicizmus kiemelkedő alkotásaként tartják számon, korában a Habsburg-korszak egyik legnagyobb és legimpozánsabb zsinagógája volt; homlokzatát hat korinthoszi oszlopos portikusz és oromzat határozza meg. Ma a Köves Slomó rabbi vezette ortodox Chábád közösség használja, a Nuszach Ari imarend szerint."
+      },
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": [
+          "en",
+          "he",
+          "hu"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "brooklyn-bagel-7558",
+      "name": {
+        "en": "Brooklyn Bagel"
+      },
+      "shortName": {
+        "en": "Brooklyn Bagel"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "group.food-drink",
+      "subgroupKey": "sub.breakfast-brunch",
+      "domain": "🛒 Marketplace",
+      "context": "mp.budapest",
+      "coord": {
+        "lat": 47.514567,
+        "lng": 19.047558
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/brooklyn-bagel-7558/537869948_753408234108829_2391178132413353986_n.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/brooklyn-bagel-7558/508693353_702206852562301_9011184825877765509_n.jpg",
+            "credit": "Brooklyn Bagel (Facebook)",
+            "license": "All rights reserved",
+            "rightsText": "Image © Brooklyn Bagel (Facebook). Informational use.",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/brooklyn-bagel-7558/514356313_724564883659831_2269204728960974537_n.jpg",
+            "credit": "Brooklyn Bagel (Facebook)",
+            "license": "All rights reserved",
+            "rightsText": "Image © Brooklyn Bagel (Facebook). Informational use.",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/brooklyn-bagel-7558/518381864_724563480326638_6375278603845305393_n.jpg",
+            "credit": "Brooklyn Bagel (Facebook)",
+            "license": "All rights reserved",
+            "rightsText": "Image © Brooklyn Bagel (Facebook). Informational use.",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/brooklyn-bagel-7558/537869948_753408234108829_2391178132413353986_n.jpg",
+            "credit": "Brooklyn Bagel (Facebook)",
+            "license": "All rights reserved",
+            "rightsText": "Image © Brooklyn Bagel (Facebook). Informational use.",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/brooklyn-bagel-7558/506946415_714406994617373_1365887692407739955_n.jpg",
+            "credit": "Brooklyn Bagel (Facebook)",
+            "license": "All rights reserved",
+            "rightsText": "Image © Brooklyn Bagel (Facebook). Informational use.",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {
+        "hu": "Közös brunch a barátokkal? Üzleti megbeszélés? Esti koktélozás? Duna-parti bagelezőnkben ez mind megvalósítható! Varázslatos kilátás, festői környezet és magával ragadó enteriőrünk fokozza ételeink és italaink élvezetét. Ne hagyd ki ezt az élményt, látogass el hozzánk Te is!",
+        "en": "Brunch with friends? Business meeting? Evening cocktails? This is all possible in our Danube-side bagel shop! A magical view, picturesque surroundings and captivating interior enhance the enjoyment of our food and drinks. Don't miss this experience, visit us!",
+        "he": "בראנץ ' עם חברים? פגישת עסקים? ערב קוקטיילים? כל זה אפשרי אצלנו  בברוקלין בייגל הממוקם ליד נהר  הדנובה! נוף קסום,  סביבה ציורית והרגשה קסומה , כל אלו רק תוספת לחוויית  ההנאה מהאוכל והמשקאות שלנו. אל תפספסו את החוויה הזו, בקרו אותנו!"
+      },
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "manager@brooklynbagel.hu",
+        "address": "1137 Budapest, Újpesti rakpart 1.",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": [
+          "hu",
+          "en",
+          "he"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    },
+    {
+      "id": "malaga-central-police-station-8105",
+      "name": {
+        "en": "Malaga Central Police Station"
+      },
+      "shortName": {
+        "en": "Malaga Central Police Station"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "",
+      "subgroupKey": "",
+      "domain": "📍 POI",
+      "context": "poi.malaga",
+      "coord": {
+        "lat": 36.724704,
+        "lng": -4.418105
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/malaga-central-police-station-8105/cover.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/malaga-central-police-station-8105/cover.jpg",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {},
+      "amenities": [],
+      "accessibility": {},
+      "contact": {
+        "phone": "",
+        "email": "",
+        "address": "",
+        "bookingUrl": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {
+        "google": null,
+        "tripadvisor": null
+      },
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-08-25T20:01:58.518Z",
+        "version": 1
+      }
+    }
+  ]
+}

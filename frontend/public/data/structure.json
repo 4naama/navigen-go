@@ -1,5 +1,40 @@
 [
   {
+    "groupKey": "group.spots",
+    "groupName": "✨ Main Spots",
+    "subgroups": [
+      {
+        "key": "sub.squares",
+        "name": "⛲ Squares"
+      },
+      {
+        "key": "sub.main-areas",
+        "name": "🎯 Central Area"
+      },
+      {
+        "key": "sub.contests-voting",
+        "name": "🏆 Contests & Voting"
+      },
+      {
+        "key": "sub.camping-zones",
+        "name": "🏕️ Camping Zones"
+      },
+      {
+        "key": "sub.restricted-areas",
+        "name": "🚧 Restricted Areas"
+      },
+      {
+        "key": "sub.markets",
+        "name": "🛍️ Markets"
+      },
+      {
+        "key": "sub.streets",
+        "name": "🛣️ Streets"
+      }
+    ],
+    "domain": "📍 POI"
+  },
+  {
     "groupKey": "group.parks-nature",
     "groupName": "🌳 Parks & Nature",
     "subgroups": [
@@ -21,33 +56,6 @@
       }
     ],
     "domain": "📍 POI"
-  },
-  {
-    "groupKey": "group.food",
-    "groupName": "🍽️ Food & Drink",
-    "subgroups": [
-      {
-        "key": "sub.coffee-snacks",
-        "name": "☕ Coffee & Snacks"
-      },
-      {
-        "key": "sub.food-stalls",
-        "name": "🍔 Food Stalls"
-      },
-      {
-        "key": "sub.bars-beverages",
-        "name": "🍻 Bars & Beverages"
-      },
-      {
-        "key": "sub.vegan-healthy",
-        "name": "🥗 Vegan & Healthy"
-      },
-      {
-        "key": "sub.street-food",
-        "name": "🥙 Street Food"
-      }
-    ],
-    "domain": "🎉 Festival"
   },
   {
     "groupKey": "group.food-drink",
@@ -136,10 +144,6 @@
       {
         "key": "sub.cuisine-french",
         "name": "🥖 French"
-      },
-      {
-        "key": "sub.vegetarian-vegan",
-        "name": "🥗 Vegetarian/Vegan"
       },
       {
         "key": "sub.cuisine-spanish",
@@ -403,36 +407,28 @@
     "domain": "📍 POI"
   },
   {
-    "groupKey": "group.areas",
-    "groupName": "🧭 Neighborhoods / Areas",
+    "groupKey": "group.event-food",
+    "groupName": "🥂 Event Food & Drink",
     "subgroups": [
       {
-        "key": "sub.squares",
-        "name": "⛲ Squares"
+        "key": "sub.coffee-snacks",
+        "name": "☕ Coffee & Snacks"
       },
       {
-        "key": "sub.main-areas",
-        "name": "🎯 Central Area"
+        "key": "sub.food-stalls",
+        "name": "🍔 Food Stalls"
       },
       {
-        "key": "sub.contests-voting",
-        "name": "🏆 Contests & Voting"
+        "key": "sub.bars-beverages",
+        "name": "🍻 Bars & Beverages"
       },
       {
-        "key": "sub.camping-zones",
-        "name": "🏕️ Camping Zones"
+        "key": "sub.vegan-healthy",
+        "name": "🥗 Vegan & Healthy"
       },
       {
-        "key": "sub.restricted-areas",
-        "name": "🚧 Restricted Areas"
-      },
-      {
-        "key": "sub.markets",
-        "name": "🛍️ Markets"
-      },
-      {
-        "key": "sub.streets",
-        "name": "🛣️ Streets"
+        "key": "sub.street-food",
+        "name": "🥙 Street Food"
       }
     ],
     "domain": "🎉 Festival"
@@ -450,14 +446,6 @@
         "name": "♻️ Recycling & Waste Points"
       },
       {
-        "key": "sub.accessibility",
-        "name": "♿ Accessibility"
-      },
-      {
-        "key": "sub.translation-services",
-        "name": "🌐 Translation Services"
-      },
-      {
         "key": "sub.event-payment",
         "name": "🎟️ Event Payment Services"
       },
@@ -470,28 +458,12 @@
         "name": "🏧 ATM / Cashpoint"
       },
       {
-        "key": "sub.pet-services",
-        "name": "🐾 Pet Services"
-      },
-      {
         "key": "sub.info-booths",
         "name": "💬 Info Booths"
       },
       {
-        "key": "sub.wifi",
-        "name": "📶 Wi-Fi Access"
-      },
-      {
-        "key": "sub.charging-stations",
-        "name": "🔌 Charging Stations"
-      },
-      {
         "key": "sub.lockers-storage",
         "name": "🔒 Lockers & Storage"
-      },
-      {
-        "key": "sub.kids-zone",
-        "name": "🤹 Kids Zone"
       },
       {
         "key": "sub.lost-found",
@@ -815,6 +787,6 @@
         "name": "🚓 Police Assistance"
       }
     ],
-    "domain": "🎉 Festival"
+    "domain": "🛒 Marketplace"
   }
 ]
