@@ -140,10 +140,23 @@ export function createLocationProfileModal(data) {
   body.className = 'modal-body';
   body.innerHTML = `
     <div class="modal-body-inner">
-      <figure class="location-media" aria-label="Location image">
+      <figure class="location-media" aria-label="Location image" style="position:relative;">
         <img src="${payload.imageSrc || '/assets/placeholder-images/icon-512-green.png'}" 
              alt="${payload.name || 'Location'} image"
              style="width:100%;height:auto;display:block;border-radius:8px;">
+        ${
+          (Array.isArray(payload?.tags) && payload.tags.length)
+            ? (() => {
+                // lead: humanize tag key via i18n; fallback to key sans "tag."
+                const tk = String(payload.tags[0] || '').trim();
+                const label = (typeof t === 'function' ? (t(tk) || '') : '') || tk.replace(/^tag\./,'').replace(/-/g,' ');
+                return `<div class="tag-chip" aria-label="tag"
+                          style="position:absolute;top:8px;left:8px;padding:4px 8px;border-radius:12px;background:rgba(0,0,0,0.6);backdrop-filter:saturate(120%);color:#fff;font-size:12px;line-height:1;">
+                          ${label}
+                        </div>`;
+              })()
+            : ''
+        }
       </figure>
 
       <section class="location-description">
@@ -264,6 +277,68 @@ export function showLocationProfileModal(data) {
 
     slider.appendChild(prev);
     slider.appendChild(next);
+    
+    // Enable tap-to-fullscreen on the slider; revert styles on exit.
+    // No CSS file changes – we apply minimal inline styles and remove them on exit.
+    (function enableFullscreen(sliderEl){
+      if (!sliderEl || !sliderEl.requestFullscreen) return;
+
+      // Apply/revert inline styles for a good fullscreen layout; avoid !important.
+      const applyFsStyles = () => {
+        sliderEl.style.background = '#000';
+        sliderEl.style.width = '100vw';
+        sliderEl.style.height = '100vh';
+        sliderEl.style.maxWidth = '100vw';
+        sliderEl.style.maxHeight = '100vh';
+        sliderEl.style.position = 'fixed';
+        sliderEl.style.top = '0';
+        sliderEl.style.left = '0';
+        sliderEl.style.right = '0';
+        sliderEl.style.bottom = '0';
+        sliderEl.style.zIndex = '9999';
+        // Make images fit nicely inside viewport.
+        sliderEl.querySelectorAll('.lpm-img').forEach(img => {
+          img.style.objectFit = 'contain';
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.background = '#000';
+        });
+      };
+
+      const clearFsStyles = () => {
+        sliderEl.removeAttribute('style');
+        sliderEl.querySelectorAll('.lpm-img').forEach(img => {
+          img.style.objectFit = '';
+          img.style.width = '';
+          img.style.height = '';
+          img.style.background = '';
+        });
+      };
+
+      // Toggle fullscreen on image tap; ignore clicks on prev/next buttons.
+      sliderEl.addEventListener('click', (ev) => {
+        const onImg = ev.target && ev.target.classList && ev.target.classList.contains('lpm-img');
+        const onNav = ev.target && ev.target.classList && (ev.target.classList.contains('lpm-prev') || ev.target.classList.contains('lpm-next'));
+        if (!onImg || onNav) return;
+
+        if (document.fullscreenElement === sliderEl) {
+          (document.exitFullscreen && document.exitFullscreen())?.catch(()=>{});
+        } else {
+          // Prefer standards; fall back for older WebKit if present.
+          const req = sliderEl.requestFullscreen || sliderEl.webkitRequestFullscreen;
+          if (req) {
+            req.call(sliderEl).then(applyFsStyles).catch(()=>{});
+          }
+        }
+      }, { passive: true });
+
+      // Keep styles in sync when user exits with system UI (Back/Esc/gesture).
+      document.addEventListener('fullscreenchange', () => {
+        const active = document.fullscreenElement === sliderEl;
+        if (active) applyFsStyles(); else clearFsStyles();
+      });
+    })(slider);
+        
 
     // 3) Replace existing <img> with slider
     mediaFigure.innerHTML = '';
@@ -531,56 +606,60 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-  // Utility: create a location button wired to LPM
-  function makeLocationButton(loc) {
-    const btn = document.createElement('button');
-    btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
-    btn.setAttribute('data-id', loc.ID);
-    btn.classList.add('location-button');
+// Utility: create a location button and wire it to the Location Profile Modal (LPM)
+function makeLocationButton(loc) {
+  const btn = document.createElement('button');
+  btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
+  btn.setAttribute('data-id', loc.ID);
+  btn.classList.add('location-button');
+  
+  // Expose searchable metadata: name/shortName for text, data-tags with keys minus "tag."
+  const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
+  btn.setAttribute('data-name', btn.textContent);
+  btn.setAttribute('data-short-name', String(loc["Short Name"] || ''));
+  btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
 
-    const cc = loc["Coordinate Compound"];
-    if (typeof cc === "string" && cc.includes(",")) {
-      // parse "lat,lng" from sheet-style coord
-      const [lat, lng] = cc.split(',').map(s => s.trim());
-      btn.setAttribute('data-lat', lat);
-      btn.setAttribute('data-lng', lng);
-      btn.title = `Open profile / Route (${lat}, ${lng})`;
-
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-
-        // build gallery: prefer loc.media (cover + images), else placeholder
-        const media   = (loc && loc.media) ? loc.media : {};
-        const gallery = Array.isArray(media.images) ? media.images : [];
-        const images  = gallery
-          .map(m => (m && typeof m === 'object') ? m.src : m)
-          .filter(Boolean);
-        const cover   = (media.cover && String(media.cover).trim())
-          ? media.cover
-          : (images[0] || '/assets/placeholder-images/icon-512-green.png');
-
-      /** open the Location Profile Modal (modal uses descriptions{lang}; no scalar) */
-      showLocationProfileModal({
-        // lead: prefer new id → fallback to legacy ID attribute
-        id: String(loc?.id ?? btn.getAttribute('data-id') ?? ''),
-        name: btn.textContent,
-        lat, 
-        lng,
-        imageSrc: cover,   // first paint
-        images,            // slider sources
-        media,             // preserves default flag & rightsText per image
-
-        // lead: pass the descriptions map when present; empty object otherwise
-        descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
-
-        originEl: btn
-      });
-
-
-      });
-    }
-    return btn;
+  const cc = loc["Coordinate Compound"];
+  let lat = "", lng = "";
+  if (typeof cc === "string" && cc.includes(",")) {
+    // Parse "lat,lng" from sheet coords; add as data attrs and a helpful title
+    [lat, lng] = cc.split(',').map(s => s.trim());
+    btn.setAttribute('data-lat', lat);
+    btn.setAttribute('data-lng', lng);
+    btn.title = `Open profile / Route (${lat}, ${lng})`;
   }
+
+  // Always open LPM on click (coords optional)
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    // Build gallery from loc.media (cover + images); fallback to a safe placeholder
+    const media   = (loc && loc.media) ? loc.media : {};
+    const gallery = Array.isArray(media.images) ? media.images : [];
+    const images  = gallery
+      .map(m => (m && typeof m === 'object') ? m.src : m)
+      .filter(Boolean);
+    const cover   = (media.cover && String(media.cover).trim())
+      ? media.cover
+      : (images[0] || '/assets/placeholder-images/icon-512-green.png');
+
+    /** Open the Location Profile Modal; descriptions{} only (no scalar), pass tags[] for chip */
+    showLocationProfileModal({
+      id: btn.getAttribute('data-id'),
+      name: btn.textContent,
+      lat, lng,                         // may be ""
+      imageSrc: cover,                  // first paint
+      images,                           // slider sources
+      media,                            // preserves default/credits
+      descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
+      tags: Array.isArray(loc?.tags) ? loc.tags : [],
+      originEl: btn
+    });
+  });
+
+  return btn;
+
+}
 
 
 export function buildAccordion(groupedStructure, geoPoints) {

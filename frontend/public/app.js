@@ -43,6 +43,18 @@ const BUILD_ID = '2025-08-25-01'; // bump this each deploy
   } catch {}
 })();
 
+// Helper: Match name/shortName OR tag keys (strip "tag."), case-insensitive; supports multi-word queries.
+function matchesQueryByNameOrTag(loc, q) {
+  const qStr = String(q || '').toLowerCase().trim();
+  if (!qStr) return true;
+  const tokens = qStr.split(/\s+/).filter(Boolean);
+  const name = [
+    (loc?.name && (loc.name.en || Object.values(loc.name)[0])) || '',
+    (loc?.shortName && (loc.shortName.en || Object.values(loc.shortName)[0])) || ''
+  ].join(' ').toLowerCase();
+  const tags = (Array.isArray(loc?.tags) ? loc.tags : []).map(t => String(t).toLowerCase().replace(/^tag\./,''));
+  return tokens.every(tok => name.includes(tok) || tags.some(tag => tag.includes(tok)));
+}
 
 // 🌍 Emergency data + localization helpers
 // Served as a static ES module from /public/scripts
@@ -225,39 +237,45 @@ function renderPopularGroup(list = geoPoints) {
     btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
     btn.setAttribute("data-group", groupKey);
     btn.setAttribute("data-id", loc.ID);
+    
+    // Stamp searchable metadata on Popular buttons (2 lines max)
+    const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
+    btn.setAttribute('data-name', btn.textContent);
+    btn.setAttribute('data-short-name', String(loc["Short Name"] || ''));
+    btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
+        
 
-    // ✅ Inject GPS data if available from "Coordinate Compound"
+    // ✅ Inject GPS data if available from "Coordinate Compound" (kept; clarified title)
+    let lat = "", lng = "";
     if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
-      const [lat, lng] = loc["Coordinate Compound"].split(',').map(x => x.trim());
+      [lat, lng] = loc["Coordinate Compound"].split(',').map(x => x.trim());
       btn.setAttribute("data-lat", lat);
       btn.setAttribute("data-lng", lng);
       btn.title = `Open profile / Route (${lat}, ${lng})`;
-
-      // ✅ Click to open LPM (was: bare e.preventDefault(); + Maps)
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        // build gallery from loc.media.images; pick cover
-        const media   = (loc && loc.media) ? loc.media : {};
-        const gallery = Array.isArray(media.images) ? media.images : [];
-        const images  = gallery.map(m => (m && typeof m === 'object') ? m.src : m).filter(Boolean);
-        const cover   = (media.cover && String(media.cover).trim()) ? media.cover : (images[0] || '/assets/logo-icon.svg');
-
-        showLocationProfileModal({
-          id: btn.getAttribute('data-id'),
-          name: btn.textContent,
-          lat, lng,
-          imageSrc: cover,   // first paint
-          images,            // slider sources
-          media,             // lets slider honor the default image flag
-          // lead: pass descriptions map as-is; never pass a scalar; log when empty for visibility
-          // lead: always pass a descriptions map; log when it is empty for debugging
-          descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
-
-          originEl: btn
-        });
-
-      });
     }
+
+    // ✅ Always attach click so modal opens even without coords
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // build gallery from loc.media.images; pick cover
+      const media   = (loc && loc.media) ? loc.media : {};
+      const gallery = Array.isArray(media.images) ? media.images : [];
+      const images  = gallery.map(m => (m && typeof m === 'object') ? m.src : m).filter(Boolean);
+      const cover   = (media.cover && String(media.cover).trim()) ? media.cover : (images[0] || '/assets/logo-icon.svg');
+
+      // Pass descriptions + tags so LPM can show the tag chip and text
+      showLocationProfileModal({
+        id: btn.getAttribute('data-id'),
+        name: btn.textContent,
+        lat, lng, // may be ""
+        imageSrc: cover,
+        images,
+        media,
+        descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
+        tags: Array.isArray(loc?.tags) ? loc.tags : [],
+        originEl: btn
+      });
+    });
 
     // ⬅ close the if-block before append
     buttonContainer.appendChild(btn);
@@ -446,38 +464,74 @@ function wireAccordionGroups(structure_data) {
 
     // Apply flat 1px tinted border to group children, no background styling
     sibling.querySelectorAll('button').forEach(locBtn => {
+      // keep styling
       locBtn.classList.add('quick-button', 'location-button');
       locBtn.style.border = '1px solid var(--group-color-ink)';
       locBtn.style.backgroundColor = 'transparent';
 
+      // keep label wrap
       if (!locBtn.querySelector('.location-name')) {
         const label = locBtn.textContent.trim();
         locBtn.innerHTML = `<span class="location-name">${label}</span>`;
       }
+
+      // ensure searchable metadata for regular + tag search
+      if (!locBtn.hasAttribute('data-name')) {
+        locBtn.setAttribute('data-name', locBtn.textContent.trim());
+      }
+      if (!locBtn.hasAttribute('data-short-name')) {
+        locBtn.setAttribute('data-short-name', locBtn.textContent.trim());
+      }
+      if (!locBtn.hasAttribute('data-tags')) {
+        // try to mirror tags stamped elsewhere (popular/makeLocationButton)
+        const id = locBtn.getAttribute('data-id');
+        const rec = Array.isArray(window.geoPoints)
+          ? window.geoPoints.find(x => String(x?.ID) === String(id))
+          : null;
+        const tags = Array.isArray(rec?.tags)
+          ? rec.tags.map(k => String(k).replace(/^tag\./,'')).join(' ')
+          : '';
+        locBtn.setAttribute('data-tags', tags);
+      }
     });
+
 
   });
 }
 
-function filterLocations() {
-  const query = document.getElementById("search").value.toLowerCase();
+// Name + tag search; supports multi-word queries (no cross-scope fetch)
+function filterLocations(q) {
+  const input = String(q || '').toLowerCase().trim();
+  const tokens = input ? input.split(/\s+/) : [];
 
-  document.querySelectorAll('.accordion-section').forEach(section => {
-    const buttons = section.querySelectorAll('.quick-button');
-    let anyMatch = false;
+  // Include Accordion + legacy items only (Popular intentionally excluded)
+  const items = document.querySelectorAll('.location-button, .location-item, [data-role="location-item"]');
 
-    buttons.forEach(btn => {
-      const match = btn.textContent.toLowerCase().includes(query);
-      btn.style.display = match ? '' : 'none';
-      if (match) anyMatch = true;
-    });
-
-    section.style.display = anyMatch ? '' : 'none';
+  items.forEach(el => {
+    const name = (el.getAttribute('data-name') || el.textContent || '').toLowerCase();
+    const shortName = (el.getAttribute('data-short-name') || '').toLowerCase();
+    const tags = (el.getAttribute('data-tags') || '').toLowerCase(); // space-joined keys without "tag."
+    const hay = `${name} ${shortName} ${tags}`;
+    const ok = tokens.length === 0 ? true : tokens.every(tk => hay.includes(tk));
+    el.style.display = ok ? '' : 'none';
   });
 
-  document.querySelectorAll('.quick-button.popular-button').forEach(btn => {
-    btn.style.display = btn.textContent.toLowerCase().includes(query) ? '' : 'none';
+  // hide/show accordion sections based on visible children (Popular is never hidden)
+  document.querySelectorAll('div.accordion-section').forEach(section => {
+    // skip Popular section explicitly
+    const isPopular = !!section.querySelector('.group-header-button[data-group="group.popular"]');
+    if (isPopular) return;
+
+    // count visible items inside this section (we filter by inline display)
+    const childCandidates = section.querySelectorAll('.location-button, .location-item, [data-role="location-item"]');
+    let visible = 0;
+    childCandidates.forEach(btn => { if (btn.style.display !== 'none') visible++; });
+
+    const hide = (childCandidates.length > 0 && visible === 0);
+    section.style.display = hide ? 'none' : '';
+    section.setAttribute('aria-hidden', hide ? 'true' : 'false');
   });
+
 }
 
 function clearSearch() {
@@ -846,14 +900,17 @@ async function initEmergencyBlock(countryOverride) {
       const clearBtn = document.getElementById('clear-search'); // ✅ Added this line
 
       if (searchInput && clearBtn) {
+        // lead: pass query to filter; enables name + tag search in the next patch
         searchInput.addEventListener('input', () => {
-          const hasText = searchInput.value.trim() !== '';
+          const q = searchInput.value;
+          const hasText = q.trim() !== '';
           clearBtn.style.display = hasText ? 'inline' : 'none';
-          filterLocations();
+          filterLocations(q); // now accepts optional query
         });
 
         clearBtn.addEventListener('click', () => {
           clearSearch();
+          filterLocations(''); // ensure full reset after clearing
           searchInput.focus();
         });
 
@@ -1145,13 +1202,8 @@ if (alertButton) {
         }
       });
     }   
-
-    searchInput.addEventListener('input', () => {
-      filterLocations();
-      clearBtn.style.display = searchInput.value.trim() ? 'inline' : 'none';
-    });
   }
-
+  
   const accessibilityButton = document.getElementById("accessibility-button");
   if (accessibilityButton) {
     accessibilityButton.addEventListener("click", () => {
