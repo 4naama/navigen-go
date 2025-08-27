@@ -144,27 +144,24 @@ export function createLocationProfileModal(data) {
         <img src="${payload.imageSrc || '/assets/placeholder-images/icon-512-green.png'}" 
              alt="${payload.name || 'Location'} image"
              style="width:100%;height:auto;display:block;border-radius:8px;">
-        ${
-          (Array.isArray(payload?.tags) && payload.tags.length)
-            ? (() => {
-                // lead: humanize tag key via i18n; fallback to key sans "tag."
-                const tk = String(payload.tags[0] || '').trim();
-                const label = (typeof t === 'function' ? (t(tk) || '') : '') || tk.replace(/^tag\./,'').replace(/-/g,' ');
-                return `<div class="tag-chip" aria-label="tag"
-                          style="position:absolute;top:8px;left:8px;padding:4px 8px;border-radius:12px;background:rgba(0,0,0,0.6);backdrop-filter:saturate(120%);color:#fff;font-size:12px;line-height:1;">
-                          ${label}
-                        </div>`;
-              })()
-            : ''
-        }
       </figure>
+
+      ${
+        (Array.isArray(payload?.tags) && payload.tags.length)
+          ? (() => {
+              const chips = payload.tags
+                .map(tag => `<span class="tag-chip" data-tag="${String(tag).trim()}">${String(tag).trim()}</span>`)
+                .join('');
+              return `<section class="location-tags"><div class="tag-chips">${chips}</div></section>`;
+            })()
+          : ''
+      }
 
       <section class="location-description">
         <div class="description" data-lines="5" data-i18n-key="${usePlaceholder ? descKey : ''}">
           ${descHTML}
         </div>
       </section>
-
     </div>
   `;
 

@@ -495,43 +495,101 @@ function wireAccordionGroups(structure_data) {
       }
     });
 
-
   });
 }
 
 // Name + tag search; supports multi-word queries (no cross-scope fetch)
 function filterLocations(q) {
-  const input = String(q || '').toLowerCase().trim();
-  const tokens = input ? input.split(/\s+/) : [];
+  // include Popular's buttons too
+  var itemSel = '.location-button, .popular-button, .location-item, [data-role="location-item"]';
 
-  // Include Accordion + legacy items only (Popular intentionally excluded)
-  const items = document.querySelectorAll('.location-button, .location-item, [data-role="location-item"]');
+  var query = (q || '').toString().trim().toLowerCase();
 
-  items.forEach(el => {
-    const name = (el.getAttribute('data-name') || el.textContent || '').toLowerCase();
-    const shortName = (el.getAttribute('data-short-name') || '').toLowerCase();
-    const tags = (el.getAttribute('data-tags') || '').toLowerCase(); // space-joined keys without "tag."
-    const hay = `${name} ${shortName} ${tags}`;
-    const ok = tokens.length === 0 ? true : tokens.every(tk => hay.includes(tk));
-    el.style.display = ok ? '' : 'none';
+  // show/hide the clear button based on query state
+  var clearBtnEl = document.getElementById('clear-search');
+  if (clearBtnEl) clearBtnEl.style.display = query ? '' : 'none';
+
+  // --- RESET when empty: show everything and return ---
+  if (!query) {
+    // show all items
+    document.querySelectorAll(itemSel).forEach(function (el) {
+      el.style.display = '';
+      el.setAttribute('aria-hidden', 'false');
+    });
+
+    // unhide all subgroup headers + lists
+    document.querySelectorAll('.subheader').forEach(function (h) {
+      h.style.display = '';
+      h.setAttribute('aria-hidden', 'false');
+    });
+    document.querySelectorAll('.subgroup-items').forEach(function (wrap) {
+      wrap.style.display = '';
+      if (wrap.classList) wrap.classList.remove('is-collapsed');
+    });
+
+    // unhide all groups & refresh counts
+    document.querySelectorAll('div.accordion-section').forEach(function (section) {
+      section.style.display = '';
+      section.setAttribute('aria-hidden', 'false');
+
+      var meta = section.querySelector('.group-header-button .header-meta');
+      if (meta) {
+        var total = section.querySelectorAll(itemSel).length;
+        meta.textContent = '( ' + total + ' )';
+      }
+    });
+
+    return; // nothing to filter
+  }
+
+  // --- 1) Item-level filtering (names + tags + inline text) ---
+  var items = document.querySelectorAll(itemSel);
+  items.forEach(function (el) {
+    var name = (el.getAttribute('data-name') || el.textContent || '').toLowerCase();
+    var shortName = (el.getAttribute('data-short-name') || '').toLowerCase();
+    var tags = (el.getAttribute('data-tags') || '').toLowerCase();
+    var hay = name + ' ' + shortName + ' ' + tags;
+    var show = hay.indexOf(query) !== -1;
+    el.style.display = show ? '' : 'none';
+    el.setAttribute('aria-hidden', show ? 'false' : 'true');
   });
 
-  // hide/show accordion sections based on visible children (Popular is never hidden)
-  document.querySelectorAll('div.accordion-section').forEach(section => {
-    // skip Popular section explicitly
-    const isPopular = !!section.querySelector('.group-header-button[data-group="group.popular"]');
-    if (isPopular) return;
+  // --- 2) Subgroup-level: hide header + list if empty (no items OR none visible) ---
+  document.querySelectorAll('div.accordion-section').forEach(function (section) {
+  // Popular is no longer skipped — treat like any other group
 
-    // count visible items inside this section (we filter by inline display)
-    const childCandidates = section.querySelectorAll('.location-button, .location-item, [data-role="location-item"]');
-    let visible = 0;
-    childCandidates.forEach(btn => { if (btn.style.display !== 'none') visible++; });
 
-    const hide = (childCandidates.length > 0 && visible === 0);
-    section.style.display = hide ? 'none' : '';
-    section.setAttribute('aria-hidden', hide ? 'true' : 'false');
+    var subHeaders = section.querySelectorAll('.subheader');
+    subHeaders.forEach(function (subHeader) {
+      var sib = subHeader.nextElementSibling;
+      var subWrap = (sib && sib.classList && sib.classList.contains('subgroup-items')) ? sib : null;
+      if (!subWrap) return;
+
+      var locBtns = subWrap.querySelectorAll(itemSel);
+      var visibleInSub = 0;
+      locBtns.forEach(function (btn) { if (btn.style.display !== 'none') visibleInSub++; });
+
+      var subEmpty = (locBtns.length === 0 || visibleInSub === 0);
+      subHeader.style.display = subEmpty ? 'none' : '';
+      subHeader.setAttribute('aria-hidden', subEmpty ? 'true' : 'false');
+      subWrap.style.display = subEmpty ? 'none' : '';
+      if (subWrap.classList) subWrap.classList.toggle('is-collapsed', subEmpty);
+
+      if (!subEmpty) subHeader.dataset.count = String(visibleInSub); // short, accurate count
+    });
+
+    // --- 3) Group-level: hide section if ALL items are hidden ---
+    var childCandidates = section.querySelectorAll(itemSel);
+    var visibleCount = 0;
+    childCandidates.forEach(function (btn) { if (btn.style.display !== 'none') visibleCount++; });
+
+    var hideSection = (childCandidates.length > 0 && visibleCount === 0);
+    section.style.display = hideSection ? 'none' : '';
+    section.setAttribute('aria-hidden', hideSection ? 'true' : 'false');
+
+    var meta = section.querySelector('.group-header-button .header-meta');
+    if (meta) meta.textContent = '( ' + visibleCount + ' )';
   });
-
 }
 
 function clearSearch() {

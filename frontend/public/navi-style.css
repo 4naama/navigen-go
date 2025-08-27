@@ -1915,3 +1915,22 @@ button:hover {
   border-color: var(--group-color-ink, currentColor);
   background-color: var(--group-color, transparent);
 }
+
+/* Tag chips row shown just below the media image */
+.tag-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin:.6em 0;
+}
+.tag-chip{
+  padding:.25em .6em;
+  border:1px solid var(--group-color-ink,#cbd5e1);
+  border-radius:999px;
+  font-size:.8rem;
+  background:var(--group-color,#f3f4f6);
+  user-select:none;
+}
+.tag-chip:hover{
+  box-shadow:0 0 0 2px var(--group-color-ink,#94a3b8);
+}
