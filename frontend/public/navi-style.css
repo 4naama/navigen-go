@@ -1555,75 +1555,58 @@ button:hover {
   line-height: 1.6;
 }
 
-/* ────────────── Toast Notification (Updated) ────────────── */
-.toast {
-  position: fixed;
-  bottom: 33vh; /* 👈 One-third from bottom */
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: #ffffff;
-  color: #333333;
-  padding: 14px 24px;
-  border-radius: 12px;
-  font-size: 17px;
-  font-weight: 500;
-  font-family: inherit;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 10000;
-  opacity: 0;
-  pointer-events: auto;
-  transition: opacity 0.4s ease, transform 0.4s ease;
+/* ────────────── Toast Notification ────────────── */
+/* single instance; header + red × close */
+.toast{
+  position:fixed;
+  bottom:33vh; /* one-third from bottom */
+  left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:#fff;
+  color:#333;
+  padding:14px 16px 16px;
+  border-radius:12px;
+  font-size:17px;
+  font-weight:500;
+  font-family:inherit;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+  z-index:10000;
+  opacity:0;
+  pointer-events:auto;
+  transition:opacity .4s ease, transform .4s ease;
+  max-width:min(92vw, 420px);
 }
+.toast.visible{ opacity:1; transform:translateX(-50%) translateY(0); }
 
-.toast.visible {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
+/* header row with title + red close */
+.toast .toast-header{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-bottom:8px;
 }
+.toast .toast-title{ font-weight:600; font-size:17px; line-height:1.2; }
+.toast .toast-close{
+  appearance:none; -webkit-appearance:none;
+  background:transparent; border:0; cursor:pointer;
+  font-size:18px; line-height:1; color:#d11;
+  padding:2px 6px; border-radius:6px;
+}
+.toast .toast-close:hover{ color:#a00; }
+.toast .toast-close:focus-visible{ outline:2px solid currentColor; outline-offset:2px; }
 
-/* 📦 Center contents inside toast */
-.toast-content {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+/* body + links */
+.toast .toast-body{ line-height:1.45; }
+.toast a, .toast .toast-link{ color:#1976d2; text-decoration:underline; }
+.toast a:hover, .toast .toast-link:hover{ text-decoration:none; }
 
-/* 🔘 Button inside toast (matching resolved button) */
-.toast-btn {
-  margin-top: 10px;
-  background: #d1e0fe;
-  color: 0f172a;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.3s ease;
+/* legacy helpers kept for compat */
+.toast-content{ text-align:center; display:flex; flex-direction:column; align-items:center; }
+.toast-btn{
+  margin-top:10px; background:#d1e0fe; color:#0f172a; border:0;
+  padding:8px 16px; border-radius:8px; font-size:15px; font-weight:500; font-family:inherit;
+  cursor:pointer; transition:background .3s ease;
 }
-
-.toast-btn:hover {
-  background: #c6dafe;
-}
-
-/* 📝 Optional subtext */
-.subtext {
-  font-size: 13px;
-  color: #666;
-  margin-top: 6px;
-}
-
-.toast-link {
-  color: #1976d2; /* Resolved blue */
-  font-weight: 500;
-  text-decoration: underline;
-  margin-top: 8px;
-}
-
-.toast-link:hover {
-  text-decoration: none;
-}
+.toast-btn:hover{ background:#c6dafe; }
+/* .subtext intentionally not used anymore */
 
 #scroll-zone {
   overflow-y: auto;

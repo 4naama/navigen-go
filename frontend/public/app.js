@@ -14,11 +14,12 @@ import {
   showMyStuffModal,
   flagStyler,
   setupTapOutClose,
-  showLocationProfileModal
+  showLocationProfileModal,
+  showThankYouToast as showThankYouToastUI
 } from './modal-injector.js';
 
 // Force phones to forget old cache on new deploy; one-time per BUILD_ID.
-const BUILD_ID = '2025-08-25-01'; // bump this each deploy
+const BUILD_ID = '2025-08-30-03'; // bump this each deploy
 
 (async () => {
   try {
@@ -543,15 +544,16 @@ function filterLocations(q) {
   }
 
   // --- 1) Item-level filtering (names + tags + inline text) ---
-  var items = document.querySelectorAll(itemSel);
-  items.forEach(function (el) {
-    var name = (el.getAttribute('data-name') || el.textContent || '').toLowerCase();
-    var shortName = (el.getAttribute('data-short-name') || '').toLowerCase();
-    var tags = (el.getAttribute('data-tags') || '').toLowerCase();
-    var hay = name + ' ' + shortName + ' ' + tags;
-    var show = hay.indexOf(query) !== -1;
+  const items = document.querySelectorAll(itemSel);
+  items.forEach((el) => {
+    const lower = el.dataset.lower || '';
+    const shortName = (el.getAttribute('data-short-name') || '').toLowerCase();
+    const tags = (el.getAttribute('data-tags') || '').toLowerCase();
+    const hay = `${lower} ${shortName} ${tags}`;
+
+    const show = hay.includes(query);
     el.style.display = show ? '' : 'none';
-    el.setAttribute('aria-hidden', show ? 'false' : 'true');
+    el.setAttribute('aria-hidden', String(!show));
   });
 
   // --- 2) Subgroup-level: hide header + list if empty (no items OR none visible) ---
@@ -621,8 +623,14 @@ async function initEmergencyBlock(countryOverride) {
   const locale = pickLocale(navigator.language, supported);
   const L = getLabelsFor(data, locale);
 
-  // 3) Country code (override → saved → CF → default)
-  const cc = (countryOverride || localStorage.getItem('emg.country') || window.__CF_COUNTRY__ || 'US').toUpperCase();
+  // 3) Country code (override → saved → meta/lang → default)
+  const metaCountry =
+    document.querySelector('meta[name="cf-country"]')?.content ||   // e.g., injected by CDN/edge
+    document.querySelector('meta[name="app-country"]')?.content ||  // your own server meta
+    document.documentElement.getAttribute('data-country') ||        // optional <html data-country="HU">
+    (() => { try { return new Intl.Locale(document.documentElement.lang || navigator.language).region; } catch { return ''; } })();
+
+  const cc = (countryOverride || localStorage.getItem('emg.country') || metaCountry || 'US').toUpperCase();
 
   // 4) Country-name formatter (localized, robust; independent of globals)
   const toName = ((ln) => {
@@ -681,35 +689,6 @@ async function initEmergencyBlock(countryOverride) {
       countrySel.dataset.bound = '1';
     }
   }
-
-  // 7) Country dropdown (show names, keep values as ISO codes)
-  if (countrySel) {
-    if (countrySel.options.length === 0) {
-      const codes = Object.keys(data.countries || {})
-        .sort((a, b) => toName(a).localeCompare(toName(b)));
-      countrySel.innerHTML = codes
-        .map(code => `<option value="${code}" ${code === cc ? 'selected' : ''}>${toName(code)}</option>`)
-        .join('');
-    } else {
-      // Ensure selected reflects current cc
-      if (countrySel.value !== cc) countrySel.value = cc;
-      // If current cc not in options, add it (edge-case)
-      if (![...countrySel.options].some(o => o.value === cc)) {
-        const opt = document.createElement('option');
-        opt.value = cc; opt.textContent = toName(cc);
-        countrySel.appendChild(opt);
-        countrySel.value = cc;
-      }
-    }
-
-    if (!countrySel.dataset.bound) {
-      countrySel.addEventListener('change', () => {
-        localStorage.setItem('emg.country', countrySel.value);
-        initEmergencyBlock(countrySel.value);
-      });
-      countrySel.dataset.bound = '1';
-    }
-  }
 }
 
   // ✅ Start of DOMContent
@@ -717,17 +696,14 @@ async function initEmergencyBlock(countryOverride) {
   document.addEventListener('DOMContentLoaded', async () => {
     // 🧹 Clean up any leftover/ghost donation modal before anything runs
     document.getElementById("donation-modal")?.remove();
-
-    // 🚀 Initialize Stripe on load
-    showStripeLoader();
-
+    
+    // Old behavior: initialize Stripe once on DOM ready
     try {
       initStripe(STRIPE_PUBLIC_KEY);
+      console.log("✅ Stripe initialized at startup");
     } catch (err) {
       console.error("❌ initStripe failed:", err);
-    } finally {
-      hideStripeLoader();
-    }
+    }        
 
     // 🌐 Detect and apply user's preferred language (from localStorage or browser),
     // then set <html lang="...">, text direction (LTR/RTL), load translations,
@@ -849,10 +825,9 @@ async function initEmergencyBlock(countryOverride) {
       "Drop-down": g.groupName
     }));
 
-    // 👇 expose to console (DEV ONLY). Safe to remove later.
+    // 👇 dev-only: print datasets for inspection (no globals)
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-      window._rawStructure = structure;
-      window._geo = geoPoints;
+      console.debug('[dev] datasets ready', { structure, geoPoints });
     }
 
     /**
@@ -954,21 +929,25 @@ async function initEmergencyBlock(countryOverride) {
     }
           
       // Inside your existing main DOMContentLoaded block
-      const searchInput = document.getElementById('search');
-      const clearBtn = document.getElementById('clear-search'); // ✅ Added this line
+      // use outer lets; avoid shadowing so later blocks see the same refs
+      searchInput = document.getElementById('search');
+      clearBtn = document.getElementById('clear-search'); // keep comment; clarify scope
 
       if (searchInput && clearBtn) {
-        // lead: pass query to filter; enables name + tag search in the next patch
+        // lead: debounce filtering to cut redundant DOM work on rapid input
+        function debounce(fn, ms = 150) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+        const debouncedFilter = debounce(filterLocations, 150);
+
         searchInput.addEventListener('input', () => {
           const q = searchInput.value;
           const hasText = q.trim() !== '';
           clearBtn.style.display = hasText ? 'inline' : 'none';
-          filterLocations(q); // now accepts optional query
+          debouncedFilter(q); // debounced call
         });
 
         clearBtn.addEventListener('click', () => {
           clearSearch();
-          filterLocations(''); // ensure full reset after clearing
+          debouncedFilter(''); // reset via debounced path
           searchInput.focus();
         });
 
@@ -1039,10 +1018,10 @@ async function initEmergencyBlock(countryOverride) {
       // 🧭 Log whether we show thank-you or donation modal
       if (hasDonated) {
         console.log("🎉 Already donated → Showing thank-you modal");
-        createDonationModal(true);
+        createDonationModal(true);  // ✅ no ensureStripeReady
       } else {
         console.log("💸 Showing donation modal for potential supporter");
-        createDonationModal(false);
+        createDonationModal(false); // ✅ no ensureStripeReady
       }
 
       // 📊 Optional: Send event to analytics
@@ -1330,27 +1309,6 @@ if (alertButton) {
 
 });  // ✅ End of DOMContentLoaded  
 
-// 💬 Toast shown after successful Stripe donation
-window.showThankYouToast = function () {
-  const div = document.createElement('div');
-  div.textContent = "💖 Thank you for your support!";
-  Object.assign(div.style, {
-    position: 'fixed',
-    bottom: '20px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    background: '#222',
-    color: '#fff',
-    padding: '12px 24px',
-    borderRadius: '8px',
-    fontSize: '16px',
-    zIndex: 9999,
-    boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
-  });
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 4000);
-};
-
 document.addEventListener("DOMContentLoaded", () => {
   console.log("📡 DOM loaded — checking for ?at parameter");
 
@@ -1360,39 +1318,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     saveToLocationHistory(at); // 🧠 Store silently in local history
 
-    const gmaps = `https://maps.google.com?q=${at}`;
+    // sanitize param for the link; keep content persistent
+    // manual close only via × (no auto/tap close)
+    const atSafe = encodeURIComponent(at.trim());
+    const gmaps = `https://maps.google.com?q=${atSafe}`;
     console.log("🔗 Google Maps link:", gmaps);
 
     showToast(
-      `📍 Friend’s location received — <a href="${gmaps}" target="_blank">open in Google Maps</a><br><br>
+      `open in <a class="toast-link" href="${gmaps}" target="_blank" rel="noopener">Google Maps</a><br><br>
        📌 to save NaviGen<br>
        🏠 → 📍 for this message<br>
-       👋 to support NaviGen<br><br>
-       <span class="subtext">Tap this message to close.</span>`
-      // no duration → persistent
+       👋 to support NaviGen`,
+      { title: '📍 Friend’s location received', manualCloseOnly: true, duration: 0 }
     );
 
-  } 
+  }
 
   // Optional: also log when history is cleared from URL
   window.history.replaceState({}, document.title, window.location.pathname);
 });
-
-  const socialModal = document.getElementById("social-modal");
-  const socialButton = document.getElementById("social-button");
-  const socialCloseButtons = socialModal?.querySelectorAll(".modal-close") || [];
-
-  if (socialButton && socialModal) {
-    socialButton.addEventListener("click", () => {
-      socialModal.classList.remove("hidden");
-    });
-
-    socialCloseButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        socialModal.classList.add("hidden");
-      });
-    });
-  }
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
@@ -1411,6 +1355,27 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   });
+
+  // Refresh lightweight UI after tab returns (frame → idle)
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    requestAnimationFrame(() => {
+      // Use rIC with a proper options object; fallback to setTimeout.
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => {
+          if (document.querySelector('.group-header-button[data-group]')) {
+            paintAccordionColors(); // cheap: set CSS vars only
+          }
+        }, { timeout: 0 });
+      } else {
+        window.setTimeout(() => {
+          if (document.querySelector('.group-header-button[data-group]')) {
+            paintAccordionColors(); // cheap: set CSS vars only
+          }
+        }, 0);
+      }
+    });
+  }, { passive: true });
 
   // Setup close for Alert Modal
   const alertCloseButtons = document.querySelectorAll('#alert-modal .modal-close');
@@ -1448,20 +1413,8 @@ function trapFocus(modal) {
 // 📌 Show Pinned Modal (👋 Tap)
 function showPinnedModal() {
   const hasDonated = localStorage.getItem("hasDonated") === "true";
-  createDonationModal(hasDonated); // Always show donation modal
+  createDonationModal(hasDonated); // Modal wires buttons; Stripe is ready at DOM load
 }
-
-document.addEventListener("click", async (e) => {
-  const btn = e.target.closest(".donate-btn");
-  if (!btn) return;
-
-  const amount = parseInt(btn.dataset.amount);  // ✅ Must be defined
-  try {
-    await handleDonation(amount);               // ✅ Await the async call
-  } catch (err) {
-    console.error("Donation error:", err);
-  }
-});
 
 if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   const resetBtn = document.getElementById("dev-reset");
@@ -1544,11 +1497,5 @@ function matchDonationTier(amount) {
   }
 }
 
-// Helper: Show the thank-you toast
-function showThankYouToast() {
-  const toast = document.createElement("div");
-  toast.textContent = "💖 Thank you for your support!";
-  toast.style = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#fff;border-radius:8px;padding:10px 20px;font-size:16px;box-shadow:0 2px 6px rgba(0,0,0,0.2);z-index:9999;";
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 4000);
-}
+// Helper: Show the thank-you toast (delegates to UI module)
+function showThankYouToast() { return showThankYouToastUI(); }

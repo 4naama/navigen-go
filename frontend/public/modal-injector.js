@@ -11,7 +11,9 @@
  * @param {string} [data.description]      // optional description/teaser
  * @returns {HTMLElement} modalEl
  */
-export function createLocationProfileModal(data) {
+export function createLocationProfileModal(data, injected = {}) {
+  // injected datasets only; no window access
+  const { geoPoints = [], profiles = null, structureData = injected.structure_data ?? [] } = injected;
   // ▸ Modal shell
   const modal = document.createElement('div');
   modal.id = 'location-profile-modal';
@@ -62,26 +64,26 @@ export function createLocationProfileModal(data) {
   const payload = (typeof data === 'object' && data) ? data : {};
   let descs = normalizeDescMap(payload.descriptions);
 
-  // lead: if caller omitted descriptions, try known globals in order.
-  // lead: keep legacy ID compatibility; do not mutate incoming objects.
+  // If descriptions are missing, use injected sources in order.
+  // Keep legacy ID comparison; do not mutate incoming objects.
   if (!Object.keys(descs).length && payload.id) {
     const wantId = String(payload.id);
 
-    // 1) geoPoints (may be legacy or unified)
-    if (Array.isArray(window.geoPoints)) {
-      const found = window.geoPoints.find(x => String(x?.ID || x?.id) === wantId);
+    // 1) geoPoints (may be legacy or unified) — injected
+    if (Array.isArray(geoPoints)) {
+      const found = geoPoints.find(x => String(x?.ID || x?.id) === wantId);
       if (found) descs = normalizeDescMap(found.descriptions);
     }
 
-    // 2) profiles.locations (final merged dataset)
-    if (!Object.keys(descs).length && window.profiles && Array.isArray(window.profiles.locations)) {
-      const found = window.profiles.locations.find(x => String(x?.id) === wantId);
+    // 2) profiles.locations (final merged dataset) — injected
+    if (!Object.keys(descs).length && profiles && Array.isArray(profiles.locations)) {
+      const found = profiles.locations.find(x => String(x?.id) === wantId);
       if (found) descs = normalizeDescMap(found.descriptions);
     }
 
-    // 3) structure_data (if accordion feeds from here)
-    if (!Object.keys(descs).length && Array.isArray(window.structure_data)) {
-      const found = window.structure_data.find(x => String(x?.id) === wantId);
+    // 3) structureData (if accordion feeds from here) — injected
+    if (!Object.keys(descs).length && Array.isArray(structureData)) {
+      const found = structureData.find(x => String(x?.id) === wantId);
       if (found) descs = normalizeDescMap(found.descriptions);
     }
   }
@@ -574,24 +576,11 @@ export function showLocationProfileModal(data) {
 // Track modal items globally within this module
 let myStuffItems = [];
 
-/**
- * ESC key handler utility for any modal
- */
-export function enableEscToClose(modal) {
-  const handler = (e) => {
-    if (e.key === "Escape") {
-      modal.remove();
-      window.removeEventListener("keydown", handler);
-    }
-  };
-  window.addEventListener("keydown", handler);
-}
-
 // 🌐 Import translation function for localized modal titles and text
 import { t } from './scripts/i18n.js';
 
-// 💳 Stripe: Handles secure checkout setup and donation flow (modularized for reuse)
-import { initStripe, handleDonation } from "./scripts/stripe.js";
+// Stripe: only the donation action here (init comes from caller)
+import { handleDonation } from "./scripts/stripe.js";
 
 // ✅ Store Popular’s original position on page load
 let popularBaseOffset = 0;
@@ -609,6 +598,7 @@ function makeLocationButton(loc) {
   btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
   btn.setAttribute('data-id', loc.ID);
   btn.classList.add('location-button');
+  btn.dataset.lower = (loc["Short Name"] || loc.Name || "Unnamed").toLowerCase();
   
   // Expose searchable metadata: name/shortName for text, data-tags with keys minus "tag."
   const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
@@ -842,7 +832,7 @@ function getLangFromCountry(code) {
   return langMap[code] || null;
 }
 
-window.fetchTranslatedLangs = async () => {
+export async function fetchTranslatedLangs() {
   const langMap = {
     IE: "en", GB: "en", US: "en", CA: "en", AU: "en",
     DE: "de", AT: "de", CH: "de",
@@ -939,9 +929,10 @@ export function showModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
 
-  modal.classList.remove("hidden");   // For any manual .hidden
-  modal.classList.add("visible");     // ✅ Triggers CSS flex centering
-  modal.style.display = "";           // ✅ Clears any inline hiding (especially from hideModal)
+  modal.classList.remove("hidden");              // For any manual .hidden (avoid first-tap miss)
+  modal.style.display = "flex";                  // ✅ Force visible immediately
+  void modal.offsetWidth;                        // ✅ Reflow to flush styles before showing
+  modal.classList.add("visible");                // ✅ Flex centering applied immediately (no rAF)
 }
 
 /**
@@ -953,41 +944,76 @@ export function hideModal(id) {
 
   modal.classList.remove("visible");
   modal.classList.add("hidden");
-  modal.style.display = ""; // ✅ Clear inline display to let CSS re-apply
+  modal.style.display = "none"; // ✅ Explicitly hide for clean next show
 }
 
-// Toast: single instance; persistent until tapped (link doesn’t dismiss).
-// Optional auto-close via duration>0 for backward compatibility.
-export function showToast(message, duration = 0) {
-  // one at a time
+// Toast: single instance; header+close supported; links don’t dismiss.
+// Accepts number (duration) or opts { duration, title, manualCloseOnly }.
+export function showToast(message, opts = 0) {
+  // ensure one active toast; remove existing
   document.querySelectorAll('.toast').forEach(t => t.remove());
 
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.setAttribute("role", "status");
-  toast.setAttribute("aria-live", "polite");
-  toast.innerHTML = message;
+  const { duration = 0, title = '', manualCloseOnly = false } =
+    typeof opts === 'number' ? { duration: opts } : (opts || {});
+
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+
+  // header + red × close
+  if (title) {
+    const header = document.createElement('div');
+    header.className = 'toast-header';
+
+    const h = document.createElement('div');
+    h.className = 'toast-title';
+    h.textContent = title;
+
+    const btn = document.createElement('button');
+    btn.className = 'toast-close';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Close');
+    btn.textContent = '✖';
+    btn.addEventListener('click', () => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 400);
+    });
+
+    header.appendChild(h);
+    header.appendChild(btn);
+    toast.appendChild(header);
+  }
+
+  const body = document.createElement('div');
+  body.className = 'toast-body';
+  body.innerHTML = message;
+  toast.appendChild(body);
 
   document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('visible'));
 
-  requestAnimationFrame(() => {
-    toast.classList.add("visible");
-  });
+  // only allow tap-to-close when NOT manualCloseOnly
+  if (!manualCloseOnly) {
+    toast.addEventListener('click', (e) => {
+      if (e.target.closest('a, .toast-close')) return;
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 400);
+    }, { passive: true });
+  }
 
-  // tap anywhere on toast EXCEPT the link to close
-  toast.addEventListener("click", (e) => {
-    if (e.target.closest("a")) return; // don’t close when the link is tapped
-    toast.classList.remove("visible");
-    setTimeout(() => toast.remove(), 400);
-  }, { passive: true });
-
-  // optional auto-close if duration > 0 (keeps back-compat)
-  if (duration > 0) {
+  // auto-close only when NOT manualCloseOnly
+  if (duration > 0 && !manualCloseOnly) {
     setTimeout(() => {
-      toast.classList.remove("visible");
+      toast.classList.remove('visible');
       setTimeout(() => toast.remove(), 400);
     }, duration);
   }
+}
+
+// Uses generic toast with 4s auto-close; keeps one implementation
+export function showThankYouToast() {
+  return showToast("💖 Thank you for your support!", 4000);
 }
 
 /**
@@ -1178,9 +1204,7 @@ export function createMyStuffModal() {
           const currentLang = localStorage.getItem("lang") || "en";
           
           let availableLangs = new Set(["en", "de", "fr", "hu"]); // fallback
-          if (window.fetchTranslatedLangs) {
-            availableLangs = await window.fetchTranslatedLangs();
-          }        
+          availableLangs = await fetchTranslatedLangs();
 
           allFlags.forEach(code => {
             const img = document.createElement("img");
@@ -1726,8 +1750,11 @@ export function showShareModal(coords) {
   if (shareBtn) shareBtn.classList.remove("hidden");
 
   modal.classList.remove("hidden");
-  modal.classList.add("visible");
   modal.style.display = ""; // ✅ Clear inline junk
+  requestAnimationFrame(() => {
+    modal.classList.add("visible");
+  });
+
 }
 
 export function createIncomingLocationModal(coords) {
@@ -1772,8 +1799,8 @@ export function createIncomingLocationModal(coords) {
   modal.querySelector('#incoming-modal-resolved')?.addEventListener('click', () => modal.remove());
   modal.addEventListener('click', e => {
     if (e.target === modal) modal.remove();
-  });
-  
+  }, { passive: true });
+
   enableEscToClose(modal);
   
   document.body.appendChild(modal);
@@ -1799,21 +1826,18 @@ export function setupTapOutClose(modalId) {
   // avoid duplicate handlers on repeated calls
   modal.removeEventListener('click', onBackdropClick);
   modal.addEventListener('click', onBackdropClick, { passive: true });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-      modal.classList.add('hidden');
-    }
-  });
+  
+  // ESC handled centrally in app.js; backdrop click only here
 }
 
-// 🎁 Creates and shows the donation modal.
-// Accepts `isRepeat = true` if the user has already donated,
-// which adjusts the text to a thank-you prompt with the option to give again.
-// Reuses translation keys and handles modal injection, button actions, and close behavior.
-// Donation modal: My Stuff–style top bar + red X; unified backdrop
+// 🎁 Donation modal
+// Shows thank-you if isRepeat=true; otherwise full donate prompt.
+// Handles modal injection, translations, buttons, and close behavior.
 export function createDonationModal(isRepeat = false) {
-  if (document.getElementById("donation-modal")) { showModal("donation-modal"); return; }
+
+  // rebuild fresh if any stale instance exists
+  const existing = document.getElementById("donation-modal");
+  if (existing) existing.remove();
 
   const title = isRepeat ? t("donation.thanks.title") : t("donation.title");
   const intro = isRepeat ? t("donation.thanks.body")  : t("donation.intro");
@@ -1872,13 +1896,14 @@ export function createDonationModal(isRepeat = false) {
   // Donate buttons
   modal.querySelectorAll(".donate-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
-      const amount = parseInt(btn.dataset.amount);
+      const amount = parseInt(btn.dataset.amount); // Stripe already initialized
       await handleDonation(amount);
     });
   });
 
   setupTapOutClose("donation-modal");
-  showModal("donation-modal");
+  showModal("donation-modal");        // open immediately
+
 }
 
 /**

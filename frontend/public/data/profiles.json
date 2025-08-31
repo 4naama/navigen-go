@@ -1,6 +1,997 @@
 {
-  "locations": [
-    {
+  "locations": [      
+      {
+        "id": "osm-node-416571249",
+        "name": {
+          "en": "Fülemüle"
+        },
+        "shortName": {
+          "en": "Fülemüle"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": 47.4935401,
+          "lng": 19.0676915
+        },
+        "amenity": "restaurant",
+        "cuisine": "regional;jewish",
+        "diet:kosher": "",
+        "address": {
+          "city": "Budapest",
+          "street": "Kőfaragó utca",
+          "housenumber": "5"
+        },
+        "contact": {
+          "phone": "",
+          "website": "",
+          "address": "Kőfaragó utca 5 Budapest"
+        },
+        "location": {
+          "lat": 47.4935401,
+          "lon": 19.0676915
+        },
+        "source": "OSM/Overpass",
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "sameAs": [
+          "osm-node-416571249"
+        ]
+      },
+      {
+        "id": "osm-node-417031641",
+        "name": {
+          "en": "Glatt Kosher Restaurant"
+        },
+        "shortName": {
+          "en": "Glatt Kosher Restaurant"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": 47.498585,
+          "lng": 19.0620723
+        },
+        "amenity": "restaurant",
+        "cuisine": "",
+        "diet:kosher": "",
+        "address": {
+          "city": "Budapest",
+          "street": "",
+          "housenumber": ""
+        },
+        "contact": {
+          "phone": "",
+          "website": "",
+          "address": "Budapest"
+        },
+        "location": {
+          "lat": 47.498585,
+          "lon": 19.0620723
+        },
+        "source": "OSM/Overpass",
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "sameAs": [
+          "osm-node-417031641"
+        ]
+      },
+      {
+        "id": "osm-node-4008655313",
+        "name": {
+          "en": "Jerusalem"
+        },
+        "shortName": {
+          "en": "Jerusalem"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.cafes",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": 47.4974283,
+          "lng": 19.0612128
+        },
+        "amenity": "cafe",
+        "cuisine": "israeli",
+        "diet:kosher": "",
+        "address": {
+          "city": "Budapest",
+          "street": "Síp utca",
+          "housenumber": "22"
+        },
+        "contact": {
+          "phone": "+36 20 381 3477",
+          "website": "http://www.kosher-shop.hu/",
+          "address": "Síp utca 22 Budapest"
+        },
+        "location": {
+          "lat": 47.4974283,
+          "lon": 19.0612128
+        },
+        "source": "OSM/Overpass",
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "sameAs": [
+          "osm-node-4008655313"
+        ]
+      },
+      {
+        "id": "osm-node-4705230436",
+        "name": {
+          "en": "Hanna"
+        },
+        "shortName": {
+          "en": "Hanna"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": 47.4986041,
+          "lng": 19.0628337
+        },
+        "amenity": "restaurant",
+        "cuisine": "jewish",
+        "diet:kosher": "only",
+        "address": {
+          "city": "Budapest",
+          "street": "Kazinczy utca",
+          "housenumber": "29-31"
+        },
+        "contact": {
+          "phone": "",
+          "website": "http://www.koserhanna.hu/",
+          "address": "Kazinczy utca 29-31 Budapest"
+        },
+        "location": {
+          "lat": 47.4986041,
+          "lon": 19.0628337
+        },
+        "source": "OSM/Overpass",
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "sameAs": [
+          "osm-node-4705230436"
+        ]
+      },
+      {
+        "id": "osm-node-6939514908",
+        "name": {
+          "en": "TLV eatery"
+        },
+        "shortName": {
+          "en": "TLV eatery"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": 47.4978232,
+          "lng": 19.0609982
+        },
+        "amenity": "restaurant",
+        "cuisine": "israeli",
+        "diet:kosher": "",
+        "address": {
+          "city": "Budapest",
+          "street": "",
+          "housenumber": ""
+        },
+        "contact": {
+          "phone": "+36 20 317 5127",
+          "website": "",
+          "address": "Budapest"
+        },
+        "location": {
+          "lat": 47.4978232,
+          "lon": 19.0609982
+        },
+        "source": "OSM/Overpass",
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "sameAs": [
+          "osm-node-6939514908"
+        ]
+      },
+      {
+        "id": "osm-node-11265571018",
+        "name": {
+          "en": "Ashis"
+        },
+        "shortName": {
+          "en": "Ashis"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.fast-food",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": 47.4967791,
+          "lng": 19.0597504
+        },
+        "amenity": "fast_food",
+        "cuisine": "israeli",
+        "diet:kosher": "only",
+        "address": {
+          "city": "Budapest",
+          "street": "",
+          "housenumber": ""
+        },
+        "contact": {
+          "phone": "",
+          "website": "",
+          "address": "Budapest"
+        },
+        "location": {
+          "lat": 47.4967791,
+          "lon": 19.0597504
+        },
+        "source": "OSM/Overpass",
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "sameAs": [
+          "osm-node-11265571018"
+        ]
+      },
+      {
+        "id": "osm-node-12127906743",
+        "name": {
+          "en": "Kosher Land"
+        },
+        "shortName": {
+          "en": "Kosher Land"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": 47.4967335,
+          "lng": 19.061941
+        },
+        "amenity": "restaurant",
+        "cuisine": "",
+        "diet:kosher": "only",
+        "address": {
+          "city": "Budapest",
+          "street": "",
+          "housenumber": ""
+        },
+        "contact": {
+          "phone": "",
+          "website": "https://www.kosherdelibudapest.hu",
+          "address": "Budapest"
+        },
+        "location": {
+          "lat": 47.4967335,
+          "lon": 19.061941
+        },
+        "source": "OSM/Overpass",
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "sameAs": [
+          "osm-node-12127906743"
+        ]
+      },
+      {
+        "id": "wlb-2014-carmel-glatt-k-ser-tterem",
+        "name": {
+          "en": "Carmel glatt kóser étterem"
+        },
+        "shortName": {
+          "en": "Carmel glatt kóser étterem"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1074 Budapest, Kazinczy utca 31.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": "http://www.carmel.hu/"
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-carmel-glatt-k-ser-tterem"
+        ]
+      },
+      {
+        "id": "wlb-2014-hanna-ortodox-tterem",
+        "name": {
+          "en": "Hanna ortodox étterem"
+        },
+        "shortName": {
+          "en": "Hanna ortodox étterem"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1074 Budapest, Dob utca 35.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": "https://www.facebook.com/HannaKosherRestaurant"
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-hanna-ortodox-tterem"
+        ]
+      },
+      {
+        "id": "wlb-2014-carimama-k-ser-pizz-ria-j-nev-n-tel-aviv-cafe",
+        "name": {
+          "en": "Carimama kóser pizzéria (Tel Aviv cafe)"
+        },
+        "shortName": {
+          "en": "Carimama kóser pizzéria (Tel Aviv cafe)"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1074 Budapest, Kazinczy utca 28.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": "https://www.facebook.com/Cafe.Tel.Aviv.Budapest/?ref=br_rs"
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-carimama-k-ser-pizz-ria-j-nev-n-tel-aviv-cafe"
+        ]
+      },
+      {
+        "id": "wlb-2014-f-lem-le",
+        "name": {
+          "en": "Fülemüle"
+        },
+        "shortName": {
+          "en": "Fülemüle"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1085 Budapest, Kőfaragó utca 5.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": ""
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-f-lem-le"
+        ]
+      },
+      {
+        "id": "wlb-2014-rosenstein-vend-gl",
+        "name": {
+          "en": "Rosenstein vendéglő"
+        },
+        "shortName": {
+          "en": "Rosenstein vendéglő"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1087 Budapest, Mosonyi utca 3.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": "https://welovebudapest.com/hely/rosenstein-vendeglo"
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-rosenstein-vend-gl"
+        ]
+      },
+      {
+        "id": "wlb-2014-k-leves",
+        "name": {
+          "en": "Kőleves"
+        },
+        "shortName": {
+          "en": "Kőleves"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1075 Budapest, Kazinczy utca 37-41.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": "https://welovebudapest.com/hely/koleves-kert-es-vendeglo"
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-k-leves"
+        ]
+      },
+      {
+        "id": "wlb-2014-yiddishe-mamma-mia",
+        "name": {
+          "en": "Yiddishe Mamma Mia"
+        },
+        "shortName": {
+          "en": "Yiddishe Mamma Mia"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1075 Budapest, Király utca 13.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": "https://www.facebook.com/ymmrestaurant"
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-yiddishe-mamma-mia"
+        ]
+      },
+      {
+        "id": "wlb-2014-mazel-tov",
+        "name": {
+          "en": "Mazel Tov"
+        },
+        "shortName": {
+          "en": "Mazel Tov"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1074 Budapest, Akácfa utca 47.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": "https://welovebudapest.com/hely/mazel-tov"
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-mazel-tov"
+        ]
+      },
+      {
+        "id": "wlb-2014-macesz-bistro-bez-rt",
+        "name": {
+          "en": "Macesz Bistro (Bezárt)"
+        },
+        "shortName": {
+          "en": "Macesz Bistro (Bezárt)"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1072 Budapest, Dob utca 26.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": ""
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-macesz-bistro-bez-rt"
+        ]
+      },
+      {
+        "id": "wlb-2014-dafke-deli-bez-rt",
+        "name": {
+          "en": "Dafke Deli (Bezárt)"
+        },
+        "shortName": {
+          "en": "Dafke Deli (Bezárt)"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1075 Budapest Madách Imre út 3.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": ""
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-dafke-deli-bez-rt"
+        ]
+      },
+      {
+        "id": "wlb-2014-torta-hu",
+        "name": {
+          "en": "Torta.hu"
+        },
+        "shortName": {
+          "en": "Torta.hu"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1072 Budapest, Wesselényi utca 13.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": ""
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-torta-hu"
+        ]
+      },
+      {
+        "id": "wlb-2014-fr-hlich-cukr-szda",
+        "name": {
+          "en": "Frőhlich Cukrászda"
+        },
+        "shortName": {
+          "en": "Frőhlich Cukrászda"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.cafes",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "1072 Budapest, Dob utca 22.",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": ""
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-fr-hlich-cukr-szda"
+        ]
+      },
+      {
+        "id": "wlb-2014-k-vess-minket-tiktokon-is",
+        "name": {
+          "en": "Kövess minket Tiktokon is!"
+        },
+        "shortName": {
+          "en": "Kövess minket Tiktokon is!"
+        },
+        "Visible": "Yes",
+        "Priority": "No",
+        "groupKey": "group.food-drink",
+        "subgroupKey": "sub.restaurants",
+        "domain": "🛒 Marketplace",
+        "context": "mp.budapest",
+        "coord": {
+          "lat": null,
+          "lng": null
+        },
+        "media": {
+          "cover": ""
+        },
+        "descriptions": {},
+        "hours": {},
+        "links": {},
+        "amenities": [],
+        "accessibility": {},
+        "contact": {
+          "phone": "",
+          "email": "",
+          "address": "",
+          "bookingUrl": "",
+          "whatsapp": "",
+          "telegram": "",
+          "messenger": "",
+          "website": "https://www.tiktok.com/@welovebudapest.com?refer=creator_embed"
+        },
+        "admission": {},
+        "seasonal": {
+          "en": ""
+        },
+        "closedDates": [],
+        "ratings": {
+          "google": null,
+          "tripadvisor": null
+        },
+        "tags": [
+          "🕎 Kosher"
+        ],
+        "source": "WeLoveBudapest Toplista 2014",
+        "sameAs": [
+          "wlb-2014-k-vess-minket-tiktokon-is"
+        ]
+      },     
+      
+      {      
       "id": "aldi-city-shop-grill-7174",
       "name": {
         "en": "ALDI CITY SHOP & GRILL"
@@ -6359,6 +7350,6 @@
         "fileName": "malaga-central-police-station-8105.json",
         "fileNameAscii": "malaga-central-police-station.json"
       }
-    }
+    }    
   ]
 }
