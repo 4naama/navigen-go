@@ -1225,12 +1225,25 @@ export function createMyStuffModal() {
             if (isAvailable) {
               img.style.cursor = "pointer";
 
+              // Persist choice and navigate to the path-locale; drop ?lang, keep other params/hash.
               img.addEventListener("click", (e) => {
                 e.stopPropagation();
-                localStorage.setItem("lang", langCode);
+                localStorage.setItem("lang", langCode); // save for future visits
 
-                // ✅ Reload to apply selected language
-                location.reload();
+                const parts = location.pathname.split("/").filter(Boolean);
+                const hasPrefix = /^[a-z]{2}$/.test(parts[0]);
+                const rest = "/" + (hasPrefix ? parts.slice(1).join("/") : parts.join("/")); // "/" or "/path"
+
+                const target =
+                  langCode === "en"
+                    ? (rest === "/" ? "/" : rest)                 // EN lives at root
+                    : `/${langCode}${rest === "/" ? "" : rest}`;  // others are prefixed
+
+                const qs = new URLSearchParams(location.search);
+                qs.delete("lang");                                 // avoid duplicates
+                const query = qs.toString() ? `?${qs}` : "";
+
+                location.href = `${target}${query}${location.hash || ""}`;
               });
 
             } else {

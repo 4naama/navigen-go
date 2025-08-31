@@ -705,12 +705,17 @@ async function initEmergencyBlock(countryOverride) {
       console.error("❌ initStripe failed:", err);
     }        
 
-    // 🌐 Detect and apply user's preferred language (from localStorage or browser),
-    // then set <html lang="...">, text direction (LTR/RTL), load translations,
-    // and inject static UI text content
-    const lang = localStorage.getItem("lang") || navigator.language.slice(0, 2).toLowerCase() || "en";
+    // 🌐 Detect language: ?lang or /{lang}/ win; then saved/browser.
+    // Keeps DOM lang aligned with SEO tags.
+    const urlLang  = new URLSearchParams(location.search).get("lang");
+    const seg0     = (location.pathname.split("/").filter(Boolean)[0] || "").toLowerCase();
+    const pathLang = /^[a-z]{2}$/.test(seg0) ? seg0 : null;
+
+    const lang = (urlLang || pathLang || localStorage.getItem("lang") || (navigator.language||"en").split("-")[0] || "en").toLowerCase();
+
     document.documentElement.lang = lang;
-    document.documentElement.dir = ["ar", "he", "fa", "ur", "ps", "ckb", "dv", "syc", "yi"].includes(lang) ? "rtl" : "ltr";
+    document.documentElement.dir  = ["ar","he","fa","ur","ps","ckb","dv","syc","yi"].includes(lang) ? "rtl" : "ltr";
+    localStorage.setItem("lang", lang); // persist for next visits
 
     await loadTranslations(lang);        // ✅ Load selected language
     injectStaticTranslations();          // ✅ Apply static translations
