@@ -23,12 +23,9 @@ export default {
     const cookieLang = readCookie(req.headers.get('cookie') || '', 'app_lang');
     const acceptLang = pickFromAcceptLanguage(req.headers.get('accept-language') || '');
 
-    const locale =
-      (qLang && SUPPORTED.includes(qLang) && qLang) ||
-      pathLang ||
-      (cookieLang && SUPPORTED.includes(cookieLang) && cookieLang) ||
-      acceptLang ||
-      DEFAULT;
+    // URL path decides language; root (no prefix) is EN.
+    // Do not honor query, cookies, or Accept-Language for <html lang>.
+    const locale = pathLang || DEFAULT;
 
     // ---- build canonical + alternates for the current route
     const { canonical, alternates, xDefault } = buildLocalizedUrls(url, locale);

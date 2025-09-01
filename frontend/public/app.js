@@ -66,7 +66,42 @@ import {
   getNumbersFor
 } from '/scripts/emergency-ui.js';
 
-import { loadTranslations, t } from "./scripts/i18n.js";
+// Delay i18n import until after we lock URL-decided locale (prevents stale HU flip)
+let loadTranslations, t, RTL_LANGS;
+const i18nModPromise = (async () => await import("./scripts/i18n.js"))();
+
+// Early: ?lang → path-locale; /{lang}/ respected; root stays EN; persist prefix.
+// Also persists the decision before i18n module side-effects run.
+(() => {
+  const DEFAULT = "en";
+  const qs = new URLSearchParams(location.search);
+  const parts = location.pathname.split("/").filter(Boolean);
+  const seg0 = (parts[0] || "").toLowerCase();
+  const pathLang = /^[a-z]{2}$/.test(seg0) ? seg0 : null;
+  const norm = (l) => (l || "").slice(0, 2);
+
+  // ?lang normalization → path
+  const urlLang = (qs.get("lang") || "").toLowerCase();
+  if (urlLang) {
+    const lang = norm(urlLang);
+    const rest = "/" + (pathLang ? parts.slice(1).join("/") : parts.join("/"));
+    const target = lang === DEFAULT ? (rest === "/" ? "/" : rest) : `/${lang}${rest === "/" ? "" : rest}`;
+    qs.delete("lang");
+    const query = qs.toString() ? `?${qs}` : "";
+    const next = `${target}${query}${location.hash || ""}`;
+    if (next !== location.pathname + location.search + location.hash) location.replace(next);
+    return; // stop; navigation continues at new URL
+  }
+
+  // Decide from path (root → EN), persist immediately so i18n sees the right value
+  const chosen = pathLang || DEFAULT;
+  document.documentElement.lang = chosen;
+  document.documentElement.dir = (window.RTL_LANGS || []).includes?.(chosen) ? "rtl" : "ltr"; // safe if RTL list loads later
+  try { localStorage.setItem("lang", chosen); } catch {}
+})();
+
+// Now it’s safe to expose i18n symbols; the module will see the correct persisted lang.
+({ loadTranslations, t, RTL_LANGS } = await i18nModPromise);
 
 // ✅ Determines whether app is running in standalone/PWA mode
 function isStandalone() {
@@ -106,6 +141,27 @@ setVH();
 window.addEventListener('resize', () => requestAnimationFrame(setVH));
 window.addEventListener('orientationchange', setVH);
 window.addEventListener('pageshow', (e) => { if (e.persisted) setVH(); }); // bfcache
+
+// Root lock: if path has no /{lang}/, force EN and refresh labels
+window.addEventListener('pageshow', () => {
+  const hasPrefix = /^[a-z]{2}(?:\/|$)/.test(location.pathname.slice(1));
+  if (!hasPrefix) {
+    const locked = "en";
+    if (document.documentElement.lang !== locked) {
+      document.documentElement.lang = locked;
+      document.documentElement.dir = "ltr";
+      try { localStorage.setItem("lang", locked); } catch {}
+      i18nModPromise
+        .then(m => m.loadTranslations?.(locked))
+        .then(() => {
+          // notify DOMContentLoaded scope to refresh labels (no globals)
+          document.dispatchEvent(new CustomEvent('app:lang-changed', { detail: { lang: locked } }));
+        });
+
+    }
+  }
+});
+
 if (window.visualViewport) visualViewport.addEventListener('resize', setVH);
 
 const state = {};
@@ -421,7 +477,8 @@ function paintAccordionColors() {
 document.addEventListener('DOMContentLoaded', paintAccordionColors);
 // If accordion is re-rendered dynamically, call paintAccordionColors() again afterward.
 
-function wireAccordionGroups(structure_data) {
+// Accept injectedGeoPoints to avoid window.*; keep tags in sync
+function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
   structure_data.forEach(group => {
     const title = group["Drop-down"]?.trim();
     if (!title) return console.warn('⛔ Missing Drop-down in group:', group);
@@ -484,16 +541,16 @@ function wireAccordionGroups(structure_data) {
         locBtn.setAttribute('data-short-name', locBtn.textContent.trim());
       }
       if (!locBtn.hasAttribute('data-tags')) {
-        // try to mirror tags stamped elsewhere (popular/makeLocationButton)
         const id = locBtn.getAttribute('data-id');
-        const rec = Array.isArray(window.geoPoints)
-          ? window.geoPoints.find(x => String(x?.ID) === String(id))
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String(x?.ID || x?.id) === String(id))
           : null;
         const tags = Array.isArray(rec?.tags)
           ? rec.tags.map(k => String(k).replace(/^tag\./,'')).join(' ')
           : '';
         locBtn.setAttribute('data-tags', tags);
       }
+
     });
 
   });
@@ -705,20 +762,19 @@ async function initEmergencyBlock(countryOverride) {
       console.error("❌ initStripe failed:", err);
     }        
 
-    // 🌐 Detect language: ?lang or /{lang}/ win; then saved/browser.
-    // Keeps DOM lang aligned with SEO tags.
-    const urlLang  = new URLSearchParams(location.search).get("lang");
-    const seg0     = (location.pathname.split("/").filter(Boolean)[0] || "").toLowerCase();
-    const pathLang = /^[a-z]{2}$/.test(seg0) ? seg0 : null;
+    // 🌐 Use URL path only; root stays EN. Avoid stale flips from storage.
+    const seg0 = (location.pathname.split('/').filter(Boolean)[0] || '');
+    const lang = /^[a-z]{2}$/i.test(seg0) ? seg0.toLowerCase() : 'en';
 
-    const lang = (urlLang || pathLang || localStorage.getItem("lang") || (navigator.language||"en").split("-")[0] || "en").toLowerCase();
-
-    document.documentElement.lang = lang;
-    document.documentElement.dir  = ["ar","he","fa","ur","ps","ckb","dv","syc","yi"].includes(lang) ? "rtl" : "ltr";
-    localStorage.setItem("lang", lang); // persist for next visits
-
+    localStorage.setItem("lang", lang);  // keep: remember last prefix
     await loadTranslations(lang);        // ✅ Load selected language
     injectStaticTranslations();          // ✅ Apply static translations
+    
+    // listen for language switch requests from the root lock
+    document.addEventListener('app:lang-changed', () => {
+      injectStaticTranslations(); // translations already loaded by the sender
+    });
+        
 
     createMyStuffModal();                // 🎛️ Inject the "My Stuff" modal
     
@@ -900,7 +956,8 @@ async function initEmergencyBlock(countryOverride) {
      */
     renderPopularGroup(geoCtx);
     buildAccordion(groupedStructure, geoCtx);    // <-- pass the grouped array directly
-    wireAccordionGroups(structure_data);
+    // Pass the rendered set so tags resolve without globals
+    wireAccordionGroups(structure_data, geoCtx);
     paintAccordionColors();
 
     /**
@@ -1339,8 +1396,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   }
 
-  // Optional: also log when history is cleared from URL
-  window.history.replaceState({}, document.title, window.location.pathname);
+  // Keep ?lang; only drop ?at after storing it.
+  const q = new URLSearchParams(location.search);
+  if (q.has("at")) {
+    q.delete("at");
+    const newUrl = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
+    history.replaceState({}, document.title, newUrl);
+  }
+
 });
 
   document.addEventListener("keydown", (e) => {

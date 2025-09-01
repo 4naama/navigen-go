@@ -17,12 +17,12 @@ export function initStripe(publicKey) {
     "sv", "da", "fi", "nb", "cs", "hu", "sk"
   ];
 
-  const rawLang = localStorage.getItem("lang") || navigator.language.slice(0, 2).toLowerCase() || "en";
-  const stripeLocale = supportedLocales.includes(rawLang) ? rawLang : "en";
-
+  // 🎯 Always pin Stripe to EN for stability
+  const stripeLocale = "en"; // keep logs aligned with actual init
   console.log("📦 Stripe locale:", stripeLocale); // For debugging
-  stripe = Stripe(publicKey, { locale: "auto" });
+  stripe = Stripe(publicKey, { locale: stripeLocale }); // pin to EN
   console.log("✅ Stripe initialized");
+
 }
 
 /**

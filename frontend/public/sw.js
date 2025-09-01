@@ -1,4 +1,4 @@
-const CACHE_NAME = "navigen-go";
+const CACHE_NAME = "navigen-go-v4"; // bump to evict stale assets
 
 // Precache core shell for offline; keep list lean
 self.addEventListener("install", event => {
@@ -59,7 +59,23 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // static assets: cache-first, then network; fill cache for next time
+  const dest = req.destination || '';
+
+  if (dest === 'script' || url.pathname.endsWith('.js')) {
+    event.respondWith((async () => {
+      try {
+        const net = await fetch(req, { cache: 'no-store' });
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(req, net.clone());
+        return net;
+      } catch {
+        return (await caches.match(req)) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  // unchanged: other assets cache-first
   event.respondWith((async () => {
     const hit = await caches.match(req);
     if (hit) return hit;
@@ -70,4 +86,5 @@ self.addEventListener("fetch", event => {
     }
     return net;
   })());
+
 });

@@ -1358,7 +1358,20 @@ export function createMyStuffModal() {
 
         document.getElementById("reset-confirm")?.addEventListener("click", () => {
           localStorage.clear();
-          location.reload();
+          // Route using current <html lang>; drop ?lang, keep others.
+          const currentLang = (document.documentElement.lang || "en").toLowerCase();
+          const parts = location.pathname.split("/").filter(Boolean);
+          const hasPrefix = /^[a-z]{2}$/.test(parts[0]);
+          const rest = "/" + (hasPrefix ? parts.slice(1).join("/") : parts.join("/"));
+
+          const target = currentLang === "en"
+            ? (rest === "/" ? "/" : rest)
+            : `/${currentLang}${rest === "/" ? "" : rest}`;
+
+          const qs = new URLSearchParams(location.search);
+          qs.delete("lang");
+          const query = qs.toString() ? `?${qs}` : "";
+          location.href = `${target}${query}${location.hash || ""}`;
         });
 
         document.getElementById("reset-cancel")?.addEventListener("click", () => {

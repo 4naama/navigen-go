@@ -14,27 +14,33 @@ export function getCurrentLanguage() {
   return currentLang;
 }
 
-export async function loadTranslations(lang, callback) {
-  currentLang = lang;
+// RTL language codes used to set <html dir="rtl">
+export const RTL_LANGS = ["ar","he","fa","ur","ps","ckb","dv","syc","yi"];
 
+/**
+ * Load translations for `lang` with per-key fallback to DEFAULT_LANG.
+ * Also normalizes lang (e.g., "hu-HU" -> "hu") and syncs <html lang>/<html dir>.
+ */
+export async function loadTranslations(lang, callback) {
+  // normalize to primary subtag; default to English
+  const primary = String(lang || "").toLowerCase().split("-")[0] || DEFAULT_LANG;
+  currentLang = primary;
+
+  // try target language
   try {
-    const res = await fetch(`/data/languages/${lang}.json`);
-    if (!res.ok) throw new Error(`Could not load ${lang}.json`);
+    const res = await fetch(`/data/languages/${primary}.json`);
+    if (!res.ok) throw new Error(`Could not load ${primary}.json`);
     translations = await res.json();
   } catch (err) {
-    console.warn(`⚠️ Failed to load ${lang}.json`, err);
+    console.warn(`⚠️ Failed to load ${primary}.json`, err);
     translations = {};
   }
 
-  // ✅ Always load fallback language (English)
-  if (lang !== DEFAULT_LANG) {
+  // always have a fallback (English)
+  if (primary !== DEFAULT_LANG) {
     try {
-      const fallbackRes = await fetch(`/data/languages/${DEFAULT_LANG}.json`);
-      if (fallbackRes.ok) {
-        fallbackTranslations = await fallbackRes.json();
-      } else {
-        fallbackTranslations = {};
-      }
+      const fb = await fetch(`/data/languages/${DEFAULT_LANG}.json`);
+      fallbackTranslations = fb.ok ? await fb.json() : {};
     } catch (err) {
       console.warn(`⚠️ Failed to load fallback (${DEFAULT_LANG}.json)`, err);
       fallbackTranslations = {};
@@ -43,11 +49,16 @@ export async function loadTranslations(lang, callback) {
     fallbackTranslations = translations;
   }
 
-  // ✅ Updated translation function with fallback support
-  tFunction = (key) =>
-    translations[key] || fallbackTranslations[key] || `[${key}]`;
+  // per-key fallback; show [key] only if missing in both
+  tFunction = (key) => translations[key] ?? fallbackTranslations[key] ?? `[${key}]`;
 
-  if (callback) callback();
+  // keep document language + direction in sync (idempotent)
+  if (document.documentElement.lang !== primary) {
+    document.documentElement.lang = primary;
+  }
+  document.documentElement.dir = RTL_LANGS.includes(primary) ? "rtl" : "ltr";
+
+  if (typeof callback === "function") callback();
 }
 
 export function injectStaticTranslations() {
