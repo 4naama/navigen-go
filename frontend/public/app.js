@@ -18,31 +18,10 @@ import {
   showThankYouToast as showThankYouToastUI
 } from './modal-injector.js';
 
-// Force phones to forget old cache on new deploy; one-time per BUILD_ID.
-const BUILD_ID = '2025-08-30-03'; // bump this each deploy
-
-(async () => {
-  try {
-    const prev = localStorage.getItem('BUILD_ID');
-    if (prev !== BUILD_ID) {
-      // Unregister any service workers to stop stale responses.
-      if (navigator.serviceWorker?.getRegistrations) {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(regs.map(r => r.unregister().catch(()=>{})));
-      }
-      // Purge Cache Storage.
-      if (window.caches?.keys) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
-      }
-      localStorage.setItem('BUILD_ID', BUILD_ID);
-      // Hard reload with a cache-busting query so mobile fetches fresh.
-      const u = new URL(window.location.href);
-      u.searchParams.set('v', BUILD_ID);
-      window.location.replace(u.toString());
-    }
-  } catch {}
-})();
+// Force phones to forget old cache on new deploy; one-time per BUILD_ID. (Disabled: no redirect, no purge)
+const BUILD_ID = '2025-08-30-03'; // disabled cache-buster
+try { localStorage.setItem('BUILD_ID', BUILD_ID); } catch {}
+// (No redirect; leave URL untouched)
 
 // Helper: Match name/shortName OR tag keys (strip "tag."), case-insensitive; supports multi-word queries.
 function matchesQueryByNameOrTag(loc, q) {
@@ -66,9 +45,8 @@ import {
   getNumbersFor
 } from '/scripts/emergency-ui.js';
 
-// Delay i18n import until after we lock URL-decided locale (prevents stale HU flip)
-let loadTranslations, t, RTL_LANGS;
-const i18nModPromise = (async () => await import("./scripts/i18n.js"))();
+// Use local injectStaticTranslations() defined later in this file
+import { loadTranslations, t, RTL_LANGS } from "./scripts/i18n.js"; // keep: static import
 
 // Early: ?lang → path-locale; /{lang}/ respected; root stays EN; persist prefix.
 // Also persists the decision before i18n module side-effects run.
@@ -99,9 +77,6 @@ const i18nModPromise = (async () => await import("./scripts/i18n.js"))();
   document.documentElement.dir = (window.RTL_LANGS || []).includes?.(chosen) ? "rtl" : "ltr"; // safe if RTL list loads later
   try { localStorage.setItem("lang", chosen); } catch {}
 })();
-
-// Now it’s safe to expose i18n symbols; the module will see the correct persisted lang.
-({ loadTranslations, t, RTL_LANGS } = await i18nModPromise);
 
 // ✅ Determines whether app is running in standalone/PWA mode
 function isStandalone() {
@@ -142,8 +117,8 @@ window.addEventListener('resize', () => requestAnimationFrame(setVH));
 window.addEventListener('orientationchange', setVH);
 window.addEventListener('pageshow', (e) => { if (e.persisted) setVH(); }); // bfcache
 
-// Root lock: if path has no /{lang}/, force EN and refresh labels
-window.addEventListener('pageshow', () => {
+// Root hard-lock: if no /{lang}/ prefix, force EN and refresh labels (BFCache-safe)
+window.addEventListener('pageshow', async () => {
   const hasPrefix = /^[a-z]{2}(?:\/|$)/.test(location.pathname.slice(1));
   if (!hasPrefix) {
     const locked = "en";
@@ -151,13 +126,10 @@ window.addEventListener('pageshow', () => {
       document.documentElement.lang = locked;
       document.documentElement.dir = "ltr";
       try { localStorage.setItem("lang", locked); } catch {}
-      i18nModPromise
-        .then(m => m.loadTranslations?.(locked))
-        .then(() => {
-          // notify DOMContentLoaded scope to refresh labels (no globals)
-          document.dispatchEvent(new CustomEvent('app:lang-changed', { detail: { lang: locked } }));
-        });
-
+      await loadTranslations(locked);
+      injectStaticTranslations();
+      // notify DOMContentLoaded scope to refresh labels (no globals)
+      document.dispatchEvent(new CustomEvent('app:lang-changed', { detail: { lang: locked } }));
     }
   }
 });
