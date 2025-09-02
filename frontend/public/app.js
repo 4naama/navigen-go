@@ -74,7 +74,10 @@ import { loadTranslations, t, RTL_LANGS } from "./scripts/i18n.js"; // keep: sta
   // Decide from path (root → EN), persist immediately so i18n sees the right value
   const chosen = pathLang || DEFAULT;
   document.documentElement.lang = chosen;
-  document.documentElement.dir = (window.RTL_LANGS || []).includes?.(chosen) ? "rtl" : "ltr"; // safe if RTL list loads later
+  // Early RTL hint; i18n confirms later
+  const RTL_EARLY = ['ar','he','fa','ur'];
+  document.documentElement.dir = RTL_EARLY.includes(chosen) ? 'rtl' : 'ltr';
+  
   try { localStorage.setItem("lang", chosen); } catch {}
 })();
 

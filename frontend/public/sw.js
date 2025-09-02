@@ -4,7 +4,8 @@ const CACHE_NAME = "navigen-go-v4"; // bump to evict stale assets
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    await cache.addAll([
+    // Precache a defined set; skip failures so install cannot be bricked by a 404.
+    const ASSETS = [
       "/",
       "/index.html",
       "/navi-style.css",
@@ -17,7 +18,17 @@ self.addEventListener("install", event => {
       "/assets/icon-512.png",
       "/assets/language.svg",
       "/assets/icon-whatsapp.svg"
-    ]);
+    ];
+
+    await Promise.allSettled(ASSETS.map(async (url) => {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (res && res.ok) await cache.put(url, res.clone());
+      } catch (_) {
+        // keep install alive if a file is missing
+      }
+    }));
+
     // apply new SW immediately after install
     await self.skipWaiting();
   })());

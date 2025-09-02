@@ -809,58 +809,53 @@ function appendResolvedButton(actions, modalId = "my-stuff-modal") {
   }
 }
 
-function getLangFromCountry(code) {
+// Return canonical language code for a given country (full catalog; no ad-hoc fixes)
+export function getLangFromCountry(code) {  
+  const CATALOG = new Set([
+    'en','fr','de','hu','it','he','uk','nl','ro','pl','cs','es','sk','da','sv','nb','sl','ru','pt','is','tr','zh','el','bg','hr','et','fi','lv','lt','mt','hi','ko','ja','ar'
+  ]);
   const langMap = {
     // English-speaking
-    IE: "en", GB: "en", US: "en", CA: "en", AU: "en",
-
+    IE:'en', GB:'en', US:'en', CA:'en', AU:'en',
     // German-speaking
-    DE: "de", AT: "de", CH: "de",
-
+    DE:'de', AT:'de', CH:'de',
     // French-speaking
-    FR: "fr", BE: "fr", LU: "fr",
-
+    FR:'fr', BE:'fr', LU:'fr',
     // Others
-    HU: "hu", BG: "bg", HR: "hr", CY: "el", CZ: "cs", DK: "da", EE: "et",
-    FI: "fi", GR: "el", IT: "it", LV: "lv", LT: "lt", MT: "mt",
-    NL: "nl", PL: "pl", PT: "pt", RO: "ro", SK: "sk", SI: "sl",
-    ES: "es", SE: "sv", IS: "is", NO: "no", TR: "tr",
-    IL: "he", RU: "ru", UA: "uk", CN: "zh", SA: "ar", IN: "hi",
-    KR: "ko", JP: "ja"
+    HU:'hu', BG:'bg', HR:'hr', CY:'el', CZ:'cs', DK:'da', EE:'et',
+    FI:'fi', GR:'el', IT:'it', LV:'lv', LT:'lt', MT:'mt',
+    NL:'nl', PL:'pl', PT:'pt', RO:'ro', SK:'sk', SI:'sl',
+    ES:'es', SE:'sv', IS:'is', NO:'nb', TR:'tr',
+    IL:'he', RU:'ru', UA:'uk', CN:'zh', SA:'ar', IN:'hi',
+    KR:'ko', JP:'ja'
   };
-
-  return langMap[code] || null;
+  const cc = String(code || '').toUpperCase();
+  const lang = langMap[cc] || null;
+  return (lang && CATALOG.has(lang)) ? lang : null;
 }
 
 export async function fetchTranslatedLangs() {
-  const langMap = {
-    IE: "en", GB: "en", US: "en", CA: "en", AU: "en",
-    DE: "de", AT: "de", CH: "de",
-    FR: "fr", BE: "fr", LU: "fr",
-    HU: "hu", BG: "bg", HR: "hr", CY: "el", CZ: "cs", DK: "da", EE: "et",
-    FI: "fi", GR: "el", IT: "it", LV: "lv", LT: "lt", MT: "mt",
-    NL: "nl", PL: "pl", PT: "pt", RO: "ro", SK: "sk", SI: "sl",
-    ES: "es", SE: "sv", IS: "is", NO: "no", TR: "tr",
-    IL: "he", RU: "ru", UA: "uk", CN: "zh", SA: "ar", IN: "hi",
-    KR: "ko", JP: "ja"
-  };
+  // Canonical catalog used across app (must match Worker SUPPORTED)
+  const CATALOG = new Set([
+    'en','fr','de','hu','it','he','uk','nl','ro','pl','cs','es','sk','da','sv','nb','sl','ru','pt','is','tr','zh','el','bg','hr','et','fi','lv','lt','mt','hi','ko','ja','ar'
+  ]);
 
-  const allLangs = Array.from(new Set(Object.values(langMap)));
   const available = [];
-
   try {
     const res = await fetch('/data/languages/index.json');
     if (res.ok) {
-      const listedLangs = await res.json();
-      available.push(...listedLangs);
+      const listedLangs = await res.json(); // expects array of codes
+      for (const code of Array.isArray(listedLangs) ? listedLangs : []) {
+        const c = String(code).toLowerCase();
+        if (CATALOG.has(c)) available.push(c);
+      }
     } else {
       console.warn("⚠️ Could not load language index.json");
     }
   } catch (err) {
     console.warn("⚠️ Failed to fetch index.json:", err);
   }
-
-  return new Set(available);
+  return new Set(available.length ? available : ['en']); // safe fallback
 };
 
 /**

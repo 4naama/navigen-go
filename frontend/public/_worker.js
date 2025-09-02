@@ -4,9 +4,22 @@
 // - Sets Open Graph locale tags
 // - Injects <meta name="cf-country"> (you already read this in app.js)
 
-const SUPPORTED = ['en', 'hu'];          // add more when ready: e.g. ['en','hu','de']
-const DEFAULT   = 'en';
-const OG_MAP    = { en: 'en_US', hu: 'hu_HU' }; // extend as you add locales
+// Add all locales we plan to serve (robots still block indexing; this only shapes HTML head)
+const SUPPORTED = [
+  'en','fr','de','hu','it','he','uk','nl','ro','pl','cs','es','sk','da','sv','nb','sl','ru','pt','is','tr','zh','el','bg','hr','et','fi','lv','lt','mt','hi','ko','ja','ar'
+];
+const DEFAULT = 'en';
+
+// Map to regioned OG locales (best defaults; adjust if your target market differs)
+const OG_MAP = {
+  en:'en_US', fr:'fr_FR', de:'de_DE', hu:'hu_HU', it:'it_IT', he:'he_IL', uk:'uk_UA', nl:'nl_NL',
+  ro:'ro_RO', pl:'pl_PL', cs:'cs_CZ', es:'es_ES', sk:'sk_SK', da:'da_DK', sv:'sv_SE', nb:'nb_NO',
+  sl:'sl_SI', ru:'ru_RU', pt:'pt_PT', is:'is_IS', tr:'tr_TR',
+  // For Chinese you may want to split later: zh_CN (Simplified), zh_TW (Traditional)
+  zh:'zh_CN',
+  el:'el_GR', bg:'bg_BG', hr:'hr_HR', et:'et_EE', fi:'fi_FI', lv:'lv_LV', lt:'lt_LT', mt:'mt_MT',
+  hi:'hi_IN', ko:'ko_KR', ja:'ja_JP', ar:'ar_SA'
+};
 
 export default {
   async fetch(req, env) {

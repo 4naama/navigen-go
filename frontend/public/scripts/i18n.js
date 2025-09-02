@@ -76,6 +76,6 @@ const countryToLang = {
   EE: "et", FI: "fi", FR: "fr", DE: "de", GR: "el", HU: "hu", IE: "en",
   IT: "it", LV: "lv", LT: "lt", LU: "fr", MT: "mt", NL: "nl", PL: "pl",
   PT: "pt", RO: "ro", SK: "sk", SI: "sl", ES: "es", SE: "sv", IS: "is",
-  NO: "no", CH: "de", GB: "en", TR: "tr", IL: "he", RU: "ru", CN: "zh",
+  NO: "nb", CH: "de", GB: "en", TR: "tr", IL: "he", RU: "ru", CN: "zh",
   SA: "ar", IN: "hi", KR: "ko", JP: "ja", US: "en", CA: "en"
 };
