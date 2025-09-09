@@ -1,0 +1,58 @@
+// Minimal sitemap generator with hreflang alternates (tentative; publish later)
+import { promises as fs } from "fs";
+import path from "path";
+
+const ORIGIN = process.env.SITE_ORIGIN || "https://navigen.io";
+
+// Canonical language catalog (keep in sync with Worker SUPPORTED + /data/languages/index.json)
+const LOCALES = [
+  "en","fr","de","hu","it","he","uk","nl","ro","pl","cs","es","sk","da","sv",
+  "nb","sl","ru","pt","is","tr","zh","el","bg","hr","et","fi","lv","lt","mt",
+  "hi","ko","ja","ar"
+];
+
+// List the routes you want indexed (relative paths, leading slash, trailing slash where appropriate)
+const ROUTES = [
+  "/" // add more when ready, e.g., "/map/", "/about/"
+];
+
+const today = new Date().toISOString().slice(0, 10);
+
+function locFor(lang, route) {
+  // EN stays at root; others get /{lang}/ prefix
+  if (lang === "en") return new URL(route, ORIGIN).toString();
+  const clean = route === "/" ? "/" : route.replace(/^\/+/, "");
+  const withPrefix = lang + (clean.startsWith("/") ? "" : "/") + clean;
+  // ensure trailing slash if route had it
+  return new URL("/" + withPrefix, ORIGIN).toString();
+}
+
+function urlEntry(route) {
+  const alternates = LOCALES.map(
+    (lang) =>
+      `    <xhtml:link rel="alternate" hreflang="${lang}" href="${locFor(lang, route)}"/>`
+  ).join("\n");
+  const xdefault = `    <xhtml:link rel="alternate" hreflang="x-default" href="${locFor("en", route)}"/>`;
+  return `
+  <url>
+    <loc>${locFor("en", route)}</loc>
+${xdefault}
+${alternates}
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${route === "/" ? "0.80" : "0.60"}</priority>
+  </url>`;
+}
+
+const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${ROUTES.map(urlEntry).join("\n")}
+</urlset>
+`.trim() + "\n";
+
+const outFile = path.join(process.cwd(), "public", "sitemap.xml");
+await fs.mkdir(path.dirname(outFile), { recursive: true });
+await fs.writeFile(outFile, xml, "utf8");
+console.log("✅ Wrote", outFile);

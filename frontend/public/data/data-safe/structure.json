@@ -1,53 +1,122 @@
 [
   {
+    "groupKey": "group.spots",
+    "groupName": "✨ Main Spots",
+    "subgroups": [
+      {
+        "key": "sub.squares",
+        "name": "⛲ Squares",
+        "keywords": []
+      },
+      {
+        "key": "sub.main-areas",
+        "name": "🎯 Central Area",
+        "keywords": []
+      },
+      {
+        "key": "sub.contests-voting",
+        "name": "🏆 Contests & Voting",
+        "keywords": []
+      },
+      {
+        "key": "sub.camping-zones",
+        "name": "🏕️ Camping Zones",
+        "keywords": []
+      },
+      {
+        "key": "sub.restricted-areas",
+        "name": "🚧 Restricted Areas",
+        "keywords": []
+      },
+      {
+        "key": "sub.markets",
+        "name": "🛍️ Markets",
+        "keywords": []
+      },
+      {
+        "key": "sub.streets",
+        "name": "🛣️ Streets",
+        "keywords": []
+      }
+    ],
+    "domain": "📍 POI",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
+  },
+  {
     "groupKey": "group.parks-nature",
     "groupName": "🌳 Parks & Nature",
     "subgroups": [
       {
         "key": "sub.hills",
-        "name": "⛰️ Hills"
+        "name": "⛰️ Hills",
+        "keywords": [
+          "hill",
+          "mount",
+          "monte",
+          "mountain",
+          "viewpoint",
+          "mirador"
+        ]
       },
       {
         "key": "sub.waterfronts",
-        "name": "🌊 Waterfronts"
+        "name": "🌊 Waterfronts",
+        "keywords": [
+          "waterfront",
+          "river",
+          "lakeside",
+          "seafront",
+          "coast",
+          "beach",
+          "harbor",
+          "harbour",
+          "marina",
+          "promenade"
+        ]
       },
       {
         "key": "sub.gardens",
-        "name": "🌷 Gardens"
+        "name": "🌷 Gardens",
+        "keywords": [
+          "garden",
+          "botanical",
+          "botanic",
+          "arboretum",
+          "rose garden",
+          "horticultural"
+        ]
       },
       {
         "key": "sub.city-parks",
-        "name": "🏞️ City-parks"
+        "name": "🏞️ City-parks",
+        "keywords": [
+          "park",
+          "parque",
+          "green",
+          "playground",
+          "play area",
+          "urban park"
+        ]
       }
     ],
-    "domain": "📍 POI"
-  },
-  {
-    "groupKey": "group.food",
-    "groupName": "🍽️ Food & Drink",
-    "subgroups": [
-      {
-        "key": "sub.coffee-snacks",
-        "name": "☕ Coffee & Snacks"
-      },
-      {
-        "key": "sub.food-stalls",
-        "name": "🍔 Food Stalls"
-      },
-      {
-        "key": "sub.bars-beverages",
-        "name": "🍻 Bars & Beverages"
-      },
-      {
-        "key": "sub.vegan-healthy",
-        "name": "🥗 Vegan & Healthy"
-      },
-      {
-        "key": "sub.street-food",
-        "name": "🥙 Street Food"
-      }
+    "domain": "📍 POI",
+    "groupKeywords": [
+      "park",
+      "parque",
+      "garden",
+      "jardín",
+      "botanical",
+      "nature",
+      "natural",
+      "area",
+      "waterfront",
+      "river",
+      "coast",
+      "mirador",
+      "viewpoint"
     ],
-    "domain": "🎉 Festival"
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.food-drink",
@@ -55,134 +124,163 @@
     "subgroups": [
       {
         "key": "sub.cafes",
-        "name": "☕ Cafés"
+        "name": "☕ Cafés",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-mexican",
-        "name": "🌮 Mexican"
+        "name": "🌮 Mexican",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-hungarian",
-        "name": "🌶️ Hungarian"
+        "name": "🌶️ Hungarian",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-american",
-        "name": "🍔 American"
+        "name": "🍔 American",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-bbq",
-        "name": "🍖 BBQ"
+        "name": "🍖 BBQ",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-indian",
-        "name": "🍛 Indian"
+        "name": "🍛 Indian",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-thai",
-        "name": "🍜 Thai"
+        "name": "🍜 Thai",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-vietnamese",
-        "name": "🍜 Vietnamese"
+        "name": "🍜 Vietnamese",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-italian",
-        "name": "🍝 Italian"
+        "name": "🍝 Italian",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-japanese",
-        "name": "🍣 Japanese"
+        "name": "🍣 Japanese",
+        "keywords": []
       },
       {
         "key": "sub.ice-cream",
-        "name": "🍦 Ice Cream"
+        "name": "🍦 Ice Cream",
+        "keywords": []
       },
       {
         "key": "sub.desserts",
-        "name": "🍰 Desserts"
+        "name": "🍰 Desserts",
+        "keywords": []
       },
       {
         "key": "sub.food-courts",
-        "name": "🍱 Food Courts"
+        "name": "🍱 Food Courts",
+        "keywords": []
       },
       {
         "key": "sub.wine-bars",
-        "name": "🍷 Wine Bars"
+        "name": "🍷 Wine Bars",
+        "keywords": []
       },
       {
         "key": "sub.bars",
-        "name": "🍸 Bars"
+        "name": "🍸 Bars",
+        "keywords": []
       },
       {
         "key": "sub.pubs",
-        "name": "🍺 Pubs"
+        "name": "🍺 Pubs",
+        "keywords": []
       },
       {
         "key": "sub.breweries",
-        "name": "🍻 Breweries"
+        "name": "🍻 Breweries",
+        "keywords": []
       },
       {
         "key": "sub.restaurants",
-        "name": "🍽️ Restaurants"
+        "name": "🍽️ Restaurants",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-seafood",
-        "name": "🐟 Seafood"
+        "name": "🐟 Seafood",
+        "keywords": []
       },
       {
         "key": "sub.bakeries",
-        "name": "🥐 Bakeries"
+        "name": "🥐 Bakeries",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-french",
-        "name": "🥖 French"
-      },
-      {
-        "key": "sub.vegetarian-vegan",
-        "name": "🥗 Vegetarian/Vegan"
+        "name": "🥖 French",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-spanish",
-        "name": "🥘 Spanish"
+        "name": "🥘 Spanish",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-mediterranean",
-        "name": "🥙 Mediterranean"
+        "name": "🥙 Mediterranean",
+        "keywords": []
       },
       {
         "key": "sub.street-food",
-        "name": "🥙 Street Food"
+        "name": "🥙 Street Food",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-turkish",
-        "name": "🥙 Turkish"
+        "name": "🥙 Turkish",
+        "keywords": []
       },
       {
         "key": "sub.breakfast-brunch",
-        "name": "🥞 Breakfast/Brunch"
+        "name": "🥞 Breakfast/Brunch",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-chinese",
-        "name": "🥟 Chinese"
+        "name": "🥟 Chinese",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-korean",
-        "name": "🥢 Korean"
+        "name": "🥢 Korean",
+        "keywords": []
       },
       {
         "key": "sub.fast-food",
-        "name": "🥪 Fast-food"
+        "name": "🥪 Fast-food",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-middle-eastern",
-        "name": "🧆 Middle Eastern"
+        "name": "🧆 Middle Eastern",
+        "keywords": []
       },
       {
         "key": "sub.cuisine-greek",
-        "name": "🫒 Greek"
+        "name": "🫒 Greek",
+        "keywords": []
       }
     ],
-    "domain": "🛒 Marketplace"
+    "domain": "🛒 Marketplace",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.stages",
@@ -190,54 +288,68 @@
     "subgroups": [
       {
         "key": "sub.music-workshops",
-        "name": "🍀 Music Workshops"
+        "name": "🍀 Music Workshops",
+        "keywords": []
       },
       {
         "key": "sub.karaoke-nights",
-        "name": "🎤 Karaoke Nights"
+        "name": "🎤 Karaoke Nights",
+        "keywords": []
       },
       {
         "key": "sub.dj-dance",
-        "name": "🎧 DJ & Dance"
+        "name": "🎧 DJ & Dance",
+        "keywords": []
       },
       {
         "key": "sub.pop-stage",
-        "name": "🎵 Pop Stage"
+        "name": "🎵 Pop Stage",
+        "keywords": []
       },
       {
         "key": "sub.live-music",
-        "name": "🎷 Live Music"
+        "name": "🎷 Live Music",
+        "keywords": []
       },
       {
         "key": "sub.rock-stage",
-        "name": "🎸 Rock Stage"
+        "name": "🎸 Rock Stage",
+        "keywords": []
       },
       {
         "key": "sub.piano-keys-lounge",
-        "name": "🎹 Piano & Keys Lounge"
+        "name": "🎹 Piano & Keys Lounge",
+        "keywords": []
       },
       {
         "key": "sub.classical-performance",
-        "name": "🎼 Classical Performances"
+        "name": "🎼 Classical Performances",
+        "keywords": []
       },
       {
         "key": "sub.vinyl-retro-beats",
-        "name": "📀 Vinyl & Retro Beats"
+        "name": "📀 Vinyl & Retro Beats",
+        "keywords": []
       },
       {
         "key": "sub.silent-disco",
-        "name": "🔇 Silent Disco"
+        "name": "🔇 Silent Disco",
+        "keywords": []
       },
       {
         "key": "sub.drumming-circles",
-        "name": "🥁 Drumming Circles"
+        "name": "🥁 Drumming Circles",
+        "keywords": []
       },
       {
         "key": "sub.acoustic-sessions",
-        "name": "🪕 Acoustic Sessions"
+        "name": "🪕 Acoustic Sessions",
+        "keywords": []
       }
     ],
-    "domain": "🎉 Festival"
+    "domain": "🎉 Festival",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.activities",
@@ -245,22 +357,28 @@
     "subgroups": [
       {
         "key": "sub.art-creative-zones",
-        "name": "🎨 Art & Creative Zones"
+        "name": "🎨 Art & Creative Zones",
+        "keywords": []
       },
       {
         "key": "sub.games-fun",
-        "name": "🎯 Games & Fun"
+        "name": "🎯 Games & Fun",
+        "keywords": []
       },
       {
         "key": "sub.music-rhythm",
-        "name": "🎶 Music & Rhythm"
+        "name": "🎶 Music & Rhythm",
+        "keywords": []
       },
       {
         "key": "sub.photo-spots",
-        "name": "📸 Photo Spots"
+        "name": "📸 Photo Spots",
+        "keywords": []
       }
     ],
-    "domain": "🎉 Festival"
+    "domain": "🎉 Festival",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.experiences",
@@ -268,22 +386,28 @@
     "subgroups": [
       {
         "key": "sub.tastings",
-        "name": "🍷 Tastings"
+        "name": "🍷 Tastings",
+        "keywords": []
       },
       {
         "key": "sub.games",
-        "name": "🎲 Games"
+        "name": "🎲 Games",
+        "keywords": []
       },
       {
         "key": "sub.kids",
-        "name": "👧 Kids"
+        "name": "👧 Kids",
+        "keywords": []
       },
       {
         "key": "sub.workshops",
-        "name": "🧪 Workshops"
+        "name": "🧪 Workshops",
+        "keywords": []
       }
     ],
-    "domain": "🛒 Marketplace"
+    "domain": "🛒 Marketplace",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.landmarks",
@@ -291,58 +415,224 @@
     "subgroups": [
       {
         "key": "sub.churches",
-        "name": "⛪ Churches"
+        "name": "⛪ Churches",
+        "keywords": [
+          "church",
+          "cathedral",
+          "basilica",
+          "chapel",
+          "iglesia",
+          "abbey",
+          "monastery",
+          "convent",
+          "duomo",
+          "parish church"
+        ]
       },
       {
         "key": "sub.bridges",
-        "name": "🌉 Bridges"
+        "name": "🌉 Bridges",
+        "keywords": [
+          "bridge",
+          "viaduct",
+          "aqueduct",
+          "puente",
+          "pont",
+          "ponte",
+          "brücke",
+          "footbridge",
+          "causeway",
+          "overpass"
+        ]
       },
       {
         "key": "sub.art-nouveau",
-        "name": "🌸 Art-nouveau"
+        "name": "🌸 Art-nouveau",
+        "keywords": [
+          "art nouveau",
+          "art-nouveau",
+          "jugendstil",
+          "secession",
+          "sezession",
+          "liberty style",
+          "stile liberty",
+          "modernisme",
+          "modernismo",
+          "arte nova"
+        ]
       },
       {
         "key": "sub.modern",
-        "name": "🏙️ Modern"
+        "name": "🏙️ Modern",
+        "keywords": [
+          "modern",
+          "modernist",
+          "20th century",
+          "mid-century",
+          "bauhaus",
+          "international style"
+        ]
       },
       {
         "key": "sub.castles",
-        "name": "🏰 Castles"
+        "name": "🏰 Castles",
+        "keywords": [
+          "castle",
+          "castillo",
+          "château",
+          "chateau",
+          "fort",
+          "fortress",
+          "citadel",
+          "alcazaba",
+          "alcázar",
+          "alcazar",
+          "palace",
+          "palacio",
+          "keep",
+          "stronghold"
+        ]
       },
       {
         "key": "sub.mosques",
-        "name": "🕌 Mosques"
+        "name": "🕌 Mosques",
+        "keywords": [
+          "mosque",
+          "masjid",
+          "mezquita",
+          "jami",
+          "jama masjid",
+          "mescit",
+          "musjid"
+        ]
       },
       {
         "key": "sub.sacred-sites",
-        "name": "🕍 Sacred Sites"
+        "name": "🕍 Sacred Sites",
+        "keywords": [
+          "sacred",
+          "holy site",
+          "holy place",
+          "pilgrimage",
+          "sanctuary",
+          "shrine",
+          "hermitage",
+          "santuario",
+          "sanctuaire"
+        ]
       },
       {
         "key": "sub.synagogues",
-        "name": "🕍 Synagogues"
+        "name": "🕍 Synagogues",
+        "keywords": [
+          "synagogue",
+          "shul",
+          "sinagoga",
+          "beit knesset",
+          "beth knesset",
+          "beis knesses"
+        ]
       },
       {
         "key": "sub.gothic",
-        "name": "🕯️ Gothic"
+        "name": "🕯️ Gothic",
+        "keywords": [
+          "gothic",
+          "neo-gothic",
+          "gothic revival",
+          "neogothic",
+          "gótico",
+          "gotico",
+          "gòtic"
+        ]
       },
       {
         "key": "sub.towers",
-        "name": "🗼 Towers"
+        "name": "🗼 Towers",
+        "keywords": [
+          "tower",
+          "torre",
+          "minaret",
+          "watchtower",
+          "belfry",
+          "campanile",
+          "clock tower",
+          "observation tower"
+        ]
       },
       {
         "key": "sub.monuments",
-        "name": "🗽 Monuments"
+        "name": "🗽 Monuments",
+        "keywords": [
+          "monument",
+          "monumento",
+          "denkmal",
+          "statue",
+          "statua",
+          "memorial",
+          "memoriale",
+          "obelisk",
+          "obelisco",
+          "stele",
+          "stela",
+          "column",
+          "columna",
+          "colonne",
+          "cenotaph",
+          "mausoleum"
+        ]
       },
       {
         "key": "sub.contemporary",
-        "name": "🧩 Contemporary"
+        "name": "🧩 Contemporary",
+        "keywords": [
+          "contemporary",
+          "postmodern",
+          "postmodernism",
+          "21st century",
+          "deconstructivist",
+          "parametric"
+        ]
       },
       {
         "key": "sub.temples",
-        "name": "🛕 Temples"
+        "name": "🛕 Temples",
+        "keywords": [
+          "temple",
+          "pagoda",
+          "mandir",
+          "stupa",
+          "shrine",
+          "gurdwara",
+          "vihara",
+          "wat",
+          "jain temple",
+          "derasar"
+        ]
       }
     ],
-    "domain": "📍 POI"
+    "domain": "📍 POI",
+    "groupKeywords": [
+      "landmark",
+      "monument",
+      "cathedral",
+      "church",
+      "castle",
+      "bridge",
+      "tower",
+      "mosque",
+      "synagogue",
+      "temple",
+      "historic site",
+      "fortress",
+      "alcazaba",
+      "puente",
+      "torre",
+      "iglesia",
+      "mezquita",
+      "sinagoga"
+    ],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.social-points",
@@ -350,92 +640,453 @@
     "subgroups": [
       {
         "key": "sub.chill-spots",
-        "name": "🌴 Chill Spots"
+        "name": "🌴 Chill Spots",
+        "keywords": []
       },
       {
         "key": "sub.cultural-corner",
-        "name": "🎭 Cultural Corner"
+        "name": "🎭 Cultural Corner",
+        "keywords": []
       },
       {
         "key": "sub.massage",
-        "name": "👐 Massage"
+        "name": "👐 Massage",
+        "keywords": []
       },
       {
         "key": "sub.charity-point",
-        "name": "💖 Charity Point"
+        "name": "💖 Charity Point",
+        "keywords": []
       },
       {
         "key": "sub.group-photo-area",
-        "name": "📸 Group Photo Area"
+        "name": "📸 Group Photo Area",
+        "keywords": []
       },
       {
         "key": "sub.meeting-points",
-        "name": "🤝 Meeting Points"
+        "name": "🤝 Meeting Points",
+        "keywords": []
       },
       {
         "key": "sub.picnic-area",
-        "name": "🧺 Picnic Area"
+        "name": "🧺 Picnic Area",
+        "keywords": []
       }
     ],
-    "domain": "🎉 Festival"
+    "domain": "🎉 Festival",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.museums",
     "groupName": "🖼️ Museums & Galleries",
     "subgroups": [
       {
+        "key": "sub.military",
+        "name": "⚔️ Military & War",
+        "keywords": [
+          "military",
+          "war",
+          "army",
+          "navy",
+          "fortress",
+          "battle",
+          "defense",
+          "defence",
+          "air force"
+        ]
+      },
+      {
+        "key": "sub.industry",
+        "name": "⚙️ Industry & Technology",
+        "keywords": [
+          "industry",
+          "industrial",
+          "machinery",
+          "factory",
+          "engineering",
+          "technology",
+          "tech",
+          "manufacturing",
+          "machines",
+          "innovation"
+        ]
+      },
+      {
+        "key": "sub.sports",
+        "name": "⚽ Sports",
+        "keywords": [
+          "sport",
+          "sports",
+          "football",
+          "soccer",
+          "olympic",
+          "stadium",
+          "athletics"
+        ]
+      },
+      {
+        "key": "sub.geology",
+        "name": "⛏️ Geology & Minerals",
+        "keywords": [
+          "geology",
+          "mineral",
+          "minerals",
+          "crystal",
+          "gem",
+          "rock",
+          "mining",
+          "mine"
+        ]
+      },
+      {
+        "key": "sub.aviation",
+        "name": "✈️ Aviation",
+        "keywords": [
+          "aviation",
+          "airplane",
+          "aircraft",
+          "aeronautics",
+          "flight",
+          "aerospace"
+        ]
+      },
+      {
+        "key": "sub.ethnology",
+        "name": "🌍 Peoples & Cultures",
+        "keywords": [
+          "people",
+          "peoples",
+          "cultures",
+          "culture",
+          "ethnology",
+          "ethnographic",
+          "anthropology",
+          "indigenous",
+          "tribal"
+        ]
+      },
+      {
+        "key": "group.nature",
+        "name": "🌳 Nature & Environment",
+        "keywords": [
+          "nature",
+          "natural",
+          "environment",
+          "ecology",
+          "conservation",
+          "habitat",
+          "wildlife",
+          "biodiversity",
+          "ecosystem",
+          "protected area",
+          "national park",
+          "natural park"
+        ]
+      },
+      {
+        "key": "sub.botanical",
+        "name": "🌿 Botanical / Gardens",
+        "keywords": [
+          "garden",
+          "botanical",
+          "botanic",
+          "arboretum",
+          "rose garden",
+          "horticultural",
+          "greenhouse",
+          "orangery"
+        ]
+      },
+      {
         "key": "sub.art",
-        "name": "🎨 Art"
+        "name": "🎨 Art",
+        "keywords": [
+          "art",
+          "fine art",
+          "painting",
+          "gallery",
+          "modern art",
+          "contemporary",
+          "sculpture"
+        ]
+      },
+      {
+        "key": "group.culture",
+        "name": "🎭 Culture & Society",
+        "keywords": [
+          "culture",
+          "society",
+          "social history",
+          "customs",
+          "traditions",
+          "anthropology",
+          "ethnography",
+          "heritage"
+        ]
+      },
+      {
+        "key": "sub.music",
+        "name": "🎵 Music",
+        "keywords": [
+          "music",
+          "instrument",
+          "orchestra",
+          "composer",
+          "opera",
+          "song",
+          "choir"
+        ]
+      },
+      {
+        "key": "sub.architecture",
+        "name": "🏛️ Architecture",
+        "keywords": [
+          "architecture",
+          "architect",
+          "building design",
+          "urbanism",
+          "built environment"
+        ]
+      },
+      {
+        "key": "group.heritage",
+        "name": "🏯 Built Heritage",
+        "keywords": [
+          "built heritage",
+          "historic building",
+          "heritage building",
+          "monument",
+          "church",
+          "cathedral",
+          "castle",
+          "palace",
+          "fortress",
+          "old town",
+          "historic center",
+          "historic centre"
+        ]
       },
       {
         "key": "sub.history",
-        "name": "🏺 History"
+        "name": "🏺 History",
+        "keywords": [
+          "history",
+          "historical",
+          "archaeology",
+          "antiquities",
+          "roman",
+          "medieval",
+          "ancient"
+        ]
+      },
+      {
+        "key": "sub.zoology",
+        "name": "🐅 Zoology",
+        "keywords": [
+          "zoo",
+          "zoological",
+          "animal park",
+          "wildlife park",
+          "safari park",
+          "menagerie"
+        ]
+      },
+      {
+        "key": "sub.pharmacy",
+        "name": "💊 Pharmacy",
+        "keywords": [
+          "pharmacy",
+          "apothecary",
+          "medication",
+          "drug",
+          "remedy",
+          "herbal",
+          "medicine",
+          "medical",
+          "pharmacology"
+        ]
+      },
+      {
+        "key": "sub.literature",
+        "name": "📚 Literature & Books",
+        "keywords": [
+          "literature",
+          "books",
+          "library",
+          "manuscript",
+          "writer",
+          "poet",
+          "novel"
+        ]
       },
       {
         "key": "sub.science",
-        "name": "🔬 Science"
+        "name": "🔬 Science",
+        "keywords": [
+          "science",
+          "physics",
+          "chemistry",
+          "experiments",
+          "technology"
+        ]
+      },
+      {
+        "key": "sub.food-culture",
+        "name": "🥖 Food Culture",
+        "keywords": [
+          "food",
+          "culinary",
+          "gastronomy",
+          "bakery",
+          "chocolate",
+          "wine",
+          "beer",
+          "confectionery",
+          "sweets"
+        ]
+      },
+      {
+        "key": "sub.natural-history",
+        "name": "🦖 Natural History",
+        "keywords": [
+          "natural history",
+          "paleontology",
+          "palaeontology",
+          "fossil",
+          "dinosaur"
+        ]
       },
       {
         "key": "sub.specialty",
-        "name": "🧩 Specialty"
+        "name": "🧩 Specialty",
+        "keywords": []
+      },
+      {
+        "key": "sub.science-medicine",
+        "name": "🧬 Science",
+        "keywords": [
+          "life science",
+          "genetics",
+          "dna",
+          "genome",
+          "biotech",
+          "biomedical",
+          "biology",
+          "microbiology"
+        ]
+      },
+      {
+        "key": "sub.folklore",
+        "name": "🧵 Folklore & Traditions",
+        "keywords": [
+          "folklore",
+          "tradition",
+          "folk",
+          "craft",
+          "costume",
+          "folksong"
+        ]
+      },
+      {
+        "key": "sub.toys",
+        "name": "🧸 Toys",
+        "keywords": [
+          "toy",
+          "toys",
+          "doll",
+          "model",
+          "play",
+          "game",
+          "miniature"
+        ]
+      },
+      {
+        "key": "sub.rail",
+        "name": "🚂 Rail",
+        "keywords": [
+          "rail",
+          "railway",
+          "train",
+          "locomotive",
+          "tramway",
+          "tram"
+        ]
+      },
+      {
+        "key": "sub.automobile",
+        "name": "🚗 Automobile",
+        "keywords": [
+          "automobile",
+          "auto",
+          "car",
+          "motoring",
+          "motorcar",
+          "automotive"
+        ]
+      },
+      {
+        "key": "sub.maritime",
+        "name": "🚢 Maritime",
+        "keywords": [
+          "maritime",
+          "naval",
+          "ship",
+          "boat",
+          "sailing",
+          "port",
+          "seafaring"
+        ]
       }
     ],
-    "domain": "📍 POI"
+    "domain": "📍 POI",
+    "groupKeywords": [
+      "museum",
+      "museo",
+      "museu",
+      "musée",
+      "musee",
+      "gallery",
+      "galería",
+      "galeria",
+      "galerie"
+    ],
+    "fallbackSubgroupKey": ""
   },
   {
-    "groupKey": "group.areas",
-    "groupName": "🧭 Neighborhoods / Areas",
+    "groupKey": "group.event-food",
+    "groupName": "🥂 Event Food & Drink",
     "subgroups": [
       {
-        "key": "sub.squares",
-        "name": "⛲ Squares"
+        "key": "sub.coffee-snacks",
+        "name": "☕ Coffee & Snacks",
+        "keywords": []
       },
       {
-        "key": "sub.main-areas",
-        "name": "🎯 Central Area"
+        "key": "sub.food-stalls",
+        "name": "🍔 Food Stalls",
+        "keywords": []
       },
       {
-        "key": "sub.contests-voting",
-        "name": "🏆 Contests & Voting"
+        "key": "sub.bars-beverages",
+        "name": "🍻 Bars & Beverages",
+        "keywords": []
       },
       {
-        "key": "sub.camping-zones",
-        "name": "🏕️ Camping Zones"
+        "key": "sub.vegan-healthy",
+        "name": "🥗 Vegan & Healthy",
+        "keywords": []
       },
       {
-        "key": "sub.restricted-areas",
-        "name": "🚧 Restricted Areas"
-      },
-      {
-        "key": "sub.markets",
-        "name": "🛍️ Markets"
-      },
-      {
-        "key": "sub.streets",
-        "name": "🛣️ Streets"
+        "key": "sub.street-food",
+        "name": "🥙 Street Food",
+        "keywords": []
       }
     ],
-    "domain": "🎉 Festival"
+    "domain": "🎉 Festival",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.guests",
@@ -443,70 +1094,58 @@
     "subgroups": [
       {
         "key": "sub.weather-info",
-        "name": "☀️ Weather Info"
+        "name": "☀️ Weather Info",
+        "keywords": []
       },
       {
         "key": "sub.recycling",
-        "name": "♻️ Recycling & Waste Points"
-      },
-      {
-        "key": "sub.accessibility",
-        "name": "♿ Accessibility"
-      },
-      {
-        "key": "sub.translation-services",
-        "name": "🌐 Translation Services"
+        "name": "♻️ Recycling & Waste Points",
+        "keywords": []
       },
       {
         "key": "sub.event-payment",
-        "name": "🎟️ Event Payment Services"
+        "name": "🎟️ Event Payment Services",
+        "keywords": []
       },
       {
         "key": "sub.tickets-passes",
-        "name": "🎫 Tickets & Passes"
+        "name": "🎫 Tickets & Passes",
+        "keywords": []
       },
       {
         "key": "sub.atm",
-        "name": "🏧 ATM / Cashpoint"
-      },
-      {
-        "key": "sub.pet-services",
-        "name": "🐾 Pet Services"
+        "name": "🏧 ATM / Cashpoint",
+        "keywords": []
       },
       {
         "key": "sub.info-booths",
-        "name": "💬 Info Booths"
-      },
-      {
-        "key": "sub.wifi",
-        "name": "📶 Wi-Fi Access"
-      },
-      {
-        "key": "sub.charging-stations",
-        "name": "🔌 Charging Stations"
+        "name": "💬 Info Booths",
+        "keywords": []
       },
       {
         "key": "sub.lockers-storage",
-        "name": "🔒 Lockers & Storage"
-      },
-      {
-        "key": "sub.kids-zone",
-        "name": "🤹 Kids Zone"
+        "name": "🔒 Lockers & Storage",
+        "keywords": []
       },
       {
         "key": "sub.lost-found",
-        "name": "🧳 Lost & Found"
+        "name": "🧳 Lost & Found",
+        "keywords": []
       },
       {
         "key": "sub.health-services",
-        "name": "🩺 Health Services"
+        "name": "🩺 Health Services",
+        "keywords": []
       },
       {
         "key": "sub.help-desk",
-        "name": "🛎️ Help Desk"
+        "name": "🛎️ Help Desk",
+        "keywords": []
       }
     ],
-    "domain": "🎉 Festival"
+    "domain": "🎉 Festival",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.transport",
@@ -514,118 +1153,148 @@
     "subgroups": [
       {
         "key": "sub.ferry",
-        "name": "⛴️ Ferry"
+        "name": "⛴️ Ferry",
+        "keywords": []
       },
       {
         "key": "sub.sailboat",
-        "name": "⛵ Sailboat"
+        "name": "⛵ Sailboat",
+        "keywords": []
       },
       {
         "key": "sub.fuel-station",
-        "name": "⛽ Fuel Station"
+        "name": "⛽ Fuel Station",
+        "keywords": []
       },
       {
         "key": "sub.airport",
-        "name": "✈️ Airport"
+        "name": "✈️ Airport",
+        "keywords": []
       },
       {
         "key": "sub.ticketing",
-        "name": "🎟️ Tickets & Payment"
+        "name": "🎟️ Tickets & Payment",
+        "keywords": []
       },
       {
         "key": "sub.horse-riding",
-        "name": "🐎 Horse Riding"
+        "name": "🐎 Horse Riding",
+        "keywords": []
       },
       {
         "key": "sub.electric-charging",
-        "name": "🔋 Electric Charging"
+        "name": "🔋 Electric Charging",
+        "keywords": []
       },
       {
         "key": "sub.scenic-flight-heli",
-        "name": "🚁 Helicopter Tour"
+        "name": "🚁 Helicopter Tour",
+        "keywords": []
       },
       {
         "key": "sub.train",
-        "name": "🚄 Train"
+        "name": "🚄 Train",
+        "keywords": []
       },
       {
         "key": "sub.metro",
-        "name": "🚇 Metro / Underground"
+        "name": "🚇 Metro / Underground",
+        "keywords": []
       },
       {
         "key": "sub.local-train",
-        "name": "🚊 Local Train"
+        "name": "🚊 Local Train",
+        "keywords": []
       },
       {
         "key": "sub.tram",
-        "name": "🚋 Tram"
+        "name": "🚋 Tram",
+        "keywords": []
       },
       {
         "key": "sub.local-bus",
-        "name": "🚌 Local Bus"
+        "name": "🚌 Local Bus",
+        "keywords": []
       },
       {
         "key": "sub.coach",
-        "name": "🚍 Coach"
+        "name": "🚍 Coach",
+        "keywords": []
       },
       {
         "key": "sub.tourist-bus",
-        "name": "🚍 Sightseeing Bus"
+        "name": "🚍 Sightseeing Bus",
+        "keywords": []
       },
       {
         "key": "sub.trolleybus",
-        "name": "🚎 Trolleybus"
+        "name": "🚎 Trolleybus",
+        "keywords": []
       },
       {
         "key": "sub.shuttle",
-        "name": "🚐 Shuttle"
+        "name": "🚐 Shuttle",
+        "keywords": []
       },
       {
         "key": "sub.taxi",
-        "name": "🚕 Taxi"
+        "name": "🚕 Taxi",
+        "keywords": []
       },
       {
         "key": "sub.car-rental",
-        "name": "🚗 Car Rental"
+        "name": "🚗 Car Rental",
+        "keywords": []
       },
       {
         "key": "sub.cruise-ship",
-        "name": "🚢 Cruise Ship"
+        "name": "🚢 Cruise Ship",
+        "keywords": []
       },
       {
         "key": "sub.boat",
-        "name": "🚤 Boat"
+        "name": "🚤 Boat",
+        "keywords": []
       },
       {
         "key": "sub.bicycle",
-        "name": "🚲 Bicycle Rental"
+        "name": "🚲 Bicycle Rental",
+        "keywords": []
       },
       {
         "key": "sub.tourist-boat",
-        "name": "🛥️ Sightseeing Boat"
+        "name": "🛥️ Sightseeing Boat",
+        "keywords": []
       },
       {
         "key": "sub.scenic-flight-plane",
-        "name": "🛩️ Flightseeing"
+        "name": "🛩️ Flightseeing",
+        "keywords": []
       },
       {
         "key": "sub.passenger-ship",
-        "name": "🛳️ Passenger Ship"
+        "name": "🛳️ Passenger Ship",
+        "keywords": []
       },
       {
         "key": "sub.e-scooter",
-        "name": "🛴 E-Scooter"
+        "name": "🛴 E-Scooter",
+        "keywords": []
       },
       {
         "key": "sub.auto-rickshaw",
-        "name": "🛺 Auto Rickshaw"
+        "name": "🛺 Auto Rickshaw",
+        "keywords": []
       },
       {
         "key": "sub.parking",
-        "name": "🅿️ Parking"
+        "name": "🅿️ Parking",
+        "keywords": []
       }
     ],
-    "domain": "🎉 Festival"
+    "domain": "🎉 Festival",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.gates",
@@ -633,18 +1302,23 @@
     "subgroups": [
       {
         "key": "sub.other-gates",
-        "name": "↔️ Other Gates"
+        "name": "↔️ Other Gates",
+        "keywords": []
       },
       {
         "key": "sub.northern-gates",
-        "name": "⬆️ Northern Gates"
+        "name": "⬆️ Northern Gates",
+        "keywords": []
       },
       {
         "key": "sub.southern-gates",
-        "name": "⬇️ Southern Gates"
+        "name": "⬇️ Southern Gates",
+        "keywords": []
       }
     ],
-    "domain": "🎉 Festival"
+    "domain": "🎉 Festival",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.facilities",
@@ -652,30 +1326,38 @@
     "subgroups": [
       {
         "key": "sub.baby-changing",
-        "name": "👶 Baby Changing Facilities"
+        "name": "👶 Baby Changing Facilities",
+        "keywords": []
       },
       {
         "key": "sub.water-refill-points",
-        "name": "💧 Water & Refill Points"
+        "name": "💧 Water & Refill Points",
+        "keywords": []
       },
       {
         "key": "sub.seating-area",
-        "name": "💺 Seating Area"
+        "name": "💺 Seating Area",
+        "keywords": []
       },
       {
         "key": "sub.smoking-area",
-        "name": "🚬 Smoking Area"
+        "name": "🚬 Smoking Area",
+        "keywords": []
       },
       {
         "key": "sub.toilet-zone",
-        "name": "🚾 Toilet Zone"
+        "name": "🚾 Toilet Zone",
+        "keywords": []
       },
       {
         "key": "sub.showers",
-        "name": "🚿 Showers"
+        "name": "🚿 Showers",
+        "keywords": []
       }
     ],
-    "domain": "🎉 Festival"
+    "domain": "🎉 Festival",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.spas",
@@ -683,22 +1365,28 @@
     "subgroups": [
       {
         "key": "sub.thermal-bath",
-        "name": "♨️ Thermal Bath"
+        "name": "♨️ Thermal Bath",
+        "keywords": []
       },
       {
         "key": "sub.wellness-relaxation",
-        "name": "🌿 Wellness & Relaxation"
+        "name": "🌿 Wellness & Relaxation",
+        "keywords": []
       },
       {
         "key": "sub.aquatic-center",
-        "name": "🏊 Aquatic Center"
+        "name": "🏊 Aquatic Center",
+        "keywords": []
       },
       {
         "key": "sub.showers-bathing",
-        "name": "🚿 Showers / Bathing"
+        "name": "🚿 Showers / Bathing",
+        "keywords": []
       }
     ],
-    "domain": "📍 POI"
+    "domain": "📍 POI",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.services",
@@ -706,34 +1394,48 @@
     "subgroups": [
       {
         "key": "sub.translation-services",
-        "name": "🌐 Translation Services"
+        "name": "🌐 Translation Services",
+        "keywords": []
+      },
+      {
+        "key": "sub.language-schools",
+        "name": "🏫 Language Schools",
+        "keywords": []
       },
       {
         "key": "sub.treatments",
-        "name": "💆 Treatments"
+        "name": "💆 Treatments",
+        "keywords": []
       },
       {
         "key": "sub.photo-video",
-        "name": "📸 Photo/Video"
+        "name": "📸 Photo/Video",
+        "keywords": []
       },
       {
         "key": "sub.yoga",
-        "name": "🧘 Yoga"
+        "name": "🧘 Yoga",
+        "keywords": []
       },
       {
         "key": "sub.tours",
-        "name": "🧭 Tours"
+        "name": "🧭 Tours",
+        "keywords": []
       },
       {
         "key": "sub.rentals",
-        "name": "🚲 Rentals"
+        "name": "🚲 Rentals",
+        "keywords": []
       },
       {
         "key": "sub.repair-maintenance",
-        "name": "🛠️ Repair & Maintenance"
+        "name": "🛠️ Repair & Maintenance",
+        "keywords": []
       }
     ],
-    "domain": "🛒 Marketplace"
+    "domain": "🛒 Marketplace",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.shops",
@@ -741,46 +1443,58 @@
     "subgroups": [
       {
         "key": "sub.food-groceries",
-        "name": "🍎 Food & Groceries"
+        "name": "🍎 Food & Groceries",
+        "keywords": []
       },
       {
         "key": "sub.merchandise",
-        "name": "🎁 Merchandise"
+        "name": "🎁 Merchandise",
+        "keywords": []
       },
       {
         "key": "sub.souvenirs",
-        "name": "🎁 Souvenirs"
+        "name": "🎁 Souvenirs",
+        "keywords": []
       },
       {
         "key": "sub.apparel",
-        "name": "👕 Apparel"
+        "name": "👕 Apparel",
+        "keywords": []
       },
       {
         "key": "sub.pharmacy",
-        "name": "💊 Pharmacy"
+        "name": "💊 Pharmacy",
+        "keywords": []
       },
       {
         "key": "sub.tobacco-shop",
-        "name": "💨 Tobacco Shop"
+        "name": "💨 Tobacco Shop",
+        "keywords": []
       },
       {
         "key": "sub.convenience-store",
-        "name": "🥤 Convenience Store"
+        "name": "🥤 Convenience Store",
+        "keywords": []
       },
       {
         "key": "sub.convenience",
-        "name": "🧃 Convenience"
+        "name": "🧃 Convenience",
+        "keywords": []
       },
       {
         "key": "sub.official-festival-shop",
-        "name": "🧢 Official Festival Shop"
+        "name": "🧢 Official Festival Shop",
+        "keywords": []
       },
       {
         "key": "sub.crafts",
-        "name": "🧶 Crafts"
+        "name": "🧶 Crafts",
+        "keywords": []
       }
     ],
-    "domain": "🛒 Marketplace"
+    "domain": "🛒 Marketplace",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   },
   {
     "groupKey": "group.emergency",
@@ -788,33 +1502,42 @@
     "subgroups": [
       {
         "key": "sub.incident-response",
-        "name": "⚠️ Incident Response"
+        "name": "⚠️ Incident Response",
+        "keywords": []
       },
       {
         "key": "sub.medical-first-aid",
-        "name": "🏥 Medical / First Aid"
+        "name": "🏥 Medical / First Aid",
+        "keywords": []
       },
       {
         "key": "sub.security",
-        "name": "👮 Security"
+        "name": "👮 Security",
+        "keywords": []
       },
       {
         "key": "sub.personal-crisis",
-        "name": "💚 Personal Crisis Response"
+        "name": "💚 Personal Crisis Response",
+        "keywords": []
       },
       {
         "key": "sub.emergency-response",
-        "name": "📢 Emergency Response"
+        "name": "📢 Emergency Response",
+        "keywords": []
       },
       {
         "key": "sub.fire-safety",
-        "name": "🔥 Fire Safety"
+        "name": "🔥 Fire Safety",
+        "keywords": []
       },
       {
         "key": "sub.police-assistance",
-        "name": "🚓 Police Assistance"
+        "name": "🚓 Police Assistance",
+        "keywords": []
       }
     ],
-    "domain": "🎉 Festival"
+    "domain": "🛒 Marketplace",
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
   }
 ]

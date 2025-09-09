@@ -101,6 +101,21 @@ body {
   transition: transform 0.2s ease;
 }
 
+/* View-by gear size & interactions */
+#view-gear{
+  font-size: 20px;                 /* match pin size */
+  width: 36px; height: 36px;       /* comfortable hit target */
+  margin: 0 8px;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+}
+#view-gear:hover{ background: rgba(0,0,0,.06); }
+#view-gear:focus-visible{ outline: 2px solid #e11; outline-offset: 2px; }
+
+
 /* ===========================
    🔎 Search — unified styles
    (preserves your comment blocks, de-duplicated)
@@ -195,14 +210,35 @@ body {
   justify-content: center;
   margin: 4px 1em;
 }
-#search-container > div {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-grow: 1;
-  max-width: 420px;
-  width: 100%;
+
+/* REPLACE: inner row so it can stretch full width (no 420px cap) */
+/* Search row: allow full width so the input can expand */
+#search-container > div{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex:1 1 auto;
+  width:100%;
+  max-width:none;    /* was 420px */
+  min-width:0;       /* prevents overflow when tight */
 }
+
+/* REPLACE: input wrapper takes remaining space */
+#search-left{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  flex:1 1 auto;    /* grow/shrink to fill */
+  min-width:0;      /* prevent overflow */
+  width:auto;       /* let flex sizing win */
+}
+
+/* INSERT: keep controls fixed-size; drop legacy left margin in this row */
+#search-container #view-gear,
+#search-container #here-button{
+  flex:0 0 auto;
+}
+#search-container #here-button{ margin-left:0; }
 
 /* ==============================
    📜 Main content + scroll zone
@@ -678,6 +714,27 @@ body.large-text {
 #share-location-modal .modal-footer,
 #share-location-modal .modal-actions { margin-top: 1.5em; }
 
+/* Help: country select — taller, centered, no overflow */
+#help-modal #emg-country{
+  display:block;                     /* layout */
+  width:min(100%, 320px);            /* clamp width inside card */
+  margin:0 auto;                     /* center within the body */
+  height:36px;                       /* readable tap target */
+  padding:6px 36px 6px 12px;         /* room for arrow */
+  font-size:16px;
+  line-height:1.2;
+  border:1px solid #e0e0e0;
+  border-radius:8px;
+  background:#fff;
+  box-sizing:border-box;
+  appearance:none; -webkit-appearance:none; -moz-appearance:none; /* custom-stylable */
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat;
+  background-position:right 10px center;
+  background-size:14px 14px;
+}
+/* hide legacy arrow if present */
+#help-modal #emg-country::-ms-expand{ display:none; }
 
 /* ──────────────── Main Modal Container ──────────────── */
 /* Defines scrollable vertical layout — structure only; visual layout is handled by layout modifiers (e.g. .modal-action) */
@@ -891,90 +948,206 @@ body.large-text {
   align-self: center; /* tidy alignment */
 }
 
+/* compact CTA bar: emoji-only buttons; labels stay for SR */
+.cta-compact .modal-footer-button{
+  width:44px; height:44px;           /* 44px tap target */
+  padding:0;                          /* center emoji */
+  border-radius:12px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:20px;                     /* emoji size */
+  line-height:1;                      /* prevent emoji baseline shift */
+  -webkit-tap-highlight-color:transparent; /* cleaner tap on iOS */
+  touch-action:manipulation;          /* faster taps */
+  transition:transform .06s ease, box-shadow .12s ease, background-color .12s ease;
+}
+.cta-compact .modal-footer-button:hover{ transform:translateY(-1px); }
+.cta-compact .modal-footer-button:active{ transform:translateY(0); box-shadow:0 0 0 2px rgba(0,0,0,.06) inset; }
+
+/* keyboard focus ring */
+.cta-compact .modal-footer-button:focus-visible{
+  outline:2px solid #1a73e8;         /* app accent */
+  outline-offset:2px;
+}
+
+/* visually hide label text, keep for assistive tech */
+.cta-compact .modal-footer-button .cta-label{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+/* CTA icon size for image-based buttons (e.g., Waze) */
+.cta-compact .modal-footer-button .cta-icon{
+  width:20px; height:20px; display:block;
+}
+
+/* high-contrast support */
+body.high-contrast .cta-compact .modal-footer-button{
+  background:#222 !important;
+  color:#fff !important;
+  border:1px solid #888 !important;
+}
+
+/* LPM: rating row (emoji radios) */
+.lpm-rating{
+  margin:.75em 0 0;
+  display:flex;
+  flex-direction:column;      /* stack hint UNDER the row */
+  align-items:center;         /* center horizontally */
+  justify-content:flex-start; /* keep top-aligned */
+}
+
+.lpm-rating .rate-row{
+  display:flex;               /* center the 5 emojis */
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+  margin:0;                   /* no extra offset */
+}
+
+.lpm-rating .rate-btn{
+  width:36px; height:36px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid #e0e0e0; border-radius:10px;
+  background:#f8f8f8; font-size:20px; line-height:1;
+  cursor:pointer;
+  transition:background .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.lpm-rating .rate-btn:hover{ background:#f1f1f1; }
+.lpm-rating .rate-btn[aria-checked="true"]{
+  background:#e8f0fe; border-color:#1a73e8;
+  box-shadow:0 0 0 2px rgba(26,115,232,.15) inset;
+}
+
+.lpm-rating .rate-hint{
+  margin-top:6px;             /* show under the row */
+  font-size:.9rem; opacity:.75;
+}
+
+body.high-contrast .lpm-rating .rate-btn[aria-checked="true"]{
+  background:#333; border-color:#fff;
+  box-shadow:0 0 0 2px rgba(255,255,255,.3) inset;
+}
+
+.lpm-rating .rate-btn[disabled]{
+  opacity:.55; cursor:default; pointer-events:none;
+}
+
+/* QR modal: emoji-only CTAs */
+.qr-ctas{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  margin-top:12px;
+}
+.qr-cta{
+  width:44px; height:44px;           /* comfortable tap target */
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid #e0e0e0;
+  border-radius:12px;
+  background:#f8f8f8;
+  font-size:22px; line-height:1;     /* emoji size */
+  cursor:pointer;
+  transition:background .15s ease, box-shadow .15s ease, border-color .15s ease, transform .06s ease;
+}
+.qr-cta:hover{ background:#f1f1f1; transform:translateY(-1px); }
+.qr-cta:active{ transform:translateY(0); box-shadow:0 0 0 2px rgba(0,0,0,.06) inset; }
+.qr-cta:focus-visible{ outline:2px solid #1a73e8; outline-offset:2px; }
+
+/* high-contrast */
+body.high-contrast .qr-cta{
+  background:#222; color:#fff; border-color:#888;
+}
+
 /* ──────────────── LPM tweaks (no new classes) ──────────────── */
 /* push ⋮ to the right */
-#lpm-overflow {
-  margin-left: auto; /* 🎯 | ⭐ | —— space —— | ⋮ */
+#lpm-overflow{
+  margin-left:auto; /* 🎯 | 📅 | 🔳 | —— space —— | ⋮ */
 }
 
 /* secondary actions container under the main row */
-#lpm-secondary-actions {
-  flex-basis: 100%;  /* clean break onto new line */
-  display: none;     /* hidden until ⋮ toggles */
-  margin-top: 0.5em;
-  gap: 0.5em;
+#lpm-secondary-actions{
+  flex-basis:100%;   /* clean break onto new line */
+  display:none;      /* hidden until ⋮ toggles */
+  margin-top:.5em;
+  gap:.5em;
 }
 
 /* reveal when active */
-#lpm-secondary-actions.is-open {
-  display: flex;
-  flex-wrap: wrap;   /* wrap gracefully on narrow screens */
+#lpm-secondary-actions.is-open{
+  display:flex;
+  flex-wrap:wrap;    /* wrap gracefully on narrow screens */
 }
 
 /* ──────────────── LPM Image Slider ──────────────── */
 /* Container within .location-media */
-/* LPM slider: reserve space and crossfade (no layout shift) */
-/* LPM slider: fixed box + crossfade */
-.lpm-slider {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1/1;
-  border-radius: 8px;
-  overflow: hidden;
-  box-sizing: border-box;
-  padding-top: 8px;
+/* fixed box + crossfade (no layout shift) */
+.lpm-slider{
+  position:relative;
+  width:100%;
+  aspect-ratio:1/1;
+  border-radius:8px;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding-top:8px;   /* keep top breathing room for rounded corners */
 }
-.lpm-track {
-  position: relative;
-  width: 100%;
-  height: 100%;
+.lpm-track{
+  position:relative;
+  width:100%;
+  height:100%;
 }
 
 /* two-image buffer */
-.lpm-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  opacity: 0;transition: opacity 160ms ease;
+.lpm-img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  opacity:0;
+  transition:opacity 160ms ease;
 }
+.lpm-img.active{ opacity:1; }
 
-.lpm-img.active {
-  opacity: 1;
+/* (optional) single-slide fallback */
+.lpm-slide{
+  display:none;
+  width:100%;
+  height:auto;
+  object-fit:cover;
 }
-
-/* Slides */
-.lpm-slide {
-  display: none;
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
-.lpm-slide.active {
-  display: block;
-}
+.lpm-slide.active{ display:block; }
 
 /* Nav buttons */
-.lpm-prev, .lpm-next {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: rgba(0,0,0,0.35);
-  color: #fff;
-  font-size: 2rem;
-  line-height: 1;
-  padding: 0 0.5rem;
-  cursor: pointer;
-  border-radius: 6px;
+.lpm-prev,.lpm-next{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  border:0;
+  background:rgba(0,0,0,.6);
+  color:#fff;
+  font-size:2rem;
+  line-height:1;
+  padding:0 .5rem;
+  cursor:pointer;
+  border-radius:6px;
 }
-.lpm-prev { left: 10px; }
-.lpm-next { right: 10px; }
-.lpm-prev:focus, .lpm-next:focus { outline: 2px solid rgba(255,255,255,0.6); }
+.lpm-prev{ left:10px; }
+.lpm-next{ right:10px; }
+.lpm-prev:hover,.lpm-next:hover{ background:rgba(0,0,0,.6); }
+.lpm-prev:focus,.lpm-next:focus{ outline:2px solid rgba(255,255,255,.6); }
 
-.lpm-prev, .lpm-next { background: rgba(0,0,0,0.6); color:#fff; }
-.lpm-prev:hover, .lpm-next:hover { background: rgba(0,0,0,0.6); }
+/* LPM: header flush + keep content from sliding underneath */
+#location-profile-modal .modal-content{
+  padding-top:0;                 /* header touches the top edge */
+}
+#location-profile-modal .modal-top-bar{
+  position:sticky; top:0; z-index:2;
+  background:#fff;               /* solid cover while sticky */
+}
+#location-profile-modal .modal-body{
+  margin-top:12px;               /* small buffer under header (like other modals) */
+}
 
 
 /* ──────────────── Modal Body Action Button ──────────────── */
@@ -1053,17 +1226,53 @@ body.large-text {
   flex-shrink: 0;
 }
 
+/* label: allow wrapping within flex so text never spills */
 .my-stuff-item .label {
   display: flex;
   flex-direction: column;
   font-weight: 600;
   line-height: 1.2;
+  flex: 1 1 auto;          /* use remaining row space */
+  min-width: 0;            /* prevent flex overflow */
+  overflow-wrap: anywhere; /* wrap mid-length words */
+  word-break: break-word;  /* safety for long tokens */
 }
 
 .my-stuff-item .label small {
   font-weight: 400;
   opacity: 0.7;
   font-size: 0.85rem;
+}
+
+/* My Stuff modal: header flush to top, scrollbar on card edge */
+#my-stuff-modal .modal-content{
+  padding-top: 0;    /* attach sticky header to the top edge */
+  padding-right: 0;  /* scrollbar flush right */
+  padding-left: 0;   /* ⬅ remove leftover 1.5em from .modal-menu to re-center */
+}
+
+/* no mid-gutter on the scroll container */
+#my-stuff-modal .modal-body{
+  padding: 0;
+}
+
+/* restore inner spacing for content (keeps column visually centered) */
+#my-stuff-modal .modal-body-inner{
+  padding: 0 1.5em 1.5em 1.5em;  /* symmetric side padding */
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* label wrapping (prevents text spill on narrow screens) */
+.my-stuff-item .label{
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  line-height: 1.2;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* ──────────────── No-Miss Info View ──────────────── */
@@ -1622,11 +1831,12 @@ button:hover {
 /* ─────────────── Base overlay (edge scrollbar) ─────────────── */
 .modal{
   position:fixed; inset:0; display:none; z-index:1000;
-  background:rgba(0,0,0,.5); backdrop-filter:blur(3px);
+  background:rgba(0, 0, 0, 0.5); backdrop-filter:blur(3px);
   align-items:flex-start; justify-content:center;
-  padding:16px;                /* spacing from edges */
-  overflow-y:auto;             /* ← scrollbar on edges */
+  padding:16px;
+  overflow-y:hidden;           /* card scrolls; no screen-edge bar */
 }
+
 .modal.visible{ display:flex; }
 .modal.hidden{ display:none; }
 
@@ -1636,7 +1846,10 @@ button:hover {
   background:#fff; color:#333;
   border-radius:16px;
   box-shadow:0 10px 24px rgba(0,0,0,.18);
-  overflow:visible;            /* overlay owns scrolling */
+  max-height:calc(100vh - 32px);  /* 2× overlay padding */
+  overflow-y:auto;                 /* ← scrollbar on card edge */
+  overflow-x:hidden;
+  scrollbar-gutter: stable;        /* reserve just enough, no fat gutter */
 }
 
 /* Sticky header with red × close */
@@ -1646,17 +1859,46 @@ button:hover {
   padding:16px; margin:0 0 8px 0;
   background:#fff; border-bottom:1px solid rgba(0,0,0,.08);
 }
-.modal .modal-title{ font-size:1.25rem; font-weight:700; line-height:1.2; }
-.modal .modal-close{
-  appearance:none; -webkit-appearance:none;
-  background:transparent; border:0; cursor:pointer;
-  color:#d11; font-size:18px; line-height:1; border-radius:8px; padding:2px 6px;
-}
-.modal .modal-close:hover{ color:#a00; }
-.modal .modal-close:focus-visible{ outline:2px solid currentColor; outline-offset:2px; }
 
-.modal .modal-body{ padding:0 16px 16px; }
-.modal .modal-body-inner{ font-size:16px; }
+.modal .modal-title{
+  font-size:1.25rem;
+  font-weight:700;
+  line-height:1.2;
+}
+
+.modal .modal-close{
+  appearance:none;
+  -webkit-appearance:none;
+  background:transparent;
+  border:0;
+  cursor:pointer;
+  color:#d11;
+  font-size:24px;    /* was 18px → bigger × */
+  line-height:1;
+  border-radius:8px;
+  padding:4px 10px;  /* larger hit area */
+}
+
+.modal .modal-close:hover{
+  color:#a00;
+}
+
+.modal .modal-close:focus-visible{
+  outline:2px solid currentColor;
+  outline-offset:2px;
+}
+
+/* Let the card be the only scroller; keep body content spaced */
+.modal .modal-body{
+  padding:0 16px 16px;
+  overflow:visible;   /* no inner scroll that would make a mid-gutter */
+}
+
+/* Restore content padding, including the right side moved off the scroller */
+.modal .modal-body-inner{
+  font-size:16px;
+  padding:0 16px 0 16px;
+}
 
 /* Buttons/footer area */
 .modal .modal-actions{
@@ -1666,8 +1908,16 @@ button:hover {
 
 /* ─────────────── Variants (attach to .modal-content) ─────────────── */
 
-/* Menu variant — lists of actions (Language, Social, etc.) */
-.modal .modal-content.modal-menu{ padding:1.5em; }
+/* Header flush to top; content retains side/bottom padding */
+.modal .modal-content.modal-menu{
+  padding: 0 1.5em 1.5em;   /* ⬅️ remove ONLY the top padding */
+}
+
+/* Same for action-style modals (Help, etc.) */
+.modal .modal-content.modal-action{
+  padding: 0 1.5em 1.5em;   /* header attached; content spaced */
+}
+
 .modal-menu-list{ display:flex; flex-direction:column; gap:.75em; } /* helper */
 .modal-menu-item{
   display:flex; align-items:center; gap:12px;
@@ -1675,7 +1925,22 @@ button:hover {
   border-radius:10px; font:inherit; font-size:1rem; text-align:left;
   cursor:pointer; transition:background .2s ease;
 }
-.modal-menu-item:hover{ background:#f1f1f1; }
+
+/* View Settings selected option */
+.modal-menu-item.is-active {
+  background:#e8f0fe;
+  border-color:#1a73e8;
+  box-shadow:0 0 0 2px rgba(26,115,232,.15) inset;
+}
+.modal-menu-item.is-active:focus-visible {
+  outline:2px solid #1a73e8;
+  outline-offset:2px;
+}
+body.high-contrast .modal-menu-item.is-active {
+  background:#333;
+  border-color:#fff;
+  box-shadow:0 0 0 2px rgba(255,255,255,.3) inset;
+}
 
 /* Layout variant — general forms/content (Share Location, Help) */
 .modal .modal-content.modal-layout{ padding:1.5em; }
@@ -1698,7 +1963,6 @@ button:hover {
 }
 
 /* ──────────────── Modal Shop Category ──────────────── */
-/* ──────────────── modal-shop-item ──────────────── */
 /* Used for: Final donation/product checkout */
 
 .modal-shop-item {

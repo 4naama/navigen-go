@@ -166,28 +166,55 @@ export function createLocationProfileModal(data, injected = {}) {
       </section>
     </div>
   `;
+  
+  // add compact 1–5 rating row (emoji radios)
+  // rating row under description
+  const inner = body.querySelector('.modal-body-inner');
+  if (inner) {
+    const rate = document.createElement('section');
+    rate.className = 'lpm-rating';
+    rate.id = 'lpm-rate-section';
 
-  // ▸ Footer (pinned): primary row (🎯 ⭐ ⋮) + secondary row (ℹ️ 📤 📅 📍)
+    rate.innerHTML = `
+      <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="Rate">
+        <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
+        <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
+        <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
+        <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
+        <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
+      </div>
+      <div class="rate-hint" aria-live="polite"></div>
+    `;
+    inner.appendChild(rate);
+  }
+
+  // ▸ Footer (pinned): primary (🎯 📅 ⋮) + secondary (ℹ️ 📤 ⭐ 🍎 🧭 📍)
+  // keep: accessible labels; emoji-first layout (compact via CSS)
   const footer = document.createElement('div');
-  footer.className = 'modal-footer';
+  footer.className = 'modal-footer cta-compact';
   footer.innerHTML = `
     <button class="modal-footer-button" id="lpm-route"
-            data-lat="${data?.lat ?? ''}" data-lng="${data?.lng ?? ''}" aria-label="Route">
-      🎯 <span>Route</span>
-    </button>
-    <button class="modal-footer-button" id="lpm-save" aria-label="Save">
-      ⭐ <span>Save</span>
-    </button>
-    <button class="modal-footer-button" id="lpm-overflow" aria-label="More" aria-expanded="false">
-      ⋮
+            data-lat="${data?.lat ?? ''}" data-lng="${data?.lng ?? ''}" aria-label="Navigate">
+      🎯 <span class="cta-label">Navigate</span>
     </button>
 
-    <!-- LPM footer secondary row – toggled by ⋮ -->
+    <button class="modal-footer-button" id="lpm-book"
+            aria-label="Book"><span class="cta-label">Book</span>📅</button>
+
+    <button class="modal-footer-button" id="lpm-qr"
+            aria-label="QR Code" title="QR Code">🔳 <span class="cta-label">QR Code</span></button>
+
+    <button class="modal-footer-button" id="lpm-overflow"
+            aria-label="More" aria-expanded="false">⋮ <span class="cta-label">More</span></button>
+
     <div id="lpm-secondary-actions" aria-hidden="true">
-      <button class="modal-footer-button" id="som-info" aria-label="Info">ℹ️ <span>Info</span></button>
-      <button class="modal-footer-button" id="som-share" aria-label="Share">📤 <span>Share</span></button>
-      <button class="modal-footer-button" id="som-plan" aria-label="Add to Plan">📅 <span>Add to Plan</span></button>
-      <button class="modal-footer-button" id="som-nearby" aria-label="Nearby Spots">📍 <span>Nearby Spots</span></button>
+      <button class="modal-footer-button" id="som-info"  aria-label="Info">ℹ️ <span class="cta-label">Info</span></button>
+      <button class="modal-footer-button" id="som-share" aria-label="Share">📤 <span class="cta-label">Share</span></button>
+      <button class="modal-footer-button" id="som-save"  aria-label="Save">⭐ <span class="cta-label">Save</span></button>
+      <button class="modal-footer-button" id="som-apple" aria-label="Apple Maps">🍎 <span class="cta-label">Apple Maps</span></button>
+      <button class="modal-footer-button" id="som-waze"  aria-label="Waze">
+        <img class="cta-icon" src="/assets/social/icons-waze.png" alt=""><span class="cta-label">Waze</span>
+      </button>
     </div>
   `;
 
@@ -524,8 +551,10 @@ export function showLocationProfileModal(data) {
       btnRoute.addEventListener('click', (e) => {
         e.preventDefault();
         if (!lat || !lng) return console.warn('LPM: missing coords');
+        _track('route');
         window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
       });
+
     }
 
     // ⭐ Save → stub (hook your real flow later)
@@ -533,7 +562,263 @@ export function showLocationProfileModal(data) {
     if (btnSave) {
       btnSave.addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('⭐ Save tapped (stub)');
+        const id = String(data?.id || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const key = `saved:${id}`;
+        const was = localStorage.getItem(key) === '1';
+        localStorage.setItem(key, was ? '0' : '1');
+        showToast(was ? 'Removed from Saved' : 'Saved', 1600); // auto hide
+      });
+    }
+
+    // 📅 Book → open bookingUrl if present; else toast
+    const btnBook = modal.querySelector('#lpm-book');
+    if (btnBook) {
+      btnBook.addEventListener('click', (e) => {
+        e.preventDefault();                  // keep click inside the modal
+        const link =
+          data?.contact?.bookingUrl ||       // exporter target
+          data?.links?.booking ||            // optional mirror
+          '';
+
+        if (link) {
+          _track && _track('booking');       // analytics (only if defined)
+          window.open(String(link), '_blank', 'noopener');
+        } else {
+          showToast('Booking link coming soon', 1600);
+        }
+      }, { passive: false });
+    }
+
+    // 🔳 QR → modal with QR; track click
+    {
+      const btn = modal.querySelector('#lpm-qr');
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const uid = String(data?.id || '').trim();
+          if (!uid) { showToast('Missing id', 1600); return; }
+
+          // build simple modal
+          const id = 'qr-modal'; document.getElementById(id)?.remove();
+          const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
+          const card = document.createElement('div'); card.className = 'modal-content modal-layout';
+          const top = document.createElement('div'); top.className = 'modal-top-bar';
+          top.innerHTML = `<h2 class="modal-title">QR Code</h2><button class="modal-close" aria-label="Close">&times;</button>`;
+          top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
+
+          const body = document.createElement('div'); body.className = 'modal-body';
+          const inner = document.createElement('div'); inner.className = 'modal-body-inner';
+
+          const img = document.createElement('img');
+          img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
+          img.src = `https://navigen-api.4naama-39c.workers.dev/api/qr?school_uid=${encodeURIComponent(uid)}&size=512`;
+
+          // use existing compact emoji buttons
+          const actions = document.createElement('div');
+          actions.className = 'modal-footer cta-compact';
+
+          const shareBtn = document.createElement('button');
+          shareBtn.className = 'modal-footer-button';
+          shareBtn.type = 'button';
+          shareBtn.setAttribute('aria-label', 'Share');
+          shareBtn.title = 'Share';
+          shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
+          shareBtn.onclick = async () => {
+            _track && _track('share');
+            try { if (navigator.share) await navigator.share({ title:'NaviGen QR', url: img.src }); } catch {}
+          };
+
+          const printBtn = document.createElement('button');
+          printBtn.className = 'modal-footer-button';
+          printBtn.type = 'button';
+          printBtn.setAttribute('aria-label', 'Print');
+          printBtn.title = 'Print';
+          printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
+          // print: open minimal doc, wait for load, then print + close
+          // print: show full-screen overlay, print just the QR, then remove
+          printBtn.onclick = () => {
+            _track && _track('print');
+
+            const src = img.src;
+
+            // overlay
+            const layer = document.createElement('div');
+            layer.id = 'qr-print-layer';
+            Object.assign(layer.style, {
+              position:'fixed', inset:'0', background:'#fff',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              zIndex:'999999'
+            });
+
+            // print-only CSS
+            const style = document.createElement('style');
+            style.id = 'qr-print-style';
+            style.textContent = `
+              @media print{
+                body > *:not(#qr-print-layer){ display:none !important; }
+                #qr-print-layer{ position:static !important; inset:auto !important; }
+              }`;
+
+            // image
+            const pimg = document.createElement('img');
+            pimg.alt = 'QR Code';
+            pimg.src = src;
+            pimg.style.maxWidth = '90vw';
+            pimg.style.maxHeight = '90vh';
+            layer.appendChild(pimg);
+
+            const cleanup = () => {
+              document.getElementById('qr-print-style')?.remove();
+              document.getElementById('qr-print-layer')?.remove();
+            };
+
+            const go = () => {
+              try { window.print(); } finally { setTimeout(cleanup, 300); }
+            };
+
+            document.head.appendChild(style);
+            document.body.appendChild(layer);
+
+            if (pimg.complete) go();
+            else {
+              pimg.addEventListener('load', go,   { once:true });
+              pimg.addEventListener('error', cleanup, { once:true });
+            }
+          };
+
+          actions.appendChild(shareBtn);
+          actions.appendChild(printBtn);
+
+          // mount
+          inner.appendChild(img);
+          body.appendChild(inner);
+          body.appendChild(actions);
+
+          card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
+
+          // track
+          _track('qr');
+        });
+      }
+    }    
+
+    // ⋮ toggle secondary actions
+    const moreBtn = modal.querySelector('#lpm-overflow');
+    const secondary = modal.querySelector('#lpm-secondary-actions');
+    if (moreBtn && secondary) {
+      moreBtn.addEventListener('click', () => {
+        const open = secondary.classList.toggle('is-open'); // CSS shows when .is-open
+        secondary.setAttribute('aria-hidden', String(!open));
+        moreBtn.setAttribute('aria-expanded', String(open));
+      });
+    }
+
+    // 🍎 Apple Maps (https) – safe on any platform
+    const appleBtn = modal.querySelector('#som-apple');
+    if (appleBtn) {
+      appleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const lat = Number(data?.lat ?? moreBtn?.getAttribute('data-lat') ?? NaN);
+        const lng = Number(data?.lng ?? moreBtn?.getAttribute('data-lng') ?? NaN);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
+        _track('apple');
+        const name = encodeURIComponent(String(data?.name || 'Location'));
+        window.open(`https://maps.apple.com/?ll=${lat},${lng}&q=${name}`, '_blank', 'noopener');
+      });
+
+    }
+
+    // 🧭 Waze (UL deep link via https)
+    const wazeBtn = modal.querySelector('#som-waze');
+    if (wazeBtn) {
+      wazeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const lat = Number(data?.lat ?? moreBtn?.getAttribute('data-lat') ?? NaN);
+        const lng = Number(data?.lng ?? moreBtn?.getAttribute('data-lng') ?? NaN);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
+        _track('waze');
+        window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank', 'noopener');
+      });
+
+    }
+
+    // helpers: normalize urls/numbers
+    const normUrl = (u) => {
+      const s = String(u || '').trim(); if (!s) return '';
+      return /^(?:https?:)?\/\//i.test(s) ? s : (s.startsWith('www.') ? 'https://' + s : (s.includes('.') ? 'https://' + s : s));
+    };
+    const waUrl = (v) => {
+      const s = String(v || '').trim(); if (!s) return '';
+      const num = s.replace(/[^\d+]/g, '').replace(/^\+?/, ''); return num ? `https://wa.me/${num}` : '';
+    };
+    const tgUrl = (v) => {
+      const s = String(v || '').trim(); if (!s) return '';
+      return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/, '')}`;
+    };
+    const msgrUrl = (v) => {
+      const s = String(v || '').trim(); if (!s) return '';
+      return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`;
+    };
+
+    // link CTA with tracking (explicit action name supported)
+    const addLink = (id, emoji, label, href, action) => {
+      if (!href) return;
+      const a = document.createElement('a');
+      a.className = 'modal-footer-button';
+      a.id = id; a.href = href; a.target = '_blank'; a.rel = 'noopener';
+      a.setAttribute('aria-label', label); a.title = label;
+      a.innerHTML = `${emoji} <span class="cta-label">${label}</span>`;
+      a.addEventListener('click', () => {
+        // prefer explicit action; fallback to id-derived
+        const act = action || (id.startsWith('som-') ? id.slice(4) : id);
+        _track(String(act));
+      });
+      secondary.appendChild(a);
+    };
+
+    // Website + socials (render only if present)
+    addLink('som-www',  '🔗', 'Website',   normUrl(data.official_url || data.links?.website),                  'website');
+    addLink('som-fb',   '📘', 'Facebook',  normUrl(data.links?.Facebook || data.links?.facebook),              'facebook');
+    addLink('som-ig',   '📸', 'Instagram', normUrl(data.links?.Instagram || data.links?.instagram),            'instagram');
+    addLink('som-yt',   '▶️', 'YouTube',   normUrl(data.links?.YouTube  || data.links?.Youtube || data.links?.youtube), 'youtube');
+    addLink('som-tt',   '🎵', 'TikTok',    normUrl(data.links?.TikTok   || data.links?.tiktok),                'tiktok');
+    addLink('som-pin',  '📌', 'Pinterest', normUrl(data.links?.Pinterest || data.links?.pinterest),            'pinterest');
+    addLink('som-spot', '🎧', 'Spotify',   normUrl(data.links?.Spotify  || data.links?.spotify),               'spotify');
+
+    // Contact
+    addLink('som-call', '📞', 'Call',      data.contact?.phone  ? `tel:${String(data.contact.phone).trim()}` : '', 'phone');
+    addLink('som-mail', '📧', 'Email',     data.contact?.email  ? `mailto:${String(data.contact.email).trim()}` : '', 'email');
+    addLink('som-wa',   '🟢', 'WhatsApp',  waUrl(data.contact?.whatsapp),   'whatsapp');
+    addLink('som-tg',   '📣', 'Telegram',  tgUrl(data.contact?.telegram),   'telegram');
+    addLink('som-msgr', '💬', 'Messenger', msgrUrl(data.contact?.messenger),'messenger');
+
+    // ⭐ Save (secondary) → local toggle
+    const save2 = modal.querySelector('#som-save');
+    if (save2) {
+      save2.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = String(data?.id || '');
+        if (!id) { showToast('Missing id', 1600); return; }
+        const key = `saved:${id}`;
+        const was = localStorage.getItem(key) === '1';
+        localStorage.setItem(key, was ? '0' : '1');
+        showToast(was ? 'Removed from Saved' : 'Saved', 1600); // auto-close
+      });
+    }
+
+    // 📤 Share (placeholder; OS share → clipboard fallback)
+    const shareBtn = modal.querySelector('#som-share');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        _track('share');
+        const name = String(data?.name || 'Location');
+        const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
+        const text = coords ? `${name} — ${coords}` : name;
+        try {
+          if (navigator.share) { await navigator.share({ title: name, text }); }
+          else { await navigator.clipboard.writeText(text); showToast('Copied to clipboard', 1600); }
+        } catch {}
       });
     }
 
@@ -560,6 +845,84 @@ export function showLocationProfileModal(data) {
     (modal.querySelector('#lpm-route') ||
      modal.querySelector('#lpm-save')  ||
      btnClose)?.focus?.();
+     
+    // 1–5 rating (localStorage); emoji radios; 24h cooldown
+    (function initRating(){
+      const group = modal.querySelector('#lpm-rate-group');
+      if (!group) return;
+      const id = String(data?.id || '');
+      if (!id) return;
+
+      const key   = `rating:${id}`;       // stored value 0..5
+      const tsKey = `rating_ts:${id}`;    // last rating timestamp
+      const COOLDOWN_MS = 24*60*60*1000;  // 24h per device
+
+      const btns = Array.from(group.querySelectorAll('.rate-btn'));
+      const hint = modal.querySelector('.rate-hint');
+
+      const setUI = (n) => {
+        btns.forEach((b,i)=> b.setAttribute('aria-checked', String(i+1===n)));
+        if (hint) hint.textContent = n ? `Rated ${n}/5` : '';
+      };
+
+      let val  = Number(localStorage.getItem(key))  || 0;  // 0 = no rating
+      let last = Number(localStorage.getItem(tsKey)) || 0;
+
+      const canRate = () => !last || (Date.now() - last >= COOLDOWN_MS);
+
+      // initial visual state
+      setUI(val);
+      if (!canRate() && val) {
+        // soft-lock UI in the current session
+        btns.forEach(b => b.disabled = true);
+      }
+
+      const commit = (n) => {
+        val = n; last = Date.now();
+        localStorage.setItem(key,  String(n));
+        localStorage.setItem(tsKey, String(last));
+        setUI(n);
+        _track && _track(`rate-${n}`);   // analytics bucket: rate-1..rate-5
+        showToast(`Thanks! Rated ${n}/5`, 1600);
+
+        // lock the row for this session
+        btns.forEach(b => b.disabled = true);
+      };
+
+      // click handlers
+      btns.forEach((b,i) => {
+        b.addEventListener('click', () => {
+          if (!canRate()) {
+            showToast('You already rated today', 1600);
+            return;
+          }
+          commit(i+1);  // 1..5
+        });
+      });
+
+      // keyboard support (only if allowed)
+      group.addEventListener('keydown', (e) => {
+        if (!canRate()) return;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+          e.preventDefault(); commit(Math.min(5, (val || 0) + 1));
+        }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+          e.preventDefault(); commit(Math.max(1, (val || 1) - 1));
+        }
+      });
+    })();
+
+    // analytics beacon
+    const _track = (action) => {
+      const uid = String(data?.id || '').trim(); if (!uid) return;
+      try {
+        navigator.sendBeacon(
+          'https://navigen-api.4naama-39c.workers.dev/api/track',
+          new Blob([JSON.stringify({ event:'cta_click', school_uid:uid, action })], { type:'application/json' })
+        );
+      } catch {}
+    };
+    
   }
 
   // call wiring + reveal
@@ -630,24 +993,29 @@ function makeLocationButton(loc) {
       ? media.cover
       : (images[0] || '/assets/placeholder-images/icon-512-green.png');
 
-    /** Open the Location Profile Modal; descriptions{} only (no scalar), pass tags[] for chip */
+    // Open the Location Profile Modal; include contact + links for CTAs
     showLocationProfileModal({
       id: btn.getAttribute('data-id'),
       name: btn.textContent,
-      lat, lng,                         // may be ""
-      imageSrc: cover,                  // first paint
-      images,                           // slider sources
-      media,                            // preserves default/credits
+      lat, lng,
+      imageSrc: cover,
+      images,
+      media,
       descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
       tags: Array.isArray(loc?.tags) ? loc.tags : [],
+
+      // keep if you already added them; otherwise these help other CTAs too
+      contact: (loc && typeof loc.contact === 'object') ? loc.contact : {},
+      links:   (loc && typeof loc.links   === 'object') ? loc.links   : {},
+
       originEl: btn
     });
-  });
+
+  }); // ✅ close addEventListener('click', ...)
 
   return btn;
-
+  
 }
-
 
 export function buildAccordion(groupedStructure, geoPoints) {
   const container = document.getElementById("accordion");
@@ -702,7 +1070,9 @@ export function buildAccordion(groupedStructure, geoPoints) {
       group.subgroups.forEach((sub, sIdx) => {
         const subHeader = document.createElement('div');
         subHeader.className = 'subheader';
-        subHeader.textContent = sub.key ? (t(sub.key) || sub.name || sub.key) : (sub.name || sub.key);
+        // Prefer provided human label; fall back to i18n only for static keys
+        const label = sub.name || (sub.key && !/^admin\./.test(sub.key) ? t(sub.key) : '') || sub.key;
+        subHeader.textContent = label;
 
         const subWrap = document.createElement('div');
         subWrap.className = 'subgroup-items';
@@ -807,6 +1177,74 @@ function appendResolvedButton(actions, modalId = "my-stuff-modal") {
 
     actions.appendChild(resolvedBtn);
   }
+}
+
+// ✅ Helper: View-by settings modal (button-less; uses standard .modal shell)
+export function openViewSettingsModal({ title, contextLine, note, options, currentKey, resetLabel, onPick }) {
+  const doc=document, body=doc.body;
+
+  const overlay = doc.createElement('div');
+  overlay.className = 'modal visible';
+
+  const card = doc.createElement('div');
+  card.className = 'modal-content modal-menu';
+  card.style.maxWidth = '720px';   // align with My Stuff modal
+  card.style.width = '95vw';       // responsive
+
+  // sticky header: title + red × (same line)
+  const top = doc.createElement('div');
+  top.className = 'modal-top-bar';
+  const h2 = doc.createElement('h2');
+  h2.className = 'modal-title';
+  h2.textContent = title;
+  const close = doc.createElement('button');
+  close.className = 'modal-close';
+  close.type = 'button';
+  close.textContent = '×';
+  close.onclick = () => overlay.remove();
+  top.append(h2, close);
+
+  // body lines
+  const bodyWrap = doc.createElement('div');
+  bodyWrap.className = 'modal-body';
+  const inner = doc.createElement('div');
+  inner.className = 'modal-body-inner';
+  const line2 = doc.createElement('p'); line2.textContent = note;                  // “Applies to this page only”
+  const line3 = doc.createElement('p'); line3.textContent = contextLine;          // 🏫 Language Schools › brand › scope
+  inner.append(line2, line3);
+
+  // options (radio behavior; button-less list)
+  const menu = doc.createElement('div');
+  menu.className = 'modal-menu-list';
+  (options||[]).forEach(opt => {
+    const item = doc.createElement('button');
+    item.type = 'button';
+    item.className = 'modal-menu-item';
+    item.textContent = opt.label;
+    if ((opt.key||'').toLowerCase() === (currentKey||'').toLowerCase()) {
+      item.classList.add('is-active');  // mark selected
+    }
+
+    item.onclick = () => { onPick(opt.key); overlay.remove(); };
+    menu.appendChild(item);
+  });
+
+  // reset as last “choice”
+  if (resetLabel) {
+    const reset = doc.createElement('button');
+    reset.type = 'button';
+    reset.className = 'modal-menu-item';
+    reset.textContent = resetLabel;
+    reset.onclick = () => { onPick('__RESET__'); overlay.remove(); };
+    menu.appendChild(reset);
+  }
+
+  // ESC / backdrop close without changes
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.remove(); });
+  doc.addEventListener('keydown', function esc(e){ if(e.key==='Escape'){ overlay.remove(); doc.removeEventListener('keydown', esc); } });
+
+  inner.append(menu); bodyWrap.append(inner);
+  card.append(top, bodyWrap); overlay.append(card); body.append(overlay);
 }
 
 // Return canonical language code for a given country (full catalog; no ad-hoc fixes)
@@ -1597,7 +2035,7 @@ export function createHelpModal() {
         <label for="emg-country" class="muted" style="display:block;margin-bottom:0.25em;" data-i18n="help.chooseCountry">
           Choose country
         </label>
-        <select id="emg-country" class="emg-scale" style="min-width:220px;"></select>
+        <select id="emg-country"></select>
       </div>
 
       <p class="muted" style="margin-top:1rem;" data-i18n="help.body">

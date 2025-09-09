@@ -254,6 +254,7 @@
   "sub.translation-services": "🌐 שירותי תרגום",
   "sub.repair-maintenance": "🛠️ תיקון ותחזוקה",
   "sub.yoga": "🧘 יוגה",
+  "sub.language-schools": "🏫 בתי ספר לשפות",
   "group.experiences": "🎯 חוויות",
   "sub.workshops": "🧪 סדנאות",
   "sub.tastings": "🍷 טעימות",
@@ -319,5 +320,17 @@
   "noMiss.support.title": "תמיכה",
   "noMiss.support.body": "הקישו 👋 כדי להראות תמיכה בצוות.",
   "noMiss.thanks": "תודה — תהנו מהחוויה.",
-  "lpm.description.placeholder": "⏳ התיאור יגיע בקרוב."
+  "lpm.description.placeholder": "⏳ התיאור יגיע בקרוב.",
+  "view.settings.title": "הגדרות תצוגה",
+  "view.settings.context": " 🏫 בתי ספר לשפות › {brand} › {scope}",
+  "view.settings.note": "חל על דף זה בלבד",
+  "view.settings.mode.structure": "קטגוריה",
+  "view.settings.mode.adminArea": "אזור",
+  "view.settings.mode.city": "עיר",
+  "view.settings.mode.postalCode": "מיקוד",
+  "view.settings.mode.alpha": "אלפביתי",
+  "view.settings.mode.priority": "עדיפות",
+  "view.settings.mode.distance": "מרחק (הקרובים תחילה)",
+  "view.settings.resetToDefault": "איפוס תצוגה לברירת מחדל ({modeLabel})",
+  "view.settings.usingLocation": "משתמשים במיקומך"
 }

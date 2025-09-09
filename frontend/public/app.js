@@ -15,7 +15,8 @@ import {
   flagStyler,
   setupTapOutClose,
   showLocationProfileModal,
-  showThankYouToast as showThankYouToastUI
+  showThankYouToast as showThankYouToastUI,
+  openViewSettingsModal
 } from './modal-injector.js';
 
 // Force phones to forget old cache on new deploy; one-time per BUILD_ID. (Disabled: no redirect, no purge)
@@ -275,8 +276,14 @@ function renderPopularGroup(list = geoPoints) {
     btn.setAttribute('data-name', btn.textContent);
     btn.setAttribute('data-short-name', String(loc["Short Name"] || ''));
     btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
-        
+    
+    // Searchable address tokens (city/admin/postal/address → normalized)
+    const c = (loc && loc.contact) || {};
+    const addrBits = [c.city, c.adminArea, c.postalCode, c.countryCode, c.address].filter(Boolean).join(' ');
 
+    const addrNorm = addrBits.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    btn.setAttribute('data-addr', addrNorm);        
+        
     // ✅ Inject GPS data if available from "Coordinate Compound" (kept; clarified title)
     let lat = "", lng = "";
     if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
@@ -393,7 +400,7 @@ const PALETTE = [
 // Adjust the keys to your actual set; keep uniqueness.
 // ---------------------------------------------------------------------
 const GROUP_COLOR_INDEX = {
-  'group.popular':        0,   // brownish sand
+  'group.popular':        11,  // pink-violet
   'group.stages':         1,   // ochre
   'group.activities':     2,   // soft yellow
   'group.event-food':     3,   // yellow-green
@@ -404,7 +411,7 @@ const GROUP_COLOR_INDEX = {
   'group.social-points':  8,   // periwinkle
   'group.landmarks':      9,   // violet
   'group.museums':        10,  // lavender
-  'group.spots':          11,  // pink-violet
+  'group.spots':          0,   // brownish sand
   'group.parks-nature':   12,  // rosy pink
   'group.spas':           13,  // soft rose
   'group.food-drink':     14,  // salmon
@@ -526,8 +533,19 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
         locBtn.setAttribute('data-tags', tags);
       }
 
-    });
+      // ✅ Always set/refresh address tokens (now includes CountryCode)
+      {
+        const id = locBtn.getAttribute('data-id');
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String(x?.ID || x?.id) === String(id))
+          : null;
+        const c = (rec && rec.contact) || {};
+        const addrBits = [c.city, c.adminArea, c.postalCode, c.countryCode, c.address].filter(Boolean).join(' ');
+        const addrNorm = addrBits.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        locBtn.setAttribute('data-addr', addrNorm);
+      }
 
+    });
   });
 }
 
@@ -581,7 +599,8 @@ function filterLocations(q) {
     const lower = el.dataset.lower || '';
     const shortName = (el.getAttribute('data-short-name') || '').toLowerCase();
     const tags = (el.getAttribute('data-tags') || '').toLowerCase();
-    const hay = `${lower} ${shortName} ${tags}`;
+    const addr = (el.getAttribute('data-addr') || '').toLowerCase(); // address tokens
+    const hay = `${lower} ${shortName} ${tags} ${addr}`;
 
     const show = hay.includes(query);
     el.style.display = show ? '' : 'none';
@@ -759,11 +778,11 @@ async function initEmergencyBlock(countryOverride) {
     flagStyler();                       // 🌐 Apply title/alt to any flag icons
 
     // Load JSONs (profiles.json now carries locations)
-    // lead: normalize profile.locations to legacy geoPoints shape used by UI
-    const [actions, structure, profile] = await Promise.all([
-      fetch('data/actions.json').then(r => r.json()),
-      fetch('data/structure.json').then(r => r.json()),   // grouped shape (has .groupKey, .groupName, .subgroups[])
-      fetch('data/profiles.json').then(r => r.json())
+    const [actions, structure, profile, contexts] = await Promise.all([
+      fetch('/data/actions.json').then(r => r.json()),
+      fetch('/data/structure.json').then(r => r.json()),
+      fetch('/data/profiles.json').then(r => r.json()),
+      fetch('/data/contexts.json').then(r => r.json()) // NEW
     ]);
 
     state.actions = actions;
@@ -865,6 +884,38 @@ async function initEmergencyBlock(countryOverride) {
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
       console.debug('[dev] datasets ready', { structure, geoPoints });
     }
+    
+    // ✅ BuildStructureByAdminArea: sections stay as Group; sub-sections are unique contact.adminArea values.
+    // ✅ Input: list=geoCtx (filtered items), baseStructure=structure; returns groupedStructure-like array.
+    function buildStructureByAdminArea(list, baseStructure) {
+      // keep strict top-level Group; swap subgroups to adminArea
+      const byGroup = new Map();
+      list.forEach(loc => {
+        const g = loc.Group;
+        if (!g) return;
+        if (!byGroup.has(g)) byGroup.set(g, []);
+        byGroup.get(g).push(loc);
+      });
+
+      return baseStructure
+        .filter(g => byGroup.has(g.groupKey || g.Group))
+        .map(g => {
+          const groupKey = g.groupKey || g.Group;
+          const locs = byGroup.get(groupKey) || [];
+          const subs = [...new Set(locs.map(l => (l.contact?.adminArea || '-')))]
+            .sort((a,b) => String(a).localeCompare(String(b)))
+            .map(area => ({
+              key: `admin.${String(area)
+                .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                .toLowerCase().replace(/[^a-z0-9]+/g,'-')
+                .replace(/^-+|-+$/g,'')}`,
+              name: area || '-'           // human label used by renderer
+            }));
+
+          return { groupKey, groupName: g.groupName || g["Drop-down"] || groupKey, subgroups: subs };
+        });
+    }
+        
 
     /**
      * 1) Group FLAT rows → groupedStructure
@@ -914,25 +965,202 @@ async function initEmergencyBlock(countryOverride) {
       document.body.scrollTop = 0;
     });
     
-    // ——— Context filter ———
-    const ACTIVE_CONTEXT = new URLSearchParams(location.search).get('ctx') || null;
-    const geoCtx = ACTIVE_CONTEXT
+    // ——— Path → pageKey → filter (no params) ———
+    const segs = location.pathname.split('/').filter(Boolean);
+    if (/^[a-z]{2}$/i.test(segs[0] || '')) segs.shift(); // drop {lang}
+    let ACTIVE_PAGE = null;
+    if (segs.length >= 2) {
+      const namespace = String(segs[0]).toLowerCase();
+      const key = segs.slice(1).join('/').toLowerCase(); // keep slashes
+      ACTIVE_PAGE = `${namespace}/${key}`;
+    }
+
+    const geoCtx = ACTIVE_PAGE
       ? geoPoints.filter(loc =>
           loc.Visible === 'Yes' &&
           String(loc.Context || '')
             .split(';')
-            .map(s => s.trim())
-            .includes(ACTIVE_CONTEXT)
+            .map(s => s.trim().toLowerCase())
+            .includes(ACTIVE_PAGE)
         )
-      : geoPoints;        
-
+      : geoPoints;
+      
+    // QA: print active page + filtered count + sample names (remove after test)
+    console.debug(
+      '[QA]', 'ACTIVE_PAGE=', ACTIVE_PAGE,
+      'count=', geoCtx.length,
+      'sample=', geoCtx.slice(0,5).map(l => String(l.shortName ?? l.name ?? ''))
+    );    
+          
     /**
      * 5) Render: grouped → DOM (buildAccordion), flat → header styling (wireAccordionGroups)
      */
-    renderPopularGroup(geoCtx);
-    buildAccordion(groupedStructure, geoCtx);    // <-- pass the grouped array directly
-    // Pass the rendered set so tags resolve without globals
-    wireAccordionGroups(structure_data, geoCtx);
+    renderPopularGroup(geoCtx);    
+
+    // ✅ Allowed modes & default from contexts.json; override with last choice (i18n-aware, legacy-safe)
+    const ctxRow = Array.isArray(contexts) ? contexts.find(c => c.pageKey === ACTIVE_PAGE) : null;
+
+    // i18n labels for the current lang (keys → labels)
+    const modeLabelByKey = {
+      structure:  t('view.settings.mode.structure'),
+      adminArea:  t('view.settings.mode.adminArea'),
+      city:       t('view.settings.mode.city'),
+      postalCode: t('view.settings.mode.postalCode'),
+      alpha:      t('view.settings.mode.alpha'),
+      priority:   t('view.settings.mode.priority'),
+      distance:   t('view.settings.mode.distance')
+    };
+    // labels (lowercased) → canonical keys
+    const labelToKey = Object.fromEntries(
+      Object.entries(modeLabelByKey).map(([k, v]) => [String(v || '').toLowerCase(), k])
+    );
+    // canonical key list (case as used in i18n lookups)
+    const CANON = ['structure', 'adminArea', 'city', 'postalCode', 'alpha', 'priority', 'distance'];
+
+    // normalize any token (key or translated label) → canonical key
+    const normToken = (tok) => {
+      const s = String(tok || '').trim();
+      if (!s) return '';
+      const lc = s.toLowerCase();
+      if (lc === 'az') return 'alpha';                                  // legacy alias
+      // exact label → key
+      if (labelToKey[lc]) return labelToKey[lc];
+      // case-insensitive key match
+      const k = CANON.find(k0 => k0.toLowerCase() === lc);
+      return k || '';
+    };
+
+    // allowed (canonical keys, unique)
+    const allowedRaw = String(ctxRow?.viewOptions || '').split('|').filter(Boolean);
+    const allowed = Array.from(new Set(allowedRaw.map(normToken).filter(Boolean)));
+    const allowedLC = allowed.map(k => k.toLowerCase());
+
+    // default view (canonical key + lower-case variant)
+    const defaultView = normToken(ctxRow?.defaultView || ctxRow?.subgroupMode || 'structure') || 'structure';
+    const defaultViewLC = defaultView.toLowerCase();
+
+    // stored choice (normalized)
+    const storeKey = `navigen:view:${ACTIVE_PAGE}`;
+    const storedLC = normToken(localStorage.getItem(storeKey) || '').toLowerCase();
+
+    // pick initial mode (stored beats default; compare in lower-case)
+    let mode = allowedLC.includes(storedLC) ? storedLC : defaultViewLC;
+
+    // expose for wiring (builders read this attribute)
+    document.documentElement.setAttribute('data-subgroup-mode', mode);
+
+    // ✅ Gear opens button-less modal; selection persists per page; no centroid fallback
+    (function wireViewGear(){
+      const gear = document.getElementById('view-gear');
+      if (!gear) return;
+
+      // Build menu from allowed list; if distance is present but geolocation missing, hidden by modal helper
+      const opts = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','az','priority','distance']);
+
+      gear.onclick = () => {
+        const segs = ACTIVE_PAGE.split('/');
+        const namespace = segs[0] || '';
+        const brand     = segs[1] || '';
+        const scope     = segs.slice(2).join('/') || '';
+
+        openViewSettingsModal({
+          pageKey:   ACTIVE_PAGE,
+          namespace, brand, scope,
+          current:   mode,
+          options:   opts,
+          defaultKey: defaultView,
+          onPick: (key) => {
+            if (key === '__RESET__') {
+              localStorage.removeItem(storeKey);
+              location.reload();
+              return;
+            }
+            const chosen = String(key).toLowerCase();
+            localStorage.setItem(storeKey, chosen);
+            location.reload();
+          }
+        });
+      };
+    })();
+
+    // ✅ When in admin-area mode, remap each item's subgroupKey to admin.<slug(AdminArea)> (in memory only)
+    // ——— View builders ———
+    const slugify = (s) => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    const label = (s) => String(s||'-');
+
+    const buildStructureBy = (list, fieldFn) => {
+      const byGroup = new Map();
+      list.forEach(rec => {
+        const g = rec.Group; if (!g) return;
+        if (!byGroup.has(g)) byGroup.set(g, []);
+        byGroup.get(g).push(rec);
+      });
+      return structure
+        .filter(g => byGroup.has(g.groupKey || g.Group))
+        .map(g => {
+          const groupKey = g.groupKey || g.Group;
+          const locs = byGroup.get(groupKey) || [];
+          const subs = [...new Set(locs.map(r => fieldFn(r)))]
+            .sort((a,b)=>String(a||'').localeCompare(String(b||'')))
+            .map(val => ({ key: `dyn.${slugify(val)}`, name: label(val) }));
+          return { groupKey, groupName: g.groupName || g["Drop-down"] || groupKey, subgroups: subs };
+        });
+    };
+
+    // Per-mode: subgroupKey remap (in memory) and structure builder
+    const pageList = geoCtx.map(rec => ({ ...rec })); // shallow clone
+    const modeMap = {
+      structure: () => ({ list: pageList, grouped: structure }),
+      adminarea: () => {
+        pageList.forEach(r => { const k = r?.contact?.adminArea; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contact?.adminArea) };
+      },
+      city: () => {
+        pageList.forEach(r => { const k = r?.contact?.city; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contact?.city) };
+      },
+      postalcode: () => {
+        pageList.forEach(r => { const k = r?.contact?.postalCode; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contact?.postalCode) };
+      },
+      az: () => {
+        pageList.forEach(r => { const n = String(r?.shortName?.en || r?.name?.en || r?.name || '').trim(); const k = n ? n[0].toUpperCase() : '#';
+          const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => {
+          const n = String(r?.shortName?.en || r?.name?.en || r?.name || '').trim(); return n ? n[0].toUpperCase() : '#';
+        })};
+      },
+      priority: () => {
+        pageList.forEach(r => { const k = (String(r?.Priority||'No').toLowerCase()==='yes') ? 'Featured' : 'Other';
+          const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => (String(r?.Priority||'No').toLowerCase()==='yes') ? 'Featured' : 'Other') };
+      },
+      distance: () => {
+        // pick origin: user → page center → centroid
+        let origin = null;
+        if (navigator.geolocation) {/* will be async in future; for now fallback */}
+        const cc = (ctxRow?.centerCoord||'').split(',').map(s=>Number(s.trim()));
+        if (cc.length===2 && cc.every(Number.isFinite)) origin = {lat:cc[0], lon:cc[1]};
+        if (!origin) {
+          const pts = pageList.map(r => String(r?.coord||'').split(',').map(s=>Number(s.trim()))).filter(a=>a.length===2&&a.every(Number.isFinite));
+          if (pts.length) { const lat = pts.reduce((s,a)=>s+a[0],0)/pts.length; const lon = pts.reduce((s,a)=>s+a[1],0)/pts.length; origin = {lat,lon}; }
+        }
+        const R = 6371, toRad = d => d*Math.PI/180;
+        const distKm = (a,b) => { const dLat = toRad(b.lat-a.lat), dLon = toRad(b.lon-a.lon);
+          const la1=toRad(a.lat), la2=toRad(b.lat);
+          const x = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
+          return 2*R*Math.asin(Math.sqrt(x)); };
+        pageList.forEach(r => { const [lat,lon] = String(r?.coord||'').split(',').map(s=>Number(s.trim())); r.__km = (origin && Number.isFinite(lat)&&Number.isFinite(lon)) ? distKm(origin,{lat,lon}) : Infinity; });
+        pageList.sort((a,b)=>(a.__km||0)-(b.__km||0));
+        const band = k => (k<2?'Near (≤2 km)':k<5?'Mid (2–5 km)':k<10?'Far (5–10 km)':'10 km+');
+        pageList.forEach(r => { const k = band(r.__km||Infinity); const dyn=`dyn.${slugify(k)}`; r.subgroupKey=dyn; r["Subgroup key"]=dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => band(r.__km||Infinity)) };
+      }
+    };
+    const { list: viewList, grouped: groupedForPage } = (modeMap[mode] || modeMap.structure)();
+
+    buildAccordion(groupedForPage, viewList);
+    wireAccordionGroups(structure_data, viewList);
     paintAccordionColors();
 
     /**
@@ -990,7 +1218,75 @@ async function initEmergencyBlock(countryOverride) {
 
         clearBtn.style.display = 'none'; // Hide by default
       }
+      
+      // ✅ Insert gear between Search and the Here button (same row)
+      let gearBtn = document.getElementById('view-gear');
+      if (!gearBtn) {
+        gearBtn = document.createElement('button');
+        gearBtn.id = 'view-gear';
+        gearBtn.type = 'button';
+        gearBtn.title = t('view.settings.title');          // localized tooltip
+        gearBtn.textContent = '⚙️';
+        // place it immediately after the input; the existing "Here" button stays after it
+        searchInput.insertAdjacentElement('afterend', gearBtn);
+      }
 
+      // ✅ Build labels & open the button-less modal (no buttons; closes on select/ESC/backdrop)
+      gearBtn.onclick = () => {
+        const segs = ACTIVE_PAGE.split('/');                 // ["language-schools","helen-doron","hungary"]
+        const namespace = segs[0] || '';
+        const brand     = (segs[1] || '').replace(/-/g,' ');
+        const scope     = (segs.slice(2).join('/') || '').replace(/-/g,' ');
+
+        const modeLabels = {
+          structure:  t('view.settings.mode.structure'),
+          adminArea:  t('view.settings.mode.adminArea'),
+          city:       t('view.settings.mode.city'),
+          postalCode: t('view.settings.mode.postalCode'),
+          alpha:      t('view.settings.mode.alpha'),
+          priority:   t('view.settings.mode.priority'),
+          distance:   t('view.settings.mode.distance')
+        };
+
+        const base = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','alpha','priority','distance']);
+        const opts = base.map(normToken).filter(Boolean).map(k => ({ key: k, label: modeLabelByKey[k] || k }));
+
+        // ✅ Compose final labels here to avoid literal {brand}/{scope}/{modeLabel}
+        const modeLabelFinal   = modeLabelByKey[defaultView] || defaultView; // keep: map to display text
+        const contextLineFinal = (namespace === 'language-schools')
+          ? `🏫 Language Schools › ${brand}${scope ? ' › ' + scope : ''}`    // keep: brand/scope path
+          : `${namespace} › ${brand}${scope ? ' › ' + scope : ''}`;
+
+        openViewSettingsModal({
+          title:       t('view.settings.title'),
+          contextLine: contextLineFinal,                           // no braces
+          note:        t('view.settings.note'),
+          options:     opts,
+          currentKey:  mode,
+          resetLabel:  `Reset view to default (${modeLabelFinal})`, // no braces
+          onPick: (key) => {
+            if (key === '__RESET__') {
+              localStorage.removeItem(storeKey);
+              location.reload();
+              return;
+            }
+            // Distance requires user location only; if no API, do nothing.
+            if (String(key).toLowerCase() === 'distance') {
+              if (!navigator.geolocation) return;
+              navigator.geolocation.getCurrentPosition(
+                () => { localStorage.setItem(storeKey, 'distance'); location.reload(); },
+                ()  => { /* denied/unavailable: do nothing */ },
+                { maximumAge: 0, timeout: 10000, enableHighAccuracy: false }
+              );
+              return;
+            }
+            localStorage.setItem(storeKey, String(key).toLowerCase());
+            location.reload();
+          }
+        });
+
+      };
+          
   // 📍 Inject Share Modal at startup
   createShareModal();            // Injects #share-location-modal into DOM
   setupTapOutClose("share-location-modal");  
@@ -1347,12 +1643,55 @@ if (alertButton) {
 });  // ✅ End of DOMContentLoaded  
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("📡 DOM loaded — checking for ?at parameter");
+  console.log("📡 DOM loaded — checking for ?school / ?at parameters");
 
+  // ——— 1) Open LPM when ?school=<id> is present ———
+  {
+    const q = new URLSearchParams(location.search);
+    const uid = (q.get("school") || "").trim();
+
+    if (uid && Array.isArray(geoPoints) && geoPoints.length) {
+      const rec = geoPoints.find(x => String(x?.ID || x?.id) === uid);
+
+      if (rec) {
+        // media cover
+        const media   = rec.media || {};
+        const gallery = Array.isArray(media.images) ? media.images : [];
+        const images  = gallery.map(m => (m && typeof m === "object") ? m.src : m).filter(Boolean);
+        const cover   = (media.cover && String(media.cover).trim())
+          ? media.cover
+          : (images[0] || "/assets/placeholder-images/icon-512-green.png");
+
+        // coords
+        let lat = "", lng = "";
+        if (typeof rec["Coordinate Compound"] === "string" && rec["Coordinate Compound"].includes(",")) {
+          [lat, lng] = rec["Coordinate Compound"].split(",").map(s => s.trim());
+        }
+
+        // open the profile modal
+        showLocationProfileModal({
+          id: String(rec.ID || rec.id || uid),
+          name: rec["Short Name"] || rec.Name || "Unnamed",
+          lat, lng,
+          imageSrc: cover,
+          images,
+          media,
+          descriptions: (rec && typeof rec.descriptions === "object") ? rec.descriptions : {},
+          tags: Array.isArray(rec?.tags) ? rec.tags : [],
+          originEl: null
+        });
+      }
+
+      // drop ?school, keep other params (e.g., ?lang, ?at)
+      q.delete("school");
+      const next = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
+      history.replaceState({}, document.title, next);
+    }
+  }
+
+  // ——— 2) Existing ?at flow (unchanged) ———
   const at = new URLSearchParams(location.search).get("at");
-
   if (at) {
-
     saveToLocationHistory(at); // 🧠 Store silently in local history
 
     // sanitize param for the link; keep content persistent
@@ -1368,18 +1707,58 @@ document.addEventListener("DOMContentLoaded", () => {
        👋 to support NaviGen`,
       { title: '📍 Friend’s location received', manualCloseOnly: true, duration: 0 }
     );
-
   }
 
   // Keep ?lang; only drop ?at after storing it.
-  const q = new URLSearchParams(location.search);
-  if (q.has("at")) {
-    q.delete("at");
-    const newUrl = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
-    history.replaceState({}, document.title, newUrl);
+  {
+    const q = new URLSearchParams(location.search);
+    if (q.has("at")) {
+      q.delete("at");
+      const newUrl = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
+      history.replaceState({}, document.title, newUrl);
+    }
   }
-
 });
+
+// open a school profile when ?school=<uid> is present
+{
+  const q = new URLSearchParams(location.search);
+  const uid = q.get("school");
+  if (uid) {
+    // find by ID/alias among already-normalized geoPoints (built above)
+    const hit = Array.isArray(geoPoints)
+      ? geoPoints.find(x => String(x?.ID || x?.id) === String(uid))
+      : null;
+
+    if (hit) {
+      // basic cover/media like Popular buttons do
+      const media   = hit.media || {};
+      const gallery = Array.isArray(media.images) ? media.images : [];
+      const images  = gallery.map(m => (m && typeof m === 'object') ? m.src : m).filter(Boolean);
+      const cover   = (media.cover && String(media.cover).trim())
+        ? media.cover
+        : (images[0] || '/assets/placeholder-images/icon-512-green.png');
+
+      showLocationProfileModal({
+        id: String(hit.ID || hit.id || uid),
+        name: hit["Short Name"] || hit.Name || "Unnamed",
+        lat: (hit["Coordinate Compound"]||"").split(',')[0] || "",
+        lng: (hit["Coordinate Compound"]||"").split(',')[1] || "",
+        imageSrc: cover,
+        images,
+        media,
+        descriptions: (hit && typeof hit.descriptions === 'object') ? hit.descriptions : {},
+        tags: Array.isArray(hit?.tags) ? hit.tags : []
+      });
+    }
+
+    // keep ?lang etc; drop ?school from the URL bar
+    q.delete("school");
+    const next = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
+    history.replaceState({}, document.title, next);
+  }
+}
+
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {

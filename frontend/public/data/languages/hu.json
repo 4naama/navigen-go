@@ -254,6 +254,7 @@
   "sub.translation-services": "🌐 Fordítási szolgáltatások",
   "sub.repair-maintenance": "🛠️ Javítás és karbantartás",
   "sub.yoga": "🧘 Jóga",
+  "sub.language-schools": "🏫 Nyelviskolák",
   "group.experiences": "🎯 Élmények",
   "sub.workshops": "🧪 Műhelyek",
   "sub.tastings": "🍷 Kóstolások",
@@ -319,5 +320,17 @@
   "noMiss.support.title": "Támogatás",
   "noMiss.support.body": "Koppints a 👋 ikonra, ha támogatnád a csapatot.",
   "noMiss.thanks": "Köszönjük – élvezd az utazást.",
-  "lpm.description.placeholder": "⏳ Leírás hamarosan."
+  "lpm.description.placeholder": "⏳ Leírás hamarosan.",
+  "view.settings.title": "Nézet beállításai",
+  "view.settings.context": "🏫 Nyelviskolák › {brand} › {scope}",
+  "view.settings.note": "Csak erre az oldalra érvényes.",
+  "view.settings.mode.structure": "Kategória",
+  "view.settings.mode.adminArea": "Régió",
+  "view.settings.mode.city": "Város",
+  "view.settings.mode.postalCode": "Irányítószám",
+  "view.settings.mode.alpha": "Betűrend",
+  "view.settings.mode.priority": "Kiemelt",
+  "view.settings.mode.distance": "Távolság (legközelebbi elöl)",
+  "view.settings.resetToDefault": "Nézet visszaállítása (alapértelmezett: {modeLabel})",
+  "view.settings.usingLocation": "Az Ön helyzetét használjuk"
 }

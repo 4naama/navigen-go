@@ -254,6 +254,7 @@
   "sub.translation-services": "🌐 Translation Services",
   "sub.repair-maintenance": "🛠️ Repair & Maintenance",
   "sub.yoga": "🧘 Yoga",
+  "sub.language-schools": "🏫 Language Schools",
   "group.experiences": "🎯 Experiences",
   "sub.workshops": "🧪 Workshops",
   "sub.tastings": "🍷 Tastings",
@@ -319,5 +320,17 @@
   "noMiss.support.title": "Support",
   "noMiss.support.body": "Tap 👋 to show support for the team.",
   "noMiss.thanks": "Thank you — enjoy the ride.",
-  "lpm.description.placeholder": "⏳ Description coming soon."
+  "lpm.description.placeholder": "⏳ Description coming soon.",
+  "view.settings.title": "View by settings",
+  "view.settings.context": "🏫 Language Schools › {brand} › {scope}",
+  "view.settings.note": "Applies to this page only.",
+  "view.settings.mode.structure": "Category",
+  "view.settings.mode.adminArea": "Region",
+  "view.settings.mode.city": "City",
+  "view.settings.mode.postalCode": "Postal code",
+  "view.settings.mode.alpha": "Alphabetical",
+  "view.settings.mode.priority": "Priority",
+  "view.settings.mode.distance": "Distance (closest first)",
+  "view.settings.resetToDefault": "Reset view to default ({modeLabel})",
+  "view.settings.usingLocation": "Using your location"
 }
