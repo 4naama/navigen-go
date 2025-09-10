@@ -24,7 +24,19 @@ const OG_MAP = {
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+
+    // PWA: early pass-through for critical static assets (avoid rewrites)
+    // <!-- ensures manifest/SW/assets are served raw and with correct MIME -->
+    if (url.pathname === '/manifest.webmanifest' ||
+        url.pathname === '/sw.js' ||
+        url.pathname.startsWith('/assets/')) {
+      return env.ASSETS.fetch(req);
+    }
+
     const res = await env.ASSETS.fetch(req);
+
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('text/html')) return res; // only rewrite HTML
 
     const ct = res.headers.get('content-type') || '';
     if (!ct.includes('text/html')) return res; // only rewrite HTML

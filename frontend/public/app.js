@@ -19,6 +19,12 @@ import {
   openViewSettingsModal
 } from './modal-injector.js';
 
+// PWA: register service worker once (installability requirement)
+// <!-- keeps install prompt eligible in production -->
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW reg failed', err));
+}
+
 // Force phones to forget old cache on new deploy; one-time per BUILD_ID. (Disabled: no redirect, no purge)
 const BUILD_ID = '2025-08-30-03'; // disabled cache-buster
 try { localStorage.setItem('BUILD_ID', BUILD_ID); } catch {}
