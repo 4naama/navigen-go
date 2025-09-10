@@ -788,6 +788,36 @@ export function showLocationProfileModal(data) {
     // Contact
     addLink('som-call', '📞', 'Call',      data.contact?.phone  ? `tel:${String(data.contact.phone).trim()}` : '', 'phone');
     addLink('som-mail', '📧', 'Email',     data.contact?.email  ? `mailto:${String(data.contact.email).trim()}` : '', 'email');
+    // Fetch contact on click when not present
+    ;(function wireContactFetch(){
+      const id = String(data?.id||'').trim(); if (!id) return;
+      const call = modal.querySelector('#som-call');
+      const mail = modal.querySelector('#som-mail');
+      const bookBtn = modal.querySelector('#lpm-book');
+
+      if (call && !call.href) call.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { const r = await fetch(`/api/data/contact?id=${encodeURIComponent(id)}&kind=phone`);
+          if (r.ok){ const j=await r.json(); if (j.href) location.href=j.href; } } catch {}
+      });
+
+      if (mail && !mail.href) mail.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { const r = await fetch(`/api/data/contact?id=${encodeURIComponent(id)}&kind=email`);
+          if (r.ok){ const j=await r.json(); if (j.href) location.href=j.href; } } catch {}
+      });
+
+      if (bookBtn) {
+        const orig = bookBtn.onclick;
+        bookBtn.onclick = async (ev) => {
+          ev.preventDefault();
+          const link = data?.contact?.bookingUrl || data?.links?.booking || '';
+          if (link) { if (orig) return orig(ev); window.open(String(link),'_blank','noopener'); return; }
+          try { location.href = `/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`; } catch {}
+        };
+      }
+    })();
+    
     addLink('som-wa',   '🟢', 'WhatsApp',  waUrl(data.contact?.whatsapp),   'whatsapp');
     addLink('som-tg',   '📣', 'Telegram',  tgUrl(data.contact?.telegram),   'telegram');
     addLink('som-msgr', '💬', 'Messenger', msgrUrl(data.contact?.messenger),'messenger');
@@ -928,6 +958,31 @@ export function showLocationProfileModal(data) {
   // call wiring + reveal
   wireLocationProfileModal(modal, data, data?.originEl);
   showModal('location-profile-modal');
+
+  // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
+  ;(async () => {
+    try {
+      const id = String(data?.id || '').trim(); if (!id) return;
+      const res = await fetch(`/api/data/profile?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const payload = await res.json();
+
+      // Fill description if placeholder
+      if (payload.descriptions && !data.descriptions) {
+        const box = modal.querySelector('.location-description .description');
+        const txt = payload.descriptions.en || Object.values(payload.descriptions)[0] || '';
+        if (box && /Description coming soon/i.test(box.textContent || box.innerHTML)) {
+          box.innerHTML = String(txt).replace(/\n/g,'<br>');
+        }
+      }
+      // Upgrade cover if better
+      if (payload.media && payload.media.cover) {
+        const img = modal.querySelector('.location-media img');
+        if (img && /placeholder/.test(img.src)) img.src = payload.media.cover;
+      }
+    } catch {}
+  })();
+
 
   // 5. Reveal modal (remove .hidden, add .visible, focus trap etc.)
   // (done above via showModal)

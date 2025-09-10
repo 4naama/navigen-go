@@ -1,4 +1,4 @@
-const CACHE_NAME = "navigen-go-v4"; // bump to evict stale assets
+const CACHE_NAME = "navigen-go-v5"; // bump to evict stale assets
 
 // Precache core shell for offline; keep list lean
 self.addEventListener("install", event => {

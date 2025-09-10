@@ -21,6 +21,24 @@ const OG_MAP = {
   hi:'hi_IN', ko:'ko_KR', ja:'ja_JP', ar:'ar_SA'
 };
 
+// Simple 10-min soft limiter (instance-local; enough to bounce bots)
+// <!-- per IP/UA, cookie-bound when present -->
+const RATE = { windowMs: 10*60*1000, cap: 120, map: new Map() };
+function rateKey(req){
+  const ip = req.headers.get('cf-connecting-ip') || '0.0.0.0';
+  const ua = (req.headers.get('user-agent') || '').slice(0,64);
+  const cookie = req.headers.get('cookie') || '';
+  const hasAdmin = /\bnavigen_gate_v2=ok\b/.test(cookie);
+  return (hasAdmin?'C:':'N:') + ip + '|' + ua;
+}
+function rateHit(req){
+  const k = rateKey(req), now = Date.now();
+  let e = RATE.map.get(k);
+  if (!e || now > e.resetAt) { e = { count:0, resetAt: now + RATE.windowMs }; RATE.map.set(k, e); }
+  e.count++;
+  return { ok: e.count <= RATE.cap, remain: Math.max(0, RATE.cap - e.count), resetAt: e.resetAt };
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -33,10 +51,97 @@ export default {
       return env.ASSETS.fetch(req);
     }
 
-    const res = await env.ASSETS.fetch(req);
+    // -------- Admin-only Showcase Gate (no guest codes) --------
+    // <!-- Bans navigen.io to everyone except admin with 6-digit code -->
+    {
+      // Keep only minimal static assets public so the login page can load clean
+      const PUBLIC_PREFIXES = ['/assets/']; // gate /data/* — datasets allowed only after admin login
+      const PUBLIC_FILES = new Set(['/robots.txt','/favicon.ico']);
+      const isPublic = PUBLIC_FILES.has(url.pathname) || PUBLIC_PREFIXES.some(p => url.pathname.startsWith(p));
 
-    const ct = res.headers.get('content-type') || '';
-    if (!ct.includes('text/html')) return res; // only rewrite HTML
+      const cookie = req.headers.get('cookie') || '';
+      const ADMIN_COOKIE = 'navigen_gate_v2'; // rename to force global logout
+      const authed = new RegExp(`\\b${ADMIN_COOKIE}=ok\\b`).test(cookie);
+
+      // Everything non-public is admin-gated
+      if (!isPublic && !authed) {
+        const expected = (env.SHOWCASE_STATIC6 || '').trim(); // set in Pages → Settings → Variables
+        const codeQ = (url.searchParams.get('code') || '').trim();
+        const codeBody = await (async () => {
+          if (req.method !== 'POST') return '';
+          try {
+            const ct = req.headers.get('content-type') || '';
+            if (ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data')) {
+              const form = await req.formData();
+              return String(form.get('code') || '').trim();
+            }
+            if (ct.includes('application/json')) {
+              const j = await req.json();
+              return String(j.code || '').trim();
+            }
+          } catch {}
+          return '';
+        })();
+
+        // Accept only the admin 6-digit (no guest acceptance)
+        const submitted = codeQ || codeBody;
+        if (/^\\d{6}$/.test(submitted) && expected && submitted === expected) {
+          const headers = new Headers({
+            // 1-year remember-me (31536000 seconds)
+            'Set-Cookie': `${ADMIN_COOKIE}=ok; Max-Age=31536000; Path=/; Secure; SameSite=Lax`
+          });
+          url.searchParams.delete('code'); // clean URL
+          return new Response(null, {
+            status: 303,
+            headers: new Headers({ ...Object.fromEntries(headers), Location: url.toString() })
+          });
+        }
+
+        // Minimal login page (no external deps)
+        const body = `<!doctype html><html lang="en"><head>
+          <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <title>NaviGen — Admin Access</title>
+          <style>
+            body{font:16px system-ui;margin:0;background:#f7f7f7;color:#111}
+            .card{max-width:420px;margin:14vh auto;padding:24px;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+            h1{font-size:20px;margin:0 0 12px}.muted{opacity:.75;margin:0 0 16px}
+            form{display:flex;gap:8px}input{flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:8px}
+            button{padding:10px 14px;border:1px solid #111;border-radius:8px;background:#111;color:#fff;cursor:pointer}
+            .small{font-size:13px;opacity:.7;margin-top:12px}
+          </style></head><body>
+          <div class="card" role="dialog" aria-labelledby="t">
+            <h1 id="t">🔒 Admin Access</h1>
+            <p class="muted">Enter your 6-digit admin code.</p>
+            <form method="POST"><input name="code" inputmode="numeric" pattern="\\\\d{6}" maxlength="6" placeholder="123456" required>
+            <button type="submit">Enter</button></form>
+            <p class="small">Tip: add <code>?code=123456</code> to your own URL for quicker login.</p>
+          </div></body></html>`;
+        return new Response(body, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } });
+      }
+    }
+    
+    // -------- End Admin-only Showcase Gate --------
+
+    // Data API: same-origin + admin cookie; tiny JSON; soft 429
+    if (url.pathname.startsWith('/api/data/')) {
+      const cookie = req.headers.get('cookie') || '';
+      if (!/\bnavigen_gate_v2=ok\b/.test(cookie)) return new Response('Unauthorized', { status: 401 });
+
+      const r = rateHit(req);
+      const rlHdr = {
+        'X-RateLimit-Limit': String(RATE.cap),
+        'X-RateLimit-Remaining': String(r.remain),
+        'X-RateLimit-Reset': String(Math.ceil(r.resetAt/1000))
+      };
+      if (!r.ok) return new Response('Too Many Requests', { status: 429, headers: rlHdr });
+
+      if (url.pathname === '/api/data/list')    return handleList(req, env, url, rlHdr);
+      if (url.pathname === '/api/data/profile') return handleProfile(req, env, url, rlHdr);
+      if (url.pathname === '/api/data/contact') return handleContact(req, env, url, rlHdr);
+      return new Response('Not Found', { status: 404 });
+    }
+
+    const res = await env.ASSETS.fetch(req);
 
     const ct = res.headers.get('content-type') || '';
     if (!ct.includes('text/html')) return res; // only rewrite HTML
@@ -109,10 +214,83 @@ export default {
   }
 };
 
+// -------- Data handlers (tiny payloads; no secrets) --------
+async function handleList(req, env, url, extraHdr){
+  const q = url.searchParams;
+  const limit = Math.min(Math.max(Number(q.get('limit')||20),1),20); // ≤20 per page
+  const MAX_PAGES = 5; // ≤~100 items total; humane by design
+
+  // Load canonical dataset (already gated by admin cookie)
+  const r = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
+  if (!r.ok) return new Response('Data load error', { status: 500 });
+  const profiles = await r.json();
+  let rows = Array.isArray(profiles?.locations) ? profiles.locations : [];
+
+  // Optional filters (context + group/city/postal)
+  const ctx=(q.get('context')||'').toLowerCase();
+  const group=(q.get('group')||'').toLowerCase();
+  const city=(q.get('city')||'').toLowerCase();
+  const postal=(q.get('postal')||'').toLowerCase();
+  if (ctx)   rows = rows.filter(r=>String(r.context||r.Context||'').toLowerCase().includes(ctx));
+  if (group) rows = rows.filter(r=>String(r.groupKey||r.Group||'').toLowerCase().includes(group));
+  if (city)  rows = rows.filter(r=>String(r?.contact?.city||'').toLowerCase().includes(city));
+  if (postal)rows = rows.filter(r=>String(r?.contact?.postalCode||'').toLowerCase().includes(postal));
+  rows = rows.filter(r=>String(r.Visible||r.visible||'Yes').toLowerCase()==='yes');
+
+  const idx = Math.max(Number(q.get('cursor')||0),0);
+  const slice = rows.slice(idx, idx+limit);
+
+  // Minimal list fields only
+  const items = slice.map(p=>({
+    id: p.ID||p.id,
+    name: p.name?.en || p.Name || '',
+    shortName: p.shortName?.en || p['Short Name'] || '',
+    groupKey: p.groupKey||p.Group||'',
+    tags: Array.isArray(p.tags)?p.tags:[],
+    coord: (typeof p['Coordinate Compound']==='string' && p['Coordinate Compound'].includes(',')) ? p['Coordinate Compound'] : '',
+    cover: (p.media && p.media.cover) || (Array.isArray(p.media?.images)&&p.media.images[0]?.src) || ''
+  }));
+
+  const nextCursor = (idx+limit<rows.length && (idx/limit+1)<MAX_PAGES) ? (idx+limit) : null;
+  return new Response(JSON.stringify({ items, nextCursor, totalApprox: Math.min(rows.length, MAX_PAGES*limit) }),
+    { status:200, headers:{ 'content-type':'application/json','Cache-Control':'private, max-age=60', ...extraHdr }});
+}
+
+async function handleProfile(req, env, url, extraHdr){
+  const id = url.searchParams.get('id')||''; if(!id) return new Response('Bad Request',{status:400});
+  const r = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
+  if (!r.ok) return new Response('Data load error', { status: 500 });
+  const profiles = await r.json();
+  const p = (Array.isArray(profiles?.locations)?profiles.locations:[]).find(x=>String(x.ID||x.id)===String(id));
+  if(!p) return new Response('Not Found',{status:404});
+  const payload = {
+    id: p.ID||p.id, name: p.name||p.Name||'', shortName: p.shortName||p['Short Name']||'',
+    descriptions: p.descriptions||{}, tags: Array.isArray(p.tags)?p.tags:[],
+    coord: (typeof p['Coordinate Compound']==='string' && p['Coordinate Compound'].includes(',')) ? p['Coordinate Compound'] : '',
+    media: { cover: p.media?.cover||'', images: Array.isArray(p.media?.images)?p.media.images:[] },
+    links: p.links||{}
+  };
+  return new Response(JSON.stringify(payload), { status:200, headers:{ 'content-type':'application/json','Cache-Control':'private, max-age=60', ...extraHdr }});
+}
+
+async function handleContact(req, env, url, extraHdr){
+  const id=url.searchParams.get('id')||''; const kind=(url.searchParams.get('kind')||'').toLowerCase();
+  if(!id || !['phone','email','booking'].includes(kind)) return new Response('Bad Request',{status:400});
+  const r = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
+  if (!r.ok) return new Response('Data load error', { status: 500 });
+  const profiles = await r.json();
+  const p = (Array.isArray(profiles?.locations)?profiles.locations:[]).find(x=>String(x.ID||x.id)===String(id));
+  if(!p) return new Response('Not Found',{status:404});
+  const c = p.contact||{};
+  if(kind==='booking'){ const link=p?.contact?.bookingUrl||p?.links?.booking||''; return link?Response.redirect(link,302):new Response('No booking',{status:204}); }
+  if(kind==='phone'){ const v=c.phone?`tel:${String(c.phone).trim()}`:''; return v?new Response(JSON.stringify({href:v}),{status:200,headers:{'content-type':'application/json',...extraHdr}}):new Response('No phone',{status:204}); }
+  if(kind==='email'){ const v=c.email?`mailto:${String(c.email).trim()}`:''; return v?new Response(JSON.stringify({href:v}),{status:200,headers:{'content-type':'application/json',...extraHdr}}):new Response('No email',{status:204}); }
+}
+
 /* ---------------- helpers ---------------- */
 
 function readCookie(cookieHeader, name) {
-  const m = cookieHeader.match(new RegExp('(?:^|; )' + name.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&') + '=([^;]*)'));
+  const m = cookieHeader.match(new RegExp('(?:^|; )' + name.replace(/[-[\\]/{}()*+?.\\\\^$|]/g, '\\\\$&') + '=([^;]*)'));
   return m ? decodeURIComponent(m[1]) : null;
 }
 

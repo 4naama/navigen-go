@@ -784,10 +784,10 @@ async function initEmergencyBlock(countryOverride) {
     flagStyler();                       // 🌐 Apply title/alt to any flag icons
 
     // Load JSONs (profiles.json now carries locations)
-    const [actions, structure, profile, contexts] = await Promise.all([
+    // keep static: actions/structure/contexts (profiles come from Data API)
+    const [actions, structure, contexts] = await Promise.all([
       fetch('/data/actions.json').then(r => r.json()),
       fetch('/data/structure.json').then(r => r.json()),
-      fetch('/data/profiles.json').then(r => r.json()),
       fetch('/data/contexts.json').then(r => r.json()) // NEW
     ]);
 
@@ -808,7 +808,8 @@ async function initEmergencyBlock(countryOverride) {
       : [];
 
     // Normalize profile.locations → legacy geoPoints shape used by UI
-    let geoPointsData = (Array.isArray(profile?.locations) ? profile.locations : []).map(p => {
+    // Build from API items (normalized; minimal fields present)
+    let geoPointsData = (Array.isArray(apiItems) ? apiItems : []).map(p => {
       // i18n text → string
       const pickText = (v) => (typeof v === 'string' ? v : (v && typeof v === 'object' ? (v[lang] || v.en || Object.values(v).find(x => typeof x === 'string') || '') : ''));
 
@@ -975,6 +976,13 @@ async function initEmergencyBlock(countryOverride) {
     const segs = location.pathname.split('/').filter(Boolean);
     if (/^[a-z]{2}$/i.test(segs[0] || '')) segs.shift(); // drop {lang}
     let ACTIVE_PAGE = null;
+    // First-page items for this context (tiny, fast)
+    // <!-- keeps UX instant; more pages optional later -->
+    const API_LIMIT = 40;
+    const listRes = await fetch(`/api/data/list?context=${encodeURIComponent(ACTIVE_PAGE||'')}&limit=${API_LIMIT}`);
+    const listJson = listRes.ok ? await listRes.json() : { items: [] };
+    const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
+    
     if (segs.length >= 2) {
       const namespace = String(segs[0]).toLowerCase();
       const key = segs.slice(1).join('/').toLowerCase(); // keep slashes
