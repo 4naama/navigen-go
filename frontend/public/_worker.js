@@ -42,6 +42,24 @@ function rateHit(req){
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+    
+    // Hard gate for /data/* (no raw JSON unless admin cookie)
+    // <!-- explicit; avoids any fall-through -->
+    {
+      const cookie = req.headers.get('cookie') || '';
+      const ADMIN_COOKIE = 'navigen_gate_v2';
+      const authed = new RegExp(`\\b${ADMIN_COOKIE}=ok\\b`).test(cookie);
+      if (url.pathname.startsWith('/data/')) {
+        if (!authed) {
+          // show the same admin code page you already serve later
+          const body = `<!doctype html><title>Admin Access</title><meta charset="utf-8">`+
+                       `<body style="font:16px system-ui"><h1>🔒 Admin Access</h1>`+
+                       `<form method="POST"><input name="code" inputmode="numeric" pattern="\\d{6}" maxlength="6" required>`+
+                       `<button>Enter</button></form></body>`;
+          return new Response(body, { status: 401, headers: { 'content-type': 'text/html; charset=utf-8', 'x-ng-worker': 'gate' } });
+        }
+      }
+    }        
 
     // PWA: early pass-through for critical static assets (avoid rewrites)
     // <!-- ensures manifest/SW/assets are served raw and with correct MIME -->
@@ -141,7 +159,9 @@ export default {
       return new Response('Not Found', { status: 404 });
     }
 
-    const res = await env.ASSETS.fetch(req);
+    let res = await env.ASSETS.fetch(req);
+    res = new Response(res.body, { status: res.status, headers: new Headers(res.headers) });
+    res.headers.set('x-ng-worker', 'ok'); // quick check in DevTools
 
     const ct = res.headers.get('content-type') || '';
     if (!ct.includes('text/html')) return res; // only rewrite HTML
@@ -209,8 +229,9 @@ export default {
           }
         }
       });
-
-    return rewriter.transform(res);
+    const out = await rewriter.transform(res);
+    out.headers.set('x-ng-worker', 'ok'); // persists on HTML too
+    return out;
   }
 };
 
