@@ -43,6 +43,25 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     
+    // CORS for local dev; echo Origin + allow credentials
+    const ORIGIN = req.headers.get('origin') || '';
+    const IS_LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(ORIGIN);
+    const corsHeaders = (base = {}) => {
+      const h = new Headers(base);
+      if (IS_LOCAL_ORIGIN) {
+        h.set('Access-Control-Allow-Origin', ORIGIN);
+        h.set('Vary', 'Origin');
+        h.set('Access-Control-Allow-Credentials', 'true');
+        h.set('Access-Control-Allow-Headers', req.headers.get('access-control-request-headers') || 'Content-Type');
+        h.set('Access-Control-Allow-Methods', 'GET,OPTIONS');
+      }
+      return h;
+    };
+    // Preflight for API
+    if (req.method === 'OPTIONS' && url.pathname.startsWith('/api/data/')) {
+      return new Response(null, { status: 204, headers: corsHeaders() });
+    }
+
     // Hard gate for /data/* (no raw JSON unless admin cookie)
     // <!-- explicit; avoids any fall-through -->
     {
@@ -106,7 +125,7 @@ export default {
         if (/^\\d{6}$/.test(submitted) && expected && submitted === expected) {
           const headers = new Headers({
             // 1-year remember-me (31536000 seconds)
-            'Set-Cookie': `${ADMIN_COOKIE}=ok; Max-Age=31536000; Path=/; Secure; SameSite=Lax`
+            'Set-Cookie': `${ADMIN_COOKIE}=ok; Max-Age=31536000; Path=/; Secure; HttpOnly; SameSite=None`
           });
           url.searchParams.delete('code'); // clean URL
           return new Response(null, {
@@ -114,7 +133,15 @@ export default {
             headers: new Headers({ ...Object.fromEntries(headers), Location: url.toString() })
           });
         }
-
+        
+        // If this is an AJAX/API request to /api/data/*, return 401 JSON (not HTML)
+        if (url.pathname.startsWith('/api/data/')) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: corsHeaders({ 'content-type': 'application/json' })
+          });
+        }
+                
         // Minimal login page (no external deps)
         const body = `<!doctype html><html lang="en"><head>
           <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -133,7 +160,7 @@ export default {
             <form method="POST"><input name="code" inputmode="numeric" pattern="\\\\d{6}" maxlength="6" placeholder="123456" required>
             <button type="submit">Enter</button></form>
             <p class="small">Tip: add <code>?code=123456</code> to your own URL for quicker login.</p>
-          </div></body></html>`;
+          </div></body></html
         return new Response(body, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } });
       }
     }
@@ -141,23 +168,22 @@ export default {
     // -------- End Admin-only Showcase Gate --------
 
     // Data API: same-origin + admin cookie; tiny JSON; soft 429
-    if (url.pathname.startsWith('/api/data/')) {
-      const cookie = req.headers.get('cookie') || '';
-      if (!/\bnavigen_gate_v2=ok\b/.test(cookie)) return new Response('Unauthorized', { status: 401 });
+        if (url.pathname.startsWith('/api/data/')) {
+          const r = rateHit(req);
+          const rlHdr = {
+            'X-RateLimit-Limit': String(RATE.cap),
+            'X-RateLimit-Remaining': String(r.remain),
+            'X-RateLimit-Reset': String(Math.ceil(r.resetAt/1000))
+          };
+          if (!r.ok) {
+            return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
+          }
 
-      const r = rateHit(req);
-      const rlHdr = {
-        'X-RateLimit-Limit': String(RATE.cap),
-        'X-RateLimit-Remaining': String(r.remain),
-        'X-RateLimit-Reset': String(Math.ceil(r.resetAt/1000))
-      };
-      if (!r.ok) return new Response('Too Many Requests', { status: 429, headers: rlHdr });
-
-      if (url.pathname === '/api/data/list')    return handleList(req, env, url, rlHdr);
-      if (url.pathname === '/api/data/profile') return handleProfile(req, env, url, rlHdr);
-      if (url.pathname === '/api/data/contact') return handleContact(req, env, url, rlHdr);
-      return new Response('Not Found', { status: 404 });
-    }
+          if (url.pathname === '/api/data/list')    return handleList(req, env, url, corsHeaders(rlHdr));
+          if (url.pathname === '/api/data/profile') return handleProfile(req, env, url, corsHeaders(rlHdr));
+          if (url.pathname === '/api/data/contact') return handleContact(req, env, url, corsHeaders(rlHdr));
+          return new Response('Not Found', { status: 404, headers: corsHeaders() });
+        }
 
     let res = await env.ASSETS.fetch(req);
     res = new Response(res.body, { status: res.status, headers: new Headers(res.headers) });

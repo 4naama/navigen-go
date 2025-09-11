@@ -808,54 +808,8 @@ async function initEmergencyBlock(countryOverride) {
       : [];
 
     // Normalize profile.locations → legacy geoPoints shape used by UI
-    // Build from API items (normalized; minimal fields present)
-    let geoPointsData = (Array.isArray(apiItems) ? apiItems : []).map(p => {
-      // i18n text → string
-      const pickText = (v) => (typeof v === 'string' ? v : (v && typeof v === 'object' ? (v[lang] || v.en || Object.values(v).find(x => typeof x === 'string') || '') : ''));
-
-      // numeric coords (supports p.coord.lat/lng)
-      const lat = pickNum(p.lat, p.latitude, p.coord?.lat, p.coords?.lat, p.coordinates?.lat);
-      const lon = pickNum(p.lon, p.longitude, p.coord?.lng, p.coord?.lon, p.coords?.lng, p.coords?.lon, p.coordinates?.lng, p.coordinates?.lon);
-
-      // coord compound
-      const coordCompound = (typeof p["Coordinate Compound"] === "string" && p["Coordinate Compound"].includes(","))
-        ? p["Coordinate Compound"].trim()
-        : (Number.isFinite(lat) && Number.isFinite(lon) ? `${lat},${lon}` : "");
-
-      // group → always resolve to a key using structure_data
-      const groupLabelOrKey = String(p.groupKey ?? p.Group ?? "").trim();
-      const hit = structure_data.find(s => s["Drop-down"] === groupLabelOrKey || s.Group === groupLabelOrKey);
-      const groupKey = hit ? hit.Group : (groupLabelOrKey.startsWith("group.") ? groupLabelOrKey : "group.uncategorized");
-
-      // subgroup: take as-is (key); mirror into both fields
-      const subkey = String(p.subgroupKey ?? p["Subgroup key"] ?? "").trim();
-
-      const nameText  = pickText(p.Name ?? p.name) || 'Unnamed';
-      const shortText = pickText(p["Short Name"] ?? p.shortName ?? p.alias) || nameText;
-
-      return {
-        ...p,                                         // keep originals
-        ID: p.ID ?? p.id ?? p._id ?? cryptoIdFallback(),
-        Name: nameText,
-        "Short Name": shortText,
-        Group: groupKey,
-        groupKey: groupKey,
-
-        "Subgroup key": subkey,
-        subgroupKey: subkey,
-        "Coordinate Compound": coordCompound,
-        Context: Array.isArray(p.Context) ? p.Context.join(";")
-                : Array.isArray(p.context) ? p.context.join(";")
-                : (typeof p.Context === "string" ? p.Context : (typeof p.context === "string" ? p.context : "")),
-        Visible: (p.Visible ?? p.visible ?? "Yes"),
-        Priority: (p.Priority ?? p.priority ?? "No")
-      };
-    });
-
-    geoPoints = geoPointsData;
-
-    console.log("✅ geoPoints count:", geoPoints.length);
-    console.log("Sample record:", geoPoints[0]);
+    // Build after apiItems is fetched (deferred below)
+    let geoPointsData = []; // will assign after we fetch list
 
     // ✅ Local debug helper (not global)
     function debug() {
@@ -976,18 +930,26 @@ async function initEmergencyBlock(countryOverride) {
     const segs = location.pathname.split('/').filter(Boolean);
     if (/^[a-z]{2}$/i.test(segs[0] || '')) segs.shift(); // drop {lang}
     let ACTIVE_PAGE = null;
-    // First-page items for this context (tiny, fast)
-    // <!-- keeps UX instant; more pages optional later -->
-    const API_LIMIT = 40;
-    const listRes = await fetch(`/api/data/list?context=${encodeURIComponent(ACTIVE_PAGE||'')}&limit=${API_LIMIT}`);
-    const listJson = listRes.ok ? await listRes.json() : { items: [] };
-    const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
-    
     if (segs.length >= 2) {
       const namespace = String(segs[0]).toLowerCase();
       const key = segs.slice(1).join('/').toLowerCase(); // keep slashes
       ACTIVE_PAGE = `${namespace}/${key}`;
     }
+
+    // First-page items for this context (tiny, fast)
+    // <!-- keeps UX instant; more pages optional later -->
+    const API_LIMIT = 40;
+    // Use prod API in dev; include credentials so admin cookie is sent
+    const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen.io')
+      : location.origin;
+
+    const listRes = ACTIVE_PAGE
+      ? await fetch(new URL(`/api/data/list?context=${encodeURIComponent(ACTIVE_PAGE)}&limit=${API_LIMIT}`, API_BASE), { credentials: 'include' })
+      : { ok: true, json: async () => ({ items: [] }) };
+
+    const listJson = listRes.ok ? await listRes.json() : { items: [] };
+    const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
 
     const geoCtx = ACTIVE_PAGE
       ? geoPoints.filter(loc =>
@@ -1233,17 +1195,31 @@ async function initEmergencyBlock(countryOverride) {
         clearBtn.style.display = 'none'; // Hide by default
       }
       
-      // ✅ Insert gear between Search and the Here button (same row)
-      let gearBtn = document.getElementById('view-gear');
-      if (!gearBtn) {
-        gearBtn = document.createElement('button');
-        gearBtn.id = 'view-gear';
-        gearBtn.type = 'button';
-        gearBtn.title = t('view.settings.title');          // localized tooltip
-        gearBtn.textContent = '⚙️';
-        // place it immediately after the input; the existing "Here" button stays after it
-        searchInput.insertAdjacentElement('afterend', gearBtn);
+    // ✅ Keep × and gear in the correct row order
+    let gearBtn = document.getElementById('view-gear');
+    if (!gearBtn) {
+      gearBtn = document.createElement('button');
+      gearBtn.id = 'view-gear';
+      gearBtn.type = 'button';
+      gearBtn.title = t('view.settings.title'); // localized tooltip
+      gearBtn.textContent = '⚙️';
+
+      // ⬇️ Ensure the clear (×) lives inside the search container and right after the input
+      // short: make CSS selector #search + #clear-search and absolute position work
+      const clearEl = document.getElementById('clear-search'); // keep comment; clarify scope
+      const wrap = searchInput.closest('#search-left') || searchInput.parentElement; // short: anchor for absolute
+
+      if (clearEl && wrap) {
+        if (clearEl.parentElement !== wrap) wrap.appendChild(clearEl); // move inside container
+        if (clearEl.previousElementSibling !== searchInput) {
+          searchInput.insertAdjacentElement('afterend', clearEl); // × immediately after input
+        }
       }
+
+      // ⬇️ Insert gear after × if present; else after input
+      const anchor = document.getElementById('clear-search') || searchInput; // short: prefer × anchor
+      anchor.insertAdjacentElement('afterend', gearBtn); // keeps × visually at input’s right edge
+    }
 
       // ✅ Build labels & open the button-less modal (no buttons; closes on select/ESC/backdrop)
       gearBtn.onclick = () => {

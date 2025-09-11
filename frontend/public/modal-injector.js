@@ -797,13 +797,23 @@ export function showLocationProfileModal(data) {
 
       if (call && !call.href) call.addEventListener('click', async (e) => {
         e.preventDefault();
-        try { const r = await fetch(`/api/data/contact?id=${encodeURIComponent(id)}&kind=phone`);
+        const toURL = (p) => new URL(
+          p,
+          document.querySelector('meta[name="api-origin"]')?.content?.trim()
+            || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'https://navigen.io' : location.origin)
+        ).toString();
+        try { const r = await fetch(toURL(`/api/data/contact?id=${encodeURIComponent(id)}&kind=phone`));
           if (r.ok){ const j=await r.json(); if (j.href) location.href=j.href; } } catch {}
       });
 
       if (mail && !mail.href) mail.addEventListener('click', async (e) => {
         e.preventDefault();
-        try { const r = await fetch(`/api/data/contact?id=${encodeURIComponent(id)}&kind=email`);
+        const toURL = (p) => new URL(
+          p,
+          document.querySelector('meta[name="api-origin"]')?.content?.trim()
+            || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'https://navigen.io' : location.origin)
+        ).toString();
+        try { const r = await fetch(toURL(`/api/data/contact?id=${encodeURIComponent(id)}&kind=email`), { credentials: 'include' });
           if (r.ok){ const j=await r.json(); if (j.href) location.href=j.href; } } catch {}
       });
 
@@ -813,7 +823,12 @@ export function showLocationProfileModal(data) {
           ev.preventDefault();
           const link = data?.contact?.bookingUrl || data?.links?.booking || '';
           if (link) { if (orig) return orig(ev); window.open(String(link),'_blank','noopener'); return; }
-          try { location.href = `/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`; } catch {}
+          const toURL = (p) => new URL(
+            p,
+            document.querySelector('meta[name="api-origin"]')?.content?.trim()
+              || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'https://navigen.io' : location.origin)
+          ).toString();
+          try { location.assign(toURL(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`)); } catch {}
         };
       }
     })();
@@ -963,7 +978,7 @@ export function showLocationProfileModal(data) {
   ;(async () => {
     try {
       const id = String(data?.id || '').trim(); if (!id) return;
-      const res = await fetch(`/api/data/profile?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
+      const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
       if (!res.ok) return;
       const payload = await res.json();
 
@@ -999,6 +1014,14 @@ import { t } from './scripts/i18n.js';
 
 // Stripe: only the donation action here (init comes from caller)
 import { handleDonation } from "./scripts/stripe.js";
+
+// keep: minimal helper; picks API base per env (prod=same-origin)
+const API = (path) => {
+  const meta = document.querySelector('meta[name="api-origin"]')?.content?.trim();
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const base = meta || (isLocal ? 'https://navigen.io' : location.origin);
+  return new URL(path, base).toString();
+};
 
 // ✅ Store Popular’s original position on page load
 let popularBaseOffset = 0;

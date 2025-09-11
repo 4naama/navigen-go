@@ -1,36 +1,29 @@
-const CACHE_NAME = "navigen-go-v5"; // bump to evict stale assets
+// Bump to evict stale assets, make version explicit per env
+const IS_DEV = /\blocalhost$|\b127\.0\.0\.1$/.test(self.location.hostname); // dev skip cache
+const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v6"; // bump to evict stale assets
 
 // Precache core shell for offline; keep list lean
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
+    if (IS_DEV) { // dev: no precache; install fast
+      await self.skipWaiting(); // apply new SW immediately after install
+      return;
+    }
     const cache = await caches.open(CACHE_NAME);
     // Precache a defined set; skip failures so install cannot be bricked by a 404.
     const ASSETS = [
-      "/",
-      "/index.html",
-      "/navi-style.css",
-      "/app.js",
-      "/modal-injector.js",
-      "/data/locations.json",
-      "/data/structure.json",
-      "/data/alert.json",
-      "/assets/icon-192.png",
-      "/assets/icon-512.png",
-      "/assets/language.svg",
+      "/", "/index.html", "/navi-style.css", "/app.js", "/modal-injector.js",
+      "/data/locations.json", "/data/structure.json", "/data/alert.json",
+      "/assets/icon-192.png", "/assets/icon-512.png", "/assets/language.svg",
       "/assets/icon-whatsapp.svg"
     ];
-
     await Promise.allSettled(ASSETS.map(async (url) => {
       try {
         const res = await fetch(url, { cache: "no-store" });
         if (res && res.ok) await cache.put(url, res.clone());
-      } catch (_) {
-        // keep install alive if a file is missing
-      }
+      } catch (_) { /* keep install alive if a file is missing */ }
     }));
-
-    // apply new SW immediately after install
-    await self.skipWaiting();
+    await self.skipWaiting(); // apply new SW immediately after install
   })());
 });
 
@@ -38,8 +31,9 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))); // ✅ remove old "sziget-cache"
-    await self.clients.claim();
+    // dev: nuke everything; prod: keep only current
+    await Promise.all(keys.map(k => (IS_DEV || k !== CACHE_NAME) ? caches.delete(k) : Promise.resolve()));
+    await self.clients.claim(); // claim clients so new SW controls pages now
   })());
 });
 
@@ -47,7 +41,15 @@ self.addEventListener("activate", event => {
 // Only updates comments; behavior changed for documents.
 self.addEventListener("fetch", event => {
   const req = event.request;
+  const url = new URL(req.url); // dev: need origin to skip cross-origin
   if (req.method !== "GET") return;
+
+  if (IS_DEV) {
+    // dev: don’t intercept cross-origin; let page handle CORS
+    if (url.origin !== self.location.origin) return;
+    event.respondWith(fetch(req));
+    return;
+  }
 
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return; // ignore cross-origin
@@ -71,7 +73,6 @@ self.addEventListener("fetch", event => {
   }
 
   const dest = req.destination || '';
-
   if (dest === 'script' || url.pathname.endsWith('.js')) {
     event.respondWith((async () => {
       try {
@@ -97,5 +98,4 @@ self.addEventListener("fetch", event => {
     }
     return net;
   })());
-
 });

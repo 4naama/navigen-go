@@ -101,7 +101,7 @@ body {
   transition: transform 0.2s ease;
 }
 
-/* View-by gear size & interactions */
+/* View-by gear size & interactions — center in row */
 #view-gear{
   font-size: 20px;                 /* match pin size */
   width: 36px; height: 36px;       /* comfortable hit target */
@@ -111,7 +111,13 @@ body {
   background: transparent;
   cursor: pointer;
   border-radius: 8px;
+  display: inline-flex;            /* center emoji inside */
+  align-items: center;             /* vertical center (inner) */
+  justify-content: center;         /* horizontal center (inner) */
+  align-self: center;              /* vertical center in flex row */
+  line-height: 1;                  /* no baseline drift */
 }
+
 #view-gear:hover{ background: rgba(0,0,0,.06); }
 #view-gear:focus-visible{ outline: 2px solid #e11; outline-offset: 2px; }
 
@@ -128,53 +134,69 @@ body {
   --search-shadow: rgba(91,141,239,.15);  /* soft focus ring */
 }
 
-/* 📦 Wrapper around the input and the clear button */
-#search-left {
-  position: relative;          /* needed for absolute clear button */
-  display: inline-flex;
+/* 📦 Search container — full-width row */
+#search-container {
+  display: flex;
+  justify-content: center;
+  margin: 4px 1em;
+}
+
+/* Inner row: stretch; no fixed cap */
+#search-container > div {
+  display: flex;
+  gap: 10px;
   align-items: center;
+  flex: 1 1 auto;
   width: 100%;
+  max-width: none;
   min-width: 0;
 }
 
-/* 🧠 Search input field */
+/* 📦 Wrapper around input and clear button */
+#search-left {
+  position: relative;         /* anchor for the clear button */
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
+/* 🧠 Input */
 #search {
-  width: 100%;
+  width: calc(100% + 6px);  /* +5–8px visual growth; adjust 6px as needed */
+  margin-right: -6px;       /* keep layout stable; only the box extends */
+  box-sizing: border-box;   /* ensure borders are included */
+
   height: 36px;
   padding: 8px 14px;
-  padding-right: 2.25rem;      /* space for ❌ */
+  padding-right: 2.25rem;     /* space reserved for ❌ */
   box-sizing: border-box;
   background: #fff;
-  border: 1px solid var(--search-border);
+  border: 1px solid var(--search-border, #d7dde4);
   border-radius: 6px;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins', system-ui, sans-serif;
   font-size: 16px;
-  font-weight: 400;            /* keep text clean; not bold */
+  font-weight: 400;
   line-height: 1;
   outline: none;
 }
 
-/* Placeholder style */
-#search::placeholder {
-  font-weight: 400;
-  color: #666;
-  opacity: 1;
-}
+#search::placeholder { font-weight: 400; color: #666; opacity: 1; }
 
-/* Focus state — avoid default black border */
 #search:focus,
 #search:focus-visible {
-  border-color: var(--search-focus);
-  box-shadow: 0 0 0 3px var(--search-shadow);
+  border-color: var(--search-focus, #7aa2ff);
+  box-shadow: 0 0 0 3px var(--search-shadow, rgba(122,162,255,.2));
 }
 
-/* ❌ Clear button: visually sits inside the right side of the input */
+/* ❌ Clear button — sits inside the input on the right */
 #clear-search {
   position: absolute;
   top: 50%;
-  right: 12px;
+  right: 65px;
   transform: translateY(-50%);
-  display: none;               /* shown only when there's text */
+  display: none;              /* JS toggles; CSS also reveals on value */
   width: 24px;
   height: 24px;
   padding: 0;
@@ -182,63 +204,34 @@ body {
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   background: #fff;
-  font-size: 12px;             /* capital, bold X */
+  font-size: 12px;            /* bold X */
   font-weight: 700;
   line-height: 1;
   color: #475569;
   cursor: pointer;
-  z-index: 1;                  /* above input */
+  z-index: 1;                 /* above input */
 }
 #clear-search:hover { background: #f1f5f9; color: #334155; }
 #clear-search:active { transform: translateY(-50%) scale(0.98); }
 
-/* Show ❌ when input has value (CSS-only approach) */
+/* CSS-only reveal when the input has content */
 #search:not(:placeholder-shown) + #clear-search {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Optional JS hook: if you toggle a wrapper class in JS, this also shows ❌ */
+/* Optional JS-coop: if your code toggles a wrapper class, honor it */
 #search-left.has-value #clear-search {
   display: inline-flex;
 }
 
-/* 📦 Search container layout */
-#search-container {
-  display: flex;
-  justify-content: center;
-  margin: 4px 1em;
-}
-
-/* REPLACE: inner row so it can stretch full width (no 420px cap) */
-/* Search row: allow full width so the input can expand */
-#search-container > div{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex:1 1 auto;
-  width:100%;
-  max-width:none;    /* was 420px */
-  min-width:0;       /* prevents overflow when tight */
-}
-
-/* REPLACE: input wrapper takes remaining space */
-#search-left{
-  position:relative;
-  display:inline-flex;
-  align-items:center;
-  flex:1 1 auto;    /* grow/shrink to fill */
-  min-width:0;      /* prevent overflow */
-  width:auto;       /* let flex sizing win */
-}
-
-/* INSERT: keep controls fixed-size; drop legacy left margin in this row */
+/* Controls keep fixed size; drop legacy margin in this row */
 #search-container #view-gear,
-#search-container #here-button{
-  flex:0 0 auto;
+#search-container #here-button {
+  flex: 0 0 auto;
 }
-#search-container #here-button{ margin-left:0; }
+#search-container #here-button { margin-left: 0; }
 
 /* ==============================
    📜 Main content + scroll zone
