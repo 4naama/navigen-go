@@ -788,7 +788,8 @@ async function initEmergencyBlock(countryOverride) {
     const [actions, structure, contexts] = await Promise.all([
       fetch('/data/actions.json').then(r => r.json()),
       fetch('/data/structure.json').then(r => r.json()),
-      fetch('/data/contexts.json').then(r => r.json()) // NEW
+      // Fetch via API to avoid Access; returns same JSON
+      fetch('https://navigen.io/api/data/contexts', { credentials:'include' }).then(r => r.json()) // NEW
     ]);
 
     state.actions = actions;
@@ -944,9 +945,20 @@ async function initEmergencyBlock(countryOverride) {
       ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen.io')
       : location.origin;
 
-    const listRes = ACTIVE_PAGE
-      ? await fetch(new URL(`/api/data/list?context=${encodeURIComponent(ACTIVE_PAGE)}&limit=${API_LIMIT}`, API_BASE), { credentials: 'include' })
-      : { ok: true, json: async () => ({ items: [] }) };
+    // First API call must not block boot; show shell on 401/CORS.
+    let listRes;
+    try {
+      listRes = ACTIVE_PAGE
+        ? await fetch(
+            new URL(`/api/data/list?context=${encodeURIComponent(ACTIVE_PAGE)}&limit=${API_LIMIT}`, API_BASE),
+            { credentials: 'include' }
+          )
+        : { ok: true, json: async () => ({ items: [] }) };
+    } catch (err) {
+      console.warn('list API failed', err); // show cause during dev
+      showToast('Data API unavailable. Showing cached items.'); // short, clear
+      listRes = { ok: false, json: async () => ({ items: [] }) };
+    }
 
     const listJson = listRes.ok ? await listRes.json() : { items: [] };
     const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
@@ -1034,7 +1046,8 @@ async function initEmergencyBlock(countryOverride) {
       const opts = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','az','priority','distance']);
 
       gear.onclick = () => {
-        const segs = ACTIVE_PAGE.split('/');
+        const segs = String(ACTIVE_PAGE || '').split('/');   // safe: '' → []
+        if (!segs[0]) return; // no context; ignore click
         const namespace = segs[0] || '';
         const brand     = segs[1] || '';
         const scope     = segs.slice(2).join('/') || '';
@@ -1223,7 +1236,9 @@ async function initEmergencyBlock(countryOverride) {
 
       // ✅ Build labels & open the button-less modal (no buttons; closes on select/ESC/backdrop)
       gearBtn.onclick = () => {
-        const segs = ACTIVE_PAGE.split('/');                 // ["language-schools","helen-doron","hungary"]
+        const segs = String(ACTIVE_PAGE || '').split('/');   // safe: '' → []
+        if (!segs[0]) return; // no context; ignore click
+
         const namespace = segs[0] || '';
         const brand     = (segs[1] || '').replace(/-/g,' ');
         const scope     = (segs.slice(2).join('/') || '').replace(/-/g,' ');

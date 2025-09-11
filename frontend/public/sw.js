@@ -17,14 +17,13 @@ self.addEventListener("install", event => {
       "/assets/icon-192.png", "/assets/icon-512.png", "/assets/language.svg",
       "/assets/icon-whatsapp.svg"
     ];
-    await Promise.allSettled(ASSETS.map(async (url) => {
+    // Avoid 'url' name to prevent shadow collisions in some builds.
+    await Promise.allSettled(ASSETS.map(async (assetUrl) => {
       try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (res && res.ok) await cache.put(url, res.clone());
-      } catch (_) { /* keep install alive if a file is missing */ }
+        const res = await fetch(assetUrl, { cache: "no-store" });
+        if (res && res.ok) await cache.put(assetUrl, res.clone());
+      } catch {}
     }));
-    await self.skipWaiting(); // apply new SW immediately after install
-  })());
 });
 
 // cleanup old caches; claim clients so new SW controls pages now
@@ -41,18 +40,17 @@ self.addEventListener("activate", event => {
 // Only updates comments; behavior changed for documents.
 self.addEventListener("fetch", event => {
   const req = event.request;
-  const url = new URL(req.url); // dev: need origin to skip cross-origin
+  const u = new URL(req.url); // dev: need origin to skip cross-origin
   if (req.method !== "GET") return;
 
   if (IS_DEV) {
     // dev: don’t intercept cross-origin; let page handle CORS
-    if (url.origin !== self.location.origin) return;
+    if (u.origin !== self.location.origin) return;
     event.respondWith(fetch(req));
     return;
   }
 
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return; // ignore cross-origin
+  if (u.origin !== self.location.origin) return; // ignore cross-origin
 
   const accept = req.headers.get("accept") || "";
   const isHTML = req.mode === "navigate" || accept.includes("text/html");
@@ -73,7 +71,7 @@ self.addEventListener("fetch", event => {
   }
 
   const dest = req.destination || '';
-  if (dest === 'script' || url.pathname.endsWith('.js')) {
+  if (dest === 'script' || u.pathname.endsWith('.js')) {
     event.respondWith((async () => {
       try {
         const net = await fetch(req, { cache: 'no-store' });

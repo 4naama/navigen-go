@@ -43,22 +43,40 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     
-    // CORS for local dev; echo Origin + allow credentials
+    // CORS for local dev; echo Origin + allow credentials (localhost + LAN)
+    // Note: keeps prod strict (no wildcard with credentials)
     const ORIGIN = req.headers.get('origin') || '';
-    const IS_LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(ORIGIN);
+    const allowDevOrigin = (o) => {
+      try {
+        const u = new URL(o);
+        const h = u.hostname;
+        return (
+          h === 'localhost' ||
+          h === '127.0.0.1' ||
+          h === '0.0.0.0' ||
+          /^192\.168\.\d+\.\d+$/.test(h) ||      // typical LAN
+          /\.local$/.test(h)                      // Bonjour-style hosts
+        );
+      } catch { return false; }
+    };
+    const IS_LOCAL_ORIGIN = ORIGIN && allowDevOrigin(ORIGIN);
+
     const corsHeaders = (base = {}) => {
       const h = new Headers(base);
       if (IS_LOCAL_ORIGIN) {
+        // Always echo exact Origin for credentialed requests
         h.set('Access-Control-Allow-Origin', ORIGIN);
-        h.set('Vary', 'Origin');
+        // Ensure caches vary by Origin to prevent poisoning
+        h.set('Vary', [h.get('Vary'), 'Origin'].filter(Boolean).join(', '));
         h.set('Access-Control-Allow-Credentials', 'true');
         h.set('Access-Control-Allow-Headers', req.headers.get('access-control-request-headers') || 'Content-Type');
         h.set('Access-Control-Allow-Methods', 'GET,OPTIONS');
       }
       return h;
     };
-    // Preflight for API
-    if (req.method === 'OPTIONS' && url.pathname.startsWith('/api/data/')) {
+
+    // Preflight for API and gated data JSON
+    if (req.method === 'OPTIONS' && (url.pathname.startsWith('/api/data/') || url.pathname.startsWith('/data/'))) {
       return new Response(null, { status: 204, headers: corsHeaders() });
     }
 
@@ -75,7 +93,12 @@ export default {
                        `<body style="font:16px system-ui"><h1>🔒 Admin Access</h1>`+
                        `<form method="POST"><input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>`+
                        `<button>Enter</button></form></body>`;
-          return new Response(body, { status: 401, headers: { 'content-type': 'text/html; charset=utf-8', 'x-ng-worker': 'gate' } });
+          // dev-only CORS for /data/* gate HTML so localhost XHRs don’t hard-fail
+          return new Response(body, {
+            status: 401,
+            headers: corsHeaders({ 'content-type': 'text/html; charset=utf-8', 'x-ng-worker': 'gate' })
+          });
+
         }
       }
     }        
@@ -136,12 +159,13 @@ export default {
         
         // If this is an AJAX/API request to /api/data/*, return 401 JSON (not HTML)
         if (url.pathname.startsWith('/api/data/')) {
+          // dev CORS for localhost with credentials
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
             status: 401,
             headers: corsHeaders({ 'content-type': 'application/json' })
           });
         }
-                
+              
         // Minimal login page (no external deps)
         const body = `<!doctype html><html lang="en"><head>
           <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -161,7 +185,12 @@ export default {
             <button type="submit">Enter</button></form>
             <p class="small">Tip: add <code>?code=123456</code> to your own URL for quicker login.</p>
           </div></body></html>`
-        return new Response(body, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } });
+        // dev-only CORS for gate HTML so localhost XHRs can read it; prod 
+        return new Response(body, {
+          status: 200,
+          headers: corsHeaders({ 'content-type': 'text/html; charset=utf-8' })
+        });
+
       }
     }
     
@@ -179,15 +208,24 @@ export default {
             return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
           }
 
-          if (url.pathname === '/api/data/list')    return handleList(req, env, url, corsHeaders(rlHdr));
-          if (url.pathname === '/api/data/profile') return handleProfile(req, env, url, corsHeaders(rlHdr));
-          if (url.pathname === '/api/data/contact') return handleContact(req, env, url, corsHeaders(rlHdr));
+          // Route contexts via API; dev CORS + RL headers apply
+          if (url.pathname === '/api/data/contexts') return handleContexts(req, env, url, corsHeaders(rlHdr));                    
+          if (url.pathname === '/api/data/list')     return handleList(req, env, url, corsHeaders(rlHdr));
+          if (url.pathname === '/api/data/profile')  return handleProfile(req, env, url, corsHeaders(rlHdr));
+          if (url.pathname === '/api/data/contact')  return handleContact(req, env, url, corsHeaders(rlHdr));
+          // keep CORS echo on 404 so localhost can read the status
           return new Response('Not Found', { status: 404, headers: corsHeaders() });
+
         }
 
     let res = await env.ASSETS.fetch(req);
     res = new Response(res.body, { status: res.status, headers: new Headers(res.headers) });
     res.headers.set('x-ng-worker', 'ok'); // quick check in DevTools
+    // Echo CORS on /data/* for dev; overwrite any wildcard to support credentials.
+    if (url.pathname.startsWith('/data/')) {
+      const h = corsHeaders();
+      h.forEach((v, k) => res.headers.set(k, v));
+    }
 
     const ct = res.headers.get('content-type') || '';
     if (!ct.includes('text/html')) return res; // only rewrite HTML
@@ -262,7 +300,18 @@ export default {
 };
 
 // -------- Data handlers (tiny payloads; no secrets) --------
+async function handleContexts(req, env, url, extraHdr){
+  // Serve contexts via API to avoid Access on /data/*
+  const r = await env.ASSETS.fetch(new Request(new URL('/data/contexts.json', url), { headers: req.headers }));
+  if (!r.ok) return new Response('Data load error', { status: 500 });
+  const body = await r.text();
+  const h = new Headers({ 'content-type':'application/json','Cache-Control':'private, max-age=60' });
+  if (extraHdr) extraHdr.forEach((v, k) => h.set(k, v));
+  return new Response(body, { status: 200, headers: h });
+}
+
 async function handleList(req, env, url, extraHdr){
+
   const q = url.searchParams;
   const limit = Math.min(Math.max(Number(q.get('limit')||20),1),20); // ≤20 per page
   const MAX_PAGES = 5; // ≤~100 items total; humane by design
@@ -299,8 +348,11 @@ async function handleList(req, env, url, extraHdr){
   }));
 
   const nextCursor = (idx+limit<rows.length && (idx/limit+1)<MAX_PAGES) ? (idx+limit) : null;
-  return new Response(JSON.stringify({ items, nextCursor, totalApprox: Math.min(rows.length, MAX_PAGES*limit) }),
-    { status:200, headers:{ 'content-type':'application/json','Cache-Control':'private, max-age=60', ...extraHdr }});
+  // keep CORS + RL headers; Headers must be merged explicitly
+  const h = new Headers({ 'content-type':'application/json','Cache-Control':'private, max-age=60' });
+  if (extraHdr) extraHdr.forEach((v, k) => h.set(k, v));
+  return new Response(JSON.stringify({ items, nextCursor, totalApprox: Math.min(rows.length, MAX_PAGES*limit) }), { status:200, headers:h });
+
 }
 
 async function handleProfile(req, env, url, extraHdr){
@@ -317,7 +369,12 @@ async function handleProfile(req, env, url, extraHdr){
     media: { cover: p.media?.cover||'', images: Array.isArray(p.media?.images)?p.media.images:[] },
     links: p.links||{}
   };
-  return new Response(JSON.stringify(payload), { status:200, headers:{ 'content-type':'application/json','Cache-Control':'private, max-age=60', ...extraHdr }});
+  
+  // Keep CORS + RL headers; ensure Vary: Origin persists
+  const h = new Headers({ 'content-type':'application/json','Cache-Control':'private, max-age=60' });
+  if (extraHdr) extraHdr.forEach((v, k) => h.set(k, v));
+
+  return new Response(JSON.stringify(payload), { status:200, headers:h });
 }
 
 async function handleContact(req, env, url, extraHdr){
@@ -330,8 +387,12 @@ async function handleContact(req, env, url, extraHdr){
   if(!p) return new Response('Not Found',{status:404});
   const c = p.contact||{};
   if(kind==='booking'){ const link=p?.contact?.bookingUrl||p?.links?.booking||''; return link?Response.redirect(link,302):new Response('No booking',{status:204}); }
-    if(kind==='phone'){ const v=c.phone?'tel:'+String(c.phone).trim():''; return v?new Response(JSON.stringify({href:v}),{status:200,headers:{'content-type':'application/json',...extraHdr}}):new Response('No phone',{status:204}); }
-    if(kind==='email'){ const v=c.email?'mailto:'+String(c.email).trim():''; return v?new Response(JSON.stringify({href:v}),{status:200,headers:{'content-type':'application/json',...extraHdr}}):new Response('No email',{status:204}); }
+  if(kind==='phone'){ const v=c.phone?'tel:'+String(c.phone).trim():''; if(!v) return new Response('No phone',{status:204});
+    const h=new Headers({'content-type':'application/json'}); if (extraHdr) extraHdr.forEach((v2,k)=>h.set(k,v2));
+    return new Response(JSON.stringify({href:v}),{status:200,headers:h}); }
+  if(kind==='email'){ const v=c.email?'mailto:'+String(c.email).trim():''; if(!v) return new Response('No email',{status:204});
+    const h=new Headers({'content-type':'application/json'}); if (extraHdr) extraHdr.forEach((v2,k)=>h.set(k,v2));
+    return new Response(JSON.stringify({href:v}),{status:200,headers:h}); }
 }
 
 /* ---------------- helpers ---------------- */
