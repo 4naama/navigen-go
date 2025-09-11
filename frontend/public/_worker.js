@@ -337,7 +337,7 @@ async function handleContact(req, env, url, extraHdr){
 /* ---------------- helpers ---------------- */
 
 function readCookie(cookieHeader, name) {
-  const m = cookieHeader.match(new RegExp('(?:^|; )' + name.replace(/[-[\\]/{}()*+?.\\\\^$|]/g, '\\\\$&') + '=([^;]*)'));
+  const m = cookieHeader.match(new RegExp('(?:^|; )' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=([^;]*)'));
   return m ? decodeURIComponent(m[1]) : null;
 }
 
