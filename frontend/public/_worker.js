@@ -160,7 +160,7 @@ export default {
             <form method="POST"><input name="code" inputmode="numeric" pattern="\\\\d{6}" maxlength="6" placeholder="123456" required>
             <button type="submit">Enter</button></form>
             <p class="small">Tip: add <code>?code=123456</code> to your own URL for quicker login.</p>
-          </div></body></html
+          </div></body></html>`
         return new Response(body, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } });
       }
     }
@@ -330,8 +330,8 @@ async function handleContact(req, env, url, extraHdr){
   if(!p) return new Response('Not Found',{status:404});
   const c = p.contact||{};
   if(kind==='booking'){ const link=p?.contact?.bookingUrl||p?.links?.booking||''; return link?Response.redirect(link,302):new Response('No booking',{status:204}); }
-  if(kind==='phone'){ const v=c.phone?`tel:${String(c.phone).trim()}`:''; return v?new Response(JSON.stringify({href:v}),{status:200,headers:{'content-type':'application/json',...extraHdr}}):new Response('No phone',{status:204}); }
-  if(kind==='email'){ const v=c.email?`mailto:${String(c.email).trim()}`:''; return v?new Response(JSON.stringify({href:v}),{status:200,headers:{'content-type':'application/json',...extraHdr}}):new Response('No email',{status:204}); }
+    if(kind==='phone'){ const v=c.phone?'tel:'+String(c.phone).trim():''; return v?new Response(JSON.stringify({href:v}),{status:200,headers:{'content-type':'application/json',...extraHdr}}):new Response('No phone',{status:204}); }
+    if(kind==='email'){ const v=c.email?'mailto:'+String(c.email).trim():''; return v?new Response(JSON.stringify({href:v}),{status:200,headers:{'content-type':'application/json',...extraHdr}}):new Response('No email',{status:204}); }
 }
 
 /* ---------------- helpers ---------------- */
