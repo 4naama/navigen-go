@@ -234,23 +234,23 @@ export default {
       .on('head', {
         element(e) {
           if (!hasCountryMeta) {
-            e.append(`<meta name="cf-country" content="${cfCountry}">`, { html: true });
+            e.append('<meta name="cf-country" content="'+cfCountry+'">', { html: true });
           }
           if (!hasCanonical) {
-            e.append(`<link rel="canonical" href="${canonical}">`, { html: true });
+            e.append('<link rel="canonical" href="'+canonical+'">', { html: true });
           }
           if (!hasHreflang) {
             // x-default first (Google recommendation)
-            e.append(`<link rel="alternate" hreflang="x-default" href="${xDefault}">`, { html: true });
+            e.append('<link rel="alternate" hreflang="x-default" href="'+xDefault+'">', { html: true });
             for (const [lang, href] of Object.entries(alternates)) {
-              e.append(`<link rel="alternate" hreflang="${lang}" href="${href}">`, { html: true });
+              e.append('<link rel="alternate" hreflang="'+lang+'" href="'+href+'">', { html: true });
             }
           }
           if (!hasOgLocale) {
             // primary locale + alternates for OG
-            e.append(`<meta property="og:locale" content="${ogFor(locale)}">`, { html: true });
+            e.append('<meta property="og:locale" content="'+ogFor(locale)+'">', { html: true });
             for (const alt of SUPPORTED.filter(l => l !== locale)) {
-              e.append(`<meta property="og:locale:alternate" content="${ogFor(alt)}">`, { html: true });
+              e.append('<meta property="og:locale:alternate" content="'+ogFor(alt)+'">', { html: true });
             }
           }
         }
