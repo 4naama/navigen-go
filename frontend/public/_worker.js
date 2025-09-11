@@ -75,9 +75,16 @@ export default {
       return h;
     };
 
-    // Preflight for API and gated data JSON
-    if (req.method === 'OPTIONS' && (url.pathname.startsWith('/api/data/') || url.pathname.startsWith('/data/'))) {
-      return new Response(null, { status: 204, headers: corsHeaders() });
+    // Early route: contexts API public (before any gates)
+    if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/') {
+      const r = rateHit(req);
+      const rlHdr = {
+        'X-RateLimit-Limit': String(RATE.cap),
+        'X-RateLimit-Remaining': String(r.remain),
+        'X-RateLimit-Reset': String(Math.ceil(r.resetAt/1000))
+      };
+      if (!r.ok) return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
+      return handleContexts(req, env, url, corsHeaders(rlHdr));
     }
 
     // Hard gate for /data/* (no raw JSON unless admin cookie)
@@ -116,15 +123,17 @@ export default {
     {
       // Keep only minimal static assets public so the login page can load clean
       const PUBLIC_PREFIXES = ['/assets/']; // gate /data/* — datasets allowed only after admin login
-      const PUBLIC_FILES = new Set(['/robots.txt','/favicon.ico']);
+      // allow contexts JSON via API so app boots
+      const PUBLIC_FILES = new Set(['/robots.txt','/favicon.ico','/api/data/contexts','/api/data/contexts/']);
+
       const isPublic = PUBLIC_FILES.has(url.pathname) || PUBLIC_PREFIXES.some(p => url.pathname.startsWith(p));
 
       const cookie = req.headers.get('cookie') || '';
       const ADMIN_COOKIE = 'navigen_gate_v2'; // rename to force global logout
       const authed = new RegExp(`\\b${ADMIN_COOKIE}=ok\\b`).test(cookie);
 
-      // Everything non-public is admin-gated
-      if (!isPublic && !authed) {
+      // Everything non-public is admin-gated (disabled)
+      if (false && !isPublic && !authed) {
         const expected = (env.SHOWCASE_STATIC6 || '').trim(); // set in Pages → Settings → Variables
         const codeQ = (url.searchParams.get('code') || '').trim();
         const codeBody = await (async () => {
@@ -157,15 +166,14 @@ export default {
           });
         }
         
-        // If this is an AJAX/API request to /api/data/*, return 401 JSON (not HTML)
-        if (url.pathname.startsWith('/api/data/')) {
-          // dev CORS for localhost with credentials
+        // Allow /api/data/contexts (with optional trailing slash); gate others.
+        if (url.pathname.startsWith('/api/data/') && !/^\/api\/data\/contexts\/?$/.test(url.pathname)) {
           return new Response(JSON.stringify({ error: 'Unauthorized' }), {
             status: 401,
             headers: corsHeaders({ 'content-type': 'application/json' })
           });
         }
-              
+            
         // Minimal login page (no external deps)
         const body = `<!doctype html><html lang="en"><head>
           <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -209,16 +217,21 @@ export default {
           }
 
           // Route contexts via API; dev CORS + RL headers apply
-          if (url.pathname === '/api/data/contexts') return handleContexts(req, env, url, corsHeaders(rlHdr));                    
+          if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/')
+            return handleContexts(req, env, url, corsHeaders(rlHdr));
+
           if (url.pathname === '/api/data/list')     return handleList(req, env, url, corsHeaders(rlHdr));
           if (url.pathname === '/api/data/profile')  return handleProfile(req, env, url, corsHeaders(rlHdr));
           if (url.pathname === '/api/data/contact')  return handleContact(req, env, url, corsHeaders(rlHdr));
           // keep CORS echo on 404 so localhost can read the status
           return new Response('Not Found', { status: 404, headers: corsHeaders() });
-
         }
 
+    // fallback to index.html on 404 HTML navigations
     let res = await env.ASSETS.fetch(req);
+    if (res.status === 404 && (req.headers.get('accept')||'').includes('text/html')) {
+      res = await env.ASSETS.fetch(new Request(new URL('/index.html', url)));
+    }
     res = new Response(res.body, { status: res.status, headers: new Headers(res.headers) });
     res.headers.set('x-ng-worker', 'ok'); // quick check in DevTools
     // Echo CORS on /data/* for dev; overwrite any wildcard to support credentials.
