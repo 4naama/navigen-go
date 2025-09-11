@@ -73,7 +73,7 @@ export default {
           // show the same admin code page you already serve later
           const body = `<!doctype html><title>Admin Access</title><meta charset="utf-8">`+
                        `<body style="font:16px system-ui"><h1>🔒 Admin Access</h1>`+
-                       `<form method="POST"><input name="code" inputmode="numeric" pattern="\\d{6}" maxlength="6" required>`+
+                       `<form method="POST"><input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>`+
                        `<button>Enter</button></form></body>`;
           return new Response(body, { status: 401, headers: { 'content-type': 'text/html; charset=utf-8', 'x-ng-worker': 'gate' } });
         }
@@ -122,7 +122,7 @@ export default {
 
         // Accept only the admin 6-digit (no guest acceptance)
         const submitted = codeQ || codeBody;
-        if (/^\\d{6}$/.test(submitted) && expected && submitted === expected) {
+        if (/^\d{6}$/.test(submitted) && expected && submitted === expected) {
           const headers = new Headers({
             // 1-year remember-me (31536000 seconds)
             'Set-Cookie': `${ADMIN_COOKIE}=ok; Max-Age=31536000; Path=/; Secure; HttpOnly; SameSite=None`
@@ -157,7 +157,7 @@ export default {
           <div class="card" role="dialog" aria-labelledby="t">
             <h1 id="t">🔒 Admin Access</h1>
             <p class="muted">Enter your 6-digit admin code.</p>
-            <form method="POST"><input name="code" inputmode="numeric" pattern="\\\\d{6}" maxlength="6" placeholder="123456" required>
+            <form method="POST"><input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" required>
             <button type="submit">Enter</button></form>
             <p class="small">Tip: add <code>?code=123456</code> to your own URL for quicker login.</p>
           </div></body></html>`
