@@ -74,6 +74,11 @@ export default {
       }
       return h;
     };
+    
+    // Preflight: 204 with echoed CORS
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders() });
+    }    
 
     // Early route: contexts API public (before any gates)
     if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/') {
@@ -206,23 +211,42 @@ export default {
     
     // -------- End Admin-only Showcase Gate --------
 
-        // 401 gate disabled; RL/Bot Fight protect /api/data/*
-        if (url.pathname.startsWith('/api/data/')) {
-          const r = rateHit(req);
-          const rlHdr = {
-            'X-RateLimit-Limit': String(RATE.cap),
-            'X-RateLimit-Remaining': String(r.remain),
-            'X-RateLimit-Reset': String(Math.ceil(r.resetAt/1000))
-          };
-          if (!r.ok) {
-            return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
+          // 401 gate disabled; RL/Bot Fight protect /api/data/*
+          if (url.pathname.startsWith('/api/data/')) {
+            // Rate limit + dev CORS headers on all API responses
+            const r = rateHit(req);
+            const rlHdr = {
+              'X-RateLimit-Limit': String(RATE.cap),
+              'X-RateLimit-Remaining': String(r.remain),
+              'X-RateLimit-Reset': String(Math.ceil(r.resetAt/1000))
+            };
+            if (!r.ok) {
+              return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
+            }
+
+            // Ordered routing: contexts → all → list → profile → contact → 404
+            if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/')
+              return handleContexts(req, env, url, corsHeaders(rlHdr));
+
+            // Honeypot: pretend "all" exists; always empty
+            if (url.pathname === '/api/data/all' || url.pathname === '/api/data/all/')
+              return new Response(JSON.stringify({ items:[], nextCursor:null, totalApprox:0 }), {
+                status: 200, headers: corsHeaders(rlHdr)
+              });
+
+            if (url.pathname === '/api/data/list')
+              return handleList(req, env, url, corsHeaders(rlHdr));
+
+            if (url.pathname === '/api/data/profile')
+              return handleProfile(req, env, url, corsHeaders(rlHdr));
+
+            if (url.pathname === '/api/data/contact')
+              return handleContact(req, env, url, corsHeaders(rlHdr));
+
+            // Keep CORS echo on 404 so localhost can read status
+            return new Response('Not Found', { status: 404, headers: corsHeaders(rlHdr) });
           }
 
-          // Route contexts via API; dev CORS + RL headers apply
-          if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/')
-            return handleContexts(req, env, url, corsHeaders(rlHdr));
-
-          if (url.pathname === '/api/data/list')     return handleList(req, env, url, corsHeaders(rlHdr));
           if (url.pathname === '/api/data/profile')  return handleProfile(req, env, url, corsHeaders(rlHdr));
           if (url.pathname === '/api/data/contact')  return handleContact(req, env, url, corsHeaders(rlHdr));
           // keep CORS echo on 404 so localhost can read the status
@@ -325,20 +349,33 @@ async function handleContexts(req, env, url, extraHdr){
   return new Response(body, { status: 200, headers: h });
 }
 
+// List endpoint: requires context; returns 200 with empty items when missing, adds small jitter for low-signal callers.
 async function handleList(req, env, url, extraHdr){
+  const q = url.searchParams; // needed later
 
-  const q = url.searchParams;
+  // Require context; return empty (200) to hide signals.
+  const ctxParam = (q.get('context')||'').trim();
   const limit = Math.min(Math.max(Number(q.get('limit')||20),1),20); // ≤20 per page
-  const MAX_PAGES = 5; // ≤~100 items total; humane by design
+  const MAX_PAGES = 5; // ≤~100 items total
+  if (!ctxParam) {
+    const h = new Headers({ 'content-type':'application/json' });
+    if (extraHdr) extraHdr.forEach((v,k)=>h.set(k, v));
+    return new Response(JSON.stringify({ items:[], nextCursor:null, totalApprox:0 }), { status:200, headers:h });
+  }
 
-  // Load canonical dataset (already gated by admin cookie)
-  const r = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
-  if (!r.ok) return new Response('Data load error', { status: 500 });
-  const profiles = await r.json();
+  // Load canonical dataset (read-only)
+  const resp = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
+  if (!resp.ok) return new Response('Data load error', { status: 500 });
+  const profiles = await resp.json();
   let rows = Array.isArray(profiles?.locations) ? profiles.locations : [];
 
+  const ctx = ctxParam.toLowerCase(); // validated
+  // Add 50–200ms jitter when no Referer or UA (scraper signals).
+  const hasRef = !!req.headers.get('referer');
+  const hasUA  = !!req.headers.get('user-agent');
+  if (!hasRef || !hasUA) { await new Promise(res => setTimeout(res, 50 + Math.floor(Math.random()*150))); }
+
   // Optional filters (context + group/city/postal)
-  const ctx=(q.get('context')||'').toLowerCase();
   const group=(q.get('group')||'').toLowerCase();
   const city=(q.get('city')||'').toLowerCase();
   const postal=(q.get('postal')||'').toLowerCase();
@@ -367,7 +404,6 @@ async function handleList(req, env, url, extraHdr){
   const h = new Headers({ 'content-type':'application/json','Cache-Control':'private, max-age=60' });
   if (extraHdr) extraHdr.forEach((v, k) => h.set(k, v));
   return new Response(JSON.stringify({ items, nextCursor, totalApprox: Math.min(rows.length, MAX_PAGES*limit) }), { status:200, headers:h });
-
 }
 
 async function handleProfile(req, env, url, extraHdr){
