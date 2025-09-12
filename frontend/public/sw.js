@@ -1,6 +1,6 @@
 // Bump to evict stale assets, make version explicit per env
 const IS_DEV = /\blocalhost$|\b127\.0\.0\.1$/.test(self.location.hostname); // dev skip cache
-const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v6"; // bump to evict stale assets
+const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v7"; // bump to evict stale assets
 
 // Precache core shell for offline; keep list lean
 self.addEventListener("install", event => {
@@ -23,7 +23,9 @@ self.addEventListener("install", event => {
         const res = await fetch(assetUrl, { cache: "no-store" });
         if (res && res.ok) await cache.put(assetUrl, res.clone());
       } catch {}
-    }));
+    })); // close map + allSettled
+  })()); // invoke the async IIFE so waitUntil gets a Promise
+
 });
 
 // cleanup old caches; claim clients so new SW controls pages now

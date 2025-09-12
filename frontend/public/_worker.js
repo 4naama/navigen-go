@@ -87,13 +87,16 @@ export default {
       return handleContexts(req, env, url, corsHeaders(rlHdr));
     }
 
-    // Hard gate for /data/* (no raw JSON unless admin cookie)
+    // Hard gate for /data/* (allow boot JSON; gate the rest)
     // <!-- explicit; avoids any fall-through -->
     {
       const cookie = req.headers.get('cookie') || '';
       const ADMIN_COOKIE = 'navigen_gate_v2';
       const authed = new RegExp(`\\b${ADMIN_COOKIE}=ok\\b`).test(cookie);
-      if (url.pathname.startsWith('/data/')) {
+      // Public boot JSON needed for app startup
+      const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json)$/.test(url.pathname);
+
+      if (url.pathname.startsWith('/data/') && !isBootJson) {
         if (!authed) {
           // show the same admin code page you already serve later
           const body = `<!doctype html><title>Admin Access</title><meta charset="utf-8">`+
@@ -105,10 +108,9 @@ export default {
             status: 401,
             headers: corsHeaders({ 'content-type': 'text/html; charset=utf-8', 'x-ng-worker': 'gate' })
           });
-
         }
       }
-    }        
+    }
 
     // PWA: early pass-through for critical static assets (avoid rewrites)
     // <!-- ensures manifest/SW/assets are served raw and with correct MIME -->
