@@ -207,7 +207,7 @@ export default {
     // -------- End Admin-only Showcase Gate --------
 
         // 401 gate disabled; RL/Bot Fight protect /api/data/*
-        if (false && url.pathname.startsWith('/api/data/')) {
+        if (url.pathname.startsWith('/api/data/')) {
           const r = rateHit(req);
           const rlHdr = {
             'X-RateLimit-Limit': String(RATE.cap),
