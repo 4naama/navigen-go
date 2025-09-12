@@ -93,8 +93,8 @@ export default {
       const cookie = req.headers.get('cookie') || '';
       const ADMIN_COOKIE = 'navigen_gate_v2';
       const authed = new RegExp(`\\b${ADMIN_COOKIE}=ok\\b`).test(cookie);
-      // Public boot JSON needed for app startup
-      const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json)$/.test(url.pathname);
+      // Public boot JSON for app startup; allow list only
+      const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
 
       if (url.pathname.startsWith('/data/') && !isBootJson) {
         if (!authed) {
@@ -206,8 +206,8 @@ export default {
     
     // -------- End Admin-only Showcase Gate --------
 
-    // Data API: same-origin + admin cookie; tiny JSON; soft 429
-        if (url.pathname.startsWith('/api/data/')) {
+        // 401 gate disabled; RL/Bot Fight protect /api/data/*
+        if (false && url.pathname.startsWith('/api/data/')) {
           const r = rateHit(req);
           const rlHdr = {
             'X-RateLimit-Limit': String(RATE.cap),
