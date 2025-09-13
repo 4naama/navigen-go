@@ -261,6 +261,8 @@ export default {
       return out;
     }
 
+    // ensure we have the static asset response before rewriting
+    let res = await env.ASSETS.fetch(req);
     res = new Response(res.body, { status: res.status, headers: new Headers(res.headers) });
     res.headers.set('x-ng-worker', 'ok'); // quick check in DevTools
     // Echo CORS on /data/* for dev; overwrite any wildcard to support credentials.
@@ -397,6 +399,7 @@ async function handleList(req, env, url, extraHdr){
     name: p.name?.en || p.Name || '',
     shortName: p.shortName?.en || p['Short Name'] || '',
     groupKey: p.groupKey||p.Group||'',
+    subgroupKey: p.subgroupKey || p['Subgroup key'] || '',  // let client place items into subgroups
     tags: Array.isArray(p.tags)?p.tags:[],
     coord: (typeof p['Coordinate Compound']==='string' && p['Coordinate Compound'].includes(',')) ? p['Coordinate Compound'] : '',
     cover: (p.media && p.media.cover) || (Array.isArray(p.media?.images)&&p.media.images[0]?.src) || ''

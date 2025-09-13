@@ -2344,7 +2344,9 @@ export function createIncomingLocationModal(coords) {
     if (e.target === modal) modal.remove();
   }, { passive: true });
 
-  enableEscToClose(modal);
+  // ESC: close (module-scoped; no globals)
+  modal.addEventListener('keydown', (e) => { if (e.key === 'Escape') modal.remove(); });
+  modal.tabIndex = -1; modal.focus();
   
   document.body.appendChild(modal);
 
