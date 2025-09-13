@@ -195,7 +195,7 @@ function handleAccordionToggle(header, contentEl) {
   }
 }
 
-// ✅ Render ⭐ Popular group (as a normal accordion section)
+// ✅ Render ⭐ Popular group (normal accordion section)
 function renderPopularGroup(list = geoPoints) {
   const container = document.querySelector("#locations");
   if (!container) { console.warn('⚠️ #locations not found; skipping Popular group'); return; }
@@ -219,32 +219,27 @@ function renderPopularGroup(list = geoPoints) {
     <span class="header-arrow"></span>
   `;
 
-  // Popular body: normal accordion content; keep even when empty
-  const content = document.createElement('div');
-  content.className = 'accordion-body';
-  content.style.display = 'none';
+  const content = document.createElement("div");
+  content.className = "accordion-body";
+  content.style.display = "none";
 
-  const subWrap = document.createElement('div');
-  subWrap.className = 'subgroup-items';
+  const subWrap = document.createElement("div");
+  subWrap.className = "subgroup-items";
   content.appendChild(subWrap);
 
-  // Toggle open/close (match other groups)
-  header.addEventListener('click', () => {
+  header.addEventListener("click", () => {
     const scroller = document.getElementById('locations-scroll');
-    const wasOpen = header.classList.contains('open');
+    const wasOpen = header.classList.contains("open");
     const { top: beforeTop } = header.getBoundingClientRect();
 
-    // close others
-    document.querySelectorAll('.accordion-body').forEach(b => b.style.display = 'none');
-    document.querySelectorAll('.accordion-button, .group-header-button').forEach(b => b.classList.remove('open'));
+    document.querySelectorAll(".accordion-body").forEach(b => b.style.display = "none");
+    document.querySelectorAll(".accordion-button, .group-header-button").forEach(b => b.classList.remove("open"));
 
-    // open this
     if (!wasOpen) {
-      content.style.display = 'block';
-      header.classList.add('open');
+      content.style.display = "block";
+      header.classList.add("open");
     }
 
-    // adjust internal scroller to avoid jump
     if (scroller) {
       const { top: afterTop } = header.getBoundingClientRect();
       const delta = afterTop - beforeTop;
@@ -258,32 +253,30 @@ function renderPopularGroup(list = geoPoints) {
   popular.forEach((loc) => {
     const btn = document.createElement("button");
     btn.classList.add("quick-button", "popular-button");
-    btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
+    const name = loc["Short Name"] || loc.Name || "Unnamed";
+    btn.textContent = name;
     btn.setAttribute("data-group", groupKey);
     btn.setAttribute("data-id", loc.ID);
 
-    // searchable metadata (2 lines max)
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
-    btn.setAttribute('data-name', btn.textContent);
+    btn.setAttribute('data-name', name);
     btn.setAttribute('data-short-name', String(loc["Short Name"] || ''));
     btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
 
-    // address tokens
     const c = (loc && loc.contact) || {};
     const addrBits = [c.city, c.adminArea, c.postalCode, c.countryCode, c.address].filter(Boolean).join(' ');
     const addrNorm = addrBits.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     btn.setAttribute('data-addr', addrNorm);
 
-    // coords
     let lat = "", lng = "";
-    if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
-      [lat, lng] = loc["Coordinate Compound"].split(',').map(x => x.trim());
+    const cc = loc["Coordinate Compound"];
+    if (typeof cc === "string" && cc.includes(",")) {
+      [lat, lng] = cc.split(',').map(s => s.trim());
       btn.setAttribute("data-lat", lat);
       btn.setAttribute("data-lng", lng);
       btn.title = `Open profile / Route (${lat}, ${lng})`;
     }
 
-    // open LPM
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const media   = (loc && loc.media) ? loc.media : {};
@@ -293,13 +286,13 @@ function renderPopularGroup(list = geoPoints) {
 
       showLocationProfileModal({
         id: btn.getAttribute('data-id'),
-        name: btn.textContent,
+        name,
         lat, lng,
         imageSrc: cover,
         images,
         media,
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
-        tags: Array.isArray(loc?.tags) ? loc.tags : [],
+        tags: _tags,
         originEl: btn
       });
     });
@@ -315,6 +308,7 @@ function navigate(name, lat, lon) {
   window.open(url, '_blank');
 }
 
+// showActionModal: opens a modal with title, message, and action buttons; closes on backdrop tap.
 function showActionModal(action) {
   const modal = document.createElement("div");
   modal.className = "modal visible";
@@ -333,19 +327,15 @@ function showActionModal(action) {
   desc.textContent = action.message;
   box.appendChild(desc);
 
-  const content = document.createElement("div");
-  content.className = "accordion-body";
-  content.style.display = "none";
-  const subWrap = document.createElement("div");
-  subWrap.className = "subgroup-items";
-  content.appendChild(subWrap);
+  // Actions footer (buttons only; no accordion markup)
+  const buttonContainer = document.createElement("div");
+  buttonContainer.className = "modal-actions";
 
   action.buttons.forEach(b => {
     const bEl = document.createElement("button");
     bEl.className = "modal-action-button";
     bEl.textContent = b.status ? `${b.label} (${b.status})` : b.label;
-    // You can add logic here for what each does
-    bEl.onclick = () => alert(`TODO: handle "${b.label}"`);
+    bEl.onclick = () => alert(`TODO: handle "${b.label}"`); // keep: placeholder handler
     buttonContainer.appendChild(bEl);
   });
 
