@@ -1019,7 +1019,7 @@ import { handleDonation } from "./scripts/stripe.js";
 const API = (path) => {
   const meta = document.querySelector('meta[name="api-origin"]')?.content?.trim();
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  const base = meta || (isLocal ? 'https://navigen.io' : location.origin);
+  const base = meta || (isLocal ? 'https://navigen-go.pages.dev' : location.origin);
   return new URL(path, base).toString();
 };
 
@@ -1115,12 +1115,11 @@ export function buildAccordion(groupedStructure, geoPoints) {
     const groupKey = group.groupKey || group.Group;
     const label = group.groupName || group["Drop-down"] || groupKey;
 
-    // visible locations for this group
+    // visible locations for this group; render section even when empty
     const filtered = geoPoints.filter(
       loc => loc.Group === groupKey && loc.Visible === "Yes"
     );
-
-    if (!filtered.length) return;
+    // removed early return so headers show with ( 0 )
 
     // section
     const section = document.createElement("div");
@@ -1141,6 +1140,14 @@ export function buildAccordion(groupedStructure, geoPoints) {
     const content = document.createElement("div");
     content.className = "accordion-body";
     content.style.display = "none";
+    
+    // show small empty state when group has no items
+    if (!filtered.length) {
+      const empty = document.createElement('div');
+      empty.className = 'subgroup-items';
+      empty.innerHTML = `<div class="empty-state" style="opacity:.7;padding:.5rem 0;">No items yet</div>`;
+      content.appendChild(empty);
+    }        
 
     // --- subgroups or flat list ---
     if (Array.isArray(group.subgroups) && group.subgroups.length) {
@@ -1208,17 +1215,16 @@ export function buildAccordion(groupedStructure, geoPoints) {
         content.appendChild(othersWrap);
       }
 
-    } else {
-      // flat list (no subgroups defined)
-      // ⬇️ Added: create the container that was being used below
-      const flatWrap = document.createElement('div'); // groups without subheaders
-      flatWrap.className = 'subgroup-items';
-      content.appendChild(flatWrap);
+      } else {
+        // flat list (no subgroups defined)
+        const flatWrap = document.createElement('div'); // groups without subheaders
+        flatWrap.className = 'subgroup-items';
+        content.appendChild(flatWrap);
 
-      filtered.forEach(loc => {
-        flatWrap.appendChild(makeLocationButton(loc));
-      });
-    }
+        filtered.forEach(loc => {
+          flatWrap.appendChild(makeLocationButton(loc));
+        });
+      }
 
     // group toggle (only one open at a time, with scroll correction)
     header.addEventListener("click", () => {

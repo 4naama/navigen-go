@@ -253,11 +253,14 @@ export default {
           return new Response('Not Found', { status: 404, headers: corsHeaders() });
         }
 
-    // fallback to index.html on 404 HTML navigations
-    let res = await env.ASSETS.fetch(req);
-    if (res.status === 404 && (req.headers.get('accept')||'').includes('text/html')) {
-      res = await env.ASSETS.fetch(new Request(new URL('/index.html', url)));
+    // route /allsubs (and /{lang}/allsubs) to SPA shell
+    if (url.pathname === '/allsubs' || /^\/[a-z]{2}\/allsubs\/?$/.test(url.pathname)) {
+      const shell = await env.ASSETS.fetch(new Request(new URL('/index.html', url)));
+      const out = new Response(shell.body, { status: 200, headers: new Headers(shell.headers) });
+      out.headers.set('x-ng-worker', 'ok'); // keep debug header
+      return out;
     }
+
     res = new Response(res.body, { status: res.status, headers: new Headers(res.headers) });
     res.headers.set('x-ng-worker', 'ok'); // quick check in DevTools
     // Echo CORS on /data/* for dev; overwrite any wildcard to support credentials.
@@ -363,10 +366,10 @@ async function handleList(req, env, url, extraHdr){
     return new Response(JSON.stringify({ items:[], nextCursor:null, totalApprox:0 }), { status:200, headers:h });
   }
 
-  // Load canonical dataset (read-only)
+  // Load canonical dataset (read-only); return empty list if not found
   const resp = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
-  if (!resp.ok) return new Response('Data load error', { status: 500 });
-  const profiles = await resp.json();
+  const profiles = resp.ok ? await resp.json() : { locations: [] }; // fallback: empty list
+
   let rows = Array.isArray(profiles?.locations) ? profiles.locations : [];
 
   const ctx = ctxParam.toLowerCase(); // validated

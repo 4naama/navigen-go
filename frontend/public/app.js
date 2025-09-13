@@ -195,80 +195,65 @@ function handleAccordionToggle(header, contentEl) {
   }
 }
 
-// ✅ Render ⭐ Popular group
+// ✅ Render ⭐ Popular group (as a normal accordion section)
 function renderPopularGroup(list = geoPoints) {
   const container = document.querySelector("#locations");
-  if (!container) {
-    console.warn('⚠️ #locations not found; skipping Popular group');
-    return;
-  }
+  if (!container) { console.warn('⚠️ #locations not found; skipping Popular group'); return; }
 
-  const popular = list.filter(loc => loc.Priority === "Yes");
-  if (popular.length === 0) return;
+  const popular = (Array.isArray(list) ? list : [])
+    .filter(loc => String(loc?.Priority || '').toLowerCase() === 'yes');
 
   const section = document.createElement("div");
   section.classList.add("accordion-section");
 
-  const buttonContainer = document.createElement("div");
-  buttonContainer.classList.add("group-buttons", "hidden");
-
   const groupKey = "group.popular";
-  const groupLabel = t(groupKey); // 🌐 Translated label
+  const groupLabel = t(groupKey);
 
   const header = document.createElement("button");
   header.classList.add("group-header-button");
+  header.setAttribute("data-group", groupKey);
+  header.style.backgroundColor = 'var(--group-color)';
   header.innerHTML = `
     <span class="header-title">${groupLabel}</span>
     <span class="header-meta">( ${popular.length} )</span>
     <span class="header-arrow"></span>
   `;
-  header.setAttribute("data-group", groupKey);
-  header.style.backgroundColor = 'var(--group-color)';
 
-  header.addEventListener("click", () => {
+  // Popular body: normal accordion content; keep even when empty
+  const content = document.createElement('div');
+  content.className = 'accordion-body';
+  content.style.display = 'none';
+
+  const subWrap = document.createElement('div');
+  subWrap.className = 'subgroup-items';
+  content.appendChild(subWrap);
+
+  // Toggle open/close (match other groups)
+  header.addEventListener('click', () => {
     const scroller = document.getElementById('locations-scroll');
-    const wasOpen = header.classList.contains("open");
-    const popularHeader = document.querySelector('.group-header-button[data-group="group.popular"]');
-
-    // Target offset is Popular's position from top of scroller
-    let targetOffset = 0;
-    if (popularHeader && scroller) {
-      const popTop = popularHeader.getBoundingClientRect().top;
-      const scrollOffsetNow = scroller.scrollTop;
-      targetOffset = popTop - header.getBoundingClientRect().top + scrollOffsetNow;
-    }
-
+    const wasOpen = header.classList.contains('open');
     const { top: beforeTop } = header.getBoundingClientRect();
 
-    // Close all groups
-    document.querySelectorAll(".accordion-body").forEach(b => b.style.display = "none");
-    document.querySelectorAll(".accordion-button, .group-header-button").forEach(b => b.classList.remove("open"));
-    document.querySelectorAll(".group-buttons").forEach(b => b.classList.add("hidden"));
+    // close others
+    document.querySelectorAll('.accordion-body').forEach(b => b.style.display = 'none');
+    document.querySelectorAll('.accordion-button, .group-header-button').forEach(b => b.classList.remove('open'));
 
-    // Open tapped one if closed
+    // open this
     if (!wasOpen) {
-      buttonContainer.classList.remove("hidden");
-      buttonContainer.style.display = "block";
-      header.classList.add("open");
+      content.style.display = 'block';
+      header.classList.add('open');
     }
 
-    // Correct scroll jump inside #locations-scroll only
+    // adjust internal scroller to avoid jump
     if (scroller) {
       const { top: afterTop } = header.getBoundingClientRect();
       const delta = afterTop - beforeTop;
-      if (Math.abs(delta) > 0) scroller.scrollTop += delta;
-    }
-
-    // Move clicked header to same spot Popular sits
-    if (!wasOpen && scroller && targetOffset !== 0) {
-      scroller.scrollTo({
-        top: targetOffset,
-        behavior: 'smooth'
-      });
+      if (Math.abs(delta) > 4) scroller.scrollTop += delta;
     }
   });
 
   section.appendChild(header);
+  section.appendChild(content);
 
   popular.forEach((loc) => {
     const btn = document.createElement("button");
@@ -276,21 +261,20 @@ function renderPopularGroup(list = geoPoints) {
     btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
     btn.setAttribute("data-group", groupKey);
     btn.setAttribute("data-id", loc.ID);
-    
-    // Stamp searchable metadata on Popular buttons (2 lines max)
+
+    // searchable metadata (2 lines max)
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', btn.textContent);
     btn.setAttribute('data-short-name', String(loc["Short Name"] || ''));
     btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
-    
-    // Searchable address tokens (city/admin/postal/address → normalized)
+
+    // address tokens
     const c = (loc && loc.contact) || {};
     const addrBits = [c.city, c.adminArea, c.postalCode, c.countryCode, c.address].filter(Boolean).join(' ');
-
     const addrNorm = addrBits.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    btn.setAttribute('data-addr', addrNorm);        
-        
-    // ✅ Inject GPS data if available from "Coordinate Compound" (kept; clarified title)
+    btn.setAttribute('data-addr', addrNorm);
+
+    // coords
     let lat = "", lng = "";
     if (typeof loc["Coordinate Compound"] === "string" && loc["Coordinate Compound"].includes(",")) {
       [lat, lng] = loc["Coordinate Compound"].split(',').map(x => x.trim());
@@ -299,20 +283,18 @@ function renderPopularGroup(list = geoPoints) {
       btn.title = `Open profile / Route (${lat}, ${lng})`;
     }
 
-    // ✅ Always attach click so modal opens even without coords
+    // open LPM
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      // build gallery from loc.media.images; pick cover
       const media   = (loc && loc.media) ? loc.media : {};
       const gallery = Array.isArray(media.images) ? media.images : [];
       const images  = gallery.map(m => (m && typeof m === 'object') ? m.src : m).filter(Boolean);
       const cover   = (media.cover && String(media.cover).trim()) ? media.cover : (images[0] || '/assets/logo-icon.svg');
 
-      // Pass descriptions + tags so LPM can show the tag chip and text
       showLocationProfileModal({
         id: btn.getAttribute('data-id'),
         name: btn.textContent,
-        lat, lng, // may be ""
+        lat, lng,
         imageSrc: cover,
         images,
         media,
@@ -322,11 +304,9 @@ function renderPopularGroup(list = geoPoints) {
       });
     });
 
-    // ⬅ close the if-block before append
-    buttonContainer.appendChild(btn);
+    subWrap.appendChild(btn);
   });
 
-  section.appendChild(buttonContainer);
   container.prepend(section);
 }
 
@@ -353,8 +333,12 @@ function showActionModal(action) {
   desc.textContent = action.message;
   box.appendChild(desc);
 
-  const buttonContainer = document.createElement("div");
-  buttonContainer.className = "modal-actions";
+  const content = document.createElement("div");
+  content.className = "accordion-body";
+  content.style.display = "none";
+  const subWrap = document.createElement("div");
+  subWrap.className = "subgroup-items";
+  content.appendChild(subWrap);
 
   action.buttons.forEach(b => {
     const bEl = document.createElement("button");
@@ -829,7 +813,7 @@ async function initEmergencyBlock(countryOverride) {
     }
 
     // 3) keep downstream name the same
-    geoPoints = geoPointsData;
+    // geoPoints = geoPointsData;
 
     // tiny id fallback; keeps existing comments
     function cryptoIdFallback() {
@@ -936,14 +920,21 @@ async function initEmergencyBlock(countryOverride) {
       const key = segs.slice(1).join('/').toLowerCase(); // keep slashes
       ACTIVE_PAGE = `${namespace}/${key}`;
     }
+    
+    // demo: force structure-only coverage view (no data fetch)
+    const DEMO_ALLSUBS = (segs.length === 1 && segs[0].toLowerCase() === 'allsubs');
+    if (DEMO_ALLSUBS) {
+      ACTIVE_PAGE = null; // skip list fetch → empty items
+      document.documentElement.setAttribute('data-demo','allsubs'); // hint UI
+    }   
 
     // First-page items for this context (tiny, fast)
     // <!-- keeps UX instant; more pages optional later -->
     const API_LIMIT = 40;
     // Use prod API in dev; include credentials so admin cookie is sent
     const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-      ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen.io')
-      : location.origin;
+      ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen-go.pages.dev')
+      : location.origin; // keep: prod same-origin
 
     // First API call must not block boot; show shell on 401/CORS.
     let listRes;
@@ -962,7 +953,99 @@ async function initEmergencyBlock(countryOverride) {
 
     const listJson = listRes.ok ? await listRes.json() : { items: [] };
     const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
+        
+    // Map API items → legacy geoPoints for UI (accordion/Popular)
+    const pageLang = (document.documentElement.lang || 'en').toLowerCase(); // avoid const "lang" redeclare
+    const pickName = (v) => (typeof v === 'string') ? v : (v?.[pageLang] || v?.en || (v ? Object.values(v)[0] : '') || '');
 
+    const fallbackGroup = (Array.isArray(structure) && structure[0]?.groupKey) ||
+                          (Array.isArray(structure_data) && structure_data[0]?.Group) || 'group.other';
+
+    // Normalize any coord to "lat,lng"
+    const toCoord = (it) => {
+      if (typeof it?.coord === 'string') return it.coord;
+      if (typeof it?.coordinateCompound === 'string') return it.coordinateCompound;
+      const lat = it?.lat ?? it?.latitude ?? it?.location?.lat;
+      const lng = it?.lng ?? it?.longitude ?? it?.location?.lng;
+      return (Number.isFinite(lat) && Number.isFinite(lng)) ? `${lat},${lng}` : '';
+    };
+
+    // Build one legacy record
+    const toGeoPoint = (it) => {
+      const id  = String(it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback());
+      const nm  = pickName(it?.name) || pickName(it?.title) || 'Unnamed';
+      const sn  = pickName(it?.shortName) || nm;
+      const grp = String(it?.groupKey ?? it?.group ?? fallbackGroup);
+      const sub = String(it?.subgroupKey ?? it?.subgroup ?? '');
+      const vis = (it?.visible === false || String(it?.visible).toLowerCase() === 'no') ? 'No' : 'Yes';
+      const pri = (it?.priority === true || String(it?.priority).toLowerCase() === 'yes'
+                  || (Array.isArray(it?.tags) && it.tags.some(t => /^(tag\.)?(popular|featured|priority)$/i.test(String(t))))) ? 'Yes' : 'No';
+      const cc  = toCoord(it);
+      const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
+
+      return {
+        ID: id,
+        Name: nm,
+        "Short Name": sn,
+        Group: grp,
+        "Subgroup key": sub,
+        Visible: vis,
+        Priority: pri,
+        "Coordinate Compound": cc,
+        coord: cc,              // used by distance mode
+        Context: ctx,
+        tags: Array.isArray(it?.tags) ? it.tags : [],
+        media: it?.media || { cover: it?.cover || '', images: [] },
+        descriptions: it?.descriptions || {},
+        contact: it?.contact || {}
+      };
+    };
+
+    // Assign the mapped list now that we have the API items
+    geoPointsData = apiItems.map(toGeoPoint);
+    geoPoints = geoPointsData;
+    
+    // Map API items → legacy geoPoints used by accordion/Popular
+    (function mapApiToLegacy(){
+      if (Array.isArray(geoPoints) && geoPoints.length) return; // skip if already mapped
+
+      const pageLang = (document.documentElement.lang || 'en').toLowerCase(); // avoid reusing "lang"
+      const isPriority = (tags) =>
+        Array.isArray(tags) && tags.some(t => /^(tag\.)?(popular|featured|priority)$/i.test(String(t)));
+
+      const toGeoPoint = (it) => {
+        const id   = String(it?.id || cryptoIdFallback());
+        const name = String(it?.name || '').trim();
+        const sname= String(it?.shortName || name);
+        const coord= String(it?.coord || '').trim();
+        const group= String(it?.groupKey || '');
+
+        return {
+          // legacy fields expected by renderers
+          ID: id,
+          Name: name,
+          "Short Name": sname,
+          Group: group,
+          "Subgroup key": '',
+          Visible: 'Yes',
+          Priority: isPriority(it?.tags) ? 'Yes' : 'No',
+          "Coordinate Compound": coord,
+          coord,
+          Context: String(ACTIVE_PAGE || ''),
+
+          // fields used by search/LPM
+          name: { [pageLang]: name },
+          shortName: { [pageLang]: sname },
+          tags: Array.isArray(it?.tags) ? it.tags : [],
+          media: { cover: it?.cover || '', images: [] },
+          contact: it?.contact || {}
+        };
+      };
+
+      geoPointsData = apiItems.map(toGeoPoint);
+      geoPoints = geoPointsData; // assign AFTER mapping so UI sees items
+    })();
+            
     const geoCtx = ACTIVE_PAGE
       ? geoPoints.filter(loc =>
           loc.Visible === 'Yes' &&
@@ -1151,6 +1234,10 @@ async function initEmergencyBlock(countryOverride) {
     buildAccordion(groupedForPage, viewList);
     wireAccordionGroups(structure_data, viewList);
     paintAccordionColors();
+    
+    // coverage: remove placeholders from accordion only (keep others)
+    document.querySelectorAll('#accordion .empty-state').forEach(el => el.remove());
+        
 
     /**
      * 🌐 Applies static UI translations to the main page elements.
