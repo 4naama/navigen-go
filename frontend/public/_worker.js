@@ -210,48 +210,41 @@ export default {
     }
     
     // -------- End Admin-only Showcase Gate --------
+    // 401 gate disabled; RL/Bot Fight protect /api/data/*
+    if (url.pathname.startsWith('/api/data/')) {
+      // Rate limit + dev CORS headers on all API responses
+      const r = rateHit(req);
+      const rlHdr = {
+        'X-RateLimit-Limit': String(RATE.cap),
+        'X-RateLimit-Remaining': String(r.remain),
+        'X-RateLimit-Reset': String(Math.ceil(r.resetAt/1000))
+      };
+      if (!r.ok) {
+        return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
+      }
 
-          // 401 gate disabled; RL/Bot Fight protect /api/data/*
-          if (url.pathname.startsWith('/api/data/')) {
-            // Rate limit + dev CORS headers on all API responses
-            const r = rateHit(req);
-            const rlHdr = {
-              'X-RateLimit-Limit': String(RATE.cap),
-              'X-RateLimit-Remaining': String(r.remain),
-              'X-RateLimit-Reset': String(Math.ceil(r.resetAt/1000))
-            };
-            if (!r.ok) {
-              return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
-            }
+      // Ordered routing: contexts → all → list → profile → contact → 404
+      if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/')
+        return handleContexts(req, env, url, corsHeaders(rlHdr));
 
-            // Ordered routing: contexts → all → list → profile → contact → 404
-            if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/')
-              return handleContexts(req, env, url, corsHeaders(rlHdr));
+      // Honeypot: pretend "all" exists; always empty
+      if (url.pathname === '/api/data/all' || url.pathname === '/api/data/all/')
+        return new Response(JSON.stringify({ items: [], nextCursor: null, totalApprox: 0 }), {
+          status: 200, headers: corsHeaders(rlHdr)
+        });
 
-            // Honeypot: pretend "all" exists; always empty
-            if (url.pathname === '/api/data/all' || url.pathname === '/api/data/all/')
-              return new Response(JSON.stringify({ items:[], nextCursor:null, totalApprox:0 }), {
-                status: 200, headers: corsHeaders(rlHdr)
-              });
+      if (url.pathname === '/api/data/list')
+        return handleList(req, env, url, corsHeaders(rlHdr));
 
-            if (url.pathname === '/api/data/list')
-              return handleList(req, env, url, corsHeaders(rlHdr));
+      if (url.pathname === '/api/data/profile')
+        return handleProfile(req, env, url, corsHeaders(rlHdr));
 
-            if (url.pathname === '/api/data/profile')
-              return handleProfile(req, env, url, corsHeaders(rlHdr));
+      if (url.pathname === '/api/data/contact')
+        return handleContact(req, env, url, corsHeaders(rlHdr));
 
-            if (url.pathname === '/api/data/contact')
-              return handleContact(req, env, url, corsHeaders(rlHdr));
-
-            // Keep CORS echo on 404 so localhost can read status
-            return new Response('Not Found', { status: 404, headers: corsHeaders(rlHdr) });
-          }
-
-          if (url.pathname === '/api/data/profile')  return handleProfile(req, env, url, corsHeaders(rlHdr));
-          if (url.pathname === '/api/data/contact')  return handleContact(req, env, url, corsHeaders(rlHdr));
-          // keep CORS echo on 404 so localhost can read the status
-          return new Response('Not Found', { status: 404, headers: corsHeaders() });
-        }
+      // Keep CORS echo on 404 so localhost can read status
+      return new Response('Not Found', { status: 404, headers: corsHeaders(rlHdr) });
+    }
 
     // route /allsubs (and /{lang}/allsubs) to SPA shell
     if (url.pathname === '/allsubs' || /^\/[a-z]{2}\/allsubs\/?$/.test(url.pathname)) {
