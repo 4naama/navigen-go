@@ -1951,7 +1951,6 @@ document.addEventListener("DOMContentLoaded", () => {
       history.replaceState({}, document.title, next);
     }
   }
-  });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
