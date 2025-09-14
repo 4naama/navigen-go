@@ -529,7 +529,63 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
         locBtn.setAttribute('data-addr', addrNorm);
       }
 
+      // ✅ Ensure lat/lng & helpful title for navigation (used by LPM / route)
+      {
+        const id = locBtn.getAttribute('data-id');
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String(x?.ID || x?.id) === String(id))
+          : null;
+        const cc = rec ? (rec.coord || rec["Coordinate Compound"] || '') : '';
+        if (cc) {
+          const [lat, lng] = cc.split(',').map(s => s.trim());
+          if (lat && lng) {
+            if (!locBtn.hasAttribute('data-lat')) locBtn.setAttribute('data-lat', lat);
+            if (!locBtn.hasAttribute('data-lng')) locBtn.setAttribute('data-lng', lng);
+            if (!locBtn.title) locBtn.title = `Open profile / Route (${lat}, ${lng})`;
+          }
+        }
+      }
+
+      // ✅ Preserve media cover for previews (non-blocking)
+      {
+        const id = locBtn.getAttribute('data-id');
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String(x?.ID || x?.id) === String(id))
+          : null;
+        const cover = rec?.media?.cover || rec?.cover || '';
+        if (cover && !locBtn.hasAttribute('data-cover')) {
+          locBtn.setAttribute('data-cover', cover);
+        }
+      }
+
+      // ✅ Expose Popular/Featured flag and group keys for quick filters
+      {
+        const id = locBtn.getAttribute('data-id');
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String(x?.ID || x?.id) === String(id))
+          : null;
+
+        if (rec) {
+          // Popular/Featured detection (keeps your earlier mapper logic)
+          let pri = 'No';
+          if (rec.priority === true || String(rec.priority).toLowerCase() === 'yes' ||
+              String(rec.Popular || rec.Priority).toLowerCase() === 'yes' ||
+              (Array.isArray(rec.tags) && rec.tags.some(t => /^(tag\.)?(popular|featured|priority)$/i.test(String(t))))) {
+            pri = 'Yes';
+          }
+          locBtn.setAttribute('data-priority', pri);
+
+          // group/subgroup attributes (keys)
+          if (rec.groupKey || rec.Group) {
+            locBtn.setAttribute('data-group', String(rec.groupKey || rec.Group));
+          }
+          if (rec.subgroupKey || rec["Subgroup key"]) {
+            locBtn.setAttribute('data-subgroup', String(rec.subgroupKey || rec["Subgroup key"]));
+          }
+        }
+      }
     });
+
   });
 }
 
@@ -920,11 +976,13 @@ async function initEmergencyBlock(countryOverride) {
     if (DEMO_ALLSUBS) {
       ACTIVE_PAGE = null; // skip list fetch → empty items
       document.documentElement.setAttribute('data-demo','allsubs'); // hint UI
-    }   
+    }    
 
-    // First-page items for this context (tiny, fast)
-    // <!-- keeps UX instant; more pages optional later -->
+    // Active context row for this page (used for default group/sub)
+    const ctxRow = Array.isArray(contexts) ? contexts.find(c => c.pageKey === ACTIVE_PAGE) : null;
+
     const API_LIMIT = 40;
+
     // Use prod API in dev; include credentials so admin cookie is sent
     const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
       ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen-go.pages.dev')
@@ -969,11 +1027,14 @@ async function initEmergencyBlock(countryOverride) {
       const id  = String(it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback());
       const nm  = pickName(it?.name) || pickName(it?.title) || 'Unnamed';
       const sn  = pickName(it?.shortName) || nm;
-      const grp = String(it?.groupKey ?? it?.group ?? fallbackGroup);
-      const sub = String(it?.subgroupKey ?? it?.subgroup ?? '');
-      const vis = (it?.visible === false || String(it?.visible).toLowerCase() === 'no') ? 'No' : 'Yes';
-      const pri = (it?.priority === true || String(it?.priority).toLowerCase() === 'yes'
-                  || (Array.isArray(it?.tags) && it.tags.some(t => /^(tag\.)?(popular|featured|priority)$/i.test(String(t))))) ? 'Yes' : 'No';
+      const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
+      const sub = String(it?.subgroupKey ?? it?.subgroup ?? ctxRow?.subgroupKey ?? '');
+      const pri = (
+        it?.priority === true ||
+        String(it?.priority || it?.Popular || it?.Priority).toLowerCase() === 'yes' ||
+        (Array.isArray(it?.tags) && it.tags.some(t => /^(tag\.)?(popular|featured|priority)$/i.test(String(t))))
+      ) ? 'Yes' : 'No';
+
       const cc  = toCoord(it);
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
 
@@ -1008,7 +1069,7 @@ async function initEmergencyBlock(countryOverride) {
             tripadvisor: { rating: Number.isFinite(tR) ? tR : null, count: tC || 0 },
             combined: { value: R, count: n, score }   // value=avg 0–5, score=smoothed
           };
-        })()
+        })(),
 
         // pass-through: socials/official/booking/newsletter
         links: it?.links || {},
@@ -1085,9 +1146,6 @@ async function initEmergencyBlock(countryOverride) {
      * 5) Render: grouped → DOM (buildAccordion), flat → header styling (wireAccordionGroups)
      */
     renderPopularGroup(geoCtx);    
-
-    // ✅ Allowed modes & default from contexts.json; override with last choice (i18n-aware, legacy-safe)
-    const ctxRow = Array.isArray(contexts) ? contexts.find(c => c.pageKey === ACTIVE_PAGE) : null;
 
     // i18n labels for the current lang (keys → labels)
     const modeLabelByKey = {
@@ -1816,19 +1874,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // open the profile modal
         showLocationProfileModal({
-          id: String(hit.ID || hit.id || uid),
-          name: hit["Short Name"] || hit.Name || "Unnamed",
-          lat: (hit["Coordinate Compound"]||"").split(',')[0] || "",
-          lng: (hit["Coordinate Compound"]||"").split(',')[1] || "",
+          id: String(rec.ID || rec.id || uid),
+          name: rec["Short Name"] || rec.Name || "Unnamed",
+          lat: (rec["Coordinate Compound"]||"").split(',')[0] || "",
+          lng: (rec["Coordinate Compound"]||"").split(',')[1] || "",
           imageSrc: cover,
           images,
           media,
-          descriptions: (hit && typeof hit.descriptions === 'object') ? hit.descriptions : {},
-          tags: Array.isArray(hit?.tags) ? hit.tags : [],
-          contact: hit.contact || {},
-          links: hit.links || {},
-          ratings: hit.ratings || {},
-          pricing: hit.pricing || {}
+          descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
+          tags: Array.isArray(rec?.tags) ? rec.tags : [],
+          contact: rec.contact || {},
+          links: rec.links || {},
+          ratings: rec.ratings || {},
+          pricing: rec.pricing || {}
         });
       }
 
@@ -1890,19 +1948,19 @@ document.addEventListener("DOMContentLoaded", () => {
         : (images[0] || '/assets/placeholder-images/icon-512-green.png');
 
       showLocationProfileModal({
-        id: String(hit.ID || hit.id || uid),
-        name: hit["Short Name"] || hit.Name || "Unnamed",
-        lat: (hit["Coordinate Compound"]||"").split(',')[0] || "",
-        lng: (hit["Coordinate Compound"]||"").split(',')[1] || "",
-        imageSrc: cover,
-        images,
-        media,
-        descriptions: (hit && typeof hit.descriptions === 'object') ? hit.descriptions : {},
-        tags: Array.isArray(hit?.tags) ? hit.tags : [],
-        contact: hit.contact || {},
-        links: hit.links || {},
-        ratings: hit.ratings || {},
-        pricing: hit.pricing || {}
+          id: String(rec.ID || rec.id || uid),
+          name: rec["Short Name"] || rec.Name || "Unnamed",
+          lat: (rec["Coordinate Compound"]||"").split(',')[0] || "",
+          lng: (rec["Coordinate Compound"]||"").split(',')[1] || "",
+          imageSrc: cover,
+          images,
+          media,
+          descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
+          tags: Array.isArray(rec?.tags) ? rec.tags : [],
+          contact: rec.contact || {},
+          links: rec.links || {},
+          ratings: rec.ratings || {},
+          pricing: rec.pricing || {}
       });
     }
 
