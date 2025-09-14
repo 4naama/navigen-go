@@ -817,20 +817,20 @@ async function initEmergencyBlock(countryOverride) {
     setupMyStuffModalLogic();           // 🧩 Setup tab handling inside modal
     flagStyler();                       // 🌐 Apply title/alt to any flag icons
 
-    // Load JSONs (profiles.json now carries locations)
-    // keep static: actions/structure/contexts (profiles come from Data API)
+    // Load JSONs: profiles.json (API) carries locations.
+    // Static: actions/structure; contexts is static on Pages/local, API on navigen.io.
+
+    // Prefer same-origin contexts on Pages/local; API on navigen.io (avoids CORS).
+    const CONTEXTS_URL = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
+      ? '/data/contexts.json'
+      : 'https://navigen.io/api/data/contexts';
+
     const [actions, structure, contexts] = await Promise.all([
       fetch('/data/actions.json').then(r => r.json()),
       fetch('/data/structure.json').then(r => r.json()),
-      // Prefer same-origin static when on Pages; fall back to API when on navigen.io
-      const CONTEXTS_URL = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
-        ? '/data/contexts.json'
-        : 'https://navigen.io/api/data/contexts';
-
-      fetch(CONTEXTS_URL, (CONTEXTS_URL.startsWith('/') ? {} : { credentials:'include' }))
-        .then(r => r.json())
-
+      fetch(CONTEXTS_URL, CONTEXTS_URL.startsWith('/') ? {} : { credentials: 'include' }).then(r => r.json())
     ]);
+
 
     state.actions = actions;
 
@@ -875,12 +875,6 @@ async function initEmergencyBlock(countryOverride) {
     function cryptoIdFallback() {
       return `loc_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
     }
-
-    // ✅ Adapt grouped -> flat shape expected by your UI headers (for title/styling)
-    structure_data = structure.map(g => ({
-      "Group": g.groupKey,
-      "Drop-down": g.groupName
-    }));
 
     // 👇 dev-only: print datasets for inspection (no globals)
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
@@ -1079,8 +1073,8 @@ async function initEmergencyBlock(countryOverride) {
 
         // pass-through: socials/official/booking/newsletter
         links: it?.links || {},
-        // optional: ratings + pricing (used in LPM/UI)
-        ratings: it?.ratings || {},
+        // optional: keep original ratings separately (computed stays in .ratings)
+        origRatings: it?.ratings || {},
         pricing: it?.pricing || {},
         lang: it?.lang || ''
       };
@@ -1089,7 +1083,48 @@ async function initEmergencyBlock(countryOverride) {
     // Assign the mapped list now that we have the API items
     geoPointsData = apiItems.map(toGeoPoint);
     geoPoints = geoPointsData;
-    
+
+    // Open LPM on ?lp=<id> (post-mapping, single source of truth)
+    {
+      const q = new URLSearchParams(location.search);
+      const uid = (q.get('lp') || '').trim();
+
+      if (uid && Array.isArray(geoPoints) && geoPoints.length) {
+        const rec = geoPoints.find(x => String(x?.ID || x?.id) === uid);
+        if (rec) {
+          const media   = rec.media || {};
+          const gallery = Array.isArray(media.images) ? media.images : [];
+          const images  = gallery.map(m => (m && typeof m === 'object') ? m.src : m).filter(Boolean);
+          const cover   = (media.cover && String(media.cover).trim())
+            ? media.cover
+            : (images[0] || '/assets/placeholder-images/icon-512-green.png');
+
+          const cc = String(rec["Coordinate Compound"] || rec.coord || "");
+          const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
+
+          showLocationProfileModal({
+            id: String(rec.ID || rec.id || uid),
+            name: rec["Short Name"] || rec.Name || "Unnamed",
+            lat, lng,
+            imageSrc: cover,
+            images,
+            media,
+            descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
+            tags: Array.isArray(rec?.tags) ? rec.tags : [],
+            contact: rec.contact || {},
+            links: rec.links || {},
+            ratings: rec.ratings || {},
+            pricing: rec.pricing || {}
+          });
+        }
+
+        // drop only ?lp; keep others
+        q.delete('lp');
+        const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
+        history.replaceState({}, document.title, next);
+      }
+    }
+
     // Map API items → legacy geoPoints used by accordion/Popular
     (function mapApiToLegacy(){
       if (Array.isArray(geoPoints) && geoPoints.length) return; // skip if already mapped
@@ -1463,10 +1498,12 @@ async function initEmergencyBlock(countryOverride) {
         const opts = base.map(normToken).filter(Boolean).map(k => ({ key: k, label: modeLabelByKey[k] || k }));
 
         // ✅ Compose final labels here to avoid literal {brand}/{scope}/{modeLabel}
-        const modeLabelFinal   = modeLabelByKey[defaultView] || defaultView; // keep: map to display text
-        const contextLineFinal = (namespace === 'language-schools')
-          ? `🏫 Language Schools › ${brand}${scope ? ' › ' + scope : ''}`    // keep: brand/scope path
-          : `${namespace} › ${brand}${scope ? ' › ' + scope : ''}`;
+        const modeLabelFinal = modeLabelByKey[defaultView] || defaultView; // keep: display text
+        const cap = s => s.replace(/\b\w/g, c => c.toUpperCase());
+        const ns = cap((namespace || '').replace(/-/g, ' '));
+        const br = cap(brand);
+        const sc = cap(scope);
+        const contextLineFinal = [ns, br, sc].filter(Boolean).join(' › ');
 
         openViewSettingsModal({
           title:       t('view.settings.title'),
@@ -1854,63 +1891,13 @@ if (alertButton) {
 });  // ✅ End of DOMContentLoaded  
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("📡 DOM loaded — checking for ?school / ?at parameters");
+  console.log("📡 DOM loaded — checking for ?at parameter");
 
-  // ——— 1) Open LPM (any location) when ?school=<id> is present ——— // param kept for legacy QR
-  {
-    const q = new URLSearchParams(location.search);
-    const uid = (q.get("school") || "").trim();
-
-    if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-      const rec = geoPoints.find(x => String(x?.ID || x?.id) === uid);
-
-      if (rec) {
-        // media cover
-        const media   = rec.media || {};
-        const gallery = Array.isArray(media.images) ? media.images : [];
-        const images  = gallery.map(m => (m && typeof m === "object") ? m.src : m).filter(Boolean);
-        const cover   = (media.cover && String(media.cover).trim())
-          ? media.cover
-          : (images[0] || "/assets/placeholder-images/icon-512-green.png");
-
-        // coords
-        let lat = "", lng = "";
-        if (typeof rec["Coordinate Compound"] === "string" && rec["Coordinate Compound"].includes(",")) {
-          [lat, lng] = rec["Coordinate Compound"].split(",").map(s => s.trim());
-        }
-
-        // open the profile modal
-        showLocationProfileModal({
-          id: String(rec.ID || rec.id || uid),
-          name: rec["Short Name"] || rec.Name || "Unnamed",
-          lat: (rec["Coordinate Compound"]||"").split(',')[0] || "",
-          lng: (rec["Coordinate Compound"]||"").split(',')[1] || "",
-          imageSrc: cover,
-          images,
-          media,
-          descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
-          tags: Array.isArray(rec?.tags) ? rec.tags : [],
-          contact: rec.contact || {},
-          links: rec.links || {},
-          ratings: rec.ratings || {},
-          pricing: rec.pricing || {}
-        });
-      }
-
-      // drop ?school, keep other params (e.g., ?lang, ?at)
-      q.delete("school");
-      const next = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
-      history.replaceState({}, document.title, next);
-    }
-  }
-
-  // ——— 2) Existing ?at flow (unchanged) ———
+  // ——— ?at flow ———
   const at = new URLSearchParams(location.search).get("at");
   if (at) {
-    saveToLocationHistory(at); // 🧠 Store silently in local history
+    saveToLocationHistory(at); // store silently in local history
 
-    // sanitize param for the link; keep content persistent
-    // manual close only via × (no auto/tap close)
     const atSafe = encodeURIComponent(at.trim());
     const gmaps = `https://maps.google.com?q=${atSafe}`;
     console.log("🔗 Google Maps link:", gmaps);
@@ -1924,7 +1911,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // Keep ?lang; only drop ?at after storing it.
+  // Drop only ?at after storing; preserve other params.
   {
     const q = new URLSearchParams(location.search);
     if (q.has("at")) {
@@ -1935,33 +1922,36 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// open a school profile when ?school=<uid> is present
-{
-  const q = new URLSearchParams(location.search);
-  const uid = q.get("school");
-  if (uid) {
-    // find by ID/alias among already-normalized geoPoints (built above)
-    const hit = Array.isArray(geoPoints)
-      ? geoPoints.find(x => String(x?.ID || x?.id) === String(uid))
-      : null;
+  // ——— ?at flow — store and suggest map link ———
+  const atRaw = new URLSearchParams(location.search).get("at");
+  const at = (atRaw || "").trim();
+  if (at) {
+    saveToLocationHistory(at); // store silently in local history
 
-    if (hit) {
-      // basic cover/media like Popular buttons do
-      const media   = hit.media || {};
-      const gallery = Array.isArray(media.images) ? media.images : [];
-      const images  = gallery.map(m => (m && typeof m === 'object') ? m.src : m).filter(Boolean);
-      const cover   = (media.cover && String(media.cover).trim())
-        ? media.cover
-        : (images[0] || '/assets/placeholder-images/icon-512-green.png');
-    }
+    // sanitize for link; toast stays until closed
+    const atSafe = encodeURIComponent(at);
+    const gmaps = `https://maps.google.com/?q=${atSafe}`;
+    console.log("🔗 Google Maps link:", gmaps);
 
-    // keep ?lang etc; drop ?school from the URL bar
-    q.delete("school");
-    const next = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
-    history.replaceState({}, document.title, next);
+    showToast(
+      `open in <a class="toast-link" href="${gmaps}" target="_blank" rel="noopener">Google Maps</a><br><br>
+       📌 to save NaviGen<br>
+       🏠 → 📍 for this message<br>
+       👋 to support NaviGen`,
+      { title: '📍 Friend’s location received', manualCloseOnly: true, duration: 0 }
+    );
   }
-}
 
+  // Drop ?at after storing; keep other params
+  {
+    const q = new URLSearchParams(location.search);
+    if (q.has("at")) {
+      q.delete("at");
+      const next = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
+      history.replaceState({}, document.title, next);
+    }
+  }
+  });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
