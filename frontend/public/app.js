@@ -293,6 +293,10 @@ function renderPopularGroup(list = geoPoints) {
         media,
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
         tags: _tags,
+        contact: (loc && loc.contact) || {},
+        links: (loc && loc.links) || {},
+        ratings: (loc && loc.ratings) || {},
+        pricing: (loc && loc.pricing) || {},
         originEl: btn
       });
     });
@@ -987,7 +991,31 @@ async function initEmergencyBlock(countryOverride) {
         tags: Array.isArray(it?.tags) ? it.tags : [],
         media: it?.media || { cover: it?.cover || '', images: [] },
         descriptions: it?.descriptions || {},
-        contact: it?.contact || {}
+        contact: it?.contact || {},
+
+        // rating: minimal fields for sorting (easy to mine from exporters)
+        ratings: (() => {
+          const gR = Number(it?.ratings?.google?.rating ?? it?.google_rating);
+          const gC = Number(it?.ratings?.google?.count  ?? it?.google_count  ?? 0);
+          const tR = Number(it?.ratings?.tripadvisor?.rating ?? it?.tripadvisor_rating);
+          const tC = Number(it?.ratings?.tripadvisor?.count  ?? it?.tripadvisor_count  ?? 0);
+          const n  = (Number.isFinite(gR) ? gC : 0) + (Number.isFinite(tR) ? tC : 0);
+          const R  = n ? (((Number.isFinite(gR)? gR*gC : 0) + (Number.isFinite(tR)? tR*tC : 0)) / n) : 0;
+          const C = 4.2, m = 25;                      // small prior; tune later
+          const score = n ? ((C*m) + (R*n)) / (m + n) : 0;
+          return {
+            google: { rating: Number.isFinite(gR) ? gR : null, count: gC || 0 },
+            tripadvisor: { rating: Number.isFinite(tR) ? tR : null, count: tC || 0 },
+            combined: { value: R, count: n, score }   // value=avg 0–5, score=smoothed
+          };
+        })()
+
+        // pass-through: socials/official/booking/newsletter
+        links: it?.links || {},
+        // optional: ratings + pricing (used in LPM/UI)
+        ratings: it?.ratings || {},
+        pricing: it?.pricing || {},
+        lang: it?.lang || ''
       };
     };
 
@@ -1069,14 +1097,16 @@ async function initEmergencyBlock(countryOverride) {
       postalCode: t('view.settings.mode.postalCode'),
       alpha:      t('view.settings.mode.alpha'),
       priority:   t('view.settings.mode.priority'),
+      rating:     t('view.settings.mode.rating'),
       distance:   t('view.settings.mode.distance')
     };
+
     // labels (lowercased) → canonical keys
     const labelToKey = Object.fromEntries(
       Object.entries(modeLabelByKey).map(([k, v]) => [String(v || '').toLowerCase(), k])
     );
     // canonical key list (case as used in i18n lookups)
-    const CANON = ['structure', 'adminArea', 'city', 'postalCode', 'alpha', 'priority', 'distance'];
+    const CANON = ['structure', 'adminArea', 'city', 'postalCode', 'alpha', 'priority', 'rating', 'distance'];
 
     // normalize any token (key or translated label) → canonical key
     const normToken = (tok) => {
@@ -1116,7 +1146,7 @@ async function initEmergencyBlock(countryOverride) {
       if (!gear) return;
 
       // Build menu from allowed list; if distance is present but geolocation missing, hidden by modal helper
-      const opts = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','az','priority','distance']);
+      const opts = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']);
 
       gear.onclick = () => {
         const segs = String(ACTIVE_PAGE || '').split('/');   // safe: '' → []
@@ -1185,18 +1215,59 @@ async function initEmergencyBlock(countryOverride) {
         pageList.forEach(r => { const k = r?.contact?.postalCode; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
         return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contact?.postalCode) };
       },
-      az: () => {
-        pageList.forEach(r => { const n = String(r?.shortName?.en || r?.name?.en || r?.name || '').trim(); const k = n ? n[0].toUpperCase() : '#';
-          const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
-        return { list: pageList, grouped: buildStructureBy(pageList, r => {
-          const n = String(r?.shortName?.en || r?.name?.en || r?.name || '').trim(); return n ? n[0].toUpperCase() : '#';
-        })};
+      alpha: () => {
+        pageList.forEach(r => {
+          const n = String(r?.shortName?.en || r?.name?.en || r?.name || '').trim();
+          const k = n ? n[0].toUpperCase() : '#';
+          const dyn = `dyn.${slugify(k)}`;
+          r.subgroupKey = dyn; r["Subgroup key"] = dyn;
+        });
+        return {
+          list: pageList,
+          grouped: buildStructureBy(pageList, r => {
+            const n = String(r?.shortName?.en || r?.name?.en || r?.name || '').trim();
+            return n ? n[0].toUpperCase() : '#';
+          })
+        };
       },
       priority: () => {
         pageList.forEach(r => { const k = (String(r?.Priority||'No').toLowerCase()==='yes') ? 'Featured' : 'Other';
           const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
         return { list: pageList, grouped: buildStructureBy(pageList, r => (String(r?.Priority||'No').toLowerCase()==='yes') ? 'Featured' : 'Other') };
       },
+      // order by smoothed rating (then by total count, then by name)
+        rating: () => {
+          const band = (s) => s >= 4.5 ? 'Excellent (4.5–5)'
+                      : s >= 4.0 ? 'Great (4.0–4.4)'
+                      : s >= 3.0 ? 'Good (3.0–3.9)'
+                      : s >  0   ? 'Okay (<3)'
+                      : 'Unrated';
+
+          pageList.forEach(r => {
+            const gR = Number(r?.ratings?.google?.rating);
+            const gC = Number(r?.ratings?.google?.count  || 0);
+            const tR = Number(r?.ratings?.tripadvisor?.rating);
+            const tC = Number(r?.ratings?.tripadvisor?.count  || 0);
+            const n  = (Number.isFinite(gR) ? gC : 0) + (Number.isFinite(tR) ? tC : 0);
+            const R  = n ? (((Number.isFinite(gR)? gR*gC : 0) + (Number.isFinite(tR)? tR*tC : 0)) / n) : 0;
+            const C = 4.2, m = 25;
+            const score = n ? ((C*m) + (R*n)) / (m + n) : 0;
+            r.__score = score; r.__rcnt = n;
+            const dyn = `dyn.${slugify(band(score))}`;
+            r.subgroupKey = dyn; r["Subgroup key"] = dyn;
+          });
+
+          pageList.sort((a,b) =>
+            (b.__score - a.__score) ||
+            (b.__rcnt  - a.__rcnt ) ||
+            String(a?.shortName?.en || a?.name?.en || a?.name || '')
+              .localeCompare(String(b?.shortName?.en || b?.name?.en || b?.name || ''))
+          );
+
+          const grouped = buildStructureBy(pageList, r => band(Number(r.__score || 0)));
+          return { list: pageList, grouped };
+        },
+                
       distance: () => {
         // pick origin: user → page center → centroid
         let origin = null;
@@ -1228,37 +1299,29 @@ async function initEmergencyBlock(countryOverride) {
     // coverage: remove placeholders from accordion only (keep others)
     document.querySelectorAll('#accordion .empty-state').forEach(el => el.remove());
         
-
-    /**
-     * 🌐 Applies static UI translations to the main page elements.
-     * This includes headings, placeholders, button labels, and tooltips
-     * that are part of the base HTML and not dynamically injected modals.
-     * 
-     * Call this after translations are loaded, and again if language changes.
-     */
+    // static UI text applier; module-scoped (ESM), callable from pageshow & DOMContentLoaded
     function injectStaticTranslations() {
       // Main UI text
-      document.getElementById("page-title").textContent = t("page.title");
-      document.querySelector(".page-subtext").textContent = t("page.tagline");
-      document.getElementById("search").placeholder = t("search.placeholder");
-      document.getElementById("here-button").textContent = t("button.here");
+      document.getElementById("page-title")?.textContent = t("page.title");
+      const sub = document.querySelector(".page-subtext"); if (sub) sub.textContent = t("page.tagline");
+      const s = document.getElementById("search"); if (s) s.placeholder = t("search.placeholder");
+      const here = document.getElementById("here-button"); if (here) here.textContent = t("button.here");
 
-      // 🌐 Set translated <title>
+      // <title> + meta
       document.title = t("page.windowTitle");
-
-      // 🌐 Set translated <meta name="description">
       const metaDesc = document.querySelector('meta[name="description"]');
-      if (metaDesc) {
-        metaDesc.setAttribute("content", t("page.metaDescription"));
-      }
+      if (metaDesc) metaDesc.setAttribute("content", t("page.metaDescription"));
 
-      // Footer button tooltips
-      document.getElementById("my-stuff-toggle").title = t("tooltip.myStuff");
-      document.getElementById("alert-button").title = t("tooltip.alerts");
-      document.getElementById("help-button").title = t("tooltip.service");
-      document.getElementById("accessibility-button").title = t("tooltip.accessibility");
+      // Footer tooltips
+      const ids = [
+        ["my-stuff-toggle","tooltip.myStuff"],
+        ["alert-button","tooltip.alerts"],
+        ["help-button","tooltip.service"],
+        ["accessibility-button","tooltip.accessibility"]
+      ];
+      ids.forEach(([id,key])=>{ const el=document.getElementById(id); if(el) el.title=t(key); });
     }
-          
+         
       // Inside your existing main DOMContentLoaded block
       // use outer lets; avoid shadowing so later blocks see the same refs
       searchInput = document.getElementById('search');
@@ -1327,10 +1390,11 @@ async function initEmergencyBlock(countryOverride) {
           postalCode: t('view.settings.mode.postalCode'),
           alpha:      t('view.settings.mode.alpha'),
           priority:   t('view.settings.mode.priority'),
+          rating:     t('view.settings.mode.rating'),
           distance:   t('view.settings.mode.distance')
         };
 
-        const base = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','alpha','priority','distance']);
+        const base = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']);
         const opts = base.map(normToken).filter(Boolean).map(k => ({ key: k, label: modeLabelByKey[k] || k }));
 
         // ✅ Compose final labels here to avoid literal {brand}/{scope}/{modeLabel}
@@ -1752,15 +1816,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // open the profile modal
         showLocationProfileModal({
-          id: String(rec.ID || rec.id || uid),
-          name: rec["Short Name"] || rec.Name || "Unnamed",
-          lat, lng,
+          id: String(hit.ID || hit.id || uid),
+          name: hit["Short Name"] || hit.Name || "Unnamed",
+          lat: (hit["Coordinate Compound"]||"").split(',')[0] || "",
+          lng: (hit["Coordinate Compound"]||"").split(',')[1] || "",
           imageSrc: cover,
           images,
           media,
-          descriptions: (rec && typeof rec.descriptions === "object") ? rec.descriptions : {},
-          tags: Array.isArray(rec?.tags) ? rec.tags : [],
-          originEl: null
+          descriptions: (hit && typeof hit.descriptions === 'object') ? hit.descriptions : {},
+          tags: Array.isArray(hit?.tags) ? hit.tags : [],
+          contact: hit.contact || {},
+          links: hit.links || {},
+          ratings: hit.ratings || {},
+          pricing: hit.pricing || {}
         });
       }
 
@@ -1830,7 +1898,11 @@ document.addEventListener("DOMContentLoaded", () => {
         images,
         media,
         descriptions: (hit && typeof hit.descriptions === 'object') ? hit.descriptions : {},
-        tags: Array.isArray(hit?.tags) ? hit.tags : []
+        tags: Array.isArray(hit?.tags) ? hit.tags : [],
+        contact: hit.contact || {},
+        links: hit.links || {},
+        ratings: hit.ratings || {},
+        pricing: hit.pricing || {}
       });
     }
 

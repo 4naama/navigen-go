@@ -386,17 +386,84 @@ async function handleList(req, env, url, extraHdr){
   const idx = Math.max(Number(q.get('cursor')||0),0);
   const slice = rows.slice(idx, idx+limit);
 
-  // Minimal list fields only
-  const items = slice.map(p=>({
-    id: p.ID||p.id,
-    name: p.name?.en || p.Name || '',
-    shortName: p.shortName?.en || p['Short Name'] || '',
-    groupKey: p.groupKey||p.Group||'',
-    subgroupKey: p.subgroupKey || p['Subgroup key'] || '',  // let client place items into subgroups
-    tags: Array.isArray(p.tags)?p.tags:[],
-    coord: (typeof p['Coordinate Compound']==='string' && p['Coordinate Compound'].includes(',')) ? p['Coordinate Compound'] : '',
-    cover: (p.media && p.media.cover) || (Array.isArray(p.media?.images)&&p.media.images[0]?.src) || ''
-  }));
+  // Rich list fields (UI-ready; keeps payload small)
+  const items = slice.map(p => {
+    // normalize helpers
+    const coord = (typeof p['Coordinate Compound'] === 'string' && p['Coordinate Compound'].includes(','))
+      ? p['Coordinate Compound'] : '';
+    const mediaCover = (p.media && p.media.cover) ||
+      (Array.isArray(p.media?.images) && p.media.images[0]?.src) || '';
+
+    // links (social + official + booking + newsletter)
+    const links = Object.assign({}, p.links || {}, {
+      official: p.official_url || p.Official || p.official || '',
+      Facebook: p.Facebook || '',
+      Instagram: p.Instagram || '',
+      Pinterest: p.Pinterest || '',
+      Spotify: p.Spotify || '',
+      TikTok: p.TikTok || '',
+      YouTube: p.Youtube || p.YouTube || '',
+      booking: p.bookingUrl || (p.contact && p.contact.bookingUrl) || '',
+      newsletter: p.Newsletter || ''
+    });
+
+    // contact (address, city, admin area, country, phone/email, messaging)
+    const contact = Object.assign({}, p.contact || {}, {
+      address: p.Address || (p.contact && p.contact.address) || '',
+      postalCode: p.PostalCode || p.postalCode || (p.contact && p.contact.postalCode) || '',
+      city: p.City || (p.contact && p.contact.city) || '',
+      adminArea: p.AdminArea || p.adminArea || (p.contact && p.contact.adminArea) || '',
+      countryCode: p.CountryCode || p.countryCode || (p.contact && p.contact.countryCode) || '',
+      phone: p.Phone || (p.contact && p.contact.phone) || '',
+      email: p.Email || (p.contact && p.contact.email) || '',
+      whatsapp: p.WhatsApp || p.whatsapp || (p.contact && p.contact.whatsapp) || '',
+      telegram: p.Telegram || p.telegram || (p.contact && p.contact.telegram) || '',
+      messenger: p.Messenger || p.messenger || (p.contact && p.contact.messenger) || '',
+      bookingUrl: p.bookingUrl || (p.links && p.links.booking) || (p.contact && p.contact.bookingUrl) || ''
+    });
+
+    // ratings + price
+    const ratings = {
+      google: {
+        rating: Number(p.google_rating ?? p.googleRating ?? NaN),
+        count: Number(p.google_count ?? p.googleCount ?? NaN)
+      },
+      tripadvisor: {
+        rating: Number(p.tripadvisor_rating ?? p.tripRating ?? NaN),
+        count: Number(p.tripadvisor_count ?? p.tripCount ?? NaN)
+      }
+    };
+    const pricing = {
+      admission: p.Admission || p.admission || '',
+      priceFrom: p.price_from || p.priceFrom || '',
+      currency: p.Currency || p.currency || ''
+    };
+
+    // tags (accept Tag pipe/comma separated or array p.tags)
+    const extraTags = (typeof p.Tag === 'string')
+      ? p.Tag.split(/[\|,]/).map(s => s.trim()).filter(Boolean)
+      : [];
+    const tags = Array.isArray(p.tags) ? p.tags : [];
+    const tagsMerged = Array.from(new Set([...tags, ...extraTags]));
+
+    return {
+      id: p.ID || p.id,
+      name: p.name?.en || p.Name || '',
+      shortName: p.shortName?.en || p['Short Name'] || '',
+      groupKey: p.groupKey || p.Group || '',
+      subgroupKey: p.subgroupKey || p['Subgroup key'] || '',
+      tags: tagsMerged,
+      coord,
+      cover: mediaCover,
+      // new fields (optional for quick UI use; full profile still available)
+      links,
+      contact,
+      ratings,
+      pricing,
+      descriptions: p.descriptions || {},   // pass-through if present
+      lang: p.Lang || p.lang || ''          // hint for client-side pick
+    };
+  });
 
   const nextCursor = (idx+limit<rows.length && (idx/limit+1)<MAX_PAGES) ? (idx+limit) : null;
   // keep CORS + RL headers; Headers must be merged explicitly
