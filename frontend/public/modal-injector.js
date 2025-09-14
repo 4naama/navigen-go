@@ -272,12 +272,15 @@ export function showLocationProfileModal(data) {
           'icon-512-grey.png'
         ];
 
-    // Resolve sources
-    const baseNames = explicit.length ? explicit : defaults;
+    // Resolve sources: prefer explicit images (relative → same dir as cover); else placeholders
+    const fromExplicit = explicit.map(n => (String(n).includes('/') ? String(n) : `${dir}/${String(n)}`));
+    const fromDefaults = defaults.map(n => `${phDir}/${n}`);
     const seen = new Set();
-    const candidates = baseNames
-      .map(n => (n.includes('/') ? n : `${phDir}/${n}`))
+    const candidates = (fromExplicit.length ? fromExplicit : fromDefaults)
       .filter(src => (seen.has(src) ? false : (seen.add(src), true)));
+
+    // Ensure the cover appears in the slider once (first frame)
+    if (baseSrc && !candidates.includes(baseSrc)) candidates.unshift(baseSrc);
 
     // 2) Create slider shell
     const slider = document.createElement('div');
@@ -544,17 +547,17 @@ export function showLocationProfileModal(data) {
     // 🎯 Route → open Google Maps with provided coords
     const btnRoute = modal.querySelector('#lpm-route');
     if (btnRoute) {
-      const lat = String(data?.lat ?? btnRoute.getAttribute('data-lat') ?? '').trim();
-      const lng = String(data?.lng ?? btnRoute.getAttribute('data-lng') ?? '').trim();
-      btnRoute.setAttribute('data-lat', lat);
-      btnRoute.setAttribute('data-lng', lng);
       btnRoute.addEventListener('click', (e) => {
         e.preventDefault();
-        if (!lat || !lng) return console.warn('LPM: missing coords');
+        const latRaw = data?.lat ?? btnRoute.getAttribute('data-lat');
+        const lngRaw = data?.lng ?? btnRoute.getAttribute('data-lng');
+        const lat = Number(latRaw);
+        const lng = Number(lngRaw);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
         _track('route');
-        window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-      });
-
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+        window.open(url, '_blank', 'noopener');
+      }, { passive: false });
     }
 
     // ⭐ Save → stub (hook your real flow later)
