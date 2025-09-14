@@ -1360,7 +1360,8 @@ async function initEmergencyBlock(countryOverride) {
     // static UI text applier; module-scoped (ESM), callable from pageshow & DOMContentLoaded
     function injectStaticTranslations() {
       // Main UI text
-      document.getElementById("page-title")?.textContent = t("page.title");
+      // safe set: optional chaining cannot be on assignment LHS
+      const titleEl = document.getElementById("page-title"); if (titleEl) titleEl.textContent = t("page.title");
       const sub = document.querySelector(".page-subtext"); if (sub) sub.textContent = t("page.tagline");
       const s = document.getElementById("search"); if (s) s.placeholder = t("search.placeholder");
       const here = document.getElementById("here-button"); if (here) here.textContent = t("button.here");
