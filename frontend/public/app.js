@@ -822,8 +822,14 @@ async function initEmergencyBlock(countryOverride) {
     const [actions, structure, contexts] = await Promise.all([
       fetch('/data/actions.json').then(r => r.json()),
       fetch('/data/structure.json').then(r => r.json()),
-      // Fetch via API to avoid Access; returns same JSON
-      fetch('https://navigen.io/api/data/contexts', { credentials:'include' }).then(r => r.json()) // NEW
+      // Prefer same-origin static when on Pages; fall back to API when on navigen.io
+      const CONTEXTS_URL = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
+        ? '/data/contexts.json'
+        : 'https://navigen.io/api/data/contexts';
+
+      fetch(CONTEXTS_URL, (CONTEXTS_URL.startsWith('/') ? {} : { credentials:'include' }))
+        .then(r => r.json())
+
     ]);
 
     state.actions = actions;
@@ -1044,7 +1050,7 @@ async function initEmergencyBlock(countryOverride) {
         "Short Name": sn,
         Group: grp,
         "Subgroup key": sub,
-        Visible: vis,
+        Visible: "Yes", // keep: legacy UI expects "Yes"/"No"
         Priority: pri,
         "Coordinate Compound": cc,
         coord: cc,              // used by distance mode
@@ -1850,7 +1856,7 @@ if (alertButton) {
 document.addEventListener("DOMContentLoaded", () => {
   console.log("📡 DOM loaded — checking for ?school / ?at parameters");
 
-  // ——— 1) Open LPM when ?school=<id> is present ———
+  // ——— 1) Open LPM (any location) when ?school=<id> is present ——— // param kept for legacy QR
   {
     const q = new URLSearchParams(location.search);
     const uid = (q.get("school") || "").trim();
@@ -1947,22 +1953,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const cover   = (media.cover && String(media.cover).trim())
         ? media.cover
         : (images[0] || '/assets/placeholder-images/icon-512-green.png');
-
-      showLocationProfileModal({
-          id: String(rec.ID || rec.id || uid),
-          name: rec["Short Name"] || rec.Name || "Unnamed",
-          lat: (rec["Coordinate Compound"]||"").split(',')[0] || "",
-          lng: (rec["Coordinate Compound"]||"").split(',')[1] || "",
-          imageSrc: cover,
-          images,
-          media,
-          descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
-          tags: Array.isArray(rec?.tags) ? rec.tags : [],
-          contact: rec.contact || {},
-          links: rec.links || {},
-          ratings: rec.ratings || {},
-          pricing: rec.pricing || {}
-      });
     }
 
     // keep ?lang etc; drop ?school from the URL bar
