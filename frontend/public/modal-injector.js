@@ -249,293 +249,271 @@ export function showLocationProfileModal(data) {
   // 🔁 Upgrade placeholder image → slider
   initLpmImageSlider(modal, data);
 
-  // ————————————————————————————
-  // LPM image slider (progressive enhancement over the placeholder <img>)
-  // ————————————————————————————
-  async function initLpmImageSlider(modal, data) {
-    const mediaFigure = modal.querySelector('.location-media');
-    if (!mediaFigure) return;
+// ————————————————————————————
+// LPM image slider (progressive enhancement over the placeholder <img>)
+// ————————————————————————————
+async function initLpmImageSlider(modal, data) {
+  const mediaFigure = modal.querySelector('.location-media');
+  if (!mediaFigure) return;
 
-    // 0) Find base path from the provided image or default
-    const baseSrc = String(data?.imageSrc || '/assets/placeholder-images/icon-512-green.png');
-    const dir = baseSrc.replace(/\/[^\/]*$/, '');          // folder only
-    const filename = baseSrc.split('/').pop();
+  // cover first; fall back to initial imageSrc; never invent names
+  const cover = String(data?.media?.cover || data?.imageSrc || '/assets/placeholder-images/icon-512-green.png').trim();
 
-    // 1) Build candidate list strictly from explicit sources
-    //    a) per-location list: data.images = ["foo.png", "bar.jpg", ...]
-    //    b) fallback: all known placeholder icons from assets/placeholder-images/
-    const explicit = Array.isArray(data?.images) ? data.images : [];
+  // helpers (no guessing)
+  const uniq = (a) => Array.from(new Set(a.filter(Boolean)));
+  const getDir = (url) => {
+    try { const p = new URL(url, location.href).pathname; return p.slice(0, p.lastIndexOf('/')); }
+    catch { return String(url||'').replace(/\/[^\/]*$/, ''); }
+  };
+  const absFrom = (dir) => (v) => {
+    const s = String(v||'').trim();
+    if (!s) return '';
+    if (/^https?:\/\//i.test(s)) return s;
+    if (s.startsWith('/')) return s;
+    return dir ? `${dir}/${s}` : s;              // relative → same folder as cover
+  };
+  const loadOK = (u) => new Promise(res => {     // strict loader (no alt candidates)
+    if (!u) return res(false);
+    const im = new Image();
+    im.onload  = () => res(true);
+    im.onerror = () => res(false);
+    im.src = u;
+  });
 
-    // Folder for default placeholders
-    const phDir = '/assets/placeholder-images';
-    const defaults = [
-          'icon-512-grey.png'
-        ];
+  // explicit list from profiles.json; prefer data.images, else media.images (no guessing)
+  const explicitRaw = Array.isArray(data?.images)
+    ? data.images.map(m => (m && typeof m === 'object' ? m.src : m)).filter(Boolean)
+    : (Array.isArray(data?.media?.images) ? data.media.images.map(m => (m && typeof m === 'object' ? m.src : m)).filter(Boolean) : []);
 
-    // Resolve sources: prefer explicit images (relative → same dir as cover); else placeholders
-    const fromExplicit = explicit.map(n => (String(n).includes('/') ? String(n) : `${dir}/${String(n)}`));
-    const fromDefaults = defaults.map(n => `${phDir}/${n}`);
-    const seen = new Set();
-    const candidates = (fromExplicit.length ? fromExplicit : fromDefaults)
-      .filter(src => (seen.has(src) ? false : (seen.add(src), true)));
+  const dir = getDir(cover);
+  const toAbs = absFrom(dir);
+  const isPlaceholder = (u) => /\/icon-512-(grey|green)\.png$/i.test(String(u));
 
-    // Ensure the cover appears in the slider once (first frame)
-    if (baseSrc && !candidates.includes(baseSrc)) candidates.unshift(baseSrc);
+  // candidates = cover + explicit (same-dir resolution for relatives)
+  const candidates = uniq([cover, ...explicitRaw.map(toAbs)]).filter(u => !isPlaceholder(u));
 
-    // 2) Create slider shell
-    const slider = document.createElement('div');
-    slider.className = 'lpm-slider';
-    slider.setAttribute('role', 'region');
-    slider.setAttribute('aria-label', 'location images');
+  // Reason: build playlist first, then let show() handle swaps; robust like old flow.
+  const GREEN = '/assets/placeholder-images/icon-512-green.png';
 
-    const track = document.createElement('div');
-    track.className = 'lpm-track';
-    slider.appendChild(track);
+  // Build initial playlist from candidates (cover + explicit)
+  let playlist = candidates.slice();
 
-    const prev = document.createElement('button');
-    prev.type = 'button';
-    prev.className = 'lpm-prev';
-    prev.setAttribute('aria-label', 'Previous image');
-    prev.textContent = '‹';
-
-    const next = document.createElement('button');
-    next.type = 'button';
-    next.className = 'lpm-next';
-    next.setAttribute('aria-label', 'Next image');
-    next.textContent = '›';
-
-    slider.appendChild(prev);
-    slider.appendChild(next);
-    
-    // Enable tap-to-fullscreen on the slider; revert styles on exit.
-    // No CSS file changes – we apply minimal inline styles and remove them on exit.
-    (function enableFullscreen(sliderEl){
-      if (!sliderEl || !sliderEl.requestFullscreen) return;
-
-      // Apply/revert inline styles for a good fullscreen layout; avoid !important.
-      const applyFsStyles = () => {
-        sliderEl.style.background = '#000';
-        sliderEl.style.width = '100vw';
-        sliderEl.style.height = '100vh';
-        sliderEl.style.maxWidth = '100vw';
-        sliderEl.style.maxHeight = '100vh';
-        sliderEl.style.position = 'fixed';
-        sliderEl.style.top = '0';
-        sliderEl.style.left = '0';
-        sliderEl.style.right = '0';
-        sliderEl.style.bottom = '0';
-        sliderEl.style.zIndex = '9999';
-        // Make images fit nicely inside viewport.
-        sliderEl.querySelectorAll('.lpm-img').forEach(img => {
-          img.style.objectFit = 'contain';
-          img.style.width = '100%';
-          img.style.height = '100%';
-          img.style.background = '#000';
-        });
-      };
-
-      const clearFsStyles = () => {
-        sliderEl.removeAttribute('style');
-        sliderEl.querySelectorAll('.lpm-img').forEach(img => {
-          img.style.objectFit = '';
-          img.style.width = '';
-          img.style.height = '';
-          img.style.background = '';
-        });
-      };
-
-      // Toggle fullscreen on image tap; ignore clicks on prev/next buttons.
-      sliderEl.addEventListener('click', (ev) => {
-        const onImg = ev.target && ev.target.classList && ev.target.classList.contains('lpm-img');
-        const onNav = ev.target && ev.target.classList && (ev.target.classList.contains('lpm-prev') || ev.target.classList.contains('lpm-next'));
-        if (!onImg || onNav) return;
-
-        if (document.fullscreenElement === sliderEl) {
-          (document.exitFullscreen && document.exitFullscreen())?.catch(()=>{});
-        } else {
-          // Prefer standards; fall back for older WebKit if present.
-          const req = sliderEl.requestFullscreen || sliderEl.webkitRequestFullscreen;
-          if (req) {
-            req.call(sliderEl).then(applyFsStyles).catch(()=>{});
-          }
-        }
-      }, { passive: true });
-
-      // Keep styles in sync when user exits with system UI (Back/Esc/gesture).
-      document.addEventListener('fullscreenchange', () => {
-        const active = document.fullscreenElement === sliderEl;
-        if (active) applyFsStyles(); else clearFsStyles();
-      });
-    })(slider);
-        
-
-    // 3) Replace existing <img> with slider
-    mediaFigure.innerHTML = '';
-    mediaFigure.appendChild(slider);
-
-    // 4) Load images (reuse the list built above)
-    const images = candidates;
-
-    if (!images.length) return;
-
-    // ——— double buffer canvas ———
-    const canvasA = document.createElement('img');
-    const canvasB = document.createElement('img');
-    canvasA.className = 'lpm-img active';
-    canvasB.className = 'lpm-img';
-    track.appendChild(canvasA);
-    track.appendChild(canvasB);
-
-    let front = canvasA;           // currently visible <img>
-    let back  = canvasB;           // offscreen buffer <img>
-    let idx   = 0;                 // current index in images[]
-    
-    function resolveStartIndex(images, data) {
-      if (Number.isInteger(data?.startIndex)) {
-        const n = images.length;
-        return ((data.startIndex % n) + n) % n; // safe wrap
-      }
-      if (data?.startImage) {
-        const i = images.findIndex(u => u === data.startImage || u.endsWith('/' + data.startImage));
-        if (i >= 0) return i;
-      }
-      if (Array.isArray(data?.media?.images)) {
-        const j = data.media.images.findIndex(m => m && typeof m === 'object' && (m.default || m.isDefault));
-        if (j >= 0) return j;
-      }
-      return 0;
-    }        
-
-    // tiny LRU cache: remember which URLs we’ve decoded (no blobs kept)
-    const decoded = new Map();     // url -> true
-    const MAX_CACHE = 8;
-
-    // load into a target <img>; strict candidates only (no extension/name mutations)
-    async function loadInto(imgEl, url, loc) {
-      const s = String(url || '').trim();
-      if (!s) return false;
-
-      // freeze the original filename so we never change extension/casing
-      const fname = s.split('/').pop();
-      if (!fname) return false;
-
-      const cand = [];
-      const add = (u) => { if (u && !cand.includes(u)) cand.push(u); };
-
-      // — Order of attempts (exactly as specified) —
-      add(s); // (1) original string
-      try {
-        const dec = decodeURI(s);
-        if (dec !== s) add(dec);       // (2) decoded whole path
-      } catch { /* silent */ }
-      const enc = encodeURI(s);
-      if (enc !== s) add(enc);         // (3) encoded whole path
-
-      // (4) ID-folder fallback with the SAME filename only
-      const locId = loc?.id || loc?.ID;
-      if (locId) {
-        add(`/assets/location-profile-images/${locId}/${fname}`);
-        const encF = encodeURI(fname);
-        if (encF !== fname) {
-          // (5) encoded filename under the ID folder
-          add(`/assets/location-profile-images/${locId}/${encF}`);
+  // Fallback: if <2, fetch profiles.json and enrich by id (no globals).
+  if (playlist.length < 2) {
+    try {
+      const r = await fetch('/data/profiles.json', { cache: 'no-store' });
+      if (r.ok) {
+        const json = await r.json();
+        const list = Array.isArray(json?.locations) ? json.locations : [];
+        const hit = list.find(x => String(x?.id) === String(data?.id));
+        if (hit?.media) {
+          const dir = getDir(String(hit.media.cover || cover));
+          const toAbs2 = (v) => {
+            const s = String(v||'').trim();
+            if (!s) return '';
+            if (/^https?:\/\//i.test(s)) return s;
+            if (s.startsWith('/')) return s;
+            return dir ? `${dir}/${s}` : s;
+          };
+          const extras = Array.isArray(hit.media.images) ? hit.media.images : [];
+          const addl  = extras
+            .map(m => (m && typeof m === 'object' ? m.src : m))
+            .filter(Boolean)
+            .map(toAbs2);
+          playlist = uniq([cover, ...addl]).filter(u => !isPlaceholder(u));
         }
       }
-
-      // First success wins → probe with <img>, then set src + await decode
-      const tryUrl = async (u) => {
-        await new Promise((resolve, reject) => {
-          const probe = new Image();
-          probe.onload = resolve;
-          probe.onerror = reject;
-          probe.src = u;
-        });
-        imgEl.src = u;                 // set only after confirmed load
-        if ('decode' in imgEl) {
-          try { await imgEl.decode(); } catch { /* swallow */ }
-        } else if (!imgEl.complete) {
-          await new Promise(r => { imgEl.onload = r; imgEl.onerror = r; });
-        }
-        return true;
-      };
-
-      for (let i = 0; i < cand.length; i++) {
-        try { return await tryUrl(cand[i]); } catch { /* next */ }
-      }
-
-      // Failure fallback: green placeholder once
-      imgEl.src = '/assets/placeholder-images/icon-512-green.png';
-      return false;
-    }
-
-    // keep slider box stable based on first loaded image ratio
-    function lockAspectFrom(imgEl) {
-      if (!slider.style.aspectRatio && imgEl.naturalWidth && imgEl.naturalHeight) {
-        slider.style.aspectRatio = `${imgEl.naturalWidth}/${imgEl.naturalHeight}`;
-      }
-    }
-
-    // show specific index (wraps), swapping buffers only after next is decoded
-    async function show(to) {
-      if (!images.length) return;
-      const nextIdx = (to + images.length) % images.length;
-      const nextUrl = images[nextIdx];
-
-      // decode offscreen
-      await loadInto(back, nextUrl, data);
-
-      // first run: lock aspect so text never jumps
-      lockAspectFrom(back);
-
-      // crossfade by swapping roles
-      back.classList.add('active');
-      front.classList.remove('active');
-      [front, back] = [back, front];
-      idx = nextIdx;
-
-      // opportunistic neighbor prefetch (no heavy preload)
-      prefetch(idx + 1);
-      prefetch(idx - 1);
-    }
-
-    function prefetch(i) {
-      const url = images[(i + images.length) % images.length];
-      if (decoded.has(url)) return;
-      const probe = new Image();
-      probe.src = url;
-      if (probe.decode) probe.decode().catch(() => {});
-      decoded.set(url, true);
-      if (decoded.size > MAX_CACHE) decoded.delete(decoded.keys().next().value);
-    }
-
-    // init: prime first frame, then neighbor
-    idx = resolveStartIndex(images, data);
-    await loadInto(front, images[idx], data);
-    lockAspectFrom(front);
-    prefetch(idx + 1);
-
-    // controls
-    prev.addEventListener('click', () => show(idx - 1));
-    next.addEventListener('click', () => show(idx + 1));
-
-    // 6) Keyboard and swipe
-    slider.tabIndex = 0;
-    slider.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') { e.preventDefault(); prev.click(); }
-      if (e.key === 'ArrowRight') { e.preventDefault(); next.click(); }
-    });
-
-    // basic touch swipe
-    let startX = null;
-    slider.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
-    slider.addEventListener('touchend', (e) => {
-      if (startX == null) return;
-      const dx = e.changedTouches[0].clientX - startX;
-      if (Math.abs(dx) > 35) (dx > 0 ? prev : next).click();
-      startX = null;
-    }, { passive: true });
+    } catch {/* silent */}
   }
-  
+
+  // Guarantee at least 2 for flipping (cover + green placeholder as last resort)
+  if (playlist.length < 2) playlist = [cover, GREEN];
+
+  // Always build the slider shell so arrows+fullscreen exist even with 1 image
+  const slider = document.createElement('div');
+  slider.className = 'lpm-slider';
+  slider.setAttribute('role', 'region');
+  slider.setAttribute('aria-label', 'location images');
+
+  const track = document.createElement('div');
+  track.className = 'lpm-track';
+  slider.appendChild(track);
+
+  const prev = document.createElement('button');
+  prev.type = 'button';
+  prev.className = 'lpm-prev';
+  prev.setAttribute('aria-label', 'Previous image');
+  prev.textContent = '‹';
+
+  const next = document.createElement('button');
+  next.type = 'button';
+  next.className = 'lpm-next';
+  next.setAttribute('aria-label', 'Next image');
+  next.textContent = '›';
+
+  // minimal inline styles so arrows are visible without extra CSS
+  const styleArrow = (btn, side) => {
+    btn.style.position = 'absolute';
+    btn.style.top = '50%';
+    btn.style.transform = 'translateY(-50%)';
+    btn.style[side] = '8px';
+    btn.style.zIndex = '2';
+    btn.style.width = '36px';
+    btn.style.height = '36px';
+    btn.style.borderRadius = '9999px';
+    btn.style.border = '0';
+    btn.style.background = 'rgba(0,0,0,0.45)';
+    btn.style.color = '#fff';
+    btn.style.fontSize = '20px';
+    btn.style.lineHeight = '36px';
+    btn.style.display = 'flex';
+    btn.style.alignItems = 'center';
+    btn.style.justifyContent = 'center';
+    btn.style.cursor = 'pointer';
+    btn.style.userSelect = 'none';
+  };
+  styleArrow(prev, 'left');
+  styleArrow(next, 'right');
+
+  slider.appendChild(prev);
+  slider.appendChild(next);
+
+  // Tap-to-fullscreen on image; no !important; remove on exit
+  (function enableFullscreen(sliderEl){
+    if (!sliderEl || !sliderEl.requestFullscreen) return;
+    const applyFs = () => {
+      sliderEl.style.background = '#000';
+      sliderEl.style.position = 'fixed';
+      sliderEl.style.inset = '0';
+      sliderEl.style.zIndex = '9999';
+      sliderEl.style.width = '100vw';
+      sliderEl.style.height = '100vh';
+      sliderEl.querySelectorAll('.lpm-img').forEach(img => {
+        img.style.objectFit = 'contain';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.background = '#000';
+      });
+    };
+    const clearFs = () => {
+      sliderEl.removeAttribute('style');
+      sliderEl.querySelectorAll('.lpm-img').forEach(img => {
+        img.style.objectFit = '';
+        img.style.width = '';
+        img.style.height = '';
+        img.style.background = '';
+      });
+    };
+    sliderEl.addEventListener('click', (ev) => {
+      const onImg = ev.target?.classList?.contains('lpm-img');
+      const onNav = ev.target?.classList?.contains('lpm-prev') || ev.target?.classList?.contains('lpm-next');
+      if (!onImg || onNav) return;
+      if (document.fullscreenElement === sliderEl) document.exitFullscreen?.();
+      else sliderEl.requestFullscreen().then(applyFs).catch(()=>{});
+    }, { passive: true });
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement === sliderEl) applyFs(); else clearFs();
+    });
+  })(slider);
+
+  // replace single <img> with slider
+  mediaFigure.innerHTML = '';
+  mediaFigure.appendChild(slider);
+
+  // double-buffer; no placeholder injections
+  const canvasA = document.createElement('img');
+  const canvasB = document.createElement('img');
+  canvasA.className = 'lpm-img active';
+  canvasB.className = 'lpm-img';
+  track.appendChild(canvasA);
+  track.appendChild(canvasB);
+
+  // baseline layout so swap is visible without external CSS
+  track.style.display = 'grid';
+  [canvasA, canvasB].forEach(img => {
+    img.style.gridArea = '1 / 1';   // stack
+    img.style.width = '100%';
+    img.style.height = 'auto';
+    img.style.objectFit = 'cover';
+    img.style.opacity = '0';
+    img.style.transition = 'opacity .24s ease';
+  });
+  canvasA.style.opacity = '1';
+
+  let front = canvasA;
+  let back  = canvasB;
+
+  const lockAspectFrom = (imgEl) => {
+    if (!slider.style.aspectRatio && imgEl.naturalWidth && imgEl.naturalHeight) {
+      slider.style.aspectRatio = `${imgEl.naturalWidth}/${imgEl.naturalHeight}`;
+    }
+  };
+  const loadInto = (imgEl, url) => new Promise((resolve) => {
+    imgEl.onload  = () => resolve(true);
+    imgEl.onerror = () => resolve(false);
+    imgEl.src = url;
+    if (imgEl.decode) { imgEl.decode().then(()=>resolve(true)).catch(()=>resolve(true)); }
+  });
+
+  let idx = Math.max(0, playlist.indexOf(cover));
+  await loadInto(front, playlist[idx] || cover);
+  lockAspectFrom(front);
+
+  async function show(to) {
+    const count = playlist.length || 1;
+    let attempts = 0;
+    let nextIdx = (to + count) % count;
+    let ok = false;
+    while (attempts < count && !ok) {
+      const nextUrl = playlist[nextIdx] || cover;
+      // eslint-disable-next-line no-await-in-loop
+      ok = await loadInto(back, nextUrl);
+      if (!ok) { nextIdx = (nextIdx + Math.sign(to || 1) + count) % count; attempts++; }
+    }
+    if (!ok) return;
+    lockAspectFrom(back);
+
+    // fade swap (works without external CSS)
+    back.style.opacity = '1';
+    front.style.opacity = '0';
+
+    back.classList.add('active');
+    front.classList.remove('active');
+    [front, back] = [back, front];
+    idx = nextIdx;
+  }
+
+  // controls (keep image after tap; stop bubbling + debounce)
+  let lpmNavBusy = false; // local to slider
+  const onNav = (delta) => async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (lpmNavBusy) return;
+    lpmNavBusy = true;
+    try { await show(idx + delta); } finally { lpmNavBusy = false; }
+  };
+  // capture ensures our stopPropagation runs before any outer listener
+  prev.addEventListener('click', onNav(-1), { capture: true });
+  next.addEventListener('click', onNav(1),  { capture: true });
+  // avoid pointerdown→click bubbling that re-inits the modal
+  prev.addEventListener('pointerdown', (e) => e.stopPropagation(), { capture: true, passive: true });
+  next.addEventListener('pointerdown', (e) => e.stopPropagation(), { capture: true, passive: true });
+
+  slider.tabIndex = 0;
+  slider.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev.click(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); next.click(); }
+  });
+  let startX = null;
+  slider.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+  slider.addEventListener('touchend', (e) => {
+    if (startX == null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 35) (dx > 0 ? prev : next).click();
+    startX = null;
+  }, { passive: true });
+}
+
     // 4. Wire up buttons (Route, Save, ⋮ toggle, Close, etc.)
   
   // ————————————————————————————
@@ -1022,7 +1000,8 @@ import { handleDonation } from "./scripts/stripe.js";
 const API = (path) => {
   const meta = document.querySelector('meta[name="api-origin"]')?.content?.trim();
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  const base = meta || (isLocal ? 'https://navigen-go.pages.dev' : location.origin);
+  // keep: meta override; prefer same-origin on localhost to avoid 401
+  const base = meta || location.origin;
   return new URL(path, base).toString();
 };
 
@@ -1064,15 +1043,17 @@ function makeLocationButton(loc) {
   btn.addEventListener('click', (e) => {
     e.preventDefault();
 
-    // Build gallery from loc.media (cover + images); fallback to a safe placeholder
-    const media   = (loc && loc.media) ? loc.media : {};
+    // Build gallery from loc.media; always pass profiles.json cover+images for slider
+    const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
+    // Keep original media.images array (objects), fallback to [] 
     const gallery = Array.isArray(media.images) ? media.images : [];
-    const images  = gallery
-      .map(m => (m && typeof m === 'object') ? m.src : m)
-      .filter(Boolean);
-    const cover   = (media.cover && String(media.cover).trim())
-      ? media.cover
-      : (images[0] || '/assets/placeholder-images/icon-512-green.png');
+    const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean); // normalize to URLs
+
+    // normalize cover to a string URL even if images[] holds objects
+    const cover =
+      (media.cover && String(media.cover).trim())
+      || (images[0] && (typeof images[0] === 'string' ? images[0] : images[0]?.src))
+      || '/assets/placeholder-images/icon-512-green.png';
 
     // Open the Location Profile Modal; include contact + links for CTAs
     showLocationProfileModal({

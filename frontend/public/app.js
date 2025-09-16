@@ -200,8 +200,13 @@ function renderPopularGroup(list = geoPoints) {
   const container = document.querySelector("#locations");
   if (!container) { console.warn('⚠️ #locations not found; skipping Popular group'); return; }
 
-  const popular = (Array.isArray(list) ? list : [])
-    .filter(loc => String(loc?.Priority || '').toLowerCase() === 'yes');
+  // accept Priority:"Yes", priority:true, or popular/featured/priority tags
+  const isPriority = (rec) => {
+    const raw = String(rec?.Priority ?? rec?.priority ?? '').toLowerCase();
+    if (raw === 'yes' || raw === 'true') return true;
+    return Array.isArray(rec?.tags) && rec.tags.some(t => /^(tag\.)?(popular|featured|priority)$/i.test(String(t)));
+  };
+  const popular = (Array.isArray(list) ? list : []).filter(isPriority);
 
   const section = document.createElement("div");
   section.classList.add("accordion-section");
@@ -279,10 +284,14 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      const media   = (loc && loc.media) ? loc.media : {};
+      // Always prefer profiles.json media (cover + images) for slider
+      const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
       const gallery = Array.isArray(media.images) ? media.images : [];
-      const images  = gallery.map(m => (m && typeof m === 'object') ? m.src : m).filter(Boolean);
-      const cover   = (media.cover && String(media.cover).trim()) ? media.cover : (images[0] || '/assets/logo-icon.svg');
+      const images  = gallery.map(m => (m && typeof m === 'object' ? m.src : m)).filter(Boolean);
+      // Use explicit cover first, then first image, then one safe placeholder
+      const cover   = (media.cover && String(media.cover).trim())
+        || images[0]
+        || '/assets/placeholder-images/icon-512-green.png';
 
       showLocationProfileModal({
         id: btn.getAttribute('data-id'),
@@ -1050,7 +1059,14 @@ async function initEmergencyBlock(countryOverride) {
         coord: cc,              // used by distance mode
         Context: ctx,
         tags: Array.isArray(it?.tags) ? it.tags : [],
-        media: it?.media || { cover: it?.cover || '', images: [] },
+        // keep: pass through cover + images; accept strings or {src}; never drop gallery
+        media: (() => {
+          const m = (it && typeof it.media === 'object') ? it.media : {};
+          const cover = (m.cover || it?.cover || '').trim();
+          const raw = Array.isArray(m.images) ? m.images : (Array.isArray(it?.images) ? it.images : []);
+          const images = raw.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
+          return { ...m, cover, images };
+        })(),
         descriptions: it?.descriptions || {},
         contact: it?.contact || {},
 
@@ -1093,8 +1109,10 @@ async function initEmergencyBlock(countryOverride) {
         const rec = geoPoints.find(x => String(x?.ID || x?.id) === uid);
         if (rec) {
           const media   = rec.media || {};
+          // pass through full objects so modal can use metadata; it normalizes to URLs
           const gallery = Array.isArray(media.images) ? media.images : [];
-          const images  = gallery.map(m => (m && typeof m === 'object') ? m.src : m).filter(Boolean);
+          const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean); // normalize URLs
+
           const cover   = (media.cover && String(media.cover).trim())
             ? media.cover
             : (images[0] || '/assets/placeholder-images/icon-512-green.png');
@@ -1157,7 +1175,15 @@ async function initEmergencyBlock(countryOverride) {
           name: { [pageLang]: name },
           shortName: { [pageLang]: sname },
           tags: Array.isArray(it?.tags) ? it.tags : [],
-          media: { cover: it?.cover || '', images: [] },
+          // keep: pass cover+images; normalize to URLs
+          media: (() => {
+            const cover = (it?.media?.cover || it?.cover || '').trim();
+            const raw   = Array.isArray(it?.media?.images)
+              ? it.media.images
+              : (Array.isArray(it?.images) ? it.images : []);
+            const images = raw.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
+            return { cover, images };
+          })(),
           contact: it?.contact || {}
         };
       };
