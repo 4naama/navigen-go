@@ -448,15 +448,62 @@ async function initLpmImageSlider(modal, data) {
       slider.style.aspectRatio = `${imgEl.naturalWidth}/${imgEl.naturalHeight}`;
     }
   };
-  const loadInto = (imgEl, url) => new Promise((resolve) => {
-    imgEl.onload  = () => resolve(true);
-    imgEl.onerror = () => resolve(false);
-    imgEl.src = url;
-    if (imgEl.decode) { imgEl.decode().then(()=>resolve(true)).catch(()=>resolve(true)); }
-  });
+  
+  // Reason: try encoded/decoded + ID-folder variants so prod URLs resolve reliably.
+  async function loadInto(imgEl, url, loc) {
+    const s = String(url || '').trim();
+    if (!s) return false;
+
+    const fname = s.split('/').pop();
+    if (!fname) return false;
+
+    const cand = [];
+    const add = (u) => { if (u && !cand.includes(u)) cand.push(u); };
+
+    // 1) as-is
+    add(s);
+
+    // 2) decoded whole path
+    try { const dec = decodeURI(s); if (dec !== s) add(dec); } catch {}
+
+    // 3) encoded whole path
+    const enc = encodeURI(s);
+    if (enc !== s) add(enc);
+
+    // 4) /assets/location-profile-images/<id>/<filename>
+    const locId = loc?.id || loc?.ID;
+    if (locId) {
+      add(`/assets/location-profile-images/${locId}/${fname}`);
+      const encF = encodeURI(fname);
+      if (encF !== fname) add(`/assets/location-profile-images/${locId}/${encF}`);
+    }
+
+    const tryUrl = async (u) => {
+      await new Promise((resolve, reject) => {
+        const probe = new Image();
+        probe.onload = resolve;
+        probe.onerror = reject;
+        probe.src = u;
+      });
+      imgEl.src = u;
+      if ('decode' in imgEl) {
+        try { await imgEl.decode(); } catch {}
+      } else if (!imgEl.complete) {
+        await new Promise(r => { imgEl.onload = r; imgEl.onerror = r; });
+      }
+      return true;
+    };
+
+    for (let i = 0; i < cand.length; i++) {
+      try { return await tryUrl(cand[i]); } catch {}
+    }
+
+    imgEl.src = '/assets/placeholder-images/icon-512-green.png';
+    return false;
+  }
 
   let idx = Math.max(0, playlist.indexOf(cover));
-  await loadInto(front, playlist[idx] || cover);
+  await loadInto(front, playlist[idx] || cover, data);
   lockAspectFrom(front);
 
   async function show(to) {
