@@ -1265,7 +1265,28 @@ export function buildAccordion(groupedStructure, geoPoints) {
           const scope = norm(stripLang(location.pathname));
 
           // fetch ground truth (no-store to avoid stale)
-          const res = await fetch('/data/profiles.json', { cache: 'no-store' });
+          // Fallback: if <2, enrich via Profile API (prod-safe; no private file)
+          if (playlist.length < 2) {
+            try {
+              const id = String(data?.id || '').trim();
+              if (id) {
+                const r = await fetch(
+                  API(`/api/data/profile?id=${encodeURIComponent(id)}`),
+                  { cache: 'no-store', credentials: 'include' }
+                );
+                if (r.ok) {
+                  const hit = await r.json();
+                  const dir2 = getDir(String(hit?.media?.cover || cover));   // keep: same-folder resolution
+                  const toAbs2 = absFrom(dir2);
+                  const extras = Array.isArray(hit?.media?.images)
+                    ? hit.media.images.map(v => (v && typeof v === 'object' ? v.src : v)).filter(Boolean)
+                    : [];
+                  const base2 = String(hit?.media?.cover || cover);
+                  playlist = uniq([base2, ...extras.map(toAbs2), ...playlist]); // keep: de-dup order
+                }
+              }
+            } catch {}
+          }
           if (!res.ok) return;
           const data = await res.json();
           const list = Array.isArray(data?.locations) ? data.locations : [];
