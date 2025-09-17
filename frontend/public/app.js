@@ -200,12 +200,9 @@ function renderPopularGroup(list = geoPoints) {
   const container = document.querySelector("#locations");
   if (!container) { console.warn('⚠️ #locations not found; skipping Popular group'); return; }
 
-  // accept Priority:"Yes", priority:true, or popular/featured/priority tags
-  const isPriority = (rec) => {
-    const raw = String(rec?.Priority ?? rec?.priority ?? '').toLowerCase();
-    if (raw === 'yes' || raw === 'true') return true;
-    return Array.isArray(rec?.tags) && rec.tags.some(t => /^(tag\.)?(popular|featured|priority)$/i.test(String(t)));
-  };
+  // Popular = Priority:"Yes" (simplified)
+  const isPriority = (rec) => String(rec?.Priority || '').toLowerCase() === 'yes';
+
   const popular = (Array.isArray(list) ? list : []).filter(isPriority);
 
   const section = document.createElement("div");
@@ -576,12 +573,7 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
 
         if (rec) {
           // Popular/Featured detection (keeps your earlier mapper logic)
-          let pri = 'No';
-          if (rec.priority === true || String(rec.priority).toLowerCase() === 'yes' ||
-              String(rec.Popular || rec.Priority).toLowerCase() === 'yes' ||
-              (Array.isArray(rec.tags) && rec.tags.some(t => /^(tag\.)?(popular|featured|priority)$/i.test(String(t))))) {
-            pri = 'Yes';
-          }
+          const pri = (String(rec?.Priority || '').toLowerCase() === 'yes') ? 'Yes' : 'No';
           locBtn.setAttribute('data-priority', pri);
 
           // group/subgroup attributes (keys)
@@ -1014,6 +1006,8 @@ async function initEmergencyBlock(countryOverride) {
 
     const listJson = listRes.ok ? await listRes.json() : { items: [] };
     const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
+    
+    console.log("🛰 apiItems sample:", apiItems.slice(0,3));
         
     // Map API items → legacy geoPoints for UI (accordion/Popular)
     const pageLang = (document.documentElement.lang || 'en').toLowerCase(); // avoid const "lang" redeclare
@@ -1023,8 +1017,13 @@ async function initEmergencyBlock(countryOverride) {
                           (Array.isArray(structure_data) && structure_data[0]?.Group) || 'group.other';
 
     // Normalize any coord to "lat,lng"
+    // accept object coord (numbers or numeric-strings); keep old fallbacks
     const toCoord = (it) => {
-      if (typeof it?.coord === 'string') return it.coord;
+      if (typeof it?.coord === 'string') return it.coord;            // keep
+      if (it?.coord && it.coord.lat != null && it.coord.lng != null) {
+        const la = Number(it.coord.lat), ln = Number(it.coord.lng);  // 2-line comment: coerce
+        if (Number.isFinite(la) && Number.isFinite(ln)) return `${la},${ln}`;
+      }
       if (typeof it?.coordinateCompound === 'string') return it.coordinateCompound;
       const lat = it?.lat ?? it?.latitude ?? it?.location?.lat;
       const lng = it?.lng ?? it?.longitude ?? it?.location?.lng;
@@ -1033,16 +1032,17 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
+      console.log("🛰 toGeoPoint input:", it.id || it.ID, it.coord);
+
       const id  = String(it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback());
       const nm  = pickName(it?.name) || pickName(it?.title) || 'Unnamed';
       const sn  = pickName(it?.shortName) || nm;
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
       const sub = String(it?.subgroupKey ?? it?.subgroup ?? ctxRow?.subgroupKey ?? '');
-      const pri = (
-        it?.priority === true ||
-        String(it?.priority || it?.Popular || it?.Priority).toLowerCase() === 'yes' ||
-        (Array.isArray(it?.tags) && it.tags.some(t => /^(tag\.)?(popular|featured|priority)$/i.test(String(t))))
-      ) ? 'Yes' : 'No';
+      // Popular is a data flag (locations_data), not a content tag
+      const v = (it?.Priority ?? it?.Popular ?? it?.priority);
+      const pri = (v === true || v === 1 || String(v ?? '').toLowerCase() === 'yes' || String(v ?? '').toLowerCase() === 'true')
+        ? 'Yes' : 'No';
 
       const cc  = toCoord(it);
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
@@ -1142,55 +1142,6 @@ async function initEmergencyBlock(countryOverride) {
         history.replaceState({}, document.title, next);
       }
     }
-
-    // Map API items → legacy geoPoints used by accordion/Popular
-    (function mapApiToLegacy(){
-      if (Array.isArray(geoPoints) && geoPoints.length) return; // skip if already mapped
-
-      const pageLang = (document.documentElement.lang || 'en').toLowerCase(); // avoid reusing "lang"
-      const isPriority = (tags) =>
-        Array.isArray(tags) && tags.some(t => /^(tag\.)?(popular|featured|priority)$/i.test(String(t)));
-
-      const toGeoPoint = (it) => {
-        const id   = String(it?.id || cryptoIdFallback());
-        const name = String(it?.name || '').trim();
-        const sname= String(it?.shortName || name);
-        const coord= String(it?.coord || '').trim();
-        const group= String(it?.groupKey || '');
-
-        return {
-          // legacy fields expected by renderers
-          ID: id,
-          Name: name,
-          "Short Name": sname,
-          Group: group,
-          "Subgroup key": '',
-          Visible: 'Yes',
-          Priority: isPriority(it?.tags) ? 'Yes' : 'No',
-          "Coordinate Compound": coord,
-          coord,
-          Context: String(ACTIVE_PAGE || ''),
-
-          // fields used by search/LPM
-          name: { [pageLang]: name },
-          shortName: { [pageLang]: sname },
-          tags: Array.isArray(it?.tags) ? it.tags : [],
-          // keep: pass cover+images; normalize to URLs
-          media: (() => {
-            const cover = (it?.media?.cover || it?.cover || '').trim();
-            const raw   = Array.isArray(it?.media?.images)
-              ? it.media.images
-              : (Array.isArray(it?.images) ? it.images : []);
-            const images = raw.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
-            return { cover, images };
-          })(),
-          contact: it?.contact || {}
-        };
-      };
-
-      geoPointsData = apiItems.map(toGeoPoint);
-      geoPoints = geoPointsData; // assign AFTER mapping so UI sees items
-    })();
             
     const geoCtx = ACTIVE_PAGE
       ? geoPoints.filter(loc =>

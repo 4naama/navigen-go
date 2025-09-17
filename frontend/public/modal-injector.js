@@ -753,7 +753,6 @@ async function initLpmImageSlider(modal, data) {
         const name = encodeURIComponent(String(data?.name || 'Location'));
         window.open(`https://maps.apple.com/?ll=${lat},${lng}&q=${name}`, '_blank', 'noopener');
       });
-
     }
 
     // 🧭 Waze (UL deep link via https)
@@ -767,7 +766,6 @@ async function initLpmImageSlider(modal, data) {
         _track('waze');
         window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank', 'noopener');
       });
-
     }
 
     // helpers: normalize urls/numbers
@@ -1146,11 +1144,11 @@ export function buildAccordion(groupedStructure, geoPoints) {
     const groupKey = group.groupKey || group.Group;
     const label = group.groupName || group["Drop-down"] || groupKey;
 
-    // visible locations for this group; render section even when empty
-    const filtered = geoPoints.filter(
-      loc => loc.Group === groupKey && loc.Visible === "Yes"
-    );
-    // removed early return so headers show with ( 0 )
+    // If Popular group → collect all Priority=Yes locations.
+    // Otherwise → standard group match with Visible=Yes.
+    const filtered = (groupKey === "group.popular")
+      ? geoPoints.filter(loc => loc.Visible === "Yes" && String(loc.Priority) === "Yes")
+      : geoPoints.filter(loc => loc.Group === groupKey && loc.Visible === "Yes");
 
     // section
     const section = document.createElement("div");
@@ -1256,6 +1254,59 @@ export function buildAccordion(groupedStructure, geoPoints) {
           flatWrap.appendChild(makeLocationButton(loc));
         });
       }
+
+    // Popular enrichment: fill Popular with Priority=Yes (from profiles.json) for this route.
+    if (groupKey === "group.popular") {
+      (async () => {
+        try {
+          // derive current path scope (strip optional /xx/ lang prefix)
+          const stripLang = (p) => p.replace(/^\/[a-z]{2}(?=\/)/i,'');
+          const norm = (p) => p.replace(/^\/|\/$/g,'');
+          const scope = norm(stripLang(location.pathname));
+
+          // fetch ground truth (no-store to avoid stale)
+          const res = await fetch('/data/profiles.json', { cache: 'no-store' });
+          if (!res.ok) return;
+          const data = await res.json();
+          const list = Array.isArray(data?.locations) ? data.locations : [];
+
+          // context matches if either token or scope is a prefix of the other
+          const inScope = (ctx) => String(ctx||'').split(';').some(tok => {
+            const a = norm(tok);
+            const b = scope;
+            return b.startsWith(a) || a.startsWith(b);
+          });
+
+          // Build ID set of expected Popular items
+          const ids = new Set(
+            list
+              .filter(l => String(l.Visible).toLowerCase() === 'yes'
+                        && String(l.Priority).toLowerCase() === 'yes'
+                        && inScope(l.context))
+              .map(l => String(l.id))
+          );
+
+          // Map geoPoints by ID (sheet uses loc.ID), then materialize buttons
+          const wanted = geoPoints.filter(g => ids.has(String(g.ID)));
+          if (!wanted.length) return;
+
+          // Find or create a flat list wrapper inside this Popular section
+          let wrap = content.querySelector('.subgroup-items');
+          if (!wrap) {
+            wrap = document.createElement('div');
+            wrap.className = 'subgroup-items';
+            content.appendChild(wrap);
+          }
+
+          // Append buttons
+          wanted.forEach(loc => wrap.appendChild(makeLocationButton(loc)));
+
+          // Update header count
+          const meta = header.querySelector('.header-meta');
+          if (meta) meta.textContent = `( ${wrap.querySelectorAll(".location-button").length} )`;
+        } catch {}
+      })();
+    }
 
     // group toggle (only one open at a time, with scroll correction)
     header.addEventListener("click", () => {
