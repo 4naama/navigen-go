@@ -298,22 +298,32 @@ async function initLpmImageSlider(modal, data) {
   // Build initial playlist from candidates (cover + explicit)
   let playlist = candidates.slice();
 
-  // Fallback: if <2, enrich from profile API (auth OK)
+  // Fallback: if <2, fetch profiles.json and enrich by id (no globals).
   if (playlist.length < 2) {
     try {
-      const id = String(data?.id || '').trim();
-      if (id) {
-        const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
-        if (r.ok) {
-          const hit = await r.json();
-          const base = String(hit?.media?.cover || cover);
-          const dir2 = getDir(base);
-          const toAbs2 = absFrom(dir2);
-          const extras = Array.isArray(hit?.media?.images) ? hit.media.images.map(v => (v && typeof v === 'object' ? v.src : v)).filter(Boolean) : [];
-          playlist = uniq([base, ...extras.map(toAbs2), ...playlist]);
+      const r = await fetch('/data/profiles.json', { cache: 'no-store' });
+      if (r.ok) {
+        const json = await r.json();
+        const list = Array.isArray(json?.locations) ? json.locations : [];
+        const hit = list.find(x => String(x?.id) === String(data?.id));
+        if (hit?.media) {
+          const dir = getDir(String(hit.media.cover || cover));
+          const toAbs2 = (v) => {
+            const s = String(v||'').trim();
+            if (!s) return '';
+            if (/^https?:\/\//i.test(s)) return s;
+            if (s.startsWith('/')) return s;
+            return dir ? `${dir}/${s}` : s;
+          };
+          const extras = Array.isArray(hit.media.images) ? hit.media.images : [];
+          const addl  = extras
+            .map(m => (m && typeof m === 'object' ? m.src : m))
+            .filter(Boolean)
+            .map(toAbs2);
+          playlist = uniq([cover, ...addl]).filter(u => !isPlaceholder(u));
         }
       }
-    } catch {}
+    } catch {/* silent */}
   }
 
   // Guarantee at least 2 for flipping (cover + green placeholder as last resort)
