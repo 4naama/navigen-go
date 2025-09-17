@@ -1537,6 +1537,29 @@ async function initEmergencyBlock(countryOverride) {
 
   // PWA Install Behavior
   const headerPin  = document.querySelector('.header-pin');
+  
+  // PWA: set initial pin state early; BIP listener may refine later
+  if (headerPin) {
+    if (isStandalone()) {
+      // standalone: support 👋 opens donation modal (no prompt override)
+      headerPin.style.display = 'block';
+      headerPin.textContent = '👋'; // show support in PWA
+      headerPin.onclick = () => {
+        try {
+          const hasDonated = localStorage.getItem("hasDonated") === "true";
+          createDonationModal(hasDonated); // existing modal factory
+        } catch {
+          showModal('donation-modal'); // fallback open
+        }
+      };
+    } else {
+      // browser tab: default to 📌; BIP listener will hook prompt on click
+      headerPin.style.display = 'block';
+      headerPin.textContent = '📌'; // install (replaced by BIP if available)
+      headerPin.onclick = () => showModal('pinned-modal');
+    }
+  }
+    
   const pinnedModal = document.getElementById('pinned-modal');
 
   // 2-line: module-scoped prompt holder; not on window
