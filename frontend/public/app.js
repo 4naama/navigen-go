@@ -1536,56 +1536,40 @@ async function initEmergencyBlock(countryOverride) {
   }
 
   // PWA Install Behavior
-  const headerPin = document.querySelector('.header-pin');
+  const headerPin  = document.querySelector('.header-pin');
   const pinnedModal = document.getElementById('pinned-modal');
 
-  // 🧭 Handle OS install prompt when available (only if not already running as standalone)
-  window.addEventListener('beforeinstallprompt', (e) => {
-    if (isStandalone()) return; // Skip if already installed as PWA
+  // 2-line: module-scoped prompt holder; not on window
+  let promptEvent = null;
 
-    e.preventDefault(); // prevent default mini-infobar
-    deferredPrompt = e;
+  // 2-line: listen on globalThis (no globals created)
+  globalThis.addEventListener('beforeinstallprompt', (e) => {
+    if (isStandalone()) return;           // keep
+    e.preventDefault();                   // keep
+    promptEvent = e;                      // stays in module scope
+    if (headerPin) headerPin.dataset.bip = '1'; // mark that BIP fired
 
     if (headerPin) {
       headerPin.style.display = 'block';
       headerPin.textContent = '📌';
-
       headerPin.onclick = () => {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(choiceResult => {
-          if (choiceResult.outcome === 'accepted') {
-            // Reload to trigger standalone mode after installation
-            setTimeout(() => location.reload(), 800);
-          }
+        // 2-line: use stored event; no global vars
+        promptEvent?.prompt();
+        promptEvent?.userChoice.then(choice => {
+          if (choice.outcome === 'accepted') setTimeout(() => location.reload(), 800);
         });
       };
     }
   });
 
-  // 👋 Show 👋 button only when running in PWA standalone mode
-  if (isStandalone() && headerPin) {
-    headerPin.style.display = 'block';
-    headerPin.textContent = '👋';
-
-    // 👋 Handle tap: always show donation modal unless already donated
-    headerPin.onclick = () => {
-      const hasDonated = localStorage.getItem("hasDonated") === "true";
-
-      console.log("👋 TAP donation prompt opened", { hasDonated });
-
-      // 🧭 Log whether we show thank-you or donation modal
-      if (hasDonated) {
-        console.log("🎉 Already donated → Showing thank-you modal");
-        createDonationModal(true);  // ✅ no ensureStripeReady
-      } else {
-        console.log("💸 Showing donation modal for potential supporter");
-        createDonationModal(false); // ✅ no ensureStripeReady
-      }
-
-      // 📊 Optional: Send event to analytics
-      // trackEvent("donationPromptOpened", { hasDonated });
-    };
-  }
+  // 2-line: fallback if BIP never fires; reuse existing modal flow
+  setTimeout(() => {
+    if (!isStandalone() && headerPin && headerPin.dataset.bip !== '1') {
+      headerPin.style.display = 'block';
+      headerPin.textContent = '📌';
+      headerPin.onclick = () => showModal('pinned-modal');
+    }
+  }, 3000);
 
 // Remaining modals & buttons… (smart: alert modal is now injected on demand; we create+open it before loading data)
 const helpButton = document.getElementById("help-button");
