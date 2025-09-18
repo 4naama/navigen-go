@@ -451,12 +451,9 @@ async function handleList(req, env, url, extraHdr){
       name: p.name?.en || p.Name || '',
       shortName: p.shortName?.en || p['Short Name'] || '',
       groupKey: p.groupKey || p.Group || '',
-      subgroupKey: p.subgroupKey || p['Subgroup key'] || '',
-      tags: tagsMerged,
-      coord,
-      cover: mediaCover,
-      // new fields (optional for quick UI use; full profile still available)
-      links,
+      Priority: ((p.Priority === true || p.Priority === 1) ||
+                 (String(p.Priority ?? p.priority ?? p.Popular ?? 'No').toLowerCase() === 'yes'))
+                ? 'Yes' : 'No', // Popular reads this
       contact,
       ratings,
       pricing,
