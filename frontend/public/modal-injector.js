@@ -1146,11 +1146,11 @@ export function buildAccordion(groupedStructure, geoPoints) {
     const groupKey = group.groupKey || group.Group;
     const label = group.groupName || group["Drop-down"] || groupKey;
 
-    // If Popular group → collect all Priority=Yes locations.
-    // Otherwise → standard group match with Visible=Yes.
-    const filtered = (groupKey === "group.popular")
-      ? geoPoints.filter(loc => loc.Visible === "Yes" && String(loc.Priority) === "Yes")
-      : geoPoints.filter(loc => loc.Group === groupKey && loc.Visible === "Yes");
+  // If Popular group → collect all Priority=Yes locations (ignore Visible).
+  // Otherwise → standard group match with Visible=Yes.
+  const filtered = (groupKey === "group.popular")
+    ? geoPoints.filter(loc => String(loc.Priority) === "Yes")
+    : geoPoints.filter(loc => loc.Group === groupKey && loc.Visible === "Yes");
 
     // section
     const section = document.createElement("div");
@@ -1259,76 +1259,7 @@ export function buildAccordion(groupedStructure, geoPoints) {
 
     // Popular enrichment: fill Popular with Priority=Yes (from profiles.json) for this route.
     if (groupKey === "group.popular") {
-      (async () => {
-        try {
-          // derive current path scope (strip optional /xx/ lang prefix)
-          const stripLang = (p) => p.replace(/^\/[a-z]{2}(?=\/)/i,'');
-          const norm = (p) => p.replace(/^\/|\/$/g,'');
-          const scope = norm(stripLang(location.pathname));
-
-          // fetch ground truth (no-store to avoid stale)
-          // Fallback: if <2, enrich via Profile API (prod-safe; no private file)
-          if (playlist.length < 2) {
-            try {
-              const id = String(data?.id || '').trim();
-              if (id) {
-                const r = await fetch(
-                  API(`/api/data/profile?id=${encodeURIComponent(id)}`),
-                  { cache: 'no-store', credentials: 'include' }
-                );
-                if (r.ok) {
-                  const hit = await r.json();
-                  const dir2 = getDir(String(hit?.media?.cover || cover));   // keep: same-folder resolution
-                  const toAbs2 = absFrom(dir2);
-                  const extras = Array.isArray(hit?.media?.images)
-                    ? hit.media.images.map(v => (v && typeof v === 'object' ? v.src : v)).filter(Boolean)
-                    : [];
-                  const base2 = String(hit?.media?.cover || cover);
-                  playlist = uniq([base2, ...extras.map(toAbs2), ...playlist]); // keep: de-dup order
-                }
-              }
-            } catch {}
-          }
-          if (!res.ok) return;
-          const data = await res.json();
-          const list = Array.isArray(data?.locations) ? data.locations : [];
-
-          // context matches if either token or scope is a prefix of the other
-          const inScope = (ctx) => String(ctx||'').split(';').some(tok => {
-            const a = norm(tok);
-            const b = scope;
-            return b.startsWith(a) || a.startsWith(b);
-          });
-
-          // Build ID set of expected Popular items
-          const ids = new Set(
-            list
-              .filter(l => String(l.Visible).toLowerCase() === 'yes'
-                        && String(l.Priority).toLowerCase() === 'yes'
-                        && inScope(l.context))
-              .map(l => String(l.id))
-          );
-
-          // Map geoPoints by ID (sheet uses loc.ID), then materialize buttons
-          const wanted = geoPoints.filter(g => ids.has(String(g.ID)));
-          if (!wanted.length) return;
-
-          // Find or create a flat list wrapper inside this Popular section
-          let wrap = content.querySelector('.subgroup-items');
-          if (!wrap) {
-            wrap = document.createElement('div');
-            wrap.className = 'subgroup-items';
-            content.appendChild(wrap);
-          }
-
-          // Append buttons
-          wanted.forEach(loc => wrap.appendChild(makeLocationButton(loc)));
-
-          // Update header count
-          const meta = header.querySelector('.header-meta');
-          if (meta) meta.textContent = `( ${wrap.querySelectorAll(".location-button").length} )`;
-        } catch {}
-      })();
+      // Popular enrichment disabled by contract: Popular is driven solely by API Priority:"Yes".
     }
 
     // group toggle (only one open at a time, with scroll correction)

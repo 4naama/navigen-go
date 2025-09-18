@@ -200,9 +200,8 @@ function renderPopularGroup(list = geoPoints) {
   const container = document.querySelector("#locations");
   if (!container) { console.warn('⚠️ #locations not found; skipping Popular group'); return; }
 
-  // Popular = Priority:"Yes" (simplified)
+  // Popular = Priority:"Yes" only; no fallback; ignore Visible
   const isPriority = (rec) => String(rec?.Priority || '').toLowerCase() === 'yes';
-
   const popular = (Array.isArray(list) ? list : []).filter(isPriority);
 
   const section = document.createElement("div");
@@ -1053,7 +1052,7 @@ async function initEmergencyBlock(countryOverride) {
         "Short Name": sn,
         Group: grp,
         "Subgroup key": sub,
-        Visible: "Yes", // keep: legacy UI expects "Yes"/"No"
+        Visible: "Yes", // keep: legacy UI expects "Yes"/"No"; Popular ignores this
         Priority: pri,
         "Coordinate Compound": cc,
         coord: cc,              // used by distance mode
@@ -1145,25 +1144,35 @@ async function initEmergencyBlock(countryOverride) {
             
     const geoCtx = ACTIVE_PAGE
       ? geoPoints.filter(loc =>
-          loc.Visible === 'Yes' &&
+          loc.Visible === 'Yes' && // keep: used by non-Popular groups
           String(loc.Context || '')
             .split(';')
             .map(s => s.trim().toLowerCase())
             .includes(ACTIVE_PAGE)
         )
       : geoPoints;
-      
+
     // QA: print active page + filtered count + sample names (remove after test)
     console.debug(
       '[QA]', 'ACTIVE_PAGE=', ACTIVE_PAGE,
       'count=', geoCtx.length,
       'sample=', geoCtx.slice(0,5).map(l => String(l.shortName ?? l.name ?? ''))
-    );    
-          
+    );
+
+    // Popular: scope by context only (Priority filter happens inside renderPopularGroup)
+    const popularCtx = ACTIVE_PAGE
+      ? geoPoints.filter(loc =>
+          String(loc.Context || '')
+            .split(';')
+            .map(s => s.trim().toLowerCase())
+            .includes(ACTIVE_PAGE)
+        )
+      : geoPoints;
+
     /**
      * 5) Render: grouped → DOM (buildAccordion), flat → header styling (wireAccordionGroups)
      */
-    renderPopularGroup(geoCtx);    
+    renderPopularGroup(popularCtx);
 
     // i18n labels for the current lang (keys → labels)
     const modeLabelByKey = {
