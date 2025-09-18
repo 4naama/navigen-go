@@ -389,8 +389,21 @@ async function handleList(req, env, url, extraHdr){
   // Rich list fields (UI-ready; keeps payload small)
   const items = slice.map(p => {
     // normalize helpers
-    const coord = (typeof p['Coordinate Compound'] === 'string' && p['Coordinate Compound'].includes(','))
-      ? p['Coordinate Compound'] : '';
+    const coord = (() => {
+      // prefer object with numbers
+      if (p && typeof p.coord === 'object') {
+        const la = Number(p.coord.lat ?? p.coord.latitude);
+        const ln = Number(p.coord.lng ?? p.coord.longitude);
+        if (Number.isFinite(la) && Number.isFinite(ln)) return { lat: la, lng: ln };
+      }
+      // fallback: parse "Coordinate Compound" string
+      if (typeof p['Coordinate Compound'] === 'string' && p['Coordinate Compound'].includes(',')) {
+        const [la, ln] = p['Coordinate Compound'].split(',').map(s => Number(s.trim()));
+        if (Number.isFinite(la) && Number.isFinite(ln)) return { lat: la, lng: ln };
+      }
+      return null; // no coords
+    })();
+
     const mediaCover = (p.media && p.media.cover) ||
       (Array.isArray(p.media?.images) && p.media.images[0]?.src) || '';
 
