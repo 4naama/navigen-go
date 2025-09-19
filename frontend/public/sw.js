@@ -1,6 +1,6 @@
 // Bump to evict stale assets, make version explicit per env
 const IS_DEV = /\blocalhost$|\b127\.0\.0\.1$/.test(self.location.hostname); // dev skip cache
-const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v7"; // bump to evict stale assets
+const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v8"; // bump to evict stale assets
 
 // Precache core shell for offline; keep list lean
 self.addEventListener("install", event => {
