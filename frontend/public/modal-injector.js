@@ -845,26 +845,29 @@ async function initLpmImageSlider(modal, data) {
           if (r.ok){ const j=await r.json(); if (j.href) location.href=j.href; } } catch {}
       });
 
+      // booking: fetch JSON; open once; toast when missing
       if (bookBtn) {
         const orig = bookBtn.onclick;
         bookBtn.onclick = async (ev) => {
           ev.preventDefault();
           const id = String(data?.id || '');
-          const link = data?.contact?.bookingUrl || data?.links?.booking || '';
-          if (link) { if (orig) return orig(ev); window.open(String(link), '_blank', 'noopener'); return; }
-          const toURL = (p) => new URL(
-            p,
-            document.querySelector('meta[name="api-origin"]')?.content?.trim()
-              || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'https://navigen.io' : location.origin)
-          ).toString();
+          const direct = data?.contact?.bookingUrl || data?.links?.booking || '';
+          if (direct) { if (orig) return orig(ev); window.open(String(direct), '_blank', 'noopener'); return; }
+
+          const base = document.querySelector('meta[name="api-origin"]')?.content?.trim()
+            || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'https://navigen.io' : location.origin);
+          const url  = new URL(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`, base).toString();
+
           try {
-            const r = await fetch(toURL(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`), { credentials: 'include' });
+            const r = await fetch(url, { credentials: 'include' });
             if (r.ok) {
-              const j = await r.json();
-              if (j.href) { window.open(String(j.href), '_blank', 'noopener'); return; }
+              const j = await r.json().catch(() => ({}));
+              if (j && j.href) { window.open(String(j.href), '_blank', 'noopener'); return; }
             }
+            showToast('Booking link coming soon', 1600); // short, calm message
+          } catch {
             showToast('Booking link coming soon', 1600);
-          } catch { showToast('Booking link coming soon', 1600); }
+          }
         };
       }
 
