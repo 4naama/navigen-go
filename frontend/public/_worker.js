@@ -436,14 +436,7 @@ async function handleContact(req, env, url, extraHdr){
   const p = (Array.isArray(profiles?.locations)?profiles.locations:[]).find(x=>String(x.ID||x.id)===String(id));
   if(!p) return new Response('Not Found',{status:404});
   const c = p.contact||{};
-  // booking: 204 if missing; 200 JSON if present (no redirect)
-  if (kind === 'booking') {
-    const link = p?.contact?.bookingUrl || p?.links?.booking || '';
-    if (!link) return new Response('No booking', { status: 204 });
-    const h = new Headers({ 'content-type': 'application/json' });
-    if (extraHdr) extraHdr.forEach((v2, k) => h.set(k, v2));
-    return new Response(JSON.stringify({ href: link }), { status: 200, headers: h });
-  }
+  if(kind==='booking'){ const link=p?.contact?.bookingUrl||p?.links?.booking||''; return link?Response.redirect(link,302):new Response('No booking',{status:204}); }
   if(kind==='phone'){ const v=c.phone?'tel:'+String(c.phone).trim():''; if(!v) return new Response('No phone',{status:204});
     const h=new Headers({'content-type':'application/json'}); if (extraHdr) extraHdr.forEach((v2,k)=>h.set(k,v2));
     return new Response(JSON.stringify({href:v}),{status:200,headers:h}); }
