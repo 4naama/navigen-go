@@ -388,18 +388,19 @@ async function handleList(req, env, url, extraHdr){
 
   // Rich list fields (UI-ready; keeps payload small)
   const items = slice.map(p => {
-    // normalize helpers
+    // normalize helpers (emit numbers if possible)
     const coord = (() => {
-      // prefer object with numbers
+      // object {lat,lng} in profiles.json
       if (p && typeof p.coord === 'object') {
         const la = Number(p.coord.lat ?? p.coord.latitude);
         const ln = Number(p.coord.lng ?? p.coord.longitude);
         if (Number.isFinite(la) && Number.isFinite(ln)) return { lat: la, lng: ln };
       }
-      // fallback: parse "Coordinate Compound" string
-      if (typeof p['Coordinate Compound'] === 'string' && p['Coordinate Compound'].includes(',')) {
-        const [la, ln] = p['Coordinate Compound'].split(',').map(s => Number(s.trim()));
-        if (Number.isFinite(la) && Number.isFinite(ln)) return { lat: la, lng: ln };
+      // string "lat,lng" from any known field
+      const cc = p['Coordinate Compound'] || p.coordinateCompound || p.coord || p.coordinate || '';
+      if (typeof cc === 'string' && cc.includes(',')) {
+        const [a, b] = cc.split(',').map(s => Number(s.trim()));
+        if (Number.isFinite(a) && Number.isFinite(b)) return { lat: a, lng: b };
       }
       return null; // no coords
     })();
@@ -464,6 +465,7 @@ async function handleList(req, env, url, extraHdr){
       name: p.name?.en || p.Name || '',
       shortName: p.shortName?.en || p['Short Name'] || '',
       groupKey: p.groupKey || p.Group || '',
+      coord, // normalized {lat,lng} or null
       Priority: ((p.Priority === true || p.Priority === 1) ||
                  (String(p.Priority ?? p.priority ?? p.Popular ?? 'No').toLowerCase() === 'yes'))
                 ? 'Yes' : 'No', // Popular reads this
@@ -492,7 +494,19 @@ async function handleProfile(req, env, url, extraHdr){
   const payload = {
     id: p.ID||p.id, name: p.name||p.Name||'', shortName: p.shortName||p['Short Name']||'',
     descriptions: p.descriptions||{}, tags: Array.isArray(p.tags)?p.tags:[],
-    coord: (typeof p['Coordinate Compound']==='string' && p['Coordinate Compound'].includes(',')) ? p['Coordinate Compound'] : '',
+    coord: (() => {
+      if (p && typeof p.coord === 'object') {
+        const la = Number(p.coord.lat ?? p.coord.latitude);
+        const ln = Number(p.coord.lng ?? p.coord.longitude);
+        if (Number.isFinite(la) && Number.isFinite(ln)) return { lat: la, lng: ln };
+      }
+      const cc = p['Coordinate Compound'] || p.coordinateCompound || p.coord || p.coordinate || '';
+      if (typeof cc === 'string' && cc.includes(',')) {
+        const [a, b] = cc.split(',').map(s => Number(s.trim()));
+        if (Number.isFinite(a) && Number.isFinite(b)) return { lat: a, lng: b };
+      }
+      return null;
+    })(),
     media: { cover: p.media?.cover||'', images: Array.isArray(p.media?.images)?p.media.images:[] },
     links: p.links||{}
   };
