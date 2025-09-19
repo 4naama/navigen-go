@@ -265,13 +265,16 @@ async function initLpmImageSlider(modal, data) {
     try { const p = new URL(url, location.href).pathname; return p.slice(0, p.lastIndexOf('/')); }
     catch { return String(url||'').replace(/\/[^\/]*$/, ''); }
   };
+  // reason: normalize root-ish "assets/…" to "/assets/…" so it is absolute and same-origin
   const absFrom = (dir) => (v) => {
-    const s = String(v||'').trim();
+    const s = String(v || '').trim();
     if (!s) return '';
     if (/^https?:\/\//i.test(s)) return s;
     if (s.startsWith('/')) return s;
-    return dir ? `${dir}/${s}` : s;              // relative → same folder as cover
+    if (/^assets\//i.test(s)) return '/' + s.replace(/^\/?/, ''); // new: rootize assets/
+    return dir ? `${dir}/${s}` : s; // fallback: same folder as cover
   };
+
   const loadOK = (u) => new Promise(res => {     // strict loader (no alt candidates)
     if (!u) return res(false);
     const im = new Image();
@@ -464,6 +467,13 @@ async function initLpmImageSlider(modal, data) {
 
     // 1) as-is
     add(s);
+
+    // 1b) rootize assets/… → /assets/… (handles page-relative inputs)
+    // reason: avoid /en/… page-relative fetches that 404 and stall the slider
+    if (/^assets\//i.test(s)) {
+      const rootized = '/' + s.replace(/^\/?/, '');
+      add(rootized);
+    }
 
     // 2) decoded whole path
     try { const dec = decodeURI(s); if (dec !== s) add(dec); } catch {}
