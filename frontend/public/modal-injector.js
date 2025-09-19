@@ -849,16 +849,25 @@ async function initLpmImageSlider(modal, data) {
         const orig = bookBtn.onclick;
         bookBtn.onclick = async (ev) => {
           ev.preventDefault();
+          const id = String(data?.id || '');
           const link = data?.contact?.bookingUrl || data?.links?.booking || '';
-          if (link) { if (orig) return orig(ev); window.open(String(link),'_blank','noopener'); return; }
+          if (link) { if (orig) return orig(ev); window.open(String(link), '_blank', 'noopener'); return; }
           const toURL = (p) => new URL(
             p,
             document.querySelector('meta[name="api-origin"]')?.content?.trim()
               || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'https://navigen.io' : location.origin)
           ).toString();
-          try { location.assign(toURL(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`)); } catch {}
+          try {
+            const r = await fetch(toURL(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`), { credentials: 'include' });
+            if (r.ok) {
+              const j = await r.json();
+              if (j.href) { window.open(String(j.href), '_blank', 'noopener'); return; }
+            }
+            showToast('Booking link coming soon', 1600);
+          } catch { showToast('Booking link coming soon', 1600); }
         };
       }
+
     })();
     
     addLink('som-wa',   '🟢', 'WhatsApp',  waUrl(data.contact?.whatsapp),   'whatsapp');
