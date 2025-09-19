@@ -1,6 +1,6 @@
 // Bump to evict stale assets, make version explicit per env
 const IS_DEV = /\blocalhost$|\b127\.0\.0\.1$/.test(self.location.hostname); // dev skip cache
-const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v8"; // bump to evict stale assets
+const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v11"; // clean old cache
 
 // Precache core shell for offline; keep list lean
 self.addEventListener("install", event => {
@@ -57,18 +57,9 @@ self.addEventListener("fetch", event => {
   const accept = req.headers.get("accept") || "";
   const isHTML = req.mode === "navigate" || accept.includes("text/html");
 
-  if (isHTML) {
-    // try network, update cache; fallback to cached doc (or /index.html)
-    event.respondWith((async () => {
-      try {
-        const net = await fetch(req);
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(req, net.clone());
-        return net;
-      } catch {
-        return (await caches.match(req)) || (await caches.match("/index.html"));
-      }
-    })());
+  // API: never cache; always hit network
+  if (u.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(req, { cache: 'no-store' }));
     return;
   }
 

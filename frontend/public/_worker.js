@@ -100,21 +100,6 @@ export default {
       const authed = new RegExp(`\\b${ADMIN_COOKIE}=ok\\b`).test(cookie);
       // Public boot JSON for app startup; allow list only
       const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
-
-      if (url.pathname.startsWith('/data/') && !isBootJson) {
-        if (!authed) {
-          // show the same admin code page you already serve later
-          const body = `<!doctype html><title>Admin Access</title><meta charset="utf-8">`+
-                       `<body style="font:16px system-ui"><h1>🔒 Admin Access</h1>`+
-                       `<form method="POST"><input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>`+
-                       `<button>Enter</button></form></body>`;
-          // dev-only CORS for /data/* gate HTML so localhost XHRs don’t hard-fail
-          return new Response(body, {
-            status: 401,
-            headers: corsHeaders({ 'content-type': 'text/html; charset=utf-8', 'x-ng-worker': 'gate' })
-          });
-        }
-      }
     }
 
     // PWA: early pass-through for critical static assets (avoid rewrites)
@@ -124,92 +109,16 @@ export default {
         url.pathname.startsWith('/assets/')) {
       return env.ASSETS.fetch(req);
     }
-
-    // -------- Admin-only Showcase Gate (no guest codes) --------
-    // <!-- Bans navigen.io to everyone except admin with 6-digit code -->
-    {
-      // Keep only minimal static assets public so the login page can load clean
-      const PUBLIC_PREFIXES = ['/assets/']; // gate /data/* — datasets allowed only after admin login
-      // allow contexts JSON via API so app boots
-      const PUBLIC_FILES = new Set(['/robots.txt','/favicon.ico','/api/data/contexts','/api/data/contexts/']);
-
-      const isPublic = PUBLIC_FILES.has(url.pathname) || PUBLIC_PREFIXES.some(p => url.pathname.startsWith(p));
-
-      const cookie = req.headers.get('cookie') || '';
-      const ADMIN_COOKIE = 'navigen_gate_v2'; // rename to force global logout
-      const authed = new RegExp(`\\b${ADMIN_COOKIE}=ok\\b`).test(cookie);
-
-      // Everything non-public is admin-gated (disabled)
-      if (false && !isPublic && !authed) {
-        const expected = (env.SHOWCASE_STATIC6 || '').trim(); // set in Pages → Settings → Variables
-        const codeQ = (url.searchParams.get('code') || '').trim();
-        const codeBody = await (async () => {
-          if (req.method !== 'POST') return '';
-          try {
-            const ct = req.headers.get('content-type') || '';
-            if (ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data')) {
-              const form = await req.formData();
-              return String(form.get('code') || '').trim();
-            }
-            if (ct.includes('application/json')) {
-              const j = await req.json();
-              return String(j.code || '').trim();
-            }
-          } catch {}
-          return '';
-        })();
-
-        // Accept only the admin 6-digit (no guest acceptance)
-        const submitted = codeQ || codeBody;
-        if (/^\d{6}$/.test(submitted) && expected && submitted === expected) {
-          const headers = new Headers({
-            // 1-year remember-me (31536000 seconds)
-            'Set-Cookie': `${ADMIN_COOKIE}=ok; Max-Age=31536000; Path=/; Secure; HttpOnly; SameSite=None`
-          });
-          url.searchParams.delete('code'); // clean URL
-          return new Response(null, {
-            status: 303,
-            headers: new Headers({ ...Object.fromEntries(headers), Location: url.toString() })
-          });
-        }
-        
-        // Allow /api/data/contexts (with optional trailing slash); gate others.
-        if (url.pathname.startsWith('/api/data/') && !/^\/api\/data\/contexts\/?$/.test(url.pathname)) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-            status: 401,
-            headers: corsHeaders({ 'content-type': 'application/json' })
-          });
-        }
-            
-        // Minimal login page (no external deps)
-        const body = `<!doctype html><html lang="en"><head>
-          <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-          <title>NaviGen — Admin Access</title>
-          <style>
-            body{font:16px system-ui;margin:0;background:#f7f7f7;color:#111}
-            .card{max-width:420px;margin:14vh auto;padding:24px;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-            h1{font-size:20px;margin:0 0 12px}.muted{opacity:.75;margin:0 0 16px}
-            form{display:flex;gap:8px}input{flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:8px}
-            button{padding:10px 14px;border:1px solid #111;border-radius:8px;background:#111;color:#fff;cursor:pointer}
-            .small{font-size:13px;opacity:.7;margin-top:12px}
-          </style></head><body>
-          <div class="card" role="dialog" aria-labelledby="t">
-            <h1 id="t">🔒 Admin Access</h1>
-            <p class="muted">Enter your 6-digit admin code.</p>
-            <form method="POST"><input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" required>
-            <button type="submit">Enter</button></form>
-            <p class="small">Tip: add <code>?code=123456</code> to your own URL for quicker login.</p>
-          </div></body></html>`
-        // dev-only CORS for gate HTML so localhost XHRs can read it; prod 
-        return new Response(body, {
-          status: 200,
-          headers: corsHeaders({ 'content-type': 'text/html; charset=utf-8' })
-        });
-
-      }
-    }
     
-    // -------- End Admin-only Showcase Gate --------
+    // /api/track: no redirect; handle missing/invalid target gracefully
+    if (url.pathname === '/api/track') {
+      const target = url.searchParams.get('target') || '';
+      // invalid/missing → just 204 so UI toast informs the user
+      if (!/^https?:\/\//i.test(target)) return new Response(null, { status: 204 });
+      // optional: log asynchronously here if needed; never redirect to avoid double-open
+      return new Response(null, { status: 204 });
+    }        
+    
     // 401 gate disabled; RL/Bot Fight protect /api/data/*
     if (url.pathname.startsWith('/api/data/')) {
       // Rate limit + dev CORS headers on all API responses
