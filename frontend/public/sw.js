@@ -78,15 +78,35 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // unchanged: other assets cache-first
+  // other assets cache-first with MIME guard; HTML network-first
+  // prevents caching HTML under image keys from locale-prefixed fallbacks
   event.respondWith((async () => {
+    if (isHTML) {
+      try {
+        const net = await fetch(req, { cache: 'no-store' });
+        const c = await caches.open(CACHE_NAME);
+        c.put(req, net.clone());
+        return net;
+      } catch {
+        return (await caches.match(req)) || Response.error();
+      }
+    }
+
     const hit = await caches.match(req);
     if (hit) return hit;
+
     const net = await fetch(req);
     if (net && net.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(req, net.clone());
+      const ct = (net.headers.get('content-type') || '').toLowerCase();
+      const path = new URL(req.url).pathname;
+      const isImgReq = /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(path);
+      const okToCache = isImgReq ? ct.startsWith('image/') : true;
+      if (okToCache) {
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(req, net.clone());
+      }
     }
     return net;
   })());
+
 });

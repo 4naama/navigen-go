@@ -138,12 +138,22 @@ export function createLocationProfileModal(data, injected = {}) {
   }
 
   // ▸ Body: media + description (5-line clamp + fade handled in CSS)
+  // lead: rootize hero src; prefer media.cover → imageSrc → placeholder.
   const body = document.createElement('div');
   body.className = 'modal-body';
+
+  const heroSrc = (() => {
+    const raw = String((payload?.media?.cover || payload.imageSrc || '/assets/placeholder-images/icon-512-green.png') || '').trim();
+    if (!raw) return '/assets/placeholder-images/icon-512-green.png';
+    if (/^https?:\/\//i.test(raw) || raw.startsWith('/')) return raw;
+    if (/^assets\//i.test(raw)) return '/' + raw.replace(/^\/?/, '');
+    return raw;
+  })();
+
   body.innerHTML = `
     <div class="modal-body-inner">
       <figure class="location-media" aria-label="Location image" style="position:relative;">
-        <img src="${payload.imageSrc || '/assets/placeholder-images/icon-512-green.png'}" 
+        <img src="${heroSrc}"
              alt="${payload.name || 'Location'} image"
              style="width:100%;height:auto;display:block;border-radius:8px;">
       </figure>
@@ -166,7 +176,7 @@ export function createLocationProfileModal(data, injected = {}) {
       </section>
     </div>
   `;
-  
+
   // add compact 1–5 rating row (emoji radios)
   // rating row under description
   const inner = body.querySelector('.modal-body-inner');
@@ -245,7 +255,29 @@ export function showLocationProfileModal(data) {
 
   // 3. Append to body (hidden by default)
   document.body.appendChild(modal);
-  
+
+  // Prefetch cover fast; avoid placeholder first paint (2 lines of comments).
+  try {
+    const id = String(data?.id || '').trim();
+    const need = !data?.media?.cover || /placeholder-images/.test(String(data?.media?.cover || '')) || /placeholder-images/.test(String(data?.imageSrc || ''));
+    if (id && need) {
+      const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
+      if (r.ok) {
+        const p = await r.json();
+        const raw = String(p?.media?.cover || '').trim();
+        if (raw) {
+          const coverUrl = (/^https?:\/\//i.test(raw) || raw.startsWith('/')) ? raw
+                          : (/^assets\//i.test(raw) ? '/' + raw.replace(/^\/?/, '') : raw);
+          data.media = p.media || data.media || {};
+          data.media.cover = coverUrl;
+          data.imageSrc = coverUrl;
+          const hero = modal.querySelector('.location-media img');
+          if (hero && /placeholder-images/.test(hero.src)) hero.src = coverUrl;
+        }
+      }
+    }
+  } catch {}
+
   // 🔁 Upgrade placeholder image → slider
   initLpmImageSlider(modal, data);
 
@@ -265,14 +297,14 @@ async function initLpmImageSlider(modal, data) {
     try { const p = new URL(url, location.href).pathname; return p.slice(0, p.lastIndexOf('/')); }
     catch { return String(url||'').replace(/\/[^\/]*$/, ''); }
   };
-  // reason: normalize root-ish "assets/…" to "/assets/…" so it is absolute and same-origin
+  // Reason: rootize assets/ → /assets/ so it doesn't inherit /en/... prefix.
   const absFrom = (dir) => (v) => {
     const s = String(v || '').trim();
     if (!s) return '';
     if (/^https?:\/\//i.test(s)) return s;
     if (s.startsWith('/')) return s;
-    if (/^assets\//i.test(s)) return '/' + s.replace(/^\/?/, ''); // new: rootize assets/
-    return dir ? `${dir}/${s}` : s; // fallback: same folder as cover
+    if (/^assets\//i.test(s)) return '/' + s.replace(/^\/?/, '');
+    return dir ? `${dir}/${s}` : s;
   };
 
   const loadOK = (u) => new Promise(res => {     // strict loader (no alt candidates)
@@ -324,6 +356,7 @@ async function initLpmImageSlider(modal, data) {
               .map(m => (m && typeof m === 'object' ? m.src : m))
               .filter(Boolean)
               .map(toAbs2);
+            // Reason: fix syntax + include all extras; 2 lines keep comments brief.
             playlist = uniq([cover, ...addl]).filter(u => !isPlaceholder(u));
           }
         }
@@ -468,8 +501,8 @@ async function initLpmImageSlider(modal, data) {
     // 1) as-is
     add(s);
 
-    // 1b) rootize assets/… → /assets/… (handles page-relative inputs)
-    // reason: avoid /en/… page-relative fetches that 404 and stall the slider
+    // 1b) rootize assets/ → /assets/ (avoid /en/.../assets/ 404)
+    // Reason: ensure same-origin absolute path for gallery items.
     if (/^assets\//i.test(s)) {
       const rootized = '/' + s.replace(/^\/?/, '');
       add(rootized);
