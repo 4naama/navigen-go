@@ -257,26 +257,39 @@ export function showLocationProfileModal(data) {
   document.body.appendChild(modal);
 
   // Prefetch cover fast; avoid placeholder first paint (2 lines of comments).
-  try {
-    const id = String(data?.id || '').trim();
-    const need = !data?.media?.cover || /placeholder-images/.test(String(data?.media?.cover || '')) || /placeholder-images/.test(String(data?.imageSrc || ''));
-    if (id && need) {
-      const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
-      if (r.ok) {
-        const p = await r.json();
-        const raw = String(p?.media?.cover || '').trim();
-        if (raw) {
-          const coverUrl = (/^https?:\/\//i.test(raw) || raw.startsWith('/')) ? raw
-                          : (/^assets\//i.test(raw) ? '/' + raw.replace(/^\/?/, '') : raw);
-          data.media = p.media || data.media || {};
-          data.media.cover = coverUrl;
-          data.imageSrc = coverUrl;
-          const hero = modal.querySelector('.location-media img');
-          if (hero && /placeholder-images/.test(hero.src)) hero.src = coverUrl;
+  ;(async () => {
+    try {
+      const id = String(data?.id || '').trim();
+      const need =
+        !data?.media?.cover ||
+        /placeholder-images/.test(String(data?.media?.cover || '')) ||
+        /placeholder-images/.test(String(data?.imageSrc || ''));
+
+      if (id && need) {
+        const r = await fetch(
+          API(`/api/data/profile?id=${encodeURIComponent(id)}`),
+          { cache: 'no-store', credentials: 'include' }
+        );
+
+        if (r.ok) {
+          const p = await r.json();
+          const raw = String(p?.media?.cover || '').trim();
+          if (raw) {
+            const coverUrl =
+              (/^https?:\/\//i.test(raw) || raw.startsWith('/')) ? raw
+              : (/^assets\//i.test(raw) ? '/' + raw.replace(/^\/?/, '') : raw);
+
+            data.media = p.media || data.media || {};
+            data.media.cover = coverUrl;
+            data.imageSrc = coverUrl;
+
+            const hero = modal.querySelector('.location-media img');
+            if (hero && /placeholder-images/.test(hero.src)) hero.src = coverUrl;
+          }
         }
       }
-    }
-  } catch {}
+    } catch {}
+  })();
 
   // 🔁 Upgrade placeholder image → slider
   initLpmImageSlider(modal, data);
