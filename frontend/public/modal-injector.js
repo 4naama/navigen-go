@@ -450,6 +450,13 @@ async function initLpmImageSlider(modal, data) {
 
   slider.appendChild(prev);
   slider.appendChild(next);
+  
+  // disable nav when fewer than 2 real images (strict data contract)
+  if (playlist.length < 2) {
+    prev.disabled = true; next.disabled = true;
+    prev.style.opacity = '0.35'; next.style.opacity = '0.35';
+    prev.style.pointerEvents = 'none'; next.style.pointerEvents = 'none';
+  }    
 
   // Tap-to-fullscreen on image; no !important; remove on exit
   (function enableFullscreen(sliderEl){
@@ -564,21 +571,23 @@ async function initLpmImageSlider(modal, data) {
       if (encF !== fname) add(`/assets/location-profile-images/${locId}/${encF}`);
     }
 
-    const tryUrl = async (u) => {
-      await new Promise((resolve, reject) => {
-        const probe = new Image();
-        probe.onload = resolve;
-        probe.onerror = reject;
-        probe.src = u;
-      });
+    // Reason: only resolve when the actual <img> has painted pixels
+    const tryUrl = (u) => new Promise((resolve, reject) => {
+      const onLoad = () => {
+        imgEl.removeEventListener('load', onLoad);
+        imgEl.removeEventListener('error', onError);
+        return (imgEl.naturalWidth > 0) ? resolve(true) : reject(new Error('no pixels'));
+      };
+      const onError = () => {
+        imgEl.removeEventListener('load', onLoad);
+        imgEl.removeEventListener('error', onError);
+        reject(new Error('img error'));
+      };
+      imgEl.addEventListener('load', onLoad, { once: true });
+      imgEl.addEventListener('error', onError, { once: true });
       imgEl.src = u;
-      if ('decode' in imgEl) {
-        try { await imgEl.decode(); } catch {}
-      } else if (!imgEl.complete) {
-        await new Promise(r => { imgEl.onload = r; imgEl.onerror = r; });
-      }
-      return true;
-    };
+      if (imgEl.complete) onLoad(); // cached path
+    });
 
     for (let i = 0; i < cand.length; i++) {
       try { return await tryUrl(cand[i]); } catch {}
@@ -599,6 +608,13 @@ async function initLpmImageSlider(modal, data) {
     let ok = false;
     while (attempts < count && !ok) {
       const nextUrl = playlist[nextIdx] || cover;
+      // Reason: skip no-op swaps to the same image
+      if ((front.currentSrc || front.src) === nextUrl) {
+        nextIdx = (nextIdx + Math.sign(to || 1) + count) % count;
+        attempts++;
+        continue;
+      }
+            
       // eslint-disable-next-line no-await-in-loop
       ok = await loadInto(back, nextUrl, data); // pass location payload so ID-based candidates can resolve
 
