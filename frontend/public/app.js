@@ -284,10 +284,11 @@ function renderPopularGroup(list = geoPoints) {
       const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
       const gallery = Array.isArray(media.images) ? media.images : [];
       const images  = gallery.map(m => (m && typeof m === 'object' ? m.src : m)).filter(Boolean);
-      // Use explicit cover first, then first image, then one safe placeholder
-      const cover   = (media.cover && String(media.cover).trim())
-        || images[0]
-        || '/assets/placeholder-images/icon-512-green.png';
+      // Use explicit cover first, then first image; never use placeholders
+      const cover = (media.cover && String(media.cover).trim()) || images[0];
+
+      // guard for strict data model; 2 lines max
+      if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
       showLocationProfileModal({
         id: btn.getAttribute('data-id'),
@@ -1112,9 +1113,9 @@ async function initEmergencyBlock(countryOverride) {
           const gallery = Array.isArray(media.images) ? media.images : [];
           const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean); // normalize URLs
 
-          const cover   = (media.cover && String(media.cover).trim())
-            ? media.cover
-            : (images[0] || '/assets/placeholder-images/icon-512-green.png');
+          const cover = (media.cover && String(media.cover).trim()) || images[0];
+          // guard: strict data contract (hero + ≥2); no placeholders
+          if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
           const cc = String(rec["Coordinate Compound"] || rec.coord || "");
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];

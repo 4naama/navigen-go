@@ -143,9 +143,10 @@ export function createLocationProfileModal(data, injected = {}) {
   body.className = 'modal-body';
 
   const heroSrc = (() => {
-    const raw = String((payload?.media?.cover || payload.imageSrc || '/assets/placeholder-images/icon-512-green.png') || '').trim();
-    if (!raw) return '/assets/placeholder-images/icon-512-green.png';
-    if (/^https?:\/\//i.test(raw) || raw.startsWith('/')) return raw;
+    const raw = String((payload?.media?.cover || payload.imageSrc || '')).trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (raw.startsWith('/')) return raw;
     if (/^assets\//i.test(raw)) return '/' + raw.replace(/^\/?/, '');
     return raw;
   })();
@@ -153,9 +154,9 @@ export function createLocationProfileModal(data, injected = {}) {
   body.innerHTML = `
     <div class="modal-body-inner">
       <figure class="location-media" aria-label="Location image" style="position:relative;">
-        <img src="${heroSrc}"
+        <img src="${heroSrc || ''}"
              alt="${payload.name || 'Location'} image"
-             style="width:100%;height:auto;display:block;border-radius:8px;">
+             style="width:100%;height:auto;border-radius:8px;${heroSrc ? 'display:block;' : 'display:none;'}">
       </figure>
 
       ${
@@ -257,29 +258,73 @@ export function showLocationProfileModal(data) {
   document.body.appendChild(modal);
 
   // Prefetch cover fast; avoid placeholder first paint (2 lines of comments).
-  try {
-    const id = String(data?.id || '').trim();
-    const need = !data?.media?.cover || /placeholder-images/.test(String(data?.media?.cover || '')) || /placeholder-images/.test(String(data?.imageSrc || ''));
-    if (id && need) {
-      const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
-      if (r.ok) {
-        const p = await r.json();
-        const raw = String(p?.media?.cover || '').trim();
-        if (raw) {
-          const coverUrl = (/^https?:\/\//i.test(raw) || raw.startsWith('/')) ? raw
-                          : (/^assets\//i.test(raw) ? '/' + raw.replace(/^\/?/, '') : raw);
-          data.media = p.media || data.media || {};
-          data.media.cover = coverUrl;
-          data.imageSrc = coverUrl;
-          const hero = modal.querySelector('.location-media img');
-          if (hero && /placeholder-images/.test(hero.src)) hero.src = coverUrl;
+  ;(async () => {
+    try {
+      const id = String(data?.id || '').trim();
+      const need =
+        !data?.media?.cover ||
+        /placeholder-images/.test(String(data?.media?.cover || '')) ||
+        /placeholder-images/.test(String(data?.imageSrc || ''));
+
+      if (id && need) {
+        const r = await fetch(
+          API(`/api/data/profile?id=${encodeURIComponent(id)}`),
+          { cache: 'no-store', credentials: 'include' }
+        );
+
+        if (r.ok) {
+          const p = await r.json();
+          const raw = String(p?.media?.cover || '').trim();
+          if (raw) {
+            const coverUrl =
+              (/^https?:\/\//i.test(raw) || raw.startsWith('/')) ? raw
+              : (/^assets\//i.test(raw) ? '/' + raw.replace(/^\/?/, '') : raw);
+
+            data.media = p.media || data.media || {};
+            data.media.cover = coverUrl;
+            data.imageSrc = coverUrl;
+
+            const hero = modal.querySelector('.location-media img');
+            if (hero && /placeholder-images/.test(hero.src)) hero.src = coverUrl;
+          }
         }
       }
-    }
-  } catch {}
+    } catch {}
+  })();
 
-  // 🔁 Upgrade placeholder image → slider
-  initLpmImageSlider(modal, data);
+  // 🔁 Upgrade placeholder image → slider (deferred)
+  ;(async () => {
+    // heal hero if decode fails; keep locale unless broken
+    const hero = modal.querySelector('.location-media img');
+    const id = String(data?.id || '').trim();
+    const tryImg = (u) => new Promise(r => { if(!u) return r(false); const p=new Image(); p.onload=()=>r(u); p.onerror=()=>r(false); p.src=u; });
+    if (hero) {
+      if (!hero.complete || !hero.naturalWidth) await new Promise(r=>setTimeout(r,200));
+      if (!hero.naturalWidth) {
+        const src = hero.getAttribute('src') || '';
+        const fname = src.split('/').pop() || '';
+        const variants = [
+          src,
+          src.replace(/^\/([a-z]{2})(?:-[A-Za-z]{2})?\/assets\//i, '/assets/'),
+          /^assets\//i.test(src) ? '/' + src.replace(/^\/?/, '') : '',
+          (id && fname) ? `/assets/location-profile-images/${id}/${fname}` : ''
+        ].filter(Boolean);
+        for (const v of variants) { const ok = await tryImg(v); if (ok) { hero.src = ok; break; } }
+      }
+      if (!hero.complete || !hero.naturalWidth) {
+        await new Promise(r => {
+          const done = () => r();
+          hero.addEventListener('load', done, { once:true });
+          hero.addEventListener('error', done, { once:true });
+          setTimeout(done, 250);
+        });
+      }
+    }
+    if (!modal.dataset.lpmInit) { // start once
+      modal.dataset.lpmInit = '1';
+      initLpmImageSlider(modal, data);
+    }
+  })();
 
 // ————————————————————————————
 // LPM image slider (progressive enhancement over the placeholder <img>)
@@ -289,7 +334,8 @@ async function initLpmImageSlider(modal, data) {
   if (!mediaFigure) return;
 
   // cover first; fall back to initial imageSrc; never invent names
-  const cover = String(data?.media?.cover || data?.imageSrc || '/assets/placeholder-images/icon-512-green.png').trim();
+  // Use only real cover or imageSrc; never placeholders
+  const cover = String(data?.media?.cover || data?.imageSrc || '').trim();
 
   // helpers (no guessing)
   const uniq = (a) => Array.from(new Set(a.filter(Boolean)));
@@ -322,53 +368,42 @@ async function initLpmImageSlider(modal, data) {
 
   const dir = getDir(cover);
   const toAbs = absFrom(dir);
-  const isPlaceholder = (u) => /\/icon-512-(grey|green)\.png$/i.test(String(u));
+  const isPlaceholder = (u) => /\/placeholder-images\//i.test(String(u));
 
   // candidates = cover + explicit (same-dir resolution for relatives)
   const candidates = uniq([cover, ...explicitRaw.map(toAbs)]).filter(u => !isPlaceholder(u));
 
-  // Reason: build playlist first, then let show() handle swaps; robust like old flow.
-  const GREEN = '/assets/placeholder-images/icon-512-green.png';
-
   // Build initial playlist from candidates (cover + explicit)
   let playlist = candidates.slice();
 
-  // Fallback (dev-only): if <2, fetch local profiles.json; prod skips to avoid 401.
-  if (playlist.length < 2) {
-    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    if (isLocal) {
-      try {
-        const r = await fetch('/data/profiles.json', { cache: 'no-store', credentials: 'include' });
-        if (r.ok) {
-          const json = await r.json();
-          const list = Array.isArray(json?.locations) ? json.locations : [];
-          const hit = list.find(x => String(x?.id) === String(data?.id));
-          if (hit?.media) {
-            const dir = getDir(String(hit.media.cover || cover));
-            const toAbs2 = (v) => {
-              const s = String(v || '').trim();
-              if (!s) return '';
-              if (/^https?:\/\//i.test(s) || s.startsWith('/')) return s;
-              return dir ? `${dir}/${s}` : s;
-            };
-            const extras = Array.isArray(hit.media.images) ? hit.media.images : [];
-            const addl = extras
-              .map(m => (m && typeof m === 'object' ? m.src : m))
-              .filter(Boolean)
-              .map(toAbs2);
-            // Reason: fix syntax + include all extras; 2 lines keep comments brief.
-            playlist = uniq([cover, ...addl]).filter(u => !isPlaceholder(u));
-          }
-        }
-      } catch { /* silent */ }
-    }
+  // Fallback: if <2, pull images from the profile API once (prod-safe).
+  if (playlist.length < 2 && data?.id) {
+    try {
+      const r = await fetch(`/api/data/profile?id=${encodeURIComponent(data.id)}`, { cache: 'no-store', credentials: 'include' });
+      if (r.ok) {
+        const p = await r.json();
+        const dir2 = getDir(String(p?.media?.cover || cover));           // keep: resolve relatives near cover
+        const toAbs2 = (v) => {
+          const s = String(v || '').trim();
+          if (!s) return '';
+          if (/^https?:\/\//i.test(s) || s.startsWith('/')) return s;
+          if (/^assets\//i.test(s)) return '/' + s.replace(/^\/?/, '');
+          return dir2 ? `${dir2}/${s}` : s;
+        };
+        const extras = Array.isArray(p?.media?.images) ? p.media.images : [];
+        const addl   = extras.map(m => (m && typeof m === 'object' ? m.src : m)).filter(Boolean).map(toAbs2);
+        playlist = uniq([cover, ...addl]).filter(u => !isPlaceholder(u)); // keep: no placeholders
+      }
+    } catch { /* ignore; arrows may no-op */ }
   }
 
-  // Guarantee at least 2 for flipping (cover + green placeholder as last resort)
-  if (playlist.length < 2) playlist = [cover, GREEN];
+  // Respect data strictly; no placeholders. Single-image mode is allowed.
+  if (playlist.length < 2) { /* leave as-is; arrows may no-op */ }
 
   // Always build the slider shell so arrows+fullscreen exist even with 1 image
   const slider = document.createElement('div');
+  slider.style.position = 'relative';
+
   slider.className = 'lpm-slider';
   slider.setAttribute('role', 'region');
   slider.setAttribute('aria-label', 'location images');
@@ -508,6 +543,12 @@ async function initLpmImageSlider(modal, data) {
       add(rootized);
     }
 
+    // 1c) strip "/xx/assets/" → "/assets/" (handles en/hu prefixes)
+    {
+      const m = s.match(/^\/([a-z]{2})(?:-[A-Za-z]{2})?\/assets\/(.+)$/i);
+      if (m) add('/assets/' + m[2]);
+    }
+
     // 2) decoded whole path
     try { const dec = decodeURI(s); if (dec !== s) add(dec); } catch {}
 
@@ -543,7 +584,7 @@ async function initLpmImageSlider(modal, data) {
       try { return await tryUrl(cand[i]); } catch {}
     }
 
-    imgEl.src = '/assets/placeholder-images/icon-512-green.png';
+    // Do not swap in placeholders; keep current frame
     return false;
   }
 
@@ -559,7 +600,8 @@ async function initLpmImageSlider(modal, data) {
     while (attempts < count && !ok) {
       const nextUrl = playlist[nextIdx] || cover;
       // eslint-disable-next-line no-await-in-loop
-      ok = await loadInto(back, nextUrl);
+      ok = await loadInto(back, nextUrl, data); // pass location payload so ID-based candidates can resolve
+
       if (!ok) { nextIdx = (nextIdx + Math.sign(to || 1) + count) % count; attempts++; }
     }
     if (!ok) return;
@@ -1154,8 +1196,10 @@ function makeLocationButton(loc) {
     // normalize cover to a string URL even if images[] holds objects
     const cover =
       (media.cover && String(media.cover).trim())
-      || (images[0] && (typeof images[0] === 'string' ? images[0] : images[0]?.src))
-      || '/assets/placeholder-images/icon-512-green.png';
+      || (images[0] && (typeof images[0] === 'string' ? images[0] : images[0]?.src));
+
+    // guard: strict data model; hero + ≥2 images required
+    if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required', loc?.ID || loc?.id); return; }
 
     // Open the Location Profile Modal; include contact + links for CTAs
     showLocationProfileModal({

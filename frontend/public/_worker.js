@@ -381,9 +381,16 @@ async function handleList(req, env, url, extraHdr){
       contact,
       ratings,
       pricing,
+      media: { cover: mediaCover, images: Array.isArray(p.media?.images) ? p.media.images : [] },
       descriptions: p.descriptions || {},   // pass-through if present
-      lang: p.Lang || p.lang || ''          // hint for client-side pick
+      lang: p.Lang || p.lang || '',         // hint for client-side pick
+      // add media so UI has hero + gallery; 2 lines max
+      media: {
+        cover: (p.media && p.media.cover) || '',
+        images: Array.isArray(p.media?.images) ? p.media.images : []
+      }
     };
+
   });
 
   const nextCursor = (idx+limit<rows.length && (idx/limit+1)<MAX_PAGES) ? (idx+limit) : null;
