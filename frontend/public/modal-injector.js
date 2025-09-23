@@ -296,12 +296,12 @@ export function showLocationProfileModal(data) {
   ;(async () => {
     // heal hero if decode fails; keep locale unless broken
     const hero = modal.querySelector('.location-media img');
-    // guard: if hero is a placeholder, skip healing and return
-    if (hero && /\/placeholder-images\//i.test(hero.getAttribute('src') || '')) return;
+    // guard: if hero is a placeholder, skip healing (still init slider)
+    const heroIsPlaceholder = !!(hero && /\/placeholder-images\//i.test(hero.getAttribute('src') || ''));
     
     const id = String(data?.id || '').trim();
     const tryImg = (u) => new Promise(r => { if(!u) return r(false); const p=new Image(); p.onload=()=>r(u); p.onerror=()=>r(false); p.src=u; });
-    if (hero) {
+    if (hero && !heroIsPlaceholder) {
       if (!hero.complete || !hero.naturalWidth) await new Promise(r=>setTimeout(r,200));
       if (!hero.naturalWidth) {
         const src = hero.getAttribute('src') || '';
@@ -617,7 +617,8 @@ async function initLpmImageSlider(modal, data) {
     let nextIdx = (to + count) % count;
     let ok = false;
     while (attempts < count && !ok) {
-      const nextUrl = playlist[nextIdx] || cover;
+      const nextUrl = playlist[nextIdx] || '';
+
       // Reason: skip no-op swaps to the same image
       if ((front.currentSrc || front.src) === nextUrl) {
         nextIdx = (nextIdx + Math.sign(to || 1) + count) % count;

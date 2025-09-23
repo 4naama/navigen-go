@@ -251,7 +251,8 @@ async function handleContexts(req, env, url, extraHdr){
   const r = await env.ASSETS.fetch(new Request(new URL('/data/contexts.json', url), { headers: req.headers }));
   if (!r.ok) return new Response('Data load error', { status: 500 });
   const body = await r.text();
-  const h = new Headers({ 'content-type':'application/json','Cache-Control':'private, max-age=60' });
+  const cacheHdr = url.hostname.endsWith('pages.dev') ? 'no-store' : 'private, max-age=60';
+  const h = new Headers({ 'content-type':'application/json', 'Cache-Control': cacheHdr });
   if (extraHdr) extraHdr.forEach((v, k) => h.set(k, v));
   return new Response(body, { status: 200, headers: h });
 }
@@ -395,7 +396,8 @@ async function handleList(req, env, url, extraHdr){
 
   const nextCursor = (idx+limit<rows.length && (idx/limit+1)<MAX_PAGES) ? (idx+limit) : null;
   // keep CORS + RL headers; Headers must be merged explicitly
-  const h = new Headers({ 'content-type':'application/json','Cache-Control':'private, max-age=60' });
+  const cacheHdr = url.hostname.endsWith('pages.dev') ? 'no-store' : 'private, max-age=60';
+  const h = new Headers({ 'content-type':'application/json', 'Cache-Control': cacheHdr });
   if (extraHdr) extraHdr.forEach((v, k) => h.set(k, v));
   return new Response(JSON.stringify({ items, nextCursor, totalApprox: Math.min(rows.length, MAX_PAGES*limit) }), { status:200, headers:h });
 }
@@ -428,7 +430,8 @@ async function handleProfile(req, env, url, extraHdr){
   };
   
   // Keep CORS + RL headers; ensure Vary: Origin persists
-  const h = new Headers({ 'content-type':'application/json','Cache-Control':'private, max-age=60' });
+  const cacheHdr = url.hostname.endsWith('pages.dev') ? 'no-store' : 'private, max-age=60';
+  const h = new Headers({ 'content-type':'application/json', 'Cache-Control': cacheHdr });
   if (extraHdr) extraHdr.forEach((v, k) => h.set(k, v));
 
   return new Response(JSON.stringify(payload), { status:200, headers:h });
