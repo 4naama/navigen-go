@@ -989,18 +989,31 @@ async function initEmergencyBlock(countryOverride) {
       ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen-go.pages.dev')
       : location.origin; // keep: prod same-origin
 
-    // First API call must not block boot; show shell on 401/CORS.
+    // First API call must not block boot; force fresh list to avoid stale cache
     let listRes;
     try {
-      listRes = ACTIVE_PAGE
-        ? await fetch(
-            new URL(`/api/data/list?context=${encodeURIComponent(ACTIVE_PAGE)}&limit=${API_LIMIT}`, API_BASE),
-            { credentials: 'include' }
-          )
-        : { ok: true, json: async () => ({ items: [] }) };
+      if (ACTIVE_PAGE) {
+        const url = new URL(
+          `/api/data/list?context=${encodeURIComponent(ACTIVE_PAGE)}&limit=${API_LIMIT}`,
+          API_BASE
+        );
+        if (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) {
+          url.searchParams.set('cb', String(Date.now()));
+        }
+        listRes = await fetch(url, {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+      } else {
+        listRes = { ok: true, json: async () => ({ items: [] }) };
+      }
     } catch (err) {
-      console.warn('list API failed', err); // show cause during dev
-      showToast('Data API unavailable. Showing cached items.'); // short, clear
+      console.warn('list API failed', err);
+      showToast('Data API unavailable. Showing cached items.');
       listRes = { ok: false, json: async () => ({ items: [] }) };
     }
 

@@ -137,14 +137,14 @@ export function createLocationProfileModal(data, injected = {}) {
     descHTML = formatDescHTML(chosenText);
   }
 
-  // ▸ Body: media + description (5-line clamp + fade handled in CSS)
-  // lead: rootize hero src; prefer media.cover → imageSrc → placeholder.
+  // Rootize hero src; prefer media.cover → imageSrc. No placeholders.
   const body = document.createElement('div');
   body.className = 'modal-body';
 
   const heroSrc = (() => {
     const raw = String((payload?.media?.cover || payload.imageSrc || '')).trim();
     if (!raw) return '';
+    if (/\/placeholder-images\//i.test(raw)) return '';
     if (/^https?:\/\//i.test(raw)) return raw;
     if (raw.startsWith('/')) return raw;
     if (/^assets\//i.test(raw)) return '/' + raw.replace(/^\/?/, '');
@@ -296,6 +296,9 @@ export function showLocationProfileModal(data) {
   ;(async () => {
     // heal hero if decode fails; keep locale unless broken
     const hero = modal.querySelector('.location-media img');
+    // guard: if hero is a placeholder, skip healing and return
+    if (hero && /\/placeholder-images\//i.test(hero.getAttribute('src') || '')) return;
+    
     const id = String(data?.id || '').trim();
     const tryImg = (u) => new Promise(r => { if(!u) return r(false); const p=new Image(); p.onload=()=>r(u); p.onerror=()=>r(false); p.src=u; });
     if (hero) {
@@ -335,7 +338,10 @@ async function initLpmImageSlider(modal, data) {
 
   // cover first; fall back to initial imageSrc; never invent names
   // Use only real cover or imageSrc; never placeholders
-  const cover = String(data?.media?.cover || data?.imageSrc || '').trim();
+  const cover = (() => {
+    const c = String(data?.media?.cover || data?.imageSrc || '').trim();
+    return /\/placeholder-images\//i.test(c) ? '' : c;
+  })();
 
   // helpers (no guessing)
   const uniq = (a) => Array.from(new Set(a.filter(Boolean)));
@@ -532,7 +538,10 @@ async function initLpmImageSlider(modal, data) {
   // Reason: try encoded/decoded + ID-folder variants so prod URLs resolve reliably.
   async function loadInto(imgEl, url, loc) {
     const s = String(url || '').trim();
-    if (!s) return false;
+    if (!s) return false; if (/\/assets\/placeholder-images\//i.test(s)) return false;
+
+    // guard: never load known placeholders
+    if (/\/assets\/placeholder-images\//i.test(s)) return false;    
 
     const fname = s.split('/').pop();
     if (!fname) return false;
@@ -598,7 +607,8 @@ async function initLpmImageSlider(modal, data) {
   }
 
   let idx = Math.max(0, playlist.indexOf(cover));
-  await loadInto(front, playlist[idx] || cover, data);
+  loadInto(front, playlist[idx] || playlist[0] || '', data);
+
   lockAspectFrom(front);
 
   async function show(to) {
