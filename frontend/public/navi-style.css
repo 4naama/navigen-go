@@ -895,10 +895,10 @@ body.large-text {
   line-height: 1;
 }
 
-/* Sticky header with red × close */
+/* Sticky header with red × close; top-align × when title wraps */
 .modal .modal-top-bar{
   position:sticky; top:0; z-index:1;
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  display:flex; align-items:flex-start; justify-content:space-between; gap:12px; /* top-align when title wraps */
   padding:16px; margin:0 0 8px 0;
   background:#fff; border-bottom:1px solid rgba(0,0,0,.08);
 }
@@ -916,7 +916,7 @@ body.large-text {
   border:0;
   cursor:pointer;
   color:#d11;
-  font-size:2.5rem;
+  font-size:2.3rem;
   line-height:1;
   border-radius:8px;
   padding:4px 10px;
