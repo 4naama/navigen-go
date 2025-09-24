@@ -886,13 +886,49 @@ body.large-text {
 /* ──────────────── Close Button (Top Right, Minimal) ──────────────── */
 /* Used in modal-top-bar for consistent UX */
 .modal-close {
-  font-size: 1.5em;
+  font-size: 1.75em;
   background: none;
   border: none;
   color: #e74c3c;
   cursor: pointer;
   padding: 0;
   line-height: 1;
+}
+
+/* Sticky header with red × close */
+.modal .modal-top-bar{
+  position:sticky; top:0; z-index:1;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:16px; margin:0 0 8px 0;
+  background:#fff; border-bottom:1px solid rgba(0,0,0,.08);
+}
+
+.modal .modal-title{
+  font-size:1.75rem;
+  font-weight:700;
+  line-height:1.2;
+}
+
+.modal .modal-close{
+  appearance:none;
+  -webkit-appearance:none;
+  background:transparent;
+  border:0;
+  cursor:pointer;
+  color:#d11;
+  font-size:1.75rem;
+  line-height:1;
+  border-radius:8px;
+  padding:4px 10px;
+}
+
+.modal .modal-close:hover{
+  color:#a00;
+}
+
+.modal .modal-close:focus-visible{
+  outline:2px solid currentColor;
+  outline-offset:2px;
 }
 
 /* ──────────────── Modal Footer Layout ──────────────── */
@@ -1843,42 +1879,6 @@ button:hover {
   overflow-y:auto;                 /* ← scrollbar on card edge */
   overflow-x:hidden;
   scrollbar-gutter: stable;        /* reserve just enough, no fat gutter */
-}
-
-/* Sticky header with red × close */
-.modal .modal-top-bar{
-  position:sticky; top:0; z-index:1;
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  padding:16px; margin:0 0 8px 0;
-  background:#fff; border-bottom:1px solid rgba(0,0,0,.08);
-}
-
-.modal .modal-title{
-  font-size:1.25rem;
-  font-weight:700;
-  line-height:1.2;
-}
-
-.modal .modal-close{
-  appearance:none;
-  -webkit-appearance:none;
-  background:transparent;
-  border:0;
-  cursor:pointer;
-  color:#d11;
-  font-size:28px;
-  line-height:1;
-  border-radius:8px;
-  padding:4px 10px;
-}
-
-.modal .modal-close:hover{
-  color:#a00;
-}
-
-.modal .modal-close:focus-visible{
-  outline:2px solid currentColor;
-  outline-offset:2px;
 }
 
 /* Let the card be the only scroller; keep body content spaced */
