@@ -1849,7 +1849,6 @@ export function createMyStuffModal() {
         });
 
         actions.innerHTML = '';
-
         
       } else {
         const item = myStuffItems.find(i => i.view === state);
@@ -1879,8 +1878,7 @@ export function createMyStuffModal() {
           `;
 
           // ✅ Just call footer button appender like others
-          /* resolved footer removed; use header × */
-
+          appendResolvedButton(actions, "my-stuff-modal");
         }
                   
         if (item.view === "language") {
@@ -1960,7 +1958,13 @@ export function createMyStuffModal() {
           <div id="purchase-history"></div>
         `;
 
-        actions.innerHTML = '';
+        actions.innerHTML = `
+          <button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>
+        `;
+
+        document.getElementById("my-stuff-resolved-button")?.addEventListener("click", () => {
+          hideModal("my-stuff-modal");
+        });
 
         renderPurchaseHistory(); // ✅ Called AFTER container is ready
       }
@@ -1975,14 +1979,26 @@ export function createMyStuffModal() {
         `;
 
         // ✅ Footer with correct style (no body buttons!)
-        actions.innerHTML = `<div class="modal-footer"></div>`;
+        actions.innerHTML = `
+          <div class="modal-footer">
+            <button class="modal-footer-button" id="my-stuff-location-close">
+              ${t("modal.mystuff.resolved")}
+            </button>
+          </div>
+        `;
 
         // Add resolved button into #my-stuff-modal only if not already added
-        /* resolved footer removed; use header × */
+        appendResolvedButton(actions, "my-stuff-modal");
 
 
         // 🧹 Close modal on button click
-        // close via header ×; no footer button here
+        const closeBtn = document.getElementById("my-stuff-location-close");
+        if (closeBtn) {
+          closeBtn.addEventListener("click", () => {
+            hideModal("my-stuff-modal");
+          });
+        }
+
         renderLocationHistory(); // 📍 Inject saved locations or empty state
       }
 
@@ -2074,7 +2090,8 @@ export function createMyStuffModal() {
             </a>
           </div>
         `;
-        /* resolved footer removed; use header × */
+
+        appendResolvedButton(actions, "my-stuff-modal");
       }
 
 
@@ -2092,8 +2109,7 @@ export function createMyStuffModal() {
         `;
 
         // Add resolved button into #my-stuff-modal only if not already added
-        /* resolved footer removed; use header × */
-
+        appendResolvedButton(actions, "my-stuff-modal");
       }
 
       else if (item.view === "no-miss") {
@@ -2127,12 +2143,14 @@ export function createMyStuffModal() {
             </div>
           </div>
         `;
-        /* resolved footer removed; use header × */
 
+        appendResolvedButton(actions, "my-stuff-modal");
       }
 
-        actions.innerHTML = '';
-
+        const viewsWithResolved = ["interests", "purchases", "location-history", "language", "social", "reset", "data", "terms", "no-miss"];
+        actions.innerHTML = viewsWithResolved.includes(state)
+          ? `<button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>`
+          : '';
       }
 
       // Add close behavior
