@@ -374,7 +374,9 @@ async function initLpmImageSlider(modal, data) {
 
   const dir = getDir(cover);
   const toAbs = absFrom(dir);
-  const isPlaceholder = (u) => /\/placeholder-images\//i.test(String(u));
+  // treat folder + icon variant as placeholders (prevents dev green)
+  const isPlaceholder = (u) =>
+    /\/placeholder-images\//i.test(String(u || '')) || /icon-512.*green/i.test(String(u || ''));
 
   // candidates = cover + explicit (same-dir resolution for relatives)
   const candidates = uniq([cover, ...explicitRaw.map(toAbs)]).filter(u => !isPlaceholder(u));
@@ -513,6 +515,26 @@ async function initLpmImageSlider(modal, data) {
   canvasB.className = 'lpm-img';
   track.appendChild(canvasA);
   track.appendChild(canvasB);
+  
+  // guard these two imgs from placeholder URLs (dev flip case)
+  const __imgSrcDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+  const __guardSrc = (el) => {
+    if (!__imgSrcDesc || !el) return;
+    const { get, set } = __imgSrcDesc;
+    Object.defineProperty(el, 'src', {
+      configurable: true,
+      enumerable: true,
+      get(){ return get.call(this); },
+      set(v){
+        const s = String(v || '');
+        if (/\/assets\/placeholder-images\//i.test(s) || /icon-512.*green/i.test(s)) return; // block green
+        return set.call(this, v);
+      }
+    });
+  };
+  __guardSrc(canvasA);
+  __guardSrc(canvasB);
+    
 
   // baseline layout so swap is visible without external CSS
   track.style.display = 'grid';
@@ -538,10 +560,11 @@ async function initLpmImageSlider(modal, data) {
   // Reason: try encoded/decoded + ID-folder variants so prod URLs resolve reliably.
   async function loadInto(imgEl, url, loc) {
     const s = String(url || '').trim();
-    if (!s) return false; if (/\/assets\/placeholder-images\//i.test(s)) return false;
+    // never attempt placeholder/icon candidates at all
+    if (!s) return false; if (/\/assets\/placeholder-images\//i.test(s) || /icon-512.*green/i.test(s)) return false;
 
-    // guard: never load known placeholders
-    if (/\/assets\/placeholder-images\//i.test(s)) return false;    
+    // guard: never load known placeholders (incl. icon variant)
+    if (/\/assets\/placeholder-images\//i.test(s) || /icon-512.*green/i.test(s)) return false;
 
     const fname = s.split('/').pop();
     if (!fname) return false;

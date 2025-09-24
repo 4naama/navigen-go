@@ -1866,7 +1866,7 @@ button:hover {
   border:0;
   cursor:pointer;
   color:#d11;
-  font-size:24px;    /* was 18px → bigger × */
+  font-size:1.5em;   /* relative to .modal-content (18px) → 27px */
   line-height:1;
   border-radius:8px;
   padding:4px 10px;  /* larger hit area */
