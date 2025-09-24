@@ -1732,16 +1732,7 @@ export function createMyStuffModal() {
   injectModal({
     id: 'my-stuff-modal',
     className: 'modal modal-menu',
-    bodyHTML: `<div id="my-stuff-body" class="modal-body"></div>`,
-    footerButtons: [
-      {
-        label: t('modal.mystuff.resolved'),
-        className: 'modal-footer-button',
-        onClick: () => {
-          document.getElementById('my-stuff-modal')?.remove();
-        }
-      }
-    ]
+    bodyHTML: `<div id="my-stuff-body" class="modal-body"></div>`
   });
 
   const modal = document.getElementById('my-stuff-modal');
@@ -1857,9 +1848,8 @@ export function createMyStuffModal() {
           body.appendChild(btn);
         });
 
-        actions.innerHTML = `
-          <button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>
-        `;
+        actions.innerHTML = '';
+
         
       } else {
         const item = myStuffItems.find(i => i.view === state);
@@ -1889,7 +1879,8 @@ export function createMyStuffModal() {
           `;
 
           // ✅ Just call footer button appender like others
-          appendResolvedButton(actions, "my-stuff-modal");
+          /* resolved footer removed; use header × */
+
         }
                   
         if (item.view === "language") {
@@ -1969,13 +1960,7 @@ export function createMyStuffModal() {
           <div id="purchase-history"></div>
         `;
 
-        actions.innerHTML = `
-          <button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>
-        `;
-
-        document.getElementById("my-stuff-resolved-button")?.addEventListener("click", () => {
-          hideModal("my-stuff-modal");
-        });
+        actions.innerHTML = '';
 
         renderPurchaseHistory(); // ✅ Called AFTER container is ready
       }
@@ -1990,26 +1975,14 @@ export function createMyStuffModal() {
         `;
 
         // ✅ Footer with correct style (no body buttons!)
-        actions.innerHTML = `
-          <div class="modal-footer">
-            <button class="modal-footer-button" id="my-stuff-location-close">
-              ${t("modal.mystuff.resolved")}
-            </button>
-          </div>
-        `;
+        actions.innerHTML = `<div class="modal-footer"></div>`;
 
         // Add resolved button into #my-stuff-modal only if not already added
-        appendResolvedButton(actions, "my-stuff-modal");
+        /* resolved footer removed; use header × */
 
 
         // 🧹 Close modal on button click
-        const closeBtn = document.getElementById("my-stuff-location-close");
-        if (closeBtn) {
-          closeBtn.addEventListener("click", () => {
-            hideModal("my-stuff-modal");
-          });
-        }
-
+        // close via header ×; no footer button here
         renderLocationHistory(); // 📍 Inject saved locations or empty state
       }
 
@@ -2101,8 +2074,7 @@ export function createMyStuffModal() {
             </a>
           </div>
         `;
-
-        appendResolvedButton(actions, "my-stuff-modal");
+        /* resolved footer removed; use header × */
       }
 
 
@@ -2120,7 +2092,8 @@ export function createMyStuffModal() {
         `;
 
         // Add resolved button into #my-stuff-modal only if not already added
-        appendResolvedButton(actions, "my-stuff-modal");
+        /* resolved footer removed; use header × */
+
       }
 
       else if (item.view === "no-miss") {
@@ -2154,14 +2127,12 @@ export function createMyStuffModal() {
             </div>
           </div>
         `;
+        /* resolved footer removed; use header × */
 
-        appendResolvedButton(actions, "my-stuff-modal");
       }
 
-        const viewsWithResolved = ["interests", "purchases", "location-history", "language", "social", "reset", "data", "terms", "no-miss"];
-        actions.innerHTML = viewsWithResolved.includes(state)
-          ? `<button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>`
-          : '';
+        actions.innerHTML = '';
+
       }
 
       // Add close behavior
