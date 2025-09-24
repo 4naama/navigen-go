@@ -886,7 +886,7 @@ body.large-text {
 /* ──────────────── Close Button (Top Right, Minimal) ──────────────── */
 /* Used in modal-top-bar for consistent UX */
 .modal-close {
-  font-size: 1.75em;
+  font-size: 1.5em;
   background: none;
   border: none;
   color: #e74c3c;
@@ -904,7 +904,7 @@ body.large-text {
 }
 
 .modal .modal-title{
-  font-size:1.75rem;
+  font-size:1.25rem;
   font-weight:700;
   line-height:1.2;
 }
@@ -916,7 +916,7 @@ body.large-text {
   border:0;
   cursor:pointer;
   color:#d11;
-  font-size:1.75rem;
+  font-size:2.5rem;
   line-height:1;
   border-radius:8px;
   padding:4px 10px;
