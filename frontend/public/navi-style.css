@@ -898,7 +898,7 @@ body.large-text {
 /* Sticky header with red × close; top-align × when title wraps */
 .modal .modal-top-bar{
   position:sticky; top:0; z-index:1;
-  display:flex; align-items:baseline; justify-content:space-between; gap:12px; /* baseline-align × to first title line */
+  display:flex; align-items:baseline; justify-content:space-between; gap:12px; /* baseline-align × to first line */
   padding:16px; margin:0 0 8px 0;
   background:#fff; border-bottom:1px solid rgba(0,0,0,.08);
 }
@@ -919,7 +919,9 @@ body.large-text {
   font-size:2.3rem;
   line-height:1;
   border-radius:8px;
-  padding:0 10px; /* no vertical offset; keeps click width */
+  padding:2px 8px; /* slight top pad for visual baseline; keep click width */
+  margin-right:-6px; /* nudge glyph to the card edge to match ⋮ */
+  align-self:baseline; /* ensure baseline wins even if container changes */
 }
 
 .modal .modal-close:hover{
