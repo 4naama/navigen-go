@@ -893,7 +893,7 @@ body.large-text {
   align-self: flex-start;         /* align with first line */
   background: transparent; border: 0; cursor: pointer;
   color: #d11;
-  font-size: 40px;                /* your chosen × size */
+  font-size: 10px;                /* your chosen × size */
   line-height: 1;
   border-radius: 8px;
   padding: 2px 6px;               /* keep tap target */

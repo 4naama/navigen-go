@@ -47,9 +47,12 @@ self.addEventListener("fetch", event => {
   if (req.method !== "GET") return;
 
   if (IS_DEV) {
-    // dev: don’t intercept cross-origin; let page handle CORS
+    // dev: don’t intercept cross-origin; fetch fresh for CSS/JS
     if (u.origin !== self.location.origin) return;
-    event.respondWith(fetch(req));
+    const dest = req.destination || '';
+    const isAsset = dest === 'style' || dest === 'script' ||
+                    u.pathname.endsWith('.css') || u.pathname.endsWith('.js');
+    event.respondWith(isAsset ? fetch(req, { cache: 'no-store' }) : fetch(req));
     return;
   }
 

@@ -19,10 +19,15 @@ import {
   openViewSettingsModal
 } from './modal-injector.js';
 
-// PWA: register service worker once (installability requirement)
-// <!-- keeps install prompt eligible in production -->
+// PWA: register SW only in production (keeps install prompt there)
+/* In preview/dev (pages.dev, localhost), skip SW to force fresh CSS/JS on reload */
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW reg failed', err));
+  const PREVIEW = location.hostname.endsWith('pages.dev') ||
+                  location.hostname === 'localhost' ||
+                  location.hostname === '127.0.0.1';
+  if (!PREVIEW) {
+    navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW reg failed', err));
+  }
 }
 
 // Force phones to forget old cache on new deploy; one-time per BUILD_ID. (Disabled: no redirect, no purge)
