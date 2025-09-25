@@ -867,62 +867,40 @@ body.large-text {
 }
 
 /* ──────────────── Modal Headers & Top Bar ──────────────── */
-/* Titles, Close button, and top layout inside modal-content */
-.modal-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1em;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05); /* light gray */
-}
-
-.modal-top-bar h2 {
-  flex-grow: 1;
-  font-size: 20px;
-  margin: 0;
-  text-align: center;
-}
-
-/* ──────────────── Close Button (Top Right, Minimal) ──────────────── */
-/* Used in modal-top-bar for consistent UX; absolute anchor aligns with first line */
-.modal-close {
-  font-size: 1.5em;
-  background: none;
-  border: none;
-  color: #e74c3c;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-
-/* Sticky header with red × close; reserves right space for the button */
-.modal .modal-top-bar{
+/* Close sits in-row; header can wrap without shifting alignment */
+.modal-top-bar{
   position: sticky; top: 0; z-index: 2;
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 16px 56px 12px 16px; margin: 0 0 8px 0; /* keep title from flowing under × */
-  background: #fff; border-bottom: 1px solid rgba(0,0,0,.08);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 16px 16px 12px 16px;  /* in-row × → no right reserve */
+  margin: 0 0 8px 0;
+  background: #fff;
+  border-bottom: 1px solid rgba(0,0,0,.08);
 }
 
-.modal .modal-title{
-  font-size: 1.25rem;
-  font-weight: 700;
+.modal-top-bar h2{
+  flex: 1 1 auto;
+  font-size: 20px;
   line-height: 1.2;
+  margin: 0;
 }
 
-/* Winner: higher specificity (.modal .modal-top-bar .modal-close) + absolute top-right */
+/* Winner: in-row + sticky header; this is the authoritative modal × rule */
+/* Adjust font-size here to control the modal × across the app */
 .modal .modal-top-bar .modal-close{
   appearance: none; -webkit-appearance: none;
-  position: absolute; top: 16px; right: 16px;
+  position: static;               /* in-row; participates in flex */
+  margin-left: auto;              /* push to right edge */
+  align-self: flex-start;         /* align with first line */
   background: transparent; border: 0; cursor: pointer;
   color: #d11;
-  font-size: 28px; /* adjust as needed */
+  font-size: 40px;                /* your chosen × size */
   line-height: 1;
   border-radius: 8px;
-  padding: 2px 6px; /* keeps tap area without shifting baseline */
+  padding: 2px 6px;               /* keep tap target */
 }
 
 .modal .modal-top-bar .modal-close:hover{ color:#a00; }
-.modal .modal-top-bar .modal-close:focus-visible{ outline: 2px solid currentColor; outline-offset: 2px; }
+.modal .modal-top-bar .modal-close:focus-visible{ outline:2px solid currentColor; outline-offset:2px; }
 
 /* ──────────────── Modal Footer Layout ──────────────── */
 /* Shared footer layout for modals: My Stuff, Share, Alert, Confirm, Resolved, etc. */
@@ -1818,12 +1796,17 @@ button:hover {
   margin-bottom:8px;
 }
 .toast .toast-title{ font-weight:600; font-size:17px; line-height:1.2; }
+
+/* Toast header with title + red close */
+/* Adjust font-size here to control the toast × */
 .toast .toast-close{
   appearance:none; -webkit-appearance:none;
   background:transparent; border:0; cursor:pointer;
-  font-size:18px; line-height:1; color:#d11;
+  font-size:18px; /* set your desired toast × size */
+  line-height:1; color:#d11;
   padding:2px 6px; border-radius:6px;
 }
+
 .toast .toast-close:hover{ color:#a00; }
 .toast .toast-close:focus-visible{ outline:2px solid currentColor; outline-offset:2px; }
 
