@@ -884,7 +884,7 @@ body.large-text {
 }
 
 /* ──────────────── Close Button (Top Right, Minimal) ──────────────── */
-/* Used in modal-top-bar for consistent UX */
+/* Used in modal-top-bar for consistent UX; absolute anchor aligns with first line */
 .modal-close {
   font-size: 1.5em;
   background: none;
@@ -895,44 +895,34 @@ body.large-text {
   line-height: 1;
 }
 
-/* Sticky header with red × close; top-align × when title wraps */
+/* Sticky header with red × close; reserves right space for the button */
 .modal .modal-top-bar{
-  position:sticky; top:0; z-index:1;
-  display:flex; align-items:baseline; justify-content:space-between; gap:12px; /* baseline-align × to first line */
-  padding:16px; margin:0 0 8px 0;
-  background:#fff; border-bottom:1px solid rgba(0,0,0,.08);
+  position: sticky; top: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 56px 12px 16px; margin: 0 0 8px 0; /* keep title from flowing under × */
+  background: #fff; border-bottom: 1px solid rgba(0,0,0,.08);
 }
 
 .modal .modal-title{
-  font-size:1.25rem;
-  font-weight:700;
-  line-height:1.2;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.modal .modal-close{
-  appearance:none;
-  -webkit-appearance:none;
-  background:transparent;
-  border:0;
-  cursor:pointer;
-  color:#d11;
-  font-size:2.3rem;
-  line-height:1;
-  border-radius:8px;
-  padding:2px 8px; /* slight top pad for visual baseline; keep click width */
-  margin-right:-6px; /* nudge glyph to the card edge to match ⋮ */
-  margin-top: 2px; /* nudge × down for optical alignment */
-  align-self:baseline; /* ensure baseline wins even if container changes */
+/* Winner: higher specificity (.modal .modal-top-bar .modal-close) + absolute top-right */
+.modal .modal-top-bar .modal-close{
+  appearance: none; -webkit-appearance: none;
+  position: absolute; top: 16px; right: 16px;
+  background: transparent; border: 0; cursor: pointer;
+  color: #d11;
+  font-size: 28px; /* adjust as needed */
+  line-height: 1;
+  border-radius: 8px;
+  padding: 2px 6px; /* keeps tap area without shifting baseline */
 }
 
-.modal .modal-close:hover{
-  color:#a00;
-}
-
-.modal .modal-close:focus-visible{
-  outline:2px solid currentColor;
-  outline-offset:2px;
-}
+.modal .modal-top-bar .modal-close:hover{ color:#a00; }
+.modal .modal-top-bar .modal-close:focus-visible{ outline: 2px solid currentColor; outline-offset: 2px; }
 
 /* ──────────────── Modal Footer Layout ──────────────── */
 /* Shared footer layout for modals: My Stuff, Share, Alert, Confirm, Resolved, etc. */
