@@ -55,7 +55,7 @@ import {
   pickLocale,
   getLabelsFor,
   getNumbersFor
-} from '/scripts/emergency-ui.js';
+} from './scripts/emergency-ui.js';
 
 // Use local injectStaticTranslations() defined later in this file
 import { loadTranslations, t, RTL_LANGS } from "./scripts/i18n.js"; // keep: static import
