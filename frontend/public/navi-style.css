@@ -163,15 +163,14 @@ body {
 }
 
 /* 🧠 Input */
-#search {
+#search{
   width: calc(100% + 6px);  /* +5–8px visual growth; adjust 6px as needed */
   margin-right: -6px;       /* keep layout stable; only the box extends */
   box-sizing: border-box;   /* ensure borders are included */
 
   height: 36px;
   padding: 8px 14px;
-  padding-right: 2.25rem;     /* space reserved for ❌ */
-  box-sizing: border-box;
+  padding-right: 14px;        /* default: no extra reserve → full placeholder */
   background: #fff;
   border: 1px solid var(--search-border, #d7dde4);
   border-radius: 6px;
@@ -181,6 +180,21 @@ body {
   line-height: 1;
   outline: none;
 }
+
+/* When the user has typed, reserve room for the × so text never sits under it */
+#search:not(:placeholder-shown){
+  padding-right: 2.25rem;     /* reserve only after input */
+}
+
+/* (you already have this) reveal the × only when there is content */
+#search:not(:placeholder-shown) + #clear-search{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Optional: disable the browser’s native search-cancel icon if type="search" is used */
+input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
 
 #search::placeholder { font-weight: 400; color: #666; opacity: 1; }
 
