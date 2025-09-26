@@ -915,16 +915,9 @@ body.large-text {
   gap: 1em; flex-wrap: wrap;
 }
 
-/* My Stuff: solid footer; no transparency or blur (header unaffected) */
 #my-stuff-modal .modal-footer {
-  background: #f5f5f5;       /* same gray, fully opaque */
-  backdrop-filter: none;     /* no blur */
-}
-
-/* My Stuff: remove any gradient/fade overlays used for glass effect */
-#my-stuff-modal .modal-footer::before,
-#my-stuff-modal .modal-footer::after {
-  content: none;             /* no gradient cap */
+  background: rgba(245, 245, 245, 1); /* same gray, fully opaque */
+  backdrop-filter: none;               /* keep color, no see-through blur */
 }
 
 /* ──────────────── Modal Footer Buttons ──────────────── */

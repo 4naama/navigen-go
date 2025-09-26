@@ -1751,6 +1751,14 @@ export function createMyStuffModal() {
   topBar.querySelector('.modal-close')?.addEventListener('click', () => {
     hideModal("my-stuff-modal");
   });
+  
+  // Ensure My Stuff always has a footer container (even with no buttons)
+  let actions = modal.querySelector('.modal-footer');  // keep same class for CSS
+  if (!actions) {
+    actions = document.createElement('div');
+    actions.className = 'modal-footer';
+    modal.querySelector('.modal-content')?.appendChild(actions);
+  }    
 
   // ✅ Store all ".my-stuff-item" elements for later use
   myStuffItems = Array.from(modal.querySelectorAll('.my-stuff-item'));
@@ -1813,15 +1821,9 @@ export function createMyStuffModal() {
         renderPurchaseHistory(); // ✅ Fill with receipts from localStorage
         return;
       }
-
-
-      let actions = modal.querySelector(".modal-footer");
-      if (!actions) {
-        actions = document.createElement('div');
-        actions.className = 'modal-footer';
-        modal.querySelector('.modal-content')?.appendChild(actions);
-      }
-
+      
+      // Footer exists from injection; just grab it
+      const actions = modal.querySelector('.modal-footer');
 
       if (!modal || !title || !body || !actions) {
         console.warn("❌ Missing myStuffModal structure.");
