@@ -898,9 +898,23 @@ body.large-text {
   border-radius: 8px;
   padding: 2px 6px;               /* keep tap target */
 }
-
 .modal .modal-top-bar .modal-close:hover{ color:#a00; }
 .modal .modal-top-bar .modal-close:focus-visible{ outline:2px solid currentColor; outline-offset:2px; }
+
+/* My Stuff: center title; keep × on the same top line (right) */
+#my-stuff-modal .modal-top-bar{
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: flex-start; gap: 12px;
+  /* padding/background/border inherit from base block above */
+}
+#my-stuff-modal .modal-top-bar h1,
+#my-stuff-modal .modal-top-bar h2{
+  grid-column: 2; justify-self: center; text-align: center;
+  margin: 0; line-height: 1.2;  /* compact first line */
+}
+#my-stuff-modal .modal-top-bar .modal-close{
+  position: static; grid-column: 3; justify-self: end; align-self: flex-start;
+  margin-left: 0;  /* flex-only push not used in grid */
+}
 
 /* ──────────────── Modal Footer Layout ──────────────── */
 /* Shared footer layout for modals: My Stuff, Share, Alert, Confirm, Resolved, etc. */
