@@ -1478,9 +1478,15 @@ export function openViewSettingsModal({ title, contextLine, note, options, curre
   bodyWrap.className = 'modal-body';
   const inner = doc.createElement('div');
   inner.className = 'modal-body-inner';
-  const line2 = doc.createElement('p'); line2.textContent = note;                  // Applies to this page only
+  // note line: skip legacy scope hint only (keeps other notes)
+  {
+    const noteText = String(note || '').trim();
+    if (noteText && !/^applies\s+to\s+this\s+page\s+only\.?$/i.test(noteText)) {
+      const line2 = doc.createElement('p'); line2.textContent = noteText;
+      inner.append(line2);
+    }
+  }
   const line3 = doc.createElement('p'); line3.textContent = contextLine;          // 🏫 Language Schools › brand › scope
-  inner.append(line2);
 
   // ── Render "contextLine" as two-row breadcrumbs (icon + colored ›; wraps on row2).
   (() => {
@@ -1488,9 +1494,23 @@ export function openViewSettingsModal({ title, contextLine, note, options, curre
     const parts = raw.split('›').map(s => s.trim()).filter(Boolean);
     if (!parts.length) { inner.append(line3); return; }
 
-    // Pick separator color from the modal's close button (keeps theme in sync).
+    // Read Close (×) red from SVG stroke/fill, else its text color, else brand red.
     const closeBtn = top.querySelector('.modal-close');
-    const sepColor = closeBtn ? getComputedStyle(closeBtn).color : '#e11d48';
+    const sepColor = (() => {
+      if (!closeBtn) return '#d11';
+      const ok = (v) => v && v !== 'none' && !/^rgba?\(\s*0\s*,\s*0\s*,\s*0(?:\s*,\s*0\s*)?\)$/.test(v);
+      const svg = closeBtn.querySelector('svg');
+      if (svg) {
+        const node = svg.querySelector('[stroke]') || svg.querySelector('path,line,polyline,polygon,circle,rect');
+        if (node) {
+          const cs = getComputedStyle(node);
+          if (ok(cs.stroke)) return cs.stroke;
+          if (ok(cs.fill))   return cs.fill;
+        }
+      }
+      const c = getComputedStyle(closeBtn).color;
+      return ok(c) ? c : '#d11';
+    })();
 
     const wrap = doc.createElement('span'); wrap.className = 'vb-crumbs';
     const row1 = doc.createElement('span'); row1.className = 'vb-row1';
