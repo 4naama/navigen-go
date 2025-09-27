@@ -169,8 +169,8 @@ body {
   box-sizing: border-box;   /* ensure borders are included */
 
   height: 36px;
-  padding: 8px 14px;
-  padding-right: 14px;        /* default: no extra reserve → full placeholder */
+  /* top | right | bottom | left */
+  padding: 8px 10px 8px 14px;  /* right = 10px, left = 14px */
   background: #fff;
   border: 1px solid var(--search-border, #d7dde4);
   border-radius: 6px;
