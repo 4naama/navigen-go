@@ -1980,11 +1980,13 @@ export function createMyStuffModal() {
           <div id="location-history"></div>
         `;
 
-        // ✅ Footer uses existing container; no nested wrapper
+        // ✅ Footer with correct style (no body buttons!)
         actions.innerHTML = `
-          <button class="modal-footer-button" id="my-stuff-location-close">
-            ${t("modal.mystuff.resolved")}
-          </button>
+          <div class="modal-footer">
+            <button class="modal-footer-button" id="my-stuff-location-close">
+              ${t("modal.mystuff.resolved")}
+            </button>
+          </div>
         `;
 
         // Add resolved button into #my-stuff-modal only if not already added
