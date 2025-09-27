@@ -1282,6 +1282,8 @@ body.high-contrast .qr-cta{
   padding-right: 0;  /* scrollbar flush right */
   padding-left:  0;  /* keep column centered; no side padding on scroller */
   padding-bottom: 0; /* scroller ends at card edge → footer sticks to bottom */
+}
+
 /* no mid-gutter on the scroll container */
 #my-stuff-modal .modal-body{
   padding: 0;
