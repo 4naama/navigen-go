@@ -1478,13 +1478,6 @@ export function openViewSettingsModal({ title, contextLine, note, options, curre
   bodyWrap.className = 'modal-body';
   const inner = doc.createElement('div');
   inner.className = 'modal-body-inner';
-  const line2 = doc.createElement('p'); line2.textContent = note;                  // “Applies to this page only”
-  const line3 = doc.createElement('p'); line3.textContent = contextLine;          // 🏫 Language Schools › brand › scope
-  // body lines
-  const bodyWrap = doc.createElement('div');
-  bodyWrap.className = 'modal-body';
-  const inner = doc.createElement('div');
-  inner.className = 'modal-body-inner';
   const line2 = doc.createElement('p'); line2.textContent = note;                  // Applies to this page only
   const line3 = doc.createElement('p'); line3.textContent = contextLine;          // 🏫 Language Schools › brand › scope
   inner.append(line2);
