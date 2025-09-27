@@ -1480,7 +1480,64 @@ export function openViewSettingsModal({ title, contextLine, note, options, curre
   inner.className = 'modal-body-inner';
   const line2 = doc.createElement('p'); line2.textContent = note;                  // “Applies to this page only”
   const line3 = doc.createElement('p'); line3.textContent = contextLine;          // 🏫 Language Schools › brand › scope
-  inner.append(line2, line3);
+  // body lines
+  const bodyWrap = doc.createElement('div');
+  bodyWrap.className = 'modal-body';
+  const inner = doc.createElement('div');
+  inner.className = 'modal-body-inner';
+  const line2 = doc.createElement('p'); line2.textContent = note;                  // Applies to this page only
+  const line3 = doc.createElement('p'); line3.textContent = contextLine;          // 🏫 Language Schools › brand › scope
+  inner.append(line2);
+
+  // ── Render "contextLine" as two-row breadcrumbs (icon + colored ›; wraps on row2).
+  (() => {
+    const raw = String(contextLine || '').trim();
+    const parts = raw.split('›').map(s => s.trim()).filter(Boolean);
+    if (!parts.length) { inner.append(line3); return; }
+
+    // Pick separator color from the modal's close button (keeps theme in sync).
+    const closeBtn = top.querySelector('.modal-close');
+    const sepColor = closeBtn ? getComputedStyle(closeBtn).color : '#e11d48';
+
+    const wrap = doc.createElement('span'); wrap.className = 'vb-crumbs';
+    const row1 = doc.createElement('span'); row1.className = 'vb-row1';
+    const row2 = doc.createElement('span'); row2.className = 'vb-row2';
+
+    // Category icon (emoji if missing). Extend mapping as needed.
+    const first = parts[0];
+    const hasEmoji = /^\p{Extended_Pictographic}/u.test(first);
+    const icon = hasEmoji ? '' : ( /language\s*schools/i.test(first) ? '🏫 ' : '' );
+
+    const cat = doc.createElement('span'); cat.className = 'vb-crumb vb-cat';
+    cat.textContent = (icon ? icon : '') + first;
+    row1.appendChild(cat);
+
+    const sep1 = doc.createElement('span'); sep1.className = 'vb-sep'; sep1.textContent = '›';
+    sep1.style.color = sepColor;
+    row1.appendChild(doc.createTextNode(' '));
+    row1.appendChild(sep1);
+
+    for (let i = 1; i < parts.length; i++) {
+      if (i > 1) {
+        const sep = doc.createElement('span'); sep.className = 'vb-sep'; sep.textContent = '›';
+        sep.style.color = sepColor;
+        row2.appendChild(doc.createTextNode(' '));
+        row2.appendChild(sep);
+        row2.appendChild(doc.createTextNode(' '));
+      }
+      const c = doc.createElement('span'); c.className = 'vb-crumb'; c.textContent = parts[i];
+      row2.appendChild(c);
+    }
+
+    const line = doc.createElement('p');
+    line.appendChild(wrap);
+    wrap.appendChild(row1);
+    wrap.appendChild(row2);
+    inner.append(line); // replaces plain line3 rendering
+  })();
+
+  bodyWrap.append(inner);
+  card.append(top, bodyWrap);
 
   // options (radio behavior; button-less list)
   const menu = doc.createElement('div');

@@ -121,6 +121,12 @@ body {
 #view-gear:hover{ background: rgba(0,0,0,.06); }
 #view-gear:focus-visible{ outline: 2px solid #e11; outline-offset: 2px; }
 
+/* View-by crumbs: two-row layout; tidy spacing */
+.vb-crumbs { display:block; line-height:1.25; }
+.vb-row1   { display:block; white-space:nowrap; }
+.vb-row2   { display:block; white-space:normal; }
+.vb-cat    { display:inline-flex; align-items:center; gap:.35ch; }
+/* .vb-sep color is set inline to match the Close button */
 
 /* ===========================
    🔎 Search — unified styles
