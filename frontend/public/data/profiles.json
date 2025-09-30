@@ -1,7 +1,7 @@
 {
   "locations": [      
     {
-      "id": "aldi-city-shop-grill-7174",
+      "locationID": "aldi-city-shop-grill-7174",
       "name": {
         "en": "ALDI CITY SHOP & GRILL"
       },
@@ -12,7 +12,6 @@
       "Priority": "Yes",
       "groupKey": "group.shops",
       "subgroupKey": "sub.food-groceries",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.549937,
@@ -59,14 +58,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "aldi-city-shop-grill-7174.json",
         "fileNameAscii": "aldi-city-shop-grill.json"
       }
     },
     {
-      "id": "aperol-island-of-joy-6617",
+      "locationID": "aperol-island-of-joy-6617",
       "name": {
         "en": "APEROL ISLAND OF JOY"
       },
@@ -77,7 +76,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551002,
@@ -124,14 +122,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "aperol-island-of-joy-6617.json",
         "fileNameAscii": "aperol-island-of-joy.json"
       }
     },
     {
-      "id": "artgarden-9557",
+      "locationID": "artgarden-9557",
       "name": {
         "en": "ARTGARDEN"
       },
@@ -142,7 +140,6 @@
       "Priority": "Yes",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.558114,
@@ -189,14 +186,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "artgarden-9557.json",
         "fileNameAscii": "artgarden.json"
       }
     },
     {
-      "id": "attax-6747",
+      "locationID": "attax-6747",
       "name": {
         "en": "ATTAX"
       },
@@ -207,7 +204,6 @@
       "Priority": "No",
       "groupKey": "group.stages",
       "subgroupKey": "sub.drumming-circles",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550363,
@@ -254,14 +250,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "attax-6747.json",
         "fileNameAscii": "attax.json"
       }
     },
     {
-      "id": "basic-camping-3292",
+      "locationID": "basic-camping-3292",
       "name": {
         "en": "BASIC CAMPING"
       },
@@ -272,7 +268,6 @@
       "Priority": "No",
       "groupKey": "group.spots",
       "subgroupKey": "sub.camping-zones",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.55005,
@@ -319,14 +314,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "basic-camping-3292.json",
         "fileNameAscii": "basic-camping.json"
       }
     },
     {
-      "id": "boat-entrance-8091",
+      "locationID": "boat-entrance-8091",
       "name": {
         "en": "BOAT ENTRANCE"
       },
@@ -337,7 +332,6 @@
       "Priority": "No",
       "groupKey": "group.gates",
       "subgroupKey": "sub.other-gates",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550034,
@@ -384,14 +378,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "boat-entrance-8091.json",
         "fileNameAscii": "boat-entrance.json"
       }
     },
     {
-      "id": "bolt-night-stage-6757",
+      "locationID": "bolt-night-stage-6757",
       "name": {
         "en": "BOLT NIGHT STAGE"
       },
@@ -402,7 +396,6 @@
       "Priority": "No",
       "groupKey": "group.stages",
       "subgroupKey": "sub.rock-stage",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.555703,
@@ -449,14 +442,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "bolt-night-stage-6757.json",
         "fileNameAscii": "bolt-night-stage.json"
       }
     },
     {
-      "id": "bulls-bar-3988",
+      "locationID": "bulls-bar-3988",
       "name": {
         "en": "BULLS BAR"
       },
@@ -467,7 +460,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.bars-beverages",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.55424,
@@ -514,14 +506,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "bulls-bar-3988.json",
         "fileNameAscii": "bulls-bar.json"
       }
     },
     {
-      "id": "bulls-bar-at-delta-7926",
+      "locationID": "bulls-bar-at-delta-7926",
       "name": {
         "en": "BULLS BAR AT DELTA"
       },
@@ -532,7 +524,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.bars-beverages",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.556152,
@@ -579,14 +570,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "bulls-bar-at-delta-7926.json",
         "fileNameAscii": "bulls-bar-at-delta.json"
       }
     },
     {
-      "id": "bumbu-kingdom-5688",
+      "locationID": "bumbu-kingdom-5688",
       "name": {
         "en": "BUMBU KINGDOM"
       },
@@ -597,7 +588,6 @@
       "Priority": "No",
       "groupKey": "group.stages",
       "subgroupKey": "sub.music-workshops",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550739,
@@ -644,14 +634,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "bumbu-kingdom-5688.json",
         "fileNameAscii": "bumbu-kingdom.json"
       }
     },
     {
-      "id": "caravan-camping-9903",
+      "locationID": "caravan-camping-9903",
       "name": {
         "en": "CARAVAN CAMPING"
       },
@@ -662,7 +652,6 @@
       "Priority": "No",
       "groupKey": "group.spots",
       "subgroupKey": "sub.camping-zones",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.546489,
@@ -709,14 +698,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "caravan-camping-9903.json",
         "fileNameAscii": "caravan-camping.json"
       }
     },
     {
-      "id": "cathedral-of-freedom-1925",
+      "locationID": "cathedral-of-freedom-1925",
       "name": {
         "en": "CATHEDRAL OF FREEDOM"
       },
@@ -727,7 +716,6 @@
       "Priority": "No",
       "groupKey": "group.stages",
       "subgroupKey": "sub.vinyl-retro-beats",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551416,
@@ -774,14 +762,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "cathedral-of-freedom-1925.json",
         "fileNameAscii": "cathedral-of-freedom.json"
       }
     },
     {
-      "id": "cirque-du-sziget-4842",
+      "locationID": "cirque-du-sziget-4842",
       "name": {
         "en": "CIRQUE DU SZIGET"
       },
@@ -792,7 +780,6 @@
       "Priority": "Yes",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.549648,
@@ -839,14 +826,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "cirque-du-sziget-4842.json",
         "fileNameAscii": "cirque-du-sziget.json"
       }
     },
     {
-      "id": "coca-cola-stage-4922",
+      "locationID": "coca-cola-stage-4922",
       "name": {
         "en": "COCA-COLA STAGE"
       },
@@ -857,7 +844,6 @@
       "Priority": "Yes",
       "groupKey": "group.stages",
       "subgroupKey": "sub.pop-stage",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.555109,
@@ -904,14 +890,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "coca-cola-stage-4922.json",
         "fileNameAscii": "coca-cola-stage.json"
       }
     },
     {
-      "id": "dereszla-borbar-6301",
+      "locationID": "dereszla-borbar-6301",
       "name": {
         "en": "DERESZLA BORBÁR"
       },
@@ -922,7 +908,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.bars-beverages",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550075,
@@ -969,14 +954,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "dereszla-borbar-6301.json",
         "fileNameAscii": "dereszla-borbar.json"
       }
     },
     {
-      "id": "disney-alien-earth-wreckage-site-4759",
+      "locationID": "disney-alien-earth-wreckage-site-4759",
       "name": {
         "en": "DISNEY+ ALIEN: EARTH WRECKAGE SITE"
       },
@@ -987,7 +972,6 @@
       "Priority": "No",
       "groupKey": "group.stages",
       "subgroupKey": "sub.piano-keys-lounge",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551115,
@@ -1034,14 +1018,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "disney-alien-earth-wreckage-site-4759.json",
         "fileNameAscii": "disney-alien-earth-wreckage-site.json"
       }
     },
     {
-      "id": "dreher-drops-bar-3248",
+      "locationID": "dreher-drops-bar-3248",
       "name": {
         "en": "DREHER DROPS BAR"
       },
@@ -1052,7 +1036,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.bars-beverages",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.553849,
@@ -1099,14 +1082,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "dreher-drops-bar-3248.json",
         "fileNameAscii": "dreher-drops-bar.json"
       }
     },
     {
-      "id": "drinkiq-oasis-2426",
+      "locationID": "drinkiq-oasis-2426",
       "name": {
         "en": "DRINKIQ OASIS"
       },
@@ -1117,7 +1100,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551528,
@@ -1164,14 +1146,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "drinkiq-oasis-2426.json",
         "fileNameAscii": "drinkiq-oasis.json"
       }
     },
     {
-      "id": "dropyard-5244",
+      "locationID": "dropyard-5244",
       "name": {
         "en": "DROPYARD"
       },
@@ -1182,7 +1164,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551597,
@@ -1229,14 +1210,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "dropyard-5244.json",
         "fileNameAscii": "dropyard.json"
       }
     },
     {
-      "id": "e4u-pop-up-embassy-6864",
+      "locationID": "e4u-pop-up-embassy-6864",
       "name": {
         "en": "E4U POP-UP EMBASSY"
       },
@@ -1247,7 +1228,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.552502,
@@ -1294,14 +1274,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "e4u-pop-up-embassy-6864.json",
         "fileNameAscii": "e4u-pop-up-embassy.json"
       }
     },
     {
-      "id": "eu-meeting-point-1675",
+      "locationID": "eu-meeting-point-1675",
       "name": {
         "en": "EU MEETING POINT"
       },
@@ -1312,7 +1292,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550399,
@@ -1359,14 +1338,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "eu-meeting-point-1675.json",
         "fileNameAscii": "eu-meeting-point.json"
       }
     },
     {
-      "id": "family-camping-6363",
+      "locationID": "family-camping-6363",
       "name": {
         "en": "FAMILY CAMPING"
       },
@@ -1377,7 +1356,6 @@
       "Priority": "No",
       "groupKey": "group.spots",
       "subgroupKey": "sub.camping-zones",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.558161,
@@ -1424,14 +1402,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "family-camping-6363.json",
         "fileNameAscii": "family-camping.json"
       }
     },
     {
-      "id": "finlandia-3570",
+      "locationID": "finlandia-3570",
       "name": {
         "en": "FINLANDIA"
       },
@@ -1442,7 +1420,6 @@
       "Priority": "Yes",
       "groupKey": "group.stages",
       "subgroupKey": "sub.classical-performance",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.554197,
@@ -1489,14 +1466,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "finlandia-3570.json",
         "fileNameAscii": "finlandia.json"
       }
     },
     {
-      "id": "freshness-ship-by-old-spice-6476",
+      "locationID": "freshness-ship-by-old-spice-6476",
       "name": {
         "en": "FRESHNESS SHIP BY OLD SPICE"
       },
@@ -1507,7 +1484,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550753,
@@ -1554,14 +1530,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "freshness-ship-by-old-spice-6476.json",
         "fileNameAscii": "freshness-ship-by-old-spice.json"
       }
     },
     {
-      "id": "friss-energy-lab-6257",
+      "locationID": "friss-energy-lab-6257",
       "name": {
         "en": "FRISS ENERGY LAB"
       },
@@ -1572,7 +1548,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551159,
@@ -1619,14 +1594,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "friss-energy-lab-6257.json",
         "fileNameAscii": "friss-energy-lab.json"
       }
     },
     {
-      "id": "gallio-turkey-foodtruck-7186",
+      "locationID": "gallio-turkey-foodtruck-7186",
       "name": {
         "en": "GALLIO TURKEY FOODTRUCK"
       },
@@ -1637,7 +1612,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.food-stalls",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.55135,
@@ -1684,14 +1658,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "gallio-turkey-foodtruck-7186.json",
         "fileNameAscii": "gallio-turkey-foodtruck.json"
       }
     },
     {
-      "id": "architectural-foundation-digital-exhibition-2021",
+      "locationID": "architectural-foundation-digital-exhibition-2021",
       "name": {
         "en": "ARCHITECTURAL FOUNDATION DIGITAL EXHIBITION"
       },
@@ -1702,7 +1676,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550582,
@@ -1749,14 +1722,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "architectural-foundation-digital-exhibition-2021.json",
         "fileNameAscii": "architectural-foundation-digital-exhibition.json"
       }
     },
     {
-      "id": "giant-street-theatre-2926",
+      "locationID": "giant-street-theatre-2926",
       "name": {
         "en": "GIANT STREET THEATRE"
       },
@@ -1767,7 +1740,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.553408,
@@ -1814,14 +1786,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "giant-street-theatre-2926.json",
         "fileNameAscii": "giant-street-theatre.json"
       }
     },
     {
-      "id": "graffiti-wall-5319",
+      "locationID": "graffiti-wall-5319",
       "name": {
         "en": "GRAFFITI WALL"
       },
@@ -1832,7 +1804,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.55198,
@@ -1879,14 +1850,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "graffiti-wall-5319.json",
         "fileNameAscii": "graffiti-wall.json"
       }
     },
     {
-      "id": "grass-4499",
+      "locationID": "grass-4499",
       "name": {
         "en": "GRASS"
       },
@@ -1897,7 +1868,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.54993,
@@ -1944,14 +1914,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "grass-4499.json",
         "fileNameAscii": "grass.json"
       }
     },
     {
-      "id": "h-bridge-7911",
+      "locationID": "h-bridge-7911",
       "name": {
         "en": "H-BRIDGE"
       },
@@ -1962,7 +1932,6 @@
       "Priority": "No",
       "groupKey": "group.gates",
       "subgroupKey": "sub.southern-gates",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.541681,
@@ -2009,14 +1978,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "h-bridge-7911.json",
         "fileNameAscii": "h-bridge.json"
       }
     },
     {
-      "id": "hev-suburban-railway-6083",
+      "locationID": "hev-suburban-railway-6083",
       "name": {
         "en": "HÉV Suburban Railway"
       },
@@ -2027,7 +1996,6 @@
       "Priority": "No",
       "groupKey": "group.transport",
       "subgroupKey": "sub.local-train",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.552306,
@@ -2074,14 +2042,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "hev-suburban-railway-6083.json",
         "fileNameAscii": "hev-suburban-railway.json"
       }
     },
     {
-      "id": "halfpipe-4486",
+      "locationID": "halfpipe-4486",
       "name": {
         "en": "HALFPIPE"
       },
@@ -2092,7 +2060,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551869,
@@ -2139,14 +2106,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "halfpipe-4486.json",
         "fileNameAscii": "halfpipe.json"
       }
     },
     {
-      "id": "johnnie-walker-liquid-light-bar-5169",
+      "locationID": "johnnie-walker-liquid-light-bar-5169",
       "name": {
         "en": "JOHNNIE WALKER LIQUID LIGHT BAR"
       },
@@ -2157,7 +2124,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.bars-beverages",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.55466,
@@ -2204,14 +2170,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "johnnie-walker-liquid-light-bar-5169.json",
         "fileNameAscii": "johnnie-walker-liquid-light-bar.json"
       }
     },
     {
-      "id": "johnnie-walker-liquid-light-experience-2519",
+      "locationID": "johnnie-walker-liquid-light-experience-2519",
       "name": {
         "en": "JOHNNIE WALKER LIQUID LIGHT EXPERIENCE"
       },
@@ -2222,7 +2188,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.552872,
@@ -2269,14 +2234,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "johnnie-walker-liquid-light-experience-2519.json",
         "fileNameAscii": "johnnie-walker-liquid-light-experience.json"
       }
     },
     {
-      "id": "jukebox-by-havana-club-4504",
+      "locationID": "jukebox-by-havana-club-4504",
       "name": {
         "en": "JUKEBOX BY HAVANA CLUB"
       },
@@ -2287,7 +2252,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.555167,
@@ -2334,14 +2298,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "jukebox-by-havana-club-4504.json",
         "fileNameAscii": "jukebox-by-havana-club.json"
       }
     },
     {
-      "id": "k-bridge-8402",
+      "locationID": "k-bridge-8402",
       "name": {
         "en": "K-BRIDGE"
       },
@@ -2352,7 +2316,6 @@
       "Priority": "No",
       "groupKey": "group.gates",
       "subgroupKey": "sub.northern-gates",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.552368,
@@ -2399,14 +2362,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "k-bridge-8402.json",
         "fileNameAscii": "k-bridge.json"
       }
     },
     {
-      "id": "lightstage-9246",
+      "locationID": "lightstage-9246",
       "name": {
         "en": "LIGHTSTAGE"
       },
@@ -2417,7 +2380,6 @@
       "Priority": "Yes",
       "groupKey": "group.stages",
       "subgroupKey": "sub.dj-dance",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.557918,
@@ -2464,14 +2426,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "lightstage-9246.json",
         "fileNameAscii": "lightstage.json"
       }
     },
     {
-      "id": "lipton-club-6198",
+      "locationID": "lipton-club-6198",
       "name": {
         "en": "LIPTON CLUB"
       },
@@ -2482,7 +2444,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.553782,
@@ -2529,14 +2490,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "lipton-club-6198.json",
         "fileNameAscii": "lipton-club.json"
       }
     },
     {
-      "id": "living-statues-4767",
+      "locationID": "living-statues-4767",
       "name": {
         "en": "LIVING STATUES"
       },
@@ -2547,7 +2508,6 @@
       "Priority": "Yes",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550082,
@@ -2594,14 +2554,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "living-statues-4767.json",
         "fileNameAscii": "living-statues.json"
       }
     },
     {
-      "id": "magic-mirror-9203",
+      "locationID": "magic-mirror-9203",
       "name": {
         "en": "MAGIC MIRROR"
       },
@@ -2612,7 +2572,6 @@
       "Priority": "Yes",
       "groupKey": "group.stages",
       "subgroupKey": "sub.pop-stage",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.557129,
@@ -2659,14 +2618,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "magic-mirror-9203.json",
         "fileNameAscii": "magic-mirror.json"
       }
     },
     {
-      "id": "main-stage-3624",
+      "locationID": "main-stage-3624",
       "name": {
         "en": "MAIN STAGE"
       },
@@ -2677,7 +2636,6 @@
       "Priority": "Yes",
       "groupKey": "group.stages",
       "subgroupKey": "sub.silent-disco",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.553349,
@@ -2724,14 +2682,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "main-stage-3624.json",
         "fileNameAscii": "main-stage.json"
       }
     },
     {
-      "id": "malibu-sunshine-bar-0786",
+      "locationID": "malibu-sunshine-bar-0786",
       "name": {
         "en": "MALIBU SUNSHINE BAR"
       },
@@ -2742,7 +2700,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.bars-beverages",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.559883,
@@ -2789,14 +2746,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "malibu-sunshine-bar-0786.json",
         "fileNameAscii": "malibu-sunshine-bar.json"
       }
     },
     {
-      "id": "mobilis-5518",
+      "locationID": "mobilis-5518",
       "name": {
         "en": "MOBILIS"
       },
@@ -2807,7 +2764,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.54993,
@@ -2854,14 +2810,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "mobilis-5518.json",
         "fileNameAscii": "mobilis.json"
       }
     },
     {
-      "id": "museums-booth-4193",
+      "locationID": "museums-booth-4193",
       "name": {
         "en": "MUSEUMS BOOTH"
       },
@@ -2872,7 +2828,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.555486,
@@ -2919,14 +2874,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "museums-booth-4193.json",
         "fileNameAscii": "museums-booth.json"
       }
     },
     {
-      "id": "mykonos-7701",
+      "locationID": "mykonos-7701",
       "name": {
         "en": "MYKONOS"
       },
@@ -2937,7 +2892,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.555116,
@@ -2984,14 +2938,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "mykonos-7701.json",
         "fileNameAscii": "mykonos.json"
       }
     },
     {
-      "id": "ngo-sziget-2126",
+      "locationID": "ngo-sziget-2126",
       "name": {
         "en": "NGO SZIGET"
       },
@@ -3002,7 +2956,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550565,
@@ -3049,14 +3002,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "ngo-sziget-2126.json",
         "fileNameAscii": "ngo-sziget.json"
       }
     },
     {
-      "id": "notino-app-zone-6714",
+      "locationID": "notino-app-zone-6714",
       "name": {
         "en": "NOTINO APP ZONE"
       },
@@ -3067,7 +3020,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551778,
@@ -3114,14 +3066,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "notino-app-zone-6714.json",
         "fileNameAscii": "notino-app-zone.json"
       }
     },
     {
-      "id": "peroni-szoho-bar-7283",
+      "locationID": "peroni-szoho-bar-7283",
       "name": {
         "en": "PERONI SZOHO BAR"
       },
@@ -3132,7 +3084,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.bars-beverages",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551741,
@@ -3179,14 +3130,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "peroni-szoho-bar-7283.json",
         "fileNameAscii": "peroni-szoho-bar.json"
       }
     },
     {
-      "id": "pharmacy-7508",
+      "locationID": "pharmacy-7508",
       "name": {
         "en": "PHARMACY"
       },
@@ -3197,7 +3148,6 @@
       "Priority": "Yes",
       "groupKey": "group.shops",
       "subgroupKey": "sub.pharmacy",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.552277,
@@ -3244,14 +3194,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "pharmacy-7508.json",
         "fileNameAscii": "pharmacy.json"
       }
     },
     {
-      "id": "pilsner-urquell-zone-2991",
+      "locationID": "pilsner-urquell-zone-2991",
       "name": {
         "en": "PILSNER URQUELL ZONE"
       },
@@ -3262,7 +3212,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.553581,
@@ -3309,14 +3258,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "pilsner-urquell-zone-2991.json",
         "fileNameAscii": "pilsner-urquell-zone.json"
       }
     },
     {
-      "id": "revolut-play-tm-2765",
+      "locationID": "revolut-play-tm-2765",
       "name": {
         "en": "REVOLUT PLAY-TM"
       },
@@ -3327,7 +3276,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.553205,
@@ -3374,14 +3322,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "revolut-play-tm-2765.json",
         "fileNameAscii": "revolut-play-tm.json"
       }
     },
     {
-      "id": "revolut-stage-3570",
+      "locationID": "revolut-stage-3570",
       "name": {
         "en": "REVOLUT STAGE"
       },
@@ -3392,7 +3340,6 @@
       "Priority": "Yes",
       "groupKey": "group.stages",
       "subgroupKey": "sub.rock-stage",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.553002,
@@ -3439,14 +3386,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "revolut-stage-3570.json",
         "fileNameAscii": "revolut-stage.json"
       }
     },
     {
-      "id": "rudas-bath-7960",
+      "locationID": "rudas-bath-7960",
       "name": {
         "en": "RUDAS BATH"
       },
@@ -3457,7 +3404,6 @@
       "Priority": "No",
       "groupKey": "group.spas",
       "subgroupKey": "sub.wellness-relaxation",
-      "domain": "",
       "context": "festival/sziget-2025;poi/budapest",
       "coord": {
         "lat": 47.489236,
@@ -3504,14 +3450,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "rudas-bath-7960.json",
         "fileNameAscii": "rudas-bath.json"
       }
     },
     {
-      "id": "shell-cafe-grab-go-7218",
+      "locationID": "shell-cafe-grab-go-7218",
       "name": {
         "en": "SHELL CAFÉ GRAB & GO"
       },
@@ -3522,7 +3468,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.552075,
@@ -3569,14 +3514,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "shell-cafe-grab-go-7218.json",
         "fileNameAscii": "shell-cafe-grab-go.json"
       }
     },
     {
-      "id": "siesta-camping-8755",
+      "locationID": "siesta-camping-8755",
       "name": {
         "en": "Siesta Camping"
       },
@@ -3587,7 +3532,6 @@
       "Priority": "No",
       "groupKey": "group.spots",
       "subgroupKey": "sub.camping-zones",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.559095,
@@ -3634,14 +3578,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "siesta-camping-8755.json",
         "fileNameAscii": "siesta-camping.json"
       }
     },
     {
-      "id": "sportzone-by-sport-tv-5215",
+      "locationID": "sportzone-by-sport-tv-5215",
       "name": {
         "en": "SPORTZONE BY SPORT TV"
       },
@@ -3652,7 +3596,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.549175,
@@ -3699,14 +3642,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "sportzone-by-sport-tv-5215.json",
         "fileNameAscii": "sportzone-by-sport-tv.json"
       }
     },
     {
-      "id": "szechenyi-bath-2745",
+      "locationID": "szechenyi-bath-2745",
       "name": {
         "en": "SZECHENYI BATH"
       },
@@ -3717,7 +3660,6 @@
       "Priority": "No",
       "groupKey": "group.spas",
       "subgroupKey": "sub.thermal-bath",
-      "domain": "",
       "context": "festival/sziget-2025;poi/budapest",
       "coord": {
         "lat": 47.518023,
@@ -3764,14 +3706,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "szechenyi-bath-2745.json",
         "fileNameAscii": "szechenyi-bath.json"
       }
     },
     {
-      "id": "sziget-beach-8770",
+      "locationID": "sziget-beach-8770",
       "name": {
         "en": "SZIGET BEACH"
       },
@@ -3782,7 +3724,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.560216,
@@ -3829,14 +3770,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "sziget-beach-8770.json",
         "fileNameAscii": "sziget-beach.json"
       }
     },
     {
-      "id": "sziget-eye-by-johnnie-walker-6113",
+      "locationID": "sziget-eye-by-johnnie-walker-6113",
       "name": {
         "en": "SZIGET EYE BY JOHNNIE WALKER"
       },
@@ -3847,7 +3788,6 @@
       "Priority": "Yes",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.554892,
@@ -3894,14 +3834,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "sziget-eye-by-johnnie-walker-6113.json",
         "fileNameAscii": "sziget-eye-by-johnnie-walker.json"
       }
     },
     {
-      "id": "sziget-ville-premium-6198",
+      "locationID": "sziget-ville-premium-6198",
       "name": {
         "en": "SZIGET VILLE PREMIUM"
       },
@@ -3912,7 +3852,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.553782,
@@ -3959,14 +3898,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "sziget-ville-premium-6198.json",
         "fileNameAscii": "sziget-ville-premium.json"
       }
     },
     {
-      "id": "tanqueray-spotlight-lounge-2099",
+      "locationID": "tanqueray-spotlight-lounge-2099",
       "name": {
         "en": "TANQUERAY SPOTLIGHT LOUNGE"
       },
@@ -3977,7 +3916,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551682,
@@ -4024,14 +3962,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "tanqueray-spotlight-lounge-2099.json",
         "fileNameAscii": "tanqueray-spotlight-lounge.json"
       }
     },
     {
-      "id": "tatratea-bar-6864",
+      "locationID": "tatratea-bar-6864",
       "name": {
         "en": "TATRATEA BAR"
       },
@@ -4042,7 +3980,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.bars-beverages",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.556883,
@@ -4089,14 +4026,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "tatratea-bar-6864.json",
         "fileNameAscii": "tatratea-bar.json"
       }
     },
     {
-      "id": "tedxbudapestsalon-2577",
+      "locationID": "tedxbudapestsalon-2577",
       "name": {
         "en": "TEDxBUDAPESTSALON"
       },
@@ -4107,7 +4044,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550884,
@@ -4154,14 +4090,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "tedxbudapestsalon-2577.json",
         "fileNameAscii": "tedxbudapestsalon.json"
       }
     },
     {
-      "id": "the-buzz-6407",
+      "locationID": "the-buzz-6407",
       "name": {
         "en": "THE BUZZ"
       },
@@ -4172,7 +4108,6 @@
       "Priority": "No",
       "groupKey": "group.stages",
       "subgroupKey": "sub.live-music",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.55155,
@@ -4219,14 +4154,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "the-buzz-6407.json",
         "fileNameAscii": "the-buzz.json"
       }
     },
     {
-      "id": "the-club-by-don-julio-7830",
+      "locationID": "the-club-by-don-julio-7830",
       "name": {
         "en": "THE CLUB BY DON JULIO"
       },
@@ -4237,7 +4172,6 @@
       "Priority": "No",
       "groupKey": "group.stages",
       "subgroupKey": "sub.karaoke-nights",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.557274,
@@ -4284,14 +4218,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "the-club-by-don-julio-7830.json",
         "fileNameAscii": "the-club-by-don-julio.json"
       }
     },
     {
-      "id": "the-cypher-by-friss-4332",
+      "locationID": "the-cypher-by-friss-4332",
       "name": {
         "en": "THE CYPHER BY FRISS"
       },
@@ -4302,7 +4236,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551303,
@@ -4349,14 +4282,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "the-cypher-by-friss-4332.json",
         "fileNameAscii": "the-cypher-by-friss.json"
       }
     },
     {
-      "id": "the-house-of-peroni-nastro-azzurro-3946",
+      "locationID": "the-house-of-peroni-nastro-azzurro-3946",
       "name": {
         "en": "THE HOUSE OF PERONI NASTRO AZZURRO"
       },
@@ -4367,7 +4300,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.554552,
@@ -4414,14 +4346,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "the-house-of-peroni-nastro-azzurro-3946.json",
         "fileNameAscii": "the-house-of-peroni-nastro-azzurro.json"
       }
     },
     {
-      "id": "the-joker-4697",
+      "locationID": "the-joker-4697",
       "name": {
         "en": "THE JOKER"
       },
@@ -4432,7 +4364,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.552205,
@@ -4479,14 +4410,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "the-joker-4697.json",
         "fileNameAscii": "the-joker.json"
       }
     },
     {
-      "id": "the-pit-4187",
+      "locationID": "the-pit-4187",
       "name": {
         "en": "THE PIT"
       },
@@ -4497,7 +4428,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.549778,
@@ -4544,14 +4474,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "the-pit-4187.json",
         "fileNameAscii": "the-pit.json"
       }
     },
     {
-      "id": "travelling-funfair-2536",
+      "locationID": "travelling-funfair-2536",
       "name": {
         "en": "TRAVELLING FUNFAIR"
       },
@@ -4562,7 +4492,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551031,
@@ -4609,14 +4538,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "travelling-funfair-2536.json",
         "fileNameAscii": "travelling-funfair.json"
       }
     },
     {
-      "id": "under-the-tree-5704",
+      "locationID": "under-the-tree-5704",
       "name": {
         "en": "UNDER THE TREE"
       },
@@ -4627,7 +4556,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550347,
@@ -4674,14 +4602,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "under-the-tree-5704.json",
         "fileNameAscii": "under-the-tree.json"
       }
     },
     {
-      "id": "val-0162",
+      "locationID": "val-0162",
       "name": {
         "en": "VAL"
       },
@@ -4692,7 +4620,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.560139,
@@ -4739,14 +4666,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "val-0162.json",
         "fileNameAscii": "val.json"
       }
     },
     {
-      "id": "vaseline-72h-kiss-beats-7186",
+      "locationID": "vaseline-72h-kiss-beats-7186",
       "name": {
         "en": "VASELINE 72H KISS & BEATS"
       },
@@ -4757,7 +4684,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.55135,
@@ -4804,14 +4730,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "vaseline-72h-kiss-beats-7186.json",
         "fileNameAscii": "vaseline-72h-kiss-beats.json"
       }
     },
     {
-      "id": "xs-camping-3575",
+      "locationID": "xs-camping-3575",
       "name": {
         "en": "XS CAMPING"
       },
@@ -4822,7 +4748,6 @@
       "Priority": "No",
       "groupKey": "group.spots",
       "subgroupKey": "sub.camping-zones",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550521,
@@ -4869,14 +4794,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "xs-camping-3575.json",
         "fileNameAscii": "xs-camping.json"
       }
     },
     {
-      "id": "xs-land-3446",
+      "locationID": "xs-land-3446",
       "name": {
         "en": "XS LAND"
       },
@@ -4887,7 +4812,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550992,
@@ -4934,14 +4858,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "xs-land-3446.json",
         "fileNameAscii": "xs-land.json"
       }
     },
     {
-      "id": "yettel-aftermovie-zone-7358",
+      "locationID": "yettel-aftermovie-zone-7358",
       "name": {
         "en": "YETTEL AFTERMOVIE ZONE"
       },
@@ -4952,7 +4876,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.557057,
@@ -4999,14 +4922,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "yettel-aftermovie-zone-7358.json",
         "fileNameAscii": "yettel-aftermovie-zone.json"
       }
     },
     {
-      "id": "yettel-colosseum-6092",
+      "locationID": "yettel-colosseum-6092",
       "name": {
         "en": "YETTEL COLOSSEUM"
       },
@@ -5017,7 +4940,6 @@
       "Priority": "No",
       "groupKey": "group.stages",
       "subgroupKey": "sub.acoustic-sessions",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.555544,
@@ -5064,14 +4986,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "yettel-colosseum-6092.json",
         "fileNameAscii": "yettel-colosseum.json"
       }
     },
     {
-      "id": "ysl-beauty-light-club-6113",
+      "locationID": "ysl-beauty-light-club-6113",
       "name": {
         "en": "YSL BEAUTY LIGHT CLUB"
       },
@@ -5082,7 +5004,6 @@
       "Priority": "No",
       "groupKey": "group.activities",
       "subgroupKey": "sub.music-rhythm",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.55177,
@@ -5129,14 +5050,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "ysl-beauty-light-club-6113.json",
         "fileNameAscii": "ysl-beauty-light-club.json"
       }
     },
     {
-      "id": "bolt-taxi-9907",
+      "locationID": "bolt-taxi-9907",
       "name": {
         "en": "Bolt Taxi"
       },
@@ -5147,7 +5068,6 @@
       "Priority": "No",
       "groupKey": "group.transport",
       "subgroupKey": "sub.taxi",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551325,
@@ -5194,14 +5114,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "bolt-taxi-9907.json",
         "fileNameAscii": "bolt-taxi.json"
       }
     },
     {
-      "id": "bus-stop-kaszasdulo-5492",
+      "locationID": "bus-stop-kaszasdulo-5492",
       "name": {
         "en": "Bus Stop Kaszásdűlő"
       },
@@ -5212,7 +5132,6 @@
       "Priority": "No",
       "groupKey": "group.transport",
       "subgroupKey": "sub.local-bus",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.556682,
@@ -5259,14 +5178,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "bus-stop-kaszasdulo-5492.json",
         "fileNameAscii": "bus-stop-kaszasdulo.json"
       }
     },
     {
-      "id": "bus-stop-bogdani-ut-3848",
+      "locationID": "bus-stop-bogdani-ut-3848",
       "name": {
         "en": "Bus Stop Bogdáni út"
       },
@@ -5277,7 +5196,6 @@
       "Priority": "No",
       "groupKey": "group.transport",
       "subgroupKey": "sub.local-bus",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550171,
@@ -5324,14 +5242,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "bus-stop-bogdani-ut-3848.json",
         "fileNameAscii": "bus-stop-bogdani-ut.json"
       }
     },
     {
-      "id": "charity-point-order-of-malta-2318",
+      "locationID": "charity-point-order-of-malta-2318",
       "name": {
         "en": "Charity Point – Order of Malta"
       },
@@ -5342,7 +5260,6 @@
       "Priority": "No",
       "groupKey": "group.social-points",
       "subgroupKey": "sub.charity-point",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.54853,
@@ -5389,14 +5306,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "charity-point-order-of-malta-2318.json",
         "fileNameAscii": "charity-point-order-of-malta.json"
       }
     },
     {
-      "id": "coffee-point-1-5430",
+      "locationID": "coffee-point-1-5430",
       "name": {
         "en": "Coffee Point 1"
       },
@@ -5407,7 +5324,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.coffee-snacks",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.548038,
@@ -5454,14 +5370,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "coffee-point-1-5430.json",
         "fileNameAscii": "coffee-point-1.json"
       }
     },
     {
-      "id": "coffee-point-2-0052",
+      "locationID": "coffee-point-2-0052",
       "name": {
         "en": "Coffee Point 2"
       },
@@ -5472,7 +5388,6 @@
       "Priority": "No",
       "groupKey": "group.event-food",
       "subgroupKey": "sub.coffee-snacks",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.559175,
@@ -5519,14 +5434,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "coffee-point-2-0052.json",
         "fileNameAscii": "coffee-point-2.json"
       }
     },
     {
-      "id": "fotaxi-9907",
+      "locationID": "fotaxi-9907",
       "name": {
         "en": "Főtaxi"
       },
@@ -5537,7 +5452,6 @@
       "Priority": "No",
       "groupKey": "group.transport",
       "subgroupKey": "sub.taxi",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551325,
@@ -5584,14 +5498,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "fotaxi-9907.json",
         "fileNameAscii": "fotaxi.json"
       }
     },
     {
-      "id": "lockers-5430",
+      "locationID": "lockers-5430",
       "name": {
         "en": "Lockers"
       },
@@ -5602,7 +5516,6 @@
       "Priority": "No",
       "groupKey": "group.guests",
       "subgroupKey": "sub.lockers-storage",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.548038,
@@ -5649,14 +5562,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "lockers-5430.json",
         "fileNameAscii": "lockers.json"
       }
     },
     {
-      "id": "showers-5430",
+      "locationID": "showers-5430",
       "name": {
         "en": "Showers"
       },
@@ -5667,7 +5580,6 @@
       "Priority": "No",
       "groupKey": "group.facilities",
       "subgroupKey": "sub.showers",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.548038,
@@ -5714,14 +5626,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "showers-5430.json",
         "fileNameAscii": "showers.json"
       }
     },
     {
-      "id": "szitizen-care-point-1-5430",
+      "locationID": "szitizen-care-point-1-5430",
       "name": {
         "en": "Szitizen Care Point 1"
       },
@@ -5732,7 +5644,6 @@
       "Priority": "No",
       "groupKey": "group.social-points",
       "subgroupKey": "sub.chill-spots",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.548038,
@@ -5779,14 +5690,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "szitizen-care-point-1-5430.json",
         "fileNameAscii": "szitizen-care-point-1.json"
       }
     },
     {
-      "id": "szitizen-care-point-2-2318",
+      "locationID": "szitizen-care-point-2-2318",
       "name": {
         "en": "Szitizen Care Point 2"
       },
@@ -5797,7 +5708,6 @@
       "Priority": "No",
       "groupKey": "group.social-points",
       "subgroupKey": "sub.massage",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.54853,
@@ -5844,14 +5754,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "szitizen-care-point-2-2318.json",
         "fileNameAscii": "szitizen-care-point-2.json"
       }
     },
     {
-      "id": "toilet-1-7163",
+      "locationID": "toilet-1-7163",
       "name": {
         "en": "Toilet 1"
       },
@@ -5862,7 +5772,6 @@
       "Priority": "No",
       "groupKey": "group.facilities",
       "subgroupKey": "sub.toilet-zone",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.550552,
@@ -5909,14 +5818,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "toilet-1-7163.json",
         "fileNameAscii": "toilet-1.json"
       }
     },
     {
-      "id": "toilet-2-8098",
+      "locationID": "toilet-2-8098",
       "name": {
         "en": "Toilet 2"
       },
@@ -5927,7 +5836,6 @@
       "Priority": "No",
       "groupKey": "group.facilities",
       "subgroupKey": "sub.toilet-zone",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.551973,
@@ -5974,14 +5882,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "toilet-2-8098.json",
         "fileNameAscii": "toilet-2.json"
       }
     },
     {
-      "id": "toilet-3-5215",
+      "locationID": "toilet-3-5215",
       "name": {
         "en": "Toilet 3"
       },
@@ -5992,7 +5900,6 @@
       "Priority": "No",
       "groupKey": "group.facilities",
       "subgroupKey": "sub.toilet-zone",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.549175,
@@ -6039,14 +5946,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "toilet-3-5215.json",
         "fileNameAscii": "toilet-3.json"
       }
     },
     {
-      "id": "toilet-4-5430",
+      "locationID": "toilet-4-5430",
       "name": {
         "en": "Toilet 4"
       },
@@ -6057,7 +5964,6 @@
       "Priority": "No",
       "groupKey": "group.facilities",
       "subgroupKey": "sub.toilet-zone",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.548038,
@@ -6104,14 +6010,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "toilet-4-5430.json",
         "fileNameAscii": "toilet-4.json"
       }
     },
     {
-      "id": "toilet-5-2318",
+      "locationID": "toilet-5-2318",
       "name": {
         "en": "Toilet 5"
       },
@@ -6122,7 +6028,6 @@
       "Priority": "No",
       "groupKey": "group.facilities",
       "subgroupKey": "sub.toilet-zone",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.54853,
@@ -6169,14 +6074,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "toilet-5-2318.json",
         "fileNameAscii": "toilet-5.json"
       }
     },
     {
-      "id": "toilet-6-0298",
+      "locationID": "toilet-6-0298",
       "name": {
         "en": "Toilet 6"
       },
@@ -6187,7 +6092,6 @@
       "Priority": "No",
       "groupKey": "group.facilities",
       "subgroupKey": "sub.toilet-zone",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.559446,
@@ -6234,14 +6138,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "toilet-6-0298.json",
         "fileNameAscii": "toilet-6.json"
       }
     },
     {
-      "id": "yettel-free-charging-point-5430",
+      "locationID": "yettel-free-charging-point-5430",
       "name": {
         "en": "Yettel Free Charging Point"
       },
@@ -6252,7 +6156,6 @@
       "Priority": "No",
       "groupKey": "group.guests",
       "subgroupKey": "sub.electric-charging",
-      "domain": "",
       "context": "festival/sziget-2025",
       "coord": {
         "lat": 47.548038,
@@ -6299,14 +6202,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "yettel-free-charging-point-5430.json",
         "fileNameAscii": "yettel-free-charging-point.json"
       }
     },
     {
-      "id": "sagrada-familia-4424",
+      "locationID": "sagrada-familia-4424",
       "name": {
         "en": "Sagrada Família"
       },
@@ -6317,7 +6220,6 @@
       "Priority": "No",
       "groupKey": "group.landmarks",
       "subgroupKey": "sub.churches",
-      "domain": "",
       "context": "poi/barcelona",
       "coord": {
         "lat": 41.403524,
@@ -6376,10 +6278,7 @@
         "en": ""
       },
       "closedDates": [],
-      "ratings": {
-        "google": null,
-        "tripadvisor": null
-      },
+      "ratings": {},
       "tags": [],
       "i18n": {
         "availableLangs": [
@@ -6389,14 +6288,14 @@
         ]
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "sagrada-familia-4424.json",
         "fileNameAscii": "sagrada-familia.json"
       }
     },
     {
-      "id": "keves-andor-photography-9719",
+      "locationID": "keves-andor-photography-9719",
       "name": {
         "en": "Kévés Andor Photography"
       },
@@ -6407,7 +6306,6 @@
       "Priority": "No",
       "groupKey": "group.services",
       "subgroupKey": "sub.photo-video",
-      "domain": "",
       "context": "mp/soltvadkert",
       "coord": {
         "lat": 47.583105,
@@ -6504,10 +6402,7 @@
         "en": ""
       },
       "closedDates": [],
-      "ratings": {
-        "google": null,
-        "tripadvisor": null
-      },
+      "ratings": {},
       "tags": [],
       "i18n": {
         "availableLangs": [
@@ -6515,14 +6410,14 @@
         ]
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "keves-andor-photography-9719.json",
         "fileNameAscii": "keves-andor-photography.json"
       }
     },
     {
-      "id": "obuda-synagogue-5811",
+      "locationID": "obuda-synagogue-5811",
       "name": {
         "en": "Óbuda Synagogue"
       },
@@ -6533,7 +6428,6 @@
       "Priority": "No",
       "groupKey": "group.landmarks",
       "subgroupKey": "sub.synagogues",
-      "domain": "",
       "context": "poi/budapest",
       "coord": {
         "lat": 47.537067,
@@ -6580,10 +6474,7 @@
         "en": ""
       },
       "closedDates": [],
-      "ratings": {
-        "google": null,
-        "tripadvisor": null
-      },
+      "ratings": {},
       "tags": [],
       "i18n": {
         "availableLangs": [
@@ -6593,14 +6484,14 @@
         ]
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "obuda-synagogue-5811.json",
         "fileNameAscii": "obuda-synagogue.json"
       }
     },
     {
-      "id": "brooklyn-bagel-7558",
+      "locationID": "brooklyn-bagel-7558",
       "name": {
         "en": "Brooklyn Bagel"
       },
@@ -6611,7 +6502,6 @@
       "Priority": "No",
       "groupKey": "group.food-drink",
       "subgroupKey": "sub.breakfast-brunch",
-      "domain": "",
       "context": "mp/budapest",
       "coord": {
         "lat": 47.514567,
@@ -6694,10 +6584,7 @@
         "en": ""
       },
       "closedDates": [],
-      "ratings": {
-        "google": null,
-        "tripadvisor": null
-      },
+      "ratings": {},
       "tags": [
         "🕎 Kosher"
       ],
@@ -6709,14 +6596,14 @@
         ]
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "brooklyn-bagel-7558.json",
         "fileNameAscii": "brooklyn-bagel.json"
       }
     },
     {
-      "id": "malaga-central-police-station-8105",
+      "locationID": "malaga-central-police-station-8105",
       "name": {
         "en": "Malaga Central Police Station"
       },
@@ -6727,7 +6614,6 @@
       "Priority": "No",
       "groupKey": "group.emergency",
       "subgroupKey": "sub.police-assistance",
-      "domain": "",
       "context": "poi/malaga",
       "coord": {
         "lat": 36.724704,
@@ -6774,14 +6660,14 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "malaga-central-police-station-8105.json",
         "fileNameAscii": "malaga-central-police-station.json"
       }
     },
     {
-      "id": "helen-doron-budakeszi-7088",
+      "locationID": "helen-doron-budakeszi-7088",
       "name": {
         "en": "Helen Doron Budakeszi"
       },
@@ -6792,7 +6678,6 @@
       "Priority": "Yes",
       "groupKey": "group.services",
       "subgroupKey": "sub.language-schools",
-      "domain": "",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
         "lat": 47.502946,
@@ -6851,23 +6736,20 @@
         "en": ""
       },
       "closedDates": [],
-      "ratings": {
-        "google": null,
-        "tripadvisor": null
-      },
+      "ratings": {},
       "tags": [],
       "i18n": {
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "helen-doron-budakeszi-7088.json",
         "fileNameAscii": "helen-doron-budakeszi.json"
       }
     },
     {
-      "id": "helen-doron-nagykovacsi-9457",
+      "locationID": "helen-doron-nagykovacsi-9457",
       "name": {
         "en": "Helen Doron Nagykovácsi"
       },
@@ -6878,7 +6760,6 @@
       "Priority": "No",
       "groupKey": "group.services",
       "subgroupKey": "sub.language-schools",
-      "domain": "",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
         "lat": 47.575766,
@@ -6937,23 +6818,20 @@
         "en": ""
       },
       "closedDates": [],
-      "ratings": {
-        "google": null,
-        "tripadvisor": null
-      },
+      "ratings": {},
       "tags": [],
       "i18n": {
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "helen-doron-nagykovacsi-9457.json",
         "fileNameAscii": "helen-doron-nagykovacsi.json"
       }
     },
     {
-      "id": "helen-doron-debrecen-8910",
+      "locationID": "helen-doron-debrecen-8910",
       "name": {
         "en": "Helen Doron Debrecen"
       },
@@ -6964,7 +6842,6 @@
       "Priority": "No",
       "groupKey": "group.services",
       "subgroupKey": "sub.language-schools",
-      "domain": "",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
         "lat": 47.54224,
@@ -7027,23 +6904,20 @@
         "en": ""
       },
       "closedDates": [],
-      "ratings": {
-        "google": null,
-        "tripadvisor": null
-      },
+      "ratings": {},
       "tags": [],
       "i18n": {
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "helen-doron-debrecen-8910.json",
         "fileNameAscii": "helen-doron-debrecen.json"
       }
     },
     {
-      "id": "helen-doron-esztergom-2883",
+      "locationID": "helen-doron-esztergom-2883",
       "name": {
         "en": "Helen Doron Esztergom"
       },
@@ -7054,7 +6928,6 @@
       "Priority": "No",
       "groupKey": "group.services",
       "subgroupKey": "sub.language-schools",
-      "domain": "",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
         "lat": 47.781215,
@@ -7111,16 +6984,13 @@
         "en": ""
       },
       "closedDates": [],
-      "ratings": {
-        "google": null,
-        "tripadvisor": null
-      },
+      "ratings": {},
       "tags": [],
       "i18n": {
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-09-28T14:27:28.600Z",
+        "lastUpdated": "2025-09-30T08:15:20.539Z",
         "version": 1,
         "fileName": "helen-doron-esztergom-2883.json",
         "fileNameAscii": "helen-doron-esztergom.json"

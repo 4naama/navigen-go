@@ -71,7 +71,7 @@ export function createLocationProfileModal(data, injected = {}) {
 
     // 1) geoPoints (may be legacy or unified) — injected
     if (Array.isArray(geoPoints)) {
-      const found = geoPoints.find(x => String(x?.ID || x?.id) === wantId);
+      const found = geoPoints.find(x => String(x?.ID || x?.locationID || x?.id) === wantId); // new id too
       if (found) descs = normalizeDescMap(found.descriptions);
     }
 
@@ -1265,10 +1265,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // Utility: create a location button and wire it to the Location Profile Modal (LPM)
 function makeLocationButton(loc) {
   const btn = document.createElement('button');
-  btn.textContent = loc["Short Name"] || loc.Name || "Unnamed";
-  btn.setAttribute('data-id', loc.ID);
+  btn.textContent = loc["Short Name"] || loc.locationName || loc.Name || "Unnamed"; // prefer new name
+
+  btn.setAttribute('data-id', String(loc.ID || loc.locationID || loc.id || '')); // prefer new id
   btn.classList.add('location-button');
-  btn.dataset.lower = (loc["Short Name"] || loc.Name || "Unnamed").toLowerCase();
+  btn.dataset.lower = (loc["Short Name"] || loc.locationName || loc.Name || "Unnamed").toLowerCase(); // prefer new name
   
   // Expose searchable metadata: name/shortName for text, data-tags with keys minus "tag."
   const _tags = Array.isArray(loc?.tags) ? loc.tags : [];

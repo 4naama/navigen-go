@@ -259,10 +259,11 @@ function renderPopularGroup(list = geoPoints) {
   popular.forEach((loc) => {
     const btn = document.createElement("button");
     btn.classList.add("quick-button", "popular-button");
-    const name = loc["Short Name"] || loc.Name || "Unnamed";
+    const name = loc["Short Name"] || loc.locationName || loc.Name || "Unnamed"; // prefer new name
+
     btn.textContent = name;
     btn.setAttribute("data-group", groupKey);
-    btn.setAttribute("data-id", loc.ID);
+    btn.setAttribute("data-id", String(loc.ID || loc.locationID || loc.id || '')); // prefer new id
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', name);
@@ -520,8 +521,9 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       if (!locBtn.hasAttribute('data-tags')) {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
-          ? injectedGeoPoints.find(x => String(x?.ID || x?.id) === String(id))
+          ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
+
         const tags = Array.isArray(rec?.tags)
           ? rec.tags.map(k => String(k).replace(/^tag\./,'')).join(' ')
           : '';
@@ -532,8 +534,9 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
-          ? injectedGeoPoints.find(x => String(x?.ID || x?.id) === String(id))
+          ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
+
         const c = (rec && rec.contact) || {};
         const addrBits = [c.city, c.adminArea, c.postalCode, c.countryCode, c.address].filter(Boolean).join(' ');
         const addrNorm = addrBits.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -544,8 +547,9 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
-          ? injectedGeoPoints.find(x => String(x?.ID || x?.id) === String(id))
+          ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
+
         const cc = rec ? (rec.coord || rec["Coordinate Compound"] || '') : '';
         if (cc) {
           const [lat, lng] = cc.split(',').map(s => s.trim());
@@ -561,8 +565,9 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
-          ? injectedGeoPoints.find(x => String(x?.ID || x?.id) === String(id))
+          ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
+
         const cover = rec?.media?.cover || rec?.cover || '';
         if (cover && !locBtn.hasAttribute('data-cover')) {
           locBtn.setAttribute('data-cover', cover);
@@ -573,7 +578,7 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
-          ? injectedGeoPoints.find(x => String(x?.ID || x?.id) === String(id))
+          ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
 
         if (rec) {
@@ -1050,10 +1055,11 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      console.log("🛰 toGeoPoint input:", it.id || it.ID, it.coord);
+      console.log("🛰 toGeoPoint input:", it.locationID || it.id || it.ID, it.coord); // prefer new id
 
-      const id  = String(it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback());
-      const nm  = pickName(it?.name) || pickName(it?.title) || 'Unnamed';
+      const id  = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback()); // prefer new id
+      const nm  = pickName(it?.locationName) || pickName(it?.name) || pickName(it?.title) || 'Unnamed'; // prefer new name
+
       const sn  = pickName(it?.shortName) || nm;
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
       const sub = String(it?.subgroupKey ?? it?.subgroup ?? ctxRow?.subgroupKey ?? '');
@@ -1124,7 +1130,7 @@ async function initEmergencyBlock(countryOverride) {
       const uid = (q.get('lp') || '').trim();
 
       if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const rec = geoPoints.find(x => String(x?.ID || x?.id) === uid);
+        const rec = geoPoints.find(x => String(x?.ID || x?.locationID || x?.id) === uid); // new id first
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs
