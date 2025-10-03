@@ -930,7 +930,7 @@ async function initLpmImageSlider(modal, data) {
         e.stopImmediatePropagation();
         e.stopPropagation();
 
-        // Pull from the current profile object
+        // Read from current profile object
         const links   = (data && data.links)   || {};
         const contact = (data && data.contact) || {};
 
@@ -2458,62 +2458,138 @@ function createNavigationModal({ name, lat, lng }) {
     `
   });
   
-// 🎉 Social Channels modal (top-level; no dependencies on LPM helpers)
+// ============================
+// 🎉 Social Channels modal (TOP-LEVEL, not nested)
+// ============================
 function createSocialModal({ name, links = {}, contact = {} }) {
   const id = 'social-modal';
-  document.getElementById(id)?.remove();
+  // Remove any existing instance
+  const prev = document.getElementById(id);
+  if (prev) prev.remove();
 
-  // local helpers (self-contained)
+  // ---- Local, self-contained helpers (no external deps) ----
   const normUrl = (u) => {
-    const s = String(u || '').trim(); if (!s) return '';
-    return /^(?:https?:)?\/\//i.test(s) ? s : (s.startsWith('www.') ? 'https://' + s : (s.includes('.') ? 'https://' + s : s));
+    const s = String(u || '').trim();
+    if (!s) return '';
+    // Accept absolute URLs and protocol-relative
+    if (/^(?:https?:)?\/\//i.test(s)) return s;
+    // Accept "www." domains
+    if (s.startsWith('www.') || s.includes('.')) return 'https://' + s;
+    // Otherwise leave as-is (mailto:, tel:, etc.)
+    return s;
   };
-  const waUrl = (v) => { const s=String(v||'').trim(); if(!s) return ''; const n=s.replace(/[^\d+]/g,'').replace(/^\+?/,''); return n?`https://wa.me/${n}`:''; };
-  const tgUrl = (v) => { const s=String(v||'').trim(); if(!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/,'')}`; };
-  const msUrl = (v) => { const s=String(v||'').trim(); if(!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`; };
+  const waUrl = (v) => {
+    const s = String(v || '').trim();
+    if (!s) return '';
+    const n = s.replace(/[^\d+]/g, '').replace(/^\+?/, '');
+    return n ? `https://wa.me/${n}` : '';
+  };
+  const tgUrl = (v) => {
+    const s = String(v || '').trim();
+    if (!s) return '';
+    return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/, '')}`;
+  };
+  const msUrl = (v) => {
+    const s = String(v || '').trim();
+    if (!s) return '';
+    return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`;
+  };
 
-  const m = injectModal({
-    id, title: '', layout: 'action',
+  // ---- Modal shell (reuse your modal utilities) ----
+  const modal = injectModal({
+    id,
+    title: '',
+    layout: 'action',
     bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
   });
 
+  // Header bar (same style as QR / Help) + close
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
-  top.innerHTML = `<h2 class="modal-title">Social Channels</h2><button class="modal-close" aria-label="Close">&times;</button>`;
-  m.querySelector('.modal-content')?.prepend(top);
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+  top.innerHTML = `
+    <h2 class="modal-title">Social Channels</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  const content = modal.querySelector('.modal-content');
+  if (content) content.prepend(top);
+  const btnClose = top.querySelector('.modal-close');
+  if (btnClose) btnClose.addEventListener('click', () => hideModal(id));
 
+  // ---- Unified providers: Website + Social + Chat (icons in /assets/social/) ----
   const providers = [
-    { key:'official',  label:'Website',   emoji:'🔗',                               track:'social.website',  href: normUrl(links.official || links.Official) },
-    { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook', href: normUrl(links.facebook  || links.Facebook) },
-    { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram',href: normUrl(links.instagram || links.Instagram) },
-    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',   href: normUrl(links.tiktok    || links.TikTok) },
-    { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',  href: normUrl(links.youtube   || links.YouTube || links.Youtube) },
-    { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest',href: normUrl(links.pinterest || links.Pinterest) },
-    { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',  href: normUrl(links.spotify   || links.Spotify) },
-    { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp', href: waUrl(contact.whatsapp) },
-    { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'social.telegram', href: tgUrl(contact.telegram) },
-    { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'social.messenger',href: msUrl(contact.messenger) }
+    // Website (emoji only, per your request)
+    { key: 'official',  label: 'Website',   emoji: '🔗',                                track: 'social.website',
+      href: normUrl(links.official) },
+
+    // Socials (SVGs in /assets/social/)
+    { key: 'facebook',  label: 'Facebook',  icon: '/assets/social/icons-facebook.svg',  track: 'social.facebook',
+      href: normUrl(links.facebook) },
+
+    { key: 'instagram', label: 'Instagram', icon: '/assets/social/icons-instagram.svg', track: 'social.instagram',
+      href: normUrl(links.instagram) },
+
+    { key: 'tiktok',    label: 'TikTok',    icon: '/assets/social/icons-tiktok.svg',    track: 'social.tiktok',
+      href: normUrl(links.tiktok) },
+
+    { key: 'youtube',   label: 'YouTube',   icon: '/assets/social/icons-youtube.svg',   track: 'social.youtube',
+      href: normUrl(links.youtube) },
+
+    { key: 'pinterest', label: 'Pinterest', icon: '/assets/social/icons-pinterest.svg', track: 'social.pinterest',
+      href: normUrl(links.pinterest) },
+
+    { key: 'spotify',   label: 'Spotify',   icon: '/assets/social/icons-spotify.svg',   track: 'social.spotify',
+      href: normUrl(links.spotify) },
+
+    // Chat / Messengers (SVGs in /assets/social/)
+    { key: 'whatsapp',  label: 'WhatsApp',  icon: '/assets/social/icon-whatsapp.svg',   track: 'social.whatsapp',
+      href: waUrl(contact.whatsapp) },
+
+    { key: 'telegram',  label: 'Telegram',  icon: '/assets/social/icons-telegram.svg',  track: 'social.telegram',
+      href: tgUrl(contact.telegram) },
+
+    { key: 'messenger', label: 'Messenger', icon: '/assets/social/icons-messenger.svg', track: 'social.messenger',
+      href: msUrl(contact.messenger) }
   ];
 
-  const list = m.querySelector('#social-modal-list');
-  const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim());
+  const list = modal.querySelector('#social-modal-list');
+
+  // Build only available items
+  const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim().length > 0);
+
   if (!rows.length) {
+    // Fallback when nothing is available
     const empty = document.createElement('div');
-    empty.className = 'modal-menu-item'; empty.setAttribute('aria-disabled','true'); empty.style.pointerEvents='none';
-    empty.innerHTML = `<span class="icon-img">🎉</span><span>Booking link coming soon</span>`;
+    empty.className = 'modal-menu-item';
+    empty.setAttribute('aria-disabled', 'true');
+    empty.style.pointerEvents = 'none';
+    empty.innerHTML = `
+      <span class="icon-img">🎉</span>
+      <span>Booking link coming soon</span>
+    `;
     list.appendChild(empty);
   } else {
     rows.forEach(r => {
       const a = document.createElement('a');
-      a.className = 'modal-menu-item'; a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
-      const iconHTML = r.emoji ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
-                               : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
+      a.className = 'modal-menu-item';
+      a.href = r.href;
+      a.target = '_blank';
+      a.rel = 'noopener';
+
+      const iconHTML = r.emoji
+        ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
+        : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
+
       a.innerHTML = `${iconHTML}<span>${r.label}</span>`;
-      if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true });
+
+      // Per-provider analytics
+      if (typeof _track === 'function' && r.track) {
+        a.addEventListener('click', () => { _track(r.track); }, { passive: true });
+      }
+
       list.appendChild(a);
     });
   }
+
   setupTapOutClose(id);
   showModal(id);
 }
