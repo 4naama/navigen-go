@@ -922,20 +922,25 @@ async function initLpmImageSlider(modal, data) {
       });
     } 
     
-    // 🎉 Social Channels – opens social modal
+    // 🎉 Social Channels — open social modal (capture to beat other handlers)
     const socialBtn = modal.querySelector('#som-social');
     if (socialBtn) {
       socialBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        const links = (data && data.links) || {};
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+
+        // Pull from the current profile object
+        const links   = (data && data.links)   || {};
         const contact = (data && data.contact) || {};
+
         createSocialModal({
           name: String(data?.name || 'Location'),
           links,
           contact
         });
-      }, { passive: false });
-    }        
+      }, { capture: true, passive: false });
+    }
 
     // ⋮ toggle secondary actions
     const moreBtn = modal.querySelector('#lpm-overflow');
