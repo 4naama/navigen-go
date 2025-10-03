@@ -2496,17 +2496,17 @@ function createNavigationModal({ name, lat, lng }) {
   const rows = [
     {
       label: 'Google Maps',
-      icon: '/assets/social/512px-Google_Maps_icon_(2020).svg.png', // your file
+      icon: '/assets/social/icons-google-maps.png',
       href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
     },
     {
       label: 'Waze',
-      icon: '/assets/social/icons-waze.png', // your waze icon already used elsewhere
+      icon: '/assets/social/icons-waze.png',
       href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
     },
     {
       label: 'Apple Maps',
-      icon: '/assets/social/Apple_Maps_Logo.png',
+      icon: '/assets/social/icons-apple-maps.png',
       href: `https://maps.apple.com/?daddr=${lat},${lng}`
     }
   ];
