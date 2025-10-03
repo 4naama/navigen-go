@@ -2453,9 +2453,19 @@ function createNavigationModal({ name, lat, lng }) {
     `
   });
   
-function createSocialModal({ name, links, contact }) {
+// 🎉 Social Channels modal (top-level; no dependencies on LPM helpers)
+function createSocialModal({ name, links = {}, contact = {} }) {
   const id = 'social-modal';
   document.getElementById(id)?.remove();
+
+  // local helpers (self-contained)
+  const normUrl = (u) => {
+    const s = String(u || '').trim(); if (!s) return '';
+    return /^(?:https?:)?\/\//i.test(s) ? s : (s.startsWith('www.') ? 'https://' + s : (s.includes('.') ? 'https://' + s : s));
+  };
+  const waUrl  = (v) => { const s=String(v||'').trim(); if(!s) return ''; const n=s.replace(/[^\d+]/g,'').replace(/^\+?/,''); return n?`https://wa.me/${n}`:''; };
+  const tgUrl  = (v) => { const s=String(v||'').trim(); if(!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/,'')}`; };
+  const msUrl  = (v) => { const s=String(v||'').trim(); if(!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`; };
 
   const m = injectModal({
     id,
@@ -2464,6 +2474,7 @@ function createSocialModal({ name, links, contact }) {
     bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
   });
 
+  // header (same as others)
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
   top.innerHTML = `
@@ -2473,51 +2484,47 @@ function createSocialModal({ name, links, contact }) {
   m.querySelector('.modal-content')?.prepend(top);
   top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
 
-  // ---- UNIFIED PROVIDERS (Website + Social + Chat) ----
-  // NOTE: icons are in /assets/social/ ; Website uses emoji 🔗 as requested
+  // unified providers (Website + Social + Chat)
   const providers = [
-    { key: 'official',  label: 'Website',   emoji: '🔗',                            track: 'social.website',
-      href: normUrl((links && (links.official || links.Official)) || (typeof data !== 'undefined' ? (data.officialUrl || '') : '')) },
+    { key:'official',  label:'Website',   emoji:'🔗',                               track:'social.website',
+      href: normUrl(links.official || links.Official) },
 
-    { key: 'facebook',  label: 'Facebook',  icon: '/assets/social/icons-facebook.svg',  track: 'social.facebook',
-      href: normUrl(links?.facebook  || links?.Facebook) },
+    { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook',
+      href: normUrl(links.facebook  || links.Facebook) },
 
-    { key: 'instagram', label: 'Instagram', icon: '/assets/social/icons-instagram.svg', track: 'social.instagram',
-      href: normUrl(links?.instagram || links?.Instagram) },
+    { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram',
+      href: normUrl(links.instagram || links.Instagram) },
 
-    { key: 'tiktok',    label: 'TikTok',    icon: '/assets/social/icons-tiktok.svg',    track: 'social.tiktok',
-      href: normUrl(links?.tiktok    || links?.TikTok) },
+    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',
+      href: normUrl(links.tiktok    || links.TikTok) },
 
-    { key: 'youtube',   label: 'YouTube',   icon: '/assets/social/icons-youtube.svg',   track: 'social.youtube',
-      href: normUrl(links?.youtube   || links?.YouTube || links?.Youtube) },
+    { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',
+      href: normUrl(links.youtube   || links.YouTube || links.Youtube) },
 
-    { key: 'pinterest', label: 'Pinterest', icon: '/assets/social/icons-pinterest.svg', track: 'social.pinterest',
-      href: normUrl(links?.pinterest || links?.Pinterest) },
+    { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest',
+      href: normUrl(links.pinterest || links.Pinterest) },
 
-    { key: 'spotify',   label: 'Spotify',   icon: '/assets/social/icons-spotify.svg',   track: 'social.spotify',
-      href: normUrl(links?.spotify   || links?.Spotify) },
+    { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',
+      href: normUrl(links.spotify   || links.Spotify) },
 
-    // Chat / Messengers from contact
-    { key: 'whatsapp',  label: 'WhatsApp',  icon: '/assets/social/icon-whatsapp.svg',   track: 'social.whatsapp',
-      href: waUrl(contact?.whatsapp) },
+    // chat/messengers from contact
+    { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp',
+      href: waUrl(contact.whatsapp) },
 
-    { key: 'telegram',  label: 'Telegram',  icon: '/assets/social/icons-telegram.svg',  track: 'social.telegram',
-      href: tgUrl(contact?.telegram) },
+    { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'social.telegram',
+      href: tgUrl(contact.telegram) },
 
-    { key: 'messenger', label: 'Messenger', icon: '/assets/social/icons-messenger.svg', track: 'social.messenger',
-      href: msgrUrl(contact?.messenger) }
+    { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'social.messenger',
+      href: msUrl(contact.messenger) }
   ];
-  // -----------------------------------------------------
 
   const list = m.querySelector('#social-modal-list');
+  const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim());
 
-  // only keep providers that have a non-empty href
-  const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim().length > 0);
-
-  if (rows.length === 0) {
+  if (!rows.length) {
     const empty = document.createElement('div');
     empty.className = 'modal-menu-item';
-    empty.setAttribute('aria-disabled', 'true');
+    empty.setAttribute('aria-disabled','true');
     empty.style.pointerEvents = 'none';
     empty.innerHTML = `<span class="icon-img">🎉</span><span>Booking link coming soon</span>`;
     list.appendChild(empty);
@@ -2525,19 +2532,14 @@ function createSocialModal({ name, links, contact }) {
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
-      a.href = r.href;
-      a.target = '_blank';
-      a.rel = 'noopener';
+      a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
 
       const iconHTML = r.emoji
         ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
         : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
 
       a.innerHTML = `${iconHTML}<span>${r.label}</span>`;
-
-      if (typeof _track === 'function' && r.track) {
-        a.addEventListener('click', () => { _track(r.track); }, { passive: true });
-      }
+      if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true });
       list.appendChild(a);
     });
   }
@@ -2585,18 +2587,16 @@ function createSocialModal({ name, links, contact }) {
     btn.href = r.href;
     btn.target = '_blank';
     btn.rel = 'noopener';
-    btn.innerHTML = `
-      <span class="icon-img">
-        <img src="${r.icon}" alt="" class="icon-img">
-      </span>
-      <span>${r.label}</span>
-    `;
 
-    // analytics: fire per-provider event, then let the link open normally
+    const iconHTML = r.emoji
+      ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
+      : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
+
+    btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
+
     if (typeof _track === 'function' && r.track) {
       btn.addEventListener('click', () => { _track(r.track); }, { passive: true });
     }
-
     list.appendChild(btn);
   });
 
