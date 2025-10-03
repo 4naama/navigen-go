@@ -998,7 +998,7 @@ async function initEmergencyBlock(countryOverride) {
     // Active context row for this page (used for default group/sub)
     const ctxRow = Array.isArray(contexts) ? contexts.find(c => c.pageKey === ACTIVE_PAGE) : null;
 
-    const API_LIMIT = 40;
+    const API_LIMIT = 99; // ask for up to 99 items per page
 
     // Use prod API in dev; include credentials so admin cookie is sent
     const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
