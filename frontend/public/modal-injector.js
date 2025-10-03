@@ -222,6 +222,7 @@ export function createLocationProfileModal(data, injected = {}) {
       <button class="modal-footer-button" id="som-info"  aria-label="Info">ℹ️ <span class="cta-label">Info</span></button>
       <button class="modal-footer-button" id="som-share" aria-label="Share">📤 <span class="cta-label">Share</span></button>
       <button class="modal-footer-button" id="som-save"  aria-label="Save">⭐ <span class="cta-label">Save</span></button>
+      <button class="modal-footer-button" id="som-social" aria-label="Social Channels">🎉 <span class="cta-label">Social</span></button>
     </div>
   `;
 
@@ -720,19 +721,6 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
 
-    // ⭐ Save → stub (hook your real flow later)
-    const btnSave = modal.querySelector('#lpm-save');
-    if (btnSave) {
-      btnSave.addEventListener('click', (e) => {
-        e.preventDefault();
-        const id = String(data?.id || ''); if (!id) { showToast('Missing id', 1600); return; }
-        const key = `saved:${id}`;
-        const was = localStorage.getItem(key) === '1';
-        localStorage.setItem(key, was ? '0' : '1');
-        showToast(was ? 'Removed from Saved' : 'Saved', 1600); // auto hide
-      });
-    }
-
     // 📅 Book → open bookingUrl if present; else toast
     const btnBook = modal.querySelector('#lpm-book');
     if (btnBook) {
@@ -919,7 +907,35 @@ async function initLpmImageSlider(modal, data) {
           document.body.appendChild(wrap);
         }, { passive: false });
       }
-    }
+    }    
+
+    // ⭐ Save → stub (hook your real flow later)
+    const btnSave = modal.querySelector('#lpm-save');
+    if (btnSave) {
+      btnSave.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = String(data?.id || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const key = `saved:${id}`;
+        const was = localStorage.getItem(key) === '1';
+        localStorage.setItem(key, was ? '0' : '1');
+        showToast(was ? 'Removed from Saved' : 'Saved', 1600); // auto hide
+      });
+    } 
+    
+    // 🎉 Social Channels – opens social modal
+    const socialBtn = modal.querySelector('#som-social');
+    if (socialBtn) {
+      socialBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const links = (data && data.links) || {};
+        const contact = (data && data.contact) || {};
+        createSocialModal({
+          name: String(data?.name || 'Location'),
+          links,
+          contact
+        });
+      }, { passive: false });
+    }        
 
     // ⋮ toggle secondary actions
     const moreBtn = modal.querySelector('#lpm-overflow');
@@ -966,15 +982,6 @@ async function initLpmImageSlider(modal, data) {
       secondary.appendChild(a);
     };
 
-    // Website + socials (render only if present)
-    addLink('som-www', '🔗', 'Website', normUrl(data.officialUrl || data.links?.official), 'website'); // prefer officialUrl
-    addLink('som-fb',   '📘', 'Facebook',  normUrl(data.links?.Facebook || data.links?.facebook),              'facebook');
-    addLink('som-ig',   '📸', 'Instagram', normUrl(data.links?.Instagram || data.links?.instagram),            'instagram');
-    addLink('som-yt',   '▶️', 'YouTube',   normUrl(data.links?.YouTube  || data.links?.Youtube || data.links?.youtube), 'youtube');
-    addLink('som-tt',   '🎵', 'TikTok',    normUrl(data.links?.TikTok   || data.links?.tiktok),                'tiktok');
-    addLink('som-pin',  '📌', 'Pinterest', normUrl(data.links?.Pinterest || data.links?.pinterest),            'pinterest');
-    addLink('som-spot', '🎧', 'Spotify',   normUrl(data.links?.Spotify  || data.links?.spotify),               'spotify');
-  
     // Fetch contact on click when not present
     ;(function wireContactFetch(){
       const id = String(data?.id||'').trim(); if (!id) return;
@@ -1025,10 +1032,6 @@ async function initLpmImageSlider(modal, data) {
       }
 
     })();
-    
-    addLink('som-wa',   '🟢', 'WhatsApp',  waUrl(data.contact?.whatsapp),   'whatsapp');
-    addLink('som-tg',   '📣', 'Telegram',  tgUrl(data.contact?.telegram),   'telegram');
-    addLink('som-msgr', '💬', 'Messenger', msgrUrl(data.contact?.messenger),'messenger');
 
     // ⭐ Save (secondary) → local toggle
     const save2 = modal.querySelector('#som-save');
@@ -2449,6 +2452,99 @@ function createNavigationModal({ name, lat, lng }) {
       <div class="modal-menu-list" id="nav-modal-list"></div>
     `
   });
+  
+function createSocialModal({ name, links, contact }) {
+  const id = 'social-modal';
+  document.getElementById(id)?.remove();
+
+  const m = injectModal({
+    id,
+    title: '',
+    layout: 'action',
+    bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
+  });
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">Social Channels</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  m.querySelector('.modal-content')?.prepend(top);
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  // ---- UNIFIED PROVIDERS (Website + Social + Chat) ----
+  // NOTE: icons are in /assets/social/ ; Website uses emoji 🔗 as requested
+  const providers = [
+    { key: 'official',  label: 'Website',   emoji: '🔗',                            track: 'social.website',
+      href: normUrl((links && (links.official || links.Official)) || (typeof data !== 'undefined' ? (data.officialUrl || '') : '')) },
+
+    { key: 'facebook',  label: 'Facebook',  icon: '/assets/social/icons-facebook.svg',  track: 'social.facebook',
+      href: normUrl(links?.facebook  || links?.Facebook) },
+
+    { key: 'instagram', label: 'Instagram', icon: '/assets/social/icons-instagram.svg', track: 'social.instagram',
+      href: normUrl(links?.instagram || links?.Instagram) },
+
+    { key: 'tiktok',    label: 'TikTok',    icon: '/assets/social/icons-tiktok.svg',    track: 'social.tiktok',
+      href: normUrl(links?.tiktok    || links?.TikTok) },
+
+    { key: 'youtube',   label: 'YouTube',   icon: '/assets/social/icons-youtube.svg',   track: 'social.youtube',
+      href: normUrl(links?.youtube   || links?.YouTube || links?.Youtube) },
+
+    { key: 'pinterest', label: 'Pinterest', icon: '/assets/social/icons-pinterest.svg', track: 'social.pinterest',
+      href: normUrl(links?.pinterest || links?.Pinterest) },
+
+    { key: 'spotify',   label: 'Spotify',   icon: '/assets/social/icons-spotify.svg',   track: 'social.spotify',
+      href: normUrl(links?.spotify   || links?.Spotify) },
+
+    // Chat / Messengers from contact
+    { key: 'whatsapp',  label: 'WhatsApp',  icon: '/assets/social/icon-whatsapp.svg',   track: 'social.whatsapp',
+      href: waUrl(contact?.whatsapp) },
+
+    { key: 'telegram',  label: 'Telegram',  icon: '/assets/social/icons-telegram.svg',  track: 'social.telegram',
+      href: tgUrl(contact?.telegram) },
+
+    { key: 'messenger', label: 'Messenger', icon: '/assets/social/icons-messenger.svg', track: 'social.messenger',
+      href: msgrUrl(contact?.messenger) }
+  ];
+  // -----------------------------------------------------
+
+  const list = m.querySelector('#social-modal-list');
+
+  // only keep providers that have a non-empty href
+  const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim().length > 0);
+
+  if (rows.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'modal-menu-item';
+    empty.setAttribute('aria-disabled', 'true');
+    empty.style.pointerEvents = 'none';
+    empty.innerHTML = `<span class="icon-img">🎉</span><span>Booking link coming soon</span>`;
+    list.appendChild(empty);
+  } else {
+    rows.forEach(r => {
+      const a = document.createElement('a');
+      a.className = 'modal-menu-item';
+      a.href = r.href;
+      a.target = '_blank';
+      a.rel = 'noopener';
+
+      const iconHTML = r.emoji
+        ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
+        : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
+
+      a.innerHTML = `${iconHTML}<span>${r.label}</span>`;
+
+      if (typeof _track === 'function' && r.track) {
+        a.addEventListener('click', () => { _track(r.track); }, { passive: true });
+      }
+      list.appendChild(a);
+    });
+  }
+
+  setupTapOutClose(id);
+  showModal(id);
+}
 
   // Top bar (sticky) — reuses your QR/Help style
   const top = document.createElement('div');
@@ -2477,7 +2573,7 @@ function createNavigationModal({ name, lat, lng }) {
     },
     {
       label: 'Apple Maps',
-      icon: '/assets/social/icons-apple-maps.svg',
+      emoji: '🍎',
       href: `https://maps.apple.com/?daddr=${lat},${lng}`,
       track: 'nav.apple'
     }
