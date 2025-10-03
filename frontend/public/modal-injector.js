@@ -706,7 +706,7 @@ async function initLpmImageSlider(modal, data) {
   // ————————————————————————————  
   function wireLocationProfileModal(modal, data, originEl) {    
 
-    // 🎯 Route → open Google Maps with provided coords
+    // 🎯 Route → open Navigation modal (same header/close style as QR)
     const btnRoute = modal.querySelector('#lpm-route');
     if (btnRoute) {
       btnRoute.addEventListener('click', (e) => {
@@ -716,9 +716,11 @@ async function initLpmImageSlider(modal, data) {
         const lat = Number(latRaw);
         const lng = Number(lngRaw);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track('route');
-        const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-        window.open(url, '_blank', 'noopener');
+        _track('route'); // keep analytics event name
+        createNavigationModal({
+          name: String(data?.name || 'Location'),
+          lat, lng
+        });
       }, { passive: false });
     }
 
@@ -2462,6 +2464,72 @@ export function createHelpModal() {
 
   // tap-out + ESC
   setupTapOutClose("help-modal");
+}
+
+// 🎯 Navigation modal (compact list with icons; header + red × like QR/Help)
+function createNavigationModal({ name, lat, lng }) {
+  const id = 'nav-modal';
+  document.getElementById(id)?.remove();
+
+  // Build modal shell via injectModal (body replaced right after)
+  const m = injectModal({
+    id,
+    title: '',            // header built as top bar (uniform with QR/Help)
+    layout: 'action',
+    bodyHTML: `
+      <div class="modal-menu-list" id="nav-modal-list"></div>
+    `
+  });
+
+  // Top bar (sticky) — reuses your QR/Help style
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">🎯 Navigation</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  m.querySelector('.modal-content')?.prepend(top);
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  // Build items (icons in /assets/social/, as you requested)
+  const list = m.querySelector('#nav-modal-list');
+  const rows = [
+    {
+      label: 'Google Maps',
+      icon: '/assets/social/512px-Google_Maps_icon_(2020).svg.png', // your file
+      href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+    },
+    {
+      label: 'Waze',
+      icon: '/assets/social/icons-waze.png', // your waze icon already used elsewhere
+      href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
+    },
+    {
+      label: 'Apple Maps',
+      icon: '/assets/social/Apple_Maps_Logo.png',
+      href: `https://maps.apple.com/?daddr=${lat},${lng}`
+    }
+  ];
+
+  rows.forEach(r => {
+    const btn = document.createElement('a');
+    btn.className = 'modal-menu-item'; // same “QR/Help” list style
+    btn.href = r.href;
+    btn.target = '_blank';
+    btn.rel = 'noopener';
+    btn.innerHTML = `
+      <span class="icon-img" style="width:22px;height:22px;">
+        <img src="${r.icon}" alt="" class="icon-img" style="width:22px;height:22px;">
+      </span>
+      <span>${r.label}</span>
+    `;
+
+    list.appendChild(btn);
+  });
+
+  // Tap-out close & show
+  setupTapOutClose(id);
+  showModal(id);
 }
 
 // 🛑 Prevents overlapping share attempts by locking during active share operation.
