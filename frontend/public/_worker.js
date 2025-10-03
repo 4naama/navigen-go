@@ -263,7 +263,7 @@ async function handleList(req, env, url, extraHdr){
 
   // Require context; return empty (200) to hide signals.
   const ctxParam = (q.get('context')||'').trim();
-  const limit = Math.min(Math.max(Number(q.get('limit')||20),1),20); // ≤20 per page
+  const limit = Math.min(Math.max(Number(q.get('limit')||20),1),99); // cap 99 per page to allow larger batches
   const MAX_PAGES = 5; // ≤~100 items total
   if (!ctxParam) {
     const h = new Headers({ 'content-type':'application/json' });
