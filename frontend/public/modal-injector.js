@@ -222,10 +222,6 @@ export function createLocationProfileModal(data, injected = {}) {
       <button class="modal-footer-button" id="som-info"  aria-label="Info">ℹ️ <span class="cta-label">Info</span></button>
       <button class="modal-footer-button" id="som-share" aria-label="Share">📤 <span class="cta-label">Share</span></button>
       <button class="modal-footer-button" id="som-save"  aria-label="Save">⭐ <span class="cta-label">Save</span></button>
-      <button class="modal-footer-button" id="som-apple" aria-label="Apple Maps">🍎 <span class="cta-label">Apple Maps</span></button>
-      <button class="modal-footer-button" id="som-waze"  aria-label="Waze">
-        <img class="cta-icon" src="/assets/social/icons-waze.png" alt=""><span class="cta-label">Waze</span>
-      </button>
     </div>
   `;
 
@@ -933,33 +929,6 @@ async function initLpmImageSlider(modal, data) {
         const open = secondary.classList.toggle('is-open'); // CSS shows when .is-open
         secondary.setAttribute('aria-hidden', String(!open));
         moreBtn.setAttribute('aria-expanded', String(open));
-      });
-    }
-
-    // 🍎 Apple Maps (https) – safe on any platform
-    const appleBtn = modal.querySelector('#som-apple');
-    if (appleBtn) {
-      appleBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const lat = Number(data?.lat ?? moreBtn?.getAttribute('data-lat') ?? NaN);
-        const lng = Number(data?.lng ?? moreBtn?.getAttribute('data-lng') ?? NaN);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track('apple');
-        const name = encodeURIComponent(String(data?.name || 'Location'));
-        window.open(`https://maps.apple.com/?ll=${lat},${lng}&q=${name}`, '_blank', 'noopener');
-      });
-    }
-
-    // 🧭 Waze (UL deep link via https)
-    const wazeBtn = modal.querySelector('#som-waze');
-    if (wazeBtn) {
-      wazeBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const lat = Number(data?.lat ?? moreBtn?.getAttribute('data-lat') ?? NaN);
-        const lng = Number(data?.lng ?? moreBtn?.getAttribute('data-lng') ?? NaN);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track('waze');
-        window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank', 'noopener');
       });
     }
 
@@ -2491,38 +2460,46 @@ function createNavigationModal({ name, lat, lng }) {
   m.querySelector('.modal-content')?.prepend(top);
   top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
 
-  // Build items (icons in /assets/social/, as you requested)
+  // Build items (icons in /assets/social/) + per-provider tracking labels
   const list = m.querySelector('#nav-modal-list');
   const rows = [
     {
       label: 'Google Maps',
-      icon: '/assets/social/icons-google-maps.png',
-      href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+      icon: '/assets/social/icons-google-maps.svg',
+      href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      track: 'nav.google'
     },
     {
       label: 'Waze',
       icon: '/assets/social/icons-waze.png',
-      href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`
+      href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
+      track: 'nav.waze'
     },
     {
       label: 'Apple Maps',
-      icon: '/assets/social/icons-apple-maps.png',
-      href: `https://maps.apple.com/?daddr=${lat},${lng}`
+      icon: '/assets/social/icons-apple-maps.svg',
+      href: `https://maps.apple.com/?daddr=${lat},${lng}`,
+      track: 'nav.apple'
     }
   ];
 
   rows.forEach(r => {
     const btn = document.createElement('a');
-    btn.className = 'modal-menu-item'; // same “QR/Help” list style
+    btn.className = 'modal-menu-item';
     btn.href = r.href;
     btn.target = '_blank';
     btn.rel = 'noopener';
     btn.innerHTML = `
-      <span class="icon-img" style="width:22px;height:22px;">
-        <img src="${r.icon}" alt="" class="icon-img" style="width:22px;height:22px;">
+      <span class="icon-img">
+        <img src="${r.icon}" alt="" class="icon-img">
       </span>
       <span>${r.label}</span>
     `;
+
+    // analytics: fire per-provider event, then let the link open normally
+    if (typeof _track === 'function' && r.track) {
+      btn.addEventListener('click', () => { _track(r.track); }, { passive: true });
+    }
 
     list.appendChild(btn);
   });
