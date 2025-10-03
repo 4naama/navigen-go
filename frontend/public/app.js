@@ -605,7 +605,13 @@ function filterLocations(q) {
   // include Popular's buttons too
   var itemSel = '.location-button, .popular-button, .location-item, [data-role="location-item"]';
 
-  var query = (q || '').toString().trim().toLowerCase();
+  const norm = (s) => String(s||'')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // strip accents
+    .replace(/[-_.\/]/g,' ')                         // hyphen-like → space
+    .replace(/\s+/g,' ').trim();
+
+  var query = norm(q);
 
   // show/hide the clear button based on query state
   var clearBtnEl = document.getElementById('clear-search');
@@ -648,10 +654,10 @@ function filterLocations(q) {
   const items = document.querySelectorAll(itemSel);
   items.forEach((el) => {
     const lower = el.dataset.lower || '';
-    const shortName = (el.getAttribute('data-short-name') || '').toLowerCase();
-    const tags = (el.getAttribute('data-tags') || '').toLowerCase();
-    const addr = (el.getAttribute('data-addr') || '').toLowerCase(); // address tokens
-    const hay = `${lower} ${shortName} ${tags} ${addr}`;
+    const shortName = el.getAttribute('data-short-name') || '';
+    const tags = el.getAttribute('data-tags') || '';
+    const addr = el.getAttribute('data-addr') || '';
+    const hay = norm(`${lower} ${shortName} ${tags} ${addr}`);
 
     const show = hay.includes(query);
     el.style.display = show ? '' : 'none';
