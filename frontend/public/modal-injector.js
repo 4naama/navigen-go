@@ -2542,14 +2542,14 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
     top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
   }
 
-  // providers: consistent logo + text rows; website is text-only (no svg)
+  // providers: consistent logo + text rows; Website uses globe svg
   const providers = [
     {
       key:'official',
-      label:'Website',            // plain text; no emoji
-      icon:'',                    // text-only row
+      label:'Website',                            // text + icon like others
+      icon:'/assets/social/icons-globe.svg',      // local globe svg
       track:'social.website',
-      // clean fallbacks for site url
+      // unified fallbacks: prefer links.official, then common aliases
       href: normUrl(
         links.official
         || contact.officialUrl || contact.officialURL
@@ -2562,6 +2562,7 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
     { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram', href: normUrl(links.instagram) },
     { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',   href: normUrl(links.youtube) },
     { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',    href: normUrl(links.tiktok) },
+    // IMPORTANT: Pinterest now has a text label (no icon-only), so sizing matches others
     { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest', href: normUrl(links.pinterest) },
     { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'social.linkedin',  href: normUrl(links.linkedin) },
     { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',   href: normUrl(links.spotify) },
