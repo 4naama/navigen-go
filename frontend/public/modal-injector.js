@@ -2542,32 +2542,32 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
     top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
   }
 
-  // providers: icons only; reuse existing asset paths; no emojis
+  // providers: consistent logo + text rows; website is text-only (no svg)
   const providers = [
-    { 
+    {
       key:'official',
-      label:'🌐 Website',        // emoji-only; no missing svg
-      icon:'',                   // text-only row
+      label:'Website',            // plain text; no emoji
+      icon:'',                    // text-only row
       track:'social.website',
-      // broaden fallbacks: officialUrl/officialURL + website/site variants
+      // clean fallbacks for site url
       href: normUrl(
         links.official
         || contact.officialUrl || contact.officialURL
-        || links.officialUrl   || links.Official
         || links.website       || contact.website
         || links.site          || contact.site
+        || links.officialUrl   || links.Official
       )
     },
-    { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook', href: normUrl(links.facebook) },
-    { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram',href: normUrl(links.instagram) },
-    { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',  href: normUrl(links.youtube) },
-    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',   href: normUrl(links.tiktok) },
-    { key:'pinterest', label:'', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest', href: normUrl(links.pinterest) },
-    { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'social.linkedin', href: normUrl(links.linkedin) },
-    { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',  href: normUrl(links.spotify) },
-    { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp', href: waUrl(contact.whatsapp) },
-    { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'social.telegram', href: tgUrl(contact.telegram) },
-    { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'social.messenger',href: msUrl(contact.messenger) }
+    { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook',  href: normUrl(links.facebook) },
+    { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram', href: normUrl(links.instagram) },
+    { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',   href: normUrl(links.youtube) },
+    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',    href: normUrl(links.tiktok) },
+    { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest', href: normUrl(links.pinterest) },
+    { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'social.linkedin',  href: normUrl(links.linkedin) },
+    { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',   href: normUrl(links.spotify) },
+    { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp',  href: waUrl(contact.whatsapp) },
+    { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'social.telegram',  href: tgUrl(contact.telegram) },
+    { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'social.messenger', href: msUrl(contact.messenger) }
   ];
 
   const list = modal.querySelector('#social-modal-list');
@@ -2586,17 +2586,11 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
       a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
-      // icon-sized img; text only when label exists (Pinterest = icon-only)
+      // uniform row: 20×20 icon + text; no icon-only centering
       a.innerHTML =
         `<span class="icon-img">` +
           (r.icon ? `<img src="${r.icon}" alt="" width="20" height="20" style="display:block;object-fit:contain;">` : '') +
-        `</span>` +
-        (r.label ? `<span>${r.label}</span>` : '');
-      
-      // center icon-only rows; avoid left gap
-      if (!r.label) {
-        a.style.justifyContent = 'center';
-      }            
+        `</span><span>${r.label || (r.key === 'pinterest' ? 'Pinterest' : '')}</span>`;
 
       if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true }); // track if available
       list.appendChild(a);
