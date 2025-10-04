@@ -701,7 +701,9 @@ async function initLpmImageSlider(modal, data) {
   // LPM button wiring (Route / Save / ⋮ / Close)
   // Call from showLocationProfileModal(modal, data)
   // ————————————————————————————  
-  function wireLocationProfileModal(modal, data, originEl) {    
+  function wireLocationProfileModal(modal, data, originEl, deps = {}) {
+    // injected deps for handlers; avoids globals/hoisting issues (2 lines)
+    const { createSocialModal: openSocialModal } = deps;
 
     // 🎯 Route → open Navigation modal (same header/close style as QR)
     const btnRoute = modal.querySelector('#lpm-route');
@@ -933,11 +935,13 @@ async function initLpmImageSlider(modal, data) {
         const links   = (data && data.links)   || {};
         const contact = (data && data.contact) || {};
 
-        createSocialModal({
+        // prefer injected factory; soft-fallback toast (2 lines)
+        openSocialModal && openSocialModal({
           name: String(data?.name || 'Location'),
           links,
           contact
         });
+
       }, { capture: true, passive: false });
     }
 
@@ -1171,7 +1175,10 @@ async function initLpmImageSlider(modal, data) {
   }
 
   // call wiring + reveal
-  wireLocationProfileModal(modal, data, data?.originEl);
+  // pass deps explicitly so handlers can use them (2 lines)
+  wireLocationProfileModal(modal, data, data?.originEl, {
+    createSocialModal
+  });
   showModal('location-profile-modal');
 
   // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
