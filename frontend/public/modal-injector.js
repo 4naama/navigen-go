@@ -929,8 +929,10 @@ async function initLpmImageSlider(modal, data) {
         e.preventDefault();
         e.stopImmediatePropagation();
         e.stopPropagation();
+
         const links   = (data && data.links)   || {};
         const contact = (data && data.contact) || {};
+
         createSocialModal({
           name: String(data?.name || 'Location'),
           links,
@@ -2456,39 +2458,39 @@ function createNavigationModal({ name, lat, lng }) {
   });
   
 // ============================
-// 🎉 Social Channels modal (TOP-LEVEL, not nested)
+// 🎉 Social Channels modal (TOP-LEVEL in the same scope)
 // ============================
 function createSocialModal({ name, links = {}, contact = {} }) {
   const id = 'social-modal';
-  // Remove any existing instance
   const prev = document.getElementById(id);
   if (prev) prev.remove();
 
-  // ---- Local, self-contained helpers (no external deps) ----
-  const normUrl = (u) => {
+  // local helpers (self-contained)
+  function normUrl(u) {
     const s = String(u || '').trim();
     if (!s) return '';
     if (/^(?:https?:)?\/\//i.test(s)) return s;
     if (s.startsWith('www.') || s.includes('.')) return 'https://' + s;
     return s;
-  };
-  const waUrl = (v) => {
+  }
+  function waUrl(v) {
     const s = String(v || '').trim();
     if (!s) return '';
     const n = s.replace(/[^\d+]/g, '').replace(/^\+?/, '');
     return n ? `https://wa.me/${n}` : '';
-  };
-  const tgUrl = (v) => {
+  }
+  function tgUrl(v) {
     const s = String(v || '').trim();
     if (!s) return '';
     return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/, '')}`;
-  };
-  const msUrl = (v) => {
+  }
+  function msUrl(v) {
     const s = String(v || '').trim();
     if (!s) return '';
     return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`;
-  };
+  }
 
+  // modal shell
   const modal = injectModal({
     id,
     title: '',
@@ -2496,6 +2498,7 @@ function createSocialModal({ name, links = {}, contact = {} }) {
     bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
   });
 
+  // header + close
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
   top.innerHTML = `
@@ -2504,30 +2507,20 @@ function createSocialModal({ name, links = {}, contact = {} }) {
   `;
   const content = modal.querySelector('.modal-content');
   if (content) content.prepend(top);
-  const btnClose = top.querySelector('.modal-close');
-  if (btnClose) btnClose.addEventListener('click', () => hideModal(id));
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
 
+  // providers (Website + Social + Chat) — icons under /assets/social/
   const providers = [
-    { key: 'official',  label: 'Website',   emoji: '🔗',                                track: 'social.website',
-      href: normUrl(links.official) },
-    { key: 'facebook',  label: 'Facebook',  icon: '/assets/social/icons-facebook.svg',  track: 'social.facebook',
-      href: normUrl(links.facebook) },
-    { key: 'instagram', label: 'Instagram', icon: '/assets/social/icons-instagram.svg', track: 'social.instagram',
-      href: normUrl(links.instagram) },
-    { key: 'tiktok',    label: 'TikTok',    icon: '/assets/social/icons-tiktok.svg',    track: 'social.tiktok',
-      href: normUrl(links.tiktok) },
-    { key: 'youtube',   label: 'YouTube',   icon: '/assets/social/icons-youtube.svg',   track: 'social.youtube',
-      href: normUrl(links.youtube) },
-    { key: 'pinterest', label: 'Pinterest', icon: '/assets/social/icons-pinterest.svg', track: 'social.pinterest',
-      href: normUrl(links.pinterest) },
-    { key: 'spotify',   label: 'Spotify',   icon: '/assets/social/icons-spotify.svg',   track: 'social.spotify',
-      href: normUrl(links.spotify) },
-    { key: 'whatsapp',  label: 'WhatsApp',  icon: '/assets/social/icon-whatsapp.svg',   track: 'social.whatsapp',
-      href: waUrl(contact.whatsapp) },
-    { key: 'telegram',  label: 'Telegram',  icon: '/assets/social/icons-telegram.svg',  track: 'social.telegram',
-      href: tgUrl(contact.telegram) },
-    { key: 'messenger', label: 'Messenger', icon: '/assets/social/icons-messenger.svg', track: 'social.messenger',
-      href: msUrl(contact.messenger) }
+    { key:'official',  label:'Website',   emoji:'🔗',                               track:'social.website',  href: normUrl(links.official) },
+    { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook', href: normUrl(links.facebook) },
+    { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram',href: normUrl(links.instagram) },
+    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',   href: normUrl(links.tiktok) },
+    { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',  href: normUrl(links.youtube) },
+    { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest',href: normUrl(links.pinterest) },
+    { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',  href: normUrl(links.spotify) },
+    { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp', href: waUrl(contact.whatsapp) },
+    { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'social.telegram', href: tgUrl(contact.telegram) },
+    { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'social.messenger',href: msUrl(contact.messenger) }
   ];
 
   const list = modal.querySelector('#social-modal-list');
@@ -2536,29 +2529,20 @@ function createSocialModal({ name, links = {}, contact = {} }) {
   if (!rows.length) {
     const empty = document.createElement('div');
     empty.className = 'modal-menu-item';
-    empty.setAttribute('aria-disabled', 'true');
+    empty.setAttribute('aria-disabled','true');
     empty.style.pointerEvents = 'none';
-    empty.innerHTML = `
-      <span class="icon-img">🎉</span>
-      <span>Booking link coming soon</span>
-    `;
+    empty.innerHTML = `<span class="icon-img">🎉</span><span>Booking link coming soon</span>`;
     list.appendChild(empty);
   } else {
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
-      a.href = r.href;
-      a.target = '_blank';
-      a.rel = 'noopener';
-
+      a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
       const iconHTML = r.emoji
         ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
         : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
-
       a.innerHTML = `${iconHTML}<span>${r.label}</span>`;
-      if (typeof _track === 'function' && r.track) {
-        a.addEventListener('click', () => { _track(r.track); }, { passive: true });
-      }
+      if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true });
       list.appendChild(a);
     });
   }
