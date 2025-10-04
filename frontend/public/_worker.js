@@ -411,7 +411,8 @@ async function handleProfile(req, env, url, extraHdr){
     .find(x => String(x.locationID || x.ID || x.id) === String(id));
   if(!p) return new Response('Not Found',{status:404});
   const payload = {
-    id: p.ID||p.id, name: p.name||p.Name||'', shortName: p.shortName||p['Short Name']||'',
+    // prefer stable profile id; keep legacy fallbacks
+    id: p.locationID||p.ID||p.id, name: p.name||p.Name||'', shortName: p.shortName||p['Short Name']||'',
     descriptions: p.descriptions||{}, tags: Array.isArray(p.tags)?p.tags:[],
     coord: (() => {
       if (p && typeof p.coord === 'object') {

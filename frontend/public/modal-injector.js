@@ -244,6 +244,10 @@ export function createLocationProfileModal(data, injected = {}) {
  * @param {Object} data  – same shape as factory
  */
 export function showLocationProfileModal(data) {
+  // prefer stable profile id; avoid transient loc_*
+  // keep: normalize once at entry
+  data.id = String(data?.locationID || data?.id || '').trim();
+    
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
   if (old) old.remove();
@@ -747,7 +751,7 @@ async function initLpmImageSlider(modal, data) {
       if (btn) {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
-          const uid = String(data?.id || '').trim();
+          const uid = String(data?.id || data?.locationID || '').trim();
           if (!uid) { showToast('Missing id', 1600); return; }
 
           // build simple modal
@@ -1016,7 +1020,7 @@ async function initLpmImageSlider(modal, data) {
 
     // Fetch contact on click when not present
     ;(function wireContactFetch(){
-      const id = String(data?.id||'').trim(); if (!id) return;
+      const id = String(data?.id || data?.locationID || '').trim(); if (!id) return;
       const call = modal.querySelector('#som-call');
       const mail = modal.querySelector('#som-mail');
       const bookBtn = modal.querySelector('#lpm-book');
@@ -1044,7 +1048,7 @@ async function initLpmImageSlider(modal, data) {
         const orig = bookBtn.onclick;
         bookBtn.onclick = async (ev) => {
           ev.preventDefault();
-          const id = String(data?.id || '');
+          const id = String(data?.id || data?.locationID || '');
           const direct = data?.contact?.bookingUrl || data?.links?.booking || '';
           if (direct) { if (orig) return orig(ev); window.open(String(direct), '_blank', 'noopener'); return; }
 
@@ -1187,7 +1191,7 @@ async function initLpmImageSlider(modal, data) {
 
     // analytics beacon
     const _track = (action) => {
-      const uid = String(data?.id || '').trim(); if (!uid) return;
+      const uid = String(data?.id || data?.locationID || '').trim(); if (!uid) return;
       try {
         navigator.sendBeacon(
           'https://navigen-api.4naama-39c.workers.dev/api/track',
