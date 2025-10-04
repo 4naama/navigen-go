@@ -2442,37 +2442,55 @@ export function createHelpModal() {
   setupTapOutClose("help-modal");
 }
 
+// 🎯 Navigation modal (compact list with icons; header + red × like QR/Help)
+function createNavigationModal({ name, lat, lng }) {
+  const id = 'nav-modal';
+  document.getElementById(id)?.remove();
+
+  // Build modal shell via injectModal (body replaced right after)
+  const m = injectModal({
+    id,
+    title: '',            // header built as top bar (uniform with QR/Help)
+    layout: 'action',
+    bodyHTML: `
+      <div class="modal-menu-list" id="nav-modal-list"></div>
+    `
+  });
+  
 // ============================
-// 🎉 Social Channels modal (top-level; callable from LPM)
+// 🎉 Social Channels modal (TOP-LEVEL in the same scope)
 // ============================
-// Note: links/contact come from profiles.json via showLocationProfileModal props.
-export function createSocialModal({ name, links = {}, contact = {} }) {
+function createSocialModal({ name, links = {}, contact = {} }) {
   const id = 'social-modal';
   const prev = document.getElementById(id);
   if (prev) prev.remove();
 
-  // helpers: normalize providers (2 lines max; keep concise)
-  const normUrl = (u) => {
+  // local helpers (self-contained)
+  function normUrl(u) {
     const s = String(u || '').trim();
     if (!s) return '';
     if (/^(?:https?:)?\/\//i.test(s)) return s;
     if (s.startsWith('www.') || s.includes('.')) return 'https://' + s;
     return s;
-  };
-  const waUrl = (v) => {
-    const s = String(v || '').trim(); if (!s) return '';
+  }
+  function waUrl(v) {
+    const s = String(v || '').trim();
+    if (!s) return '';
     const n = s.replace(/[^\d+]/g, '').replace(/^\+?/, '');
     return n ? `https://wa.me/${n}` : '';
-  };
-  const tgUrl = (v) => {
-    const s = String(v || '').trim(); if (!s) return '';
+  }
+  function tgUrl(v) {
+    const s = String(v || '').trim();
+    if (!s) return '';
     return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/, '')}`;
-  };
-  const msUrl = (v) => {
-    const s = String(v || '').trim(); if (!s) return '';
+  }
+  function msUrl(v) {
+    const s = String(v || '').trim();
+    if (!s) return '';
     return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`;
-  };
+  }
 
+  // modal shell
   const modal = injectModal({
     id,
     title: '',
@@ -2480,18 +2498,20 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
     bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
   });
 
+  // header + close
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
   top.innerHTML = `
     <h2 class="modal-title">Social Channels</h2>
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
-  modal.querySelector('.modal-content')?.prepend(top);
+  const content = modal.querySelector('.modal-content');
+  if (content) content.prepend(top);
   top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
 
-  // Website + Social + Chat; icons under /assets/social/
+  // providers (Website + Social + Chat) — icons under /assets/social/
   const providers = [
-    { key:'official',  label:'Website',   emoji:'🔗',                                track:'social.website',  href: normUrl(links.official) },
+    { key:'official',  label:'Website',   emoji:'🔗',                               track:'social.website',  href: normUrl(links.official) },
     { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook', href: normUrl(links.facebook) },
     { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram',href: normUrl(links.instagram) },
     { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',   href: normUrl(links.tiktok) },
@@ -2511,7 +2531,7 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
     empty.className = 'modal-menu-item';
     empty.setAttribute('aria-disabled','true');
     empty.style.pointerEvents = 'none';
-    empty.innerHTML = `<span class="icon-img">🎉</span><span>Links coming soon</span>`;
+    empty.innerHTML = `<span class="icon-img">🎉</span><span>Booking link coming soon</span>`;
     list.appendChild(empty);
   } else {
     rows.forEach(r => {
@@ -2522,7 +2542,6 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
         ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
         : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
       a.innerHTML = `${iconHTML}<span>${r.label}</span>`;
-      // tracking is optional; _track may not exist in this scope
       if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true });
       list.appendChild(a);
     });
@@ -2532,20 +2551,62 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
   showModal(id);
 }
 
-// 🎯 Navigation modal (compact list with icons; header + red × like QR/Help)
-function createNavigationModal({ name, lat, lng }) {
-  const id = 'nav-modal';
-  document.getElementById(id)?.remove();
+  // Top bar (sticky) — reuses your QR/Help style
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">🎯 Navigation</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  m.querySelector('.modal-content')?.prepend(top);
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
 
-  // Build modal shell via injectModal (body replaced right after)
-  const m = injectModal({
-    id,
-    title: '',            // header built as top bar (uniform with QR/Help)
-    layout: 'action',
-    bodyHTML: `
-      <div class="modal-menu-list" id="nav-modal-list"></div>
-    `
-  });  
+  // Build items (icons in /assets/social/) + per-provider tracking labels
+  const list = m.querySelector('#nav-modal-list');
+  const rows = [
+    {
+      label: 'Google Maps',
+      icon: '/assets/social/icons-google-maps.svg',
+      href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      track: 'nav.google'
+    },
+    {
+      label: 'Waze',
+      icon: '/assets/social/icons-waze.png',
+      href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
+      track: 'nav.waze'
+    },
+    {
+      label: 'Apple Maps',
+      emoji: '🍎',
+      href: `https://maps.apple.com/?daddr=${lat},${lng}`,
+      track: 'nav.apple'
+    }
+  ];
+
+  rows.forEach(r => {
+    const btn = document.createElement('a');
+    btn.className = 'modal-menu-item';
+    btn.href = r.href;
+    btn.target = '_blank';
+    btn.rel = 'noopener';
+
+    const iconHTML = r.emoji
+      ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
+      : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
+
+    btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
+
+    if (typeof _track === 'function' && r.track) {
+      btn.addEventListener('click', () => { _track(r.track); }, { passive: true });
+    }
+    list.appendChild(btn);
+  });
+
+  // Tap-out close & show
+  setupTapOutClose(id);
+  showModal(id);
+}
 
 // 🛑 Prevents overlapping share attempts by locking during active share operation.
 // Ensures navigator.share is not called multiple times simultaneously (InvalidStateError workaround)
