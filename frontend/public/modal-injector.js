@@ -2458,39 +2458,23 @@ function createNavigationModal({ name, lat, lng }) {
   });
   
 // ============================
-// 🎉 Social Channels modal (TOP-LEVEL in the same scope)
+// 🎉 Social Channels modal (MODULE-SCOPED) 
+// Reason: fix scope so 🎉 handler can open same-style modal as Navigation.
 // ============================
-function createSocialModal({ name, links = {}, contact = {} }) {
+export function createSocialModal({ name, links = {}, contact = {} }) {
   const id = 'social-modal';
-  const prev = document.getElementById(id);
-  if (prev) prev.remove();
+  document.getElementById(id)?.remove();
 
-  // local helpers (self-contained)
-  function normUrl(u) {
-    const s = String(u || '').trim();
-    if (!s) return '';
-    if (/^(?:https?:)?\/\//i.test(s)) return s;
-    if (s.startsWith('www.') || s.includes('.')) return 'https://' + s;
-    return s;
-  }
-  function waUrl(v) {
-    const s = String(v || '').trim();
-    if (!s) return '';
-    const n = s.replace(/[^\d+]/g, '').replace(/^\+?/, '');
-    return n ? `https://wa.me/${n}` : '';
-  }
-  function tgUrl(v) {
-    const s = String(v || '').trim();
-    if (!s) return '';
-    return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/, '')}`;
-  }
-  function msUrl(v) {
-    const s = String(v || '').trim();
-    if (!s) return '';
-    return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`;
-  }
+  // local helpers; 2 lines each; no globals
+  const normUrl = (u) => {
+    const s = String(u || '').trim(); if (!s) return '';
+    return /^(?:https?:)?\/\//i.test(s) ? s : (s.startsWith('www.') || s.includes('.') ? 'https://' + s : s);
+  };
+  const waUrl = (v) => { const s = String(v || '').trim(); if (!s) return ''; const n = s.replace(/[^\d+]/g,'').replace(/^\+?/, ''); return n ? `https://wa.me/${n}` : ''; };
+  const tgUrl = (v) => { const s = String(v || '').trim(); if (!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/,'')}`; };
+  const msUrl = (v) => { const s = String(v || '').trim(); if (!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`; };
 
-  // modal shell
+  // same shell as Navigation: injectModal + .modal-top-bar header; no footer
   const modal = injectModal({
     id,
     title: '',
@@ -2498,50 +2482,50 @@ function createSocialModal({ name, links = {}, contact = {} }) {
     bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
   });
 
-  // header + close
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
   top.innerHTML = `
-    <h2 class="modal-title">Social Channels</h2>
+    <h2 class="modal-title">${String(name || 'Social Channels')}</h2>
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
-  const content = modal.querySelector('.modal-content');
-  if (content) content.prepend(top);
+  modal.querySelector('.modal-content')?.prepend(top);
   top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
 
-  // providers (Website + Social + Chat) — icons under /assets/social/
+  // providers: use icon files only; reuse existing asset paths
   const providers = [
-    { key:'official',  label:'Website',   emoji:'🔗',                               track:'social.website',  href: normUrl(links.official) },
+    // Use a generic link icon; remove if you don't ship one.
+    { key:'official',  label:'Website',   icon:'/assets/social/icons-website.svg',   track:'social.website',  href: normUrl(links.official) },
+
     { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook', href: normUrl(links.facebook) },
     { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram',href: normUrl(links.instagram) },
-    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',   href: normUrl(links.tiktok) },
     { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',  href: normUrl(links.youtube) },
+    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',   href: normUrl(links.tiktok) },
     { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest',href: normUrl(links.pinterest) },
+    { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'social.linkedin', href: normUrl(links.linkedin) },
     { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',  href: normUrl(links.spotify) },
+
+    // chat links (normalized)
     { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp', href: waUrl(contact.whatsapp) },
     { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'social.telegram', href: tgUrl(contact.telegram) },
     { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'social.messenger',href: msUrl(contact.messenger) }
   ];
 
   const list = modal.querySelector('#social-modal-list');
-  const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim().length > 0);
+  const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim());
 
   if (!rows.length) {
     const empty = document.createElement('div');
     empty.className = 'modal-menu-item';
     empty.setAttribute('aria-disabled','true');
     empty.style.pointerEvents = 'none';
-    empty.innerHTML = `<span class="icon-img">🎉</span><span>Booking link coming soon</span>`;
+    empty.innerHTML = `<span class="icon-img"><img src="/assets/social/icons-website.svg" alt=""></span><span>Links coming soon</span>`;
     list.appendChild(empty);
   } else {
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
       a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
-      const iconHTML = r.emoji
-        ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
-        : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
-      a.innerHTML = `${iconHTML}<span>${r.label}</span>`;
+      a.innerHTML = `<span class="icon-img"><img src="${r.icon}" alt=""></span><span>${r.label}</span>`;
       if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true });
       list.appendChild(a);
     });
