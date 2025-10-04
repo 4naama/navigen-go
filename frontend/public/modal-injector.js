@@ -2544,12 +2544,18 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
 
   // providers: icons only; reuse existing asset paths; no emojis
   const providers = [
-    { key:'official',  label:'Website',   icon:'/assets/social/icons-website.svg',   track:'social.website',  href: normUrl(links.official) },
+    { 
+      key:'official',
+      label:'🌐 Website',                 // emoji: clearer than paperclip; no missing asset
+      icon:'',                            // falsy → renderer should skip <img>
+      track:'social.website',
+      href: normUrl(links.official || contact.officialUrl || links.website || contact.website)
+    },
     { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook', href: normUrl(links.facebook) },
     { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram',href: normUrl(links.instagram) },
     { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',  href: normUrl(links.youtube) },
     { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',   href: normUrl(links.tiktok) },
-    { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest',href: normUrl(links.pinterest) },
+    { key:'pinterest', label:'', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest', href: normUrl(links.pinterest) },
     { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'social.linkedin', href: normUrl(links.linkedin) },
     { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',  href: normUrl(links.spotify) },
     { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp', href: waUrl(contact.whatsapp) },
@@ -2572,7 +2578,8 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
       a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
-      a.innerHTML = `<span class="icon-img"><img src="${r.icon}" alt=""></span><span>${r.label}</span>`;
+      // render text only when present; avoids gap for icon-only items
+      a.innerHTML = `<span class="icon-img"><img src="${r.icon}" alt=""></span>` + (r.label ? `<span>${r.label}</span>` : '');
       if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true }); // track if available
       list.appendChild(a);
     });
