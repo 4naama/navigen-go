@@ -257,7 +257,8 @@ export function showLocationProfileModal(data) {
   // Prefetch cover fast; avoid placeholder first paint (2 lines of comments).
   ;(async () => {
     try {
-      const id = String(data?.id || '').trim();
+      // use locationID fallback; avoids bad loc_* lookups
+      const id = String(data?.id || data?.locationID || '').trim();
       const need =
         !data?.media?.cover ||
         /placeholder-images/.test(String(data?.media?.cover || '')) ||
@@ -1204,7 +1205,8 @@ async function initLpmImageSlider(modal, data) {
   // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
   ;(async () => {
     try {
-      const id = String(data?.id || '').trim(); if (!id) return;
+      // accept locationID too; skip when missing
+      const id = String(data?.id || data?.locationID || '').trim(); if (!id) return;
       const needEnrich =
         !data?.descriptions ||
         !data?.media?.cover ||
@@ -1274,7 +1276,9 @@ function makeLocationButton(loc) {
   const btn = document.createElement('button');
   btn.textContent = loc["Short Name"] || loc.locationName || loc.Name || "Unnamed"; // prefer new name
 
-  btn.setAttribute('data-id', String(loc.ID || loc.locationID || loc.id || '')); // prefer new id
+  // prefer stable profile id; avoid transient loc_*
+  // keep: small comment; 2 lines max
+  btn.setAttribute('data-id', String(loc.locationID || loc.ID || loc.id || ''));
   btn.classList.add('location-button');
   btn.dataset.lower = (loc["Short Name"] || loc.locationName || loc.Name || "Unnamed").toLowerCase(); // prefer new name
   
