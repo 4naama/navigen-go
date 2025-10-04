@@ -925,7 +925,7 @@ async function initLpmImageSlider(modal, data) {
     // 🎉 Social Channels — open social modal (capture to beat other handlers)
     const socialBtn = modal.querySelector('#som-social');
     if (socialBtn) {
-      socialBtn.addEventListener('click', (e) => {
+      socialBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopImmediatePropagation();
         e.stopPropagation();
@@ -933,19 +933,20 @@ async function initLpmImageSlider(modal, data) {
         let links   = (data && data.links)   || {};
         let contact = (data && data.contact) || {};
 
-        // fallback: if missing, pull from profiles.locations by id (no globals created)
-        const isEmptyLinks =
-          !links || !Object.values(links).some(v => String(v || '').trim());
-        const isEmptyContact =
-          !contact || !['whatsapp','telegram','messenger'].some(k => String(contact[k] || '').trim());
+        const hasLinks = links && Object.values(links).some(v => String(v || '').trim());
+        const hasContact = contact && ['whatsapp','telegram','messenger'].some(k => String(contact[k] || '').trim());
 
-        if ((isEmptyLinks || isEmptyContact) && typeof profiles === 'object' && Array.isArray(profiles.locations)) {
+        // If missing, fetch profile by id and fill from payload (same API helper as LPM enrich)
+        if (!hasLinks || !hasContact) {
           try {
-            const uid = String(data?.id || data?.locationID || '').trim();
-            const rec = profiles.locations.find(x => String(x?.locationID || x?.id) === uid);
-            if (rec) {
-              if (isEmptyLinks && rec.links)   links   = rec.links;
-              if (isEmptyContact && rec.contact) contact = rec.contact;
+            const id = String(data?.id || data?.locationID || '').trim();
+            if (id) {
+              const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
+              if (res.ok) {
+                const payload = await res.json();
+                if (!hasLinks && payload.links)   links   = payload.links;
+                if (!hasContact && payload.contact) contact = payload.contact;
+              }
             }
           } catch {}
         }
