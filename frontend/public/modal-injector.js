@@ -937,7 +937,7 @@ async function initLpmImageSlider(modal, data) {
         // fill from API export (same source as postal/media); no CORS hacks
         // 2 lines: only fetch when missing any social/contact field.
         const missingLinks = !links || !Object.values(links).some(v => String(v || '').trim());
-        const missingContact = !contact || ['whatsapp','telegram','messenger','booking','bookingUrl','email','phone']
+        const missingContact = !contact || !['whatsapp','telegram','messenger','booking','bookingUrl','email','phone']
           .some(k => String((contact || {})[k] || '').trim());
 
         if (missingLinks || missingContact) {
@@ -1251,9 +1251,11 @@ import { handleDonation } from "./scripts/stripe.js";
 const API = (path) => {
   const meta = document.querySelector('meta[name="api-origin"]')?.content?.trim();
   const host = location.hostname;
-  const base = meta || ((host === 'localhost' || host === '127.0.0.1')
-    ? 'https://navigen.io'
-    : 'https://navigen-api.4naama-39c.workers.dev'); // prod Worker
+  // comments: same-origin on pages.dev to avoid CORS; keep localhost→navigen.io
+  const base = meta
+    || (host.endsWith('pages.dev') ? location.origin
+    : (host === 'localhost' || host === '127.0.0.1') ? 'https://navigen.io'
+    : 'https://navigen-api.4naama-39c.workers.dev');
   return new URL(path, base).toString();
 };
 

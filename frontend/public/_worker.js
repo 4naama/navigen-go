@@ -407,7 +407,8 @@ async function handleProfile(req, env, url, extraHdr){
   const r = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
   if (!r.ok) return new Response('Data load error', { status: 500 });
   const profiles = await r.json();
-  const p = (Array.isArray(profiles?.locations)?profiles.locations:[]).find(x=>String(x.ID||x.id)===String(id));
+  const p = (Array.isArray(profiles?.locations) ? profiles.locations : [])
+    .find(x => String(x.locationID || x.ID || x.id) === String(id));
   if(!p) return new Response('Not Found',{status:404});
   const payload = {
     id: p.ID||p.id, name: p.name||p.Name||'', shortName: p.shortName||p['Short Name']||'',
@@ -443,7 +444,8 @@ async function handleContact(req, env, url, extraHdr){
   const r = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
   if (!r.ok) return new Response('Data load error', { status: 500 });
   const profiles = await r.json();
-  const p = (Array.isArray(profiles?.locations)?profiles.locations:[]).find(x=>String(x.ID||x.id)===String(id));
+  const p = (Array.isArray(profiles?.locations) ? profiles.locations : [])
+    .find(x => String(x.locationID || x.ID || x.id) === String(id));
   if(!p) return new Response('Not Found',{status:404});
   const c = p.contact||{};
   // booking: 204 if missing; 200 JSON if present (no redirect)
