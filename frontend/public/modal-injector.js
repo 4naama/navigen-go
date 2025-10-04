@@ -2546,9 +2546,10 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
   const providers = [
     { 
       key:'official',
-      label:'🌐 Website',                 // emoji: clearer than paperclip; no missing asset
-      icon:'',                            // falsy → renderer should skip <img>
+      label:'🌐 Website',        // emoji so we don't rely on a missing svg
+      icon:'',                   // no img for website → text-only row
       track:'social.website',
+      // fallbacks: contact.officialUrl, links.website, contact.website
       href: normUrl(links.official || contact.officialUrl || links.website || contact.website)
     },
     { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook', href: normUrl(links.facebook) },
@@ -2571,15 +2572,21 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
     empty.className = 'modal-menu-item';
     empty.setAttribute('aria-disabled','true');
     empty.style.pointerEvents = 'none';
-    empty.innerHTML = `<span class="icon-img"><img src="/assets/social/icons-website.svg" alt=""></span><span>Links coming soon</span>`;
+    // emoji instead of missing website svg
+    empty.innerHTML = `<span class="icon-img" aria-hidden="true">🌐</span><span>Links coming soon</span>`;
     list.appendChild(empty);
   } else {
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
       a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
-      // render text only when present; avoids gap for icon-only items
-      a.innerHTML = `<span class="icon-img"><img src="${r.icon}" alt=""></span>` + (r.label ? `<span>${r.label}</span>` : '');
+      // icon-sized img; render text only if label present (icon-only Pinterest)
+      a.innerHTML =
+        `<span class="icon-img">` +
+          (r.icon ? `<img src="${r.icon}" alt="" width="20" height="20">` : '') +
+        `</span>` +
+        (r.label ? `<span>${r.label}</span>` : '');
+
       if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true }); // track if available
       list.appendChild(a);
     });
