@@ -2591,63 +2591,6 @@ function createNavigationModal({ name, lat, lng }) {
   showModal(id);
 }
 
-  // Top bar (sticky) — reuses your QR/Help style
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  top.innerHTML = `
-    <h2 class="modal-title">🎯 Navigation</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  m.querySelector('.modal-content')?.prepend(top);
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
-
-  // Build items (icons in /assets/social/) + per-provider tracking labels
-  const list = m.querySelector('#nav-modal-list');
-  const rows = [
-    {
-      label: 'Google Maps',
-      icon: '/assets/social/icons-google-maps.svg',
-      href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-      track: 'nav.google'
-    },
-    {
-      label: 'Waze',
-      icon: '/assets/social/icons-waze.png',
-      href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
-      track: 'nav.waze'
-    },
-    {
-      label: 'Apple Maps',
-      emoji: '🍎',
-      href: `https://maps.apple.com/?daddr=${lat},${lng}`,
-      track: 'nav.apple'
-    }
-  ];
-
-  rows.forEach(r => {
-    const btn = document.createElement('a');
-    btn.className = 'modal-menu-item';
-    btn.href = r.href;
-    btn.target = '_blank';
-    btn.rel = 'noopener';
-
-    const iconHTML = r.emoji
-      ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
-      : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
-
-    btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
-
-    if (typeof _track === 'function' && r.track) {
-      btn.addEventListener('click', () => { _track(r.track); }, { passive: true });
-    }
-    list.appendChild(btn);
-  });
-
-  // Tap-out close & show
-  setupTapOutClose(id);
-  showModal(id);
-}
-
 // 🛑 Prevents overlapping share attempts by locking during active share operation.
 // Ensures navigator.share is not called multiple times simultaneously (InvalidStateError workaround)
 let isSharing = false;
