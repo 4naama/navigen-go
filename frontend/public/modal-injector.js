@@ -2546,11 +2546,17 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
   const providers = [
     { 
       key:'official',
-      label:'🌐 Website',        // emoji so we don't rely on a missing svg
-      icon:'',                   // no img for website → text-only row
+      label:'🌐 Website',        // emoji-only; no missing svg
+      icon:'',                   // text-only row
       track:'social.website',
-      // fallbacks: contact.officialUrl, links.website, contact.website
-      href: normUrl(links.official || contact.officialUrl || links.website || contact.website)
+      // broaden fallbacks: officialUrl/officialURL + website/site variants
+      href: normUrl(
+        links.official
+        || contact.officialUrl || contact.officialURL
+        || links.officialUrl   || links.Official
+        || links.website       || contact.website
+        || links.site          || contact.site
+      )
     },
     { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook', href: normUrl(links.facebook) },
     { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram',href: normUrl(links.instagram) },
@@ -2580,12 +2586,17 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
       a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
-      // icon-sized img; render text only if label present (icon-only Pinterest)
+      // icon-sized img; text only when label exists (Pinterest = icon-only)
       a.innerHTML =
         `<span class="icon-img">` +
-          (r.icon ? `<img src="${r.icon}" alt="" width="20" height="20">` : '') +
+          (r.icon ? `<img src="${r.icon}" alt="" width="20" height="20" style="display:block;object-fit:contain;">` : '') +
         `</span>` +
         (r.label ? `<span>${r.label}</span>` : '');
+      
+      // center icon-only rows; avoid left gap
+      if (!r.label) {
+        a.style.justifyContent = 'center';
+      }            
 
       if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true }); // track if available
       list.appendChild(a);
