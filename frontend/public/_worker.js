@@ -371,7 +371,9 @@ async function handleList(req, env, url, extraHdr){
     const tagsMerged = Array.from(new Set([...tags, ...extraTags]));
 
     return {
-      id: p.ID || p.id,
+      // prefer stable profile id; keep legacy fallbacks
+      id: p.locationID || p.ID || p.id,
+      locationID: p.locationID || '',      // expose for clients that expect the new key
       name: p.name?.en || p.Name || '',
       shortName: p.shortName?.en || p['Short Name'] || '',
       groupKey: p.groupKey || p.Group || '',

@@ -1257,11 +1257,11 @@ import { handleDonation } from "./scripts/stripe.js";
 const API = (path) => {
   const meta = document.querySelector('meta[name="api-origin"]')?.content?.trim();
   const host = location.hostname;
-  // comments: same-origin on pages.dev to avoid CORS; keep localhost→navigen.io
+  // keep: use same-origin in prod (navigen.io & pages.dev); dev may point to pages.dev
   const base = meta
-    || (host.endsWith('pages.dev') ? location.origin
-    : (host === 'localhost' || host === '127.0.0.1') ? 'https://navigen.io'
-    : 'https://navigen-api.4naama-39c.workers.dev');
+    || (host === 'localhost' || host === '127.0.0.1'
+        ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen-go.pages.dev')
+        : location.origin);
   return new URL(path, base).toString();
 };
 
