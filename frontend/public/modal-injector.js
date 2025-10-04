@@ -726,23 +726,49 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
 
-    // 📅 Book → open bookingUrl if present; else toast
+    // 📅 Book → open bookingUrl if present; else fetch once and toast
     const btnBook = modal.querySelector('#lpm-book');
     if (btnBook) {
-      btnBook.addEventListener('click', (e) => {
-        e.preventDefault();                  // keep click inside the modal
-        const link =
-          data?.contact?.bookingUrl ||       // exporter target
-          data?.links?.booking ||            // optional mirror
-          '';
+      // if upstream already wired onclick, skip to prevent double-open
+      if (typeof btnBook.onclick === 'function') { return; }
 
-        if (link) {
-          _track && _track('booking');       // analytics (only if defined)
-          window.open(String(link), '_blank', 'noopener');
-        } else {
-          showToast('Booking link coming soon', 1600);
-        }
-      }, { passive: false });
+      const link =
+        data?.contact?.bookingUrl ||       // exporter target
+        data?.links?.booking ||            // optional mirror
+        '';
+
+      if (link) {
+        // use native anchor open; no JS window.open to avoid duplicates
+        btnBook.setAttribute('href', String(link));
+        btnBook.setAttribute('target', '_blank');
+        btnBook.setAttribute('rel', 'noopener');
+        // track only; native anchor handles opening
+        btnBook.addEventListener('click', () => { _track && _track('booking'); }, { passive: true });
+      } else {
+        let busy = false; // run-once guard
+        btnBook.addEventListener('click', async (e) => {
+          e.preventDefault();                  // keep click inside the modal
+          e.stopImmediatePropagation();        // ensure a single handler runs
+          if (busy) return; busy = true;
+
+          const id = String(data?.id || data?.locationID || '').trim();
+          if (!id) { showToast('Booking link coming soon', 1600); busy = false; return; }
+
+          try {
+            const url = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`);
+            const r = await fetch(url, { credentials: 'include' });
+            if (r.ok) {
+              const j = await r.json().catch(() => ({}));
+              if (j && j.href) { _track && _track('booking'); window.open(String(j.href), '_blank', 'noopener'); busy = false; return; }
+            }
+            showToast('Booking link coming soon', 1600);
+          } catch {
+            showToast('Booking link coming soon', 1600);
+          } finally {
+            busy = false;
+          }
+        }, { passive: false });
+      }
     }
 
     // 🔳 QR → modal with QR; track click
