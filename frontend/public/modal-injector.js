@@ -930,22 +930,31 @@ async function initLpmImageSlider(modal, data) {
         e.stopImmediatePropagation();
         e.stopPropagation();
 
+        // baseline from current LPM data
         let links   = (data && data.links)   || {};
         let contact = (data && data.contact) || {};
 
-        const hasLinks = links && Object.values(links).some(v => String(v || '').trim());
-        const hasContact = contact && ['whatsapp','telegram','messenger'].some(k => String(contact[k] || '').trim());
+        // fill from API export (same source as postal/media); no CORS hacks
+        // 2 lines: only fetch when missing any social/contact field.
+        const missingLinks = !links || !Object.values(links).some(v => String(v || '').trim());
+        const missingContact = !contact || ['whatsapp','telegram','messenger','booking','bookingUrl','email','phone']
+          .some(k => String((contact || {})[k] || '').trim());
 
-        // If missing, fetch profile by id and fill from payload (same API helper as LPM enrich)
-        if (!hasLinks || !hasContact) {
+        if (missingLinks || missingContact) {
           try {
             const id = String(data?.id || data?.locationID || '').trim();
             if (id) {
-              const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
-              if (res.ok) {
-                const payload = await res.json();
-                if (!hasLinks && payload.links)   links   = payload.links;
-                if (!hasContact && payload.contact) contact = payload.contact;
+              const resp = await fetch(
+                API(`/api/data/profile?id=${encodeURIComponent(id)}`),
+                { cache: 'no-store', credentials: 'include' }
+              );
+              if (resp.ok) {
+                const payload = await resp.json().catch(() => ({}));
+                // merge only when absent locally (keep existing if already present)
+                if (payload && typeof payload === 'object') {
+                  if (missingLinks && payload.links)   links   = payload.links;
+                  if (missingContact && payload.contact) contact = payload.contact;
+                }
               }
             }
           } catch {}
