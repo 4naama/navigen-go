@@ -373,27 +373,27 @@ async function handleList(req, env, url, extraHdr){
     return {
       // prefer stable profile id; keep legacy fallbacks
       id: p.locationID || p.ID || p.id,
-      locationID: p.locationID || '',      // expose for clients that expect the new key
       name: p.name?.en || p.Name || '',
       shortName: p.shortName?.en || p['Short Name'] || '',
       groupKey: p.groupKey || p.Group || '',
       coord, // normalized {lat,lng} or null
       Priority: ((p.Priority === true || p.Priority === 1) ||
                  (String(p.Priority ?? p.priority ?? p.Popular ?? 'No').toLowerCase() === 'yes'))
-                ? 'Yes' : 'No', // Popular reads this
+                ? 'Yes' : 'No',
       contact,
+      // include socials/official/booking/newsletter so Social modal has data
+      links,   // ← this was computed above but not returned
       ratings,
       pricing,
       media: { cover: mediaCover, images: Array.isArray(p.media?.images) ? p.media.images : [] },
-      descriptions: p.descriptions || {},   // pass-through if present
-      lang: p.Lang || p.lang || '',         // hint for client-side pick
+      descriptions: p.descriptions || {},
+      lang: p.Lang || p.lang || '',
       // add media so UI has hero + gallery; 2 lines max
       media: {
         cover: (p.media && p.media.cover) || '',
         images: Array.isArray(p.media?.images) ? p.media.images : []
       }
     };
-
   });
 
   const nextCursor = (idx+limit<rows.length && (idx/limit+1)<MAX_PAGES) ? (idx+limit) : null;
