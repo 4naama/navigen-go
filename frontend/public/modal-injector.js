@@ -2442,39 +2442,24 @@ export function createHelpModal() {
   setupTapOutClose("help-modal");
 }
 
-// 🎯 Navigation modal (compact list with icons; header + red × like QR/Help)
-function createNavigationModal({ name, lat, lng }) {
-  const id = 'nav-modal';
-  document.getElementById(id)?.remove();
-
-  // Build modal shell via injectModal (body replaced right after)
-  const m = injectModal({
-    id,
-    title: '',            // header built as top bar (uniform with QR/Help)
-    layout: 'action',
-    bodyHTML: `
-      <div class="modal-menu-list" id="nav-modal-list"></div>
-    `
-  });
-  
 // ============================
-// 🎉 Social Channels modal (MODULE-SCOPED) 
-// Reason: fix scope so 🎉 handler can open same-style modal as Navigation.
+// 🎉 Social Channels modal (MODULE-SCOPED)
+// Reason: make callable from 🎉 handler; same shell as Navigation; no footer.
 // ============================
 export function createSocialModal({ name, links = {}, contact = {} }) {
   const id = 'social-modal';
   document.getElementById(id)?.remove();
 
-  // local helpers; 2 lines each; no globals
+  // local helpers (2 lines each)
   const normUrl = (u) => {
     const s = String(u || '').trim(); if (!s) return '';
     return /^(?:https?:)?\/\//i.test(s) ? s : (s.startsWith('www.') || s.includes('.') ? 'https://' + s : s);
   };
-  const waUrl = (v) => { const s = String(v || '').trim(); if (!s) return ''; const n = s.replace(/[^\d+]/g,'').replace(/^\+?/, ''); return n ? `https://wa.me/${n}` : ''; };
-  const tgUrl = (v) => { const s = String(v || '').trim(); if (!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/,'')}`; };
-  const msUrl = (v) => { const s = String(v || '').trim(); if (!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`; };
+  const waUrl = (v) => { const s=String(v||'').trim(); if(!s) return ''; const n=s.replace(/[^\d+]/g,'').replace(/^\+?/, ''); return n?`https://wa.me/${n}`:''; };
+  const tgUrl = (v) => { const s=String(v||'').trim(); if(!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/,'')}`; };
+  const msUrl = (v) => { const s=String(v||'').trim(); if(!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`; };
 
-  // same shell as Navigation: injectModal + .modal-top-bar header; no footer
+  // same shell as Navigation: inject + header top bar; no footer
   const modal = injectModal({
     id,
     title: '',
@@ -2482,20 +2467,21 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
     bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
   });
 
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  top.innerHTML = `
-    <h2 class="modal-title">${String(name || 'Social Channels')}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  modal.querySelector('.modal-content')?.prepend(top);
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+  // top bar header (close only here)
+  {
+    const top = document.createElement('div');
+    top.className = 'modal-top-bar';
+    top.innerHTML = `
+      <h2 class="modal-title">${String(name || 'Social Channels')}</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    `;
+    modal.querySelector('.modal-content')?.prepend(top);
+    top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+  }
 
-  // providers: use icon files only; reuse existing asset paths
+  // providers: icons only; reuse existing asset paths; no emojis
   const providers = [
-    // Use a generic link icon; remove if you don't ship one.
     { key:'official',  label:'Website',   icon:'/assets/social/icons-website.svg',   track:'social.website',  href: normUrl(links.official) },
-
     { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook', href: normUrl(links.facebook) },
     { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram',href: normUrl(links.instagram) },
     { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',  href: normUrl(links.youtube) },
@@ -2503,8 +2489,6 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
     { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest',href: normUrl(links.pinterest) },
     { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'social.linkedin', href: normUrl(links.linkedin) },
     { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',  href: normUrl(links.spotify) },
-
-    // chat links (normalized)
     { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp', href: waUrl(contact.whatsapp) },
     { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'social.telegram', href: tgUrl(contact.telegram) },
     { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'social.messenger',href: msUrl(contact.messenger) }
@@ -2526,11 +2510,83 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
       a.className = 'modal-menu-item';
       a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
       a.innerHTML = `<span class="icon-img"><img src="${r.icon}" alt=""></span><span>${r.label}</span>`;
-      if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true });
+      if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true }); // track if available
       list.appendChild(a);
     });
   }
 
+  setupTapOutClose(id);
+  showModal(id);
+}
+
+// 🎯 Navigation modal (compact list with icons; header + red × like QR/Help)
+function createNavigationModal({ name, lat, lng }) {
+  const id = 'nav-modal';
+  document.getElementById(id)?.remove();
+
+  // Build modal shell via injectModal (body replaced right after)
+  const m = injectModal({
+    id,
+    title: '',            // header built as top bar (uniform with QR/Help)
+    layout: 'action',
+    bodyHTML: `
+      <div class="modal-menu-list" id="nav-modal-list"></div>
+    `
+  });
+
+  // Top bar (sticky) — reuses your QR/Help style
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">🎯 Navigation</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  m.querySelector('.modal-content')?.prepend(top);
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  // Build items (icons in /assets/social/) + per-provider tracking labels
+  const list = m.querySelector('#nav-modal-list');
+  const rows = [
+    {
+      label: 'Google Maps',
+      icon: '/assets/social/icons-google-maps.svg',
+      href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      track: 'nav.google'
+    },
+    {
+      label: 'Waze',
+      icon: '/assets/social/icons-waze.png',
+      href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
+      track: 'nav.waze'
+    },
+    {
+      label: 'Apple Maps',
+      emoji: '🍎',
+      href: `https://maps.apple.com/?daddr=${lat},${lng}`,
+      track: 'nav.apple'
+    }
+  ];
+
+  rows.forEach(r => {
+    const btn = document.createElement('a');
+    btn.className = 'modal-menu-item';
+    btn.href = r.href;
+    btn.target = '_blank';
+    btn.rel = 'noopener';
+
+    const iconHTML = r.emoji
+      ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
+      : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
+
+    btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
+
+    if (typeof _track === 'function' && r.track) {
+      btn.addEventListener('click', () => { _track(r.track); }, { passive: true });
+    }
+    list.appendChild(btn);
+  });
+
+  // Tap-out close & show
   setupTapOutClose(id);
   showModal(id);
 }
