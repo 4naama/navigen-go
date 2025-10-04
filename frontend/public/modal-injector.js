@@ -965,13 +965,20 @@ async function initLpmImageSlider(modal, data) {
         let links   = (data && data.links)   || {};
         let contact = (data && data.contact) || {};
 
-        // fill from API export (same source as postal/media); no CORS hacks
-        // 2 lines: only fetch when missing any social/contact field.
+        // fill from API export (same source as postal/media); fetch when Website is missing too
         const missingLinks = !links || !Object.values(links).some(v => String(v || '').trim());
         const missingContact = !contact || !['whatsapp','telegram','messenger','booking','bookingUrl','email','phone']
           .some(k => String((contact || {})[k] || '').trim());
 
-        if (missingLinks || missingContact) {
+        // detect missing Website across common fields
+        const websiteMissing = !(() => {
+          const site =
+            (links && (links.official || links.website || links.site)) ||
+            (contact && (contact.officialUrl || contact.officialURL || contact.website || contact.site)) || '';
+          return String(site).trim();
+        })();
+
+        if (missingLinks || missingContact || websiteMissing) {
           try {
             const id = String(data?.id || data?.locationID || '').trim();
             if (id) {
@@ -981,10 +988,14 @@ async function initLpmImageSlider(modal, data) {
               );
               if (resp.ok) {
                 const payload = await resp.json().catch(() => ({}));
-                // merge only when absent locally (keep existing if already present)
                 if (payload && typeof payload === 'object') {
-                  if (missingLinks && payload.links)   links   = payload.links;
-                  if (missingContact && payload.contact) contact = payload.contact;
+                  // merge only when absent locally (keep existing values)
+                  if (payload.links && typeof payload.links === 'object') {
+                    links = Object.assign({}, payload.links, links);
+                  }
+                  if (payload.contact && typeof payload.contact === 'object') {
+                    contact = Object.assign({}, payload.contact, contact);
+                  }
                 }
               }
             }
@@ -2546,16 +2557,12 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
   const providers = [
     {
       key:'official',
-      label:'Website',                            // text + icon like others
-      icon:'/assets/social/icons-globe.svg',      // local globe svg
+      label:'🌐 Website',  // requested label
+      icon:'',             // text-only row; no missing asset
       track:'social.website',
-      // unified fallbacks: prefer links.official, then common aliases
       href: normUrl(
-        links.official
-        || contact.officialUrl || contact.officialURL
-        || links.website       || contact.website
-        || links.site          || contact.site
-        || links.officialUrl   || links.Official
+        (links && (links.official || links.website || links.site)) ||
+        (contact && (contact.officialUrl || contact.officialURL || contact.website || contact.site))
       )
     },
     { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook',  href: normUrl(links.facebook) },
