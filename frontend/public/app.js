@@ -1420,7 +1420,22 @@ async function initEmergencyBlock(countryOverride) {
       // Main UI text
       // safe set: optional chaining cannot be on assignment LHS
       const titleEl = document.getElementById("page-title"); if (titleEl) titleEl.textContent = t("page.title");
-      const sub = document.querySelector(".page-subtext"); if (sub) sub.textContent = t("page.tagline");
+      
+      // Sub-tagline: prefer context-scoped i18n key from meta("navigen-context") or URL path.
+      // Fallback to t("page.tagline") when no override; ctx sanitized to snake_case.
+      const sub = document.querySelector(".page-subtext");
+      if (sub) {
+        // pick context from meta or path; fallback to default key
+        const metaCtx = document.querySelector('meta[name="navigen-context"]')?.content?.trim() || "";
+        const ctxFromPath = location.pathname
+          .replace(/^\/(?:en|hu|he|es)\//, "")
+          .replace(/\/$/, "");
+        const ctx = (metaCtx || ctxFromPath).toLowerCase();
+        const ctxKey = ctx ? `page.tagline.${ctx.replace(/[^\w]+/g, "_")}` : "page.tagline";
+        const val = t(ctxKey);
+        sub.textContent = (val && val !== ctxKey) ? val : t("page.tagline"); // 2-line comment: prefer ctx, fallback default
+      }
+
       const s = document.getElementById("search"); if (s) s.placeholder = t("search.placeholder");
       const here = document.getElementById("here-button"); if (here) here.textContent = t("button.here");
 
@@ -1472,7 +1487,8 @@ async function initEmergencyBlock(countryOverride) {
       gearBtn.id = 'view-gear';
       gearBtn.type = 'button';
       gearBtn.title = t('view.settings.title'); // localized tooltip
-      gearBtn.textContent = '⚙️';
+      // use filter icon svg instead of emoji (consistent look)
+      gearBtn.innerHTML = '<img src="/assets/filter-icon.svg" alt="" width="20" height="20">';
 
       // ⬇️ Ensure the clear (×) lives inside the search container and right after the input
       // short: make CSS selector #search + #clear-search and absolute position work
@@ -1489,6 +1505,11 @@ async function initEmergencyBlock(countryOverride) {
       // ⬇️ Insert gear after × if present; else after input
       const anchor = document.getElementById('clear-search') || searchInput; // short: prefer × anchor
       anchor.insertAdjacentElement('afterend', gearBtn); // keeps × visually at input’s right edge
+      
+      // ensure icon present even if button came from HTML (one-time swap)
+      if (!gearBtn.querySelector('img')) {
+        gearBtn.innerHTML = '<img src="/assets/filter-icon.svg" alt="">'; // size via CSS only
+      }            
     }
 
       // ✅ Build labels & open the button-less modal (no buttons; closes on select/ESC/backdrop)

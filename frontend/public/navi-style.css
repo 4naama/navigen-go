@@ -118,6 +118,9 @@ body {
   line-height: 1;                  /* no baseline drift */
 }
 
+/* image-based icon inside the view gear button */
+#view-gear img{ width:20px; height:20px; display:block; }
+
 #view-gear:hover{ background: rgba(0,0,0,.06); }
 #view-gear:focus-visible{ outline: 2px solid #e11; outline-offset: 2px; }
 
@@ -176,7 +179,7 @@ body {
 
   height: 36px;
   /* top | right | bottom | left */
-  padding: 8px 10px 8px 14px;  /* right = 10px, left = 14px */
+  padding: 8px 10px 8px 10px;  /* right = 10px, left = 10px */
   background: #fff;
   border: 1px solid var(--search-border, #d7dde4);
   border-radius: 6px;
