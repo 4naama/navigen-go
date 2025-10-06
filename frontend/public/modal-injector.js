@@ -1555,7 +1555,7 @@ function appendResolvedButton(actions, modalId = "my-stuff-modal") {
 }
 
 // ✅ Helper: View-by settings modal (button-less; uses standard .modal shell)
-export function openViewSettingsModal({ title, contextLine, note, options, currentKey, resetLabel, onPick }) {
+export function openViewSettingsModal({ title, contextLine, options, currentKey, resetLabel, onPick }) {
   const doc=document, body=doc.body;
 
   const overlay = doc.createElement('div');
@@ -1584,14 +1584,7 @@ export function openViewSettingsModal({ title, contextLine, note, options, curre
   bodyWrap.className = 'modal-body';
   const inner = doc.createElement('div');
   inner.className = 'modal-body-inner';
-  // note line: skip legacy scope hint only (keeps other notes)
-  {
-    const noteText = String(note || '').trim();
-    if (noteText && !/^applies\s+to\s+this\s+page\s+only\.?$/i.test(noteText)) {
-      const line2 = doc.createElement('p'); line2.textContent = noteText;
-      inner.append(line2);
-    }
-  }
+  
   const line3 = doc.createElement('p'); line3.textContent = contextLine;          // 🏫 Language Schools › brand › scope
 
   // ── Render "contextLine" as two-row breadcrumbs (icon + colored ›; wraps on row2).

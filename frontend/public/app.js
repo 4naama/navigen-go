@@ -1496,7 +1496,10 @@ async function initEmergencyBlock(countryOverride) {
       gearBtn.type = 'button';
       gearBtn.title = t('view.settings.title'); // localized tooltip
       // use filter icon svg instead of emoji (consistent look)
-      gearBtn.innerHTML = '<img src="/assets/filter-icon.svg" alt="" width="20" height="20">';
+      // enforce new filter icon (PNG); size via CSS (no inline)
+      const _img0 = gearBtn.querySelector('img');
+      if (_img0) { _img0.src = '/assets/icons-sliders.png'; _img0.alt = ''; }
+      else { gearBtn.innerHTML = '<img src="/assets/icons-sliders.png" alt="">'; }
 
       // ⬇️ Ensure the clear (×) lives inside the search container and right after the input
       // short: make CSS selector #search + #clear-search and absolute position work
@@ -1514,10 +1517,12 @@ async function initEmergencyBlock(countryOverride) {
       const anchor = document.getElementById('clear-search') || searchInput; // short: prefer × anchor
       anchor.insertAdjacentElement('afterend', gearBtn); // keeps × visually at input’s right edge
       
-      // ensure icon present even if button came from HTML (one-time swap)
-      if (!gearBtn.querySelector('img')) {
-        gearBtn.innerHTML = '<img src="/assets/filter-icon.svg" alt="">'; // size via CSS only
-      }            
+      // enforce icon even if button came from HTML; idempotent
+      {
+        const _img = gearBtn.querySelector('img');
+        if (_img) { _img.src = '/assets/icons-sliders.png'; _img.alt = ''; }
+        else { gearBtn.innerHTML = '<img src="/assets/icons-sliders.png" alt="">'; }
+      }                   
     }
 
       // ✅ Build labels & open the button-less modal (no buttons; closes on select/ESC/backdrop)
@@ -1554,7 +1559,6 @@ async function initEmergencyBlock(countryOverride) {
         openViewSettingsModal({
           title:       t('view.settings.title'),
           contextLine: contextLineFinal,                           // no braces
-          note:        t('view.settings.note'),
           options:     opts,
           currentKey:  mode,
           resetLabel:  `Reset view to default (${modeLabelFinal})`, // no braces

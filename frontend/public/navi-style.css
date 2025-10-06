@@ -8,15 +8,18 @@ h2,
   font-family: 'Raleway', sans-serif;
 }
 
-/* sub-tagline: allow multi-line and prevent overflow */
+/* sub-tagline: wrap safely and align to accordion column */
 .page-subtext{
-  display:block;            /* occupy its own line */
-  white-space: normal;      /* wrap normally */
-  overflow-wrap: anywhere;  /* break long tokens if needed */
-  word-break: break-word;   /* legacy engines */
-  line-height: 1.3;         /* compact but readable */
-  max-width: 100%;          /* never expand layout */
-  margin-top: 4px;          /* small breathing room below title */
+  display: block;             /* occupy its own line */
+  white-space: normal;        /* wrap normally */
+  overflow-wrap: anywhere;    /* break long tokens if needed */
+  word-break: break-word;     /* legacy engines */
+  line-height: 1.3;           /* compact but readable */
+
+  width: 100%;                /* responsive */
+  max-width: 640px;           /* match accordion/card column */
+  margin: 4px auto 1em;       /* center within column */
+  padding: 0 16px;            /* same horizontal breathing as buttons */
 }
 
 /* Use Raleway for all group headers and section titles */
