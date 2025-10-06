@@ -276,6 +276,7 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   margin: 8px 0;
   padding: 6px 10px;
   font-size: .95em;   /* subtle */
+  text-align: center;   /* center the info text */
   color: #475569;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
