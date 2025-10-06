@@ -1199,6 +1199,16 @@ async function initEmergencyBlock(countryOverride) {
             .includes(ACTIVE_PAGE)
         )
       : geoPoints;
+      
+    // add Listing filter info line above Popular
+    {
+      const scroll = document.getElementById('locations-scroll');
+      if (scroll && !document.getElementById('listing-filter-info')) {
+        const info = document.createElement('div');
+        info.id = 'listing-filter-info'; // styled in CSS
+        scroll.insertBefore(info, scroll.firstChild);
+      }
+    }
 
     /**
      * 5) Render: grouped → DOM (buildAccordion), flat → header styling (wireAccordionGroups)
@@ -1255,6 +1265,16 @@ async function initEmergencyBlock(countryOverride) {
 
     // expose for wiring (builders read this attribute)
     document.documentElement.setAttribute('data-subgroup-mode', mode);
+    
+    // update "Listing filter info" line with current view label
+    {
+      const el = document.getElementById('listing-filter-info');
+      if (el) {
+        const canonKey = (Array.isArray(CANON) ? CANON.find(k => k.toLowerCase() === mode) : '') || mode;
+        const label = modeLabelByKey[canonKey] || canonKey;
+        el.textContent = `${t('listing.filterInfo.prefix')} ${label}`;
+      }
+    }
 
     // ✅ Filter opens button-less modal; selection persists per page; no centroid fallback
     (function wireViewFilter(){
