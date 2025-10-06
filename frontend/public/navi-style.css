@@ -8,11 +8,15 @@ h2,
   font-family: 'Raleway', sans-serif;
 }
 
-.page-subtext {
-  font-family: 'Raleway', sans-serif;
-  font-weight: 400;
-  text-align: center;
-  margin: 0.2em 0 1em;
+/* sub-tagline: allow multi-line and prevent overflow */
+.page-subtext{
+  display:block;            /* occupy its own line */
+  white-space: normal;      /* wrap normally */
+  overflow-wrap: anywhere;  /* break long tokens if needed */
+  word-break: break-word;   /* legacy engines */
+  line-height: 1.3;         /* compact but readable */
+  max-width: 100%;          /* never expand layout */
+  margin-top: 4px;          /* small breathing room below title */
 }
 
 /* Use Raleway for all group headers and section titles */

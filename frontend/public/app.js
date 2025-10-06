@@ -1427,13 +1427,21 @@ async function initEmergencyBlock(countryOverride) {
       if (sub) {
         // pick context from meta or path; fallback to default key
         const metaCtx = document.querySelector('meta[name="navigen-context"]')?.content?.trim() || "";
-        const ctxFromPath = location.pathname
-          .replace(/^\/(?:en|hu|he|es)\//, "")
-          .replace(/\/$/, "");
+        const ctxFromPath = location.pathname.replace(/^\/(?:en|hu|he|es)\//, "").replace(/\/$/, "");
         const ctx = (metaCtx || ctxFromPath).toLowerCase();
-        const ctxKey = ctx ? `page.tagline.${ctx.replace(/[^\w]+/g, "_")}` : "page.tagline";
-        const val = t(ctxKey);
-        sub.textContent = (val && val !== ctxKey) ? val : t("page.tagline"); // 2-line comment: prefer ctx, fallback default
+        const snake = (s) => s.replace(/[^\w]+/g, "_");
+
+        // build cascade: full ctx → parents → default
+        const parts = ctx ? ctx.split("/").filter(Boolean) : [];
+        const keys = parts.length
+          ? [ `page.tagline.${snake(parts.join("/"))}`,
+              ...parts.slice(0, -1).map((_, i) => `page.tagline.${snake(parts.slice(0, parts.length - 1 - i).join("/"))}`),
+              "page.tagline" ]
+          : ["page.tagline"];
+
+        let val = "";
+        for (const k of keys) { const v = t(k); if (v && v !== k) { val = v; break; } }
+        sub.textContent = val || t("page.tagline"); // prefer ctx; parent/default if missing
       }
 
       const s = document.getElementById("search"); if (s) s.placeholder = t("search.placeholder");
