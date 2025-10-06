@@ -10,16 +10,18 @@ h2,
 
 /* sub-tagline: wrap safely and align to accordion column */
 .page-subtext{
-  display: block;             /* occupy its own line */
-  white-space: normal;        /* wrap normally */
-  overflow-wrap: anywhere;    /* break long tokens if needed */
-  word-break: break-word;     /* legacy engines */
-  line-height: 1.3;           /* compact but readable */
+  display: block;              /* own line */
+  white-space: normal;         /* wrap normally */
+  overflow-wrap: anywhere;     /* break long tokens */
+  word-break: break-word;      /* legacy engines */
+  line-height: 1.3;
 
-  width: 100%;                /* responsive */
-  max-width: 640px;           /* match accordion/card column */
-  margin: 4px auto 1em;       /* center within column */
-  padding: 0 16px;            /* same horizontal breathing as buttons */
+  box-sizing: border-box;      /* padding included in width */
+  width: 100%;
+  max-width: min(100%, 640px); /* match column cap; responsive down */
+  margin: 4px auto 1em;        /* center in the column */
+  padding: 0 16px;             /* same side padding as buttons */
+  text-align: center;          /* keep it centered */
 }
 
 /* Use Raleway for all group headers and section titles */
