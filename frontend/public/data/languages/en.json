@@ -53,7 +53,7 @@
   "page.title.festival_sziget_2025": "Sziget Festival 2025",
   "page.tagline.festival_sziget_2025": "The Island of Freedom — Aug 6–11, Budapest",
   "page.tagline.festival_sziget": "The Island of Freedom — Budapest",
-  "search.placeholder": "Search…",
+  "search.placeholder": "🔍 Type Destination...",
   "button.here": "📍 Here",
   "tooltip.myStuff": "My Stuff",
   "tooltip.alerts": "Alerts",
@@ -340,7 +340,6 @@
   "lpm.description.placeholder": "⏳ Description coming soon.",
   "view.settings.title": "View by settings",
   "view.settings.context": "🏫 Language Schools › {brand} › {scope}",
-  "view.settings.note": "Applies to this page only.",
   "view.settings.mode.structure": "Category",
   "view.settings.mode.adminArea": "Region",
   "view.settings.mode.city": "City",
@@ -349,7 +348,6 @@
   "view.settings.mode.priority": "Priority",
   "view.settings.mode.distance": "Distance (closest first)",
   "view.settings.resetToDefault": "Reset view to default ({modeLabel})",
-  "view.settings.usingLocation": "Using your location",
   "qr.title": "QR Code",
   "qr.share": "Share",
   "qr.print": "Print",
@@ -380,6 +378,5 @@
   "cta.messenger": "Messenger",
   "rating.hint": "Rated {n}/5",
   "alerts.none": "No current alerts.",
-  "alerts.load.error": "Failed to load alerts.",
-  "access.title": "Private area — sign in to continue"
+  "alerts.load.error": "Failed to load alerts."
 }

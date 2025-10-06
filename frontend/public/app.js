@@ -1256,15 +1256,15 @@ async function initEmergencyBlock(countryOverride) {
     // expose for wiring (builders read this attribute)
     document.documentElement.setAttribute('data-subgroup-mode', mode);
 
-    // ✅ Gear opens button-less modal; selection persists per page; no centroid fallback
-    (function wireViewGear(){
-      const gear = document.getElementById('view-gear');
-      if (!gear) return;
+    // ✅ Filter opens button-less modal; selection persists per page; no centroid fallback
+    (function wireViewFilter(){
+      const filter = document.getElementById('view-filter');
+      if (!filter) return;
 
       // Build menu from allowed list; if distance is present but geolocation missing, hidden by modal helper
       const opts = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']);
 
-      gear.onclick = () => {
+      filter.onclick = () => {
         const segs = String(ACTIVE_PAGE || '').split('/');   // safe: '' → []
         if (!segs[0]) return; // no context; ignore click
         const namespace = segs[0] || '';
@@ -1488,18 +1488,17 @@ async function initEmergencyBlock(countryOverride) {
         clearBtn.style.display = 'none'; // Hide by default
       }
       
-    // ✅ Keep × and gear in the correct row order
-    let gearBtn = document.getElementById('view-gear');
-    if (!gearBtn) {
-      gearBtn = document.createElement('button');
-      gearBtn.id = 'view-gear';
-      gearBtn.type = 'button';
-      gearBtn.title = t('view.settings.title'); // localized tooltip
-      // use filter icon svg instead of emoji (consistent look)
-      // enforce new filter icon (PNG); size via CSS (no inline)
-      const _img0 = gearBtn.querySelector('img');
+    // ✅ Keep × and filter in the correct row order
+    let filterBtn = document.getElementById('view-filter');
+    if (!filterBtn) {
+      filterBtn = document.createElement('button');
+      filterBtn.id = 'view-filter';
+      filterBtn.type = 'button';
+      filterBtn.title = t('view.settings.title'); // localized tooltip
+      // use filter icon image (consistent look) — sized by CSS
+      const _img0 = filterBtn.querySelector('img');
       if (_img0) { _img0.src = '/assets/icons-sliders.png'; _img0.alt = ''; }
-      else { gearBtn.innerHTML = '<img src="/assets/icons-sliders.png" alt="">'; }
+      else { filterBtn.innerHTML = '<img src="/assets/icons-sliders.png" alt="">' ;}
 
       // ⬇️ Ensure the clear (×) lives inside the search container and right after the input
       // short: make CSS selector #search + #clear-search and absolute position work
@@ -1513,20 +1512,20 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
 
-      // ⬇️ Insert gear after × if present; else after input
+      // ⬇️ Insert filter after × if present; else after input
       const anchor = document.getElementById('clear-search') || searchInput; // short: prefer × anchor
-      anchor.insertAdjacentElement('afterend', gearBtn); // keeps × visually at input’s right edge
-      
+      anchor.insertAdjacentElement('afterend', filterBtn); // keeps × visually at input’s right edge
+
       // enforce icon even if button came from HTML; idempotent
       {
-        const _img = gearBtn.querySelector('img');
+        const _img = filterBtn.querySelector('img');
         if (_img) { _img.src = '/assets/icons-sliders.png'; _img.alt = ''; }
-        else { gearBtn.innerHTML = '<img src="/assets/icons-sliders.png" alt="">'; }
-      }                   
+        else { filterBtn.innerHTML = '<img src="/assets/icons-sliders.png" alt="">' ;}
+      }                      
     }
 
       // ✅ Build labels & open the button-less modal (no buttons; closes on select/ESC/backdrop)
-      gearBtn.onclick = () => {
+      filterBtn.onclick = () => {
         const segs = String(ACTIVE_PAGE || '').split('/');   // safe: '' → []
         if (!segs[0]) return; // no context; ignore click
 

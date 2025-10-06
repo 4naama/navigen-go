@@ -110,8 +110,8 @@ body {
   transition: transform 0.2s ease;
 }
 
-/* View-by gear size & interactions — center in row */
-#view-gear{
+/* View-by filter size & interactions — center in row */
+#view-filter{
   font-size: 20px;                 /* match pin size */
   width: 36px; height: 36px;       /* comfortable hit target */
   margin: 0 8px;
@@ -127,11 +127,11 @@ body {
   line-height: 1;                  /* no baseline drift */
 }
 
-/* image-based icon inside the view gear button */
-#view-gear img{ width:20px; height:20px; display:block; }
+/* image-based icon inside the view filter button */
+#view-filter img{ width:24px; height:24px; display:block; }  /* visual match to 📍 */
 
-#view-gear:hover{ background: rgba(0,0,0,.06); }
-#view-gear:focus-visible{ outline: 2px solid #e11; outline-offset: 2px; }
+#view-filter:hover{ background: rgba(0,0,0,06); }
+#view-filter:focus-visible{ outline: 2px solid #e11; outline-offset: 2px; }
 
 /* View-by crumbs: two-row layout; tidy spacing */
 .vb-crumbs { display:block; line-height:1.25; }
@@ -259,10 +259,11 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
 }
 
 /* Controls keep fixed size; drop legacy margin in this row */
-#search-container #view-gear,
+#search-container #view-filter,
 #search-container #here-button {
   flex: 0 0 auto;
 }
+
 #search-container #here-button { margin-left: 0; }
 
 /* ==============================

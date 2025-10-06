@@ -53,7 +53,7 @@
   "page.title.festival_sziget_2025": "Sziget Fesztivál 2025",
   "page.tagline.festival_sziget_2025": "A Szabadság Szigete — augusztus 6–11., Budapest",
   "page.tagline.festival_sziget": "A Szabadság Szigete — Budapest",
-  "search.placeholder": "",
+  "search.placeholder": "🔍 Írd be az úticélt...",
   "button.here": "📍 Itt",
   "tooltip.myStuff": "Cuccaim",
   "tooltip.alerts": "Riasztások",
@@ -338,9 +338,8 @@
   "noMiss.support.body": "Koppints a 👋 ikonra, ha támogatnád a csapatot.",
   "noMiss.thanks": "Köszönjük – élvezd az utazást.",
   "lpm.description.placeholder": "⏳ Leírás hamarosan.",
-  "view.settings.title": "",
+  "view.settings.title": "Nézet beállításai",
   "view.settings.context": "🏫 Nyelviskolák › {brand} › {scope}",
-  "view.settings.note": "",
   "view.settings.mode.structure": "Kategória",
   "view.settings.mode.adminArea": "Régió",
   "view.settings.mode.city": "Város",
@@ -348,8 +347,7 @@
   "view.settings.mode.alpha": "Betűrend",
   "view.settings.mode.priority": "Kiemelt",
   "view.settings.mode.distance": "Távolság (legközelebbi elöl)",
-  "view.settings.resetToDefault": "",
-  "view.settings.usingLocation": "Az Ön helyzetét használjuk",
+  "view.settings.resetToDefault": "Nézet visszaállítása (alapértelmezett: {modeLabel})",
   "qr.title": "",
   "qr.share": "",
   "qr.print": "",
@@ -380,6 +378,5 @@
   "cta.messenger": "",
   "rating.hint": "",
   "alerts.none": "",
-  "alerts.load.error": "",
-  "access.title": ""
+  "alerts.load.error": ""
 }

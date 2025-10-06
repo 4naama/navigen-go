@@ -53,7 +53,7 @@
   "page.title.festival_sziget_2025": "Festival Sziget 2025",
   "page.tagline.festival_sziget_2025": "La Isla de la Libertad — 6–11 de agosto, Budapest",
   "page.tagline.festival_sziget": "La Isla de la Libertad — Budapest",
-  "search.placeholder": "",
+  "search.placeholder": "🔍 Escribe un destino...",
   "button.here": "📍 Aquí",
   "tooltip.myStuff": "Mis cosas",
   "tooltip.alerts": "Alertas",
@@ -338,9 +338,8 @@
   "noMiss.support.body": "Toca 👋 para apoyar al equipo.",
   "noMiss.thanks": "Gracias — disfruta del viaje.",
   "lpm.description.placeholder": "⏳ Descripción próximamente.",
-  "view.settings.title": "",
+  "view.settings.title": "Configuración de vista",
   "view.settings.context": "🏫 Escuelas de idiomas › {brand} › {scope}",
-  "view.settings.note": "",
   "view.settings.mode.structure": "Categoría",
   "view.settings.mode.adminArea": "Región",
   "view.settings.mode.city": "Ciudad",
@@ -348,8 +347,7 @@
   "view.settings.mode.alpha": "Alfabético",
   "view.settings.mode.priority": "Prioridad",
   "view.settings.mode.distance": "Distancia (los más cercanos primero)",
-  "view.settings.resetToDefault": "",
-  "view.settings.usingLocation": "Usando tu ubicación",
+  "view.settings.resetToDefault": "Restablecer vista a la predeterminada ({modeLabel})",
   "qr.title": "",
   "qr.share": "",
   "qr.print": "",
@@ -380,6 +378,5 @@
   "cta.messenger": "",
   "rating.hint": "",
   "alerts.none": "",
-  "alerts.load.error": "",
-  "access.title": ""
+  "alerts.load.error": ""
 }
