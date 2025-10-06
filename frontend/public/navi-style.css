@@ -128,7 +128,7 @@ body {
 }
 
 /* image-based icon inside the view filter button */
-#view-filter img{ width:40px; height:40px; display:block; }  /* visual match to 📍 */
+#view-filter img{ width:36px; height:36px; display:block; }  /* visual match to 📍 */
 
 #view-filter:hover{ background: rgba(0,0,0,06); }
 #view-filter:focus-visible{ outline: 2px solid #e11; outline-offset: 2px; }
