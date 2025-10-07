@@ -1485,12 +1485,30 @@ async function initEmergencyBlock(countryOverride) {
             info = document.createElement('div');
             info.id = 'listing-filter-info'; // styled in CSS
           }
-          // ⬅️ place it BEFORE the search row
-          row.parentNode.insertBefore(info, row);
+          
+          // place the Filter button directly after the info box (and still before the search row)
+          {
+            const filterBtn = document.getElementById('view-filter');
+            if (filterBtn) {
+              // ensure order: [info] → [filterBtn] → [search row]
+              row.parentNode.insertBefore(filterBtn, info.nextSibling || row);
 
-          // match width to the search input (left-aligned)
+              // align button’s left edge with the search input (match the info box offset)
+              const s = document.getElementById('search');
+              if (s) {
+                const left = s.getBoundingClientRect().left - row.getBoundingClientRect().left; // 2-line: exact delta
+                filterBtn.style.marginLeft = Math.max(0, Math.round(left)) + 'px';
+              }
+            }
+          }
+
+          // match width and exact left edge to the search input
           const s = document.getElementById('search');
-          if (s) info.style.width = s.offsetWidth + 'px'; // exact width as the input
+          if (s) {
+            info.style.width = s.offsetWidth + 'px'; // same visual width
+            const left = s.getBoundingClientRect().left - row.getBoundingClientRect().left; // precise delta
+            info.style.marginLeft = Math.max(0, Math.round(left)) + 'px'; // align left edge
+          }
 
           // Set localized text now that node exists; fallback to raw key if missing.
           const getMode = () => {
