@@ -1223,16 +1223,6 @@ async function initEmergencyBlock(countryOverride) {
     );
     // canonical key list (case as used in i18n lookups)
     const CANON = ['structure', 'adminArea', 'city', 'postalCode', 'alpha', 'priority', 'rating', 'distance'];
-    
-    // set "Listing filter info" text (labels ready here)
-    {
-      const el = document.getElementById('listing-filter-info');
-      if (el) {
-        const canonKey = CANON.find(k => k.toLowerCase() === mode) || mode; // normalize
-        const label = (modeLabelByKey && modeLabelByKey[canonKey]) || canonKey; // safe lookup
-        el.textContent = `${t('listing.filterInfo.prefix')} ${label}`;
-      }
-    }        
 
     // normalize any token (key or translated label) → canonical key
     const normToken = (tok) => {
@@ -1487,9 +1477,14 @@ async function initEmergencyBlock(countryOverride) {
           }
           // ⬅️ place it BEFORE the search row
           row.parentNode.insertBefore(info, row);
+
+          // set its text now that `mode` + labels exist
+          const canonKey = (Array.isArray(CANON) ? CANON.find(k => k.toLowerCase() === mode) : '') || mode;
+          const label = (modeLabelByKey && modeLabelByKey[canonKey]) || canonKey;
+          info.textContent = `${t('listing.filterInfo.prefix')} ${label}`;
         }
       }
-            
+           
       clearBtn = document.getElementById('clear-search'); // keep comment; clarify scope
 
       if (searchInput && clearBtn) {
