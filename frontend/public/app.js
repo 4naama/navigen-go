@@ -1258,7 +1258,7 @@ async function initEmergencyBlock(countryOverride) {
       const lbl = document.getElementById('listing-filter-label');
       const val = document.getElementById('listing-filter-value');
       const fallback = document.getElementById('listing-filter-info'); // legacy single box
-      const canonKey = (['structure','adminArea','city','postalCode','alpha','priority','rating','distance']
+      const canonKey = (['structure','adminArea','city','postalCode','alpha','price','rating','distance']
         .find(k => k.toLowerCase() === mode)) || mode;
       const valueText = t(`view.settings.mode.${canonKey}`) || canonKey;
 
@@ -1276,7 +1276,7 @@ async function initEmergencyBlock(countryOverride) {
       if (!filter) return;
 
       // Build menu from allowed list; if distance is present but geolocation missing, hidden by modal helper
-      const opts = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']);
+      const opts = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','alpha','price','rating','distance']);
 
       filter.onclick = () => {
         const segs = String(ACTIVE_PAGE || '').split('/');   // safe: '' → []
@@ -1521,7 +1521,7 @@ async function initEmergencyBlock(countryOverride) {
             return (typeof mode !== 'undefined' && mode) ? String(mode) : 'alpha';
           };
           const raw = getMode();
-          const canon = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']
+          const canon = ['structure','adminArea','city','postalCode','alpha','price','rating','distance']
             .find(k => k.toLowerCase() === raw.toLowerCase()) || raw;
           // set texts for the two boxes
           infoLabel.textContent = t('listing.filterInfo.prefix');   // "Filtered by:"
@@ -1544,7 +1544,7 @@ async function initEmergencyBlock(countryOverride) {
             if (legacyBtn && legacyBtn.parentElement) legacyBtn.remove();
 
             // tiny helper: list of modes as used in modal
-            const MODES = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance'];
+            const MODES = ['structure','adminArea','city','postalCode','alpha','price','rating','distance'];
 
             // map current state to canon key
             const canonFrom = (v) => MODES.find(k => k.toLowerCase() === String(v).toLowerCase()) || String(v);
@@ -1575,7 +1575,17 @@ async function initEmergencyBlock(countryOverride) {
                 btn.className = 'fvb-option';
                 btn.setAttribute('role', 'option');
                 btn.setAttribute('aria-selected', String(k === current));
-                btn.textContent = t(`view.settings.mode.${k}`) || k;
+                const FALLBACK_LABEL = {
+                  structure:'Category',
+                  adminArea:'Region',
+                  city:'City',
+                  postalCode:'Postal code',
+                  alpha:'Alphabetical',
+                  price:'Price',
+                  rating:'Rating',
+                  distance:'Distance (closest first)'
+                };
+                btn.textContent = t(`view.settings.mode.${k}`) || FALLBACK_LABEL[k] || k;
                 if (k === current) btn.classList.add('is-selected');
                 btn.addEventListener('click', (e) => {
                   e.stopPropagation();
@@ -1629,101 +1639,18 @@ async function initEmergencyBlock(countryOverride) {
             val.addEventListener('keydown', (e) => {
               if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pop.hidden ? open() : close(); }
               if (e.key === 'Escape') { e.preventDefault(); close(); val.focus(); }
+              // simple arrow nav
+              if (!pop.hidden && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                e.preventDefault();
+                const opts = Array.from(pop.querySelectorAll('.fvb-option'));
+                const idx = opts.findIndex(o => o.classList.contains('is-active'));
+                const next = e.key === 'ArrowDown' ? Math.min(idx + 1, opts.length - 1) : Math.max(idx - 1, 0);
+                opts.forEach(o => o.classList.remove('is-active'));
+                (opts[next] || opts[0]).classList.add('is-active');
+                (opts[next] || opts[0]).focus();
+              }             
             });
           }
-
-          // Make the value box a dropdown (combobox-like, no modal)
-          infoValue.setAttribute('role', 'combobox'); // a11y
-          infoValue.setAttribute('aria-expanded', 'false');
-          infoValue.tabIndex = 0;
-
-          // build popover once; anchored under FVB
-          let pop = document.getElementById('fvb-popover');
-          if (!pop) {
-            pop = document.createElement('div');
-            pop.id = 'fvb-popover';
-            pop.setAttribute('role', 'listbox');    // a11y
-            pop.hidden = true;                      // start closed
-            filtersRow.appendChild(pop);            // sibling so width aligns via CSS
-          }
-
-          // list of modes (same set the modal uses)
-          const modes = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance'];
-
-          // util: current canon key from existing state
-          const canonFrom = (val) => modes.find(k => k.toLowerCase() === String(val).toLowerCase()) || String(val);
-
-          // render options
-          const renderOptions = (currentCanon) => {
-            pop.innerHTML = '';
-            modes.forEach((k, i) => {
-              const opt = document.createElement('button');
-              opt.type = 'button';
-              opt.className = 'fvb-option';
-              opt.setAttribute('role', 'option');           // a11y
-              opt.setAttribute('data-key', k);
-              opt.setAttribute('aria-selected', k === currentCanon ? 'true' : 'false');
-              opt.textContent = t(`view.settings.mode.${k}`) || k;
-              if (k === currentCanon) opt.classList.add('is-selected');
-              // select handler: update label, fire change, close
-              opt.addEventListener('click', () => {
-                // update label box
-                infoValue.textContent = t(`view.settings.mode.${k}`) || k;
-
-                // try to store canon in a shared place used by getMode()
-                const modeCarrier = document.querySelector('[data-mode]');
-                if (modeCarrier) modeCarrier.dataset.mode = k;
-
-                // dispatch a semantic event other code can listen to
-                infoValue.dispatchEvent(new CustomEvent('fvb:change', { detail: { mode: k }, bubbles: true }));
-
-                close();
-              });
-              pop.appendChild(opt);
-            });
-          };
-
-          // open/close helpers
-          const open = () => {
-            const current = canonFrom(raw);                 // raw from your earlier getMode()
-            renderOptions(current);
-            // align width with FVB
-            pop.style.minWidth = infoValue.offsetWidth + 'px';
-            pop.hidden = false;
-            infoValue.setAttribute('aria-expanded', 'true');
-            document.addEventListener('click', onDocClick, { once: true });
-          };
-
-          const close = () => {
-            pop.hidden = true;
-            infoValue.setAttribute('aria-expanded', 'false');
-          };
-
-          // outside click close (ignore clicks inside)
-          const onDocClick = (e) => {
-            if (e.target === infoValue || pop.contains(e.target)) return;
-            close();
-          };
-
-          // toggle on click / keyboard
-          infoValue.addEventListener('click', (e) => {
-            e.stopPropagation();
-            pop.hidden ? open() : close();
-          });
-          infoValue.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pop.hidden ? open() : close(); }
-            if (e.key === 'Escape') { e.preventDefault(); close(); infoValue.focus(); }
-            // simple arrow nav
-            if (!pop.hidden && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-              e.preventDefault();
-              const opts = Array.from(pop.querySelectorAll('.fvb-option'));
-              const idx = opts.findIndex(o => o.classList.contains('is-active'));
-              const next = e.key === 'ArrowDown' ? Math.min(idx + 1, opts.length - 1) : Math.max(idx - 1, 0);
-              opts.forEach(o => o.classList.remove('is-active'));
-              (opts[next] || opts[0]).classList.add('is-active');
-              (opts[next] || opts[0]).focus();
-            }
-          });
         }
       }
 
@@ -1830,7 +1757,7 @@ async function initEmergencyBlock(countryOverride) {
           distance:   t('view.settings.mode.distance')
         };
 
-        const base = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']);
+        const base = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','alpha','price','rating','distance']);
         const opts = base.map(normToken).filter(Boolean).map(k => ({ key: k, label: modeLabelByKey[k] || k }));
 
         // ✅ Compose final labels here to avoid literal {brand}/{scope}/{modeLabel}
