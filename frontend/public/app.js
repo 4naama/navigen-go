@@ -1253,8 +1253,17 @@ async function initEmergencyBlock(countryOverride) {
     // pick initial mode (stored beats default; compare in lower-case)
     let mode = allowedLC.includes(storedLC) ? storedLC : defaultViewLC;
 
-    // expose for wiring (builders read this attribute)
-    document.documentElement.setAttribute('data-subgroup-mode', mode);
+    // set "Filtered by" text now that `mode` is known
+    {
+      const el = document.getElementById('listing-filter-info');
+      if (el) {
+        const canonKey = (['structure','adminArea','city','postalCode','alpha','priority','rating','distance']
+          .find(k => k.toLowerCase() === mode)) || mode;
+        // direct i18n lookup; no dependency on a map’s declaration order
+        const label = t(`view.settings.mode.${canonKey}`) || canonKey;
+        el.textContent = `${t('listing.filterInfo.prefix')} ${label}`;
+      }
+    }
 
     // ✅ Filter opens button-less modal; selection persists per page; no centroid fallback
     (function wireViewFilter(){
@@ -1478,17 +1487,14 @@ async function initEmergencyBlock(countryOverride) {
           // ⬅️ place it BEFORE the search row
           row.parentNode.insertBefore(info, row);
 
-          // ⬇️ match width to the actual search input
+          // match width to the search input (left-aligned)
           const s = document.getElementById('search');
           if (s) {
-            const w = Math.ceil(s.getBoundingClientRect().width);
-            info.style.width = w + 'px';          // exact width as search
-            info.style.marginLeft = 'auto';       // center the box
-            info.style.marginRight = 'auto';
+            info.style.width = s.offsetWidth + 'px'; // exact width as the input
           }
         }
       }
-          
+
       clearBtn = document.getElementById('clear-search'); // keep comment; clarify scope
 
       if (searchInput && clearBtn) {
