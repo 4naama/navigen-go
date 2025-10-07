@@ -1485,7 +1485,6 @@ async function initEmergencyBlock(countryOverride) {
             info = document.createElement('div');
             info.id = 'listing-filter-info'; // styled in CSS
           }
-          
           // ⬅️ place it BEFORE the search row
           row.parentNode.insertBefore(info, row);
 
@@ -1568,8 +1567,64 @@ async function initEmergencyBlock(countryOverride) {
     }
 
       // ✅ Build labels & open the button-less modal (no buttons; closes on select/ESC/backdrop)
-      // click is wired in wireViewFilter(); do not assign here (placement-only section)
+      filterBtn.onclick = () => {
+        const segs = String(ACTIVE_PAGE || '').split('/');   // safe: '' → []
+        if (!segs[0]) return; // no context; ignore click
 
+        const namespace = segs[0] || '';
+        const brand     = (segs[1] || '').replace(/-/g,' ');
+        const scope     = (segs.slice(2).join('/') || '').replace(/-/g,' ');
+
+        const modeLabels = {
+          structure:  t('view.settings.mode.structure'),
+          adminArea:  t('view.settings.mode.adminArea'),
+          city:       t('view.settings.mode.city'),
+          postalCode: t('view.settings.mode.postalCode'),
+          alpha:      t('view.settings.mode.alpha'),
+          priority:   t('view.settings.mode.priority'),
+          rating:     t('view.settings.mode.rating'),
+          distance:   t('view.settings.mode.distance')
+        };
+
+        const base = (allowed.length ? allowed : ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']);
+        const opts = base.map(normToken).filter(Boolean).map(k => ({ key: k, label: modeLabelByKey[k] || k }));
+
+        // ✅ Compose final labels here to avoid literal {brand}/{scope}/{modeLabel}
+        const modeLabelFinal = modeLabelByKey[defaultView] || defaultView; // keep: display text
+        const cap = s => s.replace(/\b\w/g, c => c.toUpperCase());
+        const ns = cap((namespace || '').replace(/-/g, ' '));
+        const br = cap(brand);
+        const sc = cap(scope);
+        const contextLineFinal = [ns, br, sc].filter(Boolean).join(' › ');
+
+        openViewSettingsModal({
+          title:       t('view.settings.title'),
+          contextLine: contextLineFinal,                           // no braces
+          options:     opts,
+          currentKey:  mode,
+          resetLabel:  `Reset view to default (${modeLabelFinal})`, // no braces
+          onPick: (key) => {
+            if (key === '__RESET__') {
+              localStorage.removeItem(storeKey);
+              location.reload();
+              return;
+            }
+            // Distance requires user location only; if no API, do nothing.
+            if (String(key).toLowerCase() === 'distance') {
+              if (!navigator.geolocation) return;
+              navigator.geolocation.getCurrentPosition(
+                () => { localStorage.setItem(storeKey, 'distance'); location.reload(); },
+                ()  => { /* denied/unavailable: do nothing */ },
+                { maximumAge: 0, timeout: 10000, enableHighAccuracy: false }
+              );
+              return;
+            }
+            localStorage.setItem(storeKey, String(key).toLowerCase());
+            location.reload();
+          }
+        });
+      };
+          
   // 📍 Inject Share Modal at startup
   createShareModal();            // Injects #share-location-modal into DOM
   setupTapOutClose("share-location-modal");  
