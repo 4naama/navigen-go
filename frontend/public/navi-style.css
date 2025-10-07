@@ -134,17 +134,27 @@ body {
 }
 
 #listing-filter-label{ flex: 0 0 auto; }             /* natural width */
+
+/* FVB — unified base style + selected shade */
 #listing-filter-value{
   flex: 1 1 auto; min-width: 0;                      /* can grow */
   cursor: pointer; user-select: none;                /* button feel */
+  background: #eef6ff;                               /* soft selected tint */
+  border-color: #93c5fd;                             /* light blue border */
+  box-shadow: 0 0 0 1px rgba(59,130,246,.15);        /* subtle ring */
 }
 
 /* image-based icon inside the view filter button */
 #view-filter img{ width:30px; height:30px; display:block; }  /* legacy, kept safe */
 
 /* Hover/Focus for FVB (keyboard + mouse) */
-#listing-filter-value:hover{ background: rgba(0,0,0,0.06); }  /* subtle state */
-#listing-filter-value:focus-visible{ outline: 2px solid #e11; outline-offset: 2px; }
+#listing-filter-value:hover{
+  background: #e6f0ff;                               /* a hair stronger */
+  border-color: #60a5fa;                             /* mid blue */
+}
+#listing-filter-value:focus-visible{
+  outline: 2px solid #3b82f6; outline-offset: 2px;   /* crisp focus */
+}
 
 /* View-by crumbs: two-row layout; tidy spacing */
 .vb-crumbs { display:block; line-height:1.25; }
