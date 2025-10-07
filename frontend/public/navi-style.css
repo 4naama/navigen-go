@@ -156,7 +156,8 @@ body {
 #search-container {
   display: flex;
   justify-content: center;
-  margin: 4px 1em;
+  margin-block: 4px;                     /* vertical rhythm */
+  margin-inline: var(--content-pad-x);   /* shared gutter for LTR/RTL */
 }
 
 /* Inner row: stretch; no fixed cap */
@@ -271,14 +272,14 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
    (aligned, de-duplicated, maintainable)
    ============================== */
    
-/* Listing filter info (under Search, above Popular) */
 #listing-filter-info{
   box-sizing: border-box; /* match search sizing model */
   display: block;
-  margin: 8px 0;          /* keep spacing */
+  margin-block: 8px;                 /* keep spacing */
+  margin-inline: var(--content-pad-x); /* align gutter with search row */
   padding: 6px 10px;
   font-size: .95em;       /* subtle */
-  text-align: left;       /* left-align text */
+  text-align: start;      /* RTL-safe text alignment */
   color: #475569;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
