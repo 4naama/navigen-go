@@ -1553,9 +1553,15 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
 
-      // ⬇️ Insert filter after × if present; else after input
-      const anchor = document.getElementById('clear-search') || searchInput; // short: prefer × anchor
-      anchor.insertAdjacentElement('afterend', filterBtn); // keeps × visually at input’s right edge
+      // ⬇️ Insert filter after the "Filtered by:" box (remove from search row)
+      const infoBox = document.getElementById('listing-filter-info'); // anchor after box
+      if (infoBox) {
+        infoBox.insertAdjacentElement('afterend', filterBtn); // final place, below the box
+      } else {
+        // fallback only if box missing; keep near input (rare case)
+        (document.getElementById('clear-search') || searchInput)
+          ?.insertAdjacentElement('afterend', filterBtn);
+      }
 
       // enforce icon even if button came from HTML; idempotent
       {

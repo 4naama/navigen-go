@@ -127,6 +127,12 @@ body {
   line-height: 1;                  /* no baseline drift */
 }
 
+/* When placed after the "Filtered by:" box, align to same gutter (RTL-safe) */
+#listing-filter-info + #view-filter{
+  margin-block: 6px;              /* small top/bottom gap */
+  margin-inline: var(--content-pad-x); /* match box gutter */
+}
+
 /* image-based icon inside the view filter button */
 #view-filter img{ width:30px; height:30px; display:block; }  /* visual match to 📍 */
 
