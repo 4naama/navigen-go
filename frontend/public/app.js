@@ -1523,40 +1523,50 @@ async function initEmergencyBlock(countryOverride) {
           const raw = getMode();
           const canon = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']
             .find(k => k.toLowerCase() === raw.toLowerCase()) || raw;
-          // --- FVB dropdown: remove old handlers, then wire dropdown (no modal) ---
+          // set texts for the two boxes
+          infoLabel.textContent = t('listing.filterInfo.prefix');   // "Filtered by:"
+          infoValue.textContent = t(`view.settings.mode.${canon}`); // parameter (e.g., city)
+
+          /* FVB dropdown (inline under value box, no modal) */
           {
-            // 1) Strip any existing listeners by replacing the node
+            // drop any legacy handlers on the value box
             const oldVal = document.getElementById('listing-filter-value');
-            if (!oldVal) return;
-            const newVal = oldVal.cloneNode(true);                 // keeps text/attrs
-            oldVal.parentNode.replaceChild(newVal, oldVal);
+            const val = oldVal.cloneNode(true);                     // keep text/attrs
+            oldVal.parentNode.replaceChild(val, oldVal);
 
-            // 2) Make it an accessible combobox
-            newVal.setAttribute('role', 'combobox');
-            newVal.setAttribute('aria-expanded', 'false');
-            newVal.tabIndex = 0;
+            // accessible combobox shell
+            val.setAttribute('role', 'combobox');
+            val.setAttribute('aria-expanded', 'false');
+            val.tabIndex = 0;
 
-            // 3) Build (or reuse) the popover
+            // remove legacy modal button if present
+            const legacyBtn = document.getElementById('view-filter');
+            if (legacyBtn && legacyBtn.parentElement) legacyBtn.remove();
+
+            // tiny helper: list of modes as used in modal
+            const MODES = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance'];
+
+            // map current state to canon key
+            const canonFrom = (v) => MODES.find(k => k.toLowerCase() === String(v).toLowerCase()) || String(v);
+
+            // current canon from data-mode or last computed value
+            const getCanon = () => {
+              const carrier = document.querySelector('[data-mode]');
+              const rawVal = carrier?.dataset?.mode || canon;
+              return canonFrom(rawVal);
+            };
+
+            // build popover once under the same row
             let pop = document.getElementById('fvb-popover');
             if (!pop) {
               pop = document.createElement('div');
               pop.id = 'fvb-popover';
-              pop.setAttribute('role', 'listbox');
+              pop.setAttribute('role', 'listbox'); // a11y
               pop.hidden = true;
-              document.getElementById('filters-inline')?.appendChild(pop);
+              filtersRow.appendChild(pop);         // sits under the row
             }
 
-            // 4) Source of modes (same set as modal)
-            const MODES = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance'];
-
-            // current canon from data-mode or text
-            const getCanon = () => {
-              const carrier = document.querySelector('[data-mode]');
-              const raw = carrier?.dataset?.mode || newVal.textContent || 'alpha';
-              const hit = MODES.find(k => k.toLowerCase() === String(raw).toLowerCase());
-              return hit || String(raw);
-            };
-
+            // render options
             const render = (current) => {
               pop.innerHTML = '';
               MODES.forEach(k => {
@@ -1564,58 +1574,61 @@ async function initEmergencyBlock(countryOverride) {
                 btn.type = 'button';
                 btn.className = 'fvb-option';
                 btn.setAttribute('role', 'option');
-                btn.setAttribute('aria-selected', k === current ? 'true' : 'false');
-                btn.textContent = (typeof t === 'function' && t(`view.settings.mode.${k}`)) || k;
+                btn.setAttribute('aria-selected', String(k === current));
+                btn.textContent = t(`view.settings.mode.${k}`) || k;
                 if (k === current) btn.classList.add('is-selected');
                 btn.addEventListener('click', (e) => {
                   e.stopPropagation();
-                  // update UI label
-                  newVal.textContent = (typeof t === 'function' && t(`view.settings.mode.${k}`)) || k;
-                  // persist to data-mode if present
+                  // update visible value
+                  val.textContent = t(`view.settings.mode.${k}`) || k;
+                  // persist canon to a shared carrier if present
                   const carrier = document.querySelector('[data-mode]');
                   if (carrier) carrier.dataset.mode = k;
-                  // bubble a semantic event for any listeners
-                  newVal.dispatchEvent(new CustomEvent('fvb:change', { detail: { mode: k }, bubbles: true }));
+                  // notify app of mode change
+                  val.dispatchEvent(new CustomEvent('fvb:change', { detail: { mode: k }, bubbles: true }));
                   close();
                 });
                 pop.appendChild(btn);
               });
             };
 
+            // open/close aligned under the value box
             const open = () => {
               render(getCanon());
-              pop.style.minWidth = newVal.offsetWidth + 'px';
+              const v = val.getBoundingClientRect();
+              const r = filtersRow.getBoundingClientRect();
+              pop.style.minWidth = v.width + 'px';
+              pop.style.left = (v.left - r.left) + 'px';
+              pop.style.top  = (v.bottom - r.top) + 'px';
               pop.hidden = false;
-              newVal.setAttribute('aria-expanded', 'true');
-              // close on outside click (one-shot)
+              val.setAttribute('aria-expanded', 'true');
+              // one-shot outside close
               const onDoc = (evt) => {
-                if (evt.target === newVal || pop.contains(evt.target)) return;
+                if (evt.target === val || pop.contains(evt.target)) return;
                 close();
               };
-              // store handler on element to avoid globals
-              newVal._fvbDocClose = onDoc;
+              val._fvbDoc = onDoc; // no global
               document.addEventListener('click', onDoc, { capture: true });
             };
 
             const close = () => {
               pop.hidden = true;
-              newVal.setAttribute('aria-expanded', 'false');
-              if (newVal._fvbDocClose) {
-                document.removeEventListener('click', newVal._fvbDocClose, { capture: true });
-                newVal._fvbDocClose = null;
+              val.setAttribute('aria-expanded', 'false');
+              if (val._fvbDoc) {
+                document.removeEventListener('click', val._fvbDoc, { capture: true });
+                val._fvbDoc = null;
               }
             };
 
-            // 5) Toggle handlers (stop bubbling to any legacy listeners)
-            newVal.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              e.stopImmediatePropagation(); // ensure old modal openers do not fire
+            // toggle handlers; suppress any stray modal openers
+            val.addEventListener('click', (e) => {
+              e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
               pop.hidden ? open() : close();
-            });
-            newVal.addEventListener('keydown', (e) => {
+            }, { capture: true });
+
+            val.addEventListener('keydown', (e) => {
               if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pop.hidden ? open() : close(); }
-              if (e.key === 'Escape') { e.preventDefault(); close(); newVal.focus(); }
+              if (e.key === 'Escape') { e.preventDefault(); close(); val.focus(); }
             });
           }
 
