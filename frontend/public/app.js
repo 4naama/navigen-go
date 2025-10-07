@@ -1489,9 +1489,20 @@ async function initEmergencyBlock(countryOverride) {
 
           // match width to the search input (left-aligned)
           const s = document.getElementById('search');
-          if (s) {
-            info.style.width = s.offsetWidth + 'px'; // exact width as the input
-          }
+          if (s) info.style.width = s.offsetWidth + 'px'; // exact width as the input
+
+          // set localized text now that node exists (fallbacks safe)
+          const getMode = () => {
+            const el = document.querySelector('[data-mode]'); // 2-line: try data attr first
+            if (el && el.dataset.mode) return el.dataset.mode;
+            return (typeof mode !== 'undefined' && mode) ? String(mode) : 'alpha';
+          };
+          const raw = getMode();
+          const canon = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']
+            .find(k => k.toLowerCase() === raw.toLowerCase()) || raw;
+          const prefix = t('listing.filterInfo.prefix'); // i18n prefix
+          const label = t(`view.settings.mode.${canon}`); // i18n mode label
+          info.textContent = `${prefix} ${label}`;
         }
       }
 
