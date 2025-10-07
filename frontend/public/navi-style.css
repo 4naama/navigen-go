@@ -178,6 +178,44 @@ body {
   outline: 2px solid #3b82f6; outline-offset: 2px;   /* crisp focus */
 }
 
+/* FVB dropdown popover */
+#fvb-popover{
+  position: absolute;              /* anchor under FVB */
+  z-index: 50;
+  margin-top: 4px;
+  padding: 4px;
+  min-width: 12rem;                /* will be widened in JS to FVB width */
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px rgba(2,8,23,.15);
+  max-height: 240px;
+  overflow: auto;
+  inset-inline-start: var(--content-pad-x); /* align with gutter, RTL-safe */
+}
+
+/* options inside the popover */
+#fvb-popover .fvb-option{
+  display: block;
+  width: 100%;
+  text-align: start;               /* RTL-safe */
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  font: inherit;
+  color: #0f172a;
+}
+#fvb-popover .fvb-option:hover,
+#fvb-popover .fvb-option.is-active{
+  background: #f1f5f9;
+}
+#fvb-popover .fvb-option.is-selected{
+  background: #eef6ff;
+  outline: 1px solid #93c5fd;
+}
+
 /* View-by crumbs: two-row layout; tidy spacing */
 .vb-crumbs { display:block; line-height:1.25; }
 .vb-row1   { display:block; white-space:nowrap; }

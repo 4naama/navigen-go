@@ -1526,16 +1526,97 @@ async function initEmergencyBlock(countryOverride) {
           infoLabel.textContent = t('listing.filterInfo.prefix');   // "Filtered by:"
           infoValue.textContent = t(`view.settings.mode.${canon}`); // parameter (e.g., city)
 
-          // Make the value box behave like a button (opens current filter UI)
-          infoValue.setAttribute('role', 'button'); // a11y role
-          infoValue.tabIndex = 0;                   // keyboard focus
-          const openViaOldButton = () => {
-            // reuse existing handler by delegating to #view-filter (until old button removed)
-            document.getElementById('view-filter')?.click();
+          // Make the value box a dropdown (combobox-like, no modal)
+          infoValue.setAttribute('role', 'combobox'); // a11y
+          infoValue.setAttribute('aria-expanded', 'false');
+          infoValue.tabIndex = 0;
+
+          // build popover once; anchored under FVB
+          let pop = document.getElementById('fvb-popover');
+          if (!pop) {
+            pop = document.createElement('div');
+            pop.id = 'fvb-popover';
+            pop.setAttribute('role', 'listbox');    // a11y
+            pop.hidden = true;                      // start closed
+            filtersRow.appendChild(pop);            // sibling so width aligns via CSS
+          }
+
+          // list of modes (same set the modal uses)
+          const modes = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance'];
+
+          // util: current canon key from existing state
+          const canonFrom = (val) => modes.find(k => k.toLowerCase() === String(val).toLowerCase()) || String(val);
+
+          // render options
+          const renderOptions = (currentCanon) => {
+            pop.innerHTML = '';
+            modes.forEach((k, i) => {
+              const opt = document.createElement('button');
+              opt.type = 'button';
+              opt.className = 'fvb-option';
+              opt.setAttribute('role', 'option');           // a11y
+              opt.setAttribute('data-key', k);
+              opt.setAttribute('aria-selected', k === currentCanon ? 'true' : 'false');
+              opt.textContent = t(`view.settings.mode.${k}`) || k;
+              if (k === currentCanon) opt.classList.add('is-selected');
+              // select handler: update label, fire change, close
+              opt.addEventListener('click', () => {
+                // update label box
+                infoValue.textContent = t(`view.settings.mode.${k}`) || k;
+
+                // try to store canon in a shared place used by getMode()
+                const modeCarrier = document.querySelector('[data-mode]');
+                if (modeCarrier) modeCarrier.dataset.mode = k;
+
+                // dispatch a semantic event other code can listen to
+                infoValue.dispatchEvent(new CustomEvent('fvb:change', { detail: { mode: k }, bubbles: true }));
+
+                close();
+              });
+              pop.appendChild(opt);
+            });
           };
-          infoValue.addEventListener('click', openViaOldButton);
+
+          // open/close helpers
+          const open = () => {
+            const current = canonFrom(raw);                 // raw from your earlier getMode()
+            renderOptions(current);
+            // align width with FVB
+            pop.style.minWidth = infoValue.offsetWidth + 'px';
+            pop.hidden = false;
+            infoValue.setAttribute('aria-expanded', 'true');
+            document.addEventListener('click', onDocClick, { once: true });
+          };
+
+          const close = () => {
+            pop.hidden = true;
+            infoValue.setAttribute('aria-expanded', 'false');
+          };
+
+          // outside click close (ignore clicks inside)
+          const onDocClick = (e) => {
+            if (e.target === infoValue || pop.contains(e.target)) return;
+            close();
+          };
+
+          // toggle on click / keyboard
+          infoValue.addEventListener('click', (e) => {
+            e.stopPropagation();
+            pop.hidden ? open() : close();
+          });
           infoValue.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViaOldButton(); }
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pop.hidden ? open() : close(); }
+            if (e.key === 'Escape') { e.preventDefault(); close(); infoValue.focus(); }
+            // simple arrow nav
+            if (!pop.hidden && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+              e.preventDefault();
+              const opts = Array.from(pop.querySelectorAll('.fvb-option'));
+              const idx = opts.findIndex(o => o.classList.contains('is-active'));
+              const next = e.key === 'ArrowDown' ? Math.min(idx + 1, opts.length - 1) : Math.max(idx - 1, 0);
+              opts.forEach(o => o.classList.remove('is-active'));
+              (opts[next] || opts[0]).classList.add('is-active');
+              (opts[next] || opts[0]).focus();
+            }
           });
         }
       }
