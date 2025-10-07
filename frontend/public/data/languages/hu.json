@@ -349,6 +349,8 @@
   "view.settings.mode.priority": "Kiemelt",
   "view.settings.mode.distance": "Távolság (legközelebbi elöl)",
   "view.settings.resetToDefault": "Nézet visszaállítása (alapértelmezett: {modeLabel})",
+  "view.settings.mode.rating": "Értlkelés",
+  "view.settings.mode.price": "Ár",
   "qr.title": "",
   "qr.share": "",
   "qr.print": "",

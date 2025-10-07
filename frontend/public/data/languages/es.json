@@ -349,6 +349,8 @@
   "view.settings.mode.priority": "Prioridad",
   "view.settings.mode.distance": "Distancia (los más cercanos primero)",
   "view.settings.resetToDefault": "Restablecer vista a la predeterminada ({modeLabel})",
+  "view.settings.mode.rating": "Valoración",
+  "view.settings.mode.price": "Precio",
   "qr.title": "",
   "qr.share": "",
   "qr.print": "",

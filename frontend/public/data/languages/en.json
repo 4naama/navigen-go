@@ -349,6 +349,8 @@
   "view.settings.mode.priority": "Priority",
   "view.settings.mode.distance": "Distance (closest first)",
   "view.settings.resetToDefault": "Reset view to default ({modeLabel})",
+  "view.settings.mode.rating": "Rating",
+  "view.settings.mode.price": "Price",
   "qr.title": "QR Code",
   "qr.share": "Share",
   "qr.print": "Print",
