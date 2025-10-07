@@ -1608,7 +1608,10 @@ async function initEmergencyBlock(countryOverride) {
               render(getCanon());
               const v = val.getBoundingClientRect();
               const r = filtersRow.getBoundingClientRect();
-              pop.style.width = val.offsetWidth + 'px';     // exact painted width of FVB
+              /* match FVB width exactly using subpixel precision (no rounding) */
+              pop.style.width = val.getBoundingClientRect().width + 'px';
+
+
               pop.style.left = (v.left - r.left) + 'px';
               pop.style.top  = (v.bottom - r.top) + 'px';
               pop.hidden = false;
@@ -1619,14 +1622,16 @@ async function initEmergencyBlock(countryOverride) {
                 close();
               };
               val._fvbDoc = onDoc; // no global
-              document.addEventListener('click', onDoc, { capture: true });
+              /* close on outside click AFTER option handlers run (bubble, not capture) */
+              document.addEventListener('click', onDoc, { capture: false });
             };
 
             const close = () => {
               pop.hidden = true;
               val.setAttribute('aria-expanded', 'false');
               if (val._fvbDoc) {
-                document.removeEventListener('click', val._fvbDoc, { capture: true });
+                /* match listener phase so removal always succeeds */
+                document.removeEventListener('click', val._fvbDoc, { capture: false });
                 val._fvbDoc = null;
               }
             };
