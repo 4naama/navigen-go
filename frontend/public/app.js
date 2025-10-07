@@ -1597,7 +1597,7 @@ async function initEmergencyBlock(countryOverride) {
               render(getCanon());
               const v = val.getBoundingClientRect();
               const r = filtersRow.getBoundingClientRect();
-              pop.style.minWidth = v.width + 'px';
+              pop.style.width = v.width + 'px';            // exact match to FVB width
               pop.style.left = (v.left - r.left) + 'px';
               pop.style.top  = (v.bottom - r.top) + 'px';
               pop.hidden = false;

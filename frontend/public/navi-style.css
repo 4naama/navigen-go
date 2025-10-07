@@ -186,7 +186,8 @@ body {
   z-index: 100;                       /* above cards/buttons */
   margin-top: 4px;
   padding: 4px;
-  min-width: 12rem;                   /* widened to FVB width via JS */
+  min-width: 0;                    /* allow JS to control width exactly */
+  width: auto;                     /* default; JS sets exact px width */
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 10px;                 /* slightly softer */
