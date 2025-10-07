@@ -135,22 +135,34 @@ body {
 
 #listing-filter-label{ flex: 0 0 auto; }             /* natural width */
 
-/* FVB — unified base style + selected shade */
+/* FVB — unified base style, button-like */
 #listing-filter-value{
   flex: 1 1 auto; min-width: 0;                      /* can grow */
   cursor: pointer; user-select: none;                /* button feel */
-  background: #eef6ff;                               /* soft selected tint */
-  border-color: #93c5fd;                             /* light blue border */
-  box-shadow: 0 0 0 1px rgba(59,130,246,.15);        /* subtle ring */
+  background: linear-gradient(#e5f0ff, #d9e9ff);     /* deeper, buttony */
+  border-color: #7fb4fc;                             /* slightly deeper */
+  box-shadow:
+    0 1px 0 rgba(0,0,0,.03),                         /* top bevel */
+    0 1px 4px rgba(59,130,246,.12);                  /* soft drop */
+  transition: background .15s ease, box-shadow .15s ease, transform .05s ease;
 }
 
 /* image-based icon inside the view filter button */
 #view-filter img{ width:30px; height:30px; display:block; }  /* legacy, kept safe */
 
-/* Hover/Focus for FVB (keyboard + mouse) */
+/* Hover/Focus/Active for FVB (keyboard + mouse) */
 #listing-filter-value:hover{
-  background: #e6f0ff;                               /* a hair stronger */
-  border-color: #60a5fa;                             /* mid blue */
+  background: linear-gradient(#deebff, #cfe3ff);     /* a shade stronger */
+  border-color: #5ea0fa;                             /* mid blue */
+  box-shadow:
+    0 1px 0 rgba(0,0,0,.05),
+    0 2px 6px rgba(59,130,246,.18);
+}
+#listing-filter-value:active{
+  background: linear-gradient(#cfe1ff, #c3daff);     /* pressed shade */
+  transform: translateY(1px);                        /* tactile press */
+  box-shadow:
+    inset 0 1px 3px rgba(59,130,246,.18);            /* inner press */
 }
 #listing-filter-value:focus-visible{
   outline: 2px solid #3b82f6; outline-offset: 2px;   /* crisp focus */
