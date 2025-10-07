@@ -1476,15 +1476,19 @@ async function initEmergencyBlock(countryOverride) {
             info.id = 'listing-filter-info'; // styled in CSS
           }
           // ⬅️ place it BEFORE the search row
-          row.parentNode.insertBefore(info, row);  // place info above Search
+          row.parentNode.insertBefore(info, row);
 
-          // set text for the info line
-          const canonKey = (Array.isArray(CANON) ? CANON.find(k => k.toLowerCase() === mode) : '') || mode;
-          const label = (modeLabelByKey && modeLabelByKey[canonKey]) || canonKey;  // fallback to key
-          info.textContent = `${t('listing.filterInfo.prefix')} ${label}`;
+          // ⬇️ match width to the actual search input
+          const s = document.getElementById('search');
+          if (s) {
+            const w = Math.ceil(s.getBoundingClientRect().width);
+            info.style.width = w + 'px';          // exact width as search
+            info.style.marginLeft = 'auto';       // center the box
+            info.style.marginRight = 'auto';
+          }
         }
       }
-           
+          
       clearBtn = document.getElementById('clear-search'); // keep comment; clarify scope
 
       if (searchInput && clearBtn) {

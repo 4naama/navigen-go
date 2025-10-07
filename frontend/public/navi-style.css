@@ -273,14 +273,16 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
    
 /* Listing filter info (under Search, above Popular) */
 #listing-filter-info{
-  margin: 8px 0;
+  box-sizing: border-box; /* match search sizing model */
+  margin: 8px 0;          /* keep spacing */
   padding: 6px 10px;
-  font-size: .95em;   /* subtle */
-  text-align: center;   /* center the info text */
+  font-size: .95em;       /* subtle */
+  text-align: left;       /* left-align text */
   color: #475569;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
+  /* no width here; JS sets exact width to match search */
 }
 
 /* Layout constants (edit to match your UI) */
