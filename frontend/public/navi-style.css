@@ -288,11 +288,21 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
    (aligned, de-duplicated, maintainable)
    ============================== */
    
-#listing-filter-info{
+/* Row that holds: [ "Filtered by:" ] [ value ] [ Filter button ] */
+#filters-inline{
+  display: flex;                        /* single line layout */
+  align-items: center;                  /* vertical align */
+  gap: .5rem;                           /* space between items */
+  margin-block: 8px;                    /* vertical rhythm */
+  margin-inline: var(--content-pad-x);  /* align with search gutter */
+}
+
+/* Shared box look */
+#listing-filter-label,
+#listing-filter-value{
   box-sizing: border-box; /* match search sizing model */
-  display: block;
-  margin-block: 8px;                 /* keep spacing */
-  margin-inline: var(--content-pad-x); /* align gutter with search row */
+  display: inline-flex;   /* vertically center text */
+  align-items: center;    /* center line-height */
   padding: 6px 10px;
   font-size: .95em;       /* subtle */
   text-align: start;      /* RTL-safe text alignment */
@@ -300,8 +310,15 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  /* width is set from JS to equal the search input */
+  white-space: nowrap;    /* keep each box intact */
 }
+
+/* Let the value grow to fill, label stays natural width */
+#listing-filter-label{ flex: 0 0 auto; }
+#listing-filter-value{ flex: 1 1 auto; min-width: 0; }
+
+/* Keep the Filter button inline with the boxes (from your existing rules) */
+#filters-inline #view-filter{ flex: 0 0 auto; margin: 0; }
 
 /* Layout constants (edit to match your UI) */
 :root {
