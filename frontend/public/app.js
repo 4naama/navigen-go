@@ -1553,10 +1553,19 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
 
-      // ⬇️ Insert filter after the "Filtered by:" box (remove from search row)
-      const infoBox = document.getElementById('listing-filter-info'); // anchor after box
+      // group "Filtered by:" box + Filter button into one row (prevents wrap)
+      const infoBox = document.getElementById('listing-filter-info'); // box exists
       if (infoBox) {
-        infoBox.insertAdjacentElement('afterend', filterBtn); // final place, below the box
+        let row = document.getElementById('filters-inline');
+        if (!row) {
+          row = document.createElement('div');
+          row.id = 'filters-inline';
+          infoBox.parentElement.insertBefore(row, infoBox); // place before box
+        }
+        row.appendChild(infoBox);        // move box into row
+        row.appendChild(filterBtn);      // move button after box
+        // width becomes flex-driven; clear any inline width from earlier JS
+        infoBox.style.width = '';        // let CSS flex decide width
       } else {
         // fallback only if box missing; keep near input (rare case)
         (document.getElementById('clear-search') || searchInput)
