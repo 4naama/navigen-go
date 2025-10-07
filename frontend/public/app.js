@@ -1223,6 +1223,16 @@ async function initEmergencyBlock(countryOverride) {
     );
     // canonical key list (case as used in i18n lookups)
     const CANON = ['structure', 'adminArea', 'city', 'postalCode', 'alpha', 'priority', 'rating', 'distance'];
+    
+    // set "Listing filter info" text (labels ready here)
+    {
+      const el = document.getElementById('listing-filter-info');
+      if (el) {
+        const canonKey = CANON.find(k => k.toLowerCase() === mode) || mode; // normalize
+        const label = (modeLabelByKey && modeLabelByKey[canonKey]) || canonKey; // safe lookup
+        el.textContent = `${t('listing.filterInfo.prefix')} ${label}`;
+      }
+    }        
 
     // normalize any token (key or translated label) → canonical key
     const normToken = (tok) => {
@@ -1255,16 +1265,6 @@ async function initEmergencyBlock(countryOverride) {
 
     // expose for wiring (builders read this attribute)
     document.documentElement.setAttribute('data-subgroup-mode', mode);
-
-    // update "Listing filter info" with the current view label
-    {
-      const el = document.getElementById('listing-filter-info');
-      if (el) {
-        const canonKey = (Array.isArray(CANON) ? CANON.find(k => k.toLowerCase() === mode) : '') || mode;
-        const label = modeLabelByKey[canonKey] || canonKey;
-        el.textContent = `${t('listing.filterInfo.prefix')} ${label}`;
-      }
-    }
 
     // ✅ Filter opens button-less modal; selection persists per page; no centroid fallback
     (function wireViewFilter(){
