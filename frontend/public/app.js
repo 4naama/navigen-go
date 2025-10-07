@@ -1487,9 +1487,22 @@ async function initEmergencyBlock(countryOverride) {
           // ⬅️ place it BEFORE the search row
           row.parentNode.insertBefore(info, row);
 
-          // match width to the search input (left-aligned)
+          // match width + left edge to the search input (keep layout stable)
           const s = document.getElementById('search');
-          if (s) info.style.width = s.offsetWidth + 'px'; // exact width as the input
+          const alignInfoToSearch = () => {
+            if (!s) return;
+            // width match  • keep width identical to input
+            info.style.width = s.offsetWidth + 'px';
+            // left align   • compute left offset inside the search row
+            const rowRect = row.getBoundingClientRect();
+            const sRect   = s.getBoundingClientRect();
+            info.style.marginLeft = (sRect.left - rowRect.left) + 'px';
+          };
+          // initial paint + keep in sync on viewport/layout changes
+          alignInfoToSearch();
+          addEventListener('resize', alignInfoToSearch);
+          addEventListener('orientationchange', alignInfoToSearch);
+          addEventListener('pageshow', alignInfoToSearch); // bfcache-safe
 
           // set localized text now that node exists (fallbacks safe)
           const getMode = () => {
