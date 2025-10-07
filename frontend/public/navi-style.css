@@ -128,12 +128,16 @@ body {
   box-sizing: border-box; display: inline-flex;      /* center text */
   align-items: center; padding: 6px 10px;
   font-size: .95em; text-align: start;               /* RTL-safe */
-  color: #475569; background: #f8fafc;
+  color: #475569;
   border: 1px solid #e2e8f0; border-radius: 6px;
   white-space: nowrap;                               /* keep intact */
 }
 
-#listing-filter-label{ flex: 0 0 auto; }             /* natural width */
+/* label stays gray */
+#listing-filter-label{
+  flex: 0 0 auto;                                    /* natural width */
+  background: #f8fafc;
+}
 
 /* FVB — unified base style, button-like */
 #listing-filter-value{
@@ -147,6 +151,11 @@ body {
   transition: background .15s ease, box-shadow .15s ease, transform .05s ease;
 }
 
+/* guard so FVB fill wins even if a later shared rule exists */
+#filters-inline #listing-filter-value{
+  background: linear-gradient(#e5f0ff, #d9e9ff);
+}
+
 /* image-based icon inside the view filter button */
 #view-filter img{ width:30px; height:30px; display:block; }  /* legacy, kept safe */
 
@@ -158,6 +167,7 @@ body {
     0 1px 0 rgba(0,0,0,.05),
     0 2px 6px rgba(59,130,246,.18);
 }
+
 #listing-filter-value:active{
   background: linear-gradient(#cfe1ff, #c3daff);     /* pressed shade */
   transform: translateY(1px);                        /* tactile press */
