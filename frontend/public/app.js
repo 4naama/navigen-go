@@ -1475,8 +1475,7 @@ async function initEmergencyBlock(countryOverride) {
       // use outer lets; avoid shadowing so later blocks see the same refs
       searchInput = document.getElementById('search');
       
-      // Ensure filter summary exists above search; then set its text after insertion.
-      // Purpose: show the current "Filter by" mode reliably on initial render.
+      // move "Listing filter info" above the Search row
       {
         const row = document.getElementById('search-container');
         if (row) {
@@ -1492,9 +1491,9 @@ async function initEmergencyBlock(countryOverride) {
           const s = document.getElementById('search');
           if (s) info.style.width = s.offsetWidth + 'px'; // exact width as the input
 
-          // Set localized text now that node exists; fallback to raw key if missing.
+          // set localized text now that node exists (fallbacks safe)
           const getMode = () => {
-            const el = document.querySelector('[data-mode]'); // try data attr first
+            const el = document.querySelector('[data-mode]'); // 2-line: try data attr first
             if (el && el.dataset.mode) return el.dataset.mode;
             return (typeof mode !== 'undefined' && mode) ? String(mode) : 'alpha';
           };
