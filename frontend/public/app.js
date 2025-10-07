@@ -1253,15 +1253,20 @@ async function initEmergencyBlock(countryOverride) {
     // pick initial mode (stored beats default; compare in lower-case)
     let mode = allowedLC.includes(storedLC) ? storedLC : defaultViewLC;
 
-    // set "Filtered by" text now that `mode` is known
+    // set "Filtered by" UI (two boxes: label + value)
     {
       const lbl = document.getElementById('listing-filter-label');
       const val = document.getElementById('listing-filter-value');
+      const fallback = document.getElementById('listing-filter-info'); // legacy single box
+      const canonKey = (['structure','adminArea','city','postalCode','alpha','priority','rating','distance']
+        .find(k => k.toLowerCase() === mode)) || mode;
+      const valueText = t(`view.settings.mode.${canonKey}`) || canonKey;
+
       if (lbl && val) {
-        const canonKey = (['structure','adminArea','city','postalCode','alpha','priority','rating','distance']
-          .find(k => k.toLowerCase() === mode)) || mode;
         lbl.textContent = t('listing.filterInfo.prefix'); // "Filtered by:"
-        val.textContent = t(`view.settings.mode.${canonKey}`) || canonKey; // parameter
+        val.textContent = valueText;                      // parameter (e.g., city)
+      } else if (fallback) {
+        fallback.textContent = `${t('listing.filterInfo.prefix')} ${valueText}`; // safe fallback
       }
     }
 
@@ -1482,7 +1487,7 @@ async function initEmergencyBlock(countryOverride) {
           let info = document.getElementById('listing-filter-info');
           if (!info) {
             info = document.createElement('div');
-            info.id = 'listing-filter-info'; // styled in CSS
+            info.id = 'listing-filter-info'; // legacy holder; kept for safety
           }
           
           // ⬅️ Create a row with two boxes before the search row (RTL-safe, no wrap)
@@ -1501,7 +1506,7 @@ async function initEmergencyBlock(countryOverride) {
             filtersRow.appendChild(infoLabel);
           }
 
-          // Box #2: dynamic value
+          // Box #2: dynamic value (FVB acts as button)
           let infoValue = document.getElementById('listing-filter-value');
           if (!infoValue) {
             infoValue = document.createElement('div');
@@ -1521,6 +1526,17 @@ async function initEmergencyBlock(countryOverride) {
           infoLabel.textContent = t('listing.filterInfo.prefix');   // "Filtered by:"
           infoValue.textContent = t(`view.settings.mode.${canon}`); // parameter (e.g., city)
 
+          // Make the value box behave like a button (opens current filter UI)
+          infoValue.setAttribute('role', 'button'); // a11y role
+          infoValue.tabIndex = 0;                   // keyboard focus
+          const openViaOldButton = () => {
+            // reuse existing handler by delegating to #view-filter (until old button removed)
+            document.getElementById('view-filter')?.click();
+          };
+          infoValue.addEventListener('click', openViaOldButton);
+          infoValue.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViaOldButton(); }
+          });
         }
       }
 
@@ -1571,47 +1587,32 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
 
-      // group "Filtered by:" label + value + Filter button into one row (prevents wrap)
-      const infoBox = document.getElementById('listing-filter-info'); // legacy single box
-      if (infoBox) {
-        let row = document.getElementById('filters-inline');
-        if (!row) {
-          row = document.createElement('div');
-          row.id = 'filters-inline';
-          infoBox.parentElement.insertBefore(row, infoBox); // place before old box
+      // make the Filter Value Box (FVB) the trigger; do not insert the old Filter button
+      {
+        // ensure the two-box UI exists already
+        const infoLabel = document.getElementById('listing-filter-label');
+        const infoValue = document.getElementById('listing-filter-value'); // FVB
+
+        // remove legacy single box if still present
+        document.getElementById('listing-filter-info')?.remove();
+
+        // a11y + handlers: FVB behaves like the old button
+        if (infoValue) {
+          infoValue.setAttribute('role', 'button'); // act like a button
+          infoValue.tabIndex = 0;
+
+          const openFilter = () => {
+            if (typeof filterBtn?.onclick === 'function') filterBtn.onclick(); // reuse handler
+          };
+
+          infoValue.addEventListener('click', openFilter);
+          infoValue.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFilter(); }
+          });
         }
 
-        // create two boxes: #listing-filter-label + #listing-filter-value
-        let infoLabel = document.getElementById('listing-filter-label');
-        if (!infoLabel) {
-          infoLabel = document.createElement('div');
-          infoLabel.id = 'listing-filter-label';
-          row.appendChild(infoLabel);
-        }
-        let infoValue = document.getElementById('listing-filter-value');
-        if (!infoValue) {
-          infoValue = document.createElement('div');
-          infoValue.id = 'listing-filter-value';
-          row.appendChild(infoValue);
-        }
-
-        // derive texts: use i18n if available, else parse old box text
-        const prefix = (typeof t === 'function' && t('listing.filterInfo.prefix')) || 'Filtered by:';
-        const raw = (infoBox.textContent || '').trim();
-        const valueText = raw.startsWith(prefix) ? raw.slice(prefix.length).trim() : raw;
-
-        infoLabel.textContent = prefix;        // Box #1: "Filtered by:"
-        infoValue.textContent = valueText;     // Box #2: parameter (category/city/postal…)
-
-        // place Filter button at the end of the same row
-        row.appendChild(filterBtn);
-
-        // remove legacy single box; width handled by CSS flex
-        infoBox.remove();
-      } else {
-        // fallback only if box missing; keep near input (rare case)
-        (document.getElementById('clear-search') || searchInput)
-          ?.insertAdjacentElement('afterend', filterBtn);
+        // make sure the old visual button is not in the DOM
+        if (filterBtn && filterBtn.parentElement) filterBtn.remove();
       }
 
       // enforce icon even if button came from HTML; idempotent

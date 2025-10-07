@@ -112,42 +112,39 @@ body {
 
 /* View-by filter size & interactions — inline with the info box */
 #view-filter{
-  font-size: 20px;                 /* match pin size */
-  width: 36px; height: 36px;       /* comfortable hit target */
-  padding: 6px 8px;
-  margin: 0;                       /* row handles spacing */
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 8px;
-  display: inline-flex;            /* center emoji inside */
-  align-items: center;             /* vertical center (inner) */
-  justify-content: center;         /* horizontal center (inner) */
-  align-self: center;              /* vertical center in flex row */
-  flex: 0 0 auto;                  /* fixed size, no shrink */
-  line-height: 1;                  /* no baseline drift */
+  display: none;                   /* legacy button hidden; FVB is the trigger */
 }
 
 /* When placed after the "Filtered by:" box, align to same gutter (RTL-safe) */
 #filters-inline{
-  display: flex; align-items: center; gap: .5rem;          /* single row */
-  margin-block: 6px;                                       /* vertical rhythm */
-  margin-inline: var(--content-pad-x);                     /* shared gutter */
+  display: flex; align-items: center; gap: .5rem;    /* single row */
+  margin-block: 6px;                                 /* vertical rhythm */
+  margin-inline: var(--content-pad-x);               /* shared gutter */
 }
-#filters-inline #listing-filter-info{ flex: 1 1 auto; margin: 0; min-width: 0; }
-#filters-inline #view-filter{ margin: 0; }                 /* row handles gaps */
 
-/* Fallback: if directly after the box without the row wrapper */
-#listing-filter-info + #view-filter{
-  margin-block: 6px;                                       /* small top/bottom gap */
-  margin-inline: var(--content-pad-x);                     /* match box gutter */
+/* Two-box UI: label + value (FVB) */
+#listing-filter-label,
+#listing-filter-value{
+  box-sizing: border-box; display: inline-flex;      /* center text */
+  align-items: center; padding: 6px 10px;
+  font-size: .95em; text-align: start;               /* RTL-safe */
+  color: #475569; background: #f8fafc;
+  border: 1px solid #e2e8f0; border-radius: 6px;
+  white-space: nowrap;                               /* keep intact */
+}
+
+#listing-filter-label{ flex: 0 0 auto; }             /* natural width */
+#listing-filter-value{
+  flex: 1 1 auto; min-width: 0;                      /* can grow */
+  cursor: pointer; user-select: none;                /* button feel */
 }
 
 /* image-based icon inside the view filter button */
-#view-filter img{ width:30px; height:30px; display:block; }  /* visual match to 📍 */
+#view-filter img{ width:30px; height:30px; display:block; }  /* legacy, kept safe */
 
-#view-filter:hover{ background: rgba(0,0,0,0.06); }          /* fix 0.06 opacity */
-#view-filter:focus-visible{ outline: 2px solid #e11; outline-offset: 2px; }
+/* Hover/Focus for FVB (keyboard + mouse) */
+#listing-filter-value:hover{ background: rgba(0,0,0,0.06); }  /* subtle state */
+#listing-filter-value:focus-visible{ outline: 2px solid #e11; outline-offset: 2px; }
 
 /* View-by crumbs: two-row layout; tidy spacing */
 .vb-crumbs { display:block; line-height:1.25; }
