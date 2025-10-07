@@ -1486,21 +1486,8 @@ async function initEmergencyBlock(countryOverride) {
             info.id = 'listing-filter-info'; // styled in CSS
           }
           
-          // place the Filter button directly after the info box (and still before the search row)
-          {
-            const filterBtn = document.getElementById('view-filter');
-            if (filterBtn) {
-              // ensure order: [info] → [filterBtn] → [search row]
-              row.parentNode.insertBefore(filterBtn, info.nextSibling || row);
-
-              // align button’s left edge with the search input (match the info box offset)
-              const s = document.getElementById('search');
-              if (s) {
-                const left = s.getBoundingClientRect().left - row.getBoundingClientRect().left; // 2-line: exact delta
-                filterBtn.style.marginLeft = Math.max(0, Math.round(left)) + 'px';
-              }
-            }
-          }
+          // ⬅️ place it BEFORE the search row
+          row.parentNode.insertBefore(info, row);
 
           // match width and exact left edge to the search input
           const s = document.getElementById('search');
