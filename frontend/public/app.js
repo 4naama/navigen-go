@@ -1476,11 +1476,11 @@ async function initEmergencyBlock(countryOverride) {
             info.id = 'listing-filter-info'; // styled in CSS
           }
           // ⬅️ place it BEFORE the search row
-          row.parentNode.insertBefore(info, row);
+          row.parentNode.insertBefore(info, row);  // place info above Search
 
-          // set its text now that `mode` + labels exist
+          // set text for the info line
           const canonKey = (Array.isArray(CANON) ? CANON.find(k => k.toLowerCase() === mode) : '') || mode;
-          const label = (modeLabelByKey && modeLabelByKey[canonKey]) || canonKey;
+          const label = (modeLabelByKey && modeLabelByKey[canonKey]) || canonKey;  // fallback to key
           info.textContent = `${t('listing.filterInfo.prefix')} ${label}`;
         }
       }
