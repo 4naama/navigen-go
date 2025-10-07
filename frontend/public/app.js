@@ -1591,9 +1591,10 @@ async function initEmergencyBlock(countryOverride) {
                   e.stopPropagation();
                   // update visible value
                   val.textContent = t(`view.settings.mode.${k}`) || k;
-                  // persist canon to a shared carrier if present
-                  const carrier = document.querySelector('[data-mode]');
-                  if (carrier) carrier.dataset.mode = k;
+                  // persist + apply (reuse the page-scoped key your code already uses)
+                  localStorage.setItem(storeKey, String(k).toLowerCase());
+                  location.reload(); // rebuilds with the chosen view
+
                   // notify app of mode change
                   val.dispatchEvent(new CustomEvent('fvb:change', { detail: { mode: k }, bubbles: true }));
                   close();
@@ -1607,7 +1608,7 @@ async function initEmergencyBlock(countryOverride) {
               render(getCanon());
               const v = val.getBoundingClientRect();
               const r = filtersRow.getBoundingClientRect();
-              pop.style.width = v.width + 'px';            // exact match to FVB width
+              pop.style.width = val.offsetWidth + 'px';     // exact painted width of FVB
               pop.style.left = (v.left - r.left) + 'px';
               pop.style.top  = (v.bottom - r.top) + 'px';
               pop.hidden = false;

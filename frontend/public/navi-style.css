@@ -196,6 +196,7 @@ body {
   overflow: auto;
   inset-inline-start: 0;              /* line up with FVB inside the row */
   overscroll-behavior: contain;       /* keep scroll contained */
+  box-sizing: border-box; /* width includes padding + border */
 }
 
 /* options inside the popover */
