@@ -1255,13 +1255,13 @@ async function initEmergencyBlock(countryOverride) {
 
     // set "Filtered by" text now that `mode` is known
     {
-      const el = document.getElementById('listing-filter-info');
-      if (el) {
+      const lbl = document.getElementById('listing-filter-label');
+      const val = document.getElementById('listing-filter-value');
+      if (lbl && val) {
         const canonKey = (['structure','adminArea','city','postalCode','alpha','priority','rating','distance']
           .find(k => k.toLowerCase() === mode)) || mode;
-        // direct i18n lookup; no dependency on a map’s declaration order
-        const label = t(`view.settings.mode.${canonKey}`) || canonKey;
-        el.textContent = `${t('listing.filterInfo.prefix')} ${label}`;
+        lbl.textContent = t('listing.filterInfo.prefix'); // "Filtered by:"
+        val.textContent = t(`view.settings.mode.${canonKey}`) || canonKey; // parameter
       }
     }
 
@@ -1484,14 +1484,32 @@ async function initEmergencyBlock(countryOverride) {
             info = document.createElement('div');
             info.id = 'listing-filter-info'; // styled in CSS
           }
-          // ⬅️ place it BEFORE the search row
-          row.parentNode.insertBefore(info, row);
+          
+          // ⬅️ Create a row with two boxes before the search row (RTL-safe, no wrap)
+          let filtersRow = document.getElementById('filters-inline');
+          if (!filtersRow) {
+            filtersRow = document.createElement('div');
+            filtersRow.id = 'filters-inline';
+            row.parentNode.insertBefore(filtersRow, row);
+          }
 
-          // match width to the search input (left-aligned)
-          const s = document.getElementById('search');
-          if (s) info.style.width = s.offsetWidth + 'px'; // exact width as the input
+          // Box #1: static label
+          let infoLabel = document.getElementById('listing-filter-label');
+          if (!infoLabel) {
+            infoLabel = document.createElement('div');
+            infoLabel.id = 'listing-filter-label'; // styled in CSS
+            filtersRow.appendChild(infoLabel);
+          }
 
-          // set localized text now that node exists (fallbacks safe)
+          // Box #2: dynamic value
+          let infoValue = document.getElementById('listing-filter-value');
+          if (!infoValue) {
+            infoValue = document.createElement('div');
+            infoValue.id = 'listing-filter-value'; // styled in CSS
+            filtersRow.appendChild(infoValue);
+          }
+
+          // Compute current mode and set texts
           const getMode = () => {
             const el = document.querySelector('[data-mode]'); // 2-line: try data attr first
             if (el && el.dataset.mode) return el.dataset.mode;
@@ -1500,9 +1518,9 @@ async function initEmergencyBlock(countryOverride) {
           const raw = getMode();
           const canon = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']
             .find(k => k.toLowerCase() === raw.toLowerCase()) || raw;
-          const prefix = t('listing.filterInfo.prefix'); // i18n prefix
-          const label = t(`view.settings.mode.${canon}`); // i18n mode label
-          info.textContent = `${prefix} ${label}`;
+          infoLabel.textContent = t('listing.filterInfo.prefix');   // "Filtered by:"
+          infoValue.textContent = t(`view.settings.mode.${canon}`); // parameter (e.g., city)
+
         }
       }
 
@@ -1553,19 +1571,43 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
 
-      // group "Filtered by:" box + Filter button into one row (prevents wrap)
-      const infoBox = document.getElementById('listing-filter-info'); // box exists
+      // group "Filtered by:" label + value + Filter button into one row (prevents wrap)
+      const infoBox = document.getElementById('listing-filter-info'); // legacy single box
       if (infoBox) {
         let row = document.getElementById('filters-inline');
         if (!row) {
           row = document.createElement('div');
           row.id = 'filters-inline';
-          infoBox.parentElement.insertBefore(row, infoBox); // place before box
+          infoBox.parentElement.insertBefore(row, infoBox); // place before old box
         }
-        row.appendChild(infoBox);        // move box into row
-        row.appendChild(filterBtn);      // move button after box
-        // width becomes flex-driven; clear any inline width from earlier JS
-        infoBox.style.width = '';        // let CSS flex decide width
+
+        // create two boxes: #listing-filter-label + #listing-filter-value
+        let infoLabel = document.getElementById('listing-filter-label');
+        if (!infoLabel) {
+          infoLabel = document.createElement('div');
+          infoLabel.id = 'listing-filter-label';
+          row.appendChild(infoLabel);
+        }
+        let infoValue = document.getElementById('listing-filter-value');
+        if (!infoValue) {
+          infoValue = document.createElement('div');
+          infoValue.id = 'listing-filter-value';
+          row.appendChild(infoValue);
+        }
+
+        // derive texts: use i18n if available, else parse old box text
+        const prefix = (typeof t === 'function' && t('listing.filterInfo.prefix')) || 'Filtered by:';
+        const raw = (infoBox.textContent || '').trim();
+        const valueText = raw.startsWith(prefix) ? raw.slice(prefix.length).trim() : raw;
+
+        infoLabel.textContent = prefix;        // Box #1: "Filtered by:"
+        infoValue.textContent = valueText;     // Box #2: parameter (category/city/postal…)
+
+        // place Filter button at the end of the same row
+        row.appendChild(filterBtn);
+
+        // remove legacy single box; width handled by CSS flex
+        infoBox.remove();
       } else {
         // fallback only if box missing; keep near input (rare case)
         (document.getElementById('clear-search') || searchInput)
