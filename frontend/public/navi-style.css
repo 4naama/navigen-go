@@ -117,10 +117,12 @@ body {
 
 /* When placed after the "Filtered by:" box, align to same gutter (RTL-safe) */
 #filters-inline{
-  display: flex; align-items: center; gap: .5rem;    /* single row */
-  margin-block: 6px;                                 /* vertical rhythm */
-  margin-inline: var(--content-pad-x);               /* shared gutter */
+  position: relative;                          /* anchor for popover */
+  display: flex; align-items: center; gap: .5rem;
+  margin-block: 6px;
+  margin-inline: var(--content-pad-x);
 }
+
 
 /* Two-box UI: label + value (FVB) */
 #listing-filter-label,
@@ -180,40 +182,32 @@ body {
 
 /* FVB dropdown popover */
 #fvb-popover{
-  position: absolute;              /* anchor under FVB */
+  position: absolute;
   z-index: 50;
   margin-top: 4px;
   padding: 4px;
-  min-width: 12rem;                /* will be widened in JS to FVB width */
+  min-width: 12rem;                /* widened to FVB width via JS */
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   box-shadow: 0 4px 18px rgba(2,8,23,.15);
   max-height: 240px;
   overflow: auto;
-  inset-inline-start: var(--content-pad-x); /* align with gutter, RTL-safe */
+  inset-inline-start: 0;           /* line up with FVB inside the row */
 }
 
-/* options inside the popover */
 #fvb-popover .fvb-option{
-  display: block;
-  width: 100%;
-  text-align: start;               /* RTL-safe */
+  display: block; width: 100%;
+  text-align: start;
   padding: 8px 10px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 6px;
-  font: inherit;
-  color: #0f172a;
+  border: 0; background: transparent;
+  cursor: pointer; border-radius: 6px;
+  font: inherit; color: #0f172a;
 }
 #fvb-popover .fvb-option:hover,
-#fvb-popover .fvb-option.is-active{
-  background: #f1f5f9;
-}
+#fvb-popover .fvb-option.is-active{ background: #f1f5f9; }
 #fvb-popover .fvb-option.is-selected{
-  background: #eef6ff;
-  outline: 1px solid #93c5fd;
+  background: #eef6ff; outline: 1px solid #93c5fd;
 }
 
 /* View-by crumbs: two-row layout; tidy spacing */

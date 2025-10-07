@@ -1523,8 +1523,101 @@ async function initEmergencyBlock(countryOverride) {
           const raw = getMode();
           const canon = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance']
             .find(k => k.toLowerCase() === raw.toLowerCase()) || raw;
-          infoLabel.textContent = t('listing.filterInfo.prefix');   // "Filtered by:"
-          infoValue.textContent = t(`view.settings.mode.${canon}`); // parameter (e.g., city)
+          // --- FVB dropdown: remove old handlers, then wire dropdown (no modal) ---
+          {
+            // 1) Strip any existing listeners by replacing the node
+            const oldVal = document.getElementById('listing-filter-value');
+            if (!oldVal) return;
+            const newVal = oldVal.cloneNode(true);                 // keeps text/attrs
+            oldVal.parentNode.replaceChild(newVal, oldVal);
+
+            // 2) Make it an accessible combobox
+            newVal.setAttribute('role', 'combobox');
+            newVal.setAttribute('aria-expanded', 'false');
+            newVal.tabIndex = 0;
+
+            // 3) Build (or reuse) the popover
+            let pop = document.getElementById('fvb-popover');
+            if (!pop) {
+              pop = document.createElement('div');
+              pop.id = 'fvb-popover';
+              pop.setAttribute('role', 'listbox');
+              pop.hidden = true;
+              document.getElementById('filters-inline')?.appendChild(pop);
+            }
+
+            // 4) Source of modes (same set as modal)
+            const MODES = ['structure','adminArea','city','postalCode','alpha','priority','rating','distance'];
+
+            // current canon from data-mode or text
+            const getCanon = () => {
+              const carrier = document.querySelector('[data-mode]');
+              const raw = carrier?.dataset?.mode || newVal.textContent || 'alpha';
+              const hit = MODES.find(k => k.toLowerCase() === String(raw).toLowerCase());
+              return hit || String(raw);
+            };
+
+            const render = (current) => {
+              pop.innerHTML = '';
+              MODES.forEach(k => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'fvb-option';
+                btn.setAttribute('role', 'option');
+                btn.setAttribute('aria-selected', k === current ? 'true' : 'false');
+                btn.textContent = (typeof t === 'function' && t(`view.settings.mode.${k}`)) || k;
+                if (k === current) btn.classList.add('is-selected');
+                btn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  // update UI label
+                  newVal.textContent = (typeof t === 'function' && t(`view.settings.mode.${k}`)) || k;
+                  // persist to data-mode if present
+                  const carrier = document.querySelector('[data-mode]');
+                  if (carrier) carrier.dataset.mode = k;
+                  // bubble a semantic event for any listeners
+                  newVal.dispatchEvent(new CustomEvent('fvb:change', { detail: { mode: k }, bubbles: true }));
+                  close();
+                });
+                pop.appendChild(btn);
+              });
+            };
+
+            const open = () => {
+              render(getCanon());
+              pop.style.minWidth = newVal.offsetWidth + 'px';
+              pop.hidden = false;
+              newVal.setAttribute('aria-expanded', 'true');
+              // close on outside click (one-shot)
+              const onDoc = (evt) => {
+                if (evt.target === newVal || pop.contains(evt.target)) return;
+                close();
+              };
+              // store handler on element to avoid globals
+              newVal._fvbDocClose = onDoc;
+              document.addEventListener('click', onDoc, { capture: true });
+            };
+
+            const close = () => {
+              pop.hidden = true;
+              newVal.setAttribute('aria-expanded', 'false');
+              if (newVal._fvbDocClose) {
+                document.removeEventListener('click', newVal._fvbDocClose, { capture: true });
+                newVal._fvbDocClose = null;
+              }
+            };
+
+            // 5) Toggle handlers (stop bubbling to any legacy listeners)
+            newVal.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation(); // ensure old modal openers do not fire
+              pop.hidden ? open() : close();
+            });
+            newVal.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pop.hidden ? open() : close(); }
+              if (e.key === 'Escape') { e.preventDefault(); close(); newVal.focus(); }
+            });
+          }
 
           // Make the value box a dropdown (combobox-like, no modal)
           infoValue.setAttribute('role', 'combobox'); // a11y
