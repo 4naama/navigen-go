@@ -1899,7 +1899,7 @@ const helpModal = document.getElementById("help-modal");
 // Button refs (no early modal refs: we create alert modal when needed)
 const alertButton = document.getElementById("alert-button");
 
-/* insert ⭐ button next to 🎯; ES-module only */
+/* insert ⭐ button next to 🎯; resolve anchor locally (no globals) */
 (() => {
   const row = document.getElementById("search-container");
   if (!row || document.getElementById("fav-button")) return;
@@ -1907,12 +1907,19 @@ const alertButton = document.getElementById("alert-button");
   const fav = document.createElement("button");
   fav.id = "fav-button";
   fav.type = "button";
-  fav.textContent = "⭐";                        // emoji-only, like 📌/🎯
+  fav.textContent = "⭐";                       // emoji-only, like 📌/🎯
   fav.title = t("Favorites");
   fav.setAttribute("aria-label", t("Favorites"));
 
-  const anchor = hereButton || row.firstElementChild;
-  row.insertBefore(fav, anchor);                // place left of 🎯
+  // find 🎯 at runtime in this scope; fall back if missing
+  const here = document.getElementById("here-button");
+  if (here) {
+    row.insertBefore(fav, here);               // place left of 🎯
+  } else if (row.firstElementChild) {
+    row.insertBefore(fav, row.firstElementChild);
+  } else {
+    row.appendChild(fav);                      // last resort
+  }
 
   fav.addEventListener("click", () => {
     if (!document.getElementById("favorites-modal")) {
