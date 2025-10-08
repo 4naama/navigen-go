@@ -156,27 +156,20 @@ body {
 /* FVB chevron: closed = ▼ (rotate 90), open = ▶ (rotate 0) */
 #listing-filter-value{
   position: relative;                 /* anchor the chevron */
-  padding-right: 2em;                 /* a touch more room for 8px inset */
+  padding-right: calc(1em + 1.2em);   /* keep glyph clear at 1em inset */
 }
 
-/* FVB chevron: vertically center to match accordion headers */
 #listing-filter-value::after{
-  content:"▸";                /* same glyph as groups */
+  content:"▸";                        /* base arrow (right) */
   position:absolute;
-  top:50%;                    /* hard center like accordion arrow */
-  right:8px;                  /* keep 8px gutter */
-  transform:translateY(-50%) rotate(90deg); /* closed -> ▼ */
-  display:block;              /* simpler box model */
-  line-height:1;              /* stable metrics */
-  font-size:1.1em;            /* match header-arrow size */
+  inset-block:0;
+  right:1em;                          /* match Popular/Accordion chevron line */
+  display:inline-flex;
+  align-items:center;
+  font-size:1.1em;                    /* match accordion chevron size */
+  transform:rotate(90deg);            /* closed -> ▼ */
   opacity:.75;
   transition:transform .18s ease, opacity .18s ease;
-}
-
-/* open state driven by JS aria-expanded (kept) */
-#listing-filter-value[aria-expanded="true"]::after{
-  transform:translateY(-50%) rotate(0deg); /* open -> ▶ */
-  opacity:.9;
 }
 
 /* open state driven by JS aria-expanded */
