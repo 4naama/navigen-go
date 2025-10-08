@@ -1903,6 +1903,106 @@ export function createMyStuffModal() {
     className: 'modal modal-menu',
     bodyHTML: `<div id="my-stuff-body" class="modal-body"></div>`
   });
+  
+/* Favorites Modal (FM): list saved locations with open/unsave */
+export function createFavoritesModal() {
+  if (document.getElementById("favorites-modal")) return;
+
+  const modal = injectModal({
+    id: "favorites-modal",
+    className: "modal modal-menu",
+    bodyHTML: `<div id="favorites-body" class="modal-body"></div>`
+  });
+
+  modal.classList.add("hidden");
+
+  const topBar = document.createElement("div");
+  topBar.className = "modal-top-bar";
+  topBar.innerHTML = `
+    <h2 class="modal-header">${t("Favorites")}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  modal.querySelector(".modal-content")?.prepend(topBar);
+  topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("favorites-modal"));
+
+  // footer container (kept consistent)
+  let actions = modal.querySelector(".modal-footer");
+  if (!actions) {
+    actions = document.createElement("div");
+    actions.className = "modal-footer";
+    modal.querySelector(".modal-content")?.appendChild(actions);
+  }
+}
+
+export function showFavoritesModal() {
+  if (!document.getElementById("favorites-modal")) createFavoritesModal();
+
+  const modal = document.getElementById("favorites-modal");
+  const body = modal.querySelector("#favorites-body");
+  const title = modal.querySelector(".modal-header");
+  if (!modal || !body || !title) return;
+
+  title.textContent = t("Favorites");
+  body.innerHTML = ""; // re-render each open
+
+  // read favorites; expected to be an array of { id, name, lat, lng }
+  const saved = JSON.parse(localStorage.getItem("savedLocations") || "[]");
+
+  const wrap = document.createElement("div");
+  wrap.className = "modal-menu-list";
+  body.appendChild(wrap);
+
+  if (!Array.isArray(saved) || saved.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = t("No favorites yet.");
+    wrap.appendChild(empty);
+    showModal("favorites-modal");
+    setupTapOutClose("favorites-modal"); // idempotent
+    return;
+  }
+
+  // small helper: persist without globals
+  const save = (arr) => localStorage.setItem("savedLocations", JSON.stringify(arr));
+
+  saved.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "modal-menu-item";           // consistent look
+
+    // label button opens/scrolls to item; star button unsaves (no conflict)
+    row.innerHTML = `
+      <div class="label" style="flex:1 1 auto; min-width:0;">
+        <button class="open-fav" type="button" style="all:unset; cursor:pointer;">
+          ${item.name || t("Unnamed")}
+        </button>
+      </div>
+      <button class="unsave-fav" type="button" aria-label="${t("Remove")}">⭐</button>
+    `;
+
+    // open behavior: dispatch event + attempt local scroll
+    row.querySelector(".open-fav")?.addEventListener("click", () => {
+      const evt = new CustomEvent("navigate-to-location", { detail: { id: item.id, lat: item.lat, lng: item.lng } });
+      document.dispatchEvent(evt);
+      const el = document.querySelector(`[data-location-id="${CSS.escape(String(item.id))}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      hideModal("favorites-modal");
+    });
+
+    // unsave behavior: stop row clicks, update store, re-render
+    row.querySelector(".unsave-fav")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const next = saved.filter(s => String(s.id) !== String(item.id));
+      save(next);
+      row.style.opacity = "0.5";                 // quick visual feedback
+      setTimeout(() => showFavoritesModal(), 120);
+    });
+
+    wrap.appendChild(row);
+  });
+
+  showModal("favorites-modal");
+  setupTapOutClose("favorites-modal"); // backdrop-close
+}
 
   const modal = document.getElementById('my-stuff-modal');
 

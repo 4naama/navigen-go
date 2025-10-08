@@ -16,7 +16,9 @@ import {
   setupTapOutClose,
   showLocationProfileModal,
   showThankYouToast as showThankYouToastUI,
-  openViewSettingsModal
+  openViewSettingsModal,
+  createFavoritesModal,
+  showFavoritesModal
 } from './modal-injector.js';
 
 // PWA: register SW only in production (keeps install prompt there)
@@ -1897,8 +1899,28 @@ const helpModal = document.getElementById("help-modal");
 // Button refs (no early modal refs: we create alert modal when needed)
 const alertButton = document.getElementById("alert-button");
 
-const socialButton = document.getElementById("social-button");
-const hereButton = document.getElementById("here-button");
+/* insert ⭐ button next to 🎯; ES-module only */
+(() => {
+  const row = document.getElementById("search-container");
+  if (!row || document.getElementById("fav-button")) return;
+
+  const fav = document.createElement("button");
+  fav.id = "fav-button";
+  fav.type = "button";
+  fav.textContent = "⭐";                        // emoji-only, like 📌/🎯
+  fav.title = t("Favorites");
+  fav.setAttribute("aria-label", t("Favorites"));
+
+  const anchor = hereButton || row.firstElementChild;
+  row.insertBefore(fav, anchor);                // place left of 🎯
+
+  fav.addEventListener("click", () => {
+    if (!document.getElementById("favorites-modal")) {
+      createFavoritesModal();
+    }
+    showFavoritesModal();
+  });
+})();
 
 // Location modal refs (kept as-is for other features)
 const locationModal = document.getElementById("share-location-modal");

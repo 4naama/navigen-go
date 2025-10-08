@@ -350,13 +350,17 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   display: inline-flex;
 }
 
-/* Controls keep fixed size; drop legacy margin in this row */
+/* keep fixed-size controls aligned in search row */
 #search-container #view-filter,
+#search-container #fav-button,
 #search-container #here-button {
   flex: 0 0 auto;
 }
 
+/* light spacing between ⭐ and 🎯; keep existing sizing logic */
+#search-container #fav-button { margin-left: 0; margin-right: 6px; }
 #search-container #here-button { margin-left: 0; }
+
 
 /* ==============================
    📜 Main content + scroll zone
