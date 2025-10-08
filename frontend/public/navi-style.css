@@ -357,9 +357,9 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   flex: 0 0 auto;
 }
 
-/* light spacing between ⭐ and 🎯; keep existing sizing logic */
-#search-container #fav-button { margin-left: 0; margin-right: 6px; }
-#search-container #here-button { margin-left: 0; }
+/* center ⭐ between input and 🎯 using only the row gap */
+#search-container #fav-button { margin: 0; }
+#search-container #here-button { margin: 0; }
 
 
 /* ==============================
@@ -1791,14 +1791,15 @@ button:hover {
   font-weight: bold;
   border-radius: 6px;
   background-color: white;
-  border: 1px solid #e63946; /* red border */
+  border:1px solid var(--search-border, #d6dbe1); /* search box border */
   color: black;
   cursor: pointer;
   line-height: 1;
   white-space: nowrap;
   box-sizing: border-box;
   transition: background-color 0.2s ease, border-color 0.2s ease;
-  margin-left: 16px; /* ✅ replaces previous margin, adds reliable space from input */
+  /* spacing handled by flex gap; keep it symmetric */
+  margin-left: 0;
 }
 
 #here-button:hover {
