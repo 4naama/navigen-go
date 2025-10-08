@@ -2049,13 +2049,6 @@ if (alertButton) {
   });
 }
 
-/* Social lives inside My Stuff — delegate the click */
-document.addEventListener("click", (e) => {
-  const btn = e.target.closest('#my-stuff-modal .social-button, #my-stuff-modal [data-action="social"]');
-  if (!btn) return;
-  openModal("social-modal");
-});
-
   // ✅ Defer setup to ensure modal elements exist
   setTimeout(() => {
     const hereButton = document.getElementById("here-button");
