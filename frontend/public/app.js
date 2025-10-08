@@ -1459,7 +1459,13 @@ async function initEmergencyBlock(countryOverride) {
       }
 
       const s = document.getElementById("search"); if (s) s.placeholder = t("search.placeholder");
-      const here = document.getElementById("here-button"); if (here) here.textContent = t("button.here");
+      /* emoji-only Here button; keep a11y text via title/aria-label */
+      const here = document.getElementById("here-button");
+      if (here) {
+        here.textContent = "🎯";
+        here.title = t("button.here");              // tooltip stays localized
+        here.setAttribute("aria-label", t("button.here")); // screen readers
+      }
 
       // <title> + meta
       document.title = t("page.windowTitle");
