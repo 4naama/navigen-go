@@ -1977,14 +1977,6 @@ export function createFavoritesModal() {
   `;
   modal.querySelector(".modal-content")?.prepend(topBar);
   topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("favorites-modal"));
-
-  // footer container (kept consistent)
-  let actions = modal.querySelector(".modal-footer");
-  if (!actions) {
-    actions = document.createElement("div");
-    actions.className = "modal-footer";
-    modal.querySelector(".modal-content")?.appendChild(actions);
-  }
 }
 
 export function showFavoritesModal() {
@@ -1995,7 +1987,7 @@ export function showFavoritesModal() {
   const title = modal.querySelector(".modal-header");
   if (!modal || !body || !title) return;
 
-  title.textContent = t("Favorites");
+  title.textContent = t("favorites");
   body.innerHTML = ""; // re-render each open
 
   // read favorites; expected to be an array of { id, name, lat, lng }
@@ -2008,7 +2000,7 @@ export function showFavoritesModal() {
   if (!Array.isArray(saved) || saved.length === 0) {
     const empty = document.createElement("p");
     empty.className = "muted";
-    empty.textContent = t("No favorites yet.");
+    empty.textContent = t("no.favorites.yet");
     wrap.appendChild(empty);
     showModal("favorites-modal");
     setupTapOutClose("favorites-modal"); // idempotent

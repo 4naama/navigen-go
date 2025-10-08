@@ -1892,14 +1892,31 @@ async function initEmergencyBlock(countryOverride) {
     }
   }, 3000);
 
-// Remaining modals & buttons… (smart: alert modal is now injected on demand; we create+open it before loading data)
-const helpButton = document.getElementById("help-button");
-const helpModal = document.getElementById("help-modal");
+// Footer: Call/Help + Home
+const helpButton = document.getElementById("help-button") || document.getElementById("call-button");
+const helpModal   = document.getElementById("help-modal");
+const homeButton  = document.getElementById("home-button");
 
 // Button refs (no early modal refs: we create alert modal when needed)
 const alertButton = document.getElementById("alert-button");
 
-/* insert ⭐ button next to 🎯; resolve anchor locally (no globals) */
+/* 🏠 Home: close any open modal and scroll list to top */
+if (homeButton) {
+  homeButton.addEventListener("click", () => {
+    document.querySelectorAll('[id$="-modal"]').forEach(m => m.classList.add("hidden"));
+    document.getElementById("locations-scroll")?.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
+
+/* ☎️ Call/Help: open Help modal (emergency) */
+if (helpButton) {
+  helpButton.addEventListener("click", async () => {
+    showModal("help-modal");
+    try { await initEmergencyBlock(); } catch (e) { console.error("Emergency init failed:", e); }
+  });
+}
+
+/* insert ⭐ next to 🎯; resolve anchor locally (no cross-scope refs) */
 (() => {
   const row = document.getElementById("search-container");
   if (!row || document.getElementById("fav-button")) return;
@@ -1907,31 +1924,24 @@ const alertButton = document.getElementById("alert-button");
   const fav = document.createElement("button");
   fav.id = "fav-button";
   fav.type = "button";
-  fav.textContent = "⭐";                       // emoji-only, like 📌/🎯
-  fav.title = t("Favorites");
-  fav.setAttribute("aria-label", t("Favorites"));
+  fav.textContent = "⭐"; // emoji-only, like 📌/🎯
+  fav.title = t("favorites");
+  fav.setAttribute("aria-label", t("favorites"));
 
-  // find 🎯 at runtime in this scope; fall back if missing
   const here = document.getElementById("here-button");
-  if (here) {
-    row.insertBefore(fav, here);               // place left of 🎯
-  } else if (row.firstElementChild) {
-    row.insertBefore(fav, row.firstElementChild);
-  } else {
-    row.appendChild(fav);                      // last resort
-  }
+  if (here) row.insertBefore(fav, here);      // place left of 🎯
+  else if (row.firstElementChild) row.insertBefore(fav, row.firstElementChild);
+  else row.appendChild(fav);
 
   fav.addEventListener("click", () => {
-    if (!document.getElementById("favorites-modal")) {
-      createFavoritesModal();
-    }
+    if (!document.getElementById("favorites-modal")) createFavoritesModal();
     showFavoritesModal();
   });
 })();
 
 // Location modal refs (kept as-is for other features)
 const locationModal = document.getElementById("share-location-modal");
-const coordsDisplay = document.getElementById("location-coords");
+const coordsDisplay = document.getElementById("share-location-coords");
 const shareButton = document.getElementById("share-location-button");
 
 // -- Alert modal wiring: build + open on click, then fetch + render alerts
