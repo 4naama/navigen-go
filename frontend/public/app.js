@@ -545,6 +545,20 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
         locBtn.setAttribute('data-addr', addrNorm);
       }
 
+      // ✅ Expose contact tokens for search (phone/email only; normalized)
+      /* short: add data-contact so phone/email queries match */
+      {
+        const id = locBtn.getAttribute('data-id');
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
+          : null;
+
+        const c = (rec && rec.contact) || {};
+        const raw = [c.phone, c.email].filter(Boolean).join(' ');
+        const contactNorm = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        locBtn.setAttribute('data-contact', contactNorm);
+      }
+
       // ✅ Ensure lat/lng & helpful title for navigation (used by LPM / route)
       {
         const id = locBtn.getAttribute('data-id');
@@ -655,11 +669,14 @@ function filterLocations(q) {
   // --- 1) Item-level filtering (names + tags + inline text) ---
   const items = document.querySelectorAll(itemSel);
   items.forEach((el) => {
+    // include contact tokens too (phone/email); addr already holds postal/city/region)
+    /* short: expand haystack with contact */
     const lower = el.dataset.lower || '';
     const shortName = el.getAttribute('data-short-name') || '';
     const tags = el.getAttribute('data-tags') || '';
     const addr = el.getAttribute('data-addr') || '';
-    const hay = norm(`${lower} ${shortName} ${tags} ${addr}`);
+    const contact = el.getAttribute('data-contact') || '';
+    const hay = norm(`${lower} ${shortName} ${tags} ${addr} ${contact}`);
 
     const show = hay.includes(query);
     el.style.display = show ? '' : 'none';
