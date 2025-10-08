@@ -159,17 +159,24 @@ body {
   padding-right: 2em;                 /* a touch more room for 8px inset */
 }
 
+/* FVB chevron: vertically center to match accordion headers */
 #listing-filter-value::after{
-  content:"▸";                         /* base arrow (right) */
+  content:"▸";                /* same glyph as groups */
   position:absolute;
-  inset-block:0;
-  right:8px;                           /* align with accordion chevrons */
-  display:inline-flex;
-  align-items:center;
-  font-size:1.1em;                     /* match accordion chevron size */
-  transform:rotate(90deg);             /* closed -> ▼ */
+  top:50%;                    /* hard center like accordion arrow */
+  right:8px;                  /* keep 8px gutter */
+  transform:translateY(-50%) rotate(90deg); /* closed -> ▼ */
+  display:block;              /* simpler box model */
+  line-height:1;              /* stable metrics */
+  font-size:1.1em;            /* match header-arrow size */
   opacity:.75;
   transition:transform .18s ease, opacity .18s ease;
+}
+
+/* open state driven by JS aria-expanded (kept) */
+#listing-filter-value[aria-expanded="true"]::after{
+  transform:translateY(-50%) rotate(0deg); /* open -> ▶ */
+  opacity:.9;
 }
 
 /* open state driven by JS aria-expanded */
