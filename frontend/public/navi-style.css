@@ -153,6 +153,33 @@ body {
   transition: background .15s ease, box-shadow .15s ease, transform .05s ease;
 }
 
+/* FVB chevron: closed = ▼ (rotate 90), open = ▶ (rotate 0) */
+#listing-filter-value{
+  position: relative;                 /* anchor the chevron */
+  padding-right: 1.75em;              /* make room for the chevron */
+}
+
+#listing-filter-value::after{
+  content:"▸";                         /* base arrow (right) */
+  position:absolute;
+  inset-block:0;
+  inset-inline-end:.55em;             /* right padding alignment */
+  display:inline-flex;
+  align-items:center;
+  transform:rotate(90deg);            /* closed -> ▼ */
+  opacity:.75;
+  transition:transform .18s ease, opacity .18s ease;
+}
+
+/* open state driven by JS aria-expanded */
+#listing-filter-value[aria-expanded="true"]::after{
+  transform:rotate(0deg);             /* open -> ▶ */
+  opacity:.9;
+}
+
+/* Hide any count inside the FVB */
+#listing-filter-value .vb-count{ display:none !important; }
+
 /* guard so FVB fill wins even if a later shared rule exists */
 #filters-inline #listing-filter-value{
   background: linear-gradient(#e5f0ff, #d9e9ff);
@@ -1643,14 +1670,15 @@ button:hover {
   background-color: var(--group-color, #f9f9f9);
 }
 
-.group-header-button .header-arrow::after {
-  content: "▸";
-  display: inline-block;
-  transition: transform 0.25s ease;
+/* closed = down, open = right */
+.group-header-button .header-arrow::after{
+  content:"▸";
+  display:inline-block;
+  transform:rotate(90deg);
+  transition:transform .25s ease;
 }
-
-.group-header-button.open .header-arrow::after {
-  transform: rotate(90deg);
+.group-header-button.open .header-arrow::after{
+  transform:rotate(0deg);
 }
 
 .group-buttons {
@@ -1722,17 +1750,17 @@ button:hover {
 }
 
 /* chevron – show only if there are items (needs Chrome/Edge/Safari :has) */
-.subheader:has(+ .subgroup-items:not(:empty))::after {
-  content: "▸";
-  margin-left: auto;
-  opacity: .6;
-  transition: transform .18s ease, opacity .18s ease;
+/* closed = down, open = right */
+.subheader:has(+ .subgroup-items:not(:empty))::after{
+  content:"▸";
+  margin-left:auto;
+  opacity:.6;
+  transform:rotate(90deg);
+  transition:transform .18s ease,opacity .18s ease;
 }
-
-/* expanded state flips chevron */
-.subheader.is-open:has(+ .subgroup-items)::after {
-  transform: rotate(90deg);
-  opacity: .8;
+.subheader.is-open:has(+ .subgroup-items)::after{
+  transform:rotate(0deg);
+  opacity:.8;
 }
 
 /* optional count pill pulled from data-count */
