@@ -1755,6 +1755,32 @@ button:hover {
 /* collapsed */
 .subgroup-items.is-collapsed { display: none; }
 
+/* ⭐ Favorites — same size/shape as 🎯, use search border (no red) */
+#fav-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:36px;               /* match 🎯 */
+  padding:8px 14px;          /* match 🎯 */
+  font-size:16px;
+  font-weight:bold;
+  border-radius:6px;
+  background-color:#fff;
+  border:1px solid var(--search-border, #d6dbe1); /* search box border */
+  color:black;
+  cursor:pointer;
+  line-height:1;
+  white-space:nowrap;
+  box-sizing:border-box;
+  transition:background-color .2s ease, border-color .2s ease;
+}
+
+#fav-button:hover{
+  background-color:#f1f5f9;               /* gentle hover, no red */
+  border-color:var(--search-border, #d6dbe1);
+}
+
+
 #here-button {
   display: inline-flex;
   align-items: center;
