@@ -1902,8 +1902,61 @@ export function createMyStuffModal() {
     id: 'my-stuff-modal',
     className: 'modal modal-menu',
     bodyHTML: `<div id="my-stuff-body" class="modal-body"></div>`
+  });  
+
+  const modal = document.getElementById('my-stuff-modal');
+
+  // ✅ Ensure it's hidden after injection
+  modal.classList.add('hidden');
+
+  const topBar = document.createElement('div');
+  topBar.className = 'modal-top-bar';
+  topBar.innerHTML = `
+    <h2 id="my-stuff-title" class="modal-header">${t("My Stuff")}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  modal.querySelector('.modal-content')?.prepend(topBar);
+
+  topBar.querySelector('.modal-close')?.addEventListener('click', () => {
+    hideModal("my-stuff-modal");
   });
   
+  // Ensure My Stuff always has a footer container (even with no buttons)
+  let actions = modal.querySelector('.modal-footer');  // keep same class for CSS
+  if (!actions) {
+    actions = document.createElement('div');
+    actions.className = 'modal-footer';
+    modal.querySelector('.modal-content')?.appendChild(actions);
+  }    
+
+  // ✅ Store all ".my-stuff-item" elements for later use
+  myStuffItems = Array.from(modal.querySelectorAll('.my-stuff-item'));
+
+  // ✅ Inject static Purchase History list (Phase 1)
+  const historyContainer = document.createElement("div");
+  historyContainer.id = "purchase-history"; // ✅ restore canonical ID
+  historyContainer.style = "margin-top: 1rem; padding: 0 1rem; font-size: 15px;";
+  modal.querySelector("#my-stuff-body")?.appendChild(historyContainer);
+
+  const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
+
+  if (purchases.length === 0) {
+    historyContainer.innerHTML = "<p style='opacity:0.6;'>No purchases yet.</p>";
+  } else {
+    purchases.sort((a, b) => b.timestamp - a.timestamp); // newest first
+    purchases.forEach(p => {
+      const div = document.createElement("div");
+      div.style = "background:#fff;padding:1rem;margin-bottom:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06);";
+      div.innerHTML = `
+        <div style="font-size:20px;">${p.icon}</div>
+        <div style="font-weight:600;margin-top:4px;">${p.label}</div>
+        <div style="font-size:14px;opacity:0.8;">${p.subtext}</div>
+      `;
+      historyContainer.appendChild(div);
+    });
+  }
+}
+
 /* Favorites Modal (FM): list saved locations with open/unsave */
 export function createFavoritesModal() {
   if (document.getElementById("favorites-modal")) return;
@@ -2002,60 +2055,6 @@ export function showFavoritesModal() {
 
   showModal("favorites-modal");
   setupTapOutClose("favorites-modal"); // backdrop-close
-}
-
-  const modal = document.getElementById('my-stuff-modal');
-
-  // ✅ Ensure it's hidden after injection
-  modal.classList.add('hidden');
-
-  const topBar = document.createElement('div');
-  topBar.className = 'modal-top-bar';
-  topBar.innerHTML = `
-    <h2 id="my-stuff-title" class="modal-header">${t("My Stuff")}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  modal.querySelector('.modal-content')?.prepend(topBar);
-
-  topBar.querySelector('.modal-close')?.addEventListener('click', () => {
-    hideModal("my-stuff-modal");
-  });
-  
-  // Ensure My Stuff always has a footer container (even with no buttons)
-  let actions = modal.querySelector('.modal-footer');  // keep same class for CSS
-  if (!actions) {
-    actions = document.createElement('div');
-    actions.className = 'modal-footer';
-    modal.querySelector('.modal-content')?.appendChild(actions);
-  }    
-
-  // ✅ Store all ".my-stuff-item" elements for later use
-  myStuffItems = Array.from(modal.querySelectorAll('.my-stuff-item'));
-
-  // ✅ Inject static Purchase History list (Phase 1)
-  const historyContainer = document.createElement("div");
-  historyContainer.id = "purchase-history"; // ✅ restore canonical ID
-  historyContainer.style = "margin-top: 1rem; padding: 0 1rem; font-size: 15px;";
-  modal.querySelector("#my-stuff-body")?.appendChild(historyContainer);
-
-  const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
-
-  if (purchases.length === 0) {
-    historyContainer.innerHTML = "<p style='opacity:0.6;'>No purchases yet.</p>";
-  } else {
-    purchases.sort((a, b) => b.timestamp - a.timestamp); // newest first
-    purchases.forEach(p => {
-      const div = document.createElement("div");
-      div.style = "background:#fff;padding:1rem;margin-bottom:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06);";
-      div.innerHTML = `
-        <div style="font-size:20px;">${p.icon}</div>
-        <div style="font-weight:600;margin-top:4px;">${p.label}</div>
-        <div style="font-size:14px;opacity:0.8;">${p.subtext}</div>
-      `;
-      historyContainer.appendChild(div);
-    });
-  }
-
 }
 
 /**
