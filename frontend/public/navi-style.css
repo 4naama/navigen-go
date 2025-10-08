@@ -156,7 +156,7 @@ body {
 /* FVB chevron: closed = ▼ (rotate 90), open = ▶ (rotate 0) */
 #listing-filter-value{
   position: relative;                 /* anchor the chevron */
-    padding-right: 2em;                 /* a touch more room for 8px inset */
+  padding-right: 2em;                 /* a touch more room for 8px inset */
 }
 
 #listing-filter-value::after{
@@ -404,21 +404,23 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   margin-inline: var(--content-pad-x);  /* align with search gutter */
 }
 
-/* Shared box look */
-#listing-filter-label,
-#listing-filter-value{
-  box-sizing: border-box; /* match search sizing model */
-  display: inline-flex;   /* vertically center text */
-  align-items: center;    /* center line-height */
+/* Shared box look (label only; value styles defined in unified FVB block) */
+#listing-filter-label{
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
   padding: 6px 10px;
-  font-size: .95em;       /* subtle */
-  text-align: start;      /* RTL-safe text alignment */
+  font-size: .95em;
+  text-align: start;
   color: #475569;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  white-space: nowrap;    /* keep each box intact */
+  white-space: nowrap;
 }
+
+/* Let the value grow; visual styles stay in the unified FVB rules above */
+#listing-filter-value{ flex: 1 1 auto; min-width: 0; }
 
 /* Let the value grow to fill, label stays natural width */
 #listing-filter-label{ flex: 0 0 auto; }
