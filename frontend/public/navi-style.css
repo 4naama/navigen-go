@@ -156,14 +156,14 @@ body {
 /* FVB chevron: closed = ▼ (rotate 90), open = ▶ (rotate 0) */
 #listing-filter-value{
   position: relative;                 /* anchor the chevron */
-  padding-right: 1.75em;              /* make room for the chevron */
+  padding-right: 2em;                 /* a touch more room for 8px inset */
 }
 
 #listing-filter-value::after{
   content:"▸";                         /* base arrow (right) */
   position:absolute;
   inset-block:0;
-  inset-inline-end:.55em;             /* right padding alignment */
+  inset-inline-end:8px;                          /* align with accordion chevrons */
   display:inline-flex;
   align-items:center;
   transform:rotate(90deg);            /* closed -> ▼ */
