@@ -675,9 +675,9 @@ function filterLocations(q) {
     const shortName = el.getAttribute('data-short-name') || '';
     const tags = el.getAttribute('data-tags') || '';
     const addr = el.getAttribute('data-addr') || '';
-    const contactName = el.getAttribute('data-contact-name') || '';
+    const contactPerson = el.dataset.contactPerson || '';
     const contact = el.getAttribute('data-contact') || '';
-    const hay = norm(`${lower} ${shortName} ${tags} ${addr} ${contactName} ${contact}`);
+    const hay = norm(`${lower} ${shortName} ${tags} ${addr} ${contactPerson} ${contact}`);
 
     const show = hay.includes(query);
     el.style.display = show ? '' : 'none';
