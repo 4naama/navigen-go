@@ -1123,24 +1123,8 @@ async function initEmergencyBlock(countryOverride) {
           return { ...m, cover, images };
         })(),
         descriptions: it?.descriptions || {},
-        // contactInformation single source; merge flat fields incl. contactPerson
-        contactInformation: (() => {
-          const base = it?.contactInformation || {};
-          const legacy = it?.contactInfo || it?.contact || {};
-          const flat = {
-            name: it?.contactPerson || it?.Contact || '',
-            phone: it?.phone || it?.Phone || '',
-            email: it?.email || it?.Email || '',
-            city: it?.city || it?.City || '',
-            adminArea: it?.adminArea || it?.Region || '',
-            postalCode: it?.postalCode || it?.PostalCode || '',
-            countryCode: it?.countryCode || it?.CountryCode || '',
-            address: it?.address || it?.Address || ''
-          };
-          return { ...legacy, ...base, ...Object.fromEntries(
-            Object.entries(flat).filter(([,v]) => v != null && v !== '')
-          ) };
-        })(),
+        // contactInformation is the single source
+        contactInformation: it?.contactInformation || {},
 
         // rating: minimal fields for sorting (easy to mine from exporters)
         ratings: (() => {
