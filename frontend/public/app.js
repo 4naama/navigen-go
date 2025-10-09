@@ -272,7 +272,8 @@ function renderPopularGroup(list = geoPoints) {
     btn.setAttribute('data-short-name', String(loc["Short Name"] || ''));
     btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
 
-    const c = (loc && loc.contact) || {};
+    // contactInformation is the single source
+    const c = (loc && loc.contactInformation) || {};
     const addrBits = [c.city, c.adminArea, c.postalCode, c.countryCode, c.address].filter(Boolean).join(' ');
     const addrNorm = addrBits.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     btn.setAttribute('data-addr', addrNorm);
@@ -1122,8 +1123,24 @@ async function initEmergencyBlock(countryOverride) {
           return { ...m, cover, images };
         })(),
         descriptions: it?.descriptions || {},
-        // contactInformation is the single source  // 2-line: remove legacy contact
-        contactInformation: it?.contactInformation || it?.contactInfo || it?.contact || {},
+        // contactInformation single source; merge flat fields incl. contactPerson
+        contactInformation: (() => {
+          const base = it?.contactInformation || {};
+          const legacy = it?.contactInfo || it?.contact || {};
+          const flat = {
+            name: it?.contactPerson || it?.Contact || '',
+            phone: it?.phone || it?.Phone || '',
+            email: it?.email || it?.Email || '',
+            city: it?.city || it?.City || '',
+            adminArea: it?.adminArea || it?.Region || '',
+            postalCode: it?.postalCode || it?.PostalCode || '',
+            countryCode: it?.countryCode || it?.CountryCode || '',
+            address: it?.address || it?.Address || ''
+          };
+          return { ...legacy, ...base, ...Object.fromEntries(
+            Object.entries(flat).filter(([,v]) => v != null && v !== '')
+          ) };
+        })(),
 
         // rating: minimal fields for sorting (easy to mine from exporters)
         ratings: (() => {
