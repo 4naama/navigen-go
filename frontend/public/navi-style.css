@@ -1784,18 +1784,18 @@ button:hover {
 /* collapsed */
 .subgroup-items.is-collapsed { display: none; }
 
-/* ⭐ Favorites — same size/shape as 🎯, use search border (no red) */
+/* ⭐ Favorites — neutral grey button (fill + hover) */  /* 2-line: unify with 🎯 look */
 #fav-button{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  height:36px;               /* match 🎯 */
-  padding:8px 14px;          /* match 🎯 */
+  height:36px;
+  padding:8px 14px;
   font-size:16px;
   font-weight:bold;
   border-radius:6px;
-  background-color:#fff;
-  border:1px solid var(--search-border, #d6dbe1); /* search box border */
+  background-color:#f1f5f9;                 /* grey fill */
+  border:1px solid var(--search-border, #d6dbe1);
   color:black;
   cursor:pointer;
   line-height:1;
@@ -1803,13 +1803,12 @@ button:hover {
   box-sizing:border-box;
   transition:background-color .2s ease, border-color .2s ease;
 }
-
 #fav-button:hover{
-  background-color:#f1f5f9;               /* gentle hover, no red */
+  background-color:#e2e8f0;                 /* slightly darker grey */
   border-color:var(--search-border, #d6dbe1);
 }
 
-
+/* 🎯 Share location — neutral grey button to match ⭐ */  /* 2-line: remove red hover */
 #here-button {
   display: inline-flex;
   align-items: center;
@@ -1819,21 +1818,19 @@ button:hover {
   font-size: 16px;
   font-weight: bold;
   border-radius: 6px;
-  background-color: white;
-  border:1px solid var(--search-border, #d6dbe1); /* search box border */
+  background-color: #f1f5f9;                /* grey fill */
+  border:1px solid var(--search-border, #d6dbe1);
   color: black;
   cursor: pointer;
   line-height: 1;
   white-space: nowrap;
   box-sizing: border-box;
   transition: background-color 0.2s ease, border-color 0.2s ease;
-  /* spacing handled by flex gap; keep it symmetric */
   margin-left: 0;
 }
-
 #here-button:hover {
-  background-color: #ffe5e8;
-  border-color: #c92a38;
+  background-color: #e2e8f0;                /* slightly darker grey */
+  border-color: var(--search-border, #d6dbe1);
 }
 
 #search-box {
