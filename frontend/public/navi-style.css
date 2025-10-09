@@ -123,9 +123,7 @@ body {
   margin-inline: var(--content-pad-x);
 }
 
-
-/* Two-box UI: label + value (FVB) */
-#listing-filter-label,
+/* Apply box look only to the value; label will not get a border */
 #listing-filter-value{
   box-sizing: border-box; display: inline-flex;      /* center text */
   align-items: center; padding: 6px 10px;
@@ -414,7 +412,7 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   text-align: start;
   color: #475569;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border: 0;                   /* no border on label */
   border-radius: 6px;
   white-space: nowrap;
 }
