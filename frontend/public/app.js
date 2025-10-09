@@ -553,10 +553,12 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
           ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
 
-        const c = (rec && rec.contact) || {};
-        const raw = [c.phone, c.email].filter(Boolean).join(' ');
+        // expose contact tokens (person/phone/email) for filtering  // 2-line: switch to contactInformation
+        const c = (rec && rec.contactInformation) || {};
+        const raw = [c.name, c.phone, c.email].filter(Boolean).join(' ');
         const contactNorm = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
         locBtn.setAttribute('data-contact', contactNorm);
+        locBtn.setAttribute('data-contact-person', String(c.name || ''));  // name used by search
       }
 
       // ✅ Ensure lat/lng & helpful title for navigation (used by LPM / route)
@@ -1118,7 +1120,9 @@ async function initEmergencyBlock(countryOverride) {
           return { ...m, cover, images };
         })(),
         descriptions: it?.descriptions || {},
-        contact: it?.contactInfo || it?.contact || {},  // prefer new shape
+        // contact maps new API field; keep old names for back-compat  // 2-line: ensure tokens + grouping
+        contact: it?.contactInformation || it?.contactInfo || it?.contact || {},
+        contactInformation: it?.contactInformation || it?.contactInfo || it?.contact || {},
 
         // rating: minimal fields for sorting (easy to mine from exporters)
         ratings: (() => {
