@@ -1085,7 +1085,7 @@ async function initLpmImageSlider(modal, data) {
           ev.preventDefault();
           const id = String(data?.id || data?.locationID || '');
           // booking lives under links only
-          const direct = data?.links?.booking || '';
+          const direct = data?.links?.bookingUrl || '';
           if (direct) { if (orig) return orig(ev); window.open(String(direct), '_blank', 'noopener'); return; }
 
           const url  = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`);
