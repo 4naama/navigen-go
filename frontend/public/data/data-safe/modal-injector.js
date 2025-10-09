@@ -222,10 +222,7 @@ export function createLocationProfileModal(data, injected = {}) {
       <button class="modal-footer-button" id="som-info"  aria-label="Info">ℹ️ <span class="cta-label">Info</span></button>
       <button class="modal-footer-button" id="som-share" aria-label="Share">📤 <span class="cta-label">Share</span></button>
       <button class="modal-footer-button" id="som-save"  aria-label="Save">⭐ <span class="cta-label">Save</span></button>
-      <button class="modal-footer-button" id="som-apple" aria-label="Apple Maps">🍎 <span class="cta-label">Apple Maps</span></button>
-      <button class="modal-footer-button" id="som-waze"  aria-label="Waze">
-        <img class="cta-icon" src="/assets/social/icons-waze.png" alt=""><span class="cta-label">Waze</span>
-      </button>
+      <button class="modal-footer-button" id="som-social" aria-label="Social Channels">🎉 <span class="cta-label">Social</span></button>
     </div>
   `;
 
@@ -247,6 +244,10 @@ export function createLocationProfileModal(data, injected = {}) {
  * @param {Object} data  – same shape as factory
  */
 export function showLocationProfileModal(data) {
+  // prefer stable profile id; avoid transient loc_*
+  // keep: normalize once at entry
+  data.id = String(data?.locationID || data?.id || '').trim();
+    
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
   if (old) old.remove();
@@ -260,7 +261,8 @@ export function showLocationProfileModal(data) {
   // Prefetch cover fast; avoid placeholder first paint (2 lines of comments).
   ;(async () => {
     try {
-      const id = String(data?.id || '').trim();
+      // use locationID fallback; avoids bad loc_* lookups
+      const id = String(data?.id || data?.locationID || '').trim();
       const need =
         !data?.media?.cover ||
         /placeholder-images/.test(String(data?.media?.cover || '')) ||
@@ -706,7 +708,7 @@ async function initLpmImageSlider(modal, data) {
   // ————————————————————————————  
   function wireLocationProfileModal(modal, data, originEl) {    
 
-    // 🎯 Route → open Google Maps with provided coords
+    // 🎯 Route → open Navigation modal (same header/close style as QR)
     const btnRoute = modal.querySelector('#lpm-route');
     if (btnRoute) {
       btnRoute.addEventListener('click', (e) => {
@@ -716,42 +718,55 @@ async function initLpmImageSlider(modal, data) {
         const lat = Number(latRaw);
         const lng = Number(lngRaw);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track('route');
-        const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-        window.open(url, '_blank', 'noopener');
+        _track('route'); // keep analytics event name
+        createNavigationModal({
+          name: String(data?.name || 'Location'),
+          lat, lng
+        });
       }, { passive: false });
     }
 
-    // ⭐ Save → stub (hook your real flow later)
-    const btnSave = modal.querySelector('#lpm-save');
-    if (btnSave) {
-      btnSave.addEventListener('click', (e) => {
-        e.preventDefault();
-        const id = String(data?.id || ''); if (!id) { showToast('Missing id', 1600); return; }
-        const key = `saved:${id}`;
-        const was = localStorage.getItem(key) === '1';
-        localStorage.setItem(key, was ? '0' : '1');
-        showToast(was ? 'Removed from Saved' : 'Saved', 1600); // auto hide
-      });
-    }
-
-    // 📅 Book → open bookingUrl if present; else toast
+    // 📅 Book → open bookingUrl if present; else fetch once and toast
     const btnBook = modal.querySelector('#lpm-book');
     if (btnBook) {
-      btnBook.addEventListener('click', (e) => {
-        e.preventDefault();                  // keep click inside the modal
-        const link =
-          data?.contact?.bookingUrl ||       // exporter target
-          data?.links?.booking ||            // optional mirror
-          '';
+      // if upstream already wired onclick, skip to prevent double-open
+      if (typeof btnBook.onclick === 'function') { return; }
 
-        if (link) {
-          _track && _track('booking');       // analytics (only if defined)
-          window.open(String(link), '_blank', 'noopener');
-        } else {
-          showToast('Booking link coming soon', 1600);
-        }
-      }, { passive: false });
+      // booking lives under links only
+      const link = data?.links?.booking || '';
+
+      if (link) {
+        // use native anchor open; no JS window.open to avoid duplicates
+        btnBook.setAttribute('href', String(link));
+        btnBook.setAttribute('target', '_blank');
+        btnBook.setAttribute('rel', 'noopener');
+        // track only; native anchor handles opening
+        btnBook.addEventListener('click', () => { _track && _track('booking'); }, { passive: true });
+      } else {
+        let busy = false; // run-once guard
+        btnBook.addEventListener('click', async (e) => {
+          e.preventDefault();                  // keep click inside the modal
+          e.stopImmediatePropagation();        // ensure a single handler runs
+          if (busy) return; busy = true;
+
+          const id = String(data?.id || data?.locationID || '').trim();
+          if (!id) { showToast('Booking link coming soon', 1600); busy = false; return; }
+
+          try {
+            const url = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`);
+            const r = await fetch(url, { credentials: 'include' });
+            if (r.ok) {
+              const j = await r.json().catch(() => ({}));
+              if (j && j.href) { _track && _track('booking'); window.open(String(j.href), '_blank', 'noopener'); busy = false; return; }
+            }
+            showToast('Booking link coming soon', 1600);
+          } catch {
+            showToast('Booking link coming soon', 1600);
+          } finally {
+            busy = false;
+          }
+        }, { passive: false });
+      }
     }
 
     // 🔳 QR → modal with QR; track click
@@ -760,7 +775,7 @@ async function initLpmImageSlider(modal, data) {
       if (btn) {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
-          const uid = String(data?.id || '').trim();
+          const uid = String(data?.id || data?.locationID || '').trim();
           if (!uid) { showToast('Missing id', 1600); return; }
 
           // build simple modal
@@ -921,6 +936,76 @@ async function initLpmImageSlider(modal, data) {
           document.body.appendChild(wrap);
         }, { passive: false });
       }
+    }    
+
+    // ⭐ Save → stub (hook your real flow later)
+    const btnSave = modal.querySelector('#lpm-save');
+    if (btnSave) {
+      btnSave.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = String(data?.id || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const key = `saved:${id}`;
+        const was = localStorage.getItem(key) === '1';
+        localStorage.setItem(key, was ? '0' : '1');
+        showToast(was ? 'Removed from Saved' : 'Saved', 1600); // auto hide
+      });
+    } 
+    
+    // 🎉 Social Channels — open social modal (capture to beat other handlers)
+    const socialBtn = modal.querySelector('#som-social');
+    if (socialBtn) {
+      socialBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+
+        // baseline from current LPM data
+        let links   = (data && data.links)   || {};
+        let contact = (data && data.contact) || {};
+
+        // fill from API export (same source as postal/media); fetch when Website is missing too
+        const missingLinks = !links || !Object.values(links).some(v => String(v || '').trim());
+        const missingContact = !contact || !['whatsapp','telegram','messenger','booking','bookingUrl','email','phone']
+          .some(k => String((contact || {})[k] || '').trim());
+
+        // detect missing Website across common fields
+        const websiteMissing = !(() => {
+          const site =
+            (links && (links.official || links.website || links.site)) ||
+            (contact && (contact.officialUrl || contact.officialURL || contact.website || contact.site)) || '';
+          return String(site).trim();
+        })();
+
+        if (missingLinks || missingContact || websiteMissing) {
+          try {
+            const id = String(data?.id || data?.locationID || '').trim();
+            if (id) {
+              const resp = await fetch(
+                API(`/api/data/profile?id=${encodeURIComponent(id)}`),
+                { cache: 'no-store', credentials: 'include' }
+              );
+              if (resp.ok) {
+                const payload = await resp.json().catch(() => ({}));
+                if (payload && typeof payload === 'object') {
+                  // merge only when absent locally (keep existing values)
+                  if (payload.links && typeof payload.links === 'object') {
+                    links = Object.assign({}, payload.links, links);
+                  }
+                  if (payload.contact && typeof payload.contact === 'object') {
+                    contact = Object.assign({}, payload.contact, contact);
+                  }
+                }
+              }
+            }
+          } catch {}
+        }
+
+        createSocialModal({
+          name: String(data?.name || 'Location'),
+          links,
+          contact
+        });
+      }, { capture: true, passive: false });
     }
 
     // ⋮ toggle secondary actions
@@ -931,33 +1016,6 @@ async function initLpmImageSlider(modal, data) {
         const open = secondary.classList.toggle('is-open'); // CSS shows when .is-open
         secondary.setAttribute('aria-hidden', String(!open));
         moreBtn.setAttribute('aria-expanded', String(open));
-      });
-    }
-
-    // 🍎 Apple Maps (https) – safe on any platform
-    const appleBtn = modal.querySelector('#som-apple');
-    if (appleBtn) {
-      appleBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const lat = Number(data?.lat ?? moreBtn?.getAttribute('data-lat') ?? NaN);
-        const lng = Number(data?.lng ?? moreBtn?.getAttribute('data-lng') ?? NaN);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track('apple');
-        const name = encodeURIComponent(String(data?.name || 'Location'));
-        window.open(`https://maps.apple.com/?ll=${lat},${lng}&q=${name}`, '_blank', 'noopener');
-      });
-    }
-
-    // 🧭 Waze (UL deep link via https)
-    const wazeBtn = modal.querySelector('#som-waze');
-    if (wazeBtn) {
-      wazeBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const lat = Number(data?.lat ?? moreBtn?.getAttribute('data-lat') ?? NaN);
-        const lng = Number(data?.lng ?? moreBtn?.getAttribute('data-lng') ?? NaN);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track('waze');
-        window.open(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank', 'noopener');
       });
     }
 
@@ -995,18 +1053,9 @@ async function initLpmImageSlider(modal, data) {
       secondary.appendChild(a);
     };
 
-    // Website + socials (render only if present)
-    addLink('som-www', '🔗', 'Website', normUrl(data.officialUrl || data.links?.official), 'website'); // prefer officialUrl
-    addLink('som-fb',   '📘', 'Facebook',  normUrl(data.links?.Facebook || data.links?.facebook),              'facebook');
-    addLink('som-ig',   '📸', 'Instagram', normUrl(data.links?.Instagram || data.links?.instagram),            'instagram');
-    addLink('som-yt',   '▶️', 'YouTube',   normUrl(data.links?.YouTube  || data.links?.Youtube || data.links?.youtube), 'youtube');
-    addLink('som-tt',   '🎵', 'TikTok',    normUrl(data.links?.TikTok   || data.links?.tiktok),                'tiktok');
-    addLink('som-pin',  '📌', 'Pinterest', normUrl(data.links?.Pinterest || data.links?.pinterest),            'pinterest');
-    addLink('som-spot', '🎧', 'Spotify',   normUrl(data.links?.Spotify  || data.links?.spotify),               'spotify');
-  
     // Fetch contact on click when not present
     ;(function wireContactFetch(){
-      const id = String(data?.id||'').trim(); if (!id) return;
+      const id = String(data?.id || data?.locationID || '').trim(); if (!id) return;
       const call = modal.querySelector('#som-call');
       const mail = modal.querySelector('#som-mail');
       const bookBtn = modal.querySelector('#lpm-book');
@@ -1034,8 +1083,9 @@ async function initLpmImageSlider(modal, data) {
         const orig = bookBtn.onclick;
         bookBtn.onclick = async (ev) => {
           ev.preventDefault();
-          const id = String(data?.id || '');
-          const direct = data?.contact?.bookingUrl || data?.links?.booking || '';
+          const id = String(data?.id || data?.locationID || '');
+          // booking lives under links only
+          const direct = data?.links?.booking || '';
           if (direct) { if (orig) return orig(ev); window.open(String(direct), '_blank', 'noopener'); return; }
 
           const url  = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`);
@@ -1054,10 +1104,6 @@ async function initLpmImageSlider(modal, data) {
       }
 
     })();
-    
-    addLink('som-wa',   '🟢', 'WhatsApp',  waUrl(data.contact?.whatsapp),   'whatsapp');
-    addLink('som-tg',   '📣', 'Telegram',  tgUrl(data.contact?.telegram),   'telegram');
-    addLink('som-msgr', '💬', 'Messenger', msgrUrl(data.contact?.messenger),'messenger');
 
     // ⭐ Save (secondary) → local toggle
     const save2 = modal.querySelector('#som-save');
@@ -1181,7 +1227,7 @@ async function initLpmImageSlider(modal, data) {
 
     // analytics beacon
     const _track = (action) => {
-      const uid = String(data?.id || '').trim(); if (!uid) return;
+      const uid = String(data?.id || data?.locationID || '').trim(); if (!uid) return;
       try {
         navigator.sendBeacon(
           'https://navigen-api.4naama-39c.workers.dev/api/track',
@@ -1199,7 +1245,8 @@ async function initLpmImageSlider(modal, data) {
   // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
   ;(async () => {
     try {
-      const id = String(data?.id || '').trim(); if (!id) return;
+      // accept locationID too; skip when missing
+      const id = String(data?.id || data?.locationID || '').trim(); if (!id) return;
       const needEnrich =
         !data?.descriptions ||
         !data?.media?.cover ||
@@ -1246,9 +1293,11 @@ import { handleDonation } from "./scripts/stripe.js";
 const API = (path) => {
   const meta = document.querySelector('meta[name="api-origin"]')?.content?.trim();
   const host = location.hostname;
-  const base = meta || ((host === 'localhost' || host === '127.0.0.1')
-    ? 'https://navigen.io'
-    : 'https://navigen-api.4naama-39c.workers.dev'); // prod Worker
+  // keep: use same-origin in prod (navigen.io & pages.dev); dev may point to pages.dev
+  const base = meta
+    || (host === 'localhost' || host === '127.0.0.1'
+        ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen-go.pages.dev')
+        : location.origin);
   return new URL(path, base).toString();
 };
 
@@ -1267,7 +1316,9 @@ function makeLocationButton(loc) {
   const btn = document.createElement('button');
   btn.textContent = loc["Short Name"] || loc.locationName || loc.Name || "Unnamed"; // prefer new name
 
-  btn.setAttribute('data-id', String(loc.ID || loc.locationID || loc.id || '')); // prefer new id
+  // prefer stable profile id; avoid transient loc_*
+  // keep: small comment; 2 lines max
+  btn.setAttribute('data-id', String(loc.locationID || loc.ID || loc.id || ''));
   btn.classList.add('location-button');
   btn.dataset.lower = (loc["Short Name"] || loc.locationName || loc.Name || "Unnamed").toLowerCase(); // prefer new name
   
@@ -1503,7 +1554,7 @@ function appendResolvedButton(actions, modalId = "my-stuff-modal") {
 }
 
 // ✅ Helper: View-by settings modal (button-less; uses standard .modal shell)
-export function openViewSettingsModal({ title, contextLine, note, options, currentKey, resetLabel, onPick }) {
+export function openViewSettingsModal({ title, contextLine, options, currentKey, resetLabel, onPick }) {
   const doc=document, body=doc.body;
 
   const overlay = doc.createElement('div');
@@ -1532,14 +1583,7 @@ export function openViewSettingsModal({ title, contextLine, note, options, curre
   bodyWrap.className = 'modal-body';
   const inner = doc.createElement('div');
   inner.className = 'modal-body-inner';
-  // note line: skip legacy scope hint only (keeps other notes)
-  {
-    const noteText = String(note || '').trim();
-    if (noteText && !/^applies\s+to\s+this\s+page\s+only\.?$/i.test(noteText)) {
-      const line2 = doc.createElement('p'); line2.textContent = noteText;
-      inner.append(line2);
-    }
-  }
+  
   const line3 = doc.createElement('p'); line3.textContent = contextLine;          // 🏫 Language Schools › brand › scope
 
   // ── Render "contextLine" as two-row breadcrumbs (icon + colored ›; wraps on row2).
@@ -1857,7 +1901,7 @@ export function createMyStuffModal() {
     id: 'my-stuff-modal',
     className: 'modal modal-menu',
     bodyHTML: `<div id="my-stuff-body" class="modal-body"></div>`
-  });
+  });  
 
   const modal = document.getElementById('my-stuff-modal');
 
@@ -1910,7 +1954,98 @@ export function createMyStuffModal() {
       historyContainer.appendChild(div);
     });
   }
+}
 
+/* Favorites Modal (FM): list saved locations with open/unsave */
+export function createFavoritesModal() {
+  if (document.getElementById("favorites-modal")) return;
+
+  const modal = injectModal({
+    id: "favorites-modal",
+    className: "modal modal-menu",
+    bodyHTML: `<div id="favorites-body" class="modal-body"></div>`
+  });
+
+  modal.classList.add("hidden");
+
+  const topBar = document.createElement("div");
+  topBar.className = "modal-top-bar";
+  topBar.innerHTML = `
+    <h2 class="modal-header">${t("Favorites")}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  modal.querySelector(".modal-content")?.prepend(topBar);
+  topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("favorites-modal"));
+}
+
+export function showFavoritesModal() {
+  if (!document.getElementById("favorites-modal")) createFavoritesModal();
+
+  const modal = document.getElementById("favorites-modal");
+  const body = modal.querySelector("#favorites-body");
+  const title = modal.querySelector(".modal-header");
+  if (!modal || !body || !title) return;
+
+  title.textContent = t("favorites");
+  body.innerHTML = ""; // re-render each open
+
+  // read favorites; expected to be an array of { id, name, lat, lng }
+  const saved = JSON.parse(localStorage.getItem("savedLocations") || "[]");
+
+  const wrap = document.createElement("div");
+  wrap.className = "modal-menu-list";
+  body.appendChild(wrap);
+
+  if (!Array.isArray(saved) || saved.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = t("no.favorites.yet");
+    wrap.appendChild(empty);
+    showModal("favorites-modal");
+    setupTapOutClose("favorites-modal"); // idempotent
+    return;
+  }
+
+  // small helper: persist without globals
+  const save = (arr) => localStorage.setItem("savedLocations", JSON.stringify(arr));
+
+  saved.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "modal-menu-item";           // consistent look
+
+    // label button opens/scrolls to item; star button unsaves (no conflict)
+    row.innerHTML = `
+      <div class="label" style="flex:1 1 auto; min-width:0;">
+        <button class="open-fav" type="button" style="all:unset; cursor:pointer;">
+          ${item.name || t("Unnamed")}
+        </button>
+      </div>
+      <button class="unsave-fav" type="button" aria-label="${t("Remove")}">⭐</button>
+    `;
+
+    // open behavior: dispatch event + attempt local scroll
+    row.querySelector(".open-fav")?.addEventListener("click", () => {
+      const evt = new CustomEvent("navigate-to-location", { detail: { id: item.id, lat: item.lat, lng: item.lng } });
+      document.dispatchEvent(evt);
+      const el = document.querySelector(`[data-location-id="${CSS.escape(String(item.id))}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      hideModal("favorites-modal");
+    });
+
+    // unsave behavior: stop row clicks, update store, re-render
+    row.querySelector(".unsave-fav")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const next = saved.filter(s => String(s.id) !== String(item.id));
+      save(next);
+      row.style.opacity = "0.5";                 // quick visual feedback
+      setTimeout(() => showFavoritesModal(), 120);
+    });
+
+    wrap.appendChild(row);
+  });
+
+  showModal("favorites-modal");
+  setupTapOutClose("favorites-modal"); // backdrop-close
 }
 
 /**
@@ -2462,6 +2597,171 @@ export function createHelpModal() {
 
   // tap-out + ESC
   setupTapOutClose("help-modal");
+}
+
+// ============================
+// 🎉 Social Channels modal (MODULE-SCOPED)
+// Reason: make callable from 🎉 handler; same shell as Navigation; no footer.
+// ============================
+export function createSocialModal({ name, links = {}, contact = {} }) {
+  const id = 'social-modal';
+  document.getElementById(id)?.remove();
+
+  // local helpers (2 lines each)
+  const normUrl = (u) => {
+    const s = String(u || '').trim(); if (!s) return '';
+    return /^(?:https?:)?\/\//i.test(s) ? s : (s.startsWith('www.') || s.includes('.') ? 'https://' + s : s);
+  };
+  const waUrl = (v) => { const s=String(v||'').trim(); if(!s) return ''; const n=s.replace(/[^\d+]/g,'').replace(/^\+?/, ''); return n?`https://wa.me/${n}`:''; };
+  const tgUrl = (v) => { const s=String(v||'').trim(); if(!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://t.me/${s.replace(/^@/,'')}`; };
+  const msUrl = (v) => { const s=String(v||'').trim(); if(!s) return ''; return /^https?:\/\//i.test(s) ? s : `https://m.me/${s}`; };
+
+  // same shell as Navigation: inject + header top bar; no footer
+  const modal = injectModal({
+    id,
+    title: '',
+    layout: 'action',
+    bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
+  });
+
+  // top bar header (close only here)
+  {
+    const top = document.createElement('div');
+    top.className = 'modal-top-bar';
+    top.innerHTML = `
+      <h2 class="modal-title">${String(name || 'Social Channels')}</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    `;
+    modal.querySelector('.modal-content')?.prepend(top);
+    top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+  }
+
+  // providers: consistent logo + text rows; Website uses globe svg
+  const providers = [
+    {
+      key:'official',
+      label:'🌐 Website',  // requested label
+      icon:'',             // text-only row; no missing asset
+      track:'social.website',
+      href: normUrl(
+        (links && (links.official || links.website || links.site)) ||
+        (contact && (contact.officialUrl || contact.officialURL || contact.website || contact.site))
+      )
+    },
+    { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook',  href: normUrl(links.facebook) },
+    { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram', href: normUrl(links.instagram) },
+    { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',   href: normUrl(links.youtube) },
+    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',    href: normUrl(links.tiktok) },
+    // IMPORTANT: Pinterest now has a text label (no icon-only), so sizing matches others
+    { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest', href: normUrl(links.pinterest) },
+    { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'social.linkedin',  href: normUrl(links.linkedin) },
+    { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',   href: normUrl(links.spotify) },
+    { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp',  href: waUrl(contact.whatsapp) },
+    { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'social.telegram',  href: tgUrl(contact.telegram) },
+    { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'social.messenger', href: msUrl(contact.messenger) }
+  ];
+
+  const list = modal.querySelector('#social-modal-list');
+  const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim());
+
+  if (!rows.length) {
+    const empty = document.createElement('div');
+    empty.className = 'modal-menu-item';
+    empty.setAttribute('aria-disabled','true');
+    empty.style.pointerEvents = 'none';
+    // emoji instead of missing website svg
+    empty.innerHTML = `<span class="icon-img" aria-hidden="true">🌐</span><span>Links coming soon</span>`;
+    list.appendChild(empty);
+  } else {
+    rows.forEach(r => {
+      const a = document.createElement('a');
+      a.className = 'modal-menu-item';
+      a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
+      // uniform row: 20×20 icon + text; no icon-only centering
+      a.innerHTML =
+        `<span class="icon-img">` +
+          (r.icon ? `<img src="${r.icon}" alt="" width="20" height="20" style="display:block;object-fit:contain;">` : '') +
+        `</span><span>${r.label || (r.key === 'pinterest' ? 'Pinterest' : '')}</span>`;
+
+      if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true }); // track if available
+      list.appendChild(a);
+    });
+  }
+
+  setupTapOutClose(id);
+  showModal(id);
+}
+
+// 🎯 Navigation modal (compact list with icons; header + red × like QR/Help)
+function createNavigationModal({ name, lat, lng }) {
+  const id = 'nav-modal';
+  document.getElementById(id)?.remove();
+
+  // Build modal shell via injectModal (body replaced right after)
+  const m = injectModal({
+    id,
+    title: '',            // header built as top bar (uniform with QR/Help)
+    layout: 'action',
+    bodyHTML: `
+      <div class="modal-menu-list" id="nav-modal-list"></div>
+    `
+  });
+
+  // Top bar (sticky) — reuses your QR/Help style
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">🎯 Navigation</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  m.querySelector('.modal-content')?.prepend(top);
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  // Build items (icons in /assets/social/) + per-provider tracking labels
+  const list = m.querySelector('#nav-modal-list');
+  const rows = [
+    {
+      label: 'Google Maps',
+      icon: '/assets/social/icons-google-maps.svg',
+      href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+      track: 'nav.google'
+    },
+    {
+      label: 'Waze',
+      icon: '/assets/social/icons-waze.png',
+      href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
+      track: 'nav.waze'
+    },
+    {
+      label: 'Apple Maps',
+      emoji: '🍎',
+      href: `https://maps.apple.com/?daddr=${lat},${lng}`,
+      track: 'nav.apple'
+    }
+  ];
+
+  rows.forEach(r => {
+    const btn = document.createElement('a');
+    btn.className = 'modal-menu-item';
+    btn.href = r.href;
+    btn.target = '_blank';
+    btn.rel = 'noopener';
+
+    const iconHTML = r.emoji
+      ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
+      : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
+
+    btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
+
+    if (typeof _track === 'function' && r.track) {
+      btn.addEventListener('click', () => { _track(r.track); }, { passive: true });
+    }
+    list.appendChild(btn);
+  });
+
+  // Tap-out close & show
+  setupTapOutClose(id);
+  showModal(id);
 }
 
 // 🛑 Prevents overlapping share attempts by locking during active share operation.

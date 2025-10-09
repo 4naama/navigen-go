@@ -732,10 +732,8 @@ async function initLpmImageSlider(modal, data) {
       // if upstream already wired onclick, skip to prevent double-open
       if (typeof btnBook.onclick === 'function') { return; }
 
-      const link =
-        data?.contact?.bookingUrl ||       // exporter target
-        data?.links?.booking ||            // optional mirror
-        '';
+      // booking lives under links only
+      const link = data?.links?.booking || '';
 
       if (link) {
         // use native anchor open; no JS window.open to avoid duplicates
@@ -1086,7 +1084,8 @@ async function initLpmImageSlider(modal, data) {
         bookBtn.onclick = async (ev) => {
           ev.preventDefault();
           const id = String(data?.id || data?.locationID || '');
-          const direct = data?.contact?.bookingUrl || data?.links?.booking || '';
+          // booking lives under links only
+          const direct = data?.links?.booking || '';
           if (direct) { if (orig) return orig(ev); window.open(String(direct), '_blank', 'noopener'); return; }
 
           const url  = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`);
