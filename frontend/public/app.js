@@ -307,7 +307,7 @@ function renderPopularGroup(list = geoPoints) {
         media,
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
         tags: _tags,
-        contact: (loc && loc.contact) || {},
+        contactInformation: (loc && loc.contactInformation) || {},
         links: (loc && loc.links) || {},
         ratings: (loc && loc.ratings) || {},
         pricing: (loc && loc.pricing) || {},
@@ -539,7 +539,8 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
           ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
 
-        const c = (rec && rec.contact) || {};
+        // address tokens from contactInformation
+        const c = (rec && rec.contactInformation) || {};
         const addrBits = [c.city, c.adminArea, c.postalCode, c.countryCode, c.address].filter(Boolean).join(' ');
         const addrNorm = addrBits.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
         locBtn.setAttribute('data-addr', addrNorm);
@@ -937,7 +938,8 @@ async function initEmergencyBlock(countryOverride) {
         .map(g => {
           const groupKey = g.groupKey || g.Group;
           const locs = byGroup.get(groupKey) || [];
-          const subs = [...new Set(locs.map(l => (l.contact?.adminArea || '-')))]
+          // derive area from contactInformation  // 2-line: no fallback to contact
+          const subs = [...new Set(locs.map(l => (l.contactInformation?.adminArea || '-')))]
             .sort((a,b) => String(a).localeCompare(String(b)))
             .map(area => ({
               key: `admin.${String(area)
@@ -1120,8 +1122,7 @@ async function initEmergencyBlock(countryOverride) {
           return { ...m, cover, images };
         })(),
         descriptions: it?.descriptions || {},
-        // contact maps new API field; keep old names for back-compat  // 2-line: ensure tokens + grouping
-        contact: it?.contactInformation || it?.contactInfo || it?.contact || {},
+        // contactInformation is the single source  // 2-line: remove legacy contact
         contactInformation: it?.contactInformation || it?.contactInfo || it?.contact || {},
 
         // rating: minimal fields for sorting (easy to mine from exporters)
@@ -1183,7 +1184,7 @@ async function initEmergencyBlock(countryOverride) {
             media,
             descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
             tags: Array.isArray(rec?.tags) ? rec.tags : [],
-            contact: rec.contact || {},
+            contactInformation: rec.contactInformation || {},
             links: rec.links || {},
             ratings: rec.ratings || {},
             pricing: rec.pricing || {}
@@ -1357,17 +1358,18 @@ async function initEmergencyBlock(countryOverride) {
     const pageList = geoCtx.map(rec => ({ ...rec })); // shallow clone
     const modeMap = {
       structure: () => ({ list: pageList, grouped: structure }),
+      // use contactInformation.* only  // 2-line: legacy contact removed
       adminarea: () => {
-        pageList.forEach(r => { const k = r?.contact?.adminArea; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
-        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contact?.adminArea) };
+        pageList.forEach(r => { const k = r?.contactInformation?.adminArea; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contactInformation?.adminArea) };
       },
       city: () => {
-        pageList.forEach(r => { const k = r?.contact?.city; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
-        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contact?.city) };
+        pageList.forEach(r => { const k = r?.contactInformation?.city; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contactInformation?.city) };
       },
       postalcode: () => {
-        pageList.forEach(r => { const k = r?.contact?.postalCode; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
-        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contact?.postalCode) };
+        pageList.forEach(r => { const k = r?.contactInformation?.postalCode; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contactInformation?.postalCode) };
       },
       alpha: () => {
         pageList.forEach(r => {
