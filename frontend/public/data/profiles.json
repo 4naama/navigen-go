@@ -6714,11 +6714,12 @@
       "links": {
         "official": "https://www.gyerekangolbudakeszi.hu/",
         "facebook": "https://www.facebook.com/HelenDoronBudakeszi",
-        "booking": "https://www.gyerekangolbudakeszi.hu/jelentkezes.php"
+        "bookingUrl": "https://www.gyerekangolbudakeszi.hu/jelentkezes.php"
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Zilahy Anita Hana",
         "phone": "+36 30 384 1707",
         "email": "budakeszi@helendoron.com",
         "address": "Szőlőskert út 5-7.",
@@ -6726,7 +6727,6 @@
         "city": "Budakeszi",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "https://www.gyerekangolbudakeszi.hu/jelentkezes.php",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -6742,7 +6742,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budakeszi-7088.json",
         "fileNameAscii": "hd-budakeszi.json"
@@ -6796,11 +6796,12 @@
       "links": {
         "official": "https://www.gyerekangolbudakeszi.hu/",
         "facebook": "https://www.facebook.com/HelenDoronBudakeszi",
-        "booking": "https://www.gyerekangolbudakeszi.hu/jelentkezes.php"
+        "bookingUrl": "https://www.gyerekangolbudakeszi.hu/jelentkezes.php"
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Zilahy Anita Hana",
         "phone": "+36 30 384 1707",
         "email": "budakeszi@helendoron.com",
         "address": "Tisza István tér",
@@ -6808,7 +6809,6 @@
         "city": "Nagykovácsi",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "https://www.gyerekangolbudakeszi.hu/jelentkezes.php",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -6824,7 +6824,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-nagykovacsi-9457.json",
         "fileNameAscii": "hd-nagykovacsi.json"
@@ -6880,7 +6880,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Könözsy Rita",
         "phone": "+36 20 463 1641",
         "email": "esztergom@helendoron.com",
         "address": "Szentkirályi u. 65.",
@@ -6888,7 +6889,6 @@
         "city": "Esztergom",
         "adminArea": "Komárom-Esztergom",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -6904,7 +6904,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-esztergom-2883.json",
         "fileNameAscii": "hd-esztergom.json"
@@ -6962,11 +6962,12 @@
         "pinterest": "https://hu.pinterest.com/hdebrecen/",
         "tiktok": "https://www.tiktok.com/@helendorondebrecen",
         "youtube": "https://www.youtube.com/channel/UCtCw9hCUVzdf8SgzuD_BdTg",
-        "booking": "https://www.angoldebrecen.hu/kapcsolat"
+        "bookingUrl": "https://www.angoldebrecen.hu/kapcsolat"
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Sőrés Gabriella",
         "phone": "+36 20 292 1705",
         "email": "helendoron@angoldebrecen.hu",
         "address": "Hadházi 19.",
@@ -6974,7 +6975,6 @@
         "city": "Debrecen",
         "adminArea": "Hajdú-Bihar",
         "countryCode": "HU",
-        "bookingUrl": "https://www.angoldebrecen.hu/kapcsolat",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -6990,7 +6990,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-debrecen-hadhazi-8910.json",
         "fileNameAscii": "hd-debrecen-hadhazi.json"
@@ -7046,7 +7046,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Sőrés Gabriella",
         "phone": "+36 30 822 6276",
         "email": "debrecen01@helendoron.com",
         "address": "Darabos utca 33.",
@@ -7054,7 +7055,6 @@
         "city": "Debrecen",
         "adminArea": "Hajdú-Bihar",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7070,7 +7070,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-debrecen-darabos-4026.json",
         "fileNameAscii": "hd-debrecen-darabos.json"
@@ -7109,7 +7109,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Schummer Orsolya",
         "phone": "+36 30 238 8031",
         "email": "baja@helendoron.com",
         "address": "Péter-Pál utca 9.",
@@ -7117,7 +7118,6 @@
         "city": "Baja",
         "adminArea": "Bács-Kiskun",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7133,7 +7133,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-baja-0508.json",
         "fileNameAscii": "hd-baja.json"
@@ -7170,7 +7170,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Torma Orsolya",
         "phone": "+36 30 355 5968",
         "email": "balatonlelle@helendoron.com",
         "address": "Rákóczi út 240.",
@@ -7178,7 +7179,6 @@
         "city": "Balatonlelle",
         "adminArea": "Somogy",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7194,7 +7194,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-balatonlelle-1279.json",
         "fileNameAscii": "hd-balatonlelle.json"
@@ -7233,7 +7233,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Surányi Szabina Gitta",
         "phone": "+36 30 498 4198",
         "email": "bia@helendoron.com",
         "address": "Ritsman Pál u. 52.",
@@ -7241,7 +7242,6 @@
         "city": "Biatorbágy",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7257,7 +7257,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-biatorbagy-6386.json",
         "fileNameAscii": "hd-biatorbagy.json"
@@ -7296,7 +7296,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Baratkai Violetta",
         "phone": "+36 30 676 0286",
         "email": "bp01@helendoron.com",
         "address": "Dezső utca 12b.",
@@ -7304,7 +7305,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7320,7 +7320,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest1-dezso-3648.json",
         "fileNameAscii": "hd-budapest1-dezso.json"
@@ -7359,7 +7359,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Baratkai Violetta",
         "phone": "+36 30 676 0286",
         "email": "bp01@helendoron.com",
         "address": "Hattyú utca 12.",
@@ -7367,7 +7368,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7383,7 +7383,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest1-hattyu-9372.json",
         "fileNameAscii": "hd-budapest1-hattyu.json"
@@ -7422,7 +7422,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Mészáros Szilvia",
         "phone": "+36 20 934 6272",
         "email": "rozsadomb@helendoron.com",
         "address": "Keleti Károly u. 8.",
@@ -7430,7 +7431,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7446,7 +7446,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest2-rozsadomb-0977.json",
         "fileNameAscii": "hd-budapest2-rozsadomb.json"
@@ -7485,7 +7485,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Bajzáth Orsolya",
         "phone": "+36 30 573 8292",
         "email": "bp03@helendoron.com",
         "address": "Dózsa György utca 59.",
@@ -7493,7 +7494,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7509,7 +7509,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest3-6635.json",
         "fileNameAscii": "hd-budapest3.json"
@@ -7548,7 +7548,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Chavot-Horváth Nikolett",
         "phone": "+36 30 4241 150",
         "email": "dkeszi-kapmegyer@helendoron.com",
         "address": "Lóverseny tér 6.",
@@ -7556,7 +7557,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7572,7 +7572,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest4-kaposztasmegyer-4587.json",
         "fileNameAscii": "hd-budapest4-kaposztasmegyer.json"
@@ -7611,7 +7611,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Kopre Alíz",
         "phone": "+36 30 357 6205",
         "email": "ujpest@helendoron.com",
         "address": "József Attila utca 32-34.",
@@ -7619,7 +7620,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7635,7 +7635,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest4-ujpest-5231.json",
         "fileNameAscii": "hd-budapest4-ujpest.json"
@@ -7674,7 +7674,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Annie Zhang",
         "phone": "+36 30 530 6417",
         "email": "bp10@helendoron.com",
         "address": "Újhegyi sétány 16.",
@@ -7682,7 +7683,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7698,7 +7698,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest10-ujhegyi-3449.json",
         "fileNameAscii": "hd-budapest10-ujhegyi.json"
@@ -7737,7 +7737,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Annie Zhang",
         "phone": "+36 30 530 6417",
         "email": "bp10@helendoron.com",
         "address": "Gergely u. 18.",
@@ -7745,7 +7746,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7761,7 +7761,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest10-ohegy-6257.json",
         "fileNameAscii": "hd-budapest10-ohegy.json"
@@ -7800,7 +7800,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Patkós Ildikó",
         "phone": "+36 20 931 2013",
         "email": "bp11@helendoron.com",
         "address": "Etele út 69.",
@@ -7808,7 +7809,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7824,7 +7824,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest11-etele-5968.json",
         "fileNameAscii": "hd-budapest11-etele.json"
@@ -7863,7 +7863,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Patkós Ildikó",
         "phone": "+36 20 931 2013",
         "email": "bp11@helendoron.com",
         "address": "Fadrusz u. 2.",
@@ -7871,7 +7872,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7887,7 +7887,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest11-fadrusz-3887.json",
         "fileNameAscii": "hd-budapest11-fadrusz.json"
@@ -7926,7 +7926,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Patkós Ildikó",
         "phone": "+36 20 931 2013",
         "email": "bp11@helendoron.com",
         "address": "Rétköz u. 9a",
@@ -7934,7 +7935,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -7950,7 +7950,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest11-gazdagret-5034.json",
         "fileNameAscii": "hd-budapest11-gazdagret.json"
@@ -7989,7 +7989,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Patkós Ildikó",
         "phone": "+36 20 931 2013",
         "email": "bp11@helendoron.com",
         "address": "Bartók Béla út 5.",
@@ -7997,7 +7998,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8013,7 +8013,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest11-gellert-2544.json",
         "fileNameAscii": "hd-budapest11-gellert.json"
@@ -8052,7 +8052,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Endre Judit",
         "phone": "+36 30 313 6822",
         "email": "hegyvidek@helendoron.com",
         "address": "Németvölgyi út 60.",
@@ -8060,7 +8061,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8076,7 +8076,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest12-hegyvidek-2483.json",
         "fileNameAscii": "hd-budapest12-hegyvidek.json"
@@ -8115,7 +8115,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Endre Judit",
         "phone": "+36 30 313 6822",
         "email": "hegyvidek@helendoron.com",
         "address": "Hollós út 5.",
@@ -8123,7 +8124,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8139,7 +8139,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest12-jokai-9012.json",
         "fileNameAscii": "hd-budapest12-jokai.json"
@@ -8178,7 +8178,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Rép Krisztina",
         "phone": "+36 20 440 3722",
         "email": "bp13@helendoron.com",
         "address": "Petneházy u. 54.",
@@ -8186,7 +8187,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8202,7 +8202,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest13-9502.json",
         "fileNameAscii": "hd-budapest13.json"
@@ -8241,7 +8241,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Bukovszky Barbara",
         "phone": "+36 30 397 0362",
         "email": "bp14@helendoron.com",
         "address": "Szugló u. 64.",
@@ -8249,7 +8250,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8265,7 +8265,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest14-3053.json",
         "fileNameAscii": "hd-budapest14.json"
@@ -8304,7 +8304,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Molnár Edit Mónika",
         "phone": "+36 30 834 8447",
         "email": "bp15@helendoron.com",
         "address": "Páskomliget utca 4.",
@@ -8312,7 +8313,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8328,7 +8328,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest15-8757.json",
         "fileNameAscii": "hd-budapest15.json"
@@ -8367,7 +8367,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Göndöcs Zsófia",
         "phone": "+36 20 557 4464",
         "email": "bp16@helendoron.com",
         "address": "Hősök tere 11.",
@@ -8375,7 +8376,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8391,7 +8391,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest16-5556.json",
         "fileNameAscii": "hd-budapest16.json"
@@ -8430,7 +8430,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Mártha Enikő",
         "phone": "+36 70 326 1837",
         "email": "bp17@helendoron.com",
         "address": "Péceli út 222.",
@@ -8438,7 +8439,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8454,7 +8454,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest17-csaba-haz-8939.json",
         "fileNameAscii": "hd-budapest17-csaba-haz.json"
@@ -8493,7 +8493,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Mártha Enikő",
         "phone": "+36 70 326 1837",
         "email": "bp17@helendoron.com",
         "address": "Pesti út 237.",
@@ -8501,7 +8502,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8517,7 +8517,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest17-pesti-7453.json",
         "fileNameAscii": "hd-budapest17-pesti.json"
@@ -8556,7 +8556,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Gyöngyösi Tibor",
         "phone": "+36 30 915 3939",
         "email": "bp18@gyerekangol.hu",
         "address": "Szent Lőrinc sétány 4.",
@@ -8564,7 +8565,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8580,7 +8580,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest18-2321.json",
         "fileNameAscii": "hd-budapest18.json"
@@ -8619,7 +8619,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Farkas-Káplár Anett",
         "phone": "+36 20 231 4021",
         "email": "bp22@helendoron.com",
         "address": "Tóth József utca 45.",
@@ -8627,7 +8628,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8643,7 +8643,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest22-barati-korok-6765.json",
         "fileNameAscii": "hd-budapest22-barati-korok.json"
@@ -8680,7 +8680,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Patkós Ildikó",
         "phone": "+36 20 931 2013",
         "email": "belvaros@helendoron.com",
         "address": "Bokréta utca 20.",
@@ -8688,7 +8689,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8704,7 +8704,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest9-4526.json",
         "fileNameAscii": "hd-budapest9.json"
@@ -8743,7 +8743,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Institóriszné Vas Vivien",
         "phone": "+36 70 621 7270",
         "email": "csepel@helendoron.com",
         "address": "II. Rákóczi Ferenc út 144.",
@@ -8751,7 +8752,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8767,7 +8767,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest-csepel-7584.json",
         "fileNameAscii": "hd-budapest-csepel.json"
@@ -8806,7 +8806,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Göndöcs Zsófia",
         "phone": "+36 20 557 4464",
         "email": "nyugatiter@helendoron.com",
         "address": "Nyugati tér 4.",
@@ -8814,7 +8815,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8830,7 +8830,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest-nyugati-5721.json",
         "fileNameAscii": "hd-budapest-nyugati.json"
@@ -8867,7 +8867,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Szalay Zsuzsanna",
         "phone": "+36 30 961 2212",
         "email": "obuda@helendoron.com",
         "address": "San Marco utca 81.",
@@ -8875,7 +8876,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8891,7 +8891,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budapest-obuda-4227.json",
         "fileNameAscii": "hd-budapest-obuda.json"
@@ -8928,7 +8928,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Cserháti-Zala Mónika",
         "phone": "+36 30 907 2125",
         "email": "budaors@helendoron.com",
         "address": "Patkó utca 5.",
@@ -8936,7 +8937,6 @@
         "city": "Budaörs",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -8952,7 +8952,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-budaors-torokbalint-1508.json",
         "fileNameAscii": "hd-budaors-torokbalint.json"
@@ -8991,7 +8991,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Zsidják Erika",
         "phone": "+36 70 703 8091",
         "email": "bekescsaba@helendoron.com",
         "address": "Szőlő u. 31.",
@@ -8999,7 +9000,6 @@
         "city": "Békéscsaba",
         "adminArea": "Békés",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9015,7 +9015,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-bekescsaba-0271.json",
         "fileNameAscii": "hd-bekescsaba.json"
@@ -9054,7 +9054,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Muir Anikó",
         "phone": "+36 70 881 1388",
         "email": "delpestmegye03@helendoron.com",
         "address": "Bocskai utca 13.",
@@ -9062,7 +9063,6 @@
         "city": "Cegléd",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9078,7 +9078,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-cegled-9461.json",
         "fileNameAscii": "hd-cegled.json"
@@ -9117,7 +9117,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Molnár Edit Mónika",
         "phone": "+36 30 834 8447",
         "email": "bp15@helendoron.com",
         "address": "Kacsóh Pongrác utca 1.",
@@ -9125,7 +9126,6 @@
         "city": "Csömör",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9141,7 +9141,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-csomor-4453.json",
         "fileNameAscii": "hd-csomor.json"
@@ -9180,7 +9180,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "dr. Varga Judit",
         "phone": "+36 20 669 5303",
         "email": "delpestmegye01@helendoron.com",
         "address": "Hoitsy Pál u. 19.",
@@ -9188,7 +9189,6 @@
         "city": "Dunaharaszti",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9204,7 +9204,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-dunaharaszti-9481.json",
         "fileNameAscii": "hd-dunaharaszti.json"
@@ -9243,7 +9243,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Chavot-Horváth Nikolett",
         "phone": "+36304241150",
         "email": "Dkeszi-Kapmegyer@helendoron.com",
         "address": "Állomás sétány",
@@ -9251,7 +9252,6 @@
         "city": "Dunakeszi",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9267,7 +9267,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-dunakeszi-fot-2916.json",
         "fileNameAscii": "hd-dunakeszi-fot.json"
@@ -9306,7 +9306,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Csendes Adrienn",
         "phone": "+36 30 497 1105",
         "email": "dunaujvaros@helendoron.com",
         "address": "Táncsics Mihály utca 3/c",
@@ -9314,7 +9315,6 @@
         "city": "Dunaújváros",
         "adminArea": "Fejér",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9330,7 +9330,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-dunaujvaros-2936.json",
         "fileNameAscii": "hd-dunaujvaros.json"
@@ -9369,7 +9369,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Kota Marianna",
         "phone": "+36 20 970 9870",
         "email": "miskolc02@helendoron.com",
         "address": "Hunyadi u. 27-29.",
@@ -9377,7 +9378,6 @@
         "city": "Emőd",
         "adminArea": "Borsod-Abaúj-Zemplén",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9393,7 +9393,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-emod-4933.json",
         "fileNameAscii": "hd-emod.json"
@@ -9430,7 +9430,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Nagy Erika",
         "phone": "+36 70 420 5129",
         "email": "gyula@helendoron.com",
         "address": "Temesvári út 57.",
@@ -9438,7 +9439,6 @@
         "city": "Gyula",
         "adminArea": "Békés",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9454,7 +9454,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-gyula-4009.json",
         "fileNameAscii": "hd-gyula.json"
@@ -9491,7 +9491,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Csikány-Sebestyén Nóra",
         "phone": "+36 30 479 0234",
         "email": "delpestmegye01@helendoron.com",
         "address": "Kőrösi út 130b",
@@ -9499,7 +9500,6 @@
         "city": "Gyál",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9515,7 +9515,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-gyal-6629.json",
         "fileNameAscii": "hd-gyal.json"
@@ -9552,7 +9552,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Dobrovitz Anna",
         "phone": "+36 70 885 8556",
         "email": "vecses@helendoron.com",
         "address": "Gyömrő",
@@ -9560,7 +9561,6 @@
         "city": "Gyömrő",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9576,7 +9576,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-gyomro-7674.json",
         "fileNameAscii": "hd-gyomro.json"
@@ -9615,7 +9615,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Varga Enikő",
         "phone": "+36 70 634 9679",
         "email": "gyongyos@helendoron.com",
         "address": "Török Ignác utca 6.",
@@ -9623,7 +9624,6 @@
         "city": "Gyöngyös",
         "adminArea": "Heves",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9639,7 +9639,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-gyongyos-8185.json",
         "fileNameAscii": "hd-gyongyos.json"
@@ -9676,7 +9676,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Boros Katalin",
         "phone": "+36 70 638 6865",
         "email": "gyor@helendoron.com",
         "address": "Lukács Sándor utca 14.",
@@ -9684,7 +9685,6 @@
         "city": "Győr",
         "adminArea": "Győr-Moson-Sopron",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9700,7 +9700,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-gyor-7718.json",
         "fileNameAscii": "hd-gyor.json"
@@ -9739,7 +9739,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Jankai Zsuzsa",
         "phone": "+36 30 977 3069",
         "email": "godvac@helendoron.com",
         "address": "Nemeskéri köz 33.",
@@ -9747,7 +9748,6 @@
         "city": "Göd",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9763,7 +9763,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-god-7017.json",
         "fileNameAscii": "hd-god.json"
@@ -9802,7 +9802,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Baross Edit",
         "phone": "+36 70 331 0676",
         "email": "halasztelek@helendoron.com",
         "address": "Halásztelek, Hungary",
@@ -9810,7 +9811,6 @@
         "city": "Halásztelek",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9826,7 +9826,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-halasztelek-1764.json",
         "fileNameAscii": "hd-halasztelek.json"
@@ -9863,7 +9863,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Nagy Éva",
         "phone": "+36 70 555 6746",
         "email": "hmvhely@helendoron.com",
         "address": "Bálint utca 12.",
@@ -9871,7 +9872,6 @@
         "city": "Hódmezővásárhely",
         "adminArea": "Csongrád-Csanád",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9887,7 +9887,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-hodmezovasarhely-0405.json",
         "fileNameAscii": "hd-hodmezovasarhely.json"
@@ -9926,7 +9926,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Tóth Anikó",
         "phone": "+36 30 371 9529",
         "email": "kalocsa@helendoron.com",
         "address": "Szent István király út 2-4.",
@@ -9934,7 +9935,6 @@
         "city": "Kalocsa",
         "adminArea": "Bács-Kiskun",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -9950,7 +9950,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-kalocsa-3792.json",
         "fileNameAscii": "hd-kalocsa.json"
@@ -9989,7 +9989,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Csörsz Édua",
         "phone": "+36 30 710 1086",
         "email": "kecskemet@helendoron.com",
         "address": "Fülemüle utca 4/2",
@@ -9997,7 +9998,6 @@
         "city": "Kecskemét",
         "adminArea": "Bács-Kiskun",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10013,7 +10013,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-kecskemet-4925.json",
         "fileNameAscii": "hd-kecskemet.json"
@@ -10052,7 +10052,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Molnár Edit Mónika",
         "phone": "+36 30 834 8447",
         "email": "bp15@helendoron.com",
         "address": "Szabadság út 1/a",
@@ -10060,7 +10061,6 @@
         "city": "Kerepes",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10076,7 +10076,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-kerepes-kistarcsa-8579.json",
         "fileNameAscii": "hd-kerepes-kistarcsa.json"
@@ -10115,7 +10115,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Ségercz-Karsay Fanni",
         "phone": "+36 30 494 0977",
         "email": "keszthely@helendoron.com",
         "address": "Bercsényi Miklós utca 47.",
@@ -10123,7 +10124,6 @@
         "city": "Keszthely",
         "adminArea": "Zala",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10139,7 +10139,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-keszthely-7477.json",
         "fileNameAscii": "hd-keszthely.json"
@@ -10178,7 +10178,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Eszényi Elvira",
         "phone": "+36 20 379 2206",
         "email": "vadkertkoros@helendoron.hu",
         "address": "Bethlen Gábor utca 4.",
@@ -10186,7 +10187,6 @@
         "city": "Soltvadkert",
         "adminArea": "Bács-Kiskun",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10202,7 +10202,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-kiskoros-soltvadkert-8445.json",
         "fileNameAscii": "hd-kiskoros-soltvadkert.json"
@@ -10241,7 +10241,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Veréb Zsuzsa",
         "phone": "+36 70 328 3228",
         "email": "kispest@helendoron.com",
         "address": "Üllői út 201.",
@@ -10249,7 +10250,6 @@
         "city": "Budapest",
         "adminArea": "Budapest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10265,7 +10265,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-kispest-shopmark-9698.json",
         "fileNameAscii": "hd-kispest-shopmark.json"
@@ -10304,7 +10304,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Szászi Fanni",
         "phone": "+36 70 884 2033",
         "email": "kisvarda@helendoron.com",
         "address": "Várday István utca",
@@ -10312,7 +10313,6 @@
         "city": "Kisvárda",
         "adminArea": "Szabolcs-Szatmár-Bereg",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10328,7 +10328,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-kisvarda-7077.json",
         "fileNameAscii": "hd-kisvarda.json"
@@ -10367,7 +10367,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Jacobi Mónika",
         "phone": "+36 30 400 9401",
         "email": "delpestmegye02@helendoron.com",
         "address": "Radnóti Miklós utca 4.",
@@ -10375,7 +10376,6 @@
         "city": "Lajosmizse",
         "adminArea": "Bács-Kiskun",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10391,7 +10391,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-lajosmizse-9026.json",
         "fileNameAscii": "hd-lajosmizse.json"
@@ -10430,7 +10430,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Simon Orsolya",
         "phone": "+36 70 312 9250",
         "email": "marcali@helendoron.com",
         "address": "Posta köz 8.",
@@ -10438,7 +10439,6 @@
         "city": "Marcali",
         "adminArea": "Somogy",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10454,7 +10454,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-marcali-0959.json",
         "fileNameAscii": "hd-marcali.json"
@@ -10493,7 +10493,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Kota Marianna",
         "phone": "+36 20 970 9870",
         "email": "miskolc02@helendoron.com",
         "address": "Mindszent tér 2.",
@@ -10501,7 +10502,6 @@
         "city": "Miskolc",
         "adminArea": "Borsod-Abaúj-Zemplén",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10517,7 +10517,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-miskolc-mindszent-3722.json",
         "fileNameAscii": "hd-miskolc-mindszent.json"
@@ -10554,7 +10554,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "dr. Varga Judit",
         "phone": "+36 30 566 5147",
         "email": "delpestmegye01@helendoron.com",
         "address": "Ady Endre utca 58.",
@@ -10562,7 +10563,6 @@
         "city": "Monor",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10578,7 +10578,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-monor-5795.json",
         "fileNameAscii": "hd-monor.json"
@@ -10617,7 +10617,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Simon Orsolya",
         "phone": "+36 70 312 9250",
         "email": "marcali@helendoron.com",
         "address": "Korányi Sándor utca 23-25.",
@@ -10625,7 +10626,6 @@
         "city": "Nagyatád",
         "adminArea": "Somogy",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10641,7 +10641,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-nagyatad-1158.json",
         "fileNameAscii": "hd-nagyatad.json"
@@ -10678,7 +10678,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Simon Orsolya",
         "phone": "+36 70 312 9250",
         "email": "nagykanizsa@helendoron.com",
         "address": "Huszti tér 5.",
@@ -10686,7 +10687,6 @@
         "city": "Nagykanizsa",
         "adminArea": "Zala",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10702,7 +10702,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-nagykanizsa-8154.json",
         "fileNameAscii": "hd-nagykanizsa.json"
@@ -10741,7 +10741,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Stevanyik Lívia",
         "phone": "+36 30 082 5762",
         "email": "nyiregyhaza@helendoron.com",
         "address": "Szarvas utca 22.",
@@ -10749,7 +10750,6 @@
         "city": "Nyíregyháza",
         "adminArea": "Szabolcs-Szatmár-Bereg",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10765,7 +10765,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-nyiregyhaza-6056.json",
         "fileNameAscii": "hd-nyiregyhaza.json"
@@ -10804,7 +10804,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Csabai Emőke",
         "phone": "+36 20 970 9500",
         "email": "miskolc01@helendoron.com",
         "address": "Meggyesalja utca 31.",
@@ -10812,7 +10813,6 @@
         "city": "Miskolc",
         "adminArea": "Borsod-Abaúj-Zemplén",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10828,7 +10828,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-miskolc-meggyesalja-2788.json",
         "fileNameAscii": "hd-miskolc-meggyesalja.json"
@@ -10867,7 +10867,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Tegyei Nóra",
         "phone": "+36 20 626 5160",
         "email": "pilisszentivan@helendoron.com",
         "address": "Generációk Háza",
@@ -10875,7 +10876,6 @@
         "city": "Pilisszentiván",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10891,7 +10891,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-pilisszentivan-2739.json",
         "fileNameAscii": "hd-pilisszentivan.json"
@@ -10928,7 +10928,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Endre Judit",
         "phone": "+36 30 313 6822",
         "email": "hegyvidek@helendoron.com",
         "address": "Iskola utca 2.",
@@ -10936,7 +10937,6 @@
         "city": "Pomáz",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -10952,7 +10952,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-pomaz-7911.json",
         "fileNameAscii": "hd-pomaz.json"
@@ -10991,7 +10991,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Réder Mariann",
         "phone": "+36 20 936 5437",
         "email": "pecs@helendoron.com",
         "address": "Rét utca 39.",
@@ -10999,7 +11000,6 @@
         "city": "Pécs",
         "adminArea": "Baranya",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11015,7 +11015,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-pecs-3289.json",
         "fileNameAscii": "hd-pecs.json"
@@ -11052,7 +11052,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Bálint Kriszta",
         "phone": "+36 30 222 5800",
         "email": "siofok@helendoron.com",
         "address": "Fő u. 5.",
@@ -11060,7 +11061,6 @@
         "city": "Siófok",
         "adminArea": "Somogy",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11076,7 +11076,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-siofok-2539.json",
         "fileNameAscii": "hd-siofok.json"
@@ -11115,7 +11115,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Béresné Bakondi Ágnes",
         "phone": "+36 20 362 9268",
         "email": "sopron@helendoron.com",
         "address": "Mikes Kelemen utca 7.",
@@ -11123,7 +11124,6 @@
         "city": "Sopron",
         "adminArea": "Győr-Moson-Sopron",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11139,7 +11139,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-sopron-7276.json",
         "fileNameAscii": "hd-sopron.json"
@@ -11178,7 +11178,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Zentai Tamás",
         "phone": "+36 30 336 9038",
         "email": "szeged@helendoron.com",
         "address": "Honvéd tér 5.",
@@ -11186,7 +11187,6 @@
         "city": "Szeged",
         "adminArea": "Csongrád-Csanád",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11202,7 +11202,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-szeged-3296.json",
         "fileNameAscii": "hd-szeged.json"
@@ -11239,7 +11239,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Szalay Zsuzsanna",
         "phone": "+36 30 914 0714",
         "email": "szekszard-paks@helendoron.com",
         "address": "Árpád utca 11.",
@@ -11247,7 +11248,6 @@
         "city": "Szekszárd",
         "adminArea": "Tolna",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11263,7 +11263,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-szekszard-7726.json",
         "fileNameAscii": "hd-szekszard.json"
@@ -11302,7 +11302,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Schäffer Krisztián",
         "phone": "+36 20 404 7987",
         "email": "szentendre@helendoron.com",
         "address": "Pannónia utca 1-3.",
@@ -11310,7 +11311,6 @@
         "city": "Szentendre",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11326,7 +11326,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-szentendre-6143.json",
         "fileNameAscii": "hd-szentendre.json"
@@ -11365,7 +11365,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Baross Edit",
         "phone": "+36 70 331 0676",
         "email": "szigetszentmiklos@helendoron.com",
         "address": "Bajcsy-Zsilinszky utca 24.",
@@ -11373,7 +11374,6 @@
         "city": "Szigetszentmiklós",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11389,7 +11389,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-szigetszentmiklos-6123.json",
         "fileNameAscii": "hd-szigetszentmiklos.json"
@@ -11428,7 +11428,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Eszik Fruzsina",
         "phone": "+36 30 398 0414",
         "email": "bia@helendoron.com",
         "address": "Szent István tér 10.",
@@ -11436,7 +11437,6 @@
         "city": "Százhalombatta",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11452,7 +11452,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-szazhalombatta-9542.json",
         "fileNameAscii": "hd-szazhalombatta.json"
@@ -11491,7 +11491,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Sipos Adrienn",
         "phone": "+36 70 623 0567",
         "email": "szekesfehervar@helendoron.com",
         "address": "Széchenyi u. 105.",
@@ -11499,7 +11500,6 @@
         "city": "Székesfehérvár",
         "adminArea": "Fejér",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11515,7 +11515,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-szekesfehervar-8058.json",
         "fileNameAscii": "hd-szekesfehervar.json"
@@ -11554,7 +11554,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Káldi-Hegyi Julianna",
         "phone": "+36 20 351 7006",
         "email": "tapolca@helendoron.com",
         "address": "Keszthelyi út 2.",
@@ -11562,7 +11563,6 @@
         "city": "Tapolca",
         "adminArea": "Veszprém",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11578,7 +11578,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-tapolca-3851.json",
         "fileNameAscii": "hd-tapolca.json"
@@ -11617,7 +11617,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Kovács Éva",
         "phone": "+36 70 586 4443",
         "email": "tata@helendoron.com",
         "address": "Agostyáni utca 6.",
@@ -11625,7 +11626,6 @@
         "city": "Tata",
         "adminArea": "Komárom-Esztergom",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11641,7 +11641,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-tata-5592.json",
         "fileNameAscii": "hd-tata.json"
@@ -11680,7 +11680,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Szeidler Kitti",
         "phone": "+36 30 718 6065",
         "email": "tatabanya@helendoron.com",
         "address": "Fürdő utca 1.",
@@ -11688,7 +11689,6 @@
         "city": "Tatabánya",
         "adminArea": "Komárom-Esztergom",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11704,7 +11704,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-tatabanya-2181.json",
         "fileNameAscii": "hd-tatabanya.json"
@@ -11743,7 +11743,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Baross Edit",
         "phone": "+36 70 331 0676",
         "email": "szigetszentmiklos@helendoron.com",
         "address": "Kossuth Lajos u. 62.",
@@ -11751,7 +11752,6 @@
         "city": "Tököl",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11767,7 +11767,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-tokol-1132.json",
         "fileNameAscii": "hd-tokol.json"
@@ -11806,7 +11806,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Dobrovitz Anna",
         "phone": "+36 70 885 8556",
         "email": "vecses@helendoron.com",
         "address": "Arany János utca 71.",
@@ -11814,7 +11815,6 @@
         "city": "Vecsés",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11830,7 +11830,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-vecses-4719.json",
         "fileNameAscii": "hd-vecses.json"
@@ -11869,7 +11869,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Suti Kornélia",
         "phone": "+36702508089",
         "email": "velence@helendoron.com",
         "address": "Szabadság út 26.",
@@ -11877,7 +11878,6 @@
         "city": "Gárdony",
         "adminArea": "Fejér",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11893,7 +11893,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-gardony-velencei-to-5955.json",
         "fileNameAscii": "hd-gardony-velencei-to.json"
@@ -11932,7 +11932,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Vrazsovics Marianna",
         "phone": "+36 20 560 2799",
         "email": "veszprem@helendoron.com",
         "address": "Hóvirág utca 7.",
@@ -11940,7 +11941,6 @@
         "city": "Veszprém",
         "adminArea": "Veszprém",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -11956,7 +11956,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-veszprem-7267.json",
         "fileNameAscii": "hd-veszprem.json"
@@ -11995,7 +11995,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Jankai Zsuzsa",
         "phone": "+36 30 977 3069",
         "email": "godvac@helendoron.com",
         "address": "Kosdi utca 2.",
@@ -12003,7 +12004,6 @@
         "city": "Vác",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -12019,7 +12019,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-vac-5527.json",
         "fileNameAscii": "hd-vac.json"
@@ -12058,7 +12058,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Rumpler Tibor",
         "phone": "+36 20 984 8955",
         "email": "varpalota@helendoron.com",
         "address": "Táncsics Mihály utca 7.",
@@ -12066,7 +12067,6 @@
         "city": "Várpalota",
         "adminArea": "Veszprém",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -12082,7 +12082,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-varpalota-0247.json",
         "fileNameAscii": "hd-varpalota.json"
@@ -12119,7 +12119,8 @@
       "links": {},
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Szalay Zsuzsanna",
         "phone": "+36 30 914 0714",
         "email": "erddiosd@helendoron.com",
         "address": "Duna utca 90.",
@@ -12127,7 +12128,6 @@
         "city": "Érd",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -12143,7 +12143,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-erd-diosd-7135.json",
         "fileNameAscii": "hd-erd-diosd.json"
@@ -12182,7 +12182,8 @@
       },
       "amenities": [],
       "accessibility": {},
-      "contact": {
+      "contactInformation": {
+        "name": "Dobrovitz Anna",
         "phone": "+36 70 885 8556",
         "email": "vecses@helendoron.com",
         "address": "Malom utca 1.",
@@ -12190,7 +12191,6 @@
         "city": "Üllő",
         "adminArea": "Pest",
         "countryCode": "HU",
-        "bookingUrl": "",
         "whatsapp": "",
         "telegram": "",
         "messenger": ""
@@ -12206,7 +12206,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-03T18:09:33.473Z",
+        "lastUpdated": "2025-10-09T09:28:20.472Z",
         "version": 1,
         "fileName": "hd-ullo-0662.json",
         "fileNameAscii": "hd-ullo.json"
