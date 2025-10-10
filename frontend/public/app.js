@@ -1352,7 +1352,7 @@ async function initEmergencyBlock(countryOverride) {
         .map(g => {
           const groupKey = g.groupKey || g.Group;
           const locs = byGroup.get(groupKey) || [];
-          const subs = [...new Set(locs.map(r => fieldFn(r)))]
+          const subs = Array.from(new Set(locs.map(r => fieldFn(r))))
             .sort((a,b)=>String(a||'').localeCompare(String(b||'')))
             .map(val => ({ key: `dyn.${slugify(val)}`, name: label(val) }));
           return { groupKey, groupName: g.groupName || g["Drop-down"] || groupKey, subgroups: subs };
