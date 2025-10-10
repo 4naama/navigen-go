@@ -289,8 +289,12 @@ async function handleList(req, env, url, extraHdr){
   const postal=(q.get('postal')||'').toLowerCase();
   if (ctx)   rows = rows.filter(r=>String(r.context||r.Context||'').toLowerCase().includes(ctx));
   if (group) rows = rows.filter(r=>String(r.groupKey||r.Group||'').toLowerCase().includes(group));
-  if (city)  rows = rows.filter(r=>String(r?.contact?.city||'').toLowerCase().includes(city));
-  if (postal)rows = rows.filter(r=>String(r?.contact?.postalCode||'').toLowerCase().includes(postal));
+  // use new contactInformation; keep old keys only if present
+  if (city)  rows = rows.filter(r=>String(r?.contactInformation?.city  || r?.contact?.city  || '')
+                                    .toLowerCase().includes(city));
+  if (postal)rows = rows.filter(r=>String(r?.contactInformation?.postalCode || r?.contact?.postalCode || '')
+                                    .toLowerCase().includes(postal));
+
   rows = rows.filter(r=>String(r.Visible||r.visible||'Yes').toLowerCase()==='yes');
 
   const idx = Math.max(Number(q.get('cursor')||0),0);
@@ -331,19 +335,19 @@ async function handleList(req, env, url, extraHdr){
       newsletter: p.Newsletter || ''
     });
 
-    // contact (address, city, admin area, country, phone/email, messaging)
-    const contact = Object.assign({}, p.contact || {}, {
-      address: p.Address || (p.contact && p.contact.address) || '',
-      postalCode: p.PostalCode || p.postalCode || (p.contact && p.contact.postalCode) || '',
-      city: p.City || (p.contact && p.contact.city) || '',
-      adminArea: p.AdminArea || p.adminArea || (p.contact && p.contact.adminArea) || '',
-      countryCode: p.CountryCode || p.countryCode || (p.contact && p.contact.countryCode) || '',
-      phone: p.Phone || (p.contact && p.contact.phone) || '',
-      email: p.Email || (p.contact && p.contact.email) || '',
-      whatsapp: p.WhatsApp || p.whatsapp || (p.contact && p.contact.whatsapp) || '',
-      telegram: p.Telegram || p.telegram || (p.contact && p.contact.telegram) || '',
-      messenger: p.Messenger || p.messenger || (p.contact && p.contact.messenger) || '',
-      bookingUrl: p.bookingUrl || (p.links && p.links.booking) || (p.contact && p.contact.bookingUrl) || ''
+    // contactInformation (address + person + phone/email + messaging)
+    const contactInformation = Object.assign({}, p.contactInformation || p.contact || {}, {
+      address:     p.address     || p.Address     || p.contact?.address     || '',
+      postalCode:  p.postalCode  || p.PostalCode  || p.contact?.postalCode  || '',
+      city:        p.city        || p.City        || p.contact?.city        || '',
+      adminArea:   p.adminArea   || p.AdminArea   || p.contact?.adminArea   || '',
+      countryCode: p.countryCode || p.CountryCode || p.contact?.countryCode || '',
+      name:        p.contactPerson || p.contact?.name || '',
+      phone:       p.phone       || p.contact?.phone || '',
+      email:       p.email       || p.contact?.email || '',
+      whatsapp:    p.whatsapp    || p.WhatsApp    || p.contact?.whatsapp || '',
+      telegram:    p.telegram    || p.Telegram    || p.contact?.telegram || '',
+      messenger:   p.messenger   || p.Messenger   || p.contact?.messenger || ''
     });
 
     // ratings + price
@@ -371,28 +375,29 @@ async function handleList(req, env, url, extraHdr){
     const tagsMerged = Array.from(new Set([...tags, ...extraTags]));
 
     return {
-      // prefer stable profile id; keep legacy fallbacks
-      id: p.locationID || p.ID || p.id,
-      name: p.name?.en || p.Name || '',
-      shortName: p.shortName?.en || p['Short Name'] || '',
-      groupKey: p.groupKey || p.Group || '',
-      coord, // normalized {lat,lng} or null
-      Priority: ((p.Priority === true || p.Priority === 1) ||
-                 (String(p.Priority ?? p.priority ?? p.Popular ?? 'No').toLowerCase() === 'yes'))
-                ? 'Yes' : 'No',
-      contact,
-      // include socials/official/booking/newsletter so Social modal has data
-      links,   // ← this was computed above but not returned
+      // ids + names
+      locationID: p.locationID || p.ID || p.id,           // expose the stable key
+      id:         p.locationID || p.ID || p.id,           // keep legacy id for safety
+      name:       p.name || p.Name || '',
+      shortName:  p.shortName || p['Short Name'] || '',
+      // grouping
+      groupKey:   p.groupKey || p.Group || '',
+      subgroupKey: p.subgroupKey || p['Subgroup key'] || '',
+
+      // coords + flags
+      coord,
+      Priority: (String(p.Priority ?? p.Popular ?? 'No').toLowerCase()==='yes') ? 'Yes' : 'No',
+
+      // new contact block the UI reads
+      contactInformation,
+
+      // pass-throughs
+      links,
       ratings,
       pricing,
-      media: { cover: mediaCover, images: Array.isArray(p.media?.images) ? p.media.images : [] },
       descriptions: p.descriptions || {},
-      lang: p.Lang || p.lang || '',
-      // add media so UI has hero + gallery; 2 lines max
-      media: {
-        cover: (p.media && p.media.cover) || '',
-        images: Array.isArray(p.media?.images) ? p.media.images : []
-      }
+      media: { cover: mediaCover, images: Array.isArray(p.media?.images) ? p.media.images : [] },
+      lang: p.Lang || p.lang || ''
     };
   });
 
