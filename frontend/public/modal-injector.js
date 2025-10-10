@@ -899,9 +899,10 @@ async function initLpmImageSlider(modal, data) {
           const body  = document.createElement('div'); body.className = 'modal-body';
           const inner = document.createElement('div'); inner.className = 'modal-body-inner';
 
-          const name  = String(data?.contact?.name  || '').trim();
-          const phone = String(data?.contact?.phone || '').trim();
-          const email = String(data?.contact?.email || '').trim();
+          // prefer contactInformation; fallback to legacy contact
+          const name  = String((data?.contactInformation?.name  ?? data?.contact?.name)  || '').trim();
+          const phone = String((data?.contactInformation?.phone ?? data?.contact?.phone) || '').trim();
+          const email = String((data?.contactInformation?.email ?? data?.contact?.email) || '').trim();
 
           if (name)  { const p = document.createElement('p'); p.textContent = name;  inner.appendChild(p); }
           if (phone) { const p = document.createElement('p'); p.textContent = phone; inner.appendChild(p); }
@@ -960,8 +961,9 @@ async function initLpmImageSlider(modal, data) {
         e.stopPropagation();
 
         // baseline from current LPM data
-        let links   = (data && data.links)   || {};
-        let contact = (data && data.contact) || {};
+        let links   = (data && data.links) || {};
+        // prefer new contactInformation, fallback to legacy contact
+        let contact = (data && data.contactInformation) || (data && data.contact) || {};
 
         // fill from API export (same source as postal/media); fetch when Website is missing too
         const missingLinks = !links || !Object.values(links).some(v => String(v || '').trim());
@@ -1368,9 +1370,9 @@ function makeLocationButton(loc) {
       tags: Array.isArray(loc?.tags) ? loc.tags : [],
 
       // keep if you already added them; otherwise these help other CTAs too
-      contact: (loc && typeof loc.contact === 'object') ? loc.contact : {},
-      links:   (loc && typeof loc.links   === 'object') ? loc.links   : {},
-
+      contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
+                          : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
+      links:   (loc && typeof loc.links === 'object') ? loc.links : {},
       originEl: btn
     });
 
