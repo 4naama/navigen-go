@@ -1034,10 +1034,14 @@ async function initEmergencyBlock(countryOverride) {
     let listRes;
     try {
       if (ACTIVE_PAGE) {
+        // ensure valid context even if ACTIVE_PAGE is empty in this scope
+        const __ctx = (ACTIVE_PAGE && String(ACTIVE_PAGE)) ||
+          location.pathname.replace(/^\/[a-z]{2}\//, '').replace(/\/$/, '').toLowerCase();
         const url = new URL(
-          `/api/data/list?context=${encodeURIComponent(ACTIVE_PAGE)}&limit=${API_LIMIT}`,
+          `/api/data/list?context=${encodeURIComponent(__ctx)}&limit=${API_LIMIT}`,
           API_BASE
         );
+
         if (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) {
           url.searchParams.set('cb', String(Date.now()));
         }
