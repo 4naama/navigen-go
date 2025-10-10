@@ -899,10 +899,10 @@ async function initLpmImageSlider(modal, data) {
           const body  = document.createElement('div'); body.className = 'modal-body';
           const inner = document.createElement('div'); inner.className = 'modal-body-inner';
 
-          // prefer contactInformation; fallback to legacy contact
-          const name  = String((data?.contactInformation?.name  ?? data?.contact?.name)  || '').trim();
-          const phone = String((data?.contactInformation?.phone ?? data?.contact?.phone) || '').trim();
-          const email = String((data?.contactInformation?.email ?? data?.contact?.email) || '').trim();
+          // prefer contactInformation only
+          const name  = String(data?.contactInformation?.name  || '').trim();
+          const phone = String(data?.contactInformation?.phone || '').trim();
+          const email = String(data?.contactInformation?.email || '').trim();
 
           if (name)  { const p = document.createElement('p'); p.textContent = name;  inner.appendChild(p); }
           if (phone) { const p = document.createElement('p'); p.textContent = phone; inner.appendChild(p); }
@@ -962,8 +962,8 @@ async function initLpmImageSlider(modal, data) {
 
         // baseline from current LPM data
         let links   = (data && data.links) || {};
-        // prefer new contactInformation, fallback to legacy contact
-        let contact = (data && data.contactInformation) || (data && data.contact) || {};
+        // use contactInformation only
+        let contact = (data && data.contactInformation) || {};
 
         // fill from API export (same source as postal/media); fetch when Website is missing too
         const missingLinks = !links || !Object.values(links).some(v => String(v || '').trim());

@@ -1268,8 +1268,8 @@ async function initEmergencyBlock(countryOverride) {
     const allowed = Array.from(new Set(allowedRaw.map(normToken).filter(Boolean)));
     const allowedLC = allowed.map(k => k.toLowerCase());
 
-    // default view (canonical key + lower-case variant)
-    const defaultView = normToken(ctxRow?.defaultView || ctxRow?.subgroupMode || 'structure') || 'structure';
+    // default to grouped-by-adminArea when context/storage don’t specify
+    const defaultView = normToken(ctxRow?.defaultView || ctxRow?.subgroupMode || 'adminArea') || 'adminArea';
     const defaultViewLC = defaultView.toLowerCase();
 
     // stored choice (normalized)
