@@ -534,33 +534,46 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       }
 
       // ✅ Always set/refresh address tokens (now includes CountryCode)
+      // short: prefer contactInformation; fallback to flat/export keys and listedAddress
       {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
           ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
 
-        // address tokens from contactInformation
         const c = (rec && rec.contactInformation) || {};
-        const addrBits = [c.city, c.adminArea, c.postalCode, c.countryCode, c.address].filter(Boolean).join(' ');
+        const addrBits = [
+          c.city       ?? rec?.City,
+          c.adminArea  ?? rec?.AdminArea,
+          c.postalCode ?? rec?.PostalCode,
+          c.countryCode?? rec?.CountryCode,
+          c.address    ?? rec?.Address ?? rec?.listedAddress
+        ].filter(Boolean).join(' ');
         const addrNorm = addrBits.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
         locBtn.setAttribute('data-addr', addrNorm);
       }
 
       // ✅ Expose contact tokens for search (phone/email only; normalized)
-      /* short: add data-contact so phone/email queries match */
+      // short: include contactPerson + messaging fallbacks so queries match
       {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
           ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
 
-        // expose contact tokens (person/phone/email) for filtering  // 2-line: switch to contactInformation
         const c = (rec && rec.contactInformation) || {};
-        const raw = [c.name, c.phone, c.email].filter(Boolean).join(' ');
+        const person = c.name ?? rec?.contactPerson ?? '';
+        const raw = [
+          person,
+          c.phone        ?? rec?.['Contact phone'],
+          c.email        ?? rec?.['Contact email'],
+          c.whatsapp     ?? rec?.WhatsApp,
+          c.telegram     ?? rec?.Telegram,
+          c.messenger    ?? rec?.Messenger
+        ].filter(Boolean).join(' ');
         const contactNorm = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
         locBtn.setAttribute('data-contact', contactNorm);
-        locBtn.setAttribute('data-contact-person', String(c.name || ''));  // name used by search
+        locBtn.setAttribute('data-contact-person', String(person));  // name used by search
       }
 
       // ✅ Ensure lat/lng & helpful title for navigation (used by LPM / route)
