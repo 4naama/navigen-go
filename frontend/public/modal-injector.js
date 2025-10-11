@@ -1316,7 +1316,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Utility: create a location button and wire it to the Location Profile Modal (LPM)
 function makeLocationButton(loc) {
   const btn = document.createElement('button');
-  btn.textContent = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim(); // use provided name only
+  btn.textContent = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim();
 
   // prefer stable profile id; avoid transient loc_*
   // keep: small comment; 2 lines max
@@ -2019,7 +2019,7 @@ export function showFavoritesModal() {
     row.innerHTML = `
       <div class="label" style="flex:1 1 auto; min-width:0;">
         <button class="open-fav" type="button" style="all:unset; cursor:pointer;">
-          ${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim()} <!-- no generic fallback -->
+          ${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim() || t("Unnamed")}
         </button>
       </div>
       <button class="unsave-fav" type="button" aria-label="${t("Remove")}">⭐</button>
