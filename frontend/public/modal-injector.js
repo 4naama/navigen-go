@@ -1316,13 +1316,13 @@ document.addEventListener("DOMContentLoaded", () => {
 // Utility: create a location button and wire it to the Location Profile Modal (LPM)
 function makeLocationButton(loc) {
   const btn = document.createElement('button');
-  btn.textContent = loc["Short Name"] || loc.locationName || loc.Name || "Unnamed"; // prefer new name
+  btn.textContent = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim();
 
   // prefer stable profile id; avoid transient loc_*
   // keep: small comment; 2 lines max
   btn.setAttribute('data-id', String(loc.locationID || loc.ID || loc.id || ''));
   btn.classList.add('location-button');
-  btn.dataset.lower = (loc["Short Name"] || loc.locationName || loc.Name || "Unnamed").toLowerCase(); // prefer new name
+  btn.dataset.lower = btn.textContent.toLowerCase();
   
   // Expose searchable metadata: use locationName only
   const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
@@ -2019,7 +2019,7 @@ export function showFavoritesModal() {
     row.innerHTML = `
       <div class="label" style="flex:1 1 auto; min-width:0;">
         <button class="open-fav" type="button" style="all:unset; cursor:pointer;">
-          ${item.name || t("Unnamed")}
+          ${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim() || t("Unnamed")}
         </button>
       </div>
       <button class="unsave-fav" type="button" aria-label="${t("Remove")}">⭐</button>
