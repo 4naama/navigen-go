@@ -258,7 +258,7 @@ function renderPopularGroup(list = geoPoints) {
   popular.forEach((loc) => {
     const btn = document.createElement("button");
     btn.classList.add("quick-button", "popular-button");
-    const name = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // use locationName only
+    const name = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim(); // use locationName only
 
     btn.textContent = name;
     btn.setAttribute("data-group", groupKey);
@@ -1107,7 +1107,7 @@ async function initEmergencyBlock(countryOverride) {
       console.log("🛰 toGeoPoint input:", it.locationID || it.id || it.ID, it.coord); // prefer new id
 
       const id  = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback()); // prefer new id
-      const nm = String((it?.locationName?.en ?? it?.locationName ?? 'Unnamed')).trim();
+      const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim(); // keep source name only
       
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
       const sub = String(it?.subgroupKey ?? it?.subgroup ?? ctxRow?.subgroupKey ?? '');
@@ -1199,7 +1199,7 @@ async function initEmergencyBlock(countryOverride) {
 
           showLocationProfileModal({
             id: String(rec?.locationID ?? rec?.ID ?? rec?.id ?? uid),
-            name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim() || "Unnamed",
+            name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim(), // do not fallback
             lat, lng,
             imageSrc: cover,
             images,
