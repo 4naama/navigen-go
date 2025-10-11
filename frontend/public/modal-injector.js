@@ -1324,10 +1324,10 @@ function makeLocationButton(loc) {
   btn.classList.add('location-button');
   btn.dataset.lower = (loc["Short Name"] || loc.locationName || loc.Name || "Unnamed").toLowerCase(); // prefer new name
   
-  // Expose searchable metadata: name/shortName for text, data-tags with keys minus "tag."
+  // Expose searchable metadata: use locationName only
   const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
-  btn.setAttribute('data-name', btn.textContent);
-  btn.setAttribute('data-short-name', String(loc["Short Name"] || ''));
+  const _locName = String((loc?.locationName?.en ?? loc?.locationName ?? btn.textContent ?? '')).trim();
+  btn.setAttribute('data-name', _locName);
   btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
 
   const cc = loc["Coordinate Compound"];

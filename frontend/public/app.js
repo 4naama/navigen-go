@@ -37,15 +37,12 @@ const BUILD_ID = '2025-08-30-03'; // disabled cache-buster
 try { localStorage.setItem('BUILD_ID', BUILD_ID); } catch {}
 // (No redirect; leave URL untouched)
 
-// Helper: Match name/shortName OR tag keys (strip "tag."), case-insensitive; supports multi-word queries.
+// Helper: Match locationName OR tag keys (strip "tag."), case-insensitive; supports multi-word queries.
 function matchesQueryByNameOrTag(loc, q) {
   const qStr = String(q || '').toLowerCase().trim();
   if (!qStr) return true;
   const tokens = qStr.split(/\s+/).filter(Boolean);
-  const name = [
-    (loc?.name && (loc.name.en || Object.values(loc.name)[0])) || '',
-    (loc?.shortName && (loc.shortName.en || Object.values(loc.shortName)[0])) || ''
-  ].join(' ').toLowerCase();
+  const name = String((loc?.locationName?.en ?? loc?.locationName ?? loc?.Name ?? '')).toLowerCase();
   const tags = (Array.isArray(loc?.tags) ? loc.tags : []).map(t => String(t).toLowerCase().replace(/^tag\./,''));
   return tokens.every(tok => name.includes(tok) || tags.some(tag => tag.includes(tok)));
 }
@@ -683,18 +680,17 @@ function filterLocations(q) {
     return; // nothing to filter
   }
 
-  // --- 1) Item-level filtering (names + tags + inline text) ---  // 2-line: include contact person name in haystack
+  // --- 1) Item-level filtering (names + tags + inline text) ---  // include contact person in haystack
   const items = document.querySelectorAll(itemSel);
   items.forEach((el) => {
-    // include contact tokens too (name/phone/email); addr already holds postal/city/region)
-    /* short: expand haystack with contact person */
+    // include contact tokens too (person/phone/email); addr already holds postal/city/region)
     const lower = el.dataset.lower || '';
-    const shortName = el.getAttribute('data-short-name') || '';
+    const nameAttr = el.getAttribute('data-name') || '';
     const tags = el.getAttribute('data-tags') || '';
     const addr = el.getAttribute('data-addr') || '';
     const contactPerson = el.dataset.contactPerson || '';
     const contact = el.getAttribute('data-contact') || '';
-    const hay = norm(`${lower} ${shortName} ${tags} ${addr} ${contactPerson} ${contact}`);
+    const hay = norm(`${lower} ${nameAttr} ${tags} ${addr} ${contactPerson} ${contact}`);
 
     const show = hay.includes(query);
     el.style.display = show ? '' : 'none';
@@ -1113,8 +1109,7 @@ async function initEmergencyBlock(countryOverride) {
 
       const id  = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback()); // prefer new id
       const nm  = pickName(it?.locationName) || pickName(it?.name) || pickName(it?.title) || 'Unnamed'; // prefer new name
-
-      const sn  = pickName(it?.shortName) || nm;
+      
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
       const sub = String(it?.subgroupKey ?? it?.subgroup ?? ctxRow?.subgroupKey ?? '');
       // Popular is a data flag (locations_data), not a content tag
@@ -1238,7 +1233,7 @@ async function initEmergencyBlock(countryOverride) {
     console.debug(
       '[QA]', 'ACTIVE_PAGE=', ACTIVE_PAGE,
       'count=', geoCtx.length,
-      'sample=', geoCtx.slice(0,5).map(l => String(l.shortName ?? l.name ?? ''))
+      'sample=', geoCtx.slice(0,5).map(l => String((l.locationName?.en ?? l.locationName ?? '')).trim())
     );
 
     // Popular: scope by context only (Priority filter happens inside renderPopularGroup)
@@ -1399,7 +1394,7 @@ async function initEmergencyBlock(countryOverride) {
       },
       alpha: () => {
         pageList.forEach(r => {
-          const n = String(r?.shortName?.en || r?.name?.en || r?.name || '').trim();
+          const n = String((r?.locationName?.en ?? r?.locationName ?? '')).trim();
           const k = n ? n[0].toUpperCase() : '#';
           const dyn = `dyn.${slugify(k)}`;
           r.subgroupKey = dyn; r["Subgroup key"] = dyn;
@@ -1407,9 +1402,10 @@ async function initEmergencyBlock(countryOverride) {
         return {
           list: pageList,
           grouped: buildStructureBy(pageList, r => {
-            const n = String(r?.shortName?.en || r?.name?.en || r?.name || '').trim();
+            const n = String((r?.locationName?.en ?? r?.locationName ?? '')).trim();
             return n ? n[0].toUpperCase() : '#';
           })
+
         };
       },
       priority: () => {
@@ -1439,12 +1435,13 @@ async function initEmergencyBlock(countryOverride) {
             r.subgroupKey = dyn; r["Subgroup key"] = dyn;
           });
 
-          pageList.sort((a,b) =>
-            (b.__score - a.__score) ||
-            (b.__rcnt  - a.__rcnt ) ||
-            String(a?.shortName?.en || a?.name?.en || a?.name || '')
-              .localeCompare(String(b?.shortName?.en || b?.name?.en || b?.name || ''))
-          );
+        pageList.sort((a,b) =>
+          (b.__score - a.__score) ||
+          (b.__rcnt  - a.__rcnt ) ||
+          String((a?.locationName?.en ?? a?.locationName ?? '')).localeCompare(
+            String((b?.locationName?.en ?? b?.locationName ?? ''))
+          )
+        );
 
           const grouped = buildStructureBy(pageList, r => band(Number(r.__score || 0)));
           return { list: pageList, grouped };
