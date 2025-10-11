@@ -42,7 +42,7 @@ function matchesQueryByNameOrTag(loc, q) {
   const qStr = String(q || '').toLowerCase().trim();
   if (!qStr) return true;
   const tokens = qStr.split(/\s+/).filter(Boolean);
-  const name = String((loc?.locationName?.en ?? loc?.locationName ?? loc?.Name ?? '')).toLowerCase();
+  const name = String((loc?.locationName?.en ?? loc?.locationName ?? '')).toLowerCase();
   const tags = (Array.isArray(loc?.tags) ? loc.tags : []).map(t => String(t).toLowerCase().replace(/^tag\./,''));
   return tokens.every(tok => name.includes(tok) || tags.some(tag => tag.includes(tok)));
 }
@@ -258,15 +258,14 @@ function renderPopularGroup(list = geoPoints) {
   popular.forEach((loc) => {
     const btn = document.createElement("button");
     btn.classList.add("quick-button", "popular-button");
-    const name = loc["Short Name"] || loc.locationName || loc.Name || "Unnamed"; // prefer new name
+    const name = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // use locationName only
 
     btn.textContent = name;
     btn.setAttribute("data-group", groupKey);
-    btn.setAttribute("data-id", String(loc.ID || loc.locationID || loc.id || '')); // prefer new id
+    btn.setAttribute("data-id", String(loc?.locationID ?? loc?.ID ?? loc?.id ?? '')); // prefer new id
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', name);
-    btn.setAttribute('data-short-name', String(loc["Short Name"] || ''));
     btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
 
     // contactInformation is the single source
@@ -511,13 +510,11 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
         locBtn.innerHTML = `<span class="location-name">${label}</span>`;
       }
 
-      // ensure searchable metadata for regular + tag search
+      // ensure searchable metadata for regular + tag search (use locationName only)
       if (!locBtn.hasAttribute('data-name')) {
         locBtn.setAttribute('data-name', locBtn.textContent.trim());
       }
-      if (!locBtn.hasAttribute('data-short-name')) {
-        locBtn.setAttribute('data-short-name', locBtn.textContent.trim());
-      }
+
       if (!locBtn.hasAttribute('data-tags')) {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
@@ -559,7 +556,7 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
           : null;
 
         const c = (rec && rec.contactInformation) || {};
-        const person = c.name ?? rec?.contactPerson ?? '';
+        const person = c.contactPerson ?? rec?.contactPerson ?? '';
         const raw = [
           person,
           c.phone        ?? rec?.['Contact phone'],
@@ -1000,7 +997,9 @@ async function initEmergencyBlock(countryOverride) {
     const badSubs = geoPoints.filter(p => p["Subgroup key"] && !subgroupIndex[p["Subgroup key"]]);
     if (badSubs.length) {
       console.warn("⚠️ Unknown Subgroup key(s) in locations:", badSubs.map(b => ({
-        id: b.ID, name: b.Name, subgroup: b["Subgroup key"]
+        id: String(b?.locationID ?? b?.ID ?? b?.id ?? ''),
+        name: String((b?.locationName?.en ?? b?.locationName ?? '')),
+        subgroup: b["Subgroup key"]
       })));
     } else {
       console.log("✅ All location Subgroup keys are valid.");
@@ -1108,7 +1107,7 @@ async function initEmergencyBlock(countryOverride) {
       console.log("🛰 toGeoPoint input:", it.locationID || it.id || it.ID, it.coord); // prefer new id
 
       const id  = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback()); // prefer new id
-      const nm  = pickName(it?.locationName) || pickName(it?.name) || pickName(it?.title) || 'Unnamed'; // prefer new name
+      cconst nm = pickName(it?.locationName) || 'Unnamed'; // use locationName only
       
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
       const sub = String(it?.subgroupKey ?? it?.subgroup ?? ctxRow?.subgroupKey ?? '');
@@ -1122,8 +1121,6 @@ async function initEmergencyBlock(countryOverride) {
 
       return {
         ID: id,
-        Name: nm,
-        "Short Name": sn,
         Group: grp,
         "Subgroup key": sub,
         Visible: "Yes", // keep: legacy UI expects "Yes"/"No"; Popular ignores this
@@ -1197,8 +1194,8 @@ async function initEmergencyBlock(countryOverride) {
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
           showLocationProfileModal({
-            id: String(rec.ID || rec.id || uid),
-            name: rec["Short Name"] || rec.Name || "Unnamed",
+            id: String(rec?.locationID ?? rec?.ID ?? rec?.id ?? uid),
+            name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim() || "Unnamed",
             lat, lng,
             imageSrc: cover,
             images,
