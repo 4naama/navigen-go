@@ -981,13 +981,19 @@ async function initEmergencyBlock(countryOverride) {
      */
 
     /**
-     * 3) Normalize geoPoints.Group from display names → group keys
-     *    so filtering uses keys like "group.gates" instead of "🚪 Exit / Entry Gates".
+     * 3) Normalize geoPoints.Group from display names → canonical keys
+     *    Run AFTER geoPoints is populated; accept either display or key.
      */
-    geoPoints.forEach(p => {
-      const entry = structure_data.find(g => g["Drop-down"] === p.Group);
-      if (entry) p.Group = entry.Group;
-    });
+    function normalizeGroupKeys(list) {
+      if (!Array.isArray(list) || !list.length) return;
+      list.forEach(p => {
+        const g = String(p.Group || '').trim();
+        if (!g) return;
+        // match by display name (“Drop-down”) OR already-canonical key (“Group”)
+        const entry = structure_data.find(x => x["Drop-down"] === g || x.Group === g);
+        if (entry) p.Group = entry.Group; // canonical like "group.services"
+      });
+    }
 
     /**
      * 4) Subgroup sanity check (warn if locations use unknown sub keys)
@@ -1172,6 +1178,8 @@ async function initEmergencyBlock(countryOverride) {
     // Assign the mapped list now that we have the API items
     geoPointsData = apiItems.map(toGeoPoint);
     geoPoints = geoPointsData;
+    // normalize groups now that geoPoints is ready
+    normalizeGroupKeys(geoPoints);
 
     // Open LPM on ?lp=<id> (post-mapping, single source of truth)
     {

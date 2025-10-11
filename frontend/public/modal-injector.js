@@ -900,7 +900,7 @@ async function initLpmImageSlider(modal, data) {
           const inner = document.createElement('div'); inner.className = 'modal-body-inner';
 
           // prefer contactInformation only
-          const name  = String(data?.contactInformation?.name  || '').trim();
+          const name  = String(data?.contactInformation?.contactPerson || '').trim(); // use contactPerson
           const phone = String(data?.contactInformation?.phone || '').trim();
           const email = String(data?.contactInformation?.email || '').trim();
 
