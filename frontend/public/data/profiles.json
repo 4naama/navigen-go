@@ -6668,15 +6668,12 @@
     },
     {
       "locationID": "hd-budakeszi-7088",
-      "name": {
-        "en": "HD Budakeszi"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budakeszi"
       },
       "Visible": "Yes",
       "Priority": "Yes",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -6719,7 +6716,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Zilahy Anita Hana",
+        "contactPerson": "Zilahy Anita Hana",
         "phone": "+36 30 384 1707",
         "email": "budakeszi@helendoron.com",
         "address": "Szőlőskert út 5-7.",
@@ -6742,23 +6739,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budakeszi-7088.json",
-        "fileNameAscii": "hd-budakeszi.json"
+        "fileNameAscii": "hd-budakeszi-7088.json"
       }
     },
     {
       "locationID": "hd-nagykovacsi-9457",
-      "name": {
-        "en": "HD Nagykovácsi"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Nagykovácsi"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -6801,7 +6795,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Zilahy Anita Hana",
+        "contactPerson": "Zilahy Anita Hana",
         "phone": "+36 30 384 1707",
         "email": "budakeszi@helendoron.com",
         "address": "Tisza István tér",
@@ -6824,23 +6818,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-nagykovacsi-9457.json",
-        "fileNameAscii": "hd-nagykovacsi.json"
+        "fileNameAscii": "hd-nagykovacsi-9457.json"
       }
     },
     {
       "locationID": "hd-esztergom-2883",
-      "name": {
-        "en": "HD Esztergom"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Esztergom"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -6881,7 +6872,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Könözsy Rita",
+        "contactPerson": "Könözsy Rita",
         "phone": "+36 20 463 1641",
         "email": "esztergom@helendoron.com",
         "address": "Szentkirályi u. 65.",
@@ -6904,23 +6895,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-esztergom-2883.json",
-        "fileNameAscii": "hd-esztergom.json"
+        "fileNameAscii": "hd-esztergom-2883.json"
       }
     },
     {
       "locationID": "hd-debrecen-hadhazi-8910",
-      "name": {
-        "en": "HD Debrecen Hadházi"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Debrecen Hadházi"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -6967,7 +6955,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Sőrés Gabriella",
+        "contactPerson": "Sőrés Gabriella",
         "phone": "+36 20 292 1705",
         "email": "helendoron@angoldebrecen.hu",
         "address": "Hadházi 19.",
@@ -6990,23 +6978,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-debrecen-hadhazi-8910.json",
-        "fileNameAscii": "hd-debrecen-hadhazi.json"
+        "fileNameAscii": "hd-debrecen-hadhazi-8910.json"
       }
     },
     {
       "locationID": "hd-debrecen-darabos-4026",
-      "name": {
-        "en": "HD Debrecen Darabos"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Debrecen Darabos"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7047,7 +7032,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Sőrés Gabriella",
+        "contactPerson": "Sőrés Gabriella",
         "phone": "+36 30 822 6276",
         "email": "debrecen01@helendoron.com",
         "address": "Darabos utca 33.",
@@ -7070,23 +7055,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-debrecen-darabos-4026.json",
-        "fileNameAscii": "hd-debrecen-darabos.json"
+        "fileNameAscii": "hd-debrecen-darabos-4026.json"
       }
     },
     {
       "locationID": "hd-baja-0508",
-      "name": {
-        "en": "HD Baja"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Baja"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7110,7 +7092,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Schummer Orsolya",
+        "contactPerson": "Schummer Orsolya",
         "phone": "+36 30 238 8031",
         "email": "baja@helendoron.com",
         "address": "Péter-Pál utca 9.",
@@ -7133,23 +7115,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-baja-0508.json",
-        "fileNameAscii": "hd-baja.json"
+        "fileNameAscii": "hd-baja-0508.json"
       }
     },
     {
       "locationID": "hd-balatonlelle-1279",
-      "name": {
-        "en": "HD Balatonlelle"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Balatonlelle"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7171,7 +7150,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Torma Orsolya",
+        "contactPerson": "Torma Orsolya",
         "phone": "+36 30 355 5968",
         "email": "balatonlelle@helendoron.com",
         "address": "Rákóczi út 240.",
@@ -7194,23 +7173,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-balatonlelle-1279.json",
-        "fileNameAscii": "hd-balatonlelle.json"
+        "fileNameAscii": "hd-balatonlelle-1279.json"
       }
     },
     {
       "locationID": "hd-biatorbagy-6386",
-      "name": {
-        "en": "HD Biatorbágy"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Biatorbágy"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7234,7 +7210,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Surányi Szabina Gitta",
+        "contactPerson": "Surányi Szabina Gitta",
         "phone": "+36 30 498 4198",
         "email": "bia@helendoron.com",
         "address": "Ritsman Pál u. 52.",
@@ -7257,23 +7233,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-biatorbagy-6386.json",
-        "fileNameAscii": "hd-biatorbagy.json"
+        "fileNameAscii": "hd-biatorbagy-6386.json"
       }
     },
     {
       "locationID": "hd-budapest1-dezso-3648",
-      "name": {
-        "en": "HD Budapest1 Dezső"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest1 Dezső"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7297,7 +7270,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Baratkai Violetta",
+        "contactPerson": "Baratkai Violetta",
         "phone": "+36 30 676 0286",
         "email": "bp01@helendoron.com",
         "address": "Dezső utca 12b.",
@@ -7320,23 +7293,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest1-dezso-3648.json",
-        "fileNameAscii": "hd-budapest1-dezso.json"
+        "fileNameAscii": "hd-budapest1-dezso-3648.json"
       }
     },
     {
       "locationID": "hd-budapest1-hattyu-9372",
-      "name": {
-        "en": "HD Budapest1 Hattyú"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest1 Hattyú"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7360,7 +7330,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Baratkai Violetta",
+        "contactPerson": "Baratkai Violetta",
         "phone": "+36 30 676 0286",
         "email": "bp01@helendoron.com",
         "address": "Hattyú utca 12.",
@@ -7383,23 +7353,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest1-hattyu-9372.json",
-        "fileNameAscii": "hd-budapest1-hattyu.json"
+        "fileNameAscii": "hd-budapest1-hattyu-9372.json"
       }
     },
     {
       "locationID": "hd-budapest2-rozsadomb-0977",
-      "name": {
-        "en": "HD Budapest2 Rózsadomb"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest2 Rózsadomb"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7423,7 +7390,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Mészáros Szilvia",
+        "contactPerson": "Mészáros Szilvia",
         "phone": "+36 20 934 6272",
         "email": "rozsadomb@helendoron.com",
         "address": "Keleti Károly u. 8.",
@@ -7446,23 +7413,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest2-rozsadomb-0977.json",
-        "fileNameAscii": "hd-budapest2-rozsadomb.json"
+        "fileNameAscii": "hd-budapest2-rozsadomb-0977.json"
       }
     },
     {
       "locationID": "hd-budapest3-6635",
-      "name": {
-        "en": "HD Budapest3"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest3"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7486,7 +7450,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Bajzáth Orsolya",
+        "contactPerson": "Bajzáth Orsolya",
         "phone": "+36 30 573 8292",
         "email": "bp03@helendoron.com",
         "address": "Dózsa György utca 59.",
@@ -7509,23 +7473,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest3-6635.json",
-        "fileNameAscii": "hd-budapest3.json"
+        "fileNameAscii": "hd-budapest3-6635.json"
       }
     },
     {
       "locationID": "hd-budapest4-kaposztasmegyer-4587",
-      "name": {
-        "en": "HD Budapest4 Káposztásmegyer"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest4 Káposztásmegyer"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7549,7 +7510,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Chavot-Horváth Nikolett",
+        "contactPerson": "Chavot-Horváth Nikolett",
         "phone": "+36 30 4241 150",
         "email": "dkeszi-kapmegyer@helendoron.com",
         "address": "Lóverseny tér 6.",
@@ -7572,23 +7533,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest4-kaposztasmegyer-4587.json",
-        "fileNameAscii": "hd-budapest4-kaposztasmegyer.json"
+        "fileNameAscii": "hd-budapest4-kaposztasmegyer-4587.json"
       }
     },
     {
       "locationID": "hd-budapest4-ujpest-5231",
-      "name": {
-        "en": "HD Budapest4 Újpest"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest4 Újpest"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7612,7 +7570,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Kopre Alíz",
+        "contactPerson": "Kopre Alíz",
         "phone": "+36 30 357 6205",
         "email": "ujpest@helendoron.com",
         "address": "József Attila utca 32-34.",
@@ -7635,23 +7593,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest4-ujpest-5231.json",
-        "fileNameAscii": "hd-budapest4-ujpest.json"
+        "fileNameAscii": "hd-budapest4-ujpest-5231.json"
       }
     },
     {
       "locationID": "hd-budapest10-ujhegyi-3449",
-      "name": {
-        "en": "HD Budapest10 Újhegyi"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest10 Újhegyi"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7675,7 +7630,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Annie Zhang",
+        "contactPerson": "Annie Zhang",
         "phone": "+36 30 530 6417",
         "email": "bp10@helendoron.com",
         "address": "Újhegyi sétány 16.",
@@ -7698,23 +7653,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest10-ujhegyi-3449.json",
-        "fileNameAscii": "hd-budapest10-ujhegyi.json"
+        "fileNameAscii": "hd-budapest10-ujhegyi-3449.json"
       }
     },
     {
       "locationID": "hd-budapest10-ohegy-6257",
-      "name": {
-        "en": "HD Budapest10 Óhegy"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest10 Óhegy"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7738,7 +7690,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Annie Zhang",
+        "contactPerson": "Annie Zhang",
         "phone": "+36 30 530 6417",
         "email": "bp10@helendoron.com",
         "address": "Gergely u. 18.",
@@ -7761,23 +7713,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest10-ohegy-6257.json",
-        "fileNameAscii": "hd-budapest10-ohegy.json"
+        "fileNameAscii": "hd-budapest10-ohegy-6257.json"
       }
     },
     {
       "locationID": "hd-budapest11-etele-5968",
-      "name": {
-        "en": "HD Budapest11 Etele"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest11 Etele"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7801,7 +7750,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Patkós Ildikó",
+        "contactPerson": "Patkós Ildikó",
         "phone": "+36 20 931 2013",
         "email": "bp11@helendoron.com",
         "address": "Etele út 69.",
@@ -7824,23 +7773,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest11-etele-5968.json",
-        "fileNameAscii": "hd-budapest11-etele.json"
+        "fileNameAscii": "hd-budapest11-etele-5968.json"
       }
     },
     {
       "locationID": "hd-budapest11-fadrusz-3887",
-      "name": {
-        "en": "HD Budapest11 Fadrusz"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest11 Fadrusz"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7864,7 +7810,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Patkós Ildikó",
+        "contactPerson": "Patkós Ildikó",
         "phone": "+36 20 931 2013",
         "email": "bp11@helendoron.com",
         "address": "Fadrusz u. 2.",
@@ -7887,23 +7833,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest11-fadrusz-3887.json",
-        "fileNameAscii": "hd-budapest11-fadrusz.json"
+        "fileNameAscii": "hd-budapest11-fadrusz-3887.json"
       }
     },
     {
       "locationID": "hd-budapest11-gazdagret-5034",
-      "name": {
-        "en": "HD Budapest11 Gazdagrét"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest11 Gazdagrét"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7927,7 +7870,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Patkós Ildikó",
+        "contactPerson": "Patkós Ildikó",
         "phone": "+36 20 931 2013",
         "email": "bp11@helendoron.com",
         "address": "Rétköz u. 9a",
@@ -7950,23 +7893,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest11-gazdagret-5034.json",
-        "fileNameAscii": "hd-budapest11-gazdagret.json"
+        "fileNameAscii": "hd-budapest11-gazdagret-5034.json"
       }
     },
     {
       "locationID": "hd-budapest11-gellert-2544",
-      "name": {
-        "en": "HD Budapest11 Gellért"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest11 Gellért"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -7990,7 +7930,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Patkós Ildikó",
+        "contactPerson": "Patkós Ildikó",
         "phone": "+36 20 931 2013",
         "email": "bp11@helendoron.com",
         "address": "Bartók Béla út 5.",
@@ -8013,23 +7953,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest11-gellert-2544.json",
-        "fileNameAscii": "hd-budapest11-gellert.json"
+        "fileNameAscii": "hd-budapest11-gellert-2544.json"
       }
     },
     {
       "locationID": "hd-budapest12-hegyvidek-2483",
-      "name": {
-        "en": "HD Budapest12 Hegyvidék"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest12 Hegyvidék"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8053,7 +7990,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Endre Judit",
+        "contactPerson": "Endre Judit",
         "phone": "+36 30 313 6822",
         "email": "hegyvidek@helendoron.com",
         "address": "Németvölgyi út 60.",
@@ -8076,23 +8013,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest12-hegyvidek-2483.json",
-        "fileNameAscii": "hd-budapest12-hegyvidek.json"
+        "fileNameAscii": "hd-budapest12-hegyvidek-2483.json"
       }
     },
     {
       "locationID": "hd-budapest12-jokai-9012",
-      "name": {
-        "en": "HD Budapest12 Jókai"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest12 Jókai"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8116,7 +8050,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Endre Judit",
+        "contactPerson": "Endre Judit",
         "phone": "+36 30 313 6822",
         "email": "hegyvidek@helendoron.com",
         "address": "Hollós út 5.",
@@ -8139,23 +8073,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest12-jokai-9012.json",
-        "fileNameAscii": "hd-budapest12-jokai.json"
+        "fileNameAscii": "hd-budapest12-jokai-9012.json"
       }
     },
     {
       "locationID": "hd-budapest13-9502",
-      "name": {
-        "en": "HD Budapest13"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest13"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8179,7 +8110,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Rép Krisztina",
+        "contactPerson": "Rép Krisztina",
         "phone": "+36 20 440 3722",
         "email": "bp13@helendoron.com",
         "address": "Petneházy u. 54.",
@@ -8202,23 +8133,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest13-9502.json",
-        "fileNameAscii": "hd-budapest13.json"
+        "fileNameAscii": "hd-budapest13-9502.json"
       }
     },
     {
       "locationID": "hd-budapest14-3053",
-      "name": {
-        "en": "HD Budapest14"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest14"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8242,7 +8170,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Bukovszky Barbara",
+        "contactPerson": "Bukovszky Barbara",
         "phone": "+36 30 397 0362",
         "email": "bp14@helendoron.com",
         "address": "Szugló u. 64.",
@@ -8265,23 +8193,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest14-3053.json",
-        "fileNameAscii": "hd-budapest14.json"
+        "fileNameAscii": "hd-budapest14-3053.json"
       }
     },
     {
       "locationID": "hd-budapest15-8757",
-      "name": {
-        "en": "HD Budapest15"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest15"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8305,7 +8230,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Molnár Edit Mónika",
+        "contactPerson": "Molnár Edit Mónika",
         "phone": "+36 30 834 8447",
         "email": "bp15@helendoron.com",
         "address": "Páskomliget utca 4.",
@@ -8328,23 +8253,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest15-8757.json",
-        "fileNameAscii": "hd-budapest15.json"
+        "fileNameAscii": "hd-budapest15-8757.json"
       }
     },
     {
       "locationID": "hd-budapest16-5556",
-      "name": {
-        "en": "HD Budapest16"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest16"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8368,7 +8290,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Göndöcs Zsófia",
+        "contactPerson": "Göndöcs Zsófia",
         "phone": "+36 20 557 4464",
         "email": "bp16@helendoron.com",
         "address": "Hősök tere 11.",
@@ -8391,23 +8313,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest16-5556.json",
-        "fileNameAscii": "hd-budapest16.json"
+        "fileNameAscii": "hd-budapest16-5556.json"
       }
     },
     {
       "locationID": "hd-budapest17-csaba-haz-8939",
-      "name": {
-        "en": "HD Budapest17 Csaba-Ház"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest17 Csaba-Ház"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8431,7 +8350,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Mártha Enikő",
+        "contactPerson": "Mártha Enikő",
         "phone": "+36 70 326 1837",
         "email": "bp17@helendoron.com",
         "address": "Péceli út 222.",
@@ -8454,23 +8373,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest17-csaba-haz-8939.json",
-        "fileNameAscii": "hd-budapest17-csaba-haz.json"
+        "fileNameAscii": "hd-budapest17-csaba-haz-8939.json"
       }
     },
     {
       "locationID": "hd-budapest17-pesti-7453",
-      "name": {
-        "en": "HD Budapest17 Pesti"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest17 Pesti"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8494,7 +8410,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Mártha Enikő",
+        "contactPerson": "Mártha Enikő",
         "phone": "+36 70 326 1837",
         "email": "bp17@helendoron.com",
         "address": "Pesti út 237.",
@@ -8517,23 +8433,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest17-pesti-7453.json",
-        "fileNameAscii": "hd-budapest17-pesti.json"
+        "fileNameAscii": "hd-budapest17-pesti-7453.json"
       }
     },
     {
       "locationID": "hd-budapest18-2321",
-      "name": {
-        "en": "HD Budapest18"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest18"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8557,7 +8470,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Gyöngyösi Tibor",
+        "contactPerson": "Gyöngyösi Tibor",
         "phone": "+36 30 915 3939",
         "email": "bp18@gyerekangol.hu",
         "address": "Szent Lőrinc sétány 4.",
@@ -8580,23 +8493,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest18-2321.json",
-        "fileNameAscii": "hd-budapest18.json"
+        "fileNameAscii": "hd-budapest18-2321.json"
       }
     },
     {
       "locationID": "hd-budapest22-barati-korok-6765",
-      "name": {
-        "en": "HD Budapest22 Baráti-Körök"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest22 Baráti-Körök"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8620,7 +8530,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Farkas-Káplár Anett",
+        "contactPerson": "Farkas-Káplár Anett",
         "phone": "+36 20 231 4021",
         "email": "bp22@helendoron.com",
         "address": "Tóth József utca 45.",
@@ -8643,23 +8553,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest22-barati-korok-6765.json",
-        "fileNameAscii": "hd-budapest22-barati-korok.json"
+        "fileNameAscii": "hd-budapest22-barati-korok-6765.json"
       }
     },
     {
       "locationID": "hd-budapest9-4526",
-      "name": {
-        "en": "HD Budapest9"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest9"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8681,7 +8588,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Patkós Ildikó",
+        "contactPerson": "Patkós Ildikó",
         "phone": "+36 20 931 2013",
         "email": "belvaros@helendoron.com",
         "address": "Bokréta utca 20.",
@@ -8704,23 +8611,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest9-4526.json",
-        "fileNameAscii": "hd-budapest9.json"
+        "fileNameAscii": "hd-budapest9-4526.json"
       }
     },
     {
       "locationID": "hd-budapest-csepel-7584",
-      "name": {
-        "en": "HD Budapest Csepel"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest Csepel"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8744,7 +8648,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Institóriszné Vas Vivien",
+        "contactPerson": "Institóriszné Vas Vivien",
         "phone": "+36 70 621 7270",
         "email": "csepel@helendoron.com",
         "address": "II. Rákóczi Ferenc út 144.",
@@ -8767,23 +8671,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest-csepel-7584.json",
-        "fileNameAscii": "hd-budapest-csepel.json"
+        "fileNameAscii": "hd-budapest-csepel-7584.json"
       }
     },
     {
       "locationID": "hd-budapest-nyugati-5721",
-      "name": {
-        "en": "HD Budapest Nyugati"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest Nyugati"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8807,7 +8708,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Göndöcs Zsófia",
+        "contactPerson": "Göndöcs Zsófia",
         "phone": "+36 20 557 4464",
         "email": "nyugatiter@helendoron.com",
         "address": "Nyugati tér 4.",
@@ -8830,23 +8731,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest-nyugati-5721.json",
-        "fileNameAscii": "hd-budapest-nyugati.json"
+        "fileNameAscii": "hd-budapest-nyugati-5721.json"
       }
     },
     {
       "locationID": "hd-budapest-obuda-4227",
-      "name": {
-        "en": "HD Budapest Óbuda"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budapest Óbuda"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8868,7 +8766,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Szalay Zsuzsanna",
+        "contactPerson": "Szalay Zsuzsanna",
         "phone": "+36 30 961 2212",
         "email": "obuda@helendoron.com",
         "address": "San Marco utca 81.",
@@ -8891,23 +8789,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budapest-obuda-4227.json",
-        "fileNameAscii": "hd-budapest-obuda.json"
+        "fileNameAscii": "hd-budapest-obuda-4227.json"
       }
     },
     {
       "locationID": "hd-budaors-torokbalint-1508",
-      "name": {
-        "en": "HD Budaörs Törökbálint"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Budaörs Törökbálint"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8929,7 +8824,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Cserháti-Zala Mónika",
+        "contactPerson": "Cserháti-Zala Mónika",
         "phone": "+36 30 907 2125",
         "email": "budaors@helendoron.com",
         "address": "Patkó utca 5.",
@@ -8952,23 +8847,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-budaors-torokbalint-1508.json",
-        "fileNameAscii": "hd-budaors-torokbalint.json"
+        "fileNameAscii": "hd-budaors-torokbalint-1508.json"
       }
     },
     {
       "locationID": "hd-bekescsaba-0271",
-      "name": {
-        "en": "HD Békéscsaba"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Békéscsaba"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -8992,7 +8884,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Zsidják Erika",
+        "contactPerson": "Zsidják Erika",
         "phone": "+36 70 703 8091",
         "email": "bekescsaba@helendoron.com",
         "address": "Szőlő u. 31.",
@@ -9015,23 +8907,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-bekescsaba-0271.json",
-        "fileNameAscii": "hd-bekescsaba.json"
+        "fileNameAscii": "hd-bekescsaba-0271.json"
       }
     },
     {
       "locationID": "hd-cegled-9461",
-      "name": {
-        "en": "HD Cegléd"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Cegléd"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9055,7 +8944,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Muir Anikó",
+        "contactPerson": "Muir Anikó",
         "phone": "+36 70 881 1388",
         "email": "delpestmegye03@helendoron.com",
         "address": "Bocskai utca 13.",
@@ -9078,23 +8967,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-cegled-9461.json",
-        "fileNameAscii": "hd-cegled.json"
+        "fileNameAscii": "hd-cegled-9461.json"
       }
     },
     {
       "locationID": "hd-csomor-4453",
-      "name": {
-        "en": "HD Csömör"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Csömör"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9118,7 +9004,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Molnár Edit Mónika",
+        "contactPerson": "Molnár Edit Mónika",
         "phone": "+36 30 834 8447",
         "email": "bp15@helendoron.com",
         "address": "Kacsóh Pongrác utca 1.",
@@ -9141,23 +9027,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-csomor-4453.json",
-        "fileNameAscii": "hd-csomor.json"
+        "fileNameAscii": "hd-csomor-4453.json"
       }
     },
     {
       "locationID": "hd-dunaharaszti-9481",
-      "name": {
-        "en": "HD Dunaharaszti"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Dunaharaszti"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9181,7 +9064,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "dr. Varga Judit",
+        "contactPerson": "dr. Varga Judit",
         "phone": "+36 20 669 5303",
         "email": "delpestmegye01@helendoron.com",
         "address": "Hoitsy Pál u. 19.",
@@ -9204,23 +9087,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-dunaharaszti-9481.json",
-        "fileNameAscii": "hd-dunaharaszti.json"
+        "fileNameAscii": "hd-dunaharaszti-9481.json"
       }
     },
     {
       "locationID": "hd-dunakeszi-fot-2916",
-      "name": {
-        "en": "HD Dunakeszi Fót"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Dunakeszi Fót"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9244,7 +9124,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Chavot-Horváth Nikolett",
+        "contactPerson": "Chavot-Horváth Nikolett",
         "phone": "+36304241150",
         "email": "Dkeszi-Kapmegyer@helendoron.com",
         "address": "Állomás sétány",
@@ -9267,23 +9147,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-dunakeszi-fot-2916.json",
-        "fileNameAscii": "hd-dunakeszi-fot.json"
+        "fileNameAscii": "hd-dunakeszi-fot-2916.json"
       }
     },
     {
       "locationID": "hd-dunaujvaros-2936",
-      "name": {
-        "en": "HD Dunaújváros"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Dunaújváros"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9307,7 +9184,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Csendes Adrienn",
+        "contactPerson": "Csendes Adrienn",
         "phone": "+36 30 497 1105",
         "email": "dunaujvaros@helendoron.com",
         "address": "Táncsics Mihály utca 3/c",
@@ -9330,23 +9207,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-dunaujvaros-2936.json",
-        "fileNameAscii": "hd-dunaujvaros.json"
+        "fileNameAscii": "hd-dunaujvaros-2936.json"
       }
     },
     {
       "locationID": "hd-emod-4933",
-      "name": {
-        "en": "HD Emőd"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Emőd"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9370,7 +9244,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Kota Marianna",
+        "contactPerson": "Kota Marianna",
         "phone": "+36 20 970 9870",
         "email": "miskolc02@helendoron.com",
         "address": "Hunyadi u. 27-29.",
@@ -9393,23 +9267,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-emod-4933.json",
-        "fileNameAscii": "hd-emod.json"
+        "fileNameAscii": "hd-emod-4933.json"
       }
     },
     {
       "locationID": "hd-gyula-4009",
-      "name": {
-        "en": "HD Gyula"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Gyula"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9431,7 +9302,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Nagy Erika",
+        "contactPerson": "Nagy Erika",
         "phone": "+36 70 420 5129",
         "email": "gyula@helendoron.com",
         "address": "Temesvári út 57.",
@@ -9454,23 +9325,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-gyula-4009.json",
-        "fileNameAscii": "hd-gyula.json"
+        "fileNameAscii": "hd-gyula-4009.json"
       }
     },
     {
       "locationID": "hd-gyal-6629",
-      "name": {
-        "en": "HD Gyál"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Gyál"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9492,7 +9360,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Csikány-Sebestyén Nóra",
+        "contactPerson": "Csikány-Sebestyén Nóra",
         "phone": "+36 30 479 0234",
         "email": "delpestmegye01@helendoron.com",
         "address": "Kőrösi út 130b",
@@ -9515,23 +9383,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-gyal-6629.json",
-        "fileNameAscii": "hd-gyal.json"
+        "fileNameAscii": "hd-gyal-6629.json"
       }
     },
     {
       "locationID": "hd-gyomro-7674",
-      "name": {
-        "en": "HD Gyömrő"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Gyömrő"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9553,7 +9418,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Dobrovitz Anna",
+        "contactPerson": "Dobrovitz Anna",
         "phone": "+36 70 885 8556",
         "email": "vecses@helendoron.com",
         "address": "Gyömrő",
@@ -9576,23 +9441,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-gyomro-7674.json",
-        "fileNameAscii": "hd-gyomro.json"
+        "fileNameAscii": "hd-gyomro-7674.json"
       }
     },
     {
       "locationID": "hd-gyongyos-8185",
-      "name": {
-        "en": "HD Gyöngyös"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Gyöngyös"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9616,7 +9478,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Varga Enikő",
+        "contactPerson": "Varga Enikő",
         "phone": "+36 70 634 9679",
         "email": "gyongyos@helendoron.com",
         "address": "Török Ignác utca 6.",
@@ -9639,23 +9501,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-gyongyos-8185.json",
-        "fileNameAscii": "hd-gyongyos.json"
+        "fileNameAscii": "hd-gyongyos-8185.json"
       }
     },
     {
       "locationID": "hd-gyor-7718",
-      "name": {
-        "en": "HD Győr"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Győr"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9677,7 +9536,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Boros Katalin",
+        "contactPerson": "Boros Katalin",
         "phone": "+36 70 638 6865",
         "email": "gyor@helendoron.com",
         "address": "Lukács Sándor utca 14.",
@@ -9700,23 +9559,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-gyor-7718.json",
-        "fileNameAscii": "hd-gyor.json"
+        "fileNameAscii": "hd-gyor-7718.json"
       }
     },
     {
       "locationID": "hd-god-7017",
-      "name": {
-        "en": "HD Göd"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Göd"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9740,7 +9596,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Jankai Zsuzsa",
+        "contactPerson": "Jankai Zsuzsa",
         "phone": "+36 30 977 3069",
         "email": "godvac@helendoron.com",
         "address": "Nemeskéri köz 33.",
@@ -9763,23 +9619,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-god-7017.json",
-        "fileNameAscii": "hd-god.json"
+        "fileNameAscii": "hd-god-7017.json"
       }
     },
     {
       "locationID": "hd-halasztelek-1764",
-      "name": {
-        "en": "HD Halásztelek"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Halásztelek"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9803,7 +9656,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Baross Edit",
+        "contactPerson": "Baross Edit",
         "phone": "+36 70 331 0676",
         "email": "halasztelek@helendoron.com",
         "address": "Halásztelek, Hungary",
@@ -9826,23 +9679,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-halasztelek-1764.json",
-        "fileNameAscii": "hd-halasztelek.json"
+        "fileNameAscii": "hd-halasztelek-1764.json"
       }
     },
     {
       "locationID": "hd-hodmezovasarhely-0405",
-      "name": {
-        "en": "HD Hódmezővásárhely"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Hódmezővásárhely"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9864,7 +9714,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Nagy Éva",
+        "contactPerson": "Nagy Éva",
         "phone": "+36 70 555 6746",
         "email": "hmvhely@helendoron.com",
         "address": "Bálint utca 12.",
@@ -9887,23 +9737,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-hodmezovasarhely-0405.json",
-        "fileNameAscii": "hd-hodmezovasarhely.json"
+        "fileNameAscii": "hd-hodmezovasarhely-0405.json"
       }
     },
     {
       "locationID": "hd-kalocsa-3792",
-      "name": {
-        "en": "HD Kalocsa"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Kalocsa"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9927,7 +9774,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Tóth Anikó",
+        "contactPerson": "Tóth Anikó",
         "phone": "+36 30 371 9529",
         "email": "kalocsa@helendoron.com",
         "address": "Szent István király út 2-4.",
@@ -9950,23 +9797,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-kalocsa-3792.json",
-        "fileNameAscii": "hd-kalocsa.json"
+        "fileNameAscii": "hd-kalocsa-3792.json"
       }
     },
     {
       "locationID": "hd-kecskemet-4925",
-      "name": {
-        "en": "HD Kecskemét"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Kecskemét"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -9990,7 +9834,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Csörsz Édua",
+        "contactPerson": "Csörsz Édua",
         "phone": "+36 30 710 1086",
         "email": "kecskemet@helendoron.com",
         "address": "Fülemüle utca 4/2",
@@ -10013,23 +9857,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-kecskemet-4925.json",
-        "fileNameAscii": "hd-kecskemet.json"
+        "fileNameAscii": "hd-kecskemet-4925.json"
       }
     },
     {
       "locationID": "hd-kerepes-kistarcsa-8579",
-      "name": {
-        "en": "HD Kerepes Kistarcsa"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Kerepes Kistarcsa"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10053,7 +9894,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Molnár Edit Mónika",
+        "contactPerson": "Molnár Edit Mónika",
         "phone": "+36 30 834 8447",
         "email": "bp15@helendoron.com",
         "address": "Szabadság út 1/a",
@@ -10076,23 +9917,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-kerepes-kistarcsa-8579.json",
-        "fileNameAscii": "hd-kerepes-kistarcsa.json"
+        "fileNameAscii": "hd-kerepes-kistarcsa-8579.json"
       }
     },
     {
       "locationID": "hd-keszthely-7477",
-      "name": {
-        "en": "HD Keszthely"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Keszthely"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10116,7 +9954,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Ségercz-Karsay Fanni",
+        "contactPerson": "Ségercz-Karsay Fanni",
         "phone": "+36 30 494 0977",
         "email": "keszthely@helendoron.com",
         "address": "Bercsényi Miklós utca 47.",
@@ -10139,23 +9977,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-keszthely-7477.json",
-        "fileNameAscii": "hd-keszthely.json"
+        "fileNameAscii": "hd-keszthely-7477.json"
       }
     },
     {
       "locationID": "hd-kiskoros-soltvadkert-8445",
-      "name": {
-        "en": "HD Kiskőrös Soltvadkert"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Kiskőrös Soltvadkert"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10179,7 +10014,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Eszényi Elvira",
+        "contactPerson": "Eszényi Elvira",
         "phone": "+36 20 379 2206",
         "email": "vadkertkoros@helendoron.hu",
         "address": "Bethlen Gábor utca 4.",
@@ -10202,23 +10037,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-kiskoros-soltvadkert-8445.json",
-        "fileNameAscii": "hd-kiskoros-soltvadkert.json"
+        "fileNameAscii": "hd-kiskoros-soltvadkert-8445.json"
       }
     },
     {
       "locationID": "hd-kispest-shopmark-9698",
-      "name": {
-        "en": "HD Kispest Shopmark"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Kispest Shopmark"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10242,7 +10074,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Veréb Zsuzsa",
+        "contactPerson": "Veréb Zsuzsa",
         "phone": "+36 70 328 3228",
         "email": "kispest@helendoron.com",
         "address": "Üllői út 201.",
@@ -10265,23 +10097,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-kispest-shopmark-9698.json",
-        "fileNameAscii": "hd-kispest-shopmark.json"
+        "fileNameAscii": "hd-kispest-shopmark-9698.json"
       }
     },
     {
       "locationID": "hd-kisvarda-7077",
-      "name": {
-        "en": "HD Kisvárda"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Kisvárda"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10305,7 +10134,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Szászi Fanni",
+        "contactPerson": "Szászi Fanni",
         "phone": "+36 70 884 2033",
         "email": "kisvarda@helendoron.com",
         "address": "Várday István utca",
@@ -10328,23 +10157,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-kisvarda-7077.json",
-        "fileNameAscii": "hd-kisvarda.json"
+        "fileNameAscii": "hd-kisvarda-7077.json"
       }
     },
     {
       "locationID": "hd-lajosmizse-9026",
-      "name": {
-        "en": "HD Lajosmizse"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Lajosmizse"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10368,7 +10194,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Jacobi Mónika",
+        "contactPerson": "Jacobi Mónika",
         "phone": "+36 30 400 9401",
         "email": "delpestmegye02@helendoron.com",
         "address": "Radnóti Miklós utca 4.",
@@ -10391,23 +10217,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-lajosmizse-9026.json",
-        "fileNameAscii": "hd-lajosmizse.json"
+        "fileNameAscii": "hd-lajosmizse-9026.json"
       }
     },
     {
       "locationID": "hd-marcali-0959",
-      "name": {
-        "en": "HD Marcali"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Marcali"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10431,7 +10254,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Simon Orsolya",
+        "contactPerson": "Simon Orsolya",
         "phone": "+36 70 312 9250",
         "email": "marcali@helendoron.com",
         "address": "Posta köz 8.",
@@ -10454,23 +10277,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-marcali-0959.json",
-        "fileNameAscii": "hd-marcali.json"
+        "fileNameAscii": "hd-marcali-0959.json"
       }
     },
     {
       "locationID": "hd-miskolc-mindszent-3722",
-      "name": {
-        "en": "HD Miskolc Mindszent"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Miskolc Mindszent"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10494,7 +10314,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Kota Marianna",
+        "contactPerson": "Kota Marianna",
         "phone": "+36 20 970 9870",
         "email": "miskolc02@helendoron.com",
         "address": "Mindszent tér 2.",
@@ -10517,23 +10337,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-miskolc-mindszent-3722.json",
-        "fileNameAscii": "hd-miskolc-mindszent.json"
+        "fileNameAscii": "hd-miskolc-mindszent-3722.json"
       }
     },
     {
       "locationID": "hd-monor-5795",
-      "name": {
-        "en": "HD Monor"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Monor"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10555,7 +10372,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "dr. Varga Judit",
+        "contactPerson": "dr. Varga Judit",
         "phone": "+36 30 566 5147",
         "email": "delpestmegye01@helendoron.com",
         "address": "Ady Endre utca 58.",
@@ -10578,23 +10395,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-monor-5795.json",
-        "fileNameAscii": "hd-monor.json"
+        "fileNameAscii": "hd-monor-5795.json"
       }
     },
     {
       "locationID": "hd-nagyatad-1158",
-      "name": {
-        "en": "HD Nagyatád"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Nagyatád"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10618,7 +10432,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Simon Orsolya",
+        "contactPerson": "Simon Orsolya",
         "phone": "+36 70 312 9250",
         "email": "marcali@helendoron.com",
         "address": "Korányi Sándor utca 23-25.",
@@ -10641,23 +10455,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-nagyatad-1158.json",
-        "fileNameAscii": "hd-nagyatad.json"
+        "fileNameAscii": "hd-nagyatad-1158.json"
       }
     },
     {
       "locationID": "hd-nagykanizsa-8154",
-      "name": {
-        "en": "HD Nagykanizsa"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Nagykanizsa"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10679,7 +10490,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Simon Orsolya",
+        "contactPerson": "Simon Orsolya",
         "phone": "+36 70 312 9250",
         "email": "nagykanizsa@helendoron.com",
         "address": "Huszti tér 5.",
@@ -10702,23 +10513,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-nagykanizsa-8154.json",
-        "fileNameAscii": "hd-nagykanizsa.json"
+        "fileNameAscii": "hd-nagykanizsa-8154.json"
       }
     },
     {
       "locationID": "hd-nyiregyhaza-6056",
-      "name": {
-        "en": "HD Nyíregyháza"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Nyíregyháza"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10742,7 +10550,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Stevanyik Lívia",
+        "contactPerson": "Stevanyik Lívia",
         "phone": "+36 30 082 5762",
         "email": "nyiregyhaza@helendoron.com",
         "address": "Szarvas utca 22.",
@@ -10765,23 +10573,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-nyiregyhaza-6056.json",
-        "fileNameAscii": "hd-nyiregyhaza.json"
+        "fileNameAscii": "hd-nyiregyhaza-6056.json"
       }
     },
     {
       "locationID": "hd-miskolc-meggyesalja-2788",
-      "name": {
-        "en": "HD Miskolc Meggyesalja"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Miskolc Meggyesalja"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10805,7 +10610,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Csabai Emőke",
+        "contactPerson": "Csabai Emőke",
         "phone": "+36 20 970 9500",
         "email": "miskolc01@helendoron.com",
         "address": "Meggyesalja utca 31.",
@@ -10828,23 +10633,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-miskolc-meggyesalja-2788.json",
-        "fileNameAscii": "hd-miskolc-meggyesalja.json"
+        "fileNameAscii": "hd-miskolc-meggyesalja-2788.json"
       }
     },
     {
       "locationID": "hd-pilisszentivan-2739",
-      "name": {
-        "en": "HD Pilisszentiván"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Pilisszentiván"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10868,7 +10670,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Tegyei Nóra",
+        "contactPerson": "Tegyei Nóra",
         "phone": "+36 20 626 5160",
         "email": "pilisszentivan@helendoron.com",
         "address": "Generációk Háza",
@@ -10891,23 +10693,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-pilisszentivan-2739.json",
-        "fileNameAscii": "hd-pilisszentivan.json"
+        "fileNameAscii": "hd-pilisszentivan-2739.json"
       }
     },
     {
       "locationID": "hd-pomaz-7911",
-      "name": {
-        "en": "HD Pomáz"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Pomáz"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10929,7 +10728,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Endre Judit",
+        "contactPerson": "Endre Judit",
         "phone": "+36 30 313 6822",
         "email": "hegyvidek@helendoron.com",
         "address": "Iskola utca 2.",
@@ -10952,23 +10751,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-pomaz-7911.json",
-        "fileNameAscii": "hd-pomaz.json"
+        "fileNameAscii": "hd-pomaz-7911.json"
       }
     },
     {
       "locationID": "hd-pecs-3289",
-      "name": {
-        "en": "HD Pécs"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Pécs"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -10992,7 +10788,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Réder Mariann",
+        "contactPerson": "Réder Mariann",
         "phone": "+36 20 936 5437",
         "email": "pecs@helendoron.com",
         "address": "Rét utca 39.",
@@ -11015,23 +10811,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-pecs-3289.json",
-        "fileNameAscii": "hd-pecs.json"
+        "fileNameAscii": "hd-pecs-3289.json"
       }
     },
     {
       "locationID": "hd-siofok-2539",
-      "name": {
-        "en": "HD Siófok"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Siófok"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11053,7 +10846,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Bálint Kriszta",
+        "contactPerson": "Bálint Kriszta",
         "phone": "+36 30 222 5800",
         "email": "siofok@helendoron.com",
         "address": "Fő u. 5.",
@@ -11076,23 +10869,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-siofok-2539.json",
-        "fileNameAscii": "hd-siofok.json"
+        "fileNameAscii": "hd-siofok-2539.json"
       }
     },
     {
       "locationID": "hd-sopron-7276",
-      "name": {
-        "en": "HD Sopron"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Sopron"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11116,7 +10906,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Béresné Bakondi Ágnes",
+        "contactPerson": "Béresné Bakondi Ágnes",
         "phone": "+36 20 362 9268",
         "email": "sopron@helendoron.com",
         "address": "Mikes Kelemen utca 7.",
@@ -11139,23 +10929,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-sopron-7276.json",
-        "fileNameAscii": "hd-sopron.json"
+        "fileNameAscii": "hd-sopron-7276.json"
       }
     },
     {
       "locationID": "hd-szeged-3296",
-      "name": {
-        "en": "HD Szeged"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Szeged"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11179,7 +10966,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Zentai Tamás",
+        "contactPerson": "Zentai Tamás",
         "phone": "+36 30 336 9038",
         "email": "szeged@helendoron.com",
         "address": "Honvéd tér 5.",
@@ -11202,23 +10989,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-szeged-3296.json",
-        "fileNameAscii": "hd-szeged.json"
+        "fileNameAscii": "hd-szeged-3296.json"
       }
     },
     {
       "locationID": "hd-szekszard-7726",
-      "name": {
-        "en": "HD Szekszárd"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Szekszárd"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11240,7 +11024,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Szalay Zsuzsanna",
+        "contactPerson": "Szalay Zsuzsanna",
         "phone": "+36 30 914 0714",
         "email": "szekszard-paks@helendoron.com",
         "address": "Árpád utca 11.",
@@ -11263,23 +11047,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-szekszard-7726.json",
-        "fileNameAscii": "hd-szekszard.json"
+        "fileNameAscii": "hd-szekszard-7726.json"
       }
     },
     {
       "locationID": "hd-szentendre-6143",
-      "name": {
-        "en": "HD Szentendre"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Szentendre"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11303,7 +11084,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Schäffer Krisztián",
+        "contactPerson": "Schäffer Krisztián",
         "phone": "+36 20 404 7987",
         "email": "szentendre@helendoron.com",
         "address": "Pannónia utca 1-3.",
@@ -11326,23 +11107,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-szentendre-6143.json",
-        "fileNameAscii": "hd-szentendre.json"
+        "fileNameAscii": "hd-szentendre-6143.json"
       }
     },
     {
       "locationID": "hd-szigetszentmiklos-6123",
-      "name": {
-        "en": "HD Szigetszentmiklós"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Szigetszentmiklós"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11366,7 +11144,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Baross Edit",
+        "contactPerson": "Baross Edit",
         "phone": "+36 70 331 0676",
         "email": "szigetszentmiklos@helendoron.com",
         "address": "Bajcsy-Zsilinszky utca 24.",
@@ -11389,23 +11167,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-szigetszentmiklos-6123.json",
-        "fileNameAscii": "hd-szigetszentmiklos.json"
+        "fileNameAscii": "hd-szigetszentmiklos-6123.json"
       }
     },
     {
       "locationID": "hd-szazhalombatta-9542",
-      "name": {
-        "en": "HD Százhalombatta"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Százhalombatta"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11429,7 +11204,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Eszik Fruzsina",
+        "contactPerson": "Eszik Fruzsina",
         "phone": "+36 30 398 0414",
         "email": "bia@helendoron.com",
         "address": "Szent István tér 10.",
@@ -11452,23 +11227,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-szazhalombatta-9542.json",
-        "fileNameAscii": "hd-szazhalombatta.json"
+        "fileNameAscii": "hd-szazhalombatta-9542.json"
       }
     },
     {
       "locationID": "hd-szekesfehervar-8058",
-      "name": {
-        "en": "HD Székesfehérvár"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Székesfehérvár"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11492,7 +11264,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Sipos Adrienn",
+        "contactPerson": "Sipos Adrienn",
         "phone": "+36 70 623 0567",
         "email": "szekesfehervar@helendoron.com",
         "address": "Széchenyi u. 105.",
@@ -11515,23 +11287,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-szekesfehervar-8058.json",
-        "fileNameAscii": "hd-szekesfehervar.json"
+        "fileNameAscii": "hd-szekesfehervar-8058.json"
       }
     },
     {
       "locationID": "hd-tapolca-3851",
-      "name": {
-        "en": "HD Tapolca"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Tapolca"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11555,7 +11324,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Káldi-Hegyi Julianna",
+        "contactPerson": "Káldi-Hegyi Julianna",
         "phone": "+36 20 351 7006",
         "email": "tapolca@helendoron.com",
         "address": "Keszthelyi út 2.",
@@ -11578,23 +11347,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-tapolca-3851.json",
-        "fileNameAscii": "hd-tapolca.json"
+        "fileNameAscii": "hd-tapolca-3851.json"
       }
     },
     {
       "locationID": "hd-tata-5592",
-      "name": {
-        "en": "HD Tata"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Tata"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11618,7 +11384,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Kovács Éva",
+        "contactPerson": "Kovács Éva",
         "phone": "+36 70 586 4443",
         "email": "tata@helendoron.com",
         "address": "Agostyáni utca 6.",
@@ -11641,23 +11407,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-tata-5592.json",
-        "fileNameAscii": "hd-tata.json"
+        "fileNameAscii": "hd-tata-5592.json"
       }
     },
     {
       "locationID": "hd-tatabanya-2181",
-      "name": {
-        "en": "HD Tatabánya"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Tatabánya"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11681,7 +11444,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Szeidler Kitti",
+        "contactPerson": "Szeidler Kitti",
         "phone": "+36 30 718 6065",
         "email": "tatabanya@helendoron.com",
         "address": "Fürdő utca 1.",
@@ -11704,23 +11467,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-tatabanya-2181.json",
-        "fileNameAscii": "hd-tatabanya.json"
+        "fileNameAscii": "hd-tatabanya-2181.json"
       }
     },
     {
       "locationID": "hd-tokol-1132",
-      "name": {
-        "en": "HD Tököl"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Tököl"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11744,7 +11504,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Baross Edit",
+        "contactPerson": "Baross Edit",
         "phone": "+36 70 331 0676",
         "email": "szigetszentmiklos@helendoron.com",
         "address": "Kossuth Lajos u. 62.",
@@ -11767,23 +11527,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-tokol-1132.json",
-        "fileNameAscii": "hd-tokol.json"
+        "fileNameAscii": "hd-tokol-1132.json"
       }
     },
     {
       "locationID": "hd-vecses-4719",
-      "name": {
-        "en": "HD Vecsés"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Vecsés"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11807,7 +11564,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Dobrovitz Anna",
+        "contactPerson": "Dobrovitz Anna",
         "phone": "+36 70 885 8556",
         "email": "vecses@helendoron.com",
         "address": "Arany János utca 71.",
@@ -11830,23 +11587,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-vecses-4719.json",
-        "fileNameAscii": "hd-vecses.json"
+        "fileNameAscii": "hd-vecses-4719.json"
       }
     },
     {
       "locationID": "hd-gardony-velencei-to-5955",
-      "name": {
-        "en": "HD Gárdony Velencei-tó"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Gárdony Velencei-tó"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11870,7 +11624,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Suti Kornélia",
+        "contactPerson": "Suti Kornélia",
         "phone": "+36702508089",
         "email": "velence@helendoron.com",
         "address": "Szabadság út 26.",
@@ -11893,23 +11647,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-gardony-velencei-to-5955.json",
-        "fileNameAscii": "hd-gardony-velencei-to.json"
+        "fileNameAscii": "hd-gardony-velencei-to-5955.json"
       }
     },
     {
       "locationID": "hd-veszprem-7267",
-      "name": {
-        "en": "HD Veszprém"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Veszprém"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11933,7 +11684,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Vrazsovics Marianna",
+        "contactPerson": "Vrazsovics Marianna",
         "phone": "+36 20 560 2799",
         "email": "veszprem@helendoron.com",
         "address": "Hóvirág utca 7.",
@@ -11956,23 +11707,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-veszprem-7267.json",
-        "fileNameAscii": "hd-veszprem.json"
+        "fileNameAscii": "hd-veszprem-7267.json"
       }
     },
     {
       "locationID": "hd-vac-5527",
-      "name": {
-        "en": "HD Vác"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Vác"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -11996,7 +11744,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Jankai Zsuzsa",
+        "contactPerson": "Jankai Zsuzsa",
         "phone": "+36 30 977 3069",
         "email": "godvac@helendoron.com",
         "address": "Kosdi utca 2.",
@@ -12019,23 +11767,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-vac-5527.json",
-        "fileNameAscii": "hd-vac.json"
+        "fileNameAscii": "hd-vac-5527.json"
       }
     },
     {
       "locationID": "hd-varpalota-0247",
-      "name": {
-        "en": "HD Várpalota"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Várpalota"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -12059,7 +11804,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Rumpler Tibor",
+        "contactPerson": "Rumpler Tibor",
         "phone": "+36 20 984 8955",
         "email": "varpalota@helendoron.com",
         "address": "Táncsics Mihály utca 7.",
@@ -12082,23 +11827,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-varpalota-0247.json",
-        "fileNameAscii": "hd-varpalota.json"
+        "fileNameAscii": "hd-varpalota-0247.json"
       }
     },
     {
       "locationID": "hd-erd-diosd-7135",
-      "name": {
-        "en": "HD Érd Diósd"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Érd Diósd"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -12120,7 +11862,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Szalay Zsuzsanna",
+        "contactPerson": "Szalay Zsuzsanna",
         "phone": "+36 30 914 0714",
         "email": "erddiosd@helendoron.com",
         "address": "Duna utca 90.",
@@ -12143,23 +11885,20 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-erd-diosd-7135.json",
-        "fileNameAscii": "hd-erd-diosd.json"
+        "fileNameAscii": "hd-erd-diosd-7135.json"
       }
     },
     {
       "locationID": "hd-ullo-0662",
-      "name": {
-        "en": "HD Üllő"
-      },
-      "shortName": {
+      "locationName": {
         "en": "HD Üllő"
       },
       "Visible": "Yes",
       "Priority": "No",
-      "groupKey": "group.services",
+      "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
@@ -12183,7 +11922,7 @@
       "amenities": [],
       "accessibility": {},
       "contactInformation": {
-        "name": "Dobrovitz Anna",
+        "contactPerson": "Dobrovitz Anna",
         "phone": "+36 70 885 8556",
         "email": "vecses@helendoron.com",
         "address": "Malom utca 1.",
@@ -12206,10 +11945,10 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-09T09:28:20.472Z",
+        "lastUpdated": "2025-10-11T18:04:48.516Z",
         "version": 1,
         "fileName": "hd-ullo-0662.json",
-        "fileNameAscii": "hd-ullo.json"
+        "fileNameAscii": "hd-ullo-0662.json"
       }
     }
   ]
