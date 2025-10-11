@@ -1121,6 +1121,7 @@ async function initEmergencyBlock(countryOverride) {
 
       return {
         ID: id,
+        locationName: (typeof it?.locationName === 'object' && it.locationName) ? it.locationName : nm, // carry name
         Group: grp,
         "Subgroup key": sub,
         Visible: "Yes", // keep: legacy UI expects "Yes"/"No"; Popular ignores this
