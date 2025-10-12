@@ -1111,6 +1111,7 @@ async function initEmergencyBlock(countryOverride) {
       
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
       const sub = String(it?.subgroupKey ?? it?.subgroup ?? ctxRow?.subgroupKey ?? '');
+      
       // Popular is a data flag (locations_data), not a content tag
       const v = (it?.Priority ?? it?.Popular ?? it?.priority);
       const pri = (v === true || v === 1 || String(v ?? '').toLowerCase() === 'yes' || String(v ?? '').toLowerCase() === 'true')

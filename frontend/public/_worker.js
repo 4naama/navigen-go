@@ -378,8 +378,9 @@ async function handleList(req, env, url, extraHdr){
       // ids + names
       locationID: p.locationID || p.ID || p.id,           // expose the stable key
       id:         p.locationID || p.ID || p.id,           // keep legacy id for safety
-      name:       p.name || p.Name || '',
-      shortName:  p.shortName || p['Short Name'] || '',
+      // handleList(...) — emit only locationName as-is; no fallback
+      locationName: (p && typeof p.locationName === 'object' ? p.locationName : undefined),
+
       // grouping
       groupKey:   p.groupKey || p.Group || '',
       subgroupKey: p.subgroupKey || p['Subgroup key'] || '',
@@ -418,8 +419,10 @@ async function handleProfile(req, env, url, extraHdr){
     .find(x => String(x.locationID || x.ID || x.id) === String(id));
   if(!p) return new Response('Not Found',{status:404});
   const payload = {
-    // prefer stable profile id; keep legacy fallbacks
-    id: p.locationID||p.ID||p.id, name: p.name||p.Name||'', shortName: p.shortName||p['Short Name']||'',
+    // handleProfile(...) — emit only id + locationName (no fallback)
+    id: p.locationID||p.ID||p.id,
+    locationName: (p && typeof p.locationName === 'object' ? p.locationName : undefined),
+
     descriptions: p.descriptions||{}, tags: Array.isArray(p.tags)?p.tags:[],
     coord: (() => {
       if (p && typeof p.coord === 'object') {
