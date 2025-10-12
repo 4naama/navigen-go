@@ -381,8 +381,10 @@ async function handleList(req, env, url, extraHdr){
       // ids + names
       locationID: p.locationID || p.ID || p.id,           // expose the stable key
       id:         p.locationID || p.ID || p.id,           // keep legacy id for safety
-      // handleList(...) — emit only locationName as-is; no fallback
-      locationName: (p && typeof p.locationName === 'object' ? p.locationName : undefined),
+      // pass object as-is; wrap plain string into {en:...}
+      locationName: (p && typeof p.locationName === 'object')
+        ? p.locationName
+        : (typeof p?.locationName === 'string' && p.locationName.trim() ? { en: p.locationName.trim() } : undefined),
 
       // grouping
       groupKey:   p.groupKey || p.Group || '',
@@ -424,7 +426,10 @@ async function handleProfile(req, env, url, extraHdr){
   const payload = {
     // handleProfile(...) — emit only id + locationName (no fallback)
     id: p.locationID||p.ID||p.id,
-    locationName: (p && typeof p.locationName === 'object' ? p.locationName : undefined),
+    // pass object as-is; wrap plain string into {en:...}
+    locationName: (p && typeof p.locationName === 'object')
+      ? p.locationName
+      : (typeof p?.locationName === 'string' && p.locationName.trim() ? { en: p.locationName.trim() } : undefined),
 
     descriptions: p.descriptions||{}, tags: Array.isArray(p.tags)?p.tags:[],
     coord: (() => {
