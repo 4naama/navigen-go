@@ -258,9 +258,9 @@ function renderPopularGroup(list = geoPoints) {
   popular.forEach((loc) => {
     const btn = document.createElement("button");
     btn.classList.add("quick-button", "popular-button");
-    const name = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // use locationName only
+    const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
 
-    btn.textContent = name;
+    btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
     btn.setAttribute("data-id", String(loc?.locationID ?? loc?.ID ?? loc?.id ?? '')); // prefer new id
 
@@ -297,7 +297,7 @@ function renderPopularGroup(list = geoPoints) {
 
       showLocationProfileModal({
         id: btn.getAttribute('data-id'),
-        name,
+        displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
         images,

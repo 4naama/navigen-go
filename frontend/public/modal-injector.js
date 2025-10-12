@@ -26,10 +26,11 @@ export function createLocationProfileModal(data, injected = {}) {
   // Top bar: title first, then Close → places the X on the right (matches other modals)
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
+  const displayName = String(data?.displayName ?? data?.name ?? 'Location'); // location title only
   top.innerHTML = `
-    <h2 class="modal-header" aria-live="polite">📍 ${data?.name ?? 'Location'}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
+      <h2 class="modal-header" aria-live="polite">📍 ${displayName}</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    `;
   
   /** format description: handle multi-line + empty lines safely */
   function formatDescHTML(s) {
@@ -900,11 +901,11 @@ async function initLpmImageSlider(modal, data) {
           const inner = document.createElement('div'); inner.className = 'modal-body-inner';
 
           // prefer contactInformation only
-          const name  = String(data?.contactInformation?.contactPerson || '').trim(); // use contactPerson
+          const contactPerson = String(data?.contactInformation?.contactPerson || '').trim(); // contact person only
           const phone = String(data?.contactInformation?.phone || '').trim();
           const email = String(data?.contactInformation?.email || '').trim();
 
-          if (name)  { const p = document.createElement('p'); p.textContent = name;  inner.appendChild(p); }
+          if (contactPerson)  { const p = document.createElement('p'); p.textContent = contactPerson;  inner.appendChild(p); }
           if (phone) { const p = document.createElement('p'); p.textContent = phone; inner.appendChild(p); }
           if (email) { const p = document.createElement('p'); p.textContent = email; inner.appendChild(p); }
           if (!inner.children.length) { const p = document.createElement('p'); p.textContent = ''; inner.appendChild(p); } // no labels
@@ -1003,10 +1004,11 @@ async function initLpmImageSlider(modal, data) {
         }
 
         createSocialModal({
-          name: String(data?.name || 'Location'),
+          name: String(data?.displayName ?? data?.name ?? 'Location'), // use location display label
           links,
           contact
         });
+
       }, { capture: true, passive: false });
     }
 
@@ -1316,7 +1318,8 @@ document.addEventListener("DOMContentLoaded", () => {
 // Utility: create a location button and wire it to the Location Profile Modal (LPM)
 function makeLocationButton(loc) {
   const btn = document.createElement('button');
-  btn.textContent = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim();
+  const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
+  btn.textContent = locLabel;
 
   // prefer stable profile id; avoid transient loc_*
   // keep: small comment; 2 lines max
@@ -1326,7 +1329,7 @@ function makeLocationButton(loc) {
   
   // Expose searchable metadata: use locationName only
   const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
-  const _locName = String((loc?.locationName?.en ?? loc?.locationName ?? btn.textContent ?? '')).trim();
+  const _locName = locLabel; // consistent with visual label
   btn.setAttribute('data-name', _locName);
   btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
 
