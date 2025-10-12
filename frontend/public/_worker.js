@@ -342,7 +342,10 @@ async function handleList(req, env, url, extraHdr){
       city:        p.city        || p.City        || p.contact?.city        || '',
       adminArea:   p.adminArea   || p.AdminArea   || p.contact?.adminArea   || '',
       countryCode: p.countryCode || p.CountryCode || p.contact?.countryCode || '',
-      name:        p.contactPerson || p.contact?.name || '',
+      // List item: do not emit 'name'; surface contact under contactInformation
+      contactInformation: {
+        contactPerson: p.contactInformation?.contactPerson || p.contactPerson || p.contact?.name || ''
+      },
       phone:       p.phone       || p.contact?.phone || '',
       email:       p.email       || p.contact?.email || '',
       whatsapp:    p.whatsapp    || p.WhatsApp    || p.contact?.whatsapp || '',
