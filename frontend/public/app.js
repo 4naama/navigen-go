@@ -1107,7 +1107,7 @@ async function initEmergencyBlock(countryOverride) {
       console.log("🛰 toGeoPoint input:", it.locationID || it.id || it.ID, it.coord); // prefer new id
 
       const id  = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback()); // prefer new id
-      const nm = String((it?.locationName?.en ?? it?.locationName ?? 'Unnamed')).trim();
+      const nm = String((it?.locationName?.en ?? it?.name?.en ?? it?.locationName ?? it?.name ?? 'Unnamed')).trim();
       
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
       const sub = String(it?.subgroupKey ?? it?.subgroup ?? ctxRow?.subgroupKey ?? '');
