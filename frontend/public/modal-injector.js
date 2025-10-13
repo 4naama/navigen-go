@@ -940,33 +940,37 @@ async function initLpmImageSlider(modal, data) {
       }
     }    
 
-    // ⭐ Save → write Favorites list used by the modal; keep marker for compatibility
+    // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
     const btnSave = modal.querySelector('#lpm-save');
     if (btnSave) {
+      const flip = (saved) => { btnSave.textContent = saved ? '✩' : '⭐'; };
+      // init icon from storage (if LPM opened again)
+      {
+        const id0 = String(data?.id || data?.locationID || '');
+        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
+        flip(saved0);
+      }
       btnSave.addEventListener('click', (e) => {
         e.preventDefault();
         const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
         const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
-        const lat = Number(data?.lat); const lng = Number(data?.lng);
+        const lat = Number(data?.lat), lng = Number(data?.lng);
         const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
 
         const key = `saved:${id}`;
         const was = localStorage.getItem(key) === '1';
-
         const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
         const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
 
         if (was) {
-          // remove
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
-          showToast('Removed from Saved', 1600);
+          flip(false); showToast('Removed from Saved', 1600);
         } else {
-          // add newest-first; de-duped
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
-          showToast('Saved', 1600);
+          flip(true); showToast('Saved', 1600);
         }
       });
     }
@@ -1127,31 +1131,36 @@ async function initLpmImageSlider(modal, data) {
 
     })();
 
-    // ⭐ Save (secondary) → same Favorites list update
+    // ⭐ Save (secondary) → same toggle + icon flip (⭐ ↔ ✩)
     const save2 = modal.querySelector('#som-save');
     if (save2) {
+      const flip2 = (saved) => { save2.textContent = saved ? '✩' : '⭐'; };
+      {
+        const id0 = String(data?.id || data?.locationID || '');
+        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
+        flip2(saved0);
+      }
       save2.addEventListener('click', (e) => {
         e.preventDefault();
         const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
         const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
-        const lat = Number(data?.lat); const lng = Number(data?.lng);
+        const lat = Number(data?.lat), lng = Number(data?.lng);
         const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
 
         const key = `saved:${id}`;
         const was = localStorage.getItem(key) === '1';
-
         const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
         const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
 
         if (was) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
-          showToast('Removed from Saved', 1600);
+          flip2(false); showToast('Removed from Saved', 1600);
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
-          showToast('Saved', 1600);
+          flip2(true); showToast('Saved', 1600);
         }
       });
     }
@@ -2058,7 +2067,7 @@ export function showFavoritesModal() {
           ${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim() || t("Unnamed")}
         </button>
       </div>
-      <button class="unsave-fav" type="button" aria-label="${t("Remove")}">⭐</button>
+      <button class="unsave-fav clear-x" type="button" aria-label="${t("Remove")}">✖</button>
     `;
 
     // open behavior: dispatch event + attempt local scroll
