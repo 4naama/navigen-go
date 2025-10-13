@@ -1230,6 +1230,18 @@ async function initEmergencyBlock(countryOverride) {
             .includes(ACTIVE_PAGE)
         )
       : geoPoints;
+      
+    console.log("[QA] raw apiItems sample:", apiItems.slice(0,3).map(it => ({
+      id: it.id || it.locationID,
+      hasLocationName: 'locationName' in it,
+      locationName: it.locationName
+    })));
+
+    console.log("[QA] mapped geoCtx sample:", geoCtx.slice(0,3).map(it => ({
+      id: it.id || it.locationID,
+      hasLocationName: 'locationName' in it,
+      locationName: it.locationName
+    })));
 
     // QA: print active page + filtered count + sample names (remove after test)
     console.debug(
