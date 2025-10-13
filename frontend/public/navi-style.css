@@ -691,13 +691,25 @@ body.large-text {
    General Icon Styles
    ------------------------------ */
 
-/* Use for emoji, <img>, or <svg> icons inline with text or buttons */
+/* Inline icons sized with text flow */
 .icon, .icon-img, .icon-svg {
   width: 1.2em;
   height: 1.2em;
   vertical-align: middle;
   display: inline-block;
   line-height: 1;
+}
+
+/* Square icon button (emoji/img/svg) — use for ⭐/✩/ℹ️/📤/🎉 buttons */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;     /* matches clear-x box */
+  height: 28px;
+  line-height: 1;  /* no extra leading */
+  font-size: 18px; /* tweak if you want tighter */
+  vertical-align: middle;
 }
 
 /* ------------------------------

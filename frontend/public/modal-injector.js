@@ -943,6 +943,7 @@ async function initLpmImageSlider(modal, data) {
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
     const btnSave = modal.querySelector('#lpm-save');
     if (btnSave) {
+      btnSave.classList.add('icon-btn'); // square icon button size
       const flip = (saved) => { btnSave.textContent = saved ? '✩' : '⭐'; };
       // init icon from storage (if LPM opened again)
       {
@@ -1134,6 +1135,7 @@ async function initLpmImageSlider(modal, data) {
     // ⭐ Save (secondary) → same toggle + icon flip (⭐ ↔ ✩)
     const save2 = modal.querySelector('#som-save');
     if (save2) {
+      save2.classList.add('icon-btn'); // square icon button size
       const flip2 = (saved) => { save2.textContent = saved ? '✩' : '⭐'; };
       {
         const id0 = String(data?.id || data?.locationID || '');
