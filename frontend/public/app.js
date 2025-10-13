@@ -1411,7 +1411,8 @@ async function initEmergencyBlock(countryOverride) {
           const n = String((r?.locationName?.en ?? r?.locationName ?? '')).trim();
           // use 2nd word’s first letter if “HD …” pattern, else first
           const token = n.startsWith('HD ') ? n.split(/\s+/)[1] || n : n;
-          const k = token ? token[0].toUpperCase() : '#';
+          // strip accents before picking first letter
+          const k = token ? token.normalize('NFD').replace(/[\u0300-\u036f]/g,'').charAt(0).toUpperCase() : '#';
           const dyn = `dyn.${slugify(k)}`;
           r.subgroupKey = dyn; r["Subgroup key"] = dyn;
         });
@@ -1420,7 +1421,7 @@ async function initEmergencyBlock(countryOverride) {
           grouped: buildStructureBy(pageList, r => {
             const n = String((r?.locationName?.en ?? r?.locationName ?? '')).trim();
             const token = n.startsWith('HD ') ? n.split(/\s+/)[1] || n : n;
-            return token ? token[0].toUpperCase() : '#';
+            return token ? token.normalize('NFD').replace(/[\u0300-\u036f]/g,'').charAt(0).toUpperCase() : '#';
           })
         };
       },
