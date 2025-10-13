@@ -864,6 +864,17 @@ async function initEmergencyBlock(countryOverride) {
     setupMyStuffModalLogic();           // 🧩 Setup tab handling inside modal
     flagStyler();                       // 🌐 Apply title/alt to any flag icons
 
+    // measure bottom band; update CSS var
+    const setBottomBandH = () => {
+      const el = document.getElementById('bottom-band');
+      const h = el ? Math.ceil(el.getBoundingClientRect().height) : 50;
+      document.documentElement.style.setProperty('--bottom-band-h', `${h}px`);
+    };
+    setBottomBandH();
+    addEventListener('resize', () => requestAnimationFrame(setBottomBandH), { passive: true });
+    addEventListener('orientationchange', setBottomBandH);
+    addEventListener('pageshow', (e) => { if (e.persisted) setBottomBandH(); });
+
     // Load JSONs: profiles.json (API) carries locations.
     // Static: actions/structure; contexts is static on Pages/local, API on navigen.io.
 

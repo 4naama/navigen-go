@@ -430,8 +430,8 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
 /* Layout constants (edit to match your UI) */
 :root {
   --header-h: 56px;          /* fixed header height */
-  --bottom-band-h: 50px;     /* fixed bottom band (my stuff/alert/help/acc) */
-  --end-gap: 50px;           /* visual gap above bottom band */
+  --bottom-band-h: 50px;     /* JS updates this at runtime */
+  --end-gap: 72px;           /* small buffer so last row clears band */
   --stack-gap: 8px;          /* vertical spacing between blocks */
   --content-pad-x: 1em;      /* horizontal padding for content */
 }
