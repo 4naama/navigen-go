@@ -1562,6 +1562,13 @@ button:hover {
   background-color: #fafafa;
 }
 
+/* spacer so last accordion group clears the bottom band */
+#accordion::after {
+  content: "";
+  display: block;
+  height: calc(var(--bottom-band-h) + var(--end-gap));
+}
+
 .accordion-button {
   width: 100%;
   display: flex;
