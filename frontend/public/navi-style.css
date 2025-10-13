@@ -434,6 +434,7 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   --end-gap: 72px;           /* small buffer so last row clears band */
   --stack-gap: 8px;          /* vertical spacing between blocks */
   --content-pad-x: 1em;      /* horizontal padding for content */
+  --accordion-tail-gap: 24px;
 }
 
 /* 📜 Main content area and scroll zone above bottom band */
@@ -1566,7 +1567,7 @@ button:hover {
 #accordion::after {
   content: "";
   display: block;
-  height: calc(var(--bottom-band-h) + var(--end-gap));
+  height: calc(var(--bottom-band-h) + var(--accordion-tail-gap));
 }
 
 .accordion-button {
