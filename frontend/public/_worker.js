@@ -335,23 +335,20 @@ async function handleList(req, env, url, extraHdr){
       newsletter: p.Newsletter || ''
     });
 
-    // contactInformation (address + person + phone/email + messaging)
-    const contactInformation = Object.assign({}, p.contactInformation || p.contact || {}, {
-      address:     p.address     || p.Address     || p.contact?.address     || '',
-      postalCode:  p.postalCode  || p.PostalCode  || p.contact?.postalCode  || '',
-      city:        p.city        || p.City        || p.contact?.city        || '',
-      adminArea:   p.adminArea   || p.AdminArea   || p.contact?.adminArea   || '',
-      countryCode: p.countryCode || p.CountryCode || p.contact?.countryCode || '',
-      // List item: do not emit 'name'; surface contact under contactInformation
-      contactInformation: {
-        contactPerson: p.contactInformation?.contactPerson || p.contactPerson || p.contact?.name || ''
-      },
-      phone:       p.phone       || p.contact?.phone || '',
-      email:       p.email       || p.contact?.email || '',
-      whatsapp:    p.whatsapp    || p.WhatsApp    || p.contact?.whatsapp || '',
-      telegram:    p.telegram    || p.Telegram    || p.contact?.telegram || '',
-      messenger:   p.messenger   || p.Messenger   || p.contact?.messenger || ''
-    });
+    // flatten contactInformation correctly; no nested object
+    const contactInformation = {
+      address:     p.contactInformation?.address     || p.address     || p.Address     || p.contact?.address     || '',
+      postalCode:  p.contactInformation?.postalCode  || p.postalCode  || p.PostalCode  || p.contact?.postalCode  || '',
+      city:        p.contactInformation?.city        || p.city        || p.City        || p.contact?.city        || '',
+      adminArea:   p.contactInformation?.adminArea   || p.adminArea   || p.AdminArea   || p.contact?.adminArea   || '',
+      countryCode: p.contactInformation?.countryCode || p.countryCode || p.CountryCode || p.contact?.countryCode || '',
+      contactPerson: p.contactInformation?.contactPerson || p.contactPerson || p.contact?.name || '',
+      phone:       p.contactInformation?.phone       || p.phone       || p.contact?.phone       || '',
+      email:       p.contactInformation?.email       || p.email       || p.contact?.email       || '',
+      whatsapp:    p.contactInformation?.whatsapp    || p.whatsapp    || p.contact?.whatsapp    || '',
+      telegram:    p.contactInformation?.telegram    || p.telegram    || p.contact?.telegram    || '',
+      messenger:   p.contactInformation?.messenger   || p.messenger   || p.contact?.messenger   || ''
+    };
 
     // ratings + price
     const ratings = {

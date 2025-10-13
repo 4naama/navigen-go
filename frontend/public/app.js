@@ -1230,6 +1230,18 @@ async function initEmergencyBlock(countryOverride) {
             .includes(ACTIVE_PAGE)
         )
       : geoPoints;
+      
+    console.log("[QA] raw apiItems sample:", apiItems.slice(0,3).map(it => ({
+      id: it.id || it.locationID,
+      hasLocationName: 'locationName' in it,
+      locationName: it.locationName
+    })));
+
+    console.log("[QA] mapped geoCtx sample:", geoCtx.slice(0,3).map(it => ({
+      id: it.id || it.locationID,
+      hasLocationName: 'locationName' in it,
+      locationName: it.locationName
+    })));
 
     // QA: print active page + filtered count + sample names (remove after test)
     console.debug(
@@ -1397,7 +1409,9 @@ async function initEmergencyBlock(countryOverride) {
       alpha: () => {
         pageList.forEach(r => {
           const n = String((r?.locationName?.en ?? r?.locationName ?? '')).trim();
-          const k = n ? n[0].toUpperCase() : '#';
+          // use 2nd word’s first letter if “HD …” pattern, else first
+          const token = n.startsWith('HD ') ? n.split(/\s+/)[1] || n : n;
+          const k = token ? token[0].toUpperCase() : '#';
           const dyn = `dyn.${slugify(k)}`;
           r.subgroupKey = dyn; r["Subgroup key"] = dyn;
         });
@@ -1405,11 +1419,12 @@ async function initEmergencyBlock(countryOverride) {
           list: pageList,
           grouped: buildStructureBy(pageList, r => {
             const n = String((r?.locationName?.en ?? r?.locationName ?? '')).trim();
-            return n ? n[0].toUpperCase() : '#';
+            const token = n.startsWith('HD ') ? n.split(/\s+/)[1] || n : n;
+            return token ? token[0].toUpperCase() : '#';
           })
-
         };
       },
+
       priority: () => {
         pageList.forEach(r => { const k = (String(r?.Priority||'No').toLowerCase()==='yes') ? 'Featured' : 'Other';
           const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
