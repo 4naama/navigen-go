@@ -35,3 +35,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Do not commit private data
+public/data/data-safe/
+!public/data/data-safe/.gitkeep
