@@ -2086,7 +2086,15 @@ export function showFavoritesModal() {
       e.stopPropagation();
       const next = saved.filter(s => String(s.id) !== String(item.id));
       save(next);
-      localStorage.setItem(`saved:${String(item.id)}`, '0'); // clear LPM toggle
+
+      // clear LPM toggle marker(s) so LPM shows ⭐ after delete
+      const ids = [
+        String(item?.id || ''),
+        String(item?.locationID || ''),
+        String(item?.ID || '')
+      ].filter(Boolean);
+      ids.forEach(k => localStorage.setItem(`saved:${k}`, '0'));
+
       row.style.opacity = "0.5";                 // quick visual feedback
       setTimeout(() => showFavoritesModal(), 120);
     });
