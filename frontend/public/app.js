@@ -871,9 +871,24 @@ async function initEmergencyBlock(countryOverride) {
       document.documentElement.style.setProperty('--bottom-band-h', `${h}px`);
     };
     setBottomBandH();
+
+    // keep in sync with viewport and band size changes
     addEventListener('resize', () => requestAnimationFrame(setBottomBandH), { passive: true });
     addEventListener('orientationchange', setBottomBandH);
     addEventListener('pageshow', (e) => { if (e.persisted) setBottomBandH(); });
+
+    // observe the band element itself
+    (() => {
+      const el = document.getElementById('bottom-band');
+      if (el && 'ResizeObserver' in window) {
+        new ResizeObserver(() => setBottomBandH()).observe(el);
+      }
+    })();
+
+    // react to dynamic viewport UI (mobile toolbars)
+    if (window.visualViewport) {
+      visualViewport.addEventListener('resize', setBottomBandH, { passive: true });
+    }
 
     // Load JSONs: profiles.json (API) carries locations.
     // Static: actions/structure; contexts is static on Pages/local, API on navigen.io.
