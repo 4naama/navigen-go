@@ -940,19 +940,37 @@ async function initLpmImageSlider(modal, data) {
       }
     }    
 
-    // ⭐ Save → stub (hook your real flow later)
+    // ⭐ Save → write Favorites list used by the modal; keep marker for compatibility
     const btnSave = modal.querySelector('#lpm-save');
     if (btnSave) {
       btnSave.addEventListener('click', (e) => {
         e.preventDefault();
-        const id = String(data?.id || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
+        const lat = Number(data?.lat); const lng = Number(data?.lng);
+        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+
         const key = `saved:${id}`;
         const was = localStorage.getItem(key) === '1';
-        localStorage.setItem(key, was ? '0' : '1');
-        showToast(was ? 'Removed from Saved' : 'Saved', 1600); // auto hide
+
+        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+
+        if (was) {
+          // remove
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '0');
+          showToast('Removed from Saved', 1600);
+        } else {
+          // add newest-first; de-duped
+          next.unshift(entry);
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '1');
+          showToast('Saved', 1600);
+        }
       });
-    } 
-    
+    }
+
     // 🎉 Social Channels — open social modal (capture to beat other handlers)
     const socialBtn = modal.querySelector('#som-social');
     if (socialBtn) {
@@ -1109,17 +1127,32 @@ async function initLpmImageSlider(modal, data) {
 
     })();
 
-    // ⭐ Save (secondary) → local toggle
+    // ⭐ Save (secondary) → same Favorites list update
     const save2 = modal.querySelector('#som-save');
     if (save2) {
       save2.addEventListener('click', (e) => {
         e.preventDefault();
-        const id = String(data?.id || '');
-        if (!id) { showToast('Missing id', 1600); return; }
+        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
+        const lat = Number(data?.lat); const lng = Number(data?.lng);
+        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+
         const key = `saved:${id}`;
         const was = localStorage.getItem(key) === '1';
-        localStorage.setItem(key, was ? '0' : '1');
-        showToast(was ? 'Removed from Saved' : 'Saved', 1600); // auto-close
+
+        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+
+        if (was) {
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '0');
+          showToast('Removed from Saved', 1600);
+        } else {
+          next.unshift(entry);
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '1');
+          showToast('Saved', 1600);
+        }
       });
     }
 
