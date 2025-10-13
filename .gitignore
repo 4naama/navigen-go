@@ -39,3 +39,8 @@ Thumbs.db
 # Do not commit private data
 public/data/data-safe/
 !public/data/data-safe/.gitkeep
+
+# backend worker artifacts
+backend/worker/node_modules/
+backend/worker/package-lock.json
+
