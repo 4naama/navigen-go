@@ -2086,6 +2086,7 @@ export function showFavoritesModal() {
       e.stopPropagation();
       const next = saved.filter(s => String(s.id) !== String(item.id));
       save(next);
+      localStorage.setItem(`saved:${String(item.id)}`, '0'); // clear LPM toggle
       row.style.opacity = "0.5";                 // quick visual feedback
       setTimeout(() => showFavoritesModal(), 120);
     });
