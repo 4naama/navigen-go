@@ -2660,7 +2660,8 @@ export function createHelpModal() {
     id: modalId,
     title: '',
     layout: 'action',
-    bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
+    bodyHTML: `
+      <div class="modal-menu-list" id="social-modal-list"></div>
       <p class="muted" data-i18n="help.intro">
         Hello! We’re here to assist you. Tap an emergency number to call from your phone.
       </p>
