@@ -293,7 +293,12 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
   const status = raw?.status || "free";
   const tier = raw?.tier || "free";
 
-  return json({ locationID: loc, from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200, { "cache-control": "no-store" });
+  // return minimal status payload for the app (no caching to reflect live changes)
+  return json(
+    { locationID: locID, status, tier },
+    200,
+    { "cache-control": "no-store" }
+  );
 }
 
 // ---------- helpers ----------

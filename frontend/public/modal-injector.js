@@ -737,10 +737,11 @@ async function initLpmImageSlider(modal, data) {
         const lat = Number(latRaw);
         const lng = Number(lngRaw);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track('route'); // keep analytics event name
+        trackCta('route'); // keep analytics event name
         createNavigationModal({
           name: String(data?.name || 'Location'),
-          lat, lng
+          lat, lng,
+          id: String(data?.id || data?.locationID || '').trim() // pass LPM id for tracking
         });
       }, { passive: false });
     }
@@ -760,7 +761,7 @@ async function initLpmImageSlider(modal, data) {
         btnBook.setAttribute('target', '_blank');
         btnBook.setAttribute('rel', 'noopener');
         // track only; native anchor handles opening
-        btnBook.addEventListener('click', () => { _track && _track('booking'); }, { passive: true });
+        btnBook.addEventListener('click', () => { trackCta('booking'); }, { passive: true });
       } else {
         let busy = false; // run-once guard
         btnBook.addEventListener('click', async (e) => {
@@ -776,7 +777,7 @@ async function initLpmImageSlider(modal, data) {
             const r = await fetch(url, { credentials: 'include' });
             if (r.ok) {
               const j = await r.json().catch(() => ({}));
-              if (j && j.href) { _track && _track('booking'); window.open(String(j.href), '_blank', 'noopener'); busy = false; return; }
+              if (j && j.href) { trackCta('booking'); window.open(String(j.href), '_blank', 'noopener'); busy = false; return; } // track CTA; open once
             }
             showToast('Booking link coming soon', 1600);
           } catch {
@@ -827,7 +828,7 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
-            _track && _track('share');
+            trackCta('share'); // local CTA helper
             try { if (navigator.share) await navigator.share({ title:'NaviGen QR', url: img.src }); } catch {}
           };
 
@@ -840,7 +841,7 @@ async function initLpmImageSlider(modal, data) {
           // print: open minimal doc, wait for load, then print + close
           // print: show full-screen overlay, print just the QR, then remove
           printBtn.onclick = () => {
-            _track && _track('print');
+            trackCta('print');
 
             const src = img.src;
 
@@ -900,7 +901,7 @@ async function initLpmImageSlider(modal, data) {
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
 
           // track
-          _track('qr');
+          trackCta('qr');
         });
       }
     }
@@ -944,7 +945,7 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
-            _track && _track('share_contact');
+            trackCta('share_contact');
             try {
               const text = [name, phone, email].filter(Boolean).join('\n');
               if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
@@ -998,7 +999,7 @@ async function initLpmImageSlider(modal, data) {
          /route|map/.test(id) || /maps/.test(href)    ? 'map'       :
          null);
 
-      if (action) _track(data.id, 'cta_click', action);
+      if (action) _track(data.id, 'cta_click', action); // keep full analytics call
     }, { capture: true });        
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
@@ -1088,11 +1089,11 @@ async function initLpmImageSlider(modal, data) {
         }
 
         createSocialModal({
-          name: String(data?.displayName ?? data?.name ?? 'Location'), // use location display label
+          name: String(data?.displayName ?? data?.name ?? 'Location'),
           links,
-          contact
+          contact,
+          id: String(data?.id || data?.locationID || '').trim() // pass LPM id for tracking
         });
-
       }, { capture: true, passive: false });
     }
 
@@ -1136,7 +1137,7 @@ async function initLpmImageSlider(modal, data) {
       a.addEventListener('click', () => {
         // prefer explicit action; fallback to id-derived
         const act = action || (id.startsWith('som-') ? id.slice(4) : id);
-        _track(String(act));
+        trackCta(String(act)); // send cta_click with locationID
       });
       secondary.appendChild(a);
     };
@@ -1233,7 +1234,7 @@ async function initLpmImageSlider(modal, data) {
     if (shareBtn) {
       shareBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        _track('share');
+        trackCta('share');
         const name = String(data?.name || 'Location');
         const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
         const text = coords ? `${name} — ${coords}` : name;
@@ -1304,7 +1305,7 @@ async function initLpmImageSlider(modal, data) {
         localStorage.setItem(key,  String(n));
         localStorage.setItem(tsKey, String(last));
         setUI(n);
-        _track && _track(`rate-${n}`);   // analytics bucket: rate-1..rate-5
+        trackCta(`rate-${n}`); // analytics bucket: rate-1..rate-5
         showToast(`Thanks! Rated ${n}/5`, 1600);
 
         // lock the row for this session
@@ -1335,7 +1336,7 @@ async function initLpmImageSlider(modal, data) {
     })();
 
     // analytics beacon
-    const _track = (action) => {
+    function trackCta(action) { // local CTA helper; avoids _track shadow
       const uid = String(data?.id || data?.locationID || '').trim(); if (!uid) return;
       try {
         const BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
@@ -1346,8 +1347,7 @@ async function initLpmImageSlider(modal, data) {
           new Blob([JSON.stringify({ event:'cta_click', locationID:uid, action })], { type:'application/json' })
         );
       } catch {}
-    };
-    
+    }
   }
 
   // call wiring + reveal
@@ -2657,10 +2657,10 @@ export function createHelpModal() {
   if (document.getElementById("help-modal")) return;
 
   const modal = injectModal({
-    id: "help-modal",
-    title: "",             // header rendered via modal-top-bar
-    layout: "action",
-    bodyHTML: `
+    id: modalId,
+    title: '',
+    layout: 'action',
+    bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
       <p class="muted" data-i18n="help.intro">
         Hello! We’re here to assist you. Tap an emergency number to call from your phone.
       </p>
@@ -2725,9 +2725,9 @@ export function createHelpModal() {
 // 🎉 Social Channels modal (MODULE-SCOPED)
 // Reason: make callable from 🎉 handler; same shell as Navigation; no footer.
 // ============================
-export function createSocialModal({ name, links = {}, contact = {} }) {
-  const id = 'social-modal';
-  document.getElementById(id)?.remove();
+export function createSocialModal({ name, links = {}, contact = {}, id }) { // id for analytics
+  const modalId = 'social-modal'; // avoid param shadow
+  document.getElementById(modalId)?.remove(); // remove canonical social modal
 
   // local helpers (2 lines each)
   const normUrl = (u) => {
@@ -2740,7 +2740,7 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
 
   // same shell as Navigation: inject + header top bar; no footer
   const modal = injectModal({
-    id,
+    id: modalId, // use canonical Social modal ID
     title: '',
     layout: 'action',
     bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
@@ -2755,7 +2755,7 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
       <button class="modal-close" aria-label="Close">&times;</button>
     `;
     modal.querySelector('.modal-content')?.prepend(top);
-    top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+    top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
   }
 
   // providers: consistent logo + text rows; Website uses globe svg
@@ -2805,28 +2805,30 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
           (r.icon ? `<img src="${r.icon}" alt="" width="20" height="20" style="display:block;object-fit:contain;">` : '') +
         `</span><span>${r.label || (r.key === 'pinterest' ? 'Pinterest' : '')}</span>`;
 
-      if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true }); // track if available
+      if (typeof _track === 'function' && r.track && id) {
+        a.addEventListener('click', () => _track(id, 'cta_click', r.track), { passive:true });
+      }
       list.appendChild(a);
     });
   }
 
-  setupTapOutClose(id);
-  showModal(id);
+  setupTapOutClose(modalId);
+  showModal(modalId);
 }
 
 // 🎯 Navigation modal (compact list with icons; header + red × like QR/Help)
-function createNavigationModal({ name, lat, lng }) {
-  const id = 'nav-modal';
-  document.getElementById(id)?.remove();
+function createNavigationModal({ name, lat, lng, id }) { // id for analytics
+  const modalId = 'nav-modal'; // avoid param shadow
+  document.getElementById(modalId)?.remove(); // remove canonical nav modal
 
   // Build modal shell via injectModal (body replaced right after)
   const m = injectModal({
-    id,
+    id: modalId,
     title: '',            // header built as top bar (uniform with QR/Help)
     layout: 'action',
     bodyHTML: `
-      <div class="modal-menu-list" id="nav-modal-list"></div>
-    `
+        <div class="modal-menu-list" id="nav-modal-list"></div>
+      `
   });
 
   // Top bar (sticky) — reuses your QR/Help style
@@ -2837,7 +2839,7 @@ function createNavigationModal({ name, lat, lng }) {
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   m.querySelector('.modal-content')?.prepend(top);
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
 
   // Build items (icons in /assets/social/) + per-provider tracking labels
   const list = m.querySelector('#nav-modal-list');
@@ -2875,15 +2877,15 @@ function createNavigationModal({ name, lat, lng }) {
 
     btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
 
-    if (typeof _track === 'function' && r.track) {
-      btn.addEventListener('click', () => { _track(r.track); }, { passive: true });
+    if (typeof _track === 'function' && r.track && id) {
+      btn.addEventListener('click', () => { _track(id, 'cta_click', r.track); }, { passive: true });
     }
     list.appendChild(btn);
   });
 
   // Tap-out close & show
-  setupTapOutClose(id);
-  showModal(id);
+  setupTapOutClose(modalId);
+  showModal(modalId);
 }
 
 // 🛑 Prevents overlapping share attempts by locking during active share operation.
