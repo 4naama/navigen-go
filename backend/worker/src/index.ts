@@ -3,6 +3,31 @@
 
 import QRCode from "qrcode";
 
+// Fixed event order used by API + UI
+const EVENT_ORDER = [
+  "lpm_open","call","email","whatsapp","telegram","messenger",
+  "official","booking","newsletter",
+  "facebook","instagram","pinterest","spotify","tiktok","youtube",
+  "share","save","unsave","map","qr_view"
+] as const;
+type EventKey = typeof EVENT_ORDER[number];
+
+// tz: payload.tz → country → fallback Berlin → UTC
+const TZ_FALLBACK = "Europe/Berlin";
+const TZ_BY_COUNTRY: Record<string,string> = {
+  HU:"Europe/Budapest", DE:"Europe/Berlin", AT:"Europe/Vienna", CH:"Europe/Zurich",
+  GB:"Europe/London",  IE:"Europe/Dublin",  // extend as needed
+};
+function dayKeyFor(dateUTC: Date, tz?: string, countryCode?: string) {
+  const pick = tz || (countryCode && TZ_BY_COUNTRY[countryCode.toUpperCase()]) || TZ_FALLBACK;
+  try { return new Intl.DateTimeFormat('en-CA',{ timeZone: pick, year:'numeric',month:'2-digit',day:'2-digit'}).format(dateUTC); }
+  catch { return dateUTC.toISOString().slice(0,10); } // UTC fallback
+}
+async function kvIncr(kv: KVNamespace, key: string) {
+  const cur = parseInt((await kv.get(key))||"0",10) || 0;
+  await kv.put(key, String(cur+1), { expirationTtl: 60*60*24*366 });
+}
+
 export interface Env {
   KV_STATUS: KVNamespace;
   KV_ALIASES: KVNamespace;
@@ -35,14 +60,84 @@ export default {
     }
 
     try {
-      // --- QR short link: /s/{school_uid}?c=....
+      // --- QR short link: /s/{locationID}?c=....
       if (pathname.startsWith("/s/")) {
         return await handleShortLink(req, env);
       }
 
-      // --- QR image: /api/qr?school_uid=...&c=...&fmt=svg|png&size=512
+      // --- QR image: /api/qr?locationID=...&c=...&fmt=svg|png&size=512
       if (pathname === "/api/qr") {
         return await handleQr(req, env);
+      }
+      
+      // GET /api/stats?locationID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
+      if (url.pathname === "/api/stats" && req.method === "GET") {
+        const loc  = (url.searchParams.get("locationID")||"").trim();
+        const from = (url.searchParams.get("from")||"").trim();
+        const to   = (url.searchParams.get("to")  ||"").trim();
+        const tz   = (url.searchParams.get("tz")  ||"").trim() || undefined;
+        if (!loc || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+          return json({ error:{code:"invalid_request", message:"locationID, from, to required (YYYY-MM-DD)"} }, 400);
+        }
+
+        // list all keys for this location; keys look like stats:<loc>:YYYY-MM-DD:<event>
+        const prefix = `stats:${loc}:`;
+        const days: Record<string, Partial<Record<EventKey, number>>> = {};
+        let cursor: string|undefined = undefined;
+
+        do {
+          const page = await env.KV_STATS.list({ prefix, cursor });
+          for (const k of page.keys) {
+            const name = k.name; // stats:<loc>:<day>:<event>
+            const parts = name.split(":");
+            if (parts.length !== 4) continue;
+            const day = parts[2], ev = parts[3] as EventKey;
+            if (day < from || day > to) continue;
+            const n = parseInt((await env.KV_STATS.get(name))||"0",10) || 0; // safe read
+            if (!days[day]) days[day] = {};
+            days[day][ev] = n;
+          }
+          cursor = page.cursor || undefined;
+        } while (cursor);
+
+        return json({ locationID: loc, from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
+      }            
+
+      // GET /api/stats/entity?entityID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
+      if (url.pathname === "/api/stats/entity" && req.method === "GET") {
+        const ent  = (url.searchParams.get("entityID")||"").trim();
+        const from = (url.searchParams.get("from")||"").trim();
+        const to   = (url.searchParams.get("to")  ||"").trim();
+        const tz   = (url.searchParams.get("tz")  ||"").trim() || undefined;
+        if (!ent || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+          return json({ error:{code:"invalid_request", message:"entityID, from, to required (YYYY-MM-DD)"} }, 400);
+        }
+
+        // Resolve the entity's locations. To start, read a KV list (write it when you approve the entity).
+        // Format: KV key entity:<entityID>:locations => JSON array of locationIDs
+        const raw = await env.KV_STATUS.get(`entity:${ent}:locations`);
+        const locs: string[] = raw ? JSON.parse(raw) : [];
+        const days: Record<string, Partial<Record<EventKey, number>>> = {};
+
+        for (const loc of locs) {
+          const prefix = `stats:${loc}:`;
+          let cursor: string|undefined = undefined;
+          do {
+            const page = await env.KV_STATS.list({ prefix, cursor });
+            for (const k of page.keys) {
+              const parts = k.name.split(":");
+              if (parts.length !== 4) continue;
+              const day = parts[2], ev = parts[3] as EventKey;
+              if (day < from || day > to) continue;
+              const n = parseInt((await env.KV_STATS.get(k.name))||"0",10) || 0;
+              if (!days[day]) days[day] = {};
+              days[day][ev] = (days[day][ev] || 0) + n;
+            }
+            cursor = page.cursor || undefined;
+          } while (cursor);
+        }
+
+        return json({ entityID: ent, from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
       }
 
       // --- Analytics track: POST /api/track
@@ -50,7 +145,7 @@ export default {
         return await handleTrack(req, env);
       }
 
-      // --- Status: GET /api/status?school_uid=...
+      // --- Status: GET /api/status?locationID=...
       if (pathname === "/api/status" && req.method === "GET") {
         return await handleStatus(req, env);
       }
@@ -59,7 +154,7 @@ export default {
       // if (pathname === "/api/checkout") { ... }
       // if (pathname === "/api/webhook")  { ... }
       // if (pathname === "/m/edit")       { ... }
-      // if (pathname === "/api/school/update") { ... }
+      // if (pathname === "/api/location/update") { ... }
 
       return json({ error: { code: "not_found", message: "No such route" } }, 404);
     } catch (err: any) {
@@ -82,8 +177,8 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
   if (isUlid) await increment(env.KV_STATS, keyForStat(resolved!, "qr_view"));
 
   const target = isUlid
-    ? `https://navigen.io/?school=${encodeURIComponent(resolved!)}${c ? `&c=${encodeURIComponent(c)}` : ""}`
-    : `https://navigen.io/?school=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
+    ? `https://navigen.io/?lp=${encodeURIComponent(resolved!)}${c ? `&c=${encodeURIComponent(c)}` : ""}`
+    : `https://navigen.io/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
 
   return new Response(null, {
     status: 302,
@@ -93,8 +188,14 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
 
 async function handleQr(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
-  const raw = (url.searchParams.get("school_uid") || "").trim();
-  if (!raw) return json({ error: { code: "invalid_request", message: "school_uid required" } }, 400);
+  const raw = (url.searchParams.get("locationID") || "").trim();
+  if (!raw) return json({ error: { code: "invalid_request", message: "locationID required" } }, 400);
+
+  // count a QR scan for daily stats
+  const now = new Date();
+  const country = (req as any).cf?.country || "";
+  const day = dayKeyFor(now, undefined, country); // uses Berlin fallback internally
+  await kvIncr(env.KV_STATS, `stats:${raw}:${day}:qr_view`);
 
   const resolved = await resolveUid(raw, env);
   const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(resolved || "");
@@ -103,10 +204,10 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   const fmt = (url.searchParams.get("fmt") || "svg").toLowerCase();
   const size = clamp(parseInt(url.searchParams.get("size") || "512", 10), 128, 1024);
 
-  // ✅ ULID/alias → use /s/{uid}; otherwise fall back to /?school={raw}
+  // ✅ ULID/alias → use /s/{locationID}; otherwise fall back to /?lp={raw}  
   const dataUrl = isUlid
     ? `https://navigen.io/s/${encodeURIComponent(resolved!)}${c ? `?c=${encodeURIComponent(c)}` : ""}`
-    : `https://navigen.io/?school=${encodeURIComponent(raw)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
+    : `https://navigen.io/?lp=${encodeURIComponent(raw)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
 
   if (fmt === "svg") {
     const svg = await QRCode.toString(dataUrl, { type: "svg", width: size, margin: 0 });
@@ -134,24 +235,41 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     return json({ error: { code: "invalid_request", message: "JSON body required" } }, 400);
   }
 
-  const school_uid = (typeof payload.school_uid === "string" && payload.school_uid.trim()) ? payload.school_uid.trim() : "";
+  const loc = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : "";
   const event = (payload.event || "").toString();
   const action = (payload.action || "").toString();
 
-  if (!school_uid || !event) {
-    return json({ error: { code: "invalid_request", message: "school_uid and event required" } }, 400);
+  // accept locationID (primary)
+  if (!loc || !event) {
+    return json({ error: { code: "invalid_request", message: "locationID and event required" } }, 400);
   }
-
+  
   // Only accept known event types (open list as needed)
   const allowed = new Set(["cta_click", "qr_view", "lpm_open"]);
   if (!allowed.has(event)) {
     return json({ error: { code: "invalid_request", message: "unsupported event" } }, 400);
   }
+  
+  // A) daily counter
+  const now = new Date();
+  const country = (req as any).cf?.country || "";      // CF edge country
+  const tz = (payload?.tz || "").trim() || undefined;  // optional client tz
+  // map "cta_click" + action → button key; pass through "lpm_open"
+  const evKey = (event === "cta_click")
+    ? String(action || "").toLowerCase()
+    : String(event || "").toLowerCase();
+  if ((EVENT_ORDER as readonly string[]).includes(evKey)) {
+    const day = dayKeyFor(now, tz, country);
+    const key = `stats:${loc}:${day}:${evKey}`;
+    await kvIncr(env.KV_STATS, key);
+  }
+
+  // keep response as before (e.g., return 204)    
 
   // bucket by action (website/booking/phone/wa/apple/waze/...)
   const bucket = event === "cta_click" ? (action || "other") : event;
 
-  await increment(env.KV_STATS, keyForStat(school_uid, bucket));
+  await increment(env.KV_STATS, keyForStat(loc, bucket));
   const origin = req.headers.get("Origin") || "";
   const allowOrigin = origin || "*";
 
@@ -163,19 +281,19 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
       "vary": "Origin"
     }
   });
-
 }
 
 async function handleStatus(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
-  const school_uid = (await resolveUid(url.searchParams.get("school_uid") || "", env)) || "";
-  if (!school_uid) return json({ error: { code: "invalid_request", message: "school_uid required" } }, 400);
+  const idParam = url.searchParams.get("locationID") || "";
+  const locID = (await resolveUid(idParam, env)) || "";
+  if (!locID) return json({ error: { code: "invalid_request", message: "locationID required" } }, 400);
 
-  const raw = await env.KV_STATUS.get(statusKey(school_uid), "json");
+  const raw = await env.KV_STATUS.get(statusKey(locID), "json");
   const status = raw?.status || "free";
   const tier = raw?.tier || "free";
 
-  return json({ school_uid, status, tier }, 200, { "cache-control": "no-store" });
+  return json({ locationID: loc, from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200, { "cache-control": "no-store" });
 }
 
 // ---------- helpers ----------
@@ -200,13 +318,12 @@ function todayKey(): string {
   return `${y}${m}${d}`;
 }
 
-function keyForStat(school_uid: string, bucket: string): string {
-  // KV is eventually consistent; this is fine for MVP. Move to Durable Object for atomicity later.
-  return `stats:${school_uid}:${todayKey()}:${bucket}`;
+function keyForStat(locationID: string, bucket: string): string {
+  return `stats:${locationID}:${todayKey()}:${bucket}`;
 }
 
-function statusKey(school_uid: string): string {
-  return `status:${school_uid}`;
+function statusKey(locationID: string): string {
+  return `status:${locationID}`;
 }
 
 function aliasKey(legacy: string): string {
@@ -220,7 +337,7 @@ async function resolveUid(idOrAlias: string, env: Env): Promise<string | null> {
   if (isUlid) return idOrAlias;
 
   const mapped = await env.KV_ALIASES.get(aliasKey(idOrAlias), "json");
-  return mapped?.school_uid || null;
+  return (typeof mapped === "string" ? mapped : mapped?.locationID) || null;
 }
 
 async function increment(kv: KVNamespace, key: string): Promise<void> {

@@ -1,3 +1,21 @@
+// analytics: send CTA events (preview → workers.dev; prod → same-origin)
+const TRACK_BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
+  ? 'https://navigen-api.4naama-39c.workers.dev'
+  : location.origin;
+
+function _track(locId, event, action) {
+  try {
+    const payload = {
+      locationID: String(locId || ''),
+      event, action,
+      lang: document.documentElement.lang || 'en',
+      pageKey: location.pathname.replace(/^\/(?:[a-z]{2}\/)?/, ''),
+      device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
+    };
+    navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+  } catch {}
+}
+
 /**
  * Factory: build the Location Profile Modal (LPM) element.
  * No event wiring here; just structure. Caller injects & wires.
@@ -792,7 +810,11 @@ async function initLpmImageSlider(modal, data) {
 
           const img = document.createElement('img');
           img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
-          img.src = `https://navigen-api.4naama-39c.workers.dev/api/qr?school_uid=${encodeURIComponent(uid)}&size=512`;
+          // pick workers.dev on pages.dev/localhost; prod uses same-origin
+          const BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
+            ? 'https://navigen-api.4naama-39c.workers.dev'
+            : location.origin;
+          img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512`;
 
           // use existing compact emoji buttons
           const actions = document.createElement('div');
@@ -939,6 +961,45 @@ async function initLpmImageSlider(modal, data) {
         }, { passive: false });
       }
     }    
+    
+    // count LPM open
+    if (data?.id) _track(data.id, 'lpm_open');   
+
+    // CTA beacons (delegated, fires before native handlers)
+    modal.addEventListener('click', (e) => {
+      if (!data?.id) return;
+      const el = e.target.closest('a,button');
+      if (!el) return;
+
+      // explicit data-action wins
+      const act = el.getAttribute('data-cta') || el.getAttribute('data-action');
+
+      // infer from href / id / title
+      const href = (el.getAttribute('href') || '').toLowerCase();
+      const id   = (el.id || '').toLowerCase();
+      const ttl  = (el.getAttribute('title') || '').toLowerCase();
+
+      let action =
+        act ||
+        (href.startsWith('tel:')                       ? 'call'      :
+         href.startsWith('mailto:')                    ? 'email'     :
+         href.includes('wa.me') || href.includes('whatsapp') ? 'whatsapp'  :
+         href.includes('t.me') || href.includes('telegram')  ? 'telegram'  :
+         href.includes('messenger.com') || href.includes('m.me') ? 'messenger' :
+         /booking/.test(href) || /booking/.test(id) || /booking/.test(ttl) ? 'booking' :
+         /newsletter/.test(href) || /newsletter/.test(id) || /newsletter/.test(ttl) ? 'newsletter' :
+         href.includes('facebook.com')                ? 'facebook'  :
+         href.includes('instagram.com')               ? 'instagram' :
+         href.includes('pinterest.com')               ? 'pinterest' :
+         href.includes('spotify.com')                 ? 'spotify'   :
+         href.includes('tiktok.com')                  ? 'tiktok'    :
+         href.includes('youtube.com') || href.includes('youtu.be') ? 'youtube'   :
+         id === 'share-location-button' || /share/.test(id) ? 'share' :
+         /route|map/.test(id) || /maps/.test(href)    ? 'map'       :
+         null);
+
+      if (action) _track(data.id, 'cta_click', action);
+    }, { capture: true });        
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
     const btnSave = modal.querySelector('#lpm-save');
@@ -1277,9 +1338,12 @@ async function initLpmImageSlider(modal, data) {
     const _track = (action) => {
       const uid = String(data?.id || data?.locationID || '').trim(); if (!uid) return;
       try {
+        const BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
+          ? 'https://navigen-api.4naama-39c.workers.dev'
+          : location.origin;
         navigator.sendBeacon(
-          'https://navigen-api.4naama-39c.workers.dev/api/track',
-          new Blob([JSON.stringify({ event:'cta_click', school_uid:uid, action })], { type:'application/json' })
+          `${BASE}/api/track`,
+          new Blob([JSON.stringify({ event:'cta_click', locationID:uid, action })], { type:'application/json' })
         );
       } catch {}
     };

@@ -3,8 +3,13 @@ main = "src/index.ts"
 compatibility_date = "2024-11-01"
 workers_dev = true           # test on workers.dev first; add route later
 
+# wrangler.toml
 # When ready to serve on your domain, uncomment and set:
-# route = { pattern = "navigen.io/*", zone_name = "navigen.io" }
+# Only QR + Track on navigen.io
+routes = [
+  { pattern = "navigen.io/api/track", zone_name = "navigen.io" },
+  { pattern = "navigen.io/api/qr*",   zone_name = "navigen.io" }
+]
 
 [vars]
 # secrets are set via `wrangler secret put ...`
@@ -12,22 +17,19 @@ workers_dev = true           # test on workers.dev first; add route later
 # STRIPE_SECRET_KEY = ""
 # STRIPE_WEBHOOK_SECRET = ""
 
+# --- KV bindings (PROD) ---
 [[kv_namespaces]]
-binding    = "KV_STATUS"
-id         = "f63dfdb2736446f89409c56dfbeef75e"
-preview_id = "f63dfdb2736446f89409c56dfbeef75e"
+binding = "KV_STATUS"
+id      = "954225d615444adcaee6e41d8168b386"
 
 [[kv_namespaces]]
-binding    = "KV_ALIASES"
-id         = "ef3e113309f2456693e002940394589f"
-preview_id = "ef3e113309f2456693e002940394589f"
+binding = "KV_ALIASES"
+id      = "56c318c8648145e580a825afa8e3d710"
 
 [[kv_namespaces]]
-binding    = "KV_OVERRIDES"
-id         = "04913ed32d0e448985e90ad833467f8f"
-preview_id = "04913ed32d0e448985e90ad833467f8f"
+binding = "KV_OVERRIDES"
+id      = "773992a1ee824aac8352cf313231ff51"
 
 [[kv_namespaces]]
-binding    = "KV_STATS"
-id         = "e5eb4c000a694077982c7b4b7fd7ad0d"
-preview_id = "e5eb4c000a694077982c7b4b7fd7ad0d"
+binding = "KV_STATS"
+id      = "306bdf6786d34a008902cafb4f264ecd"
