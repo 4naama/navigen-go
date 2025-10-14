@@ -43,7 +43,7 @@ const ORDER = [
 ];
 
 async function fetchStats() {
-  const base = location.origin; // pages/prod same-origin
+  const base = 'https://navigen-api.4naama.workers.dev'; // use Worker; avoids HTML from site
   const from = fromEl.value, to = toEl.value;
 
   const isEntity = modeEl.value === 'entity';
