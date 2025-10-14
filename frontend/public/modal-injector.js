@@ -2657,7 +2657,7 @@ export function createHelpModal() {
   if (document.getElementById("help-modal")) return;
 
   const modal = injectModal({
-    id: modalId,
+    id: "help-modal", // canonical id used by hideModal/setupTapOutClose
     title: '',
     layout: 'action',
     bodyHTML: `
