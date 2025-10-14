@@ -43,15 +43,15 @@ export default {
     const url = new URL(req.url);
     const { pathname } = url;
     
-    // CORS preflight (must be before any route checks)
-    if (req.method === "OPTIONS" && pathname === "/api/track") {
+    // CORS preflight for all API endpoints (GET/POST from https://navigen.io)
+    if (req.method === "OPTIONS" && pathname.startsWith("/api/")) {
       const origin = req.headers.get("Origin") || "";
-      const allowOrigin = origin || "*"; // echo origin when provided
+      const allowOrigin = origin || "*"; // echo origin when present
       return new Response(null, {
+        status: 204,
         headers: {
           "access-control-allow-origin": allowOrigin,
-          "access-control-allow-credentials": "true",
-          "access-control-allow-methods": "POST,OPTIONS",
+          "access-control-allow-methods": "GET,POST,OPTIONS",
           "access-control-allow-headers": "content-type",
           "access-control-max-age": "600",
           "vary": "Origin"
@@ -306,7 +306,14 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", ...headers },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "access-control-allow-origin": "https://navigen.io",
+      "access-control-allow-methods": "GET,POST,OPTIONS",
+      "access-control-allow-headers": "content-type",
+      "vary": "origin",
+      ...headers
+    },
   });
 }
 
