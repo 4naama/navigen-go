@@ -90,9 +90,18 @@ function renderTable(json) {
       #table-scroller{overflow:auto;max-width:100%;text-align:left}
       #table-scroller table{margin:0;border-collapse:collapse;width:max-content}
       #table-scroller th,#table-scroller td{padding:6px 10px;white-space:nowrap}
+      /* freeze header row horizontally */
       #table-scroller thead th{position:sticky;top:0;z-index:2;background:#fff}
-      #table-scroller tbody > tr > :first-child{position:sticky;left:0;z-index:1;background:#fff}
+      /* freeze first column (header, body, footer) horizontally */
+      #table-scroller thead > tr > :first-child,
+      #table-scroller tbody > tr > :first-child,
+      #table-scroller tfoot > tr > :first-child {position:sticky;left:0;background:#fff}
+      /* ensure top-left corner cell sits above both the header row and first column */
+      #table-scroller thead > tr > :first-child{z-index:4}
+      /* body first column under header but above cells */
+      #table-scroller tbody > tr > :first-child{z-index:1}
     `;
+
     document.head.appendChild(st);
   }
   // only the table scrolls horizontally; first column stays fixed
