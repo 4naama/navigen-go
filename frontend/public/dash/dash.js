@@ -82,16 +82,97 @@ function renderTable(json) {
   const grandTotal = perDateSums.reduce((a,b)=>a+b,0);
   const tfoot = `<tfoot><tr><th scope="row">Total per day</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${grandTotal}</td></tr></tfoot>`;
 
-  // only the TABLE scrolls (left-aligned) + sticky header/left col
+  // only the TABLE scrolls (left-aligned) — build normal table, then transpose in DOM
   tblWrap.innerHTML = `
     <div id="table-scroller" style="overflow:auto; max-width:100%; text-align:left;">
       <table class="stats-table" style="margin:0; width:max-content; border-collapse:collapse;">
         ${thead}
-        <tbody>${bodyRows}</tbody>
+        <tbody>${rows || bodyRows || ''}</tbody>
         ${tfoot}
       </table>
     </div>
   `;
+
+  // transpose to: Metric rows (left) × Dates (columns), with sticky header/left col
+  {
+    const wrap = tblWrap;
+    const scroller = wrap.querySelector('#table-scroller');
+    const t = scroller.querySelector('table');
+    const theadEl = t.querySelector('thead');
+    const tbodyEl = t.querySelector('tbody');
+    if (!theadEl || !tbodyEl) return;
+
+    const headCells = Array.from(theadEl.querySelectorAll('th'));
+    const bodyRowsEls = Array.from(tbodyEl.querySelectorAll('tr')).map(tr => Array.from(tr.children));
+
+    // New transposed table
+    const tNew = document.createElement('table');
+    tNew.className = t.className || 'stats-table';
+    tNew.style.margin = '0';
+    tNew.style.width = 'max-content';
+    tNew.style.borderCollapse = 'collapse';
+
+    // THEAD: corner + labels from original first column
+    const newThead = document.createElement('thead');
+    const headRow  = document.createElement('tr');
+    headRow.appendChild(document.createElement('th')); // corner
+    bodyRowsEls.forEach(r => {
+      const th = document.createElement('th');
+      th.innerHTML = (r[0]?.innerHTML ?? '').trim();
+      headRow.appendChild(th);
+    });
+    newThead.appendChild(headRow);
+
+    // TBODY: each original column (from index 1) becomes a row
+    const newBody = document.createElement('tbody');
+    const colCount = Math.max(headCells.length, bodyRowsEls[0]?.length || 0);
+    for (let c = 1; c < colCount; c++) {
+      const tr = document.createElement('tr');
+
+      const rowHead = document.createElement('th');
+      rowHead.scope = 'row';
+      rowHead.innerHTML = (headCells[c]?.innerHTML ?? '').trim();
+      tr.appendChild(rowHead);
+
+      bodyRowsEls.forEach(r => {
+        const td = document.createElement('td');
+        td.innerHTML = r[c]?.innerHTML ?? '';
+        tr.appendChild(td);
+      });
+
+      newBody.appendChild(tr);
+    }
+
+    t.replaceWith(tNew);
+    tNew.append(newThead, newBody);
+
+    // Scoped styles (sticky header + sticky left column)
+    let style = document.getElementById('dash-transpose-styles');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'dash-transpose-styles';
+      style.textContent = `
+        #table-scroller { overflow: auto; max-width: 100%; text-align: left; }
+        #table-scroller table { border-collapse: collapse; }
+        #table-scroller th, #table-scroller td { padding: 6px 10px; }
+        #table-scroller thead th { position: sticky; top: 0; z-index: 2; background: #fff; }
+        #table-scroller tbody th[scope="row"] { position: sticky; left: 0; z-index: 1; background: #fff; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Size scroller so only the table area scrolls (no globals)
+    const setSize = () => {
+      const r = scroller.getBoundingClientRect();
+      scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
+    };
+    setSize();
+    const ro = new ResizeObserver(setSize);
+    ro.observe(scroller);
+    if (scroller.parentElement) ro.observe(scroller.parentElement);
+    ro.observe(document.documentElement);
+    ro.observe(document.body);
+  }
 
   // inject scoped styles once (sticky header + sticky left column)
   let style = document.getElementById('dash-transpose-styles');
