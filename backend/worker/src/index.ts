@@ -100,7 +100,7 @@ export default {
           cursor = page.cursor || undefined;
         } while (cursor);
 
-        return json({ locationID: loc, locationName: nameForLocation(loc), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
+        return json({ locationID: loc, locationName: await nameForLocation(loc), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
       }            
 
       // GET /api/stats/entity?entityID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
@@ -137,7 +137,7 @@ export default {
           } while (cursor);
         }
 
-        return json({ entityID: ent, entityName: nameForEntity(ent), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
+        return json({ entityID: ent, entityName: await nameForEntity(ent), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
       }
 
       // --- Analytics track: POST /api/track
@@ -163,16 +163,23 @@ export default {
   },
 };
 
-import profiles from "./profiles.json" assert { type: "json" }; // names live next to the worker
+const PROFILES_URL = "https://navigen.io/data/profiles.json"; // public/data/profiles.json served by site
 
-function nameForLocation(id: string): string | undefined {
-  // profiles.locations[id] = { name: "HD Budakeszi", ... }
-  return (profiles?.locations?.[id]?.name || "").trim() || undefined; // 1-line helper; safe fallback
+async function nameForLocation(id: string): Promise<string | undefined> {
+  try {
+    const res = await fetch(PROFILES_URL, { cf: { cacheTtl: 300, cacheEverything: true } });
+    if (!res.ok) return undefined;
+    const data: any = await res.json();
+    const list = Array.isArray(data?.locations) ? data.locations : [];
+    const hit = list.find((x: any) => x?.locationID === id);
+    const ln = hit?.locationName;
+    const name = typeof ln === "string" ? ln : (ln?.en || ln?.default);
+    return typeof name === "string" ? name : undefined; // keep undefined if missing
+  } catch { return undefined; }
 }
 
-function nameForEntity(id: string): string | undefined {
-  // profiles.entities[id] = { name: "Helen Doron", ... }
-  return (profiles?.entities?.[id]?.name || "").trim() || undefined; // 1-line helper; safe fallback
+async function nameForEntity(_id: string): Promise<string | undefined> {
+  return undefined; // entities don't have names in profiles.json
 }
 
 // ---------- handlers ----------
