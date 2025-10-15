@@ -82,16 +82,46 @@ function renderTable(json) {
   const grandTotal = perDateSums.reduce((a,b)=>a+b,0);
   const tfoot = `<tfoot><tr><th scope="row">Total per day</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${grandTotal}</td></tr></tfoot>`;
 
-  // only the TABLE scrolls (left-aligned)
+  // only the TABLE scrolls (left-aligned) + sticky header/left col
   tblWrap.innerHTML = `
     <div id="table-scroller" style="overflow:auto; max-width:100%; text-align:left;">
-      <table class="stats-table" style="margin:0; width:max-content;">
+      <table class="stats-table" style="margin:0; width:max-content; border-collapse:collapse;">
         ${thead}
         <tbody>${bodyRows}</tbody>
         ${tfoot}
       </table>
     </div>
   `;
+
+  // inject scoped styles once (sticky header + sticky left column)
+  let style = document.getElementById('dash-transpose-styles');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'dash-transpose-styles';
+    style.textContent = `
+      #table-scroller { overflow: auto; max-width: 100%; text-align: left; }
+      #table-scroller table { border-collapse: collapse; }
+      #table-scroller th, #table-scroller td { padding: 6px 10px; }
+      #table-scroller thead th { position: sticky; top: 0; z-index: 2; background: #fff; }
+      #table-scroller tbody th[scope="row"] { position: sticky; left: 0; z-index: 1; background: #fff; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // dynamic height so only the table area scrolls (no globals)
+  {
+    const scroller = tblWrap.querySelector('#table-scroller');
+    const setSize = () => {
+      const r = scroller.getBoundingClientRect();
+      scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
+    };
+    setSize();
+    const ro = new ResizeObserver(setSize);
+    ro.observe(scroller);
+    if (scroller.parentElement) ro.observe(scroller.parentElement);
+    ro.observe(document.documentElement);
+    ro.observe(document.body);
+  }
 
   // dynamic height so page doesn't scroll – scoped observer (no globals)
   {
@@ -107,106 +137,6 @@ function renderTable(json) {
     ro.observe(document.documentElement);
     ro.observe(document.body);
   }
-
-  // transpose: columns -> rows, and make only the table scrollable (left-aligned)
-  {
-    const scroller = tblWrap.querySelector('#table-scroller');
-    const t = scroller.querySelector('table');
-    // scroll container + left align
-    scroller.style.overflowY = 'auto';
-    scroller.style.overflowX = 'auto';
-    scroller.style.maxWidth = '100%';
-    scroller.style.textAlign = 'left';
-    t.style.margin = '0';
-
-    // compute available height so only the table area scrolls
-    const setScrollerSize = () => {
-      const r = scroller.getBoundingClientRect();
-      scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
-    };
-    setScrollerSize();
-    const ro2 = new ResizeObserver(() => setScrollerSize());
-    ro2.observe(scroller);
-    if (scroller.parentElement) ro2.observe(scroller.parentElement);
-    ro2.observe(document.documentElement);
-    ro2.observe(document.body);
-
-    const thead = t.querySelector('thead');
-    const tbody = t.querySelector('tbody');
-    if (!thead || !tbody) return; // safety
-
-    const headCells = Array.from(thead.querySelectorAll('th'));     // original column headers
-    const bodyRows  = Array.from(tbody.querySelectorAll('tr'))      // original rows
-                           .map(tr => Array.from(tr.children));     // as cell arrays
-
-    // Build transposed table
-    const newT = document.createElement('table');
-    newT.className = t.className || 'stats-table';
-
-    // New THEAD: top-left empty + headers taken from original first-column cells
-    const newThead = document.createElement('thead');
-    const headRow  = document.createElement('tr');
-    const corner   = document.createElement('th'); headRow.appendChild(corner);
-
-    // header for each original row (use the first cell text as the label)
-    bodyRows.forEach(r => {
-      const th = document.createElement('th');
-      th.innerHTML = (r[0]?.innerHTML ?? '').trim(); // preserve formatting if any
-      headRow.appendChild(th);
-    });
-    newThead.appendChild(headRow);
-
-    // New TBODY: each original column (from index 1) becomes a row
-    const newBody = document.createElement('tbody');
-    const colCount = Math.max(headCells.length, bodyRows[0]?.length || 0);
-
-    for (let c = 1; c < colCount; c++) {
-      const tr = document.createElement('tr');
-
-      // Row header from original column header
-      const rh = document.createElement('th');
-      rh.scope = 'row';
-      rh.innerHTML = (headCells[c]?.innerHTML ?? '').trim();
-      tr.appendChild(rh);
-
-      // Cells: take column c from each original row
-      bodyRows.forEach(r => {
-        const td = document.createElement('td');
-        td.innerHTML = r[c]?.innerHTML ?? '';
-        tr.appendChild(td);
-      });
-
-      newBody.appendChild(tr);
-    }
-
-    // Replace old table with the transposed one
-    t.replaceWith(newT);
-    newT.append(newThead, newBody);
-  }    
-  
-  // keep table left; only table area scrolls
-  const scroller = tblWrap.querySelector('#table-scroller'); // local styles only
-  scroller.style.overflowY = 'auto';
-  scroller.style.overflowX = 'auto';
-  scroller.style.maxWidth = '100%';
-  tblWrap.style.textAlign = 'left';
-  tblWrap.style.overflow = 'hidden'; // prevent page scrollbars from scroller growth
-  const tbl = scroller.querySelector('table'); // compact table
-  tbl.style.margin = '0';
-  tbl.style.width = 'max-content';
-
-  // recompute height on load/resize so only table scrolls
-  const setScrollerSize2 = () => {
-    const r = scroller.getBoundingClientRect();
-    scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
-  };
-  setScrollerSize2();
-  // observe size/layout changes without touching globals
-  const ro = new ResizeObserver(() => setScrollerSize2());
-  ro.observe(scroller);
-  if (scroller.parentElement) ro.observe(scroller.parentElement);
-  ro.observe(document.documentElement);
-  ro.observe(document.body);
 
   // meta
   const label = json.locationID ? `locationID=${json.locationID}` :
