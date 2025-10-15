@@ -82,30 +82,11 @@ function renderTable(json) {
   const tfoot = `<tfoot><tr><th scope="row">Sum</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${total}</td></tr></tfoot>`;
 
   // inject scoped styles once (sticky header + left col)
-  if (!document.getElementById('table-sticky-styles')) {
-    const st = document.createElement('style');
-    st.id = 'table-sticky-styles';
-    st.textContent = `
-      #table-scroller{overflow:auto;max-width:100%;text-align:left}
-      #table-scroller table{margin:0;border-collapse:collapse;width:max-content}
-      #table-scroller th,#table-scroller td{padding:6px 10px;white-space:nowrap}
-      /* freeze header row horizontally */
-      #table-scroller thead th{position:sticky;top:0;z-index:2;background:#fff}
-      /* freeze first column (header, body, footer) horizontally */
-      #table-scroller thead > tr > :first-child,
-      #table-scroller tbody > tr > :first-child,
-      #table-scroller tfoot > tr > :first-child {position:sticky;left:0;background:#fff}
-      /* ensure top-left corner cell sits above both the header row and first column */
-      #table-scroller thead > tr > :first-child{z-index:4}
-      /* body first column under header but above cells */
-      #table-scroller tbody > tr > :first-child{z-index:1}
-    `;
+  // styles moved to navi-style.css for maintainability (no CSS-in-JS
 
-    document.head.appendChild(st);
-  }
-  // only the table scrolls horizontally; first column stays fixed
+  // only the table area scrolls; styles live in CSS
   tblWrap.innerHTML = `
-    <div id="table-scroller">
+    <div id="dash-table-scroller"> <!-- horizontal scroller only -->
       <table class="stats-table">
         ${thead}
         <tbody>${rowsHtml || ''}</tbody>

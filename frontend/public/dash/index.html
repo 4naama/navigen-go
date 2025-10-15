@@ -34,7 +34,13 @@
   </div>
 
   <div id="meta" class="muted"></div>
-  <div id="table-wrap"></div>
+  <!-- dash container: fixed header + scrolling table -->
+  <div id="dash">
+    <div id="dash-header"><!-- existing controls/meta go here --></div> <!-- non-scrolling -->
+    <div id="dash-table">
+      <div id="table-wrap"></div> <!-- table gets injected here -->
+    </div>
+  </div>
 
   <script type="module" src="/dash/dash.js"></script>
 </body>
