@@ -2304,22 +2304,17 @@ body.high-contrast .modal-menu-item.is-active {
   box-shadow:0 0 0 2px var(--group-color-ink,#94a3b8);
 }
 
-/* ==== Page frame (prevents whole-page scroll) ==== */
-html, body { height: 100%; }
-body {
-  font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  margin: 16px;
-  overflow: hidden; /* page itself does not scroll */
-  box-sizing: border-box;
-}
-
 /* ===== Dashboard layout: fixed header + scrollable table ===== */
-#dash {
+/* Self-contained dashboard viewport — no globals needed */
+#dash{
+  position: fixed;          /* isolates dashboard from page scroll */
+  inset: 16px;              /* visual margin around the app */
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 32px); /* viewport minus body margins */
-  min-height: 0;              /* allow flex children to shrink */
+  min-height: 0;            /* allow children to shrink */
   box-sizing: border-box;
+  background: #fff;         /* optional: panel look */
+  border-radius: 8px;       /* optional: match app style */
 }
 
 /* non-scrolling top area (controls, meta, etc.) */
@@ -2331,10 +2326,10 @@ body {
 }
 
 /* the ONLY vertical scroller for the dashboard */
-#dash-table {
+#dash-table{
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;              /* only body+footer scroll vertically */
+  overflow-y: auto;         /* only tbody + tfoot scroll vertically */
   overscroll-behavior: contain;
   padding: 8px 12px;
   box-sizing: border-box;
