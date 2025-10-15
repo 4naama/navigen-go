@@ -2371,7 +2371,7 @@ body.high-contrast .modal-menu-item.is-active {
   overflow-y: auto;              /* the ONLY vertical scroller */
   overflow-x: auto;
   padding-bottom: 0;             /* use table spacer for end gap */
-  scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); /* keep last row above edge */
+  scroll-padding-bottom: 12px;   /* JS scrollIntoView lands above edge */
   box-sizing: border-box;        /* include padding in height */
   max-width: 100%;
   text-align: left;
