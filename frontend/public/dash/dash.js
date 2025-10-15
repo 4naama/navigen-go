@@ -31,7 +31,7 @@ function syncMode() {
   const isEntity = modeEl.value === 'entity';
   entWrap.style.display = isEntity ? '' : 'none';
   locWrap.style.display = isEntity ? 'none' : '';
-  hintEl.textContent = isEntity ? 'Sum across mapped locations of the entity' : 'Single location daily counts';
+  hintEl.textContent = 'Single location daily counts'; // baseline; data load may refine with "for {name}"
 }
 
 // fixed order as served by your Worker (extend if needed)
@@ -98,7 +98,13 @@ function renderTable(json) {
   // meta
   const label = json.locationID ? `locationID=${json.locationID}` :
                json.entityID   ? `entityID=${json.entityID}` : '';
-  metaEl.textContent = `${label} • ${json.from} → ${json.to} • tz=${json.tz || '—'}`;
+  metaEl.textContent = ''; // meta ribbon removed
+  
+  // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
+  const dispName = (json.locationName || json.entityName || '').trim();
+  hintEl.textContent = dispName
+    ? `Single location daily counts for ${dispName}`
+    : 'Single location daily counts';    
 }
 
 loadBtn.addEventListener('click', async () => {
