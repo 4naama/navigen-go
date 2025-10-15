@@ -2428,10 +2428,3 @@ body.high-contrast .modal-menu-item.is-active {
 .row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
 input,button,select { padding:6px 10px; }
 
-/* Sum column: gentle background for readability */
-#dash-table-scroller thead th:last-child,
-#dash-table-scroller tbody td:last-child,
-#dash-table-scroller tfoot th:last-child,
-#dash-table-scroller tfoot td:last-child{
-  background: var(--sum-bg); /* light tint; keeps contrast */
-}
