@@ -81,15 +81,13 @@ function renderTable(json) {
   );
   const grandTotal = perDateSums.reduce((a,b)=>a+b,0);
   const tfoot = `<tfoot><tr><th scope="row">Total per day</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${grandTotal}</td></tr></tfoot>`;
-  
-  const rows = bodyRows; // alias so templates that reference `rows` keep working  
 
   // only the TABLE scrolls (left-aligned) — build normal table, then transpose in DOM
   tblWrap.innerHTML = `
     <div id="table-scroller" style="overflow:auto; max-width:100%; text-align:left;">
       <table class="stats-table" style="margin:0; width:max-content; border-collapse:collapse;">
-        ${thead}        
-        <tbody>${rows}</tbody> // uses the alias above
+        ${thead}
+        <tbody>${rows || bodyRows || ''}</tbody>
         ${tfoot}
       </table>
     </div>
