@@ -2367,12 +2367,12 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* horizontal scrolling lives INSIDE the table scroller */
 #dash-table-scroller{
-  height: 100%;                  /* fill the flex area */
-  overflow-y: auto;              /* the ONLY vertical scroller */
+  height: 100%;                                                     /* fill the flex area */
+  overflow-y: auto;                                                 /* the ONLY vertical scroller */
   overflow-x: auto;
-  padding-bottom: 12px;          /* keep last row fully visible */
-  scroll-padding-bottom: 12px;   /* JS scrollIntoView lands above edge */
-  box-sizing: border-box;        /* include padding in height */
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));    /* keep last rows fully clear */
+  scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); /* snap targets stay above edge */
+  box-sizing: border-box;                                           /* include padding in height */
   max-width: 100%;
   text-align: left;
 }
