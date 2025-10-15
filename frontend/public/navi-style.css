@@ -2377,11 +2377,6 @@ body.high-contrast .modal-menu-item.is-active {
   text-align: left;
 }
 
-#dash-table-scroller table::after{
-  content:""; display:block;
-  height: calc(64px + env(safe-area-inset-bottom, 0px)); /* end spacer; no layout side-effects */
-}
-
 /* table fit + no layout shift when wide (dashboard-only) */
 #dash-table-scroller table{
   margin: 0;
