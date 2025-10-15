@@ -63,27 +63,51 @@ function renderTable(json) {
   const days = json.days || {};
   const dates = Object.keys(days).sort(); // ascending
 
-  // header
-  const cols = ['Date', ...ORDER, 'Sum'];
-  const thead = `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>`;
+  // TRANSPOSED: metrics as rows, dates as columns
+  const headCells = ['Metric', ...dates, 'Sum'];
+  const thead = `<thead><tr>${headCells.map(c=>`<th>${c}</th>`).join('')}</tr></thead>`;
 
-  // rows
-  const rows = dates.map(d => {
-    const row = days[d] || {};
-    const nums = ORDER.map(k => Number(row[k]||0));
-    const sum = nums.reduce((a,b)=>a+b,0);
-    return `<tr><td>${d}</td>${nums.map(n=>`<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
+  // build one row per metric in ORDER
+  const bodyRows = ORDER.map(metric => {
+    // values for this metric across all dates
+    const vals = dates.map(d => Number(((days[d]||{})[metric]) || 0));
+    const sum = vals.reduce((a,b)=>a+b,0);
+    return `<tr><th scope="row">${metric}</th>${vals.map(n=>`<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
   }).join('');
 
-  // footer sums
-  const colSums = ORDER.map(k =>
-    dates.reduce((acc, d) => acc + Number((days[d]||{})[k]||0), 0)
+  // column sums (by date) + grand total
+  const perDateSums = dates.map(d =>
+    ORDER.reduce((acc, metric) => acc + Number(((days[d]||{})[metric]) || 0), 0)
   );
-  const total = colSums.reduce((a,b)=>a+b,0);
-  const tfoot = `<tfoot><tr><td>Period sum</td>${colSums.map(n=>`<td>${n}</td>`).join('')}<td>${total}</td></tr></tfoot>`;
+  const grandTotal = perDateSums.reduce((a,b)=>a+b,0);
+  const tfoot = `<tfoot><tr><th scope="row">Total per day</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${grandTotal}</td></tr></tfoot>`;
 
-  tblWrap.innerHTML = `<div id="table-scroller"><table class="stats-table">${thead}<tbody>${rows||''}</tbody>${tfoot}</table></div>`;
-  
+  // only the TABLE scrolls (left-aligned)
+  tblWrap.innerHTML = `
+    <div id="table-scroller" style="overflow:auto; max-width:100%; text-align:left;">
+      <table class="stats-table" style="margin:0; width:max-content;">
+        ${thead}
+        <tbody>${bodyRows}</tbody>
+        ${tfoot}
+      </table>
+    </div>
+  `;
+
+  // dynamic height so page doesn't scroll – scoped observer (no globals)
+  {
+    const scroller = tblWrap.querySelector('#table-scroller');
+    const setSize = () => {
+      const r = scroller.getBoundingClientRect();
+      scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
+    };
+    setSize();
+    const ro = new ResizeObserver(setSize);
+    ro.observe(scroller);
+    if (scroller.parentElement) ro.observe(scroller.parentElement);
+    ro.observe(document.documentElement);
+    ro.observe(document.body);
+  }
+
   // transpose: columns -> rows, and make only the table scrollable (left-aligned)
   {
     const scroller = tblWrap.querySelector('#table-scroller');
