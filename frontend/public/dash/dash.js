@@ -82,16 +82,77 @@ function renderTable(json) {
   const grandTotal = perDateSums.reduce((a,b)=>a+b,0);
   const tfoot = `<tfoot><tr><th scope="row">Total per day</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${grandTotal}</td></tr></tfoot>`;
 
-  // only the TABLE scrolls (left-aligned) — build normal table, then transpose in DOM
+  // === SAFE FALLBACK RENDER: build table strictly from `json` ===
+  // json.days  -> { "YYYY-MM-DD": { metric: number, ... }, ... }
+  // json.order -> ["route","booking",... ]  (if missing, infer from data)
+  const _days  = (json && json.days)  || {};
+  const _order = (json && (json.order || json.EVENT_ORDER)) || [];
+  const _dates = Object.keys(_days);
+
+  // infer order if not provided
+  const ORDER_SAFE = _order.length
+    ? _order
+    : Array.from(new Set(_dates.flatMap(d => Object.keys(_days[d] || {})))).sort();
+
+  // THEAD
+  const theadHTML = `<thead><tr><th>Date</th>${ORDER_SAFE.map(h => `<th>${h}</th>`).join('')}<th>Sum</th></tr></thead>`;
+
+  // ROWS
+  const rowsHTML = _dates.map(d => {
+    const row  = _days[d] || {};
+    const nums = ORDER_SAFE.map(k => Number(row[k] || 0));
+    const sum  = nums.reduce((a, b) => a + b, 0);
+    return `<tr><th scope="row">${d}</th>${nums.map(n => `<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
+  }).join('');
+
+  // FOOTER (column sums)
+  const colSums = ORDER_SAFE.map(k =>
+    _dates.reduce((acc, d) => acc + Number(((_days[d] || {})[k]) || 0), 0)
+  );
+  const grandTotal = colSums.reduce((a, b) => a + b, 0);
+  const tfootHTML = `<tfoot><tr><th scope="row">Period sum</th>${colSums.map(n => `<td>${n}</td>`).join('')}<td>${grandTotal}</td></tr></tfoot>`;
+
+  // Inject table (left aligned) inside a local scroller so ONLY the table scrolls
   tblWrap.innerHTML = `
     <div id="table-scroller" style="overflow:auto; max-width:100%; text-align:left;">
       <table class="stats-table" style="margin:0; width:max-content; border-collapse:collapse;">
-        ${thead}
-        <tbody>${rows || bodyRows || ''}</tbody>
-        ${tfoot}
+        ${theadHTML}
+        <tbody>${rowsHTML}</tbody>
+        ${tfootHTML}
       </table>
     </div>
   `;
+
+  // Sticky header + sticky first column (scoped)
+  let style = document.getElementById('dash-fallback-styles');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'dash-fallback-styles';
+    style.textContent = `
+      #table-scroller { overflow: auto; max-width: 100%; text-align: left; }
+      #table-scroller table { border-collapse: collapse; }
+      #table-scroller th, #table-scroller td { padding: 6px 10px; }
+      #table-scroller thead th { position: sticky; top: 0; z-index: 2; background: #fff; }
+      #table-scroller tbody th[scope="row"] { position: sticky; left: 0; z-index: 1; background: #fff; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Size scroller so the PAGE doesn't scroll (no globals)
+  {
+    const scroller = tblWrap.querySelector('#table-scroller');
+    const setSize = () => {
+      const r = scroller.getBoundingClientRect();
+      scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
+    };
+    setSize();
+    const ro = new ResizeObserver(setSize);
+    ro.observe(scroller);
+    if (scroller.parentElement) ro.observe(scroller.parentElement);
+    ro.observe(document.documentElement);
+    ro.observe(document.body);
+  }
+  // === END SAFE FALLBACK RENDER ===
 
   // transpose to: Metric rows (left) × Dates (columns), with sticky header/left col
   {
