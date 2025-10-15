@@ -14,6 +14,16 @@ const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOStri
 toEl.value = iso(TODAY);
 fromEl.value = iso(new Date(day(TODAY).getTime() - 29*86400e3));
 
+// normalize date input to YYYY-MM-DD; handles valueAsDate or localized text (1-2 lines of logic, keep simple)
+function getISODate(input){
+  const d = input.valueAsDate;
+  if (d instanceof Date && !isNaN(d)) return iso(d);
+  const v = (input.value||'').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const m = v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+  return m ? `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}` : v; // keep last resort
+}
+
 // load initial params from URL (?locationID=…&entityID=…&mode=…)
 {
   const u = new URL(location.href);
@@ -44,7 +54,7 @@ const ORDER = [
 
 async function fetchStats() {
   const base = 'https://navigen-api.4naama.workers.dev'; // use Worker; avoids HTML from site
-  const from = fromEl.value, to = toEl.value;
+  const from = getISODate(fromEl), to = getISODate(toEl); // normalize for API
 
   const isEntity = modeEl.value === 'entity';
   const q = isEntity
