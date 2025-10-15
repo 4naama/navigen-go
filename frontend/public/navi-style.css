@@ -2358,7 +2358,7 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table{
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;         /* only tbody + tfoot scroll vertically */
+  overflow: visible;        /* vertical scroll moved to #dash-table-scroller */
   overscroll-behavior: contain;
   padding: 8px 12px;
   box-sizing: border-box;
@@ -2366,7 +2366,8 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* horizontal scrolling lives INSIDE the table scroller */
 #dash-table-scroller {
-  overflow: auto;                /* horizontal + residual vertical */
+  height: 100%;                  /* fill the dash-table area */
+  overflow: auto;                /* horizontal + vertical scroller */
   max-width: 100%;
   text-align: left;
 }
