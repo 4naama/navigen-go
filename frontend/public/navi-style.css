@@ -2366,8 +2366,9 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* horizontal scrolling lives INSIDE the table scroller */
 #dash-table-scroller {
-  height: 100%;                  /* fill the dash-table area */
-  overflow: auto;                /* horizontal + vertical scroller */
+  max-height: 70vh;              /* finite height so rows can scroll */
+  overflow-y: auto;              /* vertical scroll for rows */
+  overflow-x: auto;              /* keep horizontal scroll when needed */
   max-width: 100%;
   text-align: left;
 }
