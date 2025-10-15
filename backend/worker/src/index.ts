@@ -100,7 +100,7 @@ export default {
           cursor = page.cursor || undefined;
         } while (cursor);
 
-        return json({ locationID: loc, from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
+        return json({ locationID: loc, locationName: nameForLocation(loc), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
       }            
 
       // GET /api/stats/entity?entityID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
@@ -137,7 +137,7 @@ export default {
           } while (cursor);
         }
 
-        return json({ entityID: ent, from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
+        return json({ entityID: ent, entityName: nameForEntity(ent), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
       }
 
       // --- Analytics track: POST /api/track
@@ -162,6 +162,18 @@ export default {
     }
   },
 };
+
+import profiles from "./profiles.json" assert { type: "json" }; // names live next to the worker
+
+function nameForLocation(id: string): string | undefined {
+  // profiles.locations[id] = { name: "HD Budakeszi", ... }
+  return (profiles?.locations?.[id]?.name || "").trim() || undefined; // 1-line helper; safe fallback
+}
+
+function nameForEntity(id: string): string | undefined {
+  // profiles.entities[id] = { name: "Helen Doron", ... }
+  return (profiles?.entities?.[id]?.name || "").trim() || undefined; // 1-line helper; safe fallback
+}
 
 // ---------- handlers ----------
 
