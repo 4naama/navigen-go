@@ -100,7 +100,8 @@ export default {
           cursor = page.cursor || undefined;
         } while (cursor);
 
-        return json({ locationID: loc, locationName: await nameForLocation(loc), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
+        const siteOrigin = req.headers.get("Origin") || "https://navigen.io"; // use caller's origin for profiles.json
+        return json({ locationID: loc, locationName: await nameForLocation(loc, siteOrigin), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
       }            
 
       // GET /api/stats/entity?entityID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
@@ -163,18 +164,25 @@ export default {
   },
 };
 
-const PROFILES_URL = "https://navigen.io/data/profiles.json"; // public/data/profiles.json served by site
+// build per-request; base comes from Origin header (staging/prod safe)
 
-async function nameForLocation(id: string): Promise<string | undefined> {
+async function nameForLocation(id: string, siteOrigin?: string): Promise<string | undefined> {
   try {
-    const res = await fetch(PROFILES_URL, { cf: { cacheTtl: 300, cacheEverything: true } });
+    const base = siteOrigin || "https://navigen.io"; // fallback only
+    const url  = new URL("/data/profiles.json", base).toString();
+    const res  = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
     if (!res.ok) return undefined;
     const data: any = await res.json();
-    const list = Array.isArray(data?.locations) ? data.locations : [];
-    const hit = list.find((x: any) => x?.locationID === id);
-    const ln = hit?.locationName;
+
+    // supports both: locations: [...] and locations: { [id]: {...} }
+    const arr = Array.isArray(data?.locations) ? data.locations : undefined;
+    const map = (!arr && data?.locations && typeof data.locations === "object") ? data.locations : undefined;
+    const hit = arr ? arr.find((x: any) => x?.locationID === id) : map?.[id];
+
+    // supports { locationName: { en: "…" } } or { name: "…" }
+    const ln = hit?.locationName || hit?.name;
     const name = typeof ln === "string" ? ln : (ln?.en || ln?.default);
-    return typeof name === "string" ? name : undefined; // keep undefined if missing
+    return typeof name === "string" ? name : undefined; // safe fallback
   } catch { return undefined; }
 }
 
