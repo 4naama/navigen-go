@@ -3,36 +3,36 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NaviGen Dashboard</title
+  <title>NaviGen Dashboard</title>
   <link rel="stylesheet" href="navi-style.css"/>
 </head>
 <body>
-  <h1>Dashboard</h1>
-
-  <div class="row">
-    <label>Mode
-      <select id="mode">
-        <option value="location">Location</option>
-        <option value="entity">Entity (sum)</option>
-      </select>
-    </label>
-    <label id="loc-wrap">locationID <input id="locationID" placeholder="hd-budakeszi-7088" /></label>
-    <label id="ent-wrap" style="display:none">entityID <input id="entityID" placeholder="helen-doron" /></label>
-    <label>From <input id="from" type="date" /></label>
-    <label>To <input id="to" type="date" /></label>
-    <button id="load">Load</button>
-    <span class="muted" id="hint"></span>
-  </div>
-
-  <div id="meta" class="muted"></div>
   <!-- dash container: fixed header + scrolling table -->
   <div id="dash">
-    <div id="dash-header"><!-- existing controls/meta go here --></div> <!-- non-scrolling -->
+    <div id="dash-header"><!-- non-scrolling: controls/meta live here -->
+      <h1>Dashboard</h1>
+      <div class="row">
+        <label>Mode
+          <select id="mode">
+            <option value="location">Location</option>
+            <option value="entity">Entity (sum)</option>
+          </select>
+        </label>
+        <label id="loc-wrap">locationID <input id="locationID" placeholder="hd-budakeszi-7088" /></label>
+        <label id="ent-wrap" style="display:none">entityID <input id="entityID" placeholder="helen-doron" /></label>
+        <label>From <input id="from" type="date" /></label>
+        <label>To <input id="to" type="date" /></label>
+        <button id="load">Load</button>
+        <span class="muted" id="hint"></span>
+      </div>
+      <div id="meta" class="muted"></div>
+    </div>
     <div id="dash-table">
       <div id="table-wrap"></div> <!-- table gets injected here -->
     </div>
   </div>
 
-  <script type="module" src="/dash/dash.js"></script>
+  <script type="module" src="dash.js"></script>
 </body>
+
 </html>
