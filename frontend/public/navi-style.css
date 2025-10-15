@@ -2305,7 +2305,7 @@ body.high-contrast .modal-menu-item.is-active {
 }
 
 /* ===== Dashboard layout: fixed header + scrollable table ===== */
-/* Self-contained dashboard viewport — no globals needed */
+/* Self-contained dashboard viewport */
 #dash{
   position: fixed;          /* isolates dashboard from page scroll */
   inset: 16px;              /* visual margin around the app */
@@ -2318,12 +2318,30 @@ body.high-contrast .modal-menu-item.is-active {
 }
 
 /* non-scrolling top area (controls, meta, etc.) */
-#dash-header {
+#dash-header{
   flex: 0 0 auto;
   padding: 10px 12px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+#dash-header h1{
+  font-size: var(--fs-h1);
+  line-height: 1.2;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+}
+#dash-header .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+#dash-header input,
+#dash-header button,
+#dash-header select{
+  font: inherit;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
   background: #fff;
 }
+#dash-header button{ cursor: pointer; }
+#dash-header .muted{ color: var(--muted); }
 
 /* the ONLY vertical scroller for the dashboard */
 #dash-table{
@@ -2342,47 +2360,52 @@ body.high-contrast .modal-menu-item.is-active {
   text-align: left;
 }
 
-/* table fit + no layout shift when wide */
-#dash-table-scroller table {
+/* table fit + no layout shift when wide (dashboard-only) */
+#dash-table-scroller table{
   margin: 0;
   border-collapse: collapse;
-  width: max-content;            /* allow horizontal overflow */
+  width: max-content;
+  font-size: var(--fs-base);
+  background: var(--bg);
 }
-
-/* cell rhythm + single-line cells for horizontal scroll */
 #dash-table-scroller th,
-#dash-table-scroller td {
-  padding: 6px 10px;
+#dash-table-scroller td{
+  padding: var(--pad-cell-y) var(--pad-cell-x);
   white-space: nowrap;
   text-align: right;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
 }
 #dash-table-scroller th:first-child,
-#dash-table-scroller td:first-child { text-align: left; }
+#dash-table-scroller td:first-child{ text-align: left; }
 
 /* THE HEADER: fixed at top of the scroller (does not scroll vertically) */
-#dash-table-scroller thead {
+#dash-table-scroller thead{
   position: sticky;
   top: 0;
   z-index: 3;
 }
-#dash-table-scroller thead th { background: #fff; }
+#dash-table-scroller thead th{
+  background: #fff;
+  font-weight: 700;
+}
 
 /* Freeze the first column (header, body, footer) horizontally */
 #dash-table-scroller thead > tr > :first-child,
 #dash-table-scroller tbody > tr > :first-child,
-#dash-table-scroller tfoot > tr > :first-child {
+#dash-table-scroller tfoot > tr > :first-child{
   position: sticky;
   left: 0;
   background: #fff;
 }
+/* top-left corner above both sticky axes */
+#dash-table-scroller thead > tr > :first-child{ z-index: 4; }
 
-/* Raise the top-left corner above both sticky axes */
-#dash-table-scroller thead > tr > :first-child { z-index: 4; }
-
-/* Footer remains scrollable vertically with tbody */
+/* Footer stays part of the scrollable content */
 #dash-table-scroller tfoot th,
-#dash-table-scroller tfoot td { background: #fff; }
+#dash-table-scroller tfoot td{
+  font-weight: 600;
+  background: #fafafa;
+}
 
 /* simple utility (kept from original) */
 .row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
