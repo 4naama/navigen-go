@@ -82,8 +82,29 @@ function renderTable(json) {
   const total = colSums.reduce((a,b)=>a+b, 0);
   const tfoot = `<tfoot><tr><td>Period sum</td>${colSums.map(n=>`<td>${n}</td>`).join('')}<td>${total}</td></tr></tfoot>`;
 
-  // simple table (no scroller, no sticky, no observers)
-  tblWrap.innerHTML = `<table>${thead}<tbody>${rowsHtml || ''}</tbody>${tfoot}</table>`;
+  // inject scoped styles once (sticky header + left col)
+  if (!document.getElementById('table-sticky-styles')) {
+    const st = document.createElement('style');
+    st.id = 'table-sticky-styles';
+    st.textContent = `
+      #table-scroller{overflow:auto;max-width:100%;text-align:left}
+      #table-scroller table{margin:0;border-collapse:collapse;width:max-content}
+      #table-scroller th,#table-scroller td{padding:6px 10px;white-space:nowrap}
+      #table-scroller thead th{position:sticky;top:0;z-index:2;background:#fff}
+      #table-scroller tbody > tr > :first-child{position:sticky;left:0;z-index:1;background:#fff}
+    `;
+    document.head.appendChild(st);
+  }
+  // only the table scrolls horizontally; first column stays fixed
+  tblWrap.innerHTML = `
+    <div id="table-scroller">
+      <table class="stats-table">
+        ${thead}
+        <tbody>${rowsHtml || ''}</tbody>
+        ${tfoot}
+      </table>
+    </div>
+  `;
 
   // meta
   const label = json.locationID ? `locationID=${json.locationID}` :
