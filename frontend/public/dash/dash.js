@@ -94,7 +94,7 @@ function renderTable(json) {
   `;
 
   // transpose to: Metric rows (left) × Dates (columns), with sticky header/left col
-  {
+  try { // guard: if transpose fails, keep the original table visible
     const wrap = tblWrap;
     const scroller = wrap.querySelector('#table-scroller');
     const t = scroller.querySelector('table');
@@ -102,7 +102,7 @@ function renderTable(json) {
     const tbodyEl = t.querySelector('tbody');
     if (!theadEl || !tbodyEl) return;
 
-    const headCells = Array.from(theadEl.querySelectorAll('th'));
+    const headThs = Array.from(theadEl.querySelectorAll('th')); // collect header cells once
     const bodyRowsEls = Array.from(tbodyEl.querySelectorAll('tr')).map(tr => Array.from(tr.children));
 
     // New transposed table
@@ -125,13 +125,13 @@ function renderTable(json) {
 
     // TBODY: each original column (from index 1) becomes a row
     const newBody = document.createElement('tbody');
-    const colCount = Math.max(headCells.length, bodyRowsEls[0]?.length || 0);
+    const colCount = Math.max(headThs.length, bodyRowsEls[0]?.length || 0); // use collected header cells
     for (let c = 1; c < colCount; c++) {
       const tr = document.createElement('tr');
 
       const rowHead = document.createElement('th');
       rowHead.scope = 'row';
-      rowHead.innerHTML = (headCells[c]?.innerHTML ?? '').trim();
+      rowHead.innerHTML = (headThs[c]?.innerHTML ?? '').trim(); // header label per column
       tr.appendChild(rowHead);
 
       bodyRowsEls.forEach(r => {
@@ -172,6 +172,8 @@ function renderTable(json) {
     if (scroller.parentElement) ro.observe(scroller.parentElement);
     ro.observe(document.documentElement);
     ro.observe(document.body);
+  } catch (err) {
+    console.error('Transpose failed; showing non-transposed table', err); // keep table visible
   }
 
   // inject scoped styles once (sticky header + sticky left column)
