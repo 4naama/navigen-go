@@ -63,164 +63,27 @@ function renderTable(json) {
   const days = json.days || {};
   const dates = Object.keys(days).sort(); // ascending
 
-  // TRANSPOSED: metrics as rows, dates as columns
-  const headCells = ['Metric', ...dates, 'Sum'];
-  const thead = `<thead><tr>${headCells.map(c=>`<th>${c}</th>`).join('')}</tr></thead>`;
+  // header
+  const cols = ['Date', ...ORDER, 'Sum'];
+  const thead = `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>`;
 
-  // build one row per metric in ORDER
-  const bodyRows = ORDER.map(metric => {
-    // values for this metric across all dates
-    const vals = dates.map(d => Number(((days[d]||{})[metric]) || 0));
-    const sum = vals.reduce((a,b)=>a+b,0);
-    return `<tr><th scope="row">${metric}</th>${vals.map(n=>`<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
+  // rows
+  const rowsHtml = dates.map(d => {
+    const row = days[d] || {};
+    const nums = ORDER.map(k => Number(row[k] || 0));
+    const sum = nums.reduce((a,b)=>a+b, 0);
+    return `<tr><td>${d}</td>${nums.map(n=>`<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
   }).join('');
 
-  // column sums (by date) + grand total
-  const perDateSums = dates.map(d =>
-    ORDER.reduce((acc, metric) => acc + Number(((days[d]||{})[metric]) || 0), 0)
+  // footer sums
+  const colSums = ORDER.map(k =>
+    dates.reduce((acc, d) => acc + Number((days[d] || {})[k] || 0), 0)
   );
-  const grandTotal = perDateSums.reduce((a,b)=>a+b,0);
-  const tfoot = `<tfoot><tr><th scope="row">Total per day</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${grandTotal}</td></tr></tfoot>`;
+  const total = colSums.reduce((a,b)=>a+b, 0);
+  const tfoot = `<tfoot><tr><td>Period sum</td>${colSums.map(n=>`<td>${n}</td>`).join('')}<td>${total}</td></tr></tfoot>`;
 
-  // only the TABLE scrolls (left-aligned) — build normal table, then transpose in DOM
-  tblWrap.innerHTML = `
-    <div id="table-scroller" style="overflow:auto; max-width:100%; text-align:left;">
-      <table class="stats-table" style="margin:0; width:max-content; border-collapse:collapse;">
-        ${thead}
-        <tbody>${bodyRows}</tbody>
-        ${tfoot}
-      </table>
-    </div>
-  `;
-
-  // transpose to: Metric rows (left) × Dates (columns), with sticky header/left col
-  try { // guard: if transpose fails, keep the original table visible
-    const wrap = tblWrap;
-    const scroller = wrap.querySelector('#table-scroller');
-    const t = scroller.querySelector('table');
-    const theadEl = t.querySelector('thead');
-    const tbodyEl = t.querySelector('tbody');
-    if (!theadEl || !tbodyEl) return;
-
-    const headThs = Array.from(theadEl.querySelectorAll('th')); // collect header cells once
-    const bodyRowsEls = Array.from(tbodyEl.querySelectorAll('tr')).map(tr => Array.from(tr.children));
-    const rows = bodyRowsEls; // alias for legacy refs
-
-    // New transposed table
-    const tNew = document.createElement('table');
-    tNew.className = t.className || 'stats-table';
-    tNew.style.margin = '0';
-    tNew.style.width = 'max-content';
-    tNew.style.borderCollapse = 'collapse';
-
-    // THEAD: corner + labels from original first column
-    const newThead = document.createElement('thead');
-    const headRow  = document.createElement('tr');
-    headRow.appendChild(document.createElement('th')); // corner
-    bodyRowsEls.forEach(r => {
-      const th = document.createElement('th');
-      th.innerHTML = (r[0]?.innerHTML ?? '').trim();
-      headRow.appendChild(th);
-    });
-    newThead.appendChild(headRow);
-
-    // TBODY: each original column (from index 1) becomes a row
-    const newBody = document.createElement('tbody');
-    const colCount = Math.max(headThs.length, bodyRowsEls[0]?.length || 0); // use collected header cells
-    for (let c = 1; c < colCount; c++) {
-      const tr = document.createElement('tr');
-
-      const rowHead = document.createElement('th');
-      rowHead.scope = 'row';
-      rowHead.innerHTML = (headThs[c]?.innerHTML ?? '').trim(); // header label per column
-      tr.appendChild(rowHead);
-
-      bodyRowsEls.forEach(r => {
-        const td = document.createElement('td');
-        td.innerHTML = r[c]?.innerHTML ?? '';
-        tr.appendChild(td);
-      });
-
-      newBody.appendChild(tr);
-    }
-
-    t.replaceWith(tNew);
-    tNew.append(newThead, newBody);
-
-    // Scoped styles (sticky header + sticky left column)
-    let style = document.getElementById('dash-transpose-styles');
-    if (!style) {
-      style = document.createElement('style');
-      style.id = 'dash-transpose-styles';
-      style.textContent = `
-        #table-scroller { overflow: auto; max-width: 100%; text-align: left; }
-        #table-scroller table { border-collapse: collapse; }
-        #table-scroller th, #table-scroller td { padding: 6px 10px; }
-        #table-scroller thead th { position: sticky; top: 0; z-index: 2; background: #fff; }
-        #table-scroller tbody th[scope="row"] { position: sticky; left: 0; z-index: 1; background: #fff; }
-      `;
-      document.head.appendChild(style);
-    }
-
-    // Size scroller so only the table area scrolls (no globals)
-    const setSize = () => {
-      const r = scroller.getBoundingClientRect();
-      scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
-    };
-    setSize();
-    const ro = new ResizeObserver(setSize);
-    ro.observe(scroller);
-    if (scroller.parentElement) ro.observe(scroller.parentElement);
-    ro.observe(document.documentElement);
-    ro.observe(document.body);
-  } catch (err) {
-    console.error('Transpose failed; showing non-transposed table', err); // keep table visible
-  }
-
-  // inject scoped styles once (sticky header + sticky left column)
-  let style = document.getElementById('dash-transpose-styles');
-  if (!style) {
-    style = document.createElement('style');
-    style.id = 'dash-transpose-styles';
-    style.textContent = `
-      #table-scroller { overflow: auto; max-width: 100%; text-align: left; }
-      #table-scroller table { border-collapse: collapse; }
-      #table-scroller th, #table-scroller td { padding: 6px 10px; }
-      #table-scroller thead th { position: sticky; top: 0; z-index: 2; background: #fff; }
-      #table-scroller tbody th[scope="row"] { position: sticky; left: 0; z-index: 1; background: #fff; }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // dynamic height so only the table area scrolls (no globals)
-  {
-    const scroller = tblWrap.querySelector('#table-scroller');
-    const setSize = () => {
-      const r = scroller.getBoundingClientRect();
-      scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
-    };
-    setSize();
-    const ro = new ResizeObserver(setSize);
-    ro.observe(scroller);
-    if (scroller.parentElement) ro.observe(scroller.parentElement);
-    ro.observe(document.documentElement);
-    ro.observe(document.body);
-  }
-
-  // dynamic height so page doesn't scroll – scoped observer (no globals)
-  {
-    const scroller = tblWrap.querySelector('#table-scroller');
-    const setSize = () => {
-      const r = scroller.getBoundingClientRect();
-      scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
-    };
-    setSize();
-    const ro = new ResizeObserver(setSize);
-    ro.observe(scroller);
-    if (scroller.parentElement) ro.observe(scroller.parentElement);
-    ro.observe(document.documentElement);
-    ro.observe(document.body);
-  }
+  // simple table (no scroller, no sticky, no observers)
+  tblWrap.innerHTML = `<table>${thead}<tbody>${rowsHtml || ''}</tbody>${tfoot}</table>`;
 
   // meta
   const label = json.locationID ? `locationID=${json.locationID}` :
