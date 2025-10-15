@@ -2304,82 +2304,91 @@ body.high-contrast .modal-menu-item.is-active {
   box-shadow:0 0 0 2px var(--group-color-ink,#94a3b8);
 }
 
+/* ==== Page frame (prevents whole-page scroll) ==== */
+html, body { height: 100%; }
+body {
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  margin: 16px;
+  overflow: hidden; /* page itself does not scroll */
+  box-sizing: border-box;
+}
+
 /* ===== Dashboard layout: fixed header + scrollable table ===== */
-#dash{
-  display:flex; flex-direction:column;
-  height:100vh;            /* pairs with body{overflow:hidden} */
-  box-sizing:border-box;
+#dash {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 32px); /* viewport minus body margins */
+  min-height: 0;              /* allow flex children to shrink */
+  box-sizing: border-box;
 }
 
 /* non-scrolling top area (controls, meta, etc.) */
-#dash-header{
-  flex:0 0 auto;
-  padding:10px 12px;       /* tweak as needed */
-  border-bottom:1px solid #e5e7eb;
-  background:#fff;
+#dash-header {
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
 }
 
 /* the ONLY vertical scroller for the dashboard */
-#dash-table{                       /* only this area can scroll vertically */
-  flex:1 1 auto; min-height:0;
-  overflow-y:auto; overscroll-behavior:contain;
-  padding:8px 12px; box-sizing:border-box;
+#dash-table {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;              /* only body+footer scroll vertically */
+  overscroll-behavior: contain;
+  padding: 8px 12px;
+  box-sizing: border-box;
 }
 
-/* inside the vertical scroller: only body+footer consume vertical scroll;
-   the header row stays pinned to the top of the scroller */
-#dash-table-scroller{ overflow:auto; max-width:100%; text-align:left; }
-#dash-table-scroller table{ margin:0; border-collapse:collapse; width:max-content; }
+/* horizontal scrolling lives INSIDE the table scroller */
+#dash-table-scroller {
+  overflow: auto;                /* horizontal + residual vertical */
+  max-width: 100%;
+  text-align: left;
+}
 
-/* cell rhythm + keep cells on one line for horizontal scroll */
-#dash-table-scroller th, #dash-table-scroller td{ padding:6px 10px; white-space:nowrap; }
+/* table fit + no layout shift when wide */
+#dash-table-scroller table {
+  margin: 0;
+  border-collapse: collapse;
+  width: max-content;            /* allow horizontal overflow */
+}
+
+/* cell rhythm + single-line cells for horizontal scroll */
+#dash-table-scroller th,
+#dash-table-scroller td {
+  padding: 6px 10px;
+  white-space: nowrap;
+  text-align: right;
+  border: 1px solid #e5e7eb;
+}
+#dash-table-scroller th:first-child,
+#dash-table-scroller td:first-child { text-align: left; }
 
 /* THE HEADER: fixed at top of the scroller (does not scroll vertically) */
-#dash-table-scroller thead{ position:sticky; top:0; z-index:3; }
-#dash-table-scroller thead th{ background:#fff; }
+#dash-table-scroller thead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+#dash-table-scroller thead th { background: #fff; }
 
 /* Freeze the first column (header, body, footer) horizontally */
 #dash-table-scroller thead > tr > :first-child,
 #dash-table-scroller tbody > tr > :first-child,
-#dash-table-scroller tfoot > tr > :first-child{ position:sticky; left:0; background:#fff; }
+#dash-table-scroller tfoot > tr > :first-child {
+  position: sticky;
+  left: 0;
+  background: #fff;
+}
 
 /* Raise the top-left corner above both sticky axes */
-#dash-table-scroller thead > tr > :first-child{ z-index:4; }
+#dash-table-scroller thead > tr > :first-child { z-index: 4; }
 
-/* FOOTER remains part of the scrollable content (not sticky) */
-#dash-table-scroller tfoot th, #dash-table-scroller tfoot td{ background:#fff; }
-
-/* horizontal scrolling lives INSIDE the table scroller */
-#dash-table-scroller{
-  overflow:auto; max-width:100%; text-align:left;
-}
-
-/* table fit + no layout shift when wide */
-#dash-table-scroller table{
-  margin:0; border-collapse:collapse; width:max-content;
-}
-
-/* cell rhythm + keep cells on one line for horizontal scroll */
-#dash-table-scroller th,
-#dash-table-scroller td{
-  padding:6px 10px; white-space:nowrap;
-}
-
-/* sticky header row */
-#dash-table-scroller thead th{
-  position:sticky; top:0; z-index:2; background:#fff;
-}
-
-/* freeze first column across head/body/foot */
-#dash-table-scroller thead > tr > :first-child,
-#dash-table-scroller tbody > tr > :first-child,
-#dash-table-scroller tfoot > tr > :first-child{
-  position:sticky; left:0; background:#fff;
-}
-
-/* raise the top-left corner above both sticky axes */
-#dash-table-scroller thead > tr > :first-child{ z-index:4; }
-
-/* footer row stays aligned; first cell frozen with column */
+/* Footer remains scrollable vertically with tbody */
 #dash-table-scroller tfoot th,
-#dash-table-scroller tfoot td{ background:#fff; }
+#dash-table-scroller tfoot td { background: #fff; }
+
+/* simple utility (kept from original) */
+.row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+input,button,select { padding:6px 10px; }
