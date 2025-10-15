@@ -90,9 +90,22 @@ function renderTable(json) {
     const t = scroller.querySelector('table');
     // scroll container + left align
     scroller.style.overflowY = 'auto';
-    scroller.style.maxHeight = 'calc(100vh - 220px)'; // adjust if needed
+    scroller.style.overflowX = 'auto';
+    scroller.style.maxWidth = '100%';
     scroller.style.textAlign = 'left';
     t.style.margin = '0';
+
+    // compute available height so only the table area scrolls
+    const setScrollerSize = () => {
+      const r = scroller.getBoundingClientRect();
+      scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
+    };
+    setScrollerSize();
+    const ro2 = new ResizeObserver(() => setScrollerSize());
+    ro2.observe(scroller);
+    if (scroller.parentElement) ro2.observe(scroller.parentElement);
+    ro2.observe(document.documentElement);
+    ro2.observe(document.body);
 
     const thead = t.querySelector('thead');
     const tbody = t.querySelector('tbody');
@@ -150,11 +163,26 @@ function renderTable(json) {
   // keep table left; only table area scrolls
   const scroller = tblWrap.querySelector('#table-scroller'); // local styles only
   scroller.style.overflowY = 'auto';
-  scroller.style.maxHeight = 'calc(100vh - 220px)'; // fits under controls/top
+  scroller.style.overflowX = 'auto';
+  scroller.style.maxWidth = '100%';
   tblWrap.style.textAlign = 'left';
+  tblWrap.style.overflow = 'hidden'; // prevent page scrollbars from scroller growth
   const tbl = scroller.querySelector('table'); // compact table
   tbl.style.margin = '0';
   tbl.style.width = 'max-content';
+
+  // recompute height on load/resize so only table scrolls
+  const setScrollerSize2 = () => {
+    const r = scroller.getBoundingClientRect();
+    scroller.style.maxHeight = Math.max(120, window.innerHeight - r.top - 16) + 'px';
+  };
+  setScrollerSize2();
+  // observe size/layout changes without touching globals
+  const ro = new ResizeObserver(() => setScrollerSize2());
+  ro.observe(scroller);
+  if (scroller.parentElement) ro.observe(scroller.parentElement);
+  ro.observe(document.documentElement);
+  ro.observe(document.body);
 
   // meta
   const label = json.locationID ? `locationID=${json.locationID}` :
