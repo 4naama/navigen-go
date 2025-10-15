@@ -2307,14 +2307,25 @@ body.high-contrast .modal-menu-item.is-active {
 /* ===== Dashboard layout: fixed header + scrollable table ===== */
 /* Self-contained dashboard viewport */
 #dash{
-  position: fixed;          /* isolates dashboard from page scroll */
-  inset: 16px;              /* visual margin around the app */
-  display: flex;
-  flex-direction: column;
-  min-height: 0;            /* allow children to shrink */
-  box-sizing: border-box;
-  background: #fff;         /* optional: panel look */
-  border-radius: 8px;       /* optional: match app style */
+  /* dashboard-scoped design tokens */
+  --font-sans: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --text: #0f172a;         /* slate-900 */
+  --muted: #64748b;        /* slate-500 */
+  --border: #e5e7eb;       /* gray-200 */
+  --bg: #ffffff;
+  --fs-base: 14px;
+  --fs-h1: 32px;
+  --pad-cell-y: 6px;
+  --pad-cell-x: 10px;
+
+  position: fixed; inset: 16px;
+  display: flex; flex-direction: column;
+  min-height: 0; box-sizing: border-box;
+
+  font-family: var(--font-sans); /* apply typography */
+  color: var(--text);            /* text color */
+  background: var(--bg);
+  border-radius: 8px;
 }
 
 /* non-scrolling top area (controls, meta, etc.) */
