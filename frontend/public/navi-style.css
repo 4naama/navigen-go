@@ -2367,9 +2367,12 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* horizontal scrolling lives INSIDE the table scroller */
 #dash-table-scroller{
-  max-height: 70vh;              /* finite height → rows can scroll */
+  height: 100%;                  /* fill the flex area */
   overflow-y: auto;              /* vertical scroll for rows */
-  overflow-x: auto;              /* horizontal scroll when needed */
+  overflow-x: auto;              /* horizontal when needed */
+  padding-bottom: 12px;          /* keep last row fully visible */
+  scroll-padding-bottom: 12px;   /* JS scrollIntoView lands above edge */
+  box-sizing: border-box;        /* include padding in height */
   max-width: 100%;
   text-align: left;
 }
@@ -2427,4 +2430,3 @@ body.high-contrast .modal-menu-item.is-active {
 /* simple utility (kept from original) */
 .row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
 input,button,select { padding:6px 10px; }
-
