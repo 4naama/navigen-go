@@ -2370,10 +2370,6 @@ body.high-contrast .modal-menu-item.is-active {
   max-height: 70vh;              /* finite height → rows can scroll */
   overflow-y: auto;              /* vertical scroll for rows */
   overflow-x: auto;              /* horizontal scroll when needed */
-  padding-bottom: 12px;          /* end buffer so last row clears edge */
-  scroll-padding-bottom: 12px;   /* JS scrollIntoView lands above edge */
-  scrollbar-gutter: stable;      /* no layout shift on scrollbar show */
-  box-sizing: border-box;        /* include padding in height */
   max-width: 100%;
   text-align: left;
 }
