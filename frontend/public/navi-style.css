@@ -2317,6 +2317,7 @@ body.high-contrast .modal-menu-item.is-active {
   --fs-h1: 32px;
   --pad-cell-y: 6px;
   --pad-cell-x: 10px;
+  --sum-bg: #f8fafc; /* subtle Sum col shade */
 
   position: fixed; inset: 16px;
   display: flex; flex-direction: column;
@@ -2358,17 +2359,19 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table{
   flex: 1 1 auto;
   min-height: 0;
-  overflow: visible;        /* vertical scroll moved to #dash-table-scroller */
+  overflow: visible;        /* scroller owns vertical scroll */
   overscroll-behavior: contain;
   padding: 8px 12px;
   box-sizing: border-box;
 }
 
 /* horizontal scrolling lives INSIDE the table scroller */
-#dash-table-scroller {
-  max-height: 70vh;              /* finite height so rows can scroll */
+#dash-table-scroller{
+  height: 100%;                  /* fill flex space → full scroll range */
   overflow-y: auto;              /* vertical scroll for rows */
-  overflow-x: auto;              /* keep horizontal scroll when needed */
+  overflow-x: auto;              /* horizontal when needed */
+  padding-bottom: 8px;           /* ensures last row fully visible */
+  box-sizing: border-box;        /* include padding in height */
   max-width: 100%;
   text-align: left;
 }
@@ -2396,7 +2399,10 @@ body.high-contrast .modal-menu-item.is-active {
   position: sticky;
   top: 0;
   z-index: 3;
+  background: var(--bg);      /* solid under sticky */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); /* gentle depth; tweak if needed */
 }
+
 #dash-table-scroller thead th{
   background: #fff;
   font-weight: 700;
@@ -2423,3 +2429,11 @@ body.high-contrast .modal-menu-item.is-active {
 /* simple utility (kept from original) */
 .row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
 input,button,select { padding:6px 10px; }
+
+/* Sum column: gentle background for readability */
+#dash-table-scroller thead th:last-child,
+#dash-table-scroller tbody td:last-child,
+#dash-table-scroller tfoot th:last-child,
+#dash-table-scroller tfoot td:last-child{
+  background: var(--sum-bg); /* light tint; keeps contrast */
+}
