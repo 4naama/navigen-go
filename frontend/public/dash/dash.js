@@ -63,24 +63,23 @@ function renderTable(json) {
   const days = json.days || {};
   const dates = Object.keys(days).sort(); // ascending
 
-  // header
-  const cols = ['Date', ...ORDER, 'Sum'];
+  // header: metrics as first col, dates across
+  const cols = ['Metric', ...dates, 'Sum']; // metrics ↓ × dates →
   const thead = `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>`;
 
-  // rows
-  const rowsHtml = dates.map(d => {
-    const row = days[d] || {};
-    const nums = ORDER.map(k => Number(row[k] || 0));
-    const sum = nums.reduce((a,b)=>a+b, 0);
-    return `<tr><td>${d}</td>${nums.map(n=>`<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
+  // rows: one row per metric, values across dates
+  const rowsHtml = ORDER.map(metric => {
+    const vals = dates.map(d => Number(((days[d] || {})[metric]) || 0));
+    const sum  = vals.reduce((a,b)=>a+b, 0);
+    return `<tr><th scope="row">${metric}</th>${vals.map(n=>`<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
   }).join('');
 
-  // footer sums
-  const colSums = ORDER.map(k =>
-    dates.reduce((acc, d) => acc + Number((days[d] || {})[k] || 0), 0)
+  // footer: per-date sums (sum across all metrics for each date)
+  const perDateSums = dates.map(d =>
+    ORDER.reduce((acc, k) => acc + Number(((days[d] || {})[k]) || 0), 0)
   );
-  const total = colSums.reduce((a,b)=>a+b, 0);
-  const tfoot = `<tfoot><tr><td>Period sum</td>${colSums.map(n=>`<td>${n}</td>`).join('')}<td>${total}</td></tr></tfoot>`;
+  const total = perDateSums.reduce((a,b)=>a+b, 0);
+  const tfoot = `<tfoot><tr><th scope="row">Sum</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${total}</td></tr></tfoot>`;
 
   // inject scoped styles once (sticky header + left col)
   if (!document.getElementById('table-sticky-styles')) {
