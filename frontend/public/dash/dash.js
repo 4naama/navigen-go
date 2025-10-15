@@ -82,7 +82,79 @@ function renderTable(json) {
   const total = colSums.reduce((a,b)=>a+b,0);
   const tfoot = `<tfoot><tr><td>Period sum</td>${colSums.map(n=>`<td>${n}</td>`).join('')}<td>${total}</td></tr></tfoot>`;
 
-  tblWrap.innerHTML = `<table>${thead}<tbody>${rows||''}</tbody>${tfoot}</table>`;
+  tblWrap.innerHTML = `<div id="table-scroller"><table class="stats-table">${thead}<tbody>${rows||''}</tbody>${tfoot}</table></div>`;
+  
+  // transpose: columns -> rows, and make only the table scrollable (left-aligned)
+  {
+    const scroller = tblWrap.querySelector('#table-scroller');
+    const t = scroller.querySelector('table');
+    // scroll container + left align
+    scroller.style.overflowY = 'auto';
+    scroller.style.maxHeight = 'calc(100vh - 220px)'; // adjust if needed
+    scroller.style.textAlign = 'left';
+    t.style.margin = '0';
+
+    const thead = t.querySelector('thead');
+    const tbody = t.querySelector('tbody');
+    if (!thead || !tbody) return; // safety
+
+    const headCells = Array.from(thead.querySelectorAll('th'));     // original column headers
+    const bodyRows  = Array.from(tbody.querySelectorAll('tr'))      // original rows
+                           .map(tr => Array.from(tr.children));     // as cell arrays
+
+    // Build transposed table
+    const newT = document.createElement('table');
+    newT.className = t.className || 'stats-table';
+
+    // New THEAD: top-left empty + headers taken from original first-column cells
+    const newThead = document.createElement('thead');
+    const headRow  = document.createElement('tr');
+    const corner   = document.createElement('th'); headRow.appendChild(corner);
+
+    // header for each original row (use the first cell text as the label)
+    bodyRows.forEach(r => {
+      const th = document.createElement('th');
+      th.innerHTML = (r[0]?.innerHTML ?? '').trim(); // preserve formatting if any
+      headRow.appendChild(th);
+    });
+    newThead.appendChild(headRow);
+
+    // New TBODY: each original column (from index 1) becomes a row
+    const newBody = document.createElement('tbody');
+    const colCount = Math.max(headCells.length, bodyRows[0]?.length || 0);
+
+    for (let c = 1; c < colCount; c++) {
+      const tr = document.createElement('tr');
+
+      // Row header from original column header
+      const rh = document.createElement('th');
+      rh.scope = 'row';
+      rh.innerHTML = (headCells[c]?.innerHTML ?? '').trim();
+      tr.appendChild(rh);
+
+      // Cells: take column c from each original row
+      bodyRows.forEach(r => {
+        const td = document.createElement('td');
+        td.innerHTML = r[c]?.innerHTML ?? '';
+        tr.appendChild(td);
+      });
+
+      newBody.appendChild(tr);
+    }
+
+    // Replace old table with the transposed one
+    t.replaceWith(newT);
+    newT.append(newThead, newBody);
+  }    
+  
+  // keep table left; only table area scrolls
+  const scroller = tblWrap.querySelector('#table-scroller'); // local styles only
+  scroller.style.overflowY = 'auto';
+  scroller.style.maxHeight = 'calc(100vh - 220px)'; // fits under controls/top
+  tblWrap.style.textAlign = 'left';
+  const tbl = scroller.querySelector('table'); // compact table
+  tbl.style.margin = '0';
+  tbl.style.width = 'max-content';
 
   // meta
   const label = json.locationID ? `locationID=${json.locationID}` :
