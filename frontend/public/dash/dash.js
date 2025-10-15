@@ -104,6 +104,7 @@ function renderTable(json) {
 
     const headThs = Array.from(theadEl.querySelectorAll('th')); // collect header cells once
     const bodyRowsEls = Array.from(tbodyEl.querySelectorAll('tr')).map(tr => Array.from(tr.children));
+    const rows = bodyRowsEls; // alias for legacy refs
 
     // New transposed table
     const tNew = document.createElement('table');
