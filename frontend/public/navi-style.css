@@ -2359,7 +2359,7 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table{
   flex: 1 1 auto;
   min-height: 0;
-  overflow: visible;        /* scroller owns vertical scroll */
+  overflow: hidden;         /* scroller owns vertical scroll */
   overscroll-behavior: contain;
   padding: 8px 12px;
   box-sizing: border-box;
@@ -2425,9 +2425,10 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller tfoot th,
 #dash-table-scroller tfoot td{
   font-weight: 600;
-  background: #fafafa;
+  background: var(--sum-bg, #fafafa); /* uses token */
 }
 
-/* simple utility (kept from original) */
-.row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-input,button,select { padding:6px 10px; }
+/* dashboard-scoped utils (no global leak) */
+#dash .row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+#dash input,#dash button,#dash select { padding:6px 10px; }
+
