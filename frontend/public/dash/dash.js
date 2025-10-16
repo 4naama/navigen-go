@@ -1,6 +1,15 @@
 // Minimal dashboard: pulls /api/stats* and renders a fixed-order daily table.
-import { t } from './i18n.js'; // i18n
-
+// Robust i18n loader: tries local and absolute; falls back to key-echo if server serves HTML
+let t = (k) => k; // safe fallback so UI renders even if i18n.js isn’t served as JS
+try {
+  ({ t } = await import('./i18n.js'));
+} catch (_e1) {
+  try {
+    ({ t } = await import('/i18n.js'));
+  } catch (_e2) {
+    console.warn('i18n module failed to load; using key fallback'); // keep 1-line comment
+  }
+}
 
 const $ = (s) => document.querySelector(s);
 const modeEl = $('#mode'), locEl = $('#locationID'), entEl = $('#entityID');
