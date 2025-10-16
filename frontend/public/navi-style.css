@@ -2439,3 +2439,14 @@ body.high-contrast .modal-menu-item.is-active {
 #dash .row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
 #dash input,#dash button,#dash select { padding:6px 10px; }
 
+/* end-gap so last rows show; no scroller edits */
+#dash-table-scroller table{
+  margin-bottom: 56px; /* stable baseline on all devices */
+}
+
+/* upgrade: scale with row height + safe area, capped on tall screens */
+@supports (height: 1lh){
+  #dash-table-scroller table{
+    margin-bottom: clamp(48px, calc(2.25lh + env(safe-area-inset-bottom, 0px)), 7dvh);
+  }
+}
