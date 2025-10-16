@@ -2342,7 +2342,6 @@ body.high-contrast .modal-menu-item.is-active {
   font-weight: 800;
   margin: 0 0 12px 0;
 }
-#dash-header .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
 #dash-header input,
 #dash-header button,
 #dash-header select{
@@ -2406,61 +2405,60 @@ body.high-contrast .modal-menu-item.is-active {
 /* THE HEADER: fixed at top of the scroller (does not scroll vertically) */
 /* keep header readable with a subtle shade */
 #dash-table-scroller thead{
-  position: sticky; top: 0; z-index: 4;
-  background: var(--sum-bg, #f1f5f9); /* match footer band */
+  position: sticky; top: 0; z-index: 5;
+  background: var(--sum-bg, #f1f5f9);
   box-shadow: 0 2px 6px rgba(0,0,0,.08);
   border-bottom: 1px solid var(--border, #e5e7eb);
 }
-
 #dash-table-scroller thead th{
-  background: inherit; /* keep thead band tint */
+  background: inherit; /* keep band tint */
   font-weight: 700;
+  position: relative; z-index: 5; /* header plane above body-left */
 }
 
-/* Freeze first column; set backgrounds once via section-specific rules */
+/* Freeze first column; section-specific backgrounds below */
 #dash-table-scroller thead > tr > :first-child,
 #dash-table-scroller tbody > tr > :first-child,
 #dash-table-scroller tfoot > tr > :first-child{
-  position: sticky;
-  left: 0;
+  position: sticky; left: 0;
 }
 
-/* Body first column stays white for readability */
-#dash-table-scroller tbody > tr > :first-child { background: #fff; }
+/* Body first column stays white; header/footer inherit bands */
+#dash-table-scroller tbody > tr > :first-child{ background:#fff; z-index:3; }
+#dash-table-scroller thead > tr > :first-child{ background:inherit; z-index:6; } /* top-left wins */
+#dash-table-scroller tfoot > tr > :first-child{ background:inherit; z-index:4; }
 
-/* Header/Footer first column inherit their band tint */
-#dash-table-scroller thead > tr > :first-child,
-#dash-table-scroller tfoot > tr > :first-child { background: inherit; }
-
-/* Keep the top-left cell above both sticky axes */
-/* top-left header must sit above both sticky axes */
-#dash-table-scroller thead > tr > :first-child{
-  z-index: 6;              /* higher than other sticky cells */
-  background: inherit;     /* solid header band; not see-through */
+/* Footer band + readability */
+#dash-table-scroller tfoot{
+  background: var(--sum-bg, #f1f5f9);
+  box-shadow: 0 -3px 8px rgba(0,0,0,.08);
 }
-
-/* Sum row: clearer separation */
 #dash-table-scroller tfoot th,
 #dash-table-scroller tfoot td{
   font-weight: 600;
-  background: var(--sum-bg, #f1f5f9); /* token now a touch deeper */
-  border-top: 1px solid var(--border, #e2e8f0); /* gentle line */
+  background: inherit;           /* inherit the band */
+  border-top: 1px solid var(--border, #e2e8f0);
 }
 
-/* soft lift for footer band */
-#dash-table-scroller tfoot{
+/* Sum column: unify background from header to footer */
+#dash-table-scroller thead th:last-child,
+#dash-table-scroller tbody td:last-child,
+#dash-table-scroller tfoot th:last-child,
+#dash-table-scroller tfoot td:last-child{
   background: var(--sum-bg, #f1f5f9);
-  box-shadow: 0 -3px 8px rgba(0,0,0,.08); /* subtle, not heavy */
+  font-weight: 600;
 }
+
+/* keep planes ordered: header above left column */
+#dash-table-scroller thead th{ position: relative; z-index:5; }
+#dash-table-scroller tbody > tr > :first-child{ z-index:3; }
 
 /* dashboard-scoped utils (no global leak) */
 #dash .row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
 #dash input,#dash button,#dash select { padding:6px 10px; }
 
 /* end-gap so last rows show; no scroller edits */
-#dash-table-scroller table{
-  margin-bottom: 56px; /* stable baseline on all devices */
-}
+#dash-table-scroller table{ margin-bottom:56px; }
 
 /* upgrade: scale with row height + safe area, capped on tall screens */
 @supports (height: 1lh){
@@ -2469,21 +2467,8 @@ body.high-contrast .modal-menu-item.is-active {
   }
 }
 
-/* Sum column: unify background from header to footer (no !important) */
-#dash-table-scroller thead th:last-child,
-#dash-table-scroller tbody td:last-child,
-#dash-table-scroller tfoot th:last-child,
-#dash-table-scroller tfoot td:last-child{
-  background: var(--sum-bg, #f1f5f9); /* same token the footer uses */
-  font-weight: 600;                   /* keeps totals readable */
-}
-
-/* keep other header cells below the corner; body’s first col below header */
-#dash-table-scroller thead th{ position: relative; z-index: 5; } /* header plane */
-#dash-table-scroller tbody > tr > :first-child{ z-index: 3; }    /* left plane */
-
 /* Make locationID box a bit longer, but not full-width */
 #loc-wrap #locationID{
-  width: 36ch;       /* fits hd-budapest4-kaposztasmegyer-4587 (+ wiggle) */
-  max-width: 100%;   /* stays responsive in narrow layouts */
+  width: 36ch;           /* fits hd-budapest4-kaposztasmegyer-4587 */
+  max-width: 100%;
 }
