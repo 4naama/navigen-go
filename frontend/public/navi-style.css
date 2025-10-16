@@ -2344,6 +2344,10 @@ body.high-contrast .modal-menu-item.is-active {
   margin: 0 0 12px 0;
   display: flex; align-items: center; gap: 10px; /* logo inline */
 }
+#dash-header h1 .app-logo{
+  display: block; flex: 0 0 auto;
+  width: 28px; height: 28px;     /* matches HTML attrs; no first-paint jump */
+}
 
 #dash-header h1 .app-logo{
   height: 28px; width: auto; /* small, crisp */
