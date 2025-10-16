@@ -145,14 +145,27 @@ function renderTable(json) {
       btn.title = 'Copy table as TSV';
       btn.ariaLabel = 'Copy table as TSV';
       btn.textContent = '⧉'; // copy/duplicate emoji
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const table = tblWrap.querySelector('table.stats-table');
         if (!table) return;
-        const tsv = toTSV(table); // helper below
-        (navigator.clipboard && navigator.clipboard.writeText)
-          ? navigator.clipboard.writeText(tsv).catch(()=>{})
-          : document.execCommand && document.execCommand('copy'); // best-effort fallback
+        const tsv = toTSV(table); // helper stays simple
+
+        try{
+          if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(tsv);
+          else if (document.execCommand) document.execCommand('copy'); // legacy
+          // clicked feedback: 2–3s darker state
+          btn.classList.add('copied');              // visual cue
+          const oldTitle = btn.title;
+          btn.title = 'Copied';                     // short tooltip cue
+          setTimeout(() => {                        // clear after ~2.5s
+            btn.classList.remove('copied');
+            btn.title = oldTitle;
+          }, 2500);
+        }catch(_e){
+          // if copy fails, keep silent; button stays normal
+        }
       });
+
       metaEl.appendChild(btn);
     }
     // lightweight inline layout so button sits to the right of the range

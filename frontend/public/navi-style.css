@@ -2505,15 +2505,25 @@ body.high-contrast .modal-menu-item.is-active {
 /* meta/date row with right-aligned actions */
 #meta{ display:flex; align-items:center; gap:8px; }
 
-/* small, unobtrusive copy button */
+/* copy button: hover + 2–3s clicked feedback */
 #copy-tsv{
   margin-left:auto;
-  font: inherit;
-  line-height: 1;
-  padding: 4px 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: #fff;
-  cursor: pointer;
+  font:inherit; line-height:1;
+  padding:4px 8px;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:#fff;
+  cursor:pointer;
+  transition: background-color .15s ease, box-shadow .15s ease, border-color .15s ease; /* smooth */
 }
-#copy-tsv:hover{ box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+#copy-tsv:hover,
+#copy-tsv:focus-visible{
+  background:#f8fafc;            /* light tint on hover/focus */
+  box-shadow:0 1px 2px rgba(0,0,0,.06);
+  outline:none;
+}
+#copy-tsv.copied{
+  background:#e2e8f0;            /* darker, visible state */
+  border-color:#cbd5e1;          /* slightly stronger border */
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.02);
+}
