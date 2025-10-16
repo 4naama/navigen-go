@@ -5284,6 +5284,86 @@
         "fileName": "hd-ullo-0662.json",
         "fileNameAscii": "hd-ullo-0662.json"
       }
+    },
+    {
+      "locationID": "europa-patika-rakoczi-ter-1666",
+      "locationName": {
+        "en": "Európa Patika Rákóczi tér"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "🛒 Shops",
+      "subgroupKey": "sub.pharmacy",
+      "context": "pharmacies/hungary;pharmacies/hungary/budapest",
+      "coord": {
+        "lat": 47.492389,
+        "lng": 19.071666
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/europa-patika-rakoczi-ter-1666/portrait.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/europa-patika-rakoczi-ter-1666/portrait.jpg",
+            "alt": "Európa Patika Rákóczi tér",
+            "credit": "Európa Patika Rákóczi tér",
+            "license": "All rights reserved",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/europa-patika-rakoczi-ter-1666/20221219_europapatia_honlap_sliderek_slide_1.jpg",
+            "alt": "Európa Patika Rákóczi tér",
+            "credit": "Európa Patika Rákóczi tér",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/europa-patika-rakoczi-ter-1666/20221219_europapatia_honlap_sliderek_slide_3.jpg",
+            "alt": "Európa Patika Rákóczi tér",
+            "credit": "Európa Patika Rákóczi tér",
+            "license": "All rights reserved",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {},
+      "hours": {},
+      "links": {
+        "official": "https://europapatika.com/",
+        "facebook": "https://www.facebook.com/europapatika/",
+        "bookingUrl": "https://patikamax.hu/"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "Pintér András",
+        "phone": "+36 1 219 0771",
+        "email": "rakoczi@patikamax.hu",
+        "address": "Rákóczi tér 1.",
+        "postalCode": "1084",
+        "city": "Budapest",
+        "adminArea": "Budapest",
+        "countryCode": "HU",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [],
+      "i18n": {
+        "availableLangs": []
+      },
+      "meta": {
+        "lastUpdated": "2025-10-16T22:09:22.691Z",
+        "version": 1,
+        "fileName": "europa-patika-rakoczi-ter-1666.json",
+        "fileNameAscii": "europa-patika-rakoczi-ter-1666.json"
+      }
     }
+    
   ]
 }  
