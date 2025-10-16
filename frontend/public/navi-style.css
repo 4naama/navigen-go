@@ -2397,6 +2397,8 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table{
   flex: 1 1 auto;
   min-height: 0;
+  display: flex;                 /* make the scroller fill available height */
+  flex-direction: column;
   overflow: hidden;              /* scroller owns vertical scroll */
   overscroll-behavior: contain;
   padding: 0 12px 0;             /* no top/bottom padding near sticky header */
@@ -2404,13 +2406,14 @@ body.high-contrast .modal-menu-item.is-active {
 }
 
 /* horizontal scrolling lives INSIDE the table scroller */
+/* Scroller fills the available space and provides the only inner scroll */
 #dash-table-scroller{
-  max-height: 70vh;
+  flex: 1 1 auto;      /* NEW: consume remaining height in #dash-table */
+  min-height: 0;       /* NEW: allow shrinking below content height */
   overflow-y: auto;
   overflow-x: auto;
-  padding: 0;                    /* zero top padding; header can touch */
-  scroll-padding-top: 0;         /* no reserved offset above sticky */
-  scroll-padding-bottom: 12px;   /* keep only bottom breathing room */
+  padding-bottom: 12px;
+  scroll-padding-bottom: 12px;
   scrollbar-gutter: stable;
   box-sizing: border-box;
   max-width: 100%;
