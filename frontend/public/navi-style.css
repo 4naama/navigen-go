@@ -2433,7 +2433,11 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller tfoot > tr > :first-child { background: inherit; }
 
 /* Keep the top-left cell above both sticky axes */
-#dash-table-scroller thead > tr > :first-child { z-index: 4; }
+/* top-left header must sit above both sticky axes */
+#dash-table-scroller thead > tr > :first-child{
+  z-index: 6;              /* higher than other sticky cells */
+  background: inherit;     /* solid header band; not see-through */
+}
 
 /* Sum row: clearer separation */
 #dash-table-scroller tfoot th,
@@ -2463,4 +2467,23 @@ body.high-contrast .modal-menu-item.is-active {
   #dash-table-scroller table{
     margin-bottom: clamp(48px, calc(2.25lh + env(safe-area-inset-bottom, 0px)), 7dvh);
   }
+}
+
+/* Sum column: unify background from header to footer (no !important) */
+#dash-table-scroller thead th:last-child,
+#dash-table-scroller tbody td:last-child,
+#dash-table-scroller tfoot th:last-child,
+#dash-table-scroller tfoot td:last-child{
+  background: var(--sum-bg, #f1f5f9); /* same token the footer uses */
+  font-weight: 600;                   /* keeps totals readable */
+}
+
+/* keep other header cells below the corner; body’s first col below header */
+#dash-table-scroller thead th{ position: relative; z-index: 5; } /* header plane */
+#dash-table-scroller tbody > tr > :first-child{ z-index: 3; }    /* left plane */
+
+/* Make locationID box a bit longer, but not full-width */
+#loc-wrap #locationID{
+  width: 36ch;       /* fits hd-budapest4-kaposztasmegyer-4587 (+ wiggle) */
+  max-width: 100%;   /* stays responsive in narrow layouts */
 }
