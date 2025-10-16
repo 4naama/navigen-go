@@ -128,15 +128,38 @@ function renderTable(json) {
   // meta
   const label = json.locationID ? `locationID=${json.locationID}` :
                json.entityID   ? `entityID=${json.entityID}` : '';
-  metaEl.textContent = ''; // keep meta ribbon clear
   /* update period subtitle under the title */
   {
     const days = Number(periodEl.value) || 14;               // period length
     const end = day(TODAY);                                   // today (local)
     const start = new Date(end.getTime() - (days - 1) * 86400e3);
     const startISO = iso(start), endISO = iso(end);
-    const weeklyNote = days > 14 ? ', weekly view' : '';
-    metaEl.textContent = `${startISO} → ${endISO}`; // show only date range; keep daily logic intact
+
+    // inline date range + right-aligned copy button
+    metaEl.innerHTML = `<span class="meta-range">${startISO} → ${endISO}</span>`;
+    let btn = document.getElementById('copy-tsv');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'copy-tsv';
+      btn.type = 'button';
+      btn.title = 'Copy table as TSV';
+      btn.ariaLabel = 'Copy table as TSV';
+      btn.textContent = '⧉'; // copy/duplicate emoji
+      btn.addEventListener('click', () => {
+        const table = tblWrap.querySelector('table.stats-table');
+        if (!table) return;
+        const tsv = toTSV(table); // helper below
+        (navigator.clipboard && navigator.clipboard.writeText)
+          ? navigator.clipboard.writeText(tsv).catch(()=>{})
+          : document.execCommand && document.execCommand('copy'); // best-effort fallback
+      });
+      metaEl.appendChild(btn);
+    }
+    // lightweight inline layout so button sits to the right of the range
+    metaEl.style.display = 'flex';
+    metaEl.style.alignItems = 'center';
+    metaEl.style.gap = '8px';
+    btn.style.marginLeft = 'auto';
   }
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
@@ -144,6 +167,30 @@ function renderTable(json) {
   hintEl.textContent = dispName
     ? `Single location daily counts for ${dispName}`
     : 'Single location daily counts';    
+}
+
+// Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.
+/** Returns a TSV string for spreadsheet-friendly pasting. */
+function toTSV(table){
+  const rows = [];
+  const pick = (sel) => Array.from(table.querySelectorAll(sel));
+  const clean = (s) => String(s).replace(/\s+/g,' ').replace(/\t/g,' ').trim();
+
+  // header
+  const thead = table.tHead;
+  if (thead && thead.rows[0]) {
+    rows.push(Array.from(thead.rows[0].cells).map(c => clean(c.textContent)).join('\t'));
+  }
+  // body
+  for (const tr of table.tBodies[0]?.rows || []) {
+    rows.push(Array.from(tr.cells).map(c => clean(c.textContent)).join('\t'));
+  }
+  // footer (single summary row)
+  const tfoot = table.tFoot;
+  if (tfoot && tfoot.rows[0]) {
+    rows.push(Array.from(tfoot.rows[0].cells).map(c => clean(c.textContent)).join('\t'));
+  }
+  return rows.join('\n');
 }
 
 async function loadAndRender(){         // single entry point
