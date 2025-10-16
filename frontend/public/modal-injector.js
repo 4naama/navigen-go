@@ -746,45 +746,23 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
 
-    // 📅 Book → open bookingUrl if present; else fetch once and toast
+    // 📅 Book → ONLY open links.bookingUrl; else toast (no legacy, no contact API)
     const btnBook = modal.querySelector('#lpm-book');
     if (btnBook) {
-      // if upstream already wired onclick, skip to prevent double-open
-      if (typeof btnBook.onclick === 'function') { return; }
+      if (typeof btnBook.onclick === 'function') { return; } // prevent double wiring
 
-      // booking lives under links only
-      const link = data?.links?.booking || '';
+      const bookingUrl = String(data?.links?.bookingUrl || '').trim();
 
-      if (link) {
-        // use native anchor open; no JS window.open to avoid duplicates
-        btnBook.setAttribute('href', String(link));
+      if (bookingUrl) {
+        // native anchor; track only
+        btnBook.setAttribute('href', bookingUrl);
         btnBook.setAttribute('target', '_blank');
         btnBook.setAttribute('rel', 'noopener');
-        // track only; native anchor handles opening
         btnBook.addEventListener('click', () => { trackCta('booking'); }, { passive: true });
       } else {
-        let busy = false; // run-once guard
-        btnBook.addEventListener('click', async (e) => {
-          e.preventDefault();                  // keep click inside the modal
-          e.stopImmediatePropagation();        // ensure a single handler runs
-          if (busy) return; busy = true;
-
-          const id = String(data?.id || data?.locationID || '').trim();
-          if (!id) { showToast('Booking link coming soon', 1600); busy = false; return; }
-
-          try {
-            const url = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`);
-            const r = await fetch(url, { credentials: 'include' });
-            if (r.ok) {
-              const j = await r.json().catch(() => ({}));
-              if (j && j.href) { trackCta('booking'); window.open(String(j.href), '_blank', 'noopener'); busy = false; return; } // track CTA; open once
-            }
-            showToast('Booking link coming soon', 1600);
-          } catch {
-            showToast('Booking link coming soon', 1600);
-          } finally {
-            busy = false;
-          }
+        btnBook.addEventListener('click', (e) => {
+          e.preventDefault();
+          showToast('Booking link coming soon', 1600);
         }, { passive: false });
       }
     }
@@ -1167,31 +1145,24 @@ async function initLpmImageSlider(modal, data) {
         } catch {}
       });
 
-      // booking: fetch JSON; open once; toast when missing
+      // booking: ONLY links.bookingUrl; else toast (cleaned)
       if (bookBtn) {
-        const orig = bookBtn.onclick;
-        bookBtn.onclick = async (ev) => {
+        const prev = bookBtn.onclick;
+        bookBtn.onclick = (ev) => {
           ev.preventDefault();
-          const id = String(data?.id || data?.locationID || '');
-          // booking lives under links only
-          const direct = data?.links?.bookingUrl || '';
-          if (direct) { if (orig) return orig(ev); window.open(String(direct), '_blank', 'noopener'); return; }
-
-          const url  = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`);
-          try {
-            const r = await fetch(url, { credentials: 'include' });
-
-            if (r.ok) {
-              const j = await r.json().catch(() => ({}));
-              if (j && j.href) { window.open(String(j.href), '_blank', 'noopener'); return; }
-            }
-            showToast('Booking link coming soon', 1600); // short, calm message
-          } catch {
-            showToast('Booking link coming soon', 1600);
+          const bookingUrl = String(data?.links?.bookingUrl || '').trim();
+          if (bookingUrl) {
+            if (typeof prev === 'function') return prev(ev); // respect upstream if any
+            const a = document.createElement('a'); /* module-scoped, no globals added */
+            a.href = bookingUrl;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.click();
+            return;
           }
+          showToast('Booking link coming soon', 1600);
         };
       }
-
     })();
 
     // ⭐ Save (secondary) → same toggle + icon flip (⭐ ↔ ✩)
@@ -2860,7 +2831,7 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     {
       label: 'Apple Maps',
       emoji: '🍎',
-      href: `https://maps.apple.com/?daddr=${lat},${lng}`,
+      href: `https://maps.apple.com/?saddr=Current+Location&daddr=${lat},${lng}&dirflg=d`, // force dest
       track: 'nav.apple'
     }
   ];
