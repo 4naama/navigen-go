@@ -129,16 +129,10 @@ function renderTable(json) {
   const label = json.locationID ? `locationID=${json.locationID}` :
                json.entityID   ? `entityID=${json.entityID}` : '';
   metaEl.textContent = ''; // keep meta ribbon clear
-  // show current period under the title
-  const days = Number(periodEl.value) || 14;
-  const end = day(TODAY);
-  const start = new Date(end.getTime() - (days - 1) * 86400e3);
-  const startISO = iso(start), endISO = iso(end);
-  const weeklyNote = days > 14 ? ', weekly view' : '';
   /* update period subtitle under the title */
   {
-    const days = Number(periodEl.value) || 14;
-    const end = day(TODAY);
+    const days = Number(periodEl.value) || 14;               // period length
+    const end = day(TODAY);                                   // today (local)
     const start = new Date(end.getTime() - (days - 1) * 86400e3);
     const startISO = iso(start), endISO = iso(end);
     const weeklyNote = days > 14 ? ', weekly view' : '';
