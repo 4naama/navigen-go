@@ -2407,26 +2407,33 @@ body.high-contrast .modal-menu-item.is-active {
 /* keep header readable with a subtle shade */
 #dash-table-scroller thead{
   position: sticky; top: 0; z-index: 4;
-  background: var(--bg, #fff);
+  background: var(--sum-bg, #f1f5f9); /* match footer band */
   box-shadow: 0 2px 6px rgba(0,0,0,.08);
   border-bottom: 1px solid var(--border, #e5e7eb);
 }
 
 #dash-table-scroller thead th{
-  background: #fff;
+  background: inherit; /* keep thead band tint */
   font-weight: 700;
 }
 
-/* Freeze the first column (header, body, footer) horizontally */
+/* Freeze first column; set backgrounds once via section-specific rules */
 #dash-table-scroller thead > tr > :first-child,
 #dash-table-scroller tbody > tr > :first-child,
 #dash-table-scroller tfoot > tr > :first-child{
   position: sticky;
   left: 0;
-  background: #fff;
 }
-/* top-left corner above both sticky axes */
-#dash-table-scroller thead > tr > :first-child{ z-index: 4; }
+
+/* Body first column stays white for readability */
+#dash-table-scroller tbody > tr > :first-child { background: #fff; }
+
+/* Header/Footer first column inherit their band tint */
+#dash-table-scroller thead > tr > :first-child,
+#dash-table-scroller tfoot > tr > :first-child { background: inherit; }
+
+/* Keep the top-left cell above both sticky axes */
+#dash-table-scroller thead > tr > :first-child { z-index: 4; }
 
 /* Sum row: clearer separation */
 #dash-table-scroller tfoot th,
