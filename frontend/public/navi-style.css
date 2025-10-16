@@ -641,6 +641,16 @@ body.high-contrast {
   font-size: 110%;
 }
 
+/* Sub-group containers + headers (ensure dark surface) */
+body.high-contrast .sub-group,
+body.high-contrast .subgroup,
+body.high-contrast .subgroup-items,
+body.high-contrast .subheader {
+  background-color: #111 !important; /* same panel tone */
+  color: #fff !important;
+  border-color: #666 !important;
+}
+
 /* General Buttons */
 body.high-contrast button,
 body.high-contrast .quick-button,
@@ -660,14 +670,18 @@ body.high-contrast .group-header-button:hover {
 
 /* Accordion Inner Group Buttons */
 body.high-contrast .group-buttons .quick-button,
-body.high-contrast .location-button {
+body.high-contrast .location-button,
+body.high-contrast .subgroup-items .quick-button,
+body.high-contrast .subgroup-items .location-button {
   background-color: #222 !important;
   color: #fff !important;
   border: 1px solid #666 !important;
 }
 
 body.high-contrast .group-buttons .quick-button:hover,
-body.high-contrast .location-button:hover {
+body.high-contrast .location-button:hover,
+body.high-contrast .subgroup-items .quick-button:hover,
+body.high-contrast .subgroup-items .location-button:hover {
   background-color: #333 !important;
 }
 
@@ -679,7 +693,7 @@ body.high-contrast .quick-button[data-group="group.popular"] {              /* �
   border-color: #ffc107 !important;
 }
 
-body.high-contrast .quick-button[data-group="group.popular"]:hover {            /* 💥 Popular replaced*/
+body.high-contrast .quick-button[data-group="group.popular"]:hover {        /* 💥 Popular replaced*/
   background-color: rgba(255, 193, 7, 0.3) !important;
 }
 
