@@ -2,13 +2,13 @@
 // Robust i18n loader: tries local and absolute; falls back to key-echo if server serves HTML
 let t = (k) => k; // safe fallback so UI renders even if i18n.js isn’t served as JS
 try {
-  // robust path: resolves next to dash.js; avoids SPA HTML fallback
-  // robust path resolution (2 tries) to avoid SPA HTML fallback
+  // try absolute prod path first; fall back to local root copy
   try {
-    ({ t } = await import(new URL('./scripts/i18n.js', import.meta.url).href)); // next to dash.js
+    ({ t } = await import('/scripts/i18n.js')); // served from /public/scripts
   } catch (_e1) {
-    ({ t } = await import('/scripts/i18n.js')); // absolute root as fallback
+    ({ t } = await import(new URL('./i18n.js', import.meta.url).href)); // local minimal build
   }
+
 } catch (_e) {
   console.warn('i18n module failed to load (served as HTML?) — using key fallback');
 }
