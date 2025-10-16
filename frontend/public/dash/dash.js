@@ -4,10 +4,19 @@ let t = (k) => k; // safe fallback so UI renders even if i18n.js isn’t served 
 try {
   // try absolute prod path first; fall back to local root copy
   try {
-    ({ t } = await import('/scripts/i18n.js')); // served from /public/scripts
+    const m = await import('/scripts/i18n.js'); // served from /public/scripts
+    ({ t, loadTranslations } = m);
   } catch (_e1) {
-    ({ t } = await import(new URL('./i18n.js', import.meta.url).href)); // local minimal build
+    const m = await import(new URL('./i18n.js', import.meta.url).href); // local minimal build
+    ({ t, loadTranslations } = m);
   }
+  // ensure labels before first use (e.g., syncMode, headers)
+  await loadTranslations(
+    document.documentElement.lang ||
+    localStorage.getItem('lang') ||
+    (navigator.language || 'en').split('-')[0] ||
+    'en'
+  );
 
 } catch (_e) {
   console.warn('i18n module failed to load (served as HTML?) — using key fallback');
