@@ -3,7 +3,7 @@
 let t = (k) => k; // safe fallback so UI renders even if i18n.js isn’t served as JS
 try {
   // robust path: resolves next to dash.js; avoids SPA HTML fallback
-  ({ t } = await import(new URL('./i18n.js', import.meta.url).href));
+  ({ t } = await import(new URL('./scripts/i18n.js', import.meta.url).href));
 } catch (_e) {
   console.warn('i18n module failed to load (served as HTML?) — using key fallback');
 }
