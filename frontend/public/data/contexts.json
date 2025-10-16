@@ -126,5 +126,68 @@
     "subgroupMode": "structure",
     "defaultView": "structure",
     "viewOptions": ""
+  },
+  {
+    "theme": "pharmacies",
+    "namespace": "pharmacies",
+    "key": "pharmacies",
+    "pageKey": "pharmacies/pharmacies",
+    "indexable": false,
+    "minItems": null,
+    "languages": [
+      "en",
+      "hu"
+    ],
+    "titles": {
+      "en": "Pharmacies",
+      "hu": "Patikák"
+    },
+    "metaDescs": {},
+    "lastmod": "Fri Oct 17 2025 00:00:00 GMT+0200 (Central European Summer Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "pharmacies",
+    "namespace": "pharmacies",
+    "key": "pharmacies/hungary",
+    "pageKey": "pharmacies/pharmacies/hungary",
+    "indexable": false,
+    "minItems": null,
+    "languages": [
+      "en",
+      "hu"
+    ],
+    "titles": {
+      "en": "Pharmacies in Hungary",
+      "hu": "Patikák Magyarországon"
+    },
+    "metaDescs": {},
+    "lastmod": "Sat Oct 18 2025 00:00:00 GMT+0200 (Central European Summer Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "pharmacies",
+    "namespace": "pharmacies",
+    "key": "pharmacies/hungary/budapest",
+    "pageKey": "pharmacies/pharmacies/hungary/budapest",
+    "indexable": false,
+    "minItems": null,
+    "languages": [
+      "en",
+      "hu"
+    ],
+    "titles": {
+      "en": "Pharmacies in Budapest, Hungary",
+      "hu": "Patikák Budapesten, Magyarországon"
+    },
+    "metaDescs": {},
+    "lastmod": "Thu Oct 16 2025 00:00:00 GMT+0200 (Central European Summer Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
   }
 ]
