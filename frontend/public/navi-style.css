@@ -2404,12 +2404,12 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller td:first-child{ text-align: left; }
 
 /* THE HEADER: fixed at top of the scroller (does not scroll vertically) */
+/* keep header readable with a subtle shade */
 #dash-table-scroller thead{
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  background: var(--bg);      /* solid under sticky */
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06); /* gentle depth; tweak if needed */
+  position: sticky; top: 0; z-index: 4;
+  background: var(--bg, #fff);
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  border-bottom: 1px solid var(--border, #e5e7eb);
 }
 
 #dash-table-scroller thead th{
@@ -2428,11 +2428,18 @@ body.high-contrast .modal-menu-item.is-active {
 /* top-left corner above both sticky axes */
 #dash-table-scroller thead > tr > :first-child{ z-index: 4; }
 
-/* Footer stays part of the scrollable content */
+/* “Sum” row: gentle top edge + soft lift */
 #dash-table-scroller tfoot th,
 #dash-table-scroller tfoot td{
   font-weight: 600;
-  background: var(--sum-bg, #fafafa); /* uses token */
+  background: var(--sum-bg, #fafafa);
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+/* optional soft shadow above footer row (no sticky) */
+#dash-table-scroller tfoot{
+  background: var(--sum-bg, #fafafa);
+  box-shadow: 0 -2px 6px rgba(0,0,0,.06);
 }
 
 /* dashboard-scoped utils (no global leak) */
