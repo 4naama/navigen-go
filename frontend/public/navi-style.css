@@ -640,6 +640,12 @@ body.high-contrast {
   color: #fff;
   font-size: 110%;
 }
+/* sub-group count pill stays readable in HC */
+body.high-contrast .subheader[data-count]::before{
+  background-color: rgba(255,255,255,.16); /* light-on-dark */
+  color: #e5e7eb;                          /* readable text */
+  border: 1px solid rgba(255,255,255,.22); /* subtle edge for AA */
+}
 
 /* Sub-group containers + headers (ensure dark surface) */
 body.high-contrast .sub-group,
