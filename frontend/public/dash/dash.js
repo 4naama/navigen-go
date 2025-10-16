@@ -136,7 +136,7 @@ function renderTable(json) {
     const start = new Date(end.getTime() - (days - 1) * 86400e3);
     const startISO = iso(start), endISO = iso(end);
     const weeklyNote = days > 14 ? ', weekly view' : '';
-    metaEl.textContent = `Period: ${startISO} → ${endISO} (${days} days${weeklyNote})`;
+    metaEl.textContent = `${startISO} → ${endISO}`; // show only date range; keep daily logic intact
   }
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
