@@ -2,44 +2,11 @@
 // Robust i18n loader: tries local and absolute; falls back to key-echo if server serves HTML
 let t = (k) => k; // safe fallback so UI renders even if i18n.js isn’t served as JS
 try {
-  // i18n loader: try normal imports; if server serves HTML, fetch->Blob import
-  async function loadI18n() {
-    const candidates = [
-      '/scripts/i18n.js',                               // prod path
-      new URL('./scripts/i18n.js', import.meta.url).href, // relative scripts/
-      new URL('./i18n.js', import.meta.url).href,       // local root copy
-      '/i18n.js'                                        // absolute root copy
-    ];
-
-    // 1) try regular module imports
-    for (const url of candidates) {
-      try { return await import(url); } catch (_) { /* try next */ }
-    }
-
-    // 2) fetch and verify not HTML; then import from a Blob (fixes bad MIME)
-    for (const url of candidates) {
-      try {
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) continue;
-        const ct = res.headers.get('content-type') || '';
-        const code = await res.text();
-        const looksHTML = /<\s*html|<!doctype/i.test(code);
-        const isJSish = /javascript|ecmascript/.test(ct) || !ct; // some hosts omit CT
-        if (looksHTML) continue; // avoid importing fallback HTML
-        const blob = new Blob([code], { type: 'text/javascript' });
-        const blobURL = URL.createObjectURL(blob);
-        try { return await import(blobURL); }
-        finally { URL.revokeObjectURL(blobURL); }
-      } catch (_) { /* try next */ }
-    }
-
-    throw new Error('Unable to load i18n module');
-  }
-
+  // try absolute prod path first; fall back to local root copy
   try {
-    ({ t } = await loadI18n()); // set real t(); UI labels will localize
-  } catch (_e) {
-    console.warn('i18n module failed to load — using key fallback');
+    ({ t } = await import('/scripts/i18n.js')); // served from /public/scripts
+  } catch (_e1) {
+    ({ t } = await import(new URL('./i18n.js', import.meta.url).href)); // local minimal build
   }
 
 } catch (_e) {
