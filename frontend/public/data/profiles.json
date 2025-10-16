@@ -5294,7 +5294,7 @@
       "Priority": "Yes",
       "groupKey": "🛒 Shops",
       "subgroupKey": "sub.pharmacy",
-      "context": "pharmacies/hungary;pharmacies/hungary/budapest",
+      "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
       "coord": {
         "lat": 47.492389,
         "lng": 19.071666
@@ -5363,7 +5363,6 @@
         "fileName": "europa-patika-rakoczi-ter-1666.json",
         "fileNameAscii": "europa-patika-rakoczi-ter-1666.json"
       }
-    }
-    
+    }    
   ]
 }  
