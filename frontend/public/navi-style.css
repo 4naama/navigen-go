@@ -2358,22 +2358,22 @@ body.high-contrast .modal-menu-item.is-active {
 /* the ONLY vertical scroller for the dashboard */
 #dash-table{
   flex: 1 1 auto;
-  min-height: 0;            /* allow child scroller to shrink */
-  overflow: visible;        /* don't clip the scroller's bottom */
+  min-height: 0;
+  overflow: hidden;         /* scroller owns vertical scroll */
   overscroll-behavior: contain;
   padding: 8px 12px;
   box-sizing: border-box;
 }
 
-/* fill the flex slot so bottom rows can clear */
+/* horizontal scrolling lives INSIDE the table scroller */
 #dash-table-scroller{
-  height: 100%;                  /* use all available height */
-  overflow-y: auto;
-  overflow-x: auto;
-  padding-bottom: 28px;          /* gentle end-gap */
-  scroll-padding-bottom: 28px;   /* keep last row fully visible */
-  scrollbar-gutter: stable;
-  box-sizing: border-box;
+  max-height: 70vh;              /* finite height → rows can scroll */
+  overflow-y: auto;              /* vertical scroll for rows */
+  overflow-x: auto;              /* horizontal scroll when needed */
+  padding-bottom: 12px;          /* end buffer so last row clears edge */
+  scroll-padding-bottom: 12px;   /* JS scrollIntoView lands above edge */
+  scrollbar-gutter: stable;      /* no layout shift on scrollbar show */
+  box-sizing: border-box;        /* include padding in height */
   max-width: 100%;
   text-align: left;
 }
