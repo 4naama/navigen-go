@@ -2,7 +2,7 @@
 
 const $ = (s) => document.querySelector(s);
 const modeEl = $('#mode'), locEl = $('#locationID'), entEl = $('#entityID');
-const fromEl = $('#from'), toEl = $('#to'), loadBtn = $('#load');
+const periodEl = $('#period'); // single control drives the window
 const hintEl = $('#hint'), metaEl = $('#meta'), tblWrap = $('#table-wrap');
 const locWrap = $('#loc-wrap'), entWrap = $('#ent-wrap');
 
@@ -10,9 +10,8 @@ const TODAY = new Date();
 const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 
-// default: last 30d
-toEl.value = iso(TODAY);
-fromEl.value = iso(new Date(day(TODAY).getTime() - 29*86400e3));
+// default: 2 weeks
+periodEl.value = '14';
 
 // normalize date input to YYYY-MM-DD; handles valueAsDate or localized text (1-2 lines of logic, keep simple)
 function getISODate(input){
@@ -52,9 +51,30 @@ const ORDER = [
   'share','save','unsave','map','qr_view'
 ];
 
+// display labels for metrics (centralized, tweak here)
+// fallback humanizer keeps others readable; 2-line comments only
+const METRIC_LABEL = Object.freeze({
+  lpm_open: 'Profile view',
+  call: 'Phone call',
+  qr_view: 'QR view',
+});
+const HUMANIZE = (k) => {
+  const ACR = { qr:'QR', id:'ID', url:'URL', sms:'SMS' };
+  const BRANDS = {
+    facebook:'Facebook', instagram:'Instagram', pinterest:'Pinterest',
+    spotify:'Spotify', tiktok:'TikTok', youtube:'YouTube',
+    whatsapp:'WhatsApp', telegram:'Telegram', messenger:'Messenger'
+  };
+  return k.split('_').map(w => ACR[w] || BRANDS[w] || (w[0]?.toUpperCase() + w.slice(1))).join(' ');
+};
+const labelFor = (k) => METRIC_LABEL[k] || HUMANIZE(k);
+
 async function fetchStats() {
-  const base = 'https://navigen-api.4naama.workers.dev'; // use Worker; avoids HTML from site
-  const from = getISODate(fromEl), to = getISODate(toEl); // normalize for API
+  const base = 'https://navigen-api.4naama.workers.dev'; // Worker stays
+  const periodDays = Number(periodEl.value) || 14;
+  const end = day(TODAY);                               // today (local)
+  const start = new Date(end.getTime() - (periodDays - 1) * 86400e3);
+  const from = iso(start), to = iso(end);               // API window
 
   const isEntity = modeEl.value === 'entity';
   const q = isEntity
@@ -81,7 +101,7 @@ function renderTable(json) {
   const rowsHtml = ORDER.map(metric => {
     const vals = dates.map(d => Number(((days[d] || {})[metric]) || 0));
     const sum  = vals.reduce((a,b)=>a+b, 0);
-    return `<tr><th scope="row">${metric}</th>${vals.map(n=>`<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
+    return `<tr><th scope="row">${labelFor(metric)}</th>${vals.map(n=>`<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
   }).join('');
 
   // footer: per-date sums (sum across all metrics for each date)
@@ -108,8 +128,23 @@ function renderTable(json) {
   // meta
   const label = json.locationID ? `locationID=${json.locationID}` :
                json.entityID   ? `entityID=${json.entityID}` : '';
-  metaEl.textContent = ''; // meta ribbon removed
-  
+  metaEl.textContent = ''; // keep meta ribbon clear
+  // show current period under the title
+  const days = Number(periodEl.value) || 14;
+  const end = day(TODAY);
+  const start = new Date(end.getTime() - (days - 1) * 86400e3);
+  const startISO = iso(start), endISO = iso(end);
+  const weeklyNote = days > 14 ? ', weekly view' : '';
+  /* update period subtitle under the title */
+  {
+    const days = Number(periodEl.value) || 14;
+    const end = day(TODAY);
+    const start = new Date(end.getTime() - (days - 1) * 86400e3);
+    const startISO = iso(start), endISO = iso(end);
+    const weeklyNote = days > 14 ? ', weekly view' : '';
+    metaEl.textContent = `Period: ${startISO} → ${endISO} (${days} days${weeklyNote})`;
+  }
+
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
   const dispName = (json.locationName || json.entityName || '').trim();
   hintEl.textContent = dispName
@@ -117,20 +152,18 @@ function renderTable(json) {
     : 'Single location daily counts';    
 }
 
-loadBtn.addEventListener('click', async () => {
-  try {
+async function loadAndRender(){         // single entry point
+  try{
     tblWrap.textContent = 'Loading…';
     const json = await fetchStats();
-    // align to API-provided order if present
-    if (Array.isArray(json.order) && json.order.length) {
-      // include qr_view if server has it but client not yet
-      json.order.forEach(k => { if (!ORDER.includes(k)) ORDER.push(k); });
+    if (Array.isArray(json.order) && json.order.length){
+      json.order.forEach(k => { if (!ORDER.includes(k)) ORDER.push(k); }); // keep server order
     }
     renderTable(json);
-  } catch (e) {
+  }catch(e){
     tblWrap.textContent = (e && e.message) ? e.message : 'Failed to load stats';
   }
-});
+}
 
-// auto-load once
-loadBtn.click();
+periodEl.addEventListener('change', () => loadAndRender()); // react to user
+loadAndRender();                                            // auto-load once

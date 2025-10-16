@@ -2317,7 +2317,7 @@ body.high-contrast .modal-menu-item.is-active {
   --fs-h1: 32px;
   --pad-cell-y: 6px;
   --pad-cell-x: 10px;
-  --sum-bg: #f8fafc; /* subtle Sum col shade */
+  --sum-bg: #f1f5f9; /* slightly deeper Sum shade */
 
   position: fixed; inset: 16px;
   display: flex; flex-direction: column;
@@ -2405,18 +2405,11 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* THE HEADER: fixed at top of the scroller (does not scroll vertically) */
 /* keep header readable with a subtle shade */
-/* sticky header: subtle shade + mask tiny peek */
 #dash-table-scroller thead{
-  position: sticky; top: 0; z-index: 6;
+  position: sticky; top: 0; z-index: 4;
   background: var(--bg, #fff);
-  box-shadow: 0 2px 8px rgba(0,0,0,.10);
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
   border-bottom: 1px solid var(--border, #e5e7eb);
-}
-/* 2px cover above the header so rows can’t peek */
-#dash-table-scroller thead::before{
-  content:""; display:block;
-  position: sticky; top:-2px; height:2px;
-  background: var(--bg, #fff);
 }
 
 #dash-table-scroller thead th{
@@ -2435,17 +2428,18 @@ body.high-contrast .modal-menu-item.is-active {
 /* top-left corner above both sticky axes */
 #dash-table-scroller thead > tr > :first-child{ z-index: 4; }
 
-/* “Sum” row: gentle top edge + soft lift */
-/* Sum row: clearer separation, matches header tone */
+/* Sum row: clearer separation */
 #dash-table-scroller tfoot th,
 #dash-table-scroller tfoot td{
   font-weight: 600;
-  background: var(--sum-bg, #fafafa);
-  border-top: 1px solid var(--border, #e5e7eb);
+  background: var(--sum-bg, #f1f5f9); /* token now a touch deeper */
+  border-top: 1px solid var(--border, #e2e8f0); /* gentle line */
 }
+
+/* soft lift for footer band */
 #dash-table-scroller tfoot{
-  background: var(--sum-bg, #fafafa);
-  box-shadow: 0 -3px 8px rgba(0,0,0,.10);
+  background: var(--sum-bg, #f1f5f9);
+  box-shadow: 0 -3px 8px rgba(0,0,0,.08); /* subtle, not heavy */
 }
 
 /* dashboard-scoped utils (no global leak) */

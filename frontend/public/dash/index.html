@@ -20,9 +20,15 @@
         </label>
         <label id="loc-wrap">locationID <input id="locationID" placeholder="hd-budakeszi-7088" /></label>
         <label id="ent-wrap" style="display:none">entityID <input id="entityID" placeholder="helen-doron" /></label>
-        <label>From <input id="from" type="date" /></label>
-        <label>To <input id="to" type="date" /></label>
-        <button id="load">Load</button>
+        <label>Period
+          <select id="period">
+            <option value="1">1 day (24h)</option>
+            <option value="7">1 week (7 days)</option>
+            <option value="14" selected>2 weeks (14 days)</option>
+            <option value="28">4 weeks (28 days)</option>
+            <option value="56">8 weeks (56 days)</option>
+          </select>
+        </label>
         <span class="muted" id="hint"></span>
       </div>
       <div id="meta" class="muted"></div>
