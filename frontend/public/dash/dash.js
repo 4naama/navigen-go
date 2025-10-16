@@ -52,18 +52,18 @@ function syncMode() {
 
 // fixed order as served by your Worker (extend if needed)
 const ORDER = [
-  'lpm_open','call','email','whatsapp','telegram','messenger',
+  'lpm-open','call','email','whatsapp','telegram','messenger',
   'official','booking','newsletter',
   'facebook','instagram','pinterest','spotify','tiktok','youtube',
-  'share','save','unsave','map','qr_view'
+  'share','save','unsave','map','qr-view'
 ];
 
 // display labels for metrics (centralized, tweak here)
 // fallback humanizer keeps others readable; 2-line comments only
 const METRIC_LABEL = Object.freeze({
-  lpm_open: t('metric.lpm_open'),
+  lpm_open: t('metric.lpm-open'),
   call:     t('metric.call'),
-  qr_view:  t('metric.qr_view'),
+  qr_view:  t('metric.qr-view'),
 });
 
 const HUMANIZE = (k) => {
@@ -186,7 +186,7 @@ function renderTable(json) {
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
   const dispName = (json.locationName || json.entityName || '').trim();
-  hintEl.textContent = dispName ? `${t('dash.hint.single_for')} ${dispName}` : t('dash.hint.single');
+  hintEl.textContent = dispName ? `${t('dash.hint.single-for')} ${dispName}` : t('dash.hint.single');
 }
 
 // Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.
@@ -222,7 +222,7 @@ async function loadAndRender(){         // single entry point
     }
     renderTable(json);
   }catch(e){
-    tblWrap.textContent = (e && e.message) ? e.message : t('dash.error.load_failed');
+    tblWrap.textContent = (e && e.message) ? e.message : t('dash.error.load-failed');
   }
 }
 
