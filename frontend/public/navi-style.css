@@ -2336,12 +2336,19 @@ body.high-contrast .modal-menu-item.is-active {
   border-bottom: 1px solid var(--border);
   background: var(--bg);
 }
+
 #dash-header h1{
   font-size: var(--fs-h1);
   line-height: 1.2;
   font-weight: 800;
   margin: 0 0 12px 0;
+  display: flex; align-items: center; gap: 10px; /* logo inline */
 }
+#dash-header h1 .app-logo{
+  height: 28px; width: auto; /* small, crisp */
+  display: block;            /* no descender gap */
+}
+
 #dash-header input,
 #dash-header button,
 #dash-header select{
@@ -2360,7 +2367,7 @@ body.high-contrast .modal-menu-item.is-active {
   min-height: 0;
   overflow: hidden;         /* scroller owns vertical scroll */
   overscroll-behavior: contain;
-  padding: 8px 12px;
+  padding: 0 12px 8px;      /* remove top gap so thead touches header */
   box-sizing: border-box;
 }
 
@@ -2410,8 +2417,9 @@ body.high-contrast .modal-menu-item.is-active {
   box-shadow: 0 2px 6px rgba(0,0,0,.08);
   border-bottom: 1px solid var(--border, #e5e7eb);
 }
+
 #dash-table-scroller thead th{
-  background: inherit; /* keep band tint */
+  background-color: var(--sum-bg, #f1f5f9); /* explicit opaque fill */
   font-weight: 700;
   position: relative; z-index: 5; /* header plane above body-left */
 }
@@ -2425,7 +2433,10 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* Body first column stays white; header/footer inherit bands */
 #dash-table-scroller tbody > tr > :first-child{ background:#fff; z-index:3; }
-#dash-table-scroller thead > tr > :first-child{ background:inherit; z-index:6; } /* top-left wins */
+#dash-table-scroller thead > tr > :first-child{
+  background-color: var(--sum-bg, #f1f5f9); /* solid, non-see-through */
+  z-index: 6;                                /* top-left wins */
+}
 #dash-table-scroller tfoot > tr > :first-child{ background:inherit; z-index:4; }
 
 /* Footer band + readability */
