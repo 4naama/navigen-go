@@ -2547,3 +2547,21 @@ body.high-contrast .modal-menu-item.is-active {
   border-color:#cbd5e1;          /* slightly stronger border */
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.02);
 }
+
+/* Mobile/touch: ensure last rows can scroll fully into view */
+@media (pointer: coarse), (max-width: 640px){
+  /* Let the scroller size naturally; keep momentum scroll */
+  #dash-table-scroller{
+    max-height: none;         /* remove 70vh cap on phones */
+    height: auto;
+    padding-bottom: 16px;     /* small, single bottom cushion */
+    scroll-padding-bottom: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Remove extra spacer that shortens the reachable range */
+  #dash-table-scroller::after{ height: 0; }
+
+  /* Neutralize large bottom margins so last rows are reachable */
+  #dash-table-scroller table{ margin-bottom: 16px !important; }
+}

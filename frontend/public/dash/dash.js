@@ -1,4 +1,6 @@
 // Minimal dashboard: pulls /api/stats* and renders a fixed-order daily table.
+import { t } from './i18n.js'; // i18n
+
 
 const $ = (s) => document.querySelector(s);
 const modeEl = $('#mode'), locEl = $('#locationID'), entEl = $('#entityID');
@@ -40,7 +42,7 @@ function syncMode() {
   const isEntity = modeEl.value === 'entity';
   entWrap.style.display = isEntity ? '' : 'none';
   locWrap.style.display = isEntity ? 'none' : '';
-  hintEl.textContent = 'Single location daily counts'; // baseline; data load may refine with "for {name}"
+  hintEl.textContent = t('dash.hint.single'); // baseline
 }
 
 // fixed order as served by your Worker (extend if needed)
@@ -54,10 +56,11 @@ const ORDER = [
 // display labels for metrics (centralized, tweak here)
 // fallback humanizer keeps others readable; 2-line comments only
 const METRIC_LABEL = Object.freeze({
-  lpm_open: 'Profile view',
-  call: 'Phone call',
-  qr_view: 'QR view',
+  lpm_open: t('metric.lpm_open'),
+  call:     t('metric.call'),
+  qr_view:  t('metric.qr_view'),
 });
+
 const HUMANIZE = (k) => {
   const ACR = { qr:'QR', id:'ID', url:'URL', sms:'SMS' };
   const BRANDS = {
@@ -94,7 +97,7 @@ function renderTable(json) {
   const dates = Object.keys(days).sort(); // ascending
 
   // header: metrics as first col, dates across
-  const cols = ['Metric', ...dates, 'Sum']; // metrics ↓ × dates →
+  const cols = [t('dash.col.metric'), ...dates, t('dash.col.sum')]; // metrics ↓ × dates →
   const thead = `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>`;
 
   // rows: one row per metric, values across dates
@@ -109,7 +112,7 @@ function renderTable(json) {
     ORDER.reduce((acc, k) => acc + Number(((days[d] || {})[k]) || 0), 0)
   );
   const total = perDateSums.reduce((a,b)=>a+b, 0);
-  const tfoot = `<tfoot><tr><th scope="row">Sum</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${total}</td></tr></tfoot>`;
+  const tfoot = `<tfoot><tr><th scope="row">${t('dash.col.sum')}</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${total}</td></tr></tfoot>`;
 
   // inject scoped styles once (sticky header + left col)
   // styles moved to navi-style.css for maintainability (no CSS-in-JS
@@ -142,8 +145,9 @@ function renderTable(json) {
       btn = document.createElement('button');
       btn.id = 'copy-tsv';
       btn.type = 'button';
-      btn.title = 'Copy table as TSV';
-      btn.ariaLabel = 'Copy table as TSV';
+      btn.title = t('dash.copy.tsv');
+      btn.ariaLabel = t('dash.copy.tsv');
+
       btn.textContent = '⧉'; // copy/duplicate emoji
       btn.addEventListener('click', async () => {
         const table = tblWrap.querySelector('table.stats-table');
@@ -156,7 +160,7 @@ function renderTable(json) {
           // clicked feedback: 2–3s darker state
           btn.classList.add('copied');              // visual cue
           const oldTitle = btn.title;
-          btn.title = 'Copied';                     // short tooltip cue
+          btn.title = t('dash.copy.copied');        // short tooltip cue
           setTimeout(() => {                        // clear after ~2.5s
             btn.classList.remove('copied');
             btn.title = oldTitle;
@@ -177,9 +181,7 @@ function renderTable(json) {
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
   const dispName = (json.locationName || json.entityName || '').trim();
-  hintEl.textContent = dispName
-    ? `Single location daily counts for ${dispName}`
-    : 'Single location daily counts';    
+  hintEl.textContent = dispName ? `${t('dash.hint.single_for')} ${dispName}` : t('dash.hint.single');
 }
 
 // Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.
@@ -208,14 +210,14 @@ function toTSV(table){
 
 async function loadAndRender(){         // single entry point
   try{
-    tblWrap.textContent = 'Loading…';
+    tblWrap.textContent = t('dash.state.loading');
     const json = await fetchStats();
     if (Array.isArray(json.order) && json.order.length){
       json.order.forEach(k => { if (!ORDER.includes(k)) ORDER.push(k); }); // keep server order
     }
     renderTable(json);
   }catch(e){
-    tblWrap.textContent = (e && e.message) ? e.message : 'Failed to load stats';
+    tblWrap.textContent = (e && e.message) ? e.message : t('dash.error.load_failed');
   }
 }
 
