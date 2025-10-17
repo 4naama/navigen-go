@@ -2325,8 +2325,9 @@ body.high-contrast .modal-menu-item.is-active {
 }
 
 /* ===== Dashboard layout: fixed header + scrollable table ===== */
-/* Scope + tokens */
+/* Self-contained dashboard viewport */
 #dash{
+  /* dashboard-scoped design tokens */
   --font-sans: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   --text:#0f172a; --muted:#64748b; --border:#e5e7eb; --bg:#fff;
   --fs-base:14px; --fs-h1:32px; --pad-cell-y:6px; --pad-cell-x:10px;
@@ -2335,56 +2336,49 @@ body.high-contrast .modal-menu-item.is-active {
   font-family:var(--font-sans); color:var(--text); background:var(--bg); border-radius:8px;
 }
 
-/* Header (non-scrolling) */
+/* non-scrolling top area */
 #dash-header{
   flex:0 0 auto; padding:10px 12px; border-bottom:1px solid var(--border); background:var(--bg);
 }
-#dash-header h1{
-  font-size:var(--fs-h1); line-height:1.2; font-weight:800; margin:0 0 12px 0; display:flex; align-items:center; gap:10px;
-}
-#dash-header h1 .app-logo{
-  height:28px; width:auto; display:block; flex:0 0 auto; /* stable logo */
-}
-#dash-header input,#dash-header button,#dash-header select{
-  font:inherit; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:#fff;
-}
+#dash-header h1{ font-size:var(--fs-h1); line-height:1.2; font-weight:800; margin:0 0 12px 0; display:flex; align-items:center; gap:10px; }
+#dash-header h1 .app-logo{ height:28px; width:auto; display:block; flex:0 0 auto; }
+#dash-header input,#dash-header button,#dash-header select{ font:inherit; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:#fff; }
 #dash-header button{ cursor:pointer; }
 #dash-header .muted{ color:var(--muted); }
 
-/* Table container (owns vertical scroll area below header) */
+/* the ONLY vertical scroller for the dashboard */
 #dash-table{
   flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; overscroll-behavior:contain;
   padding:0 12px 0; box-sizing:border-box;
 }
 
-/* Scroller (unified; no extra bottom padding, no spacer) */
+/* unified scrollport: owns the bottom floor; no ::after, no table margins */
 #dash-table-scroller{
-  flex:1 1 auto; min-height:0; max-height:60vh;
+  flex:1 1 auto; min-height:0; max-height:60vh; /* desktop/tablet cap */
   overflow-y:auto; overflow-x:auto; -webkit-overflow-scrolling:touch;
-  padding-bottom:0; scroll-padding-bottom:0; scrollbar-gutter:stable; box-sizing:border-box; max-width:100%; text-align:left;
+  padding-bottom:56px;             /* single source of floor on desktop */
+  scroll-padding-bottom:56px;      /* mirror for programmatic scroll */
+  scrollbar-gutter:stable both-edges;
+  box-sizing:border-box; max-width:100%; text-align:left;
 }
 
-/* Table fit + compact floor handled only by table margin */
+/* table fit */
 #dash-table-scroller table{
   margin:0; border-collapse:collapse; width:max-content; font-size:var(--fs-base); background:var(--bg);
 }
-
-/* Cells */
 #dash-table-scroller th,#dash-table-scroller td{
   padding:var(--pad-cell-y) var(--pad-cell-x); white-space:nowrap; text-align:right; border:1px solid var(--border);
 }
 #dash-table-scroller th:first-child,#dash-table-scroller td:first-child{ text-align:left; }
 
-/* Sticky header */
+/* sticky header */
 #dash-table-scroller thead{
   position:sticky; top:0; z-index:5; background:var(--sum-bg);
   box-shadow:0 2px 6px rgba(0,0,0,.08); border-bottom:1px solid var(--border);
 }
-#dash-table-scroller thead th{
-  background-color:var(--sum-bg); font-weight:700; position:relative; z-index:5;
-}
+#dash-table-scroller thead th{ background-color:var(--sum-bg); font-weight:700; position:relative; z-index:5; }
 
-/* Sticky first column */
+/* sticky first column */
 #dash-table-scroller thead>tr>:first-child,
 #dash-table-scroller tbody>tr>:first-child,
 #dash-table-scroller tfoot>tr>:first-child{ position:sticky; left:0; }
@@ -2392,23 +2386,17 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller thead>tr>:first-child{ background-color:var(--sum-bg); z-index:6; }
 #dash-table-scroller tfoot>tr>:first-child{ background:inherit; z-index:4; }
 
-/* Footer band */
-#dash-table-scroller tfoot{
-  background:var(--sum-bg); box-shadow:0 -3px 8px rgba(0,0,0,.08);
-}
-#dash-table-scroller tfoot th,#dash-table-scroller tfoot td{
-  font-weight:600; background:inherit; border-top:1px solid var(--border);
-}
+/* footer band */
+#dash-table-scroller tfoot{ background:var(--sum-bg); box-shadow:0 -3px 8px rgba(0,0,0,.08); }
+#dash-table-scroller tfoot th,#dash-table-scroller tfoot td{ font-weight:600; background:inherit; border-top:1px solid var(--border); }
 
-/* Sum column band */
+/* sum column band */
 #dash-table-scroller thead th:last-child,
 #dash-table-scroller tbody td:last-child,
 #dash-table-scroller tfoot th:last-child,
-#dash-table-scroller tfoot td:last-child{
-  background:var(--sum-bg); font-weight:600;
-}
+#dash-table-scroller tfoot td:last-child{ background:var(--sum-bg); font-weight:600; }
 
-/* Utilities */
+/* utilities */
 #dash .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
 #dash input,#dash button,#dash select{ padding:6px 10px; }
 #loc-wrap #locationID{ width:36ch; max-width:100%; }
@@ -2417,37 +2405,28 @@ body.high-contrast .modal-menu-item.is-active {
   margin-left:auto; font:inherit; line-height:1; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer;
   transition:background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
-#copy-tsv:hover,#copy-tsv:focus-visible{
-  background:#f8fafc; box-shadow:0 1px 2px rgba(0,0,0,.06); outline:none;
-}
-#copy-tsv.copied{
-  background:#e2e8f0; border-color:#cbd5e1; box-shadow:inset 0 0 0 1px rgba(0,0,0,.02);
-}
+#copy-tsv:hover,#copy-tsv:focus-visible{ background:#f8fafc; box-shadow:0 1px 2px rgba(0,0,0,.06); outline:none; }
+#copy-tsv.copied{ background:#e2e8f0; border-color:#cbd5e1; box-shadow:inset 0 0 0 1px rgba(0,0,0,.02); }
 
-/* End-gap: single source of truth (≈ −2 rows). No ::after, no scroller padding. */
-#dash-table-scroller table{ margin-bottom:12px; } /* fallback when lh unsupported */
+/* desktop/tablet: scale the floor with row-height when available */
 @supports (height:1lh){
-  #dash-table-scroller table{
-    margin-bottom:clamp(12px, calc(0.25lh + env(safe-area-inset-bottom,0px)), 4dvh);
+  #dash-table-scroller{
+    padding-bottom:clamp(32px, 1.25lh, 7dvh);     /* ≈ two rows room */
+    scroll-padding-bottom:clamp(32px, 1.25lh, 7dvh);
   }
 }
 
-/* Mobile/touch: respect safe-area; same single-source margin */
+/* Mobile/touch: dynamic viewport + safe-area; same single source */
 @media (pointer:coarse), (max-width:640px){
   #dash-table-scroller{
-    max-height:60vh; height:auto; -webkit-overflow-scrolling:touch;
-    padding-bottom:env(safe-area-inset-bottom,0px); scroll-padding-bottom:env(safe-area-inset-bottom,0px);
-  }
-  /* keep one margin source; larger min to clear chrome slightly */
-  #dash-table-scroller table{ margin-bottom:16px; }
-  @supports (height:1lh){
-    #dash-table-scroller table{
-      margin-bottom:clamp(16px, calc(0.5lh + env(safe-area-inset-bottom,0px)), 6dvh);
-    }
+    max-height:60svh; height:auto; /* svh tracks visible space */
+    padding-bottom:calc(clamp(20px, 1.5lh, 8dvh) + env(safe-area-inset-bottom,0px));
+    scroll-padding-bottom:calc(clamp(20px, 1.5lh, 8dvh) + env(safe-area-inset-bottom,0px));
+    -webkit-overflow-scrolling:touch;
   }
 }
 
-/* One-line label+input; scroll when narrow */
+/* one-line label+input; scroll when narrow */
 #dash-header #loc-wrap{ display:inline-flex; align-items:center; gap:8px; white-space:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; }
-/* Compact input */
+/* compact input */
 #dash-header #loc-wrap input#locationID{ width:22ch; flex:0 0 auto; min-width:10ch; }
