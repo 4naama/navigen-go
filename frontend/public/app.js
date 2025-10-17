@@ -683,13 +683,17 @@ function filterLocations(q) {
     // include contact tokens too (person/phone/email); addr already holds postal/city/region)
     const lower = el.dataset.lower || '';
     const nameAttr = el.getAttribute('data-name') || '';
-    const tags = el.getAttribute('data-tags') || '';
+    const tags = el.getAttribute('data-tags') || '';          // ← tag expressions searched word-by-word
     const addr = el.getAttribute('data-addr') || '';
     const contactPerson = el.dataset.contactPerson || '';
     const contact = el.getAttribute('data-contact') || '';
     const hay = norm(`${lower} ${nameAttr} ${tags} ${addr} ${contactPerson} ${contact}`);
 
-    const show = hay.includes(query);
+    // token-AND match: every word must appear as a full word (no fuzzy, punctuation-safe)
+    const tokens = query.split(' ').filter(Boolean);
+    const hayWords = hay.split(/[^a-z0-9]+/);
+    const show = tokens.every(tok => hayWords.includes(tok));
+
     el.style.display = show ? '' : 'none';
     el.setAttribute('aria-hidden', String(!show));
   });
