@@ -2379,12 +2379,33 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller thead th{ background-color:var(--sum-bg); font-weight:700; position:relative; z-index:5; }
 
 /* sticky first column */
+/* Sticky first column — same rule for head/body/foot; higher stacking so others slide under */
 #dash-table-scroller thead>tr>:first-child,
 #dash-table-scroller tbody>tr>:first-child,
-#dash-table-scroller tfoot>tr>:first-child{ position:sticky; left:0; }
-#dash-table-scroller tbody>tr>:first-child{ background:#fff; z-index:3; }
-#dash-table-scroller thead>tr>:first-child{ background-color:var(--sum-bg); z-index:6; }
-#dash-table-scroller tfoot>tr>:first-child{ background:inherit; z-index:4; }
+#dash-table-scroller tfoot>tr>:first-child{
+  position: sticky;
+  left: 0;                              /* stick colMetric to left edge */
+  background-clip: padding-box;         /* avoid bleed under border */
+  box-shadow: 1px 0 0 var(--border);    /* subtle divider on the right */
+}
+
+/* Head cell: "Metric" */
+#dash-table-scroller thead>tr>:first-child{
+  background-color: var(--sum-bg);
+  z-index: 30;
+}
+
+/* Body cells: metric values */
+#dash-table-scroller tbody>tr>:first-child{
+  background: #fff;
+  z-index: 20;
+}
+
+/* Foot cell: "Sum" — match head behavior */
+#dash-table-scroller tfoot>tr>:first-child{
+  background-color: var(--sum-bg);      /* same band as thead */
+  z-index: 25;                          /* above body, below header */
+}
 
 /* footer band */
 #dash-table-scroller tfoot{ background:var(--sum-bg); box-shadow:0 -3px 8px rgba(0,0,0,.08); }
