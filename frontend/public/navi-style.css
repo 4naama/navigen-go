@@ -2405,13 +2405,14 @@ body.high-contrast .modal-menu-item.is-active {
   box-sizing: border-box;
 }
 
-/* horizontal scrolling lives INSIDE the table scroller */
-/* Scroller fills the available space and provides the only inner scroll */
+/* scroller owns both vertical and horizontal scroll; keep a stable cap */
 #dash-table-scroller{
-  flex: 1 1 auto;      /* NEW: consume remaining height in #dash-table */
-  min-height: 0;       /* NEW: allow shrinking below content height */
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 60vh;                /* <- bound height so inner area scrolls */
   overflow-y: auto;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* momentum on iOS */
   padding-bottom: 12px;
   scroll-padding-bottom: 12px;
   scrollbar-gutter: stable;
@@ -2553,19 +2554,16 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* Mobile/touch: ensure last rows can scroll fully into view */
 @media (pointer: coarse), (max-width: 640px){
-  /* Let the scroller size naturally; keep momentum scroll */
+  /* Keep the same inner scroll behavior on phones */
   #dash-table-scroller{
-    max-height: none;         /* remove 70vh cap on phones */
+    max-height: 60vh;         /* <- keep the cap on small screens too */
     height: auto;
-    padding-bottom: 16px;     /* small, single bottom cushion */
+    padding-bottom: 16px;
     scroll-padding-bottom: 16px;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Remove extra spacer that shortens the reachable range */
   #dash-table-scroller::after{ height: 0; }
-
-  /* Neutralize large bottom margins so last rows are reachable */
   #dash-table-scroller table{ margin-bottom: 16px !important; }
 }
 
