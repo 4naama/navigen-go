@@ -2378,33 +2378,42 @@ body.high-contrast .modal-menu-item.is-active {
 }
 #dash-table-scroller thead th{ background-color:var(--sum-bg); font-weight:700; position:relative; z-index:5; }
 
-/* sticky first column */
-/* Sticky first column — same rule for head/body/foot; higher stacking so others slide under */
+/* Sticky first column — refreeze colMetric and keep Sum aligned like Metric */
 #dash-table-scroller thead>tr>:first-child,
 #dash-table-scroller tbody>tr>:first-child,
 #dash-table-scroller tfoot>tr>:first-child{
   position: sticky;
-  left: 0;                              /* stick colMetric to left edge */
-  background-clip: padding-box;         /* avoid bleed under border */
-  box-shadow: 1px 0 0 var(--border);    /* subtle divider on the right */
+  left: 0;                  /* lock to left edge (freeze) */
+  top: auto; bottom: auto;  /* prevent vertical stickiness here */
+  background-clip: padding-box;
+  box-shadow: 1px 0 0 var(--border);
+  transform: translateZ(0); /* Safari/iOS: ensure a stable sticky layer */
+  contain: paint;           /* keep paint isolated so scrollers slide under */
+  z-index: 10;              /* base; section-specific rules lift above */
 }
 
 /* Head cell: "Metric" */
 #dash-table-scroller thead>tr>:first-child{
   background-color: var(--sum-bg);
-  z-index: 30;
+  z-index: 40;
 }
 
 /* Body cells: metric values */
 #dash-table-scroller tbody>tr>:first-child{
   background: #fff;
-  z-index: 20;
+  z-index: 30;
 }
 
-/* Foot cell: "Sum" — match head behavior */
+/* Foot cell: "Sum" — same visuals as header so scrollers pass underneath */
 #dash-table-scroller tfoot>tr>:first-child{
-  background-color: var(--sum-bg);      /* same band as thead */
-  z-index: 25;                          /* above body, below header */
+  background-color: var(--sum-bg);
+  z-index: 35;
+}
+
+/* Ensure table provides a stable containing block for sticky cells (iOS/Safari quirks) */
+#dash-table-scroller table{
+  position: relative;      /* keeps sticky left stable in some WebKit builds */
+  table-layout: fixed;     /* consistent column geometry while scrolling */
 }
 
 /* footer band */
