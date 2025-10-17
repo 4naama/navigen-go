@@ -689,10 +689,9 @@ function filterLocations(q) {
     const contact = el.getAttribute('data-contact') || '';
     const hay = norm(`${lower} ${nameAttr} ${tags} ${addr} ${contactPerson} ${contact}`);
 
-    // token-AND match: every word must appear as a full word (no fuzzy, punctuation-safe)
+    // token-AND match: every word in the query must appear in hay
     const tokens = query.split(' ').filter(Boolean);
-    const hayWords = hay.split(/[^a-z0-9]+/);
-    const show = tokens.every(tok => hayWords.includes(tok));
+    const show = tokens.every(tok => hay.includes(tok));
 
     el.style.display = show ? '' : 'none';
     el.setAttribute('aria-hidden', String(!show));
