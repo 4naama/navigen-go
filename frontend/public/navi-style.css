@@ -2569,8 +2569,10 @@ body.high-contrast .modal-menu-item.is-active {
   #dash-table-scroller table{ margin-bottom: 16px !important; }
 }
 
-/* compact input; prevent flex growth */
-#dash-header #locationID { width: 28ch; max-width: 100%; flex: 0 0 auto; }
-#dash-header #loc-wrap { max-width: 32ch; } /* cap label+input group */
-#dash-header #loc-wrap input { min-width: 0; } /* allow shrink in flex */
+/* one-line label+input; scroll when narrow */
+#dash-header #loc-wrap { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* compact input; no wrap; text scrolls inside */
+#dash-header #loc-wrap input#locationID { width: 22ch; flex: 0 0 auto; min-width: 10ch; }
+
 
