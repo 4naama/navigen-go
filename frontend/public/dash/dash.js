@@ -66,12 +66,11 @@ const ORDER = [
   'share','save','unsave','map','qr-view'
 ];
 
-// display labels for metrics (centralized, tweak here)
-// fallback humanizer keeps others readable; 2-line comments only
+// display labels for metrics (ids must match ORDER exactly)
 const METRIC_LABEL = Object.freeze({
-  lpm_open: t('metric.lpm-open'),
-  call:     t('metric.call'),
-  qr_view:  t('metric.qr-view'),
+  'lpm-open': t('metric.lpm-open'),
+  call:       t('metric.call'),
+  'qr-view':  t('metric.qr-view'),
 });
 
 const HUMANIZE = (k) => {
