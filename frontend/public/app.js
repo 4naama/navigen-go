@@ -683,14 +683,20 @@ function filterLocations(q) {
     // include contact tokens too (person/phone/email); addr already holds postal/city/region)
     const lower = el.dataset.lower || '';
     const nameAttr = el.getAttribute('data-name') || '';
-    const tags = el.getAttribute('data-tags') || '';          // ← tag expressions searched word-by-word
+    // include tags even if data-tags is missing: read visible tag chips too
+    let tags = el.getAttribute('data-tags') || '';
+    if (!tags) {
+      tags = Array.from(el.querySelectorAll('[data-tag], .tag, .tags [data-tag], .tags .tag'))
+        .map(n => n.textContent || '')
+        .join(' ');
+    }
     const addr = el.getAttribute('data-addr') || '';
     const contactPerson = el.dataset.contactPerson || '';
     const contact = el.getAttribute('data-contact') || '';
     const hay = norm(`${lower} ${nameAttr} ${tags} ${addr} ${contactPerson} ${contact}`);
 
     // token-AND match: every word in the query must appear in hay
-    const tokens = query.split(' ').filter(Boolean);
+    const tokens = norm(query).split(/\s+/).filter(Boolean);
     const show = tokens.every(tok => hay.includes(tok));
 
     el.style.display = show ? '' : 'none';
