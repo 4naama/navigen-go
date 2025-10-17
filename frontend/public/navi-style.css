@@ -2568,3 +2568,5 @@ body.high-contrast .modal-menu-item.is-active {
   /* Neutralize large bottom margins so last rows are reachable */
   #dash-table-scroller table{ margin-bottom: 16px !important; }
 }
+/* compact Location input; longer IDs scroll horizontally */
+#locationID { width: 28ch; max-width: 100%; }
