@@ -2465,3 +2465,13 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-header #loc-wrap{ display:inline-flex; align-items:center; gap:8px; white-space:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 /* compact input */
 #dash-header #loc-wrap input#locationID{ width:22ch; flex:0 0 auto; min-width:10ch; }
+
+/* Decorative refresh glyph after Period selector (UI-only) */
+#period-refresh{
+  font-size: inherit;      /* same size as ⧉ button text */
+  line-height: 1;          /* align with controls */
+  margin-left: 1ch;        /* ~one “space” width */
+  vertical-align: middle;  /* sit nicely on baseline */
+  opacity: .85;            /* subtle, not a button */
+  user-select: none;       /* decorative only */
+}
