@@ -2425,7 +2425,7 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller::after{
   content:"";
   display:block;
-  height: 24px;                  /* gentle breathing room at bottom */
+  height: 32px; /* mild base spacer; phones get larger below */
 }
 
 /* table fit + no layout shift when wide (dashboard-only) */
@@ -2554,17 +2554,18 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* Mobile/touch: ensure last rows can scroll fully into view */
 @media (pointer: coarse), (max-width: 640px){
-  /* Keep the same inner scroll behavior on phones */
   #dash-table-scroller{
-    max-height: 60vh;         /* <- keep the cap on small screens too */
+    max-height: 60vh;
     height: auto;
-    padding-bottom: 16px;
-    scroll-padding-bottom: 16px;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));      /* larger floor on phones */
+    scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));/* stop last row above chrome */
     -webkit-overflow-scrolling: touch;
   }
 
-  #dash-table-scroller::after{ height: 0; }
-  #dash-table-scroller table{ margin-bottom: 16px !important; }
+  #dash-table-scroller::after{ height: calc(48px + env(safe-area-inset-bottom, 0px)); } /* restore spacer */
+  #dash-table-scroller table{
+    margin-bottom: clamp(48px, calc(2.25lh + env(safe-area-inset-bottom, 0px)), 10dvh) !important; /* readable end gap */
+  }
 }
 
 /* one-line label+input; scroll when narrow */
