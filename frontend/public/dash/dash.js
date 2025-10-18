@@ -128,7 +128,7 @@ const ORDER = [
   'lpm-open','call','email','whatsapp','telegram','messenger',
   'official','booking','newsletter',
   'facebook','instagram','pinterest','spotify','tiktok','youtube',
-  'share','save','unsave','map', qr-view
+  'share','save','unsave','map', 'qr-view'
 ];
 
 // display labels for metrics (ids must match ORDER exactly)
