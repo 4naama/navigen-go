@@ -91,11 +91,12 @@ export default {
             const name = k.name; // stats:<loc>:<day>:<event>
             const parts = name.split(":");
             if (parts.length !== 4) continue;
-            const day = parts[2], ev = parts[3] as EventKey;
+            const day = parts[2];
+            const ev = (parts[3] as string).replaceAll("_", "-") as EventKey;
             if (day < from || day > to) continue;
             const n = parseInt((await env.KV_STATS.get(name))||"0",10) || 0; // safe read
             if (!days[day]) days[day] = {};
-            days[day][ev] = n;
+            days[day][ev] = (days[day][ev] || 0) + n;
           }
           cursor = page.cursor || undefined;
         } while (cursor);
@@ -128,11 +129,12 @@ export default {
             for (const k of page.keys) {
               const parts = k.name.split(":");
               if (parts.length !== 4) continue;
-              const day = parts[2], ev = parts[3] as EventKey;
+              const day = parts[2];
+              const ev = (parts[3] as string).replaceAll("_", "-") as EventKey;
               if (day < from || day > to) continue;
               const n = parseInt((await env.KV_STATS.get(k.name))||"0",10) || 0;
               if (!days[day]) days[day] = {};
-              days[day][ev] = (days[day][ev] || 0) + n;
+              days[day][ev] = (days[day][ev] || 0) + n; // keep additive; now normalized
             }
             cursor = page.cursor || undefined;
           } while (cursor);
