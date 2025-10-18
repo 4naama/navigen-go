@@ -199,52 +199,68 @@ function renderTable(json) {
   // meta
   const label = json.locationID ? `locationID=${json.locationID}` :
                json.entityID   ? `entityID=${json.entityID}` : '';
-  /* update period subtitle under the title */
+               
+  /* update period subtitle under the title — do NOT wipe #meta */
   {
-    const days = Number(periodEl.value) || 14;               // period length
-    const end = day(TODAY);                                   // today (local)
+    const days = Number(periodEl.value) || 14;
+    const end = day(TODAY);
     const start = new Date(end.getTime() - (days - 1) * 86400e3);
     const startISO = iso(start), endISO = iso(end);
 
-    // inline date range + right-aligned copy button
-    metaEl.innerHTML = `<span class="meta-range">${startISO} → ${endISO}</span>`;
-    let btn = document.getElementById('copy-tsv');
-    if (!btn) {
-      btn = document.createElement('button');
-      btn.id = 'copy-tsv';
-      btn.type = 'button';
-      btn.title = t('dash.copy.tsv');
-      btn.ariaLabel = t('dash.copy.tsv');
+    // 1) ensure the date-range span exists and update its text
+    let range = metaEl.querySelector('.meta-range');
+    if (!range) {
+      range = document.createElement('span');
+      range.className = 'meta-range';
+      metaEl.prepend(range);               // keep existing buttons intact
+    }
+    range.textContent = `${startISO} → ${endISO}`;
 
-      btn.textContent = '⧉'; // copy/duplicate emoji
-      btn.addEventListener('click', async () => {
+    // 2) ensure Copy button exists (id is stable)
+    let copyBtn = document.getElementById('copy-tsv');
+    if (!copyBtn) {
+      copyBtn = document.createElement('button');
+      copyBtn.id = 'copy-tsv';
+      copyBtn.type = 'button';
+      copyBtn.title = t('dash.copy.tsv');
+      copyBtn.ariaLabel = t('dash.copy.tsv');
+      copyBtn.textContent = '⧉';
+      copyBtn.addEventListener('click', async () => {
         const table = tblWrap.querySelector('table.stats-table');
         if (!table) return;
-        const tsv = toTSV(table); // helper stays simple
-
+        const tsv = toTSV(table);
         try{
           if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(tsv);
-          else if (document.execCommand) document.execCommand('copy'); // legacy
-          // clicked feedback: 2–3s darker state
-          btn.classList.add('copied');              // visual cue
-          const oldTitle = btn.title;
-          btn.title = t('dash.copy.copied');        // short tooltip cue
-          setTimeout(() => {                        // clear after ~2.5s
-            btn.classList.remove('copied');
-            btn.title = oldTitle;
-          }, 2500);
-        }catch(_e){
-          // if copy fails, keep silent; button stays normal
-        }
+          else if (document.execCommand) document.execCommand('copy');
+          copyBtn.classList.add('copied');
+          const oldTitle = copyBtn.title;
+          copyBtn.title = t('dash.copy.copied');
+          setTimeout(() => { copyBtn.classList.remove('copied'); copyBtn.title = oldTitle; }, 2500);
+        }catch(_e){ /* noop */ }
       });
-
-      metaEl.appendChild(btn);
+      metaEl.appendChild(copyBtn);
     }
-    // lightweight inline layout so button sits to the right of the range
+
+    // 3) ensure Refresh button exists and sits before Copy
+    let refreshBtn = document.getElementById('refresh-page');
+    if (!refreshBtn) {
+      refreshBtn = document.createElement('button');
+      refreshBtn.id = 'refresh-page';
+      refreshBtn.type = 'button';
+      refreshBtn.textContent = '⟳';
+      refreshBtn.title = 'Refresh';
+      refreshBtn.setAttribute('aria-label', 'Refresh');
+      refreshBtn.addEventListener('click', () => window.location.reload());
+    }
+    if (copyBtn.previousElementSibling !== refreshBtn) {
+      copyBtn.insertAdjacentElement('beforebegin', refreshBtn);
+    }
+
+    // inline layout (once)
     metaEl.style.display = 'flex';
     metaEl.style.alignItems = 'center';
     metaEl.style.gap = '8px';
-    btn.style.marginLeft = 'auto';
+    copyBtn.style.marginLeft = 'auto';
   }
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
