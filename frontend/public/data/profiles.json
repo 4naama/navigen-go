@@ -241,7 +241,7 @@
         "en": "HD Debrecen Hadházi"
       },
       "Visible": "Yes",
-      "Priority": "No",
+      "Priority": "Yes",
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
