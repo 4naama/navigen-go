@@ -26,27 +26,62 @@ const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 
 // default: 2 weeks
-// UI-only: refresh button before Copy; reloads page on tap/click
+// Insert refresh button before Copy; reload on tap. Wait for DOM safely.
 (() => {
-  // remove older decorative glyph if present
+  // remove old decorative glyph
   const old = document.getElementById('period-refresh');
   if (old && old.parentNode) old.parentNode.removeChild(old);
 
-  // find Copy button; insert our refresh button before it
-  const copyBtn = document.getElementById('copy-tsv');
-  if (!copyBtn) return; // keep safe if header not rendered yet
+  const placeButton = () => {
+    const copyBtn = document.getElementById('copy-tsv');
+    if (!copyBtn) return false;
+    if (!document.getElementById('refresh-page')) {
+      const btn = document.createElement('button');
+      btn.id = 'refresh-page'; btn.type = 'button';
+      btn.textContent = '⟳'; btn.title = 'Refresh';
+      btn.setAttribute('aria-label','Refresh');
+      btn.addEventListener('click', () => window.location.reload()); // simple reload
+      copyBtn.insertAdjacentElement('beforebegin', btn);
+    }
+    return true;
+  };
 
-  const btn = document.createElement('button');
-  btn.id = 'refresh-page';
-  btn.type = 'button';
-  btn.textContent = '⟳'; // matches copy icon style size via CSS
-  btn.title = 'Refresh';
-  btn.setAttribute('aria-label', 'Refresh');
+  // try now, then observe header until available
+  if (!placeButton()) {
+    const header = document.getElementById('dash-header') || document.body;
+    const mo = new MutationObserver(() => { if (placeButton()) mo.disconnect(); });
+    mo.observe(header, { childList:true, subtree:true });
+    // also run after DOMContentLoaded just in case
+    document.addEventListener('DOMContentLoaded', placeButton, { once:true });
+  }
+})();
 
-  // tap/click → reload
-  btn.addEventListener('click', () => { window.location.reload(); });
-
-  copyBtn.insertAdjacentElement('beforebegin', btn);
+// Move "Single location daily counts" onto its own line (non-destructive)
+(() => {
+  const wrapSubtitle = () => {
+    const header = document.getElementById('dash-header');
+    if (!header) return false;
+    // find a text node with exact subtitle; wrap it
+    const walker = document.createTreeWalker(header, NodeFilter.SHOW_TEXT);
+    let n; while ((n = walker.nextNode())) {
+      const t = n.nodeValue && n.nodeValue.trim();
+      if (t === 'Single location daily counts') {
+        if (!n.parentNode.querySelector('.meta-linebreak')) {
+          const span = document.createElement('span');
+          span.className = 'meta-linebreak';
+          span.textContent = t;
+          n.parentNode.insertBefore(span, n);
+          n.parentNode.removeChild(n);
+        }
+        return true;
+      }
+    }
+    return false;
+  };
+  if (!wrapSubtitle()) {
+    const mo = new MutationObserver(() => { if (wrapSubtitle()) mo.disconnect(); });
+    mo.observe(document.body, { childList:true, subtree:true });
+  }
 })();
 
 // normalize date input to YYYY-MM-DD; handles valueAsDate or localized text (1-2 lines of logic, keep simple)
