@@ -393,7 +393,7 @@
   "dash.copy.copied": "Copied",
   "dash.state.loading": "Loading…",
   "dash.error.load-failed": "Failed to load stats",
-  "metric.lpm-open": "Profile view",
+  "metric.lpm_open": "Profile view",
   "metric.call": "Phone call",
-  "metric.qr-view": "QR view"
+  "metric.qr_view": "QR view"
 }

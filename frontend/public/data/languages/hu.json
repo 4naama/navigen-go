@@ -262,7 +262,7 @@
   "sub.food-groceries": "🎁 Ajándéktárgyak",
   "sub.convenience-store": "🧃 Kényelmi bolt",
   "sub.tobacco-shop": "",
-  "sub.pharmacy": "",
+  "sub.pharmacy": "Patika",
   "sub.crafts": "",
   "sub.apparel": "",
   "sub.souvenirs": "",
@@ -393,7 +393,7 @@
   "dash.copy.copied": "Másolva",
   "dash.state.loading": "Betöltés…",
   "dash.error.load-failed": "A statisztikák betöltése nem sikerült",
-  "metric.lpm-open": "Profilmegtekintés",
+  "metric.lpm_open": "Profilmegtekintés",
   "metric.call": "Telefonhívás",
-  "metric.qr-view": "QR-kód"
+  "metric.qr_view": "QR-kód"
 }

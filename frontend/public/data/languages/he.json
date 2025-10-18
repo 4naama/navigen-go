@@ -393,7 +393,7 @@
   "dash.copy.copied": "הועתק",
   "dash.state.loading": "טוען…",
   "dash.error.load-failed": "טעינת הסטטיסטיקות נכשלה",
-  "metric.lpm-open": "פרופיל",
+  "metric.lpm_open": "פרופיל",
   "metric.call": "שיחה",
-  "metric.qr-view": "קוד QR"
+  "metric.qr_view": "קוד QR"
 }
