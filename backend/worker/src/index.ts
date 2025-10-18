@@ -69,6 +69,51 @@ export default {
       if (pathname === "/api/qr") {
         return await handleQr(req, env);
       }
+
+// --- Admin purge (one-off): POST /api/admin/purge-legacy
+// Merges stats:<loc>:<day>:<event_with_underscores> into hyphen form and deletes legacy keys.
+if (pathname === "/api/admin/purge-legacy" && req.method === "POST") {
+  const auth = req.headers.get("Authorization") || "";
+  if (!auth.startsWith("Bearer ")) {
+    return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
+  }
+  const token = auth.slice(7).trim();
+  if (!token || token !== env.JWT_SECRET) {
+    return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
+  }
+
+  let cursor: string|undefined = undefined;
+  let migrated = 0, removed = 0;
+
+  do {
+    const page = await env.KV_STATS.list({ prefix: "stats:", cursor });
+    for (const k of page.keys) {
+      // keys look like: stats:<loc>:YYYY-MM-DD:<event>
+      const name = k.name;
+      const parts = name.split(":");
+      if (parts.length !== 4) continue;
+
+      const ev = parts[3];
+      if (!ev.includes("_")) continue; // only legacy
+
+      const n = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
+      // delete empty legacy rows immediately
+      if (!n) { await env.KV_STATS.delete(name); removed++; continue; }
+
+      const hyphen = ev.replaceAll("_","-");
+      const target = `stats:${parts[1]}:${parts[2]}:${hyphen}`;
+
+      const cur = parseInt((await env.KV_STATS.get(target)) || "0", 10) || 0;
+      await env.KV_STATS.put(target, String(cur + n), { expirationTtl: 60*60*24*366 });
+      await env.KV_STATS.delete(name);
+
+      migrated++; removed++;
+    }
+    cursor = page.cursor || undefined;
+  } while (cursor);
+
+  return json({ ok:true, migrated, removed }, 200);
+}
       
       // GET /api/stats?locationID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
       if (url.pathname === "/api/stats" && req.method === "GET") {
