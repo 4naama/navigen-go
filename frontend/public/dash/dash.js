@@ -179,15 +179,24 @@ function renderTable(json) {
 
   // rows: one row per metric, values across dates
   const rowsHtml = ORDER.map(metric => {
-    const vals = dates.map(d => Number(((days[d] || {})[metric]) || 0));
+    const vals = dates.map(d => {
+      const bucket = days[d] || {};
+      const alt = metric.replaceAll('-', '_'); // legacy variant
+      return Number(bucket[metric] ?? bucket[alt] ?? 0);
+    });
     const sum  = vals.reduce((a,b)=>a+b, 0);
     return `<tr><th scope="row">${labelFor(metric)}</th>${vals.map(n=>`<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
   }).join('');
 
   // footer: per-date sums (sum across all metrics for each date)
-  const perDateSums = dates.map(d =>
-    ORDER.reduce((acc, k) => acc + Number(((days[d] || {})[k]) || 0), 0)
-  );
+  const perDateSums = dates.map(d => {
+    const bucket = days[d] || {};
+    return ORDER.reduce((acc, k) => {
+      const alt = k.replaceAll('-', '_');
+      return acc + Number(bucket[k] ?? bucket[alt] ?? 0);
+    }, 0);
+  });
+
   const total = perDateSums.reduce((a,b)=>a+b, 0);
   const tfoot = `<tfoot><tr><th scope="row">${t('dash.col.sum')}</th>${perDateSums.map(n=>`<td>${n}</td>`).join('')}<td>${total}</td></tr></tfoot>`;
 
