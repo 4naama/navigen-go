@@ -98,24 +98,29 @@ function getISODate(input){
   return m ? `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}` : v; // keep last resort
 }
 
-// load initial params from URL (?locationID=…&entityID=…&mode=…)
+// load initial params from URL; tolerate missing controls
 {
   const u = new URL(location.href);
   const m = u.searchParams.get('mode') || 'location';
   const lid = u.searchParams.get('locationID') || '';
   const eid = u.searchParams.get('entityID') || '';
-  modeEl.value = m;
-  locEl.value = lid;
-  entEl.value = eid;
-  syncMode();
+
+  if (modeEl) modeEl.value = m;
+  if (locEl)  locEl.value  = lid;
+  if (entEl)  entEl.value  = eid;
+
+  if (modeEl && locWrap && entWrap) syncMode();
 }
 
-modeEl.addEventListener('change', syncMode);
+// only wire mode listener if the control exists
+if (modeEl) modeEl.addEventListener('change', syncMode);
+
 function syncMode() {
+  if (!modeEl || !entWrap || !locWrap) return; // no-op without controls
   const isEntity = modeEl.value === 'entity';
   entWrap.style.display = isEntity ? '' : 'none';
   locWrap.style.display = isEntity ? 'none' : '';
-  hintEl.textContent = t('dash.hint.single'); // baseline
+  if (hintEl) hintEl.textContent = t('dash.hint.single'); // baseline
 }
 
 // fixed order as served by your Worker (extend if needed)
@@ -146,7 +151,7 @@ const labelFor = (k) => METRIC_LABEL[k] || HUMANIZE(k);
 
 async function fetchStats() {
   const base = 'https://navigen-api.4naama.workers.dev'; // Worker stays
-  const periodDays = Number(periodEl.value) || 14;
+  const periodDays = Number(periodEl?.value) || 14;
   const end = day(TODAY);                               // today (local)
   const start = new Date(end.getTime() - (periodDays - 1) * 86400e3);
   const from = iso(start), to = iso(end);               // API window
@@ -206,7 +211,7 @@ function renderTable(json) {
                
   /* update period subtitle under the title — do NOT wipe #meta */
   {
-    const days = Number(periodEl.value) || 14;
+    const days = Number(periodEl?.value) || 14;
     const end = day(TODAY);
     const start = new Date(end.getTime() - (days - 1) * 86400e3);
     const startISO = iso(start), endISO = iso(end);
@@ -306,7 +311,9 @@ function renderTable(json) {
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
   const dispName = (json.locationName || json.entityName || '').trim();
-  hintEl.textContent = dispName ? `${t('dash.hint.single-for')} ${dispName}` : t('dash.hint.single');
+  if (hintEl) {
+    hintEl.textContent = dispName ? `${t('dash.hint.single-for')} ${dispName}` : t('dash.hint.single');
+  }
 }
 
 // Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.
@@ -356,5 +363,5 @@ async function loadAndRender(){         // single entry point
   }
 }
 
-periodEl.addEventListener('change', () => loadAndRender()); // react to user
+if (periodEl) periodEl.addEventListener('change', () => loadAndRender()); // safe if missing
 loadAndRender();                                            // auto-load once
