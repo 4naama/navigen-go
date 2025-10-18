@@ -2437,11 +2437,29 @@ body.high-contrast .modal-menu-item.is-active {
 #loc-wrap #locationID{ width:36ch; max-width:100%; }
 
 #meta{
-  display:flex; align-items:center;
-  column-gap:8px; row-gap:6px; /* cleaner spacing in wrapped rows */
-  flex-wrap:wrap;              /* allow wrap */
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;          /* allow wrap */
+  column-gap:8px;
+  row-gap:6px;
+  align-content:flex-start;
 }
-#meta .meta-linebreak{ flex-basis:100%; height:0; margin:0; } /* force next-line when present */
+
+/* Force the subtitle that follows the Period selector onto its own line */
+#meta select#period + .muted{
+  flex-basis:100%;
+  width:100%;
+  display:block;           /* guarantees line break even on wide screens */
+  white-space:normal;      /* ensure it can wrap if long */
+}
+
+/* (keep optional helper for cases where you inject an explicit break) */
+#meta .meta-linebreak{
+  flex-basis:100%;
+  width:100%;
+  height:0;
+  margin:0;
+}
 
 #copy-tsv{
   margin-left:auto; font:inherit; line-height:1; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer;
@@ -2499,8 +2517,11 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* Refresh button style (matches Copy) */
 #refresh-page{
-  font:inherit; line-height:1; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer;
-  margin-left:1em;   /* ≈ one ⟳ width of space before the button */
+  font:inherit; font-size:1.15em; /* bigger glyph to match ⧉ */
+  line-height:1;
+  padding:4px 8px;
+  border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer;
+  margin-left:0;     /* reverted: no extra gap before the button */
   margin-right:8px;  /* keep gap before Copy */
   transition:background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
