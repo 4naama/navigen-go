@@ -125,17 +125,16 @@ function syncMode() {
 
 // fixed order as served by your Worker (extend if needed)
 const ORDER = [
-  'lpm-open','call','email','whatsapp','telegram','messenger',
+  'lpm_open','call','email','whatsapp','telegram','messenger',
   'official','booking','newsletter',
   'facebook','instagram','pinterest','spotify','tiktok','youtube',
-  'share','save','unsave','map', 'qr-view'
+  'share','save','unsave','map','qr_view'
 ];
 
 // display labels for metrics (ids must match ORDER exactly)
 const METRIC_LABEL = Object.freeze({
   'lpm-open': t('metric.lpm-open'),
   call:       t('metric.call'),
-  'qr-view':  t('metric.qr-view'),
 });
 
 const HUMANIZE = (k) => {
