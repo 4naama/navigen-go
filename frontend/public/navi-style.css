@@ -2440,24 +2440,16 @@ body.high-contrast .modal-menu-item.is-active {
   display:flex;
   align-items:center;
   flex-wrap:wrap;          /* allow wrap */
-  column-gap:8px;
-  row-gap:6px;
-  align-content:flex-start;
+  column-gap:8px;          /* horizontal spacing between items */
+  row-gap:6px;             /* vertical spacing between wrapped rows */
+  align-content:flex-start;/* keep wrapped rows tight under the first line */
 }
 
-/* Force the subtitle that follows the Period selector onto its own line */
-#meta select#period + .muted{
-  flex-basis:100%;
-  width:100%;
-  display:block;           /* guarantees line break even on wide screens */
-  white-space:normal;      /* ensure it can wrap if long */
-}
-
-/* (keep optional helper for cases where you inject an explicit break) */
+/* Single, explicit line-break helper: insert a bare element with this class */
 #meta .meta-linebreak{
-  flex-basis:100%;
+  flex-basis:100%;   /* push following items to a new line */
   width:100%;
-  height:0;
+  height:0;          /* no extra vertical space by itself */
   margin:0;
 }
 
