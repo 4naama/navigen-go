@@ -26,17 +26,27 @@ const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 
 // default: 2 weeks
-periodEl.value = '14';
-// UI-only: show a refresh glyph right after the Period selector (no action)
+// UI-only: refresh button before Copy; reloads page on tap/click
 (() => {
-  const id = 'period-refresh';
-  if (!document.getElementById(id)) {
-    const span = document.createElement('span');
-    span.id = id;
-    span.textContent = '⟳';           // visual hint only
-    span.setAttribute('aria-hidden','true'); // decorative
-    periodEl.insertAdjacentElement('afterend', span); // place after select
-  }
+  // remove older decorative glyph if present
+  const old = document.getElementById('period-refresh');
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+
+  // find Copy button; insert our refresh button before it
+  const copyBtn = document.getElementById('copy-tsv');
+  if (!copyBtn) return; // keep safe if header not rendered yet
+
+  const btn = document.createElement('button');
+  btn.id = 'refresh-page';
+  btn.type = 'button';
+  btn.textContent = '⟳'; // matches copy icon style size via CSS
+  btn.title = 'Refresh';
+  btn.setAttribute('aria-label', 'Refresh');
+
+  // tap/click → reload
+  btn.addEventListener('click', () => { window.location.reload(); });
+
+  copyBtn.insertAdjacentElement('beforebegin', btn);
 })();
 
 // normalize date input to YYYY-MM-DD; handles valueAsDate or localized text (1-2 lines of logic, keep simple)

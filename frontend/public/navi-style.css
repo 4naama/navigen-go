@@ -2436,12 +2436,27 @@ body.high-contrast .modal-menu-item.is-active {
 #dash input,#dash button,#dash select{ padding:6px 10px; }
 #loc-wrap #locationID{ width:36ch; max-width:100%; }
 #meta{ display:flex; align-items:center; gap:8px; }
+
 #copy-tsv{
   margin-left:auto; font:inherit; line-height:1; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer;
   transition:background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
-#copy-tsv:hover,#copy-tsv:focus-visible{ background:#f8fafc; box-shadow:0 1px 2px rgba(0,0,0,.06); outline:none; }
-#copy-tsv.copied{ background:#e2e8f0; border-color:#cbd5e1; box-shadow:inset 0 0 0 1px rgba(0,0,0,.02); }
+#copy-tsv:hover,#copy-tsv:focus-visible{
+  background:#f8fafc; box-shadow:0 1px 2px rgba(0,0,0,.06); outline:none;
+}
+#copy-tsv.copied{
+  background:#e2e8f0; border-color:#cbd5e1; box-shadow:inset 0 0 0 1px rgba(0,0,0,.02);
+}
+
+/* Refresh button — same look/feel; placed before Copy */
+#refresh-page{
+  font:inherit; line-height:1; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer;
+  margin-right:8px;           /* spacing before Copy button */
+  transition:background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+#refresh-page:hover,#refresh-page:focus-visible{
+  background:#f8fafc; box-shadow:0 1px 2px rgba(0,0,0,.06); outline:none;
+}
 
 /* desktop/tablet: scale the floor with row-height when available */
 @supports (height:1lh){
