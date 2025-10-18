@@ -25,6 +25,10 @@ const TODAY = new Date();
 const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 
+// Match app behavior: reload when tapping the logo
+const dashLogo = document.getElementById('logo-icon');
+if (dashLogo) dashLogo.addEventListener('click', () => location.reload());
+
 // default: 2 weeks
 // Insert refresh button before Copy; reload on tap. Wait for DOM safely.
 (() => {

@@ -2531,16 +2531,10 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller td.delta-down{ background:#FECACA; } /* reddish */
 /* no delta-eq: ties remain with default styling */
 
-/* colMetric distinct band + soft right-edge shade */
-#dash-table-scroller thead>tr>:first-child{
-  background: var(--sum-bg); /* align with header band */
-  box-shadow: 1px 0 0 var(--border), 8px 0 8px -6px rgba(0,0,0,.12); /* right-edge shade */
-}
-#dash-table-scroller tbody>tr>:first-child{
-  background: #fafafa; /* subtle body band */
-  box-shadow: 1px 0 0 var(--border), 8px 0 8px -6px rgba(0,0,0,.12); /* same shade */
-}
+/* colMetric distinct band — unified blueish tint + soft right-edge shade */
+#dash-table-scroller thead>tr>:first-child,
+#dash-table-scroller tbody>tr>:first-child,
 #dash-table-scroller tfoot>tr>:first-child{
-  background: var(--sum-bg); /* align with Sum band */
-  box-shadow: 1px 0 0 var(--border), 8px 0 8px -6px rgba(0,0,0,.12);
+  background: #EAF2FF; /* same-grade blueish tint across the whole column */
+  box-shadow: 1px 0 0 var(--border), 8px 0 8px -6px rgba(0,0,0,.12); /* right-edge shade */
 }
