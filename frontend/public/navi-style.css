@@ -2525,3 +2525,18 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* Force “Single location daily counts” onto the next line */
 .meta-linebreak{ flex-basis:100%; display:block; margin-top:8px; }
+
+/* Delta highlighting for latest date column (no borders) */
+#dash-table-scroller td.delta-up{
+  background: rgba(22,163,74,.16);  /* green tint */
+  color: #065f46;                   /* readable on tint */
+  font-weight: 600;                 /* subtle emphasis */
+}
+#dash-table-scroller td.delta-down{
+  background: rgba(220,38,38,.16);  /* red tint */
+  color: #7f1d1d;
+  font-weight: 600;
+}
+#dash-table-scroller td.delta-eq{
+  background: rgba(100,116,139,.08);/* neutral tint */
+}

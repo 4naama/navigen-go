@@ -282,17 +282,20 @@ function renderTable(json) {
           const cells = tr.cells;
           if (cells.length <= lastIdx) continue;
 
-          // reset any previous color on data cells
-          for (let i = 1; i < cells.length; i++) cells[i].style.removeProperty('color');
+          // reset any previous delta classes on data cells
+          for (let i = 1; i < cells.length; i++){
+            cells[i].classList.remove('delta-up','delta-down','delta-eq');
+          }
 
           const a = toNum(cells[prevIdx]?.textContent);
           const b = toNum(cells[lastIdx]?.textContent);
 
           if (Number.isFinite(a) && Number.isFinite(b)) {
-            if (b > a)      cells[lastIdx].style.color = '#166534'; // green ↑
-            else if (b < a) cells[lastIdx].style.color = '#991b1b'; // red ↓
-            // equal → leave default color
+            if (b > a)      cells[lastIdx].classList.add('delta-up');   // green tint
+            else if (b < a) cells[lastIdx].classList.add('delta-down'); // red tint
+            else            cells[lastIdx].classList.add('delta-eq');   // neutral tint
           }
+
         }
       }
     }
