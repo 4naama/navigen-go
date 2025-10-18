@@ -2509,7 +2509,7 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* Refresh button style (matches Copy) */
 #refresh-page{
-  font:inherit; font-size:1.15em; /* bigger glyph to match ⧉ */
+  font-size:1.15em; /* bigger glyph to match ⧉ */
   line-height:1;
   padding:4px 8px;
   border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer;
