@@ -344,15 +344,9 @@ async function loadAndRender(){         // single entry point
     tblWrap.textContent = t('dash.state.loading');
     const json = await fetchStats();
     if (Array.isArray(json.order) && json.order.length){
-      // exclude dummy rows in any naming style (dash/underscore/space/case)
-      const N = (s) => String(s || '').trim().toLowerCase();
-      const EXCLUDE = new Set([
-        'qr-view', 'qr view', 'qr_view',         // dummy QR
-        'profile-view', 'profile view', 'profile_view' // dummy Profile
-      ]);
-      json.order.forEach(k => {
-        const key = N(k);
-        if (!EXCLUDE.has(key) && !ORDER.includes(k)) ORDER.push(k);
+      // merge server-specified order; backend guarantees correct keys (underscored)
+      json.order.forEach((k) => {
+        if (!ORDER.includes(k)) ORDER.push(k);
       });
     }
 
