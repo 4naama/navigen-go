@@ -2509,13 +2509,12 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* Refresh button style (matches Copy) */
 #refresh-page{
-  /* Force consistent emoji size across devices (incl. iOS) */
-  font-size:clamp(1em, 1rem + 2px, 1.35em); /* nudge above base, cap on desktop */
-  -webkit-text-size-adjust:100%;            /* stop iOS text auto-shrink */
+  font-size:1.15em; /* bigger glyph to match ⧉ */
   line-height:1;
   padding:4px 8px;
   border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer;
-  margin-left:0; margin-right:8px;
+  margin-left:0;     /* reverted: no extra gap before the button */
+  margin-right:8px;  /* keep gap before Copy */
   transition:background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
 
