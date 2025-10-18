@@ -5,10 +5,10 @@ import QRCode from "qrcode";
 
 // Fixed event order used by API + UI
 const EVENT_ORDER = [
-  "lpm_open","call","email","whatsapp","telegram","messenger",
+  "lpm-open","call","email","whatsapp","telegram","messenger",
   "official","booking","newsletter",
   "facebook","instagram","pinterest","spotify","tiktok","youtube",
-  "share","save","unsave","map","qr_view"
+  "share","save","unsave","map","qr-view"
 ] as const;
 type EventKey = typeof EVENT_ORDER[number];
 
@@ -201,7 +201,7 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
   const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(resolved || "");
 
   // count the view against the resolved ULID when we have one; otherwise skip counting
-  if (isUlid) await increment(env.KV_STATS, keyForStat(resolved!, "qr_view"));
+  if (isUlid) await increment(env.KV_STATS, keyForStat(resolved!, "qr-view"));
 
   const target = isUlid
     ? `https://navigen.io/?lp=${encodeURIComponent(resolved!)}${c ? `&c=${encodeURIComponent(c)}` : ""}`
@@ -222,7 +222,7 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   const now = new Date();
   const country = (req as any).cf?.country || "";
   const day = dayKeyFor(now, undefined, country); // uses Berlin fallback internally
-  await kvIncr(env.KV_STATS, `stats:${raw}:${day}:qr_view`);
+  await kvIncr(env.KV_STATS, `stats:${raw}:${day}:qr-view`);
 
   const resolved = await resolveUid(raw, env);
   const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(resolved || "");
@@ -272,7 +272,7 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   }
   
   // Only accept known event types (open list as needed)
-  const allowed = new Set(["cta_click", "qr_view", "lpm_open"]);
+  const allowed = new Set(["cta_click", "qr-view", "lpm-open"]);
   if (!allowed.has(event)) {
     return json({ error: { code: "invalid_request", message: "unsupported event" } }, 400);
   }
@@ -281,7 +281,7 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   const now = new Date();
   const country = (req as any).cf?.country || "";      // CF edge country
   const tz = (payload?.tz || "").trim() || undefined;  // optional client tz
-  // map "cta_click" + action → button key; pass through "lpm_open"
+  // map "cta_click" + action → button key; pass through "lpm-open"
   const evKey = (event === "cta_click")
     ? String(action || "").toLowerCase()
     : String(event || "").toLowerCase();
