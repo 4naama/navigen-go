@@ -942,7 +942,7 @@ async function initLpmImageSlider(modal, data) {
     }    
     
     // count LPM open
-    if (data?.id) _track(data.id, 'lpm_open');   
+    if (data?.id) _track(data.id, 'lpm-open');   
 
     // CTA beacons (delegated, fires before native handlers)
     modal.addEventListener('click', (e) => {
