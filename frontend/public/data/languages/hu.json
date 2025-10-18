@@ -393,7 +393,7 @@
   "dash.copy.copied": "Másolva",
   "dash.state.loading": "Betöltés…",
   "dash.error.load-failed": "A statisztikák betöltése nem sikerült",
-  "metric.lpm_open": "Profilmegtekintés",
+  "metric.lpm-open": "Profilmegtekintés",
   "metric.call": "Telefonhívás",
-  "metric.qr_view": "QR-kód"
+  "metric.qr-view": "QR-kód"
 }
