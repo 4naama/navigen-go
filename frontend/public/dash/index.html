@@ -14,7 +14,7 @@
   <div id="dash">
     <div id="dash-header"><!-- non-scrolling: controls/meta live here -->
 
-      <!-- Same skeleton as app header for identical centering/slots -->
+      <!-- match app header skeleton -->
       <div class="header-bar">
         <img alt="Logo Icon" height="24" id="logo-icon" src="/assets/logo-icon.svg" width="24" />
         <h2 id="page-title">Dashboard</h2>
@@ -22,14 +22,29 @@
       </div>
       <p class="page-subtext"></p>
 
-      <!-- Keep dashboard-specific controls and meta under the header -->
       <div class="row">
-        …
+        <label>Mode
+          <select id="mode">
+            <option value="location">Location</option>
+            <option value="entity">Entity (sum)</option>
+          </select>
+        </label>
+        <label id="loc-wrap">Location <input id="locationID" placeholder="hd-debrecen-hadhazi-8910" /></label>
+        <label id="ent-wrap" style="display:none">entityID <input id="entityID" placeholder="helen-doron" /></label>
+        <label>Period
+          <select id="period">
+            <option value="1">1 day (24h)</option>
+            <option value="7">1 week (7 days)</option>
+            <option value="14" selected>2 weeks (14 days)</option>
+            <option value="28">4 weeks (28 days)</option>
+            <option value="56">8 weeks (56 days)</option>
+          </select>
+        </label>
+        <span class="muted" id="hint"></span>
       </div>
+
       <div id="meta" class="muted"></div>
-
     </div>
-
     <div id="dash-table">
       <div id="table-wrap"></div> <!-- table gets injected here -->
     </div>
