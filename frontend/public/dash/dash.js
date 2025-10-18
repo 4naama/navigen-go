@@ -284,18 +284,17 @@ function renderTable(json) {
 
           // reset any previous delta classes on data cells
           for (let i = 1; i < cells.length; i++){
-            cells[i].classList.remove('delta-up','delta-down','delta-eq');
+            cells[i].classList.remove('delta-up','delta-down');
           }
 
           const a = toNum(cells[prevIdx]?.textContent);
           const b = toNum(cells[lastIdx]?.textContent);
 
           if (Number.isFinite(a) && Number.isFinite(b)) {
-            if (b > a)      cells[lastIdx].classList.add('delta-up');   // green tint
-            else if (b < a) cells[lastIdx].classList.add('delta-down'); // red tint
-            else            cells[lastIdx].classList.add('delta-eq');   // neutral tint
+            if (b > a)      cells[lastIdx].classList.add('delta-up');   // green background
+            else if (b < a) cells[lastIdx].classList.add('delta-down'); // red background
+            // equal → no class, default look
           }
-
         }
       }
     }
