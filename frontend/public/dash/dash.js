@@ -346,7 +346,8 @@ async function loadAndRender(){         // single entry point
     const json = await fetchStats();
     if (Array.isArray(json.order) && json.order.length){
       // merge server-specified order; backend guarantees correct keys (underscored)
-      json.order.forEach((k) => {
+      json.order.forEach((kRaw) => {
+        const k = String(kRaw).replaceAll('_', '-'); // normalize legacy ids
         if (!ORDER.includes(k)) ORDER.push(k);
       });
     }
