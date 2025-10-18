@@ -261,6 +261,41 @@ function renderTable(json) {
     metaEl.style.alignItems = 'center';
     metaEl.style.gap = '8px';
     copyBtn.style.marginLeft = 'auto';
+
+    // latest column delta color (text only) vs previous date; runs on each render
+    {
+      const table = tblWrap.querySelector('table.stats-table'); // table just rendered
+      if (table && table.tHead && table.tBodies[0]) {
+        const ths = Array.from(table.tHead.rows[0].cells);
+        let sumIdx = ths.findIndex(th => th.textContent.trim().toLowerCase() === 'sum');
+        if (sumIdx < 0) sumIdx = ths.length;             // if no “Sum”, use last col
+        const lastIdx = Math.max(1, sumIdx - 1);         // last DATE column
+        const prevIdx = Math.max(1, lastIdx - 1);        // previous DATE column
+
+        const toNum = (t) => {
+          const m = String(t||'').replace(/\u00A0/g,' ').replace(/\s+/g,'').replace(/,/g,'')
+                                 .match(/-?\d+(?:\.\d+)?/);
+          return m ? Number(m[0]) : NaN;
+        };
+
+        for (const tr of table.tBodies[0].rows) {
+          const cells = tr.cells;
+          if (cells.length <= lastIdx) continue;
+
+          // reset any previous color on data cells
+          for (let i = 1; i < cells.length; i++) cells[i].style.removeProperty('color');
+
+          const a = toNum(cells[prevIdx]?.textContent);
+          const b = toNum(cells[lastIdx]?.textContent);
+
+          if (Number.isFinite(a) && Number.isFinite(b)) {
+            if (b > a)      cells[lastIdx].style.color = '#166534'; // green ↑
+            else if (b < a) cells[lastIdx].style.color = '#991b1b'; // red ↓
+            // equal → leave default color
+          }
+        }
+      }
+    }
   }
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
@@ -297,9 +332,15 @@ async function loadAndRender(){         // single entry point
     tblWrap.textContent = t('dash.state.loading');
     const json = await fetchStats();
     if (Array.isArray(json.order) && json.order.length){
-      const EXCLUDE = new Set(['qr-view','profile view','profile_view']); // drop dummy rows
+      // exclude dummy rows in any naming style (dash/underscore/space/case)
+      const N = (s) => String(s || '').trim().toLowerCase();
+      const EXCLUDE = new Set([
+        'qr-view', 'qr view', 'qr_view',         // dummy QR
+        'profile-view', 'profile view', 'profile_view' // dummy Profile
+      ]);
       json.order.forEach(k => {
-        if (!EXCLUDE.has(k) && !ORDER.includes(k)) ORDER.push(k);
+        const key = N(k);
+        if (!EXCLUDE.has(key) && !ORDER.includes(k)) ORDER.push(k);
       });
     }
 
