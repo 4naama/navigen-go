@@ -119,7 +119,7 @@ const ORDER = [
   'lpm-open','call','email','whatsapp','telegram','messenger',
   'official','booking','newsletter',
   'facebook','instagram','pinterest','spotify','tiktok','youtube',
-  'share','save','unsave','map','qr-view'
+  'share','save','unsave','map' // removed dummy 'qr-view'
 ];
 
 // display labels for metrics (ids must match ORDER exactly)
@@ -297,8 +297,12 @@ async function loadAndRender(){         // single entry point
     tblWrap.textContent = t('dash.state.loading');
     const json = await fetchStats();
     if (Array.isArray(json.order) && json.order.length){
-      json.order.forEach(k => { if (!ORDER.includes(k)) ORDER.push(k); }); // keep server order
+      const EXCLUDE = new Set(['qr-view','profile view','profile_view']); // drop dummy rows
+      json.order.forEach(k => {
+        if (!EXCLUDE.has(k) && !ORDER.includes(k)) ORDER.push(k);
+      });
     }
+
     renderTable(json);
   }catch(e){
     tblWrap.textContent = (e && e.message) ? e.message : t('dash.error.load-failed');
