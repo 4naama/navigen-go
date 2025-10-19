@@ -271,7 +271,7 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   const day = dayKeyFor(now, undefined, country); // uses Berlin fallback internally
   const resolved = await resolveUid(raw, env);
   const idForCount = resolved || raw; // ULID when available; else fallback
-  await kvIncr(env.KV_STATS, `stats:${idForCount}:${day}:qr-view`);
+  await kvIncr(env.KV_STATS, `stats:${idForCount}:${day}:qr-view`); // count under ULID when resolved
 
   const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(idForCount); // check the counted id
 
@@ -311,7 +311,7 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   }
 
   const locRaw = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : ""; // accept slug or ULID
-  const loc = await resolveUid(locRaw, env) || ""; // normalize to canonical ULID
+  const loc = await resolveUid(locRaw, env) || ""; // canonical ULID
   const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
   let action = (payload.action || "").toString().toLowerCase().replaceAll("_","-").trim(); // normalize legacy
   if (action.startsWith("nav.")) action = "map";            // nav.google/nav.apple → map
@@ -322,20 +322,18 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     return json({ error: { code: "invalid_request", message: "locationID and event required" } }, 400);
   }
   
-  // Only accept known event types (open list as needed)
-  const allowed = new Set(["cta-click", "qr-view", "lpm-open"]);
+  // validate AFTER normalization
+  const allowed = new Set(["cta-click","qr-view","lpm-open"]);
   if (!allowed.has(event)) {
     return json({ error: { code: "invalid_request", message: "unsupported event" } }, 400);
   }
-  
+
   // A) daily counter
   const now = new Date();
   const country = (req as any).cf?.country || "";      // CF edge country
   const tz = (payload?.tz || "").trim() || undefined;  // optional client tz
   // map "cta-click" + action → button key; pass through "lpm-open"
-  const evKey = (event === "cta-click")
-    ? String(action || "").toLowerCase()
-    : String(event || "").toLowerCase();
+  const evKey = (event === "cta-click") ? action : event; // already normalized/collapsed
   if ((EVENT_ORDER as readonly string[]).includes(evKey)) {
     const day = dayKeyFor(now, tz, country);
     const key = `stats:${loc}:${day}:${evKey}`;
