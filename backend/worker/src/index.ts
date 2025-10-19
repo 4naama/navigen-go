@@ -319,10 +319,11 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
   // normalize action into canonical dashboard keys
   let action = (payload.action || "").toString().toLowerCase().replaceAll("_","-").trim(); // normalize legacy
-  // normalize action into canonical keys (keep daily stats consistent)
-  if (action.startsWith("nav.")) action = "map";                  // nav.google / nav.apple → map
+  // normalize action into canonical keys (keeps daily stats consistent)
+  if (action.startsWith("nav.")) action = "map";                  // nav.google/nav.apple → map
   if (action === "route") action = "map";                         // older client emitted "route"
   if (action.startsWith("social.")) action = action.slice(7) || "other"; // social.instagram → instagram
+  if (action === "share-contact" || action === "share_contact") action = "share"; // Business Card share → share
 
   if (action.startsWith("share")) action = "share";               // share_contact / share-qr → share
   // optional: fold anything not in EVENT_ORDER into "other" (keeps data consolidated)
