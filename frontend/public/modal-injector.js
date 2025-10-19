@@ -924,7 +924,8 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
-            trackCta('share_contact');
+            // keep: maps to canonical "share" metric
+            trackCta('share'); // short, clear action id
             try {
               const text = [name, phone, email].filter(Boolean).join('\n');
               if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
