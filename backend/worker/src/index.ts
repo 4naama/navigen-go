@@ -319,7 +319,7 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   }
   
   // Only accept known event types (open list as needed)
-  const allowed = new Set(["cta_click", "qr-view", "lpm-open"]);
+  const allowed = new Set(["cta-click", "qr-view", "lpm-open"]);
   if (!allowed.has(event)) {
     return json({ error: { code: "invalid_request", message: "unsupported event" } }, 400);
   }
@@ -328,8 +328,8 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   const now = new Date();
   const country = (req as any).cf?.country || "";      // CF edge country
   const tz = (payload?.tz || "").trim() || undefined;  // optional client tz
-  // map "cta_click" + action → button key; pass through "lpm-open"
-  const evKey = (event === "cta_click")
+  // map "cta-click" + action → button key; pass through "lpm-open"
+  const evKey = (event === "cta-click")
     ? String(action || "").toLowerCase()
     : String(event || "").toLowerCase();
   if ((EVENT_ORDER as readonly string[]).includes(evKey)) {
