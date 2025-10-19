@@ -132,9 +132,27 @@ const ORDER = [
 ];
 
 // display labels for metrics (ids must match ORDER exactly)
+// keep: explicit i18n labels; others fall back to HUMANIZE()
 const METRIC_LABEL = Object.freeze({
   'lpm-open': t('metric.lpm-open'),
   'call':     t('metric.call'),
+  'email':    t('metric.email'),
+  'whatsapp': t('metric.whatsapp'),
+  'telegram': t('metric.telegram'),
+  'messenger':t('metric.messenger'),
+  'official': t('metric.official'),
+  'booking':  t('metric.booking'),
+  'newsletter': t('metric.newsletter'),
+  'facebook': t('metric.facebook'),
+  'instagram':t('metric.instagram'),
+  'pinterest':t('metric.pinterest'),
+  'spotify':  t('metric.spotify'),
+  'tiktok':   t('metric.tiktok'),
+  'youtube':  t('metric.youtube'),
+  'share':    t('metric.share'),
+  'save':     t('metric.save'),
+  'unsave':   t('metric.unsave'),
+  'map':      t('metric.map'),
   'qr-view':  t('metric.qr-view')
 });
 
