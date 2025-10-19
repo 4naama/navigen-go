@@ -943,7 +943,8 @@ async function initLpmImageSlider(modal, data) {
     }    
     
     // count LPM open
-    if (data?.id) _track(data.id, 'lpm-open');   
+    // send only with canonical ULID (prevents 400 from /api/track)
+    { const uid = String(data?.id || data?.locationID || '').trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) _track(uid, 'lpm-open'); }
 
     // CTA beacons (delegated, fires before native handlers)
     modal.addEventListener('click', (e) => {
@@ -1309,7 +1310,7 @@ async function initLpmImageSlider(modal, data) {
 
     // analytics beacon
     function trackCta(action) { // local CTA helper; avoids _track shadow
-      const uid = String(data?.id || data?.locationID || '').trim(); if (!uid) return;
+      const uid = String(data?.id || data?.locationID || '').trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
       try {
         const BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
           ? 'https://navigen-api.4naama-39c.workers.dev'
