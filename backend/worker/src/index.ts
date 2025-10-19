@@ -52,7 +52,7 @@ export default {
         headers: {
           "access-control-allow-origin": allowOrigin,
           "access-control-allow-methods": "GET,POST,OPTIONS",
-          "access-control-allow-headers": "content-type",
+          "access-control-allow-headers": "content-type, authorization",
           "access-control-max-age": "600",
           "vary": "Origin"
         }
@@ -265,14 +265,15 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   const raw = (url.searchParams.get("locationID") || "").trim();
   if (!raw) return json({ error: { code: "invalid_request", message: "locationID required" } }, 400);
 
-  // count a QR scan for daily stats
+  // count a QR scan for daily stats (prefer resolved ULID)
   const now = new Date();
   const country = (req as any).cf?.country || "";
   const day = dayKeyFor(now, undefined, country); // uses Berlin fallback internally
-  await kvIncr(env.KV_STATS, `stats:${raw}:${day}:qr-view`);
-
   const resolved = await resolveUid(raw, env);
-  const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(resolved || "");
+  const idForCount = resolved || raw; // ULID when available; else fallback
+  await kvIncr(env.KV_STATS, `stats:${idForCount}:${day}:qr-view`);
+
+  const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(idForCount); // check the counted id
 
   const c = url.searchParams.get("c") || "";
   const fmt = (url.searchParams.get("fmt") || "svg").toLowerCase();
@@ -309,9 +310,12 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     return json({ error: { code: "invalid_request", message: "JSON body required" } }, 400);
   }
 
-  const loc = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : "";
+  const locRaw = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : ""; // accept slug or ULID
+  const loc = await resolveUid(locRaw, env) || ""; // normalize to canonical ULID
   const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
-  const action = (payload.action || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
+  let action = (payload.action || "").toString().toLowerCase().replaceAll("_","-").trim(); // normalize legacy
+  if (action.startsWith("nav.")) action = "map";            // nav.google/nav.apple → map
+  if (action.startsWith("social.")) action = action.slice(7) || "other"; // social.instagram → instagram
 
   // accept locationID (primary)
   if (!loc || !event) {
