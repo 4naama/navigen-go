@@ -319,9 +319,11 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
   // normalize action into canonical dashboard keys
   let action = (payload.action || "").toString().toLowerCase().replaceAll("_","-").trim(); // normalize legacy
+  // normalize action into canonical keys (keep daily stats consistent)
   if (action.startsWith("nav.")) action = "map";                  // nav.google / nav.apple → map
   if (action === "route") action = "map";                         // older client emitted "route"
   if (action.startsWith("social.")) action = action.slice(7) || "other"; // social.instagram → instagram
+
   if (action.startsWith("share")) action = "share";               // share_contact / share-qr → share
   // optional: fold anything not in EVENT_ORDER into "other" (keeps data consolidated)
 
@@ -347,10 +349,14 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     const key = `stats:${loc}:${day}:${evKey}`;
     await kvIncr(env.KV_STATS, key);
   }
+  
+  // bucket by action (website/booking/phone/wa/apple/waze/...)
+  // keeps legacy YYYYMMDD counters for any older readers
+  const bucket = event === "cta-click" ? (action || "other") : event;
+  await increment(env.KV_STATS, keyForStat(loc, bucket));    
 
   // keep response as before (e.g., return 204)
-  // ✂ removed legacy per-bucket/todayKey counter to avoid split storage
-  // All counting happens in the daily YYYY-MM-DD scheme above.
+  // daily counters above + legacy YYYYMMDD bucket for older readers
 
   const origin = req.headers.get("Origin") || "";
   const allowOrigin = origin || "*";
