@@ -4,27 +4,18 @@ const TRACK_BASE = (location.hostname.endsWith('pages.dev') || location.hostname
   : location.origin;
 
 function _track(locId, event, action) {
-  // guard: only send when id+event exist; normalize to hyphen (2 lines max)
-  const id = String(locId || '').trim(); if (!id) return;
-  const ev = String(event || '').trim().toLowerCase(); if (!ev) return;
-  const act = String(action || '').trim().toLowerCase()
-    .replace(/^social\./, '')            // strip module prefix
-    .replaceAll('_', '-')
-    .replaceAll('.', '-');
-
+  // normalize event to the Worker’s allowed set; action kept as-is for bucketing
+  const ev = String(event || '').trim().toLowerCase().replace(/\s+/g, '-').replaceAll('.', '-').replaceAll('_', '-');
   try {
     const payload = {
-      locationID: id,
+      locationID: String(locId || ''),
       event: ev,
-      action: act,
+      action,
       lang: document.documentElement.lang || 'en',
       pageKey: location.pathname.replace(/^\/(?:[a-z]{2}\/)?/, ''),
       device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
     };
-    navigator.sendBeacon(
-      `${TRACK_BASE}/api/track`,
-      new Blob([JSON.stringify(payload)], { type: 'application/json' })
-    );
+    navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify(payload)], { type: 'application/json' }));
   } catch {}
 }
 
