@@ -309,14 +309,9 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     return json({ error: { code: "invalid_request", message: "JSON body required" } }, 400);
   }
 
-  // coerce to canonical tokens before validation; accept common synonyms
   const loc = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : "";
-  const rawEvent  = String(payload.event  ?? "");
-  const rawAction = String(payload.action ?? "");
-  const event = rawEvent.trim().toLowerCase()
-    .replaceAll("_","-").replaceAll(".","-").replace(/\s+/g,"-")
-    .replace(/^qr$/,"qr-view").replace(/^open$/,"lpm-open"); // map short aliases
-  const action = rawAction.trim().toLowerCase().replaceAll("_","-").replaceAll(".","-").replace(/\s+/g,"-");
+  const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
+  const action = (payload.action || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
 
   // accept locationID (primary)
   if (!loc || !event) {

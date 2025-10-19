@@ -3,14 +3,12 @@ const TRACK_BASE = (location.hostname.endsWith('pages.dev') || location.hostname
   ? 'https://navigen-api.4naama-39c.workers.dev'
   : location.origin;
 
-function _track(locId, event, action) {
-  // normalize event to the Worker’s allowed set; action kept as-is for bucketing
-  const ev = String(event || '').trim().toLowerCase().replace(/\s+/g, '-').replaceAll('.', '-').replaceAll('_', '-');
+function _track(locId, event, action) { // normalize legacy underscores client-side
   try {
     const payload = {
       locationID: String(locId || ''),
-      event: ev,
-      action,
+      event: String(event || '').replaceAll('_','-'),
+      action: String(action || '').replaceAll('_','-'),
       lang: document.documentElement.lang || 'en',
       pageKey: location.pathname.replace(/^\/(?:[a-z]{2}\/)?/, ''),
       device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
