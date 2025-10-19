@@ -341,7 +341,7 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   // keep response as before (e.g., return 204)    
 
   // bucket by action (website/booking/phone/wa/apple/waze/...)
-  const bucket = event === "cta_click" ? (action || "other") : event;
+  const bucket = event === "cta-click" ? (action || "other") : event;
 
   await increment(env.KV_STATS, keyForStat(loc, bucket));
   const origin = req.headers.get("Origin") || "";

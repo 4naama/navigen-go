@@ -977,7 +977,7 @@ async function initLpmImageSlider(modal, data) {
          /route|map/.test(id) || /maps/.test(href)    ? 'map'       :
          null);
 
-      if (action) _track(data.id, 'cta_click', action); // keep full analytics call
+      if (action) _track(data.id, 'cta-click', action); // keep full analytics call
     }, { capture: true });        
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
@@ -1115,7 +1115,7 @@ async function initLpmImageSlider(modal, data) {
       a.addEventListener('click', () => {
         // prefer explicit action; fallback to id-derived
         const act = action || (id.startsWith('som-') ? id.slice(4) : id);
-        trackCta(String(act)); // send cta_click with locationID
+        trackCta(String(act)); // send cta-click with locationID
       });
       secondary.appendChild(a);
     };
@@ -1315,7 +1315,7 @@ async function initLpmImageSlider(modal, data) {
           : location.origin;
         navigator.sendBeacon(
           `${BASE}/api/track`,
-          new Blob([JSON.stringify({ event:'cta_click', locationID:uid, action })], { type:'application/json' })
+          new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action })], { type:'application/json' })
         );
       } catch {}
     }
@@ -2778,7 +2778,7 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
         `</span><span>${r.label || (r.key === 'pinterest' ? 'Pinterest' : '')}</span>`;
 
       if (typeof _track === 'function' && r.track && id) {
-        a.addEventListener('click', () => _track(id, 'cta_click', r.track), { passive:true });
+        a.addEventListener('click', () => _track(id, 'cta-click', r.track), { passive:true });
       }
       list.appendChild(a);
     });
@@ -2850,7 +2850,7 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
 
     if (typeof _track === 'function' && r.track && id) {
-      btn.addEventListener('click', () => { _track(id, 'cta_click', r.track); }, { passive: true });
+      btn.addEventListener('click', () => { _track(id, 'cta-click', r.track); }, { passive: true });
     }
     list.appendChild(btn);
   });
