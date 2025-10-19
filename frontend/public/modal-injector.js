@@ -944,8 +944,8 @@ async function initLpmImageSlider(modal, data) {
     }    
     
     // count LPM open
-    // send when we have any id; server resolves alias → ULID
-    { const uid = String(data?.id || data?.locationID || '').trim(); if (uid) _track(uid, 'lpm-open'); }
+    // send only with canonical ULID (prevents 400 from /api/track)
+    { const uid = String(data?.id || data?.locationID || '').trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) _track(uid, 'lpm-open'); }
 
     // CTA beacons (delegated, fires before native handlers)
     modal.addEventListener('click', (e) => {
@@ -1313,7 +1313,7 @@ async function initLpmImageSlider(modal, data) {
     // analytics beacon
     function trackCta(action) { // local CTA helper; avoids _track shadow
       // send only when id is a canonical ULID
-      const uid = String(data?.id || data?.locationID || '').trim(); if (!uid) return; // backend resolves alias → ULID
+      const uid = String(data?.id || data?.locationID || '').trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
       try {
         const BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
           ? 'https://navigen-api.4naama-39c.workers.dev'
@@ -2785,7 +2785,7 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
       // local guard identical to Navigation modal
       if (r.track && id) {
         a.addEventListener('click', () => {
-          const uid = String(id).trim(); if (!uid) return; // allow alias; server resolves
+          const uid = String(id).trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
           (typeof _track === 'function')
             ? _track(uid, 'cta-click', r.track)
             : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
@@ -2863,7 +2863,7 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     // local guard: only beacon when id is a ULID
     if (r.track && id) {
       btn.addEventListener('click', () => {
-        const uid = String(id).trim(); if (uid) {
+        const uid = String(id).trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) {
           (typeof _track === 'function')
             ? _track(uid, 'cta-click', r.track)
             : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
