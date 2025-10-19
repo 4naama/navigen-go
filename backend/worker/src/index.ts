@@ -309,9 +309,12 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     return json({ error: { code: "invalid_request", message: "JSON body required" } }, 400);
   }
 
-  const loc = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : "";
-  const event = (payload.event || "").toString();
-  const action = (payload.action || "").toString();
+const loc    = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : "";
+const event  = String(payload.event  || "").trim().toLowerCase(); // accept legacy case
+const action = String(payload.action || "").trim().toLowerCase()
+                .replace(/^social\./, '')        // strip module prefix
+                .replaceAll("_","-")
+                .replaceAll(".","-");            // 2-line normalization, hyphen-only
 
   // accept locationID (primary)
   if (!loc || !event) {
