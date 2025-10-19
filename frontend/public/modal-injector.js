@@ -1,7 +1,5 @@
 // analytics: send CTA events (preview → workers.dev; prod → same-origin)
-const TRACK_BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
-  ? 'https://navigen-api.4naama-39c.workers.dev'
-  : location.origin;
+const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
 function _track(locId, event, action) {
   try {
@@ -1310,9 +1308,7 @@ async function initLpmImageSlider(modal, data) {
     function trackCta(action) { // local CTA helper; avoids _track shadow
       const uid = String(data?.id || data?.locationID || '').trim(); if (!uid) return;
       try {
-        const BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
-          ? 'https://navigen-api.4naama-39c.workers.dev'
-          : location.origin;
+        const BASE = 'https://navigen-api.4naama.workers.dev';
         navigator.sendBeacon(
           `${BASE}/api/track`,
           new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action })], { type:'application/json' })
