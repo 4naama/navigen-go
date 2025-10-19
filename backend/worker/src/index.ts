@@ -121,7 +121,7 @@ export default {
       // GET /api/stats?locationID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
       if (url.pathname === "/api/stats" && req.method === "GET") {
         const locRaw = (url.searchParams.get("locationID")||"").trim(); // accept alias or ULID
-        const loc    = (await resolveUid(locRaw, env)) || locRaw;       // prefer ULID; fallback to slug
+        const loc    = (await resolveUid(locRaw, env)) || locRaw; // prefer canonical ULID for reads
         const from = (url.searchParams.get("from")||"").trim();
         const to   = (url.searchParams.get("to")  ||"").trim();
         const tz   = (url.searchParams.get("tz")  ||"").trim() || undefined;
@@ -317,9 +317,13 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   const locRaw = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : ""; // accept slug or ULID
   const loc = (await resolveUid(locRaw, env)) || locRaw; // prefer ULID; fallback to slug
   const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
+  // normalize action into canonical dashboard keys
   let action = (payload.action || "").toString().toLowerCase().replaceAll("_","-").trim(); // normalize legacy
-  if (action.startsWith("nav.")) action = "map";            // nav.google/nav.apple → map
+  if (action.startsWith("nav.")) action = "map";                  // nav.google / nav.apple → map
+  if (action === "route") action = "map";                         // older client emitted "route"
   if (action.startsWith("social.")) action = action.slice(7) || "other"; // social.instagram → instagram
+  if (action.startsWith("share")) action = "share";               // share_contact / share-qr → share
+  // optional: fold anything not in EVENT_ORDER into "other" (keeps data consolidated)
 
   // accept locationID (primary)
   if (!loc || !event) {
@@ -344,12 +348,10 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     await kvIncr(env.KV_STATS, key);
   }
 
-  // keep response as before (e.g., return 204)    
+  // keep response as before (e.g., return 204)
+  // ✂ removed legacy per-bucket/todayKey counter to avoid split storage
+  // All counting happens in the daily YYYY-MM-DD scheme above.
 
-  // bucket by action (website/booking/phone/wa/apple/waze/...)
-  const bucket = event === "cta-click" ? (action || "other") : event;
-
-  await increment(env.KV_STATS, keyForStat(loc, bucket));
   const origin = req.headers.get("Origin") || "";
   const allowOrigin = origin || "*";
 
