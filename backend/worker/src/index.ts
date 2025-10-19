@@ -121,7 +121,7 @@ export default {
       // GET /api/stats?locationID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
       if (url.pathname === "/api/stats" && req.method === "GET") {
         const locRaw = (url.searchParams.get("locationID")||"").trim(); // accept alias or ULID
-        const loc    = (await resolveUid(locRaw, env)) || locRaw;       // prefer canonical ULID
+        const loc    = (await resolveUid(locRaw, env)) || locRaw;       // prefer ULID; fallback to slug
         const from = (url.searchParams.get("from")||"").trim();
         const to   = (url.searchParams.get("to")  ||"").trim();
         const tz   = (url.searchParams.get("tz")  ||"").trim() || undefined;
@@ -315,7 +315,7 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   }
 
   const locRaw = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : ""; // accept slug or ULID
-  const loc = await resolveUid(locRaw, env) || ""; // canonical ULID
+  const loc = (await resolveUid(locRaw, env)) || locRaw; // prefer ULID; fallback to slug
   const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
   let action = (payload.action || "").toString().toLowerCase().replaceAll("_","-").trim(); // normalize legacy
   if (action.startsWith("nav.")) action = "map";            // nav.google/nav.apple → map
