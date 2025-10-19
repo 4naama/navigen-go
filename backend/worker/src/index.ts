@@ -71,7 +71,7 @@ export default {
       }
 
     // --- Admin purge (one-off): POST /api/admin/purge-legacy
-    // Merges stats:<loc>:<day>:<event_with_underscores> into hyphen form and deletes legacy keys.
+    // Merges stats:<loc>:<day>:<event_with_underscores> → hyphen, or burns legacy keys entirely.
     if (pathname === "/api/admin/purge-legacy" && req.method === "POST") {
       const auth = req.headers.get("Authorization") || "";
       if (!auth.startsWith("Bearer ")) {
@@ -81,6 +81,9 @@ export default {
       if (!token || token !== env.JWT_SECRET) {
         return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
       }
+
+      const body = await req.json().catch(() => ({}));
+      const mode = (body?.mode || "merge").toString(); // 'merge' or 'burn'
 
       let cursor: string|undefined = undefined;
       let migrated = 0, removed = 0;
@@ -96,28 +99,29 @@ export default {
           const ev = parts[3];
           if (!ev.includes("_")) continue; // only legacy
 
-          const n = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
-          // delete empty legacy rows immediately
-          if (!n) { await env.KV_STATS.delete(name); removed++; continue; }
-
-          const hyphen = ev.replaceAll("_","-");
-          const target = `stats:${parts[1]}:${parts[2]}:${hyphen}`;
-
-          const cur = parseInt((await env.KV_STATS.get(target)) || "0", 10) || 0;
-          await env.KV_STATS.put(target, String(cur + n), { expirationTtl: 60*60*24*366 });
+          if (mode === "merge") {
+            const n = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
+            if (!n) { await env.KV_STATS.delete(name); removed++; continue; } // drop empty
+            const hyphen = ev.replaceAll("_","-");
+            const target = `stats:${parts[1]}:${parts[2]}:${hyphen}`;
+            const cur = parseInt((await env.KV_STATS.get(target)) || "0", 10) || 0;
+            await env.KV_STATS.put(target, String(cur + n), { expirationTtl: 60*60*24*366 });
+            migrated++;
+          }
+          // 'burn' deletes legacy without merging
           await env.KV_STATS.delete(name);
-
-          migrated++; removed++;
+          removed++;
         }
         cursor = page.cursor || undefined;
       } while (cursor);
 
-      return json({ ok:true, migrated, removed }, 200);
+      return json({ ok:true, mode, migrated, removed }, 200);
     }
           
       // GET /api/stats?locationID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
       if (url.pathname === "/api/stats" && req.method === "GET") {
-        const loc  = (url.searchParams.get("locationID")||"").trim();
+        const locRaw = (url.searchParams.get("locationID")||"").trim(); // accept alias or ULID
+        const loc    = (await resolveUid(locRaw, env)) || locRaw;       // prefer canonical ULID
         const from = (url.searchParams.get("from")||"").trim();
         const to   = (url.searchParams.get("to")  ||"").trim();
         const tz   = (url.searchParams.get("tz")  ||"").trim() || undefined;
@@ -384,9 +388,9 @@ function json(body: unknown, status = 200, headers: Record<string, string> = {})
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "access-control-allow-origin": "https://navigen.io",
+      "access-control-allow-origin": "*", // safe for our JSON; preflight already echoes Origin
       "access-control-allow-methods": "GET,POST,OPTIONS",
-      "access-control-allow-headers": "content-type",
+      "access-control-allow-headers": "content-type, authorization",
       "vary": "origin",
       ...headers
     },
