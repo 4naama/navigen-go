@@ -979,7 +979,8 @@ async function initLpmImageSlider(modal, data) {
          /route|map/.test(id) || /maps/.test(href)    ? 'map'       :
          null);
 
-      if (action) _track(data.id, 'cta-click', action); // keep full analytics call
+      // gate by ULID to avoid invalid_request
+      if (action) { const uid = String(data?.id || data?.locationID || '').trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) _track(uid, 'cta-click', action); }
     }, { capture: true });        
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
@@ -1310,6 +1311,7 @@ async function initLpmImageSlider(modal, data) {
 
     // analytics beacon
     function trackCta(action) { // local CTA helper; avoids _track shadow
+      // send only when id is a canonical ULID
       const uid = String(data?.id || data?.locationID || '').trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
       try {
         const BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
@@ -2779,8 +2781,14 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
           (r.icon ? `<img src="${r.icon}" alt="" width="20" height="20" style="display:block;object-fit:contain;">` : '') +
         `</span><span>${r.label || (r.key === 'pinterest' ? 'Pinterest' : '')}</span>`;
 
-      if (typeof _track === 'function' && r.track && id) {
-        a.addEventListener('click', () => _track(id, 'cta-click', r.track), { passive:true });
+      // local guard identical to Navigation modal
+      if (r.track && id) {
+        a.addEventListener('click', () => {
+          const uid = String(id).trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
+          (typeof _track === 'function')
+            ? _track(uid, 'cta-click', r.track)
+            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
+        }, { passive:true });
       }
       list.appendChild(a);
     });
@@ -2851,8 +2859,15 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
 
     btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
 
-    if (typeof _track === 'function' && r.track && id) {
-      btn.addEventListener('click', () => { _track(id, 'cta-click', r.track); }, { passive: true });
+    // local guard: only beacon when id is a ULID
+    if (r.track && id) {
+      btn.addEventListener('click', () => {
+        const uid = String(id).trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) {
+          (typeof _track === 'function')
+            ? _track(uid, 'cta-click', r.track)
+            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
+        }
+      }, { passive: true });
     }
     list.appendChild(btn);
   });
