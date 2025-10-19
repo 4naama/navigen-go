@@ -309,12 +309,14 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     return json({ error: { code: "invalid_request", message: "JSON body required" } }, 400);
   }
 
-const loc    = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : "";
-const event  = String(payload.event  || "").trim().toLowerCase(); // accept legacy case
-const action = String(payload.action || "").trim().toLowerCase()
-                .replace(/^social\./, '')        // strip module prefix
-                .replaceAll("_","-")
-                .replaceAll(".","-");            // 2-line normalization, hyphen-only
+  // coerce to canonical tokens before validation; accept common synonyms
+  const loc = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : "";
+  const rawEvent  = String(payload.event  ?? "");
+  const rawAction = String(payload.action ?? "");
+  const event = rawEvent.trim().toLowerCase()
+    .replaceAll("_","-").replaceAll(".","-").replace(/\s+/g,"-")
+    .replace(/^qr$/,"qr-view").replace(/^open$/,"lpm-open"); // map short aliases
+  const action = rawAction.trim().toLowerCase().replaceAll("_","-").replaceAll(".","-").replace(/\s+/g,"-");
 
   // accept locationID (primary)
   if (!loc || !event) {
