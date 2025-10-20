@@ -121,7 +121,7 @@ async function fetchStats() {
   const start = new Date(end.getTime() - (periodDays - 1) * 86400e3);
   const from = iso(start), to = iso(end);               // API window
 
-  const isEntity = modeEl.value === 'entity';
+  const isEntity = (modeEl?.value || 'location') === 'entity';
   const q = isEntity
     ? new URL(`/api/stats/entity?entityID=${encodeURIComponent(entEl.value)}&from=${from}&to=${to}`, base)
     : new URL(`/api/stats?locationID=${encodeURIComponent(locEl.value)}&from=${from}&to=${to}`, base);
@@ -287,11 +287,14 @@ function renderTable(json) {
   // Line 1: "Total daily counts for" + inline selector; clear legacy #hint
   const metaHintEl = metaEl.querySelector('.meta-hint');
   if (metaHintEl) {
-    metaHintEl.textContent = `${t('dash.hint.single-for')} `;  // you updated strings
-    if (modeEl) metaHintEl.appendChild(modeEl);                // put selector inline
+    if (modeEl) {
+      metaHintEl.textContent = `${t('dash.hint.single-for')} `; // “Total daily counts for ” + selector
+      metaHintEl.appendChild(modeEl);
+    } else {
+      metaHintEl.textContent = t('dash.hint.single');           // fallback: “Total daily counts”
+    }
   }
   if (hintEl) hintEl.textContent = '';
-
 }
 
 // Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.

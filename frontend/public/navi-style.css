@@ -2441,7 +2441,6 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* utilities */
 #dash .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; } /* keep */
-#dash .row > label{ flex:0 0 100%; }  /* each control on its own line */
 #dash .row > label{ flex: 0 0 100%; }            /* each control on its own line */
 #dash .row > #hint{ display:block; width:100%; } /* (now emptied in JS) still behaves as a line */
 #dash input,#dash button,#dash select{ padding:6px 10px; }
