@@ -15,58 +15,6 @@ try {
   console.warn('i18n module failed to load (served as HTML?) — using key fallback');
 }
 
-// Stripe success redirect handler (dashboard) — mirrors app.js phase 1
-(async function handleStripeReturnOnDash() {
-  const url = new URL(window.location.href);
-  const sessionId = url.searchParams.get("sid");
-  if (!sessionId) return;
-
-  // optional: toast helper from modal-injector (if available)
-  let showThankYouToastUI = null;
-  try {
-    ({ showThankYouToast: showThankYouToastUI } =
-      await import(new URL('./modal-injector.js', import.meta.url).href));
-  } catch (_e) { /* toast is optional on dash */ }
-
-  try {
-    const res = await fetch(`https://navigen-go.onrender.com/stripe/session?sid=${sessionId}`);
-    if (!res.ok) throw new Error("Failed to fetch session");
-    const data = await res.json();
-
-    // same mapping as in app.js
-    const matchDonationTier = (amount) => {
-      switch (amount) {
-        case 300:  return { label: "donation.btn.coffee", subtext: "donation.btn.coffee.sub", emoji: "☕" };
-        case 500:  return { label: "donation.btn.keep",   subtext: "donation.btn.keep.sub",   emoji: "🎈" };
-        case 1000: return { label: "donation.btn.fuel",   subtext: "donation.btn.fuel.sub",   emoji: "🚀" };
-        default:   return null;
-      }
-    };
-
-    const tier = matchDonationTier(data.amount_total); // cents
-    if (!tier) return;
-
-    const purchase = {
-      session_id: sessionId,
-      icon: "💖",
-      label: tier.label,
-      subtext: tier.subtext,
-      amount: data.amount_total,
-      currency: data.currency,
-      timestamp: Date.now()
-    };
-
-    const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
-    if (!purchases.find(p => p.session_id === sessionId)) {
-      purchases.push(purchase);
-      localStorage.setItem("myPurchases", JSON.stringify(purchases));
-      if (typeof showThankYouToastUI === 'function') showThankYouToastUI();
-    }
-  } catch (err) {
-    console.error("Stripe return handling failed (dash):", err);
-  }
-})();
-
 const $ = (s) => document.querySelector(s);
 const modeEl = $('#mode'), locEl = $('#locationID'), entEl = $('#entityID');
 const periodEl = $('#period'); // single control drives the window
