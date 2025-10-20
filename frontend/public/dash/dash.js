@@ -41,8 +41,23 @@ if (dashLogo) {
 }
 
 // Reuse app modules: createDonationModal + Stripe (same as app.js)
-import { createDonationModal } from './modal-injector.js';
-import { initStripe } from './scripts/stripe.js';
+// Donation/Stripe loaders (mirror the i18n guard; tolerate HTML responses)
+/* keep comments compact; follow i18n pattern */
+let createDonationModal = null, initStripe = () => {};
+try {
+  try {
+    ({ createDonationModal } = await import('/modal-injector.js'));
+  } catch (_eA) {
+    ({ createDonationModal } = await import(new URL('./modal-injector.js', import.meta.url).href));
+  }
+  try {
+    ({ initStripe } = await import('/scripts/stripe.js'));
+  } catch (_eB) {
+    ({ initStripe } = await import(new URL('./scripts/stripe.js', import.meta.url).href));
+  }
+} catch (_e) {
+  console.warn('Donation/Stripe modules failed to load (served as HTML?) — donation will be disabled');
+}
 
 // init Stripe once (same public key used by app.js)
 const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
@@ -54,7 +69,7 @@ if (donateBtn) {
   const openDonation = (e) => {
     e.preventDefault();
     const hasDonated = localStorage.getItem("hasDonated") === "true";
-    createDonationModal(hasDonated); // existing module builds + shows the modal
+    if (typeof createDonationModal === 'function') createDonationModal(hasDonated);
   };
   donateBtn.addEventListener('click', openDonation);
   donateBtn.addEventListener('keydown', (e) => {
