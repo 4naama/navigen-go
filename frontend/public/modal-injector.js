@@ -880,7 +880,7 @@ async function initLpmImageSlider(modal, data) {
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
 
           // track
-          trackCta('qr');
+          trackCta('qr-view');
         });
       }
     }
@@ -1011,11 +1011,13 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip(false); showToast('Removed from Saved', 1600);
+          trackCta('unsave');
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip(true); showToast('Saved', 1600);
+          trackCta('save');
         }
       });
     }
@@ -1195,11 +1197,13 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip2(false); showToast('Removed from Saved', 1600);
+          trackCta('unsave');
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip2(true); showToast('Saved', 1600);
+          trackCta('save');
         }
       });
     }
@@ -2741,23 +2745,23 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
       key:'official',
       label:'🌐 Website',  // requested label
       icon:'',             // text-only row; no missing asset
-      track:'social.website',
+      track:'official',
       href: normUrl(
         (links && (links.official || links.website || links.site)) ||
         (contact && (contact.officialUrl || contact.officialURL || contact.website || contact.site))
       )
     },
-    { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook',  href: normUrl(links.facebook) },
-    { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram', href: normUrl(links.instagram) },
-    { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',   href: normUrl(links.youtube) },
-    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',    href: normUrl(links.tiktok) },
+    { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'facebook',  href: normUrl(links.facebook) },
+    { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'instagram', href: normUrl(links.instagram) },
+    { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'youtube',   href: normUrl(links.youtube) },
+    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'tiktok',    href: normUrl(links.tiktok) },
     // IMPORTANT: Pinterest now has a text label (no icon-only), so sizing matches others
-    { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest', href: normUrl(links.pinterest) },
-    { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'social.linkedin',  href: normUrl(links.linkedin) },
-    { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',   href: normUrl(links.spotify) },
-    { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp',  href: waUrl(contact.whatsapp) },
-    { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'social.telegram',  href: tgUrl(contact.telegram) },
-    { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'social.messenger', href: msUrl(contact.messenger) }
+    { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'pinterest', href: normUrl(links.pinterest) },
+    { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'linkedin',  href: normUrl(links.linkedin) }, // not charted, harmless
+    { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'spotify',   href: normUrl(links.spotify) },
+    { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'whatsapp',  href: waUrl(contact.whatsapp) },
+    { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'telegram',  href: tgUrl(contact.telegram) },
+    { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'messenger', href: msUrl(contact.messenger) }
   ];
 
   const list = modal.querySelector('#social-modal-list');
@@ -2831,19 +2835,19 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
       label: 'Google Maps',
       icon: '/assets/social/icons-google-maps.svg',
       href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-      track: 'nav.google'
+      track: 'map'
     },
     {
       label: 'Waze',
       icon: '/assets/social/icons-waze.png',
       href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
-      track: 'nav.waze'
+      track: 'map'
     },
     {
       label: 'Apple Maps',
       emoji: '🍎',
       href: `https://maps.apple.com/?saddr=Current+Location&daddr=${lat},${lng}&dirflg=d`, // force dest
-      track: 'nav.apple'
+      track: 'map'
     }
   ];
 
