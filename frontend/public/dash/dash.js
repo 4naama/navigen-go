@@ -47,6 +47,23 @@ if (donateBtn) donateBtn.addEventListener('click', () => {
   if (modal) modal.classList.remove('hidden');             // show modal
 });
 
+// Open Donation (👋) modal directly on dashboard; skip pin/install.
+// Works if #donation-modal exists; otherwise no-ops silently.
+const donateBtn = document.querySelector('.header-pin');
+if (donateBtn) {
+  const openDonation = (ev) => {
+    const modal = document.getElementById('donation-modal');
+    if (!modal) return;                           // nothing to open
+    ev.preventDefault();
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');   // accessibility hint
+  };
+  donateBtn.addEventListener('click', openDonation);
+  donateBtn.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') openDonation(e);
+  });
+}
+
 // Legacy subtitle wrapper no longer needed; hint now lives in #meta as .meta-hint (kept for compatibility, but no-op)
 /* keeps comments concise; avoids touching DOM text nodes */
 (() => { /* no-op */ })();
