@@ -2341,7 +2341,16 @@ body.high-contrast .modal-menu-item.is-active {
 
 #dash-header h1{ font-size:var(--fs-h1); line-height:1.15; font-weight:800; margin:0 0 4px 0; display:flex; align-items:center; gap:6px; }
 #dash-header h1 .app-logo{ height:22px; width:auto; display:block; flex:0 0 auto; }
-#dash-header input,#dash-header button,#dash-header select{ font:inherit; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:#fff; }
+#dash-header input,#dash-header button,#dash-header select{ font:inherit; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:#fff; } /* keep */
+/* move chevrons left a touch; keep 1ch gap to right edge */
+#dash-header select{
+  appearance:none; -webkit-appearance:none;  /* allow positioning */
+  padding-right:2.2ch;                        /* room for glyph + 1ch gap */
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat;
+  background-position:right 1ch center;       /* chevron sits 1ch from edge */
+  background-size:14px 14px;
+}
 #dash-header button{ cursor:pointer; }
 #dash-header .muted{ color:var(--muted); }
 
@@ -2432,6 +2441,7 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* utilities */
 #dash .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; } /* keep */
+#dash .row > label{ flex:0 0 100%; }  /* each control on its own line */
 #dash .row > label{ flex: 0 0 100%; }            /* each control on its own line */
 #dash .row > #hint{ display:block; width:100%; } /* (now emptied in JS) still behaves as a line */
 #dash input,#dash button,#dash select{ padding:6px 10px; }

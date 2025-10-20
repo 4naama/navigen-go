@@ -29,36 +29,7 @@ const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOStri
 const dashLogo = document.getElementById('logo-icon');
 if (dashLogo) dashLogo.addEventListener('click', () => location.reload());
 
-// default: 2 weeks
-// Insert refresh button before Copy; reload on tap. Wait for DOM safely.
-(() => {
-  // remove old decorative glyph
-  const old = document.getElementById('period-refresh');
-  if (old && old.parentNode) old.parentNode.removeChild(old);
-
-  const placeButton = () => {
-    const copyBtn = document.getElementById('copy-tsv');
-    if (!copyBtn) return false;
-    if (!document.getElementById('refresh-page')) {
-      const btn = document.createElement('button');
-      btn.id = 'refresh-page'; btn.type = 'button';
-      btn.textContent = '⟳'; btn.title = 'Refresh';
-      btn.setAttribute('aria-label','Refresh');
-      btn.addEventListener('click', () => window.location.reload()); // simple reload
-      copyBtn.insertAdjacentElement('beforebegin', btn);
-    }
-    return true;
-  };
-
-  // try now, then observe header until available
-  if (!placeButton()) {
-    const header = document.getElementById('dash-header') || document.body;
-    const mo = new MutationObserver(() => { if (placeButton()) mo.disconnect(); });
-    mo.observe(header, { childList:true, subtree:true });
-    // also run after DOMContentLoaded just in case
-    document.addEventListener('DOMContentLoaded', placeButton, { once:true });
-  }
-})();
+// Refresh removed; Copy button remains (2-line comment).
 
 // Legacy subtitle wrapper no longer needed; hint now lives in #meta as .meta-hint (kept for compatibility, but no-op)
 /* keeps comments concise; avoids touching DOM text nodes */
@@ -219,12 +190,24 @@ function renderTable(json) {
     const start = new Date(end.getTime() - (days - 1) * 86400e3);
     const startISO = iso(start), endISO = iso(end);
 
-    // 1) ensure the date-range span exists and update its text
+    // ensure hint (line 1) exists FIRST, then a break, then the date range (line 4)
+    let metaHint = metaEl.querySelector('.meta-hint');
+    if (!metaHint) {
+      metaHint = document.createElement('span');
+      metaHint.className = 'meta-hint';
+      metaEl.prepend(metaHint);                 // hint goes first
+    }
+    let brk = metaEl.querySelector('.meta-linebreak');
+    if (!brk) {
+      brk = document.createElement('span');
+      brk.className = 'meta-linebreak';
+      metaHint.insertAdjacentElement('afterend', brk);
+    }
     let range = metaEl.querySelector('.meta-range');
     if (!range) {
       range = document.createElement('span');
       range.className = 'meta-range';
-      metaEl.prepend(range);               // keep existing buttons intact
+      brk.insertAdjacentElement('afterend', range); // range after hint+break
     }
     range.textContent = `${startISO} → ${endISO}`;
 
@@ -253,20 +236,7 @@ function renderTable(json) {
       metaEl.appendChild(copyBtn);
     }
 
-    // 3) ensure Refresh button exists and sits before Copy
-    let refreshBtn = document.getElementById('refresh-page');
-    if (!refreshBtn) {
-      refreshBtn = document.createElement('button');
-      refreshBtn.id = 'refresh-page';
-      refreshBtn.type = 'button';
-      refreshBtn.textContent = '⟳';
-      refreshBtn.title = 'Refresh';
-      refreshBtn.setAttribute('aria-label', 'Refresh');
-      refreshBtn.addEventListener('click', () => window.location.reload());
-    }
-    if (copyBtn.previousElementSibling !== refreshBtn) {
-      copyBtn.insertAdjacentElement('beforebegin', refreshBtn);
-    }
+    // Refresh removed; Copy button remains.
 
     // inline layout (once)
     metaEl.style.display = 'flex';
@@ -314,10 +284,14 @@ function renderTable(json) {
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
   const dispName = (json.locationName || json.entityName || '').trim();
-  // move the hint into #meta as its own line and clear #hint
+  // Line 1: "Total daily counts for" + inline selector; clear legacy #hint
   const metaHintEl = metaEl.querySelector('.meta-hint');
-  if (metaHintEl) metaHintEl.textContent = dispName ? `${t('dash.hint.single-for')} ${dispName}` : t('dash.hint.single');
+  if (metaHintEl) {
+    metaHintEl.textContent = `${t('dash.hint.single-for')} `;  // you updated strings
+    if (modeEl) metaHintEl.appendChild(modeEl);                // put selector inline
+  }
   if (hintEl) hintEl.textContent = '';
+
 }
 
 // Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.
