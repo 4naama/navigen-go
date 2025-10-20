@@ -81,6 +81,11 @@ body {
   transform: scale(1.2) rotate(-5deg);
 }
 
+/* animate on tap/click too (not just hover) */
+#logo-icon:active {
+  transform: scale(1.2) rotate(-5deg);
+}
+
 #page-title {
   flex: 1;
   font-size: 20px;

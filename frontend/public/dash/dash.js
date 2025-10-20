@@ -30,7 +30,15 @@ const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOStri
 
 // Match app behavior: reload when tapping the logo
 const dashLogo = document.getElementById('logo-icon');
-if (dashLogo) dashLogo.addEventListener('click', () => location.reload());
+// tap anim first, then reload (keeps comments concise)
+if (dashLogo) {
+  dashLogo.addEventListener('animationend', () => dashLogo.classList.remove('animating'));
+  dashLogo.addEventListener('click', (e) => {
+    e.preventDefault();                       // allow anim to play
+    dashLogo.classList.add('animating');      // trigger CSS keyframes
+    setTimeout(() => location.reload(), 280); // reload after brief pop
+  }, { passive: false });
+}
 
 // Refresh removed; Copy button remains (2-line comment).
 

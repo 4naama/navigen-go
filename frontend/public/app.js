@@ -1113,8 +1113,6 @@ async function initEmergencyBlock(countryOverride) {
 
     const listJson = listRes.ok ? await listRes.json() : { items: [] };
     const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
-    
-    console.log("🛰 apiItems sample:", apiItems.slice(0,3));
         
     // Map API items → legacy geoPoints for UI (accordion/Popular)
     const pageLang = (document.documentElement.lang || 'en').toLowerCase(); // avoid const "lang" redeclare
@@ -1139,8 +1137,6 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      console.log("🛰 toGeoPoint input:", it.locationID || it.id || it.ID, it.coord); // prefer new id
-
       const id  = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback()); // prefer new id
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1265,25 +1261,6 @@ async function initEmergencyBlock(countryOverride) {
             .includes(ACTIVE_PAGE)
         )
       : geoPoints;
-      
-    console.log("[QA] raw apiItems sample:", apiItems.slice(0,3).map(it => ({
-      id: it.id || it.locationID,
-      hasLocationName: 'locationName' in it,
-      locationName: it.locationName
-    })));
-
-    console.log("[QA] mapped geoCtx sample:", geoCtx.slice(0,3).map(it => ({
-      id: it.id || it.locationID,
-      hasLocationName: 'locationName' in it,
-      locationName: it.locationName
-    })));
-
-    // QA: print active page + filtered count + sample names (remove after test)
-    console.debug(
-      '[QA]', 'ACTIVE_PAGE=', ACTIVE_PAGE,
-      'count=', geoCtx.length,
-      'sample=', geoCtx.slice(0,5).map(l => String((l.locationName?.en ?? l.locationName ?? '')).trim())
-    );
 
     // Popular: scope by context only (Priority filter happens inside renderPopularGroup)
     const popularCtx = ACTIVE_PAGE
