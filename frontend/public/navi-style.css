@@ -2353,7 +2353,7 @@ body.high-contrast .modal-menu-item.is-active {
 }
 
 /* Ensure selects always fit their longest labels */
-#dash-header #mode   { min-width: 14ch; }  /* fits: "Entity (sum)" */
+#dash-header #mode   { min-width: 16ch; }  /* fits: "Entity (sum)" */
 #dash-header #period { min-width: 20ch; }  /* fits: "8 weeks (56 days)" */
 
 #dash-header button{ cursor:pointer; }
@@ -2510,7 +2510,7 @@ body.high-contrast .modal-menu-item.is-active {
 /* one-line label+input; scroll when narrow */
 #dash-header #loc-wrap{ display:inline-flex; align-items:center; gap:8px; white-space:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 /* compact input */
-#dash-header #loc-wrap input#locationID{ width:22ch; flex:0 0 auto; min-width:10ch; }
+#dash-header #loc-wrap input#locationID{ width:26ch; flex:0 0 auto; min-width:10ch; }
 
 /* Decorative refresh glyph after Period selector (UI-only) */
 #period-refresh{
