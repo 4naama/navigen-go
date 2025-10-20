@@ -42,19 +42,25 @@ if (dashLogo) {
 
 // Open Donation (👋) modal directly on dashboard; skip pin/install.
 // Works if #donation-modal exists; otherwise no-ops silently.
+// Donation (👋) via app’s modal factory; tolerate missing module gracefully
+let createDonationModal = null;
+try {
+  try { ({ createDonationModal } = await import('/modal-injector.js')); }
+  catch { ({ createDonationModal } = await import(new URL('./modal-injector.js', import.meta.url).href)); }
+} catch { /* module unavailable; clicking will no-op */ }
+
 const donateBtn = document.querySelector('.header-pin');
 if (donateBtn) {
-  const openDonation = (ev) => {
-    const modal = document.getElementById('donation-modal');
-    if (!modal) return;                           // nothing to open
-    ev.preventDefault();
-    modal.classList.remove('hidden');
-    modal.setAttribute('aria-hidden', 'false');   // accessibility hint
+  const openDonation = (e) => {
+    e.preventDefault();
+    if (typeof createDonationModal === 'function') {
+      // “hasDonated” flag mirrors app behavior; false is fine if you don’t track it here
+      const hasDonated = localStorage.getItem('hasDonated') === 'true';
+      createDonationModal(hasDonated);
+    }
   };
   donateBtn.addEventListener('click', openDonation);
-  donateBtn.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') openDonation(e);
-  });
+  donateBtn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') openDonation(e); });
 }
 
 // Legacy subtitle wrapper no longer needed; hint now lives in #meta as .meta-hint (kept for compatibility, but no-op)
