@@ -32,8 +32,9 @@ const locWrap = $('#loc-wrap'), entWrap = $('#ent-wrap');
   if (!lead) {
     lead = document.createElement('div');
     lead.id = 'meta-lead';
-    lead.className = 'muted'; // same font tone as meta
     row.insertAdjacentElement('beforebegin', lead);
+  } else {
+    lead.classList.remove('muted'); // ensure normal header color
   }
 
   // ensure mode select exists (if removed from HTML, recreate minimal one)
@@ -96,7 +97,7 @@ function syncMode() {
   const isEntity = modeEl.value === 'entity';
   entWrap.style.display = isEntity ? '' : 'none';
   locWrap.style.display = isEntity ? 'none' : '';
-  if (hintEl) hintEl.textContent = t('dash.hint.single'); // baseline
+  if (hintEl) hintEl.textContent = ''; // legacy hint suppressed
 }
 
 // fixed order as served by your Worker (extend if needed)
