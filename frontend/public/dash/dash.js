@@ -60,8 +60,7 @@ try {
     if (!purchases.find(p => p.session_id === sessionId)) {
       purchases.push(purchase);
       localStorage.setItem("myPurchases", JSON.stringify(purchases));
-      if (typeof showThankYouToast === 'function')      showThankYouToast();      // canonical export
-      else if (typeof showThankYouToastUI === 'function') showThankYouToastUI();  // fallback alias
+      if (typeof showThankYouToastUI === 'function') showThankYouToastUI();
     }
   } catch (err) {
     console.error("Stripe return handling failed (dash):", err);
