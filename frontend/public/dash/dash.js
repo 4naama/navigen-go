@@ -40,27 +40,13 @@ if (dashLogo) {
   }, { passive: false });
 }
 
-// Reuse app modules: createDonationModal + Stripe (same as app.js)
-import { createDonationModal } from './modal-injector.js';
-import { initStripe } from './scripts/stripe.js';
+// Open Donation (👋) modal directly on dashboard; no pin/install step (2-line comment).
+const donateBtn = document.getElementById('donation-trigger');
+if (donateBtn) donateBtn.addEventListener('click', () => {
+  const modal = document.getElementById('donation-modal'); // modal exists in CSS/HTML
+  if (modal) modal.classList.remove('hidden');             // show modal
+});
 
-// init Stripe once (same public key used by app.js)
-const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
-try { initStripe(STRIPE_PUBLIC_KEY); } catch { /* keep UI working without Stripe */ }
-
-// Open Donation (👋) directly using the existing modal factory
-const donateBtn = document.getElementById('donation-trigger') || document.querySelector('.header-pin');
-if (donateBtn) {
-  const openDonation = (e) => {
-    e.preventDefault();
-    const hasDonated = localStorage.getItem("hasDonated") === "true";
-    createDonationModal(hasDonated); // existing module builds + shows the modal
-  };
-  donateBtn.addEventListener('click', openDonation);
-  donateBtn.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') openDonation(e);
-  });
-}
 
 // Legacy subtitle wrapper no longer needed; hint now lives in #meta as .meta-hint (kept for compatibility, but no-op)
 /* keeps comments concise; avoids touching DOM text nodes */
