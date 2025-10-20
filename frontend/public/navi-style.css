@@ -2431,7 +2431,9 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller tfoot td:last-child{ background:var(--sum-bg); font-weight:600; }
 
 /* utilities */
-#dash .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+#dash .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; } /* keep */
+#dash .row > label{ flex: 0 0 100%; }            /* each control on its own line */
+#dash .row > #hint{ display:block; width:100%; } /* (now emptied in JS) still behaves as a line */
 #dash input,#dash button,#dash select{ padding:6px 10px; }
 #loc-wrap #locationID{ width:36ch; max-width:100%; }
 

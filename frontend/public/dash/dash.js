@@ -60,33 +60,9 @@ if (dashLogo) dashLogo.addEventListener('click', () => location.reload());
   }
 })();
 
-// Move "Single location daily counts" onto its own line (non-destructive)
-(() => {
-  const wrapSubtitle = () => {
-    const header = document.getElementById('dash-header');
-    if (!header) return false;
-    // find a text node with exact subtitle; wrap it
-    const walker = document.createTreeWalker(header, NodeFilter.SHOW_TEXT);
-    let n; while ((n = walker.nextNode())) {
-      const t = n.nodeValue && n.nodeValue.trim();
-      if (t === 'Single location daily counts') {
-        if (!n.parentNode.querySelector('.meta-linebreak')) {
-          const span = document.createElement('span');
-          span.className = 'meta-linebreak';
-          span.textContent = t;
-          n.parentNode.insertBefore(span, n);
-          n.parentNode.removeChild(n);
-        }
-        return true;
-      }
-    }
-    return false;
-  };
-  if (!wrapSubtitle()) {
-    const mo = new MutationObserver(() => { if (wrapSubtitle()) mo.disconnect(); });
-    mo.observe(document.body, { childList:true, subtree:true });
-  }
-})();
+// Legacy subtitle wrapper no longer needed; hint now lives in #meta as .meta-hint (kept for compatibility, but no-op)
+/* keeps comments concise; avoids touching DOM text nodes */
+(() => { /* no-op */ })();
 
 // normalize date input to YYYY-MM-DD; handles valueAsDate or localized text (1-2 lines of logic, keep simple)
 function getISODate(input){
@@ -252,20 +228,6 @@ function renderTable(json) {
     }
     range.textContent = `${startISO} → ${endISO}`;
 
-    // ensure a line break, then a meta-hint span right after the range
-    let brk = metaEl.querySelector('.meta-linebreak');
-    if (!brk) {
-      brk = document.createElement('span');
-      brk.className = 'meta-linebreak';
-      metaEl.appendChild(brk);
-    }
-    let metaHint = metaEl.querySelector('.meta-hint');
-    if (!metaHint) {
-      metaHint = document.createElement('span');
-      metaHint.className = 'meta-hint';
-      metaEl.appendChild(metaHint);
-    }
-
     // 2) ensure Copy button exists (id is stable)
     let copyBtn = document.getElementById('copy-tsv');
     if (!copyBtn) {
@@ -352,9 +314,10 @@ function renderTable(json) {
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
   const dispName = (json.locationName || json.entityName || '').trim();
-  if (hintEl) {
-    hintEl.textContent = dispName ? `${t('dash.hint.single-for')} ${dispName}` : t('dash.hint.single');
-  }
+  // move the hint into #meta as its own line and clear #hint
+  const metaHintEl = metaEl.querySelector('.meta-hint');
+  if (metaHintEl) metaHintEl.textContent = dispName ? `${t('dash.hint.single-for')} ${dispName}` : t('dash.hint.single');
+  if (hintEl) hintEl.textContent = '';
 }
 
 // Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.
