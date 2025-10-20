@@ -2337,7 +2337,7 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* non-scrolling top area */
 #dash-header{
-  flex:0 0 auto; padding:6px 10px; border-bottom:1px solid var(--border); background:var(--bg);
+  flex:0 0 auto; padding:6px 6px; border-bottom:1px solid var(--border); background:var(--bg);
 }
 
 #dash-header h1{ font-size:var(--fs-h1); line-height:1.15; font-weight:800; margin:0 0 4px 0; display:flex; align-items:center; gap:6px; }
@@ -2432,7 +2432,7 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller tfoot td:last-child{ background:var(--sum-bg); font-weight:600; }
 
 /* utilities */
-#dash .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+#dash .row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
 #dash input,#dash button,#dash select{ padding:6px 10px; }
 #loc-wrap #locationID{ width:36ch; max-width:100%; }
 
