@@ -252,6 +252,20 @@ function renderTable(json) {
     }
     range.textContent = `${startISO} → ${endISO}`;
 
+    // ensure a line break, then a meta-hint span right after the range
+    let brk = metaEl.querySelector('.meta-linebreak');
+    if (!brk) {
+      brk = document.createElement('span');
+      brk.className = 'meta-linebreak';
+      metaEl.appendChild(brk);
+    }
+    let metaHint = metaEl.querySelector('.meta-hint');
+    if (!metaHint) {
+      metaHint = document.createElement('span');
+      metaHint.className = 'meta-hint';
+      metaEl.appendChild(metaHint);
+    }
+
     // 2) ensure Copy button exists (id is stable)
     let copyBtn = document.getElementById('copy-tsv');
     if (!copyBtn) {
