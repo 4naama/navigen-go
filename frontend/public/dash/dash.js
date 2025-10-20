@@ -21,35 +21,8 @@ const periodEl = $('#period'); // single control drives the window
 const hintEl = $('#hint'), metaEl = $('#meta'), tblWrap = $('#table-wrap');
 const locWrap = $('#loc-wrap'), entWrap = $('#ent-wrap');
 
-// First-line: "Total daily counts for" + selector; insert above Location
-(() => {
-  const header = document.getElementById('dash-header');
-  const row = header?.querySelector('.row');
-  if (!header || !row) return;
-
-  // build/ensure lead line container
-  let lead = header.querySelector('#meta-lead');
-  if (!lead) {
-    lead = document.createElement('div');
-    lead.id = 'meta-lead';
-    row.insertAdjacentElement('beforebegin', lead);
-  } else {
-    lead.classList.remove('muted'); // ensure normal header color
-  }
-
-  // ensure mode select exists (if removed from HTML, recreate minimal one)
-  let sel = document.getElementById('mode');
-  if (!sel) {
-    sel = document.createElement('select');
-    sel.id = 'mode';
-    sel.innerHTML = `<option value="location">Location</option><option value="entity">Entity (sum)</option>`;
-    sel.addEventListener('change', () => { try { syncMode(); loadAndRender(); } catch(_){} });
-  }
-
-  // write label + exactly 2 spaces, then append selector
-  lead.textContent = 'Total daily counts for' + '  ';
-  lead.appendChild(sel);
-})();
+// First line is static in HTML now; no JS injection needed.
+(() => {})();
 
 const TODAY = new Date();
 const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());

@@ -2451,6 +2451,9 @@ body.high-contrast .modal-menu-item.is-active {
 #dash input,#dash button,#dash select{ padding:6px 10px; }
 #loc-wrap #locationID{ width:36ch; max-width:100%; }
 
+/* Make the first line’s spacing match the rows */
+#meta-lead { display:block; margin-bottom:6px; }
+
 #meta{
   display:flex;
   align-items:center;

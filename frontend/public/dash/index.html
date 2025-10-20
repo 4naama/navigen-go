@@ -22,6 +22,14 @@
       </div>
       <p class="page-subtext"></p>
 
+      <!-- First line renders immediately; 2 spaces before the selector -->
+      <div id="meta-lead">Total daily counts for&nbsp;&nbsp;
+        <select id="mode">
+          <option value="location">Location</option>
+          <option value="entity">Entity (Sum)</option>
+        </select>
+      </div>
+
       <div class="row">
         <!-- Mode selector moved into the meta header; control stays in DOM via JS -->
         <label id="loc-wrap">Location <input id="locationID" placeholder="hd-debrecen-hadhazi-8910" /></label>
