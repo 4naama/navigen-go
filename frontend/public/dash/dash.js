@@ -40,6 +40,13 @@ if (dashLogo) {
   }, { passive: false });
 }
 
+// Open Donation (👋) modal directly on dashboard; no pin/install step (2-line comment).
+const donateBtn = document.getElementById('donation-trigger');
+if (donateBtn) donateBtn.addEventListener('click', () => {
+  const modal = document.getElementById('donation-modal'); // modal exists in CSS/HTML
+  if (modal) modal.classList.remove('hidden');             // show modal
+});
+
 // Open Donation (👋) modal directly on dashboard; skip pin/install.
 // Works if #donation-modal exists; otherwise no-ops silently.
 const donateBtn = document.querySelector('.header-pin');
