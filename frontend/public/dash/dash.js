@@ -40,15 +40,21 @@ if (dashLogo) {
   }, { passive: false });
 }
 
-// Open Donation (👋) modal directly; no pin/install.
+// Reuse app modules: createDonationModal + Stripe (same as app.js)
+import { createDonationModal } from './modal-injector.js';
+import { initStripe } from './scripts/stripe.js';
+
+// init Stripe once (same public key used by app.js)
+const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
+try { initStripe(STRIPE_PUBLIC_KEY); } catch { /* keep UI working without Stripe */ }
+
+// Open Donation (👋) directly using the existing modal factory
 const donateBtn = document.getElementById('donation-trigger') || document.querySelector('.header-pin');
 if (donateBtn) {
-  const openDonation = (ev) => {
-    ev.preventDefault();
-    const modal = document.getElementById('donation-modal');
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    modal.setAttribute('aria-hidden', 'false');
+  const openDonation = (e) => {
+    e.preventDefault();
+    const hasDonated = localStorage.getItem("hasDonated") === "true";
+    createDonationModal(hasDonated); // existing module builds + shows the modal
   };
   donateBtn.addEventListener('click', openDonation);
   donateBtn.addEventListener('keydown', (e) => {
