@@ -69,7 +69,7 @@ if (donateBtn) {
   const openDonation = (e) => {
     e.preventDefault();
     const hasDonated = localStorage.getItem("hasDonated") === "true";
-    if (typeof createDonationModal === 'function') createDonationModal(hasDonated);
+    createDonationModal(hasDonated); // existing module builds + shows the modal
   };
   donateBtn.addEventListener('click', openDonation);
   donateBtn.addEventListener('keydown', (e) => {
