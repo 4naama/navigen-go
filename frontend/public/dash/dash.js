@@ -40,7 +40,12 @@ if (dashLogo) {
   }, { passive: false });
 }
 
-// Refresh removed; Copy button remains (2-line comment).
+// Open Donation (👋) modal directly on dashboard; no pin/install step (2-line comment).
+const donateBtn = document.getElementById('donation-trigger');
+if (donateBtn) donateBtn.addEventListener('click', () => {
+  const modal = document.getElementById('donation-modal'); // modal exists in CSS/HTML
+  if (modal) modal.classList.remove('hidden');             // show modal
+});
 
 // Legacy subtitle wrapper no longer needed; hint now lives in #meta as .meta-hint (kept for compatibility, but no-op)
 /* keeps comments concise; avoids touching DOM text nodes */
