@@ -21,6 +21,35 @@ const periodEl = $('#period'); // single control drives the window
 const hintEl = $('#hint'), metaEl = $('#meta'), tblWrap = $('#table-wrap');
 const locWrap = $('#loc-wrap'), entWrap = $('#ent-wrap');
 
+// First-line: "Total daily counts for" + selector; insert above Location
+(() => {
+  const header = document.getElementById('dash-header');
+  const row = header?.querySelector('.row');
+  if (!header || !row) return;
+
+  // build/ensure lead line container
+  let lead = header.querySelector('#meta-lead');
+  if (!lead) {
+    lead = document.createElement('div');
+    lead.id = 'meta-lead';
+    lead.className = 'muted'; // same font tone as meta
+    row.insertAdjacentElement('beforebegin', lead);
+  }
+
+  // ensure mode select exists (if removed from HTML, recreate minimal one)
+  let sel = document.getElementById('mode');
+  if (!sel) {
+    sel = document.createElement('select');
+    sel.id = 'mode';
+    sel.innerHTML = `<option value="location">Location</option><option value="entity">Entity (sum)</option>`;
+    sel.addEventListener('change', () => { try { syncMode(); loadAndRender(); } catch(_){} });
+  }
+
+  // write label + exactly 2 spaces, then append selector
+  lead.textContent = 'Total daily counts for' + '  ';
+  lead.appendChild(sel);
+})();
+
 const TODAY = new Date();
 const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -190,24 +219,15 @@ function renderTable(json) {
     const start = new Date(end.getTime() - (days - 1) * 86400e3);
     const startISO = iso(start), endISO = iso(end);
 
-    // ensure hint (line 1) exists FIRST, then a break, then the date range (line 4)
-    let metaHint = metaEl.querySelector('.meta-hint');
-    if (!metaHint) {
-      metaHint = document.createElement('span');
-      metaHint.className = 'meta-hint';
-      metaEl.prepend(metaHint);                 // hint goes first
-    }
-    let brk = metaEl.querySelector('.meta-linebreak');
-    if (!brk) {
-      brk = document.createElement('span');
-      brk.className = 'meta-linebreak';
-      metaHint.insertAdjacentElement('afterend', brk);
-    }
+    // remove meta-hint line entirely; keep only the date range
+    const oldHint = metaEl.querySelector('.meta-hint'); if (oldHint) oldHint.remove();
+    const oldBrk  = metaEl.querySelector('.meta-linebreak'); if (oldBrk) oldBrk.remove();
+
     let range = metaEl.querySelector('.meta-range');
     if (!range) {
       range = document.createElement('span');
       range.className = 'meta-range';
-      brk.insertAdjacentElement('afterend', range); // range after hint+break
+      metaEl.prepend(range); // range becomes the first/only meta line
     }
     range.textContent = `${startISO} → ${endISO}`;
 
@@ -285,15 +305,11 @@ function renderTable(json) {
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
   const dispName = (json.locationName || json.entityName || '').trim();
   // Line 1: "Total daily counts for" + inline selector; clear legacy #hint
+  // no hint line anymore — remove any leftovers and clear legacy #hint
   const metaHintEl = metaEl.querySelector('.meta-hint');
-  if (metaHintEl) {
-    if (modeEl) {
-      metaHintEl.textContent = `${t('dash.hint.single-for')} `; // “Total daily counts for ” + selector
-      metaHintEl.appendChild(modeEl);
-    } else {
-      metaHintEl.textContent = t('dash.hint.single');           // fallback: “Total daily counts”
-    }
-  }
+  if (metaHintEl) metaHintEl.remove();
+  const metaBrkEl = metaEl.querySelector('.meta-linebreak');
+  if (metaBrkEl) metaBrkEl.remove();
   if (hintEl) hintEl.textContent = '';
 }
 
