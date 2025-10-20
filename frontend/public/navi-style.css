@@ -2344,13 +2344,17 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-header input,#dash-header button,#dash-header select{ font:inherit; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:#fff; } /* keep */
 /* move chevrons left a touch; keep 1ch gap to right edge */
 #dash-header select{
-  appearance:none; -webkit-appearance:none;  /* custom chevron */
-  padding-right:3.4ch;                        /* extra room so chevron never crowds */
+  appearance:none; -webkit-appearance:none;  /* allow positioning */
+  padding-right:2.2ch;                        /* room for glyph + 1ch gap */
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat:no-repeat;
-  background-position:right 1.4ch center;     /* keep ~1ch gap to right box edge */
+  background-position:right 1ch center;       /* chevron sits 1ch from edge */
   background-size:14px 14px;
 }
+
+/* Ensure selects always fit their longest labels */
+#dash-header #mode   { min-width: 14ch; }  /* fits: "Entity (sum)" */
+#dash-header #period { min-width: 20ch; }  /* fits: "8 weeks (56 days)" */
 
 #dash-header button{ cursor:pointer; }
 #dash-header .muted{ color:var(--muted); }
