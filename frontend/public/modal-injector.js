@@ -1,6 +1,20 @@
 // analytics: unified endpoint; always use live worker for all environments
 const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
+// cache + resolve alias → ULID via Worker; keeps all beacons canonical
+const _uidCache = new Map();
+async function toUlid(id) {
+  const k = String(id || '').trim(); if (!k) return '';
+  if (_uidCache.has(k)) return _uidCache.get(k);
+  try {
+    const u = new URL(`/api/status?locationID=${encodeURIComponent(k)}`, TRACK_BASE);
+    const r = await fetch(u); if (!r.ok) return '';
+    const j = await r.json(); const ulid = String(j.locationID || '');
+    if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(ulid)) { _uidCache.set(k, ulid); return ulid; }
+  } catch {}
+  return '';
+}
+
 function _track(locId, event, action) { // normalize legacy underscores client-side
   try {
     const payload = {
@@ -943,7 +957,7 @@ async function initLpmImageSlider(modal, data) {
     
     // count LPM open
     // send only with canonical ULID (prevents 400 from /api/track)
-    { const uid = String(data?.id || data?.locationID || '').trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) _track(uid, 'lpm-open'); }
+    ;(async () => { const uid = await toUlid(String(data?.id || data?.locationID || '').trim()); if (uid) _track(uid, 'lpm-open'); })(); // resolve→ULID first
 
     // CTA beacons (delegated, fires before native handlers)
     modal.addEventListener('click', (e) => {
@@ -978,8 +992,7 @@ async function initLpmImageSlider(modal, data) {
          /route|map/.test(id) || /maps/.test(href)    ? 'map'       :
          null);
 
-      // gate by ULID to avoid invalid_request
-      if (action) { const uid = String(data?.id || data?.locationID || '').trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) _track(uid, String(action).toLowerCase().replaceAll('_','-')); }
+      if (action) { (async () => { const uid = await toUlid(String(data?.id || data?.locationID || '').trim()); if (uid) _track(uid, String(action).toLowerCase().replaceAll('_','-')); })(); } // resolve→ULID then send
     }, { capture: true });        
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
@@ -1314,18 +1327,15 @@ async function initLpmImageSlider(modal, data) {
 
     // analytics beacon
     function trackCta(action) { // local CTA helper; avoids _track shadow
-      // send only when id is a canonical ULID
-      const uid = String(data?.id || data?.locationID || '').trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
-      try {
-        const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
-          || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
-
-        // send metric directly (hyphen canonical)
-        navigator.sendBeacon(
-          `${TRACK_BASE}/api/track`,
-          new Blob([JSON.stringify({ event: String(action).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' })
-        );
-      } catch {}
+      (async () => {
+        const uid = await toUlid(String(data?.id || data?.locationID || '').trim()); if (!uid) return;
+        try {
+          navigator.sendBeacon(
+            `${TRACK_BASE}/api/track`,
+            new Blob([JSON.stringify({ event: String(action).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' })
+          );
+        } catch {}
+      })();
     }
   }
 
@@ -2787,13 +2797,16 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
 
       // local guard identical to Navigation modal
       if (r.track && id) {
-        a.addEventListener('click', () => {
-          const uid = String(id).trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
-          // send metric directly (hyphen canonical), no action payload
-          (typeof _track === 'function')
-            ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-'))
-            : navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
+        a.addEventListener('click', (e) => {
+          e.stopPropagation(); // avoid double-count with delegated handler
+          (async () => {
+            const uid = await toUlid(String(id).trim()); if (!uid) return;
+            (typeof _track === 'function')
+              ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-'))
+              : navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
+          })();
         }, { passive:true });
+
       }
       list.appendChild(a);
     });
@@ -2866,12 +2879,14 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
 
     // local guard: only beacon when id is a ULID
     if (r.track && id) {
-      btn.addEventListener('click', () => {
-        const uid = String(id).trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // avoid double-count with delegated handler
+        (async () => {
+          const uid = await toUlid(String(id).trim()); if (!uid) return;
           (typeof _track === 'function')
-            ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-')) // send metric directly
+            ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-'))
             : navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
-        }
+        })();
       }, { passive: true });
     }
     list.appendChild(btn);
