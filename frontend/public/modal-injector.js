@@ -1322,7 +1322,7 @@ async function initLpmImageSlider(modal, data) {
 
         // send metric directly (hyphen canonical)
         navigator.sendBeacon(
-          `${BASE}/api/track`,
+          `${TRACK_BASE}/api/track`,
           new Blob([JSON.stringify({ event: String(action).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' })
         );
       } catch {}
@@ -2792,7 +2792,7 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
           // send metric directly (hyphen canonical), no action payload
           (typeof _track === 'function')
             ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-'))
-            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
+            : navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
         }, { passive:true });
       }
       list.appendChild(a);
