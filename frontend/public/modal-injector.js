@@ -2792,7 +2792,7 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
           const uid = String(id).trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
           (typeof _track === 'function')
             ? _track(uid, 'cta-click', r.track)
-            : navigator.sendBeacon(API('/api/track'), new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
+            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
         }, { passive:true });
       }
       list.appendChild(a);
@@ -2870,7 +2870,7 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
         const uid = String(id).trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) {
           (typeof _track === 'function')
             ? _track(uid, 'cta-click', r.track)
-            : navigator.sendBeacon(API('/api/track'), new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
+            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
         }
       }, { passive: true });
     }
