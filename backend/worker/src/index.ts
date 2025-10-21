@@ -412,7 +412,7 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     return json({ error: { code: "invalid_request", message: "locationID and event required" } }, 400);
   }
   
-  // accept any metric listed in EVENT_ORDER (hyphen canonical)
+  // accept any metric in EVENT_ORDER (hyphen canonical)
   const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
   if (!allowed.has(event)) {
     return json({ error: { code: "invalid_request", message: "unsupported event" } }, 400);
@@ -430,8 +430,7 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     await kvIncr(env.KV_STATS, key);
   }
   
-  // count by the metric key directly (event is canonical)
-  const bucket = event;
+  const bucket = event; // event is already a canonical metric
   await increment(env.KV_STATS, keyForStat(loc, bucket));
 
   // keep response as before (e.g., return 204)
