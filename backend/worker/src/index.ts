@@ -394,7 +394,8 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     });
   }
 
-  const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
+  // canonicalize: _→- and trim; clients send hyphen metrics
+  const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-").trim();
   // normalize action into canonical dashboard keys
   let action = (payload.action || "").toString().toLowerCase().replaceAll("_","-").trim(); // normalize legacy
   // normalize action into canonical keys (keeps daily stats consistent)
@@ -411,18 +412,18 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     return json({ error: { code: "invalid_request", message: "locationID and event required" } }, 400);
   }
   
-  // validate AFTER normalization
-  const allowed = new Set(["cta-click","qr-view","lpm-open"]);
+  // accept any metric listed by EVENT_ORDER (hyphen canonical)
+  const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
   if (!allowed.has(event)) {
-    return json({ error: { code: "invalid_request", message: "unsupported event" } }, 400);
+    return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
   }
 
   // A) daily counter
   const now = new Date();
   const country = (req as any).cf?.country || "";      // CF edge country
   const tz = (payload?.tz || "").trim() || undefined;  // optional client tz
-  // map "cta-click" + action → button key; pass through "lpm-open"
-  const evKey = (event === "cta-click") ? action : event; // already normalized/collapsed
+  // direct metric counting (event itself is the metric key)
+  const evKey = event;
   if ((EVENT_ORDER as readonly string[]).includes(evKey)) {
     const day = dayKeyFor(now, tz, country);
     const key = `stats:${loc}:${day}:${evKey}`;
