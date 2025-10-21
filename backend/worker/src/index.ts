@@ -116,9 +116,59 @@ export default {
       } while (cursor);
 
       return json({ ok:true, mode, migrated, removed }, 200);
-    }
-          
-      // GET /api/stats?locationID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
+      }
+
+      // --- Admin backfill: POST /api/admin/backfill-slug-stats
+      // Moves stats:<slug>:YYYY-MM-DD:<event> → stats:<ULID>:YYYY-MM-DD:<event> using KV_ALIASES.
+      if (pathname === "/api/admin/backfill-slug-stats" && req.method === "POST") {
+        const auth = req.headers.get("Authorization") || "";
+        if (!auth.startsWith("Bearer ")) {
+          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
+        }
+        const token = auth.slice(7).trim();
+        if (!token || token !== env.JWT_SECRET) {
+          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
+        }
+
+        let cursor: string|undefined = undefined;
+        let moved = 0, removed = 0, skipped = 0;
+
+        do {
+          const page = await env.KV_STATS.list({ prefix: "stats:", cursor });
+          for (const k of page.keys) {
+            // shape: stats:<id>:YYYY-MM-DD:<event>
+            const parts = k.name.split(":");
+            if (parts.length !== 4) continue;
+
+            const id = parts[1];
+            const day = parts[2];
+            const ev  = parts[3];
+
+            // skip if already ULID
+            if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(id)) { skipped++; continue; }
+
+            // try alias → ULID
+            const mapped = await env.KV_ALIASES.get(aliasKey(id), "json");
+            const ulid = (typeof mapped === "string" ? mapped : mapped?.locationID) || "";
+            if (!ulid || !/^[0-9A-HJKMNP-TV-Z]{26}$/.test(ulid)) { skipped++; continue; }
+
+            const srcVal = parseInt((await env.KV_STATS.get(k.name)) || "0", 10) || 0;
+            if (!srcVal) { await env.KV_STATS.delete(k.name); removed++; continue; }
+
+            const dstKey = `stats:${ulid}:${day}:${ev.replaceAll("_","-")}`; // normalize event
+            const cur = parseInt((await env.KV_STATS.get(dstKey)) || "0", 10) || 0;
+            await env.KV_STATS.put(dstKey, String(cur + srcVal), { expirationTtl: 60*60*24*366 });
+            await env.KV_STATS.delete(k.name);
+            moved++;
+          }
+          cursor = page.cursor || undefined;
+        } while (cursor);
+
+        return json({ ok:true, moved, removed, skipped }, 200);
+      }
+                
+      // GET /api/stats?locationID=.&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
+
       if (url.pathname === "/api/stats" && req.method === "GET") {
         const locRaw = (url.searchParams.get("locationID")||"").trim(); // accept alias or ULID
         const loc    = (await resolveUid(locRaw, env)) || locRaw; // prefer canonical ULID for reads
@@ -273,11 +323,9 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   const now = new Date();
   const country = (req as any).cf?.country || "";
   const day = dayKeyFor(now, undefined, country); // uses Berlin fallback internally
-  const resolved = await resolveUid(raw, env);
-  const idForCount = resolved || raw; // ULID when available; else fallback
-  await kvIncr(env.KV_STATS, `stats:${idForCount}:${day}:qr-view`); // count under ULID when resolved
-
-  const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(idForCount); // check the counted id
+  const resolved = await resolveUid(raw, env); // require canonical id for counting
+  if (resolved) { await kvIncr(env.KV_STATS, `stats:${resolved}:${day}:qr-view`); } // count only on ULID
+  const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(resolved || ""); // reflect counted id
 
   const c = url.searchParams.get("c") || "";
   const fmt = (url.searchParams.get("fmt") || "svg").toLowerCase();
@@ -315,7 +363,11 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   }
 
   const locRaw = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : ""; // accept slug or ULID
-  const loc = (await resolveUid(locRaw, env)) || locRaw; // prefer ULID; fallback to slug
+  const loc = await resolveUid(locRaw, env); if (!loc) { // require canonical id
+    const origin = req.headers.get("Origin") || "*"; // keep CORS shape
+    return new Response(null, { status: 204, headers: { "access-control-allow-origin": origin, "vary": "Origin" } });
+  }
+
   const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
   // normalize action into canonical dashboard keys
   let action = (payload.action || "").toString().toLowerCase().replaceAll("_","-").trim(); // normalize legacy
