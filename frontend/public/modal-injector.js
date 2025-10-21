@@ -979,7 +979,7 @@ async function initLpmImageSlider(modal, data) {
          null);
 
       // gate by ULID to avoid invalid_request
-      if (action) { const uid = String(data?.id || data?.locationID || '').trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) _track(uid, 'cta-click', action); }
+      if (action) { const uid = String(data?.id || data?.locationID || '').trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) _track(uid, String(action).toLowerCase().replaceAll('_','-')); }
     }, { capture: true });        
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
@@ -1320,9 +1320,10 @@ async function initLpmImageSlider(modal, data) {
         const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
           || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
 
+        // send metric directly (hyphen canonical); no legacy cta-click
         navigator.sendBeacon(
           `${BASE}/api/track`,
-          new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action })], { type:'application/json' })
+          new Blob([JSON.stringify({ event: String(action).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' })
         );
       } catch {}
     }
@@ -2867,8 +2868,8 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
       btn.addEventListener('click', () => {
         const uid = String(id).trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) {
           (typeof _track === 'function')
-            ? _track(uid, 'cta-click', r.track)
-            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
+            ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-')) // send metric directly
+            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
         }
       }, { passive: true });
     }
