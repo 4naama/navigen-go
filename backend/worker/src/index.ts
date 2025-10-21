@@ -46,14 +46,14 @@ export default {
     // CORS preflight for all API endpoints (GET/POST from https://navigen.io)
     if (req.method === "OPTIONS" && pathname.startsWith("/api/")) {
       const origin = req.headers.get("Origin") || "";
-      const allowOrigin = origin || "*"; // echo origin when present
+      const allowOrigin = origin || "*"; // echo exact origin when present
       return new Response(null, {
         status: 204,
         headers: {
           "access-control-allow-origin": allowOrigin,
           "access-control-allow-methods": "GET,POST,OPTIONS",
           "access-control-allow-headers": "content-type, authorization",
-          "access-control-allow-credentials": "true", // needed because the browser sent credentials: include
+          "access-control-allow-credentials": "true", // required when the request uses credentials
           "access-control-max-age": "600",
           "vary": "Origin"
         }
@@ -343,7 +343,7 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
       headers: {
         "content-type": "image/svg+xml",
         "cache-control": "public, max-age=86400",
-        "access-control-allow-origin": "*" // allow fetch() during tests
+        "access-control-allow-origin": "*" // safe for static assets
       }
     });
   } else {
@@ -352,7 +352,7 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
       headers: {
         "content-type": "image/png",
         "cache-control": "public, max-age=86400",
-        "access-control-allow-origin": "*" // allow fetch() during tests
+        "access-control-allow-origin": "*"
       }
     });
   }
@@ -379,12 +379,13 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
 
   const locRaw = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : ""; // accept slug or ULID
   const loc = await resolveUid(locRaw, env); if (!loc) { // require canonical id
+    // after successfully counting in /api/track
     const origin = req.headers.get("Origin") || "*";
     return new Response(null, {
       status: 204,
       headers: {
-        "access-control-allow-origin": origin,  // echo caller
-        "access-control-allow-credentials": "true", // match preflight
+        "access-control-allow-origin": origin,   // must echo the caller, not *
+        "access-control-allow-credentials": "true", // match preflight requirement
         "vary": "Origin"
       }
     });
