@@ -805,7 +805,7 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
-            trackCta('share'); // local CTA helper
+            _track(String(data?.id || data?.locationID || '').trim(), 'share'); // use metric directly
             try { if (navigator.share) await navigator.share({ title:'NaviGen QR', url: img.src }); } catch {}
           };
 
@@ -878,7 +878,7 @@ async function initLpmImageSlider(modal, data) {
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
 
           // track
-          trackCta('qr-view');
+          _track(String(data?.id || data?.locationID || '').trim(), 'qr-view'); // go straight to Worker
         });
       }
     }
@@ -1320,7 +1320,7 @@ async function initLpmImageSlider(modal, data) {
         const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
           || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
 
-        // send metric directly (hyphen canonical); no legacy cta-click
+        // send metric directly (hyphen canonical)
         navigator.sendBeacon(
           `${BASE}/api/track`,
           new Blob([JSON.stringify({ event: String(action).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' })
@@ -2870,7 +2870,7 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
         const uid = String(id).trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) {
           (typeof _track === 'function')
             ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-')) // send metric directly
-            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
+            : navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
         }
       }, { passive: true });
     }
