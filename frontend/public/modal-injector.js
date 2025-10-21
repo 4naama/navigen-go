@@ -790,10 +790,10 @@ async function initLpmImageSlider(modal, data) {
 
           const img = document.createElement('img');
           img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
-          // pick workers.dev on pages.dev/localhost; prod uses same-origin
-          const BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
-            ? 'https://navigen-api.4naama-39c.workers.dev'
-            : location.origin;
+          // dev → prod (or meta api-origin); prod stays same-origin
+          const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
+            || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
+
           img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512`;
 
           // use existing compact emoji buttons
@@ -1319,9 +1319,9 @@ async function initLpmImageSlider(modal, data) {
       // send only when id is a canonical ULID
       const uid = String(data?.id || data?.locationID || '').trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
       try {
-        const BASE = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
-          ? 'https://navigen-api.4naama-39c.workers.dev'
-          : location.origin;
+        const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
+          || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
+
         navigator.sendBeacon(
           `${BASE}/api/track`,
           new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action })], { type:'application/json' })
@@ -2792,7 +2792,7 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
           const uid = String(id).trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
           (typeof _track === 'function')
             ? _track(uid, 'cta-click', r.track)
-            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
+            : navigator.sendBeacon(API('/api/track'), new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
         }, { passive:true });
       }
       list.appendChild(a);
@@ -2870,7 +2870,7 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
         const uid = String(id).trim(); if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) {
           (typeof _track === 'function')
             ? _track(uid, 'cta-click', r.track)
-            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
+            : navigator.sendBeacon(API('/api/track'), new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
         }
       }, { passive: true });
     }
