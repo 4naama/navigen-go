@@ -141,7 +141,7 @@ const HUMANIZE = (k) => {
 const labelFor = (k) => METRIC_LABEL[k] || HUMANIZE(k);
 
 async function fetchStats() {
-  const base = location.origin; // prod same-origin → https://navigen.io
+  const base = 'https://navigen-api.4naama.workers.dev'; // Worker stays
   const periodDays = Number(periodEl?.value) || 14;
   const end = day(TODAY);                               // today (local)
   const start = new Date(end.getTime() - (periodDays - 1) * 86400e3);
