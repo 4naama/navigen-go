@@ -53,6 +53,7 @@ export default {
           "access-control-allow-origin": allowOrigin,
           "access-control-allow-methods": "GET,POST,OPTIONS",
           "access-control-allow-headers": "content-type, authorization",
+          "access-control-allow-credentials": "true", // needed because the browser sent credentials: include
           "access-control-max-age": "600",
           "vary": "Origin"
         }
@@ -339,9 +340,23 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   if (fmt === "svg") {
     const svg = await QRCode.toString(dataUrl, { type: "svg", width: size, margin: 0 });
     return new Response(svg, {
-      headers: { "content-type": "image/svg+xml", "cache-control": "public, max-age=86400" }
+      headers: {
+        "content-type": "image/svg+xml",
+        "cache-control": "public, max-age=86400",
+        "access-control-allow-origin": "*" // allow fetch() during tests
+      }
+    });
+  } else {
+    const bytes = await QRCode.toBuffer(dataUrl, { type: "png", width: size, margin: 0 });
+    return new Response(bytes, {
+      headers: {
+        "content-type": "image/png",
+        "cache-control": "public, max-age=86400",
+        "access-control-allow-origin": "*" // allow fetch() during tests
+      }
     });
   }
+
   if (fmt === "png") {
     const dataUrlPng: string = await QRCode.toDataURL(dataUrl, { width: size, margin: 0 });
     const base64 = dataUrlPng.split(",")[1] || "";
@@ -364,8 +379,15 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
 
   const locRaw = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : ""; // accept slug or ULID
   const loc = await resolveUid(locRaw, env); if (!loc) { // require canonical id
-    const origin = req.headers.get("Origin") || "*"; // keep CORS shape
-    return new Response(null, { status: 204, headers: { "access-control-allow-origin": origin, "vary": "Origin" } });
+    const origin = req.headers.get("Origin") || "*";
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "access-control-allow-origin": origin,  // echo caller
+        "access-control-allow-credentials": "true", // match preflight
+        "vary": "Origin"
+      }
+    });
   }
 
   const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-"); // normalize legacy
