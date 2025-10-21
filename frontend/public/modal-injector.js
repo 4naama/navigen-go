@@ -1117,9 +1117,9 @@ async function initLpmImageSlider(modal, data) {
       a.setAttribute('aria-label', label); a.title = label;
       a.innerHTML = `${emoji} <span class="cta-label">${label}</span>`;
       a.addEventListener('click', () => {
-        // prefer explicit action; fallback to id-derived
+        // prefer explicit action; fallback to id-derived; send metric directly
         const act = action || (id.startsWith('som-') ? id.slice(4) : id);
-        trackCta(String(act)); // send cta-click with locationID
+        _track(uid, String(act).toLowerCase().replaceAll('_','-')); // send metric directly
       });
       secondary.appendChild(a);
     };
@@ -2789,9 +2789,10 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
       if (r.track && id) {
         a.addEventListener('click', () => {
           const uid = String(id).trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(uid)) return;
+          // send metric directly (hyphen canonical), no action payload
           (typeof _track === 'function')
-            ? _track(uid, 'cta-click', r.track)
-            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event:'cta-click', locationID:uid, action:r.track })], { type:'application/json' }));
+            ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-'))
+            : navigator.sendBeacon(`${location.origin}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
         }, { passive:true });
       }
       list.appendChild(a);

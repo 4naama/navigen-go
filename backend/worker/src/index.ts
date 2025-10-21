@@ -412,10 +412,10 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     return json({ error: { code: "invalid_request", message: "locationID and event required" } }, 400);
   }
   
-  // accept any metric listed by EVENT_ORDER (hyphen canonical)
+  // accept any metric listed in EVENT_ORDER (hyphen canonical)
   const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
   if (!allowed.has(event)) {
-    return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
+    return json({ error: { code: "invalid_request", message: "unsupported event" } }, 400);
   }
 
   // A) daily counter
@@ -430,10 +430,9 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
     await kvIncr(env.KV_STATS, key);
   }
   
-  // bucket by action (website/booking/phone/wa/apple/waze/...)
-  // keeps legacy YYYYMMDD counters for any older readers
-  const bucket = event === "cta-click" ? (action || "other") : event;
-  await increment(env.KV_STATS, keyForStat(loc, bucket));    
+  // count by the metric key directly (event is canonical)
+  const bucket = event;
+  await increment(env.KV_STATS, keyForStat(loc, bucket));
 
   // keep response as before (e.g., return 204)
   // daily counters above + legacy YYYYMMDD bucket for older readers
