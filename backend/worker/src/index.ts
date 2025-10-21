@@ -43,17 +43,20 @@ export default {
     const url = new URL(req.url);
     const { pathname } = url;
     
-    // CORS preflight for all API endpoints (GET/POST from https://navigen.io)
+    // CORS preflight for all API endpoints (must allow credentials)
     if (req.method === "OPTIONS" && pathname.startsWith("/api/")) {
       const origin = req.headers.get("Origin") || "";
-      const allowOrigin = origin || "*"; // echo exact origin when present
+      // If there's no Origin, do a minimal 204 without CORS (non-browser caller)
+      if (!origin) return new Response(null, { status: 204 });
+
+      // Echo the exact origin (NOT "*") and allow credentials
       return new Response(null, {
         status: 204,
         headers: {
-          "access-control-allow-origin": allowOrigin,
+          "access-control-allow-origin": origin,              // exact echo
+          "access-control-allow-credentials": "true",         // required with credentials: include
           "access-control-allow-methods": "GET,POST,OPTIONS",
           "access-control-allow-headers": "content-type, authorization",
-          "access-control-allow-credentials": "true", // required when the request uses credentials
           "access-control-max-age": "600",
           "vary": "Origin"
         }
@@ -380,12 +383,12 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   const locRaw = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : ""; // accept slug or ULID
   const loc = await resolveUid(locRaw, env); if (!loc) { // require canonical id
     // after successfully counting in /api/track
-    const origin = req.headers.get("Origin") || "*";
+    const origin = req.headers.get("Origin") || "";
     return new Response(null, {
       status: 204,
       headers: {
-        "access-control-allow-origin": origin,   // must echo the caller, not *
-        "access-control-allow-credentials": "true", // match preflight requirement
+        "access-control-allow-origin": origin || "https://navigen.io", // exact echo preferred
+        "access-control-allow-credentials": "true",
         "vary": "Origin"
       }
     });
