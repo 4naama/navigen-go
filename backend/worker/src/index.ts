@@ -46,19 +46,20 @@ export default {
     // CORS preflight for all API endpoints (must allow credentials)
     if (req.method === "OPTIONS" && pathname.startsWith("/api/")) {
       const origin = req.headers.get("Origin") || "";
-      // If there's no Origin, do a minimal 204 without CORS (non-browser caller)
-      if (!origin) return new Response(null, { status: 204 });
+      if (!origin) return new Response(null, { status: 204 }); // non-browser callers
 
-      // Echo the exact origin (NOT "*") and allow credentials
+      // Echo back whatever headers Chrome asked for (covers accept, content-type, etc.)
+      const reqHeaders = req.headers.get("Access-Control-Request-Headers") || "content-type, authorization, accept";
+
       return new Response(null, {
         status: 204,
         headers: {
-          "access-control-allow-origin": origin,              // exact echo
-          "access-control-allow-credentials": "true",         // required with credentials: include
+          "access-control-allow-origin": origin,                  // exact echo
+          "access-control-allow-credentials": "true",             // credentials preflight
           "access-control-allow-methods": "GET,POST,OPTIONS",
-          "access-control-allow-headers": "content-type, authorization",
+          "access-control-allow-headers": reqHeaders,             // echo requested headers
           "access-control-max-age": "600",
-          "vary": "Origin"
+          "vary": "Origin, Access-Control-Request-Headers"        // vary by origin + requested hdrs
         }
       });
     }
@@ -205,7 +206,11 @@ export default {
         } while (cursor);
 
         const siteOrigin = req.headers.get("Origin") || "https://navigen.io"; // use caller's origin for profiles.json
-        return json({ locationID: loc, locationName: await nameForLocation(loc, siteOrigin), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
+        return json(
+          { locationID: loc, locationName: await nameForLocation(loc, siteOrigin), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days },
+          200,
+          { "access-control-allow-origin": req.headers.get("Origin") || "https://navigen.io" } // echo origin on actual GET
+        );
       }            
 
       // GET /api/stats/entity?entityID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
@@ -475,10 +480,13 @@ function json(body: unknown, status = 200, headers: Record<string, string> = {})
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "access-control-allow-origin": "*", // safe for our JSON; preflight already echoes Origin
+      // IMPORTANT: echo Origin for credentialed calls; '*' is invalid with credentials
+      // (The preflight already validated; we mirror here so the actual request passes.)
+      "access-control-allow-origin": headers["access-control-allow-origin"] || "",
+      "access-control-allow-credentials": "true",
       "access-control-allow-methods": "GET,POST,OPTIONS",
-      "access-control-allow-headers": "content-type, authorization",
-      "vary": "origin",
+      "access-control-allow-headers": "content-type, authorization, accept",
+      "vary": "Origin",
       ...headers
     },
   });
