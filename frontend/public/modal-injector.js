@@ -743,8 +743,7 @@ async function initLpmImageSlider(modal, data) {
   // LPM button wiring (Route / Save / ⋮ / Close)
   // Call from showLocationProfileModal(modal, data)
   // ————————————————————————————  
-  function wireLocationProfileModal(modal, data, originEl) {    
-
+  function wireLocationProfileModal(modal, data, originEl) {
     // 🎯 Route → open Navigation modal (same header/close style as QR)
     const btnRoute = modal.querySelector('#lpm-route');
     if (btnRoute) {
@@ -755,7 +754,7 @@ async function initLpmImageSlider(modal, data) {
         const lat = Number(latRaw);
         const lng = Number(lngRaw);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track(String(data?.id || data?.locationID || '').trim(), 'map'); // map legacy 'route' → 'map'
+        // server counts via /out/map on click; no client beacons
         createNavigationModal({
           name: String(data?.name || 'Location'),
           lat, lng,
@@ -822,7 +821,8 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
-            _track(String(data?.id || data?.locationID || '').trim(), 'share'); // use metric directly
+            const uid = String(data?.id || data?.locationID || '').trim();
+            if (uid) { try { await fetch(`/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} }
             try { if (navigator.share) await navigator.share({ title:'NaviGen QR', url: img.src }); } catch {}
           };
 
@@ -834,8 +834,7 @@ async function initLpmImageSlider(modal, data) {
           printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
           // print: open minimal doc, wait for load, then print + close
           // print: show full-screen overlay, print just the QR, then remove
-          printBtn.onclick = () => {
-            _track(String(data?.id || data?.locationID || '').trim(), 'print'); // 1 path → Worker
+          /* no tracking for print; not in EVENT_ORDER */
 
             const src = img.src;
 
@@ -882,7 +881,7 @@ async function initLpmImageSlider(modal, data) {
               pimg.addEventListener('load', go,   { once:true });
               pimg.addEventListener('error', cleanup, { once:true });
             }
-          };
+          });
 
           actions.appendChild(shareBtn);
           actions.appendChild(printBtn);
@@ -894,9 +893,9 @@ async function initLpmImageSlider(modal, data) {
 
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
 
-          // track
-          _track(String(data?.id || data?.locationID || '').trim(), 'qr-view'); // go straight to Worker
-        });
+          /* count a QR view (modal/image shown) */
+          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+        };
       }
     }
 
@@ -939,8 +938,8 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
-            // keep: maps to canonical "share" metric
-            _track(String(data?.id || data?.locationID || '').trim(), 'share'); // 1 path → Worker
+            const uid = String(data?.id || data?.locationID || '').trim();
+            if (uid) { try { await fetch(`/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} }
             try {
               const text = [name, phone, email].filter(Boolean).join('\n');
               if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
@@ -962,41 +961,7 @@ async function initLpmImageSlider(modal, data) {
     // send only with canonical ULID (prevents 400 from /api/track)
     ;(async () => { const uid = await toUlid(String(data?.id||data?.locationID||'').trim()); if (uid) { try{ await fetch(`/hit/lpm-open/${uid}`,{method:'POST',keepalive:true}); }catch{} } })();
 
-    // CTA beacons (delegated, fires before native handlers)
-    modal.addEventListener('click', (e) => {
-      if (!data?.id) return;
-      const el = e.target.closest('a,button');
-      if (!el) return;
-
-      // explicit data-action wins
-      const act = el.getAttribute('data-cta') || el.getAttribute('data-action');
-
-      // infer from href / id / title
-      const href = (el.getAttribute('href') || '').toLowerCase();
-      const id   = (el.id || '').toLowerCase();
-      const ttl  = (el.getAttribute('title') || '').toLowerCase();
-
-      let action =
-        act ||
-        (href.startsWith('tel:')                       ? 'call'      :
-         href.startsWith('mailto:')                    ? 'email'     :
-         href.includes('wa.me') || href.includes('whatsapp') ? 'whatsapp'  :
-         href.includes('t.me') || href.includes('telegram')  ? 'telegram'  :
-         href.includes('messenger.com') || href.includes('m.me') ? 'messenger' :
-         /booking/.test(href) || /booking/.test(id) || /booking/.test(ttl) ? 'booking' :
-         /newsletter/.test(href) || /newsletter/.test(id) || /newsletter/.test(ttl) ? 'newsletter' :
-         href.includes('facebook.com')                ? 'facebook'  :
-         href.includes('instagram.com')               ? 'instagram' :
-         href.includes('pinterest.com')               ? 'pinterest' :
-         href.includes('spotify.com')                 ? 'spotify'   :
-         href.includes('tiktok.com')                  ? 'tiktok'    :
-         href.includes('youtube.com') || href.includes('youtu.be') ? 'youtube'   :
-         id === 'share-location-button' || /share/.test(id) ? 'share' :
-         /route|map/.test(id) || /maps/.test(href)    ? 'map'       :
-         null);
-
-      if (action) { (async () => { const uid = await toUlid(String(data?.id || data?.locationID || '').trim()); if (uid) _track(uid, String(action).toLowerCase().replaceAll('_','-')); })(); } // resolve→ULID then send
-    }, { capture: true });        
+    // Delegated client beacons removed — server counts via /out/* and /hit/*
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
     const btnSave = modal.querySelector('#lpm-save');
@@ -1031,7 +996,7 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip(true); showToast('Saved', 1600);
-          _track(String(data?.id || data?.locationID || '').trim(), 'save');
+          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/save/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         }
       });
     }
@@ -1129,14 +1094,13 @@ async function initLpmImageSlider(modal, data) {
       if (!href) return;
       const a = document.createElement('a');
       a.className = 'modal-footer-button';
-      a.id = id; a.href = href; a.target = '_blank'; a.rel = 'noopener';
+      a.id = id;
+      const uid = String(data?.id || data?.locationID || '').trim();
+      const act = (action || (id.startsWith('som-') ? id.slice(4) : id)).toLowerCase().replaceAll('_','-');
+      a.href = uid && href ? `/out/${act}/${encodeURIComponent(uid)}?to=${encodeURIComponent(href)}` : (href || '#');
+      a.target = '_blank'; a.rel = 'noopener';
       a.setAttribute('aria-label', label); a.title = label;
       a.innerHTML = `${emoji} <span class="cta-label">${label}</span>`;
-      a.addEventListener('click', () => {
-        // prefer explicit action; fallback to id-derived; send metric directly
-        const act = action || (id.startsWith('som-') ? id.slice(4) : id);
-        _track(String(data?.id || data?.locationID || '').trim(), String(act).toLowerCase().replaceAll('_','-')); // use LPM id reliably
-      });
       secondary.appendChild(a);
     };
 
@@ -1211,7 +1175,7 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip2(false); showToast('Removed from Saved', 1600);
-          _track(String(data?.id || data?.locationID || '').trim(), 'unsave'); // 1 path → Worker
+          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
@@ -1298,7 +1262,7 @@ async function initLpmImageSlider(modal, data) {
         localStorage.setItem(key,  String(n));
         localStorage.setItem(tsKey, String(last));
         setUI(n);
-        _track(String(data?.id || data?.locationID || '').trim(), `rate-${n}`); // 1 path → Worker
+        /* no server metric for rating yet; stored locally only */
         showToast(`Thanks! Rated ${n}/5`, 1600);
 
         // lock the row for this session
@@ -1369,10 +1333,6 @@ async function initLpmImageSlider(modal, data) {
 
   // 5. Reveal modal (remove .hidden, add .visible, focus trap etc.)
   // (done above via showModal)
-
-}
-
-// modal-injector.js
 
 // Track modal items globally within this module
 let myStuffItems = [];
@@ -2850,28 +2810,24 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
   rows.forEach(r => {
     const btn = document.createElement('a');
     btn.className = 'modal-menu-item';
-    btn.href = r.href;
+    btn.href = r.href;                   // initial (will be replaced at click)
     btn.target = '_blank';
     btn.rel = 'noopener';
+
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const rawId = String(id || '').trim();
+      const uid = await toUlid(rawId);
+      const to = r.href.split('?to=').pop() || '';
+      const url = uid ? `/out/map/${encodeURIComponent(uid)}?to=${to}` : decodeURIComponent(to);
+      window.open(url, '_blank', 'noopener,noreferrer'); // open outside the app
+    }, { capture: true });
 
     const iconHTML = r.emoji
       ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
       : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
 
     btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
-
-    // local guard: only beacon when id is a ULID
-    if (r.track && id) {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // avoid double-count with delegated handler
-        (async () => {
-          const uid = await toUlid(String(id).trim()); if (!uid) return;
-          (typeof _track === 'function')
-            ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-'))
-            : navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
-        })();
-      }, { passive: true });
-    }
     list.appendChild(btn);
   });
 
