@@ -750,7 +750,7 @@ async function initLpmImageSlider(modal, data) {
         const lat = Number(latRaw);
         const lng = Number(lngRaw);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        trackCta('route'); // keep analytics event name
+        _track(String(data?.id || data?.locationID || '').trim(), 'route'); // keep analytics event name
         createNavigationModal({
           name: String(data?.name || 'Location'),
           lat, lng,
@@ -771,7 +771,7 @@ async function initLpmImageSlider(modal, data) {
         btnBook.setAttribute('href', bookingUrl);
         btnBook.setAttribute('target', '_blank');
         btnBook.setAttribute('rel', 'noopener');
-        btnBook.addEventListener('click', () => { trackCta('booking'); }, { passive: true });
+        btnBook.addEventListener('click', () => { _track(String(data?.id || data?.locationID || '').trim(), 'booking'); }, { passive: true }); // 1 path → Worker
       } else {
         btnBook.addEventListener('click', (e) => {
           e.preventDefault();
@@ -832,7 +832,7 @@ async function initLpmImageSlider(modal, data) {
           // print: open minimal doc, wait for load, then print + close
           // print: show full-screen overlay, print just the QR, then remove
           printBtn.onclick = () => {
-            trackCta('print');
+            _track(String(data?.id || data?.locationID || '').trim(), 'print'); // 1 path → Worker
 
             const src = img.src;
 
@@ -937,7 +937,7 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
             // keep: maps to canonical "share" metric
-            trackCta('share'); // short, clear action id
+            _track(String(data?.id || data?.locationID || '').trim(), 'share'); // 1 path → Worker
             try {
               const text = [name, phone, email].filter(Boolean).join('\n');
               if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
@@ -1022,13 +1022,13 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip(false); showToast('Removed from Saved', 1600);
-          trackCta('unsave');
+          _track(String(data?.id || data?.locationID || '').trim(), 'unsave');
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip(true); showToast('Saved', 1600);
-          trackCta('save');
+          _track(String(data?.id || data?.locationID || '').trim(), 'save');
         }
       });
     }
@@ -1208,13 +1208,13 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip2(false); showToast('Removed from Saved', 1600);
-          trackCta('unsave');
+          _track(String(data?.id || data?.locationID || '').trim(), 'unsave'); // 1 path → Worker
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip2(true); showToast('Saved', 1600);
-          trackCta('save');
+          _track(String(data?.id || data?.locationID || '').trim(), 'save'); // 1 path → Worker
         }
       });
     }
@@ -1224,7 +1224,7 @@ async function initLpmImageSlider(modal, data) {
     if (shareBtn) {
       shareBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        trackCta('share');
+        _track(String(data?.id || data?.locationID || '').trim(), 'share'); // short, clear action id
         const name = String(data?.name || 'Location');
         const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
         const text = coords ? `${name} — ${coords}` : name;
@@ -1295,7 +1295,7 @@ async function initLpmImageSlider(modal, data) {
         localStorage.setItem(key,  String(n));
         localStorage.setItem(tsKey, String(last));
         setUI(n);
-        trackCta(`rate-${n}`); // analytics bucket: rate-1..rate-5
+        _track(String(data?.id || data?.locationID || '').trim(), `rate-${n}`); // 1 path → Worker
         showToast(`Thanks! Rated ${n}/5`, 1600);
 
         // lock the row for this session
@@ -1326,17 +1326,7 @@ async function initLpmImageSlider(modal, data) {
     })();
 
     // analytics beacon
-    function trackCta(action) { // local CTA helper; avoids _track shadow
-      (async () => {
-        const uid = await toUlid(String(data?.id || data?.locationID || '').trim()); if (!uid) return;
-        try {
-          navigator.sendBeacon(
-            `${TRACK_BASE}/api/track`,
-            new Blob([JSON.stringify({ event: String(action).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' })
-          );
-        } catch {}
-      })();
-    }
+    // removed trackCta; all beacons use _track(uid,event) // single path → Worker
   }
 
   // call wiring + reveal
