@@ -744,7 +744,6 @@ async function initLpmImageSlider(modal, data) {
   // Call from showLocationProfileModal(modal, data)
   // ————————————————————————————  
   function wireLocationProfile(word_modal, data, originEl) {            // ← restore the function wrapper
-    const modal = word_modal; // keep local name if your inner code expects `modal`
     // 🎯 Route → open Navigation modal (same header/close style as QR)
     const btnRoute = modal.querySelector('#lpm-route');
     if (btnRoute) {
@@ -2829,19 +2828,6 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
       : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
 
     btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
-
-    // local guard: only beacon when id is a ULID
-    if (r.track && id) {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // avoid double-count with delegated handler
-        (async () => {
-          const uid = await toUlid(String(id).trim()); if (!uid) return;
-          (typeof _track === 'function')
-            ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-'))
-            : navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
-        })();
-      }, { passive: true });
-    }
     list.appendChild(btn);
   });
 
