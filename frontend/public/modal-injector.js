@@ -896,7 +896,7 @@ async function initLpmImageSlider(modal, data) {
 
           /* count a QR view (modal/image shown) */
           ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
-        });
+        };
       }
     }
 
