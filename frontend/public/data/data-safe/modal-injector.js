@@ -1,3 +1,39 @@
+// analytics: unified endpoint; always use live worker for all environments
+const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
+
+// cache + resolve alias → ULID via Worker; keeps all beacons canonical
+const _uidCache = new Map();
+async function toUlid(id) {
+  const k = String(id || '').trim(); if (!k) return '';
+  if (_uidCache.has(k)) return _uidCache.get(k);
+  try {
+    const u = new URL(`/api/status?locationID=${encodeURIComponent(k)}`, TRACK_BASE);
+    const r = await fetch(u); if (!r.ok) return '';
+    const j = await r.json(); const ulid = String(j.locationID || '');
+    if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(ulid)) { _uidCache.set(k, ulid); return ulid; }
+  } catch {}
+  return '';
+}
+
+function _track(locId, event, action) { // resolve → ULID; map legacy 'route' → 'map'
+  (async () => {
+    const uid = await toUlid(String(locId || '').trim()); if (!uid) return;
+    const ev0 = String(event || '').toLowerCase().replaceAll('_','-');
+    const ev  = (ev0 === 'route') ? 'map' : ev0; // Worker allows 'map', not 'route'
+    const payload = {
+      locationID: uid,
+      event: ev,
+      action: String(action || '').toLowerCase().replaceAll('_','-'),
+      lang: document.documentElement.lang || 'en',
+      pageKey: location.pathname.replace(/^\/(?:[a-z]{2}\/)?/, ''),
+      device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
+    };
+    try {
+      navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    } catch {}
+  })();
+}
+
 /**
  * Factory: build the Location Profile Modal (LPM) element.
  * No event wiring here; just structure. Caller injects & wires.
@@ -26,10 +62,11 @@ export function createLocationProfileModal(data, injected = {}) {
   // Top bar: title first, then Close → places the X on the right (matches other modals)
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
+  const displayName = String(data?.displayName ?? data?.name ?? 'Location'); // location title only
   top.innerHTML = `
-    <h2 class="modal-header" aria-live="polite">📍 ${data?.name ?? 'Location'}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
+      <h2 class="modal-header" aria-live="polite">📍 ${displayName}</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    `;
   
   /** format description: handle multi-line + empty lines safely */
   function formatDescHTML(s) {
@@ -706,8 +743,7 @@ async function initLpmImageSlider(modal, data) {
   // LPM button wiring (Route / Save / ⋮ / Close)
   // Call from showLocationProfileModal(modal, data)
   // ————————————————————————————  
-  function wireLocationProfileModal(modal, data, originEl) {    
-
+  function wireLocationProfileModal(modal, data, originEl) {
     // 🎯 Route → open Navigation modal (same header/close style as QR)
     const btnRoute = modal.querySelector('#lpm-route');
     if (btnRoute) {
@@ -718,53 +754,30 @@ async function initLpmImageSlider(modal, data) {
         const lat = Number(latRaw);
         const lng = Number(lngRaw);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track('route'); // keep analytics event name
+        // server counts via /out/map on click; no client beacons
         createNavigationModal({
           name: String(data?.name || 'Location'),
-          lat, lng
+          lat, lng,
+          id: String(data?.id || data?.locationID || '').trim() // pass LPM id for tracking
         });
       }, { passive: false });
     }
 
-    // 📅 Book → open bookingUrl if present; else fetch once and toast
+    // 📅 Book → ONLY open links.bookingUrl; else toast (no legacy, no contact API)
     const btnBook = modal.querySelector('#lpm-book');
     if (btnBook) {
-      // if upstream already wired onclick, skip to prevent double-open
-      if (typeof btnBook.onclick === 'function') { return; }
+      if (typeof btnBook.onclick === 'function') { return; } // prevent double wiring
 
-      // booking lives under links only
-      const link = data?.links?.booking || '';
+      const bookingUrl = String(data?.links?.bookingUrl || '').trim();
 
-      if (link) {
-        // use native anchor open; no JS window.open to avoid duplicates
-        btnBook.setAttribute('href', String(link));
-        btnBook.setAttribute('target', '_blank');
-        btnBook.setAttribute('rel', 'noopener');
-        // track only; native anchor handles opening
-        btnBook.addEventListener('click', () => { _track && _track('booking'); }, { passive: true });
+      if (bookingUrl) {
+        // native anchor; track only
+        btnBook.setAttribute('href', `/out/booking/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
+        btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
-        let busy = false; // run-once guard
-        btnBook.addEventListener('click', async (e) => {
-          e.preventDefault();                  // keep click inside the modal
-          e.stopImmediatePropagation();        // ensure a single handler runs
-          if (busy) return; busy = true;
-
-          const id = String(data?.id || data?.locationID || '').trim();
-          if (!id) { showToast('Booking link coming soon', 1600); busy = false; return; }
-
-          try {
-            const url = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`);
-            const r = await fetch(url, { credentials: 'include' });
-            if (r.ok) {
-              const j = await r.json().catch(() => ({}));
-              if (j && j.href) { _track && _track('booking'); window.open(String(j.href), '_blank', 'noopener'); busy = false; return; }
-            }
-            showToast('Booking link coming soon', 1600);
-          } catch {
-            showToast('Booking link coming soon', 1600);
-          } finally {
-            busy = false;
-          }
+        btnBook.addEventListener('click', (e) => {
+          e.preventDefault();
+          showToast('Booking link coming soon', 1600);
         }, { passive: false });
       }
     }
@@ -791,7 +804,11 @@ async function initLpmImageSlider(modal, data) {
 
           const img = document.createElement('img');
           img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
-          img.src = `https://navigen-api.4naama-39c.workers.dev/api/qr?school_uid=${encodeURIComponent(uid)}&size=512`;
+          // dev → prod (or meta api-origin); prod stays same-origin
+          const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
+            || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
+
+          img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512`;
 
           // use existing compact emoji buttons
           const actions = document.createElement('div');
@@ -804,7 +821,8 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
-            _track && _track('share');
+            const uid = String(data?.id || data?.locationID || '').trim();
+            if (uid) { try { await fetch(`/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} }
             try { if (navigator.share) await navigator.share({ title:'NaviGen QR', url: img.src }); } catch {}
           };
 
@@ -816,8 +834,7 @@ async function initLpmImageSlider(modal, data) {
           printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
           // print: open minimal doc, wait for load, then print + close
           // print: show full-screen overlay, print just the QR, then remove
-          printBtn.onclick = () => {
-            _track && _track('print');
+          /* no tracking for print; not in EVENT_ORDER */
 
             const src = img.src;
 
@@ -864,7 +881,7 @@ async function initLpmImageSlider(modal, data) {
               pimg.addEventListener('load', go,   { once:true });
               pimg.addEventListener('error', cleanup, { once:true });
             }
-          };
+          });
 
           actions.appendChild(shareBtn);
           actions.appendChild(printBtn);
@@ -876,9 +893,9 @@ async function initLpmImageSlider(modal, data) {
 
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
 
-          // track
-          _track('qr');
-        });
+          /* count a QR view (modal/image shown) */
+          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+        };
       }
     }
 
@@ -899,11 +916,12 @@ async function initLpmImageSlider(modal, data) {
           const body  = document.createElement('div'); body.className = 'modal-body';
           const inner = document.createElement('div'); inner.className = 'modal-body-inner';
 
-          const name  = String(data?.contact?.name  || '').trim();
-          const phone = String(data?.contact?.phone || '').trim();
-          const email = String(data?.contact?.email || '').trim();
+          // prefer contactInformation only
+          const contactPerson = String(data?.contactInformation?.contactPerson || '').trim(); // contact person only
+          const phone = String(data?.contactInformation?.phone || '').trim();
+          const email = String(data?.contactInformation?.email || '').trim();
 
-          if (name)  { const p = document.createElement('p'); p.textContent = name;  inner.appendChild(p); }
+          if (contactPerson)  { const p = document.createElement('p'); p.textContent = contactPerson;  inner.appendChild(p); }
           if (phone) { const p = document.createElement('p'); p.textContent = phone; inner.appendChild(p); }
           if (email) { const p = document.createElement('p'); p.textContent = email; inner.appendChild(p); }
           if (!inner.children.length) { const p = document.createElement('p'); p.textContent = ''; inner.appendChild(p); } // no labels
@@ -920,7 +938,8 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
-            _track && _track('share_contact');
+            const uid = String(data?.id || data?.locationID || '').trim();
+            if (uid) { try { await fetch(`/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} }
             try {
               const text = [name, phone, email].filter(Boolean).join('\n');
               if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
@@ -937,20 +956,51 @@ async function initLpmImageSlider(modal, data) {
         }, { passive: false });
       }
     }    
+    
+    // count LPM open
+    // send only with canonical ULID (prevents 400 from /api/track)
+    ;(async () => { const uid = await toUlid(String(data?.id||data?.locationID||'').trim()); if (uid) { try{ await fetch(`/hit/lpm-open/${uid}`,{method:'POST',keepalive:true}); }catch{} } })();
 
-    // ⭐ Save → stub (hook your real flow later)
+    // Delegated client beacons removed — server counts via /out/* and /hit/*
+
+    // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
     const btnSave = modal.querySelector('#lpm-save');
     if (btnSave) {
+      btnSave.classList.add('icon-btn'); // square icon button size
+      const flip = (saved) => { btnSave.textContent = saved ? '✩' : '⭐'; };
+      // init icon from storage (if LPM opened again)
+      {
+        const id0 = String(data?.id || data?.locationID || '');
+        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
+        flip(saved0);
+      }
       btnSave.addEventListener('click', (e) => {
         e.preventDefault();
-        const id = String(data?.id || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
+        const lat = Number(data?.lat), lng = Number(data?.lng);
+        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+
         const key = `saved:${id}`;
         const was = localStorage.getItem(key) === '1';
-        localStorage.setItem(key, was ? '0' : '1');
-        showToast(was ? 'Removed from Saved' : 'Saved', 1600); // auto hide
+        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+
+        if (was) {
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '0');
+          flip(false); showToast('Removed from Saved', 1600);
+          ;(async()=>{ try{ await fetch(`/hit/${was?'unsave':'save'}/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}`,{method:'POST',keepalive:true}); }catch{} })();
+        } else {
+          next.unshift(entry);
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '1');
+          flip(true); showToast('Saved', 1600);
+          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/save/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+        }
       });
-    } 
-    
+    }
+
     // 🎉 Social Channels — open social modal (capture to beat other handlers)
     const socialBtn = modal.querySelector('#som-social');
     if (socialBtn) {
@@ -960,8 +1010,9 @@ async function initLpmImageSlider(modal, data) {
         e.stopPropagation();
 
         // baseline from current LPM data
-        let links   = (data && data.links)   || {};
-        let contact = (data && data.contact) || {};
+        let links   = (data && data.links) || {};
+        // use contactInformation only
+        let contact = (data && data.contactInformation) || {};
 
         // fill from API export (same source as postal/media); fetch when Website is missing too
         const missingLinks = !links || !Object.values(links).some(v => String(v || '').trim());
@@ -1001,9 +1052,10 @@ async function initLpmImageSlider(modal, data) {
         }
 
         createSocialModal({
-          name: String(data?.name || 'Location'),
+          name: String(data?.displayName ?? data?.name ?? 'Location'),
           links,
-          contact
+          contact,
+          id: String(data?.id || data?.locationID || '').trim() // pass LPM id for tracking
         });
       }, { capture: true, passive: false });
     }
@@ -1042,14 +1094,13 @@ async function initLpmImageSlider(modal, data) {
       if (!href) return;
       const a = document.createElement('a');
       a.className = 'modal-footer-button';
-      a.id = id; a.href = href; a.target = '_blank'; a.rel = 'noopener';
+      a.id = id;
+      const uid = String(data?.id || data?.locationID || '').trim();
+      const act = (action || (id.startsWith('som-') ? id.slice(4) : id)).toLowerCase().replaceAll('_','-');
+      a.href = uid && href ? `/out/${act}/${encodeURIComponent(uid)}?to=${encodeURIComponent(href)}` : (href || '#');
+      a.target = '_blank'; a.rel = 'noopener';
       a.setAttribute('aria-label', label); a.title = label;
       a.innerHTML = `${emoji} <span class="cta-label">${label}</span>`;
-      a.addEventListener('click', () => {
-        // prefer explicit action; fallback to id-derived
-        const act = action || (id.startsWith('som-') ? id.slice(4) : id);
-        _track(String(act));
-      });
       secondary.appendChild(a);
     };
 
@@ -1078,44 +1129,60 @@ async function initLpmImageSlider(modal, data) {
         } catch {}
       });
 
-      // booking: fetch JSON; open once; toast when missing
+      // booking: ONLY links.bookingUrl; else toast (cleaned)
       if (bookBtn) {
-        const orig = bookBtn.onclick;
-        bookBtn.onclick = async (ev) => {
+        const prev = bookBtn.onclick;
+        bookBtn.onclick = (ev) => {
           ev.preventDefault();
-          const id = String(data?.id || data?.locationID || '');
-          // booking lives under links only
-          const direct = data?.links?.booking || '';
-          if (direct) { if (orig) return orig(ev); window.open(String(direct), '_blank', 'noopener'); return; }
-
-          const url  = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=booking`);
-          try {
-            const r = await fetch(url, { credentials: 'include' });
-
-            if (r.ok) {
-              const j = await r.json().catch(() => ({}));
-              if (j && j.href) { window.open(String(j.href), '_blank', 'noopener'); return; }
-            }
-            showToast('Booking link coming soon', 1600); // short, calm message
-          } catch {
-            showToast('Booking link coming soon', 1600);
+          const bookingUrl = String(data?.links?.bookingUrl || '').trim();
+          if (bookingUrl) {
+            if (typeof prev === 'function') return prev(ev); // respect upstream if any
+            const a = document.createElement('a'); /* module-scoped, no globals added */
+            a.href = bookingUrl;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.click();
+            return;
           }
+          showToast('Booking link coming soon', 1600);
         };
       }
-
     })();
 
-    // ⭐ Save (secondary) → local toggle
+    // ⭐ Save (secondary) → same toggle + icon flip (⭐ ↔ ✩)
     const save2 = modal.querySelector('#som-save');
     if (save2) {
+      save2.classList.add('icon-btn'); // square icon button size
+      const flip2 = (saved) => { save2.textContent = saved ? '✩' : '⭐'; };
+      {
+        const id0 = String(data?.id || data?.locationID || '');
+        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
+        flip2(saved0);
+      }
       save2.addEventListener('click', (e) => {
         e.preventDefault();
-        const id = String(data?.id || '');
-        if (!id) { showToast('Missing id', 1600); return; }
+        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
+        const lat = Number(data?.lat), lng = Number(data?.lng);
+        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+
         const key = `saved:${id}`;
         const was = localStorage.getItem(key) === '1';
-        localStorage.setItem(key, was ? '0' : '1');
-        showToast(was ? 'Removed from Saved' : 'Saved', 1600); // auto-close
+        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+
+        if (was) {
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '0');
+          flip2(false); showToast('Removed from Saved', 1600);
+          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+        } else {
+          next.unshift(entry);
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '1');
+          flip2(true); showToast('Saved', 1600);
+          ;(async()=>{ try{ await fetch(`/hit/${was?'unsave':'save'}/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}`,{method:'POST',keepalive:true}); }catch{} })();
+        }
       });
     }
 
@@ -1124,7 +1191,7 @@ async function initLpmImageSlider(modal, data) {
     if (shareBtn) {
       shareBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        _track('share');
+        ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         const name = String(data?.name || 'Location');
         const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
         const text = coords ? `${name} — ${coords}` : name;
@@ -1195,7 +1262,7 @@ async function initLpmImageSlider(modal, data) {
         localStorage.setItem(key,  String(n));
         localStorage.setItem(tsKey, String(last));
         setUI(n);
-        _track && _track(`rate-${n}`);   // analytics bucket: rate-1..rate-5
+        /* no server metric for rating yet; stored locally only */
         showToast(`Thanks! Rated ${n}/5`, 1600);
 
         // lock the row for this session
@@ -1226,16 +1293,7 @@ async function initLpmImageSlider(modal, data) {
     })();
 
     // analytics beacon
-    const _track = (action) => {
-      const uid = String(data?.id || data?.locationID || '').trim(); if (!uid) return;
-      try {
-        navigator.sendBeacon(
-          'https://navigen-api.4naama-39c.workers.dev/api/track',
-          new Blob([JSON.stringify({ event:'cta_click', school_uid:uid, action })], { type:'application/json' })
-        );
-      } catch {}
-    };
-    
+    // removed trackCta; all beacons use _track(uid,event) // single path → Worker
   }
 
   // call wiring + reveal
@@ -1276,10 +1334,6 @@ async function initLpmImageSlider(modal, data) {
   // 5. Reveal modal (remove .hidden, add .visible, focus trap etc.)
   // (done above via showModal)
 
-}
-
-// modal-injector.js
-
 // Track modal items globally within this module
 let myStuffItems = [];
 
@@ -1314,18 +1368,19 @@ document.addEventListener("DOMContentLoaded", () => {
 // Utility: create a location button and wire it to the Location Profile Modal (LPM)
 function makeLocationButton(loc) {
   const btn = document.createElement('button');
-  btn.textContent = loc["Short Name"] || loc.locationName || loc.Name || "Unnamed"; // prefer new name
+  const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
+  btn.textContent = locLabel;
 
   // prefer stable profile id; avoid transient loc_*
   // keep: small comment; 2 lines max
   btn.setAttribute('data-id', String(loc.locationID || loc.ID || loc.id || ''));
   btn.classList.add('location-button');
-  btn.dataset.lower = (loc["Short Name"] || loc.locationName || loc.Name || "Unnamed").toLowerCase(); // prefer new name
+  btn.dataset.lower = btn.textContent.toLowerCase();
   
-  // Expose searchable metadata: name/shortName for text, data-tags with keys minus "tag."
+  // Expose searchable metadata: use locationName only
   const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
-  btn.setAttribute('data-name', btn.textContent);
-  btn.setAttribute('data-short-name', String(loc["Short Name"] || ''));
+  const _locName = locLabel; // consistent with visual label
+  btn.setAttribute('data-name', _locName);
   btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
 
   const cc = loc["Coordinate Compound"];
@@ -1368,9 +1423,9 @@ function makeLocationButton(loc) {
       tags: Array.isArray(loc?.tags) ? loc.tags : [],
 
       // keep if you already added them; otherwise these help other CTAs too
-      contact: (loc && typeof loc.contact === 'object') ? loc.contact : {},
-      links:   (loc && typeof loc.links   === 'object') ? loc.links   : {},
-
+      contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
+                          : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
+      links:   (loc && typeof loc.links === 'object') ? loc.links : {},
       originEl: btn
     });
 
@@ -2017,10 +2072,10 @@ export function showFavoritesModal() {
     row.innerHTML = `
       <div class="label" style="flex:1 1 auto; min-width:0;">
         <button class="open-fav" type="button" style="all:unset; cursor:pointer;">
-          ${item.name || t("Unnamed")}
+          ${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim() || t("Unnamed")}
         </button>
       </div>
-      <button class="unsave-fav" type="button" aria-label="${t("Remove")}">⭐</button>
+      <button class="unsave-fav clear-x" type="button" aria-label="${t("Remove")}">✖</button>
     `;
 
     // open behavior: dispatch event + attempt local scroll
@@ -2037,6 +2092,15 @@ export function showFavoritesModal() {
       e.stopPropagation();
       const next = saved.filter(s => String(s.id) !== String(item.id));
       save(next);
+
+      // clear LPM toggle marker(s) so LPM shows ⭐ after delete
+      const ids = [
+        String(item?.id || ''),
+        String(item?.locationID || ''),
+        String(item?.ID || '')
+      ].filter(Boolean);
+      ids.forEach(k => localStorage.setItem(`saved:${k}`, '0'));
+
       row.style.opacity = "0.5";                 // quick visual feedback
       setTimeout(() => showFavoritesModal(), 120);
     });
@@ -2535,10 +2599,11 @@ export function createHelpModal() {
   if (document.getElementById("help-modal")) return;
 
   const modal = injectModal({
-    id: "help-modal",
-    title: "",             // header rendered via modal-top-bar
-    layout: "action",
+    id: "help-modal", // canonical id used by hideModal/setupTapOutClose
+    title: '',
+    layout: 'action',
     bodyHTML: `
+      <div class="modal-menu-list" id="social-modal-list"></div>
       <p class="muted" data-i18n="help.intro">
         Hello! We’re here to assist you. Tap an emergency number to call from your phone.
       </p>
@@ -2603,9 +2668,9 @@ export function createHelpModal() {
 // 🎉 Social Channels modal (MODULE-SCOPED)
 // Reason: make callable from 🎉 handler; same shell as Navigation; no footer.
 // ============================
-export function createSocialModal({ name, links = {}, contact = {} }) {
-  const id = 'social-modal';
-  document.getElementById(id)?.remove();
+export function createSocialModal({ name, links = {}, contact = {}, id }) { // id for analytics
+  const modalId = 'social-modal'; // avoid param shadow
+  document.getElementById(modalId)?.remove(); // remove canonical social modal
 
   // local helpers (2 lines each)
   const normUrl = (u) => {
@@ -2618,7 +2683,7 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
 
   // same shell as Navigation: inject + header top bar; no footer
   const modal = injectModal({
-    id,
+    id: modalId, // use canonical Social modal ID
     title: '',
     layout: 'action',
     bodyHTML: `<div class="modal-menu-list" id="social-modal-list"></div>`
@@ -2633,7 +2698,7 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
       <button class="modal-close" aria-label="Close">&times;</button>
     `;
     modal.querySelector('.modal-content')?.prepend(top);
-    top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+    top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
   }
 
   // providers: consistent logo + text rows; Website uses globe svg
@@ -2642,23 +2707,23 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
       key:'official',
       label:'🌐 Website',  // requested label
       icon:'',             // text-only row; no missing asset
-      track:'social.website',
+      track:'official',
       href: normUrl(
         (links && (links.official || links.website || links.site)) ||
         (contact && (contact.officialUrl || contact.officialURL || contact.website || contact.site))
       )
     },
-    { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'social.facebook',  href: normUrl(links.facebook) },
-    { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'social.instagram', href: normUrl(links.instagram) },
-    { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'social.youtube',   href: normUrl(links.youtube) },
-    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'social.tiktok',    href: normUrl(links.tiktok) },
+    { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'facebook',  href: normUrl(links.facebook) },
+    { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'instagram', href: normUrl(links.instagram) },
+    { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'youtube',   href: normUrl(links.youtube) },
+    { key:'tiktok',    label:'TikTok',    icon:'/assets/social/icons-tiktok.svg',    track:'tiktok',    href: normUrl(links.tiktok) },
     // IMPORTANT: Pinterest now has a text label (no icon-only), so sizing matches others
-    { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'social.pinterest', href: normUrl(links.pinterest) },
-    { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'social.linkedin',  href: normUrl(links.linkedin) },
-    { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'social.spotify',   href: normUrl(links.spotify) },
-    { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'social.whatsapp',  href: waUrl(contact.whatsapp) },
-    { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'social.telegram',  href: tgUrl(contact.telegram) },
-    { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'social.messenger', href: msUrl(contact.messenger) }
+    { key:'pinterest', label:'Pinterest', icon:'/assets/social/icons-pinterest.svg', track:'pinterest', href: normUrl(links.pinterest) },
+    { key:'linkedin',  label:'LinkedIn',  icon:'/assets/social/icons-linkedin.svg',  track:'linkedin',  href: normUrl(links.linkedin) }, // not charted, harmless
+    { key:'spotify',   label:'Spotify',   icon:'/assets/social/icons-spotify.svg',   track:'spotify',   href: normUrl(links.spotify) },
+    { key:'whatsapp',  label:'WhatsApp',  icon:'/assets/social/icon-whatsapp.svg',   track:'whatsapp',  href: waUrl(contact.whatsapp) },
+    { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'telegram',  href: tgUrl(contact.telegram) },
+    { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'messenger', href: msUrl(contact.messenger) }
   ];
 
   const list = modal.querySelector('#social-modal-list');
@@ -2676,35 +2741,37 @@ export function createSocialModal({ name, links = {}, contact = {} }) {
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
-      a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
+      a.href = `/out/${r.track}/${encodeURIComponent(String(id||'').trim())}?to=${encodeURIComponent(r.href)}`;
+      a.target = '_blank'; a.rel = 'noopener';
       // uniform row: 20×20 icon + text; no icon-only centering
       a.innerHTML =
         `<span class="icon-img">` +
           (r.icon ? `<img src="${r.icon}" alt="" width="20" height="20" style="display:block;object-fit:contain;">` : '') +
         `</span><span>${r.label || (r.key === 'pinterest' ? 'Pinterest' : '')}</span>`;
 
-      if (typeof _track === 'function' && r.track) a.addEventListener('click', () => _track(r.track), { passive:true }); // track if available
+      // local guard identical to Navigation modal
+      // removed beacon; server counts on redirect
       list.appendChild(a);
     });
   }
 
-  setupTapOutClose(id);
-  showModal(id);
+  setupTapOutClose(modalId);
+  showModal(modalId);
 }
 
 // 🎯 Navigation modal (compact list with icons; header + red × like QR/Help)
-function createNavigationModal({ name, lat, lng }) {
-  const id = 'nav-modal';
-  document.getElementById(id)?.remove();
+function createNavigationModal({ name, lat, lng, id }) { // id for analytics
+  const modalId = 'nav-modal'; // avoid param shadow
+  document.getElementById(modalId)?.remove(); // remove canonical nav modal
 
   // Build modal shell via injectModal (body replaced right after)
   const m = injectModal({
-    id,
+    id: modalId,
     title: '',            // header built as top bar (uniform with QR/Help)
     layout: 'action',
     bodyHTML: `
-      <div class="modal-menu-list" id="nav-modal-list"></div>
-    `
+        <div class="modal-menu-list" id="nav-modal-list"></div>
+      `
   });
 
   // Top bar (sticky) — reuses your QR/Help style
@@ -2715,7 +2782,7 @@ function createNavigationModal({ name, lat, lng }) {
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   m.querySelector('.modal-content')?.prepend(top);
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
 
   // Build items (icons in /assets/social/) + per-provider tracking labels
   const list = m.querySelector('#nav-modal-list');
@@ -2723,45 +2790,50 @@ function createNavigationModal({ name, lat, lng }) {
     {
       label: 'Google Maps',
       icon: '/assets/social/icons-google-maps.svg',
-      href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-      track: 'nav.google'
+      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`)}`,
+      track: 'map' // server counts on redirect
     },
     {
       label: 'Waze',
       icon: '/assets/social/icons-waze.png',
-      href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
-      track: 'nav.waze'
+      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`)}`,
+      track: 'map' // server counts on redirect
     },
     {
       label: 'Apple Maps',
       emoji: '🍎',
-      href: `https://maps.apple.com/?daddr=${lat},${lng}`,
-      track: 'nav.apple'
+      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://maps.apple.com/?saddr=Current+Location&daddr=${lat},${lng}&dirflg=d`)}`,
+      track: 'map' // server counts on redirect
     }
   ];
 
   rows.forEach(r => {
     const btn = document.createElement('a');
     btn.className = 'modal-menu-item';
-    btn.href = r.href;
+    btn.href = r.href;                   // initial (will be replaced at click)
     btn.target = '_blank';
     btn.rel = 'noopener';
+
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const rawId = String(id || '').trim();
+      const uid = await toUlid(rawId);
+      const to = r.href.split('?to=').pop() || '';
+      const url = uid ? `/out/map/${encodeURIComponent(uid)}?to=${to}` : decodeURIComponent(to);
+      window.open(url, '_blank', 'noopener,noreferrer'); // open outside the app
+    }, { capture: true });
 
     const iconHTML = r.emoji
       ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
       : `<span class="icon-img"><img src="${r.icon}" alt="" class="icon-img"></span>`;
 
     btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
-
-    if (typeof _track === 'function' && r.track) {
-      btn.addEventListener('click', () => { _track(r.track); }, { passive: true });
-    }
     list.appendChild(btn);
   });
 
   // Tap-out close & show
-  setupTapOutClose(id);
-  showModal(id);
+  setupTapOutClose(modalId);
+  showModal(modalId);
 }
 
 // 🛑 Prevents overlapping share attempts by locking during active share operation.
