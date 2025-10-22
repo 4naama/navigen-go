@@ -8,8 +8,9 @@ const EVENT_ORDER = [
   "lpm-open","call","email","whatsapp","telegram","messenger",
   "official","booking","newsletter",
   "facebook","instagram","pinterest","spotify","tiktok","youtube",
-  "share","save","unsave","map","qr-view"
-] as const;
+  "share","save","unsave","map","qr-scan","qr-view"
+] as const; // add qr-scan; keep qr-view for image/modal-only
+
 type EventKey = typeof EVENT_ORDER[number];
 
 // tz: payload.tz → country → fallback Berlin → UTC
@@ -256,6 +257,66 @@ export default {
         return await handleStatus(req, env);
       }
 
+      // --- Outbound tracked redirect: /out/{event}/{id}?to=<url>
+      if (pathname.startsWith("/out/") && req.method === "GET") {
+        const parts = pathname.split("/").filter(Boolean); // ['out','event','id']
+        const ev = (parts[1] || "").toLowerCase().replaceAll("_","-");
+        const idRaw = parts[2] || "";
+        const to = (new URL(req.url)).searchParams.get("to") || "";
+
+        const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
+        if (!allowed.has(ev)) {
+          return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
+        }
+
+        const loc = await resolveUid(idRaw, env);
+        if (!loc) {
+          return json({ error:{ code:"invalid_request", message:"bad id" } }, 400);
+        }
+
+        // basic redirect safety: https only
+        if (!/^https:\/\/[^ ]+/i.test(to)) {
+          return json({ error:{ code:"invalid_request", message:"https to= required" } }, 400);
+        }
+
+        // lightweight human-navigation guard (skip obvious bots/previews)
+        const method = req.method || "GET";
+        const sfm = req.headers.get("Sec-Fetch-Mode") || "";
+        const ua = req.headers.get("User-Agent") || "";
+        const isHumanNav =
+          method === "GET" &&
+          (!sfm || /navigate|same-origin/i.test(sfm)) &&
+          !/(bot|crawler|spider|facebookexternalhit|twitterbot|slackbot)/i.test(ua);
+
+        if (isHumanNav) {
+          try {
+            const now = new Date();
+            const country = (req as any).cf?.country || "";
+            const day = dayKeyFor(now, undefined, country);
+            await kvIncr(env.KV_STATS, `stats:${loc}:${day}:${ev}`);
+          } catch {}
+        }
+
+        return new Response(null, { status: 302, headers: { Location: to, "Cache-Control": "no-store" } });
+      }
+      
+      // --- Non-redirect hit: POST /hit/{event}/{id}
+      if (pathname.startsWith("/hit/") && req.method === "POST") {
+        const parts = pathname.split("/").filter(Boolean); // ['hit','event','id']
+        const ev = (parts[1] || "").toLowerCase().replaceAll("_","-");
+        const idRaw = parts[2] || "";
+        const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
+        if (!allowed.has(ev)) return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
+
+        const loc = await resolveUid(idRaw, env); if (!loc) return json({ error:{ code:"invalid_request", message:"bad id" } }, 400);
+
+        const now = new Date(); const country = (req as any).cf?.country || "";
+        const day = dayKeyFor(now, undefined, country);
+        await kvIncr(env.KV_STATS, `stats:${loc}:${day}:${ev}`);
+
+        return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+      }            
+
       // (Stubs for later)
       // if (pathname === "/api/checkout") { ... }
       // if (pathname === "/api/webhook")  { ... }
@@ -306,7 +367,11 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
   const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(resolved || "");
 
   // count the view against the resolved ULID when we have one; otherwise skip counting
-  if (isUlid) await increment(env.KV_STATS, keyForStat(resolved!, "qr-view"));
+  if (isUlid) {
+    const now = new Date(); const country = (req as any).cf?.country || "";
+    const day = dayKeyFor(now, undefined, country);
+    await kvIncr(env.KV_STATS, `stats:${resolved!}:${day}:qr-scan`); // count only human scans
+  }
 
   const target = isUlid
     ? `https://navigen.io/?lp=${encodeURIComponent(resolved!)}${c ? `&c=${encodeURIComponent(c)}` : ""}`
@@ -328,7 +393,7 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   const country = (req as any).cf?.country || "";
   const day = dayKeyFor(now, undefined, country); // uses Berlin fallback internally
   const resolved = await resolveUid(raw, env); // require canonical id for counting
-  if (resolved) { await kvIncr(env.KV_STATS, `stats:${resolved}:${day}:qr-view`); } // count only on ULID
+  // removed counting at generation-time; QR scans are counted at /s/{id} only
   const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(resolved || ""); // reflect counted id
 
   const c = url.searchParams.get("c") || "";

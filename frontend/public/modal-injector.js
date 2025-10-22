@@ -773,10 +773,8 @@ async function initLpmImageSlider(modal, data) {
 
       if (bookingUrl) {
         // native anchor; track only
-        btnBook.setAttribute('href', bookingUrl);
-        btnBook.setAttribute('target', '_blank');
-        btnBook.setAttribute('rel', 'noopener');
-        btnBook.addEventListener('click', () => { _track(String(data?.id || data?.locationID || '').trim(), 'booking'); }, { passive: true }); // 1 path → Worker
+        btnBook.setAttribute('href', `/out/booking/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
+        btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
           e.preventDefault();
@@ -962,7 +960,7 @@ async function initLpmImageSlider(modal, data) {
     
     // count LPM open
     // send only with canonical ULID (prevents 400 from /api/track)
-    ;(async () => { const uid = await toUlid(String(data?.id || data?.locationID || '').trim()); if (uid) _track(uid, 'lpm-open'); })(); // resolve→ULID first
+    ;(async () => { const uid = await toUlid(String(data?.id||data?.locationID||'').trim()); if (uid) { try{ await fetch(`/hit/lpm-open/${uid}`,{method:'POST',keepalive:true}); }catch{} } })();
 
     // CTA beacons (delegated, fires before native handlers)
     modal.addEventListener('click', (e) => {
@@ -1027,7 +1025,7 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip(false); showToast('Removed from Saved', 1600);
-          _track(String(data?.id || data?.locationID || '').trim(), 'unsave');
+          ;(async()=>{ try{ await fetch(`/hit/${was?'unsave':'save'}/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}`,{method:'POST',keepalive:true}); }catch{} })();
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
@@ -1219,7 +1217,7 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip2(true); showToast('Saved', 1600);
-          _track(String(data?.id || data?.locationID || '').trim(), 'save'); // 1 path → Worker
+          ;(async()=>{ try{ await fetch(`/hit/${was?'unsave':'save'}/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}`,{method:'POST',keepalive:true}); }catch{} })();
         }
       });
     }
@@ -1229,7 +1227,7 @@ async function initLpmImageSlider(modal, data) {
     if (shareBtn) {
       shareBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        _track(String(data?.id || data?.locationID || '').trim(), 'share'); // short, clear action id
+        ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         const name = String(data?.name || 'Location');
         const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
         const text = coords ? `${name} — ${coords}` : name;
@@ -2783,7 +2781,8 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
-      a.href = r.href; a.target = '_blank'; a.rel = 'noopener';
+      a.href = `/out/${r.track}/${encodeURIComponent(String(id||'').trim())}?to=${encodeURIComponent(r.href)}`;
+      a.target = '_blank'; a.rel = 'noopener';
       // uniform row: 20×20 icon + text; no icon-only centering
       a.innerHTML =
         `<span class="icon-img">` +
@@ -2791,18 +2790,7 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
         `</span><span>${r.label || (r.key === 'pinterest' ? 'Pinterest' : '')}</span>`;
 
       // local guard identical to Navigation modal
-      if (r.track && id) {
-        a.addEventListener('click', (e) => {
-          e.stopPropagation(); // avoid double-count with delegated handler
-          (async () => {
-            const uid = await toUlid(String(id).trim()); if (!uid) return;
-            (typeof _track === 'function')
-              ? _track(uid, String(r.track).toLowerCase().replaceAll('_','-'))
-              : navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify({ event: String(r.track).toLowerCase().replaceAll('_','-'), locationID: uid })], { type:'application/json' }));
-          })();
-        }, { passive:true });
-
-      }
+      // removed beacon; server counts on redirect
       list.appendChild(a);
     });
   }
@@ -2842,19 +2830,18 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     {
       label: 'Google Maps',
       icon: '/assets/social/icons-google-maps.svg',
-      href: `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-      track: 'map'
+      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`)}`
     },
     {
       label: 'Waze',
       icon: '/assets/social/icons-waze.png',
-      href: `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`,
+      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`)}`
       track: 'map'
     },
     {
       label: 'Apple Maps',
       emoji: '🍎',
-      href: `https://maps.apple.com/?saddr=Current+Location&daddr=${lat},${lng}&dirflg=d`, // force dest
+      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://maps.apple.com/?saddr=Current+Location&daddr=${lat},${lng}&dirflg=d`)}`
       track: 'map'
     }
   ];

@@ -101,8 +101,8 @@ const ORDER = [
   'lpm-open','call','email','whatsapp','telegram','messenger',
   'official','booking','newsletter',
   'facebook','instagram','pinterest','spotify','tiktok','youtube',
-  'share','save','unsave','map','qr-view'
-];
+  'share','save','unsave','map','qr-scan','qr-view'
+]; // show scans and (optionally) views
 
 // display labels for metrics (ids must match ORDER exactly)
 // keep: explicit i18n labels; others fall back to HUMANIZE()
@@ -126,7 +126,8 @@ const METRIC_LABEL = Object.freeze({
   'save':     t('metric.save'),
   'unsave':   t('metric.unsave'),
   'map':      t('metric.map'),
-  'qr-view':  t('metric.qr-view')
+  'qr-scan':  t('metric.qr-scan'),
+  'qr-view':  t('metric.qr-view') // keep view label
 });
 
 const HUMANIZE = (k) => {
