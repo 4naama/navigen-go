@@ -1335,8 +1335,6 @@ async function initLpmImageSlider(modal, data) {
   // 5. Reveal modal (remove .hidden, add .visible, focus trap etc.)
   // (done above via showModal)
 
-// modal-injector.js
-
 // Track modal items globally within this module
 let myStuffItems = [];
 
