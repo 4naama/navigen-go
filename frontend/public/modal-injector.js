@@ -743,7 +743,7 @@ async function initLpmImageSlider(modal, data) {
   // LPM button wiring (Route / Save / ⋮ / Close)
   // Call from showLocationProfileModal(modal, data)
   // ————————————————————————————  
-  function wireLocationProfile(word_modal, data, originEl) {            // ← restore the function wrapper
+  function wireLocationProfileModal(modal, data, originEl) {
     // 🎯 Route → open Navigation modal (same header/close style as QR)
     const btnRoute = modal.querySelector('#lpm-route');
     if (btnRoute) {
