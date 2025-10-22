@@ -894,7 +894,7 @@ async function initLpmImageSlider(modal, data) {
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
 
           /* count a QR view (modal/image shown) */
-          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+          ;(async()=>{ const uid=await toUlid(String(data?.id||data?.locationID||'').trim()); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         };
       }
     }
@@ -939,7 +939,7 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
             const uid = String(data?.id || data?.locationID || '').trim();
-            if (uid) { try { await fetch(`/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} }
+            { const uid = await toUlid(String(data?.id || data?.locationID || '').trim()); if (uid) { try { await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} } }
             try {
               const text = [name, phone, email].filter(Boolean).join('\n');
               if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
@@ -990,7 +990,7 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip(false); showToast('Removed from Saved', 1600);
-          ;(async()=>{ try{ await fetch(`/hit/${was?'unsave':'save'}/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}`,{method:'POST',keepalive:true}); }catch{} })();
+          ;(async()=>{ const uid=await toUlid(String(data?.id||data?.locationID||'').trim()); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
@@ -1175,13 +1175,13 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip2(false); showToast('Removed from Saved', 1600);
-          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+          ;(async()=>{ const uid=await toUlid(String(data?.id||data?.locationID||'').trim()); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip2(true); showToast('Saved', 1600);
-          ;(async()=>{ try{ await fetch(`/hit/${was?'unsave':'save'}/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}`,{method:'POST',keepalive:true}); }catch{} })();
+          ;(async()=>{ const uid=await toUlid(String(data?.id||data?.locationID||'').trim()); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         }
       });
     }
@@ -2818,7 +2818,7 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
       const rawId = String(id || '').trim();
       const uid = await toUlid(rawId);
       const to = r.href.split('?to=').pop() || '';
-      const url = uid ? `/out/map/${encodeURIComponent(uid)}?to=${to}` : decodeURIComponent(to);
+      const url = uid ? `${TRACK_BASE}/out/map/${encodeURIComponent(uid)}?to=${to}` : decodeURIComponent(to); // Worker handles redirect + stats
       window.open(url, '_blank', 'noopener,noreferrer'); // open outside the app
     }, { capture: true });
 
@@ -2829,6 +2829,16 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
     list.appendChild(btn);
   });
+  
+  ;(async()=>{ 
+    const uid = await toUlid(String(id||'').trim()); if(!uid) return;
+    list.querySelectorAll('a.modal-menu-item[href*="/out/"]').forEach(a => {
+      const u = new URL(a.href, location.origin);
+      const ev = (u.pathname.split('/')[2]||'').toLowerCase();        // event segment
+      const to = u.searchParams.get('to') || '';
+      a.href = `${TRACK_BASE}/out/${encodeURIComponent(ev)}/${encodeURIComponent(uid)}?to=${encodeURIComponent(to)}`; // Worker + ULID
+    });
+  })();    
 
   // Tap-out close & show
   setupTapOutClose(modalId);
