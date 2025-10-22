@@ -755,7 +755,7 @@ async function initLpmImageSlider(modal, data) {
         const lat = Number(latRaw);
         const lng = Number(lngRaw);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track(String(data?.id || data?.locationID || '').trim(), 'map'); // map legacy 'route' → 'map'
+        // server counts via /out/map on click; no client beacons
         createNavigationModal({
           name: String(data?.name || 'Location'),
           lat, lng,
@@ -822,7 +822,8 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
-            _track(String(data?.id || data?.locationID || '').trim(), 'share'); // use metric directly
+            const uid = String(data?.id || data?.locationID || '').trim();
+            if (uid) { try { await fetch(`/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} }
             try { if (navigator.share) await navigator.share({ title:'NaviGen QR', url: img.src }); } catch {}
           };
 
@@ -834,8 +835,7 @@ async function initLpmImageSlider(modal, data) {
           printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
           // print: open minimal doc, wait for load, then print + close
           // print: show full-screen overlay, print just the QR, then remove
-          printBtn.onclick = () => {
-            _track(String(data?.id || data?.locationID || '').trim(), 'print'); // 1 path → Worker
+          /* no tracking for print; not in EVENT_ORDER */
 
             const src = img.src;
 
@@ -894,8 +894,8 @@ async function initLpmImageSlider(modal, data) {
 
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
 
-          // track
-          _track(String(data?.id || data?.locationID || '').trim(), 'qr-view'); // go straight to Worker
+          /* count a QR view (modal/image shown) */
+          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         });
       }
     }
@@ -939,8 +939,8 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
           shareBtn.onclick = async () => {
-            // keep: maps to canonical "share" metric
-            _track(String(data?.id || data?.locationID || '').trim(), 'share'); // 1 path → Worker
+            const uid = String(data?.id || data?.locationID || '').trim();
+            if (uid) { try { await fetch(`/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} }
             try {
               const text = [name, phone, email].filter(Boolean).join('\n');
               if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
@@ -997,7 +997,7 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip(true); showToast('Saved', 1600);
-          _track(String(data?.id || data?.locationID || '').trim(), 'save');
+          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/save/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         }
       });
     }
@@ -1095,14 +1095,13 @@ async function initLpmImageSlider(modal, data) {
       if (!href) return;
       const a = document.createElement('a');
       a.className = 'modal-footer-button';
-      a.id = id; a.href = href; a.target = '_blank'; a.rel = 'noopener';
+      a.id = id;
+      const uid = String(data?.id || data?.locationID || '').trim();
+      const act = (action || (id.startsWith('som-') ? id.slice(4) : id)).toLowerCase().replaceAll('_','-');
+      a.href = uid && href ? `/out/${act}/${encodeURIComponent(uid)}?to=${encodeURIComponent(href)}` : (href || '#');
+      a.target = '_blank'; a.rel = 'noopener';
       a.setAttribute('aria-label', label); a.title = label;
       a.innerHTML = `${emoji} <span class="cta-label">${label}</span>`;
-      a.addEventListener('click', () => {
-        // prefer explicit action; fallback to id-derived; send metric directly
-        const act = action || (id.startsWith('som-') ? id.slice(4) : id);
-        _track(String(data?.id || data?.locationID || '').trim(), String(act).toLowerCase().replaceAll('_','-')); // use LPM id reliably
-      });
       secondary.appendChild(a);
     };
 
@@ -1177,7 +1176,7 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip2(false); showToast('Removed from Saved', 1600);
-          _track(String(data?.id || data?.locationID || '').trim(), 'unsave'); // 1 path → Worker
+          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
@@ -1264,7 +1263,7 @@ async function initLpmImageSlider(modal, data) {
         localStorage.setItem(key,  String(n));
         localStorage.setItem(tsKey, String(last));
         setUI(n);
-        _track(String(data?.id || data?.locationID || '').trim(), `rate-${n}`); // 1 path → Worker
+        /* no server metric for rating yet; stored locally only */
         showToast(`Thanks! Rated ${n}/5`, 1600);
 
         // lock the row for this session
@@ -2821,18 +2820,12 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     btn.rel = 'noopener';
 
     btn.addEventListener('click', async (e) => {
-      e.preventDefault();
+      e.preventDefault(); e.stopPropagation();
       const rawId = String(id || '').trim();
-      const uid = await toUlid(rawId);   // calls /api/status → ULID:contentReference[oaicite:3]{index=3}
-      const use = uid || '';             // if empty, alias missing
-      const to = r.href.split('?to=').pop(); // already url-encoded target
-
-      if (use) {
-        location.href = `/out/map/${encodeURIComponent(use)}?to=${to}`;
-      } else {
-        // no ULID mapping → navigate directly; no count, but UX works
-        location.href = decodeURIComponent(to);
-      }
+      const uid = await toUlid(rawId);
+      const to = r.href.split('?to=').pop() || '';
+      const url = uid ? `/out/map/${encodeURIComponent(uid)}?to=${to}` : decodeURIComponent(to);
+      window.open(url, '_blank', 'noopener,noreferrer'); // open outside the app
     }, { capture: true });
 
     const iconHTML = r.emoji
