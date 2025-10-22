@@ -962,41 +962,7 @@ async function initLpmImageSlider(modal, data) {
     // send only with canonical ULID (prevents 400 from /api/track)
     ;(async () => { const uid = await toUlid(String(data?.id||data?.locationID||'').trim()); if (uid) { try{ await fetch(`/hit/lpm-open/${uid}`,{method:'POST',keepalive:true}); }catch{} } })();
 
-    // CTA beacons (delegated, fires before native handlers)
-    modal.addEventListener('click', (e) => {
-      if (!data?.id) return;
-      const el = e.target.closest('a,button');
-      if (!el) return;
-
-      // explicit data-action wins
-      const act = el.getAttribute('data-cta') || el.getAttribute('data-action');
-
-      // infer from href / id / title
-      const href = (el.getAttribute('href') || '').toLowerCase();
-      const id   = (el.id || '').toLowerCase();
-      const ttl  = (el.getAttribute('title') || '').toLowerCase();
-
-      let action =
-        act ||
-        (href.startsWith('tel:')                       ? 'call'      :
-         href.startsWith('mailto:')                    ? 'email'     :
-         href.includes('wa.me') || href.includes('whatsapp') ? 'whatsapp'  :
-         href.includes('t.me') || href.includes('telegram')  ? 'telegram'  :
-         href.includes('messenger.com') || href.includes('m.me') ? 'messenger' :
-         /booking/.test(href) || /booking/.test(id) || /booking/.test(ttl) ? 'booking' :
-         /newsletter/.test(href) || /newsletter/.test(id) || /newsletter/.test(ttl) ? 'newsletter' :
-         href.includes('facebook.com')                ? 'facebook'  :
-         href.includes('instagram.com')               ? 'instagram' :
-         href.includes('pinterest.com')               ? 'pinterest' :
-         href.includes('spotify.com')                 ? 'spotify'   :
-         href.includes('tiktok.com')                  ? 'tiktok'    :
-         href.includes('youtube.com') || href.includes('youtu.be') ? 'youtube'   :
-         id === 'share-location-button' || /share/.test(id) ? 'share' :
-         /route|map/.test(id) || /maps/.test(href)    ? 'map'       :
-         null);
-
-      if (action) { (async () => { const uid = await toUlid(String(data?.id || data?.locationID || '').trim()); if (uid) _track(uid, String(action).toLowerCase().replaceAll('_','-')); })(); } // resolve→ULID then send
-    }, { capture: true });        
+    // Delegated client beacons removed — server counts via /out/* and /hit/*
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
     const btnSave = modal.querySelector('#lpm-save');
@@ -2850,9 +2816,24 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
   rows.forEach(r => {
     const btn = document.createElement('a');
     btn.className = 'modal-menu-item';
-    btn.href = r.href;
+    btn.href = r.href;                   // initial (will be replaced at click)
     btn.target = '_blank';
     btn.rel = 'noopener';
+
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const rawId = String(id || '').trim();
+      const uid = await toUlid(rawId);   // calls /api/status → ULID:contentReference[oaicite:3]{index=3}
+      const use = uid || '';             // if empty, alias missing
+      const to = r.href.split('?to=').pop(); // already url-encoded target
+
+      if (use) {
+        location.href = `/out/map/${encodeURIComponent(use)}?to=${to}`;
+      } else {
+        // no ULID mapping → navigate directly; no count, but UX works
+        location.href = decodeURIComponent(to);
+      }
+    }, { capture: true });
 
     const iconHTML = r.emoji
       ? `<span class="icon-img" aria-hidden="true">${r.emoji}</span>`
