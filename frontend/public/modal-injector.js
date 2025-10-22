@@ -1297,7 +1297,8 @@ async function initLpmImageSlider(modal, data) {
   }
 
   // call wiring + reveal
-  showLocationProfileModal.wire = wireLocationProfileModal; // expose local wiring to caller scope (no globals)
+  (showLocationProfileModal.wire)(modal, data, data?.originEl);
+
   showModal('location-profile-modal');
 
   // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
