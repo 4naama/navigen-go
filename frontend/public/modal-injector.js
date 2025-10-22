@@ -2830,19 +2830,20 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     {
       label: 'Google Maps',
       icon: '/assets/social/icons-google-maps.svg',
-      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`)}`
+      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`)}`,
+      track: 'map' // server counts on redirect
     },
     {
       label: 'Waze',
       icon: '/assets/social/icons-waze.png',
-      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`)}`
-      track: 'map'
+      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`)}`,
+      track: 'map' // server counts on redirect
     },
     {
       label: 'Apple Maps',
       emoji: '🍎',
-      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://maps.apple.com/?saddr=Current+Location&daddr=${lat},${lng}&dirflg=d`)}`
-      track: 'map'
+      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://maps.apple.com/?saddr=Current+Location&daddr=${lat},${lng}&dirflg=d`)}`,
+      track: 'map' // server counts on redirect
     }
   ];
 
