@@ -1294,11 +1294,45 @@ async function initLpmImageSlider(modal, data) {
 
     // analytics beacon
     // removed trackCta; all beacons use _track(uid,event) // single path → Worker
+
+    // call wiring + reveal
+    wireLocationProfileModal(modal, data, data?.originEl);
+    showModal('location-profile-modal');
+
+    // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
+    ;(async () => {
+      try {
+        const id = String(data?.id || data?.locationID || '').trim(); if (!id) return;
+        const needEnrich =
+          !data?.descriptions ||
+          !data?.media?.cover ||
+          (Array.isArray(data?.media?.images) && data.media.images.length < 2);
+        if (!needEnrich) return;
+
+        const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
+        if (!res.ok) return;
+        const payload = await res.json();
+
+        if (payload.descriptions && !data.descriptions) {
+          const box = modal.querySelector('.location-description .description');
+          const txt = payload.descriptions.en || Object.values(payload.descriptions)[0] || '';
+          if (box && /Description coming soon/i.test(box.textContent || box.innerHTML)) {
+            box.innerHTML = String(txt).replace(/\n/g,'<br>');
+          }
+        }
+        if (payload.media && payload.media.cover) {
+          const img = modal.querySelector('.location-media img');
+          if (img && /placeholder/.test(img.src)) img.src = payload.media.cover;
+        }
+      } catch {}
+    })();
+
+    // 5. Reveal modal (remove .hidden, add .visible, focus trap etc.)
+    // (done above via showModal)
   }
 
   // call wiring + reveal
-  (showLocationProfileModal.wire)(modal, data, data?.originEl);
-
+  wireLocationProfileModal(modal, data, data?.originEl);
   showModal('location-profile-modal');
 
   // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
