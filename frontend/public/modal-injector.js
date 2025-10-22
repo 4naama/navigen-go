@@ -15,18 +15,23 @@ async function toUlid(id) {
   return '';
 }
 
-function _track(locId, event, action) { // normalize legacy underscores client-side
-  try {
+function _track(locId, event, action) { // resolve → ULID; map legacy 'route' → 'map'
+  (async () => {
+    const uid = await toUlid(String(locId || '').trim()); if (!uid) return;
+    const ev0 = String(event || '').toLowerCase().replaceAll('_','-');
+    const ev  = (ev0 === 'route') ? 'map' : ev0; // Worker allows 'map', not 'route'
     const payload = {
-      locationID: String(locId || ''),
-      event: String(event || '').replaceAll('_','-'),
-      action: String(action || '').replaceAll('_','-'),
+      locationID: uid,
+      event: ev,
+      action: String(action || '').toLowerCase().replaceAll('_','-'),
       lang: document.documentElement.lang || 'en',
       pageKey: location.pathname.replace(/^\/(?:[a-z]{2}\/)?/, ''),
       device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
     };
-    navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-  } catch {}
+    try {
+      navigator.sendBeacon(`${TRACK_BASE}/api/track`, new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+    } catch {}
+  })();
 }
 
 /**
@@ -750,7 +755,7 @@ async function initLpmImageSlider(modal, data) {
         const lat = Number(latRaw);
         const lng = Number(lngRaw);
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) { showToast('Missing coordinates', 1600); return; }
-        _track(String(data?.id || data?.locationID || '').trim(), 'route'); // keep analytics event name
+        _track(String(data?.id || data?.locationID || '').trim(), 'map'); // map legacy 'route' → 'map'
         createNavigationModal({
           name: String(data?.name || 'Location'),
           lat, lng,
@@ -1132,7 +1137,7 @@ async function initLpmImageSlider(modal, data) {
       a.addEventListener('click', () => {
         // prefer explicit action; fallback to id-derived; send metric directly
         const act = action || (id.startsWith('som-') ? id.slice(4) : id);
-        _track(uid, String(act).toLowerCase().replaceAll('_','-')); // send metric directly
+        _track(String(data?.id || data?.locationID || '').trim(), String(act).toLowerCase().replaceAll('_','-')); // use LPM id reliably
       });
       secondary.appendChild(a);
     };
