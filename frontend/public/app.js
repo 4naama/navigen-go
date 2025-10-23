@@ -118,6 +118,27 @@ function showStripeLoader() {
   if (loader) loader.style.display = "flex";
 }
 
+// ULID resolver: accept ULID or alias; fetch canonical ULID from Worker /api/status
+async function ensureUlid(idOrAlias) {
+  const raw = String(idOrAlias || '').trim();
+  const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+  if (ULID.test(raw)) return raw;        // already a ULID
+  if (!raw) return '';                   // nothing to resolve
+
+  try {
+    const r = await fetch(
+      'https://navigen-api.4naama.workers.dev/api/status?locationID=' + encodeURIComponent(raw),
+      { cache: 'no-store' }
+    );
+    if (!r.ok) return '';
+    const j = await r.json();
+    const uid = String(j?.locationID || '').trim();
+    return ULID.test(uid) ? uid : '';
+  } catch {
+    return '';
+  }
+}
+
 function hideStripeLoader() {
   const loader = document.getElementById("stripe-loader");
   if (loader) loader.style.display = "none";
@@ -283,8 +304,9 @@ function renderPopularGroup(list = geoPoints) {
       btn.title = `Open profile / Route (${lat}, ${lng})`;
     }
 
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.preventDefault();
+
       // Always prefer profiles.json media (cover + images) for slider
       const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
       const gallery = Array.isArray(media.images) ? media.images : [];
@@ -295,8 +317,14 @@ function renderPopularGroup(list = geoPoints) {
       // guard for strict data model; 2 lines max
       if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
+      // 🛠 Normalize any legacy/alias id to a ULID before opening the modal
+      const uid = await ensureUlid(
+        btn.getAttribute('data-id') || String(loc?.locationID || loc?.id || loc?.ID || '')
+      );
+      if (!uid) { console.warn('Data error: ULID id required to open profile'); return; }
+
       showLocationProfileModal({
-        id: btn.getAttribute('data-id'),
+        locationID: uid, id: uid,              // ULID only
         displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
