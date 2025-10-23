@@ -283,7 +283,8 @@ export function createLocationProfileModal(data, injected = {}) {
 export function showLocationProfileModal(data) {
   // prefer stable profile id; avoid transient loc_*
   // keep: normalize once at entry
-  data.id = String(data?.locationID || data?.id || '').trim();
+  // prefer stable profile id; avoid transient loc_* // keep: normalize once at entry
+  const _uid = String(data?.locationID || '').trim(); const _isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(_uid); if (!_isUlid) { console.error('LPM requires ULID locationID'); return; } data.id = _uid;
     
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
@@ -772,7 +773,7 @@ async function initLpmImageSlider(modal, data) {
 
       if (bookingUrl) {
         // native anchor; track only
-        btnBook.setAttribute('href', `/out/booking/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
+        btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id).trim())}?to=${encodeURIComponent(bookingUrl)}`); // server counts on redirect
         btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
@@ -959,7 +960,7 @@ async function initLpmImageSlider(modal, data) {
     
     // count LPM open
     // send only with canonical ULID (prevents 400 from /api/track)
-    ;(async () => { const uid = await toUlid(String(data?.id||data?.locationID||'').trim()); if (uid) { try{ await fetch(`/hit/lpm-open/${uid}`,{method:'POST',keepalive:true}); }catch{} } })();
+    ;(async () => { const uid = String(data?.id||'').trim(); try{ await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
 
@@ -2740,7 +2741,7 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
-      a.href = `/out/${r.track}/${encodeURIComponent(String(id||'').trim())}?to=${encodeURIComponent(r.href)}`;
+      a.href = `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(String(id||'').trim())}?to=${encodeURIComponent(r.href)}`; // server counts on redirect
       a.target = '_blank'; a.rel = 'noopener';
       // uniform row: 20×20 icon + text; no icon-only centering
       a.innerHTML =
@@ -2789,19 +2790,19 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     {
       label: 'Google Maps',
       icon: '/assets/social/icons-google-maps.svg',
-      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`)}`,
+      href: `${TRACK_BASE}/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`)}`, // Google
       track: 'map' // server counts on redirect
     },
     {
       label: 'Waze',
       icon: '/assets/social/icons-waze.png',
-      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`)}`,
+      href: `${TRACK_BASE}/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`)}`, // Waze
       track: 'map' // server counts on redirect
     },
     {
       label: 'Apple Maps',
       emoji: '🍎',
-      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://maps.apple.com/?saddr=Current+Location&daddr=${lat},${lng}&dirflg=d`)}`,
+      href: `${TRACK_BASE}/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://maps.apple.com/?daddr=${lat},${lng}`)}`, // Apple
       track: 'map' // server counts on redirect
     }
   ];
@@ -2816,7 +2817,7 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     btn.addEventListener('click', async (e) => {
       e.preventDefault(); e.stopPropagation();
       const rawId = String(id || '').trim();
-      const uid = await toUlid(rawId);
+      const uid = String(rawId||'').trim(); // ULID-only contract; no resolver
       const to = r.href.split('?to=').pop() || '';
       const url = uid ? `${TRACK_BASE}/out/map/${encodeURIComponent(uid)}?to=${to}` : decodeURIComponent(to); // Worker handles redirect + stats
       window.open(url, '_blank', 'noopener,noreferrer'); // open outside the app
