@@ -1357,7 +1357,8 @@ function makeLocationButton(loc) {
 
   // prefer stable profile id; avoid transient loc_*
   // keep: small comment; 2 lines max
-  btn.setAttribute('data-id', String(loc.locationID || loc.ID || loc.id || ''));
+  // ULID-only: stamp canonical id (fallbacks removed; 2 lines max)
+  btn.setAttribute('data-id', String(loc.locationID || '').trim());
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
   
@@ -1396,7 +1397,9 @@ function makeLocationButton(loc) {
     if (!cover) { console.warn('Data error: cover required', loc?.locationID || loc?.ID || loc?.id); return; } // allow 1+ images
 
     // Open the Location Profile Modal; include contact + links for CTAs
+    // ULID-only: pass the canonical id under both keys (2 lines max)
     showLocationProfileModal({
+      locationID: btn.getAttribute('data-id'),
       id: btn.getAttribute('data-id'),
       name: btn.textContent,
       lat, lng,
@@ -1405,8 +1408,6 @@ function makeLocationButton(loc) {
       media,
       descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
       tags: Array.isArray(loc?.tags) ? loc.tags : [],
-
-      // keep if you already added them; otherwise these help other CTAs too
       contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
                           : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
       links:   (loc && typeof loc.links === 'object') ? loc.links : {},
