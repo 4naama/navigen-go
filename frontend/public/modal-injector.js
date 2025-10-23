@@ -280,12 +280,13 @@ export function createLocationProfileModal(data, injected = {}) {
  *
  * @param {Object} data  – same shape as factory
  */
-export function showLocationProfileModal(data) {
-  // prefer stable profile id; avoid transient loc_*
-  // keep: normalize once at entry
-  // prefer stable profile id; avoid transient loc_* // keep: normalize once at entry
-  const _uid = String(data?.locationID || '').trim(); const _isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(_uid); if (!_isUlid) { console.error('LPM requires ULID locationID'); return; } data.id = _uid;
-    
+export async function showLocationProfileModal(data) {
+  // prefer stable profile id; accept legacy id/slug and resolve → ULID (2 lines max)
+  const raw = String(data?.locationID || data?.id || '').trim();
+  const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : await toUlid(raw);
+  if (!uid) { console.error('LPM requires ULID locationID'); return; }
+  data.locationID = uid; data.id = uid;
+
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
   if (old) old.remove();
