@@ -2,22 +2,12 @@
 const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
 // cache + resolve alias → ULID via Worker; keeps all beacons canonical
-const _uidCache = new Map();
-async function toUlid(id) {
-  const k = String(id || '').trim(); if (!k) return '';
-  if (_uidCache.has(k)) return _uidCache.get(k);
-  try {
-    const u = new URL(`/api/status?locationID=${encodeURIComponent(k)}`, TRACK_BASE);
-    const r = await fetch(u); if (!r.ok) return '';
-    const j = await r.json(); const ulid = String(j.locationID || '');
-    if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(ulid)) { _uidCache.set(k, ulid); return ulid; }
-  } catch {}
-  return '';
-}
+// ULID-only: client resolver removed; all callers must pass a ULID.
+// ULID-only: resolver removed by design; no slug resolution on client.
 
 function _track(locId, event, action) { // resolve → ULID; map legacy 'route' → 'map'
   (async () => {
-    const uid = await toUlid(String(locId || '').trim()); if (!uid) return;
+    const uid = String(locId || '').trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) return;
     const ev0 = String(event || '').toLowerCase().replaceAll('_','-');
     const ev  = (ev0 === 'route') ? 'map' : ev0; // Worker allows 'map', not 'route'
     const payload = {
@@ -281,11 +271,10 @@ export function createLocationProfileModal(data, injected = {}) {
  * @param {Object} data  – same shape as factory
  */
 export async function showLocationProfileModal(data) {
-  // prefer stable profile id; accept legacy id/slug and resolve → ULID (2 lines max)
-  const raw = String(data?.locationID || data?.id || '').trim();
-  const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : await toUlid(raw);
-  if (!uid) { console.error('LPM requires ULID locationID'); return; }
-  data.locationID = uid; data.id = uid;
+  // prefer stable profile id; enforce ULID-only at entry (2 lines max)
+  const _uid = String(data?.locationID || data?.id || '').trim();
+  if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(_uid)) { console.error('LPM requires ULID locationID'); return; }
+  data.locationID = _uid; data.id = _uid;
 
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
