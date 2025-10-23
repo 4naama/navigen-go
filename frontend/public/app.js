@@ -1149,7 +1149,10 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      const _rawId = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? ''); const id = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(_rawId) ? _rawId : ''; // prefer ULID; empty if none
+      const _rawId = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? '');
+      const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+      const locationID = ULID.test(_rawId) ? _rawId : '';     // ULID-only
+      const legacyId   = ULID.test(_rawId) ? '' : _rawId;      // keep alias for resolver
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
@@ -1164,7 +1167,8 @@ async function initEmergencyBlock(countryOverride) {
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
 
       return {
-        ID: id,
+        locationID: locationID, ID: locationID,  // ULID-only; keep legacy key too
+        id: legacyId,
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
           ? it.locationName
