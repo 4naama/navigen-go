@@ -262,7 +262,7 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    btn.setAttribute("data-id", String(loc?.locationID ?? loc?.ID ?? loc?.id ?? '')); // prefer new id
+    { const _uid = String(loc?.locationID ?? loc?.id ?? loc?.ID ?? ''); const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(_uid) ? _uid : ''; if (uid) { btn.setAttribute("data-id", uid); } else { btn.removeAttribute("data-id"); } } // prefer ULID; drop non-ULID
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', name);
@@ -1137,7 +1137,7 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      const id  = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback()); // prefer new id
+      const _rawId = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? ''); const id = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(_rawId) ? _rawId : ''; // prefer ULID; empty if none
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
@@ -1215,7 +1215,7 @@ async function initEmergencyBlock(countryOverride) {
       const uid = (q.get('lp') || '').trim();
 
       if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const rec = geoPoints.find(x => String(x?.ID || x?.locationID || x?.id) === uid); // new id first
+        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.locationID) === uid) : null); // ULID-only
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs
@@ -1230,7 +1230,7 @@ async function initEmergencyBlock(countryOverride) {
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
           showLocationProfileModal({
-            id: String(rec?.locationID ?? rec?.ID ?? rec?.id ?? uid),
+            id: String(rec?.locationID || ''),
             name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim() || "Unnamed",
             lat, lng,
             imageSrc: cover,
