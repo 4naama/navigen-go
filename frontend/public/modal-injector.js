@@ -821,11 +821,7 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.setAttribute('aria-label', 'Share');
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
-          shareBtn.onclick = async () => {
-            const uid = String(data?.id || data?.locationID || '').trim();
-            if (uid) { try { await fetch(`/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} }
-            try { if (navigator.share) await navigator.share({ title:'NaviGen QR', url: img.src }); } catch {}
-          };
+          shareBtn.onclick = async () => { const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } try{ if(navigator.share) await navigator.share({ title:'NaviGen QR', url: img.src }); }catch{} };
 
           const printBtn = document.createElement('button');
           printBtn.className = 'modal-footer-button';
@@ -895,7 +891,7 @@ async function initLpmImageSlider(modal, data) {
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
 
           /* count a QR view (modal/image shown) */
-          ;(async()=>{ const uid=await toUlid(String(data?.id||data?.locationID||'').trim()); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         };
       }
     }
@@ -938,10 +934,8 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.setAttribute('aria-label', 'Share');
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
-          shareBtn.onclick = async () => {
-            const uid = String(data?.id || data?.locationID || '').trim();
-            { const uid = await toUlid(String(data?.id || data?.locationID || '').trim()); if (uid) { try { await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} } }
-            try {
+          shareBtn.onclick = async () => { const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } try {
+
               const text = [name, phone, email].filter(Boolean).join('\n');
               if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
               else if (text) { await navigator.clipboard.writeText(text); showToast('Copied to clipboard', 1600); }
@@ -991,13 +985,13 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip(false); showToast('Removed from Saved', 1600);
-          ;(async()=>{ const uid=await toUlid(String(data?.id||data?.locationID||'').trim()); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip(true); showToast('Saved', 1600);
-          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/save/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/save/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         }
       });
     }
@@ -1098,7 +1092,7 @@ async function initLpmImageSlider(modal, data) {
       a.id = id;
       const uid = String(data?.id || data?.locationID || '').trim();
       const act = (action || (id.startsWith('som-') ? id.slice(4) : id)).toLowerCase().replaceAll('_','-');
-      a.href = uid && href ? `/out/${act}/${encodeURIComponent(uid)}?to=${encodeURIComponent(href)}` : (href || '#');
+      a.href = uid && href ? `${TRACK_BASE}/out/${act}/${encodeURIComponent(uid)}?to=${encodeURIComponent(href)}` : (href || '#');
       a.target = '_blank'; a.rel = 'noopener';
       a.setAttribute('aria-label', label); a.title = label;
       a.innerHTML = `${emoji} <span class="cta-label">${label}</span>`;
@@ -1176,13 +1170,13 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip2(false); showToast('Removed from Saved', 1600);
-          ;(async()=>{ const uid=await toUlid(String(data?.id||data?.locationID||'').trim()); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip2(true); showToast('Saved', 1600);
-          ;(async()=>{ const uid=await toUlid(String(data?.id||data?.locationID||'').trim()); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         }
       });
     }
@@ -1192,7 +1186,7 @@ async function initLpmImageSlider(modal, data) {
     if (shareBtn) {
       shareBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+        ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         const name = String(data?.name || 'Location');
         const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
         const text = coords ? `${name} — ${coords}` : name;
@@ -2831,15 +2825,7 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     list.appendChild(btn);
   });
   
-  ;(async()=>{ 
-    const uid = await toUlid(String(id||'').trim()); if(!uid) return;
-    list.querySelectorAll('a.modal-menu-item[href*="/out/"]').forEach(a => {
-      const u = new URL(a.href, location.origin);
-      const ev = (u.pathname.split('/')[2]||'').toLowerCase();        // event segment
-      const to = u.searchParams.get('to') || '';
-      a.href = `${TRACK_BASE}/out/${encodeURIComponent(ev)}/${encodeURIComponent(uid)}?to=${encodeURIComponent(to)}`; // Worker + ULID
-    });
-  })();    
+  // (removed ULID rewrite; links already use TRACK_BASE + data.id which is ULID-only)
 
   // Tap-out close & show
   setupTapOutClose(modalId);
