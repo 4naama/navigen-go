@@ -1106,6 +1106,17 @@ async function initEmergencyBlock(countryOverride) {
           cache: 'no-store',
           headers: {} // rely on fetch's cache: 'no-store'
         });
+
+        // retry once on 404: some deployed Worker bundles only match the slash-suffixed path
+        // keep query params; do not loop (one attempt only)
+        if (listRes && listRes.status === 404) {
+          const alt = new URL(url.toString());
+          if (!alt.pathname.endsWith('/')) alt.pathname += '/';
+          try {
+            const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store' }); // same headers/policy
+            if (r2.ok) listRes = r2;
+          } catch { /* non-fatal; fall back to original 404 result */ }
+        }
       } else {
         listRes = { ok: true, json: async () => ({ items: [] }) };
       }

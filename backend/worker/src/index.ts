@@ -341,7 +341,7 @@ export default {
       // if (pathname === "/api/location/update") { ... }
 
       // --- Data list: GET /api/data/list?context=<pageKey>&limit=99
-      if (pathname === "/api/data/list" && req.method === "GET") {
+      if ((pathname === "/api/data/list" || pathname.startsWith("/api/data/list/")) && (req.method === "GET" || req.method === "HEAD")) {
         const siteOrigin = req.headers.get("Origin") || "https://navigen.io"; // load same site data
         const limit = clamp(parseInt(url.searchParams.get("limit") || "99", 10), 1, 999);
         const context = String(url.searchParams.get("context") || "").trim().toLowerCase();
@@ -371,7 +371,7 @@ export default {
       }
 
       // --- Profile: GET /api/data/profile?id=<slug|ULID>
-      if (pathname === "/api/data/profile" && req.method === "GET") {
+      if ((pathname === "/api/data/profile" || pathname.startsWith("/api/data/profile/")) && (req.method === "GET" || req.method === "HEAD")) {
         const idRaw = (url.searchParams.get("id") || "").trim(); // may be slug or ULID
         if (!idRaw) return json({ error:{ code:"invalid_request", message:"id required" } }, 400);
 
