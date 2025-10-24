@@ -58,7 +58,7 @@ export default {
           "Access-Control-Allow-Origin": allowOrigin,
           "Access-Control-Allow-Credentials": "true", // REQUIRED for credentials
           "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-          "Access-Control-Allow-Headers": reqHdrs || "content-type, authorization",
+          "Access-Control-Allow-Headers": reqHdrs || "content-type, authorization, cache-control, pragma",
           "Access-Control-Max-Age": "600",
           "Vary": "Origin"
         }
