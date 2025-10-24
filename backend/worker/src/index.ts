@@ -400,8 +400,12 @@ export default {
         return json(payload, 200, { "cache-control":"no-store" });
       }
 
-      // Fallback 404
-      return json({ error: { code: "not_found", message: "No such route" } }, 404);
+      // Fallback 404 — include the evaluated path for live verification
+      return json(
+        { error: { code: "not_found", message: "No such route", path: (new URL(req.url)).pathname } },
+        404,
+        { "x-navigen-route": (new URL(req.url)).pathname }
+      );
 
     } catch (err: any) {
       return json({ error: { code: "server_error", message: err?.message || "Unexpected" } }, 500);
