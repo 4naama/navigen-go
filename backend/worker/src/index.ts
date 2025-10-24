@@ -45,19 +45,18 @@ export default {
     const { pathname } = url;
     
     // --- CORS preflight: allow credentialed requests from allowed web origins
-    // --- GLOBAL CORS PREFLIGHT (run before any routing)
+    // GLOBAL CORS PREFLIGHT — must run before all routing
     if (req.method === "OPTIONS") {
       const origin  = req.headers.get("Origin") || "";
       const reqHdrs = req.headers.get("Access-Control-Request-Headers") || "";
-      // allowlist your app origins (expand if needed)
-      const ALLOW = new Set(["https://navigen.io", "https://navigen-go.pages.dev"]);
-      const allowOrigin = ALLOW.has(origin) ? origin : "https://navigen.io";
+      const allow = new Set(["https://navigen.io","https://navigen-go.pages.dev"]);
+      const allowOrigin = allow.has(origin) ? origin : "https://navigen.io";
 
       return new Response(null, {
         status: 204,
         headers: {
           "Access-Control-Allow-Origin": allowOrigin,
-          "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Allow-Credentials": "true", // REQUIRED for credentials
           "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
           "Access-Control-Allow-Headers": reqHdrs || "content-type, authorization",
           "Access-Control-Max-Age": "600",
