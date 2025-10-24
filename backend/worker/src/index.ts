@@ -47,18 +47,19 @@ export default {
     // CORS preflight for all API endpoints (must allow credentials)
     if (req.method === "OPTIONS" && pathname.startsWith("/api/")) {
       const origin = req.headers.get("Origin") || "";
-      // If there's no Origin, do a minimal 204 without CORS (non-browser caller)
-      if (!origin) return new Response(null, { status: 204 });
+      const reqHdrs = req.headers.get("Access-Control-Request-Headers") || ""; // echo asked headers
+      if (!origin) return new Response(null, { status: 204 });                 // non-browser caller
 
-      // Echo the exact origin (NOT "*") and allow credentials
+      const ALLOW = new Set(["https://navigen.io","https://navigen-go.pages.dev"]);
+      const allowOrigin = ALLOW.has(origin) ? origin : "https://navigen.io";
+
       return new Response(null, {
         status: 204,
         headers: {
-          // prefer concrete allowlist; echo only when recognized
-          "access-control-allow-origin": ["https://navigen.io","https://navigen-go.pages.dev"].includes(origin) ? origin : "https://navigen.io",
-          "access-control-allow-credentials": "true",
+          "access-control-allow-origin": allowOrigin,                 // concrete origin only
+          "access-control-allow-credentials": "true",                 // <— required for credentials
           "access-control-allow-methods": "GET,POST,OPTIONS",
-          "access-control-allow-headers": "content-type, authorization",
+          "access-control-allow-headers": (reqHdrs || "content-type, authorization"),
           "access-control-max-age": "600",
           "vary": "Origin"
         }
