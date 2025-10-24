@@ -1327,17 +1327,8 @@ import { t } from './scripts/i18n.js';
 // Stripe: only the donation action here (init comes from caller)
 import { handleDonation } from "./scripts/stripe.js";
 
-// keep: minimal helper; picks API base per env (prod=same-origin)
-const API = (path) => {
-  const meta = document.querySelector('meta[name="api-origin"]')?.content?.trim();
-  const host = location.hostname;
-  // keep: use same-origin in prod (navigen.io & pages.dev); dev may point to pages.dev
-  const base = meta
-    || (host === 'localhost' || host === '127.0.0.1'
-        ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen-go.pages.dev')
-        : location.origin);
-  return new URL(path, base).toString();
-};
+// canonical API; ULID-only responses (no same-origin)
+const API = (path) => new URL(path, 'https://navigen-api.4naama.workers.dev').toString();
 
 // ✅ Store Popular’s original position on page load
 let popularBaseOffset = 0;

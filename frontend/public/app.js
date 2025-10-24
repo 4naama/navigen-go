@@ -1083,10 +1083,8 @@ async function initEmergencyBlock(countryOverride) {
 
     const API_LIMIT = 99; // ask for up to 99 items per page
 
-    // Use prod API in dev; include credentials so admin cookie is sent
-    const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-      ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen-go.pages.dev')
-      : location.origin; // keep: prod same-origin
+    // canonical API; keep single source of truth
+    const API_BASE = 'https://navigen-api.4naama.workers.dev';
 
     // First API call must not block boot; force fresh list to avoid stale cache
     let listRes;
