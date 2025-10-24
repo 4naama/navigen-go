@@ -45,21 +45,19 @@ export default {
     const { pathname } = url;
     
     // --- CORS preflight: allow credentialed requests from allowed web origins
+    // --- GLOBAL CORS PREFLIGHT (run before any routing)
     if (req.method === "OPTIONS") {
-      const origin = req.headers.get("Origin") || "";
+      const origin  = req.headers.get("Origin") || "";
       const reqHdrs = req.headers.get("Access-Control-Request-Headers") || "";
-      const reqMeth = req.headers.get("Access-Control-Request-Method") || "GET";
-
-      // allowlist your app origins
+      // allowlist your app origins (expand if needed)
       const ALLOW = new Set(["https://navigen.io", "https://navigen-go.pages.dev"]);
       const allowOrigin = ALLOW.has(origin) ? origin : "https://navigen.io";
 
-      // respond always; do NOT fall through (preflight must end here)
       return new Response(null, {
         status: 204,
         headers: {
-          "Access-Control-Allow-Origin": allowOrigin,                     // concrete, not "*"
-          "Access-Control-Allow-Credentials": "true",                     // REQUIRED for credentials
+          "Access-Control-Allow-Origin": allowOrigin,
+          "Access-Control-Allow-Credentials": "true",
           "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
           "Access-Control-Allow-Headers": reqHdrs || "content-type, authorization",
           "Access-Control-Max-Age": "600",
@@ -301,7 +299,16 @@ export default {
           } catch {}
         }
 
-        return new Response(null, { status: 302, headers: { Location: to, "Cache-Control": "no-store" } });
+        return new Response(null, {
+          status: 302,
+          headers: {
+            "Location": to,
+            "Cache-Control": "no-store",
+            "Access-Control-Allow-Origin": "https://navigen.io",
+            "Access-Control-Allow-Credentials": "true",
+            "Vary": "Origin"
+          }
+        });
       }
       
       // --- Non-redirect hit: POST /hit/{event}/{id}
@@ -318,7 +325,14 @@ export default {
         const day = dayKeyFor(now, undefined, country);
         await kvIncr(env.KV_STATS, `stats:${loc}:${day}:${ev}`);
 
-        return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+        return new Response(null, {
+          status: 204,
+          headers: {
+            "Access-Control-Allow-Origin": "https://navigen.io",
+            "Access-Control-Allow-Credentials": "true",
+            "Vary": "Origin"
+          }
+        });
       }            
 
       // (Stubs for later)
@@ -445,9 +459,14 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
 
   return new Response(null, {
     status: 302,
-    headers: { Location: target, "Cache-Control": "public, max-age=300" }
+    headers: {
+      "Location": target,
+      "Cache-Control": "public, max-age=300",
+      "Access-Control-Allow-Origin": "https://navigen.io",
+      "Access-Control-Allow-Credentials": "true",
+      "Vary": "Origin"
+    }
   });
-}
 
 async function handleQr(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
@@ -475,9 +494,11 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
     const svg = await QRCode.toString(dataUrl, { type: "svg", width: size, margin: 0 });
     return new Response(svg, {
       headers: {
-        "content-type": "image/svg+xml",
-        "cache-control": "public, max-age=86400",
-        "access-control-allow-origin": "*" // safe for static assets
+        "Content-Type": "image/svg+xml",
+        "Cache-Control": "public, max-age=86400",
+        "Access-Control-Allow-Origin": "https://navigen.io",
+        "Access-Control-Allow-Credentials": "true",
+        "Vary": "Origin"
       }
     });
   } else {
@@ -602,19 +623,18 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
 
 // JSON: must be compatible with credentialed fetches from the app
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
-  // Keep this aligned with the preflight handler
-  const allowOrigin = "https://navigen.io";
+  const allowOrigin = "https://navigen.io"; // keep in sync with ALLOW set above
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Access-Control-Allow-Origin": allowOrigin,      // concrete, not "*"
-      "Access-Control-Allow-Credentials": "true",      // REQUIRED when site uses credentials
+      "Access-Control-Allow-Origin": allowOrigin,
+      "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
       "Access-Control-Allow-Headers": "content-type, authorization",
       "Vary": "Origin",
       ...headers
-    },
+    }
   });
 }
 
