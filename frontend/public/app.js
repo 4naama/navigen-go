@@ -1102,7 +1102,7 @@ async function initEmergencyBlock(countryOverride) {
           url.searchParams.set('cb', String(Date.now()));
         }
         listRes = await fetch(url, {
-          credentials: 'include',
+          credentials: 'omit',              // no cookies → no credentialed CORS needed
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-store, no-cache, must-revalidate',
