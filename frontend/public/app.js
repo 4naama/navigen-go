@@ -265,7 +265,7 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    { const _uid = String(loc?.locationID ?? loc?.id ?? loc?.ID ?? ''); const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(_uid) ? _uid : ''; if (uid) { btn.setAttribute("data-id", uid); } else { btn.removeAttribute("data-id"); } } // prefer ULID; drop non-ULID
+    btn.setAttribute("data-id", String(loc.locationID || '').trim()); // ULID-only: Worker guarantees ULID
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', name);
@@ -300,10 +300,7 @@ function renderPopularGroup(list = geoPoints) {
       if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
       // normalize to ULID: prefer data-id, then locationID/id/ID; do not call modal without ULID
-      const uid =
-        [btn.getAttribute('data-id'), loc && loc.locationID, loc && loc.id, loc && loc.ID]
-          .map(v => (v == null ? '' : String(v)))
-          .find(isUlid) || '';
+      const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
 
       if (!uid) { console.warn('Data error: ULID id required to open profile'); return; }
 
@@ -1149,10 +1146,9 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      const _rawId = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? '');
-      const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-      const locationID = ULID.test(_rawId) ? _rawId : '';     // ULID-only
-      const legacyId   = ULID.test(_rawId) ? '' : _rawId;      // keep alias for resolver
+      const uid = String(it?.locationID || '').trim();        // ULID-only from Worker
+      const locationID = uid; const legacyId = '';            // no alias in client
+
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
@@ -1167,8 +1163,9 @@ async function initEmergencyBlock(countryOverride) {
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
 
       return {
-        locationID: locationID, ID: locationID,  // ULID-only; keep legacy key too
-        id: legacyId,
+        locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
+        id: locationID,                           // legacy .id also mirrors ULID
+
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
           ? it.locationName
