@@ -44,24 +44,26 @@ export default {
     const url = new URL(req.url);
     const { pathname } = url;
     
-    // CORS preflight for all API endpoints (must allow credentials)
-    if (req.method === "OPTIONS" && pathname.startsWith("/api/")) {
+    // --- CORS preflight: allow credentialed requests from allowed web origins
+    if (req.method === "OPTIONS") {
       const origin = req.headers.get("Origin") || "";
-      const reqHdrs = req.headers.get("Access-Control-Request-Headers") || ""; // echo asked headers
-      if (!origin) return new Response(null, { status: 204 });                 // non-browser caller
+      const reqHdrs = req.headers.get("Access-Control-Request-Headers") || "";
+      const reqMeth = req.headers.get("Access-Control-Request-Method") || "GET";
 
-      const ALLOW = new Set(["https://navigen.io","https://navigen-go.pages.dev"]);
+      // allowlist your app origins
+      const ALLOW = new Set(["https://navigen.io", "https://navigen-go.pages.dev"]);
       const allowOrigin = ALLOW.has(origin) ? origin : "https://navigen.io";
 
+      // respond always; do NOT fall through (preflight must end here)
       return new Response(null, {
         status: 204,
         headers: {
-          "access-control-allow-origin": allowOrigin,                 // concrete origin only
-          "access-control-allow-credentials": "true",                 // <— required for credentials
-          "access-control-allow-methods": "GET,POST,OPTIONS",
-          "access-control-allow-headers": (reqHdrs || "content-type, authorization"),
-          "access-control-max-age": "600",
-          "vary": "Origin"
+          "Access-Control-Allow-Origin": allowOrigin,                     // concrete, not "*"
+          "Access-Control-Allow-Credentials": "true",                     // REQUIRED for credentials
+          "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+          "Access-Control-Allow-Headers": reqHdrs || "content-type, authorization",
+          "Access-Control-Max-Age": "600",
+          "Vary": "Origin"
         }
       });
     }
@@ -600,21 +602,17 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
 
 // JSON: must be compatible with credentialed fetches from the app
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
-  // canonical allowlist; expand if you serve the app from more hosts
-  const ALLOWED = new Set(["https://navigen.io", "https://navigen-go.pages.dev"]);
-  // Prefer a specific origin for credentialed requests; default to the canonical app origin
+  // Keep this aligned with the preflight handler
   const allowOrigin = "https://navigen.io";
-
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      "content-type": "application/json; charset=utf-8",
-      // DO NOT use "*" with credentials; send a concrete origin
-      "access-control-allow-origin": allowOrigin,
-      "access-control-allow-credentials": "true",   // required when credentials: "include"
-      "access-control-allow-methods": "GET,POST,OPTIONS",
-      "access-control-allow-headers": "content-type, authorization",
-      "vary": "Origin",                               // allow future per-origin logic
+      "Content-Type": "application/json; charset=utf-8",
+      "Access-Control-Allow-Origin": allowOrigin,      // concrete, not "*"
+      "Access-Control-Allow-Credentials": "true",      // REQUIRED when site uses credentials
+      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+      "Access-Control-Allow-Headers": "content-type, authorization",
+      "Vary": "Origin",
       ...headers
     },
   });
