@@ -341,11 +341,51 @@ export default {
       // if (pathname === "/api/location/update") { ... }
 
       // --- Data list: GET /api/data/list?context=<pageKey>&limit=99
-      /* deleted duplicate broadened /api/data/list block */
+      // Data API: normalize once; single handlers cover with/without trailing slash.
+      const normPath = pathname.replace(/\/{2,}/g, "/").replace(/(.+)\/$/, "$1");
 
-      /* deleted duplicate broadened /api/data/profile block */
+      // GET /api/data/list?context=...&limit=...
+      if (normPath === "/api/data/list" && req.method === "GET") {
+        const base = req.headers.get("Origin") || "https://navigen.io"; // keep caller origin
+        const target = new URL("/api/data/list", base);
+        url.searchParams.forEach((v, k) => target.searchParams.set(k, v)); // pass through query
+        const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true } });
+        const body = await r.text();
+        return new Response(body, {
+          status: r.status,
+          headers: {
+            "Content-Type": r.headers.get("Content-Type") || "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "https://navigen.io",
+            "Access-Control-Allow-Credentials": "true",
+            "Vary": "Origin",
+            "Cache-Control": "no-store",
+            "x-navigen-route": "/api/data/list"
+          }
+        });
+      }
+
+      // GET /api/data/profile?id=...
+      if (normPath === "/api/data/profile" && req.method === "GET") {
+        const base = req.headers.get("Origin") || "https://navigen.io"; // keep caller origin
+        const target = new URL("/api/data/profile", base);
+        url.searchParams.forEach((v, k) => target.searchParams.set(k, v)); // pass through query
+        const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true } });
+        const body = await r.text();
+        return new Response(body, {
+          status: r.status,
+          headers: {
+            "Content-Type": r.headers.get("Content-Type") || "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "https://navigen.io",
+            "Access-Control-Allow-Credentials": "true",
+            "Vary": "Origin",
+            "Cache-Control": "no-store",
+            "x-navigen-route": "/api/data/profile"
+          }
+        });
+      }
 
       // Fallback 404 — include the evaluated path for live verification
+
       return json(
         { error: { code: "not_found", message: "No such route", path: (new URL(req.url)).pathname } },
         404,
