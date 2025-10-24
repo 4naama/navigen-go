@@ -54,8 +54,9 @@ export default {
       return new Response(null, {
         status: 204,
         headers: {
-          "access-control-allow-origin": origin,              // exact echo
-          "access-control-allow-credentials": "true",         // required with credentials: include
+          // prefer concrete allowlist; echo only when recognized
+          "access-control-allow-origin": ["https://navigen.io","https://navigen-go.pages.dev"].includes(origin) ? origin : "https://navigen.io",
+          "access-control-allow-credentials": "true",
           "access-control-allow-methods": "GET,POST,OPTIONS",
           "access-control-allow-headers": "content-type, authorization",
           "access-control-max-age": "600",
@@ -509,12 +510,11 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
 
   const locRaw = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : ""; // accept slug or ULID
   const loc = await resolveUid(locRaw, env); if (!loc) { // require canonical id
-    // after successfully counting in /api/track
-    const origin = req.headers.get("Origin") || "";
+    // unknown id: no-op (do not leak); keep CORS consistent with allowlist
     return new Response(null, {
       status: 204,
       headers: {
-        "access-control-allow-origin": origin || "https://navigen.io", // exact echo preferred
+        "access-control-allow-origin": "https://navigen.io", // or your allowOrigin variable
         "access-control-allow-credentials": "true",
         "vary": "Origin"
       }
@@ -570,7 +570,7 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   return new Response(null, {
     status: 204,
     headers: {
-      "access-control-allow-origin": allowOrigin,
+      "access-control-allow-origin": "https://navigen.io", // same as above (or allowOrigin variable)
       "access-control-allow-credentials": "true",
       "vary": "Origin"
     }
@@ -597,15 +597,23 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
 
 // ---------- helpers ----------
 
+// JSON: must be compatible with credentialed fetches from the app
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
+  // canonical allowlist; expand if you serve the app from more hosts
+  const ALLOWED = new Set(["https://navigen.io", "https://navigen-go.pages.dev"]);
+  // Prefer a specific origin for credentialed requests; default to the canonical app origin
+  const allowOrigin = "https://navigen.io";
+
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
-      "access-control-allow-origin": "*", // safe for our JSON; preflight already echoes Origin
+      // DO NOT use "*" with credentials; send a concrete origin
+      "access-control-allow-origin": allowOrigin,
+      "access-control-allow-credentials": "true",   // required when credentials: "include"
       "access-control-allow-methods": "GET,POST,OPTIONS",
       "access-control-allow-headers": "content-type, authorization",
-      "vary": "origin",
+      "vary": "Origin",                               // allow future per-origin logic
       ...headers
     },
   });
