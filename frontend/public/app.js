@@ -268,7 +268,7 @@ function renderPopularGroup(list = geoPoints) {
     btn.setAttribute("data-id", String(loc.locationID || '').trim()); // ULID-only: Worker guarantees ULID
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
-    btn.setAttribute('data-name', name);
+    btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
     btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
 
     // contactInformation is the single source
@@ -302,7 +302,7 @@ function renderPopularGroup(list = geoPoints) {
       // normalize to ULID: prefer data-id, then locationID/id/ID; do not call modal without ULID
       const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
 
-      if (!uid) { console.warn('Data error: ULID id required to open profile'); return; }
+      if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) { console.warn('Data error: ULID id required to open profile'); return; } // strict ULID guard
 
       showLocationProfileModal({
         locationID: uid, id: uid,              // ULID only
