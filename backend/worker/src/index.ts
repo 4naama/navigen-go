@@ -466,6 +466,7 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
       "Vary": "Origin"
     }
   });
+}
 
 async function handleQr(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
