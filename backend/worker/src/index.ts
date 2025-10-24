@@ -341,64 +341,9 @@ export default {
       // if (pathname === "/api/location/update") { ... }
 
       // --- Data list: GET /api/data/list?context=<pageKey>&limit=99
-      if ((pathname === "/api/data/list" || pathname.startsWith("/api/data/list/")) && (req.method === "GET" || req.method === "HEAD")) {
-        const siteOrigin = req.headers.get("Origin") || "https://navigen.io"; // load same site data
-        const limit = clamp(parseInt(url.searchParams.get("limit") || "99", 10), 1, 999);
-        const context = String(url.searchParams.get("context") || "").trim().toLowerCase();
+      /* deleted duplicate broadened /api/data/list block */
 
-        const res = await fetch(new URL("/data/profiles.json", siteOrigin).toString(), {
-          cf: { cacheTtl: 60, cacheEverything: true }
-        });
-        if (!res.ok) return json({ error:{ code:"upstream_error", message:"profiles.json unavailable" } }, 502);
-
-        const data: any = await res.json();
-        const items: any[] = Array.isArray(data?.locations) ? data.locations : [];
-
-        const out: any[] = [];
-        for (const it of items) {
-          const alias = String(it?.locationID || "").trim(); // slug in profiles.json
-          if (!alias) continue; // defensive only
-          const uid = await resolveUid(alias, env); // slug → ULID
-          if (!uid) return json({ error:{ code:"mapping_missing", message:`Missing KV alias for ${alias}` } }, 500);
-
-          const ctxList: string[] = Array.isArray(it?.contexts) ? it.contexts.map((s: any)=>String(s||'').toLowerCase()) : [];
-          if (context && ctxList.length && !ctxList.includes(context)) continue;
-
-          out.push({ ...it, locationID: uid }); // emit ULID only
-          if (out.length >= limit) break;
-        }
-        return json({ items: out }, 200, { "cache-control": "no-store" });
-      }
-
-      // --- Profile: GET /api/data/profile?id=<slug|ULID>
-      if ((pathname === "/api/data/profile" || pathname.startsWith("/api/data/profile/")) && (req.method === "GET" || req.method === "HEAD")) {
-        const idRaw = (url.searchParams.get("id") || "").trim(); // may be slug or ULID
-        if (!idRaw) return json({ error:{ code:"invalid_request", message:"id required" } }, 400);
-
-        const uid = await resolveUid(idRaw, env); // normalize to ULID
-        if (!uid) return json({ error:{ code:"invalid_request", message:"unknown id" } }, 400);
-
-        const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
-        const res = await fetch(new URL("/data/profiles.json", siteOrigin).toString(), {
-          cf: { cacheTtl: 60, cacheEverything: true }
-        });
-        if (!res.ok) return json({ error:{ code:"upstream_error", message:"profiles.json unavailable" } }, 502);
-
-        const data: any = await res.json();
-        const arr: any[] = Array.isArray(data?.locations) ? data.locations : [];
-
-        let hit: any = null;
-        for (const it of arr) {
-          const alias = String(it?.locationID || "").trim(); // slug in profiles.json
-          if (!alias) continue;
-          const mapped = await resolveUid(alias, env); // alias → ULID
-          if (mapped === uid) { hit = it; break; }
-        }
-        if (!hit) return json({ error:{ code:"not_found", message:"profile not found" } }, 404);
-
-        const payload = { ...hit, locationID: uid }; // ULID only
-        return json(payload, 200, { "cache-control":"no-store" });
-      }
+      /* deleted duplicate broadened /api/data/profile block */
 
       // Fallback 404 — include the evaluated path for live verification
       return json(
