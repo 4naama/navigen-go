@@ -1104,10 +1104,7 @@ async function initEmergencyBlock(countryOverride) {
         listRes = await fetch(url, {
           credentials: 'omit',              // no cookies → no credentialed CORS needed
           cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate',
-            'Pragma': 'no-cache'
-          }
+          headers: {} // rely on fetch's cache: 'no-store'
         });
       } else {
         listRes = { ok: true, json: async () => ({ items: [] }) };
