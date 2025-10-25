@@ -342,16 +342,21 @@ export default {
       // if (pathname === "/m/edit")       { ... }
       // if (pathname === "/api/location/update") { ... }
 
-      // --- Data list: GET /api/data/list?context=<pageKey>&limit=99
-      // Data API: normalize once; single handlers cover with/without trailing slash.
-      const normPath = pathname.replace(/\/{2,}/g, "/").replace(/(.+)\/$/, "$1");
+      // use normPath declared earlier; do not redeclare here
 
       // GET /api/data/list?context=...&limit=...
       if (normPath === "/api/data/list" && req.method === "GET") {
-        const base = req.headers.get("Origin") || "https://navigen.io"; // keep caller origin
-        const target = new URL("/api/data/list", base);
-        url.searchParams.forEach((v, k) => target.searchParams.set(k, v)); // pass through query
-        const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true } });
+        const target = new URL("https://navigen.io/api/data/list"); // fixed upstream path
+        url.searchParams.forEach((v, k) => target.searchParams.set(k, v)); // pass through query exactly
+        const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true }, headers: { "Accept": "application/json" } });
+
+        // on error, log minimal details for triage
+        if (r.status >= 400) {
+          const preview = await r.clone().text().then(t => t.slice(0, 256)).catch(() => "<no-body>");
+          const qs = Object.fromEntries(target.searchParams);
+          console.warn(JSON.stringify({ route: "/api/data/list", status: r.status, qs, preview }));
+        }
+
         const body = await r.text();
         return new Response(body, {
           status: r.status,
@@ -367,11 +372,22 @@ export default {
       }
 
       // GET /api/data/profile?id=...
+      // profile: accept alias or ULID; resolve alias → ULID via KV_ALIASES
       if (normPath === "/api/data/profile" && req.method === "GET") {
         const base = req.headers.get("Origin") || "https://navigen.io"; // keep caller origin
         const target = new URL("/api/data/profile", base);
-        url.searchParams.forEach((v, k) => target.searchParams.set(k, v)); // pass through query
-        const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true } });
+
+        // accept alias or ULID; resolve alias → ULID
+        const raw = (url.searchParams.get("id") || "").trim();
+        const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(raw);
+        const mapped = isUlid ? raw : (await resolveUid(raw, env)) || raw;
+
+        // rebuild query with mapped id
+        url.searchParams.forEach((v, k) => { if (k !== "id") target.searchParams.set(k, v); });
+        target.searchParams.set("id", mapped);
+
+        const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true }, headers: { "Accept": "application/json" } });
+
         const body = await r.text();
         return new Response(body, {
           status: r.status,
