@@ -175,7 +175,79 @@ export default {
         return json({ ok:true, moved, removed, skipped }, 200);
       }
                 
-      // GET /api/stats?locationID=.&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
+      // --- Admin seed: POST /api/admin/seed-alias-ulids
+      // Generate deterministic ULIDs for all aliases in profiles.json and write KV_ALIASES.
+      if (pathname === "/api/admin/seed-alias-ulids" && req.method === "POST") {
+        const auth = req.headers.get("Authorization") || "";
+        if (!auth.startsWith("Bearer ")) {
+          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
+        }
+        const token = auth.slice(7).trim();
+        if (!token || token !== env.JWT_SECRET) {
+          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
+        }
+
+        // Load profiles.json from caller origin (keeps staging/prod safe)
+        const base = req.headers.get("Origin") || "https://navigen.io";
+        const src  = new URL("/data/profiles.json", base).toString();
+        const resp = await fetch(src, { cf: { cacheTtl: 60, cacheEverything: true }, headers: { "Accept": "application/json" } });
+        if (!resp.ok) return json({ error:{ code:"upstream", message:"profiles.json not reachable" } }, 502);
+        const data: any = await resp.json();
+
+        // Normalize locations list: supports array or object map
+        const list: Array<{locationID:string}> =
+          Array.isArray(data?.locations) ? data.locations :
+          (data?.locations && typeof data.locations === "object")
+            ? Object.values(data.locations) as any[] : [];
+
+        // Collect aliases (anything not already a 26-char ULID)
+        const aliases: string[] = list
+          .map(x => String(x?.locationID || "").trim())
+          .filter(id => id && !/^[0-9A-HJKMNP-TV-Z]{26}$/.test(id));
+
+        // Small helpers local to this request (no globals)
+        const B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+        const toBase32 = (bytes: Uint8Array) => {
+          let bits = 0, val = 0, out = "";
+          for (const b of bytes) {
+            val = (val << 8) | b; bits += 8;
+            while (bits >= 5) { bits -= 5; out += B32[(val >>> bits) & 31]; val &= (1 << bits) - 1; }
+          }
+          if (bits > 0) out += B32[(val << (5 - bits)) & 31];
+          return out;
+        };
+        const deterministicUlid = async (alias: string) => {
+          // Fixed timestamp keeps outputs stable across runs.
+          const t = new Uint8Array(8);
+          new DataView(t.buffer).setBigUint64(0, 1735689600000n); // 2025-01-01T00:00:00.000Z
+          const time48 = t.slice(2); // last 6 bytes
+
+          const enc = new TextEncoder().encode(alias);
+          const hashBuf = await crypto.subtle.digest("SHA-256", enc); // Web Crypto at edge
+          const h = new Uint8Array(hashBuf).slice(0, 10); // 80 bits
+
+          const bytes = new Uint8Array(16);
+          bytes.set(time48, 0); bytes.set(h, 6);
+
+          let b32 = toBase32(bytes);
+          if (b32.length < 26) b32 = b32.padEnd(26, "0");
+          if (b32.length > 26) b32 = b32.slice(0, 26);
+          return b32;
+        };
+
+        let wrote = 0, skipped = 0;
+        for (const alias of aliases) {
+          try {
+            const ulid = await deterministicUlid(alias);
+            await env.KV_ALIASES.put(`alias:${alias}`, JSON.stringify({ locationID: ulid }));
+            wrote++;
+          } catch { skipped++; }
+        }
+
+        return json({ ok:true, wrote, skipped, total: aliases.length }, 200);
+      }
+
+      // GET /api/stats?locationID=.
 
       if (url.pathname === "/api/stats" && req.method === "GET") {
         const locRaw = (url.searchParams.get("locationID")||"").trim(); // accept alias or ULID
