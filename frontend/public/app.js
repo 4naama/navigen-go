@@ -302,7 +302,8 @@ function renderPopularGroup(list = geoPoints) {
       // normalize to ULID: prefer data-id, then locationID/id/ID; do not call modal without ULID
       const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
 
-      if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) { console.warn('Data error: ULID id required to open profile'); return; } // strict ULID guard
+      if (!uid) { console.warn('Data error: id missing'); return; } // minimal guard
+      // allow alias or ULID; Worker resolves aliases safely
 
       showLocationProfileModal({
         locationID: uid, id: uid,              // ULID only

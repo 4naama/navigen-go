@@ -1206,6 +1206,7 @@ async function initLpmImageSlider(modal, data) {
       btnClose.addEventListener('click', (e) => {
         e.preventDefault();
         modal.remove();
+        const originEl = data?.originEl; // ensure defined
         if (originEl && typeof originEl.focus === 'function') originEl.focus();
       });
     }
