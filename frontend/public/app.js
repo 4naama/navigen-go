@@ -916,12 +916,13 @@ async function initEmergencyBlock(countryOverride) {
       ? '/data/contexts.json'
       : 'https://navigen.io/api/data/contexts';
 
+    // guard all three; 2-line comment: avoid boot break on 404/500
+    const safeJson = async (p, fb) => { const r = await p.catch(() => null); return (r && r.ok) ? r.json() : fb; };
     const [actions, structure, contexts] = await Promise.all([
-      fetch('/data/actions.json').then(r => r.json()),
-      fetch('/data/structure.json').then(r => r.json()),
-      fetch(CONTEXTS_URL, CONTEXTS_URL.startsWith('/') ? {} : { credentials: 'include' }).then(r => r.json())
+      safeJson(fetch('/data/actions.json',   { cache:'no-store' }), []),
+      safeJson(fetch('/data/structure.json', { cache:'no-store' }), []),
+      safeJson(fetch(CONTEXTS_URL, (CONTEXTS_URL.startsWith('/') ? { cache:'no-store' } : { cache:'no-store', credentials:'include' })), [])
     ]);
-
 
     state.actions = actions;
 
@@ -2056,8 +2057,8 @@ if (alertButton) {
 
     try {
       // 4) Fetch alerts fresh
-      const res = await fetch("/data/alert.json", { cache: "no-store" });
-      const alerts = await res.json();
+      const res = await fetch("/data/alert.json", { cache:'no-store' }).catch(() => null);
+      const alerts = res && res.ok ? await res.json() : [];
 
       if (!Array.isArray(alerts) || alerts.length === 0) {
         alertModalContent.innerHTML = "<p>No current alerts.</p>";
@@ -2262,7 +2263,7 @@ if (alertButton) {
         if (!container) return;
 
         try {
-          const res = await fetch("/data/alerts.json");
+          const res = await fetch("/data/alert.json", { cache:'no-store' });
           const alerts = await res.json();
 
           if (!Array.isArray(alerts) || alerts.length === 0) {
