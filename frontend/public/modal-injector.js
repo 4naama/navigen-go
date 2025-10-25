@@ -271,10 +271,9 @@ export function createLocationProfileModal(data, injected = {}) {
  * @param {Object} data  – same shape as factory
  */
 export async function showLocationProfileModal(data) {
-  // prefer stable profile id; enforce ULID-only at entry (2 lines max)
-  const _uid = String(data?.locationID || data?.id || '').trim();
-  if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(_uid)) { console.error('LPM requires ULID locationID'); return; }
-  data.locationID = _uid; data.id = _uid;
+  // prefer stable profile id; accept alias or ULID and pass through
+  const _id = String(data?.locationID || data?.id || '').trim();
+  data.locationID = _id; data.id = _id;
 
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
@@ -942,9 +941,13 @@ async function initLpmImageSlider(modal, data) {
       }
     }    
     
-    // count LPM open
-    // send only with canonical ULID (prevents 400 from /api/track)
-    ;(async () => { const uid = String(data?.id||'').trim(); try{ await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} })();
+    // count LPM open (only with canonical ULID → avoid /api/track 400)
+    ;(async () => {
+      const uid = String(data?.id||'').trim();
+      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+        try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+      }
+    })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
 
@@ -975,7 +978,12 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '0');
           flip(false); showToast('Removed from Saved', 1600);
-          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+          ;(async()=>{ 
+            const uid = String(data?.id||'').trim();
+            if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+              try { await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+            }
+          })();
         } else {
           next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
@@ -1166,7 +1174,12 @@ async function initLpmImageSlider(modal, data) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
           localStorage.setItem(key, '1');
           flip2(true); showToast('Saved', 1600);
-          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+          ;(async()=>{ 
+            const uid = String(data?.id||'').trim();
+            if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+              try { await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+            }
+          })();
         }
       });
     }
