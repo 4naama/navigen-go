@@ -42,8 +42,10 @@ export interface Env {
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
-    const { pathname } = url;
-    
+    // normalize once: collapse repeats; strip one trailing slash (not root)
+    const pathname = url.pathname;
+    const normPath = pathname.replace(/\/{2,}/g, "/").replace(/(.+)\/$/, "$1");
+
     // --- CORS preflight: allow credentialed requests from allowed web origins
     // GLOBAL CORS PREFLIGHT — must run before all routing
     if (req.method === "OPTIONS") {
