@@ -150,9 +150,22 @@ async function fetchStats() {
   const from = iso(start), to = iso(end);               // API window
 
   const isEntity = (modeEl?.value || 'location') === 'entity';
+
+  // Resolve non-ULID locationID via profile API (returns canonical ULID), then query stats.
+  let locId = String(locEl?.value || '').trim();
+  if (!isEntity && locId && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locId)) {
+    try {
+      const r = await fetch(new URL(`/api/data/profile?id=${encodeURIComponent(locId)}`, base), { cache: 'no-store' });
+      if (r.ok) {
+        const p = await r.json();
+        if (p?.locationID && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(p.locationID)) locId = p.locationID;
+      }
+    } catch { /* leave locId as-is on failure */ }
+  }
+
   const q = isEntity
     ? new URL(`/api/stats/entity?entityID=${encodeURIComponent(entEl.value)}&from=${from}&to=${to}`, base)
-    : new URL(`/api/stats?locationID=${encodeURIComponent(locEl.value)}&from=${from}&to=${to}`, base);
+    : new URL(`/api/stats?locationID=${encodeURIComponent(locId)}&from=${from}&to=${to}`, base);
 
   const res = await fetch(q, { cache: 'no-store' });
   if (!res.ok) {
