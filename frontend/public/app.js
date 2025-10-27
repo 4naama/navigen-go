@@ -134,46 +134,37 @@ window.addEventListener('resize', () => requestAnimationFrame(setVH));
 window.addEventListener('orientationchange', setVH);
 window.addEventListener('pageshow', (e) => { if (e.persisted) setVH(); }); // bfcache
 
-// --- Language + route guard (dash owns its skin) -----------------------------
-// 1) Skip app bootstrap on /dash
-// 2) If /dash has no /{lang}/ prefix, redirect to stored lang (or EN stays root)
-const __isDash = /^\/(?:[a-z]{2}\/)?dash(?:\/|$)/i.test(location.pathname);
+// route-aware loader (no globals; ES modules only)
+// Purpose: prevent the app shell from booting on /dash and let the dashboard own its UI/lang.
 
-window.addEventListener('pageshow', async () => {
-  const path = location.pathname;
-  const hasPrefix = /^[a-z]{2}(?:\/|$)/.test(path.slice(1));
+// 1) Route test
+const path = location.pathname;
+const isDash = /^\/(?:[a-z]{2}\/)?dash(?:\/|$)/i.test(path);
+const hasLangPrefix = /^[a-z]{2}(?:\/|$)/.test(path.slice(1));
 
-  if (__isDash) {
-    if (!hasPrefix) {
-      let stored = "en";
-      try { stored = (localStorage.getItem("lang") || "en").slice(0,2).toLowerCase(); } catch {}
-      if (stored !== "en") {
-        const qs = location.search || "", hash = location.hash || "";
-        location.replace(`/${stored}${path}${qs}${hash}`);
-      }
-    }
-    return; // dash: do not force EN, and let dash JS render its own UI
+// 2) If DASH without /{lang}/, prefer stored lang (or keep EN at root)
+if (isDash && !hasLangPrefix) {
+  let stored = "en";
+  try { stored = (localStorage.getItem("lang") || "en").slice(0,2).toLowerCase(); } catch {}
+  if (stored !== "en") {
+    const qs = location.search || "", hash = location.hash || "";
+    location.replace(`/${stored}${path}${qs}${hash}`);
+  }
+}
+
+// 3) Route-dependent boot (dynamic import prevents premature side-effects)
+(async () => {
+  if (isDash) {
+    // DASH: import ONLY the dashboard bundle; never load the app shell
+    // If your dash is pure HTML+its own script tag, you can leave this empty.
+    // Otherwise point to your dash module here:
+    try { await import('./dash.js'); } catch {}
+    return;
   }
 
-  // Non-dash pages keep the original root EN lock
-  if (!hasPrefix) {
-    const locked = "en";
-    if (document.documentElement.lang !== locked) {
-      document.documentElement.lang = locked;
-      document.documentElement.dir  = "ltr";
-      try { localStorage.setItem("lang", locked); } catch {}
-      await loadTranslations(locked);
-      injectStaticTranslations();
-      document.dispatchEvent(new CustomEvent('app:lang-changed', { detail: { lang: locked } }));
-    }
-  }
-});
-
-// Also stop the big DOMContentLoaded app bootstrap from running on /dash
-document.addEventListener('DOMContentLoaded', async () => {
-  if (__isDash) return; // dash page → bail early; dash has its own code/skin
-  // (keep the rest of your existing DOMContentLoaded body below this line)
-});
+  // APP pages: load the original app shell (moved into a separate module)
+  try { await import('./app-shell.js'); } catch (e) { console.error('App boot failed', e); }
+})();
 
 if (window.visualViewport) visualViewport.addEventListener('resize', setVH);
 
