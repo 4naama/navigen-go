@@ -134,18 +134,21 @@ window.addEventListener('resize', () => requestAnimationFrame(setVH));
 window.addEventListener('orientationchange', setVH);
 window.addEventListener('pageshow', (e) => { if (e.persisted) setVH(); }); // bfcache
 
-// Root hard-lock: if no /{lang}/ prefix, force EN and refresh labels (BFCache-safe)
+// Root hard-lock (skip /dash; loader handles dash lang/prefix)
 window.addEventListener('pageshow', async () => {
-  const hasPrefix = /^[a-z]{2}(?:\/|$)/.test(location.pathname.slice(1));
+  const path   = location.pathname;
+  const isDash = /^\/(?:[a-z]{2}\/)?dash(?:\/|$)/i.test(path);
+  if (isDash) return; // don't touch dashboard language
+
+  const hasPrefix = /^[a-z]{2}(?:\/|$)/.test(path.slice(1));
   if (!hasPrefix) {
-    const locked = "en";
+    const locked = 'en';
     if (document.documentElement.lang !== locked) {
       document.documentElement.lang = locked;
-      document.documentElement.dir = "ltr";
-      try { localStorage.setItem("lang", locked); } catch {}
+      document.documentElement.dir  = 'ltr';
+      try { localStorage.setItem('lang', locked); } catch {}
       await loadTranslations(locked);
       injectStaticTranslations();
-      // notify DOMContentLoaded scope to refresh labels (no globals)
       document.dispatchEvent(new CustomEvent('app:lang-changed', { detail: { lang: locked } }));
     }
   }
