@@ -134,18 +134,40 @@ window.addEventListener('resize', () => requestAnimationFrame(setVH));
 window.addEventListener('orientationchange', setVH);
 window.addEventListener('pageshow', (e) => { if (e.persisted) setVH(); }); // bfcache
 
-// Root hard-lock: if no /{lang}/ prefix, force EN and refresh labels (BFCache-safe)
+// Root hard-lock (BFCache-safe):
+// • Skip on /dash so dashboard can own its language
+// • If /dash has no /{lang}/ prefix, prefer stored lang (or EN) and redirect once.
 window.addEventListener('pageshow', async () => {
-  const hasPrefix = /^[a-z]{2}(?:\/|$)/.test(location.pathname.slice(1));
+  const path = location.pathname;
+  const hasPrefix = /^[a-z]{2}(?:\/|$)/.test(path.slice(1));
+  const isDash   = /^\/(?:[a-z]{2}\/)?dash(?:\/|$)/i.test(path);
+
+  if (isDash) {
+    if (!hasPrefix) {
+      // choose stored lang (fallback EN); build prefixed path for dash only
+      let stored = "en";
+      try { stored = (localStorage.getItem("lang") || "en").slice(0,2).toLowerCase(); } catch {}
+      if (stored !== "en") {
+        const rest = path; // dash path already starts with /dash
+        const qs   = location.search || "";
+        const hash = location.hash   || "";
+        location.replace(`/${stored}${rest}${qs}${hash}`);
+        return; // let navigation happen
+      }
+    }
+    // dash keeps its current lang; do not force EN here
+    return;
+  }
+
+  // Non-dash pages: keep the original root EN lock when no prefix is present
   if (!hasPrefix) {
     const locked = "en";
     if (document.documentElement.lang !== locked) {
       document.documentElement.lang = locked;
-      document.documentElement.dir = "ltr";
+      document.documentElement.dir  = "ltr";
       try { localStorage.setItem("lang", locked); } catch {}
       await loadTranslations(locked);
       injectStaticTranslations();
-      // notify DOMContentLoaded scope to refresh labels (no globals)
       document.dispatchEvent(new CustomEvent('app:lang-changed', { detail: { lang: locked } }));
     }
   }
