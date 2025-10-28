@@ -17,10 +17,9 @@ if (isDash && !hasLangPrefix) {
 // 3) Route-dependent boot (dynamic import prevents premature side-effects)
 (async () => {
   if (isDash) {
-    // DASH: import ONLY the dashboard bundle; never load the app shell
-    // If your dash is pure HTML+its own script tag, you can leave this empty.
-    // Otherwise point to your dash module here:
-    try { await import('./dash.js'); } catch {}
+    // Do NOT import the app shell here. Dash owns its skin.
+    // Optional: if you *do* want to module-load extra dash code later, use an absolute URL:
+    // await import('/dash.js');
     return;
   }
 
