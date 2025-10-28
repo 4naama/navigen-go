@@ -23,5 +23,29 @@ if (isDash && !hasLangPrefix) {
     return;
   }
   // APP pages: load the original app shell (moved into a separate module)
-  try { await import('./app-shell.js'); } catch (e) { console.error('App boot failed', e); }
-})();
+  try {
+    // prefer absolute URL; avoids path/prefix pitfalls
+    await import('/app-shell.js');
+  } catch (e1) {
+    console.warn('[boot] /app-shell.js failed, trying fallbacks', e1);
+    const lang = (document.documentElement.lang || 'en').slice(0,2).toLowerCase();
+    const tries = [
+      `/app-shell.js?cb=${Date.now()}`,     // cache-bust straight path
+      `/${lang}/app-shell.js`,              // language-prefixed hosting
+      `/assets/app-shell.js`,               // static assets folder (if published there)
+    ];
+    let ok = false, lastErr = e1;
+    for (const u of tries) {
+      try { await import(u); ok = true; break; } catch (e) { lastErr = e; }
+    }
+    if (!ok) {
+      // final attempt: inject a <script type="module"> to bypass import() MIME checks
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.type = 'module'; s.src = `/app-shell.js?tag=${Date.now()}`;
+        s.onload = res; s.onerror = () => rej(lastErr);
+        document.currentScript?.parentNode?.appendChild(s) || document.head.appendChild(s);
+      }).catch(err => { console.error('App boot failed', err); });
+    }
+  }
+  })();

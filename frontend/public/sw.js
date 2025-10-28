@@ -14,11 +14,13 @@ self.addEventListener("install", event => {
     const cache = await caches.open(CACHE_NAME);
     // Precache a defined set; skip failures so install cannot be bricked by a 404.
     const ASSETS = [
-      "/", "/index.html", "/navi-style.css", "/app.js", "/modal-injector.js",
+      "/", "/index.html", "/navi-style.css",
+      "/app.js", "/app-shell.js", "/modal-injector.js",
       "/data/locations.json", "/data/structure.json", "/data/alert.json",
       "/assets/icon-192.png", "/assets/icon-512.png", "/assets/language.svg",
       "/assets/icon-whatsapp.svg"
     ];
+
     // Avoid 'url' name to prevent shadow collisions in some builds.
     await Promise.allSettled(ASSETS.map(async (assetUrl) => {
       try {
