@@ -1,32 +1,155 @@
+import {
+  buildAccordion,
+  createMyStuffModal,
+  createAlertModal,
+  createDonationModal,
+  createHelpModal,
+  setupMyStuffModalLogic,
+  createShareModal,
+  showModal,
+  showShareModal,
+  createIncomingLocationModal,
+  saveToLocationHistory,
+  showToast,
+  showMyStuffModal,
+  flagStyler,
+  setupTapOutClose,
+  showLocationProfileModal,
+  showThankYouToast as showThankYouToastUI,
+  openViewSettingsModal,
+  createFavoritesModal,
+  showFavoritesModal
+} from './modal-injector.js';
 
-// 1) Route test
-const path = location.pathname;
-const isDash = /^\/(?:[a-z]{2}\/)?dash(?:\/|$)/i.test(path);
-const hasLangPrefix = /^[a-z]{2}(?:\/|$)/.test(path.slice(1));
-
-// 2) If DASH without /{lang}/, prefer stored lang (or keep EN at root)
-if (isDash && !hasLangPrefix) {
-  let stored = "en";
-  try { stored = (localStorage.getItem("lang") || "en").slice(0,2).toLowerCase(); } catch {}
-  if (stored !== "en") {
-    const qs = location.search || "", hash = location.hash || "";
-    location.replace(`/${stored}${path}${qs}${hash}`);
+// PWA: register SW only in production (keeps install prompt there)
+/* In preview/dev (pages.dev, localhost), skip SW to force fresh CSS/JS on reload */
+if ('serviceWorker' in navigator) {
+  const PREVIEW = location.hostname.endsWith('pages.dev') ||
+                  location.hostname === 'localhost' ||
+                  location.hostname === '127.0.0.1';
+  if (!PREVIEW) {
+    navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW reg failed', err));
   }
 }
 
-// 3) Route-dependent boot (dynamic import prevents premature side-effects)
-(async () => {
-  if (isDash) {
-    // DASH: import ONLY the dashboard bundle; never load the app shell
-    // If your dash is pure HTML+its own script tag, you can leave this empty.
-    // Otherwise point to your dash module here:
-    try { await import('./dash.js'); } catch {}
-    return;
+// Force phones to forget old cache on new deploy; one-time per BUILD_ID. (Disabled: no redirect, no purge)
+const BUILD_ID = '2025-08-30-03'; // disabled cache-buster
+try { localStorage.setItem('BUILD_ID', BUILD_ID); } catch {}
+// (No redirect; leave URL untouched)
+
+// Helper: Match locationName OR tag keys (strip "tag."), case-insensitive; supports multi-word queries.
+function matchesQueryByNameOrTag(loc, q) {
+  const qStr = String(q || '').toLowerCase().trim();
+  if (!qStr) return true;
+  const tokens = qStr.split(/\s+/).filter(Boolean);
+  const name = String((loc?.locationName?.en ?? loc?.locationName ?? '')).toLowerCase();
+  const tags = (Array.isArray(loc?.tags) ? loc.tags : []).map(t => String(t).toLowerCase().replace(/^tag\./,''));
+  return tokens.every(tok => name.includes(tok) || tags.some(tag => tag.includes(tok)));
+}
+
+// 🌍 Emergency data + localization helpers
+// Served as a static ES module from /public/scripts
+import {
+  loadEmergencyData,
+  pickLocale,
+  getLabelsFor,
+  getNumbersFor
+} from './scripts/emergency-ui.js';
+
+// Use local injectStaticTranslations() defined later in this file
+import { loadTranslations, t, RTL_LANGS } from "./scripts/i18n.js"; // keep: static import
+
+// Early: ?lang → path-locale; /{lang}/ respected; root stays EN; persist prefix.
+// Also persists the decision before i18n module side-effects run.
+(() => {
+  const DEFAULT = "en";
+  const qs = new URLSearchParams(location.search);
+  const parts = location.pathname.split("/").filter(Boolean);
+  const seg0 = (parts[0] || "").toLowerCase();
+  const pathLang = /^[a-z]{2}$/.test(seg0) ? seg0 : null;
+  const norm = (l) => (l || "").slice(0, 2);
+
+  // ?lang normalization → path
+  const urlLang = (qs.get("lang") || "").toLowerCase();
+  if (urlLang) {
+    const lang = norm(urlLang);
+    const rest = "/" + (pathLang ? parts.slice(1).join("/") : parts.join("/"));
+    const target = lang === DEFAULT ? (rest === "/" ? "/" : rest) : `/${lang}${rest === "/" ? "" : rest}`;
+    qs.delete("lang");
+    const query = qs.toString() ? `?${qs}` : "";
+    const next = `${target}${query}${location.hash || ""}`;
+    if (next !== location.pathname + location.search + location.hash) location.replace(next);
+    return; // stop; navigation continues at new URL
   }
 
-  // APP pages: load the original app shell (moved into a separate module)
-  try { await import('./app-shell.js'); } catch (e) { console.error('App boot failed', e); }
+  // Decide from path (root → EN), persist immediately so i18n sees the right value
+  const chosen = pathLang || DEFAULT;
+  document.documentElement.lang = chosen;
+  // Early RTL hint; i18n confirms later
+  const RTL_EARLY = ['ar','he','fa','ur'];
+  document.documentElement.dir = RTL_EARLY.includes(chosen) ? 'rtl' : 'ltr';
+  
+  try { localStorage.setItem("lang", chosen); } catch {}
 })();
+
+// ✅ Determines whether app is running in standalone/PWA mode
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+function getUserLang() {
+  // Use browser setting or override with ?lang=fr
+  const urlLang = new URLSearchParams(window.location.search).get("lang");
+  return urlLang || navigator.language.split("-")[0] || "en"; // e.g. "fr"
+}
+
+const BACKEND_URL = "https://navigen-go.onrender.com";
+
+// ULID checker: keep client ULID-only (2 lines)
+const isUlid = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
+
+// ✅ Stripe Block
+import { initStripe, handleDonation } from "./scripts/stripe.js";
+
+// ✅ Stripe public key (inject securely in production)
+const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
+
+// 🔄 Initialize Stripe loader overlay controls
+function showStripeLoader() {
+  const loader = document.getElementById("stripe-loader");
+  if (loader) loader.style.display = "flex";
+}
+
+function hideStripeLoader() {
+  const loader = document.getElementById("stripe-loader");
+  if (loader) loader.style.display = "none";
+}
+
+const setVH = () =>
+  document.documentElement.style.setProperty('--vh', window.innerHeight + 'px');
+
+setVH();
+window.addEventListener('resize', () => requestAnimationFrame(setVH));
+window.addEventListener('orientationchange', setVH);
+window.addEventListener('pageshow', (e) => { if (e.persisted) setVH(); }); // bfcache
+
+// Root hard-lock: if no /{lang}/ prefix, force EN and refresh labels (BFCache-safe)
+window.addEventListener('pageshow', async () => {
+  const hasPrefix = /^[a-z]{2}(?:\/|$)/.test(location.pathname.slice(1));
+  if (!hasPrefix) {
+    const locked = "en";
+    if (document.documentElement.lang !== locked) {
+      document.documentElement.lang = locked;
+      document.documentElement.dir = "ltr";
+      try { localStorage.setItem("lang", locked); } catch {}
+      await loadTranslations(locked);
+      injectStaticTranslations();
+      // notify DOMContentLoaded scope to refresh labels (no globals)
+      document.dispatchEvent(new CustomEvent('app:lang-changed', { detail: { lang: locked } }));
+    }
+  }
+});
 
 if (window.visualViewport) visualViewport.addEventListener('resize', setVH);
 
