@@ -762,7 +762,8 @@ async function initLpmImageSlider(modal, data) {
 
       if (bookingUrl) {
         // native anchor; track only
-        btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id).trim())}?to=${encodeURIComponent(bookingUrl)}`); // server counts on redirect
+        // if your Worker expects /out/book/ to count "booking", use that:
+        btnBook.setAttribute('href', `${TRACK_BASE}/out/book/${encodeURIComponent(String(data?.id).trim())}?to=${encodeURIComponent(bookingUrl)}`);
         btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
@@ -818,10 +819,9 @@ async function initLpmImageSlider(modal, data) {
           printBtn.setAttribute('aria-label', 'Print');
           printBtn.title = 'Print';
           printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
-          // print: open minimal doc, wait for load, then print + close
-          // print: show full-screen overlay, print just the QR, then remove
-          /* no tracking for print; not in EVENT_ORDER */
 
+          /* run print overlay only on click (prevents breaking the QR modal) */
+          printBtn.addEventListener('click', () => {
             const src = img.src;
 
             // overlay
@@ -882,12 +882,13 @@ async function initLpmImageSlider(modal, data) {
           /* count a QR view (modal/image shown) */
           ;(async()=>{ 
             const uid=String(data?.id||'').trim(); 
-            if(uid){ 
-              try{ 
-                console.debug('[track] qr-view', uid);
-                await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); 
-              }catch(err){ console.warn('QR view track failed', err); } 
-            } 
+            if(!uid) return;
+            try {
+              const r = await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+              if (!r.ok) { // fallback if server expects underscore
+                await fetch(`${TRACK_BASE}/hit/qr_view/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+              }
+            } catch(_e) {}
           })();
         };
       }
@@ -952,9 +953,13 @@ async function initLpmImageSlider(modal, data) {
     // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
       const uid = String(data?.id||'').trim();
-      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-        try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
-      }
+      if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) return;
+      try {
+        const r = await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+        if (!r.ok) {
+          await fetch(`${TRACK_BASE}/hit/lpm_open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+        }
+      } catch {}
     })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
