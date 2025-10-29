@@ -75,35 +75,16 @@ function getISODate(input){
 {
   const u   = new URL(location.href);
   const m   = u.searchParams.get('mode') || 'location';
-  const qId = (u.searchParams.get('locationID') || '').trim(); // may be slug OR ULID
-  const ali = (u.searchParams.get('alias') || '').trim();      // optional display hint
-  const eid = (u.searchParams.get('entityID') || '').trim();
+  const lid = u.searchParams.get('locationID') || '';          // canonical (ULID) for data
+  const ali = u.searchParams.get('alias') || '';               // human slug (optional)
+  const eid = u.searchParams.get('entityID') || '';
 
   if (modeEl) modeEl.value = m;
 
-  // If a ULID is present, use it directly; if not, try alias→ULID lookup
-  const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-
-  async function resolveIfNeeded(raw) {
-    if (!raw) return { display: '', canonical: '' };
-    if (ULID_RE.test(raw)) return { display: ali || raw, canonical: raw };
-    // raw is a slug; prefer explicit alias label, resolve canonical via API
-    try {
-      const r = await fetch(`/api/alias?slug=${encodeURIComponent(raw)}`, { cache:'no-store', credentials:'include' });
-      if (r.ok) {
-        const j = await r.json();
-        return { display: ali || j.slug || raw, canonical: j.ulid || '' };
-      }
-    } catch {}
-    // fallback: display slug, no canonical (stats calls will error if not resolved)
-    return { display: ali || raw, canonical: '' };
-  }
-
-  const { display, canonical } = await resolveIfNeeded(qId);
-
+  // UI shows slug when provided; data always uses ULID
   if (locEl) {
-    locEl.value = display || qId;                 // slug (or ULID) for human display
-    if (canonical) locEl.dataset.canonicalId = canonical; // ULID for all fetches
+    locEl.value = ali || lid;                  // display: slug if present, else ULID
+    if (lid) locEl.dataset.canonicalId = lid;  // stash ULID for fetches
   }
   if (entEl) entEl.value = eid;
 
