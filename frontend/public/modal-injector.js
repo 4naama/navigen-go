@@ -755,13 +755,16 @@ async function initLpmImageSlider(modal, data) {
 
     // 📅 Book → ONLY open links.bookingUrl; else toast (no legacy, no contact API)
     const btnBook = modal.querySelector('#lpm-book');
-    if (btnBook && typeof btnBook.onclick !== 'function') { // prevent double wiring of Book only
+    if (btnBook) {
+      if (typeof btnBook.onclick === 'function') { return; } // prevent double wiring
+
       const bookingUrl = String(data?.links?.bookingUrl || '').trim();
+
       if (bookingUrl) {
         // native anchor; track only
+        // redirect through Worker so booking clicks are counted (server resolves alias)
         btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
-        btnBook.setAttribute('target', '_blank');
-        btnBook.setAttribute('rel', 'noopener');
+        btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
           e.preventDefault();
@@ -816,9 +819,13 @@ async function initLpmImageSlider(modal, data) {
           printBtn.setAttribute('aria-label', 'Print');
           printBtn.title = 'Print';
           printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
-          printBtn.onclick = () => { // print: overlay full-screen QR, trigger print, clean up
+          // print: open minimal doc, wait for load, then print + close
+          // print: show full-screen overlay, print just the QR, then remove
+          /* no tracking for print; not in EVENT_ORDER */
+
             const src = img.src;
 
+            // overlay
             const layer = document.createElement('div');
             layer.id = 'qr-print-layer';
             Object.assign(layer.style, {
@@ -827,6 +834,7 @@ async function initLpmImageSlider(modal, data) {
               zIndex:'999999'
             });
 
+            // print-only CSS
             const style = document.createElement('style');
             style.id = 'qr-print-style';
             style.textContent = `
@@ -835,6 +843,7 @@ async function initLpmImageSlider(modal, data) {
                 #qr-print-layer{ position:static !important; inset:auto !important; }
               }`;
 
+            // image
             const pimg = document.createElement('img');
             pimg.alt = 'QR Business Card';
             pimg.src = src;
@@ -859,7 +868,7 @@ async function initLpmImageSlider(modal, data) {
               pimg.addEventListener('load', go,   { once:true });
               pimg.addEventListener('error', cleanup, { once:true });
             }
-          };
+          });
 
           actions.appendChild(shareBtn);
           actions.appendChild(printBtn);
@@ -875,7 +884,7 @@ async function initLpmImageSlider(modal, data) {
 
           // count a QR view (modal/image shown); server resolves alias → ULID
           /* duplicate qr-view beacon removed — counted once above */
-        });
+        };
       }
     }
 
