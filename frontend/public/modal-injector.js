@@ -2209,7 +2209,7 @@ export function showFavoritesModal() {
           appendResolvedButton(actions, "my-stuff-modal");
         }
                   
-        if (item.view === "language") {
+        else if (item.view === "language") {
           body.innerHTML = `<div class="modal-language-body flag-list"></div>`;
           const flagList = body.querySelector(".flag-list");
 
