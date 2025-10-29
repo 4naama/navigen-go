@@ -822,8 +822,7 @@ async function initLpmImageSlider(modal, data) {
           // print: open minimal doc, wait for load, then print + close
           // print: show full-screen overlay, print just the QR, then remove
           /* no tracking for print; not in EVENT_ORDER */
-
-            const src = img.src;
+          printBtn.addEventListener('click', () => { /* print on demand; QR click stays intact */ const src = img.src;
 
             // overlay
             const layer = document.createElement('div');
@@ -868,7 +867,7 @@ async function initLpmImageSlider(modal, data) {
               pimg.addEventListener('load', go,   { once:true });
               pimg.addEventListener('error', cleanup, { once:true });
             }
-          });
+          }); // close print click listener
 
           actions.appendChild(shareBtn);
           actions.appendChild(printBtn);
@@ -883,7 +882,7 @@ async function initLpmImageSlider(modal, data) {
           ;(async()=>{ try { await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(String(data?.id||'').trim())}`, { method:'POST', keepalive:true }); } catch {} })();
 
           // count a QR view (modal/image shown); server resolves alias → ULID
-          ;(async()=>{ const uid = String(data?.id||'').trim(); try { await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} })();
+          /* duplicate qr-view beacon removed — counted once above */
         };
       }
     }
