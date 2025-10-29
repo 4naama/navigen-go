@@ -16,6 +16,7 @@ self.addEventListener("install", event => {
     const ASSETS = [
       "/", "/index.html", "/navi-style.css",
       "/app.js", "/app-shell.js", "/modal-injector.js",
+      "/scripts/i18n.js", "/scripts/stripe.js",
       "/data/locations.json", "/data/structure.json", "/data/alert.json",
       "/assets/icon-192.png", "/assets/icon-512.png", "/assets/language.svg",
       "/assets/icon-whatsapp.svg"

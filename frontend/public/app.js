@@ -24,28 +24,33 @@ if (isDash && !hasLangPrefix) {
   }
   // APP pages: load the original app shell (moved into a separate module)
   try {
-    // prefer absolute URL; avoids path/prefix pitfalls
-    await import('/app-shell.js');
-  } catch (e1) {
-    console.warn('[boot] /app-shell.js failed, trying fallbacks', e1);
-    const lang = (document.documentElement.lang || 'en').slice(0,2).toLowerCase();
-    const tries = [
-      `/app-shell.js?cb=${Date.now()}`,     // cache-bust straight path
-      `/${lang}/app-shell.js`,              // language-prefixed hosting
-      `/assets/app-shell.js`,               // static assets folder (if published there)
-    ];
-    let ok = false, lastErr = e1;
-    for (const u of tries) {
-      try { await import(u); ok = true; break; } catch (e) { lastErr = e; }
+    // Force network check for correct MIME to avoid HTML/404 masquerading as JS
+    const url = '/app-shell.js?cb=' + Date.now();
+    const r = await fetch(url, { cache: 'no-store' });
+    const ct = (r.headers.get('content-type') || '').toLowerCase();
+    if (!r.ok || !ct.includes('javascript')) {
+      throw new Error('app-shell.js bad fetch: ' + r.status + ' ' + ct);
     }
-    if (!ok) {
-      // final attempt: inject a <script type="module"> to bypass import() MIME checks
+    await import(url);
+  } catch (e) {
+    console.error('[boot] app-shell load failed:', e);
+    // Probe likely nested imports so console shows the real offender
+    for (const u of ['/scripts/i18n.js','/scripts/stripe.js']) {
+      try {
+        const rr = await fetch(u + '?cb=' + Date.now(), { cache: 'no-store' });
+        console.info('[probe]', u, rr.status, rr.headers.get('content-type'));
+      } catch (pe) {
+        console.warn('[probe failed]', u, pe);
+      }
+    }
+    // Last resort: module tag injection (keeps page usable if import() rejects)
+    try {
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.type = 'module'; s.src = `/app-shell.js?tag=${Date.now()}`;
-        s.onload = res; s.onerror = () => rej(lastErr);
-        document.currentScript?.parentNode?.appendChild(s) || document.head.appendChild(s);
-      }).catch(err => { console.error('App boot failed', err); });
-    }
+        s.type = 'module'; s.src = '/app-shell.js?tag=' + Date.now();
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+    } catch {}
   }
   })();
