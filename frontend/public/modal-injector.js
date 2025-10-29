@@ -755,7 +755,8 @@ async function initLpmImageSlider(modal, data) {
 
     // 📅 Book → ONLY open links.bookingUrl; else toast (no legacy, no contact API)
     const btnBook = modal.querySelector('#lpm-book');
-    if (btnBook && typeof btnBook.onclick !== 'function') { // prevent double-wiring Book only
+    if (btnBook) {
+      if (typeof btnBook.onclick === 'function') { return; } // prevent double wiring
 
       const bookingUrl = String(data?.links?.bookingUrl || '').trim();
 
