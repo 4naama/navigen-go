@@ -880,15 +880,7 @@ async function initLpmImageSlider(modal, data) {
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
 
           /* count a QR view (modal/image shown) */
-          ;(async()=>{ 
-            const uid=String(data?.id||'').trim(); 
-            if(uid){ 
-              try{ 
-                console.debug('[track] qr-view', uid);
-                await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); 
-              }catch(err){ console.warn('QR view track failed', err); } 
-            } 
-          })();
+          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         };
       }
     }
