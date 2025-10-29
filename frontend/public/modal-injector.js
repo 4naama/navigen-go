@@ -817,9 +817,13 @@ async function initLpmImageSlider(modal, data) {
           printBtn.setAttribute('aria-label', 'Print');
           printBtn.title = 'Print';
           printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
-          printBtn.onclick = () => { // print: overlay QR, trigger print, clean up
+          // print: open minimal doc, wait for load, then print + close
+          // print: show full-screen overlay, print just the QR, then remove
+          /* no tracking for print; not in EVENT_ORDER */
+
             const src = img.src;
 
+            // overlay
             const layer = document.createElement('div');
             layer.id = 'qr-print-layer';
             Object.assign(layer.style, {
@@ -828,6 +832,7 @@ async function initLpmImageSlider(modal, data) {
               zIndex:'999999'
             });
 
+            // print-only CSS
             const style = document.createElement('style');
             style.id = 'qr-print-style';
             style.textContent = `
@@ -836,6 +841,7 @@ async function initLpmImageSlider(modal, data) {
                 #qr-print-layer{ position:static !important; inset:auto !important; }
               }`;
 
+            // image
             const pimg = document.createElement('img');
             pimg.alt = 'QR Business Card';
             pimg.src = src;
@@ -860,7 +866,7 @@ async function initLpmImageSlider(modal, data) {
               pimg.addEventListener('load', go,   { once:true });
               pimg.addEventListener('error', cleanup, { once:true });
             }
-          };
+          });
 
           actions.appendChild(shareBtn);
           actions.appendChild(printBtn);
@@ -1290,40 +1296,41 @@ async function initLpmImageSlider(modal, data) {
     // analytics beacon
     // removed trackCta; all beacons use _track(uid,event) // single path → Worker
 
-    // (removed self-call; function ends cleanly here)
-  }  
+    // call wiring + reveal
+    wireLocationProfileModal(modal, data, data?.originEl);
+    showModal('location-profile-modal');
 
-  // Call wiring once (after definition) + reveal
-  wireLocationProfileModal(modal, data, data?.originEl);
-  showModal('location-profile-modal');
+    // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
+    ;(async () => {
+      try {
+        // accept locationID too; skip when missing
+        const id = String(data?.id || data?.locationID || '').trim(); if (!id) return;
+        const needEnrich =
+          !data?.descriptions ||
+          !data?.media?.cover ||
+          (Array.isArray(data?.media?.images) && data.media.images.length < 2);
+        if (!needEnrich) return; // skip network when local data is complete
 
-  // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
-  ;(async () => {
-    try {
-      const id = String(data?.id || data?.locationID || '').trim(); if (!id) return;
-      const needEnrich =
-        !data?.descriptions ||
-        !data?.media?.cover ||
-        (Array.isArray(data?.media?.images) && data.media.images.length < 2);
-      if (!needEnrich) return;
-
-      const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
-      if (!res.ok) return;
-      const payload = await res.json();
-
-      if (payload.descriptions && !data.descriptions) {
-        const box = modal.querySelector('.location-description .description');
-        const txt = payload.descriptions.en || Object.values(payload.descriptions)[0] || '';
-        if (box && /Description coming soon/i.test(box.textContent || box.innerHTML)) {
-          box.innerHTML = String(txt).replace(/\n/g,'<br>');
+        const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
+        if (!res.ok) return;
+        const payload = await res.json();
+        
+        // Fill description if placeholder
+        if (payload.descriptions && !data.descriptions) {
+          const box = modal.querySelector('.location-description .description');
+          const txt = payload.descriptions.en || Object.values(payload.descriptions)[0] || '';
+          if (box && /Description coming soon/i.test(box.textContent || box.innerHTML)) {
+            box.innerHTML = String(txt).replace(/\n/g,'<br>');
+          }
         }
-      }
-      if (payload.media && payload.media.cover) {
-        const img = modal.querySelector('.location-media img');
-        if (img && /placeholder/.test(img.src)) img.src = payload.media.cover;
-      }
-    } catch {}
-  })();
+        // Upgrade cover if better
+        if (payload.media && payload.media.cover) {
+          const img = modal.querySelector('.location-media img');
+          if (img && /placeholder/.test(img.src)) img.src = payload.media.cover;
+        }
+      } catch {}
+    })();
+  }  
 
   // 5. Reveal modal (remove .hidden, add .visible, focus trap etc.)
 
