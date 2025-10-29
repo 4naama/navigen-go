@@ -73,14 +73,20 @@ function getISODate(input){
 
 // load initial params from URL; tolerate missing controls
 {
-  const u = new URL(location.href);
-  const m = u.searchParams.get('mode') || 'location';
-  const lid = u.searchParams.get('locationID') || '';
+  const u   = new URL(location.href);
+  const m   = u.searchParams.get('mode') || 'location';
+  const lid = u.searchParams.get('locationID') || '';          // canonical (ULID) for data
+  const ali = u.searchParams.get('alias') || '';               // human slug (optional)
   const eid = u.searchParams.get('entityID') || '';
 
   if (modeEl) modeEl.value = m;
-  if (locEl)  locEl.value  = lid;
-  if (entEl)  entEl.value  = eid;
+
+  // UI shows slug when provided; data always uses ULID
+  if (locEl) {
+    locEl.value = ali || lid;                  // display: slug if present, else ULID
+    if (lid) locEl.dataset.canonicalId = lid;  // stash ULID for fetches
+  }
+  if (entEl) entEl.value = eid;
 
   if (modeEl && locWrap && entWrap) syncMode();
 }
@@ -152,7 +158,8 @@ async function fetchStats() {
   const isEntity = (modeEl?.value || 'location') === 'entity';
 
   // Resolve non-ULID locationID via profile API (returns canonical ULID), then query stats.
-  let locId = String(locEl?.value || '').trim();
+  // prefer the canonical ULID we stashed; fall back to what’s typed
+  let locId = String((locEl?.dataset?.canonicalId || locEl?.value || '')).trim();
   if (!isEntity && locId && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locId)) {
     try {
       const r = await fetch(new URL(`/api/data/profile?id=${encodeURIComponent(locId)}`, base), { cache: 'no-store' });
