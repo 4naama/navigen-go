@@ -102,19 +102,14 @@ export default {
       const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
     }
 
-    // PWA & modules: early pass-through for static assets and JS modules
-    // keeps .js/.mjs and /scripts/* from being rewritten to HTML
-    if (
-      url.pathname === '/manifest.webmanifest' ||
-      url.pathname === '/sw.js' ||
-      url.pathname.endsWith('.js') ||
-      url.pathname.endsWith('.mjs') ||
-      url.pathname.startsWith('/scripts/') ||
-      url.pathname.startsWith('/assets/')
-    ) {
+    // PWA: early pass-through for critical static assets (avoid rewrites)
+    // <!-- ensures manifest/SW/assets are served raw and with correct MIME -->
+    if (url.pathname === '/manifest.webmanifest' ||
+        url.pathname === '/sw.js' ||
+        url.pathname.startsWith('/assets/')) {
       return env.ASSETS.fetch(req);
     }
-
+    
     // /api/track: no redirect; handle missing/invalid target gracefully
     if (url.pathname === '/api/track') {
       const target = url.searchParams.get('target') || '';
