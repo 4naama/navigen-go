@@ -137,11 +137,32 @@ export default {
         return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
       }
 
-      // Ordered routing: contexts → all → list → profile → contact → 404
+      // Ordered routing: alias → contexts → all → list → profile → contact → 404
+
+      // GET /api/alias?slug=hd-debrecen-hadhazi-8910
+      // Returns { slug, ulid } or 404. Accepts slug only (not ULID); keeps API narrow.
+      if (url.pathname === '/api/alias' && req.method === 'GET') {
+        const slug = (url.searchParams.get('slug') || '').trim();
+        if (!slug) {
+          return new Response(JSON.stringify({ error:{ code:'invalid_request', message:'slug required' } }), {
+            status: 400, headers: corsHeaders(rlHdr)
+          });
+        }
+        // Use the same resolver you already rely on in /api/stats and /api/data/profile
+        // It reads KV_ALIASES ("alias:<slug>" -> {"locationID": "<ULID>"}).
+        const ulid = await resolveUid(slug, env); // returns canonical ULID or null
+        if (!ulid) {
+          return new Response(JSON.stringify({ error:{ code:'not_found', message:'alias not found' } }), {
+            status: 404, headers: corsHeaders(rlHdr)
+          });
+        }
+        return new Response(JSON.stringify({ slug, ulid }), { status: 200, headers: corsHeaders(rlHdr) });
+      }
+
+      // contexts → all → list → profile → contact → 404
       if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/')
         return handleContexts(req, env, url, corsHeaders(rlHdr));
 
-      // Honeypot: pretend "all" exists; always empty
       if (url.pathname === '/api/data/all' || url.pathname === '/api/data/all/')
         return new Response(JSON.stringify({ items: [], nextCursor: null, totalApprox: 0 }), {
           status: 200, headers: corsHeaders(rlHdr)
@@ -156,9 +177,7 @@ export default {
       if (url.pathname === '/api/data/contact')
         return handleContact(req, env, url, corsHeaders(rlHdr));
 
-      // Keep CORS echo on 404 so localhost can read status
       return new Response('Not Found', { status: 404, headers: corsHeaders(rlHdr) });
-    }
 
     // route /allsubs (and /{lang}/allsubs) to SPA shell
     if (url.pathname === '/allsubs' || /^\/[a-z]{2}\/allsubs\/?$/.test(url.pathname)) {
