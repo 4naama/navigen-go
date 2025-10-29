@@ -762,7 +762,8 @@ async function initLpmImageSlider(modal, data) {
 
       if (bookingUrl) {
         // native anchor; track only
-        btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id).trim())}?to=${encodeURIComponent(bookingUrl)}`); // server counts on redirect
+        // redirect through Worker so booking clicks are counted (server resolves alias)
+        btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
         btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
@@ -879,8 +880,8 @@ async function initLpmImageSlider(modal, data) {
 
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
 
-          /* count a QR view (modal/image shown) */
-          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+          // count a QR view (modal/image shown); server resolves alias → ULID
+          ;(async()=>{ const uid = String(data?.id||'').trim(); try { await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} })();
         };
       }
     }
@@ -944,9 +945,8 @@ async function initLpmImageSlider(modal, data) {
     // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
       const uid = String(data?.id||'').trim();
-      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-        try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
-      }
+      // count lpm-open on modal show (server resolves alias → ULID)
+      try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
     })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
