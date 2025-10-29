@@ -879,6 +879,8 @@ async function initLpmImageSlider(modal, data) {
           body.appendChild(actions);
 
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
+          // count a QR view (modal/image shown); server resolves alias → ULID
+          ;(async()=>{ try { await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(String(data?.id||'').trim())}`, { method:'POST', keepalive:true }); } catch {} })();
 
           // count a QR view (modal/image shown); server resolves alias → ULID
           ;(async()=>{ const uid = String(data?.id||'').trim(); try { await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} })();
@@ -1131,7 +1133,9 @@ async function initLpmImageSlider(modal, data) {
           if (bookingUrl) {
             if (typeof prev === 'function') return prev(ev); // respect upstream if any
             const a = document.createElement('a'); /* module-scoped, no globals added */
-            a.href = bookingUrl;
+            // redirect through Worker so booking clicks are counted (server resolves alias)
+            a.href = `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`;
+            a.target = '_blank'; a.rel = 'noopener';
             a.target = '_blank';
             a.rel = 'noopener';
             a.click();
