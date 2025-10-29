@@ -755,16 +755,13 @@ async function initLpmImageSlider(modal, data) {
 
     // 📅 Book → ONLY open links.bookingUrl; else toast (no legacy, no contact API)
     const btnBook = modal.querySelector('#lpm-book');
-    if (btnBook) {
-      if (typeof btnBook.onclick === 'function') { return; } // prevent double wiring
-
+    if (btnBook && typeof btnBook.onclick !== 'function') { // prevent double wiring of Book only
       const bookingUrl = String(data?.links?.bookingUrl || '').trim();
-
       if (bookingUrl) {
         // native anchor; track only
-        // redirect through Worker so booking clicks are counted (server resolves alias)
         btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
-        btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
+        btnBook.setAttribute('target', '_blank');
+        btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
           e.preventDefault();
@@ -822,7 +819,8 @@ async function initLpmImageSlider(modal, data) {
           // print: open minimal doc, wait for load, then print + close
           // print: show full-screen overlay, print just the QR, then remove
           /* no tracking for print; not in EVENT_ORDER */
-          printBtn.addEventListener('click', () => { /* print on demand; QR click stays intact */ const src = img.src;
+
+            const src = img.src;
 
             // overlay
             const layer = document.createElement('div');
@@ -867,7 +865,7 @@ async function initLpmImageSlider(modal, data) {
               pimg.addEventListener('load', go,   { once:true });
               pimg.addEventListener('error', cleanup, { once:true });
             }
-          }); // close print click listener
+          });
 
           actions.appendChild(shareBtn);
           actions.appendChild(printBtn);
