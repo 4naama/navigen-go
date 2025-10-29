@@ -763,7 +763,7 @@ async function initLpmImageSlider(modal, data) {
       if (bookingUrl) {
         // native anchor; track only
         // if your Worker expects /out/book/ to count "booking", use that:
-        btnBook.setAttribute('href', `${TRACK_BASE}/out/book/${encodeURIComponent(String(data?.id).trim())}?to=${encodeURIComponent(bookingUrl)}`);
+        btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id).trim())}?to=${encodeURIComponent(bookingUrl)}`);
         btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
@@ -890,7 +890,7 @@ async function initLpmImageSlider(modal, data) {
               }
             } catch(_e) {}
           })();
-        };
+        }, { passive: false });
       }
     }
 
