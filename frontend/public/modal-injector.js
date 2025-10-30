@@ -879,7 +879,6 @@ async function initLpmImageSlider(modal, data) {
           body.appendChild(actions);
 
           card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
-          showModal('qr-modal');
           // count a QR view (modal/image shown); server resolves alias → ULID
           ;(async()=>{ try { await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(String(data?.id||'').trim())}`, { method:'POST', keepalive:true }); } catch {} })();
 
