@@ -821,7 +821,8 @@ async function initLpmImageSlider(modal, data) {
           printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
           // print: open minimal doc, wait for load, then print + close
           // print: show full-screen overlay, print just the QR, then remove
-          /* no tracking for print; not in EVENT_ORDER */
+          printBtn.onclick = () => {
+            trackCta('print');
 
             const src = img.src;
 
