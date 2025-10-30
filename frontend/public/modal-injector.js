@@ -821,8 +821,7 @@ async function initLpmImageSlider(modal, data) {
           printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
           // print: open minimal doc, wait for load, then print + close
           // print: show full-screen overlay, print just the QR, then remove
-          printBtn.onclick = () => {
-            trackCta('print');
+          /* no tracking for print; not in EVENT_ORDER */
 
             const src = img.src;
 
@@ -869,7 +868,7 @@ async function initLpmImageSlider(modal, data) {
               pimg.addEventListener('load', go,   { once:true });
               pimg.addEventListener('error', cleanup, { once:true });
             }
-          };
+          });
 
           actions.appendChild(shareBtn);
           actions.appendChild(printBtn);
@@ -885,7 +884,7 @@ async function initLpmImageSlider(modal, data) {
 
           // count a QR view (modal/image shown); server resolves alias → ULID
           /* duplicate qr-view beacon removed — counted once above */
-        });
+        };
       }
     }
 
