@@ -285,17 +285,18 @@ export async function showLocationProfileModal(data) {
   // 3. Append to body (hidden by default)
   document.body.appendChild(modal);
   
-  // placeholder cover when missing; keeps UI clean
+  // placeholder cover when missing — set hero <img> synchronously
   {
     const ph = '/assets/icon-512-green.png';
+    const hero = modal.querySelector('.location-media img');
     if (!data?.media?.cover) {
       data.media = data.media || {};
-      data.media.cover = ph;
-      data.imageSrc = data.imageSrc || ph;
-      const hero = modal.querySelector('.location-media img');
-      if (hero && !hero.getAttribute('src')) hero.src = ph;
+      data.media.cover = ph;                  // keep model state coherent
     }
-  }    
+    if (hero && !hero.getAttribute('src')) {
+      hero.src = data.media.cover;            // show placeholder immediately
+    }
+  }
 
   // Prefetch cover fast; avoid placeholder first paint (2 lines of comments).
   ;(async () => {
@@ -552,6 +553,11 @@ async function initLpmImageSlider(modal, data) {
   })(slider);
   
   if (playlist.length === 0) { return; }  // keep existing <img> (green placeholder)
+
+  // If playlist is empty OR placeholder-only, keep the existing hero (e.g., green icon)
+  const ph = '/assets/icon-512-green.png';
+  const placeholderOnly = playlist.length > 0 && playlist.every(it => (it.src || '').includes(ph));
+  if (playlist.length === 0 || placeholderOnly) return;
 
   // replace single <img> with slider
   mediaFigure.innerHTML = '';
