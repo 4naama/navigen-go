@@ -823,7 +823,10 @@ async function initLpmImageSlider(modal, data) {
           // print: show full-screen overlay, print just the QR, then remove
           /* no tracking for print; not in EVENT_ORDER */
 
-            printBtn.onclick = () => {
+          printBtn.onclick = () => {
+
+            // define src from the QR img in this scope
+            const src = img.src;
 
             // overlay
             const layer = document.createElement('div');
@@ -868,7 +871,7 @@ async function initLpmImageSlider(modal, data) {
               pimg.addEventListener('load', go,   { once:true });
               pimg.addEventListener('error', cleanup, { once:true });
             }
-          });
+          };
 
           actions.appendChild(shareBtn);
           actions.appendChild(printBtn);
