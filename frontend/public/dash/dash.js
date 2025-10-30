@@ -192,28 +192,17 @@ function renderTable(json) {
 
   // rows: one row per metric, values across dates
   const rowsHtml = ORDER.map(metric => {
-    // TEMP: one-shot debug to see keys present for "save"
-    if (metric === 'save') {
-      const firstDayKey = dates[0];
-      const firstBucket = days[firstDayKey] || {};
-      console.debug('[metrics] SAVE bucket keys on first day:', Object.keys(firstBucket));
-    }
-        
     // STRICT counting: choose the exact API key for this metric
-    const API_KEYS = {
-      save: 'save',       // change this to the exact payload key once confirmed, e.g. 'saved'
-      unsave: 'unsave'
-    };
+    const API_KEYS = { save: 'save', unsave: 'unsave' };
 
     const vals = dates.map(d => {
       const bucket = days[d] || {};
       const key = API_KEYS[metric];
-      const alt = key.replaceAll('-', '_'); // legacy underscore variant, if any
+      const alt = key.replaceAll('-', '_');
       return Number(bucket[key] ?? bucket[alt] ?? 0);
     });
 
-    });
-    const sum  = vals.reduce((a,b)=>a+b, 0);
+    const sum = vals.reduce((a,b)=>a+b, 0);
     return `<tr><th scope="row">${labelFor(metric)}</th>${vals.map(n=>`<td>${n}</td>`).join('')}<td>${sum}</td></tr>`;
   }).join('');
 
