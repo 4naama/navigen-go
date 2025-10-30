@@ -884,7 +884,7 @@ async function initLpmImageSlider(modal, data) {
           // count a QR view (modal/image shown); server resolves alias → ULID
           /* duplicate qr-view beacon removed — counted once above */
         };
-      }
+      });
     }
 
     // ℹ️ → Business Card modal (same layout as QR; data-only body)
