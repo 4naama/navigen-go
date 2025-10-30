@@ -195,6 +195,7 @@ function renderTable(json) {
     const vals = dates.map(d => {
       const bucket = days[d] || {};
       const alt = metric.replaceAll('-', '_'); // legacy variant
+      // strict: only canonical metric (and legacy underscore variant)
       return Number(bucket[metric] ?? bucket[alt] ?? 0);
     });
     const sum  = vals.reduce((a,b)=>a+b, 0);
