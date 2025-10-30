@@ -310,7 +310,8 @@ export async function showLocationProfileModal(data) {
             data.imageSrc = coverUrl;
 
             const hero = modal.querySelector('.location-media img');
-            if (hero && /placeholder-images/.test(hero.src)) hero.src = coverUrl;
+            
+            // no-op: green cover is authoritative now
           }
         }
       }
@@ -322,11 +323,11 @@ export async function showLocationProfileModal(data) {
     // heal hero if decode fails; keep locale unless broken
     const hero = modal.querySelector('.location-media img');
     // guard: if hero is a placeholder, skip healing (still init slider)
-    const heroIsPlaceholder = !!(hero && /\/placeholder-images\//i.test(hero.getAttribute('src') || ''));
+    const heroIsPlaceholder = false; // treat any cover as valid
     
     const id = String(data?.id || '').trim();
     const tryImg = (u) => new Promise(r => { if(!u) return r(false); const p=new Image(); p.onload=()=>r(u); p.onerror=()=>r(false); p.src=u; });
-    if (hero && !heroIsPlaceholder) {
+    if (hero) {
       if (!hero.complete || !hero.naturalWidth) await new Promise(r=>setTimeout(r,200));
       if (!hero.naturalWidth) {
         const src = hero.getAttribute('src') || '';
@@ -405,7 +406,7 @@ async function initLpmImageSlider(modal, data) {
   const candidates = uniq([cover, ...explicitRaw.map(toAbs)]);
 
   // candidates = cover + explicit (same-dir resolution for relatives)
-  const candidates = uniq([cover, ...explicitRaw.map(toAbs)]).filter(u => !isPlaceholder(u));
+  /* (placeholder filtering removed; green covers are valid) */
 
   // Build initial playlist from candidates (cover + explicit)
   let playlist = candidates.slice();
@@ -1304,7 +1305,8 @@ async function initLpmImageSlider(modal, data) {
         // Upgrade cover if better
         if (payload.media && payload.media.cover) {
           const img = modal.querySelector('.location-media img');
-          if (img && /placeholder/.test(img.src)) img.src = payload.media.cover;
+          
+          // no-op: do not override images that include 'placeholder'
         }
       } catch {}
     })();
