@@ -320,6 +320,7 @@ export async function showLocationProfileModal(data) {
       }
     } catch {}
   })();
+}
 
   // 🔁 Upgrade placeholder image → slider (deferred)
   ;(async () => {
