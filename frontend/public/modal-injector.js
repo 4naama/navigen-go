@@ -367,8 +367,7 @@ async function initLpmImageSlider(modal, data) {
   const mediaFigure = modal.querySelector('.location-media');
   if (!mediaFigure) return;
 
-  // cover first; fall back to initial imageSrc; never invent names
-  // Use only real cover or imageSrc; never placeholders
+  // Use the provided cover/imageSrc as-is (green PNG is a valid cover)
   const cover = String(data?.media?.cover || data?.imageSrc || '').trim();
 
 
@@ -403,6 +402,8 @@ async function initLpmImageSlider(modal, data) {
 
   const dir = getDir(cover);
   const toAbs = absFrom(dir);
+  
+  // candidates = cover + explicit (same-dir resolution for relatives)
   const candidates = uniq([cover, ...explicitRaw.map(toAbs)]);
 
   // candidates = cover + explicit (same-dir resolution for relatives)
@@ -638,6 +639,8 @@ async function initLpmImageSlider(modal, data) {
   }
 
   let idx = Math.max(0, playlist.indexOf(cover));
+  /* seed front with the known cover so the slider never starts blank */
+  front.src = playlist[idx] || playlist[0] || cover || '';
   loadInto(front, playlist[idx] || playlist[0] || '', data);
 
   lockAspectFrom(front);
