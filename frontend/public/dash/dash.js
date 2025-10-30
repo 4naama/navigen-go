@@ -197,7 +197,7 @@ function renderTable(json) {
 
     const vals = dates.map(d => {
       const bucket = days[d] || {};
-      const key = API_KEYS[metric];
+      const key = API_KEYS[metric] || metric; // fallback for non-save/unsave metrics
       const alt = key.replaceAll('-', '_');
       return Number(bucket[key] ?? bucket[alt] ?? 0);
     });
