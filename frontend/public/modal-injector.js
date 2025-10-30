@@ -272,7 +272,7 @@ export function createLocationProfileModal(data, injected = {}) {
  */
 export async function showLocationProfileModal(data) {
   // prefer stable profile id; accept alias or ULID and pass through
-  const _id = String(data?.locationID || data?.id || '').trim();
+  const _id = String(data?.locationID || data?.id || data?.ID || '').trim();
   data.locationID = _id; data.id = _id;
 
   // 1. Remove any existing modal
@@ -1369,7 +1369,7 @@ function makeLocationButton(loc) {
   // prefer stable profile id; avoid transient loc_*
   // keep: small comment; 2 lines max
   // ULID-only: stamp canonical id (fallbacks removed; 2 lines max)
-  btn.setAttribute('data-id', String(loc.locationID || '').trim());
+  btn.setAttribute('data-id', String(loc.locationID || loc.ID || loc.id || '').trim());
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
   
