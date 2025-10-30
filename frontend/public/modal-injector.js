@@ -284,32 +284,18 @@ export async function showLocationProfileModal(data) {
 
   // 3. Append to body (hidden by default)
   document.body.appendChild(modal);
-  
-  // placeholder cover when missing — set hero <img> synchronously
-  {
-    const ph = '/assets/icon-512-green.png';
-    const hero = modal.querySelector('.location-media img');
-    if (!data?.media?.cover) {
-      data.media = data.media || {};
-      data.media.cover = ph;                  // keep model state coherent
-    }
-    if (hero && !hero.getAttribute('src')) {
-      hero.src = data.media.cover;            // show placeholder immediately
-    }
-  }
 
   // Prefetch cover fast; avoid placeholder first paint (2 lines of comments).
   ;(async () => {
     try {
       // use locationID fallback; avoids bad loc_* lookups
       const id = String(data?.id || data?.locationID || '').trim();
-      const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id); // only fetch when true
       const need =
         !data?.media?.cover ||
         /placeholder-images/.test(String(data?.media?.cover || '')) ||
         /placeholder-images/.test(String(data?.imageSrc || ''));
 
-      if (isUlid && need) {
+      if (id && need) {
         const r = await fetch(
           API(`/api/data/profile?id=${encodeURIComponent(id)}`),
           { cache: 'no-store', credentials: 'include' }
@@ -433,7 +419,7 @@ async function initLpmImageSlider(modal, data) {
   let playlist = candidates.slice();
 
   // Fallback: if <2, pull images from the profile API once (prod-safe).
-  if (playlist.length < 2 && data?.id && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(data.id))) {
+  if (playlist.length < 2 && data?.id) {
     try {
       const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(data.id)}`), { cache: 'no-store', credentials: 'include' }); // use Worker
       if (r.ok) {
@@ -551,13 +537,6 @@ async function initLpmImageSlider(modal, data) {
       if (document.fullscreenElement === sliderEl) applyFs(); else clearFs();
     });
   })(slider);
-  
-  if (playlist.length === 0) { return; }  // keep existing <img> (green placeholder)
-
-  // If playlist is empty OR placeholder-only, keep the existing hero (e.g., green icon)
-  const ph = '/assets/icon-512-green.png';
-  const placeholderOnly = playlist.length > 0 && playlist.every(it => (it.src || '').includes(ph));
-  if (playlist.length === 0 || placeholderOnly) return;
 
   // replace single <img> with slider
   mediaFigure.innerHTML = '';
@@ -1052,8 +1031,7 @@ async function initLpmImageSlider(modal, data) {
         if (missingLinks || missingContact || websiteMissing) {
           try {
             const id = String(data?.id || data?.locationID || '').trim();
-            const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id); // skip fetch for non-ULIDs
-            if (isUlid) {
+            if (id) {
               const resp = await fetch(
                 API(`/api/data/profile?id=${encodeURIComponent(id)}`),
                 { cache: 'no-store', credentials: 'include' }
@@ -1330,8 +1308,7 @@ async function initLpmImageSlider(modal, data) {
     ;(async () => {
       try {
         // accept locationID too; skip when missing
-        const id = String(data?.id || data?.locationID || '').trim();
-        if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id)) return;
+        const id = String(data?.id || data?.locationID || '').trim(); if (!id) return;
         const needEnrich =
           !data?.descriptions ||
           !data?.media?.cover ||
