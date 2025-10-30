@@ -171,7 +171,6 @@ export function createLocationProfileModal(data, injected = {}) {
   const heroSrc = (() => {
     const raw = String((payload?.media?.cover || payload.imageSrc || '')).trim();
     if (!raw) return '';
-    if (/\/placeholder-images\//i.test(raw)) return '';
     if (/^https?:\/\//i.test(raw)) return raw;
     if (raw.startsWith('/')) return raw;
     if (/^assets\//i.test(raw)) return '/' + raw.replace(/^\/?/, '');
@@ -290,10 +289,7 @@ export async function showLocationProfileModal(data) {
     try {
       // use locationID fallback; avoids bad loc_* lookups
       const id = String(data?.id || data?.locationID || '').trim();
-      const need =
-        !data?.media?.cover ||
-        /placeholder-images/.test(String(data?.media?.cover || '')) ||
-        /placeholder-images/.test(String(data?.imageSrc || ''));
+      const need = false; // no prefetch: cover is authoritative
 
       if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id) && need) {
         const r = await fetch(
@@ -372,10 +368,8 @@ async function initLpmImageSlider(modal, data) {
 
   // cover first; fall back to initial imageSrc; never invent names
   // Use only real cover or imageSrc; never placeholders
-  const cover = (() => {
-    const c = String(data?.media?.cover || data?.imageSrc || '').trim();
-    return /\/placeholder-images\//i.test(c) ? '' : c;
-  })();
+  const cover = String(data?.media?.cover || data?.imageSrc || '').trim();
+
 
   // helpers (no guessing)
   const uniq = (a) => Array.from(new Set(a.filter(Boolean)));
@@ -408,9 +402,7 @@ async function initLpmImageSlider(modal, data) {
 
   const dir = getDir(cover);
   const toAbs = absFrom(dir);
-  // treat folder + icon variant as placeholders (prevents dev green)
-  const isPlaceholder = (u) =>
-    /\/placeholder-images\//i.test(String(u || '')) || /icon-512.*green/i.test(String(u || ''));
+  const candidates = uniq([cover, ...explicitRaw.map(toAbs)]);
 
   // candidates = cover + explicit (same-dir resolution for relatives)
   const candidates = uniq([cover, ...explicitRaw.map(toAbs)]).filter(u => !isPlaceholder(u));
@@ -434,7 +426,7 @@ async function initLpmImageSlider(modal, data) {
         };
         const extras = Array.isArray(p?.media?.images) ? p.media.images : [];
         const addl   = extras.map(m => (m && typeof m === 'object' ? m.src : m)).filter(Boolean).map(toAbs2);
-        playlist = uniq([cover, ...addl]).filter(u => !isPlaceholder(u)); // keep: no placeholders
+        playlist = uniq([cover, ...addl]);
       }
     } catch { /* ignore; arrows may no-op */ }
   }
@@ -550,25 +542,7 @@ async function initLpmImageSlider(modal, data) {
   track.appendChild(canvasA);
   track.appendChild(canvasB);
   
-  // guard these two imgs from placeholder URLs (dev flip case)
-  const __imgSrcDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
-  const __guardSrc = (el) => {
-    if (!__imgSrcDesc || !el) return;
-    const { get, set } = __imgSrcDesc;
-    Object.defineProperty(el, 'src', {
-      configurable: true,
-      enumerable: true,
-      get(){ return get.call(this); },
-      set(v){
-        const s = String(v || '');
-        if (/\/assets\/placeholder-images\//i.test(s) || /icon-512.*green/i.test(s)) return; // block green
-        return set.call(this, v);
-      }
-    });
-  };
-  __guardSrc(canvasA);
-  __guardSrc(canvasB);
-    
+  // removed placeholder src guard — green cover is a valid image now
 
   // baseline layout so swap is visible without external CSS
   track.style.display = 'grid';
@@ -595,10 +569,9 @@ async function initLpmImageSlider(modal, data) {
   async function loadInto(imgEl, url, loc) {
     const s = String(url || '').trim();
     // never attempt placeholder/icon candidates at all
-    if (!s) return false; if (/\/assets\/placeholder-images\//i.test(s) || /icon-512.*green/i.test(s)) return false;
+    if (!s) return false;
 
-    // guard: never load known placeholders (incl. icon variant)
-    if (/\/assets\/placeholder-images\//i.test(s) || /icon-512.*green/i.test(s)) return false;
+    // allow PNG/JPG/WebP, including green cover
 
     const fname = s.split('/').pop();
     if (!fname) return false;
