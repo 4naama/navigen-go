@@ -320,7 +320,6 @@ export async function showLocationProfileModal(data) {
       }
     } catch {}
   })();
-}
 
   // 🔁 Upgrade placeholder image → slider (deferred)
   ;(async () => {
@@ -358,6 +357,7 @@ export async function showLocationProfileModal(data) {
       initLpmImageSlider(modal, data);
     }
   })();
+}    
 
 // ————————————————————————————
 // LPM image slider (progressive enhancement over the placeholder <img>)
