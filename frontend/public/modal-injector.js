@@ -295,7 +295,7 @@ export async function showLocationProfileModal(data) {
         /placeholder-images/.test(String(data?.media?.cover || '')) ||
         /placeholder-images/.test(String(data?.imageSrc || ''));
 
-      if (id && need) {
+      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id) && need) {
         const r = await fetch(
           API(`/api/data/profile?id=${encodeURIComponent(id)}`),
           { cache: 'no-store', credentials: 'include' }
@@ -419,7 +419,7 @@ async function initLpmImageSlider(modal, data) {
   let playlist = candidates.slice();
 
   // Fallback: if <2, pull images from the profile API once (prod-safe).
-  if (playlist.length < 2 && data?.id) {
+  if (playlist.length < 2 && data?.id && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(data.id))) {
     try {
       const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(data.id)}`), { cache: 'no-store', credentials: 'include' }); // use Worker
       if (r.ok) {
@@ -1308,7 +1308,8 @@ async function initLpmImageSlider(modal, data) {
     ;(async () => {
       try {
         // accept locationID too; skip when missing
-        const id = String(data?.id || data?.locationID || '').trim(); if (!id) return;
+        const id = String(data?.id || data?.locationID || '').trim();
+        if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id)) return;
         const needEnrich =
           !data?.descriptions ||
           !data?.media?.cover ||
