@@ -868,7 +868,7 @@ async function initLpmImageSlider(modal, data) {
               pimg.addEventListener('load', go,   { once:true });
               pimg.addEventListener('error', cleanup, { once:true });
             }
-          });
+          };
 
           actions.appendChild(shareBtn);
           actions.appendChild(printBtn);
