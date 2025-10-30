@@ -823,52 +823,51 @@ async function initLpmImageSlider(modal, data) {
           // print: show full-screen overlay, print just the QR, then remove
           /* no tracking for print; not in EVENT_ORDER */
 
-            printBtn.onclick = () => {
+          printBtn.onclick = () => {
 
-            // overlay
-            const layer = document.createElement('div');
-            layer.id = 'qr-print-layer';
-            Object.assign(layer.style, {
-              position:'fixed', inset:'0', background:'#fff',
-              display:'flex', alignItems:'center', justifyContent:'center',
-              zIndex:'999999'
-            });
-
-            // print-only CSS
-            const style = document.createElement('style');
-            style.id = 'qr-print-style';
-            style.textContent = `
-              @media print{
-                body > *:not(#qr-print-layer){ display:none !important; }
-                #qr-print-layer{ position:static !important; inset:auto !important; }
-              }`;
-
-            // image
-            const pimg = document.createElement('img');
-            pimg.alt = 'QR Business Card';
-            pimg.src = src;
-            pimg.style.maxWidth = '90vw';
-            pimg.style.maxHeight = '90vh';
-            layer.appendChild(pimg);
-
-            const cleanup = () => {
-              document.getElementById('qr-print-style')?.remove();
-              document.getElementById('qr-print-layer')?.remove();
-            };
-
-            const go = () => {
-              try { window.print(); } finally { setTimeout(cleanup, 300); }
-            };
-
-            document.head.appendChild(style);
-            document.body.appendChild(layer);
-
-            if (pimg.complete) go();
-            else {
-              pimg.addEventListener('load', go,   { once:true });
-              pimg.addEventListener('error', cleanup, { once:true });
-            }
+          // overlay
+          const layer = document.createElement('div');
+          layer.id = 'qr-print-layer';
+          Object.assign(layer.style, {
+            position:'fixed', inset:'0', background:'#fff',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            zIndex:'999999'
           });
+
+          // print-only CSS
+          const style = document.createElement('style');
+          style.id = 'qr-print-style';
+          style.textContent = `
+            @media print{
+              body > *:not(#qr-print-layer){ display:none !important; }
+              #qr-print-layer{ position:static !important; inset:auto !important; }
+            }`;
+
+          // image
+          const pimg = document.createElement('img');
+          pimg.alt = 'QR Business Card';
+          pimg.src = src;
+          pimg.style.maxWidth = '90vw';
+          pimg.style.maxHeight = '90vh';
+          layer.appendChild(pimg);
+
+          const cleanup = () => {
+            document.getElementById('qr-print-style')?.remove();
+            document.getElementById('qr-print-layer')?.remove();
+          };
+
+          const go = () => {
+            try { window.print(); } finally { setTimeout(cleanup, 300); }
+          };
+
+          document.head.appendChild(style);
+          document.body.appendChild(layer);
+
+          if (pimg.complete) go();
+          else {
+            pimg.addEventListener('load', go,   { once:true });
+            pimg.addEventListener('error', cleanup, { once:true });
+          }
 
           actions.appendChild(shareBtn);
           actions.appendChild(printBtn);
