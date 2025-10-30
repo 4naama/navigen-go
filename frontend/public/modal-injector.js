@@ -272,7 +272,7 @@ export function createLocationProfileModal(data, injected = {}) {
  */
 export async function showLocationProfileModal(data) {
   // prefer stable profile id; accept alias or ULID and pass through
-  const _id = String(data?.locationID || data?.id || data?.ID || '').trim();
+  const _id = String(data?.locationID || data?.id || '').trim();
   data.locationID = _id; data.id = _id;
 
   // 1. Remove any existing modal
@@ -357,6 +357,10 @@ export async function showLocationProfileModal(data) {
       initLpmImageSlider(modal, data);
     }
   })();
+
+    // call wiring + reveal
+    wireLocationProfileModal(modal, data, data?.originEl);
+    showModal('location-profile-modal');  
 }    
 
 // ————————————————————————————
@@ -1300,10 +1304,6 @@ async function initLpmImageSlider(modal, data) {
     // analytics beacon
     // removed trackCta; all beacons use _track(uid,event) // single path → Worker
 
-    // call wiring + reveal
-    wireLocationProfileModal(modal, data, data?.originEl);
-    showModal('location-profile-modal');
-
     // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
     ;(async () => {
       try {
@@ -1369,7 +1369,7 @@ function makeLocationButton(loc) {
   // prefer stable profile id; avoid transient loc_*
   // keep: small comment; 2 lines max
   // ULID-only: stamp canonical id (fallbacks removed; 2 lines max)
-  btn.setAttribute('data-id', String(loc.locationID || loc.ID || loc.id || '').trim());
+  btn.setAttribute('data-id', String(loc.locationID || '').trim());
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
   
