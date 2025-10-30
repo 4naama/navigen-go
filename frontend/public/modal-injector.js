@@ -284,18 +284,31 @@ export async function showLocationProfileModal(data) {
 
   // 3. Append to body (hidden by default)
   document.body.appendChild(modal);
+  
+  // placeholder cover when missing; keeps UI clean
+  {
+    const ph = '/assets/icon-512-green.png';
+    if (!data?.media?.cover) {
+      data.media = data.media || {};
+      data.media.cover = ph;
+      data.imageSrc = data.imageSrc || ph;
+      const hero = modal.querySelector('.location-media img');
+      if (hero && !hero.getAttribute('src')) hero.src = ph;
+    }
+  }    
 
   // Prefetch cover fast; avoid placeholder first paint (2 lines of comments).
   ;(async () => {
     try {
       // use locationID fallback; avoids bad loc_* lookups
       const id = String(data?.id || data?.locationID || '').trim();
+      const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id); // only fetch when true
       const need =
         !data?.media?.cover ||
         /placeholder-images/.test(String(data?.media?.cover || '')) ||
         /placeholder-images/.test(String(data?.imageSrc || ''));
 
-      if (id && need) {
+      if (isUlid && need) {
         const r = await fetch(
           API(`/api/data/profile?id=${encodeURIComponent(id)}`),
           { cache: 'no-store', credentials: 'include' }
@@ -1031,7 +1044,8 @@ async function initLpmImageSlider(modal, data) {
         if (missingLinks || missingContact || websiteMissing) {
           try {
             const id = String(data?.id || data?.locationID || '').trim();
-            if (id) {
+            const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id); // skip fetch for non-ULIDs
+            if (isUlid) {
               const resp = await fetch(
                 API(`/api/data/profile?id=${encodeURIComponent(id)}`),
                 { cache: 'no-store', credentials: 'include' }
