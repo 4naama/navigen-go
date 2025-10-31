@@ -225,30 +225,57 @@ export function createLocationProfileModal(data, injected = {}) {
     inner.appendChild(rate);
   }
 
-  // ▸ Footer (pinned): primary (🎯 📅 ⋮) + secondary (ℹ️ 📤 ⭐ 🍎 🧭 📍)
-  // keep: accessible labels; emoji-first layout (compact via CSS)
-  const footer = document.createElement('div');
-  footer.className = 'modal-footer cta-compact';
+  // ▸ Footer (pinned): primary (🏷️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // updated order; 2 lines max
   footer.innerHTML = `
-    <button class="modal-footer-button" id="lpm-route"
-            data-lat="${data?.lat ?? ''}" data-lng="${data?.lng ?? ''}" aria-label="Navigate">
-      🎯 <span class="cta-label">Navigate</span>
+    <!-- Row 1: 🏷️ 📅 ⭐ 🔳 ⋮ -->
+    <button class="modal-footer-button" id="lpm-tag" aria-label="Tag">
+      🏷️ <span class="cta-label">Tag</span>
     </button>
 
-    <button class="modal-footer-button" id="lpm-book"
-            aria-label="Book"><span class="cta-label">Book</span>📅</button>
+    <button class="modal-footer-button" id="lpm-book" aria-label="Book">
+      <span class="cta-label">Book</span>📅
+    </button>
 
-    <button class="modal-footer-button" id="lpm-qr"
-            aria-label="QR Code" title="QR Code">🔳 <span class="cta-label">QR Code</span></button>
+    <button class="modal-footer-button" id="lpm-save" aria-label="Save">
+      ⭐ <span class="cta-label">Save</span>
+    </button>
 
-    <button class="modal-footer-button" id="lpm-overflow"
-            aria-label="More" aria-expanded="false">⋮ <span class="cta-label">More</span></button>
+    <button class="modal-footer-button" id="lpm-qr" aria-label="QR Code" title="QR Code">
+      🔳 <span class="cta-label">QR Code</span>
+    </button>
 
+    <button class="modal-footer-button" id="lpm-overflow" aria-label="More" aria-expanded="false">
+      ⋮ <span class="cta-label">More</span>
+    </button>
+
+    <!-- Row 2 (secondary tray): 🎯 ℹ️ 📡 🌍 📣 📤 -->
     <div id="lpm-secondary-actions" aria-hidden="true">
-      <button class="modal-footer-button" id="som-info"  aria-label="Info">ℹ️ <span class="cta-label">Info</span></button>
-      <button class="modal-footer-button" id="som-share" aria-label="Share">📤 <span class="cta-label">Share</span></button>
-      <button class="modal-footer-button" id="som-save"  aria-label="Save">⭐ <span class="cta-label">Save</span></button>
-      <button class="modal-footer-button" id="som-social" aria-label="Social Channels">🎉 <span class="cta-label">Social</span></button>
+      <button class="modal-footer-button" id="lpm-route"
+              data-lat="${data?.lat ?? ''}" data-lng="${data?.lng ?? ''}" aria-label="Navigate">
+        🎯 <span class="cta-label">Navigate</span>
+      </button>
+
+      <button class="modal-footer-button" id="som-info" aria-label="Info">
+        ℹ️ <span class="cta-label">Info</span>
+      </button>
+
+      <!-- new empty placeholder -->
+      <button class="modal-footer-button" id="som-signal" aria-label="Signal">
+        📡 <span class="cta-label">Signal</span>
+      </button>
+
+      <button class="modal-footer-button" id="som-social" aria-label="Social Channels">
+        🌍 <span class="cta-label">Social</span>
+      </button>
+
+      <!-- new empty placeholder -->
+      <button class="modal-footer-button" id="som-announce" aria-label="Announcements">
+        📣 <span class="cta-label">Announcements</span>
+      </button>
+
+      <button class="modal-footer-button" id="som-share" aria-label="Share">
+        📤 <span class="cta-label">Share</span>
+      </button>
     </div>
   `;
 
