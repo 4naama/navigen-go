@@ -1145,10 +1145,6 @@ async function initLpmImageSlider(modal, data) {
     })();
 
     // ⭐ Save (secondary) handled by helper
-    
-      primaryBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggle(); });
-      secondaryBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggle(); });
-    }
 
     // 📤 Share (placeholder; OS share → clipboard fallback)
     const shareBtn = modal.querySelector('#som-share');
