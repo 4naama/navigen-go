@@ -295,22 +295,19 @@ async function canonicalizeId(input, originEl){
   if (ULID_RE.test(s)) return s;                        // already ULID
   if (__canonCache.has(s)) return __canonCache.get(s);  // cached
 
-  // 1) Try DOM hints first (no network)
-  const fromDom = originEl?.getAttribute?.('data-canonical-id') ||
-                  originEl?.getAttribute?.('data-id') || '';
-  if (ULID_RE.test(fromDom)) { __canonCache.set(s, fromDom); return fromDom; }
+  // DOM-only first (keeps your fast path)
+  const cand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
+  if (ULID_RE.test(cand)) { __canonCache.set(s, cand); return cand; }
 
-  // 2) Network fallback → Worker resolves alias via KV_ALIASES
-  //    Using the existing API base in this module.
+  // Worker fallback: ask /api/data/profile to resolve alias → ULID via KV_ALIASES
   try {
-    const url = API(`/api/data/profile?id=${encodeURIComponent(s)}`);
-    const res = await fetch(url, { cache: 'no-store', credentials: 'include' });
+    const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(s)}`), { cache: 'no-store', credentials: 'include' });
     if (res.ok) {
       const j = await res.json().catch(() => ({}));
       const uid = String(j?.id || j?.locationID || '').trim();
       if (ULID_RE.test(uid)) { __canonCache.set(s, uid); return uid; }
     }
-  } catch { /* silent: fallback to empty */ }
+  } catch {} // keep silent; unresolved stays empty
 
   __canonCache.set(s, ''); // unresolved stays empty
   return '';
