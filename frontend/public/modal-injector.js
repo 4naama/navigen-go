@@ -289,14 +289,25 @@ export function createLocationProfileModal(data, injected = {}) {
 /* ULID canonicalizer: slug|ULID → ULID */
 const __canonCache = new Map();
 async function canonicalizeId(input, originEl){
+  const s = String(input||'').trim();
   const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-  const s = String(input || '').trim();
-  if (ULID_RE.test(s)) return s; // already ULID
-  if (__canonCache.has(s)) return __canonCache.get(s); // avoid repeats
-  // DOM-only: prefer data-canonical-id, then data-id; no network call
-  const cand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
-  if (ULID_RE.test(cand)) { __canonCache.set(s, cand); return cand; }
-  __canonCache.set(s, ''); // unresolved stays empty
+  if (ULID_RE.test(s)) return s;
+  if (!s) {
+    const cand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
+    return ULID_RE.test(cand) ? cand : '';
+  }
+  if (__canonCache.has(s)) return __canonCache.get(s);
+  const domCand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
+  if (ULID_RE.test(domCand)) { __canonCache.set(s, domCand); return domCand; }
+  try {
+    const r = await fetch(API(`/api/alias/${encodeURIComponent(s)}`), { cache:'no-store', credentials:'omit' });
+    if (r.ok) {
+      const p = await r.json().catch(()=>null);
+      const u = String(p?.locationID||'').trim();
+      if (ULID_RE.test(u)) { __canonCache.set(s, u); return u; }
+    }
+  } catch {}
+  __canonCache.set(s, '');
   return '';
 }
 
