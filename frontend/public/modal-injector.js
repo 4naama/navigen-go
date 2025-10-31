@@ -242,10 +242,6 @@ export function createLocationProfileModal(data, injected = {}) {
       ⭐ <span class="cta-label">Save</span>
     </button>
 
-    <button class="modal-footer-button" id="lpm-qr" aria-label="QR Code" title="QR Code">
-      🔳 <span class="cta-label">QR Code</span>
-    </button>
-
     <button class="modal-footer-button" id="lpm-overflow" aria-label="More" aria-expanded="false">
       ⋮ <span class="cta-label">More</span>
     </button>
@@ -784,122 +780,6 @@ async function initLpmImageSlider(modal, data) {
       }
     }
 
-    // 🔳 QR → modal with QR; track click
-    {
-      const btn = modal.querySelector('#lpm-qr');
-      if (btn) {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const uid = String(data?.id || data?.locationID || '').trim();
-          if (!uid) { showToast('Missing id', 1600); return; }
-
-          // build simple modal
-          const id = 'qr-modal'; document.getElementById(id)?.remove();
-          const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
-          const card = document.createElement('div'); card.className = 'modal-content modal-layout';
-          const top = document.createElement('div'); top.className = 'modal-top-bar';
-          top.innerHTML = `<h2 class="modal-title">QR Code</h2><button class="modal-close" aria-label="Close">&times;</button>`;
-          top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
-
-          const body = document.createElement('div'); body.className = 'modal-body';
-          const inner = document.createElement('div'); inner.className = 'modal-body-inner';
-
-          const img = document.createElement('img');
-          img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
-          // dev → prod (or meta api-origin); prod stays same-origin
-          const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
-            || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
-
-          img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512`;
-
-          // use existing compact emoji buttons
-          const actions = document.createElement('div');
-          actions.className = 'modal-footer cta-compact';
-
-          const shareBtn = document.createElement('button');
-          shareBtn.className = 'modal-footer-button';
-          shareBtn.type = 'button';
-          shareBtn.setAttribute('aria-label', 'Share');
-          shareBtn.title = 'Share';
-          shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
-          shareBtn.onclick = async () => { const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } try{ if(navigator.share) await navigator.share({ title:'NaviGen QR', url: img.src }); }catch{} };
-
-          const printBtn = document.createElement('button');
-          printBtn.className = 'modal-footer-button';
-          printBtn.type = 'button';
-          printBtn.setAttribute('aria-label', 'Print');
-          printBtn.title = 'Print';
-          printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
-          // print: open minimal doc, wait for load, then print + close
-          // print: show full-screen overlay, print just the QR, then remove
-          /* no tracking for print; not in EVENT_ORDER */
-
-          printBtn.onclick = () => { const src = img.src;
-
-            // overlay
-            const layer = document.createElement('div');
-            layer.id = 'qr-print-layer';
-            Object.assign(layer.style, {
-              position:'fixed', inset:'0', background:'#fff',
-              display:'flex', alignItems:'center', justifyContent:'center',
-              zIndex:'999999'
-            });
-
-            // print-only CSS
-            const style = document.createElement('style');
-            style.id = 'qr-print-style';
-            style.textContent = `
-              @media print{
-                body > *:not(#qr-print-layer){ display:none !important; }
-                #qr-print-layer{ position:static !important; inset:auto !important; }
-              }`;
-
-            // image
-            const pimg = document.createElement('img');
-            pimg.alt = 'QR Business Card';
-            pimg.src = src;
-            pimg.style.maxWidth = '90vw';
-            pimg.style.maxHeight = '90vh';
-            layer.appendChild(pimg);
-
-            const cleanup = () => {
-              document.getElementById('qr-print-style')?.remove();
-              document.getElementById('qr-print-layer')?.remove();
-            };
-
-            const go = () => {
-              try { window.print(); } finally { setTimeout(cleanup, 300); }
-            };
-
-            document.head.appendChild(style);
-            document.body.appendChild(layer);
-
-            if (pimg.complete) go();
-            else {
-              pimg.addEventListener('load', go,   { once:true });
-              pimg.addEventListener('error', cleanup, { once:true });
-            }
-          };
-
-          actions.appendChild(shareBtn);
-          actions.appendChild(printBtn);
-
-          // mount
-          inner.appendChild(img);
-          body.appendChild(inner);
-          body.appendChild(actions);
-
-          card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
-          showModal('qr-modal');
-          // count a QR view (modal/image shown); server resolves alias → ULID
-          ;(async()=>{ try { await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(String(data?.id||'').trim())}`, { method:'POST', keepalive:true }); } catch {} })();
-
-          // count a QR view (modal/image shown); server resolves alias → ULID
-          /* duplicate qr-view beacon removed — counted once above */
-        });
-      }
-    }
-
     // ℹ️ → Business Card modal (same layout as QR; data-only body)
     {
       const btn = modal.querySelector('#som-info');
@@ -927,7 +807,94 @@ async function initLpmImageSlider(modal, data) {
           if (email) { const p = document.createElement('p'); p.textContent = email; inner.appendChild(p); }
           if (!inner.children.length) { const p = document.createElement('p'); p.textContent = ''; inner.appendChild(p); } // no labels
 
+          // 🔳 append QR row under Info, then existing inner
+          const qrRow = document.createElement('div');
+          qrRow.className = 'modal-menu-list';
+          qrRow.innerHTML = `
+            <button type="button" class="modal-menu-item" id="som-info-qr">
+              <span class="icon-img">🔳</span><span>QR code</span>
+            </button>
+          `;
+          inner.appendChild(qrRow);
           body.appendChild(inner);
+
+          // open the same QR modal as before (moved here)        // 2 lines max
+          qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            const uid = String(data?.id || data?.locationID || '').trim();
+            if (!uid) { showToast('Missing id', 1600); return; }
+
+            const id = 'qr-modal'; document.getElementById(id)?.remove();
+            const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
+            const card = document.createElement('div'); card.className = 'modal-content modal-layout';
+            const top = document.createElement('div'); top.className = 'modal-top-bar';
+            top.innerHTML = `<h2 class="modal-title">QR Code</h2><button class="modal-close" aria-label="Close">&times;</button>`;
+            top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
+
+            const body = document.createElement('div'); body.className = 'modal-body';
+            const inner = document.createElement('div'); inner.className = 'modal-body-inner';
+
+            const img = document.createElement('img');
+            img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
+            const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
+              || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
+            img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512`;
+
+            const actions = document.createElement('div');
+            actions.className = 'modal-footer cta-compact';
+
+            const shareBtn = document.createElement('button');
+            shareBtn.className = 'modal-footer-button';
+            shareBtn.type = 'button';
+            shareBtn.setAttribute('aria-label', 'Share');
+            shareBtn.title = 'Share';
+            shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
+            shareBtn.onclick = async () => {
+              const idStr = String(data?.id||'').trim();
+              if (idStr) { try { await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(idStr)}`, { method:'POST', keepalive:true }); } catch {} }
+              try { if (navigator.share) await navigator.share({ title: 'NaviGen QR', url: img.src }); } catch {}
+            };
+
+            const printBtn = document.createElement('button');
+            printBtn.className = 'modal-footer-button';
+            printBtn.type = 'button';
+            printBtn.setAttribute('aria-label', 'Print');
+            printBtn.title = 'Print';
+            printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
+            printBtn.onclick = () => {
+              const src = img.src;
+              const layer = document.createElement('div');
+              layer.id = 'qr-print-layer';
+              Object.assign(layer.style, { position:'fixed', inset:'0', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', zIndex:'999999' });
+              const style = document.createElement('style');
+              style.id = 'qr-print-style';
+              style.textContent = `
+                @media print{
+                  body > *:not(#qr-print-layer){ display:none !important; }
+                  #qr-print-layer{ position:static !important; inset:auto !important; }
+                }`;
+              const pimg = document.createElement('img');
+              pimg.alt = 'QR Business Card'; pimg.src = src;
+              pimg.style.maxWidth = '90vw'; pimg.style.maxHeight = '90vh';
+              layer.appendChild(pimg);
+              const cleanup = () => { document.getElementById('qr-print-style')?.remove(); document.getElementById('qr-print-layer')?.remove(); };
+              const go = () => { try { window.print(); } finally { setTimeout(cleanup, 300); } };
+              document.head.appendChild(style); document.body.appendChild(layer);
+              if (pimg.complete) go();
+              else { pimg.addEventListener('load', go, { once:true }); pimg.addEventListener('error', cleanup, { once:true }); }
+            };
+
+            actions.appendChild(shareBtn);
+            actions.appendChild(printBtn);
+
+            inner.appendChild(img);
+            body.appendChild(inner);
+            body.appendChild(actions);
+            card.appendChild(top); card.appendChild(body); wrap.appendChild(card);
+            document.body.appendChild(wrap);
+            showModal('qr-modal');
+            (async()=>{ try { await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} })();
+          });
 
           const actions = document.createElement('div');
           actions.className = 'modal-footer cta-compact';
