@@ -818,7 +818,7 @@ async function initLpmImageSlider(modal, data) {
           inner.appendChild(qrRow);
           body.appendChild(inner);
 
-          // open the same QR modal as before (moved here)        // 2 lines max
+          // open the same QR modal as before (moved here)
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
             const uid = String(data?.id || data?.locationID || '').trim();
@@ -938,7 +938,7 @@ async function initLpmImageSlider(modal, data) {
       modal.querySelector('#som-save')
     );
 
-    // 🎉 Social Channels — open social modal (capture to beat other handlers)
+    // 🌍 Social Channels — open social modal (capture to beat other handlers)
     const socialBtn = modal.querySelector('#som-social');
     if (socialBtn) {
       socialBtn.addEventListener('click', async (e) => {
@@ -1089,45 +1089,61 @@ async function initLpmImageSlider(modal, data) {
     })();
 
     // ⭐ Save (secondary) handled by helper
-    const save2 = modal.querySelector('#som-save');
-    if (save2) {
-      save2.classList.add('icon-btn'); // square icon button size
-      const flip2 = (saved) => { save2.textContent = saved ? '✩' : '⭐'; };
-      {
-        const id0 = String(data?.id || data?.locationID || '');
-        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
-        flip2(saved0);
-      }
-      save2.addEventListener('click', (e) => {
-        e.preventDefault();
-        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
-        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
-        const lat = Number(data?.lat), lng = Number(data?.lng);
-        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+    // helper: save/unsave; sync both buttons; ULID-gated analytics
+    function initSaveButtons(primaryBtn, secondaryBtn){
+      const id = String(data?.id || data?.locationID || '');
+      const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
+      const lat = Number(data?.lat), lng = Number(data?.lng);
+      const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+      const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id);
 
-        const key = `saved:${id}`;
-        const was = localStorage.getItem(key) === '1';
-        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
-        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+      const flip = (btn, saved) => {
+        if (!btn) return;
+        btn.textContent = saved ? '✩' : '⭐';
+        btn.setAttribute('aria-pressed', String(saved));
+        btn.classList.add('icon-btn');
+      };
 
-        if (was) {
+      const readSaved = () => (id && localStorage.getItem(`saved:${id}`) === '1');
+      const writeState = (saved) => {
+        try {
+          localStorage.setItem(`saved:${id}`, saved ? '1' : '0');
+          const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+          const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+          if (saved) next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
-          localStorage.setItem(key, '0');
-          flip2(false); showToast('Removed from Saved', 1600);
-          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
-        } else {
-          next.unshift(entry);
-          localStorage.setItem('savedLocations', JSON.stringify(next));
-          localStorage.setItem(key, '1');
-          flip2(true); showToast('Saved', 1600);
-          ;(async()=>{ 
-            const uid = String(data?.id||'').trim();
-            if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-              try { await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
-            }
-          })();
+        } catch {}
+      };
+
+      const init = readSaved();
+      flip(primaryBtn, init);
+      flip(secondaryBtn, init);
+
+      let busy = false;
+      const toggle = async () => {
+        if (!id || busy) { if (!id) showToast('Missing id', 1600); return; }
+        busy = true;
+        try {
+          const was = readSaved();
+          const now = !was;
+          writeState(now);
+          flip(primaryBtn, now);
+          flip(secondaryBtn, now);
+          showToast(now ? 'Saved' : 'Removed from Saved', 1600);
+          // ULID-gated beacon — recompute per click
+          const uid = String(data?.id || data?.locationID || '').trim();
+          if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+            try {
+              await fetch(`${TRACK_BASE}/hit/${now ? 'save' : 'unsave'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+            } catch {}
+          }
+        } finally {
+          busy = false;
         }
-      });
+      };
+
+      primaryBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggle(); });
+      secondaryBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggle(); });
     }
 
     // 📤 Share (placeholder; OS share → clipboard fallback)
@@ -2027,6 +2043,21 @@ export function showFavoritesModal() {
       const next = saved.filter(s => String(s.id) !== String(item.id));
       save(next);
 
+      // ULID-gated unsave beacon (Favorites ✖)
+      {
+        // try item.id; if not ULID, attempt to reuse saved LPM id when present
+        let uid = String(item?.id || item?.locationID || item?.ID || '').trim();
+        if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+          const el = document.querySelector(`[data-id="${CSS.escape(String(item?.id||''))}"]`);
+          if (el) uid = String(el.getAttribute('data-id') || '').trim();
+        }
+        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+          (async()=>{ try {
+            await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+          } catch {} })();
+        }
+      }
+
       // clear LPM toggle marker(s) so LPM shows ⭐ after delete
       const ids = [
         String(item?.id || ''),
@@ -2599,8 +2630,8 @@ export function createHelpModal() {
 }
 
 // ============================
-// 🎉 Social Channels modal (MODULE-SCOPED)
-// Reason: make callable from 🎉 handler; same shell as Navigation; no footer.
+// 🌍 Social Channels modal (MODULE-SCOPED)
+// Reason: make callable from 🌍 handler; same shell as Navigation; no footer.
 // ============================
 export function createSocialModal({ name, links = {}, contact = {}, id }) { // id for analytics
   const modalId = 'social-modal'; // avoid param shadow
