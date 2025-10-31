@@ -268,13 +268,21 @@ async function canonicalId(env, input) {
   const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
   if (!s) return '';
   if (ULID_RE.test(s)) return s;                 // already ULID
-  // Lookup slug → ULID in KV_ALIASES (binding must exist in wrangler/pages env)
+  // Lookup slug → ULID in KV_ALIASES; values are JSON {locationID:"<ULID>"}; keys are "alias:<slug>"
   try {
     if (env.KV_ALIASES) {
-      const u = await env.KV_ALIASES.get(s, 'text');
-      if (u && ULID_RE.test(u)) return u;
+      const keys = [s, `alias:${s}`]; // prefer exact, then namespaced
+      for (const k of keys) {
+        const val = await env.KV_ALIASES.get(k, 'text');
+        if (!val) continue;
+        // Accept either a bare ULID string or a JSON blob with .locationID
+        const maybe = val.trim().startsWith('{')
+          ? String((JSON.parse(val)||{}).locationID||'').trim()
+          : val.trim();
+        if (ULID_RE.test(maybe)) return maybe;
+      }
     }
-  } catch (_) {}
+  } catch {}
   return ''; // unresolved stays empty (client will ignore non-ULID)
 }
 
