@@ -286,28 +286,30 @@ export function createLocationProfileModal(data, injected = {}) {
   return modal;
 }
 
-/* ULID canonicalizer: slug|ULID → ULID */
+/* ULID canonicalizer: slug|ULID → ULID; memoized (DOM → Worker KV fallback) */
 const __canonCache = new Map();
 async function canonicalizeId(input, originEl){
-  const s = String(input||'').trim();
   const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-  if (ULID_RE.test(s)) return s;
-  if (!s) {
-    const cand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
-    return ULID_RE.test(cand) ? cand : '';
-  }
-  if (__canonCache.has(s)) return __canonCache.get(s);
-  const domCand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
-  if (ULID_RE.test(domCand)) { __canonCache.set(s, domCand); return domCand; }
+  const s = String(input || '').trim();
+  if (!s) return '';
+  if (ULID_RE.test(s)) return s;                        // already ULID
+  if (__canonCache.has(s)) return __canonCache.get(s);  // cached
+
+  // DOM-only first (keeps your fast path; 2 lines)
+  const cand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
+  if (ULID_RE.test(cand)) { __canonCache.set(s, cand); return cand; }
+
+  // Worker fallback: ask /api/data/profile to resolve alias → ULID via KV_ALIASES
   try {
-    const r = await fetch(API(`/api/alias/${encodeURIComponent(s)}`), { cache:'no-store', credentials:'omit' });
-    if (r.ok) {
-      const p = await r.json().catch(()=>null);
-      const u = String(p?.locationID||'').trim();
-      if (ULID_RE.test(u)) { __canonCache.set(s, u); return u; }
+    const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(s)}`), { cache: 'no-store', credentials: 'include' });
+    if (res.ok) {
+      const j = await res.json().catch(() => ({}));
+      const uid = String(j?.id || j?.locationID || '').trim();
+      if (ULID_RE.test(uid)) { __canonCache.set(s, uid); return uid; }
     }
-  } catch {}
-  __canonCache.set(s, '');
+  } catch {} // keep silent; unresolved stays empty
+
+  __canonCache.set(s, ''); // unresolved stays empty
   return '';
 }
 
