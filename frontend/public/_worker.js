@@ -330,7 +330,7 @@ async function handleList(req, env, url, extraHdr){
   const slice = rows.slice(idx, idx+limit);
 
   // Rich list fields (UI-ready; keeps payload small)
-  const items = slice.map(p => {
+  const items = await Promise.all(slice.map(async (p) => {
     // normalize helpers (emit numbers if possible)
     const coord = (() => {
       // object {lat,lng} in profiles.json
@@ -432,7 +432,7 @@ async function handleList(req, env, url, extraHdr){
       media: { cover: mediaCover, images: Array.isArray(p.media?.images) ? p.media.images : [] },
       lang: p.Lang || p.lang || ''
     };
-  });
+  }));
 
   const nextCursor = (idx+limit<rows.length && (idx/limit+1)<MAX_PAGES) ? (idx+limit) : null;
   // keep CORS + RL headers; Headers must be merged explicitly
