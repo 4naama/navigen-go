@@ -938,7 +938,7 @@ async function initLpmImageSlider(modal, data) {
       modal.querySelector('#som-save')
     );
 
-    // 🎉 Social Channels — open social modal (capture to beat other handlers)
+    // 🌍 Social Channels — open social modal (capture to beat other handlers)
     const socialBtn = modal.querySelector('#som-social');
     if (socialBtn) {
       socialBtn.addEventListener('click', async (e) => {
@@ -2039,6 +2039,16 @@ export function showFavoritesModal() {
       const next = saved.filter(s => String(s.id) !== String(item.id));
       save(next);
 
+      // ULID-gated unsave beacon (Favorites unsave path)
+      {
+        const uid = String(item?.id || item?.locationID || item?.ID || '').trim();
+        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+          (async()=>{ try{
+            await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+          }catch{} })();
+        }
+      }
+
       // clear LPM toggle marker(s) so LPM shows ⭐ after delete
       const ids = [
         String(item?.id || ''),
@@ -2611,8 +2621,8 @@ export function createHelpModal() {
 }
 
 // ============================
-// 🎉 Social Channels modal (MODULE-SCOPED)
-// Reason: make callable from 🎉 handler; same shell as Navigation; no footer.
+// 🌍 Social Channels modal (MODULE-SCOPED)
+// Reason: make callable from 🌍 handler; same shell as Navigation; no footer.
 // ============================
 export function createSocialModal({ name, links = {}, contact = {}, id }) { // id for analytics
   const modalId = 'social-modal'; // avoid param shadow
