@@ -262,6 +262,22 @@ async function handleContexts(req, env, url, extraHdr){
   return new Response(body, { status: 200, headers: h });
 }
 
+// canonicalId: returns a ULID if input is a ULID; else resolves slug via KV_ALIASES
+async function canonicalId(env, input) {
+  const s = String(input || '').trim();
+  const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+  if (!s) return '';
+  if (ULID_RE.test(s)) return s;                 // already ULID
+  // Lookup slug → ULID in KV_ALIASES (binding must exist in wrangler/pages env)
+  try {
+    if (env.KV_ALIASES) {
+      const u = await env.KV_ALIASES.get(s, 'text');
+      if (u && ULID_RE.test(u)) return u;
+    }
+  } catch (_) {}
+  return ''; // unresolved stays empty (client will ignore non-ULID)
+}
+
 // List endpoint: requires context; returns 200 with empty items when missing, adds small jitter for low-signal callers.
 async function handleList(req, env, url, extraHdr){
   const q = url.searchParams; // needed later
@@ -380,9 +396,10 @@ async function handleList(req, env, url, extraHdr){
     const tagsMerged = Array.from(new Set([...tags, ...extraTags]));
 
     return {
-      // ids + names
-      locationID: p.locationID || p.ID || p.id,           // expose the stable key
-      id:         p.locationID || p.ID || p.id,           // keep legacy id for safety
+      // ids + names (ULID-only): canonicalize via KV_ALIASES when not already ULID
+      locationID: await canonicalId(env, (p.locationID || p.ID || p.id)),
+      id:         await canonicalId(env, (p.locationID || p.ID || p.id)),
+
       // pass object as-is; wrap plain string into {en:...}
       locationName: (p && typeof p.locationName === 'object')
         ? p.locationName
