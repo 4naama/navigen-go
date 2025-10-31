@@ -305,7 +305,8 @@ function renderPopularGroup(list = geoPoints) {
       const alias = String(btn.getAttribute('data-id') || '').trim();                     // slug
       const uid   = String(btn.getAttribute('data-canonical-id') || '').trim();           // ULID
 
-      if (!uid) { console.warn('Data error: id missing'); return; } // minimal guard
+      // allow opening with slug; save/unsave remain ULID-gated
+      if (!uid) { console.warn('Data note: canonical id missing (opening with slug)'); }
       // allow alias or ULID; Worker resolves aliases safely
 
       showLocationProfileModal({
