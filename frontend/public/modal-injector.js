@@ -300,7 +300,7 @@ async function canonicalizeId(input, originEl){
   const domCand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
   if (ULID_RE.test(domCand)) { __canonCache.set(s, domCand); return domCand; }
   try {
-    const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(s)}`), { cache:'no-store', credentials:'include' });
+    const r = await fetch(API(`/api/alias/${encodeURIComponent(s)}`), { cache:'no-store', credentials:'omit' });
     if (r.ok) {
       const p = await r.json().catch(()=>null);
       const u = String(p?.locationID||'').trim();
@@ -1055,7 +1055,7 @@ async function initLpmImageSlider(modal, data) {
         if (missingLinks || missingContact || websiteMissing) {
           try {
             const id = String(data?.id || data?.locationID || '').trim();
-            if (id) {
+            if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id)) {
               const resp = await fetch(
                 API(`/api/data/profile?id=${encodeURIComponent(id)}`),
                 { cache: 'no-store', credentials: 'include' }
