@@ -225,7 +225,9 @@ export function createLocationProfileModal(data, injected = {}) {
     inner.appendChild(rate);
   }
 
-  // ▸ Footer (pinned): primary (🏷️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // updated order; 2 lines max
+  // ▸ Footer (pinned): primary (🏷️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // define footer first
+  const footer = document.createElement('div');
+  footer.className = 'modal-footer cta-compact';
   footer.innerHTML = `
     <!-- Row 1: 🏷️ 📅 ⭐ 🔳 ⋮ -->
     <button class="modal-footer-button" id="lpm-tag" aria-label="Tag">
