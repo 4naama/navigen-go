@@ -2,22 +2,12 @@
 const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
 // cache + resolve alias → ULID via Worker; keeps all beacons canonical
-const _uidCache = new Map();
-async function toUlid(id) {
-  const k = String(id || '').trim(); if (!k) return '';
-  if (_uidCache.has(k)) return _uidCache.get(k);
-  try {
-    const u = new URL(`/api/status?locationID=${encodeURIComponent(k)}`, TRACK_BASE);
-    const r = await fetch(u); if (!r.ok) return '';
-    const j = await r.json(); const ulid = String(j.locationID || '');
-    if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(ulid)) { _uidCache.set(k, ulid); return ulid; }
-  } catch {}
-  return '';
-}
+// ULID-only: client resolver removed; all callers must pass a ULID.
+// ULID-only: resolver removed by design; no slug resolution on client.
 
 function _track(locId, event, action) { // resolve → ULID; map legacy 'route' → 'map'
   (async () => {
-    const uid = await toUlid(String(locId || '').trim()); if (!uid) return;
+    const uid = String(locId || '').trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) return;
     const ev0 = String(event || '').toLowerCase().replaceAll('_','-');
     const ev  = (ev0 === 'route') ? 'map' : ev0; // Worker allows 'map', not 'route'
     const payload = {
@@ -181,7 +171,6 @@ export function createLocationProfileModal(data, injected = {}) {
   const heroSrc = (() => {
     const raw = String((payload?.media?.cover || payload.imageSrc || '')).trim();
     if (!raw) return '';
-    if (/\/placeholder-images\//i.test(raw)) return '';
     if (/^https?:\/\//i.test(raw)) return raw;
     if (raw.startsWith('/')) return raw;
     if (/^assets\//i.test(raw)) return '/' + raw.replace(/^\/?/, '');
@@ -236,30 +225,55 @@ export function createLocationProfileModal(data, injected = {}) {
     inner.appendChild(rate);
   }
 
-  // ▸ Footer (pinned): primary (🎯 📅 ⋮) + secondary (ℹ️ 📤 ⭐ 🍎 🧭 📍)
-  // keep: accessible labels; emoji-first layout (compact via CSS)
+  // ▸ Footer (pinned): primary (🏷️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // define footer first
   const footer = document.createElement('div');
   footer.className = 'modal-footer cta-compact';
   footer.innerHTML = `
-    <button class="modal-footer-button" id="lpm-route"
-            data-lat="${data?.lat ?? ''}" data-lng="${data?.lng ?? ''}" aria-label="Navigate">
-      🎯 <span class="cta-label">Navigate</span>
+    <!-- Row 1: 🏷️ 📅 ⭐ 🔳 ⋮ -->
+    <button class="modal-footer-button" id="lpm-tag" aria-label="Tag">
+      🏷️ <span class="cta-label">Tag</span>
     </button>
 
-    <button class="modal-footer-button" id="lpm-book"
-            aria-label="Book"><span class="cta-label">Book</span>📅</button>
+    <button class="modal-footer-button" id="lpm-book" aria-label="Book">
+      <span class="cta-label">Book</span>📅
+    </button>
 
-    <button class="modal-footer-button" id="lpm-qr"
-            aria-label="QR Code" title="QR Code">🔳 <span class="cta-label">QR Code</span></button>
+    <button class="modal-footer-button" id="lpm-save" aria-label="Save">
+      ⭐ <span class="cta-label">Save</span>
+    </button>
 
-    <button class="modal-footer-button" id="lpm-overflow"
-            aria-label="More" aria-expanded="false">⋮ <span class="cta-label">More</span></button>
+    <button class="modal-footer-button" id="lpm-overflow" aria-label="More" aria-expanded="false">
+      ⋮ <span class="cta-label">More</span>
+    </button>
 
+    <!-- Row 2 (secondary tray): 🎯 ℹ️ 📡 🌍 📣 📤 -->
     <div id="lpm-secondary-actions" aria-hidden="true">
-      <button class="modal-footer-button" id="som-info"  aria-label="Info">ℹ️ <span class="cta-label">Info</span></button>
-      <button class="modal-footer-button" id="som-share" aria-label="Share">📤 <span class="cta-label">Share</span></button>
-      <button class="modal-footer-button" id="som-save"  aria-label="Save">⭐ <span class="cta-label">Save</span></button>
-      <button class="modal-footer-button" id="som-social" aria-label="Social Channels">🎉 <span class="cta-label">Social</span></button>
+      <button class="modal-footer-button" id="lpm-route"
+              data-lat="${data?.lat ?? ''}" data-lng="${data?.lng ?? ''}" aria-label="Navigate">
+        🎯 <span class="cta-label">Navigate</span>
+      </button>
+
+      <button class="modal-footer-button" id="som-info" aria-label="Info">
+        ℹ️ <span class="cta-label">Info</span>
+      </button>
+
+      <!-- new empty placeholder -->
+      <button class="modal-footer-button" id="som-signal" aria-label="Signal">
+        📡 <span class="cta-label">Signal</span>
+      </button>
+
+      <button class="modal-footer-button" id="som-social" aria-label="Social Channels">
+        🌍 <span class="cta-label">Social</span>
+      </button>
+
+      <!-- new empty placeholder -->
+      <button class="modal-footer-button" id="som-announce" aria-label="Announcements">
+        📣 <span class="cta-label">Announcements</span>
+      </button>
+
+      <button class="modal-footer-button" id="som-share" aria-label="Share">
+        📤 <span class="cta-label">Share</span>
+      </button>
     </div>
   `;
 
@@ -280,11 +294,11 @@ export function createLocationProfileModal(data, injected = {}) {
  *
  * @param {Object} data  – same shape as factory
  */
-export function showLocationProfileModal(data) {
-  // prefer stable profile id; avoid transient loc_*
-  // keep: normalize once at entry
-  data.id = String(data?.locationID || data?.id || '').trim();
-    
+export async function showLocationProfileModal(data) {
+  // prefer stable profile id; accept alias or ULID and pass through
+  const _id = String(data?.locationID || data?.id || '').trim();
+  data.locationID = _id; data.id = _id;
+
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
   if (old) old.remove();
@@ -300,12 +314,9 @@ export function showLocationProfileModal(data) {
     try {
       // use locationID fallback; avoids bad loc_* lookups
       const id = String(data?.id || data?.locationID || '').trim();
-      const need =
-        !data?.media?.cover ||
-        /placeholder-images/.test(String(data?.media?.cover || '')) ||
-        /placeholder-images/.test(String(data?.imageSrc || ''));
+      const need = false; // no prefetch: cover is authoritative
 
-      if (id && need) {
+      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id) && need) {
         const r = await fetch(
           API(`/api/data/profile?id=${encodeURIComponent(id)}`),
           { cache: 'no-store', credentials: 'include' }
@@ -324,7 +335,8 @@ export function showLocationProfileModal(data) {
             data.imageSrc = coverUrl;
 
             const hero = modal.querySelector('.location-media img');
-            if (hero && /placeholder-images/.test(hero.src)) hero.src = coverUrl;
+            
+            // no-op: green cover is authoritative now
           }
         }
       }
@@ -336,11 +348,11 @@ export function showLocationProfileModal(data) {
     // heal hero if decode fails; keep locale unless broken
     const hero = modal.querySelector('.location-media img');
     // guard: if hero is a placeholder, skip healing (still init slider)
-    const heroIsPlaceholder = !!(hero && /\/placeholder-images\//i.test(hero.getAttribute('src') || ''));
+    const heroIsPlaceholder = false; // treat any cover as valid
     
     const id = String(data?.id || '').trim();
     const tryImg = (u) => new Promise(r => { if(!u) return r(false); const p=new Image(); p.onload=()=>r(u); p.onerror=()=>r(false); p.src=u; });
-    if (hero && !heroIsPlaceholder) {
+    if (hero) {
       if (!hero.complete || !hero.naturalWidth) await new Promise(r=>setTimeout(r,200));
       if (!hero.naturalWidth) {
         const src = hero.getAttribute('src') || '';
@@ -368,6 +380,11 @@ export function showLocationProfileModal(data) {
     }
   })();
 
+    // call wiring + reveal
+    wireLocationProfileModal(modal, data, data?.originEl);
+    showModal('location-profile-modal');  
+}    
+
 // ————————————————————————————
 // LPM image slider (progressive enhancement over the placeholder <img>)
 // ————————————————————————————
@@ -375,12 +392,9 @@ async function initLpmImageSlider(modal, data) {
   const mediaFigure = modal.querySelector('.location-media');
   if (!mediaFigure) return;
 
-  // cover first; fall back to initial imageSrc; never invent names
-  // Use only real cover or imageSrc; never placeholders
-  const cover = (() => {
-    const c = String(data?.media?.cover || data?.imageSrc || '').trim();
-    return /\/placeholder-images\//i.test(c) ? '' : c;
-  })();
+  // Use the provided cover/imageSrc as-is (green PNG is a valid cover)
+  const cover = String(data?.media?.cover || data?.imageSrc || '').trim();
+
 
   // helpers (no guessing)
   const uniq = (a) => Array.from(new Set(a.filter(Boolean)));
@@ -413,18 +427,18 @@ async function initLpmImageSlider(modal, data) {
 
   const dir = getDir(cover);
   const toAbs = absFrom(dir);
-  // treat folder + icon variant as placeholders (prevents dev green)
-  const isPlaceholder = (u) =>
-    /\/placeholder-images\//i.test(String(u || '')) || /icon-512.*green/i.test(String(u || ''));
+  
+  // candidates = cover + explicit (same-dir resolution for relatives)
+  const candidates = uniq([cover, ...explicitRaw.map(toAbs)]);
 
   // candidates = cover + explicit (same-dir resolution for relatives)
-  const candidates = uniq([cover, ...explicitRaw.map(toAbs)]).filter(u => !isPlaceholder(u));
+  /* (placeholder filtering removed; green covers are valid) */
 
   // Build initial playlist from candidates (cover + explicit)
   let playlist = candidates.slice();
 
   // Fallback: if <2, pull images from the profile API once (prod-safe).
-  if (playlist.length < 2 && data?.id) {
+  if (playlist.length < 2 && data?.id && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(data.id))) {
     try {
       const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(data.id)}`), { cache: 'no-store', credentials: 'include' }); // use Worker
       if (r.ok) {
@@ -439,7 +453,7 @@ async function initLpmImageSlider(modal, data) {
         };
         const extras = Array.isArray(p?.media?.images) ? p.media.images : [];
         const addl   = extras.map(m => (m && typeof m === 'object' ? m.src : m)).filter(Boolean).map(toAbs2);
-        playlist = uniq([cover, ...addl]).filter(u => !isPlaceholder(u)); // keep: no placeholders
+        playlist = uniq([cover, ...addl]);
       }
     } catch { /* ignore; arrows may no-op */ }
   }
@@ -555,25 +569,7 @@ async function initLpmImageSlider(modal, data) {
   track.appendChild(canvasA);
   track.appendChild(canvasB);
   
-  // guard these two imgs from placeholder URLs (dev flip case)
-  const __imgSrcDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
-  const __guardSrc = (el) => {
-    if (!__imgSrcDesc || !el) return;
-    const { get, set } = __imgSrcDesc;
-    Object.defineProperty(el, 'src', {
-      configurable: true,
-      enumerable: true,
-      get(){ return get.call(this); },
-      set(v){
-        const s = String(v || '');
-        if (/\/assets\/placeholder-images\//i.test(s) || /icon-512.*green/i.test(s)) return; // block green
-        return set.call(this, v);
-      }
-    });
-  };
-  __guardSrc(canvasA);
-  __guardSrc(canvasB);
-    
+  // removed placeholder src guard — green cover is a valid image now
 
   // baseline layout so swap is visible without external CSS
   track.style.display = 'grid';
@@ -600,10 +596,9 @@ async function initLpmImageSlider(modal, data) {
   async function loadInto(imgEl, url, loc) {
     const s = String(url || '').trim();
     // never attempt placeholder/icon candidates at all
-    if (!s) return false; if (/\/assets\/placeholder-images\//i.test(s) || /icon-512.*green/i.test(s)) return false;
+    if (!s) return false;
 
-    // guard: never load known placeholders (incl. icon variant)
-    if (/\/assets\/placeholder-images\//i.test(s) || /icon-512.*green/i.test(s)) return false;
+    // allow PNG/JPG/WebP, including green cover
 
     const fname = s.split('/').pop();
     if (!fname) return false;
@@ -669,6 +664,8 @@ async function initLpmImageSlider(modal, data) {
   }
 
   let idx = Math.max(0, playlist.indexOf(cover));
+  /* seed front with the known cover so the slider never starts blank */
+  front.src = playlist[idx] || playlist[0] || cover || '';
   loadInto(front, playlist[idx] || playlist[0] || '', data);
 
   lockAspectFrom(front);
@@ -772,130 +769,14 @@ async function initLpmImageSlider(modal, data) {
 
       if (bookingUrl) {
         // native anchor; track only
-        btnBook.setAttribute('href', `/out/booking/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
+        // redirect through Worker so booking clicks are counted (server resolves alias)
+        btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
         btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
           e.preventDefault();
           showToast('Booking link coming soon', 1600);
         }, { passive: false });
-      }
-    }
-
-    // 🔳 QR → modal with QR; track click
-    {
-      const btn = modal.querySelector('#lpm-qr');
-      if (btn) {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const uid = String(data?.id || data?.locationID || '').trim();
-          if (!uid) { showToast('Missing id', 1600); return; }
-
-          // build simple modal
-          const id = 'qr-modal'; document.getElementById(id)?.remove();
-          const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
-          const card = document.createElement('div'); card.className = 'modal-content modal-layout';
-          const top = document.createElement('div'); top.className = 'modal-top-bar';
-          top.innerHTML = `<h2 class="modal-title">QR Code</h2><button class="modal-close" aria-label="Close">&times;</button>`;
-          top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
-
-          const body = document.createElement('div'); body.className = 'modal-body';
-          const inner = document.createElement('div'); inner.className = 'modal-body-inner';
-
-          const img = document.createElement('img');
-          img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
-          // dev → prod (or meta api-origin); prod stays same-origin
-          const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
-            || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
-
-          img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512`;
-
-          // use existing compact emoji buttons
-          const actions = document.createElement('div');
-          actions.className = 'modal-footer cta-compact';
-
-          const shareBtn = document.createElement('button');
-          shareBtn.className = 'modal-footer-button';
-          shareBtn.type = 'button';
-          shareBtn.setAttribute('aria-label', 'Share');
-          shareBtn.title = 'Share';
-          shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
-          shareBtn.onclick = async () => {
-            const uid = String(data?.id || data?.locationID || '').trim();
-            if (uid) { try { await fetch(`/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} }
-            try { if (navigator.share) await navigator.share({ title:'NaviGen QR', url: img.src }); } catch {}
-          };
-
-          const printBtn = document.createElement('button');
-          printBtn.className = 'modal-footer-button';
-          printBtn.type = 'button';
-          printBtn.setAttribute('aria-label', 'Print');
-          printBtn.title = 'Print';
-          printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
-          // print: open minimal doc, wait for load, then print + close
-          // print: show full-screen overlay, print just the QR, then remove
-          /* no tracking for print; not in EVENT_ORDER */
-
-            const src = img.src;
-
-            // overlay
-            const layer = document.createElement('div');
-            layer.id = 'qr-print-layer';
-            Object.assign(layer.style, {
-              position:'fixed', inset:'0', background:'#fff',
-              display:'flex', alignItems:'center', justifyContent:'center',
-              zIndex:'999999'
-            });
-
-            // print-only CSS
-            const style = document.createElement('style');
-            style.id = 'qr-print-style';
-            style.textContent = `
-              @media print{
-                body > *:not(#qr-print-layer){ display:none !important; }
-                #qr-print-layer{ position:static !important; inset:auto !important; }
-              }`;
-
-            // image
-            const pimg = document.createElement('img');
-            pimg.alt = 'QR Business Card';
-            pimg.src = src;
-            pimg.style.maxWidth = '90vw';
-            pimg.style.maxHeight = '90vh';
-            layer.appendChild(pimg);
-
-            const cleanup = () => {
-              document.getElementById('qr-print-style')?.remove();
-              document.getElementById('qr-print-layer')?.remove();
-            };
-
-            const go = () => {
-              try { window.print(); } finally { setTimeout(cleanup, 300); }
-            };
-
-            document.head.appendChild(style);
-            document.body.appendChild(layer);
-
-            if (pimg.complete) go();
-            else {
-              pimg.addEventListener('load', go,   { once:true });
-              pimg.addEventListener('error', cleanup, { once:true });
-            }
-          });
-
-          actions.appendChild(shareBtn);
-          actions.appendChild(printBtn);
-
-          // mount
-          inner.appendChild(img);
-          body.appendChild(inner);
-          body.appendChild(actions);
-
-          card.appendChild(top); card.appendChild(body); wrap.appendChild(card); document.body.appendChild(wrap);
-
-          /* count a QR view (modal/image shown) */
-          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/qr-view/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
-        };
       }
     }
 
@@ -926,7 +807,94 @@ async function initLpmImageSlider(modal, data) {
           if (email) { const p = document.createElement('p'); p.textContent = email; inner.appendChild(p); }
           if (!inner.children.length) { const p = document.createElement('p'); p.textContent = ''; inner.appendChild(p); } // no labels
 
+          // 🔳 append QR row under Info, then existing inner
+          const qrRow = document.createElement('div');
+          qrRow.className = 'modal-menu-list';
+          qrRow.innerHTML = `
+            <button type="button" class="modal-menu-item" id="som-info-qr">
+              <span class="icon-img">🔳</span><span>QR code</span>
+            </button>
+          `;
+          inner.appendChild(qrRow);
           body.appendChild(inner);
+
+          // open the same QR modal as before (moved here)
+          qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            const uid = String(data?.id || data?.locationID || '').trim();
+            if (!uid) { showToast('Missing id', 1600); return; }
+
+            const id = 'qr-modal'; document.getElementById(id)?.remove();
+            const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
+            const card = document.createElement('div'); card.className = 'modal-content modal-layout';
+            const top = document.createElement('div'); top.className = 'modal-top-bar';
+            top.innerHTML = `<h2 class="modal-title">QR Code</h2><button class="modal-close" aria-label="Close">&times;</button>`;
+            top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
+
+            const body = document.createElement('div'); body.className = 'modal-body';
+            const inner = document.createElement('div'); inner.className = 'modal-body-inner';
+
+            const img = document.createElement('img');
+            img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
+            const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
+              || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
+            img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512`;
+
+            const actions = document.createElement('div');
+            actions.className = 'modal-footer cta-compact';
+
+            const shareBtn = document.createElement('button');
+            shareBtn.className = 'modal-footer-button';
+            shareBtn.type = 'button';
+            shareBtn.setAttribute('aria-label', 'Share');
+            shareBtn.title = 'Share';
+            shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
+            shareBtn.onclick = async () => {
+              const idStr = String(data?.id||'').trim();
+              if (idStr) { try { await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(idStr)}`, { method:'POST', keepalive:true }); } catch {} }
+              try { if (navigator.share) await navigator.share({ title: 'NaviGen QR', url: img.src }); } catch {}
+            };
+
+            const printBtn = document.createElement('button');
+            printBtn.className = 'modal-footer-button';
+            printBtn.type = 'button';
+            printBtn.setAttribute('aria-label', 'Print');
+            printBtn.title = 'Print';
+            printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
+            printBtn.onclick = () => {
+              const src = img.src;
+              const layer = document.createElement('div');
+              layer.id = 'qr-print-layer';
+              Object.assign(layer.style, { position:'fixed', inset:'0', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', zIndex:'999999' });
+              const style = document.createElement('style');
+              style.id = 'qr-print-style';
+              style.textContent = `
+                @media print{
+                  body > *:not(#qr-print-layer){ display:none !important; }
+                  #qr-print-layer{ position:static !important; inset:auto !important; }
+                }`;
+              const pimg = document.createElement('img');
+              pimg.alt = 'QR Business Card'; pimg.src = src;
+              pimg.style.maxWidth = '90vw'; pimg.style.maxHeight = '90vh';
+              layer.appendChild(pimg);
+              const cleanup = () => { document.getElementById('qr-print-style')?.remove(); document.getElementById('qr-print-layer')?.remove(); };
+              const go = () => { try { window.print(); } finally { setTimeout(cleanup, 300); } };
+              document.head.appendChild(style); document.body.appendChild(layer);
+              if (pimg.complete) go();
+              else { pimg.addEventListener('load', go, { once:true }); pimg.addEventListener('error', cleanup, { once:true }); }
+            };
+
+            actions.appendChild(shareBtn);
+            actions.appendChild(printBtn);
+
+            inner.appendChild(img);
+            body.appendChild(inner);
+            body.appendChild(actions);
+            card.appendChild(top); card.appendChild(body); wrap.appendChild(card);
+            document.body.appendChild(wrap);
+            showModal('qr-modal');
+            (async()=>{ try { await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} })();
+          });
 
           const actions = document.createElement('div');
           actions.className = 'modal-footer cta-compact';
@@ -937,10 +905,8 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.setAttribute('aria-label', 'Share');
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
-          shareBtn.onclick = async () => {
-            const uid = String(data?.id || data?.locationID || '').trim();
-            if (uid) { try { await fetch(`/hit/share/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} }
-            try {
+          shareBtn.onclick = async () => { const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } try {
+
               const text = [name, phone, email].filter(Boolean).join('\n');
               if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
               else if (text) { await navigator.clipboard.writeText(text); showToast('Copied to clipboard', 1600); }
@@ -957,51 +923,78 @@ async function initLpmImageSlider(modal, data) {
       }
     }    
     
-    // count LPM open
-    // send only with canonical ULID (prevents 400 from /api/track)
-    ;(async () => { const uid = await toUlid(String(data?.id||data?.locationID||'').trim()); if (uid) { try{ await fetch(`/hit/lpm-open/${uid}`,{method:'POST',keepalive:true}); }catch{} } })();
+    // count LPM open (only with canonical ULID → avoid /api/track 400)
+    ;(async () => {
+      const uid = String(data?.id||'').trim();
+      // count lpm-open on modal show (server resolves alias → ULID)
+      try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+    })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
-    const btnSave = modal.querySelector('#lpm-save');
-    if (btnSave) {
-      btnSave.classList.add('icon-btn'); // square icon button size
-      const flip = (saved) => { btnSave.textContent = saved ? '✩' : '⭐'; };
-      // init icon from storage (if LPM opened again)
-      {
-        const id0 = String(data?.id || data?.locationID || '');
-        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
-        flip(saved0);
-      }
-      btnSave.addEventListener('click', (e) => {
-        e.preventDefault();
-        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
-        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
-        const lat = Number(data?.lat), lng = Number(data?.lng);
-        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+    // helper placed before first use: avoids ReferenceError in some engines
+    function initSaveButtons(primaryBtn, secondaryBtn){
+      const id = String(data?.id || data?.locationID || '');
+      const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
+      const lat = Number(data?.lat), lng = Number(data?.lng);
+      const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
 
-        const key = `saved:${id}`;
-        const was = localStorage.getItem(key) === '1';
-        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
-        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+      const flip = (btn, saved) => {
+        if (!btn) return;
+        btn.textContent = saved ? '✩' : '⭐';
+        btn.setAttribute('aria-pressed', String(saved));
+        btn.classList.add('icon-btn');
+      };
 
-        if (was) {
+      const readSaved = () => (id && localStorage.getItem(`saved:${id}`) === '1');
+      const writeState = (saved) => {
+        try {
+          localStorage.setItem(`saved:${id}`, saved ? '1' : '0');
+          const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+          const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+          if (saved) next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
-          localStorage.setItem(key, '0');
-          flip(false); showToast('Removed from Saved', 1600);
-          ;(async()=>{ try{ await fetch(`/hit/${was?'unsave':'save'}/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}`,{method:'POST',keepalive:true}); }catch{} })();
-        } else {
-          next.unshift(entry);
-          localStorage.setItem('savedLocations', JSON.stringify(next));
-          localStorage.setItem(key, '1');
-          flip(true); showToast('Saved', 1600);
-          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/save/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
-        }
-      });
+        } catch {}
+      };
+
+      // init both buttons
+      const init = readSaved();
+      flip(primaryBtn, init);
+      flip(secondaryBtn, init);
+
+      let busy = false;
+      const toggle = async () => {
+        if (!id || busy) { if (!id) showToast('Missing id', 1600); return; }
+        busy = true;
+        try {
+          const was = readSaved();
+          const now = !was;
+          writeState(now);
+          flip(primaryBtn, now);
+          flip(secondaryBtn, now);
+          showToast(now ? 'Saved' : 'Removed from Saved', 1600);
+
+          // ULID-gated beacon — recompute per click
+          const uid = String(data?.id || data?.locationID || '').trim();
+          if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+            try {
+              await fetch(`${TRACK_BASE}/hit/${now ? 'save' : 'unsave'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+            } catch {}
+          }
+        } finally { busy = false; }
+      };
+
+      primaryBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggle(); });
+      secondaryBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggle(); });
     }
 
-    // 🎉 Social Channels — open social modal (capture to beat other handlers)
+    initSaveButtons(
+      modal.querySelector('#lpm-save'),
+      modal.querySelector('#som-save')
+    );
+
+    // 🌍 Social Channels — open social modal (capture to beat other handlers)
     const socialBtn = modal.querySelector('#som-social');
     if (socialBtn) {
       socialBtn.addEventListener('click', async (e) => {
@@ -1097,7 +1090,7 @@ async function initLpmImageSlider(modal, data) {
       a.id = id;
       const uid = String(data?.id || data?.locationID || '').trim();
       const act = (action || (id.startsWith('som-') ? id.slice(4) : id)).toLowerCase().replaceAll('_','-');
-      a.href = uid && href ? `/out/${act}/${encodeURIComponent(uid)}?to=${encodeURIComponent(href)}` : (href || '#');
+      a.href = uid && href ? `${TRACK_BASE}/out/${act}/${encodeURIComponent(uid)}?to=${encodeURIComponent(href)}` : (href || '#');
       a.target = '_blank'; a.rel = 'noopener';
       a.setAttribute('aria-label', label); a.title = label;
       a.innerHTML = `${emoji} <span class="cta-label">${label}</span>`;
@@ -1138,7 +1131,9 @@ async function initLpmImageSlider(modal, data) {
           if (bookingUrl) {
             if (typeof prev === 'function') return prev(ev); // respect upstream if any
             const a = document.createElement('a'); /* module-scoped, no globals added */
-            a.href = bookingUrl;
+            // redirect through Worker so booking clicks are counted (server resolves alias)
+            a.href = `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`;
+            a.target = '_blank'; a.rel = 'noopener';
             a.target = '_blank';
             a.rel = 'noopener';
             a.click();
@@ -1149,49 +1144,14 @@ async function initLpmImageSlider(modal, data) {
       }
     })();
 
-    // ⭐ Save (secondary) → same toggle + icon flip (⭐ ↔ ✩)
-    const save2 = modal.querySelector('#som-save');
-    if (save2) {
-      save2.classList.add('icon-btn'); // square icon button size
-      const flip2 = (saved) => { save2.textContent = saved ? '✩' : '⭐'; };
-      {
-        const id0 = String(data?.id || data?.locationID || '');
-        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
-        flip2(saved0);
-      }
-      save2.addEventListener('click', (e) => {
-        e.preventDefault();
-        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
-        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
-        const lat = Number(data?.lat), lng = Number(data?.lng);
-        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
-
-        const key = `saved:${id}`;
-        const was = localStorage.getItem(key) === '1';
-        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
-        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
-
-        if (was) {
-          localStorage.setItem('savedLocations', JSON.stringify(next));
-          localStorage.setItem(key, '0');
-          flip2(false); showToast('Removed from Saved', 1600);
-          ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
-        } else {
-          next.unshift(entry);
-          localStorage.setItem('savedLocations', JSON.stringify(next));
-          localStorage.setItem(key, '1');
-          flip2(true); showToast('Saved', 1600);
-          ;(async()=>{ try{ await fetch(`/hit/${was?'unsave':'save'}/${encodeURIComponent(String(data?.id||data?.locationID||'').trim())}`,{method:'POST',keepalive:true}); }catch{} })();
-        }
-      });
-    }
+    // ⭐ Save (secondary) handled by helper
 
     // 📤 Share (placeholder; OS share → clipboard fallback)
     const shareBtn = modal.querySelector('#som-share');
     if (shareBtn) {
       shareBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        ;(async()=>{ const uid=String(data?.id||data?.locationID||'').trim(); if(uid){ try{ await fetch(`/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+        ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
         const name = String(data?.name || 'Location');
         const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
         const text = coords ? `${name} — ${coords}` : name;
@@ -1208,6 +1168,7 @@ async function initLpmImageSlider(modal, data) {
       btnClose.addEventListener('click', (e) => {
         e.preventDefault();
         modal.remove();
+        const originEl = data?.originEl; // ensure defined
         if (originEl && typeof originEl.focus === 'function') originEl.focus();
       });
     }
@@ -1294,45 +1255,42 @@ async function initLpmImageSlider(modal, data) {
 
     // analytics beacon
     // removed trackCta; all beacons use _track(uid,event) // single path → Worker
-  }
 
-  // call wiring + reveal
-  wireLocationProfileModal(modal, data, data?.originEl);
-  showModal('location-profile-modal');
+    // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
+    ;(async () => {
+      try {
+        // accept locationID too; skip when missing
+        const id = String(data?.id || data?.locationID || '').trim();
+        if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id)) return;
+        const needEnrich =
+          !data?.descriptions ||
+          !data?.media?.cover ||
+          (Array.isArray(data?.media?.images) && data.media.images.length < 2);
+        if (!needEnrich) return; // skip network when local data is complete
 
-  // 🔎 Enrich LPM from Data API (non-blocking; keeps UX instant)
-  ;(async () => {
-    try {
-      // accept locationID too; skip when missing
-      const id = String(data?.id || data?.locationID || '').trim(); if (!id) return;
-      const needEnrich =
-        !data?.descriptions ||
-        !data?.media?.cover ||
-        (Array.isArray(data?.media?.images) && data.media.images.length < 2);
-      if (!needEnrich) return; // skip network when local data is complete
-
-      const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
-      if (!res.ok) return;
-      const payload = await res.json();
-      
-      // Fill description if placeholder
-      if (payload.descriptions && !data.descriptions) {
-        const box = modal.querySelector('.location-description .description');
-        const txt = payload.descriptions.en || Object.values(payload.descriptions)[0] || '';
-        if (box && /Description coming soon/i.test(box.textContent || box.innerHTML)) {
-          box.innerHTML = String(txt).replace(/\n/g,'<br>');
+        const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
+        if (!res.ok) return;
+        const payload = await res.json();
+        
+        // Fill description if placeholder
+        if (payload.descriptions && !data.descriptions) {
+          const box = modal.querySelector('.location-description .description');
+          const txt = payload.descriptions.en || Object.values(payload.descriptions)[0] || '';
+          if (box && /Description coming soon/i.test(box.textContent || box.innerHTML)) {
+            box.innerHTML = String(txt).replace(/\n/g,'<br>');
+          }
         }
-      }
-      // Upgrade cover if better
-      if (payload.media && payload.media.cover) {
-        const img = modal.querySelector('.location-media img');
-        if (img && /placeholder/.test(img.src)) img.src = payload.media.cover;
-      }
-    } catch {}
-  })();
+        // Upgrade cover if better
+        if (payload.media && payload.media.cover) {
+          const img = modal.querySelector('.location-media img');
+          
+          // no-op: do not override images that include 'placeholder'
+        }
+      } catch {}
+    })();
+  }  
 
   // 5. Reveal modal (remove .hidden, add .visible, focus trap etc.)
-  // (done above via showModal)
 
 // Track modal items globally within this module
 let myStuffItems = [];
@@ -1343,17 +1301,8 @@ import { t } from './scripts/i18n.js';
 // Stripe: only the donation action here (init comes from caller)
 import { handleDonation } from "./scripts/stripe.js";
 
-// keep: minimal helper; picks API base per env (prod=same-origin)
-const API = (path) => {
-  const meta = document.querySelector('meta[name="api-origin"]')?.content?.trim();
-  const host = location.hostname;
-  // keep: use same-origin in prod (navigen.io & pages.dev); dev may point to pages.dev
-  const base = meta
-    || (host === 'localhost' || host === '127.0.0.1'
-        ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen-go.pages.dev')
-        : location.origin);
-  return new URL(path, base).toString();
-};
+// canonical API; ULID-only responses (no same-origin)
+const API = (path) => new URL(path, 'https://navigen-api.4naama.workers.dev').toString();
 
 // ✅ Store Popular’s original position on page load
 let popularBaseOffset = 0;
@@ -1373,7 +1322,8 @@ function makeLocationButton(loc) {
 
   // prefer stable profile id; avoid transient loc_*
   // keep: small comment; 2 lines max
-  btn.setAttribute('data-id', String(loc.locationID || loc.ID || loc.id || ''));
+  // ULID-only: stamp canonical id (fallbacks removed; 2 lines max)
+  btn.setAttribute('data-id', String(loc.locationID || '').trim());
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
   
@@ -1412,7 +1362,9 @@ function makeLocationButton(loc) {
     if (!cover) { console.warn('Data error: cover required', loc?.locationID || loc?.ID || loc?.id); return; } // allow 1+ images
 
     // Open the Location Profile Modal; include contact + links for CTAs
+    // ULID-only: pass the canonical id under both keys (2 lines max)
     showLocationProfileModal({
+      locationID: btn.getAttribute('data-id'),
       id: btn.getAttribute('data-id'),
       name: btn.textContent,
       lat, lng,
@@ -1421,8 +1373,6 @@ function makeLocationButton(loc) {
       media,
       descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
       tags: Array.isArray(loc?.tags) ? loc.tags : [],
-
-      // keep if you already added them; otherwise these help other CTAs too
       contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
                           : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
       links:   (loc && typeof loc.links === 'object') ? loc.links : {},
@@ -2093,6 +2043,21 @@ export function showFavoritesModal() {
       const next = saved.filter(s => String(s.id) !== String(item.id));
       save(next);
 
+      // ULID-gated unsave beacon (Favorites ✖)
+      {
+        // try item.id; if not ULID, attempt to reuse saved LPM id when present
+        let uid = String(item?.id || item?.locationID || item?.ID || '').trim();
+        if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+          const el = document.querySelector(`[data-id="${CSS.escape(String(item?.id||''))}"]`);
+          if (el) uid = String(el.getAttribute('data-id') || '').trim();
+        }
+        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+          (async()=>{ try {
+            await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+          } catch {} })();
+        }
+      }
+
       // clear LPM toggle marker(s) so LPM shows ⭐ after delete
       const ids = [
         String(item?.id || ''),
@@ -2665,8 +2630,8 @@ export function createHelpModal() {
 }
 
 // ============================
-// 🎉 Social Channels modal (MODULE-SCOPED)
-// Reason: make callable from 🎉 handler; same shell as Navigation; no footer.
+// 🌍 Social Channels modal (MODULE-SCOPED)
+// Reason: make callable from 🌍 handler; same shell as Navigation; no footer.
 // ============================
 export function createSocialModal({ name, links = {}, contact = {}, id }) { // id for analytics
   const modalId = 'social-modal'; // avoid param shadow
@@ -2741,7 +2706,7 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
-      a.href = `/out/${r.track}/${encodeURIComponent(String(id||'').trim())}?to=${encodeURIComponent(r.href)}`;
+      a.href = `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(String(id||'').trim())}?to=${encodeURIComponent(r.href)}`; // server counts on redirect
       a.target = '_blank'; a.rel = 'noopener';
       // uniform row: 20×20 icon + text; no icon-only centering
       a.innerHTML =
@@ -2790,19 +2755,19 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     {
       label: 'Google Maps',
       icon: '/assets/social/icons-google-maps.svg',
-      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`)}`,
+      href: `${TRACK_BASE}/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`)}`, // Google
       track: 'map' // server counts on redirect
     },
     {
       label: 'Waze',
       icon: '/assets/social/icons-waze.png',
-      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`)}`,
+      href: `${TRACK_BASE}/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`)}`, // Waze
       track: 'map' // server counts on redirect
     },
     {
       label: 'Apple Maps',
       emoji: '🍎',
-      href: `/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://maps.apple.com/?saddr=Current+Location&daddr=${lat},${lng}&dirflg=d`)}`,
+      href: `${TRACK_BASE}/out/map/${encodeURIComponent(id)}?to=${encodeURIComponent(`https://maps.apple.com/?daddr=${lat},${lng}`)}`, // Apple
       track: 'map' // server counts on redirect
     }
   ];
@@ -2817,9 +2782,9 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     btn.addEventListener('click', async (e) => {
       e.preventDefault(); e.stopPropagation();
       const rawId = String(id || '').trim();
-      const uid = await toUlid(rawId);
+      const uid = String(rawId||'').trim(); // ULID-only contract; no resolver
       const to = r.href.split('?to=').pop() || '';
-      const url = uid ? `/out/map/${encodeURIComponent(uid)}?to=${to}` : decodeURIComponent(to);
+      const url = uid ? `${TRACK_BASE}/out/map/${encodeURIComponent(uid)}?to=${to}` : decodeURIComponent(to); // Worker handles redirect + stats
       window.open(url, '_blank', 'noopener,noreferrer'); // open outside the app
     }, { capture: true });
 
@@ -2830,6 +2795,8 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     btn.innerHTML = `${iconHTML}<span>${r.label}</span>`;
     list.appendChild(btn);
   });
+  
+  // (removed ULID rewrite; links already use TRACK_BASE + data.id which is ULID-only)
 
   // Tap-out close & show
   setupTapOutClose(modalId);

@@ -37,15 +37,12 @@ const BUILD_ID = '2025-08-30-03'; // disabled cache-buster
 try { localStorage.setItem('BUILD_ID', BUILD_ID); } catch {}
 // (No redirect; leave URL untouched)
 
-// Helper: Match name/shortName OR tag keys (strip "tag."), case-insensitive; supports multi-word queries.
+// Helper: Match locationName OR tag keys (strip "tag."), case-insensitive; supports multi-word queries.
 function matchesQueryByNameOrTag(loc, q) {
   const qStr = String(q || '').toLowerCase().trim();
   if (!qStr) return true;
   const tokens = qStr.split(/\s+/).filter(Boolean);
-  const name = [
-    (loc?.name && (loc.name.en || Object.values(loc.name)[0])) || '',
-    (loc?.shortName && (loc.shortName.en || Object.values(loc.shortName)[0])) || ''
-  ].join(' ').toLowerCase();
+  const name = String((loc?.locationName?.en ?? loc?.locationName ?? '')).toLowerCase();
   const tags = (Array.isArray(loc?.tags) ? loc.tags : []).map(t => String(t).toLowerCase().replace(/^tag\./,''));
   return tokens.every(tok => name.includes(tok) || tags.some(tag => tag.includes(tok)));
 }
@@ -108,6 +105,9 @@ function getUserLang() {
 }
 
 const BACKEND_URL = "https://navigen-go.onrender.com";
+
+// ULID checker: keep client ULID-only (2 lines)
+const isUlid = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
 
 // ✅ Stripe Block
 import { initStripe, handleDonation } from "./scripts/stripe.js";
@@ -261,18 +261,18 @@ function renderPopularGroup(list = geoPoints) {
   popular.forEach((loc) => {
     const btn = document.createElement("button");
     btn.classList.add("quick-button", "popular-button");
-    const name = loc["Short Name"] || loc.locationName || loc.Name || "Unnamed"; // prefer new name
+    const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
 
-    btn.textContent = name;
+    btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    btn.setAttribute("data-id", String(loc.ID || loc.locationID || loc.id || '')); // prefer new id
+    btn.setAttribute("data-id", String(loc.locationID || '').trim()); // ULID-only: Worker guarantees ULID
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
-    btn.setAttribute('data-name', name);
-    btn.setAttribute('data-short-name', String(loc["Short Name"] || ''));
+    btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
     btn.setAttribute('data-tags', _tags.map(k => String(k).replace(/^tag\./,'')).join(' '));
 
-    const c = (loc && loc.contact) || {};
+    // contactInformation is the single source
+    const c = (loc && loc.contactInformation) || {};
     const addrBits = [c.city, c.adminArea, c.postalCode, c.countryCode, c.address].filter(Boolean).join(' ');
     const addrNorm = addrBits.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     btn.setAttribute('data-addr', addrNorm);
@@ -288,6 +288,7 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+
       // Always prefer profiles.json media (cover + images) for slider
       const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
       const gallery = Array.isArray(media.images) ? media.images : [];
@@ -298,16 +299,22 @@ function renderPopularGroup(list = geoPoints) {
       // guard for strict data model; 2 lines max
       if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
+      // normalize to ULID: prefer data-id, then locationID/id/ID; do not call modal without ULID
+      const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
+
+      if (!uid) { console.warn('Data error: id missing'); return; } // minimal guard
+      // allow alias or ULID; Worker resolves aliases safely
+
       showLocationProfileModal({
-        id: btn.getAttribute('data-id'),
-        name,
+        locationID: uid, id: uid,              // ULID only
+        displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
         images,
         media,
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
         tags: _tags,
-        contact: (loc && loc.contact) || {},
+        contactInformation: (loc && loc.contactInformation) || {},
         links: (loc && loc.links) || {},
         ratings: (loc && loc.ratings) || {},
         pricing: (loc && loc.pricing) || {},
@@ -513,13 +520,11 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
         locBtn.innerHTML = `<span class="location-name">${label}</span>`;
       }
 
-      // ensure searchable metadata for regular + tag search
+      // ensure searchable metadata for regular + tag search (use locationName only)
       if (!locBtn.hasAttribute('data-name')) {
         locBtn.setAttribute('data-name', locBtn.textContent.trim());
       }
-      if (!locBtn.hasAttribute('data-short-name')) {
-        locBtn.setAttribute('data-short-name', locBtn.textContent.trim());
-      }
+
       if (!locBtn.hasAttribute('data-tags')) {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
@@ -533,30 +538,46 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       }
 
       // ✅ Always set/refresh address tokens (now includes CountryCode)
+      // short: prefer contactInformation; fallback to flat/export keys and listedAddress
       {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
           ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
 
-        const c = (rec && rec.contact) || {};
-        const addrBits = [c.city, c.adminArea, c.postalCode, c.countryCode, c.address].filter(Boolean).join(' ');
+        const c = (rec && rec.contactInformation) || {};
+        const addrBits = [
+          c.city       ?? rec?.City,
+          c.adminArea  ?? rec?.AdminArea,
+          c.postalCode ?? rec?.PostalCode,
+          c.countryCode?? rec?.CountryCode,
+          c.address    ?? rec?.Address ?? rec?.listedAddress
+        ].filter(Boolean).join(' ');
         const addrNorm = addrBits.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
         locBtn.setAttribute('data-addr', addrNorm);
       }
 
       // ✅ Expose contact tokens for search (phone/email only; normalized)
-      /* short: add data-contact so phone/email queries match */
+      // short: include contactPerson + messaging fallbacks so queries match
       {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
           ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(id)) // accept new id too
           : null;
 
-        const c = (rec && rec.contact) || {};
-        const raw = [c.phone, c.email].filter(Boolean).join(' ');
+        const c = (rec && rec.contactInformation) || {};
+        const person = c.contactPerson ?? rec?.contactPerson ?? '';
+        const raw = [
+          person,
+          c.phone        ?? rec?.['Contact phone'],
+          c.email        ?? rec?.['Contact email'],
+          c.whatsapp     ?? rec?.WhatsApp,
+          c.telegram     ?? rec?.Telegram,
+          c.messenger    ?? rec?.Messenger
+        ].filter(Boolean).join(' ');
         const contactNorm = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
         locBtn.setAttribute('data-contact', contactNorm);
+        locBtn.setAttribute('data-contact-person', String(person));  // name used by search
       }
 
       // ✅ Ensure lat/lng & helpful title for navigation (used by LPM / route)
@@ -666,19 +687,28 @@ function filterLocations(q) {
     return; // nothing to filter
   }
 
-  // --- 1) Item-level filtering (names + tags + inline text) ---
+  // --- 1) Item-level filtering (names + tags + inline text) ---  // include contact person in haystack
   const items = document.querySelectorAll(itemSel);
   items.forEach((el) => {
-    // include contact tokens too (phone/email); addr already holds postal/city/region)
-    /* short: expand haystack with contact */
+    // include contact tokens too (person/phone/email); addr already holds postal/city/region)
     const lower = el.dataset.lower || '';
-    const shortName = el.getAttribute('data-short-name') || '';
-    const tags = el.getAttribute('data-tags') || '';
+    const nameAttr = el.getAttribute('data-name') || '';
+    // include tags even if data-tags is missing: read visible tag chips too
+    let tags = el.getAttribute('data-tags') || '';
+    if (!tags) {
+      tags = Array.from(el.querySelectorAll('[data-tag], .tag, .tags [data-tag], .tags .tag'))
+        .map(n => n.textContent || '')
+        .join(' ');
+    }
     const addr = el.getAttribute('data-addr') || '';
+    const contactPerson = el.dataset.contactPerson || '';
     const contact = el.getAttribute('data-contact') || '';
-    const hay = norm(`${lower} ${shortName} ${tags} ${addr} ${contact}`);
+    const hay = norm(`${lower} ${nameAttr} ${tags} ${addr} ${contactPerson} ${contact}`);
 
-    const show = hay.includes(query);
+    // token-AND match: every word in the query must appear in hay
+    const tokens = norm(query).split(/\s+/).filter(Boolean);
+    const show = tokens.every(tok => hay.includes(tok));
+
     el.style.display = show ? '' : 'none';
     el.setAttribute('aria-hidden', String(!show));
   });
@@ -853,6 +883,32 @@ async function initEmergencyBlock(countryOverride) {
     setupMyStuffModalLogic();           // 🧩 Setup tab handling inside modal
     flagStyler();                       // 🌐 Apply title/alt to any flag icons
 
+    // measure bottom band; update CSS var
+    const setBottomBandH = () => {
+      const el = document.getElementById('bottom-band');
+      const h = el ? Math.ceil(el.getBoundingClientRect().height) : 50;
+      document.documentElement.style.setProperty('--bottom-band-h', `${h}px`);
+    };
+    setBottomBandH();
+
+    // keep in sync with viewport and band size changes
+    addEventListener('resize', () => requestAnimationFrame(setBottomBandH), { passive: true });
+    addEventListener('orientationchange', setBottomBandH);
+    addEventListener('pageshow', (e) => { if (e.persisted) setBottomBandH(); });
+
+    // observe the band element itself
+    (() => {
+      const el = document.getElementById('bottom-band');
+      if (el && 'ResizeObserver' in window) {
+        new ResizeObserver(() => setBottomBandH()).observe(el);
+      }
+    })();
+
+    // react to dynamic viewport UI (mobile toolbars)
+    if (window.visualViewport) {
+      visualViewport.addEventListener('resize', setBottomBandH, { passive: true });
+    }
+
     // Load JSONs: profiles.json (API) carries locations.
     // Static: actions/structure; contexts is static on Pages/local, API on navigen.io.
 
@@ -861,12 +917,13 @@ async function initEmergencyBlock(countryOverride) {
       ? '/data/contexts.json'
       : 'https://navigen.io/api/data/contexts';
 
+    // guard all three; 2-line comment: avoid boot break on 404/500
+    const safeJson = async (p, fb) => { const r = await p.catch(() => null); return (r && r.ok) ? r.json() : fb; };
     const [actions, structure, contexts] = await Promise.all([
-      fetch('/data/actions.json').then(r => r.json()),
-      fetch('/data/structure.json').then(r => r.json()),
-      fetch(CONTEXTS_URL, CONTEXTS_URL.startsWith('/') ? {} : { credentials: 'include' }).then(r => r.json())
+      safeJson(fetch('/data/actions.json',   { cache:'no-store' }), []),
+      safeJson(fetch('/data/structure.json', { cache:'no-store' }), []),
+      safeJson(fetch(CONTEXTS_URL, (CONTEXTS_URL.startsWith('/') ? { cache:'no-store' } : { cache:'no-store', credentials:'include' })), [])
     ]);
-
 
     state.actions = actions;
 
@@ -934,7 +991,8 @@ async function initEmergencyBlock(countryOverride) {
         .map(g => {
           const groupKey = g.groupKey || g.Group;
           const locs = byGroup.get(groupKey) || [];
-          const subs = [...new Set(locs.map(l => (l.contact?.adminArea || '-')))]
+          // derive area from contactInformation  // 2-line: no fallback to contact
+          const subs = [...new Set(locs.map(l => (l.contactInformation?.adminArea || '-')))]
             .sort((a,b) => String(a).localeCompare(String(b)))
             .map(area => ({
               key: `admin.${String(area)
@@ -962,13 +1020,19 @@ async function initEmergencyBlock(countryOverride) {
      */
 
     /**
-     * 3) Normalize geoPoints.Group from display names → group keys
-     *    so filtering uses keys like "group.gates" instead of "🚪 Exit / Entry Gates".
+     * 3) Normalize geoPoints.Group from display names → canonical keys
+     *    Run AFTER geoPoints is populated; accept either display or key.
      */
-    geoPoints.forEach(p => {
-      const entry = structure_data.find(g => g["Drop-down"] === p.Group);
-      if (entry) p.Group = entry.Group;
-    });
+    function normalizeGroupKeys(list) {
+      if (!Array.isArray(list) || !list.length) return;
+      list.forEach(p => {
+        const g = String(p.Group || '').trim();
+        if (!g) return;
+        // match by display name (“Drop-down”) OR already-canonical key (“Group”)
+        const entry = structure_data.find(x => x["Drop-down"] === g || x.Group === g);
+        if (entry) p.Group = entry.Group; // canonical like "group.services"
+      });
+    }
 
     /**
      * 4) Subgroup sanity check (warn if locations use unknown sub keys)
@@ -979,7 +1043,9 @@ async function initEmergencyBlock(countryOverride) {
     const badSubs = geoPoints.filter(p => p["Subgroup key"] && !subgroupIndex[p["Subgroup key"]]);
     if (badSubs.length) {
       console.warn("⚠️ Unknown Subgroup key(s) in locations:", badSubs.map(b => ({
-        id: b.ID, name: b.Name, subgroup: b["Subgroup key"]
+        id: String(b?.locationID ?? b?.ID ?? b?.id ?? ''),
+        name: String((b?.locationName?.en ?? b?.locationName ?? '')),
+        subgroup: b["Subgroup key"]
       })));
     } else {
       console.log("✅ All location Subgroup keys are valid.");
@@ -1019,30 +1085,40 @@ async function initEmergencyBlock(countryOverride) {
 
     const API_LIMIT = 99; // ask for up to 99 items per page
 
-    // Use prod API in dev; include credentials so admin cookie is sent
-    const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-      ? (document.querySelector('meta[name="api-origin"]')?.content?.trim() || 'https://navigen-go.pages.dev')
-      : location.origin; // keep: prod same-origin
+    // canonical API; keep single source of truth
+    const API_BASE = 'https://navigen-api.4naama.workers.dev';
 
     // First API call must not block boot; force fresh list to avoid stale cache
     let listRes;
     try {
       if (ACTIVE_PAGE) {
+        // ensure valid context even if ACTIVE_PAGE is empty in this scope
+        const __ctx = (ACTIVE_PAGE && String(ACTIVE_PAGE)) ||
+          location.pathname.replace(/^\/[a-z]{2}\//, '').replace(/\/$/, '').toLowerCase();
         const url = new URL(
-          `/api/data/list?context=${encodeURIComponent(ACTIVE_PAGE)}&limit=${API_LIMIT}`,
+          `/api/data/list?context=${encodeURIComponent(__ctx)}&limit=${API_LIMIT}`,
           API_BASE
         );
+
         if (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) {
           url.searchParams.set('cb', String(Date.now()));
         }
         listRes = await fetch(url, {
-          credentials: 'include',
+          credentials: 'omit',              // no cookies → no credentialed CORS needed
           cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate',
-            'Pragma': 'no-cache'
-          }
+          headers: {} // rely on fetch's cache: 'no-store'
         });
+
+        // retry once on 404: some deployed Worker bundles only match the slash-suffixed path
+        // keep query params; do not loop (one attempt only)
+        if (listRes && listRes.status === 404) {
+          const alt = new URL(url.toString());
+          if (!alt.pathname.endsWith('/')) alt.pathname += '/';
+          try {
+            const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store' }); // same headers/policy
+            if (r2.ok) listRes = r2;
+          } catch { /* non-fatal; fall back to original 404 result */ }
+        }
       } else {
         listRes = { ok: true, json: async () => ({ items: [] }) };
       }
@@ -1054,8 +1130,6 @@ async function initEmergencyBlock(countryOverride) {
 
     const listJson = listRes.ok ? await listRes.json() : { items: [] };
     const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
-    
-    console.log("🛰 apiItems sample:", apiItems.slice(0,3));
         
     // Map API items → legacy geoPoints for UI (accordion/Popular)
     const pageLang = (document.documentElement.lang || 'en').toLowerCase(); // avoid const "lang" redeclare
@@ -1080,14 +1154,14 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      console.log("🛰 toGeoPoint input:", it.locationID || it.id || it.ID, it.coord); // prefer new id
+      const uid = String(it?.locationID || '').trim();        // ULID-only from Worker
+      const locationID = uid; const legacyId = '';            // no alias in client
 
-      const id  = String(it?.locationID ?? it?.id ?? it?.uid ?? it?.ID ?? cryptoIdFallback()); // prefer new id
-      const nm  = pickName(it?.locationName) || pickName(it?.name) || pickName(it?.title) || 'Unnamed'; // prefer new name
-
-      const sn  = pickName(it?.shortName) || nm;
+      const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
+      
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
       const sub = String(it?.subgroupKey ?? it?.subgroup ?? ctxRow?.subgroupKey ?? '');
+      
       // Popular is a data flag (locations_data), not a content tag
       const v = (it?.Priority ?? it?.Popular ?? it?.priority);
       const pri = (v === true || v === 1 || String(v ?? '').toLowerCase() === 'yes' || String(v ?? '').toLowerCase() === 'true')
@@ -1097,9 +1171,13 @@ async function initEmergencyBlock(countryOverride) {
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
 
       return {
-        ID: id,
-        Name: nm,
-        "Short Name": sn,
+        locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
+        id: locationID,                           // legacy .id also mirrors ULID
+
+        // always provide an object with .en so all callers resolve a name
+        locationName: (it && typeof it.locationName === 'object' && it.locationName)
+          ? it.locationName
+          : { en: String(nm) },
         Group: grp,
         "Subgroup key": sub,
         Visible: "Yes", // keep: legacy UI expects "Yes"/"No"; Popular ignores this
@@ -1117,7 +1195,8 @@ async function initEmergencyBlock(countryOverride) {
           return { ...m, cover, images };
         })(),
         descriptions: it?.descriptions || {},
-        contact: it?.contactInfo || it?.contact || {},  // prefer new shape
+        // contactInformation is the single source
+        contactInformation: it?.contactInformation || {},
 
         // rating: minimal fields for sorting (easy to mine from exporters)
         ratings: (() => {
@@ -1148,6 +1227,8 @@ async function initEmergencyBlock(countryOverride) {
     // Assign the mapped list now that we have the API items
     geoPointsData = apiItems.map(toGeoPoint);
     geoPoints = geoPointsData;
+    // normalize groups now that geoPoints is ready
+    normalizeGroupKeys(geoPoints);
 
     // Open LPM on ?lp=<id> (post-mapping, single source of truth)
     {
@@ -1155,7 +1236,7 @@ async function initEmergencyBlock(countryOverride) {
       const uid = (q.get('lp') || '').trim();
 
       if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const rec = geoPoints.find(x => String(x?.ID || x?.locationID || x?.id) === uid); // new id first
+        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.locationID) === uid) : null); // ULID-only
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs
@@ -1170,15 +1251,15 @@ async function initEmergencyBlock(countryOverride) {
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
           showLocationProfileModal({
-            id: String(rec.ID || rec.id || uid),
-            name: rec["Short Name"] || rec.Name || "Unnamed",
+            id: String(rec?.locationID || ''),
+            name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim() || "Unnamed",
             lat, lng,
             imageSrc: cover,
             images,
             media,
             descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
             tags: Array.isArray(rec?.tags) ? rec.tags : [],
-            contact: rec.contact || {},
+            contactInformation: rec.contactInformation || {},
             links: rec.links || {},
             ratings: rec.ratings || {},
             pricing: rec.pricing || {}
@@ -1201,13 +1282,6 @@ async function initEmergencyBlock(countryOverride) {
             .includes(ACTIVE_PAGE)
         )
       : geoPoints;
-
-    // QA: print active page + filtered count + sample names (remove after test)
-    console.debug(
-      '[QA]', 'ACTIVE_PAGE=', ACTIVE_PAGE,
-      'count=', geoCtx.length,
-      'sample=', geoCtx.slice(0,5).map(l => String(l.shortName ?? l.name ?? ''))
-    );
 
     // Popular: scope by context only (Priority filter happens inside renderPopularGroup)
     const popularCtx = ACTIVE_PAGE
@@ -1261,8 +1335,8 @@ async function initEmergencyBlock(countryOverride) {
     const allowed = Array.from(new Set(allowedRaw.map(normToken).filter(Boolean)));
     const allowedLC = allowed.map(k => k.toLowerCase());
 
-    // default view (canonical key + lower-case variant)
-    const defaultView = normToken(ctxRow?.defaultView || ctxRow?.subgroupMode || 'structure') || 'structure';
+    // default to grouped-by-adminArea when context/storage don’t specify
+    const defaultView = normToken(ctxRow?.defaultView || ctxRow?.subgroupMode || 'adminArea') || 'adminArea';
     const defaultViewLC = defaultView.toLowerCase();
 
     // stored choice (normalized)
@@ -1341,7 +1415,7 @@ async function initEmergencyBlock(countryOverride) {
         .map(g => {
           const groupKey = g.groupKey || g.Group;
           const locs = byGroup.get(groupKey) || [];
-          const subs = [...new Set(locs.map(r => fieldFn(r)))]
+          const subs = Array.from(new Set(locs.map(r => fieldFn(r))))
             .sort((a,b)=>String(a||'').localeCompare(String(b||'')))
             .map(val => ({ key: `dyn.${slugify(val)}`, name: label(val) }));
           return { groupKey, groupName: g.groupName || g["Drop-down"] || groupKey, subgroups: subs };
@@ -1352,33 +1426,39 @@ async function initEmergencyBlock(countryOverride) {
     const pageList = geoCtx.map(rec => ({ ...rec })); // shallow clone
     const modeMap = {
       structure: () => ({ list: pageList, grouped: structure }),
+      // use contactInformation.* only  // 2-line: legacy contact removed
       adminarea: () => {
-        pageList.forEach(r => { const k = r?.contact?.adminArea; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
-        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contact?.adminArea) };
+        pageList.forEach(r => { const k = r?.contactInformation?.adminArea; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contactInformation?.adminArea) };
       },
       city: () => {
-        pageList.forEach(r => { const k = r?.contact?.city; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
-        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contact?.city) };
+        pageList.forEach(r => { const k = r?.contactInformation?.city; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contactInformation?.city) };
       },
       postalcode: () => {
-        pageList.forEach(r => { const k = r?.contact?.postalCode; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
-        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contact?.postalCode) };
+        pageList.forEach(r => { const k = r?.contactInformation?.postalCode; const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
+        return { list: pageList, grouped: buildStructureBy(pageList, r => r?.contactInformation?.postalCode) };
       },
       alpha: () => {
         pageList.forEach(r => {
-          const n = String(r?.shortName?.en || r?.name?.en || r?.name || '').trim();
-          const k = n ? n[0].toUpperCase() : '#';
+          const n = String((r?.locationName?.en ?? r?.locationName ?? '')).trim();
+          // use 2nd word’s first letter if “HD …” pattern, else first
+          const token = n.startsWith('HD ') ? n.split(/\s+/)[1] || n : n;
+          // strip accents before picking first letter
+          const k = token ? token.normalize('NFD').replace(/[\u0300-\u036f]/g,'').charAt(0).toUpperCase() : '#';
           const dyn = `dyn.${slugify(k)}`;
           r.subgroupKey = dyn; r["Subgroup key"] = dyn;
         });
         return {
           list: pageList,
           grouped: buildStructureBy(pageList, r => {
-            const n = String(r?.shortName?.en || r?.name?.en || r?.name || '').trim();
-            return n ? n[0].toUpperCase() : '#';
+            const n = String((r?.locationName?.en ?? r?.locationName ?? '')).trim();
+            const token = n.startsWith('HD ') ? n.split(/\s+/)[1] || n : n;
+            return token ? token.normalize('NFD').replace(/[\u0300-\u036f]/g,'').charAt(0).toUpperCase() : '#';
           })
         };
       },
+
       priority: () => {
         pageList.forEach(r => { const k = (String(r?.Priority||'No').toLowerCase()==='yes') ? 'Featured' : 'Other';
           const dyn = `dyn.${slugify(k)}`; r.subgroupKey = dyn; r["Subgroup key"] = dyn; });
@@ -1406,12 +1486,13 @@ async function initEmergencyBlock(countryOverride) {
             r.subgroupKey = dyn; r["Subgroup key"] = dyn;
           });
 
-          pageList.sort((a,b) =>
-            (b.__score - a.__score) ||
-            (b.__rcnt  - a.__rcnt ) ||
-            String(a?.shortName?.en || a?.name?.en || a?.name || '')
-              .localeCompare(String(b?.shortName?.en || b?.name?.en || b?.name || ''))
-          );
+        pageList.sort((a,b) =>
+          (b.__score - a.__score) ||
+          (b.__rcnt  - a.__rcnt ) ||
+          String((a?.locationName?.en ?? a?.locationName ?? '')).localeCompare(
+            String((b?.locationName?.en ?? b?.locationName ?? ''))
+          )
+        );
 
           const grouped = buildStructureBy(pageList, r => band(Number(r.__score || 0)));
           return { list: pageList, grouped };
@@ -1977,8 +2058,8 @@ if (alertButton) {
 
     try {
       // 4) Fetch alerts fresh
-      const res = await fetch("/data/alert.json", { cache: "no-store" });
-      const alerts = await res.json();
+      const res = await fetch("/data/alert.json", { cache:'no-store' }).catch(() => null);
+      const alerts = res && res.ok ? await res.json() : [];
 
       if (!Array.isArray(alerts) || alerts.length === 0) {
         alertModalContent.innerHTML = "<p>No current alerts.</p>";
@@ -2183,7 +2264,7 @@ if (alertButton) {
         if (!container) return;
 
         try {
-          const res = await fetch("/data/alerts.json");
+          const res = await fetch("/data/alert.json", { cache:'no-store' });
           const alerts = await res.json();
 
           if (!Array.isArray(alerts) || alerts.length === 0) {

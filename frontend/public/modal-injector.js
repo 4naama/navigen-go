@@ -286,6 +286,31 @@ export function createLocationProfileModal(data, injected = {}) {
   return modal;
 }
 
+/* ULID canonicalizer: slug|ULID → ULID; memoized, module-scoped (2 lines) */
+const __canonCache = new Map();
+async function canonicalizeId(input, originEl){
+  const s = String(input||'').trim();
+  const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+  if (ULID_RE.test(s)) return s;
+  if (!s) {
+    const cand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
+    return ULID_RE.test(cand) ? cand : '';
+  }
+  if (__canonCache.has(s)) return __canonCache.get(s);
+  const domCand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
+  if (ULID_RE.test(domCand)) { __canonCache.set(s, domCand); return domCand; }
+  try {
+    const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(s)}`), { cache:'no-store', credentials:'include' });
+    if (r.ok) {
+      const p = await r.json().catch(()=>null);
+      const u = String(p?.locationID||'').trim();
+      if (ULID_RE.test(u)) { __canonCache.set(s, u); return u; }
+    }
+  } catch {}
+  __canonCache.set(s, '');
+  return '';
+}
+
 /**
  * Show the Location Profile Modal (LPM).
  * - Removes any existing instance
@@ -295,9 +320,11 @@ export function createLocationProfileModal(data, injected = {}) {
  * @param {Object} data  – same shape as factory
  */
 export async function showLocationProfileModal(data) {
-  // prefer stable profile id; accept alias or ULID and pass through
-  const _id = String(data?.locationID || data?.id || '').trim();
-  data.locationID = _id; data.id = _id;
+  // ULID-only in logic: resolve once at boot; keep alias for UI/migration (2 lines)
+  const aliasOrId = String(data?.locationID || data?.id || '').trim();
+  const ulid = await canonicalizeId(aliasOrId, data?.originEl);
+  data._alias = (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(aliasOrId) ? '' : aliasOrId);
+  data.locationID = ulid || aliasOrId; data.id = ulid || aliasOrId;
 
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
@@ -935,7 +962,9 @@ async function initLpmImageSlider(modal, data) {
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
     // helper placed before first use: avoids ReferenceError in some engines
     function initSaveButtons(primaryBtn, secondaryBtn){
-      const id = String(data?.id || data?.locationID || '');
+      // strict on write: only ULID ids participate in state/beacons (2 lines)
+      const idRaw = String(data?.id || data?.locationID || '');
+      const id = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(idRaw) ? idRaw : '';
       const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
       const lat = Number(data?.lat), lng = Number(data?.lng);
       const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
