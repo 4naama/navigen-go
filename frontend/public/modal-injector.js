@@ -818,7 +818,7 @@ async function initLpmImageSlider(modal, data) {
           inner.appendChild(qrRow);
           body.appendChild(inner);
 
-          // open the same QR modal as before (moved here)        // 2 lines max
+          // open the same QR modal as before (moved here)
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
             const uid = String(data?.id || data?.locationID || '').trim();
@@ -1130,8 +1130,12 @@ async function initLpmImageSlider(modal, data) {
           flip(primaryBtn, now);
           flip(secondaryBtn, now);
           showToast(now ? 'Saved' : 'Removed from Saved', 1600);
-          if (isULID) {
-            try { await fetch(`${TRACK_BASE}/hit/${now ? 'save' : 'unsave'}/${encodeURIComponent(id)}`, { method:'POST', keepalive:true }); } catch {}
+          // ULID-gated beacon — recompute per click
+          const uid = String(data?.id || data?.locationID || '').trim();
+          if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+            try {
+              await fetch(`${TRACK_BASE}/hit/${now ? 'save' : 'unsave'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+            } catch {}
           }
         } finally {
           busy = false;
@@ -2039,13 +2043,18 @@ export function showFavoritesModal() {
       const next = saved.filter(s => String(s.id) !== String(item.id));
       save(next);
 
-      // ULID-gated unsave beacon (Favorites unsave path)
+      // ULID-gated unsave beacon (Favorites ✖)
       {
-        const uid = String(item?.id || item?.locationID || item?.ID || '').trim();
+        // try item.id; if not ULID, attempt to reuse saved LPM id when present
+        let uid = String(item?.id || item?.locationID || item?.ID || '').trim();
+        if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+          const el = document.querySelector(`[data-id="${CSS.escape(String(item?.id||''))}"]`);
+          if (el) uid = String(el.getAttribute('data-id') || '').trim();
+        }
         if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-          (async()=>{ try{
+          (async()=>{ try {
             await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
-          }catch{} })();
+          } catch {} })();
         }
       }
 
