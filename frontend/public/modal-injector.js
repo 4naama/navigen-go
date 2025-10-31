@@ -955,8 +955,10 @@ async function initLpmImageSlider(modal, data) {
     // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
       const uid = String(data?.id||'').trim();
-      // count lpm-open on modal show (server resolves alias → ULID)
-      try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+      // count lpm-open only when we truly have a ULID (avoid /hit 400 spam)
+      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+        try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+      }
     })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
@@ -1356,8 +1358,14 @@ function makeLocationButton(loc) {
 
   // prefer stable profile id; avoid transient loc_*
   // keep: small comment; 2 lines max
-  // ULID-only: stamp canonical id (fallbacks removed; 2 lines max)
-  btn.setAttribute('data-id', String(loc.locationID || '').trim());
+  // ULID-only: prefer loc.locationID, else ID/id when they are ULIDs (no aliases)
+  (() => {
+    const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
+    const candidates=[String(loc.locationID||''),String(loc.ID||''),String(loc.id||'')].map(s=>s.trim());
+    const canon=candidates.find(s=>ULID.test(s))||'';
+    btn.setAttribute('data-id', canon);
+  })();
+
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
   
