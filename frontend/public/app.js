@@ -265,7 +265,9 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    btn.setAttribute("data-id", String(loc.locationID || '').trim()); // ULID-only: Worker guarantees ULID
+    // keep slug for UX; stamp canonical ULID for logic (2 lines)
+    btn.setAttribute("data-id", String(loc.ID || loc.id || '').trim());             // slug (human-readable)
+    btn.setAttribute("data-canonical-id", String(loc.locationID || '').trim());     // ULID (strict write)
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
@@ -299,15 +301,17 @@ function renderPopularGroup(list = geoPoints) {
       // guard for strict data model; 2 lines max
       if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
-      // normalize to ULID: prefer data-id, then locationID/id/ID; do not call modal without ULID
-      const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
+      // strict on write: ULID for logic; keep slug as alias (2 lines)
+      const alias = String(btn.getAttribute('data-id') || '').trim();                     // slug
+      const uid   = String(btn.getAttribute('data-canonical-id') || '').trim();           // ULID
 
       if (!uid) { console.warn('Data error: id missing'); return; } // minimal guard
       // allow alias or ULID; Worker resolves aliases safely
 
       showLocationProfileModal({
-        locationID: uid, id: uid,              // ULID only
-        displayName: locLabel, name: locLabel, // display + legacy
+        // ULID-only in logic; carry slug for UI/migration (2 lines)
+        locationID: uid, id: uid, _alias: alias,
+        displayName: locLabel, name: locLabel,
         lat, lng,
         imageSrc: cover,
         images,
