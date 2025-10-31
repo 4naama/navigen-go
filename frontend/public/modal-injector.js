@@ -933,47 +933,10 @@ async function initLpmImageSlider(modal, data) {
     // Delegated client beacons removed — server counts via /out/* and /hit/*
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
-    const btnSave = modal.querySelector('#lpm-save');
-    if (btnSave) {
-      btnSave.classList.add('icon-btn'); // square icon button size
-      const flip = (saved) => { btnSave.textContent = saved ? '✩' : '⭐'; };
-      // init icon from storage (if LPM opened again)
-      {
-        const id0 = String(data?.id || data?.locationID || '');
-        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
-        flip(saved0);
-      }
-      btnSave.addEventListener('click', (e) => {
-        e.preventDefault();
-        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
-        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
-        const lat = Number(data?.lat), lng = Number(data?.lng);
-        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
-
-        const key = `saved:${id}`;
-        const was = localStorage.getItem(key) === '1';
-        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
-        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
-
-        if (was) {
-          localStorage.setItem('savedLocations', JSON.stringify(next));
-          localStorage.setItem(key, '0');
-          flip(false); showToast('Removed from Saved', 1600);
-          ;(async()=>{ 
-            const uid = String(data?.id||'').trim();
-            if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-              try { await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
-            }
-          })();
-        } else {
-          next.unshift(entry);
-          localStorage.setItem('savedLocations', JSON.stringify(next));
-          localStorage.setItem(key, '1');
-          flip(true); showToast('Saved', 1600);
-          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/save/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
-        }
-      });
-    }
+    initSaveButtons(
+      modal.querySelector('#lpm-save'),
+      modal.querySelector('#som-save')
+    );
 
     // 🎉 Social Channels — open social modal (capture to beat other handlers)
     const socialBtn = modal.querySelector('#som-social');
@@ -1125,46 +1088,58 @@ async function initLpmImageSlider(modal, data) {
       }
     })();
 
-    // ⭐ Save (secondary) → same toggle + icon flip (⭐ ↔ ✩)
-    const save2 = modal.querySelector('#som-save');
-    if (save2) {
-      save2.classList.add('icon-btn'); // square icon button size
-      const flip2 = (saved) => { save2.textContent = saved ? '✩' : '⭐'; };
-      {
-        const id0 = String(data?.id || data?.locationID || '');
-        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
-        flip2(saved0);
-      }
-      save2.addEventListener('click', (e) => {
-        e.preventDefault();
-        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
-        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
-        const lat = Number(data?.lat), lng = Number(data?.lng);
-        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+    // ⭐ Save (secondary) handled by helper
+    // helper: save/unsave; sync both buttons; ULID-gated analytics
+    function initSaveButtons(primaryBtn, secondaryBtn){
+      const id = String(data?.id || data?.locationID || '');
+      const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
+      const lat = Number(data?.lat), lng = Number(data?.lng);
+      const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+      const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id);
 
-        const key = `saved:${id}`;
-        const was = localStorage.getItem(key) === '1';
-        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
-        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+      const flip = (btn, saved) => {
+        if (!btn) return;
+        btn.textContent = saved ? '✩' : '⭐';
+        btn.setAttribute('aria-pressed', String(saved));
+        btn.classList.add('icon-btn');
+      };
 
-        if (was) {
+      const readSaved = () => (id && localStorage.getItem(`saved:${id}`) === '1');
+      const writeState = (saved) => {
+        try {
+          localStorage.setItem(`saved:${id}`, saved ? '1' : '0');
+          const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+          const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+          if (saved) next.unshift(entry);
           localStorage.setItem('savedLocations', JSON.stringify(next));
-          localStorage.setItem(key, '0');
-          flip2(false); showToast('Removed from Saved', 1600);
-          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
-        } else {
-          next.unshift(entry);
-          localStorage.setItem('savedLocations', JSON.stringify(next));
-          localStorage.setItem(key, '1');
-          flip2(true); showToast('Saved', 1600);
-          ;(async()=>{ 
-            const uid = String(data?.id||'').trim();
-            if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-              try { await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
-            }
-          })();
+        } catch {}
+      };
+
+      const init = readSaved();
+      flip(primaryBtn, init);
+      flip(secondaryBtn, init);
+
+      let busy = false;
+      const toggle = async () => {
+        if (!id || busy) { if (!id) showToast('Missing id', 1600); return; }
+        busy = true;
+        try {
+          const was = readSaved();
+          const now = !was;
+          writeState(now);
+          flip(primaryBtn, now);
+          flip(secondaryBtn, now);
+          showToast(now ? 'Saved' : 'Removed from Saved', 1600);
+          if (isULID) {
+            try { await fetch(`${TRACK_BASE}/hit/${now ? 'save' : 'unsave'}/${encodeURIComponent(id)}`, { method:'POST', keepalive:true }); } catch {}
+          }
+        } finally {
+          busy = false;
         }
-      });
+      };
+
+      primaryBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggle(); });
+      secondaryBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggle(); });
     }
 
     // 📤 Share (placeholder; OS share → clipboard fallback)
