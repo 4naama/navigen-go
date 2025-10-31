@@ -975,6 +975,9 @@ async function initLpmImageSlider(modal, data) {
         btn.setAttribute('aria-pressed', String(saved));
         btn.classList.add('icon-btn');
       };
+      
+      /* migrate once: saved:<alias> → saved:<ULID> (2 lines) */
+      if (id && data?._alias && localStorage.getItem(`saved:${data._alias}`) === '1') { try { localStorage.setItem(`saved:${id}`, '1'); } catch {} }
 
       const readSaved = () => (id && localStorage.getItem(`saved:${id}`) === '1');
       const writeState = (saved) => {
