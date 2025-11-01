@@ -302,7 +302,12 @@ function renderPopularGroup(list = geoPoints) {
       // normalize id from data-id; allow ULID or alias (slug). Still bail if empty.
       const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
 
-      if (!uid) { console.warn('Data error: id missing'); return; } // minimal guard
+      // allow LPM open without ULID; slug is for LPM beacons only (no app model changes)
+      const alias = String(btn.getAttribute('data-slug') || btn.getAttribute('data-alias') || '').trim();
+      const nameStr = String(btn.getAttribute('data-name') || '').trim();
+      const toSlug = (s) => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+      const idForLpm = uid || alias || toSlug(nameStr);
+      if (!idForLpm) { console.warn('Data error: id+slug missing'); return; }
       // allow alias or ULID; Worker resolves aliases safely
 
       showLocationProfileModal({

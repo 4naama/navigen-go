@@ -295,9 +295,9 @@ export function createLocationProfileModal(data, injected = {}) {
  * @param {Object} data  – same shape as factory
  */
 export async function showLocationProfileModal(data) {
-  // prefer stable profile id; accept alias or ULID and pass through
-  const _id = String(data?.locationID || data?.id || '').trim();
-  data.locationID = _id; data.id = _id;
+  // keep ULID canonical; do not overwrite with slug
+  const locULID = String(data?.locationID || '').trim();
+  const lpmId   = String(data?.id || locULID).trim(); // used only for LPM beacons/fallback
 
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
