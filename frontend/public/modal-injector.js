@@ -925,8 +925,8 @@ async function initLpmImageSlider(modal, data) {
     
     // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
-      // count lpm-open with provided identifier (ULID preferred, else slug)
-      const idOrSlug = String(data?.id || data?.locationID || '').trim();
+      // count lpm-open on modal show; use ULID if present, otherwise slug (always defined)
+      const idOrSlug = String(data?.id || data?.locationID || data?.slug || data?.alias || '').trim();
       if (!idOrSlug) return;
       try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true }); } catch {}
     })();

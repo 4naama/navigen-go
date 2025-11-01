@@ -265,12 +265,11 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    btn.se// prefer ULID in data-id; park non-ULID (slug) in data-alias for LPM-only beacons
+    // prefer ULID in data-id; park non-ULID (slug) in data-alias for LPM-only beacons
     const rawId = String(loc?.locationID ?? loc?.ID ?? loc?.id ?? '').trim();
     const uid = isUlid(rawId) ? rawId : '';
     btn.setAttribute('data-id', uid);
     if (!uid) btn.setAttribute('data-alias', rawId);
-    tAttribute("data-id", String(loc?.locationID ?? loc?.ID ?? loc?.id ?? '').trim()); // accept ULID or alias; Worker resolves if needed
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
