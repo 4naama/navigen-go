@@ -287,29 +287,44 @@ export function createLocationProfileModal(data, injected = {}) {
 }
 
 /* ULID canonicalizer: slug|ULID → ULID; memoized (DOM → Worker KV fallback) */
+// slug|ULID → ULID; DOM hint → list fallback (memoized)
 const __canonCache = new Map();
+let __listMapPromise = null;
+
 async function canonicalizeId(input, originEl){
-  const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+  const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
   const s = String(input || '').trim();
   if (!s) return '';
-  if (ULID_RE.test(s)) return s;                        // already ULID
-  if (__canonCache.has(s)) return __canonCache.get(s);  // cached
+  if (ULID.test(s)) return s;
+  if (__canonCache.has(s)) return __canonCache.get(s);
 
-  // DOM-only first (keeps your fast path; 2 lines)
-  const cand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
-  if (ULID_RE.test(cand)) { __canonCache.set(s, cand); return cand; }
+  // 1) DOM hint
+  const dom = (originEl?.getAttribute?.('data-canonical-id') || '').trim();
+  if (ULID.test(dom)) { __canonCache.set(s, dom); return dom; }
 
-  // Worker fallback: ask /api/data/profile to resolve alias → ULID via KV_ALIASES
+  // 2) Worker list fallback (load once, build alias→ULID map)
   try {
-    const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(s)}`), { cache: 'no-store', credentials: 'include' });
-    if (res.ok) {
-      const j = await res.json().catch(() => ({}));
-      const uid = String(j?.id || j?.locationID || '').trim();
-      if (ULID_RE.test(uid)) { __canonCache.set(s, uid); return uid; }
+    if (!__listMapPromise) {
+      __listMapPromise = (async () => {
+        const res = await fetch(API('/api/data/list'), { cache:'no-store', credentials:'include' });
+        if (!res.ok) return new Map();
+        const j = await res.json().catch(() => ({}));
+        const items = Array.isArray(j?.items) ? j.items : [];
+        const map = new Map();
+        for (const it of items) {
+          const uid = String(it?.id || it?.locationID || '').trim();
+          const alias = String(it?.alias || it?.slug || it?.locationID || '').trim();
+          if (ULID.test(uid) && alias) map.set(alias, uid);
+        }
+        return map;
+      })();
     }
-  } catch {} // keep silent; unresolved stays empty
+    const listMap = await __listMapPromise;
+    const fromList = listMap.get(s) || '';
+    if (ULID.test(fromList)) { __canonCache.set(s, fromList); return fromList; }
+  } catch {}
 
-  __canonCache.set(s, ''); // unresolved stays empty
+  __canonCache.set(s, '');
   return '';
 }
 
