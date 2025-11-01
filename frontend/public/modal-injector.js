@@ -1356,14 +1356,13 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // prefer stable profile id; avoid transient loc_*
-  // keep: small comment; 2 lines max
-  // ULID-only: prefer loc.locationID, else ID/id when they are ULIDs (no aliases)
+  // ULID-only: scan common canonical keys; stamp both attrs when found (2 lines of comments)
   (() => {
     const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
-    const candidates=[String(loc.locationID||''),String(loc.ID||''),String(loc.id||'')].map(s=>s.trim());
-    const canon=candidates.find(s=>ULID.test(s))||'';
-    btn.setAttribute('data-id', canon);
+    const keys=['locationID','ULID','ulid','ID','id','canonicalID','canonicalId'];
+    const pick=(o,k)=>String((o&&o[k])||'').trim();
+    const canon=keys.map(k=>pick(loc,k)).find(s=>ULID.test(s))||'';
+    if (canon){ btn.setAttribute('data-id', canon); btn.setAttribute('data-canonical-id', canon); }
   })();
 
   btn.classList.add('location-button');
