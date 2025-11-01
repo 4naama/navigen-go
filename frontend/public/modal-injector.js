@@ -287,53 +287,29 @@ export function createLocationProfileModal(data, injected = {}) {
 }
 
 /* ULID canonicalizer: slug|ULID → ULID; memoized (DOM → Worker KV fallback) */
-// slug|ULID → ULID; DOM hint → list fallback (memoized)
 const __canonCache = new Map();
-let __listMapPromise = null;
-
 async function canonicalizeId(input, originEl){
-  const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+  const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
   const s = String(input || '').trim();
   if (!s) return '';
-  if (ULID.test(s)) return s;
-  if (__canonCache.has(s)) return __canonCache.get(s);
+  if (ULID_RE.test(s)) return s;                        // already ULID
+  if (__canonCache.has(s)) return __canonCache.get(s);  // cached
 
-  // 1) DOM hint
-  const dom = (originEl?.getAttribute?.('data-canonical-id') || '').trim();
-  if (ULID.test(dom)) { __canonCache.set(s, dom); return dom; }
+  // DOM-only first (keeps your fast path; 2 lines)
+  const cand = originEl?.getAttribute?.('data-canonical-id') || originEl?.getAttribute?.('data-id') || '';
+  if (ULID_RE.test(cand)) { __canonCache.set(s, cand); return cand; }
 
-  // 2) Worker list fallback (load once, build alias→ULID map)
+  // Worker fallback: ask /api/data/profile to resolve alias → ULID via KV_ALIASES
   try {
-    if (!__listMapPromise) {
-      __listMapPromise = (async () => {
-        const res = await fetch(API('/api/data/list'), { cache:'no-store', credentials:'include' });
-        if (!res.ok) return new Map();
-        const j = await res.json().catch(() => ({}));
-        const items = Array.isArray(j?.items) ? j.items : [];
-        const map = new Map();
-        for (const it of items) {
-          const uid = String(it?.id || it?.locationID || '').trim();
-          const alias = String(it?.alias || it?.slug || it?.locationID || '').trim();
-          if (ULID.test(uid) && alias) map.set(alias, uid);
-        }
-        return map;
-      })();
+    const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(s)}`), { cache: 'no-store', credentials: 'include' });
+    if (res.ok) {
+      const j = await res.json().catch(() => ({}));
+      const uid = String(j?.id || j?.locationID || '').trim();
+      if (ULID_RE.test(uid)) { __canonCache.set(s, uid); return uid; }
     }
-    const listMap = await __listMapPromise;
-    const fromList = listMap.get(s) || '';
-    if (ULID.test(fromList)) { __canonCache.set(s, fromList); return fromList; }
-  } catch {}
+  } catch {} // keep silent; unresolved stays empty
 
-  // 3) Profile fallback (single item): try to promote alias → ULID if Worker knows it
-  try {
-    const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(s)}`), { cache:'no-store', credentials:'include' });
-    if (r.ok) {
-      const p = await r.json().catch(()=> ({}));
-      const got = String(p?.id || p?.locationID || '').trim();
-      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(got)) { __canonCache.set(s, got); return got; }
-    }
-  } catch {}
-  __canonCache.set(s, '');
+  __canonCache.set(s, ''); // unresolved stays empty
   return '';
 }
 
@@ -823,13 +799,7 @@ async function initLpmImageSlider(modal, data) {
       if (bookingUrl) {
         // native anchor; track only
         // redirect through Worker so booking clicks are counted (server resolves alias)
-        const uid = String(data?.id || data?.locationID || '').trim();
-        btnBook.setAttribute(
-          'href',
-          uid
-            ? `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`
-            : bookingUrl // fallback: open direct if we don’t have a canonical id yet
-        );
+        btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
         btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
@@ -880,10 +850,8 @@ async function initLpmImageSlider(modal, data) {
           // open the same QR modal as before (moved here)
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
-            const uid   = String(data?.id || data?.locationID || '').trim();
-            const alias = String(data?._alias || '').trim();
-            const token = uid || alias;                // accept slug when ULID missing
-            if (!token) { showToast('Missing id', 1600); return; }
+            const uid = String(data?.id || data?.locationID || '').trim();
+            if (!uid) { showToast('Missing id', 1600); return; }
 
             const id = 'qr-modal'; document.getElementById(id)?.remove();
             const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
@@ -991,6 +959,7 @@ async function initLpmImageSlider(modal, data) {
       if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
         try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
       }
+
     })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
@@ -1388,13 +1357,14 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // ULID-only: scan common canonical keys; stamp both attrs when found
+  // prefer stable profile id; avoid transient loc_*
+  // keep: small comment; 2 lines max
+  // ULID-only: prefer loc.locationID, else ID/id when they are ULIDs (no aliases)
   (() => {
     const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
-    const keys=['locationID','ULID','ulid','ID','id','canonicalID','canonicalId'];
-    const pick=(o,k)=>String((o&&o[k])||'').trim();
-    const canon=keys.map(k=>pick(loc,k)).find(s=>ULID.test(s))||'';
-    if (canon){ btn.setAttribute('data-id', canon); btn.setAttribute('data-canonical-id', canon); }
+    const candidates=[String(loc.locationID||''),String(loc.ID||''),String(loc.id||'')].map(s=>s.trim());
+    const canon=candidates.find(s=>ULID.test(s))||'';
+    btn.setAttribute('data-id', canon);
   })();
 
   btn.classList.add('location-button');
@@ -2779,10 +2749,7 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
-      const uid = String(id || '').trim();
-      a.href = uid
-        ? `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(uid)}?to=${encodeURIComponent(r.href)}`
-        : r.href;  // fallback: open direct when ULID is not yet known
+      a.href = `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(String(id||'').trim())}?to=${encodeURIComponent(r.href)}`; // server counts on redirect
       a.target = '_blank'; a.rel = 'noopener';
       // uniform row: 20×20 icon + text; no icon-only centering
       a.innerHTML =
