@@ -265,7 +265,7 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    btn.setAttribute("data-id", String(loc.locationID || '').trim()); // ULID-only: Worker guarantees ULID
+    btn.setAttribute("data-id", String(loc?.locationID ?? loc?.ID ?? loc?.id ?? '').trim()); // accept ULID or alias; Worker resolves if needed
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
@@ -1236,7 +1236,12 @@ async function initEmergencyBlock(countryOverride) {
       const uid = (q.get('lp') || '').trim();
 
       if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.locationID) === uid) : null); // ULID-only
+        const rec = geoPoints.find(x => {
+          const a = String(x?.locationID || '').trim();
+          const b = String(x?.ID || '').trim();
+          const c = String(x?.id || '').trim();
+          return uid === a || uid === b || uid === c; // ULID or slug alias
+        });
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs
@@ -1251,7 +1256,8 @@ async function initEmergencyBlock(countryOverride) {
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
           showLocationProfileModal({
-            id: String(rec?.locationID || ''),
+            locationID: String(rec?.locationID ?? rec?.ID ?? rec?.id ?? ''), // clarify: ULID or alias
+            id:         String(rec?.locationID ?? rec?.ID ?? rec?.id ?? ''),
             name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim() || "Unnamed",
             lat, lng,
             imageSrc: cover,
