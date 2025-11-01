@@ -1378,19 +1378,20 @@ function makeLocationButton(loc) {
       showLocationProfileModal({
         locationID: uid,
         id: uid || alias,
-      name: btn.textContent,
-      lat, lng,
-      imageSrc: cover,
-      images,
-      media,
-      descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
-      tags: Array.isArray(loc?.tags) ? loc.tags : [],
-      contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
-                          : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
-      links:   (loc && typeof loc.links === 'object') ? loc.links : {},
-      originEl: btn
-    });
-
+        name: btn.textContent,
+        lat,
+        lng,
+        imageSrc: cover,
+        images,
+        media,
+        descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
+        tags: Array.isArray(loc?.tags) ? loc.tags : [],
+        contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
+                              : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
+        links: (loc && typeof loc.links === 'object') ? loc.links : {},
+        originEl: btn
+      });
+    }
   }); // ✅ close addEventListener('click', ...)
 
   return btn;
