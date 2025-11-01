@@ -265,7 +265,7 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    btn.setAttribute("data-id", String(loc.locationID || '').trim()); // ULID-only: Worker guarantees ULID
+    btn.setAttribute("data-id", String(loc.locationID || loc.ID || loc.id || '').trim()); // accept locationID / ID / id
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
