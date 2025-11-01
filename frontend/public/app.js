@@ -265,7 +265,12 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    btn.setAttribute("data-id", String(loc?.locationID ?? loc?.ID ?? loc?.id ?? '').trim()); // accept ULID or alias; Worker resolves if needed
+    btn.se// prefer ULID in data-id; park non-ULID (slug) in data-alias for LPM-only beacons
+    const rawId = String(loc?.locationID ?? loc?.ID ?? loc?.id ?? '').trim();
+    const uid = isUlid(rawId) ? rawId : '';
+    btn.setAttribute('data-id', uid);
+    if (!uid) btn.setAttribute('data-alias', rawId);
+    tAttribute("data-id", String(loc?.locationID ?? loc?.ID ?? loc?.id ?? '').trim()); // accept ULID or alias; Worker resolves if needed
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
@@ -302,17 +307,17 @@ function renderPopularGroup(list = geoPoints) {
       // normalize id from data-id; allow ULID or alias (slug). Still bail if empty.
       const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
 
-      // allow LPM open without ULID; slug is for LPM beacons only (no app model changes)
-      const alias = String(btn.getAttribute('data-slug') || btn.getAttribute('data-alias') || '').trim();
-      const nameStr = String(btn.getAttribute('data-name') || '').trim();
-      const toSlug = (s) => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-      const idForLpm = uid || alias || toSlug(nameStr);
+      // allow LPM open with ULID or provided slug (no derivation)
+      const alias = String(btn.getAttribute('data-alias') || '').trim();
+      const idForLpm = uid || alias;
       if (!idForLpm) { console.warn('Data error: id+slug missing'); return; }
+
       // allow alias or ULID; Worker resolves aliases safely
 
       showLocationProfileModal({
-        locationID: uid, id: uid,              // ULID only
-        displayName: locLabel, name: locLabel, // display + legacy
+        locationID: uid,                        // stays ULID (may be empty)
+        id: idForLpm,                           // ULID or slug for LPM-only tracking
+        displayName: locLabel, name: locLabel,  // display + legacy
         lat, lng,
         imageSrc: cover,
         images,

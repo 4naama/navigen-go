@@ -925,9 +925,10 @@ async function initLpmImageSlider(modal, data) {
     
     // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
-      const uid = String(data?.id||'').trim();
-      // count lpm-open on modal show (server resolves alias → ULID)
-      try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+      // count lpm-open with provided identifier (ULID preferred, else slug)
+      const idOrSlug = String(data?.id || data?.locationID || '').trim();
+      if (!idOrSlug) return;
+      try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true }); } catch {}
     })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
@@ -1320,10 +1321,13 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // prefer stable profile id; avoid transient loc_*
-  // keep: small comment; 2 lines max
-  // ULID-only: stamp canonical id (fallbacks removed; 2 lines max)
-  btn.setAttribute('data-id', String(loc.locationID || '').trim());
+  // prefer ULID; keep slug in data-alias for LPM-only beacons
+  {
+    const raw = String(loc.locationID || '').trim();
+    const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
+    btn.setAttribute('data-id', uid);
+    if (!uid) btn.setAttribute('data-alias', raw);
+  }
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
   
@@ -1362,10 +1366,13 @@ function makeLocationButton(loc) {
     if (!cover) { console.warn('Data error: cover required', loc?.locationID || loc?.ID || loc?.id); return; } // allow 1+ images
 
     // Open the Location Profile Modal; include contact + links for CTAs
-    // ULID-only: pass the canonical id under both keys (2 lines max)
-    showLocationProfileModal({
-      locationID: btn.getAttribute('data-id'),
-      id: btn.getAttribute('data-id'),
+    // pass ULID if present, else slug only to LPM; ULID remains canonical
+    {
+      const uid = String(btn.getAttribute('data-id') || '').trim();
+      const alias = String(btn.getAttribute('data-alias') || '').trim();
+      showLocationProfileModal({
+        locationID: uid,
+        id: uid || alias,
       name: btn.textContent,
       lat, lng,
       imageSrc: cover,
