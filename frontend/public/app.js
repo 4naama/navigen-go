@@ -106,7 +106,7 @@ function getUserLang() {
 
 const BACKEND_URL = "https://navigen-go.onrender.com";
 
-// ULID checker: keep client ULID-only
+// ULID checker: keep client ULID-only (2 lines)
 const isUlid = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
 
 // ✅ Stripe Block
@@ -265,11 +265,7 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    // prefer ULID in data-id; park non-ULID (slug) in data-alias for LPM-only beacons
-    const rawId = String(loc?.locationID ?? loc?.ID ?? loc?.id ?? '').trim();
-    const uid = isUlid(rawId) ? rawId : '';
-    btn.setAttribute('data-id', uid);
-    if (!uid) btn.setAttribute('data-alias', rawId);
+    btn.setAttribute("data-id", String(loc.locationID || '').trim()); // ULID-only: Worker guarantees ULID
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
@@ -300,24 +296,18 @@ function renderPopularGroup(list = geoPoints) {
       // Use explicit cover first, then first image; never use placeholders
       const cover = (media.cover && String(media.cover).trim()) || images[0];
 
-      // allow LPM open with cover only; still log when gallery <2
-      if (!cover) { console.warn('Data error: cover missing'); return; }
-      if (images.length < 2) { console.debug('⚠️ only one image (no slider)'); }
+      // guard for strict data model; 2 lines max
+      if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
-      // normalize id from data-id; allow ULID or alias (slug). Still bail if empty.
+      // normalize to ULID: prefer data-id, then locationID/id/ID; do not call modal without ULID
       const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
 
-      // allow LPM open with ULID or provided slug (no derivation)
-      const alias = String(btn.getAttribute('data-alias') || '').trim();
-      const idForLpm = uid || alias;
-      if (!idForLpm) { console.warn('Data error: id+slug missing'); return; }
-
+      if (!uid) { console.warn('Data error: id missing'); return; } // minimal guard
       // allow alias or ULID; Worker resolves aliases safely
 
       showLocationProfileModal({
-        locationID: uid,                        // stays ULID (may be empty)
-        id: idForLpm,                           // ULID or slug for LPM-only tracking
-        displayName: locLabel, name: locLabel,  // display + legacy
+        locationID: uid, id: uid,              // ULID only
+        displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
         images,
@@ -1164,10 +1154,8 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      // preserve ULID AND keep original alias/slug for LPM beacons
-      const uid   = String(it?.locationID || '').trim();
-      const alias = String(it?.id || '').trim();              // cloudflare alias/slug (never missing by design)
-      const locationID = uid;
+      const uid = String(it?.locationID || '').trim();        // ULID-only from Worker
+      const locationID = uid; const legacyId = '';            // no alias in client
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1183,9 +1171,8 @@ async function initEmergencyBlock(countryOverride) {
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
 
       return {
-        locationID: locationID, ID: locationID,         // ULID stays canonical
-        id: (uid || alias),                              // ULID if present, else slug for LPM beacons
-        alias,                                           // expose alias for Popular buttons only
+        locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
+        id: locationID,                           // legacy .id also mirrors ULID
 
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
@@ -1249,12 +1236,7 @@ async function initEmergencyBlock(countryOverride) {
       const uid = (q.get('lp') || '').trim();
 
       if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const rec = geoPoints.find(x => {
-          const a = String(x?.locationID || '').trim();
-          const b = String(x?.ID || '').trim();
-          const c = String(x?.id || '').trim();
-          return uid === a || uid === b || uid === c; // ULID or slug alias
-        });
+        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.locationID) === uid) : null); // ULID-only
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs
@@ -1269,8 +1251,7 @@ async function initEmergencyBlock(countryOverride) {
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
           showLocationProfileModal({
-            locationID: String(rec?.locationID ?? rec?.ID ?? rec?.id ?? ''), // clarify: ULID or alias
-            id:         String(rec?.locationID ?? rec?.ID ?? rec?.id ?? ''),
+            id: String(rec?.locationID || ''),
             name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim() || "Unnamed",
             lat, lng,
             imageSrc: cover,
