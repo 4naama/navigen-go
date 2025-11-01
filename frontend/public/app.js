@@ -301,6 +301,14 @@ function renderPopularGroup(list = geoPoints) {
       // guard for strict data model; 2 lines max
       if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
+      // stamp ULID from current record before reading attrs
+      {
+        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        const cands=[String(loc?.locationID||''),String(loc?.ID||''),String(loc?.id||'')].map(s=>s.trim());
+        const uid0=cands.find(s=>ULID.test(s))||'';
+        if (uid0){ btn.setAttribute('data-canonical-id', uid0); btn.setAttribute('data-id', uid0); }
+      }
+
       // strict on write: ULID for logic; keep slug as alias (2 lines)
       const alias = String(btn.getAttribute('data-id') || '').trim();                     // slug
       const uid   = String(btn.getAttribute('data-canonical-id') || '').trim();           // ULID
