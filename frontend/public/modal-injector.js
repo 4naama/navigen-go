@@ -1356,7 +1356,7 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // ULID-only: scan common canonical keys; stamp both attrs when found (2 lines of comments)
+  // ULID-only: scan common canonical keys; stamp both attrs when found
   (() => {
     const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
     const keys=['locationID','ULID','ulid','ID','id','canonicalID','canonicalId'];
