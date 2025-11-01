@@ -7,7 +7,8 @@ const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
 function _track(locId, event, action) { // resolve → ULID; map legacy 'route' → 'map'
   (async () => {
-    const uid = String(locId || '').trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) return;
+    // accept slug or ULID — only skip if empty
+    const uid = String(locId || '').trim(); if (!uid) return;
     const ev0 = String(event || '').toLowerCase().replaceAll('_','-');
     const ev  = (ev0 === 'route') ? 'map' : ev0; // Worker allows 'map', not 'route'
     const payload = {
@@ -286,6 +287,57 @@ export function createLocationProfileModal(data, injected = {}) {
   return modal;
 }
 
+/* ULID canonicalizer: slug|ULID → ULID; memoized (DOM → Worker KV fallback) */
+// slug|ULID → ULID; DOM hint → list fallback (memoized)
+const __canonCache = new Map();
+let __listMapPromise = null;
+
+async function canonicalizeId(input, originEl){
+  const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+  const s = String(input || '').trim();
+  if (!s) return '';
+  if (ULID.test(s)) return s;
+  if (__canonCache.has(s)) return __canonCache.get(s);
+
+  // 1) DOM hint
+  const dom = (originEl?.getAttribute?.('data-canonical-id') || '').trim();
+  if (ULID.test(dom)) { __canonCache.set(s, dom); return dom; }
+
+  // 2) Worker list fallback (load once, build alias→ULID map)
+  try {
+    if (!__listMapPromise) {
+      __listMapPromise = (async () => {
+        const res = await fetch(API('/api/data/list'), { cache:'no-store', credentials:'include' });
+        if (!res.ok) return new Map();
+        const j = await res.json().catch(() => ({}));
+        const items = Array.isArray(j?.items) ? j.items : [];
+        const map = new Map();
+        for (const it of items) {
+          const uid = String(it?.id || it?.locationID || '').trim();
+          const alias = String(it?.alias || it?.slug || it?.locationID || '').trim();
+          if (ULID.test(uid) && alias) map.set(alias, uid);
+        }
+        return map;
+      })();
+    }
+    const listMap = await __listMapPromise;
+    const fromList = listMap.get(s) || '';
+    if (ULID.test(fromList)) { __canonCache.set(s, fromList); return fromList; }
+  } catch {}
+
+  // 3) Profile fallback (single item): try to promote alias → ULID if Worker knows it
+  try {
+    const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(s)}`), { cache:'no-store', credentials:'include' });
+    if (r.ok) {
+      const p = await r.json().catch(()=> ({}));
+      const got = String(p?.id || p?.locationID || '').trim();
+      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(got)) { __canonCache.set(s, got); return got; }
+    }
+  } catch {}
+  __canonCache.set(s, '');
+  return '';
+}
+
 /**
  * Show the Location Profile Modal (LPM).
  * - Removes any existing instance
@@ -295,9 +347,11 @@ export function createLocationProfileModal(data, injected = {}) {
  * @param {Object} data  – same shape as factory
  */
 export async function showLocationProfileModal(data) {
-  // prefer stable profile id; accept alias or ULID and pass through
-  const _id = String(data?.locationID || data?.id || '').trim();
-  data.locationID = _id; data.id = _id;
+  // ULID-only in logic: resolve once at boot; keep alias for UI/migration (2 lines)
+  const aliasOrId = String(data?.locationID || data?.id || '').trim();
+  const ulid = await canonicalizeId(aliasOrId, data?.originEl);
+  data._alias = (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(aliasOrId) ? '' : aliasOrId);
+  data.locationID = ulid || aliasOrId; data.id = ulid || aliasOrId;
 
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
@@ -770,7 +824,13 @@ async function initLpmImageSlider(modal, data) {
       if (bookingUrl) {
         // native anchor; track only
         // redirect through Worker so booking clicks are counted (server resolves alias)
-        btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
+        const uid = String(data?.id || data?.locationID || '').trim();
+        btnBook.setAttribute(
+          'href',
+          uid
+            ? `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`
+            : bookingUrl // fallback: open direct if we don’t have a canonical id yet
+        );
         btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
@@ -821,8 +881,10 @@ async function initLpmImageSlider(modal, data) {
           // open the same QR modal as before (moved here)
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
-            const uid = String(data?.id || data?.locationID || '').trim();
-            if (!uid) { showToast('Missing id', 1600); return; }
+            const uid   = String(data?.id || data?.locationID || '').trim();
+            const alias = String(data?._alias || '').trim();
+            const token = uid || alias;                // accept slug when ULID missing
+            if (!token) { showToast('Missing id', 1600); return; }
 
             const id = 'qr-modal'; document.getElementById(id)?.remove();
             const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
@@ -925,9 +987,18 @@ async function initLpmImageSlider(modal, data) {
     
     // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
-      const uid = String(data?.id||'').trim();
-      // count lpm-open on modal show (server resolves alias → ULID)
-      try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+      // count lpm-open only when we truly have a ULID (avoid /hit 400 spam)
+      // use data.id/data.locationID; fallback to the button’s stamped ULID
+      const uid0 = String(data?.id || data?.locationID || '').trim();
+      const fromOrigin = String(originEl?.getAttribute?.('data-canonical-id') || '').trim(); // read stamped ULID from the clicked button
+      const isULID = (s) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(s);
+      const uid = uid0 || fromOrigin; // accept slug or ULID; only skip empty
+
+      if (uid) {
+        try {
+          await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method: 'POST', keepalive: true });
+        } catch {}
+      }
     })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
@@ -935,7 +1006,9 @@ async function initLpmImageSlider(modal, data) {
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
     // helper placed before first use: avoids ReferenceError in some engines
     function initSaveButtons(primaryBtn, secondaryBtn){
-      const id = String(data?.id || data?.locationID || '');
+      // strict on write: only ULID ids participate in state/beacons (2 lines)
+      const idRaw = String(data?.id || data?.locationID || '');
+      const id = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(idRaw) ? idRaw : '';
       const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
       const lat = Number(data?.lat), lng = Number(data?.lng);
       const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
@@ -946,6 +1019,9 @@ async function initLpmImageSlider(modal, data) {
         btn.setAttribute('aria-pressed', String(saved));
         btn.classList.add('icon-btn');
       };
+      
+      /* migrate once: saved:<alias> → saved:<ULID> (2 lines) */
+      if (id && data?._alias && localStorage.getItem(`saved:${data._alias}`) === '1') { try { localStorage.setItem(`saved:${id}`, '1'); } catch {} }
 
       const readSaved = () => (id && localStorage.getItem(`saved:${id}`) === '1');
       const writeState = (saved) => {
@@ -1023,7 +1099,7 @@ async function initLpmImageSlider(modal, data) {
         if (missingLinks || missingContact || websiteMissing) {
           try {
             const id = String(data?.id || data?.locationID || '').trim();
-            if (id) {
+            if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id)) {
               const resp = await fetch(
                 API(`/api/data/profile?id=${encodeURIComponent(id)}`),
                 { cache: 'no-store', credentials: 'include' }
@@ -1320,10 +1396,15 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // prefer stable profile id; avoid transient loc_*
-  // keep: small comment; 2 lines max
-  // ULID-only: stamp canonical id (fallbacks removed; 2 lines max)
-  btn.setAttribute('data-id', String(loc.locationID || '').trim());
+  // ULID-only: scan common canonical keys; stamp both attrs when found
+  (() => {
+    const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
+    const keys=['locationID','ULID','ulid','ID','id','canonicalID','canonicalId'];
+    const pick=(o,k)=>String((o&&o[k])||'').trim();
+    const canon=keys.map(k=>pick(loc,k)).find(s=>ULID.test(s))||'';
+    if (canon){ btn.setAttribute('data-id', canon); btn.setAttribute('data-canonical-id', canon); }
+  })();
+
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
   
@@ -2706,7 +2787,10 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
-      a.href = `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(String(id||'').trim())}?to=${encodeURIComponent(r.href)}`; // server counts on redirect
+      const uid = String(id || '').trim();
+      a.href = uid
+        ? `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(uid)}?to=${encodeURIComponent(r.href)}`
+        : r.href;  // fallback: open direct when ULID is not yet known
       a.target = '_blank'; a.rel = 'noopener';
       // uniform row: 20×20 icon + text; no icon-only centering
       a.innerHTML =
