@@ -225,6 +225,10 @@ export function createLocationProfileModal(data, injected = {}) {
     inner.appendChild(rate);
   }
 
+  // ▸ Footer (pinned): primary (🎯 📅 ⋮) + secondary (ℹ️ 📤 ⭐ 🍎 🧭 📍)
+  // keep: accessible labels; emoji-first layout (compact via CSS)
+  const footer = document.createElement('div');
+  footer.className = 'modal-footer cta-compact';
   // ▸ Footer (pinned): primary (🏷️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // define footer first
   const footer = document.createElement('div');
   footer.className = 'modal-footer cta-compact';
@@ -295,9 +299,9 @@ export function createLocationProfileModal(data, injected = {}) {
  * @param {Object} data  – same shape as factory
  */
 export async function showLocationProfileModal(data) {
-  // keep ULID canonical; do not overwrite with slug
-  const locULID = String(data?.locationID || '').trim();
-  const lpmId   = String(data?.id || locULID).trim(); // used only for LPM beacons/fallback
+  // prefer stable profile id; accept alias or ULID and pass through
+  const _id = String(data?.locationID || data?.id || '').trim();
+  data.locationID = _id; data.id = _id;
 
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
@@ -309,7 +313,7 @@ export async function showLocationProfileModal(data) {
   // 3. Append to body (hidden by default)
   document.body.appendChild(modal);
 
-  // Prefetch cover fast; avoid placeholder first paint
+  // Prefetch cover fast; avoid placeholder first paint (2 lines of comments).
   ;(async () => {
     try {
       // use locationID fallback; avoids bad loc_* lookups
@@ -807,7 +811,7 @@ async function initLpmImageSlider(modal, data) {
           if (email) { const p = document.createElement('p'); p.textContent = email; inner.appendChild(p); }
           if (!inner.children.length) { const p = document.createElement('p'); p.textContent = ''; inner.appendChild(p); } // no labels
 
-          // 🔳 append QR row under Info, then existing inner
+          // append QR row under Info, then existing inner       // 2 lines max
           const qrRow = document.createElement('div');
           qrRow.className = 'modal-menu-list';
           qrRow.innerHTML = `
@@ -818,7 +822,7 @@ async function initLpmImageSlider(modal, data) {
           inner.appendChild(qrRow);
           body.appendChild(inner);
 
-          // open the same QR modal as before (moved here)
+          // open the same QR modal as before (moved here)        // 2 lines max
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
             const uid = String(data?.id || data?.locationID || '').trim();
@@ -925,79 +929,57 @@ async function initLpmImageSlider(modal, data) {
     
     // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
-      // count lpm-open using id (ULID or slug) with a strict fallback to locationID
-      const idOrSlug = String(data?.id || data?.locationID || '').trim();
-      if (!idOrSlug) return; // never post empty path
-      try {
-        await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true });
-      } catch (err) { console.warn('lpm-open tracking failed', err); }
+      const uid = String(data?.id||'').trim();
+      // count lpm-open on modal show (server resolves alias → ULID)
+      try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
     })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)
-    // helper placed before first use: avoids ReferenceError in some engines
-    function initSaveButtons(primaryBtn, secondaryBtn){
-      const id = String(data?.id || data?.locationID || '');
-      const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
-      const lat = Number(data?.lat), lng = Number(data?.lng);
-      const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+    const btnSave = modal.querySelector('#lpm-save');
+    if (btnSave) {
+      btnSave.classList.add('icon-btn'); // square icon button size
+      const flip = (saved) => { btnSave.textContent = saved ? '✩' : '⭐'; };
+      // init icon from storage (if LPM opened again)
+      {
+        const id0 = String(data?.id || data?.locationID || '');
+        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
+        flip(saved0);
+      }
+      btnSave.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
+        const lat = Number(data?.lat), lng = Number(data?.lng);
+        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
 
-      const flip = (btn, saved) => {
-        if (!btn) return;
-        btn.textContent = saved ? '✩' : '⭐';
-        btn.setAttribute('aria-pressed', String(saved));
-        btn.classList.add('icon-btn');
-      };
+        const key = `saved:${id}`;
+        const was = localStorage.getItem(key) === '1';
+        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
 
-      const readSaved = () => (id && localStorage.getItem(`saved:${id}`) === '1');
-      const writeState = (saved) => {
-        try {
-          localStorage.setItem(`saved:${id}`, saved ? '1' : '0');
-          const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
-          const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
-          if (saved) next.unshift(entry);
+        if (was) {
           localStorage.setItem('savedLocations', JSON.stringify(next));
-        } catch {}
-      };
-
-      // init both buttons
-      const init = readSaved();
-      flip(primaryBtn, init);
-      flip(secondaryBtn, init);
-
-      let busy = false;
-      const toggle = async () => {
-        if (!id || busy) { if (!id) showToast('Missing id', 1600); return; }
-        busy = true;
-        try {
-          const was = readSaved();
-          const now = !was;
-          writeState(now);
-          flip(primaryBtn, now);
-          flip(secondaryBtn, now);
-          showToast(now ? 'Saved' : 'Removed from Saved', 1600);
-
-          // ULID-gated beacon — recompute per click
-          const uid = String(data?.id || data?.locationID || '').trim();
-          if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-            try {
-              await fetch(`${TRACK_BASE}/hit/${now ? 'save' : 'unsave'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
-            } catch {}
-          }
-        } finally { busy = false; }
-      };
-
-      primaryBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggle(); });
-      secondaryBtn?.addEventListener('click', (e)=>{ e.preventDefault(); toggle(); });
+          localStorage.setItem(key, '0');
+          flip(false); showToast('Removed from Saved', 1600);
+          ;(async()=>{ 
+            const uid = String(data?.id||'').trim();
+            if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+              try { await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+            }
+          })();
+        } else {
+          next.unshift(entry);
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '1');
+          flip(true); showToast('Saved', 1600);
+          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/save/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+        }
+      });
     }
 
-    initSaveButtons(
-      modal.querySelector('#lpm-save'),
-      modal.querySelector('#som-save')
-    );
-
-    // 🌍 Social Channels — open social modal (capture to beat other handlers)
+    // 🎉 Social Channels — open social modal (capture to beat other handlers)
     const socialBtn = modal.querySelector('#som-social');
     if (socialBtn) {
       socialBtn.addEventListener('click', async (e) => {
@@ -1147,7 +1129,47 @@ async function initLpmImageSlider(modal, data) {
       }
     })();
 
-    // ⭐ Save (secondary) handled by helper
+    // ⭐ Save (secondary) → same toggle + icon flip (⭐ ↔ ✩)
+    const save2 = modal.querySelector('#som-save');
+    if (save2) {
+      save2.classList.add('icon-btn'); // square icon button size
+      const flip2 = (saved) => { save2.textContent = saved ? '✩' : '⭐'; };
+      {
+        const id0 = String(data?.id || data?.locationID || '');
+        const saved0 = id0 && localStorage.getItem(`saved:${id0}`) === '1';
+        flip2(saved0);
+      }
+      save2.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = String(data?.id || data?.locationID || ''); if (!id) { showToast('Missing id', 1600); return; }
+        const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
+        const lat = Number(data?.lat), lng = Number(data?.lng);
+        const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
+
+        const key = `saved:${id}`;
+        const was = localStorage.getItem(key) === '1';
+        const arr = JSON.parse(localStorage.getItem('savedLocations') || '[]');
+        const next = Array.isArray(arr) ? arr.filter(x => String(x.id) !== id) : [];
+
+        if (was) {
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '0');
+          flip2(false); showToast('Removed from Saved', 1600);
+          ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+        } else {
+          next.unshift(entry);
+          localStorage.setItem('savedLocations', JSON.stringify(next));
+          localStorage.setItem(key, '1');
+          flip2(true); showToast('Saved', 1600);
+          ;(async()=>{ 
+            const uid = String(data?.id||'').trim();
+            if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+              try { await fetch(`${TRACK_BASE}/hit/${was?'unsave':'save'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+            }
+          })();
+        }
+      });
+    }
 
     // 📤 Share (placeholder; OS share → clipboard fallback)
     const shareBtn = modal.querySelector('#som-share');
@@ -1323,14 +1345,10 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // prefer ULID; if absent, take slug/alias from id/ID (no model pollution)
-  {
-    const raw = String(loc.locationID || loc.ID || loc.id || '').trim();
-    const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
-    btn.setAttribute('data-id', uid);
-    if (!uid) btn.setAttribute('data-alias', raw);
-  }
-
+  // prefer stable profile id; avoid transient loc_*
+  // keep: small comment; 2 lines max
+  // ULID-only: stamp canonical id (fallbacks removed; 2 lines max)
+  btn.setAttribute('data-id', String(loc.locationID || '').trim());
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
   
@@ -1353,8 +1371,6 @@ function makeLocationButton(loc) {
   // Always open LPM on click (coords optional)
   btn.addEventListener('click', (e) => {
     e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation(); // prevent duplicate opens/reopens on rebuilds
 
     // Build gallery from loc.media; always pass profiles.json cover+images for slider
     const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
@@ -1371,13 +1387,10 @@ function makeLocationButton(loc) {
     if (!cover) { console.warn('Data error: cover required', loc?.locationID || loc?.ID || loc?.id); return; } // allow 1+ images
 
     // Open the Location Profile Modal; include contact + links for CTAs
-    // pass ULID if present, else slug only to LPM; ULID remains canonical
-    {
-      const uid = String(btn.getAttribute('data-id') || '').trim();
-      const alias = String(btn.getAttribute('data-alias') || '').trim();
-      showLocationProfileModal({
-        locationID: uid,
-        id: uid || alias,
+    // ULID-only: pass the canonical id under both keys (2 lines max)
+    showLocationProfileModal({
+      locationID: btn.getAttribute('data-id'),
+      id: btn.getAttribute('data-id'),
       name: btn.textContent,
       lat, lng,
       imageSrc: cover,
@@ -2055,21 +2068,6 @@ export function showFavoritesModal() {
       const next = saved.filter(s => String(s.id) !== String(item.id));
       save(next);
 
-      // ULID-gated unsave beacon (Favorites ✖)
-      {
-        // try item.id; if not ULID, attempt to reuse saved LPM id when present
-        let uid = String(item?.id || item?.locationID || item?.ID || '').trim();
-        if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-          const el = document.querySelector(`[data-id="${CSS.escape(String(item?.id||''))}"]`);
-          if (el) uid = String(el.getAttribute('data-id') || '').trim();
-        }
-        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-          (async()=>{ try {
-            await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
-          } catch {} })();
-        }
-      }
-
       // clear LPM toggle marker(s) so LPM shows ⭐ after delete
       const ids = [
         String(item?.id || ''),
@@ -2642,14 +2640,14 @@ export function createHelpModal() {
 }
 
 // ============================
-// 🌍 Social Channels modal (MODULE-SCOPED)
-// Reason: make callable from 🌍 handler; same shell as Navigation; no footer.
+// 🎉 Social Channels modal (MODULE-SCOPED)
+// Reason: make callable from 🎉 handler; same shell as Navigation; no footer.
 // ============================
 export function createSocialModal({ name, links = {}, contact = {}, id }) { // id for analytics
   const modalId = 'social-modal'; // avoid param shadow
   document.getElementById(modalId)?.remove(); // remove canonical social modal
 
-  // local helpers
+  // local helpers (2 lines each)
   const normUrl = (u) => {
     const s = String(u || '').trim(); if (!s) return '';
     return /^(?:https?:)?\/\//i.test(s) ? s : (s.startsWith('www.') || s.includes('.') ? 'https://' + s : s);
