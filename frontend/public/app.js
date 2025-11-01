@@ -299,7 +299,7 @@ function renderPopularGroup(list = geoPoints) {
       const cover = (media.cover && String(media.cover).trim()) || images[0];
 
       // guard for strict data model
-      if (!cover) { console.warn('Data error: cover required'); return; }
+      if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
       // stamp ULID from current record; preserve slug in data-id
       const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
@@ -1177,9 +1177,8 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      const uid   = String(it?.locationID || '').trim();        // ULID when resolved
-      const alias = String(it?.id || it?.ID || '').trim();      // keep slug as fallback
-      const locationID = uid || alias;                          // prefer ULID, else slug
+      const uid = String(it?.locationID || '').trim();        // ULID-only from Worker
+      const locationID = uid; const legacyId = '';            // no alias in client
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1269,7 +1268,7 @@ async function initEmergencyBlock(countryOverride) {
 
           const cover = (media.cover && String(media.cover).trim()) || images[0];
           // guard: strict data contract (hero + ≥2); no placeholders
-          if (!cover) { console.warn('Data error: cover required'); return; }
+          if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
           const cc = String(rec["Coordinate Compound"] || rec.coord || "");
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
