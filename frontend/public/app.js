@@ -299,7 +299,7 @@ function renderPopularGroup(list = geoPoints) {
       // guard for strict data model; 2 lines max
       if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
-      // normalize to ULID: prefer data-id, then locationID/id/ID; do not call modal without ULID
+      // normalize id from data-id; allow ULID or alias (slug). Still bail if empty.
       const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
 
       if (!uid) { console.warn('Data error: id missing'); return; } // minimal guard
