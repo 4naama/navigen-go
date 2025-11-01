@@ -324,6 +324,15 @@ async function canonicalizeId(input, originEl){
     if (ULID.test(fromList)) { __canonCache.set(s, fromList); return fromList; }
   } catch {}
 
+  // 3) Profile fallback (single item): try to promote alias → ULID if Worker knows it
+  try {
+    const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(s)}`), { cache:'no-store', credentials:'include' });
+    if (r.ok) {
+      const p = await r.json().catch(()=> ({}));
+      const got = String(p?.id || p?.locationID || '').trim();
+      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(got)) { __canonCache.set(s, got); return got; }
+    }
+  } catch {}
   __canonCache.set(s, '');
   return '';
 }
