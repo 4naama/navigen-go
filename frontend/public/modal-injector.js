@@ -309,7 +309,7 @@ export async function showLocationProfileModal(data) {
   // 3. Append to body (hidden by default)
   document.body.appendChild(modal);
 
-  // Prefetch cover fast; avoid placeholder first paint (2 lines of comments).
+  // Prefetch cover fast; avoid placeholder first paint
   ;(async () => {
     try {
       // use locationID fallback; avoids bad loc_* lookups
@@ -925,17 +925,12 @@ async function initLpmImageSlider(modal, data) {
     
     // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
-      // count lpm-open using either ULID or slug (no 400s)
+      // count lpm-open using id (ULID or slug) with a strict fallback to locationID
       const idOrSlug = String(data?.id || data?.locationID || '').trim();
-      if (!idOrSlug) return;
+      if (!idOrSlug) return; // never post empty path
       try {
-        await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, {
-          method: 'POST',
-          keepalive: true
-        });
-      } catch (err) {
-        console.warn('lpm-open tracking failed', err);
-      }
+        await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true });
+      } catch (err) { console.warn('lpm-open tracking failed', err); }
     })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
@@ -1328,13 +1323,14 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // prefer ULID; keep slug in data-alias for LPM-only beacons
+  // prefer ULID; if absent, take slug/alias from id/ID (no model pollution)
   {
-    const raw = String(loc.locationID || '').trim();
+    const raw = String(loc.locationID || loc.ID || loc.id || '').trim();
     const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
     btn.setAttribute('data-id', uid);
     if (!uid) btn.setAttribute('data-alias', raw);
   }
+
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
   
@@ -1357,6 +1353,8 @@ function makeLocationButton(loc) {
   // Always open LPM on click (coords optional)
   btn.addEventListener('click', (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation(); // prevent duplicate opens/reopens on rebuilds
 
     // Build gallery from loc.media; always pass profiles.json cover+images for slider
     const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
@@ -2651,7 +2649,7 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
   const modalId = 'social-modal'; // avoid param shadow
   document.getElementById(modalId)?.remove(); // remove canonical social modal
 
-  // local helpers (2 lines each)
+  // local helpers
   const normUrl = (u) => {
     const s = String(u || '').trim(); if (!s) return '';
     return /^(?:https?:)?\/\//i.test(s) ? s : (s.startsWith('www.') || s.includes('.') ? 'https://' + s : s);

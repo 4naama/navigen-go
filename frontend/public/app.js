@@ -106,7 +106,7 @@ function getUserLang() {
 
 const BACKEND_URL = "https://navigen-go.onrender.com";
 
-// ULID checker: keep client ULID-only (2 lines)
+// ULID checker: keep client ULID-only
 const isUlid = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
 
 // ✅ Stripe Block
@@ -1164,8 +1164,10 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      const uid = String(it?.locationID || '').trim();        // ULID-only from Worker
-      const locationID = uid; const legacyId = '';            // no alias in client
+      // preserve ULID AND keep original alias/slug for LPM beacons
+      const uid   = String(it?.locationID || '').trim();
+      const alias = String(it?.id || '').trim();              // cloudflare alias/slug (never missing by design)
+      const locationID = uid;
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1181,8 +1183,9 @@ async function initEmergencyBlock(countryOverride) {
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
 
       return {
-        locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
-        id: locationID,                           // legacy .id also mirrors ULID
+        locationID: locationID, ID: locationID,         // ULID stays canonical
+        id: (uid || alias),                              // ULID if present, else slug for LPM beacons
+        alias,                                           // expose alias for Popular buttons only
 
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
