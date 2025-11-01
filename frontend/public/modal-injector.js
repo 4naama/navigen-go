@@ -225,10 +225,6 @@ export function createLocationProfileModal(data, injected = {}) {
     inner.appendChild(rate);
   }
 
-  // ▸ Footer (pinned): primary (🎯 📅 ⋮) + secondary (ℹ️ 📤 ⭐ 🍎 🧭 📍)
-  // keep: accessible labels; emoji-first layout (compact via CSS)
-  const footer = document.createElement('div');
-  footer.className = 'modal-footer cta-compact';
   // ▸ Footer (pinned): primary (🏷️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // define footer first
   const footer = document.createElement('div');
   footer.className = 'modal-footer cta-compact';
