@@ -514,7 +514,20 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
 
     // Apply flat 1px tinted border to group children, no background styling
     sibling.querySelectorAll('button').forEach(locBtn => {
-      // keep styling
+      // stamp ULID onto buttons; then keep styling
+      (() => {
+        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        const idAttr = locBtn.getAttribute('data-id');           // may be slug
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(idAttr))
+          : null;
+        const uid = String(rec?.locationID || rec?.ID || rec?.id || '').trim();
+        if (ULID.test(uid)) {
+          // make buttons emit ULID everywhere
+          locBtn.setAttribute('data-id', uid);
+          locBtn.setAttribute('data-canonical-id', uid);
+        }
+      })();
       locBtn.classList.add('quick-button', 'location-button');
       locBtn.style.border = '1px solid var(--group-color-ink)';
       locBtn.style.backgroundColor = 'transparent';
