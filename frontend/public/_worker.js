@@ -302,7 +302,12 @@ async function handleList(req, env, url, extraHdr){
 
   // Load canonical dataset (read-only); return empty list if not found
   const resp = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
-  const profiles = resp.ok ? await resp.json() : { locations: [] }; // fallback: empty list
+  let profiles;
+  try {
+    profiles = resp.ok ? await resp.json() : { locations: [] }; // fallback: empty list
+  } catch {
+    profiles = { locations: [] }; // tolerate malformed JSON → no crash
+  }
 
   let rows = Array.isArray(profiles?.locations) ? profiles.locations : [];
 
@@ -446,7 +451,7 @@ async function handleProfile(req, env, url, extraHdr){
   const id = url.searchParams.get('id')||''; if(!id) return new Response('Bad Request',{status:400});
   const r = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
   if (!r.ok) return new Response('Data load error', { status: 500 });
-  const profiles = await r.json();
+  let profiles; try { profiles = await r.json(); } catch { profiles = { locations: [] }; }
   const p = (Array.isArray(profiles?.locations) ? profiles.locations : [])
     .find(x => String(x.locationID || x.ID || x.id) === String(id));
   if(!p) return new Response('Not Found',{status:404});
