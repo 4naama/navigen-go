@@ -986,10 +986,17 @@ async function initLpmImageSlider(modal, data) {
     
     // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
-      const uid = String(data?.id||'').trim();
       // count lpm-open only when we truly have a ULID (avoid /hit 400 spam)
-      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-        try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {}
+      // use data.id/data.locationID; fallback to the button’s stamped ULID
+      const uid0 = String(data?.id || data?.locationID || '').trim();
+      const fromOrigin = String(originEl?.getAttribute?.('data-canonical-id') || '').trim(); // read stamped ULID from the clicked button
+      const isULID = (s) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(s);
+      const uid = isULID(uid0) ? uid0 : (isULID(fromOrigin) ? fromOrigin : '');
+
+      if (uid) {
+        try {
+          await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method: 'POST', keepalive: true });
+        } catch {}
       }
     })();
 
