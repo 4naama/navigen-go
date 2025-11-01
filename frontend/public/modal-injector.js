@@ -7,7 +7,8 @@ const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
 function _track(locId, event, action) { // resolve → ULID; map legacy 'route' → 'map'
   (async () => {
-    const uid = String(locId || '').trim(); if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) return;
+    // accept slug or ULID — only skip if empty
+    const uid = String(locId || '').trim(); if (!uid) return;
     const ev0 = String(event || '').toLowerCase().replaceAll('_','-');
     const ev  = (ev0 === 'route') ? 'map' : ev0; // Worker allows 'map', not 'route'
     const payload = {
@@ -302,30 +303,18 @@ async function canonicalizeId(input, originEl){
   const dom = (originEl?.getAttribute?.('data-canonical-id') || '').trim();
   if (ULID.test(dom)) { __canonCache.set(s, dom); return dom; }
 
-  // 2) Worker list fallback (load once, build alias→ULID map) — include context from path
+  // 2) Worker list fallback (load once, build alias→ULID map)
   try {
     if (!__listMapPromise) {
       __listMapPromise = (async () => {
-        // derive ACTIVE_PAGE like app.js: strip /{lang}/ and trailing slash
-        const ctx = location.pathname
-          .replace(/^\/[a-z]{2}(?:-[A-Za-z]{2})?\//i, '/')
-          .replace(/^\/+/, '')
-          .replace(/\/+$/, '')
-          .toLowerCase();
-
-        const url = new URL('/api/data/list', 'https://navigen-api.4naama.workers.dev');
-        if (ctx) url.searchParams.set('context', ctx);
-        url.searchParams.set('limit', '99');
-
-        const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
+        const res = await fetch(API('/api/data/list'), { cache:'no-store', credentials:'include' });
         if (!res.ok) return new Map();
-
         const j = await res.json().catch(() => ({}));
         const items = Array.isArray(j?.items) ? j.items : [];
         const map = new Map();
         for (const it of items) {
           const uid = String(it?.id || it?.locationID || '').trim();
-          const alias = String(it?.alias || it?.slug || '').trim();
+          const alias = String(it?.alias || it?.slug || it?.locationID || '').trim();
           if (ULID.test(uid) && alias) map.set(alias, uid);
         }
         return map;
@@ -1003,7 +992,7 @@ async function initLpmImageSlider(modal, data) {
       const uid0 = String(data?.id || data?.locationID || '').trim();
       const fromOrigin = String(originEl?.getAttribute?.('data-canonical-id') || '').trim(); // read stamped ULID from the clicked button
       const isULID = (s) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(s);
-      const uid = isULID(uid0) ? uid0 : (isULID(fromOrigin) ? fromOrigin : '');
+      const uid = uid0 || fromOrigin; // accept slug or ULID; only skip empty
 
       if (uid) {
         try {
