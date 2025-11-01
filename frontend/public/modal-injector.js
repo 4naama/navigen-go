@@ -324,6 +324,15 @@ async function canonicalizeId(input, originEl){
     if (ULID.test(fromList)) { __canonCache.set(s, fromList); return fromList; }
   } catch {}
 
+  // 3) Profile fallback (single item): try to promote alias → ULID if Worker knows it
+  try {
+    const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(s)}`), { cache:'no-store', credentials:'include' });
+    if (r.ok) {
+      const p = await r.json().catch(()=> ({}));
+      const got = String(p?.id || p?.locationID || '').trim();
+      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(got)) { __canonCache.set(s, got); return got; }
+    }
+  } catch {}
   __canonCache.set(s, '');
   return '';
 }
@@ -814,7 +823,13 @@ async function initLpmImageSlider(modal, data) {
       if (bookingUrl) {
         // native anchor; track only
         // redirect through Worker so booking clicks are counted (server resolves alias)
-        btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
+        const uid = String(data?.id || data?.locationID || '').trim();
+        btnBook.setAttribute(
+          'href',
+          uid
+            ? `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`
+            : bookingUrl // fallback: open direct if we don’t have a canonical id yet
+        );
         btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
       } else {
         btnBook.addEventListener('click', (e) => {
@@ -865,8 +880,10 @@ async function initLpmImageSlider(modal, data) {
           // open the same QR modal as before (moved here)
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
-            const uid = String(data?.id || data?.locationID || '').trim();
-            if (!uid) { showToast('Missing id', 1600); return; }
+            const uid   = String(data?.id || data?.locationID || '').trim();
+            const alias = String(data?._alias || '').trim();
+            const token = uid || alias;                // accept slug when ULID missing
+            if (!token) { showToast('Missing id', 1600); return; }
 
             const id = 'qr-modal'; document.getElementById(id)?.remove();
             const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
@@ -2762,7 +2779,10 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
-      a.href = `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(String(id||'').trim())}?to=${encodeURIComponent(r.href)}`; // server counts on redirect
+      const uid = String(id || '').trim();
+      a.href = uid
+        ? `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(uid)}?to=${encodeURIComponent(r.href)}`
+        : r.href;  // fallback: open direct when ULID is not yet known
       a.target = '_blank'; a.rel = 'noopener';
       // uniform row: 20×20 icon + text; no icon-only centering
       a.innerHTML =
