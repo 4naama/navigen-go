@@ -302,18 +302,30 @@ async function canonicalizeId(input, originEl){
   const dom = (originEl?.getAttribute?.('data-canonical-id') || '').trim();
   if (ULID.test(dom)) { __canonCache.set(s, dom); return dom; }
 
-  // 2) Worker list fallback (load once, build alias→ULID map)
+  // 2) Worker list fallback (load once, build alias→ULID map) — include context from path
   try {
     if (!__listMapPromise) {
       __listMapPromise = (async () => {
-        const res = await fetch(API('/api/data/list'), { cache:'no-store', credentials:'include' });
+        // derive ACTIVE_PAGE like app.js: strip /{lang}/ and trailing slash
+        const ctx = location.pathname
+          .replace(/^\/[a-z]{2}(?:-[A-Za-z]{2})?\//i, '/')
+          .replace(/^\/+/, '')
+          .replace(/\/+$/, '')
+          .toLowerCase();
+
+        const url = new URL('/api/data/list', 'https://navigen-api.4naama.workers.dev');
+        if (ctx) url.searchParams.set('context', ctx);
+        url.searchParams.set('limit', '99');
+
+        const res = await fetch(url.toString(), { cache: 'no-store', credentials: 'include' });
         if (!res.ok) return new Map();
+
         const j = await res.json().catch(() => ({}));
         const items = Array.isArray(j?.items) ? j.items : [];
         const map = new Map();
         for (const it of items) {
           const uid = String(it?.id || it?.locationID || '').trim();
-          const alias = String(it?.alias || it?.slug || it?.locationID || '').trim();
+          const alias = String(it?.alias || it?.slug || '').trim();
           if (ULID.test(uid) && alias) map.set(alias, uid);
         }
         return map;
