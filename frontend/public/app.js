@@ -106,7 +106,7 @@ function getUserLang() {
 
 const BACKEND_URL = "https://navigen-go.onrender.com";
 
-// ULID checker: keep client ULID-only (2 lines)
+// ULID checker: keep client ULID-only
 const isUlid = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
 
 // ✅ Stripe Block
@@ -265,7 +265,7 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    // keep slug for UX; stamp canonical ULID for logic (2 lines)
+    // keep slug for UX; stamp canonical ULID for logic
     btn.setAttribute("data-id", String(loc.ID || loc.id || '').trim());             // slug (human-readable)
     btn.setAttribute("data-canonical-id", String(loc.locationID || '').trim());     // ULID (strict write)
 
@@ -298,18 +298,24 @@ function renderPopularGroup(list = geoPoints) {
       // Use explicit cover first, then first image; never use placeholders
       const cover = (media.cover && String(media.cover).trim()) || images[0];
 
-      // guard for strict data model; 2 lines max
-      if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
+      // guard for strict data model
+      if (!cover) { console.warn('Data error: cover required'); return; }
 
-      // strict on write: ULID for logic; keep slug as alias (2 lines)
-      const alias = String(btn.getAttribute('data-id') || '').trim();                     // slug
-      const uid   = String(btn.getAttribute('data-canonical-id') || '').trim();           // ULID
+      // stamp ULID from current record; preserve slug in data-id
+      const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
+      const cands=[String(loc?.locationID||''),String(loc?.ID||''),String(loc?.id||'')].map(s=>s.trim());
+      const uid0=cands.find(s=>ULID.test(s))||'';
+      if (uid0) btn.setAttribute('data-canonical-id', uid0);
 
-      if (!uid) { console.warn('Data error: id missing'); return; } // minimal guard
-      // allow alias or ULID; Worker resolves aliases safely
+      // strict on write: keep alias as slug; use uid0 for ULID logic
+      const alias = String(btn.getAttribute('data-id') || '').trim(); // slug (unchanged)
+      const uid   = uid0;                                             // ULID (from data)
+
+      // allow opening with slug; save/unsave remain ULID-gated
+      if (!uid) { console.warn('Data note: canonical id missing (opening with slug)'); }
 
       showLocationProfileModal({
-        // ULID-only in logic; carry slug for UI/migration (2 lines)
+        // ULID-only in logic; carry slug for UI/migration
         locationID: uid, id: uid, _alias: alias,
         displayName: locLabel, name: locLabel,
         lat, lng,
@@ -513,7 +519,20 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
 
     // Apply flat 1px tinted border to group children, no background styling
     sibling.querySelectorAll('button').forEach(locBtn => {
-      // keep styling
+      // stamp ULID onto buttons; then keep styling
+      (() => {
+        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        const idAttr = locBtn.getAttribute('data-id');           // may be slug
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String(x?.locationID || x?.ID || x?.id) === String(idAttr))
+          : null;
+        const uid = String(rec?.locationID || rec?.ID || rec?.id || '').trim();
+        if (ULID.test(uid)) {
+          // make buttons emit ULID everywhere
+          locBtn.setAttribute('data-id', uid);
+          locBtn.setAttribute('data-canonical-id', uid);
+        }
+      })();
       locBtn.classList.add('quick-button', 'location-button');
       locBtn.style.border = '1px solid var(--group-color-ink)';
       locBtn.style.backgroundColor = 'transparent';
@@ -1158,8 +1177,10 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      const uid = String(it?.locationID || '').trim();        // ULID-only from Worker
-      const locationID = uid; const legacyId = '';            // no alias in client
+      const uid   = String(it?.locationID || '').trim();      // ULID when present
+      const alias = String(it?.id || it?.ID || '').trim();    // slug fallback from content
+      const locationID = uid || alias;                         // prefer ULID, else slug
+      const legacyId   = alias;                                // keep original alias for UI
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1176,7 +1197,7 @@ async function initEmergencyBlock(countryOverride) {
 
       return {
         locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
-        id: locationID,                           // legacy .id also mirrors ULID
+        id: locationID,                           // pass a usable id (ULID or slug)
 
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
@@ -1249,7 +1270,7 @@ async function initEmergencyBlock(countryOverride) {
 
           const cover = (media.cover && String(media.cover).trim()) || images[0];
           // guard: strict data contract (hero + ≥2); no placeholders
-          if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
+          if (!cover) { console.warn('Data error: cover required'); return; }
 
           const cc = String(rec["Coordinate Compound"] || rec.coord || "");
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
