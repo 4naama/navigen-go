@@ -925,10 +925,17 @@ async function initLpmImageSlider(modal, data) {
     
     // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
-      // count lpm-open on modal show; use ULID if present, otherwise slug (always defined)
-      const idOrSlug = String(data?.id || data?.locationID || data?.slug || data?.alias || '').trim();
+      // count lpm-open using either ULID or slug (no 400s)
+      const idOrSlug = String(data?.id || data?.locationID || '').trim();
       if (!idOrSlug) return;
-      try { await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true }); } catch {}
+      try {
+        await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, {
+          method: 'POST',
+          keepalive: true
+        });
+      } catch (err) {
+        console.warn('lpm-open tracking failed', err);
+      }
     })();
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
