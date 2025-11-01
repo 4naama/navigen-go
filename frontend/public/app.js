@@ -265,7 +265,10 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    btn.setAttribute("data-id", String(loc.locationID || loc.ID || loc.id || '').trim()); // accept locationID / ID / id
+    const rawId = String(loc.locationID || loc.ID || loc.id || '').trim();            // raw id or slug
+    const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
+    btn.setAttribute('data-id', uid);                                                 // ULID for tracking
+    btn.setAttribute('data-alias', rawId);                                            // slug/alias fallback
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
@@ -299,14 +302,14 @@ function renderPopularGroup(list = geoPoints) {
       // guard for strict data model; 2 lines max
       if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
 
-      // normalize to ULID: prefer data-id, then locationID/id/ID; do not call modal without ULID
-      const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
+      // prefer ULID from data-id; fallback to slug/alias when ULID is absent
+      const uid   = String(btn.getAttribute('data-id') || '').trim();      // ULID if present
+      const alias = String(btn.getAttribute('data-alias') || '').trim();   // slug/alias
 
-      if (!uid) { console.warn('Data error: id missing'); return; } // minimal guard
-      // allow alias or ULID; Worker resolves aliases safely
+      if (!uid && !alias) { console.warn('Data error: id missing'); return; } // need at least one
 
       showLocationProfileModal({
-        locationID: uid, id: uid,              // ULID only
+        locationID: uid, id: uid || alias,     // pass ULID or slug (server counts both)
         displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
@@ -1251,7 +1254,8 @@ async function initEmergencyBlock(countryOverride) {
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
           showLocationProfileModal({
-            id: String(rec?.locationID || ''),
+            locationID: String(rec?.locationID || rec?.ID || rec?.id || ''), // prefer ULID, fallback to slug
+            id: String(rec?.locationID || rec?.ID || rec?.id || ''),         // pass same value for compatibility
             name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim() || "Unnamed",
             lat, lng,
             imageSrc: cover,
