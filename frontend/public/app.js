@@ -266,8 +266,11 @@ function renderPopularGroup(list = geoPoints) {
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
     // keep slug for UX; stamp canonical ULID for logic
-    btn.setAttribute("data-id", String(loc.ID || loc.id || '').trim());             // slug (human-readable)
-    btn.setAttribute("data-canonical-id", String(loc.locationID || '').trim());     // ULID (strict write)
+    // ensure both ids are stamped; fallback to locationID if slug is empty
+    const slug = String(loc.ID || loc.id || '').trim();
+    const uid  = String(loc.locationID || '').trim();
+    btn.setAttribute('data-id', slug || uid);              // use slug first, else ULID
+    btn.setAttribute('data-canonical-id', uid || slug);    // prefer ULID; else slug
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
