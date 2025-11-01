@@ -275,8 +275,9 @@
           }
         ]
       },
-      "descriptions": {},
-      "hours": {},
+      "descriptions": {
+          "hu": "A Helen Doron módszer a te módszered, ha...\n\nVilágosan látod, milyen fontos, hogy az órákon csak angolul beszéljünk, így gyermeked természetes módon szívja magába az angol nyelvtan szabályait, a jó kiejtéssel és a helyes angol hanglejtéssel.\n\nMegvilágosult szülőként fontosnak tartod gyermeked agyi és mozgásfejlődését is, nemcsak a nyelvi készségeit.\n\nHiszel gyermeked képességeiben, mert a gyerekek magukba szívják a nyelvet még akkor is, ha nem beszélik azt rögtön az elejétől fogva – csak akkor, amikor arra készen állnak.\n\nSzeretnéd, ha gyermeked gond és stressz nélkül kommunikálna angol nyelven szóban és írásban is."
+      },      "hours": {},
       "links": {
         "official": "https://www.angoldebrecen.hu/",
         "facebook": "https://www.facebook.com/HelenDoronDebrecen/",
@@ -5542,7 +5543,7 @@
       "Priority": "Yes",
       "groupKey": "🛒 Shops",
       "subgroupKey": "sub.pharmacy",
-      "context": "pharmacies/hungary;pharmacies/hungary/budapest",
+      "context": "pharmacies/hungary;pharmacies/hungary/budapest;language-schools/helen-doron/hungary",
       "coord": {
         "lat": 47.492389,
         "lng": 19.071666
