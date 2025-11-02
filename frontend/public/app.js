@@ -265,7 +265,7 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    const rawId = String(loc.locationID || loc.ID || loc.id || '').trim();            // raw id or slug
+    const rawId = String(loc.locationID || loc.ID || loc.id || loc.slug || loc.alias || '').trim(); // raw id or slug (fallback to slug/alias)
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
     // slug/alias fallback — follow Accordion: only set when ULID is missing
@@ -1248,8 +1248,8 @@ async function initEmergencyBlock(countryOverride) {
           const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean); // normalize URLs
 
           const cover = (media.cover && String(media.cover).trim()) || images[0];
-          // guard: strict data contract (hero + ≥2); no placeholders
-          if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
+          // guard for strict data model; require cover only (align with Accordion)
+          if (!cover) { console.warn('Data error: cover required'); return; }
 
           const cc = String(rec["Coordinate Compound"] || rec.coord || "");
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
