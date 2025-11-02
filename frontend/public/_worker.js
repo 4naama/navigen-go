@@ -115,15 +115,32 @@ export default {
       return env.ASSETS.fetch(req);
     }
 
-    // /api/track: no redirect; handle missing/invalid target gracefully
+    // /api/track: no redirect; handle missing/invalid target gracefully  // (kept; comment clarified)
     if (url.pathname === '/api/track') {
       const target = url.searchParams.get('target') || '';
       // invalid/missing → just 204 so UI toast informs the user
       if (!/^https?:\/\//i.test(target)) return new Response(null, { status: 204 });
       // optional: log asynchronously here if needed; never redirect to avoid double-open
       return new Response(null, { status: 204 });
-    }        
-    
+    }
+
+    // /hit/lpm-open/:id — accept ULID or slug; resolve via canonicalId before increment  // new: analytics shim
+    if (url.pathname.startsWith('/hit/lpm-open/')) {
+      const raw = url.pathname.split('/').pop() || '';
+      const id = await canonicalId(env, raw); // uses existing helper in this file
+      if (!id) return new Response('Bad Request', { status: 400 });
+      try {
+        // tiny counter: KV_METRICS key "hit:lpm-open:<ULID>" → integer as text
+        const k = `hit:lpm-open:${id}`;
+        const cur = Number(await env.KV_METRICS?.get(k, 'text')) || 0;
+        await env.KV_METRICS?.put(k, String(cur + 1));
+      } catch (err) {
+        // if metrics KV unset, still succeed so UI flow isn’t blocked
+        console.warn('metrics increment failed', err);
+      }
+      return new Response(null, { status: 200 });
+    }
+
     // 401 gate disabled; RL/Bot Fight protect /api/data/*
     if (url.pathname.startsWith('/api/data/')) {
       // Rate limit + dev CORS headers on all API responses
