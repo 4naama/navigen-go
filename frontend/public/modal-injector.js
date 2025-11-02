@@ -927,16 +927,11 @@ async function initLpmImageSlider(modal, data) {
     ;(async () => {
       const idOrSlug = String(data?.id || data?.locationID || '').trim(); // existing source preserved
       if (!idOrSlug) return; // never post empty path
-
-      // Only send beacon if it's a ULID; otherwise just log parity for debugging
-      const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(idOrSlug); // no globals; local-only
+      // Send beacon with ULID or slug — Worker resolves slugs → ULID
       const src =
         originEl && originEl.classList && originEl.classList.contains('popular-button')
           ? 'popular' : 'accordion';
-      console.debug('lpm-open', { id: idOrSlug, src, beacon: isULID ? 'sent' : 'skipped' }); // keep parity signal
-
-      if (!isULID) return; // prevent /hit/* 400 on slug-only ids
-
+      console.debug('lpm-open', { id: idOrSlug, src, beacon: 'sent' });
       try {
         await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true });
       } catch (err) { console.warn('lpm-open tracking failed', err); }
@@ -988,10 +983,10 @@ async function initLpmImageSlider(modal, data) {
           showToast(now ? 'Saved' : 'Removed from Saved', 1600);
 
           // ULID-gated beacon — recompute per click
-          const uid = String(data?.id || data?.locationID || '').trim();
-          if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+          const idOrSlug = String(data?.id || data?.locationID || '').trim();
+          if (idOrSlug) {
             try {
-              await fetch(`${TRACK_BASE}/hit/${now ? 'save' : 'unsave'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+              await fetch(`${TRACK_BASE}/hit/${now ? 'save' : 'unsave'}/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true });
             } catch {}
           }
         } finally { busy = false; }
@@ -2067,15 +2062,11 @@ export function showFavoritesModal() {
 
       // ULID-gated unsave beacon (Favorites ✖)
       {
-        // try item.id; if not ULID, attempt to reuse saved LPM id when present
-        let uid = String(item?.id || item?.locationID || item?.ID || '').trim();
-        if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
-          const el = document.querySelector(`[data-id="${CSS.escape(String(item?.id||''))}"]`);
-          if (el) uid = String(el.getAttribute('data-id') || '').trim();
-        }
-        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+        // send with ULID or slug; Worker resolves slugs → ULID
+        const idOrSlug = String(item?.id || item?.locationID || item?.ID || '').trim();
+        if (idOrSlug) {
           (async()=>{ try {
-            await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+            await fetch(`${TRACK_BASE}/hit/unsave/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true });
           } catch {} })();
         }
       }
