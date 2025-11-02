@@ -1196,43 +1196,38 @@ async function initLpmImageSlider(modal, data) {
     // ⭐ Save (secondary) handled by helper
 
     // 📤 Share (placeholder; OS share → clipboard fallback)
-    ;(async () => {
-      const raw = String(data?.id || data?.locationID || '').trim();
-      if (!raw) return;
-      try {
-        const uid = await resolveULIDFor(raw);
-        if (uid)
-          await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`, {
-            method: 'POST',
-            keepalive: true
-          });
-      } catch {}
-    })();
-    const name = String(data?.name || 'Location');
-    const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
-    const text = coords ? `${name} — ${coords}` : name;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: name, text });
-      } else {
-        await navigator.clipboard.writeText(text);
-        showToast('Copied to clipboard', 1600);
-      }
-    } catch {}
+    const shareBtn = modal.querySelector('#som-share');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
 
-        ;(async()=>{ 
-          const raw = String(data?.id || '').trim(); 
-          if (!raw) return;
-          try { const __uid = await resolveULIDFor(raw); if (__uid) await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(__uid)}`, { method:'POST', keepalive:true }); } catch {}
-        })();
+        // 1) count Share with canonical ULID (slug → ULID)
+        const raw = String(data?.id || data?.locationID || '').trim();
+        if (raw) {
+          try {
+            const uid = await resolveULIDFor(raw);
+            if (uid) {
+              await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`, {
+                method: 'POST',
+                keepalive: true
+              });
+            }
+          } catch {}
+        }
+
+        // 2) then perform the OS share (or clipboard fallback)
         const name = String(data?.name || 'Location');
         const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
         const text = coords ? `${name} — ${coords}` : name;
         try {
-          if (navigator.share) { await navigator.share({ title: name, text }); }
-          else { await navigator.clipboard.writeText(text); showToast('Copied to clipboard', 1600); }
+          if (navigator.share) {
+            await navigator.share({ title: name, text });
+          } else {
+            await navigator.clipboard.writeText(text);
+            showToast('Copied to clipboard', 1600);
+          }
         } catch {}
-      });
+      }, { passive: false });
     }
 
     // × Close → remove modal, return focus to originating trigger if provided
