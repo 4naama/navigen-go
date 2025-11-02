@@ -937,8 +937,19 @@ async function initLpmImageSlider(modal, data) {
           shareBtn.setAttribute('aria-label', 'Share');
           shareBtn.title = 'Share';
           shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
-          shareBtn.onclick = async () => { const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } try {
+          shareBtn.onclick = async () => {
+            // send with canonical ULID to avoid 400 on slug (keep comment, clarify)
+            const raw = String(data?.id || data?.locationID || '').trim();
+            if (raw) {
+              try {
+                const __uid = await resolveULIDFor(raw);
+                if (__uid) {
+                  await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(__uid)}`, { method: 'POST', keepalive: true });
+                }
+              } catch {}
+            }
 
+            try {
               const text = [name, phone, email].filter(Boolean).join('\n');
               if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
               else if (text) { await navigator.clipboard.writeText(text); showToast('Copied to clipboard', 1600); }
@@ -1018,13 +1029,15 @@ async function initLpmImageSlider(modal, data) {
           flip(secondaryBtn, now);
           showToast(now ? 'Saved' : 'Removed from Saved', 1600);
 
-          // ULID-gated beacon — recompute per click
-          const uid = String(data?.id || data?.locationID || '').trim();
-          if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(uid)) {
+          // Resolve slug → ULID before sending; count even when LPM opened from a slug
+          const rawId = String(data?.id || data?.locationID || '').trim();
+          const uid = await resolveULIDFor(rawId);
+          if (uid) {
             try {
-              await fetch(`${TRACK_BASE}/hit/${now ? 'save' : 'unsave'}/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
+              await fetch(`${TRACK_BASE}/hit/${now ? 'save' : 'unsave'}/${encodeURIComponent(uid)}`, { method: 'POST', keepalive: true });
             } catch {}
           }
+
         } finally { busy = false; }
       };
 
@@ -1064,12 +1077,13 @@ async function initLpmImageSlider(modal, data) {
         })();
 
         const rawId = String(data?.id || data?.locationID || '').trim();
-        const canId = (await resolveULIDFor(rawId)) || rawId; // pass canonical when available
+        const canId = await resolveULIDFor(rawId); // only fetch when we have a real ULID
         if (canId) {
           const resp = await fetch(
             API(`/api/data/profile?id=${encodeURIComponent(canId)}`),
             { cache: 'no-store', credentials: 'include' }
           );
+
           if (resp.ok) {
             const payload = await resp.json().catch(() => ({}));
             if (payload && typeof payload === 'object') {
@@ -2782,8 +2796,28 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
     rows.forEach(r => {
       const a = document.createElement('a');
       a.className = 'modal-menu-item';
-      a.href = `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(String(id||'').trim())}?to=${encodeURIComponent(r.href)}`; // server counts on redirect
-      a.target = '_blank'; a.rel = 'noopener';
+      const _id = String(id || '').trim();
+      const _isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(_id);
+
+      // If we already have a ULID, send through /out for counting; otherwise fall back to plain link.
+      a.href = _isULID ? `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(_id)}?to=${encodeURIComponent(r.href)}`
+                       : r.href;
+      a.target = '_blank'; 
+      a.rel = 'noopener';
+
+      // If it's not a ULID, try to resolve on click; if resolved, count via /out, else just open plain.
+      if (!_isULID) {
+        a.add_hook_added__ = true; // avoid double-binding if called twice
+        a.addEventListener('click', async (ev) => {
+          const resolved = await resolveULIDFor(_id);
+          if (resolved) {
+            ev.preventDefault();
+            const url = `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(resolved)}?to=${encodeURIComponent(r.href)}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+          }
+        }, { capture: true });
+      }
+
       // uniform row: 20×20 icon + text; no icon-only centering
       a.innerHTML =
         `<span class="icon-img">` +
