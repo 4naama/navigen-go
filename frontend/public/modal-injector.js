@@ -1064,27 +1064,24 @@ async function initLpmImageSlider(modal, data) {
         })();
 
         const rawId = String(data?.id || data?.locationID || '').trim();
-        const canId = (await resolveULIDFor(rawId)) || rawId;
+        const canId = (await resolveULIDFor(rawId)) || rawId; // pass canonical when available
         if (canId) {
           const resp = await fetch(
             API(`/api/data/profile?id=${encodeURIComponent(canId)}`),
-
-                { cache: 'no-store', credentials: 'include' }
-              );
-              if (resp.ok) {
-                const payload = await resp.json().catch(() => ({}));
-                if (payload && typeof payload === 'object') {
-                  // merge only when absent locally (keep existing values)
-                  if (payload.links && typeof payload.links === 'object') {
-                    links = Object.assign({}, payload.links, links);
-                  }
-                  if (payload.contact && typeof payload.contact === 'object') {
-                    contact = Object.assign({}, payload.contact, contact);
-                  }
-                }
+            { cache: 'no-store', credentials: 'include' }
+          );
+          if (resp.ok) {
+            const payload = await resp.json().catch(() => ({}));
+            if (payload && typeof payload === 'object') {
+              // merge only when absent locally (keep existing values)
+              if (payload.links && typeof payload.links === 'object') {
+                links = Object.assign({}, payload.links, links);
+              }
+              if (payload.contact && typeof payload.contact === 'object') {
+                contact = Object.assign({}, payload.contact, contact);
               }
             }
-          } catch {}
+          }
         }
 
         createSocialModal({
