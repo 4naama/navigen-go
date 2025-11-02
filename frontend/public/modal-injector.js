@@ -2860,7 +2860,7 @@ function createNavigationModal({ name, lat, lng, id }) { // id for analytics
     btn.addEventListener('click', async (e) => {
       e.preventDefault(); e.stopPropagation();
       const rawId = String(id || '').trim();
-      const uid = String(rawId||'').trim(); // ULID-only contract; no resolver
+      const uid = await resolveULIDFor(rawId); // resolve slug → ULID before tracking
       const to = r.href.split('?to=').pop() || '';
       const url = uid ? `${TRACK_BASE}/out/map/${encodeURIComponent(uid)}?to=${to}` : decodeURIComponent(to); // Worker handles redirect + stats
       window.open(url, '_blank', 'noopener,noreferrer'); // open outside the app
