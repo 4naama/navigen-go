@@ -1,22 +1,22 @@
 // analytics: unified endpoint; always use live worker for all environments
 const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
-// Resolve a slug → canonical ULID via stats (single-day); returns '' on failure.
-// Reason: keep ULID canonical across app while allowing slug inputs for LPM/actions.
+// Resolve slug → canonical ULID via stats; returns '' if cannot resolve.
+// keeps ULID canonical across app while allowing slug inputs from UI.
 async function resolveULIDFor(idOrSlug) {
   const s = String(idOrSlug || '').trim();
   const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
   if (!s) return '';
   if (ULID.test(s)) return s;
 
-  const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
-  const today = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+  const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
 
   try {
-    const u = `${TRACK_BASE}/api/stats?locationID=${encodeURIComponent(s)}&from=${iso(today)}&to=${iso(today)}`;
-    const r = await fetch(u, { cache: 'no-store' });
+    const url = `${TRACK_BASE}/api/stats?locationID=${encodeURIComponent(s)}&from=${iso(today)}&to=${iso(today)}`;
+    const r = await fetch(url, { cache: 'no-store' });
     if (!r.ok) return '';
-    const j = await r.json();
+    const j = await r.json().catch(() => null);
     const uid = String(j?.locationID || '').trim();
     return ULID.test(uid) ? uid : '';
   } catch { return ''; }
@@ -789,10 +789,16 @@ async function initLpmImageSlider(modal, data) {
       const bookingUrl = String(data?.links?.bookingUrl || '').trim();
 
       if (bookingUrl) {
-        // native anchor; track only
-        // redirect through Worker so booking clicks are counted (server resolves alias)
-        btnBook.setAttribute('href', `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`);
-        btnBook.setAttribute('target', '_blank'); btnBook.setAttribute('rel', 'noopener');
+        btnBook.removeAttribute('href');
+        btnBook.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const raw = String(data?.id || data?.locationID || '').trim();
+          const uid = await resolveULIDFor(raw);
+          if (!uid) { showToast('Booking link coming soon', 1600); return; }
+          const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }, { capture: true });
+
       } else {
         btnBook.addEventListener('click', (e) => {
           e.preventDefault();
@@ -1057,12 +1063,12 @@ async function initLpmImageSlider(modal, data) {
           return String(site).trim();
         })();
 
-        if (missingLinks || missingContact || websiteMissing) {
-          try {
-            const id = String(data?.id || data?.locationID || '').trim();
-            if (id) {
-              const resp = await fetch(
-                API(`/api/data/profile?id=${encodeURIComponent(id)}`),
+        const rawId = String(data?.id || data?.locationID || '').trim();
+        const canId = (await resolveULIDFor(rawId)) || rawId;
+        if (canId) {
+          const resp = await fetch(
+            API(`/api/data/profile?id=${encodeURIComponent(canId)}`),
+
                 { cache: 'no-store', credentials: 'include' }
               );
               if (resp.ok) {
@@ -1085,7 +1091,7 @@ async function initLpmImageSlider(modal, data) {
           name: String(data?.displayName ?? data?.name ?? 'Location'),
           links,
           contact,
-          id: String(data?.id || data?.locationID || '').trim() // pass LPM id for tracking
+          id: canId // pass LPM id for tracking
         });
       }, { capture: true, passive: false });
     }
@@ -1125,12 +1131,21 @@ async function initLpmImageSlider(modal, data) {
       const a = document.createElement('a');
       a.className = 'modal-footer-button';
       a.id = id;
-      const uid = String(data?.id || data?.locationID || '').trim();
       const act = (action || (id.startsWith('som-') ? id.slice(4) : id)).toLowerCase().replaceAll('_','-');
-      a.href = uid && href ? `${TRACK_BASE}/out/${act}/${encodeURIComponent(uid)}?to=${encodeURIComponent(href)}` : (href || '#');
+      a.href = href;
       a.target = '_blank'; a.rel = 'noopener';
       a.setAttribute('aria-label', label); a.title = label;
       a.innerHTML = `${emoji} <span class="cta-label">${label}</span>`;
+      a.addEventListener('click', async (e) => {
+        try {
+          const raw = String(data?.id || data?.locationID || '').trim();
+          const uid = await resolveULIDFor(raw);
+          if (!uid) return;
+          e.preventDefault();
+          const url = `${TRACK_BASE}/out/${act}/${encodeURIComponent(uid)}?to=${encodeURIComponent(href)}`;
+          window.open(url, '_blank', 'noopener,noreferrer');
+        } catch {}
+      }, { capture: true });
       secondary.appendChild(a);
     };
 
@@ -1184,10 +1199,30 @@ async function initLpmImageSlider(modal, data) {
     // ⭐ Save (secondary) handled by helper
 
     // 📤 Share (placeholder; OS share → clipboard fallback)
-    const shareBtn = modal.querySelector('#som-share');
-    if (shareBtn) {
-      shareBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
+    ;(async () => {
+      const raw = String(data?.id || data?.locationID || '').trim();
+      if (!raw) return;
+      try {
+        const uid = await resolveULIDFor(raw);
+        if (uid)
+          await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`, {
+            method: 'POST',
+            keepalive: true
+          });
+      } catch {}
+    })();
+    const name = String(data?.name || 'Location');
+    const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
+    const text = coords ? `${name} — ${coords}` : name;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: name, text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        showToast('Copied to clipboard', 1600);
+      }
+    } catch {}
+
         ;(async()=>{ 
           const raw = String(data?.id || '').trim(); 
           if (!raw) return;
