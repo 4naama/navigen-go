@@ -1,5 +1,5 @@
-// analytics: unified endpoint; always use live worker for all environments
-const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
+// analytics: unified endpoint; always use live worker for all environments  // clarified: use same-origin Worker
+const TRACK_BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim()) || location.origin;
 
 // cache + resolve alias → ULID via Worker; keeps all beacons canonical
 // ULID-only: client resolver removed; all callers must pass a ULID.
