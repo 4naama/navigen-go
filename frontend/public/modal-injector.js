@@ -923,15 +923,19 @@ async function initLpmImageSlider(modal, data) {
       }
     }    
     
-    // count LPM open (server now resolves slug→ULID via canonicalId; send for ULID or slug)
+    // count LPM open (ULID-only beacon; skip on slug to avoid 400)  // updated comment for clarity
     ;(async () => {
       const idOrSlug = String(data?.id || data?.locationID || '').trim(); // existing source preserved
       if (!idOrSlug) return; // never post empty path
 
+      // Only send beacon if it's a ULID; otherwise just log parity for debugging
+      const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(idOrSlug); // no globals; local-only
       const src =
         originEl && originEl.classList && originEl.classList.contains('popular-button')
           ? 'popular' : 'accordion';
-      console.debug('lpm-open', { id: idOrSlug, src, beacon: 'sent' }); // keep parity signal
+      console.debug('lpm-open', { id: idOrSlug, src, beacon: isULID ? 'sent' : 'skipped' }); // keep parity signal
+
+      if (!isULID) return; // prevent /hit/* 400 on slug-only ids
 
       try {
         await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true });
