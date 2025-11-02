@@ -163,10 +163,10 @@ async function fetchStats() {
   // but keep the stashed ULID available for advanced flows if needed.
   let locId = String((locEl?.value || locEl?.dataset?.canonicalId || '')).trim();
 
-  const idParam = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locId) ? 'locationID' : 'slug'; // ULID → locationID, else slug
+  // Always send locationID=; backend resolves ULID or slug via KV aliases (no client pre-resolution)
   const q = isEntity
     ? new URL(`/api/stats/entity?entityID=${encodeURIComponent(entEl.value)}&from=${from}&to=${to}`, base)
-    : new URL(`/api/stats?${idParam}=${encodeURIComponent(locId)}&from=${from}&to=${to}`, base);
+    : new URL(`/api/stats?locationID=${encodeURIComponent(locId)}&from=${from}&to=${to}`, base);
 
   const res = await fetch(q, { cache: 'no-store' });
   if (!res.ok) {
