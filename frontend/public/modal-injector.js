@@ -1,6 +1,27 @@
 // analytics: unified endpoint; always use live worker for all environments
 const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
+// Resolve a slug → canonical ULID via stats (single-day); returns '' on failure.
+// Reason: keep ULID canonical across app while allowing slug inputs for LPM/actions.
+async function resolveULIDFor(idOrSlug) {
+  const s = String(idOrSlug || '').trim();
+  const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+  if (!s) return '';
+  if (ULID.test(s)) return s;
+
+  const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const today = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+
+  try {
+    const u = `${TRACK_BASE}/api/stats?locationID=${encodeURIComponent(s)}&from=${iso(today)}&to=${iso(today)}`;
+    const r = await fetch(u, { cache: 'no-store' });
+    if (!r.ok) return '';
+    const j = await r.json();
+    const uid = String(j?.locationID || '').trim();
+    return ULID.test(uid) ? uid : '';
+  } catch { return ''; }
+}
+
 // cache + resolve alias → ULID via Worker; keeps all beacons canonical
 // ULID-only: client resolver removed; all callers must pass a ULID.
 // ULID-only: resolver removed by design; no slug resolution on client.
@@ -851,7 +872,7 @@ async function initLpmImageSlider(modal, data) {
             shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
             shareBtn.onclick = async () => {
               const idStr = String(data?.id||'').trim();
-              if (idStr) { try { await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(idStr)}`, { method:'POST', keepalive:true }); } catch {} }
+              if (idStr) { try { const __uid = await resolveULIDFor(idStr); if (__uid) await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(__uid)}`, { method:'POST', keepalive:true }); } catch {} }
               try { if (navigator.share) await navigator.share({ title: 'NaviGen QR', url: img.src }); } catch {}
             };
 
@@ -893,7 +914,12 @@ async function initLpmImageSlider(modal, data) {
             card.appendChild(top); card.appendChild(body); wrap.appendChild(card);
             document.body.appendChild(wrap);
             showModal('qr-modal');
-            (async()=>{ try { await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true }); } catch {} })();
+            (async()=>{ 
+              try { 
+                const __uid = await resolveULIDFor(uid);
+                if (__uid) await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(__uid)}`, { method:'POST', keepalive:true });
+              } catch {} 
+            })();
           });
 
           const actions = document.createElement('div');
@@ -923,22 +949,21 @@ async function initLpmImageSlider(modal, data) {
       }
     }    
     
-    // count LPM open (ULID-only beacon; skip on slug to avoid 400)  // updated comment for clarity
+    // count LPM open — allow slug or ULID; resolve slug → ULID before sending (avoids 400)
     ;(async () => {
-      const idOrSlug = String(data?.id || data?.locationID || '').trim(); // existing source preserved
-      if (!idOrSlug) return; // never post empty path
+      const idOrSlug = String(data?.id || data?.locationID || '').trim();
+      if (!idOrSlug) return;
 
-      // Only send beacon if it's a ULID; otherwise just log parity for debugging
-      const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(idOrSlug); // no globals; local-only
       const src =
         originEl && originEl.classList && originEl.classList.contains('popular-button')
           ? 'popular' : 'accordion';
-      console.debug('lpm-open', { id: idOrSlug, src, beacon: isULID ? 'sent' : 'skipped' }); // keep parity signal
 
-      if (!isULID) return; // prevent /hit/* 400 on slug-only ids
+      const uid = await resolveULIDFor(idOrSlug);
+      console.debug('lpm-open', { id: idOrSlug, src, beacon: uid ? 'sent' : 'skipped' });
 
+      if (!uid) return; // unresolved → skip safely
       try {
-        await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true });
+        await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(uid)}`, { method:'POST', keepalive:true });
       } catch (err) { console.warn('lpm-open tracking failed', err); }
     })();
 
@@ -1163,7 +1188,11 @@ async function initLpmImageSlider(modal, data) {
     if (shareBtn) {
       shareBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        ;(async()=>{ const uid=String(data?.id||'').trim(); if(uid){ try{ await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(uid)}`,{method:'POST',keepalive:true}); }catch{} } })();
+        ;(async()=>{ 
+          const raw = String(data?.id || '').trim(); 
+          if (!raw) return;
+          try { const __uid = await resolveULIDFor(raw); if (__uid) await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(__uid)}`, { method:'POST', keepalive:true }); } catch {}
+        })();
         const name = String(data?.name || 'Location');
         const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
         const text = coords ? `${name} — ${coords}` : name;
