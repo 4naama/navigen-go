@@ -1159,7 +1159,23 @@ async function initEmergencyBlock(countryOverride) {
     // Build one legacy record
     const toGeoPoint = (it) => {
       const uid   = String(it?.locationID || it?.ID || it?.id || '').trim(); // ULID only (canonical)
-      const alias = String(it?.slug || it?.alias || '').trim();              // slug fallback for UI/LPM only
+      // slug fallback for UI/LPM only (when ULID is missing)
+      // 1) explicit slug/alias
+      // 2) folder name from media.cover (/assets/location-profile-images/<slug-or-id>/...)
+      // 3) conservative slugified display name
+      const explicitSlug = String(it?.slug || it?.alias || '').trim();
+      const coverPath = String(it?.media?.cover || '').trim();
+      const coverFolder = (() => {
+        const m = coverPath.match(/\/location-profile-images\/([^/]+)\//i);
+        return m ? m[1] : '';
+      })();
+      const nameSource = String(
+        (it?.locationName && (it.locationName.en || it.locationName.hu || it.locationName?.[Object.keys(it.locationName||{})[0]])) || ''
+      ).trim();
+      const nameSlug = nameSource
+        .normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+        .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+      const alias = explicitSlug || coverFolder || nameSlug;
       const locationID = uid; const legacyId = uid;           // mirror canonical ULID (if present)
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
@@ -1177,7 +1193,7 @@ async function initEmergencyBlock(countryOverride) {
 
       return {
         locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
-        id: uid || alias,                         // LPM/CTAs get ULID, or slug if ULID missing
+        id: uid || alias,                         // LPM/CTAs get ULID, else the derived slug (see alias block)
 
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
