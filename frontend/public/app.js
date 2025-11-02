@@ -268,8 +268,33 @@ function renderPopularGroup(list = geoPoints) {
     const rawId = String(loc.locationID || loc.ID || loc.id || loc.slug || loc.alias || '').trim(); // raw id or slug (fallback to slug/alias)
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
+
     // slug/alias fallback — follow Accordion: only set when ULID is missing
-    if (!uid) btn.setAttribute('data-alias', rawId);
+    if (!uid) {
+      let alias = rawId; // try mapped id/slug first
+
+      // Popular-only guard: derive a slug if everything is empty (ULID + mapped id/slug absent)
+      if (!alias) {
+        const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
+        const cover   = String(media.cover || '').trim();
+
+        // 1) derive from /assets/location-profile-images/<folder>/...
+        const fromCover = (() => {
+          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
+          return m ? m[1] : '';
+        })();
+
+        // 2) fallback: conservative slug from display name
+        const nameSource = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim();
+        const fromName   = nameSource
+          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+          .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+
+        alias = fromCover || fromName;
+      }
+
+      if (alias) btn.setAttribute('data-alias', alias);
+    }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
@@ -307,7 +332,8 @@ function renderPopularGroup(list = geoPoints) {
       const uid   = String(btn.getAttribute('data-id') || '').trim();      // ULID if present
       const alias = String(btn.getAttribute('data-alias') || '').trim();   // slug/alias
 
-      if (!uid && !alias) { console.warn('Data error: id missing'); return; } // need at least one
+      // need at least one; Popular path now derives alias above when both are missing
+      if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
 
       showLocationProfileModal({
         locationID: uid, id: uid || alias,     // pass ULID or slug (server counts both)
@@ -1159,23 +1185,7 @@ async function initEmergencyBlock(countryOverride) {
     // Build one legacy record
     const toGeoPoint = (it) => {
       const uid   = String(it?.locationID || it?.ID || it?.id || '').trim(); // ULID only (canonical)
-      // slug fallback for UI/LPM only (when ULID is missing)
-      // 1) explicit slug/alias
-      // 2) folder name from media.cover (/assets/location-profile-images/<slug-or-id>/...)
-      // 3) conservative slugified display name
-      const explicitSlug = String(it?.slug || it?.alias || '').trim();
-      const coverPath = String(it?.media?.cover || '').trim();
-      const coverFolder = (() => {
-        const m = coverPath.match(/\/location-profile-images\/([^/]+)\//i);
-        return m ? m[1] : '';
-      })();
-      const nameSource = String(
-        (it?.locationName && (it.locationName.en || it.locationName.hu || it.locationName?.[Object.keys(it.locationName||{})[0]])) || ''
-      ).trim();
-      const nameSlug = nameSource
-        .normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
-        .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-      const alias = explicitSlug || coverFolder || nameSlug;
+      const alias = String(it?.slug || it?.alias || '').trim();              // slug fallback for UI/LPM only
       const locationID = uid; const legacyId = uid;           // mirror canonical ULID (if present)
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
@@ -1193,7 +1203,7 @@ async function initEmergencyBlock(countryOverride) {
 
       return {
         locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
-        id: uid || alias,                         // LPM/CTAs get ULID, else the derived slug (see alias block)
+        id: uid || alias,                         // LPM/CTAs get ULID, or slug if ULID missing
 
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
