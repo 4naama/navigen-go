@@ -924,15 +924,18 @@ async function initLpmImageSlider(modal, data) {
     }    
     
     ;(async () => {
-      // count lpm-open using id (ULID or slug) with a strict fallback to locationID
+      // count lpm-open using ULID only; skip beacon on slug (Worker is ULID-only)
       const idOrSlug = String(data?.id || data?.locationID || '').trim();
       if (!idOrSlug) return; // never post empty path
+      const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(idOrSlug);
 
       // quick parity telemetry (console-only): source=popular|accordion
       const src =
         originEl && originEl.classList && originEl.classList.contains('popular-button')
           ? 'popular' : 'accordion';
-      console.debug('lpm-open', { id: idOrSlug, src }); // non-invasive parity check
+      console.debug('lpm-open', { id: idOrSlug, src, beacon: isULID ? 'sent' : 'skipped' }); // parity check
+
+      if (!isULID) return; // avoid /hit/* 400 on slug-only ids
 
       try {
         await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true });
