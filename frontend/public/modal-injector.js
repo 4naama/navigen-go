@@ -923,11 +923,17 @@ async function initLpmImageSlider(modal, data) {
       }
     }    
     
-    // count LPM open (only with canonical ULID → avoid /api/track 400)
     ;(async () => {
       // count lpm-open using id (ULID or slug) with a strict fallback to locationID
       const idOrSlug = String(data?.id || data?.locationID || '').trim();
       if (!idOrSlug) return; // never post empty path
+
+      // quick parity telemetry (console-only): source=popular|accordion
+      const src =
+        originEl && originEl.classList && originEl.classList.contains('popular-button')
+          ? 'popular' : 'accordion';
+      console.debug('lpm-open', { id: idOrSlug, src }); // non-invasive parity check
+
       try {
         await fetch(`${TRACK_BASE}/hit/lpm-open/${encodeURIComponent(idOrSlug)}`, { method:'POST', keepalive:true });
       } catch (err) { console.warn('lpm-open tracking failed', err); }

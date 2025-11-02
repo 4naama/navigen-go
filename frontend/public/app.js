@@ -1158,8 +1158,9 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      const uid = String(it?.locationID || it?.ID || it?.id || '').trim(); // accept locationID / ID / id
-      const locationID = uid; const legacyId = uid;           // mirror chosen id for legacy consumers
+      const uid   = String(it?.locationID || it?.ID || it?.id || '').trim(); // ULID only (canonical)
+      const alias = String(it?.slug || it?.alias || '').trim();              // slug fallback for UI/LPM only
+      const locationID = uid; const legacyId = uid;           // mirror canonical ULID (if present)
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1176,7 +1177,7 @@ async function initEmergencyBlock(countryOverride) {
 
       return {
         locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
-        id: locationID,                           // legacy .id also mirrors ULID
+        id: uid || alias,                         // LPM/CTAs get ULID, or slug if ULID missing
 
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
