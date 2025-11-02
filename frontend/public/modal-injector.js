@@ -1174,18 +1174,16 @@ async function initLpmImageSlider(modal, data) {
       // booking: ONLY links.bookingUrl; else toast (cleaned)
       if (bookBtn) {
         const prev = bookBtn.onclick;
-        bookBtn.onclick = (ev) => {
+        bookBtn.onclick = async (ev) => {
           ev.preventDefault();
           const bookingUrl = String(data?.links?.bookingUrl || '').trim();
           if (bookingUrl) {
-            if (typeof prev === 'function') return prev(ev); // respect upstream if any
-            const a = document.createElement('a'); /* module-scoped, no globals added */
-            // redirect through Worker so booking clicks are counted (server resolves alias)
-            a.href = `${TRACK_BASE}/out/booking/${encodeURIComponent(String(data?.id||'').trim())}?to=${encodeURIComponent(bookingUrl)}`;
-            a.target = '_blank'; a.rel = 'noopener';
-            a.target = '_blank';
-            a.rel = 'noopener';
-            a.click();
+            if (typeof prev === 'function') return prev(ev); // keep upstream if any
+            const raw = String(data?.id || data?.locationID || '').trim();
+            const uid = await resolveULIDFor(raw);
+            if (!uid) { showToast('Booking link coming soon', 1600); return; }
+            const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
             return;
           }
           showToast('Booking link coming soon', 1600);
