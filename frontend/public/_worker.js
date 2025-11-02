@@ -138,7 +138,7 @@ export default {
         // if metrics KV unset, still succeed so UI flow isn’t blocked
         console.warn('metrics increment failed', err);
       }
-      return new Response(null, { status: 200 });
+      return new Response(null, { status: 204 }); // align with other /hit/* handlers
     }
 
     // 401 gate disabled; RL/Bot Fight protect /api/data/*
@@ -279,28 +279,52 @@ async function handleContexts(req, env, url, extraHdr){
   return new Response(body, { status: 200, headers: h });
 }
 
-// canonicalId: returns a ULID if input is a ULID; else resolves slug via KV_ALIASES
+// canonicalId: returns a ULID if input is a ULID; else resolves slug via KV_ALIASES, then profiles.json  // comment clarified
 async function canonicalId(env, input) {
   const s = String(input || '').trim();
   const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
   if (!s) return '';
-  if (ULID_RE.test(s)) return s;                 // already ULID
-  // Lookup slug → ULID in KV_ALIASES; values are JSON {locationID:"<ULID>"}; keys are "alias:<slug>"
+  if (ULID_RE.test(s)) return s; // already ULID
+
+  // 1) KV alias lookup (exact or namespaced)
   try {
     if (env.KV_ALIASES) {
       const keys = [s, `alias:${s}`]; // prefer exact, then namespaced
       for (const k of keys) {
         const val = await env.KV_ALIASES.get(k, 'text');
         if (!val) continue;
-        // Accept either a bare ULID string or a JSON blob with .locationID
         const maybe = val.trim().startsWith('{')
           ? String((JSON.parse(val)||{}).locationID||'').trim()
           : val.trim();
         if (ULID_RE.test(maybe)) return maybe;
       }
     }
-  } catch {}
-  return ''; // unresolved stays empty (client will ignore non-ULID)
+  } catch { /* tolerate KV read errors; fall through to dataset lookup */ }
+
+  // 2) Fallback: scan profiles.json for a row whose slug/id matches `s`, then lift its ULID
+  try {
+    const url = new URL('/data/profiles.json', 'https://dummy.local'); // path only; ASSETS uses req host
+    const r = await env.ASSETS.fetch(new Request(url));
+    if (r && r.ok) {
+      const data = await r.json();
+      const rows = Array.isArray(data?.locations) ? data.locations : [];
+      // try common fields that may carry slugs/ids; keep it small and safe
+      const hit = rows.find(p => {
+        const candidates = [
+          p.slug, p.Slug, p.alias, p.Alias,
+          ...(Array.isArray(p.aliases) ? p.aliases : []),
+          String(p.id||p.ID||'')
+        ].filter(Boolean).map(x => String(x).trim().toLowerCase());
+        return candidates.includes(s.toLowerCase());
+      });
+      if (hit) {
+        const maybe = String(hit.locationID || hit.ID || '').trim();
+        if (ULID_RE.test(maybe)) return maybe; // return canonical ULID from dataset
+      }
+    }
+  } catch { /* ignore dataset errors; keep behavior deterministic */ }
+
+  return ''; // unresolved stays empty (caller decides response code)
 }
 
 // List endpoint: requires context; returns 200 with empty items when missing, adds small jitter for low-signal callers.
