@@ -75,17 +75,18 @@ function getISODate(input){
 {
   const u   = new URL(location.href);
   const m   = u.searchParams.get('mode') || 'location';
-  const lid = u.searchParams.get('locationID') || '';          // canonical (ULID) for data
-  const ali = u.searchParams.get('alias') || '';               // human slug (optional)
+  const lid = u.searchParams.get('locationID') || '';          // ULID (optional, stashed)
+  const slug = u.searchParams.get('slug') || u.searchParams.get('alias') || ''; // prefer slug in URL
   const eid = u.searchParams.get('entityID') || '';
 
   if (modeEl) modeEl.value = m;
 
-  // UI shows slug when provided; data always uses ULID
+  // UI shows slug when present; stash ULID if provided
   if (locEl) {
-    locEl.value = ali || lid;                  // display: slug if present, else ULID
-    if (lid) locEl.dataset.canonicalId = lid;  // stash ULID for fetches
+    locEl.value = slug || lid;
+    if (lid) locEl.dataset.canonicalId = lid;  // stash canonical ULID without polluting the URL
   }
+
   if (entEl) entEl.value = eid;
 
   if (modeEl && locWrap && entWrap) syncMode();
@@ -157,18 +158,10 @@ async function fetchStats() {
 
   const isEntity = (modeEl?.value || 'location') === 'entity';
 
-  // Resolve non-ULID locationID via profile API (returns canonical ULID), then query stats.
-  // prefer the canonical ULID we stashed; fall back to what’s typed
-  let locId = String((locEl?.dataset?.canonicalId || locEl?.value || '')).trim();
-  if (!isEntity && locId && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locId)) {
-    try {
-      const r = await fetch(new URL(`/api/data/profile?id=${encodeURIComponent(locId)}`, base), { cache: 'no-store' });
-      if (r.ok) {
-        const p = await r.json();
-        if (p?.locationID && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(p.locationID)) locId = p.locationID;
-      }
-    } catch { /* leave locId as-is on failure */ }
-  }
+  // Accept either ULID or slug — pass through; backend resolves slug → ULID (KV aliases)
+  // Prefer what the user sees (slug) over the stashed ULID for request composition,
+  // but keep the stashed ULID available for advanced flows if needed.
+  let locId = String((locEl?.value || locEl?.dataset?.canonicalId || '')).trim();
 
   const q = isEntity
     ? new URL(`/api/stats/entity?entityID=${encodeURIComponent(entEl.value)}&from=${from}&to=${to}`, base)

@@ -268,7 +268,8 @@ function renderPopularGroup(list = geoPoints) {
     const rawId = String(loc.locationID || loc.ID || loc.id || '').trim();            // raw id or slug
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
-    btn.setAttribute('data-alias', rawId);                                            // slug/alias fallback
+    // slug/alias fallback — follow Accordion: only set when ULID is missing
+    if (!uid) btn.setAttribute('data-alias', rawId);
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
@@ -299,8 +300,8 @@ function renderPopularGroup(list = geoPoints) {
       // Use explicit cover first, then first image; never use placeholders
       const cover = (media.cover && String(media.cover).trim()) || images[0];
 
-      // guard for strict data model; 2 lines max
-      if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
+      // guard for strict data model; require cover only (align with Accordion)
+      if (!cover) { console.warn('Data error: cover required'); return; }
 
       // prefer ULID from data-id; fallback to slug/alias when ULID is absent
       const uid   = String(btn.getAttribute('data-id') || '').trim();      // ULID if present
