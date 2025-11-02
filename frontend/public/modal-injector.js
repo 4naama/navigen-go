@@ -786,7 +786,8 @@ async function initLpmImageSlider(modal, data) {
     if (btnBook) {
       if (typeof btnBook.onclick === 'function') { return; } // prevent double wiring
 
-      const bookingUrl = String(data?.links?.bookingUrl || '').trim();
+      // Always request booking href from backend (profiles.json via /api/data/contact)
+      const locationKey = String(data?.id || data?.slug || uid || '').trim(); // slug or ulid both accepted
 
       if (bookingUrl) {
         btnBook.removeAttribute('href');
@@ -794,7 +795,26 @@ async function initLpmImageSlider(modal, data) {
           e.preventDefault();
           const raw = String(data?.id || data?.locationID || '').trim();
           const uid = await resolveULIDFor(raw);
-          if (!uid) { showToast('Booking link coming soon', 1600); return; }
+          // Fetch precise booking URL from API using either slug or ULID
+          try {
+            const res = await fetch(`/api/data/contact?id=${encodeURIComponent(locationKey)}&kind=booking`, { credentials: 'include' });
+            if (res.status === 200) {
+              const { href } = await res.json();
+              if (href) {
+                // record dash / click count (slug or ulid)
+                try { fetch(`/api/track?target=${encodeURIComponent(locationKey)}`, { method: 'GET', credentials: 'include', keepalive: true }); } catch {}
+                window.open(href, '_blank', 'noopener,noreferrer');
+              } else {
+                showToast('Booking not available for this profile', 1600);
+              }
+            } else if (res.status === 204) {
+              showToast('Booking not available for this profile', 1600);
+            } else {
+              showToast('Temporary error — please try again', 1600);
+            }
+          } catch {
+            showToast('Network error — please try again', 1600);
+          }
           const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
           window.open(url, '_blank', 'noopener,noreferrer');
         }, { capture: true });
@@ -1190,12 +1210,32 @@ async function initLpmImageSlider(modal, data) {
         const prev = bookBtn.onclick;
         bookBtn.onclick = async (ev) => {
           ev.preventDefault();
-          const bookingUrl = String(data?.links?.bookingUrl || '').trim();
+          // Always request booking href from backend (profiles.json via /api/data/contact)
+          const locationKey = String(data?.id || data?.slug || uid || '').trim(); // slug or ulid both accepted
           if (bookingUrl) {
             if (typeof prev === 'function') return prev(ev); // keep upstream if any
             const raw = String(data?.id || data?.locationID || '').trim();
             const uid = await resolveULIDFor(raw);
-            if (!uid) { showToast('Booking link coming soon', 1600); return; }
+            // Fetch precise booking URL from API using either slug or ULID
+            try {
+              const res = await fetch(`/api/data/contact?id=${encodeURIComponent(locationKey)}&kind=booking`, { credentials: 'include' });
+              if (res.status === 200) {
+                const { href } = await res.json();
+                if (href) {
+                  // record dash / click count (slug or ulid)
+                  try { fetch(`/api/track?target=${encodeURIComponent(locationKey)}`, { method: 'GET', credentials: 'include', keepalive: true }); } catch {}
+                  window.open(href, '_blank', 'noopener,noreferrer');
+                } else {
+                  showToast('Booking not available for this profile', 1600);
+                }
+              } else if (res.status === 204) {
+                showToast('Booking not available for this profile', 1600);
+              } else {
+                showToast('Temporary error — please try again', 1600);
+              }
+            } catch {
+              showToast('Network error — please try again', 1600);
+            }
             const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
             window.open(url, '_blank', 'noopener,noreferrer');
             return;
