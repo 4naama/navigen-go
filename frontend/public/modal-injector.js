@@ -1248,22 +1248,26 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>
+    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; prefer profiles.json short slug (locationID)
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // prefer explicit slug/alias; if id itself is a slug, use it; never force ULID
-        const raw  = String(data?.id || data?.locationID || '').trim();
+        // prefer the short slug from profiles.json (locationID); never force ULID
+        const raw  = String(data?.id || '').trim(); // may be ULID or a non-ULID slug
         const isUl = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw);
-        const slug = String(data?.slug || data?.alias || (!isUl ? raw : '')).trim();
+        const slug = String(
+          data?.locationID ||              // ✅ short slug from profiles.json
+          data?.slug || data?.alias ||     // fallback: existing slug/alias
+          (!isUl ? raw : '')               // fallback: id only when it's not a ULID
+        ).trim();
 
         if (!slug) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
         window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
       }, { capture: true });
-    }        
+    }
 
     // × Close → remove modal, return focus to originating trigger if provided
     const btnClose = modal.querySelector('.modal-close');
