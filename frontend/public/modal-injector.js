@@ -336,14 +336,30 @@ export async function showLocationProfileModal(data) {
   // 3. Append to body (hidden by default)
   document.body.appendChild(modal);
 
-  // ensure short slug is immediately available to the UI (seed DOM cache now; avoids empty attr at click)
+  // ensure short slug is immediately available to the UI (fetch profile once and cache the slug)
   {
-    const looksShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim()); // short pattern like "hd-debrecen-hadhazi-8910"
-    const short = String(data?.locationID || '').trim();
-    if (looksShort(short)) {
-      // cache short slug on the modal for button handlers that read from DOM (kept comment, clarified)
-      modal.setAttribute('data-locationid', short);
-    }
+    (async () => {
+      try {
+        // Always resolve to ULID first; the Profile API returns the canonical short slug
+        const raw = String(data?.id || data?.locationID || '').trim();
+        const uid = await resolveULIDFor(raw);
+        if (!uid) return;
+
+        const resp = await fetch(
+          API(`/api/data/profile?id=${encodeURIComponent(uid)}`),
+          { cache: 'no-store', credentials: 'include' }
+        );
+        if (!resp.ok) return;
+
+        const profile = await resp.json().catch(() => ({}));
+        const slug = String(profile?.locationID || '').trim(); // by design: always present, stable
+        if (!slug) return;
+
+        // cache once for all button handlers that read from DOM
+        data.locationID = slug;                 // keep the in-memory LPM model consistent
+        modal.setAttribute('data-locationid', slug);
+      } catch { /* non-fatal */ }
+    })();
   }
 
   // Prefetch cover fast; avoid placeholder first paint
@@ -1276,13 +1292,13 @@ async function initLpmImageSlider(modal, data) {
           ''
         ).trim();
 
-        // Only open when we have a verified short slug; cache it for subsequent clicks.
-        if (looksShort(slug)) {
-          modal.setAttribute('data-locationid', slug);     // cache for UI reuse
+        // open Dashboard with the short slug we fetched up front (no pattern checks needed)
+        const slug = String(modal.getAttribute('data-locationid') || data?.locationID || '').trim();
+        if (slug) {
+          modal.setAttribute('data-locationid', slug); // keep DOM cache in sync
           window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
         } else {
-          // safety fallback only — dashboard is always available, but we avoid sending invalid ids
-          showToast('Dashboard unavailable for this profile', 1600);
+          showToast('Dashboard unavailable for this profile', 1600); // should be unreachable in normal flow
         }
       }, { capture: true });
     }
