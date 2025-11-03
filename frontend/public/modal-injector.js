@@ -1254,33 +1254,21 @@ async function initLpmImageSlider(modal, data) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
+        // keep: prefer the short slug; never use ULID/long alias (comment clarified, not removed)
         const looksShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
 
-        // 1) Prefer the short slug already present (profiles.json or prior enrich)
-        let slug = String(data?.locationID || modal.getAttribute('data-locationid') || '').trim();
+        let slug = String(
+          data?.locationID ||
+          modal.getAttribute('data-locationid') ||
+          ''
+        ).trim();
 
-        // 2) If not short, try the QR <img src="/api/qr?locationID=..."> injected by the ℹ️ → “QR code” (when opened)
-        if (!looksShort(slug)) {
-          const qr = document.querySelector('img[src*="/api/qr?locationID="]');
-          if (qr) {
-            try {
-              const u = new URL(qr.src, location.origin);
-              const id = (u.searchParams.get('locationID') || '').trim();
-              if (looksShort(id)) {
-                slug = id;
-                // cache for subsequent clicks
-                data.locationID = slug;
-                modal.setAttribute('data-locationid', slug);
-              }
-            } catch {}
-          }
-        }
-
-        // 3) Only open when we have a verified short slug; keep toast strictly as a last-resort safety fallback
+        // Only open when we have a verified short slug; keep toast strictly as a last-resort safety fallback
         if (looksShort(slug)) {
           window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
         } else {
-          showToast('Dashboard unavailable for this profile', 1600); // safety fallback only
+          // safety fallback only (kept)
+          showToast('Dashboard unavailable for this profile', 1600);
         }
       }, { capture: true });
     }
@@ -1396,12 +1384,12 @@ async function initLpmImageSlider(modal, data) {
         const payload = await res.json();
         
         // ensure short slug available to UI (profiles.json → locationID)
-        // update only if the API returns the *short* slug; never downgrade to long alias
+        // update only if the API returns the *short* slug; never downgrade to a long alias (kept comment, clarified)
         if (payload && payload.locationID) {
-          const val = String(payload.locationID).trim();
-          const looksShort = /^hd-[a-z0-9-]+$/i.test(val);
+          const _locid = String(payload.locationID).trim();
+          const looksShort = /^hd-[a-z0-9-]+$/i.test(_locid);
           if (looksShort) {
-            data.locationID = val;                                   // memory (short slug only)
+            data.locationID = _locid;                                // memory (short slug only)
             modal.setAttribute('data-locationid', data.locationID);  // DOM
           }
           // else: keep existing short slug from profiles.json; do not overwrite with long alias
@@ -2845,6 +2833,8 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
   }
 
   const list = modal.querySelector('#social-modal-list');
+  if (list) list.innerHTML = ''; // clear stale rows before rendering
+
   const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim());
 
   if (!rows.length) {
@@ -2865,12 +2855,12 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
       // If we already have a ULID, send through /out for counting; otherwise fall back to plain link.
       a.href = _isULID ? `${TRACK_BASE}/out/${r.track}/${encodeURIComponent(_id)}?to=${encodeURIComponent(r.href)}`
                        : r.href;
-      a.target = '_blank'; 
+      a.target = '_blank';
       a.rel = 'noopener';
 
       // If it's not a ULID, try to resolve on click; if resolved, count via /out, else just open plain.
       if (!_isULID) {
-        a.add_hook_added__ = true; // avoid double-binding if called twice
+        a.add_hook_added__ = true; // keep: avoid double-binding if called twice
         a.addEventListener('click', async (ev) => {
           const resolved = await resolveULIDFor(_id);
           if (resolved) {
