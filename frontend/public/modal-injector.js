@@ -1248,57 +1248,49 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-  // 📈 Stats (dashboard) — open with the short slug; fetch-and-cache if missing (toast only as a last fallback)
-  const statsBtn = modal.querySelector('#som-stats');
-  if (statsBtn) {
-    statsBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
+    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; ensure short slug is used (await API if needed)
+    const statsBtn = modal.querySelector('#som-stats');
+    if (statsBtn) {
+      statsBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
 
-      // 1) Prefer a non-ULID short slug already present (payload or cached on the DOM)
-      const isULID = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v||'').trim());
-      let slug = '';
-      const candidateA = String(data?.locationID || '').trim();
-      const candidateB = String(modal.getAttribute('data-locationid') || '').trim();
-      if (candidateA && !isULID(candidateA)) slug = candidateA;
-      else if (candidateB && !isULID(candidateB)) slug = candidateB;
+        // keep: prefer the short slug from profiles.json; never use ULID/long slug when short is available
+        const isULID = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
+        const looksShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
 
-      // 2) If we still don't have a slug, fetch profile once to obtain it
-      if (!slug) {
-        try {
-          // pick a resolvable id: ULID directly, else try to resolve slug→ULID first
-          const raw = String(data?.id || data?.locationID || '').trim();
-          let uid = isULID(raw) ? raw : await resolveULIDFor(raw); // safe helper within this module
-          if (uid) {
-            const resp = await fetch(API(`/api/data/profile?id=${encodeURIComponent(uid)}`), { cache:'no-store', credentials:'include' });
-            if (resp.ok) {
-              const prof = await resp.json().catch(()=>null);
-              const locid = String(prof?.locationID || '').trim(); // profiles.json short slug
-              if (locid && !isULID(locid)) {
-                slug = locid;
-                // cache for subsequent clicks during this session
-                data.locationID = slug;
-                modal.setAttribute('data-locationid', slug);
+        let slug = String(data?.locationID || modal.getAttribute('data-locationid') || '').trim();
+
+        // If we don't already have the short slug (or we have a ULID / long alias), fetch it now.
+        if (!looksShort(slug)) {
+          try {
+            // choose a resolvable id: prefer canonical ULID if present; else resolve whatever we have
+            const raw = String(data?.id || data?.locationID || '').trim();
+            let uid = isULID(raw) ? raw : await resolveULIDFor(raw); // resolve slug → ULID (kept comment)
+            if (uid) {
+              const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(uid)}`), { cache: 'no-store', credentials: 'include' });
+              if (r.ok) {
+                const p = await r.json().catch(() => null);
+                const fromApi = String(p?.locationID || '').trim(); // profiles.json short slug (kept comment)
+                if (looksShort(fromApi)) {
+                  slug = fromApi;
+                  // cache so subsequent clicks don’t refetch (kept, clarified)
+                  data.locationID = slug;
+                  modal.setAttribute('data-locationid', slug);
+                }
               }
             }
-          }
-        } catch { /* ignore network errors; fallback below */ }
-      }
+          } catch { /* network failures fall through to safety fallback below */ }
+        }
 
-      // 3) Final attempt: use any non-empty id (ULID or long slug) — dashboard accepts aliases too (backend resolves) :contentReference[oaicite:2]{index=2}
-      if (!slug) {
-        const raw = String(data?.id || data?.locationID || '').trim();
-        if (raw) slug = raw; // acceptable fallback (dash resolves ULID/slug/alias)
-      }
-
-      // 4) Open dash or fallback toast (safety only)
-      if (slug) {
-        window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
-      } else {
-        // keep for safety fallback only
-        showToast('Dashboard unavailable for this profile', 1600);
-      }
-    }, { capture: true });
-  }
+        // Final guard: only open with a short slug; keep toast strictly as safety fallback.
+        if (looksShort(slug)) {
+          window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
+        } else {
+          // safety fallback only (should rarely trigger once API is available)
+          showToast('Dashboard unavailable for this profile', 1600);
+        }
+      }, { capture: true });
+    }
 
     // × Close → remove modal, return focus to originating trigger if provided
     const btnClose = modal.querySelector('.modal-close');
