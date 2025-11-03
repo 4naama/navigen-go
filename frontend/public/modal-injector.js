@@ -357,8 +357,19 @@ export async function showLocationProfileModal(data) {
 
   // 4. Append to body and expose slug to handlers immediately
   document.body.appendChild(modal);
-  if (data.locationID) {
-    modal.setAttribute('data-locationid', String(data.locationID).trim());
+  // Prefer a short 'hd-...' slug from the incoming data; fall back to whatever was provided if no short slug is found.
+  {
+    const candidates = [
+      String(data.locationID || '').trim(),
+      String(data.id || '').trim()
+    ].filter(Boolean);
+    const short = candidates.find(s => /^hd-[a-z0-9-]+$/i.test(s));
+    const chosen = short || candidates[0] || '';
+    if (chosen) {
+      modal.setAttribute('data-locationid', chosen);
+      // keep in-memory payload consistent for other handlers that read from data
+      if (short) data.locationID = short;
+    }
   }
 
   // Prefetch cover fast; avoid placeholder first paint
@@ -1279,13 +1290,22 @@ async function initLpmImageSlider(modal, data) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // open Dashboard with the short slug we fetched up front (no pattern checks needed; comment clarified)
-        const slug = String(modal.getAttribute('data-locationid') || data?.locationID || '').trim();
-        if (slug) {
-          modal.setAttribute('data-locationid', slug); // keep DOM cache in sync
-          window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
-        } else {
-          showToast('Dashboard unavailable for this profile', 1600); // should be unreachable in normal flow
+        // open Dashboard with the short slug we fetched up front (prefer an 'hd-...' slug if available)
+        {
+          const modalSlug = String(modal.getAttribute('data-locationid') || '').trim();
+          const candidates = [
+            modalSlug,
+            String(data?.locationID || '').trim(),
+            String(data?.id || '').trim()
+          ].filter(Boolean);
+          const short = candidates.find(s => /^hd-[a-z0-9-]+$/i.test(s));
+          const slug = short || candidates[0] || '';
+          if (slug) {
+            modal.setAttribute('data-locationid', slug); // keep DOM cache in sync
+            window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
+          } else {
+            showToast('Dashboard unavailable for this profile', 1600); // should be unreachable in normal flow
+          }
         }
       }, { capture: true });
     }
