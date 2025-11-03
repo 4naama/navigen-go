@@ -2825,18 +2825,15 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
     top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
   }
 
-  // providers: consistent logo + text rows; Website uses globe svg
+  // Build Website first (explicit), then socials; this avoids it being filtered out
+  // while preserving the existing "🌐 Website" label.
+  const websiteHref = normUrl(
+    (links && (links.official || links.website || links.site)) ||
+    (contact && (contact.officialUrl || contact.officialURL || contact.website || contact.site))
+  );
+
+  // Social providers (without 'official' — we inject it separately above)
   const providers = [
-    {
-      key:'official',
-      label:'🌐 Website',  // requested label
-      icon:'',             // text-only row; no missing asset
-      track:'official',
-      href: normUrl(
-        (links && (links.official || links.website || links.site)) ||
-        (contact && (contact.officialUrl || contact.officialURL || contact.website || contact.site))
-      )
-    },
     { key:'facebook',  label:'Facebook',  icon:'/assets/social/icons-facebook.svg',  track:'facebook',  href: normUrl(links.facebook) },
     { key:'instagram', label:'Instagram', icon:'/assets/social/icons-instagram.svg', track:'instagram', href: normUrl(links.instagram) },
     { key:'youtube',   label:'YouTube',   icon:'/assets/social/icons-youtube.svg',   track:'youtube',   href: normUrl(links.youtube) },
@@ -2849,6 +2846,17 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
     { key:'telegram',  label:'Telegram',  icon:'/assets/social/icons-telegram.svg',  track:'telegram',  href: tgUrl(contact.telegram) },
     { key:'messenger', label:'Messenger', icon:'/assets/social/icons-messenger.svg', track:'messenger', href: msUrl(contact.messenger) }
   ];
+
+  // Prepend 🌐 Website when available, ensuring it appears at the very top.
+  if (websiteHref) {
+    providers.unshift({
+      key: 'official',
+      label: '🌐 Website',   // keep existing label
+      icon: '',              // text-only row; no missing asset
+      track: 'official',
+      href: websiteHref
+    });
+  }
 
   const list = modal.querySelector('#social-modal-list');
   const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim());
