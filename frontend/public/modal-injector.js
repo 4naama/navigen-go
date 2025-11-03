@@ -1248,26 +1248,30 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; must be the short `hd-...` slug (toast kept only as safety fallback)
+    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; must be the short `hd-...` slug
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // keep: prefer the short slug; never use ULID/long alias (comment clarified, not removed)
+        // keep: prefer the short slug; never use ULID/long alias (kept comment, clarified)
         const looksShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
 
+        // Prefer any already-known short slug; also accept short slug carried in data.id / originEl alias.
         let slug = String(
           data?.locationID ||
           modal.getAttribute('data-locationid') ||
+          data?.id ||                                     // ← accept short slug passed as id (when no ULID)
+          (data?.originEl && data.originEl.getAttribute && data.originEl.getAttribute('data-alias')) ||
           ''
         ).trim();
 
-        // Only open when we have a verified short slug; keep toast strictly as a last-resort safety fallback
+        // Only open when we have a verified short slug; cache it for subsequent clicks.
         if (looksShort(slug)) {
+          modal.setAttribute('data-locationid', slug);     // cache for UI reuse
           window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
         } else {
-          // safety fallback only (kept)
+          // safety fallback only — dashboard is always available, but we avoid sending invalid ids
           showToast('Dashboard unavailable for this profile', 1600);
         }
       }, { capture: true });
