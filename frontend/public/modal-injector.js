@@ -1280,19 +1280,7 @@ async function initLpmImageSlider(modal, data) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // keep: prefer the short slug; never use ULID/long alias (kept comment, clarified)
-        const looksShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
-
-        // Prefer any already-known short slug; also accept short slug carried in data.id / originEl alias.
-        let slug = String(
-          data?.locationID ||
-          modal.getAttribute('data-locationid') ||
-          data?.id ||                                     // ← accept short slug passed as id (when no ULID)
-          (data?.originEl && data.originEl.getAttribute && data.originEl.getAttribute('data-alias')) ||
-          ''
-        ).trim();
-
-        // open Dashboard with the short slug we fetched up front (no pattern checks needed)
+        // open Dashboard with the short slug we fetched up front (no pattern checks needed; comment clarified)
         const slug = String(modal.getAttribute('data-locationid') || data?.locationID || '').trim();
         if (slug) {
           modal.setAttribute('data-locationid', slug); // keep DOM cache in sync
