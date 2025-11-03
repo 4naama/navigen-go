@@ -2822,20 +2822,21 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
   ];
 
   // Prepend 🌐 Website when available, ensuring it appears at the very top.
-  if (websiteHref) {
-    providers.unshift({
-      key: 'official',
-      label: '🌐 Website',   // keep existing label
-      icon: '',              // text-only row; no missing asset
-      track: 'official',
-      href: websiteHref
-    });
-  }
+  // (Build the final rows explicitly so filtering can’t drop the Website row.)
+  const officialRow = websiteHref ? {
+    key: 'official',
+    label: '🌐 Website',   // keep existing label
+    icon: '',              // text-only row; no missing asset
+    track: 'official',
+    href: websiteHref
+  } : null;
 
   const list = modal.querySelector('#social-modal-list');
   if (list) list.innerHTML = ''; // clear stale rows before rendering
 
-  const rows = providers.filter(p => typeof p.href === 'string' && p.href.trim());
+  // Keep existing providers, but always put Website first when present.
+  const socialRows = providers.filter(p => typeof p.href === 'string' && p.href.trim());
+  const rows = officialRow ? [officialRow, ...socialRows] : socialRows;
 
   if (!rows.length) {
     const empty = document.createElement('div');
