@@ -1248,27 +1248,57 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; use profiles.json short slug only
-    const statsBtn = modal.querySelector('#som-stats');
-    if (statsBtn) {
-      statsBtn.addEventListener('click', (e) => {
-        e.preventDefault();
+  // 📈 Stats (dashboard) — open with the short slug; fetch-and-cache if missing (toast only as a last fallback)
+  const statsBtn = modal.querySelector('#som-stats');
+  if (statsBtn) {
+    statsBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
 
-        // use only the short slug from profiles.json; never use ULID/long slug
-        const locid = String(
-          data?.locationID ||
-          modal.getAttribute('data-locationid') ||
-          ''
-        ).trim();
+      // 1) Prefer a non-ULID short slug already present (payload or cached on the DOM)
+      const isULID = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v||'').trim());
+      let slug = '';
+      const candidateA = String(data?.locationID || '').trim();
+      const candidateB = String(modal.getAttribute('data-locationid') || '').trim();
+      if (candidateA && !isULID(candidateA)) slug = candidateA;
+      else if (candidateB && !isULID(candidateB)) slug = candidateB;
 
-        if (!locid) {
-          showToast('Dashboard unavailable for this profile', 1600);
-          return;
-        }
+      // 2) If we still don't have a slug, fetch profile once to obtain it
+      if (!slug) {
+        try {
+          // pick a resolvable id: ULID directly, else try to resolve slug→ULID first
+          const raw = String(data?.id || data?.locationID || '').trim();
+          let uid = isULID(raw) ? raw : await resolveULIDFor(raw); // safe helper within this module
+          if (uid) {
+            const resp = await fetch(API(`/api/data/profile?id=${encodeURIComponent(uid)}`), { cache:'no-store', credentials:'include' });
+            if (resp.ok) {
+              const prof = await resp.json().catch(()=>null);
+              const locid = String(prof?.locationID || '').trim(); // profiles.json short slug
+              if (locid && !isULID(locid)) {
+                slug = locid;
+                // cache for subsequent clicks during this session
+                data.locationID = slug;
+                modal.setAttribute('data-locationid', slug);
+              }
+            }
+          }
+        } catch { /* ignore network errors; fallback below */ }
+      }
 
-        window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(locid)}`, '_blank', 'noopener,noreferrer');
-      }, { capture: true });
-    }
+      // 3) Final attempt: use any non-empty id (ULID or long slug) — dashboard accepts aliases too (backend resolves) :contentReference[oaicite:2]{index=2}
+      if (!slug) {
+        const raw = String(data?.id || data?.locationID || '').trim();
+        if (raw) slug = raw; // acceptable fallback (dash resolves ULID/slug/alias)
+      }
+
+      // 4) Open dash or fallback toast (safety only)
+      if (slug) {
+        window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
+      } else {
+        // keep for safety fallback only
+        showToast('Dashboard unavailable for this profile', 1600);
+      }
+    }, { capture: true });
+  }
 
     // × Close → remove modal, return focus to originating trigger if provided
     const btnClose = modal.querySelector('.modal-close');
