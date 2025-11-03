@@ -1254,14 +1254,13 @@ async function initLpmImageSlider(modal, data) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // prefer the short slug from profiles.json (locationID); never force ULID
-        const raw  = String(data?.id || '').trim(); // may be ULID or a non-ULID slug
-        const isUl = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw);
-        const slug = String(
-          data?.locationID ||              // ✅ short slug from profiles.json
-          data?.slug || data?.alias ||     // fallback: existing slug/alias
-          (!isUl ? raw : '')               // fallback: id only when it's not a ULID
-        ).trim();
+        // always prefer short slug from profiles.json; do not use slug/alias
+        const locid = String(data?.locationID || '').trim();
+        const raw   = String(data?.id || '').trim(); // may be ULID or non-ULID
+        const isUl  = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw);
+
+        // only fallback is a non-ULID id; never use data.slug or data.alias
+        const slug = locid || (!isUl ? raw : '');
 
         if (!slug) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
