@@ -295,6 +295,12 @@ export function createLocationProfileModal(data, injected = {}) {
       <button class="modal-footer-button" id="som-share" aria-label="Share">
         📤 <span class="cta-label">Share</span>
       </button>
+
+      <!-- 📈 Dashboard (2nd row, last position) -->
+      <button class="modal-footer-button" id="som-stats" aria-label="Statistics">
+        📈 <span class="cta-label">Stats</span>
+      </button>
+
     </div>
   `;
 
@@ -1241,6 +1247,23 @@ async function initLpmImageSlider(modal, data) {
         } catch {}
       }, { passive: false });
     }
+        
+    // 📈 Stats (dashboard) — open https://navigen.io/dash/<slug>; keep Share block untouched
+    const statsBtn = modal.querySelector('#som-stats');
+    if (statsBtn) {
+      statsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        // prefer explicit slug/alias; if id itself is a slug, use it; never force ULID
+        const raw  = String(data?.id || data?.locationID || '').trim();
+        const isUl = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw);
+        const slug = String(data?.slug || data?.alias || (!isUl ? raw : '')).trim();
+
+        if (!slug) { showToast('Dashboard unavailable for this profile', 1600); return; }
+
+        window.open(`https://navigen.io/dash/${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
+      }, { capture: true });
+    }        
 
     // × Close → remove modal, return focus to originating trigger if provided
     const btnClose = modal.querySelector('.modal-close');
