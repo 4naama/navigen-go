@@ -1248,59 +1248,39 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; use profiles.json short slug only (clarified: *must* be the short `hd-...` slug; toast kept only as safety fallback)
+    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; must be the short `hd-...` slug (toast kept only as safety fallback)
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
-      statsBtn.addEventListener('click', async (e) => {
+      statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // open a blank tab immediately to keep user-gesture and avoid popup blockers (kept logic, clarified)
-        const popup = window.open('about:blank', '_blank', 'noopener,noreferrer');
+        const looksShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
 
-        // use only the short slug from profiles.json; never use ULID/long slug (updated to validate "short" form)
-        const isULID = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
-        const looksShort = (v) => {
-          const s = String(v || '').trim();
-          if (!s) return false;
-          if (isULID(s)) return false;                // ULID is not a short slug (kept comment, clarified)
-          if (/^helen-doron-/i.test(s)) return false; // long alias; not allowed (kept comment, clarified)
-          return /^[a-z]{2,3}-[a-z0-9-]+$/i.test(s);  // short pattern like "hd-debrecen-hadhazi-8910"
-        };
-
-        // prefer any short slug already present (payload or cached on DOM) — never use ULID/long alias
+        // 1) Prefer the short slug already present (profiles.json or prior enrich)
         let slug = String(data?.locationID || modal.getAttribute('data-locationid') || '').trim();
+
+        // 2) If not short, try the QR <img src="/api/qr?locationID=..."> injected by the ℹ️ → “QR code” (when opened)
         if (!looksShort(slug)) {
-          try {
-            // pick something resolvable we have now; backend profile API expects ULID (kept comment)
-            const raw = String(data?.id || data?.locationID || modal.getAttribute('data-id') || '').trim();
-            const uid = isULID(raw) ? raw : await resolveULIDFor(raw); // resolves slug→ULID when needed (kept comment)
-            if (uid) {
-              const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(uid)}`), { cache: 'no-store', credentials: 'include' });
-              if (r.ok) {
-                const p = await r.json().catch(() => null);
-                const fromApi = String(p?.locationID || '').trim(); // profiles.json short slug (kept comment)
-                if (looksShort(fromApi)) {
-                  slug = fromApi;
-                  // cache for subsequent clicks in this session (kept, clarified)
-                  data.locationID = slug;
-                  modal.setAttribute('data-locationid', slug);
-                }
+          const qr = document.querySelector('img[src*="/api/qr?locationID="]');
+          if (qr) {
+            try {
+              const u = new URL(qr.src, location.origin);
+              const id = (u.searchParams.get('locationID') || '').trim();
+              if (looksShort(id)) {
+                slug = id;
+                // cache for subsequent clicks
+                data.locationID = slug;
+                modal.setAttribute('data-locationid', slug);
               }
-            }
-          } catch { /* network/resolve failure → handled by fallback below (kept comment) */ }
+            } catch {}
+          }
         }
 
+        // 3) Only open when we have a verified short slug; keep toast strictly as a last-resort safety fallback
         if (looksShort(slug)) {
-          const url = `https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`;
-          if (popup && !popup.closed) {
-            popup.location = url; // navigate the pre-opened tab (avoids popup-block)
-          } else {
-            window.open(url, '_blank', 'noopener,noreferrer');
-          }
+          window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
         } else {
-          // safety fallback only (retain toast, clarified)
-          if (popup && !popup.closed) popup.close();
-          showToast('Dashboard unavailable for this profile', 1600);
+          showToast('Dashboard unavailable for this profile', 1600); // safety fallback only
         }
       }, { capture: true });
     }
@@ -1416,11 +1396,17 @@ async function initLpmImageSlider(modal, data) {
         const payload = await res.json();
         
         // ensure short slug available to UI (profiles.json → locationID)
+        // update only if the API returns the *short* slug; never downgrade to long alias
         if (payload && payload.locationID) {
-          data.locationID = String(payload.locationID).trim();      // memory
-          modal.setAttribute('data-locationid', data.locationID);   // DOM
-        }                
-        
+          const val = String(payload.locationID).trim();
+          const looksShort = /^hd-[a-z0-9-]+$/i.test(val);
+          if (looksShort) {
+            data.locationID = val;                                   // memory (short slug only)
+            modal.setAttribute('data-locationid', data.locationID);  // DOM
+          }
+          // else: keep existing short slug from profiles.json; do not overwrite with long alias
+        }
+
         // Fill description if placeholder
         if (payload.descriptions && !data.descriptions) {
           const box = modal.querySelector('.location-description .description');
