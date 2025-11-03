@@ -336,6 +336,16 @@ export async function showLocationProfileModal(data) {
   // 3. Append to body (hidden by default)
   document.body.appendChild(modal);
 
+  // ensure short slug is immediately available to the UI (seed DOM cache now; avoids empty attr at click)
+  {
+    const looksShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim()); // short pattern like "hd-debrecen-hadhazi-8910"
+    const short = String(data?.locationID || '').trim();
+    if (looksShort(short)) {
+      // cache short slug on the modal for button handlers that read from DOM (kept comment, clarified)
+      modal.setAttribute('data-locationid', short);
+    }
+  }
+
   // Prefetch cover fast; avoid placeholder first paint
   ;(async () => {
     try {
