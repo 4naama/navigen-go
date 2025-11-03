@@ -1248,7 +1248,7 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open https://navigen.io/dash/<slug>; keep Share block untouched
+    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
@@ -1261,7 +1261,7 @@ async function initLpmImageSlider(modal, data) {
 
         if (!slug) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
-        window.open(`https://navigen.io/dash/${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
+        window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
       }, { capture: true });
     }        
 
