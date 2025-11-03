@@ -1248,24 +1248,32 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; ensure short slug is used (await API if needed)
+    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; use profiles.json short slug only (clarified: *must* be the short `hd-...` slug; toast kept only as safety fallback)
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', async (e) => {
         e.preventDefault();
 
-        // keep: prefer the short slug from profiles.json; never use ULID/long slug when short is available
+        // open a blank tab immediately to keep user-gesture and avoid popup blockers (kept logic, clarified)
+        const popup = window.open('about:blank', '_blank', 'noopener,noreferrer');
+
+        // use only the short slug from profiles.json; never use ULID/long slug (updated to validate "short" form)
         const isULID = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
-        const looksShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
+        const looksShort = (v) => {
+          const s = String(v || '').trim();
+          if (!s) return false;
+          if (isULID(s)) return false;                // ULID is not a short slug (kept comment, clarified)
+          if (/^helen-doron-/i.test(s)) return false; // long alias; not allowed (kept comment, clarified)
+          return /^[a-z]{2,3}-[a-z0-9-]+$/i.test(s);  // short pattern like "hd-debrecen-hadhazi-8910"
+        };
 
+        // prefer any short slug already present (payload or cached on DOM) — never use ULID/long alias
         let slug = String(data?.locationID || modal.getAttribute('data-locationid') || '').trim();
-
-        // If we don't already have the short slug (or we have a ULID / long alias), fetch it now.
         if (!looksShort(slug)) {
           try {
-            // choose a resolvable id: prefer canonical ULID if present; else resolve whatever we have
-            const raw = String(data?.id || data?.locationID || '').trim();
-            let uid = isULID(raw) ? raw : await resolveULIDFor(raw); // resolve slug → ULID (kept comment)
+            // pick something resolvable we have now; backend profile API expects ULID (kept comment)
+            const raw = String(data?.id || data?.locationID || modal.getAttribute('data-id') || '').trim();
+            const uid = isULID(raw) ? raw : await resolveULIDFor(raw); // resolves slug→ULID when needed (kept comment)
             if (uid) {
               const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(uid)}`), { cache: 'no-store', credentials: 'include' });
               if (r.ok) {
@@ -1273,20 +1281,25 @@ async function initLpmImageSlider(modal, data) {
                 const fromApi = String(p?.locationID || '').trim(); // profiles.json short slug (kept comment)
                 if (looksShort(fromApi)) {
                   slug = fromApi;
-                  // cache so subsequent clicks don’t refetch (kept, clarified)
+                  // cache for subsequent clicks in this session (kept, clarified)
                   data.locationID = slug;
                   modal.setAttribute('data-locationid', slug);
                 }
               }
             }
-          } catch { /* network failures fall through to safety fallback below */ }
+          } catch { /* network/resolve failure → handled by fallback below (kept comment) */ }
         }
 
-        // Final guard: only open with a short slug; keep toast strictly as safety fallback.
         if (looksShort(slug)) {
-          window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
+          const url = `https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`;
+          if (popup && !popup.closed) {
+            popup.location = url; // navigate the pre-opened tab (avoids popup-block)
+          } else {
+            window.open(url, '_blank', 'noopener,noreferrer');
+          }
         } else {
-          // safety fallback only (should rarely trigger once API is available)
+          // safety fallback only (retain toast, clarified)
+          if (popup && !popup.closed) popup.close();
           showToast('Dashboard unavailable for this profile', 1600);
         }
       }, { capture: true });
