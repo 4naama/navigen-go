@@ -1093,12 +1093,12 @@ async function initLpmImageSlider(modal, data) {
           if (resp.ok) {
             const payload = await resp.json().catch(() => ({}));
             if (payload && typeof payload === 'object') {
-              // merge only when absent locally (keep existing values)
+              // prefer already-present local fields, but FILL MISSING from payload (keeps official from API)
               if (payload.links && typeof payload.links === 'object') {
-                links = Object.assign({}, payload.links, links);
+                links = Object.assign({}, links, payload.links);
               }
               if (payload.contact && typeof payload.contact === 'object') {
-                contact = Object.assign({}, payload.contact, contact);
+                contact = Object.assign({}, contact, payload.contact);
               }
             }
           }
