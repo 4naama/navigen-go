@@ -336,7 +336,7 @@ function renderPopularGroup(list = geoPoints) {
       if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
 
       showLocationProfileModal({
-        locationID: uid, id: uid || alias,     // pass ULID or slug (server counts both)
+        locationID: String(loc?.locationID || ''), id: uid || alias,     // short slug from profiles.json
         displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
@@ -1282,8 +1282,8 @@ async function initEmergencyBlock(countryOverride) {
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
           showLocationProfileModal({
-            locationID: String(rec?.locationID || rec?.ID || rec?.id || ''), // prefer ULID, fallback to slug
-            id: String(rec?.locationID || rec?.ID || rec?.id || ''),         // pass same value for compatibility
+            locationID: String(rec?.locationID || ''),       // short slug from profiles.json
+            id: String(rec?.locationID || ''),               // use the same short slug; exclude ULID
             name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim() || "Unnamed",
             lat, lng,
             imageSrc: cover,

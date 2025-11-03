@@ -1248,23 +1248,25 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; prefer profiles.json short slug (locationID)
+    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; use profiles.json short slug only
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // always prefer short slug from profiles.json; do not use slug/alias
-        const locid = String(data?.locationID || '').trim();
-        const raw   = String(data?.id || '').trim(); // may be ULID or non-ULID
-        const isUl  = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw);
+        // use only the short slug from profiles.json; never use ULID/long slug
+        const locid = String(
+          data?.locationID ||
+          modal.getAttribute('data-locationid') ||
+          ''
+        ).trim();
 
-        // only fallback is a non-ULID id; never use data.slug or data.alias
-        const slug = locid || (!isUl ? raw : '');
+        if (!locid) {
+          showToast('Dashboard unavailable for this profile', 1600);
+          return;
+        }
 
-        if (!slug) { showToast('Dashboard unavailable for this profile', 1600); return; }
-
-        window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
+        window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(locid)}`, '_blank', 'noopener,noreferrer');
       }, { capture: true });
     }
 
@@ -1377,6 +1379,12 @@ async function initLpmImageSlider(modal, data) {
         const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
         if (!res.ok) return;
         const payload = await res.json();
+        
+        // ensure short slug available to UI (profiles.json → locationID)
+        if (payload && payload.locationID) {
+          data.locationID = String(payload.locationID).trim();      // memory
+          modal.setAttribute('data-locationid', data.locationID);   // DOM
+        }                
         
         // Fill description if placeholder
         if (payload.descriptions && !data.descriptions) {
