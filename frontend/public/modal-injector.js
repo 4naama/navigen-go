@@ -330,16 +330,24 @@ export async function showLocationProfileModal(data) {
   const old = document.getElementById('location-profile-modal');
   if (old) old.remove();
 
-  // 2. Resolve short slug synchronously BEFORE creating the modal (removes race with 📈 click)
+  // 2. Ensure short slug is present before creating the modal (zero-race for 📈)
   {
-    const raw = String(data?.id || data?.locationID || '').trim();
-    const uid = await resolveULIDFor(raw); // ULID canonical, short slug comes from profile
-    if (uid) {
-      const resp = await fetch(API(`/api/data/profile?id=${encodeURIComponent(uid)}`), { cache: 'no-store', credentials: 'include' });
-      if (resp.ok) {
-        const profile = await resp.json().catch(() => ({}));
-        const slug = String(profile?.locationID || '').trim(); // profiles.json guarantees this shape
-        if (slug) data.locationID = slug; // seed payload so factory + handlers get the short slug
+    const hd = String(data?.locationID || '').trim(); // profiles.json provides the short slug
+    if (/^hd-[a-z0-9-]+$/i.test(hd)) {
+      // we already have the short slug from profiles.json — use it as-is (kept comment, clarified)
+      data.locationID = hd;
+    } else {
+      const raw = String(data?.id || data?.locationID || '').trim(); // may be ULID or alias
+      const uid = await resolveULIDFor(raw); // only fetch profile when a ULID is available
+      if (uid) {
+        try {
+          const resp = await fetch(API(`/api/data/profile?id=${encodeURIComponent(uid)}`), { cache: 'no-store', credentials: 'include' });
+          if (resp.ok) {
+            const profile = await resp.json().catch(() => ({}));
+            const slug = String(profile?.locationID || '').trim();
+            if (slug) data.locationID = slug; // seed payload so factory + handlers get the short slug
+          }
+        } catch {}
       }
     }
   }
