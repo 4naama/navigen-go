@@ -130,6 +130,48 @@
   {
     "theme": "pharmacies",
     "namespace": "pharmacies",
+    "key": "helen-doron",
+    "pageKey": "pharmacies/helen-doron",
+    "indexable": false,
+    "minItems": null,
+    "languages": [
+      "en",
+      "hu"
+    ],
+    "titles": {
+      "en": "Pharmacies in Budapest, Hungary",
+      "hu": "Patikák Budapesten, Magyarországon"
+    },
+    "metaDescs": {},
+    "lastmod": "Mon Nov 03 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "pharmacies",
+    "namespace": "pharmacies",
+    "key": "helen-doron/hungary",
+    "pageKey": "pharmacies/helen-doron/hungary",
+    "indexable": false,
+    "minItems": null,
+    "languages": [
+      "en",
+      "hu"
+    ],
+    "titles": {
+      "en": "Pharmacies in Budapest, Hungary",
+      "hu": "Patikák Budapesten, Magyarországon"
+    },
+    "metaDescs": {},
+    "lastmod": "Mon Nov 03 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "pharmacies",
+    "namespace": "pharmacies",
     "key": "pharmacies",
     "pageKey": "pharmacies/pharmacies",
     "indexable": false,
