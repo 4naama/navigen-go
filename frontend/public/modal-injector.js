@@ -330,36 +330,27 @@ export async function showLocationProfileModal(data) {
   const old = document.getElementById('location-profile-modal');
   if (old) old.remove();
 
-  // 2. Build fresh modal from factory
+  // 2. Resolve short slug synchronously BEFORE creating the modal (removes race with 📈 click)
+  {
+    const raw = String(data?.id || data?.locationID || '').trim();
+    const uid = await resolveULIDFor(raw); // ULID canonical, short slug comes from profile
+    if (uid) {
+      const resp = await fetch(API(`/api/data/profile?id=${encodeURIComponent(uid)}`), { cache: 'no-store', credentials: 'include' });
+      if (resp.ok) {
+        const profile = await resp.json().catch(() => ({}));
+        const slug = String(profile?.locationID || '').trim(); // profiles.json guarantees this shape
+        if (slug) data.locationID = slug; // seed payload so factory + handlers get the short slug
+      }
+    }
+  }
+
+  // 3. Build fresh modal from factory (now seeded with short slug)
   const modal = createLocationProfileModal(data);
 
-  // 3. Append to body (hidden by default)
+  // 4. Append to body and expose slug to handlers immediately
   document.body.appendChild(modal);
-
-  // ensure short slug is immediately available to the UI (fetch profile once and cache the slug)
-  {
-    (async () => {
-      try {
-        // Always resolve to ULID first; the Profile API returns the canonical short slug
-        const raw = String(data?.id || data?.locationID || '').trim();
-        const uid = await resolveULIDFor(raw);
-        if (!uid) return;
-
-        const resp = await fetch(
-          API(`/api/data/profile?id=${encodeURIComponent(uid)}`),
-          { cache: 'no-store', credentials: 'include' }
-        );
-        if (!resp.ok) return;
-
-        const profile = await resp.json().catch(() => ({}));
-        const slug = String(profile?.locationID || '').trim(); // by design: always present, stable
-        if (!slug) return;
-
-        // cache once for all button handlers that read from DOM
-        data.locationID = slug;                 // keep the in-memory LPM model consistent
-        modal.setAttribute('data-locationid', slug);
-      } catch { /* non-fatal */ }
-    })();
+  if (data.locationID) {
+    modal.setAttribute('data-locationid', String(data.locationID).trim());
   }
 
   // Prefetch cover fast; avoid placeholder first paint
@@ -1514,8 +1505,9 @@ function makeLocationButton(loc) {
       const uid = String(btn.getAttribute('data-id') || '').trim();
       const alias = String(btn.getAttribute('data-alias') || '').trim();
       showLocationProfileModal({
-        locationID: uid,
-        id: uid || alias,
+        // LPM contract: short slug for actions; keep ULID canonical via `id` (comment clarified)
+        locationID: String(alias || loc?.locationID || ''),  // short slug from profiles.json / data-alias
+        id: uid || alias,                                    // ULID preferred; else the same short slug
         name: btn.textContent,
         lat,
         lng,
