@@ -383,6 +383,7 @@
   "metric.map": "Térkép",
   "metric.qr-view": "QR-kód",
   "metric.qr-scan": "QR kód beolvasása",
+  "metric.qr-print": "QR-nyomtatás",
   "dash.label.location": "",
   "dash.label.period": ""
 }

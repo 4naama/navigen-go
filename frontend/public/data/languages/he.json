@@ -383,6 +383,7 @@
   "metric.map": "מפה",
   "metric.qr-view": "קוד QR",
   "metric.qr-scan": "סרוק QR",
+  "metric.qr-print": "הדפסת QR",
   "dash.label.location": "",
   "dash.label.period": ""
 }

@@ -383,6 +383,7 @@
   "metric.map": "Mapa",
   "metric.qr-view": "QR",
   "metric.qr-scan": "Escanear QR",
+  "metric.qr-print": "Impresión QR",
   "dash.label.location": "",
   "dash.label.period": ""
 }
