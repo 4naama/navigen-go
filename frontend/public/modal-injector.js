@@ -341,23 +341,25 @@ export async function showLocationProfileModal(data) {
   // 3. Build fresh modal from factory (now seeded with short slug)
   const modal = createLocationProfileModal(data);
 
-  // 4. Append to body and expose identifier to handlers (prefer short; fallback to alias; never cache ULID)
+  // 4. Append to body and expose identifier to handlers (prefer alias for URL; fallback to short; never cache ULID)
   document.body.appendChild(modal);
   // Keep data.* intact; only cache a display identifier for click handlers.
   {
-    const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+    const ULID   = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
     const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
-    const idA = String(data?.id || '').trim();         // may be ULID in some paths
-    const idB = String(data?.locationID || '').trim(); // may be short or alias
 
-    const pool = [idA, idB].filter(Boolean).filter(v => !ULID.test(v));
-    const short = pool.find(isShort);
+    const idA = String(data?.id || '').trim();         // may be ULID or alias in some paths
+    const idB = String(data?.locationID || '').trim(); // may be alias or short slug
+
+    // Non-ULID candidates only
+    const pool  = [idA, idB].filter(Boolean).filter(v => !ULID.test(v));
+
+    // Prefer alias over short for display
     const alias = pool.find(v => !isShort(v));
-    const chosen = short || alias || '';
+    const short = pool.find(isShort);
+    const chosen = alias || short || '';
 
-    if (chosen) {
-      modal.setAttribute('data-locationid', chosen); // DOM-only cache; do not mutate data.*
-    }
+    if (chosen) modal.setAttribute('data-locationid', chosen); // DOM-only cache; do not mutate data.*
   }
 
   // Prefetch cover fast; avoid placeholder first paint
@@ -1272,30 +1274,28 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open with a non-ULID identifier (prefer alias; fallback to short; never use ULID)
+    // 📈 Stats (dashboard) — open with alias in URL (fallback to short if no alias; never use ULID)
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        const ULID    = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
         const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
-        const modalId = String(modal.getAttribute('data-locationid') || '').trim();
-        const idA = String(data?.id || '').trim();
-        const idB = String(data?.locationID || '').trim();
 
-        // Build non-ULID candidates in stable order: DOM cache → data.id → data.locationID
-        const pool = [modalId, idA, idB].filter(Boolean).filter(v => !ULID.test(v));
+        const fromDom = String(modal.getAttribute('data-locationid') || '').trim();
+        const idA     = String(data?.id || '').trim();
+        const idB     = String(data?.locationID || '').trim();
 
-        // Prefer alias over short; fall back to short if no alias exists.
+        // Non-ULID candidates in stable order: DOM cache → data.id → data.locationID
+        const pool  = [fromDom, idA, idB].filter(Boolean).filter(v => !ULID.test(v));
+
+        // Prefer alias for display; fall back to short only if no alias exists
         const alias = pool.find(v => !isShort(v));
         const short = pool.find(isShort);
         const chosen = alias || short || '';
 
-        if (!chosen) {
-          showToast('Dashboard unavailable for this profile', 1600);
-          return;
-        }
+        if (!chosen) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
         // Keep DOM cache in sync; do not mutate data.*
         modal.setAttribute('data-locationid', chosen);
