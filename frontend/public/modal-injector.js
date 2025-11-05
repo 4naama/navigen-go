@@ -814,9 +814,11 @@ async function initLpmImageSlider(modal, data) {
     }
 
     // 📅 Book → ONLY open links.bookingUrl; else toast (no legacy, no contact API)
-    const btnBook = modal.querySelector('#lpm-book');
+    // Guard: mark once so later code (e.g., onclick fallback) can skip re-binding.
+    const btnBook = modal.find ? modal.find('#lpm-book') : modal.querySelector('#lpm-book');
     if (btnBook) {
-      if (typeof btnBook.onclick === 'function') { return; } // prevent double wiring
+      if (btnBook.dataset.lpmWired === '1') return; // already wired elsewhere
+      if (typeof btnBook.onclick === 'function') return; // keep existing guard
 
       const bookingUrl = String(data?.links?.bookingUrl || '').trim();
 
@@ -830,12 +832,14 @@ async function initLpmImageSlider(modal, data) {
           const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
           window.open(url, '_blank', 'noopener,noreferrer');
         }, { capture: true });
+        btnBook.dataset.lpmWired = '1'; // ← mark bound
 
       } else {
         btnBook.addEventListener('click', (e) => {
           e.preventDefault();
           showToast('Booking link coming soon', 1600);
         }, { passive: false });
+        btnBook.dataset.lpmWired = '1'; // ← mark bound
       }
     }
 
@@ -1218,23 +1222,33 @@ async function initLpmImageSlider(modal, data) {
       });
 
       // booking: ONLY links.bookingUrl; else toast (cleaned)
+      // If already wired above, skip to avoid double-firing on the same button.
       if (bookBtn) {
-        const prev = bookBtn.onclick;
-        bookBtn.onclick = async (ev) => {
-          ev.preventDefault();
+        if (bookBtn.dataset && bookBtn.dataset.lpmWired === '1') {
+          // already has a capture-phase handler from the primary wiring; do nothing
+        } else {
           const bookingUrl = String(data?.links?.bookingUrl || '').trim();
           if (bookingUrl) {
-            if (typeof prev === 'function') return prev(ev); // keep upstream if any
-            const raw = String(data?.id || data?.locationID || '').trim();
-            const uid = await resolveULIDFor(raw);
-            if (!uid) { showToast('Booking link coming soon', 1600); return; }
-            const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
-            window.open(url, '_blank', 'noopener,noreferrer');
-            return;
+            bookBtn.removeAttribute('href');
+            bookBtn.addEventListener('click', async (ev) => {
+              ev.preventDefault();
+              const raw = String(data?.id || data?.locationID || '').trim();
+              const uid = await resolveULIDFor(raw);
+              if (!uid) { showToast('Booking link coming soon', 1600); return; }
+              const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
+              window.open(url, '_blank', 'noopener,noreferrer');
+            }, { capture: true });
+            bookBtn.dataset.lpmWired = '1'; // mark bound
+          } else {
+            bookBtn.addEventListener('click', (ev) => {
+              ev.preventDefault();
+              showToast('Booking link coming soon', 1600);
+            }, { passive: false });
+            bookBtn.dataset.lpmWired = '1'; // mark bound
           }
-          showToast('Booking link coming soon', 1600);
-        };
+        }
       }
+
     })();
 
     // ⭐ Save (secondary) handled by helper
