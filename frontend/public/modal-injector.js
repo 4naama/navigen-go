@@ -1268,26 +1268,29 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<alias-or-short>; allow brand aliases (no short-only rule)
+    // 📈 Stats (dashboard) — open with alias for display, but ensure backend counts via short key if available
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // Prefer a non-ULID alias; fallback to short; never send ULID to /dash
         {
           const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-          const modalSlug = String(modal.getAttribute('data-locationid') || '').trim();
-          const candidates = [
-            modalSlug,
-            String(data?.id || '').trim(),
-            String(data?.locationID || '').trim()
-          ].filter(Boolean);
-          const slug = candidates.find(s => !ULID.test(s)) || '';
-          if (slug) {
-            // keep DOM cache in sync but do not mutate data.locationID
-            modal.setAttribute('data-locationid', slug);
-            window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
+          const aliasOrDom = String(modal.getAttribute('data-locationid') || '').trim();
+          const shortKey   = String(data?.locationID || '').trim(); // short id from profiles.json
+          const isAlias    = aliasOrDom && !/^hd-[a-z0-9-]+$/i.test(aliasOrDom) && !ULID.test(aliasOrDom);
+
+          // use alias for UI (open URL), short for internal tracking
+          const displaySlug = isAlias ? aliasOrDom : shortKey || aliasOrDom;
+          const trackSlug   = shortKey || aliasOrDom;
+
+          if (displaySlug) {
+            modal.setAttribute('data-locationid', displaySlug);
+            // background ping to preserve counting behavior if short key exists
+            if (trackSlug && trackSlug !== displaySlug) {
+              fetch(`/api/data/track?locationID=${encodeURIComponent(trackSlug)}`, { method: 'POST', keepalive: true }).catch(() => {});
+            }
+            window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(displaySlug)}`, '_blank', 'noopener,noreferrer');
           } else {
             showToast('Dashboard unavailable for this profile', 1600);
           }
