@@ -932,7 +932,7 @@ async function initLpmImageSlider(modal, data) {
               try {
                 const uid = (img?.dataset?.uid || img?.dataset?.ulid || img?.dataset?.locationId || img?.getAttribute?.('data-id') || '').trim();
                 if (uid) {
-                  const endpoint = `/hit/qr-print/${encodeURIComponent(uid)}`;
+                  const endpoint = `${TRACK_BASE}/hit/qr-print/${encodeURIComponent(uid)}`;
                   if (navigator.sendBeacon) {
                     const body = new Blob([], { type: 'application/octet-stream' });
                     navigator.sendBeacon(endpoint, body);
@@ -979,6 +979,7 @@ async function initLpmImageSlider(modal, data) {
                 if (__uid) await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(__uid)}`, { method:'POST', keepalive:true });
               } catch {} 
             })();
+
           });
 
           const actions = document.createElement('div');
