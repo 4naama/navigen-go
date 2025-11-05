@@ -330,45 +330,29 @@ export async function showLocationProfileModal(data) {
   const old = document.getElementById('location-profile-modal');
   if (old) old.remove();
 
-  // 2. Ensure short slug is present before creating the modal (zero-race for 📈)
+  // 2. Do not rewrite slug before creating the modal (allow brand alias or short slug as provided)
   {
-    const hd = String(data?.locationID || '').trim(); // profiles.json provides the short slug
-    if (/^hd-[a-z0-9-]+$/i.test(hd)) {
-      // we already have the short slug from profiles.json — use it as-is (kept comment, clarified)
-      data.locationID = hd;
-    } else {
-      const raw = String(data?.id || data?.locationID || '').trim(); // may be ULID or alias
-      const uid = await resolveULIDFor(raw); // only fetch profile when a ULID is available
-      if (uid) {
-        try {
-          const resp = await fetch(API(`/api/data/profile?id=${encodeURIComponent(uid)}`), { cache: 'no-store', credentials: 'include' });
-          if (resp.ok) {
-            const profile = await resp.json().catch(() => ({}));
-            const slug = String(profile?.locationID || '').trim();
-            if (slug) data.locationID = slug; // seed payload so factory + handlers get the short slug
-          }
-        } catch {}
-      }
-    }
+    // Keep incoming dataset values as-is:
+    // - data.id stays the canonical ULID (if present) for counting beacons
+    // - data.locationID may be a brand alias or a shortened slug
+    // No normalization here; handlers will prefer a non-ULID alias for dashboard.
   }
 
   // 3. Build fresh modal from factory (now seeded with short slug)
   const modal = createLocationProfileModal(data);
 
-  // 4. Append to body and expose slug to handlers immediately
+  // 4. Append to body and expose slug/alias to handlers immediately
   document.body.appendChild(modal);
-  // Prefer a short 'hd-...' slug from the incoming data; fall back to whatever was provided if no short slug is found.
+  // Prefer a non-ULID alias/slug for dashboard; do not rewrite data.locationID.
   {
-    const candidates = [
-      String(data.locationID || '').trim(),
-      String(data.id || '').trim()
+    const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+    const aliasFirst = [
+      String(data?.id || '').trim(),         // may be alias if no ULID yet
+      String(data?.locationID || '').trim()  // may be alias or short slug
     ].filter(Boolean);
-    const short = candidates.find(s => /^hd-[a-z0-9-]+$/i.test(s));
-    const chosen = short || candidates[0] || '';
+    const chosen = aliasFirst.find(s => !ULID.test(s)) || aliasFirst[0] || '';
     if (chosen) {
-      modal.setAttribute('data-locationid', chosen);
-      // keep in-memory payload consistent for other handlers that read from data
-      if (short) data.locationID = short;
+      modal.setAttribute('data-locationid', chosen); // DOM cache only
     }
   }
 
@@ -1284,27 +1268,28 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<slug>; must be the short `hd-...` slug
+    // 📈 Stats (dashboard) — open https://navigen.io/dash/?locationID=<alias-or-short>; allow brand aliases (no short-only rule)
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // open Dashboard with the short slug we fetched up front (prefer an 'hd-...' slug if available)
+        // Prefer a non-ULID alias; fallback to short; never send ULID to /dash
         {
+          const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
           const modalSlug = String(modal.getAttribute('data-locationid') || '').trim();
           const candidates = [
             modalSlug,
-            String(data?.locationID || '').trim(),
-            String(data?.id || '').trim()
+            String(data?.id || '').trim(),
+            String(data?.locationID || '').trim()
           ].filter(Boolean);
-          const short = candidates.find(s => /^hd-[a-z0-9-]+$/i.test(s));
-          const slug = short || candidates[0] || '';
+          const slug = candidates.find(s => !ULID.test(s)) || '';
           if (slug) {
-            modal.setAttribute('data-locationid', slug); // keep DOM cache in sync
+            // keep DOM cache in sync but do not mutate data.locationID
+            modal.setAttribute('data-locationid', slug);
             window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(slug)}`, '_blank', 'noopener,noreferrer');
           } else {
-            showToast('Dashboard unavailable for this profile', 1600); // should be unreachable in normal flow
+            showToast('Dashboard unavailable for this profile', 1600);
           }
         }
       }, { capture: true });
@@ -1420,16 +1405,17 @@ async function initLpmImageSlider(modal, data) {
         if (!res.ok) return;
         const payload = await res.json();
         
-        // ensure short slug available to UI (profiles.json → locationID)
-        // update only if the API returns the *short* slug; never downgrade to a long alias (kept comment, clarified)
+        // keep API-provided locationID as-is (alias or short); do not force short or overwrite brand alias
         if (payload && payload.locationID) {
-          const _locid = String(payload.locationID).trim();
-          const looksShort = /^hd-[a-z0-9-]+$/i.test(_locid);
-          if (looksShort) {
-            data.locationID = _locid;                                // memory (short slug only)
-            modal.setAttribute('data-locationid', data.locationID);  // DOM
+          const apiId = String(payload.locationID).trim();
+          // Only update the DOM cache if we don't already have a non-ULID alias there.
+          const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+          const currentDom = String(modal.getAttribute('data-locationid') || '').trim();
+          const hasAlias = currentDom && !ULID.test(currentDom);
+          if (!hasAlias && apiId) {
+            modal.setAttribute('data-locationid', apiId);
           }
-          // else: keep existing short slug from profiles.json; do not overwrite with long alias
+          // Keep data.locationID as originally provided by the dataset; no mutation here.
         }
 
         // Fill description if placeholder
