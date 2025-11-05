@@ -921,23 +921,10 @@ async function initLpmImageSlider(modal, data) {
             const printBtn = document.createElement('button');
             printBtn.className = 'modal-footer-button';
             printBtn.type = 'button';
-            printBtn.setAttribute('aria-label', t('cta.print'));
-            printBtn.title = t('cta.print');
-            printBtn.innerHTML = `🖨️ <span class="cta-label">${t('cta.print')}</span>`;
-            printBtn.onclick = async () => {
-              try {
-                const uid = (img?.dataset?.uid || img?.dataset?.ulid || img?.dataset?.locationId || img?.getAttribute?.('data-id') || '').trim();
-                if (uid) {
-                  const endpoint = `/hit/qr-print/${encodeURIComponent(uid)}`;
-                  if (navigator.sendBeacon) {
-                    const body = new Blob([], { type: 'application/octet-stream' });
-                    navigator.sendBeacon(endpoint, body);
-                  } else {
-                    await fetch(endpoint, { method: 'POST', keepalive: true });
-                  }
-                }
-              } catch {}
-
+            printBtn.setAttribute('aria-label', 'Print');
+            printBtn.title = 'Print';
+            printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
+            printBtn.onclick = () => {
               const src = img.src;
               const layer = document.createElement('div');
               layer.id = 'qr-print-layer';
