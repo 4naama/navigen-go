@@ -1272,7 +1272,7 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open with a non-ULID identifier (prefer short; fallback to alias; never use ULID)
+    // 📈 Stats (dashboard) — open with a non-ULID identifier (prefer alias; fallback to short; never use ULID)
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
@@ -1280,18 +1280,17 @@ async function initLpmImageSlider(modal, data) {
 
         const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
         const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
-
-        const fromDom = String(modal.getAttribute('data-locationid') || '').trim();
+        const modalId = String(modal.getAttribute('data-locationid') || '').trim();
         const idA = String(data?.id || '').trim();
         const idB = String(data?.locationID || '').trim();
 
-        // Non-ULID candidates: DOM cache → data.id → data.locationID
-        const pool = [fromDom, idA, idB].filter(Boolean).filter(v => !ULID.test(v));
+        // Build non-ULID candidates in stable order: DOM cache → data.id → data.locationID
+        const pool = [modalId, idA, idB].filter(Boolean).filter(v => !ULID.test(v));
 
-        // Prefer short (counts reliably); fallback to alias for display if short is absent.
-        const short = pool.find(isShort);
+        // Prefer alias over short; fall back to short if no alias exists.
         const alias = pool.find(v => !isShort(v));
-        const chosen = short || alias || '';
+        const short = pool.find(isShort);
+        const chosen = alias || short || '';
 
         if (!chosen) {
           showToast('Dashboard unavailable for this profile', 1600);
