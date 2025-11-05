@@ -901,11 +901,7 @@ async function initLpmImageSlider(modal, data) {
             img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
             const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
               || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
-            // encode a tracked URL so the scan increments `qr-scan` on the API Worker, then lands on LPM (?lp=<id>)
-            const ORIGIN   = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin;
-            const landing  = `${ORIGIN}/?lp=${encodeURIComponent(uid)}`; // opens Business Card (LPM) on arrival
-            const tracked  = `${TRACK_BASE}/out/qr-scan/${encodeURIComponent(uid)}?to=${encodeURIComponent(landing)}`; // server counts on redirect
-            img.src = `${BASE}/api/qr?url=${encodeURIComponent(tracked)}&size=512`; // QR encodes the tracked URL
+            img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512`;
 
             const actions = document.createElement('div');
             actions.className = 'modal-footer cta-compact';
