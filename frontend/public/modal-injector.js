@@ -903,26 +903,11 @@ async function initLpmImageSlider(modal, data) {
               || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
             // encode a tracked URL so the scan increments `qr-scan` on the API Worker, then lands on LPM (?lp=<id>)
             const ORIGIN   = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin;
-            const landing  = `${ORIGIN}/?lp=${encodeURIComponent(uid)}`; // opens Business Card (LPM) on arrival
-
-            // Resolve slug → ULID before generating QR; fall back to direct landing on miss.
-            (async () => {
-              try {
-                const __uid = await resolveULIDFor(uid);
-                if (__uid) {
-                  // tracked redirect counts as qr-scan on the Worker
-                  const href = `${TRACK_BASE}/out/qr-scan/${encodeURIComponent(__uid)}?to=${encodeURIComponent(landing)}`;
-                  img.dataset.ulid = __uid; // keep for print tracking
-                  img.src = `${BASE}/api/qr?url=${encodeURIComponent(href)}&size=512`; // QR encodes the tracked URL
-                } else {
-                  // no ULID → still show a working QR that lands on the LPM (no scan count)
-                  img.src = `${BASE}/api/qr?url=${encodeURIComponent(landing)}&size=512`;
-                }
-              } catch {
-                img.src = `${BASE}/api/qr?url=${encodeURIComponent(landing)}&size=512`;
-              }
-            })();
-
+            const landing = `${ORIGIN}/?lp=${encodeURIComponent(uid)}`; // opens Business Card (LPM) on arrival
+            img.src = `${BASE}/api/qr?url=${encodeURIComponent(landing)}&size=512`; // show QR immediately (fallback)
+            (async ()=>{ try{ const __uid=await resolveULIDFor(uid);
+              if(__uid){ img.dataset.ulid=__uid; const href=`${TRACK_BASE}/out/qr-scan/${encodeURIComponent(__uid)}?to=${encodeURIComponent(landing)}`;
+                img.src = `${BASE}/api/qr?url=${encodeURIComponent(href)}&size=512`; } } catch{} })(); // swap to tracked QR when ULID is known
             const actions = document.createElement('div');
             actions.className = 'modal-footer cta-compact';
 
