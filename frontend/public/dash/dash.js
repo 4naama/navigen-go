@@ -103,13 +103,14 @@ function syncMode() {
   if (hintEl) hintEl.textContent = ''; // legacy hint suppressed
 }
 
-// fixed order as served by your Worker (extend if needed)
+// fixed order as served by the Worker
 const ORDER = [
-  'lpm-open','call','email','whatsapp','telegram','messenger',
-  'official','booking','newsletter',
-  'facebook','instagram','pinterest','spotify','tiktok','youtube',
-  'share','save','unsave','map','qr-scan','qr-view'
-]; // show scans and (optionally) views
+  'lpm-open','save','unsave',  
+  'booking','newsletter',
+  'share','map','qr-view','qr-scan','qr-print',  
+  'official','facebook','instagram','pinterest','spotify','tiktok','youtube',
+  'call','email','whatsapp','telegram','messenger'
+]; // show scans, views, and prints
 
 // display labels for metrics (ids must match ORDER exactly)
 // keep: explicit i18n labels; others fall back to HUMANIZE()
@@ -134,7 +135,8 @@ const METRIC_LABEL = Object.freeze({
   'unsave':   t('metric.unsave'),
   'map':      t('metric.map'),
   'qr-scan':  t('metric.qr-scan'),
-  'qr-view':  t('metric.qr-view') // keep view label
+  'qr-view':  t('metric.qr-view'), // keep view label
+  'qr-print': t('metric.qr-print') // new: QR → Print clicks
 });
 
 const HUMANIZE = (k) => {
