@@ -341,18 +341,24 @@ export async function showLocationProfileModal(data) {
   // 3. Build fresh modal from factory (now seeded with short slug)
   const modal = createLocationProfileModal(data);
 
-  // 4. Append to body and expose slug/alias to handlers immediately
+  // 4. Append to body and expose identifier to handlers (prefer alias over short; never cache ULID)
   document.body.appendChild(modal);
-  // Prefer a non-ULID alias/slug for dashboard; do not rewrite data.locationID.
+  // Keep data.* intact; only cache a display identifier for click handlers.
   {
     const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-    const aliasFirst = [
-      String(data?.id || '').trim(),         // may be alias if no ULID yet
-      String(data?.locationID || '').trim()  // may be alias or short slug
-    ].filter(Boolean);
-    const chosen = aliasFirst.find(s => !ULID.test(s)) || aliasFirst[0] || '';
+    const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
+    const idA = String(data?.id || '').trim();           // may be ULID or alias in some paths
+    const idB = String(data?.locationID || '').trim();   // may be alias or short slug
+
+    const candidates = [idA, idB].filter(Boolean).filter(v => !ULID.test(v));
+
+    // Prefer a non-short alias; if none, fall back to short slug; else nothing.
+    const alias = candidates.find(v => !isShort(v));
+    const short = candidates.find(isShort);
+    const chosen = alias || short || '';
+
     if (chosen) {
-      modal.setAttribute('data-locationid', chosen); // DOM cache only
+      modal.setAttribute('data-locationid', chosen); // DOM-only cache; do not mutate data.*
     }
   }
 
@@ -1268,44 +1274,36 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open with a non-ULID identifier; if the alias isn't mapped, also ping with a shortened key
-    statsBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
+    // 📈 Stats (dashboard) — open with a non-ULID identifier (prefer alias; fallback to short; never use ULID)
+    const statsBtn = modal.querySelector('#som-stats');
+    if (statsBtn) {
+      statsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
 
-      // read candidates (no globals; keep wording general)
-      const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-      const domId   = String(modal.getAttribute('data-locationid') || '').trim();
-      const dataId  = String(data?.id || '').trim();
-      const shortId = String(data?.locationID || '').trim();
+        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
+        const modalId = String(modal.getAttribute('data-locationid') || '').trim();
+        const idA = String(data?.id || '').trim();
+        const idB = String(data?.locationID || '').trim();
 
-      const aliasOrShort = [domId, dataId, shortId].find(v => v && !ULID.test(v)) || '';
-      const displayId    = aliasOrShort || '';
-      const dashUrl      = `https://navigen.io/dash/?locationID=${encodeURIComponent(displayId)}`;
+        // Build non-ULID candidates in stable order: DOM cache → data.id → data.locationID
+        const pool = [modalId, idA, idB].filter(Boolean).filter(v => !ULID.test(v));
 
-      if (!displayId) {
-        showToast('Dashboard unavailable for this profile', 1600);
-        return;
-      }
+        // Prefer alias over short; fall back to short if no alias exists.
+        const alias = pool.find(v => !isShort(v));
+        const short = pool.find(isShort);
+        const chosen = alias || short || '';
 
-      // open the user-facing URL
-      window.open(dashUrl, '_blank', 'noopener,noreferrer');
-
-      // background: if displayId is an alias that isn't mapped, reuse shortId for counting
-      try {
-        const from = new Date(Date.now() - 24*3600*1000), to = new Date();
-        const iso = d => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
-        const check = await fetch(`https://navigen-api.4naama.workers.dev/api/stats?locationID=${encodeURIComponent(displayId)}&from=${iso(from)}&to=${iso(to)}`, { cache: 'no-store' });
-        const j = check.ok ? await check.json().catch(()=>null) : null;
-        const resolved = (j && (j.locationID || j.uid || j.id)) || '';
-        const mapped = resolved && resolved !== displayId;
-
-        // if alias is not mapped but a short key exists, make a lightweight ping with the short key
-        if (!mapped && shortId) {
-          // keep it general; the server will handle the incrementing on its side
-          fetch(`https://navigen-api.4naama.workers.dev/api/stats?locationID=${encodeURIComponent(shortId)}&from=${iso(from)}&to=${iso(to)}`, { cache: 'no-store' }).catch(() => {});
+        if (!chosen) {
+          showToast('Dashboard unavailable for this profile', 1600);
+          return;
         }
-      } catch {}
-    }, { capture: true });
+
+        // Keep DOM cache in sync; do not mutate data.*
+        modal.setAttribute('data-locationid', chosen);
+        window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(chosen)}`, '_blank', 'noopener,noreferrer');
+      }, { capture: true });
+    }
 
     // × Close → remove modal, return focus to originating trigger if provided
     const btnClose = modal.querySelector('.modal-close');
