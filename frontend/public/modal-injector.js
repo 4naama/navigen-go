@@ -814,18 +814,16 @@ async function initLpmImageSlider(modal, data) {
     }
 
     // 📅 Book → ONLY open links.bookingUrl; else toast (no legacy, no contact API)
+    // Guard: if we've already wired this button once, skip to prevent double firing.
     const btnBook = modal.querySelector('#lpm-book');
     if (btnBook) {
-      // prevent double wiring from multiple code paths (onclick vs addEventListener)
-      if (btnBook.dataset.lpmWired === '1' || typeof btnBook.onclick === 'function') { return; } // keep comment, clarify
-      btnBook.dataset.lpmWired = '1'; // mark as wired so later blocks can skip
+      if (btnBook.dataset.lpmWired === '1' || typeof btnBook.onclick === 'function') { return; } // prevent double wiring
 
-      const bookingUrl = String(data?.intho?.bookingUrl || data?.links?.bookingUrl || '').trim();
+      const bookingUrl = String(data?.links?.bookingUrl || '').trim();
 
       if (bookingUrl) {
         btnBook.removeAttribute('href');
-        btnBox = btnBook; // existing element reference
-        btnBox.addEventListener('click', async (e) => {
+        btnBook.addEventListener('click', async (e) => {
           e.preventDefault();
           const raw = String(data?.id || data?.locationID || '').trim();
           const uid = await resolveULIDFor(raw);
@@ -833,12 +831,14 @@ async function initLpmImageSlider(modal, data) {
           const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
           window.open(url, '_blank', 'noopener,noreferrer');
         }, { capture: true });
+        btnBook.setAttribute('data-lpm-wired', '1'); // mark as wired
 
       } else {
         btnBook.addEventListener('click', (e) => {
           e.preventDefault();
-          showToast('Booking link coming soon', 1600);
+          show busyness('Booking link coming soon', 1600);
         }, { passive: false });
+        btnBook.setAttribute('data-lpm-wired', '1'); // mark as wired
       }
     }
 
@@ -1202,13 +1202,29 @@ async function initLpmImageSlider(modal, data) {
       const mail = modal.querySelector('#som-mail');
       const bookBtn = modal.querySelector('#lpm-book');
 
-      if (call && !call.href) /* …unchanged… */
+      if (call && !call.href) call.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          const url = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=phone`);
+          const r = await fetch(url);
+          if (r.ok){ const j=await r.json(); if (j.href) location.href=j.href; }
+        } catch {}
+      });
 
-      if (mail && !mail.href) /* …unchanged… */
+      if (mail && !mail.href) mail.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          const url = API(`/api/data/contact?id=${encodeURIComponent(id)}&kind=email`);
+          const r = await fetch(url, { credentials: 'include' });
+          if (r.ok){ const j=await r.json(); if (j.href) location.href=j.href; }
+        } catch {}
+      });
 
       // booking: ONLY links.bookingUrl; else toast (cleaned)
-      // If the primary booking handler already wired via addEventListener, skip to avoid double firing.
-      if (bookBtn && bookBtn.dataset.lpmWired !== '1') {
+      // Skip if primary handler already wired to avoid duplicate opens/counts.
+      if (bookBtn) {
+        if (bookBtn.dataset.lpmWired === '1') return; // primary handler attached above
+
         const bookingUrl = String(data?.links?.bookingUrl || '').trim();
         if (bookingUrl) {
           bookBtn.removeAttribute('href');
@@ -1220,15 +1236,16 @@ async function initLpmImageSlider(modal, data) {
             const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
             window.open(url, '_blank', 'noopener,noreferrer');
           }, { capture: true });
-          bookBtn.dataset.lpmWired = '1'; // mark as wired to prevent duplicate handlers
+          bookBtn.setAttribute('data-lpm-wired', '1');
         } else {
           bookBtn.addEventListener('click', (ev) => {
             ev.preventDefault();
             showToast('Booking link coming soon', 1600);
           }, { passive: false });
-          bookBtn.dataset.lpmWired = '1';
+          bookBtn.setAttribute('data-lpm-wired', '1');
         }
       }
+      
     })();
 
     // ⭐ Save (secondary) handled by helper
