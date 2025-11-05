@@ -1268,35 +1268,44 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open with alias for display, but ensure backend counts via short key if available
-    const statsBtn = modal.querySelector('#som-stats');
-    if (statsBtn) {
-      statsBtn.addEventListener('click', (e) => {
-        e.preventDefault();
+    // 📈 Stats (dashboard) — open with a non-ULID identifier; if the alias isn't mapped, also ping with a shortened key
+    statsBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
 
-        {
-          const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-          const aliasOrDom = String(modal.getAttribute('data-locationid') || '').trim();
-          const shortKey   = String(data?.locationID || '').trim(); // short id from profiles.json
-          const isAlias    = aliasOrDom && !/^hd-[a-z0-9-]+$/i.test(aliasOrDom) && !ULID.test(aliasOrDom);
+      // read candidates (no globals; keep wording general)
+      const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+      const domId   = String(modal.getAttribute('data-locationid') || '').trim();
+      const dataId  = String(data?.id || '').trim();
+      const shortId = String(data?.locationID || '').trim();
 
-          // use alias for UI (open URL), short for internal tracking
-          const displaySlug = isAlias ? aliasOrDom : shortKey || aliasOrDom;
-          const trackSlug   = shortKey || aliasOrDom;
+      const aliasOrShort = [domId, dataId, shortId].find(v => v && !ULID.test(v)) || '';
+      const displayId    = aliasOrShort || '';
+      const dashUrl      = `https://navigen.io/dash/?locationID=${encodeURIComponent(displayId)}`;
 
-          if (displaySlug) {
-            modal.setAttribute('data-locationid', displaySlug);
-            // background ping to preserve counting behavior if short key exists
-            if (trackSlug && trackSlug !== displaySlug) {
-              fetch(`/api/data/track?locationID=${encodeURIComponent(trackSlug)}`, { method: 'POST', keepalive: true }).catch(() => {});
-            }
-            window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(displaySlug)}`, '_blank', 'noopener,noreferrer');
-          } else {
-            showToast('Dashboard unavailable for this profile', 1600);
-          }
+      if (!displayId) {
+        showToast('Dashboard unavailable for this profile', 1600);
+        return;
+      }
+
+      // open the user-facing URL
+      window.open(dashUrl, '_blank', 'noopener,noreferrer');
+
+      // background: if displayId is an alias that isn't mapped, reuse shortId for counting
+      try {
+        const from = new Date(Date.now() - 24*3600*1000), to = new Date();
+        const iso = d => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+        const check = await fetch(`https://navigen-api.4naama.workers.dev/api/stats?locationID=${encodeURIComponent(displayId)}&from=${iso(from)}&to=${iso(to)}`, { cache: 'no-store' });
+        const j = check.ok ? await check.json().catch(()=>null) : null;
+        const resolved = (j && (j.locationID || j.uid || j.id)) || '';
+        const mapped = resolved && resolved !== displayId;
+
+        // if alias is not mapped but a short key exists, make a lightweight ping with the short key
+        if (!mapped && shortId) {
+          // keep it general; the server will handle the incrementing on its side
+          fetch(`https://navigen-api.4naama.workers.dev/api/stats?locationID=${encodeURIComponent(shortId)}&from=${iso(from)}&to=${iso(to)}`, { cache: 'no-store' }).catch(() => {});
         }
-      }, { capture: true });
-    }
+      } catch {}
+    }, { capture: true });
 
     // × Close → remove modal, return focus to originating trigger if provided
     const btnClose = modal.querySelector('.modal-close');
