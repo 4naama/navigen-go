@@ -903,10 +903,11 @@ async function initLpmImageSlider(modal, data) {
               || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
             // encode a tracked URL so the scan increments `qr-scan` on the API Worker, then lands on LPM (?lp=<id>)
             const ORIGIN   = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin;
-            const landing  = `${ORIGIN}/?lp=${encodeURIComponent(uid)}`; // opens Business Card (LPM) on arrival
-            const tracked  = `${TRACK_BASE}/out/qr-scan/${encodeURIComponent(uid)}?to=${encodeURIComponent(landing)}`; // server counts on redirect
-            img.src = `${BASE}/api/qr?url=${encodeURIComponent(tracked)}&size=512`; // QR encodes the tracked URL
-
+            const landing = `${ORIGIN}/?lp=${encodeURIComponent(uid)}`; // opens Business Card (LPM) on arrival
+            img.src = `${BASE}/api/qr?url=${encodeURIComponent(landing)}&size=512`; // show QR immediately (fallback)
+            (async ()=>{ try{ const __uid=await resolveULIDFor(uid);
+              if(__uid){ img.dataset.ulid=__uid; const href=`${TRACK_BASE}/out/qr-scan/${encodeURIComponent(__uid)}?to=${encodeURIComponent(landing)}`;
+                img.src = `${BASE}/api/qr?url=${encodeURIComponent(href)}&size=512`; } } catch{} })(); // swap to tracked QR when ULID is known
             const actions = document.createElement('div');
             actions.className = 'modal-footer cta-compact';
 
@@ -932,7 +933,7 @@ async function initLpmImageSlider(modal, data) {
               try {
                 const uid = (img?.dataset?.uid || img?.dataset?.ulid || img?.dataset?.locationId || img?.getAttribute?.('data-id') || '').trim();
                 if (uid) {
-                  const endpoint = `/hit/qr-print/${encodeURIComponent(uid)}`;
+                  const endpoint = `${TRACK_BASE}/hit/qr-print/${encodeURIComponent(uid)}`;
                   if (navigator.sendBeacon) {
                     const body = new Blob([], { type: 'application/octet-stream' });
                     navigator.sendBeacon(endpoint, body);
