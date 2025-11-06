@@ -925,15 +925,15 @@ async function initLpmImageSlider(modal, data) {
             printBtn.title = 'Print';
             printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
             printBtn.onclick = () => {
-              // count QR → Print with canonical ULID (reuse the same uid path as qr-view)
+              // count QR → Print; mirror qr-view path (resolve slug → ULID before sending)
               (async () => {
                 try {
-                  const __uid = await resolveULIDFor(String(uid || '').trim()); // slug → ULID (dash expects ULID)
+                  const raw = String(data?.id || data?.locationID || '').trim(); // prefer slug; dash expects/uses ULID after resolve
+                  const __uid = raw ? await resolveULIDFor(raw) : null;          // slug → ULID (same helper as qr-view/share)
                   if (__uid) {
-                    fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(__uid)}`, { method: 'POST', keepalive: true })
-                      .catch(() => {}); // non-blocking: printing must proceed regardless
+                    await fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(__uid)}`, { method: 'POST', keepalive: true });
                   }
-                } catch {}
+                } catch { /* no-op: printing must proceed regardless */ }
               })();
               const src = img.src;
               const layer = document.createElement('div');
