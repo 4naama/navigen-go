@@ -924,15 +924,17 @@ async function initLpmImageSlider(modal, data) {
             printBtn.setAttribute('aria-label', 'Print');
             printBtn.title = 'Print';
             printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
-            printBtn.onclick = async () => {
-              // count QR → Print (resolve slug → ULID before sending; dash reads ULID metrics)
-              try {
-                const raw = String(data?.id || data?.locationID || '').trim();
-                const __uid = await resolveULIDFor(raw);
-                if (__uid) {
-                  await fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(__uid)}`, { method: 'POST', keepalive: true });
-                }
-              } catch { /* no-op: printing should still proceed */ }
+            printBtn.onclick = () => {
+              // count QR → Print with canonical ULID (reuse the same uid path as qr-view)
+              (async () => {
+                try {
+                  const __uid = await resolveULIDFor(String(uid || '').trim()); // slug → ULID (dash expects ULID)
+                  if (__uid) {
+                    fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(__uid)}`, { method: 'POST', keepalive: true })
+                      .catch(() => {}); // non-blocking: printing must proceed regardless
+                  }
+                } catch {}
+              })();
               const src = img.src;
               const layer = document.createElement('div');
               layer.id = 'qr-print-layer';
