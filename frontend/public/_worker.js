@@ -114,6 +114,36 @@ export default {
     ) {
       return env.ASSETS.fetch(req);
     }
+
+    // /hit/:metric/:id — accept qr-print, resolve slug→ULID, persist, return 204
+    if (url.pathname.startsWith('/hit/')) {
+      const m = url.pathname.match(/^\/hit\/([a-z0-9-]+)\/([^/]+)\/?$/i);
+      if (!m) return new Response('Bad Request', { status: 400 });
+
+      const metric = m[1].toLowerCase();
+      const rawId  = decodeURIComponent(m[2] || '');
+
+      // allow only qr-print here (other metrics are handled elsewhere)
+      if (metric !== 'qr-print') {
+        return new Response('Unknown metric', { status: 400 });
+      }
+
+      // normalize identifier (dash expects/uses ULID)
+      const uid = await canonicalId(env, rawId);
+      if (!uid) return new Response('Bad Request', { status: 400 });
+
+      // persist daily counter in KV_STATS: m:<ULID>:YYYY-MM-DD:qr-print
+      const localISO = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString();
+      const day = localISO.slice(0, 10); // YYYY-MM-DD
+      const key = `m:${uid}:${day}:qr-print`;
+
+      try {
+        const cur = Number(await env.KV_STATS.get(key, 'text')) || 0;
+        await env.KV_STATS.put(key, String(cur + 1), { expirationTtl: 400 * 24 * 60 * 60 });
+      } catch { /* ignore storage errors; still return 204 so client won't retry */ }
+
+      return new Response(null, { status: 204 });
+    }
     
     // /hit/:metric/:id — minimal acceptor for qr-print (slug→ULID; 204 on success)
     if (url.pathname.startsWith('/hit/')) {
