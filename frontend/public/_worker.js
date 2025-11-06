@@ -114,6 +114,27 @@ export default {
     ) {
       return env.ASSETS.fetch(req);
     }
+    
+    // /hit/:metric/:id — minimal acceptor for qr-print (slug→ULID; 204 on success)
+    if (url.pathname.startsWith('/hit/')) {
+      const m = url.pathname.match(/^\/hit\/([a-z0-9-]+)\/([^/]+)\/?$/i);
+      if (!m) return new Response('Bad Request', { status: 400 });
+      const metric = m[1].toLowerCase();
+      const rawId  = decodeURIComponent(m[2] || '');
+
+      // Only allow qr-print for now (other metrics not handled in this worker)
+      if (metric !== 'qr-print') {
+        return new Response('Unknown metric', { status: 400 });
+      }
+
+      // Accept ULID or slug; resolve to canonical ULID (dash expects ULID)
+      const uid = await canonicalId(env, rawId);
+      if (!uid) return new Response('Bad Request', { status: 400 });
+
+      // TODO: increment a counter in KV/queue (e.g., env.KV_METRICS) for uid + 'qr-print'
+      // For now, no-op but unblock the client path:
+      return new Response(null, { status: 204 });
+    }
 
     // /api/track: no redirect; handle missing/invalid target gracefully
     if (url.pathname === '/api/track') {
