@@ -539,6 +539,46 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
 
     // Apply flat 1px tinted border to group children, no background styling
     sibling.querySelectorAll('button').forEach(locBtn => {
+      // ✅ Ensure accordion items carry a canonical id (ULID) like Popular does (needed for hits/QR)
+      // derive by matching the visible label to injectedGeoPoints (already filtered for the page)
+      try {
+        const visibleLabel = String((locBtn.querySelector('.location-name')?.textContent || locBtn.textContent || '')).trim();
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String((x?.locationName?.en ?? x?.locationName ?? '')).trim() === visibleLabel)
+          : null;
+
+        // set data-id to ULID when available; else expose slug/alias fallback
+        if (rec) {
+          const uid   = String(rec?.locationID || rec?.ID || rec?.id || '').trim();
+          const alias = String(rec?.slug || rec?.alias || '').trim();
+
+          if (uid && !locBtn.getAttribute('data-id')) {
+            locBtn.setAttribute('data-id', uid);            // canonical for tracking (/hit/*)
+          }
+          if (!uid && alias && !locBtn.getAttribute('data-alias')) {
+            locBtn.setAttribute('data-alias', alias);       // fallback for UI if ULID truly missing
+          }
+
+          // also surface cover for modal previews if buildAccordion didn’t put one
+          if (!locBtn.hasAttribute('data-cover')) {
+            const cover = rec?.media?.cover || rec?.cover || '';
+            if (cover) locBtn.setAttribute('data-cover', cover);
+          }
+
+          // keep lat/lng if missing (used by routing + modal header)
+          if (!locBtn.hasAttribute('data-lat') || !locBtn.hasAttribute('data-lng')) {
+            const cc = String(rec?.coord || rec?.["Coordinate Compound"] || '').trim();
+            if (cc.includes(',')) {
+              const [lat, lng] = cc.split(',').map(s => s.trim());
+              if (lat && lng) {
+                if (!locBtn.hasAttribute('data-lat')) locBtn.setAttribute('data-lat', lat);
+                if (!locBtn.hasAttribute('data-lng')) locBtn.setAttribute('data-lng', lng);
+                if (!locBtn.title) locBtn.title = `Open profile / Route (${lat}, ${lng})`;
+              }
+            }
+          }
+        }
+      } catch { /* keep going; styling below still applies */ }
       // keep styling
       locBtn.classList.add('quick-button', 'location-button');
       locBtn.style.border = '1px solid var(--group-color-ink)';
