@@ -131,9 +131,15 @@ export default {
       const uid = await canonicalId(env, rawId);
       if (!uid) return new Response('Bad Request', { status: 400 });
 
-      // TODO: increment a counter in KV/queue (e.g., env.KV_METRICS) for uid + 'qr-print'
-      // For now, no-op but unblock the client path:
+      // persist: increment daily qr-print counter under KV_STATS
+      const day = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10); // YYYY-MM-DD (local)
+      const key = `m:${uid}:${day}:qr-print`; // prefix m:<ULID>:<date>:<metric>
+      try {
+        const cur = Number(await env.KV_STATS.get(key, 'text')) || 0;
+        await env.KV_STATS.put(key, String(cur + 1), { expirationTtl: 400*24*60*60 }); // ~400 days
+      } catch {}
       return new Response(null, { status: 204 });
+
     }
 
     // /api/track: no redirect; handle missing/invalid target gracefully
@@ -145,8 +151,44 @@ export default {
       return new Response(null, { status: 204 });
     }        
     
+    // /api/stats — minimal reader (ULID or slug; returns daily buckets the dash expects)
+    if (url.pathname === '/api/stats') {
+      const q = url.searchParams;
+      const idOrSlug = (q.get('locationID') || '').trim();
+      const from = (q.get('from') || '').trim(); // YYYY-MM-DD
+      const to   = (q.get('to')   || '').trim(); // YYYY-MM-DD
+      if (!idOrSlug || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+        return new Response('Bad Request', { status: 400 });
+      }
+
+      const uid = await canonicalId(env, idOrSlug); // slug → ULID (or passthrough)
+      if (!uid) return new Response('Not Found', { status: 404 });
+
+      const days = {};
+      try {
+        // keys look like m:<ULID>:YYYY-MM-DD:metric
+        const prefix = `m:${uid}:`;
+        const listed = await env.KV_STATS.list({ prefix });
+        for (const { name } of listed.keys || []) {
+          const [/*m*/, /*uid*/, d, metric] = name.split(':');
+          if (d >= from && d <= to && metric === 'qr-print') {
+            const n = Number(await env.KV_STATS.get(name, 'text')) || 0;
+            if (!days[d]) days[d] = {};
+            days[d]['qr-print'] = (days[d]['qr-print'] || 0) + n;
+          }
+        }
+      } catch {}
+
+      const body = { locationID: uid, days };
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'content-type': 'application/json', 'Cache-Control': 'no-store' }
+      });
+    }
+
     // 401 gate disabled; RL/Bot Fight protect /api/data/*
     if (url.pathname.startsWith('/api/data/')) {
+
       // Rate limit + dev CORS headers on all API responses
       const r = rateHit(req);
       const rlHdr = {
