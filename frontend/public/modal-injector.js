@@ -941,21 +941,24 @@ async function initLpmImageSlider(modal, data) {
               pimg.style.maxWidth = '90vw'; pimg.style.maxHeight = '90vh';
               layer.appendChild(pimg);
               const cleanup = () => { document.getElementById('qr-print-style')?.remove(); document.getElementById('qr-print-layer')?.remove(); };
-              const go = async () => { 
-                try { 
-                  // send QR print beacon (for dash /api/stats tracking)
-                  const idStr = String(data?.id || data?.locationID || '').trim();
-                  if (idStr) { 
-                    try { 
-                      const __uid = await resolveULIDFor(idStr);
-                      if (__uid) await fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(__uid)}`, { method:'POST', keepalive:true });
-                    } catch {} 
+              const go = async () => {
+                try {
+                  // send QR print beacon using the regular slug/alias (no ULID force)
+                  const idOrSlug = String(data?.id || data?.locationID || '').trim();
+                  if (idOrSlug) {
+                    try {
+                      await fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(idOrSlug)}`, {
+                        method: 'POST',
+                        keepalive: true
+                      });
+                    } catch {}
                   }
-                  window.print(); 
-                } finally { 
-                  setTimeout(cleanup, 300); 
-                } 
+                  window.print();
+                } finally {
+                  setTimeout(cleanup, 300);
+                }
               };
+
               document.head.appendChild(style); document.body.appendChild(layer);
               if (pimg.complete) go();
               else { pimg.addEventListener('load', go, { once:true }); pimg.addEventListener('error', cleanup, { once:true }); }
