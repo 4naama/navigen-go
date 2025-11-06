@@ -941,16 +941,19 @@ async function initLpmImageSlider(modal, data) {
               pimg.style.maxWidth = '90vw'; pimg.style.maxHeight = '90vh';
               layer.appendChild(pimg);
               const cleanup = () => { document.getElementById('qr-print-style')?.remove(); document.getElementById('qr-print-layer')?.remove(); };
+              // match other /hit/* beacons: resolve slug → ULID before sending
               const go = async () => {
                 try {
-                  // send QR print beacon using the regular slug/alias (no ULID force)
-                  const idOrSlug = String(data?.id || data?.locationID || '').trim();
-                  if (idOrSlug) {
+                  const raw = String(data?.id || data?.locationID || '').trim();
+                  if (raw) {
                     try {
-                      await fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(idOrSlug)}`, {
-                        method: 'POST',
-                        keepalive: true
-                      });
+                      const uid = await resolveULIDFor(raw); // same helper used for lpm-open/save/share
+                      if (uid) {
+                        await fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(uid)}`, {
+                          method: 'POST',
+                          keepalive: true
+                        });
+                      }
                     } catch {}
                   }
                   window.print();
