@@ -924,7 +924,15 @@ async function initLpmImageSlider(modal, data) {
             printBtn.setAttribute('aria-label', 'Print');
             printBtn.title = 'Print';
             printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
-            printBtn.onclick = () => {
+            printBtn.onclick = async () => {
+              // count QR → Print (resolve slug → ULID before sending; dash reads ULID metrics)
+              try {
+                const raw = String(data?.id || data?.locationID || '').trim();
+                const __uid = await resolveULIDFor(raw);
+                if (__uid) {
+                  await fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(__uid)}`, { method: 'POST', keepalive: true });
+                }
+              } catch { /* no-op: printing should still proceed */ }
               const src = img.src;
               const layer = document.createElement('div');
               layer.id = 'qr-print-layer';
@@ -941,27 +949,7 @@ async function initLpmImageSlider(modal, data) {
               pimg.style.maxWidth = '90vw'; pimg.style.maxHeight = '90vh';
               layer.appendChild(pimg);
               const cleanup = () => { document.getElementById('qr-print-style')?.remove(); document.getElementById('qr-print-layer')?.remove(); };
-              // match other /hit/* beacons: resolve slug → ULID before sending
-              const go = async () => {
-                try {
-                  const raw = String(data?.id || data?.locationID || '').trim();
-                  if (raw) {
-                    try {
-                      const uid = await resolveULIDFor(raw); // same helper used for lpm-open/save/share
-                      if (uid) {
-                        await fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(uid)}`, {
-                          method: 'POST',
-                          keepalive: true
-                        });
-                      }
-                    } catch {}
-                  }
-                  window.print();
-                } finally {
-                  setTimeout(cleanup, 300);
-                }
-              };
-
+              const go = () => { try { window.print(); } finally { setTimeout(cleanup, 300); } };
               document.head.appendChild(style); document.body.appendChild(layer);
               if (pimg.complete) go();
               else { pimg.addEventListener('load', go, { once:true }); pimg.addEventListener('error', cleanup, { once:true }); }
