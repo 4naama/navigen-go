@@ -1263,20 +1263,39 @@ async function initLpmImageSlider(modal, data) {
 
     })();
 
-    // normalize id shape for all actions opened from anywhere (Popular or Accordion)
-    // prefer slug/alias if given; dash expects/uses ULID after resolve in the hit paths
+    // normalize id shape for all actions (Popular or Accordion)
+    // keep ULID in data.id if we already have it; prefer alias/short only for display/locationID
     (() => {
-      const el = originEl || null; // keep whatever reference you already have to the clicked element, if available
-      const alias = String(data?.alias || data?.slug || el?.getAttribute?.('data-alias') || el?.getAttribute?.('data-slug') || '').trim();
-      const raw   = String(data?.id || data?.locationID || el?.getAttribute?.('data-id') || el?.getAttribute?.('data-locationid') || alias || '').trim();
-      if (raw) {
-        // expose both keys so Save/QR/Share all see an identifier
+      const el = originEl || null;
+      const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+
+      const alias = String(
+        data?.alias || data?.slug ||
+        el?.getAttribute?.('data-alias') || el?.getAttribute?.('data-slug') || ''
+      ).trim();
+
+      const domId = String(
+        el?.getAttribute?.('data-id') || el?.getAttribute?.('data-locationid') || ''
+      ).trim();
+
+      const raw = String(
+        data?.id || data?.locationID || domId || alias || ''
+      ).trim();
+
+      const alreadyUlid = ULID.test(String(data?.id || ''));
+
+      if (alreadyUlid) {
+        // we already have canonical id → keep it in data.id
+        // use alias/short (if any) only for display/locationID
+        if (alias)         data.locationID = alias;
+        else if (raw && !ULID.test(raw)) data.locationID = raw;
+      } else if (raw) {
+        // no ULID yet → use the best identifier we have for both
         data.id = raw;
         data.locationID = raw;
       }
-      if (alias) {
-        data.alias = alias; // help Stats prefer slug over ULID
-      }
+
+      if (alias) data.alias = alias; // aid Stats preference
     })();
 
     // ⭐ Save (secondary) handled by helper
@@ -1316,7 +1335,7 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — open with alias in URL (fallback to short if no alias; never use ULID)
+    // 📈 Stats (dashboard) — prefer alias/short; fall back to ULID if needed
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
@@ -1329,19 +1348,21 @@ async function initLpmImageSlider(modal, data) {
         const idA     = String(data?.id || '').trim();
         const idB     = String(data?.locationID || '').trim();
 
-        // Non-ULID candidates in stable order: DOM cache → data.id → data.locationID
-        const pool  = [fromDom, idA, idB].filter(Boolean).filter(v => !ULID.test(v));
+        // Non-ULID first: DOM cache → data.id → data.locationID
+        const poolNonUlid = [fromDom, idA, idB].filter(Boolean).filter(v => !ULID.test(v));
+        const alias = poolNonUlid.find(v => !isShort(v));
+        const short = poolNonUlid.find(isShort);
 
-        // Prefer alias for display; fall back to short only if no alias exists
-        const alias = pool.find(v => !isShort(v));
-        const short = pool.find(isShort);
-        const chosen = alias || short || '';
+        // ULID fallback candidates (same order)
+        const poolUlid = [fromDom, idA, idB].filter(Boolean).find(v => ULID.test(v));
 
-        if (!chosen) { showToast('Dashboard unavailable for this profile', 1600); return; }
+        const target = alias || short || poolUlid || '';
 
-        // Keep DOM cache in sync; do not mutate data.*
-        modal.setAttribute('data-locationid', chosen);
-        window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(chosen)}`, '_blank', 'noopener,noreferrer');
+        if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
+
+        // Sync DOM cache for next time; leave data.* untouched
+        modal.setAttribute('data-locationid', target);
+        window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(target)}`, '_blank', 'noopener,noreferrer');
       }, { capture: true });
     }
 
