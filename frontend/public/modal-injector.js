@@ -1278,21 +1278,20 @@ async function initLpmImageSlider(modal, data) {
         el?.getAttribute?.('data-id') || el?.getAttribute?.('data-locationid') || ''
       ).trim();
 
+      // prefer dataset slug; never overwrite a non-empty locationID
       const raw = String(
-        data?.id || data?.locationID || domId || alias || ''
+        data?.locationID || data?.id || domId || alias || ''
       ).trim();
 
       const alreadyUlid = ULID.test(String(data?.id || ''));
 
       if (alreadyUlid) {
-        // we already have canonical id → keep it in data.id
-        // use alias/short (if any) only for display/locationID
-        if (alias)         data.locationID = alias;
-        else if (raw && !ULID.test(raw)) data.locationID = raw;
+        // keep ULID in data.id; only fill locationID when it's empty
+        if (!data.locationID && raw && !ULID.test(raw)) data.locationID = raw;
       } else if (raw) {
-        // no ULID yet → use the best identifier we have for both
+        // no ULID yet → set id; do NOT clobber an existing dataset slug
         data.id = raw;
-        data.locationID = raw;
+        if (!data.locationID) data.locationID = raw;
       }
 
       if (alias) data.alias = alias; // aid Stats preference
@@ -1537,41 +1536,16 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // prefer ULID; if absent, take slug/alias from id/ID/slug/alias; when none exist, derive a safe alias (aligns with Popular)
+  // dataset-only identifiers: ULID if present; slug = profiles.json locationID (no derivation)
   {
-    const rawIdOrSlug = String(
-      loc.locationID || loc.ID || loc.id || loc.slug || loc.alias || ''
-    ).trim();
+    const datasetSlug = String(loc?.locationID || '').trim();
+    const raw = String(loc?.ID || loc?.id || '').trim();
+    const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
 
-    const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawIdOrSlug) ? rawIdOrSlug : '';
-    btn.setAttribute('data-id', uid); // ULID for tracking when available
-
-    if (!uid) {
-      // 1) start with existing short id/slug if provided by dataset
-      let alias = rawIdOrSlug;
-
-      // 2) derive from cover-image folder when nothing provided
-      if (!alias) {
-        const media = (loc && typeof loc.media === 'object') ? loc.media : {};
-        const cover = String(media.cover || '').trim();
-        const fromCover = (() => {
-          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
-          return m ? m[1] : '';
-        })();
-
-        // 3) final fallback: conservative slug from display name
-        const nameSource = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim();
-        const fromName = nameSource
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-
-        alias = fromCover || fromName;
-      }
-
-      if (alias) {
-        btn.setAttribute('data-alias', alias);      // explicit slug for Stats/Share
-        btn.setAttribute('data-locationid', alias); // expose for QR/Save handlers
-      }
+    if (uid) btn.setAttribute('data-id', uid);
+    if (datasetSlug) {
+      btn.setAttribute('data-alias', datasetSlug);
+      btn.setAttribute('data-locationid', datasetSlug);
     }
   }
 
