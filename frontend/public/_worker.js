@@ -115,36 +115,38 @@ export default {
       return env.ASSETS.fetch(req);
     }
 
-    // /hit/:metric/:id — accept qr-print, resolve slug→ULID, persist, return 204
+    // /hit/:metric/:id — unified client-side event counter (allows a small, explicit list)
+    // NOTE: replaces the qr-print only logic and any duplicate /hit blocks below.
     if (url.pathname.startsWith('/hit/')) {
-      const m = url.pathname.match(/^\/hit\/([a-z0-9-]+)\/([^/]+)\/?$/i);
-      if (!m) return new Response('Bad Request', { status: 400 });
+      // keep comment, but clarify: this endpoint increments daily metric counters for non-redirect CTAs
+      const [, , metric, idOrSlug] = url.pathname.split('/'); // ['', 'hit', ':metric', ':id']
+      const ALLOWED_HIT_METRICS = new Set(['qr-print', 'qr-view', 'share', 'lpm-open']); // minimal, extend as needed
 
-      const metric = m[1].toLowerCase();
-      const rawId  = decodeURIComponent(m[2] || '');
-
-      // allow only qr-print here (other metrics are handled elsewhere)
-      if (metric !== 'qr-print') {
-        return new Response('Unknown metric', { status: 400 });
+      if (!metric || !ALLOWED_HIT_METRICS.has(metric) || !idOrSlug) {
+        return new Response('Bad Request', { status: 400 });
       }
 
-      // normalize identifier (dash expects/uses ULID)
-      const uid = await canonicalId(env, rawId);
-      if (!uid) return new Response('Bad Request', { status: 400 });
+      // resolve to ULID for canonical counting (works with ULID or slug)
+      const ulid = await canonicalId(env, idOrSlug);
+      if (!ulid) return new Response('Unknown location', { status: 404 });
 
-      // persist daily counter in KV_STATS: m:<ULID>:YYYY-MM-DD:qr-print
-      const localISO = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString();
-      const day = localISO.slice(0, 10); // YYYY-MM-DD
-      const key = `m:${uid}:${day}:qr-print`;
+      // daily bucket: m:<ULID>:YYYY-MM-DD:<metric>
+      const date = new Date().toISOString().slice(0, 10);
+      const key = `m:${ulid}:${date}:${metric}`;
 
-      try {
-        const cur = Number(await env.KV_STATS.get(key, 'text')) || 0;
-        await env.KV_STATS.put(key, String(cur + 1), { expirationTtl: 400 * 24 * 60 * 60 });
-      } catch { /* ignore storage errors; still return 204 so client won't retry */ }
+      const current = parseInt((await env.KV_STATS.get(key)) || '0', 10);
+      await env.KV_STATS.put(key, String((isNaN(current) ? 0 : current) + 1));
 
-      return new Response(null, { status: 204 });
+      // CORS for browser POSTs (no credentials); mirrors other public JSON endpoints
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        },
+      });
     }
-    
+
     // /hit/:metric/:id — minimal acceptor for qr-print (slug→ULID; 204 on success)
     if (url.pathname.startsWith('/hit/')) {
       const m = url.pathname.match(/^\/hit\/([a-z0-9-]+)\/([^/]+)\/?$/i);
@@ -168,19 +170,32 @@ export default {
         const cur = Number(await env.KV_STATS.get(key, 'text')) || 0;
         await env.KV_STATS.put(key, String(cur + 1), { expirationTtl: 400*24*60*60 }); // ~400 days
       } catch {}
-      return new Response(null, { status: 204 });
-
+      // duplicate /hit/* block removed — unified handler above handles all hit metrics
     }
 
-    // /api/track: no redirect; handle missing/invalid target gracefully
+    // /api/track: deprecated — previously no redirect; handled missing/invalid target gracefully
     if (url.pathname === '/api/track') {
       const target = url.searchParams.get('target') || '';
-      // invalid/missing → just 204 so UI toast informs the user
-      if (!/^https?:\/\//i.test(target)) return new Response(null, { status: 204 });
-      // optional: log asynchronously here if needed; never redirect to avoid double-open
-      return new Response(null, { status: 204 });
-    }        
-    
+      // clarify deprecation instead of silent 204; retain validation comment for context
+      if (!/^https?:\/\//i.test(target)) {
+        return new Response('Deprecated: use /hit/:metric/:id', {
+          status: 410,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+          },
+        });
+      }
+      // optional: if logging was ever added, it should be moved to /hit; never redirect to avoid double-open
+      return new Response('Deprecated: use /hit/:metric/:id', {
+        status: 410,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        },
+      });
+    }
+
     // /api/stats — minimal reader (ULID or slug; returns daily buckets the dash expects)
     if (url.pathname === '/api/stats') {
       const q = url.searchParams;
@@ -199,12 +214,13 @@ export default {
         // keys look like m:<ULID>:YYYY-MM-DD:metric
         const prefix = `m:${uid}:`;
         const listed = await env.KV_STATS.list({ prefix });
+        const ALLOWED_HIT_METRICS = new Set(['qr-print', 'qr-view', 'share', 'lpm-open']); // keep in sync with /hit
         for (const { name } of listed.keys || []) {
           const [/*m*/, /*uid*/, d, metric] = name.split(':');
-          if (d >= from && d <= to && metric === 'qr-print') {
+          if (d >= from && d <= to && ALLOWED_HIT_METRICS.has(metric)) {
             const n = Number(await env.KV_STATS.get(name, 'text')) || 0;
             if (!days[d]) days[d] = {};
-            days[d]['qr-print'] = (days[d]['qr-print'] || 0) + n;
+            days[d][metric] = (days[d][metric] || 0) + n;
           }
         }
       } catch {}
@@ -212,7 +228,12 @@ export default {
       const body = { locationID: uid, days };
       return new Response(JSON.stringify(body), {
         status: 200,
-        headers: { 'content-type': 'application/json', 'Cache-Control': 'no-store' }
+        headers: {
+          'content-type': 'application/json',
+          'Cache-Control': 'no-store',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        }
       });
     }
 
