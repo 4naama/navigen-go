@@ -1278,21 +1278,20 @@ async function initLpmImageSlider(modal, data) {
         el?.getAttribute?.('data-id') || el?.getAttribute?.('data-locationid') || ''
       ).trim();
 
+      // prefer dataset slug; never overwrite a non-empty locationID
       const raw = String(
-        data?.id || data?.locationID || domId || alias || ''
+        data?.locationID || data?.id || domId || alias || ''
       ).trim();
 
       const alreadyUlid = ULID.test(String(data?.id || ''));
 
       if (alreadyUlid) {
-        // we already have canonical id → keep it in data.id
-        // use alias/short (if any) only for display/locationID
-        if (alias)         data.locationID = alias;
-        else if (raw && !ULID.test(raw)) data.locationID = raw;
+        // keep ULID; only fill locationID when it's empty and raw is non-ULID
+        if (!data.locationID && raw && !ULID.test(raw)) data.locationID = raw;
       } else if (raw) {
-        // no ULID yet → use the best identifier we have for both
+        // no ULID yet → set id for handlers; do NOT clobber an existing dataset slug
         data.id = raw;
-        data.locationID = raw;
+        if (!data.locationID) data.locationID = raw;
       }
 
       if (alias) data.alias = alias; // aid Stats preference
