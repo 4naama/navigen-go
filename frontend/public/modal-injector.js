@@ -1263,6 +1263,22 @@ async function initLpmImageSlider(modal, data) {
 
     })();
 
+    // normalize id shape for all actions opened from anywhere (Popular or Accordion)
+    // prefer slug/alias if given; dash expects/uses ULID after resolve in the hit paths
+    (() => {
+      const el = originEl || null; // keep whatever reference you already have to the clicked element, if available
+      const alias = String(data?.alias || data?.slug || el?.getAttribute?.('data-alias') || el?.getAttribute?.('data-slug') || '').trim();
+      const raw   = String(data?.id || data?.locationID || el?.getAttribute?.('data-id') || el?.getAttribute?.('data-locationid') || alias || '').trim();
+      if (raw) {
+        // expose both keys so Save/QR/Share all see an identifier
+        data.id = raw;
+        data.locationID = raw;
+      }
+      if (alias) {
+        data.alias = alias; // help Stats prefer slug over ULID
+      }
+    })();
+
     // ⭐ Save (secondary) handled by helper
 
     // 📤 Share (placeholder; OS share → clipboard fallback)
