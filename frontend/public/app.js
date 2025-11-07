@@ -6,11 +6,11 @@ import {
   createHelpModal,
   setupMyStuffModalLogic,
   createShareModal,
-  showModal,
-  showShareModal,
+  /* showModal — defined locally in app.js */
+  /* showShareModal — defined locally in app.js */
   createIncomingLocationModal,
   saveToLocationHistory,
-  showToast,
+  /* showToast — defined locally in app.js */
   showMyStuffModal,
   flagStyler,
   setupTapOutClose,
