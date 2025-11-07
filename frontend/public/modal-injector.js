@@ -1537,12 +1537,42 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // prefer ULID; if absent, take slug/alias from id/ID (no model pollution)
+  // prefer ULID; if absent, take slug/alias from id/ID/slug/alias; when none exist, derive a safe alias (aligns with Popular)
   {
-    const raw = String(loc.locationID || loc.ID || loc.id || '').trim();
-    const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
-    btn.setAttribute('data-id', uid);
-    if (!uid) btn.setAttribute('data-alias', raw);
+    const rawIdOrSlug = String(
+      loc.locationID || loc.ID || loc.id || loc.slug || loc.alias || ''
+    ).trim();
+
+    const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawIdOrSlug) ? rawIdOrSlug : '';
+    btn.setAttribute('data-id', uid); // ULID for tracking when available
+
+    if (!uid) {
+      // 1) start with existing short id/slug if provided by dataset
+      let alias = rawIdOrSlug;
+
+      // 2) derive from cover-image folder when nothing provided
+      if (!alias) {
+        const media = (loc && typeof loc.media === 'object') ? loc.media : {};
+        const cover = String(media.cover || '').trim();
+        const fromCover = (() => {
+          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
+          return m ? m[1] : '';
+        })();
+
+        // 3) final fallback: conservative slug from display name
+        const nameSource = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim();
+        const fromName = nameSource
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+        alias = fromCover || fromName;
+      }
+
+      if (alias) {
+        btn.setAttribute('data-alias', alias);      // explicit slug for Stats/Share
+        btn.setAttribute('data-locationid', alias); // expose for QR/Save handlers
+      }
+    }
   }
 
   btn.classList.add('location-button');
