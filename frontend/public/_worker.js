@@ -75,10 +75,22 @@ export default {
       return h;
     };
     
-    // Preflight: 204 with echoed CORS
+    // Preflight: allow public cross-origin for /hit/* and /api/stats in production too
     if (req.method === 'OPTIONS') {
+      const p = url.pathname;
+      const isPublic = p.startsWith('/hit/') || p === '/api/stats';
+      if (isPublic) {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+            'Access-Control-Allow-Headers': req.headers.get('access-control-request-headers') || 'Content-Type'
+          }
+        });
+      }
       return new Response(null, { status: 204, headers: corsHeaders() });
-    }    
+    }
 
     // Early route: contexts API public (before any gates)
     if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/') {
@@ -147,31 +159,7 @@ export default {
       });
     }
 
-    // /hit/:metric/:id — minimal acceptor for qr-print (slug→ULID; 204 on success)
-    if (url.pathname.startsWith('/hit/')) {
-      const m = url.pathname.match(/^\/hit\/([a-z0-9-]+)\/([^/]+)\/?$/i);
-      if (!m) return new Response('Bad Request', { status: 400 });
-      const metric = m[1].toLowerCase();
-      const rawId  = decodeURIComponent(m[2] || '');
-
-      // Only allow qr-print for now (other metrics not handled in this worker)
-      if (metric !== 'qr-print') {
-        return new Response('Unknown metric', { status: 400 });
-      }
-
-      // Accept ULID or slug; resolve to canonical ULID (dash expects ULID)
-      const uid = await canonicalId(env, rawId);
-      if (!uid) return new Response('Bad Request', { status: 400 });
-
-      // persist: increment daily qr-print counter under KV_STATS
-      const day = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10); // YYYY-MM-DD (local)
-      const key = `m:${uid}:${day}:qr-print`; // prefix m:<ULID>:<date>:<metric>
-      try {
-        const cur = Number(await env.KV_STATS.get(key, 'text')) || 0;
-        await env.KV_STATS.put(key, String(cur + 1), { expirationTtl: 400*24*60*60 }); // ~400 days
-      } catch {}
-      // duplicate /hit/* block removed — unified handler above handles all hit metrics
-    }
+    // duplicate /hit/* block removed — unified handler above handles all hit metrics
 
     // /api/track: deprecated — previously no redirect; handled missing/invalid target gracefully
     if (url.pathname === '/api/track') {
