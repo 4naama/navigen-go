@@ -343,22 +343,9 @@ export async function showLocationProfileModal(data) {
 
   // 4. Append to body and expose identifier to handlers (prefer alias for URL; fallback to short; never cache ULID)
   document.body.appendChild(modal);
-  // Keep data.* intact; only cache a display identifier for click handlers.
+  // Keep data.* intact; only cache the dataset slug for click handlers (no alias/short selection).
   {
-    const ULID   = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-    const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
-
-    const idA = String(data?.id || '').trim();         // may be ULID or alias in some paths
-    const idB = String(data?.locationID || '').trim(); // may be alias or short slug
-
-    // Non-ULID candidates only
-    const pool  = [idA, idB].filter(Boolean).filter(v => !ULID.test(v));
-
-    // Prefer alias over short for display
-    const alias = pool.find(v => !isShort(v));
-    const short = pool.find(isShort);
-    const chosen = alias || short || '';
-
+    const chosen = String(data?.locationID || '').trim();
     if (chosen) modal.setAttribute('data-locationid', chosen); // DOM-only cache; do not mutate data.*
   }
 
@@ -1347,20 +1334,13 @@ async function initLpmImageSlider(modal, data) {
         const idA     = String(data?.id || '').trim();
         const idB     = String(data?.locationID || '').trim();
 
-        // Non-ULID first: DOM cache → data.id → data.locationID
-        const poolNonUlid = [fromDom, idA, idB].filter(Boolean).filter(v => !ULID.test(v));
-        const alias = poolNonUlid.find(v => !isShort(v));
-        const short = poolNonUlid.find(isShort);
-
-        // ULID fallback candidates (same order)
-        const poolUlid = [fromDom, idA, idB].filter(Boolean).find(v => ULID.test(v));
-
-        const target = alias || short || poolUlid || '';
-
+        // Always use the dataset slug (profiles.json → locationID) for Dashboard; no alias/short selection.
+        const target = String(data?.locationID || '').trim();
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
         // Sync DOM cache for next time; leave data.* untouched
         modal.setAttribute('data-locationid', target);
+
         window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(target)}`, '_blank', 'noopener,noreferrer');
       }, { capture: true });
     }
