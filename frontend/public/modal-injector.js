@@ -343,6 +343,12 @@ export async function showLocationProfileModal(data) {
 
   // 4. Append to body and expose identifier to handlers (prefer alias for URL; fallback to short; never cache ULID)
   document.body.appendChild(modal);
+  // show the modal (factory returns `modal hidden`)
+  modal.classList.remove('hidden');
+  modal.classList.add('visible');
+  // close on backdrop tap and on X
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); }, { passive: true });
+  modal.querySelector('.modal-close')?.addEventListener('click', () => modal.remove(), { passive: true });
   // Keep data.* intact; only cache a display identifier for click handlers.
   {
     const ULID   = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
