@@ -539,24 +539,27 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
 
     // Apply flat 1px tinted border to group children, no background styling
     sibling.querySelectorAll('button').forEach(locBtn => {
-      // ensure accordion items expose an identifier like Popular does
-      // prefer canonical ULID; otherwise fall back to slug/alias for id/locationID
+      // ensure accordion items expose dataset identifiers only (no alias/cover fallbacks)
       try {
-        const uid   = String(locBtn.getAttribute('data-id') || '').trim();
-        const alias = String(locBtn.getAttribute('data-alias') || locBtn.getAttribute('data-slug') || '').trim();
+        const label = (locBtn.querySelector('.location-name')?.textContent || locBtn.textContent || '').trim();
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String((x?.locationName?.en ?? x?.locationName ?? '')).trim() === label)
+          : null;
 
-        // If neither attribute is present, keep existing behavior (no throw).
-        const chosen = uid || alias; // ULID preferred; else slug/alias
+        const datasetSlug = String(rec?.locationID || '').trim();
+        const rawId = String(locBtn.getAttribute('data-id') || '').trim();
+        const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : ''; // ULID only
 
-        if (chosen) {
-          // expose both shapes so all handlers (save/qr/share) can read either
-          if (!locBtn.getAttribute('data-id'))          locBtn.setAttribute('data-id', chosen);
-          if (!locBtn.getAttribute('data-locationid'))  locBtn.setAttribute('data-locationid', chosen);
-          // keep alias available explicitly for Stats link (slug preferred there)
-          if (alias && !locBtn.getAttribute('data-alias')) locBtn.setAttribute('data-alias', alias);
+        if (datasetSlug) {
+          if (!uid && locBtn.getAttribute('data-id')) locBtn.removeAttribute('data-id'); // drop non-ULID ids
+          if (uid && !locBtn.getAttribute('data-id')) locBtn.setAttribute('data-id', uid);
+
+          // force dataset slug on both attributes; stop any short alias from leaking in
+          locBtn.setAttribute('data-alias', datasetSlug);
+          locBtn.setAttribute('data-locationid', datasetSlug);
         }
       } catch { /* leave original styling/wiring below unchanged */ }
-          
+
       // keep styling
       locBtn.classList.add('quick-button', 'location-button');
       locBtn.style.border = '1px solid var(--group-color-ink)';
