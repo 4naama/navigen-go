@@ -293,7 +293,7 @@ function renderPopularGroup(list = geoPoints) {
         alias = fromCover || fromName;
       }
 
-      if (String(loc?.locationID || '').trim()) btn.setAttribute('data-alias', String(loc.locationID).trim());
+      if (alias) btn.setAttribute('data-alias', alias);
     }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
@@ -336,7 +336,7 @@ function renderPopularGroup(list = geoPoints) {
       if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
 
       showLocationProfileModal({
-        locationID: String(loc?.locationID || ''), id: uid || String(loc?.locationID || ''), // dataset slug only when no ULID
+        locationID: String(loc?.locationID || ''), id: uid || alias,     // short slug from profiles.json
         displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
