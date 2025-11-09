@@ -269,12 +269,14 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // slug/alias = canonical dataset slug only; never derive from cover or name
-    {
-      const datasetSlug = String(loc?.locationID || '').trim();
-      if (datasetSlug) {
-        btn.setAttribute('data-alias', datasetSlug);
-        btn.setAttribute('data-locationid', datasetSlug); // keep both in sync for consumers
+    // slug/alias — Popular uses the canonical dataset slug only (locationID). No cover/name derivation.
+    // We set alias/locationid only when there is no ULID (uid is empty); otherwise data-id carries the ULID.
+    if (!uid) {
+      const alias = String(loc?.locationID || '').trim(); // canonical slug (always provided by dataset)
+      // keep comments for clarity: if alias ever came back empty, that's a data error; no derivation here.
+      if (alias) {
+        btn.setAttribute('data-alias', alias);
+        btn.setAttribute('data-locationid', alias); // mirror for consumers that read data-locationid
       }
     }
 
