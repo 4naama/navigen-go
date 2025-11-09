@@ -208,13 +208,7 @@ function renderPopularGroup(list = geoPoints) {
   if (!container) { console.warn('⚠️ #locations not found; skipping Popular group'); return; }
 
   // Popular = Priority:"Yes" only; no fallback; ignore Visible
-  // accept any truthy flag across Priority/Popular/priority variants
-  const isPriority = (rec) => {
-    const v = rec?.Priority ?? rec?.Popular ?? rec?.priority;
-    const s = String(v ?? '').toLowerCase().trim();
-    return v === true || v === 1 || s === 'yes' || s === 'true';
-  };
-
+  const isPriority = (rec) => String(rec?.Priority || '').toLowerCase() === 'yes';
   const popular = (Array.isArray(list) ? list : []).filter(isPriority);
 
   const section = document.createElement("div");
@@ -275,13 +269,23 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // always trust dataset slug (locationID); never derive from cover/name
-    {
-      const slug = String(loc?.locationID || '').trim();
-      if (!slug) { console.warn('Data error: locationID (slug) required'); return; }
-      btn.setAttribute('data-alias', slug);
-      btn.setAttribute('data-locationid', slug); // mirror for consistency with accordion wiring
-    }
+    // slug/alias fallback — follow Accordion: only set when ULID is missing
+    if (!uid) {
+      let alias = rawId; // try mapped id/slug first
+
+      // Popular-only guard: derive a slug ONLY from cover folder when ULID + mapped id/slug are absent
+      if (!alias) {
+        const media = (loc && typeof loc.media === 'object') ? loc.media : {};
+        const cover = String(media.cover || '').trim();
+
+        // derive from /assets/location-profile-images/<folder>/... ; do not fallback to name
+        const fromCover = (() => {
+          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
+          return m ? m[1] : '';
+        })();
+
+        alias = fromCover; // keep empty if no folder segment found (no name-based fallback)
+      }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
@@ -1071,7 +1075,7 @@ async function initEmergencyBlock(countryOverride) {
      */
     function normalizeGroupKeys(list) {
       if (!Array.isArray(list) || !list.length) return;
-      list.forEach(p => { if (!p || typeof p !== 'object') return; // defensive: skip null/invalid
+      list.forEach(p => {
         const g = String(p.Group || '').trim();
         if (!g) return;
         // match by display name (“Drop-down”) OR already-canonical key (“Group”)
@@ -1200,10 +1204,12 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      // ULID stays canonical in ID; locationID is the canonical short slug (required)
+      // ULID stays canonical in ID; locationID must be the short dataset slug for Dash/QR
       const uid = String(it?.ID || it?.id || '').trim();                     // ULID only (canonical)
-      const locationID = String(it?.locationID || '').trim();                // required slug
-      if (!locationID) { console.warn('Data error: missing locationID slug', it); return null; }
+      let alias = String(it?.slug || it?.alias || '').trim();                // short slug for UI/Dashboard
+      const apiLoc = String(it?.locationID || '').trim();                    // may be slug or ULID from API
+      if (apiLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(apiLoc) && !alias) alias = apiLoc; // accept non-ULID as slug
+      const locationID = alias;                                              // prefer short slug only
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1274,7 +1280,7 @@ async function initEmergencyBlock(countryOverride) {
     };
 
     // Assign the mapped list now that we have the API items
-    geoPointsData = apiItems.map(toGeoPoint).filter(x => x && typeof x === 'object'); // drop null/invalid rows
+    geoPointsData = apiItems.map(toGeoPoint);
     geoPoints = geoPointsData;
     // normalize groups now that geoPoints is ready
     normalizeGroupKeys(geoPoints);
@@ -1282,13 +1288,10 @@ async function initEmergencyBlock(countryOverride) {
     // Open LPM on ?lp=<id> (post-mapping, single source of truth)
     {
       const q = new URLSearchParams(location.search);
-      const token = (q.get('lp') || '').trim();
+      const uid = (q.get('lp') || '').trim();
 
-      if (token && Array.isArray(geoPoints) && geoPoints.length) {
-        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-        const rec = ULID.test(token)
-          ? geoPoints.find(x => String(x?.ID || x?.id || '').trim() === token)   // match by ULID
-          : geoPoints.find(x => String(x?.locationID || '').trim() === token);   // match by slug
+      if (uid && Array.isArray(geoPoints) && geoPoints.length) {
+        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.locationID) === uid) : null); // ULID-only
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs
