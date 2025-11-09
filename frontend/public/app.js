@@ -273,18 +273,17 @@ function renderPopularGroup(list = geoPoints) {
     if (!uid) {
       let alias = rawId; // try mapped id/slug first
 
+      // Popular-only guard: derive a slug if everything is empty (ULID + mapped id/slug absent)
       // Popular-only guard: derive a slug ONLY from cover folder when ULID + mapped id/slug are absent
       if (!alias) {
         const media = (loc && typeof loc.media === 'object') ? loc.media : {};
         const cover = String(media.cover || '').trim();
 
-        // derive from /assets/location-profile-images/<folder>/... ; do not fallback to name
-        const fromCover = (() => {
-          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
-          return m ? m[1] : '';
-        })();
+        // derive from /assets/location-profile-images/<folder>/... ; no name-based fallback
+        const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
+        const fromCover = m ? m[1] : '';
 
-        alias = fromCover; // keep empty if no folder segment found (no name-based fallback)
+        alias = fromCover; // keep empty if no folder segment found
       }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
