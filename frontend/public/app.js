@@ -273,17 +273,16 @@ function renderPopularGroup(list = geoPoints) {
     if (!uid) {
       let alias = rawId; // try mapped id/slug first
 
-      // slug/alias fallback — only when ULID is missing; cover-folder ONLY (no name fallback)
-      if (!uid) {
-        let alias = rawId; // try mapped id/slug first
-        if (!alias) {
-          const media = (loc && typeof loc.media === 'object') ? loc.media : {};
-          const cover = String(media.cover || '').trim();
-          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
-          alias = m ? m[1] : '';
-        }
-        if (alias) btn.setAttribute('data-alias', alias);
+      // Popular-only: derive a slug ONLY from cover folder when missing (no name fallback)
+      if (!alias) {
+        const media = (loc && typeof loc.media === 'object') ? loc.media : {};
+        const cover = String(media.cover || '').trim();
+        const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
+        alias = m ? m[1] : '';
       }
+
+      if (alias) btn.setAttribute('data-alias', alias);
+    }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
