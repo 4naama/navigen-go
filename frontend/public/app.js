@@ -1065,7 +1065,7 @@ async function initEmergencyBlock(countryOverride) {
      */
     function normalizeGroupKeys(list) {
       if (!Array.isArray(list) || !list.length) return;
-      list.forEach(p => {
+      list.forEach(p => { if (!p || typeof p !== 'object') return; // defensive: skip null/invalid
         const g = String(p.Group || '').trim();
         if (!g) return;
         // match by display name (“Drop-down”) OR already-canonical key (“Group”)
@@ -1268,7 +1268,7 @@ async function initEmergencyBlock(countryOverride) {
     };
 
     // Assign the mapped list now that we have the API items
-    geoPointsData = apiItems.map(toGeoPoint);
+    geoPointsData = apiItems.map(toGeoPoint).filter(x => x && typeof x === 'object'); // drop null/invalid rows
     geoPoints = geoPointsData;
     // normalize groups now that geoPoints is ready
     normalizeGroupKeys(geoPoints);
