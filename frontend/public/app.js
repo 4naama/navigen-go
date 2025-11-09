@@ -1214,9 +1214,11 @@ async function initEmergencyBlock(countryOverride) {
     // Build one legacy record
     const toGeoPoint = (it) => {
       // ULID stays canonical in ID; locationID must be the short dataset slug for Dash/QR
-      const uid   = String(it?.ID || it?.id || it?.locationID || '').trim(); // ULID only (canonical)
-      const alias = String(it?.slug || it?.alias || '').trim();              // short slug for UI/Dashboard
-      const locationID = alias || String(it?.locationID || '').trim(); const legacyId = uid;
+      const uid = String(it?.ID || it?.id || '').trim();                     // ULID only (canonical)
+      let alias = String(it?.slug || it?.alias || '').trim();                // short slug for UI/Dashboard
+      const apiLoc = String(it?.locationID || '').trim();                    // may be slug or ULID from API
+      if (apiLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(apiLoc) && !alias) alias = apiLoc; // accept non-ULID as slug
+      const locationID = alias;                                              // prefer short slug only
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1232,8 +1234,9 @@ async function initEmergencyBlock(countryOverride) {
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
 
       return {
-        locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
-        id: uid || alias,                         // LPM/CTAs get ULID, or slug if ULID missing
+        locationID,                  // short slug only (for Dash/QR/QR-code)
+        ID: uid || '',               // keep ULID in legacy ID slot; never mirror slug here
+        id: uid || locationID,       // primary id for LPM: ULID preferred; else slug
 
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
