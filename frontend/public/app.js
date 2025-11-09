@@ -537,6 +537,10 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       return;
     }
 
+    // Accordion wiring pass: for each location button, stamp authoritative identifiers onto the element.
+    // - Always set `data-locationid` (and mirror to `data-alias`) from the dataset record’s `locationID` (e.g., hd-…-####).
+    // - Set `data-id` only if a real ULID exists; never place slugs/aliases in `data-id`.
+    // Rationale: LPM CTAs resolve identifiers via `data.id || data.locationID`; this guarantees one is always valid.
     sibling.querySelectorAll('button').forEach(locBtn => {
       // ✅ Ensure accordion items carry a canonical id (ULID) like Popular does (needed for hits/QR)
       // derive by matching the visible label to injectedGeoPoints (already filtered for the page)
@@ -546,16 +550,21 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
           ? injectedGeoPoints.find(x => String((x?.locationName?.en ?? x?.locationName ?? '')).trim() === visibleLabel)
           : null;
 
-        // set data-id to ULID when available; else expose slug/alias fallback
+        // set dataset slug for all CTAs; ULID optional — do NOT rely on alias/cover
         if (rec) {
-          const uid   = String(rec?.locationID || rec?.ID || rec?.id || '').trim();
-          const alias = String(rec?.slug || rec?.alias || '').trim();
+          const slug = String(rec?.locationID || '').trim();               // authoritative: hd-…-#### from profiles.json
+          const rawId = String(rec?.ID || rec?.id || '').trim();          // potential ULID if present
+          const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId);
 
-          if (uid && !locBtn.getAttribute('data-id')) {
-            locBtn.setAttribute('data-id', uid);            // canonical for tracking (/hit/*)
+          // Always publish the dataset slug for non-ULID actions
+          if (slug) {
+            locBtn.setAttribute('data-locationid', slug);
+            if (!locBtn.getAttribute('data-alias')) locBtn.setAttribute('data-alias', slug);
           }
-          if (!uid && alias && !locBtn.getAttribute('data-alias')) {
-            locBtn.setAttribute('data-alias', alias);       // fallback for UI if ULID truly missing
+
+          // Only set data-id when it's a real ULID; never stuff slug into data-id
+          if (isULID && !locBtn.getAttribute('data-id')) {
+            locBtn.setAttribute('data-id', rawId);
           }
 
           // also surface cover for modal previews if buildAccordion didn’t put one
@@ -577,6 +586,7 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
             }
           }
         }
+
       } catch { /* keep going; styling below still applies */ }
       
       // keep styling
