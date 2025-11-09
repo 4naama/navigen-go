@@ -815,8 +815,9 @@ async function initLpmImageSlider(modal, data) {
           e.preventDefault();
           const raw = String(data?.id || data?.locationID || '').trim();
           const uid = await resolveULIDFor(raw);
-          if (!uid) { showToast('Booking link coming soon', 1600); return; }
-          const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
+          const url = uid
+            ? `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`
+            : bookingUrl; // fallback: open directly if ULID not resolvable
           window.open(url, '_blank', 'noopener,noreferrer');
         }, { capture: true });
         btnBook.dataset.lpmWired = '1'; // ← mark bound
@@ -871,7 +872,8 @@ async function initLpmImageSlider(modal, data) {
           // open the same QR modal as before (moved here)
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
-            const uid = String(data?.id || data?.locationID || '').trim();
+            const uidRaw = String(data?.id || data?.locationID || '').trim();
+            const uid = uidRaw || String(document.getElementById('location-profile-modal')?.getAttribute('data-locationid') || '').trim();
             if (!uid) { showToast('Missing id', 1600); return; }
 
             const id = 'qr-modal'; document.getElementById(id)?.remove();
@@ -1233,8 +1235,9 @@ async function initLpmImageSlider(modal, data) {
               ev.preventDefault();
               const raw = String(data?.id || data?.locationID || '').trim();
               const uid = await resolveULIDFor(raw);
-              if (!uid) { showToast('Booking link coming soon', 1600); return; }
-              const url = `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`;
+              const url = uid
+                ? `${TRACK_BASE}/out/booking/${encodeURIComponent(uid)}?to=${encodeURIComponent(bookingUrl)}`
+                : bookingUrl; // fallback: open directly if ULID not resolvable
               window.open(url, '_blank', 'noopener,noreferrer');
             }, { capture: true });
             bookBtn.dataset.lpmWired = '1'; // mark bound
@@ -1335,7 +1338,12 @@ async function initLpmImageSlider(modal, data) {
         const idB     = String(data?.locationID || '').trim();
 
         // Always use the dataset slug (profiles.json → locationID) for Dashboard; no alias/short selection.
-        const target = String(data?.locationID || '').trim();
+        let target = String(data?.locationID || '').trim();
+        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        if (ULID.test(target)) {
+          // prefer slug for Dashboard; fall back to modal DOM cache
+          target = String(data?.alias || modal.getAttribute('data-locationid') || '').trim();
+        }
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
         // Sync DOM cache for next time; leave data.* untouched
