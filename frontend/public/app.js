@@ -269,7 +269,8 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // slug/alias = canonical dataset slug only; never derive from cover or name
+    // slug/alias fallback — follow Accordion: only set when ULID is missing
+    // slug must be the canonical dataset locationID
     if (!uid) {
       const alias = String(loc?.locationID || '').trim();
       if (alias) {

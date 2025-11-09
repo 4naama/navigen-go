@@ -1352,6 +1352,7 @@ async function initLpmImageSlider(modal, data) {
         dashUrl.searchParams.set('slug', target);                 // dash.js prefers slug/alias
         dashUrl.searchParams.set('locationID', target);           // keep for compatibility
         window.open(String(dashUrl), '_blank', 'noopener,noreferrer');
+
       }, { capture: true });
     }
 
@@ -1531,7 +1532,7 @@ function makeLocationButton(loc) {
     const raw = String(loc?.ID || loc?.id || '').trim();
     const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
 
-    // slug must be the canonical dataset locationID; no cover/name derivation
+    // slug must be the canonical dataset locationID
     const slug = String(loc?.locationID || '').trim();
 
     if (uid) btn.setAttribute('data-id', uid);
