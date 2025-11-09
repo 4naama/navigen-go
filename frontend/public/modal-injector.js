@@ -1348,7 +1348,10 @@ async function initLpmImageSlider(modal, data) {
         // Sync DOM cache for next time; leave data.* untouched
         modal.setAttribute('data-locationid', target);
 
-        window.open(`https://navigen.io/dash/?locationID=${encodeURIComponent(target)}`, '_blank', 'noopener,noreferrer');
+        const dashUrl = new URL('https://navigen.io/dash/');
+        dashUrl.searchParams.set('slug', target);                 // dash.js prefers slug/alias
+        dashUrl.searchParams.set('locationID', target);           // keep for compatibility
+        window.open(String(dashUrl), '_blank', 'noopener,noreferrer');
       }, { capture: true });
     }
 
@@ -1528,27 +1531,15 @@ function makeLocationButton(loc) {
     const raw = String(loc?.ID || loc?.id || '').trim();
     const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
 
-    let slug = String(loc?.locationID || '').trim(); // may be empty or a ULID
-    if (!slug || /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(slug)) {
-      // Derive like Popular: prefer folder from cover, fallback to name-based slug
-      const media = (loc && typeof loc.media === 'object') ? loc.media : {};
-      const cover = String(media.cover || '').trim();
-      const fromCover = (() => {
-        const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
-        return m ? m[1] : '';
-      })();
-      const fromName = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-        .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-      slug = fromCover || fromName;
-    }
+    // slug must be the canonical dataset locationID; no cover/name derivation
+    const slug = String(loc?.locationID || '').trim();
 
-    if (uid) btn.setAttribute('data-id', uid);
-    if (slug) {
-      btn.setAttribute('data-alias', slug);
-      btn.setAttribute('data-locationid', slug);
-    }
-  }
+        if (uid) btn.setAttribute('data-id', uid);
+        if (slug) {
+          btn.setAttribute('data-alias', slug);
+          btn.setAttribute('data-locationid', slug);
+        }
+      }
 
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
