@@ -579,7 +579,6 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
           }
         }
       } catch { /* keep going; styling below still applies */ }
-      
       // keep styling
       locBtn.classList.add('quick-button', 'location-button');
       locBtn.style.border = '1px solid var(--group-color-ink)';
