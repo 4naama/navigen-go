@@ -537,7 +537,6 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       return;
     }
 
-    // Apply flat 1px tinted border to group children, no background styling
     sibling.querySelectorAll('button').forEach(locBtn => {
       // ✅ Ensure accordion items carry a canonical id (ULID) like Popular does (needed for hits/QR)
       // derive by matching the visible label to injectedGeoPoints (already filtered for the page)
