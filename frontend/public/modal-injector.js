@@ -1534,12 +1534,12 @@ function makeLocationButton(loc) {
     // slug must be the canonical dataset locationID; no cover/name derivation
     const slug = String(loc?.locationID || '').trim();
 
-        if (uid) btn.setAttribute('data-id', uid);
-        if (slug) {
-          btn.setAttribute('data-alias', slug);
-          btn.setAttribute('data-locationid', slug);
-        }
-      }
+    if (uid) btn.setAttribute('data-id', uid);
+    if (slug) {
+      btn.setAttribute('data-alias', slug);
+      btn.setAttribute('data-locationid', slug);
+    }
+  }
 
   btn.classList.add('location-button');
   btn.dataset.lower = btn.textContent.toLowerCase();
