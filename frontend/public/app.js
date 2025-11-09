@@ -274,17 +274,27 @@ function renderPopularGroup(list = geoPoints) {
       let alias = rawId; // try mapped id/slug first
 
       // Popular-only guard: derive a slug if everything is empty (ULID + mapped id/slug absent)
-      // Popular-only guard: derive a slug ONLY from cover folder when ULID + mapped id/slug are absent
       if (!alias) {
-        const media = (loc && typeof loc.media === 'object') ? loc.media : {};
-        const cover = String(media.cover || '').trim();
+        const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
+        const cover   = String(media.cover || '').trim();
 
-        // derive from /assets/location-profile-images/<folder>/... ; no name-based fallback
-        const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
-        const fromCover = m ? m[1] : '';
+        // 1) derive from /assets/location-profile-images/<folder>/...
+        const fromCover = (() => {
+          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
+          return m ? m[1] : '';
+        })();
 
-        alias = fromCover; // keep empty if no folder segment found
+        // 2) fallback: conservative slug from display name
+        const nameSource = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim();
+        const fromName   = nameSource
+          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+          .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+
+        alias = fromCover || fromName;
       }
+
+      if (alias) btn.setAttribute('data-alias', alias);
+    }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
