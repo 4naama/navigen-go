@@ -208,7 +208,13 @@ function renderPopularGroup(list = geoPoints) {
   if (!container) { console.warn('⚠️ #locations not found; skipping Popular group'); return; }
 
   // Popular = Priority:"Yes" only; no fallback; ignore Visible
-  const isPriority = (rec) => String(rec?.Priority || '').toLowerCase() === 'yes';
+  // accept any truthy flag across Priority/Popular/priority variants
+  const isPriority = (rec) => {
+    const v = rec?.Priority ?? rec?.Popular ?? rec?.priority;
+    const s = String(v ?? '').toLowerCase().trim();
+    return v === true || v === 1 || s === 'yes' || s === 'true';
+  };
+
   const popular = (Array.isArray(list) ? list : []).filter(isPriority);
 
   const section = document.createElement("div");
