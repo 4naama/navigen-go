@@ -269,14 +269,12 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // slug/alias — Popular uses the canonical dataset slug only (locationID). No cover/name derivation.
-    // We set alias/locationid only when there is no ULID (uid is empty); otherwise data-id carries the ULID.
-    if (!uid) {
-      const alias = String(loc?.locationID || '').trim(); // canonical slug (always provided by dataset)
-      // keep comments for clarity: if alias ever came back empty, that's a data error; no derivation here.
-      if (alias) {
-        btn.setAttribute('data-locationid', alias); // mirror for consumers that read data-locationid
-      }
+    // always trust dataset slug (locationID); never derive from cover/name
+    {
+      const slug = String(loc?.locationID || '').trim();
+      if (!slug) { console.warn('Data error: locationID (slug) required'); return; }
+      btn.setAttribute('data-alias', slug);
+      btn.setAttribute('data-locationid', slug); // mirror for consistency with accordion wiring
     }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
@@ -1196,12 +1194,10 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      // ULID stays canonical in ID; locationID must be the short dataset slug for Dash/QR
+      // ULID stays canonical in ID; locationID is the canonical short slug (required)
       const uid = String(it?.ID || it?.id || '').trim();                     // ULID only (canonical)
-      let alias = String(it?.slug || it?.alias || '').trim();                // short slug for UI/Dashboard
-      const apiLoc = String(it?.locationID || '').trim();                    // may be slug or ULID from API
-      if (apiLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(apiLoc) && !alias) alias = apiLoc; // accept non-ULID as slug
-      const locationID = alias;                                              // prefer short slug only
+      const locationID = String(it?.locationID || '').trim();                // required slug
+      if (!locationID) { console.warn('Data error: missing locationID slug', it); return null; }
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1280,10 +1276,13 @@ async function initEmergencyBlock(countryOverride) {
     // Open LPM on ?lp=<id> (post-mapping, single source of truth)
     {
       const q = new URLSearchParams(location.search);
-      const uid = (q.get('lp') || '').trim();
+      const token = (q.get('lp') || '').trim();
 
-      if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.locationID) === uid) : null); // ULID-only
+      if (token && Array.isArray(geoPoints) && geoPoints.length) {
+        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        const rec = ULID.test(token)
+          ? geoPoints.find(x => String(x?.ID || x?.id || '').trim() === token)   // match by ULID
+          : geoPoints.find(x => String(x?.locationID || '').trim() === token);   // match by slug
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs
