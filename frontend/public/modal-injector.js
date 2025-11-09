@@ -1339,9 +1339,8 @@ async function initLpmImageSlider(modal, data) {
 
         // Always use the dataset slug (profiles.json → locationID) for Dashboard; no alias/short selection.
         let target = String(data?.locationID || '').trim();
-        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-        if (ULID.test(target)) {
-          // prefer slug for Dashboard; fall back to modal DOM cache
+        // prefer slug for Dashboard when a ULID-shaped value is detected; fall back to modal DOM cache
+        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(target)) {
           target = String(data?.alias || modal.getAttribute('data-locationid') || '').trim();
         }
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
