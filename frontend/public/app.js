@@ -336,7 +336,7 @@ function renderPopularGroup(list = geoPoints) {
       if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
 
       showLocationProfileModal({
-        locationID: String(loc?.locationID || ''), id: uid || String(loc?.locationID || ''), // dataset slug only when no ULID
+        locationID: String(loc?.locationID || ''), id: uid || alias,     // short slug from profiles.json
         displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
@@ -542,25 +542,18 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       // ensure accordion items expose an identifier like Popular does
       // prefer canonical ULID; otherwise fall back to slug/alias for id/locationID
       try {
-        // ensure accordion items expose dataset identifiers only (no fallbacks)
-        // ULID stays in data-id ONLY if it’s a ULID; dataset slug goes to data-locationid / data-alias
-        const label = (locBtn.querySelector('.location-name')?.textContent || locBtn.textContent || '').trim();
-        const rec = Array.isArray(injectedGeoPoints)
-          ? injectedGeoPoints.find(x => String((x?.locationName?.en ?? x?.locationName ?? '')).trim() === label)
-          : null;
+        const uid   = String(locBtn.getAttribute('data-id') || '').trim();
+        const alias = String(locBtn.getAttribute('data-alias') || locBtn.getAttribute('data-slug') || '').trim();
 
-        const datasetSlug = String(rec?.locationID || '').trim();
-        const rawId = String(locBtn.getAttribute('data-id') || '').trim();
-        const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId);
+        // If neither attribute is present, keep existing behavior (no throw).
+        const chosen = uid || alias; // ULID preferred; else slug/alias
 
-        // keep only real ULID in data-id
-        if (!isULID && rawId) locBtn.removeAttribute('data-id');
-        if (isULID && !locBtn.getAttribute('data-id')) locBtn.setAttribute('data-id', rawId);
-
-        // always publish dataset slug for non-ULID actions
-        if (datasetSlug) {
-          locBtn.setAttribute('data-locationid', datasetSlug);
-          if (!locBtn.getAttribute('data-alias')) locBtn.setAttribute('data-alias', datasetSlug);
+        if (chosen) {
+          // expose both shapes so all handlers (save/qr/share) can read either
+          if (!locBtn.getAttribute('data-id'))          locBtn.setAttribute('data-id', chosen);
+          if (!locBtn.getAttribute('data-locationid'))  locBtn.setAttribute('data-locationid', chosen);
+          // keep alias available explicitly for Stats link (slug preferred there)
+          if (alias && !locBtn.getAttribute('data-alias')) locBtn.setAttribute('data-alias', alias);
         }
       } catch { /* leave original styling/wiring below unchanged */ }
           
