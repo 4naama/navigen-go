@@ -1527,28 +1527,21 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // dataset-only identifiers: no derivation — use profiles.json slug; ULID only if truly present
+  // dataset-only identifiers — trust locationID directly; never derive from cover/name
   {
     const raw = String(loc?.ID || loc?.id || '').trim();
     const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
-
-    // dataset-only identifiers: trust profiles.json; never derive from cover/name
-    {
-      const raw = String(loc?.ID || loc?.id || '').trim();
-      const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
-      const slug = String(loc?.locationID || '').trim();
-
-      if (uid) btn.setAttribute('data-id', uid);
-      if (!slug) { console.warn('Data error: locationID (slug) required'); return btn; }
-
-      btn.setAttribute('data-alias', slug);
-      btn.setAttribute('data-locationid', slug);
-    }
+    const slug = String(loc?.locationID || '').trim();
 
     if (uid) btn.setAttribute('data-id', uid);
+
     if (slug) {
+      // use dataset slug consistently for alias + locationID
       btn.setAttribute('data-alias', slug);
       btn.setAttribute('data-locationid', slug);
+    } else {
+      // keep wiring even if slug missing (LPM will still open by ULID)
+      console.warn('Accordion: missing locationID slug for', loc);
     }
   }
 
