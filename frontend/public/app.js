@@ -269,19 +269,17 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // slug/alias fallback — follow Accordion: only set when ULID is missing
-    if (!uid) {
-      let alias = rawId; // try mapped id/slug first
-
-      // Popular-only: derive a slug ONLY from cover folder when missing (no name fallback)
-      if (!alias) {
-        const media = (loc && typeof loc.media === 'object') ? loc.media : {};
-        const cover = String(media.cover || '').trim();
-        const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
-        alias = m ? m[1] : '';
+    // Popular: never derive alias from cover or name — use dataset slug only
+    {
+      const slug = String(loc?.locationID || '').trim();
+      if (slug) {
+        btn.setAttribute('data-alias', slug);
+        btn.setAttribute('data-locationid', slug);
+      } else {
+        // no slug provided → leave alias unset; rely on ULID (data-id) only
+        // (intentional: no fallback/derivation)
+        console.warn('Popular: missing locationID slug for', loc);
       }
-
-      if (alias) btn.setAttribute('data-alias', alias);
     }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
