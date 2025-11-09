@@ -539,24 +539,27 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
 
     // Apply flat 1px tinted border to group children, no background styling
     sibling.querySelectorAll('button').forEach(locBtn => {
-      // ensure accordion items expose an identifier like Popular does
-      // prefer canonical ULID; otherwise fall back to slug/alias for id/locationID
+      // ensure accordion items expose dataset identifiers correctly
+      // data-id: ULID only; data-locationid/data-alias: dataset slug (never ULID)
       try {
-        const uid   = String(locBtn.getAttribute('data-id') || '').trim();
+        const rawId = String(locBtn.getAttribute('data-id') || '').trim();
         const alias = String(locBtn.getAttribute('data-alias') || locBtn.getAttribute('data-slug') || '').trim();
+        const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId);
 
-        // If neither attribute is present, keep existing behavior (no throw).
-        const chosen = uid || alias; // ULID preferred; else slug/alias
+        // enforce: data-id must be ULID; drop non-ULID ids
+        if (!isULID && rawId) locBtn.removeAttribute('data-id');
 
-        if (chosen) {
-          // expose both shapes so all handlers (save/qr/share) can read either
-          if (!locBtn.getAttribute('data-id'))          locBtn.setAttribute('data-id', chosen);
-          if (!locBtn.getAttribute('data-locationid'))  locBtn.setAttribute('data-locationid', chosen);
-          // keep alias available explicitly for Stats link (slug preferred there)
-          if (alias && !locBtn.getAttribute('data-alias')) locBtn.setAttribute('data-alias', alias);
+        if (isULID && !locBtn.getAttribute('data-id')) {
+          locBtn.setAttribute('data-id', rawId);
+        }
+
+        // always publish the dataset slug for non-ULID actions
+        if (alias) {
+          locBtn.setAttribute('data-locationid', alias);
+          if (!locBtn.getAttribute('data-alias')) locBtn.setAttribute('data-alias', alias);
         }
       } catch { /* leave original styling/wiring below unchanged */ }
-          
+       
       // keep styling
       locBtn.classList.add('quick-button', 'location-button');
       locBtn.style.border = '1px solid var(--group-color-ink)';
