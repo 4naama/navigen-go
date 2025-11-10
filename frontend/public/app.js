@@ -1300,8 +1300,7 @@ async function initEmergencyBlock(countryOverride) {
     };
 
     // Assign the mapped list now that we have the API items
-    geoPointsData = apiItems.map(toGeoPoint).filter(x => x && typeof x === 'object'); // drop null/invalid rows
-
+    geoPointsData = apiItems.map(toGeoPoint);
     geoPoints = geoPointsData;
     // normalize groups now that geoPoints is ready
     normalizeGroupKeys(geoPoints);
