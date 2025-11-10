@@ -114,7 +114,34 @@ export default {
       const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
     }
 
+    // /s/{id}?c=... — shortlink for LPMs: redirect to /?lp=... and count scan (mobile UA only)
+    {
+      const p = url.pathname;
+      if (p.startsWith('/s/')) {
+        const [, , idRaw = ''] = p.split('/'); // ['', 's', '{id}']
+        const c = url.searchParams.get('c') || '';
+
+        // simple phone UA gate; skip desktops/bots
+        const ua = req.headers.get('user-agent') || '';
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+
+        // keep buckets consistent with /hit and /out handlers
+        const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        if (isMobile && ULID_RE.test(idRaw)) {
+          const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+          const key  = `m:${idRaw}:${date}:qr-scan`; // daily bucket: same format used elsewhere
+          const cur  = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
+          await env.KV_STATS.put(key, String(cur + 1));
+        }
+
+        // open that very LPM (existing app logic reads ?lp=<id> and renders the LPM modal)
+        const target = `/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
+        return Response.redirect(target, 302);
+      }
+    }
+
     // PWA & modules: early pass-through for static assets and JS modules
+
     // keeps .js/.mjs and /scripts/* from being rewritten to HTML
     if (
       url.pathname === '/manifest.webmanifest' ||
