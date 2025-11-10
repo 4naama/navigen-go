@@ -269,13 +269,31 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // Popular: never derive from cover/name — stamp dataset slug only
-    {
-      const slug = String(loc?.locationID || '').trim();
-      if (slug) {
-        btn.setAttribute('data-alias', slug);
-        btn.setAttribute('data-locationid', slug);
+    // slug/alias fallback — follow Accordion: only set when ULID is missing
+    if (!uid) {
+      let alias = rawId; // try mapped id/slug first
+
+      // Popular-only guard: derive a slug if everything is empty (ULID + mapped id/slug absent)
+      if (!alias) {
+        const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
+        const cover   = String(media.cover || '').trim();
+
+        // 1) derive from /assets/location-profile-images/<folder>/...
+        const fromCover = (() => {
+          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
+          return m ? m[1] : '';
+        })();
+
+        // 2) fallback: conservative slug from display name
+        const nameSource = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim();
+        const fromName   = nameSource
+          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+          .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+
+        alias = fromCover || fromName;
       }
+
+      if (alias) btn.setAttribute('data-alias', alias);
     }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
@@ -308,7 +326,7 @@ function renderPopularGroup(list = geoPoints) {
       const cover = (media.cover && String(media.cover).trim()) || images[0];
 
       // guard for strict data model; require cover only (align with Accordion)
-      if (!cover) { console.warn('Data note: cover missing — opening LPM without hero'); } // allow LPM even without cover
+      if (!cover) { console.warn('Data error: cover required'); return; }
 
       // prefer ULID from data-id; fallback to slug/alias when ULID is absent
       const uid   = String(btn.getAttribute('data-id') || '').trim();      // ULID if present
@@ -542,12 +560,12 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
           locBtn.setAttribute('data-alias', datasetSlug);
         }
 
-        // set ULID if present; never wipe an existing data-id
+        // keep only a true ULID in data-id
         if (isULID) {
           locBtn.setAttribute('data-id', rawId);
+        } else if (locBtn.hasAttribute('data-id')) {
+          locBtn.removeAttribute('data-id');
         }
-        // else: leave any pre-stamped data-id intact
-
       } catch { /* keep going; styling below still applies */ }
 
       // keep styling
@@ -1066,7 +1084,7 @@ async function initEmergencyBlock(countryOverride) {
      */
     function normalizeGroupKeys(list) {
       if (!Array.isArray(list) || !list.length) return;
-      list.forEach(p => { if (!p || typeof p !== 'object') return;
+      list.forEach(p => {
         const g = String(p.Group || '').trim();
         if (!g) return;
         // match by display name (“Drop-down”) OR already-canonical key (“Group”)
@@ -1132,7 +1150,7 @@ async function initEmergencyBlock(countryOverride) {
     // First API call must not block boot; force fresh list to avoid stale cache
     let listRes;
     try {
-      if (true) { // always fetch using the derived __ctx (ACTIVE_PAGE fallback below)
+      if (ACTIVE_PAGE) {
         // ensure valid context even if ACTIVE_PAGE is empty in this scope
         const __ctx = (ACTIVE_PAGE && String(ACTIVE_PAGE)) ||
           location.pathname.replace(/^\/[a-z]{2}\//, '').replace(/\/$/, '').toLowerCase();
@@ -1161,7 +1179,7 @@ async function initEmergencyBlock(countryOverride) {
           } catch { /* non-fatal; fall back to original 404 result */ }
         }
       } else {
-        /* no-op: always fetch with derived __ctx so accordion never renders empty */
+        listRes = { ok: true, json: async () => ({ items: [] }) };
       }
     } catch (err) {
       console.warn('list API failed', err);
@@ -1195,24 +1213,12 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      // ULID stays canonical in ID; `locationID` comes only from a non-ULID dataset slug.
-      // No promotion of ULIDs into `locationID`.
-      const uid   = String(it?.ID || it?.id || '').trim();                   // ULID only
-      const rawLoc = String(it?.locationID || '').trim();                    // dataset field (slug or, incorrectly, a ULID)
-      const rawAlias = String(it?.slug || it?.alias || '').trim();           // optional explicit slug
-
-      let locationID = '';
-      if (rawLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawLoc)) {
-        // dataset provided a proper slug — trust it
-        locationID = rawLoc;
-      } else if (rawLoc && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawLoc)) {
-        // dataset gave a ULID (no slug). Per design we **don’t** promote ULID to `locationID`.
-        console.warn('Data row has ULID in locationID; skipping slug assignment', { id: uid || rawLoc });
-        // leave `locationID` empty so this row will be filtered if no explicit slug exists
-      } else if (rawAlias) {
-        // only if producer sent an explicit slug field, use it
-        locationID = rawAlias;
-      }
+      // ULID stays canonical in ID; locationID must be the short dataset slug for Dash/QR
+      const uid = String(it?.ID || it?.id || '').trim();                     // ULID only (canonical)
+      let alias = String(it?.slug || it?.alias || '').trim();                // short slug for UI/Dashboard
+      const apiLoc = String(it?.locationID || '').trim();                    // may be slug or ULID from API
+      if (apiLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(apiLoc) && !alias) alias = apiLoc; // accept non-ULID as slug
+      const locationID = alias;                                              // prefer short slug only
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1225,13 +1231,7 @@ async function initEmergencyBlock(countryOverride) {
         ? 'Yes' : 'No';
 
       const cc  = toCoord(it);
-      // Context comes from dataset only; normalize tokens to lower-case and ';'-join
-      let ctx = '';
-      if (Array.isArray(it?.contexts) && it.contexts.length) {
-        ctx = it.contexts.map(s => String(s).trim().toLowerCase()).join(';');
-      } else if (typeof it?.context === 'string' && it.context) {
-        ctx = String(it.context).trim().toLowerCase();
-      }
+      const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
 
       return {
         locationID,                  // short slug only (for Dash/QR/QR-code)
@@ -1289,7 +1289,7 @@ async function initEmergencyBlock(countryOverride) {
     };
 
     // Assign the mapped list now that we have the API items
-    geoPointsData = apiItems.map(toGeoPoint).filter(x => x && typeof x === 'object'); // drop null/invalid rows
+    geoPointsData = apiItems.map(toGeoPoint);
     geoPoints = geoPointsData;
     // normalize groups now that geoPoints is ready
     normalizeGroupKeys(geoPoints);
@@ -1300,7 +1300,7 @@ async function initEmergencyBlock(countryOverride) {
       const uid = (q.get('lp') || '').trim();
 
       if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.ID || x?.id) === uid) : null); // match ULID against ID/id
+        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.locationID) === uid) : null); // ULID-only
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs
@@ -1308,7 +1308,8 @@ async function initEmergencyBlock(countryOverride) {
           const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean); // normalize URLs
 
           const cover = (media.cover && String(media.cover).trim()) || images[0];
-          if (!cover) { console.warn('Data note: cover missing — opening LPM without hero'); } // do not block modal
+          // guard for strict data model; require cover only (align with Accordion)
+          if (!cover) { console.warn('Data error: cover required'); return; }
 
           const cc = String(rec["Coordinate Compound"] || rec.coord || "");
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
