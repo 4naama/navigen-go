@@ -1213,22 +1213,29 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      // ULID stays canonical in ID; locationID must be a non-ULID slug (single source of truth)
-      const uid    = String(it?.ID || it?.id || '').trim();                  // ULID only (canonical)
-      const apiLoc = String(it?.locationID || '').trim();                    // dataset field: slug or (bad) ULID
-      const alias  = String(it?.slug || it?.alias || '').trim();             // optional explicit slug
+      // ULID stays canonical in ID; `locationID` comes only from a non-ULID dataset slug.
+      // No promotion of ULIDs into `locationID`.
+      const uid   = String(it?.ID || it?.id || '').trim();                   // ULID only
+      const rawLoc = String(it?.locationID || '').trim();                    // dataset field (slug or, incorrectly, a ULID)
+      const rawAlias = String(it?.slug || it?.alias || '').trim();           // optional explicit slug
 
       let locationID = '';
-      if (apiLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(apiLoc)) {
-        // trust dataset slug when it's not a ULID
-        locationID = apiLoc;
-      } else if (alias) {
-        // fallback: accept explicit slug field if present
-        locationID = alias;
-      } else {
-        // by design this shouldn't happen; log and let pipeline filter guard drop it
-        console.warn('Data error: missing non-ULID locationID slug', it);
-        return null; // signal row skip to the caller
+      if (rawLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawLoc)) {
+        // dataset provided a proper slug — trust it
+        locationID = rawLoc;
+      } else if (rawLoc && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawLoc)) {
+        // dataset gave a ULID (no slug). Per design we **don’t** promote ULID to `locationID`.
+        console.warn('Data row has ULID in locationID; skipping slug assignment', { id: uid || rawLoc });
+        // leave `locationID` empty so this row will be filtered if no explicit slug exists
+      } else if (rawAlias) {
+        // only if producer sent an explicit slug field, use it
+        locationID = rawAlias;
+      }
+
+      if (!locationID) {
+        // By design you always send a slug; if not, skip the row to avoid broken buttons.
+        console.warn('Skipping item without slug in `locationID`/`slug`', it);
+        return null;
       }
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
@@ -1242,7 +1249,14 @@ async function initEmergencyBlock(countryOverride) {
         ? 'Yes' : 'No';
 
       const cc  = toCoord(it);
-      const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
+      // Map context from data; prefer `contexts` array, else single `context` string; no forced fallback.
+      let ctx = '';
+      if (Array.isArray(it?.contexts) && it.contexts.length) {
+        ctx = it.contexts.join(';');
+      } else if (typeof it?.context === 'string' && it.context) {
+        ctx = it.context;
+      }
+
 
       return {
         locationID,                  // short slug only (for Dash/QR/QR-code)
