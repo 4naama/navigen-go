@@ -1214,11 +1214,9 @@ async function initEmergencyBlock(countryOverride) {
     // Build one legacy record
     const toGeoPoint = (it) => {
       // ULID stays canonical in ID; locationID must be the short dataset slug for Dash/QR
-      const uid = String(it?.ID || it?.id || '').trim();                     // ULID only (canonical)
-      let alias = String(it?.slug || it?.alias || '').trim();                // short slug for UI/Dashboard
-      const apiLoc = String(it?.locationID || '').trim();                    // may be slug or ULID from API
-      if (apiLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(apiLoc) && !alias) alias = apiLoc; // accept non-ULID as slug
-      const locationID = alias;                                              // prefer short slug only
+      const uid   = String(it?.ID || it?.id || it?.locationID || '').trim(); // ULID only (canonical)
+      const alias = String(it?.slug || it?.alias || '').trim();              // short slug for UI/Dashboard
+      const locationID = alias || String(it?.locationID || '').trim(); const legacyId = uid;
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
