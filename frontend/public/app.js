@@ -1122,16 +1122,7 @@ async function initEmergencyBlock(countryOverride) {
     }    
 
     // Active context row for this page (used for default group/sub)
-    // Context comes from dataset only; normalize to lower-case tokens joined by ';'
-    const ctx = (() => {
-      if (Array.isArray(it?.contexts) && it.contexts.length) {
-        return it.contexts.map(s => String(s).trim().toLowerCase()).join(';');
-      }
-      if (typeof it?.context === 'string' && it.context) {
-        return String(it.context).trim().toLowerCase();
-      }
-      return ''; // dataset must supply context; no guessing
-    })();
+    const ctxRow = Array.isArray(contexts) ? contexts.find(c => c.pageKey === ACTIVE_PAGE) : null;
 
     const API_LIMIT = 99; // ask for up to 99 items per page
 
@@ -1234,14 +1225,13 @@ async function initEmergencyBlock(countryOverride) {
         ? 'Yes' : 'No';
 
       const cc  = toCoord(it);
-      // Map context from data; prefer `contexts` array, else single `context` string; no forced fallback.
+      // Context comes from dataset only; normalize tokens to lower-case and ';'-join
       let ctx = '';
       if (Array.isArray(it?.contexts) && it.contexts.length) {
-        ctx = it.contexts.join(';');
+        ctx = it.contexts.map(s => String(s).trim().toLowerCase()).join(';');
       } else if (typeof it?.context === 'string' && it.context) {
-        ctx = it.context;
+        ctx = String(it.context).trim().toLowerCase();
       }
-
 
       return {
         locationID,                  // short slug only (for Dash/QR/QR-code)
