@@ -569,9 +569,9 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   const fmt = (url.searchParams.get("fmt") || "svg").toLowerCase();
   const size = clamp(parseInt(url.searchParams.get("size") || "512", 10), 128, 1024);
 
-  // ✅ ULID/alias → use /s/{locationID}; otherwise fall back to /?lp={raw}  
+  // ✅ ULID → count+redirect via /out/qr-scan to the LPM (?lp=...); non-ULID falls back to LPM with raw id
   const dataUrl = isUlid
-    ? `https://navigen.io/s/${encodeURIComponent(resolved!)}${c ? `?c=${encodeURIComponent(c)}` : ""}`
+    ? `https://navigen.io/out/qr-scan/${encodeURIComponent(resolved!)}?to=${encodeURIComponent(`/?lp=${resolved!}${c ? `&c=${c}` : ""}`)}`
     : `https://navigen.io/?lp=${encodeURIComponent(raw)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
 
   if (fmt === "svg") {
