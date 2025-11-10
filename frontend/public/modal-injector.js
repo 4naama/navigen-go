@@ -1527,21 +1527,30 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // dataset-only identifiers — trust locationID directly; never derive from cover/name
+  // dataset-only identifiers: no derivation — use profiles.json slug; ULID only if truly present
   {
     const raw = String(loc?.ID || loc?.id || '').trim();
     const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
-    const slug = String(loc?.locationID || '').trim();
+
+    let slug = String(loc?.locationID || '').trim(); // may be empty or a ULID
+    if (!slug || /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(slug)) {
+      // Derive like Popular: prefer folder from cover, fallback to name-based slug
+      const media = (loc && typeof loc.media === 'object') ? loc.media : {};
+      const cover = String(media.cover || '').trim();
+      const fromCover = (() => {
+        const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
+        return m ? m[1] : '';
+      })();
+      const fromName = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+        .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+      slug = fromCover || fromName;
+    }
 
     if (uid) btn.setAttribute('data-id', uid);
-
     if (slug) {
-      // use dataset slug consistently for alias + locationID
       btn.setAttribute('data-alias', slug);
       btn.setAttribute('data-locationid', slug);
-    } else {
-      // keep wiring even if slug missing (LPM will still open by ULID)
-      console.warn('Accordion: missing locationID slug for', loc);
     }
   }
 
@@ -1580,6 +1589,9 @@ function makeLocationButton(loc) {
     const cover =
       (media.cover && String(media.cover).trim())
       || (images[0] && (typeof images[0] === 'string' ? images[0] : images[0]?.src));
+
+    // guard: strict data model; hero + ≥2 images required
+    if (!cover) { console.warn('Data error: cover required', loc?.locationID || loc?.ID || loc?.id); return; } // allow 1+ images
 
     // Open the Location Profile Modal; include contact + links for CTAs
     // pass ULID if present, else slug only to LPM; ULID remains canonical
