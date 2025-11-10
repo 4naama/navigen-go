@@ -121,21 +121,26 @@ export default {
         const [, , idRaw = ''] = p.split('/'); // ['', 's', '{id}']
         const c = url.searchParams.get('c') || '';
 
-        // simple phone UA gate; skip desktops/bots
-        const ua = req.headers.get('user-agent') || '';
-        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+        // Always redirect to the exact LPM; counting is best-effort (no crash if KV missing)
+        try {
+          // simple phone UA gate; skip desktops/bots
+          const ua = req.headers.get('user-agent') || '';
+          const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
 
-        // keep buckets consistent with /hit and /out handlers
-        const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-        if (isMobile && ULID_RE.test(idRaw)) {
-          const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
-          const key  = `m:${idRaw}:${date}:qr-scan`; // daily bucket: same format used elsewhere
-          const cur  = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
-          await env.KV_STATS.put(key, String(cur + 1));
+          // keep buckets clean — count only ULID-looking ids
+          const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+          if (isMobile && ULID_RE.test(idRaw) && env.KV_STATS) {
+            const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+            const key  = `m:${idRaw}:${date}:qr-scan`;
+            const cur  = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
+            await env.KV_STATS.put(key, String(cur + 1));
+          }
+        } catch (e) {
+          // keep silent; redirect must still succeed
+          // NOTE: if this prints in logs as 1101, it means env.KV_STATS is not bound in Pages
         }
 
-        // open that very LPM (existing app logic reads ?lp=<id> and renders the LPM modal)
-        const target = `/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
+        const target = `/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ''}`; // open that very LPM
         return Response.redirect(target, 302);
       }
     }
