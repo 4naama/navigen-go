@@ -308,7 +308,7 @@ function renderPopularGroup(list = geoPoints) {
       const cover = (media.cover && String(media.cover).trim()) || images[0];
 
       // guard for strict data model; require cover only (align with Accordion)
-      if (!cover) { console.warn('Data error: cover required'); return; }
+      if (!cover) { console.warn('Data note: cover missing — opening LPM without hero'); } // allow LPM even without cover
 
       // prefer ULID from data-id; fallback to slug/alias when ULID is absent
       const uid   = String(btn.getAttribute('data-id') || '').trim();      // ULID if present
@@ -1132,7 +1132,7 @@ async function initEmergencyBlock(countryOverride) {
     // First API call must not block boot; force fresh list to avoid stale cache
     let listRes;
     try {
-      if (ACTIVE_PAGE) {
+      if (true) { // always fetch using the derived __ctx (ACTIVE_PAGE fallback below)
         // ensure valid context even if ACTIVE_PAGE is empty in this scope
         const __ctx = (ACTIVE_PAGE && String(ACTIVE_PAGE)) ||
           location.pathname.replace(/^\/[a-z]{2}\//, '').replace(/\/$/, '').toLowerCase();
@@ -1161,7 +1161,7 @@ async function initEmergencyBlock(countryOverride) {
           } catch { /* non-fatal; fall back to original 404 result */ }
         }
       } else {
-        listRes = { ok: true, json: async () => ({ items: [] }) };
+        /* no-op: always fetch with derived __ctx so accordion never renders empty */
       }
     } catch (err) {
       console.warn('list API failed', err);
@@ -1300,7 +1300,7 @@ async function initEmergencyBlock(countryOverride) {
       const uid = (q.get('lp') || '').trim();
 
       if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.locationID) === uid) : null); // ULID-only
+        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.ID || x?.id) === uid) : null); // match ULID against ID/id
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs
@@ -1308,8 +1308,7 @@ async function initEmergencyBlock(countryOverride) {
           const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean); // normalize URLs
 
           const cover = (media.cover && String(media.cover).trim()) || images[0];
-          // guard for strict data model; require cover only (align with Accordion)
-          if (!cover) { console.warn('Data error: cover required'); return; }
+          if (!cover) { console.warn('Data note: cover missing — opening LPM without hero'); } // do not block modal
 
           const cc = String(rec["Coordinate Compound"] || rec.coord || "");
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
