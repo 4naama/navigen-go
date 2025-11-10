@@ -560,12 +560,12 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
           locBtn.setAttribute('data-alias', datasetSlug);
         }
 
-        // set ULID if present; never wipe an existing data-id
+        // keep only a true ULID in data-id
         if (isULID) {
           locBtn.setAttribute('data-id', rawId);
+        } else if (locBtn.hasAttribute('data-id')) {
+          locBtn.removeAttribute('data-id');
         }
-        // else: leave any pre-stamped data-id intact
-
       } catch { /* keep going; styling below still applies */ }
 
       // keep styling
