@@ -265,7 +265,36 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.textContent = locLabel;
     btn.setAttribute("data-group", groupKey);
-    btn.setAttribute("data-id", String(loc.locationID || '').trim()); // ULID-only: Worker guarantees ULID
+    const rawId = String(loc.locationID || loc.ID || loc.id || loc.slug || loc.alias || '').trim(); // raw id or slug (fallback to slug/alias)
+    const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
+    btn.setAttribute('data-id', uid);                                                 // ULID for tracking
+
+    // slug/alias fallback — follow Accordion: only set when ULID is missing
+    if (!uid) {
+      let alias = rawId; // try mapped id/slug first
+
+      // Popular-only guard: derive a slug if everything is empty (ULID + mapped id/slug absent)
+      if (!alias) {
+        const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
+        const cover   = String(media.cover || '').trim();
+
+        // 1) derive from /assets/location-profile-images/<folder>/...
+        const fromCover = (() => {
+          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
+          return m ? m[1] : '';
+        })();
+
+        // 2) fallback: conservative slug from display name
+        const nameSource = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim();
+        const fromName   = nameSource
+          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+          .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+
+        alias = fromCover || fromName;
+      }
+
+      if (alias) btn.setAttribute('data-alias', alias);
+    }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
@@ -296,17 +325,18 @@ function renderPopularGroup(list = geoPoints) {
       // Use explicit cover first, then first image; never use placeholders
       const cover = (media.cover && String(media.cover).trim()) || images[0];
 
-      // guard for strict data model; 2 lines max
-      if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
+      // guard for strict data model; require cover only (align with Accordion)
+      if (!cover) { console.warn('Data error: cover required'); return; }
 
-      // normalize to ULID: prefer data-id, then locationID/id/ID; do not call modal without ULID
-      const uid = String(btn.getAttribute('data-id') || '').trim(); // ULID-only
+      // prefer ULID from data-id; fallback to slug/alias when ULID is absent
+      const uid   = String(btn.getAttribute('data-id') || '').trim();      // ULID if present
+      const alias = String(btn.getAttribute('data-alias') || '').trim();   // slug/alias
 
-      if (!uid) { console.warn('Data error: id missing'); return; } // minimal guard
-      // allow alias or ULID; Worker resolves aliases safely
+      // need at least one; Popular path now derives alias above when both are missing
+      if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
 
       showLocationProfileModal({
-        locationID: uid, id: uid,              // ULID only
+        locationID: String(loc?.locationID || ''), id: uid || alias,     // short slug from profiles.json
         displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
@@ -507,8 +537,58 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       return;
     }
 
-    // Apply flat 1px tinted border to group children, no background styling
+    // Accordion wiring pass: for each location button, stamp authoritative identifiers onto the element.
+    // - Always set `data-locationid` (and mirror to `data-alias`) from the dataset record’s `locationID` (e.g., hd-…-####).
+    // - Set `data-id` only if a real ULID exists; never place slugs/aliases in `data-id`.
+    // Rationale: LPM CTAs resolve identifiers via `data.id || data.locationID`; this guarantees one is always valid.
     sibling.querySelectorAll('button').forEach(locBtn => {
+      // ✅ Ensure accordion items carry a canonical id (ULID) like Popular does (needed for hits/QR)
+      // derive by matching the visible label to injectedGeoPoints (already filtered for the page)
+      try {
+        const visibleLabel = String((locBtn.querySelector('.location-name')?.textContent || locBtn.textContent || '')).trim();
+        const rec = Array.isArray(injectedGeoPoints)
+          ? injectedGeoPoints.find(x => String((x?.locationName?.en ?? x?.locationName ?? '')).trim() === visibleLabel)
+          : null;
+
+        // set dataset slug for all CTAs; ULID optional — do NOT rely on alias/cover
+        if (rec) {
+          const slug = String(rec?.locationID || '').trim();               // authoritative: hd-…-#### from profiles.json
+          const rawId = String(rec?.ID || rec?.id || '').trim();          // potential ULID if present
+          const isULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId);
+
+          // Always publish the dataset slug for non-ULID actions
+          if (slug) {
+            locBtn.setAttribute('data-locationid', slug);
+            if (!locBtn.getAttribute('data-alias')) locBtn.setAttribute('data-alias', slug);
+          }
+
+          // Only set data-id when it's a real ULID; never stuff slug into data-id
+          if (isULID && !locBtn.getAttribute('data-id')) {
+            locBtn.setAttribute('data-id', rawId);
+          }
+
+          // also surface cover for modal previews if buildAccordion didn’t put one
+          if (!locBtn.hasAttribute('data-cover')) {
+            const cover = rec?.media?.cover || rec?.cover || '';
+            if (cover) locBtn.setAttribute('data-cover', cover);
+          }
+
+          // keep lat/lng if missing (used by routing + modal header)
+          if (!locBtn.hasAttribute('data-lat') || !locBtn.hasAttribute('data-lng')) {
+            const cc = String(rec?.coord || rec?.["Coordinate Compound"] || '').trim();
+            if (cc.includes(',')) {
+              const [lat, lng] = cc.split(',').map(s => s.trim());
+              if (lat && lng) {
+                if (!locBtn.hasAttribute('data-lat')) locBtn.setAttribute('data-lat', lat);
+                if (!locBtn.hasAttribute('data-lng')) locBtn.setAttribute('data-lng', lng);
+                if (!locBtn.title) locBtn.title = `Open profile / Route (${lat}, ${lng})`;
+              }
+            }
+          }
+        }
+
+      } catch { /* keep going; styling below still applies */ }
+      
       // keep styling
       locBtn.classList.add('quick-button', 'location-button');
       locBtn.style.border = '1px solid var(--group-color-ink)';
@@ -1154,8 +1234,9 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      const uid = String(it?.locationID || '').trim();        // ULID-only from Worker
-      const locationID = uid; const legacyId = '';            // no alias in client
+      const uid   = String(it?.locationID || it?.ID || it?.id || '').trim(); // ULID only (canonical)
+      const alias = String(it?.slug || it?.alias || '').trim();              // slug fallback for UI/LPM only
+      const locationID = uid; const legacyId = uid;           // mirror canonical ULID (if present)
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1172,7 +1253,7 @@ async function initEmergencyBlock(countryOverride) {
 
       return {
         locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
-        id: locationID,                           // legacy .id also mirrors ULID
+        id: uid || alias,                         // LPM/CTAs get ULID, or slug if ULID missing
 
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
@@ -1244,14 +1325,15 @@ async function initEmergencyBlock(countryOverride) {
           const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean); // normalize URLs
 
           const cover = (media.cover && String(media.cover).trim()) || images[0];
-          // guard: strict data contract (hero + ≥2); no placeholders
-          if (!cover || images.length < 2) { console.warn('Data error: cover+2 images required'); return; }
+          // guard for strict data model; require cover only (align with Accordion)
+          if (!cover) { console.warn('Data error: cover required'); return; }
 
           const cc = String(rec["Coordinate Compound"] || rec.coord || "");
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
           showLocationProfileModal({
-            id: String(rec?.locationID || ''),
+            locationID: String(rec?.locationID || ''),       // short slug from profiles.json
+            id: String(rec?.locationID || ''),               // use the same short slug; exclude ULID
             name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim() || "Unnamed",
             lat, lng,
             imageSrc: cover,
