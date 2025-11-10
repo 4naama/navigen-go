@@ -40,7 +40,7 @@ function rateHit(req){
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) { // include ctx so waitUntil works
     const url = new URL(req.url);
     
     // CORS for local dev; echo Origin + allow credentials (localhost + LAN)
@@ -120,25 +120,24 @@ export default {
       if (p.startsWith('/s/')) {
         const [, , idRaw = ''] = p.split('/'); // ['', 's', '{id}']
         const c = url.searchParams.get('c') || '';
-        const target = `/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ''}`; // open that very LPM
+        const target = `/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
 
-        // fire-and-forget counting — never block redirect, never throw
+        // Best-effort counting that can never block or crash
         try {
           const ua = req.headers.get('user-agent') || '';
           const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
           const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
-          if (isMobile && ULID_RE.test(idRaw) && env && env.KV_STATS) {
+          if (isMobile && ULID_RE.test(idRaw) && env && env.KV_STATS && ctx) {
             const bump = async () => {
               const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
               const key = `m:${idRaw}:${day}:qr-scan`;
               const cur = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
               await env.KV_STATS.put(key, String(cur + 1));
             };
-            // run in background; ignore errors
-            ctx.waitUntil(bump().catch(() => {}));
+            ctx.waitUntil(bump().catch(() => {})); // never throw
           }
-        } catch (_) { /* swallow all */ }
+        } catch (_) { /* swallow all errors */ }
 
         return Response.redirect(target, 302);
       }
