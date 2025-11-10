@@ -1581,9 +1581,6 @@ function makeLocationButton(loc) {
       (media.cover && String(media.cover).trim())
       || (images[0] && (typeof images[0] === 'string' ? images[0] : images[0]?.src));
 
-    // allow opening without a cover — modal hides hero when empty; keep warning for telemetry
-    if (!cover) { console.warn('Accordion: opening LPM without cover', loc?.locationID || loc?.ID || loc?.id); }
-
     // Open the Location Profile Modal; include contact + links for CTAs
     // pass ULID if present, else slug only to LPM; ULID remains canonical
     {
