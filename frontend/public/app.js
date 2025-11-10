@@ -269,31 +269,13 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // slug/alias fallback — follow Accordion: only set when ULID is missing
-    if (!uid) {
-      let alias = rawId; // try mapped id/slug first
-
-      // Popular-only guard: derive a slug if everything is empty (ULID + mapped id/slug absent)
-      if (!alias) {
-        const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
-        const cover   = String(media.cover || '').trim();
-
-        // 1) derive from /assets/location-profile-images/<folder>/...
-        const fromCover = (() => {
-          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
-          return m ? m[1] : '';
-        })();
-
-        // 2) fallback: conservative slug from display name
-        const nameSource = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim();
-        const fromName   = nameSource
-          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-          .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-
-        alias = fromCover || fromName;
+    // Popular: never derive from cover/name — stamp dataset slug only
+    {
+      const slug = String(loc?.locationID || '').trim();
+      if (slug) {
+        btn.setAttribute('data-alias', slug);
+        btn.setAttribute('data-locationid', slug);
       }
-
-      if (alias) btn.setAttribute('data-alias', alias);
     }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
@@ -1140,7 +1122,16 @@ async function initEmergencyBlock(countryOverride) {
     }    
 
     // Active context row for this page (used for default group/sub)
-    const ctxRow = Array.isArray(contexts) ? contexts.find(c => c.pageKey === ACTIVE_PAGE) : null;
+    // Context comes from dataset only; normalize to lower-case tokens joined by ';'
+    const ctx = (() => {
+      if (Array.isArray(it?.contexts) && it.contexts.length) {
+        return it.contexts.map(s => String(s).trim().toLowerCase()).join(';');
+      }
+      if (typeof it?.context === 'string' && it.context) {
+        return String(it.context).trim().toLowerCase();
+      }
+      return ''; // dataset must supply context; no guessing
+    })();
 
     const API_LIMIT = 99; // ask for up to 99 items per page
 
