@@ -132,7 +132,7 @@ export default {
     if (url.pathname.startsWith('/hit/')) {
       // keep comment, but clarify: this endpoint increments daily metric counters for non-redirect CTAs
       const [, , metric, idOrSlug] = url.pathname.split('/'); // ['', 'hit', ':metric', ':id']
-      const ALLOWED_HIT_METRICS = new Set(['qr-print', 'qr-view', 'share', 'lpm-open']); // minimal, extend as needed
+      const ALLOWED_HIT_METRICS = new Set(['qr-print', 'qr-view', 'qr-scan', 'share', 'lpm-open']); // added qr-scan
 
       if (!metric || !ALLOWED_HIT_METRICS.has(metric) || !idOrSlug) {
         return new Response('Bad Request', { status: 400 });
@@ -160,6 +160,34 @@ export default {
     }
 
     // duplicate /hit/* block removed — unified handler above handles all hit metrics
+
+    // /out/qr-scan/:id?to=<url> — count a physical QR scan, then redirect to landing
+    if (url.pathname.startsWith('/out/')) {
+      // Only support qr-scan here (keeps change minimal)
+      const [, , metric, idOrSlug] = url.pathname.split('/'); // ['', 'out', ':metric', ':id']
+      if (metric !== 'qr-scan' || !idOrSlug) {
+        return new Response('Not Found', { status: 404 });
+      }
+
+      // Resolve slug → ULID (or accept raw ULID)
+      const ulid = await canonicalId(env, idOrSlug);
+      if (!ulid) return new Response('Unknown location', { status: 404 });
+
+      // Daily bucket: m:<ULID>:YYYY-MM-DD:qr-scan
+      const date = new Date().toISOString().slice(0, 10);
+      const key = `m:${ulid}:${date}:qr-scan`;
+      const current = parseInt((await env.KV_STATS.get(key)) || '0', 10);
+      await env.KV_STATS.put(key, String((isNaN(current) ? 0 : current) + 1));
+
+      // Redirect to landing (?to=...), default to home if missing
+      const target = url.searchParams.get('to') || '/';
+      // Basic safety: only allow http(s) targets
+      const safe = /^(?:https?:)?\/\//i.test(target) || target.startsWith('/');
+      const dest = safe ? target : '/';
+
+      return Response.redirect(dest, 302);
+    }
+
 
     // /api/track: deprecated — previously no redirect; handled missing/invalid target gracefully
     if (url.pathname === '/api/track') {
@@ -202,7 +230,7 @@ export default {
         // keys look like m:<ULID>:YYYY-MM-DD:metric
         const prefix = `m:${uid}:`;
         const listed = await env.KV_STATS.list({ prefix });
-        const ALLOWED_HIT_METRICS = new Set(['qr-print', 'qr-view', 'share', 'lpm-open']); // keep in sync with /hit
+        const ALLOWED_HIT_METRICS = new Set(['qr-print', 'qr-view', 'qr-scan', 'share', 'lpm-open']); // include qr-scan for dash
         for (const { name } of listed.keys || []) {
           const [/*m*/, /*uid*/, d, metric] = name.split(':');
           if (d >= from && d <= to && ALLOWED_HIT_METRICS.has(metric)) {
