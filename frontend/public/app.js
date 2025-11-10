@@ -1232,12 +1232,6 @@ async function initEmergencyBlock(countryOverride) {
         locationID = rawAlias;
       }
 
-      if (!locationID) {
-        // By design you always send a slug; if not, skip the row to avoid broken buttons.
-        console.warn('Skipping item without slug in `locationID`/`slug`', it);
-        return null;
-      }
-
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
