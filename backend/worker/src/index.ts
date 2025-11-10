@@ -528,7 +528,12 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
   if (isUlid) {
     const now = new Date(); const country = (req as any).cf?.country || "";
     const day = dayKeyFor(now, undefined, country);
-    await kvIncr(env.KV_STATS, `stats:${resolved!}:${day}:qr-scan`); // count only human scans
+    const ua = req.headers.get("User-Agent") || "";
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    // count only when opened on a phone
+    if (isMobile) {
+      await kvIncr(env.KV_STATS, `stats:${resolved!}:${day}:qr-scan`);
+    }
   }
 
   const target = isUlid
