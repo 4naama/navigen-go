@@ -1234,9 +1234,8 @@ async function initEmergencyBlock(countryOverride) {
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
 
       return {
-        locationID,                  // short slug only (for Dash/QR/QR-code)
-        ID: uid || '',               // keep ULID in legacy ID slot; never mirror slug here
-        id: uid || locationID,       // primary id for LPM: ULID preferred; else slug
+        locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
+        id: uid || alias,                         // LPM/CTAs get ULID, or slug if ULID missing
 
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
