@@ -537,37 +537,48 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
       return;
     }
 
+    // Apply flat 1px tinted border to group children, no background styling
     sibling.querySelectorAll('button').forEach(locBtn => {
-      // Accordion wiring pass: for each location button, stamp authoritative identifiers onto the element.
-      // - Always set `data-locationid` (and mirror to `data-alias`) from the dataset record’s `locationID` (e.g., hd-…-####).
-      // - Set `data-id` only if a real ULID exists; never place slugs/aliases in `data-id`.
-      // Rationale: LPM CTAs resolve identifiers via `data.id || data.locationID`; this guarantees one is always valid.
+      // ✅ Ensure accordion items carry a canonical id (ULID) like Popular does (needed for hits/QR)
+      // derive by matching the visible label to injectedGeoPoints (already filtered for the page)
       try {
         const visibleLabel = String((locBtn.querySelector('.location-name')?.textContent || locBtn.textContent || '')).trim();
         const rec = Array.isArray(injectedGeoPoints)
           ? injectedGeoPoints.find(x => String((x?.locationName?.en ?? x?.locationName ?? '')).trim() === visibleLabel)
           : null;
 
-        if (!rec) return;
+        // set data-id to ULID when available; else expose slug/alias fallback
+        if (rec) {
+          const uid   = String(rec?.locationID || rec?.ID || rec?.id || '').trim();
+          const alias = String(rec?.slug || rec?.alias || '').trim();
 
-        const datasetSlug = String(rec?.locationID || '').trim();
-        const rawId       = String(rec?.ID || rec?.id || '').trim();
-        const isULID      = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId);
+          if (uid && !locBtn.getAttribute('data-id')) {
+            locBtn.setAttribute('data-id', uid);            // canonical for tracking (/hit/*)
+          }
+          if (!uid && alias && !locBtn.getAttribute('data-alias')) {
+            locBtn.setAttribute('data-alias', alias);       // fallback for UI if ULID truly missing
+          }
 
-        // publish dataset slug for all non-ULID actions
-        if (datasetSlug) {
-          locBtn.setAttribute('data-locationid', datasetSlug);
-          locBtn.setAttribute('data-alias', datasetSlug);
-        }
+          // also surface cover for modal previews if buildAccordion didn’t put one
+          if (!locBtn.hasAttribute('data-cover')) {
+            const cover = rec?.media?.cover || rec?.cover || '';
+            if (cover) locBtn.setAttribute('data-cover', cover);
+          }
 
-        // keep only a true ULID in data-id
-        if (isULID) {
-          locBtn.setAttribute('data-id', rawId);
-        } else if (locBtn.hasAttribute('data-id')) {
-          locBtn.removeAttribute('data-id');
+          // keep lat/lng if missing (used by routing + modal header)
+          if (!locBtn.hasAttribute('data-lat') || !locBtn.hasAttribute('data-lng')) {
+            const cc = String(rec?.coord || rec?.["Coordinate Compound"] || '').trim();
+            if (cc.includes(',')) {
+              const [lat, lng] = cc.split(',').map(s => s.trim());
+              if (lat && lng) {
+                if (!locBtn.hasAttribute('data-lat')) locBtn.setAttribute('data-lat', lat);
+                if (!locBtn.hasAttribute('data-lng')) locBtn.setAttribute('data-lng', lng);
+                if (!locBtn.title) locBtn.title = `Open profile / Route (${lat}, ${lng})`;
+              }
+            }
+          }
         }
       } catch { /* keep going; styling below still applies */ }
-
       // keep styling
       locBtn.classList.add('quick-button', 'location-button');
       locBtn.style.border = '1px solid var(--group-color-ink)';
@@ -1213,12 +1224,9 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      // ULID stays canonical in ID; locationID must be the short dataset slug for Dash/QR
-      const uid = String(it?.ID || it?.id || '').trim();                     // ULID only (canonical)
-      let alias = String(it?.slug || it?.alias || '').trim();                // short slug for UI/Dashboard
-      const apiLoc = String(it?.locationID || '').trim();                    // may be slug or ULID from API
-      if (apiLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(apiLoc) && !alias) alias = apiLoc; // accept non-ULID as slug
-      const locationID = alias;                                              // prefer short slug only
+      const uid   = String(it?.locationID || it?.ID || it?.id || '').trim(); // ULID only (canonical)
+      const alias = String(it?.slug || it?.alias || '').trim();              // slug fallback for UI/LPM only
+      const locationID = uid; const legacyId = uid;           // mirror canonical ULID (if present)
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
@@ -1234,9 +1242,8 @@ async function initEmergencyBlock(countryOverride) {
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
 
       return {
-        locationID,                  // short slug only (for Dash/QR/QR-code)
-        ID: uid || '',               // keep ULID in legacy ID slot; never mirror slug here
-        id: uid || locationID,       // primary id for LPM: ULID preferred; else slug
+        locationID: locationID, ID: locationID,  // ULID-only; mirror for legacy reads
+        id: uid || alias,                         // LPM/CTAs get ULID, or slug if ULID missing
 
         // always provide an object with .en so all callers resolve a name
         locationName: (it && typeof it.locationName === 'object' && it.locationName)
