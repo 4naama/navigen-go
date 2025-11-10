@@ -1213,23 +1213,12 @@ async function initEmergencyBlock(countryOverride) {
 
     // Build one legacy record
     const toGeoPoint = (it) => {
-      // ULID stays canonical in ID; locationID must be a non-ULID slug (single source of truth)
-      const uid    = String(it?.ID || it?.id || '').trim();                  // ULID only (canonical)
-      const apiLoc = String(it?.locationID || '').trim();                    // dataset field: slug or (bad) ULID
-      const alias  = String(it?.slug || it?.alias || '').trim();             // optional explicit slug
-
-      let locationID = '';
-      if (apiLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(apiLoc)) {
-        // trust dataset slug when it's not a ULID
-        locationID = apiLoc;
-      } else if (alias) {
-        // fallback: accept explicit slug field if present
-        locationID = alias;
-      } else {
-        // by design this shouldn't happen; log and let pipeline filter guard drop it
-        console.warn('Data error: missing non-ULID locationID slug', it);
-        return null; // signal row skip to the caller
-      }
+      // ULID stays canonical in ID; locationID must be the short dataset slug for Dash/QR
+      const uid = String(it?.ID || it?.id || '').trim();                     // ULID only (canonical)
+      let alias = String(it?.slug || it?.alias || '').trim();                // short slug for UI/Dashboard
+      const apiLoc = String(it?.locationID || '').trim();                    // may be slug or ULID from API
+      if (apiLoc && !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(apiLoc) && !alias) alias = apiLoc; // accept non-ULID as slug
+      const locationID = alias;                                              // prefer short slug only
 
       const nm = String((it?.locationName?.en ?? it?.locationName ?? '')).trim();
       
