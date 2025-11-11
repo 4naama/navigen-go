@@ -1348,9 +1348,7 @@ async function initLpmImageSlider(modal, data) {
         // Sync DOM cache for next time; leave data.* untouched
         modal.setAttribute('data-locationid', target);
 
-        const dashUrl = new URL('https://navigen.io/dash/');
-        dashUrl.searchParams.set('slug', target);                 // dash.js prefers slug/alias
-        dashUrl.searchParams.set('locationID', target);           // keep for compatibility
+        const dashUrl = new URL(`https://navigen.io/dash/${encodeURIComponent(target)}`); // pretty path; edge normalizes to query form
         window.open(String(dashUrl), '_blank', 'noopener,noreferrer');
 
       }, { capture: true });
