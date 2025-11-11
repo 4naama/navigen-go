@@ -40,7 +40,7 @@ function rateHit(req){
 }
 
 export default {
-    async fetch(req, env, ctx) { // include ctx for background tasks
+  async fetch(req, env, ctx) { // include ctx so waitUntil works
     const url = new URL(req.url);
     
     // CORS for local dev; echo Origin + allow credentials (localhost + LAN)
@@ -115,33 +115,33 @@ export default {
     }
 
     // /s/{id}?c=... — shortlink for LPMs: redirect to /?lp=... and count scan (mobile UA only)
-    {
-      const p = url.pathname;
-      if (p.startsWith('/s/')) {
-        const [, , idRaw = ''] = p.split('/'); // ['', 's', '{id}']
-        const c = url.searchParams.get('c') || '';
-        const target = `/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
+  {
+    const p = url.pathname;
+    if (p.startsWith('/s/')) {
+      const [, , idRaw = ''] = p.split('/'); // ['', 's', '{id}']
+      const c = url.searchParams.get('c') || '';
+      const target = `/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
 
-        // Best-effort counting that can never block or crash
-        try {
-          const ua = req.headers.get('user-agent') || '';
-          const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-          const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+      // Best-effort counting that can never block or crash
+      try {
+        const ua = req.headers.get('user-agent') || '';
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+        const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
-          if (isMobile && ULID_RE.test(idRaw) && env && env.KV_STATS && ctx) {
-            const bump = async () => {
-              const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
-              const key = `m:${idRaw}:${day}:qr-scan`;
-              const cur = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
-              await env.KV_STATS.put(key, String(cur + 1));
-            };
-            ctx.waitUntil(bump().catch(() => {})); // never throw
-          }
-        } catch (_) { /* swallow all errors */ }
+        if (isMobile && ULID_RE.test(idRaw) && env && env.KV_STATS && ctx) {
+          const bump = async () => {
+            const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
+            const key = `m:${idRaw}:${day}:qr-scan`;
+            const cur = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
+            await env.KV_STATS.put(key, String(cur + 1));
+          };
+          ctx.waitUntil(bump().catch(() => {})); // never throw
+        }
+      } catch (_) { /* swallow all errors */ }
 
-        return Response.redirect(target, 302);
-      }
+      return Response.redirect(target, 302);
     }
+  }
 
     // PWA & modules: early pass-through for static assets and JS modules
 
@@ -192,23 +192,33 @@ export default {
     // duplicate /hit/* block removed — unified handler above handles all hit metrics
 
     // /out/qr-scan/:id?to=<url> — count a physical QR scan, then redirect to landing
-    const id = params.id; // whatever you currently name it
-    const to = url.searchParams.get('to') || '/';
-    const redirect = Response.redirect(to, 302);
+    {
+      const p = url.pathname;
+      if (p.startsWith('/out/')) {
+        const [, , metric, idOrSlug] = p.split('/'); // ['', 'out', ':metric', ':id']
+        if (metric !== 'qr-scan' || !idOrSlug) {
+          // keep behavior minimal; only qr-scan supported here
+          return new Response('Not Found', { status: 404 });
+        }
 
-    // best-effort background counter — never block the redirect
-    try {
-      if (env && env.KV_STATS && ctx) {
-        const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-        const day = new Date().toISOString().slice(0, 10);
-        const key = `m:${ULID_RE.test(id) ? id : id}:${day}:qr-scan`;
-        ctx.waitUntil((async () => {
-          const cur = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
-          await env.KV_STATS.put(key, String(cur + 1));
-        })().catch(() => {}));
+        // Resolve to canonical ULID (accept ULID or slug); same helper used elsewhere
+        const ulid = await canonicalId(env, idOrSlug);
+        if (!ulid) return new Response('Unknown location', { status: 404 });
+
+        // Increment daily bucket: m:<ULID>:YYYY-MM-DD:qr-scan (same KV_STATS used by /hit + /api/stats)
+        const date = new Date().toISOString().slice(0, 10);
+        const key  = `m:${ulid}:${date}:qr-scan`;
+        const cur  = parseInt((await env.KV_STATS.get(key)) || '0', 10);
+        await env.KV_STATS.put(key, String((isNaN(cur) ? 0 : cur) + 1));
+
+        // Redirect to landing (default /), allow only http(s) or same-origin paths
+        const target = url.searchParams.get('to') || '/';
+        const safe   = /^(?:https?:)?\/\//i.test(target) || target.startsWith('/');
+        const dest   = safe ? target : '/';
+
+        return Response.redirect(dest, 302);
       }
-    } catch {}
-    return redirect;
+    }
 
     // /api/track: deprecated — previously no redirect; handled missing/invalid target gracefully
     if (url.pathname === '/api/track') {
