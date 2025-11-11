@@ -910,19 +910,6 @@ async function initEmergencyBlock(countryOverride) {
   // ✅ Start of DOMContent
   // Wait until DOM is fully loaded before attaching handlers
   document.addEventListener('DOMContentLoaded', async () => {
-    // stop the directory app on /dash/* (keep clean URL; no redirects)
-    {
-      const parts = location.pathname.split('/').filter(Boolean);
-      const langPrefixed = /^[a-z]{2}$/i.test(parts[0] || '');
-      const i = langPrefixed ? 1 : 0;
-      if ((parts[i] || '').toLowerCase() === 'dash') {
-        // hand off: expose slug for the dashboard bundle via DOM attrs
-        const slug = decodeURIComponent(parts.slice(i + 1).join('/'));
-        document.documentElement.setAttribute('data-app', 'dashboard');        // clarifies ownership
-        document.documentElement.setAttribute('data-dash-slug', slug);         // e.g., europa-patika-rakoczi-ter-1666
-        return; // do not initialize the directory UI on /dash/*
-      }
-    }
     // 🧹 Clean up any leftover/ghost donation modal before anything runs
     document.getElementById("donation-modal")?.remove();
     

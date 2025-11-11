@@ -329,6 +329,15 @@ export default {
       return out;
     }
 
+    // clean dashboard path → internal /dash/?slug=…&locationID=…
+    if (/^\/dash\/[^/]+\/?$/.test(url.pathname)) {
+      const slug = decodeURIComponent(url.pathname.replace(/^\/dash\/|\/$/g, ''));
+      const internal = new URL(url, url.origin);
+      internal.pathname = '/dash/';
+      internal.search = `?slug=${encodeURIComponent(slug)}&locationID=${encodeURIComponent(slug)}`;
+      return env.ASSETS.fetch(new Request(internal.toString(), req)); // internal fetch, no redirect
+    }
+
     // ensure we have the static asset response before rewriting
     let res = await env.ASSETS.fetch(req);
     res = new Response(res.body, { status: res.status, headers: new Headers(res.headers) });
