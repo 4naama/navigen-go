@@ -269,26 +269,12 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // slug/alias fallback — prefer dataset slug; if missing, derive even when ULID exists (Accordion parity)
+    // dataset-only: use profiles.json slug exactly — no derivation, no fallbacks
     {
-      let alias = String(loc?.locationID || rawId).trim(); // try mapped slug first (profiles.json), else rawId
-      if (!alias) {
-        const media = (loc && typeof loc.media === 'object') ? loc.media : {};
-        const cover = String(media.cover || '').trim();
-        const fromCover = (() => {
-          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
-          return m ? m[1] : '';
-        })();
-        const nameSource = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim();
-        const fromName = nameSource
-          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-          .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-        alias = fromCover || fromName;
-      }
+      const alias = String(loc?.locationID || '').trim();
       if (alias) {
-        btn.setAttribute('data-alias', alias);
-        // keep search consistency with Accordion
-        btn.setAttribute('data-locationid', alias);
+        btn.setAttribute('data-alias', alias);       // used by UI/search
+        btn.setAttribute('data-locationid', alias);  // used by LPM/Stats
       }
     }
 
@@ -1310,22 +1296,24 @@ async function initEmergencyBlock(countryOverride) {
           const cc = String(rec["Coordinate Compound"] || rec.coord || "");
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
+          // open LPM with the dataset slug (authoritative); include alias for handlers
           showLocationProfileModal({
-            locationID: String(rec?.locationID || ''),       // short slug from profiles.json
-            id: String(rec?.locationID || ''),               // use the same short slug; exclude ULID
-            name: String((rec?.locationName?.en ?? rec?.locationName ?? '')).trim() || "Unnamed",
+            locationID: String(loc?.locationID || ''),        // slug for dashboard
+            id: (uid || String(loc?.locationID || '')),       // ULID for beacons; else same slug
+            alias: String(loc?.locationID || ''),             // mirror slug
+            displayName: locLabel, name: locLabel,            // display + legacy
             lat, lng,
             imageSrc: cover,
             images,
             media,
-            descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
-            tags: Array.isArray(rec?.tags) ? rec.tags : [],
-            contactInformation: rec.contactInformation || {},
-            links: rec.links || {},
-            ratings: rec.ratings || {},
-            pricing: rec.pricing || {}
+            descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
+            tags: _tags,
+            contactInformation: (loc && loc.contactInformation) || {},
+            links: (loc && loc.links) || {},
+            ratings: (loc && loc.ratings) || {},
+            pricing: (loc && loc.pricing) || {},
+            originEl: btn
           });
-        }
 
         // drop only ?lp; keep others
         q.delete('lp');
