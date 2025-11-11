@@ -1324,37 +1324,22 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — prefer alias/short; fall back to ULID if needed
+    // 📈 Stats (dashboard) — use the dataset slug exactly as provided (no ULID checks, no alias fallback)
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        const ULID    = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-        const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
-
-        const fromDom = String(modal.getAttribute('data-locationid') || '').trim();
-        const idA     = String(data?.id || '').trim();
-        const idB     = String(data?.locationID || '').trim();
-
-        // Always use the dataset slug (profiles.json → locationID) for Dashboard; no alias/short selection.
-        let target = String(data?.locationID || '').trim();
-        // if empty, reuse the modal’s cached slug or the alias; only then consider ULID replacement
-        if (!target) target = String(modal.getAttribute('data-locationid') || data?.alias || '').trim();
-        // prefer slug for Dashboard when a ULID-shaped value is detected
-        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(target)) {
-          target = String(data?.alias || modal.getAttribute('data-locationid') || '').trim();
-        }
+        const target = String(data?.locationID || '').trim(); // authoritative profiles.json slug
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
-        // Sync DOM cache for next time; leave data.* untouched
+        // keep a DOM cache for follow-up clicks
         modal.setAttribute('data-locationid', target);
 
         const dashUrl = new URL('https://navigen.io/dash/');
-        dashUrl.searchParams.set('slug', target);                 // dash.js prefers slug/alias
-        dashUrl.searchParams.set('locationID', target);           // keep for compatibility
+        dashUrl.searchParams.set('slug', target);
+        dashUrl.searchParams.set('locationID', target);
         window.open(String(dashUrl), '_blank', 'noopener,noreferrer');
-
       }, { capture: true });
     }
 
@@ -1529,30 +1514,17 @@ function makeLocationButton(loc) {
   const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
   btn.textContent = locLabel;
 
-  // dataset-only identifiers: no derivation — use profiles.json slug; ULID only if truly present
+  // dataset-only identifiers: use profiles.json slug as the single source of truth (no derivation)
+  // keep only a true ULID in data-id
   {
-    const raw = String(loc?.ID || loc?.id || '').trim();
-    const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? raw : '';
-
-    let slug = String(loc?.locationID || '').trim(); // may be empty or a ULID
-    if (!slug || /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(slug)) {
-      // Derive like Popular: prefer folder from cover, fallback to name-based slug
-      const media = (loc && typeof loc.media === 'object') ? loc.media : {};
-      const cover = String(media.cover || '').trim();
-      const fromCover = (() => {
-        const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
-        return m ? m[1] : '';
-      })();
-      const fromName = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-        .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-      slug = fromCover || fromName;
-    }
+    const rawUlid = String(loc?.ID || loc?.id || '').trim();
+    const uid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawUlid) ? rawUlid : '';
+    const slug = String(loc?.locationID || '').trim(); // authoritative slug from profiles.json
 
     if (uid) btn.setAttribute('data-id', uid);
     if (slug) {
-      btn.setAttribute('data-alias', slug);
-      btn.setAttribute('data-locationid', slug);
+      btn.setAttribute('data-alias', slug);       // keep existing comment: used by search/UI
+      btn.setAttribute('data-locationid', slug);  // used by handlers and Dashboard
     }
   }
 
@@ -1601,9 +1573,9 @@ function makeLocationButton(loc) {
       const uid = String(btn.getAttribute('data-id') || '').trim();
       const alias = String(btn.getAttribute('data-alias') || '').trim();
       showLocationProfileModal({
-        // LPM contract: use the derived alias when dataset locationID is missing (matches Accordion path)
-        locationID: String(alias || loc?.locationID || ''),  // ensure a slug reaches the modal
-        id: uid || alias,
+        // use the dataset slug exactly as provided by profiles.json
+        locationID: String(loc?.locationID || ''),
+        id: uid || String(loc?.locationID || ''), // ULID preferred for beacons; else fall back to the same slug
         name: btn.textContent,
         lat,
         lng,
@@ -1611,7 +1583,7 @@ function makeLocationButton(loc) {
         images,
         media,
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
-        tags: _tags,
+        tags: Array.isArray(loc?.tags) ? loc.tags : [],
         contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
                               : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
         links: (loc && typeof loc.links === 'object') ? loc.links : {},
