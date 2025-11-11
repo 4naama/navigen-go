@@ -910,6 +910,19 @@ async function initEmergencyBlock(countryOverride) {
   // ✅ Start of DOMContent
   // Wait until DOM is fully loaded before attaching handlers
   document.addEventListener('DOMContentLoaded', async () => {
+    // stop the directory app on /dash/* (keep clean URL; no redirects)
+    {
+      const parts = location.pathname.split('/').filter(Boolean);
+      const langPrefixed = /^[a-z]{2}$/i.test(parts[0] || '');
+      const i = langPrefixed ? 1 : 0;
+      if ((parts[i] || '').toLowerCase() === 'dash') {
+        // hand off: expose slug for the dashboard bundle via DOM attrs
+        const slug = decodeURIComponent(parts.slice(i + 1).join('/'));
+        document.documentElement.setAttribute('data-app', 'dashboard');        // clarifies ownership
+        document.documentElement.setAttribute('data-dash-slug', slug);         // e.g., europa-patika-rakoczi-ter-1666
+        return; // do not initialize the directory UI on /dash/*
+      }
+    }
     // 🧹 Clean up any leftover/ghost donation modal before anything runs
     document.getElementById("donation-modal")?.remove();
     
@@ -1122,22 +1135,16 @@ async function initEmergencyBlock(countryOverride) {
       document.body.scrollTop = 0;
     });
     
-    // ——— Path → pageKey → filter (no params); skip boot on /dash/* ———
+    // ——— Path → pageKey → filter (no params) ———
     const segs = location.pathname.split('/').filter(Boolean);
     if (/^[a-z]{2}$/i.test(segs[0] || '')) segs.shift(); // drop {lang}
-
-    // if this is a dashboard URL, do not initialize the directory app here
-    if ((segs[0] || '').toLowerCase() === 'dash') {
-      return; // let the dashboard bundle own /dash/* without redirecting or rewriting
-    }
-
     let ACTIVE_PAGE = null;
     if (segs.length >= 2) {
       const namespace = String(segs[0]).toLowerCase();
       const key = segs.slice(1).join('/').toLowerCase(); // keep slashes
       ACTIVE_PAGE = `${namespace}/${key}`;
     }
-
+    
     // demo: force structure-only coverage view (no data fetch)
     const DEMO_ALLSUBS = (segs.length === 1 && segs[0].toLowerCase() === 'allsubs');
     if (DEMO_ALLSUBS) {
