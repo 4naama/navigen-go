@@ -142,18 +142,6 @@ export default {
         return Response.redirect(target, 302);
       }
     }
-    
-    // /dash/<slug> — pretty URL → normalize to current query form without changing Dash internals
-    {
-      const m = url.pathname.match(/^\/dash\/([^\/?#]+)\/?$/);
-      if (m) {
-        const slug = m[1];
-        const q = new URLSearchParams(url.search);
-        if (!q.has('slug'))       q.set('slug', slug);        // dash.js prefers slug/alias
-        if (!q.has('locationID')) q.set('locationID', slug);  // keep for compatibility
-        return Response.redirect(`/dash/?${q.toString()}`, 301);
-      }
-    }
 
     // PWA & modules: early pass-through for static assets and JS modules
 
