@@ -1337,12 +1337,10 @@ async function initLpmImageSlider(modal, data) {
         const idA     = String(data?.id || '').trim();
         const idB     = String(data?.locationID || '').trim();
 
-        // Always use the dataset slug (profiles.json → locationID) for Dashboard; no alias/short selection.
-        let target = String(data?.locationID || '').trim();
-        // prefer slug for Dashboard when a ULID-shaped value is detected; fall back to modal DOM cache
-        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(target)) {
-          target = String(data?.alias || modal.getAttribute('data-locationid') || '').trim();
-        }
+        // Use a slug for Dashboard — read in this order and stop as soon as one is found
+        let target = String(
+          data?.locationID || data?.alias || modal.getAttribute('data-locationid') || ''
+        ).trim();
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
         // Sync DOM cache for next time; leave data.* untouched
@@ -1585,23 +1583,27 @@ function makeLocationButton(loc) {
     {
       const uid = String(btn.getAttribute('data-id') || '').trim();
       const alias = String(btn.getAttribute('data-alias') || '').trim();
-      showLocationProfileModal({
-        // use the dataset slug exactly as provided by profiles.json
-        locationID: String(loc?.locationID || ''),
-        id: uid || String(loc?.locationID || ''), // ULID preferred for beacons; else fall back to the same slug
-        name: btn.textContent,
-        lat,
-        lng,
-        imageSrc: cover,
-        images,
-        media,
-        descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
-        tags: Array.isArray(loc?.tags) ? loc.tags : [],
-        contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
-                              : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
-        links: (loc && typeof loc.links === 'object') ? loc.links : {},
-        originEl: btn
-      });
+      // use the button’s alias first (it’s stamped from profiles.json), then dataset slug
+      {
+        const alias = String(btn.getAttribute('data-alias') || '').trim();
+        showLocationProfileModal({
+          locationID: String(alias || loc?.locationID || ''),     // slug for dashboard
+          id: String(uid || alias || loc?.locationID || ''),      // ULID for beacons; else same slug
+          alias: String(alias || loc?.locationID || ''),          // mirror slug for handlers
+          name: btn.textContent,
+          lat,
+          lng,
+          imageSrc: cover,
+          images,
+          media,
+          descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
+          tags: Array.isArray(loc?.tags) ? loc.tags : [],
+          contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
+                                : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
+          links: (loc && typeof loc.links === 'object') ? loc.links : {},
+          originEl: btn
+        });
+      }
     }
   }); // ✅ close addEventListener('click', ...)
 
