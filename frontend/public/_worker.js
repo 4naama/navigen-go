@@ -172,6 +172,24 @@ export default {
       }
     }
 
+    // Single-segment resolver → canonical context + open LPM
+    {
+      const p = url.pathname;                                   // keep SPA routing intact for multi-segment paths
+      const single = p.replace(/^\/+|\/+$/g, '');
+      const isSingleSeg = single && !single.includes('/');
+
+      // Pilot scope: Helen Doron (Hungary) locations only — map '/<slug>' → '/language-schools/helen-doron/hungary/<slug>?lp=<slug>'
+      // This keeps blast radius tiny and guarantees the right environment + modal open.
+      if (isSingleSeg &&
+          !['api', 'assets', 'cdn-cgi', 'dash', 'manifest.webmanifest', 'sw.js', 'favicon.ico'].includes(single)) {
+        const target = new URL(url);
+        target.pathname = `/language-schools/helen-doron/hungary/${single}`;
+        // pass through lp so the SPA opens the specific LPM right away
+        target.searchParams.set('lp', single);
+        return Response.redirect(target.toString(), 302);
+      }
+    }
+
     // PWA & modules: early pass-through for static assets and JS modules
 
 
