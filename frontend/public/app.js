@@ -315,24 +315,37 @@ function renderPopularGroup(list = geoPoints) {
       // need at least one; Popular path now derives alias above when both are missing
       if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
 
-      // pass the dataset slug as the single source of truth (no ULID here)
+      // open LPM with dataset slug only (no derivation, no ULID preference)
       showLocationProfileModal({
-        locationID: String(loc?.locationID || ''),
-        id: String(loc?.locationID || ''), // keep id == slug so telemetry can resolve ULID server-side
-        alias: String(loc?.locationID || ''), // ensure alias is present for handlers
-        displayName: locLabel, name: locLabel, // display + legacy
-        lat, lng,
+        // identifiers
+        locationID: String(loc?.locationID || ''),  // authoritative slug from profiles.json
+        id: String(loc?.locationID || ''),          // keep id == slug for uniform telemetry
+        alias: String(loc?.locationID || ''),       // cached alias for handlers
+
+        // display
+        displayName: locLabel,                      // existing comment: shown in header
+        name: locLabel,                             // legacy consumers
+
+        // geo
+        lat: lat,
+        lng: lng,
+
+        // media
         imageSrc: cover,
-        images,
-        media,
+        images: images,
+        media: media,
+
+        // meta
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
-        tags: _tags,
-        contactInformation: (loc && loc.contactInformation) || {},
-        links: (loc && loc.links) || {},
-        ratings: (loc && loc.ratings) || {},
-        pricing: (loc && loc.pricing) || {},
+        tags: Array.isArray(_tags) ? _tags : [],
+        contactInformation: (loc && loc.contactInformation) ? loc.contactInformation : {},
+        links: (loc && loc.links) ? loc.links : {},
+        ratings: (loc && loc.ratings) ? loc.ratings : {},
+        pricing: (loc && loc.pricing) ? loc.pricing : {},
+
+        // origin
         originEl: btn
-      });
+      }); // <-- balanced ) and ; close the call
 
     subWrap.appendChild(btn);
   });
