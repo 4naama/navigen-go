@@ -246,12 +246,36 @@ export default {
     // /api/stats — minimal reader (ULID or slug; returns daily buckets the dash expects)
     if (url.pathname === '/api/stats') {
       const q = url.searchParams;
-      const idOrSlug = (q.get('locationID') || '').trim();
-      const from = (q.get('from') || '').trim(); // YYYY-MM-DD
-      const to   = (q.get('to')   || '').trim(); // YYYY-MM-DD
-      if (!idOrSlug || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-        return new Response('Bad Request', { status: 400 });
+
+      // 1) locationID: prefer query; else infer from Referer like /dash/<slug>
+      let idOrSlug = (q.get('locationID') || '').trim();
+      if (!idOrSlug) {
+        const ref = req.headers.get('referer') || '';
+        const m = ref.match(/\/dash\/([^/?#]+)/i);
+        if (m) idOrSlug = decodeURIComponent(m[1]);
       }
+
+      // 2) date range: prefer query; else default to last 14 days (inclusive)
+      const asYMD = (d) => {
+        const y = d.getUTCFullYear();
+        const m = String(d.getUTCMonth() + 1).padStart(2,'0');
+        const day = String(d.getUTCDate()).padStart(2,'0');
+        return `${y}-${m}-${day}`;
+      };
+      let from = (q.get('from') || '').trim();
+      let to   = (q.get('to')   || '').trim();
+      const ymd = /^\d{4}-\d{2}-\d{2}$/;
+      if (!ymd.test(from) || !ymd.test(to)) {
+        const today = new Date();                         // UTC today
+        const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 13));
+        from = asYMD(start);
+        to   = asYMD(today);
+      }
+
+      if (!idOrSlug) return new Response('Bad Request', { status: 400 });
+
+      const uid = await canonicalId(env, idOrSlug); // slug → ULID (or passthrough)
+      if (!uid) return new Response('Not Found', { status: 404 });
 
       const uid = await canonicalId(env, idOrSlug); // slug → ULID (or passthrough)
       if (!uid) return new Response('Not Found', { status: 404 });
