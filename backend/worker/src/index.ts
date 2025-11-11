@@ -247,16 +247,42 @@ export default {
         return json({ ok:true, wrote, skipped, total: aliases.length }, 200);
       }
 
-      // GET /api/stats?locationID=.
-
+      // GET /api/stats
+      // Accepts query params as before, but now tolerates clean paths:
+      // if locationID is missing, infer from Referer /dash/<slug>;
+      // if dates are missing, default to last 14 days (inclusive, UTC).
       if (url.pathname === "/api/stats" && req.method === "GET") {
-        const locRaw = (url.searchParams.get("locationID")||"").trim(); // accept alias or ULID
-        const loc    = (await resolveUid(locRaw, env)) || locRaw; // prefer canonical ULID for reads
-        const from = (url.searchParams.get("from")||"").trim();
-        const to   = (url.searchParams.get("to")  ||"").trim();
-        const tz   = (url.searchParams.get("tz")  ||"").trim() || undefined;
-        if (!loc || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-          return json({ error:{code:"invalid_request", message:"locationID, from, to required (YYYY-MM-DD)"} }, 400);
+        const qp = url.searchParams;
+
+        // 1) Infer locationID from query OR Referer (/dash/<slug>)
+        let idRaw = (qp.get("locationID") || "").trim();
+        if (!idRaw) {
+          const ref = req.headers.get("Referer") || "";
+          const m = ref.match(/\/dash\/([^/?#]+)/i);
+          if (m) idRaw = decodeURIComponent(m[1]);
+        }
+        const loc = idRaw ? ((await resolveUid(idRaw, env)) || idRaw) : "";
+
+        // 2) Dates: query or default to last 14 days
+        const ymd = (d: Date) => {
+          const y = d.getUTCFullYear();
+          const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+          const dd = String(d.getUTCDate()).padStart(2, "0");
+          return `${y}-${m}-${dd}`;
+        };
+        let from = (qp.get("from") || "").trim();
+        let to   = (qp.get("to")   || "").trim();
+        const re = /^\d{4}-\d{2}-\d{2}$/;
+        if (!re.test(from) || !re.test(to)) {
+          const today = new Date();
+          const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 13));
+          from = ymd(start);
+          to   = ymd(today);
+        }
+
+        const tz   = (qp.get("tz") || "").trim() || undefined;
+        if (!loc) {
+          return json({ error: { code: "invalid_request", message: "locationID required" } }, 400);
         }
 
         // list all keys for this location; keys look like stats:<loc>:YYYY-MM-DD:<event>
