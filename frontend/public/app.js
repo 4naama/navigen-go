@@ -1179,33 +1179,8 @@ async function initEmergencyBlock(countryOverride) {
           } catch { /* non-fatal; fall back to original 404 result */ }
         }
       } else {
-        // Fallback: if user deep-linked as /<slug> or ?lp=<id>, try a no-context list so LPM can resolve
-        const q = new URLSearchParams(location.search);
-        const lpParam = (q.get('lp') || '').trim();
-        const seg = location.pathname.replace(/^\/+|\/+$/g, '');
-        const singleSeg = (seg && !seg.includes('/')) ? seg : '';
-        const wantsLp = lpParam || singleSeg;
-
-        if (wantsLp) {
-          try {
-            // no context → ask API for a small, cross-context list
-            const url = new URL(`/api/data/list?limit=${API_LIMIT}`, API_BASE);
-            listRes = await fetch(url, { credentials: 'omit', cache: 'no-store' });
-            // retry once with trailing slash (some bundles require it)
-            if (listRes && listRes.status === 404) {
-              const alt = new URL(url.toString());
-              if (!alt.pathname.endsWith('/')) alt.pathname += '/';
-              const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store' }).catch(() => null);
-              if (r2 && r2.ok) listRes = r2;
-            }
-          } catch {
-            listRes = { ok: false, json: async () => ({ items: [] }) };
-          }
-        } else {
-          listRes = { ok: true, json: async () => ({ items: [] }) };
-        }
+        listRes = { ok: true, json: async () => ({ items: [] }) };
       }
-
     } catch (err) {
       console.warn('list API failed', err);
       showToast('Data API unavailable. Showing cached items.');
@@ -1319,34 +1294,13 @@ async function initEmergencyBlock(countryOverride) {
     // normalize groups now that geoPoints is ready
     normalizeGroupKeys(geoPoints);
 
-    // Open LPM on ?lp=<id> or /<slug> (accept slug; tolerate ULID if present in data)
+    // Open LPM on ?lp=<id> (post-mapping, single source of truth)
     {
       const q = new URLSearchParams(location.search);
-      const lpQuery = (q.get('lp') || '').trim();
+      const uid = (q.get('lp') || '').trim();
 
-      // Treat a single-segment path '/<slug>' as if '?lp=<slug>' (keeps same behavior elsewhere)
-      const pathSeg = location.pathname.replace(/^\/+|\/+$/g, '');
-      const lpPath = (pathSeg && !pathSeg.includes('/')) ? pathSeg : '';
-
-      // Prefer explicit query param, otherwise path segment
-      const lp = (lpQuery || lpPath);
-
-      if (lp && Array.isArray(geoPoints) && geoPoints.length) {
-        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-        const norm = (s) => String(s || '').trim().toLowerCase();
-
-        // 1) Prefer match by slug (your geoPoints[*].locationID is a slug)
-        let rec = geoPoints.find(x => norm(x?.locationID) === norm(lp));
-
-        // 2) If not found and looks like a ULID, try common ULID fields too
-        if (!rec && ULID.test(lp)) {
-          rec = geoPoints.find(x =>
-            norm(x?.id)   === norm(lp) ||
-            norm(x?.ID)   === norm(lp) ||
-            norm(x?.ulid) === norm(lp)
-          );
-        }
-
+      if (uid && Array.isArray(geoPoints) && geoPoints.length) {
+        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.locationID) === uid) : null); // ULID-only
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs

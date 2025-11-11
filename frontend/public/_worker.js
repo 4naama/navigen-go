@@ -143,35 +143,6 @@ export default {
       }
     }
 
-    // /s/{id}?c=... — shortlink for LPMs: redirect to /?lp=... and count scan (mobile UA only)
-    {
-      const p = url.pathname;
-      if (p.startsWith('/s/')) {
-        const [, , idRaw = ''] = p.split('/'); // ['', 's', '{id}']
-        const c = url.searchParams.get('c') || '';
-        const target = `/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
-
-        // Best-effort counting that can never block or crash
-        try {
-          const ua = req.headers.get('user-agent') || '';
-          const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-          const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-
-          if (isMobile && ULID_RE.test(idRaw) && env && env.KV_STATS && ctx) {
-            const bump = async () => {
-              const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
-              const key = `m:${idRaw}:${day}:qr-scan`;
-              const cur = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
-              await env.KV_STATS.put(key, String(cur + 1));
-            };
-            ctx.waitUntil(bump().catch(() => {})); // never throw
-          }
-        } catch (_) { /* swallow all errors */ }
-
-        return Response.redirect(target, 302);
-      }
-    }
-
     // PWA & modules: early pass-through for static assets and JS modules
 
     // keeps .js/.mjs and /scripts/* from being rewritten to HTML
@@ -484,28 +455,11 @@ async function handleList(req, env, url, extraHdr){
   const ctxParam = (q.get('context')||'').trim();
   const limit = Math.min(Math.max(Number(q.get('limit')||20),1),99); // cap 99 per page to allow larger batches
   const MAX_PAGES = 5; // ≤~100 items total
-    // No explicit context: return a small global list so single-segment deep links can resolve.
-    // Keeps payload tiny; lets the SPA match ?lp=/path <slug> or ULID and open the modal.
-    if (!ctxParam) {
-      // Load the canonical dataset (read-only); tolerate errors → empty.
-      const r = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
-      let profiles; try { profiles = r.ok ? await r.json() : { locations: [] }; } catch { profiles = { locations: [] }; }
-
-      // Slice a conservative batch (≤ limit) and include only visible records when possible.
-      const rowsAll = Array.isArray(profiles?.locations) ? profiles.locations : [];
-      const rows = rowsAll
-        .filter(p => String(p?.Visible ?? p?.visible ?? 'Yes').toLowerCase() === 'yes')
-        .slice(0, limit);
-
-      // Respond exactly like the contextual list does (shape: {items, nextCursor, totalApprox})
-      const h = new Headers({ 'content-type': 'application/json' });
-      if (extraHdr) extraHdr.forEach((v,k)=>h.set(k, v));
-      return new Response(JSON.stringify({
-        items: rows,                 // raw records; the SPA already normalizes to geoPoints
-        nextCursor: null,
-        totalApprox: Math.min(rowsAll.length, limit)
-      }), { status: 200, headers: h });
-    }
+  if (!ctxParam) {
+    const h = new Headers({ 'content-type':'application/json' });
+    if (extraHdr) extraHdr.forEach((v,k)=>h.set(k, v));
+    return new Response(JSON.stringify({ items:[], nextCursor:null, totalApprox:0 }), { status:200, headers:h });
+  }
 
   // Load canonical dataset (read-only); return empty list if not found
   const resp = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
