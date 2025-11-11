@@ -269,14 +269,28 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // publish dataset slug for non-ULID actions (no derivation — dataset is authoritative)
-    (function () {
-      const datasetSlug = String(loc?.locationID || '').trim();
-      if (datasetSlug) {
-        btn.setAttribute('data-alias', datasetSlug);       // used by UI/search
-        btn.setAttribute('data-locationid', datasetSlug);  // used by LPM/Stats
+    // slug/alias fallback — prefer dataset slug; if missing, derive even when ULID exists (Accordion parity)
+    {
+      let alias = String(loc?.locationID || rawId).trim(); // try mapped slug first (profiles.json), else rawId
+      if (!alias) {
+        const media = (loc && typeof loc.media === 'object') ? loc.media : {};
+        const cover = String(media.cover || '').trim();
+        const fromCover = (() => {
+          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
+          return m ? m[1] : '';
+        })();
+        const nameSource = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim();
+        const fromName = nameSource
+          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+          .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+        alias = fromCover || fromName;
       }
-    })(); // IIFE keeps scope local; no globals
+      if (alias) {
+        btn.setAttribute('data-alias', alias);
+        // keep search consistency with Accordion
+        btn.setAttribute('data-locationid', alias);
+      }
+    }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
@@ -317,37 +331,22 @@ function renderPopularGroup(list = geoPoints) {
       // need at least one; Popular path now derives alias above when both are missing
       if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
 
-      // open LPM with dataset slug only (no derivation, no ULID preference)
       showLocationProfileModal({
-        // identifiers
-        locationID: String(loc?.locationID || ''),  // authoritative slug from profiles.json
-        id: String(loc?.locationID || ''),          // keep id == slug for uniform telemetry
-        alias: String(loc?.locationID || ''),       // cached alias for handlers
-
-        // display
-        displayName: locLabel,                      // existing comment: shown in header
-        name: locLabel,                             // legacy consumers
-
-        // geo
-        lat: lat,
-        lng: lng,
-
-        // media
+        locationID: String(loc?.locationID || ''), id: uid || alias,     // short slug from profiles.json
+        displayName: locLabel, name: locLabel, // display + legacy
+        lat, lng,
         imageSrc: cover,
-        images: images,
-        media: media,
-
-        // meta
+        images,
+        media,
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
-        tags: Array.isArray(_tags) ? _tags : [],
-        contactInformation: (loc && loc.contactInformation) ? loc.contactInformation : {},
-        links: (loc && loc.links) ? loc.links : {},
-        ratings: (loc && loc.ratings) ? loc.ratings : {},
-        pricing: (loc && loc.pricing) ? loc.pricing : {},
-
-        // origin
+        tags: _tags,
+        contactInformation: (loc && loc.contactInformation) || {},
+        links: (loc && loc.links) || {},
+        ratings: (loc && loc.ratings) || {},
+        pricing: (loc && loc.pricing) || {},
         originEl: btn
-      }); // <-- balanced ) and ; close the call
+      });
+    });
 
     subWrap.appendChild(btn);
   });

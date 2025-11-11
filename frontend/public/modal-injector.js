@@ -1324,21 +1324,35 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — use the dataset slug directly (no ULID checks, no derivation)
+    // 📈 Stats (dashboard) — prefer alias/short; fall back to ULID if needed
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        const target = String(data?.locationID || data?.alias || '').trim();
+        const ULID    = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
+
+        const fromDom = String(modal.getAttribute('data-locationid') || '').trim();
+        const idA     = String(data?.id || '').trim();
+        const idB     = String(data?.locationID || '').trim();
+
+        // Always use the dataset slug (profiles.json → locationID) for Dashboard; no alias/short selection.
+        let target = String(data?.locationID || '').trim();
+        // prefer slug for Dashboard when a ULID-shaped value is detected; fall back to modal DOM cache
+        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(target)) {
+          target = String(data?.alias || modal.getAttribute('data-locationid') || '').trim();
+        }
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
-        modal.setAttribute('data-locationid', target); // cache for consistency
+        // Sync DOM cache for next time; leave data.* untouched
+        modal.setAttribute('data-locationid', target);
 
         const dashUrl = new URL('https://navigen.io/dash/');
-        dashUrl.searchParams.set('slug', target);
-        dashUrl.searchParams.set('locationID', target);
+        dashUrl.searchParams.set('slug', target);                 // dash.js prefers slug/alias
+        dashUrl.searchParams.set('locationID', target);           // keep for compatibility
         window.open(String(dashUrl), '_blank', 'noopener,noreferrer');
+
       }, { capture: true });
     }
 
