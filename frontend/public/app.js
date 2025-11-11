@@ -269,12 +269,14 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // publish dataset slug for all non-ULID actions (no derivation — dataset is authoritative)
-    const datasetSlug = String(loc?.locationID || '').trim();
-    if (datasetSlug) {
-      btn.setAttribute('data-alias', datasetSlug);      // used by UI/search
-      btn.setAttribute('data-locationid', datasetSlug); // used by LPM/Stats
-    }
+    // publish dataset slug for non-ULID actions (no derivation — dataset is authoritative)
+    (function () {
+      const datasetSlug = String(loc?.locationID || '').trim();
+      if (datasetSlug) {
+        btn.setAttribute('data-alias', datasetSlug);       // used by UI/search
+        btn.setAttribute('data-locationid', datasetSlug);  // used by LPM/Stats
+      }
+    })(); // IIFE keeps scope local; no globals
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
     btn.setAttribute('data-name', locLabel); // use visible label; keep search consistent
