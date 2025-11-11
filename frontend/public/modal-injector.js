@@ -1324,17 +1324,16 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — use the dataset slug exactly as provided (no ULID checks, no alias fallback)
+    // 📈 Stats (dashboard) — use the dataset slug directly (no ULID checks, no derivation)
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        const target = String(data?.locationID || '').trim(); // authoritative profiles.json slug
+        const target = String(data?.locationID || data?.alias || '').trim();
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
-        // keep a DOM cache for follow-up clicks
-        modal.setAttribute('data-locationid', target);
+        modal.setAttribute('data-locationid', target); // cache for consistency
 
         const dashUrl = new URL('https://navigen.io/dash/');
         dashUrl.searchParams.set('slug', target);

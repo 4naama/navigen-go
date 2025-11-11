@@ -269,27 +269,11 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // slug/alias fallback — prefer dataset slug; if missing, derive even when ULID exists (Accordion parity)
-    {
-      let alias = String(loc?.locationID || rawId).trim(); // try mapped slug first (profiles.json), else rawId
-      if (!alias) {
-        const media = (loc && typeof loc.media === 'object') ? loc.media : {};
-        const cover = String(media.cover || '').trim();
-        const fromCover = (() => {
-          const m = cover.match(/\/location-profile-images\/([^/]+)\//i);
-          return m ? m[1] : '';
-        })();
-        const nameSource = String((loc?.locationName?.en ?? loc?.locationName ?? '')).trim();
-        const fromName = nameSource
-          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-          .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
-        alias = fromCover || fromName;
-      }
-      if (alias) {
-        btn.setAttribute('data-alias', alias);
-        // keep search consistency with Accordion
-        btn.setAttribute('data-locationid', alias);
-      }
+    // publish dataset slug for all non-ULID actions (no derivation — dataset is authoritative)
+    const datasetSlug = String(loc?.locationID || '').trim();
+    if (datasetSlug) {
+      btn.setAttribute('data-alias', datasetSlug);      // used by UI/search
+      btn.setAttribute('data-locationid', datasetSlug); // used by LPM/Stats
     }
 
     const _tags = Array.isArray(loc?.tags) ? loc.tags : [];
@@ -331,8 +315,11 @@ function renderPopularGroup(list = geoPoints) {
       // need at least one; Popular path now derives alias above when both are missing
       if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
 
+      // pass the dataset slug as the single source of truth (no ULID here)
       showLocationProfileModal({
-        locationID: String(loc?.locationID || ''), id: uid || alias,     // short slug from profiles.json
+        locationID: String(loc?.locationID || ''),
+        id: String(loc?.locationID || ''), // keep id == slug so telemetry can resolve ULID server-side
+        alias: String(loc?.locationID || ''), // ensure alias is present for handlers
         displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
@@ -346,7 +333,6 @@ function renderPopularGroup(list = geoPoints) {
         pricing: (loc && loc.pricing) || {},
         originEl: btn
       });
-    });
 
     subWrap.appendChild(btn);
   });
