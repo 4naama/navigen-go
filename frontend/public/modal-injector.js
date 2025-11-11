@@ -1339,7 +1339,9 @@ async function initLpmImageSlider(modal, data) {
 
         // Always use the dataset slug (profiles.json → locationID) for Dashboard; no alias/short selection.
         let target = String(data?.locationID || '').trim();
-        // prefer slug for Dashboard when a ULID-shaped value is detected; fall back to modal DOM cache
+        // if empty, reuse the modal’s cached slug or the alias; only then consider ULID replacement
+        if (!target) target = String(modal.getAttribute('data-locationid') || data?.alias || '').trim();
+        // prefer slug for Dashboard when a ULID-shaped value is detected
         if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(target)) {
           target = String(data?.alias || modal.getAttribute('data-locationid') || '').trim();
         }
@@ -1599,9 +1601,9 @@ function makeLocationButton(loc) {
       const uid = String(btn.getAttribute('data-id') || '').trim();
       const alias = String(btn.getAttribute('data-alias') || '').trim();
       showLocationProfileModal({
-        // LPM contract: short slug for actions; keep ULID canonical via `id` (comment clarified)
-        locationID: String(alias || loc?.locationID || ''),  // short slug from profiles.json / data-alias
-        id: uid || alias,                                    // ULID preferred; else the same short slug
+        // LPM contract: use the derived alias when dataset locationID is missing (matches Accordion path)
+        locationID: String(alias || loc?.locationID || ''),  // ensure a slug reaches the modal
+        id: uid || alias,
         name: btn.textContent,
         lat,
         lng,
@@ -1609,7 +1611,7 @@ function makeLocationButton(loc) {
         images,
         media,
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
-        tags: Array.isArray(loc?.tags) ? loc.tags : [],
+        tags: _tags,
         contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
                               : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
         links: (loc && typeof loc.links === 'object') ? loc.links : {},
