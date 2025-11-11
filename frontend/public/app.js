@@ -1294,13 +1294,26 @@ async function initEmergencyBlock(countryOverride) {
     // normalize groups now that geoPoints is ready
     normalizeGroupKeys(geoPoints);
 
-    // Open LPM on ?lp=<id> (post-mapping, single source of truth)
+    // Open LPM on ?lp=<id> (accept slug; tolerate ULID if present in data)
     {
       const q = new URLSearchParams(location.search);
-      const uid = (q.get('lp') || '').trim();
+      const lp = (q.get('lp') || '').trim();
 
-      if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i; const rec = (ULID.test(uid) ? geoPoints.find(x => String(x?.locationID) === uid) : null); // ULID-only
+      if (lp && Array.isArray(geoPoints) && geoPoints.length) {
+        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+
+        // 1) Prefer match by slug (your locationID in geoPoints is a slug)
+        let rec = geoPoints.find(x => String(x?.locationID || '').trim() === lp);
+
+        // 2) If not found and looks like a ULID, try common ULID fields too
+        if (!rec && ULID.test(lp)) {
+          rec = geoPoints.find(x =>
+            String(x?.id || '').trim() === lp ||
+            String(x?.ID || '').trim() === lp ||
+            String(x?.ulid || '').trim() === lp
+          );
+        }
+
         if (rec) {
           const media   = rec.media || {};
           // pass through full objects so modal can use metadata; it normalizes to URLs
