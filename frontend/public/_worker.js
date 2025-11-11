@@ -172,26 +172,7 @@ export default {
       }
     }
 
-    // Single-segment resolver → canonical context + open LPM
-    {
-      const p = url.pathname;                                   // keep SPA routing intact for multi-segment paths
-      const single = p.replace(/^\/+|\/+$/g, '');
-      const isSingleSeg = single && !single.includes('/');
-
-      // Pilot scope: Helen Doron (Hungary) locations only — map '/<slug>' → '/language-schools/helen-doron/hungary/<slug>?lp=<slug>'
-      // This keeps blast radius tiny and guarantees the right environment + modal open.
-      if (isSingleSeg &&
-          !['api', 'assets', 'cdn-cgi', 'dash', 'manifest.webmanifest', 'sw.js', 'favicon.ico'].includes(single)) {
-        const target = new URL(url);
-        target.pathname = `/language-schools/helen-doron/hungary/${single}`;
-        // pass through lp so the SPA opens the specific LPM right away
-        target.searchParams.set('lp', single);
-        return Response.redirect(target.toString(), 302);
-      }
-    }
-
     // PWA & modules: early pass-through for static assets and JS modules
-
 
     // keeps .js/.mjs and /scripts/* from being rewritten to HTML
     if (
@@ -503,11 +484,28 @@ async function handleList(req, env, url, extraHdr){
   const ctxParam = (q.get('context')||'').trim();
   const limit = Math.min(Math.max(Number(q.get('limit')||20),1),99); // cap 99 per page to allow larger batches
   const MAX_PAGES = 5; // ≤~100 items total
-  if (!ctxParam) {
-    const h = new Headers({ 'content-type':'application/json' });
-    if (extraHdr) extraHdr.forEach((v,k)=>h.set(k, v));
-    return new Response(JSON.stringify({ items:[], nextCursor:null, totalApprox:0 }), { status:200, headers:h });
-  }
+    // No explicit context: return a small global list so single-segment deep links can resolve.
+    // Keeps payload tiny; lets the SPA match ?lp=/path <slug> or ULID and open the modal.
+    if (!ctxParam) {
+      // Load the canonical dataset (read-only); tolerate errors → empty.
+      const r = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
+      let profiles; try { profiles = r.ok ? await r.json() : { locations: [] }; } catch { profiles = { locations: [] }; }
+
+      // Slice a conservative batch (≤ limit) and include only visible records when possible.
+      const rowsAll = Array.isArray(profiles?.locations) ? profiles.locations : [];
+      const rows = rowsAll
+        .filter(p => String(p?.Visible ?? p?.visible ?? 'Yes').toLowerCase() === 'yes')
+        .slice(0, limit);
+
+      // Respond exactly like the contextual list does (shape: {items, nextCursor, totalApprox})
+      const h = new Headers({ 'content-type': 'application/json' });
+      if (extraHdr) extraHdr.forEach((v,k)=>h.set(k, v));
+      return new Response(JSON.stringify({
+        items: rows,                 // raw records; the SPA already normalizes to geoPoints
+        nextCursor: null,
+        totalApprox: Math.min(rowsAll.length, limit)
+      }), { status: 200, headers: h });
+    }
 
   // Load canonical dataset (read-only); return empty list if not found
   const resp = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url), { headers: req.headers }));
