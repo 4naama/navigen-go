@@ -1122,16 +1122,22 @@ async function initEmergencyBlock(countryOverride) {
       document.body.scrollTop = 0;
     });
     
-    // ——— Path → pageKey → filter (no params) ———
+    // ——— Path → pageKey → filter (no params); skip boot on /dash/* ———
     const segs = location.pathname.split('/').filter(Boolean);
     if (/^[a-z]{2}$/i.test(segs[0] || '')) segs.shift(); // drop {lang}
+
+    // if this is a dashboard URL, do not initialize the directory app here
+    if ((segs[0] || '').toLowerCase() === 'dash') {
+      return; // let the dashboard bundle own /dash/* without redirecting or rewriting
+    }
+
     let ACTIVE_PAGE = null;
     if (segs.length >= 2) {
       const namespace = String(segs[0]).toLowerCase();
       const key = segs.slice(1).join('/').toLowerCase(); // keep slashes
       ACTIVE_PAGE = `${namespace}/${key}`;
     }
-    
+
     // demo: force structure-only coverage view (no data fetch)
     const DEMO_ALLSUBS = (segs.length === 1 && segs[0].toLowerCase() === 'allsubs');
     if (DEMO_ALLSUBS) {
