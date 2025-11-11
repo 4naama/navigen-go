@@ -1179,8 +1179,33 @@ async function initEmergencyBlock(countryOverride) {
           } catch { /* non-fatal; fall back to original 404 result */ }
         }
       } else {
-        listRes = { ok: true, json: async () => ({ items: [] }) };
+        // Fallback: if user deep-linked as /<slug> or ?lp=<id>, try a no-context list so LPM can resolve
+        const q = new URLSearchParams(location.search);
+        const lpParam = (q.get('lp') || '').trim();
+        const seg = location.pathname.replace(/^\/+|\/+$/g, '');
+        const singleSeg = (seg && !seg.includes('/')) ? seg : '';
+        const wantsLp = lpParam || singleSeg;
+
+        if (wantsLp) {
+          try {
+            // no context → ask API for a small, cross-context list
+            const url = new URL(`/api/data/list?limit=${API_LIMIT}`, API_BASE);
+            listRes = await fetch(url, { credentials: 'omit', cache: 'no-store' });
+            // retry once with trailing slash (some bundles require it)
+            if (listRes && listRes.status === 404) {
+              const alt = new URL(url.toString());
+              if (!alt.pathname.endsWith('/')) alt.pathname += '/';
+              const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store' }).catch(() => null);
+              if (r2 && r2.ok) listRes = r2;
+            }
+          } catch {
+            listRes = { ok: false, json: async () => ({ items: [] }) };
+          }
+        } else {
+          listRes = { ok: true, json: async () => ({ items: [] }) };
+        }
       }
+
     } catch (err) {
       console.warn('list API failed', err);
       showToast('Data API unavailable. Showing cached items.');
