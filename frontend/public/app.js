@@ -1294,23 +1294,31 @@ async function initEmergencyBlock(countryOverride) {
     // normalize groups now that geoPoints is ready
     normalizeGroupKeys(geoPoints);
 
-    // Open LPM on ?lp=<id> (accept slug; tolerate ULID if present in data)
+    // Open LPM on ?lp=<id> or /<slug> (accept slug; tolerate ULID if present in data)
     {
       const q = new URLSearchParams(location.search);
-      const lp = (q.get('lp') || '').trim();
+      const lpQuery = (q.get('lp') || '').trim();
+
+      // Treat a single-segment path '/<slug>' as if '?lp=<slug>' (keeps same behavior elsewhere)
+      const pathSeg = location.pathname.replace(/^\/+|\/+$/g, '');
+      const lpPath = (pathSeg && !pathSeg.includes('/')) ? pathSeg : '';
+
+      // Prefer explicit query param, otherwise path segment
+      const lp = (lpQuery || lpPath);
 
       if (lp && Array.isArray(geoPoints) && geoPoints.length) {
         const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        const norm = (s) => String(s || '').trim().toLowerCase();
 
-        // 1) Prefer match by slug (your locationID in geoPoints is a slug)
-        let rec = geoPoints.find(x => String(x?.locationID || '').trim() === lp);
+        // 1) Prefer match by slug (your geoPoints[*].locationID is a slug)
+        let rec = geoPoints.find(x => norm(x?.locationID) === norm(lp));
 
         // 2) If not found and looks like a ULID, try common ULID fields too
         if (!rec && ULID.test(lp)) {
           rec = geoPoints.find(x =>
-            String(x?.id || '').trim() === lp ||
-            String(x?.ID || '').trim() === lp ||
-            String(x?.ulid || '').trim() === lp
+            norm(x?.id)   === norm(lp) ||
+            norm(x?.ID)   === norm(lp) ||
+            norm(x?.ulid) === norm(lp)
           );
         }
 
