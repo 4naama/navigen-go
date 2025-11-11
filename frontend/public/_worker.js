@@ -143,7 +143,37 @@ export default {
       }
     }
 
+    // /s/{id}?c=... — shortlink for LPMs: redirect to /?lp=... and count scan (mobile UA only)
+    {
+      const p = url.pathname;
+      if (p.startsWith('/s/')) {
+        const [, , idRaw = ''] = p.split('/'); // ['', 's', '{id}']
+        const c = url.searchParams.get('c') || '';
+        const target = `/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
+
+        // Best-effort counting that can never block or crash
+        try {
+          const ua = req.headers.get('user-agent') || '';
+          const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+          const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+
+          if (isMobile && ULID_RE.test(idRaw) && env && env.KV_STATS && ctx) {
+            const bump = async () => {
+              const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
+              const key = `m:${idRaw}:${day}:qr-scan`;
+              const cur = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
+              await env.KV_STATS.put(key, String(cur + 1));
+            };
+            ctx.waitUntil(bump().catch(() => {})); // never throw
+          }
+        } catch (_) { /* swallow all errors */ }
+
+        return Response.redirect(target, 302);
+      }
+    }
+
     // PWA & modules: early pass-through for static assets and JS modules
+
 
     // keeps .js/.mjs and /scripts/* from being rewritten to HTML
     if (
