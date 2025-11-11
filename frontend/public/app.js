@@ -1314,6 +1314,7 @@ async function initEmergencyBlock(countryOverride) {
             pricing: (loc && loc.pricing) || {},
             originEl: btn
           });
+        }
 
         // drop only ?lp; keep others
         q.delete('lp');
