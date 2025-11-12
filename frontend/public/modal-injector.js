@@ -1347,7 +1347,9 @@ async function initLpmImageSlider(modal, data) {
         const fromAli = String(data?.alias || '').trim();
 
         // Gate: first non-empty slug wins (no ULID shape checks)
-        let target = (fromPay || fromAli || fromDom).trim();
+        const rawULID = String(data?.id || '').trim();
+        let target = (fromPay || fromAli || fromDom || rawULID).trim(); // prefer slug; fallback to ULID
+
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
         // Sync DOM cache for next time; leave data.* untouched
