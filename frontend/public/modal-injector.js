@@ -345,8 +345,8 @@ export async function showLocationProfileModal(data) {
   document.body.appendChild(modal);
   // Keep data.* intact; only cache the dataset slug for click handlers (no alias/short selection).
   {
-    const chosen = String(data?.locationID || '').trim();
-    if (chosen) modal.setAttribute('data-locationid', chosen); // DOM-only cache; do not mutate data.*
+    const chosen = String(data?.locationID || data?.id || '').trim(); // prefer slug; fallback to ULID
+    if (chosen) modal.setAttribute('data-locationid', chosen);
   }
 
   // Prefetch cover fast; avoid placeholder first paint
