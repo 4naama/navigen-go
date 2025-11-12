@@ -1354,13 +1354,13 @@ async function initLpmImageSlider(modal, data) {
         // Sync DOM cache for next time; leave data.* untouched
         modal.setAttribute('data-locationid', target);
 
-        // Canonicalize client URL: ?locationID=<id> → /dash/<id> (ULID or slug; Worker will 302 slug→ULID in prod)
-        (() => {
-          const u = new URL(location.href);
-          const raw = (u.searchParams.get('locationID') || '').trim();
-          if (raw && (u.pathname === '/dash' || u.pathname === '/dash/')) {
-            history.replaceState({}, document.title, `/dash/${encodeURIComponent(raw)}${location.hash || ''}`);
-          }
+        // Open canonical Dashboard URL: prefer ULID path; else slug (server will 302 slug→ULID)
+        (async () => {
+          const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+          const uid = ULID_RE.test(rawULID) ? rawULID : await resolveULIDFor(target);
+          const seg = ULID_RE.test(uid) ? uid : target; // ULID wins; fallback to human slug
+          const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
+          window.open(href, '_blank', 'noopener,noreferrer');
         })();
       }, { capture: true });
     }
