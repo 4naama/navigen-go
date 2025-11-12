@@ -1341,11 +1341,7 @@ async function initLpmImageSlider(modal, data) {
         const ULID    = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
         const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
 
-        const fromDom = String(modal.getAttribute('data-locationid') || '').trim();
-        const idA     = String(data?.id || '').trim();
-        const idB     = String(data?.locationID || '').trim();
-
-        // Always use a slug for Dashboard; check payload first, then alias, then the modal’s DOM cache
+        // ← keep only this declaration
         const fromDom = String(modal.getAttribute('data-locationid') || '').trim();
         const fromPay = String(data?.locationID || '').trim();
         const fromAli = String(data?.alias || '').trim();
