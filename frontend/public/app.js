@@ -1329,6 +1329,8 @@ async function initEmergencyBlock(countryOverride) {
             originEl: null
           });
         }
+      }
+
       } else if (uid) {
         // Fallback: fetch by ULID when the list for this context wasn’t loaded
         try {
@@ -1376,55 +1378,55 @@ async function initEmergencyBlock(countryOverride) {
         } catch (e) {
           console.warn('QR fallback fetch failed', e);
         }
-        } else if (uid) {
-          // Fallback: fetch by ULID when the list for this context wasn’t loaded
-          try {
-            const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
-            if (ULID.test(uid)) {
-              const res = await fetch(`${API_BASE}/api/data/item?id=${encodeURIComponent(uid)}`, { cache:'no-store', credentials:'omit' });
-              if (res.ok) {
-                const it = await res.json();
-                // shape into the same fields the modal expects
-                const nm = String((it?.locationName?.en ?? it?.locationName ?? 'Unnamed')).trim();
-                const media = (it && typeof it.media === 'object') ? it.media : {};
-                const gallery = Array.isArray(media.images) ? media.images : (Array.isArray(it?.images) ? it.images : []);
-                const images = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
-                const cover = (media.cover && String(media.cover).trim()) || images[0] || '';
-                const cc = (() => {
-                  if (typeof it?.coord === 'string') return it.coord;
-                  if (it?.coord && it.coord.lat != null && it.coord.lng != null) return `${it.coord.lat},${it.coord.lng}`;
-                  if (typeof it?.coordinateCompound === 'string') return it.coordinateCompound;
-                  return '';
-                })();
+      } else if (uid) {
+        // Fallback: fetch by ULID when the list for this context wasn’t loaded
+        try {
+          const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
+          if (ULID.test(uid)) {
+            const res = await fetch(`${API_BASE}/api/data/item?id=${encodeURIComponent(uid)}`, { cache:'no-store', credentials:'omit' });
+            if (res.ok) {
+              const it = await res.json();
+              // shape into the same fields the modal expects
+              const nm = String((it?.locationName?.en ?? it?.locationName ?? 'Unnamed')).trim();
+              const media = (it && typeof it.media === 'object') ? it.media : {};
+              const gallery = Array.isArray(media.images) ? media.images : (Array.isArray(it?.images) ? it.images : []);
+              const images = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
+              const cover = (media.cover && String(media.cover).trim()) || images[0] || '';
+              const cc = (() => {
+                if (typeof it?.coord === 'string') return it.coord;
+                if (it?.coord && it.coord.lat != null && it.coord.lng != null) return `${it.coord.lat},${it.coord.lng}`;
+                if (typeof it?.coordinateCompound === 'string') return it.coordinateCompound;
+                return '';
+              })();
 
-                // guard remains: require a cover to show LPM consistently
-                if (!cover) { console.warn('Data error: cover required (QR)'); }
-                else {
-                  const [lat, lng] = cc.includes(',') ? cc.split(',').map(s=>s.trim()) : ['',''];
-                  showLocationProfileModal({
-                    locationID: String(it?.slug || it?.alias || it?.locationID || ''), // human if available
-                    id: String(it?.ID || it?.id || uid),                                // ULID
-                    displayName: nm, name: nm,
-                    lat, lng,
-                    imageSrc: cover,
-                    images,
-                    media,
-                    descriptions: it?.descriptions || {},
-                    tags: Array.isArray(it?.tags) ? it.tags : [],
-                    contactInformation: it?.contactInformation || {},
-                    links: it?.links || {},
-                    ratings: it?.ratings || {},
-                    pricing: it?.pricing || {},
-                    originEl: null
-                  });
-                }
+              // guard remains: require a cover to show LPM consistently
+              if (!cover) { console.warn('Data error: cover required (QR)'); }
+              else {
+                const [lat, lng] = cc.includes(',') ? cc.split(',').map(s=>s.trim()) : ['',''];
+                showLocationProfileModal({
+                  locationID: String(it?.slug || it?.alias || it?.locationID || ''), // human if available
+                  id: String(it?.ID || it?.id || uid),                                // ULID
+                  displayName: nm, name: nm,
+                  lat, lng,
+                  imageSrc: cover,
+                  images,
+                  media,
+                  descriptions: it?.descriptions || {},
+                  tags: Array.isArray(it?.tags) ? it.tags : [],
+                  contactInformation: it?.contactInformation || {},
+                  links: it?.links || {},
+                  ratings: it?.ratings || {},
+                  pricing: it?.pricing || {},
+                  originEl: null
+                });
               }
             }
-          } catch (e) {
-            console.warn('QR fallback fetch failed', e);
           }
+        } catch (e) {
+          console.warn('QR fallback fetch failed', e);
         }
       }
+    }
 
         // drop only ?lp; keep others
         q.delete('lp');
