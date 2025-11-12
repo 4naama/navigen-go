@@ -345,7 +345,9 @@ export async function showLocationProfileModal(data) {
   document.body.appendChild(modal);
   // Keep data.* intact; only cache the dataset slug for click handlers (no alias/short selection).
   {
-    const chosen = String(data?.locationID || data?.id || '').trim(); // prefer slug; fallback to ULID
+    const pref   = String(data?.locationID || '').trim();
+    const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(pref);
+    const chosen = (!isUlid && pref) ? pref : ''; // cache only a human slug; never a ULID
     if (chosen) modal.setAttribute('data-locationid', chosen);
   }
 
@@ -1290,8 +1292,7 @@ async function initLpmImageSlider(modal, data) {
         if (candidate && ULID.test(candidate)) data.id = candidate;
       }
 
-      // 3) Mirror alias if present (handlers may read it)
-      if (alias) data.alias = alias; // aid Stats preference
+      // 3) De-slug: do not mirror alias; locationID is the only identifier (alias or ULID)
 
     })();
 
@@ -1478,9 +1479,11 @@ async function initLpmImageSlider(modal, data) {
           const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
           const currentDom = String(modal.getAttribute('data-locationid') || '').trim();
           const hasAlias = currentDom && !ULID.test(currentDom);
-          if (!hasAlias && apiId) {
+          // only upgrade cache with a human slug; never write a ULID here
+          if (!hasAlias && apiId && !ULID.test(apiId)) {
             modal.setAttribute('data-locationid', apiId);
           }
+
           // Keep data.locationID as originally provided by the dataset; no mutation here.
         }
 
