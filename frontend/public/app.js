@@ -317,7 +317,6 @@ function renderPopularGroup(list = geoPoints) {
       if (!uid && !locid) { console.warn('Data error: identifier missing (Popular)'); return; }
 
       // single-field payload: locationID from the button’s slug attribute; id stays ULID-only
-      const locid = String(btn.getAttribute('data-locationid') || '').trim(); // human slug from dataset stamp
       showLocationProfileModal({
         locationID: String(locid || loc?.locationID || ''),  // prefer button’s slug; fallback to dataset
         id:         String(uid || ''),                       // ULID for tracking/beacons only
