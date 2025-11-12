@@ -1354,11 +1354,14 @@ async function initLpmImageSlider(modal, data) {
         // Sync DOM cache for next time; leave data.* untouched
         modal.setAttribute('data-locationid', target);
 
-        const dashUrl = new URL('https://navigen.io/dash/');
-        // de-slug: no separate slug param; dashboard reads a single locationID
-        dashUrl.searchParams.set('locationID', target); // keep for compatibility
-        window.open(String(dashUrl), '_blank', 'noopener,noreferrer');
-
+        // Canonicalize client URL: ?locationID=<id> → /dash/<id> (ULID or slug; Worker will 302 slug→ULID in prod)
+        (() => {
+          const u = new URL(location.href);
+          const raw = (u.searchParams.get('locationID') || '').trim();
+          if (raw && (u.pathname === '/dash' || u.pathname === '/dash/')) {
+            history.replaceState({}, document.title, `/dash/${encodeURIComponent(raw)}${location.hash || ''}`);
+          }
+        })();
       }, { capture: true });
     }
 

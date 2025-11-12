@@ -157,6 +157,34 @@ export default {
       return env.ASSETS.fetch(req);
     }
 
+    // Canonicalize Dashboard URLs: /dash/?locationID=...  →  /dash/<ULID>; also /dash/<slug> → /dash/<ULID>
+    {
+      const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+
+      // Query form → path form
+      if (url.pathname === '/dash' || url.pathname === '/dash/') {
+        const raw = (url.searchParams.get('locationID') || '').trim();
+        if (raw) {
+          const uid = await canonicalId(env, raw);              // slug→ULID or passthrough
+          if (uid && ULID_RE.test(uid)) {
+            return Response.redirect(`${url.origin}/dash/${encodeURIComponent(uid)}`, 301);
+          }
+        }
+        // no id → fall through to SPA shell
+      }
+
+      // Path form with slug → ULID
+      if (url.pathname.startsWith('/dash/')) {
+        const [, , seg = ''] = url.pathname.split('/');         // ['', 'dash', '{seg}']
+        if (seg && !ULID_RE.test(seg)) {
+          const uid = await canonicalId(env, seg);
+          if (uid && ULID_RE.test(uid)) {
+            return Response.redirect(`${url.origin}/dash/${encodeURIComponent(uid)}`, 302);
+          }
+        }
+      }
+    }
+
     // /hit/:metric/:id — unified client-side event counter (allows a small, explicit list)
     // NOTE: replaces the qr-print only logic and any duplicate /hit blocks below.
     if (url.pathname.startsWith('/hit/')) {

@@ -21,6 +21,15 @@ const periodEl = $('#period'); // single control drives the window
 const hintEl = $('#hint'), metaEl = $('#meta'), tblWrap = $('#table-wrap');
 const locWrap = $('#loc-wrap'), entWrap = $('#ent-wrap');
 
+// Canonicalize client URL: ?locationID=<id> → /dash/<id> (ULID or slug; server will 302 slug→ULID in prod)
+(() => {
+  const u = new URL(location.href);
+  const raw = (u.searchParams.get('locationID') || '').trim();
+  if (raw && (u.pathname === '/dash' || u.pathname === '/dash/')) {
+    history.replaceState({}, document.title, `/dash/${encodeURIComponent(raw)}${location.hash || ''}`);
+  }
+})();
+
 // First line is static in HTML now; no JS injection needed.
 (() => {})();
 
