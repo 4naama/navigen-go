@@ -1352,11 +1352,9 @@ async function initLpmImageSlider(modal, data) {
         modal.setAttribute('data-locationid', target);
 
         // Build canonical URL — /dash/<ULID>, with optional #slug=<human> for display
-        const seg  = ULID.test(rawULID) ? rawULID : target; // ULID wins
-        const hash = (ULID.test(seg) && target && !ULID.test(target))
-          ? `#slug=${encodeURIComponent(target)}`
-          : '';
-        const href = `https://navigen.io/dash/${encodeURIComponent(seg)}${hash}`;
+        const seg     = ULID.test(rawULID) ? rawULID : target; // ULID if available, else slug
+        const isHuman = (target && !ULID.test(target));        // detect a human-readable slug
+        const href    = `https://navigen.io/dash/${encodeURIComponent(seg)}${isHuman ? `#slug=${encodeURIComponent(target)}` : ''}`;
         window.open(href, '_blank', 'noopener,noreferrer');
       }, { capture: true });
     }
