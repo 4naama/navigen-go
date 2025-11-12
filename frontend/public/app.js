@@ -1328,8 +1328,6 @@ async function initEmergencyBlock(countryOverride) {
             // origin
             originEl: null
           });
-        }
-
         } else if (uid) {
           // Fallback: fetch by ULID when the list for this context wasn’t loaded
           try {
