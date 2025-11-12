@@ -1599,7 +1599,7 @@ function makeLocationButton(loc) {
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
         tags: Array.isArray(loc?.tags) ? loc.tags : [],
         contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
-                              : ((loc && typeof loc.contact === 'object']) ? loc.contact : {}),
+                              : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
         links: (loc && typeof loc.links === 'object') ? loc.links : {},
         originEl: btn
       });
