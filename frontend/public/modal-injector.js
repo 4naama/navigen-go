@@ -1479,7 +1479,7 @@ async function initLpmImageSlider(modal, data) {
           const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
           const currentDom = String(modal.getAttribute('data-locationid') || '').trim();
           const hasAlias = currentDom && !ULID.test(currentDom);
-          // only upgrade cache with a human slug; never write a ULID here
+          // upgrade cache only with a human slug (never a ULID)
           if (!hasAlias && apiId && !ULID.test(apiId)) {
             modal.setAttribute('data-locationid', apiId);
           }

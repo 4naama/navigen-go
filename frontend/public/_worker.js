@@ -570,15 +570,21 @@ async function handleList(req, env, url, extraHdr){
     const tagsMerged = Array.from(new Set([...tags, ...extraTags]));
 
     return {
-      // ids + names (ULID-only): canonicalize via KV_ALIASES when not already ULID
+      // ids: keep canonical ULID for APIs/analytics
       locationID: await canonicalId(env, (p.locationID || p.ID || p.id)),
       id:         await canonicalId(env, (p.locationID || p.ID || p.id)),
+
+      // expose the original human identifier (if present and non-ULID) so UI can prefer it
+      alias: (() => {
+        const raw = String(p.locationID || '').trim();
+        return /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw) ? '' : raw;  // keep only human slug here
+      })(),
 
       // pass object as-is; wrap plain string into {en:...}
       locationName: (p && typeof p.locationName === 'object')
         ? p.locationName
         : (typeof p?.locationName === 'string' && p.locationName.trim() ? { en: p.locationName.trim() } : undefined),
-
+        
       // grouping
       groupKey:   p.groupKey || p.Group || '',
       subgroupKey: p.subgroupKey || p['Subgroup key'] || '',
