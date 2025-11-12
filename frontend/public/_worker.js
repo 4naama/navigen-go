@@ -187,10 +187,23 @@ export default {
       const date = new Date().toISOString().slice(0, 10);
       const key = `m:${ulid}:${date}:${metric}`;
 
-      const current = parseInt((await env.KV_STATS.get(key)) || '0', 10);
-      await env.KV_STATS.put(key, String((isNaN(current) ? 0 : current) + 1));
+      // Safe KV increment (no-throw → always 204)
+      try {
+        if (!env || !env.KV_STATS) {
+          return new Response(null, {
+            status: 204,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+            },
+          });
+        }
+        const current = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
+        await env.KV_STATS.put(key, String(current + 1));
+      } catch (_) {
+        // swallow and still return 204
+      }
 
-      // CORS for browser POSTs (no credentials); mirrors other public JSON endpoints
       return new Response(null, {
         status: 204,
         headers: {
@@ -217,13 +230,19 @@ export default {
         if (!ulid) return new Response('Unknown location', { status: 404 });
 
         // Increment daily bucket: m:<ULID>:YYYY-MM-DD:qr-scan (same KV_STATS used by /hit + /api/stats)
-        const date = new Date().toISOString().slice(0, 10);
-        const key  = `m:${ulid}:${date}:qr-scan`;
-        const cur  = parseInt((await env.KV_STATS.get(key)) || '0', 10);
-        await env.KV_STATS.put(key, String((isNaN(cur) ? 0 : cur) + 1));
+        // Safe KV increment; never block redirect
+        try {
+          if (env && env.KV_STATS) {
+            const date = new Date().toISOString().slice(0, 10);
+            const key  = `m:${ulid}:${date}:qr-scan`;
+            const cur  = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
+            await env.KV_STATS.put(key, String(cur + 1));
+          }
+        } catch (_) { /* ignore */ }
 
         // Redirect to landing (default /), allow only http(s) or same-origin paths
         const target = url.searchParams.get('to') || '/';
+
         const safe   = /^(?:https?:)?\/\//i.test(target) || target.startsWith('/');
         const dest   = safe ? target : '/';
 
