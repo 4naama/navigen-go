@@ -1299,24 +1299,38 @@ async function initEmergencyBlock(countryOverride) {
           const cc = String(rec["Coordinate Compound"] || rec.coord || "");
           const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
-          // open LPM with the dataset slug (authoritative); include alias for handlers
+          // open LPM with strict contract: slug in locationID + alias; id = ULID (or slug if none)
           showLocationProfileModal({
-            locationID: String(loc?.locationID || ''),        // slug for dashboard
-            id: (uid || String(loc?.locationID || '')),       // ULID for beacons; else same slug
-            alias: String(loc?.locationID || ''),             // mirror slug
-            displayName: locLabel, name: locLabel,            // display + legacy
-            lat, lng,
+            // identifiers
+            locationID: String(rec?.locationID || ''),                  // required slug from dataset
+            alias:      String(rec?.locationID || ''),                  // mirror slug for handlers
+            id:         String((rec?.ID || rec?.id || rec?.locationID || '')), // ULID preferred; else slug
+
+            // display
+            displayName: String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
+            name:        String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
+
+            // geo
+            lat: (cc && cc.includes(",")) ? cc.split(",").map(s => s.trim())[0] : "",
+            lng: (cc && cc.includes(",")) ? cc.split(",").map(s => s.trim())[1] : "",
+
+            // media
             imageSrc: cover,
             images,
             media,
-            descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
-            tags: _tags,
-            contactInformation: (loc && loc.contactInformation) || {},
-            links: (loc && loc.links) || {},
-            ratings: (loc && loc.ratings) || {},
-            pricing: (loc && loc.pricing) || {},
-            originEl: btn
+
+            // meta
+            descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
+            tags: Array.isArray(rec?.tags) ? rec.tags : [],
+            contactInformation: (rec && rec.contactInformation) || {},
+            links: (rec && rec.links) || {},
+            ratings: (rec && rec.ratings) || {},
+            pricing: (rec && rec.pricing) || {},
+
+            // origin
+            originEl: null
           });
+
         }
 
         // drop only ?lp; keep others

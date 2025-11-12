@@ -1268,23 +1268,31 @@ async function initLpmImageSlider(modal, data) {
         el?.getAttribute?.('data-id') || el?.getAttribute?.('data-locationid') || ''
       ).trim();
 
-      // prefer dataset slug; never overwrite a non-empty locationID
+      // prefer dataset slug; never overwrite a non-empty locationID (clarified)
+      // Always ensure a slug lands in locationID if we have one in alias/DOM — even when id is a ULID.
       const raw = String(
         data?.locationID || data?.id || domId || alias || ''
       ).trim();
 
       const alreadyUlid = ULID.test(String(data?.id || ''));
 
-      if (alreadyUlid) {
-        // keep ULID; only fill locationID when it's empty and raw is non-ULID
-        if (!data.locationID && raw && !ULID.test(raw)) data.locationID = raw;
-      } else if (raw) {
-        // no ULID yet → set id for handlers; do NOT clobber an existing dataset slug
-        data.id = raw;
-        if (!data.locationID) data.locationID = raw;
+      // 1) Ensure locationID (slug) when missing: take alias first, else a non-ULID domId.
+      if (!data.locationID) {
+        const fromAlias = String(alias || '').trim();
+        const fromDom   = String(domId  || '').trim();
+        const slug = fromAlias || (fromDom && !ULID.test(fromDom) ? fromDom : '');
+        if (slug) data.locationID = slug;
       }
 
+      // 2) Ensure id (ULID) when missing: keep existing; only set if we find a ULID.
+      if (!data.id) {
+        const candidate = [raw, domId].map(v => String(v || '').trim()).find(Boolean);
+        if (candidate && ULID.test(candidate)) data.id = candidate;
+      }
+
+      // 3) Mirror alias if present (handlers may read it)
       if (alias) data.alias = alias; // aid Stats preference
+
     })();
 
     // ⭐ Save (secondary) handled by helper
@@ -1337,20 +1345,21 @@ async function initLpmImageSlider(modal, data) {
         const idA     = String(data?.id || '').trim();
         const idB     = String(data?.locationID || '').trim();
 
-        // Always use the dataset slug (profiles.json → locationID) for Dashboard; no alias/short selection.
-        let target = String(data?.locationID || '').trim();
-        // prefer slug for Dashboard when a ULID-shaped value is detected; fall back to modal DOM cache
-        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(target)) {
-          target = String(data?.alias || modal.getAttribute('data-locationid') || '').trim();
-        }
+        // Always use a slug for Dashboard; check payload first, then alias, then the modal’s DOM cache
+        const fromDom = String(modal.getAttribute('data-locationid') || '').trim();
+        const fromPay = String(data?.locationID || '').trim();
+        const fromAli = String(data?.alias || '').trim();
+
+        // Gate: first non-empty slug wins (no ULID shape checks)
+        let target = (fromPay || fromAli || fromDom).trim();
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
         // Sync DOM cache for next time; leave data.* untouched
         modal.setAttribute('data-locationid', target);
 
         const dashUrl = new URL('https://navigen.io/dash/');
-        dashUrl.searchParams.set('slug', target);                 // dash.js prefers slug/alias
-        dashUrl.searchParams.set('locationID', target);           // keep for compatibility
+        dashUrl.searchParams.set('slug', target);       // dash.js prefers slug/alias
+        dashUrl.searchParams.set('locationID', target); // keep for compatibility
         window.open(String(dashUrl), '_blank', 'noopener,noreferrer');
 
       }, { capture: true });
