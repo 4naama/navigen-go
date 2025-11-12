@@ -318,9 +318,9 @@ function renderPopularGroup(list = geoPoints) {
 
       // single-field payload: locationID carries the human slug; id is ULID-only (if present)
       showLocationProfileModal({
-        locationID: String(loc?.locationID || locid || ''),           // slug for Dashboard/UI
-        id:         String(uid || ''),                                // ULID for tracking/beacons only
-        displayName: locLabel, name: locLabel, // display + legacy
+        locationID: String(locid || loc?.locationID || ''),  // **prefer the button’s human slug**; fallback to dataset
+        id:         String(uid || ''),                       // ULID for tracking/beacons only
+        displayName: locLabel, name: locLabel,
         lat, lng,
         imageSrc: cover,
         images,
