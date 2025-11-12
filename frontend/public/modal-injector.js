@@ -1332,7 +1332,7 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
         
-    // 📈 Stats (dashboard) — prefer alias/short; fall back to ULID if needed
+    // 📈 Stats (dashboard) — single-field locationID (alias or ULID): prefer payload, then cached DOM; fall back to ULID if needed
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', (e) => {
@@ -1342,13 +1342,11 @@ async function initLpmImageSlider(modal, data) {
         const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
 
         // ← keep only this declaration
-        const fromDom = String(modal.getAttribute('data-locationid') || '').trim();
-        const fromPay = String(data?.locationID || '').trim();
-        const fromAli = '' /* de-slug: alias unused; single-field model (locationID or ULID) */;
+        const cachedLocationId  = String(modal.getAttribute('data-locationid') || '').trim(); // cached in DOM
+        const payloadLocationId = String(data?.locationID || '').trim();                     // passed in payload
+        const rawULID           = String(data?.id || '').trim();                             // ULID (if known)
 
-        // Gate: first non-empty slug wins (no ULID shape checks)
-        const rawULID = String(data?.id || '').trim();
-        let target = (fromPay || fromDom || rawULID).trim(); // de-slug: prefer locationID; fallback to ULID
+        let target = (payloadLocationId || cachedLocationId || rawULID).trim(); // de-slug: prefer payload; fallback to cached or ULID
 
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
