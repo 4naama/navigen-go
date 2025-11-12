@@ -82,24 +82,23 @@ function getISODate(input){
 
 // load initial params from URL; tolerate missing controls
 {
-  const u   = new URL(location.href);
-  const m   = u.searchParams.get('mode') || 'location';
-  const lid = u.searchParams.get('locationID') || '';                    // legacy query (alias or ULID)
-  // de-slug: ignore legacy slug/alias params; single-field contract via locationID
-  const eid = u.searchParams.get('entityID') || '';
-
-  // NEW: accept /dash/<id> path form as well
-  const segs   = location.pathname.split('/').filter(Boolean);
-  const pathId = (segs[0] === 'dash' && segs[1]) ? segs[1] : '';
+  const u     = new URL(location.href);
+  const m     = u.searchParams.get('mode') || 'location';
+  const lid   = u.searchParams.get('locationID') || '';                    // legacy query (alias or ULID)
+  const eid   = u.searchParams.get('entityID') || '';
+  const segs  = location.pathname.split('/').filter(Boolean);
+  const pathId= (segs[0] === 'dash' && segs[1]) ? segs[1] : '';            // /dash/<id>
+  const hash  = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  const slugH = (hash.get('slug') || '').trim();                           // human slug from hash (if any)
 
   if (modeEl) modeEl.value = m;
 
-  // UI shows slug when present; otherwise ULID. Prefer query, then path.
   if (locEl) {
-    const chosen = lid || pathId;
+    // prefer the human slug (from hash), else legacy query, else path id
+    const chosen = slugH || lid || pathId;
     locEl.value = chosen;
 
-    // If the path segment is a ULID, stash it as canonical for fetches
+    // stash canonical ULID when present so fetches use it
     if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(pathId)) {
       locEl.dataset.canonicalId = pathId;
     }

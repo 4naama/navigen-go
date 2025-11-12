@@ -1339,28 +1339,25 @@ async function initLpmImageSlider(modal, data) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        const ULID    = /^[0-9A-HJKMNP-TV-Z]{26}$/i; // keep ULID shape check; no short-id helper needed
+        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i; // keep ULID shape check
 
-        // ← keep only this declaration
         const cachedLocationId  = String(modal.getAttribute('data-locationid') || '').trim(); // cached in DOM
-        const payloadLocationId = String(data?.locationID || '').trim();                     // passed in payload
-        const rawULID           = String(data?.id || '').trim();                             // ULID (if known)
+        const payloadLocationId = String(data?.locationID || '').trim();                      // passed in payload
+        const rawULID           = String(data?.id || '').trim();                              // ULID (if known)
 
-        let target = (payloadLocationId || cachedLocationId || rawULID).trim(); // de-slug: prefer payload; fallback to cached or ULID
-
+        let target = (payloadLocationId || cachedLocationId || rawULID).trim(); // prefer payload; fallback to cached or ULID
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
         // Sync DOM cache for next time; leave data.* untouched
         modal.setAttribute('data-locationid', target);
 
-        // Open canonical Dashboard URL: prefer ULID path; else slug (server will 302 slug→ULID)
-        (async () => {
-          const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-          const uid = ULID_RE.test(rawULID) ? rawULID : await resolveULIDFor(target);
-          const seg = ULID_RE.test(uid) ? uid : target; // ULID wins; fallback to human slug
-          const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-          window.open(href, '_blank', 'noopener,noreferrer');
-        })();
+        // Build canonical URL — /dash/<ULID>, with optional #slug=<human> for display
+        const seg  = ULID.test(rawULID) ? rawULID : target; // ULID wins
+        const hash = (ULID.test(seg) && target && !ULID.test(target))
+          ? `#slug=${encodeURIComponent(target)}`
+          : '';
+        const href = `https://navigen.io/dash/${encodeURIComponent(seg)}${hash}`;
+        window.open(href, '_blank', 'noopener,noreferrer');
       }, { capture: true });
     }
 
