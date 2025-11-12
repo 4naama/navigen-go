@@ -32,6 +32,8 @@
   "help.continue": "➡️ Continue",
   "shareLocation.title": "Share Your Location",
   "share.note": "📱 Works best via WhatsApp",
+  "dash.title": "Dashboard",
+  "dash.windowTitlePrefix": "Dashboard —",
   "page.windowTitle": "NaviGen — The Navigation Platform",
   "page.metaDescription": "Your city & events navigator. Works offline. Powered by NaviGen (beta).",
   "page.title": "Hey, NaviGen here!",

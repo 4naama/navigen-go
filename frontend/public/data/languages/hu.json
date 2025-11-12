@@ -32,6 +32,8 @@
   "help.continue": "➡️ Tovább",
   "shareLocation.title": "Helymeghatározás megosztása",
   "share.note": "📱 Legjobban WhatsApp-on működik",
+  "dash.title": "Instrumententafel",
+  "dash.windowTitlePrefix": "Instrumententafel —",
   "page.windowTitle": "NaviGen — A navigációs platform",
   "page.metaDescription": "A város és események navigátora. Offline is működik. A NaviGen (béta) működteti.",
   "page.title": "Helló, itt a NaviGen!",

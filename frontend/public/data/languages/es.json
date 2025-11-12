@@ -32,6 +32,8 @@
   "help.continue": "➡️ Continuar",
   "shareLocation.title": "Comparte tu ubicación",
   "share.note": "📱 Funciona mejor por WhatsApp",
+  "dash.title": "Řídicí panel",
+  "dash.windowTitlePrefix": "Řídicí panel —",
   "page.windowTitle": "NaviGen — La plataforma de navegación",
   "page.metaDescription": "Tu navegador de ciudad y eventos. Funciona sin conexión. Impulsado por NaviGen (beta).",
   "page.title": "¡Hola, soy NaviGen!",
