@@ -1351,11 +1351,23 @@ async function initLpmImageSlider(modal, data) {
         // Sync DOM cache for next time; leave data.* untouched
         modal.setAttribute('data-locationid', target);
 
-        // Build canonical URL — /dash/<ULID>, with optional #slug=<human> for display
-        const seg     = ULID.test(rawULID) ? rawULID : target; // ULID if available, else slug
-        const isHuman = (target && !ULID.test(target));        // detect a human-readable slug
-        const href    = `https://navigen.io/dash/${encodeURIComponent(seg)}${isHuman ? `#slug=${encodeURIComponent(target)}` : ''}`;
+        // Clean URL: /dash/<ULID>. Save human slug for the dashboard to read (no hash in URL).
+        const seg = ULID.test(rawULID) ? rawULID : target; // ULID if available, else slug (server will 302 → ULID)
+
+        // persist human slug for UI (if we have one); also leave a short-lived pending hint for redirects
+        try {
+          const isHuman = (target && !ULID.test(target));
+          if (isHuman) {
+            // if we already know the ULID now, bind it directly
+            if (ULID.test(rawULID)) localStorage.setItem(`navigen.slug:${rawULID}`, target);
+            // always drop a pending slug to be picked up after redirect
+            localStorage.setItem('navigen.pendingSlug', JSON.stringify({ value: target, ts: Date.now() }));
+          }
+        } catch { /* ignore storage errors */ }
+
+        const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
         window.open(href, '_blank', 'noopener,noreferrer');
+
       }, { capture: true });
     }
 

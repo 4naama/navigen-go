@@ -84,22 +84,42 @@ function getISODate(input){
 {
   const u     = new URL(location.href);
   const m     = u.searchParams.get('mode') || 'location';
-  const lid   = u.searchParams.get('locationID') || '';                    // legacy query (alias or ULID)
+  const lidQ  = u.searchParams.get('locationID') || '';               // legacy query (alias or ULID)
   const eid   = u.searchParams.get('entityID') || '';
   const segs  = location.pathname.split('/').filter(Boolean);
-  const pathId= (segs[0] === 'dash' && segs[1]) ? segs[1] : '';            // /dash/<id>
-  const hash  = new URLSearchParams((location.hash || '').replace(/^#/, ''));
-  const slugH = (hash.get('slug') || '').trim();                           // human slug from hash (if any)
+  const pathId= (segs[0] === 'dash' && segs[1]) ? segs[1] : '';       // /dash/<id>
+  const ULID  = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
   if (modeEl) modeEl.value = m;
 
   if (locEl) {
-    // prefer the human slug (from hash), else legacy query, else path id
-    const chosen = slugH || lid || pathId;
+    // prefer a saved human slug for the path ULID; else use legacy query; else path id
+    let human = '';
+    try {
+      if (ULID.test(pathId)) {
+        human = localStorage.getItem(`navigen.slug:${pathId}`) || '';
+        // optional: one-shot pending slug for popular→redirect case
+        if (!human) {
+          const raw = localStorage.getItem('navigen.pendingSlug') || '';
+          if (raw) {
+            const obj = JSON.parse(raw);
+            if (obj && obj.value && (Date.now() - Number(obj.ts || 0) < 60_000)) {
+              human = String(obj.value);
+              // bind it to the canonical ULID so future loads don’t need pending
+              localStorage.setItem(`navigen.slug:${pathId}`, human);
+            }
+            // clear pending either way
+            localStorage.removeItem('navigen.pendingSlug');
+          }
+        }
+      }
+    } catch { /* ignore storage/JSON errors */ }
+
+    const chosen = human || lidQ || pathId;
     locEl.value = chosen;
 
     // stash canonical ULID when present so fetches use it
-    if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(pathId)) {
+    if (ULID.test(pathId)) {
       locEl.dataset.canonicalId = pathId;
     }
   }
