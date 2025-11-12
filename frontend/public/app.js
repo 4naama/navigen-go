@@ -1377,7 +1377,6 @@ async function initEmergencyBlock(countryOverride) {
           }
         } catch (e) {
           console.warn('QR fallback fetch failed', e);
-        }
         } else if (uid) {
           // Fallback: fetch by ULID when the list for this context wasn’t loaded
           try {
