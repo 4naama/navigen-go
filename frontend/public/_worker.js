@@ -185,6 +185,16 @@ export default {
       }
     }
 
+    // QR shortlink: /s/<id>  →  /?lp=<ULID> (id may be slug or ULID)
+    if (url.pathname.startsWith('/s/')) {
+      const seg = url.pathname.split('/')[2] || '';
+      if (seg) {
+        const uid = await canonicalId(env, seg); // resolve slug→ULID or passthrough
+        if (uid) return Response.redirect(`${url.origin}/?lp=${encodeURIComponent(uid)}`, 302);
+      }
+      return Response.redirect(`${url.origin}/`, 302);
+    }
+
     // /hit/:metric/:id — unified client-side event counter (allows a small, explicit list)
     // NOTE: replaces the qr-print only logic and any duplicate /hit blocks below.
     if (url.pathname.startsWith('/hit/')) {
