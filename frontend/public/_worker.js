@@ -357,7 +357,16 @@ export default {
       return out;
     }
 
+    // Serve Dashboard shell for /dash and /dash/* (returns /dash/index.html)
+    if (url.pathname === '/dash' || url.pathname.startsWith('/dash/')) {
+      const shell = await env.ASSETS.fetch(new Request(new URL('/dash/index.html', url)));
+      const out = new Response(shell.body, { status: 200, headers: new Headers(shell.headers) });
+      out.headers.set('x-ng-worker', 'ok'); // keep debug header
+      return out;
+    }
+
     // ensure we have the static asset response before rewriting
+
     let res = await env.ASSETS.fetch(req);
     res = new Response(res.body, { status: res.status, headers: new Headers(res.headers) });
     res.headers.set('x-ng-worker', 'ok'); // quick check in DevTools

@@ -84,16 +84,25 @@ function getISODate(input){
 {
   const u   = new URL(location.href);
   const m   = u.searchParams.get('mode') || 'location';
-  const lid = u.searchParams.get('locationID') || '';          // identifier (alias or ULID)
+  const lid = u.searchParams.get('locationID') || '';                    // legacy query (alias or ULID)
   // de-slug: ignore legacy slug/alias params; single-field contract via locationID
   const eid = u.searchParams.get('entityID') || '';
 
+  // NEW: accept /dash/<id> path form as well
+  const segs   = location.pathname.split('/').filter(Boolean);
+  const pathId = (segs[0] === 'dash' && segs[1]) ? segs[1] : '';
+
   if (modeEl) modeEl.value = m;
 
-  // UI shows slug when present; stash ULID if provided
+  // UI shows slug when present; otherwise ULID. Prefer query, then path.
   if (locEl) {
-    locEl.value = lid; // de-slug: single-field source of truth
-    // de-slug: no stash needed — value already carries alias or ULID
+    const chosen = lid || pathId;
+    locEl.value = chosen;
+
+    // If the path segment is a ULID, stash it as canonical for fetches
+    if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(pathId)) {
+      locEl.dataset.canonicalId = pathId;
+    }
   }
 
   if (entEl) entEl.value = eid;

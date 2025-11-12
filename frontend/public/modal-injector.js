@@ -1339,8 +1339,7 @@ async function initLpmImageSlider(modal, data) {
       statsBtn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        const ULID    = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-        const isShort = (v) => /^hd-[a-z0-9-]+$/i.test(String(v || '').trim());
+        const ULID    = /^[0-9A-HJKMNP-TV-Z]{26}$/i; // keep ULID shape check; no short-id helper needed
 
         // ← keep only this declaration
         const cachedLocationId  = String(modal.getAttribute('data-locationid') || '').trim(); // cached in DOM
