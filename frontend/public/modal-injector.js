@@ -1344,11 +1344,11 @@ async function initLpmImageSlider(modal, data) {
         // ← keep only this declaration
         const fromDom = String(modal.getAttribute('data-locationid') || '').trim();
         const fromPay = String(data?.locationID || '').trim();
-        const fromAli = String(data?.alias || '').trim();
+        const fromAli = '' /* de-slug: alias unused; single-field model (locationID or ULID) */;
 
         // Gate: first non-empty slug wins (no ULID shape checks)
         const rawULID = String(data?.id || '').trim();
-        let target = (fromPay || fromAli || fromDom || rawULID).trim(); // prefer slug; fallback to ULID
+        let target = (fromPay || fromDom || rawULID).trim(); // de-slug: prefer locationID; fallback to ULID
 
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
@@ -1356,7 +1356,7 @@ async function initLpmImageSlider(modal, data) {
         modal.setAttribute('data-locationid', target);
 
         const dashUrl = new URL('https://navigen.io/dash/');
-        dashUrl.searchParams.set('slug', target);       // dash.js prefers slug/alias
+        // de-slug: no separate slug param; dashboard reads a single locationID
         dashUrl.searchParams.set('locationID', target); // keep for compatibility
         window.open(String(dashUrl), '_blank', 'noopener,noreferrer');
 

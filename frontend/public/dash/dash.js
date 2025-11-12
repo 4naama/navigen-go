@@ -75,16 +75,16 @@ function getISODate(input){
 {
   const u   = new URL(location.href);
   const m   = u.searchParams.get('mode') || 'location';
-  const lid = u.searchParams.get('locationID') || '';          // ULID (optional, stashed)
-  const slug = u.searchParams.get('slug') || u.searchParams.get('alias') || ''; // prefer slug in URL
+  const lid = u.searchParams.get('locationID') || '';          // identifier (alias or ULID)
+  // de-slug: ignore legacy slug/alias params; single-field contract via locationID
   const eid = u.searchParams.get('entityID') || '';
 
   if (modeEl) modeEl.value = m;
 
   // UI shows slug when present; stash ULID if provided
   if (locEl) {
-    locEl.value = slug || lid;
-    if (lid) locEl.dataset.canonicalId = lid;  // stash canonical ULID without polluting the URL
+    locEl.value = lid; // de-slug: single-field source of truth
+    // de-slug: no stash needed — value already carries alias or ULID
   }
 
   if (entEl) entEl.value = eid;

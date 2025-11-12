@@ -269,12 +269,11 @@ function renderPopularGroup(list = geoPoints) {
     const uid   = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId) ? rawId : '';               // ULID-only
     btn.setAttribute('data-id', uid);                                                 // ULID for tracking
 
-    // dataset-only: use profiles.json slug exactly — no derivation, no fallbacks
+    // dataset-only: use profiles.json locationID as-is (alias or ULID) — no derivation, no fallbacks
     {
-      const alias = String(loc?.locationID || '').trim();
-      if (alias) {
-        btn.setAttribute('data-alias', alias);       // used by UI/search
-        btn.setAttribute('data-locationid', alias);  // used by LPM/Stats
+      const ident = String(loc?.locationID || '').trim();
+      if (ident) {
+        btn.setAttribute('data-locationid', ident);  // used by UI/search and LPM/Stats
       }
     }
 
@@ -317,11 +316,10 @@ function renderPopularGroup(list = geoPoints) {
       // need at least one; Popular path now derives alias above when both are missing
       if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
 
-      // always include slug in payload (strict contract) and mirror to alias; keep ULID for beacons
+      // single-field payload: locationID may be alias or ULID; id keeps ULID (if known) for tracking
       showLocationProfileModal({
-        locationID: String(loc?.locationID || ''),                    // required slug
-        alias:      String(loc?.locationID || ''),                    // mirror slug for handlers
-        id:         String(uid || loc?.locationID || ''),             // ULID preferred; else slug
+        locationID: String(loc?.locationID || ''),                    // required identifier (alias or ULID)
+        id:         String(uid || loc?.locationID || ''),             // ULID preferred; else same identifier
         displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
