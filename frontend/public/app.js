@@ -1278,73 +1278,66 @@ async function initEmergencyBlock(countryOverride) {
 
     // Open LPM on ?lp=<id> (post-mapping, single source of truth)
     {
-      const q = new URLSearchParams(location.search);
+      const q   = new URLSearchParams(location.search);
       const uid = (q.get('lp') || '').trim();
 
       if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
-        let rec = ULID.test(uid) ? geoPoints.find(x => String(x?.ID || x?.id || '') === uid) : null; // find by ULID in ID/id
+        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+        const rec  = ULID.test(uid) ? geoPoints.find(x => String(x?.ID || x?.id || '') === uid) : null; // find by ULID in ID/id
         if (rec) {
           const media   = rec.media || {};
-          // pass through full objects so modal can use metadata; it normalizes to URLs
           const gallery = Array.isArray(media.images) ? media.images : [];
-          const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean); // normalize URLs
+          const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
 
           const cover = (media.cover && String(media.cover).trim()) || images[0];
-          // guard for strict data model; require cover only (align with Accordion)
-          if (!cover) { console.warn('Data error: cover required'); return; }
+          if (!cover) { console.warn('Data error: cover required'); }
+          else {
+            const cc = String(rec["Coordinate Compound"] || rec.coord || "");
+            const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
-          const cc = String(rec["Coordinate Compound"] || rec.coord || "");
-          const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
+            showLocationProfileModal({
+              // identifiers (single-field model)
+              locationID: String(rec?.locationID || ''),           // human slug if present
+              id:         String(rec?.ID || rec?.id || uid),       // ULID
 
-          // open LPM with strict contract: slug in locationID + alias; id = ULID (or slug if none)
-          showLocationProfileModal({
-            // identifiers
-            locationID: String(rec?.locationID || ''),                  // required slug from dataset
-            alias:      String(rec?.locationID || ''),                  // mirror slug for handlers
-            id:         String((rec?.ID || rec?.id || rec?.locationID || '')), // ULID preferred; else slug
+              // display
+              displayName: String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
+              name:        String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
 
-            // display
-            displayName: String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
-            name:        String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
+              // geo
+              lat, lng,
 
-            // geo
-            lat: (cc && cc.includes(",")) ? cc.split(",").map(s => s.trim())[0] : "",
-            lng: (cc && cc.includes(",")) ? cc.split(",").map(s => s.trim())[1] : "",
+              // media
+              imageSrc: cover,
+              images,
+              media,
 
-            // media
-            imageSrc: cover,
-            images,
-            media,
+              // meta
+              descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
+              tags: Array.isArray(rec?.tags) ? rec.tags : [],
+              contactInformation: (rec && rec.contactInformation) || {},
+              links: (rec && rec.links) || {},
+              ratings: (rec && rec.ratings) || {},
+              pricing: (rec && rec.pricing) || {},
 
-            // meta
-            descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
-            tags: Array.isArray(rec?.tags) ? rec.tags : [],
-            contactInformation: (rec && rec.contactInformation) || {},
-            links: (rec && rec.links) || {},
-            ratings: (rec && rec.ratings) || {},
-            pricing: (rec && rec.pricing) || {},
-
-            // origin
-            originEl: null
-          });
+              // origin
+              originEl: null
+            });
+          }
         }
       } else if (uid) {
         // Fallback: fetch by ULID when the list for this context wasn’t loaded
         try {
-          const ULID=/^[0-9A-HJKMNP-TV-Z]{26}$/i;
+          const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
           if (ULID.test(uid)) {
             const res = await fetch(`${API_BASE}/api/data/item?id=${encodeURIComponent(uid)}`, { cache:'no-store', credentials:'omit' });
             if (res.ok) {
-              const it = await res.json();
-              // shape into the same fields the modal expects
-              const nm = String((it?.locationName?.en ?? it?.locationName ?? 'Unnamed')).trim();
+              const it    = await res.json();
               const media = (it && typeof it.media === 'object') ? it.media : {};
-              const rawImgs = Array.isArray(media.images) ? media.images : (Array.isArray(it?.images) ? it.images : []);
-              const images = rawImgs.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
+              const raw   = Array.isArray(media.images) ? media.images : (Array.isArray(it?.images) ? it.images : []);
+              const images= raw.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
               const cover = (media.cover && String(media.cover).trim()) || images[0] || '';
 
-              // guard for strict data model; require cover only (align with Accordion)
               if (!cover) {
                 console.warn('Data error: cover required (QR)');
               } else {
@@ -1355,15 +1348,15 @@ async function initEmergencyBlock(countryOverride) {
                   return '';
                 })();
                 const [lat, lng] = cc.includes(',') ? cc.split(',').map(s=>s.trim()) : ['',''];
+                const name = String((it?.locationName?.en ?? it?.locationName ?? 'Unnamed')).trim();
 
                 showLocationProfileModal({
                   // identifiers
                   locationID: String(it?.slug || it?.alias || it?.locationID || ''), // human if available
-                  alias:      String(it?.slug || it?.alias || it?.locationID || ''), // mirror for handlers
                   id:         String(it?.ID || it?.id || uid),                        // ULID
 
                   // display
-                  displayName: nm, name: nm,
+                  displayName: name, name,
 
                   // geo
                   lat, lng,
@@ -1392,11 +1385,10 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
 
-        // drop only ?lp; keep others
-        q.delete('lp');
-        const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
-        history.replaceState({}, document.title, next);
-      }
+      // drop only ?lp; keep others
+      q.delete('lp');
+      const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
+      history.replaceState({}, document.title, next);
     }
             
     const geoCtx = ACTIVE_PAGE
