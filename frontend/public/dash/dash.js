@@ -124,6 +124,21 @@ function getISODate(input){
     }
   }
 
+  // Localize H2 and set window title with human slug (if available)
+  {
+    const pageTitleEl = document.getElementById('page-title');
+    const titleTxt = (typeof t === 'function' && t('dash.title')) || 'Dashboard';
+    if (pageTitleEl) pageTitleEl.textContent = titleTxt;
+
+    const human = String(document.getElementById('locationID')?.value || '').trim();
+    const prefix = (typeof t === 'function' && t('dash.windowTitlePrefix')) || 'Dashboard —';
+    if (human) {
+      document.title = `${prefix} ${human}`;
+    } else {
+      document.title = titleTxt;
+    }
+  }
+
   if (entEl) entEl.value = eid;
 
   if (modeEl && locWrap && entWrap) syncMode();
