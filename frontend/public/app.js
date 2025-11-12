@@ -309,17 +309,17 @@ function renderPopularGroup(list = geoPoints) {
       // guard for strict data model; require cover only (align with Accordion)
       if (!cover) { console.warn('Data error: cover required'); return; }
 
-      // prefer ULID from data-id; fallback to slug/alias when ULID is absent
-      const uid   = String(btn.getAttribute('data-id') || '').trim();      // ULID if present
-      const alias = String(btn.getAttribute('data-alias') || '').trim();   // slug/alias
+      // prefer ULID from data-id; fallback to human slug from data-locationid
+      const uid   = String(btn.getAttribute('data-id') || '').trim();            // ULID if present
+      const locid = String(btn.getAttribute('data-locationid') || '').trim();    // human slug
 
-      // need at least one; Popular path now derives alias above when both are missing
-      if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
+      // need at least one identifier (ULID or slug)
+      if (!uid && !locid) { console.warn('Data error: identifier missing (Popular)'); return; }
 
-      // single-field payload: locationID may be alias or ULID; id keeps ULID (if known) for tracking
+      // single-field payload: locationID carries the human slug; id is ULID-only (if present)
       showLocationProfileModal({
-        locationID: String(loc?.locationID || ''),                    // required identifier (alias or ULID)
-        id:         String(uid || loc?.locationID || ''),             // ULID preferred; else same identifier
+        locationID: String(loc?.locationID || locid || ''),           // slug for Dashboard/UI
+        id:         String(uid || ''),                                // ULID for tracking/beacons only
         displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,
@@ -537,10 +537,9 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
         const rawId       = String(rec?.ID || rec?.id || '').trim();
         const isULID      = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawId);
 
-        // publish dataset slug for all non-ULID actions
+        // publish dataset slug for all non-ULID actions (single source)
         if (datasetSlug) {
           locBtn.setAttribute('data-locationid', datasetSlug);
-          locBtn.setAttribute('data-alias', datasetSlug);
         }
 
         // keep only a true ULID in data-id
