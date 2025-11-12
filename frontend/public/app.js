@@ -317,8 +317,11 @@ function renderPopularGroup(list = geoPoints) {
       // need at least one; Popular path now derives alias above when both are missing
       if (!uid && !alias) { console.warn('Data error: id missing (Popular)'); return; }
 
+      // always include slug in payload (strict contract) and mirror to alias; keep ULID for beacons
       showLocationProfileModal({
-        locationID: String(loc?.locationID || ''), id: uid || alias,     // short slug from profiles.json
+        locationID: String(loc?.locationID || ''),                    // required slug
+        alias:      String(loc?.locationID || ''),                    // mirror slug for handlers
+        id:         String(uid || loc?.locationID || ''),             // ULID preferred; else slug
         displayName: locLabel, name: locLabel, // display + legacy
         lat, lng,
         imageSrc: cover,

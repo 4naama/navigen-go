@@ -1585,10 +1585,11 @@ function makeLocationButton(loc) {
     {
       const uid = String(btn.getAttribute('data-id') || '').trim();
       const alias = String(btn.getAttribute('data-alias') || '').trim();
+      // always include slug in payload (strict contract) and mirror to alias; keep ULID for beacons
       showLocationProfileModal({
-        // use the dataset slug exactly as provided by profiles.json
-        locationID: String(loc?.locationID || ''),
-        id: uid || String(loc?.locationID || ''), // ULID preferred for beacons; else fall back to the same slug
+        locationID: String(loc?.locationID || ''),                    // required slug
+        alias:      String(loc?.locationID || ''),                    // mirror slug for handlers
+        id:         String(uid || loc?.locationID || ''),             // ULID preferred; else slug
         name: btn.textContent,
         lat,
         lng,
@@ -1598,7 +1599,7 @@ function makeLocationButton(loc) {
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
         tags: Array.isArray(loc?.tags) ? loc.tags : [],
         contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
-                              : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
+                              : ((loc && typeof loc.contact === 'object']) ? loc.contact : {}),
         links: (loc && typeof loc.links === 'object') ? loc.links : {},
         originEl: btn
       });
