@@ -1132,41 +1132,37 @@ async function initEmergencyBlock(countryOverride) {
     // First API call must not block boot; force fresh list to avoid stale cache
     let listRes;
     try {
-      // fetch items for the current context path (works on root and on deep context pages)
-      {
-        // derive context from URL path (strip optional /{lang}/ and trailing slash)
-        const __ctx = location.pathname
-          .replace(/^\/[a-z]{2}\//i, '')
-          .replace(/^\/|\/$/g, '')
-          .toLowerCase();
+      // derive context from URL path (strip optional /{lang}/ and trailing slash)
+      const parts = location.pathname.split('/').filter(Boolean);
+      const noLang = (/^[a-z]{2}$/i.test(parts[0] || '')) ? parts.slice(1) : parts;
+      const __ctx = noLang.join('/').replace(/\/$/,'').toLowerCase();
 
-        if (__ctx) {
-          const url = new URL(
-            `/api/data/list?context=${encodeURIComponent(__ctx)}&limit=${API_LIMIT}`,
-            API_BASE
-          );
+      if (__ctx) {
+        const url = new URL(
+          `/api/data/list?context=${encodeURIComponent(__ctx)}&limit=${API_LIMIT}`,
+          API_BASE
+        );
 
-          if (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) {
-            url.searchParams.set('cb', String(Date.now()));
-          }
-          listRes = await fetch(url, {
-            credentials: 'omit',              // no cookies → no credentialed CORS needed
-            cache: 'no-store',
-            headers: {} // rely on fetch's cache: 'no-store'
-          });
+        if (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) {
+          url.searchParams.set('cb', String(Date.now()));
+        }
 
-          // retry once on 404: some deployed Worker bundles only match the slash-suffixed path
-          // keep query params; do not loop (one attempt only)
-          if (listRes && listRes.status === 404) {
-            const alt = new URL(url.toString());
-            if (!alt.pathname.endsWith('/')) alt.pathname += '/';
-            try {
-              const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store' }); // same headers/policy
-              if (r2.ok) listRes = r2;
-            } catch { /* non-fatal; fall back to original 404 result */ }
-          }
-        } else {
+        listRes = await fetch(url, {
+          credentials: 'omit',              // no cookies → no credentialed CORS needed
+          cache: 'no-store',
+          headers: {} // rely on fetch's cache: 'no-store'
+        });
 
+        // retry once on 404: some deployed Worker bundles only match the slash-suffixed path
+        // keep query params; do not loop (one attempt only)
+        if (listRes && listRes.status === 404) {
+          const alt = new URL(url.toString());
+          if (!alt.pathname.endsWith('/')) alt.pathname += '/';
+          const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store' }); // same headers/policy
+          if (r2.ok) listRes = r2;
+        }
+      } else {
+        // root (no context path): use empty list
         listRes = { ok: true, json: async () => ({ items: [] }) };
       }
     } catch (err) {
