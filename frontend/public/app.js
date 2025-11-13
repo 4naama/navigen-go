@@ -137,7 +137,9 @@ window.addEventListener('pageshow', (e) => { if (e.persisted) setVH(); }); // bf
 // Root hard-lock: if no /{lang}/ prefix, force EN and refresh labels (BFCache-safe)
 window.addEventListener('pageshow', async () => {
   const hasPrefix = /^[a-z]{2}(?:\/|$)/.test(location.pathname.slice(1));
-  if (!hasPrefix) {
+  // allow deep structured paths such as /language-schools/... to stay intact
+  const isStructured = /^\/(language|events|schools|services|places)/i.test(location.pathname);
+  if (!hasPrefix && !isStructured) {
     const locked = "en";
     if (document.documentElement.lang !== locked) {
       document.documentElement.lang = locked;
@@ -145,7 +147,6 @@ window.addEventListener('pageshow', async () => {
       try { localStorage.setItem("lang", locked); } catch {}
       await loadTranslations(locked);
       injectStaticTranslations();
-      // notify DOMContentLoaded scope to refresh labels (no globals)
       document.dispatchEvent(new CustomEvent('app:lang-changed', { detail: { lang: locked } }));
     }
   }
