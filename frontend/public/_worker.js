@@ -114,34 +114,43 @@ export default {
       const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
     }
 
-    // /s/<ULID> — QR shortlink: resolve via KV_ALIASES → /{context}?lp=<ULID> (robust JSON/text read)
+    // /s/<ULID> — QR shortlink: resolve context via Item API → /{context}?lp=<ULID>
     if (url.pathname.startsWith('/s/')) {
-      const ulidRaw = url.pathname.split('/')[2] || '';
-      const ulid = ulidRaw.trim();
+      const ulid = (url.pathname.split('/')[2] || '').trim();
       const c = url.searchParams.get('c') || '';
       if (!ulid) return Response.redirect(`${url.origin}/`, 302);
 
-      let rec = null;
+      // 1) Try Item API to get contexts[]; this avoids storing context in KV
+      let ctxPath = '';
       try {
-        // try JSON first
-        rec = await env.KV_ALIASES.get(ulid, { type: 'json' });
-        // fallback: plain text → parse
-        if (!rec) {
-          const txt = await env.KV_ALIASES.get(ulid);
-          if (txt) rec = JSON.parse(txt);
+        const api = new URL(`/api/data/item?id=${encodeURIComponent(ulid)}`, 'https://navigen-api.4naama.workers.dev');
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort('timeout'), 2500);
+        const res = await fetch(api.toString(), { redirect: 'follow', cf: { cacheEverything: false }, signal: ctrl.signal });
+        clearTimeout(timer);
+
+        if (res && res.ok) {
+          const item = await res.json();
+          const arr = Array.isArray(item?.contexts) ? item.contexts : [];
+          // pick first context (your client already supports multi-context via semi-colon join)
+          const primary = String(arr[0] || '').trim();
+          if (primary) ctxPath = primary.replace(/^\/+|\/+$/g, '');
         }
-      } catch (_) {
-        rec = null; // never throw from shortlink
+      } catch (_) { /* fall through to slug/KV or root fallback */ }
+
+      // 2) If API didn’t yield a context, try to infer from KV slug (optional, harmless)
+      if (!ctxPath) {
+        try {
+          const txt = await env.KV_ALIASES.get(ulid);
+          // (we intentionally do not build a path from slug — context is authoritative)
+        } catch (_) {}
       }
 
-      if (rec && rec.context) {
-        const ctx = String(rec.context).replace(/^\/+|\/+$/g, ''); // no leading/trailing slash
-        const dest = `${url.origin}/${ctx}?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
-        return Response.redirect(dest, 302);
-      }
+      // 3) Redirect: context path if known; else root with lp (client will still open LPM)
+      const dest = ctxPath
+        ? `${url.origin}/${ctxPath}?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ''}`
+        : `${url.origin}/?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
 
-      // hard fallback only if the KV key is truly missing/malformed
-      const dest = `${url.origin}/?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
       return Response.redirect(dest, 302);
     }
 
