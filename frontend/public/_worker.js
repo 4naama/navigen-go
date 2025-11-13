@@ -114,16 +114,30 @@ export default {
       const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
     }
 
-    // /s/{id}?c=... — shortlink for LPMs: redirect to /?lp=... (no edge counting to avoid 1101)
-    {
-      const p = url.pathname;
-      if (p.startsWith('/s/')) {
-        const [, , idRaw = ''] = p.split('/'); // ['', 's', '{id}']
-        const c = url.searchParams.get('c') || '';
-        const target = `/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
-        return Response.redirect(target, 302);
+    // /s/<ULID> — QR shortlink: resolve via KV_ALIASES → redirect to context path with ?lp=<ULID>
+    if (url.pathname.startsWith('/s/')) {
+      const [, , ulid = ''] = url.pathname.split('/');
+      if (!ulid) return Response.redirect(`${url.origin}/`, 302);
+
+      try {
+        // read mapping object stored in KV_ALIASES (one key per ULID)
+        const raw = await env.KV_ALIASES.get(ulid, 'json');
+
+        if (raw && raw.context) {
+          // normalized context path (no leading / inside the KV value)
+          const ctxPath = raw.context.replace(/^\/+/, '').replace(/\/+$/, '');
+          const dest = `${url.origin}/${ctxPath}?lp=${encodeURIComponent(ulid)}`;
+          return Response.redirect(dest, 302);
+        } else {
+          // fallback (should never happen if KV complete)
+          return Response.redirect(`${url.origin}/?lp=${encodeURIComponent(ulid)}`, 302);
+        }
+      } catch (err) {
+        console.warn('KV_ALIASES lookup failed', err);
+        return Response.redirect(`${url.origin}/?lp=${encodeURIComponent(ulid)}`, 302);
       }
     }
+
     // PWA & modules: early pass-through for static assets and JS modules
 
     // keeps .js/.mjs and /scripts/* from being rewritten to HTML
