@@ -1132,35 +1132,41 @@ async function initEmergencyBlock(countryOverride) {
     // First API call must not block boot; force fresh list to avoid stale cache
     let listRes;
     try {
-      if (ACTIVE_PAGE) {
-        // ensure valid context even if ACTIVE_PAGE is empty in this scope
-        const __ctx = (ACTIVE_PAGE && String(ACTIVE_PAGE)) ||
-          location.pathname.replace(/^\/[a-z]{2}\//, '').replace(/\/$/, '').toLowerCase();
-        const url = new URL(
-          `/api/data/list?context=${encodeURIComponent(__ctx)}&limit=${API_LIMIT}`,
-          API_BASE
-        );
+      // fetch items for the current context path (works on root and on deep context pages)
+      {
+        // derive context from URL path (strip optional /{lang}/ and trailing slash)
+        const __ctx = location.pathname
+          .replace(/^\/[a-z]{2}\//i, '')
+          .replace(/^\/|\/$/g, '')
+          .toLowerCase();
 
-        if (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) {
-          url.searchParams.set('cb', String(Date.now()));
-        }
-        listRes = await fetch(url, {
-          credentials: 'omit',              // no cookies → no credentialed CORS needed
-          cache: 'no-store',
-          headers: {} // rely on fetch's cache: 'no-store'
-        });
+        if (__ctx) {
+          const url = new URL(
+            `/api/data/list?context=${encodeURIComponent(__ctx)}&limit=${API_LIMIT}`,
+            API_BASE
+          );
 
-        // retry once on 404: some deployed Worker bundles only match the slash-suffixed path
-        // keep query params; do not loop (one attempt only)
-        if (listRes && listRes.status === 404) {
-          const alt = new URL(url.toString());
-          if (!alt.pathname.endsWith('/')) alt.pathname += '/';
-          try {
-            const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store' }); // same headers/policy
-            if (r2.ok) listRes = r2;
-          } catch { /* non-fatal; fall back to original 404 result */ }
-        }
-      } else {
+          if (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) {
+            url.searchParams.set('cb', String(Date.now()));
+          }
+          listRes = await fetch(url, {
+            credentials: 'omit',              // no cookies → no credentialed CORS needed
+            cache: 'no-store',
+            headers: {} // rely on fetch's cache: 'no-store'
+          });
+
+          // retry once on 404: some deployed Worker bundles only match the slash-suffixed path
+          // keep query params; do not loop (one attempt only)
+          if (listRes && listRes.status === 404) {
+            const alt = new URL(url.toString());
+            if (!alt.pathname.endsWith('/')) alt.pathname += '/';
+            try {
+              const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store' }); // same headers/policy
+              if (r2.ok) listRes = r2;
+            } catch { /* non-fatal; fall back to original 404 result */ }
+          }
+        } else {
+
         listRes = { ok: true, json: async () => ({ items: [] }) };
       }
     } catch (err) {
