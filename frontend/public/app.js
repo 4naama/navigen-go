@@ -74,22 +74,39 @@ import { loadTranslations, t, RTL_LANGS } from "./scripts/i18n.js"; // keep: sta
   if (urlLang) {
     const lang = norm(urlLang);
     const rest = "/" + (pathLang ? parts.slice(1).join("/") : parts.join("/"));
-    const target = lang === DEFAULT ? (rest === "/" ? "/" : rest) : `/${lang}${rest === "/" ? "" : rest}`;
+    const target =
+      lang === DEFAULT
+        ? rest === "/" ? "/" : rest
+        : `/${lang}${rest === "/" ? "" : rest}`;
     qs.delete("lang");
     const query = qs.toString() ? `?${qs}` : "";
     const next = `${target}${query}${location.hash || ""}`;
-    if (next !== location.pathname + location.search + location.hash) location.replace(next);
+    if (next !== location.pathname + location.search + location.hash) {
+      location.replace(next);
+    }
     return; // stop; navigation continues at new URL
+  }
+
+  // --- NEW: allow structured context paths (e.g., /language-schools/...) without lang prefix
+  const structured = /^\/(language|events|schools|services|places|experiences|guides)/i.test(location.pathname);
+  if (!pathLang && structured) {
+    // do not rewrite; keep current path and treat as default language
+    document.documentElement.lang = DEFAULT;
+    document.documentElement.dir = "ltr";
+    try { localStorage.setItem("lang", DEFAULT); } catch {}
+    return;
   }
 
   // Decide from path (root → EN), persist immediately so i18n sees the right value
   const chosen = pathLang || DEFAULT;
   document.documentElement.lang = chosen;
   // Early RTL hint; i18n confirms later
-  const RTL_EARLY = ['ar','he','fa','ur'];
-  document.documentElement.dir = RTL_EARLY.includes(chosen) ? 'rtl' : 'ltr';
-  
-  try { localStorage.setItem("lang", chosen); } catch {}
+  const RTL_EARLY = ["ar", "he", "fa", "ur"];
+  document.documentElement.dir = RTL_EARLY.includes(chosen) ? "rtl" : "ltr";
+
+  try {
+    localStorage.setItem("lang", chosen);
+  } catch {}
 })();
 
 // ✅ Determines whether app is running in standalone/PWA mode
