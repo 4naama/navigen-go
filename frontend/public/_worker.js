@@ -114,28 +114,35 @@ export default {
       const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
     }
 
-    // /s/<ULID> — QR shortlink: resolve via KV_ALIASES → redirect to context path with ?lp=<ULID>
+    // /s/<ULID> — QR shortlink: resolve via KV_ALIASES → /{context}?lp=<ULID> (robust JSON/text read)
     if (url.pathname.startsWith('/s/')) {
-      const [, , ulid = ''] = url.pathname.split('/');
+      const ulidRaw = url.pathname.split('/')[2] || '';
+      const ulid = ulidRaw.trim();
+      const c = url.searchParams.get('c') || '';
       if (!ulid) return Response.redirect(`${url.origin}/`, 302);
 
+      let rec = null;
       try {
-        // read mapping object stored in KV_ALIASES (one key per ULID)
-        const raw = await env.KV_ALIASES.get(ulid, 'json');
-
-        if (raw && raw.context) {
-          // normalized context path (no leading / inside the KV value)
-          const ctxPath = raw.context.replace(/^\/+/, '').replace(/\/+$/, '');
-          const dest = `${url.origin}/${ctxPath}?lp=${encodeURIComponent(ulid)}`;
-          return Response.redirect(dest, 302);
-        } else {
-          // fallback (should never happen if KV complete)
-          return Response.redirect(`${url.origin}/?lp=${encodeURIComponent(ulid)}`, 302);
+        // try JSON first
+        rec = await env.KV_ALIASES.get(ulid, { type: 'json' });
+        // fallback: plain text → parse
+        if (!rec) {
+          const txt = await env.KV_ALIASES.get(ulid);
+          if (txt) rec = JSON.parse(txt);
         }
-      } catch (err) {
-        console.warn('KV_ALIASES lookup failed', err);
-        return Response.redirect(`${url.origin}/?lp=${encodeURIComponent(ulid)}`, 302);
+      } catch (_) {
+        rec = null; // never throw from shortlink
       }
+
+      if (rec && rec.context) {
+        const ctx = String(rec.context).replace(/^\/+|\/+$/g, ''); // no leading/trailing slash
+        const dest = `${url.origin}/${ctx}?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
+        return Response.redirect(dest, 302);
+      }
+
+      // hard fallback only if the KV key is truly missing/malformed
+      const dest = `${url.origin}/?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
+      return Response.redirect(dest, 302);
     }
 
     // PWA & modules: early pass-through for static assets and JS modules
