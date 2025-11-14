@@ -443,7 +443,7 @@ export default {
         });
       }
 
-      // GET /api/data/profile?id=...
+            // GET /api/data/profile?id=...
       // profile: accept alias or ULID; resolve alias → ULID via KV_ALIASES
       if (normPath === "/api/data/profile" && req.method === "GET") {
         const base = req.headers.get("Origin") || "https://navigen.io"; // keep caller origin
@@ -472,6 +472,74 @@ export default {
             "x-navigen-route": "/api/data/profile"
           }
         });
+      }
+
+      // GET /api/data/item?id=...
+      // item: accept alias or ULID; resolve alias → ULID; return single item + contexts
+      if (normPath === "/api/data/item" && req.method === "GET") {
+        const base = req.headers.get("Origin") || "https://navigen.io";
+        const target = new URL("/data/profiles.json", base);
+
+        // accept alias or ULID; resolve alias → ULID for canonical id
+        const rawId = (url.searchParams.get("id") || "").trim();
+        const canonical = (await resolveUid(rawId, env)) || rawId; // ULID preferred; slug fallback
+
+        const r = await fetch(target.toString(), {
+          cf: { cacheTtl: 60, cacheEverything: true },
+          headers: { "Accept": "application/json" }
+        });
+
+        if (!r.ok) {
+          return json(
+            { error: { code: "upstream", message: "profiles.json not reachable" } },
+            502,
+            { "x-navigen-route": "/api/data/item" }
+          );
+        }
+
+        let data: any;
+        try {
+          data = await r.json();
+        } catch {
+          data = { locations: [] };
+        }
+
+        const list: any[] = Array.isArray(data?.locations) ? data.locations : [];
+        // match by ULID OR slug; tolerate legacy fields
+        const hit = list.find((p) => {
+          const slug = String(p?.locationID || "").trim();
+          const id   = String(p?.ID || p?.id || "").trim();
+          return slug === rawId || id === rawId || id === canonical;
+        });
+
+        if (!hit) {
+          return json(
+            { error: { code: "not_found", message: "item not found" } },
+            404,
+            { "x-navigen-route": "/api/data/item" }
+          );
+        }
+
+        const ctxStr = String(hit.context || hit.Context || "").trim();
+        const ctxArr = ctxStr
+          ? ctxStr.split(";").map((s: string) => s.trim()).filter(Boolean)
+          : [];
+
+        const payload = {
+          ID: canonical,
+          locationID: String(hit.locationID || "").trim(),
+          contexts: ctxArr,
+          // minimal fields for LPM fallback (can be extended later)
+          locationName: hit.locationName || hit.name,
+          media: hit.media || {},
+          coord: hit.coord || hit["Coordinate Compound"] || "",
+          links: hit.links || {},
+          contactInformation: hit.contactInformation || hit.contact || {},
+          descriptions: hit.descriptions || {},
+          tags: Array.isArray(hit.tags) ? hit.tags : []
+        };
+
+        return json(payload, 200, { "x-navigen-route": "/api/data/item" });
       }
 
       // Fallback 404 — include the evaluated path for live verification
@@ -521,29 +589,60 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
   const [, , idRaw = ""] = url.pathname.split("/"); // "/s/{id}"
   const c = url.searchParams.get("c") || "";
 
-  const resolved = await resolveUid(idRaw, env);
-  const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(resolved || "");
+  const raw = idRaw.trim();
+  if (!raw) {
+    return Response.redirect(`${url.origin}/`, 302);
+  }
 
-  // count the view against the resolved ULID when we have one; otherwise skip counting
+  // 1) Resolve slug → canonical ULID (via KV_ALIASES); fall back to raw when unresolved
+  const resolved = await resolveUid(raw, env);
+  const ulid = resolved || raw;
+  const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(ulid);
+
+  // 2) Count scan for canonical ULID only (same as before)
   if (isUlid) {
-    const now = new Date(); const country = (req as any).cf?.country || "";
+    const now = new Date();
+    const country = (req as any).cf?.country || "";
     const day = dayKeyFor(now, undefined, country);
     const ua = req.headers.get("User-Agent") || "";
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-    // count only when opened on a phone
     if (isMobile) {
-      await kvIncr(env.KV_STATS, `stats:${resolved!}:${day}:qr-scan`);
+      await kvIncr(env.KV_STATS, `stats:${ulid}:${day}:qr-scan`);
     }
   }
 
-  const target = isUlid
-    ? `https://navigen.io/?lp=${encodeURIComponent(resolved!)}${c ? `&c=${encodeURIComponent(c)}` : ""}`
-    : `https://navigen.io/?lp=${encodeURIComponent(idRaw)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
+  // 3) Try to fetch item + contexts from our new /api/data/item
+  let ctxPath = "";
+  if (isUlid) {
+    try {
+      const itemUrl = new URL(`/api/data/item?id=${encodeURIComponent(ulid)}`, url.origin).toString();
+      const res = await fetch(itemUrl, { cf: { cacheTtl: 30, cacheEverything: false } });
+      if (res.ok) {
+        const item = await res.json().catch(() => null as any);
+        const arr = Array.isArray(item?.contexts) ? item.contexts : [];
+        if (arr.length) {
+          // pick the deepest/most specific context (most path segments)
+          ctxPath = arr
+            .slice()
+            .sort((a: string, b: string) => (b.split("/").length - a.split("/").length))[0]
+            .trim()
+            .replace(/^\/+|\/+$/g, "");
+        }
+      }
+    } catch {
+      // ignore and fall back to root + lp
+    }
+  }
+
+  // 4) Build redirect target: context page + lp=ULID when we know context; else root + lp
+  const dest = ctxPath && isUlid
+    ? `https://navigen.io/${ctxPath}?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ""}`
+    : `https://navigen.io/?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
 
   return new Response(null, {
     status: 302,
     headers: {
-      "Location": target,
+      "Location": dest,
       "Cache-Control": "public, max-age=300",
       "Access-Control-Allow-Origin": "https://navigen.io",
       "Access-Control-Allow-Credentials": "true",
