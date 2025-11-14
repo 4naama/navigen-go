@@ -8,8 +8,8 @@ const EVENT_ORDER = [
   "lpm-open","call","email","whatsapp","telegram","messenger",
   "official","booking","newsletter",
   "facebook","instagram","pinterest","spotify","tiktok","youtube",
-  "share","save","unsave","map","qr-scan","qr-view"
-] as const; // add qr-scan; keep qr-view for image/modal-only
+  "share","save","unsave","map","qr-print","qr-scan","qr-view"
+] as const;
 
 type EventKey = typeof EVENT_ORDER[number];
 
@@ -630,7 +630,11 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
   // try to upgrade to context page when we have a ULID
   if (isUlid) {
     try {
-      const itemUrl = new URL(`/api/data/item?id=${encodeURIComponent(ulid)}`, url.origin).toString();
+      const itemUrl = new URL(
+        `/api/data/item?id=${encodeURIComponent(ulid)}`,
+        "https://navigen-api.4naama.workers.dev"
+      ).toString();
+
       const res = await fetch(itemUrl, { cf: { cacheEverything: false } });
       if (res.ok) {
         const item: any = await res.json().catch(() => null);
