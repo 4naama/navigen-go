@@ -422,7 +422,6 @@ export default {
         url.searchParams.forEach((v, k) => target.searchParams.set(k, v)); // pass through query exactly
         const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true }, headers: { "Accept": "application/json" } });
 
-        // on error, log minimal details for triage
         if (r.status >= 400) {
           const preview = await r.clone().text().then(t => t.slice(0, 256)).catch(() => "<no-body>");
           const qs = Object.fromEntries(target.searchParams);
@@ -443,18 +442,16 @@ export default {
         });
       }
 
-            // GET /api/data/profile?id=...
+      // GET /api/data/profile?id=...
       // profile: accept alias or ULID; resolve alias → ULID via KV_ALIASES
       if (normPath === "/api/data/profile" && req.method === "GET") {
         const base = req.headers.get("Origin") || "https://navigen.io"; // keep caller origin
         const target = new URL("/api/data/profile", base);
 
-        // accept alias or ULID; resolve alias → ULID
         const raw = (url.searchParams.get("id") || "").trim();
         const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(raw);
         const mapped = isUlid ? raw : (await resolveUid(raw, env)) || raw;
 
-        // rebuild query with mapped id
         url.searchParams.forEach((v, k) => { if (k !== "id") target.searchParams.set(k, v); });
         target.searchParams.set("id", mapped);
 
@@ -475,21 +472,27 @@ export default {
       }
 
       // GET /api/data/item?id=...
-      // item: accept alias or ULID; resolve alias → ULID; return single item + contexts
+      // item: accept alias or ULID; resolve alias → ULID; return single item + contexts[]
       if (normPath === "/api/data/item" && req.method === "GET") {
+        const idParam = (url.searchParams.get("id") || "").trim();
+        if (!idParam) {
+          return json(
+            { error: { code: "invalid_request", message: "id required" } },
+            400,
+            { "x-navigen-route": "/api/data/item" }
+          );
+        }
+
+        const mapped = (await resolveUid(idParam, env)) || idParam;
+
         const base = req.headers.get("Origin") || "https://navigen.io";
-        const target = new URL("/data/profiles.json", base);
-
-        // accept alias or ULID; resolve alias → ULID for canonical id
-        const rawId = (url.searchParams.get("id") || "").trim();
-        const canonical = (await resolveUid(rawId, env)) || rawId; // ULID preferred; slug fallback
-
-        const r = await fetch(target.toString(), {
+        const src  = new URL("/data/profiles.json", base).toString();
+        const resp = await fetch(src, {
           cf: { cacheTtl: 60, cacheEverything: true },
           headers: { "Accept": "application/json" }
         });
 
-        if (!r.ok) {
+        if (!resp.ok) {
           return json(
             { error: { code: "upstream", message: "profiles.json not reachable" } },
             502,
@@ -499,17 +502,21 @@ export default {
 
         let data: any;
         try {
-          data = await r.json();
+          data = await resp.json();
         } catch {
           data = { locations: [] };
         }
 
-        const list: any[] = Array.isArray(data?.locations) ? data.locations : [];
-        // match by ULID OR slug; tolerate legacy fields
-        const hit = list.find((p) => {
+        const locs: any[] = Array.isArray(data?.locations)
+          ? data.locations
+          : (data?.locations && typeof data.locations === "object")
+            ? Object.values(data.locations)
+            : [];
+
+        const hit = locs.find((p) => {
           const slug = String(p?.locationID || "").trim();
           const id   = String(p?.ID || p?.id || "").trim();
-          return slug === rawId || id === rawId || id === canonical;
+          return id === mapped || slug === idParam;
         });
 
         if (!hit) {
@@ -526,24 +533,24 @@ export default {
           : [];
 
         const payload = {
-          ID: canonical,
+          id: mapped || hit.ID || hit.id || hit.locationID,
           locationID: String(hit.locationID || "").trim(),
           contexts: ctxArr,
-          // minimal fields for LPM fallback (can be extended later)
           locationName: hit.locationName || hit.name,
           media: hit.media || {},
           coord: hit.coord || hit["Coordinate Compound"] || "",
           links: hit.links || {},
           contactInformation: hit.contactInformation || hit.contact || {},
           descriptions: hit.descriptions || {},
-          tags: Array.isArray(hit.tags) ? hit.tags : []
+          tags: Array.isArray(hit.tags) ? hit.tags : [],
+          ratings: hit.ratings || {},
+          pricing: hit.pricing || {}
         };
 
         return json(payload, 200, { "x-navigen-route": "/api/data/item" });
       }
 
       // Fallback 404 — include the evaluated path for live verification
-
       return json(
         { error: { code: "not_found", message: "No such route", path: (new URL(req.url)).pathname } },
         404,
@@ -594,50 +601,57 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
     return Response.redirect(`${url.origin}/`, 302);
   }
 
-  // 1) Resolve slug → canonical ULID (via KV_ALIASES); fall back to raw when unresolved
-  const resolved = await resolveUid(raw, env);
-  const ulid = resolved || raw;
-  const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(ulid);
+  const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
-  // 2) Count scan for canonical ULID only (same as before)
+  // slug → canonical ULID (via KV_ALIASES); fallback to raw
+  const mapped = await resolveUid(raw, env);
+  const ulid = mapped || raw;
+  const isUlid = ULID_RE.test(ulid);
+
+  // count qr-scan when we have a ULID and a mobile UA
   if (isUlid) {
-    const now = new Date();
-    const country = (req as any).cf?.country || "";
-    const day = dayKeyFor(now, undefined, country);
-    const ua = req.headers.get("User-Agent") || "";
-    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-    if (isMobile) {
-      await kvIncr(env.KV_STATS, `stats:${ulid}:${day}:qr-scan`);
+    try {
+      const now = new Date();
+      const country = (req as any).cf?.country || "";
+      const day = dayKeyFor(now, undefined, country);
+      const ua = req.headers.get("User-Agent") || "";
+      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+      if (isMobile) {
+        await kvIncr(env.KV_STATS, `stats:${ulid}:${day}:qr-scan`);
+      }
+    } catch {
+      // ignore counting errors
     }
   }
 
-  // 3) Try to fetch item + contexts from our new /api/data/item
-  let ctxPath = "";
+  // default destination: root + lp
+  let dest = `https://navigen.io/?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
+
+  // try to upgrade to context page when we have a ULID
   if (isUlid) {
     try {
       const itemUrl = new URL(`/api/data/item?id=${encodeURIComponent(ulid)}`, url.origin).toString();
-      const res = await fetch(itemUrl, { cf: { cacheTtl: 30, cacheEverything: false } });
+      const res = await fetch(itemUrl, { cf: { cacheEverything: false } });
       if (res.ok) {
-        const item = await res.json().catch(() => null as any);
-        const arr = Array.isArray(item?.contexts) ? item.contexts : [];
-        if (arr.length) {
-          // pick the deepest/most specific context (most path segments)
-          ctxPath = arr
+        const item: any = await res.json().catch(() => null);
+        const ctxs: string[] = Array.isArray(item?.contexts) ? item.contexts : [];
+        if (ctxs.length) {
+          // pick the deepest context (most path segments)
+          const best = ctxs
             .slice()
-            .sort((a: string, b: string) => (b.split("/").length - a.split("/").length))[0]
+            .sort((a, b) => b.split("/").length - a.split("/").length)[0];
+          const ctxPath = String(best || "")
             .trim()
             .replace(/^\/+|\/+$/g, "");
+          if (ctxPath) {
+            dest = `https://navigen.io/${ctxPath}?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
+          }
         }
       }
     } catch {
-      // ignore and fall back to root + lp
+      // fall back to root + lp on any error
     }
   }
-
-  // 4) Build redirect target: context page + lp=ULID when we know context; else root + lp
-  const dest = ctxPath && isUlid
-    ? `https://navigen.io/${ctxPath}?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ""}`
-    : `https://navigen.io/?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
 
   return new Response(null, {
     status: 302,
