@@ -874,7 +874,7 @@ async function initLpmImageSlider(modal, data) {
           // open the same QR modal as before (moved here)
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
-            const uidRaw = String(data?.locationID || data?.id || '').trim();
+            const uidRaw = String(data?.id || data?.locationID || '').trim();
             const uid = uidRaw || String(document.getElementById('location-profile-modal')?.getAttribute('data-locationid') || '').trim();
             if (!uid) { showToast('Missing id', 1600); return; }
 
