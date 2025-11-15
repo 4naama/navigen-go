@@ -483,8 +483,13 @@ export default {
           );
         }
 
-        const mapped = (await resolveUid(idParam, env)) || idParam;
+        const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
+        // 1) canonical ULID (if idParam is a slug)
+        const mapped = (await resolveUid(idParam, env)) || idParam;
+        const isUlid = ULID_RE.test(mapped);
+
+        // 2) load profiles.json once
         const base = req.headers.get("Origin") || "https://navigen.io";
         const src  = new URL("/data/profiles.json", base).toString();
         const resp = await fetch(src, {
@@ -513,11 +518,49 @@ export default {
             ? Object.values(data.locations)
             : [];
 
-        const hit = locs.find((p) => {
+        // 3) first try: direct slug/ID match from profiles.json
+        let hit = locs.find((p) => {
           const slug = String(p?.locationID || "").trim();
           const id   = String(p?.ID || p?.id || "").trim();
-          return id === mapped || slug === idParam;
+          // match by slug OR by ULID (if profiles.json ever stores it)
+          return slug === idParam || id === mapped;
         });
+
+        // 4) second try: ULID → slug via KV_ALIASES, then slug → profiles.json
+        if (!hit && isUlid && env.KV_ALIASES) {
+          let aliasSlug = "";
+          let cursor: string | undefined = undefined;
+
+          do {
+            const page = await env.KV_ALIASES.list({ prefix: "alias:", cursor });
+            for (const k of page.keys) {
+              const name = k.name; // "alias:<slug>"
+              const raw = await env.KV_ALIASES.get(name, "text");
+              if (!raw) continue;
+
+              let val = raw.trim();
+              if (val.startsWith("{")) {
+                try {
+                  const j = JSON.parse(val) as any;
+                  val = String(j?.locationID || "").trim();
+                } catch {
+                  val = "";
+                }
+              }
+
+              if (val && val === mapped) {
+                aliasSlug = name.replace(/^alias:/, "");
+                break;
+              }
+            }
+            if (aliasSlug) break;
+            cursor = page.cursor || undefined;
+          } while (cursor);
+
+          if (aliasSlug) {
+            hit = locs.find((p) => String(p?.locationID || "").trim() === aliasSlug);
+          }
+        }
 
         if (!hit) {
           return json(
