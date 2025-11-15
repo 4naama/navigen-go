@@ -729,10 +729,12 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   const fmt = (url.searchParams.get("fmt") || "svg").toLowerCase();
   const size = clamp(parseInt(url.searchParams.get("size") || "512", 10), 128, 1024);
 
-  // ULID/slug → scan counter via /out/qr-scan → shortlink /s/{id} (context upgrade happens there)
-  const dataUrl = isUlid
-    ? `https://navigen.io/out/qr-scan/${encodeURIComponent(resolved!)}?to=${encodeURIComponent(`/s/${resolved!}${c ? `?c=${c}` : ""}`)}`
-    : `https://navigen.io/out/qr-scan/${encodeURIComponent(raw)}?to=${encodeURIComponent(`/s/${raw}${c ? `?c=${c}` : ""}`)}`;
+  // id used for counting (ULID if resolvable, else raw); slug/id used for /s/{...}
+  const idForScan = isUlid ? resolved! : raw;
+  const slugOrId = raw;
+
+  const dataUrl =
+    `https://navigen.io/out/qr-scan/${encodeURIComponent(idForScan)}?to=${encodeURIComponent(`/s/${slugOrId}${c ? `?c=${c}` : ""}`)}`;
 
   if (fmt === "svg") {
     const svg = await QRCode.toString(dataUrl, { type: "svg", width: size, margin: 0 });
