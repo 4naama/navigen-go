@@ -7,6 +7,7 @@ workers_dev = true           # test on workers.dev first; add route later
 # When ready to serve on your domain, uncomment and set:
 # Only QR + Track on navigen.io
 routes = [
+  { pattern = "navigen.io/s/*",               zone_name = "navigen.io" },
   { pattern = "navigen.io/api/track",         zone_name = "navigen.io" },
   { pattern = "navigen.io/api/qr*",           zone_name = "navigen.io" },
   { pattern = "navigen.io/api/status",        zone_name = "navigen.io" },
