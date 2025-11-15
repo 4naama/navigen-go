@@ -686,10 +686,10 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   const fmt = (url.searchParams.get("fmt") || "svg").toLowerCase();
   const size = clamp(parseInt(url.searchParams.get("size") || "512", 10), 128, 1024);
 
-  // ✅ ULID → count+redirect via /out/qr-scan to the LPM (?lp=...); non-ULID falls back to LPM with raw id
+  // ULID/slug → scan counter via /out/qr-scan → shortlink /s/{id} (context upgrade happens there)
   const dataUrl = isUlid
-    ? `https://navigen.io/out/qr-scan/${encodeURIComponent(resolved!)}?to=${encodeURIComponent(`/?lp=${resolved!}${c ? `&c=${c}` : ""}`)}`
-    : `https://navigen.io/?lp=${encodeURIComponent(raw)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
+    ? `https://navigen.io/out/qr-scan/${encodeURIComponent(resolved!)}?to=${encodeURIComponent(`/s/${resolved!}${c ? `?c=${c}` : ""}`)}`
+    : `https://navigen.io/out/qr-scan/${encodeURIComponent(raw)}?to=${encodeURIComponent(`/s/${raw}${c ? `?c=${c}` : ""}`)}`;
 
   if (fmt === "svg") {
     const svg = await QRCode.toString(dataUrl, { type: "svg", width: size, margin: 0 });
