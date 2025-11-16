@@ -889,10 +889,25 @@ async function initLpmImageSlider(modal, data) {
             const inner = document.createElement('div'); inner.className = 'modal-body-inner';
 
             const img = document.createElement('img');
-            img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
-            const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
-              || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
-            img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512`;
+            img.alt = 'QR Code';
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+
+            const slugOrId = String(data?.locationID || data?.id || uid || '').trim();
+
+            // Prefer qrUrl from the dataset; fall back to ?lp=<id> on the current origin
+            const qrPayload = (data && typeof data.qrUrl === 'string' && data.qrUrl.trim())
+              ? data.qrUrl.trim()
+              : `${location.origin}/?lp=${encodeURIComponent(slugOrId)}`;
+
+            QRCode.toDataURL(qrPayload, { width: 512, margin: 1 })
+              .then((dataUrl) => {
+                img.src = dataUrl;
+              })
+              .catch((err) => {
+                console.warn('QR generation failed', err);
+                img.alt = 'QR unavailable';
+              });
 
             const actions = document.createElement('div');
             actions.className = 'modal-footer cta-compact';
