@@ -892,7 +892,7 @@ async function initLpmImageSlider(modal, data) {
             img.alt = 'QR Code'; img.style.maxWidth = '100%'; img.style.height = 'auto';
             const BASE = (document.querySelector('meta[name="api-origin"]')?.content?.trim())
               || ((location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) ? 'https://navigen.io' : location.origin);
-            img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512&cb=${Date.now()}`;
+            img.src = `${BASE}/api/qr?locationID=${encodeURIComponent(uid)}&size=512`;
 
             const actions = document.createElement('div');
             actions.className = 'modal-footer cta-compact';
