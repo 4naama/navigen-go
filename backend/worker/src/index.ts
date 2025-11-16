@@ -715,27 +715,58 @@ async function handleShortLink(req: Request, env: Env): Promise<Response> {
 async function handleQr(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
   const raw = (url.searchParams.get("locationID") || "").trim();
-  if (!raw) return json({ error: { code: "invalid_request", message: "locationID required" } }, 400);
+  if (!raw) {
+    return json(
+      { error: { code: "invalid_request", message: "locationID required" } },
+      400
+    );
+  }
 
-  // count a QR scan for daily stats (prefer resolved ULID)
-  const now = new Date();
-  const country = (req as any).cf?.country || "";
-  const day = dayKeyFor(now, undefined, country); // uses Berlin fallback internally
-  const resolved = await resolveUid(raw, env); // require canonical id for counting
-  // removed counting at generation-time; QR scans are counted at /s/{id} only
-  const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(resolved || ""); // reflect counted id
-
-  const c = url.searchParams.get("c") || "";
   const fmt = (url.searchParams.get("fmt") || "svg").toLowerCase();
   const size = clamp(parseInt(url.searchParams.get("size") || "512", 10), 128, 1024);
 
-  // id used for counting (ULID if resolvable, else raw); slug/id used for /s/{...}
-  const idForScan = isUlid ? resolved! : raw;
-  const slugOrId = raw;
+  // 1) Load profiles.json and find the matching record by slug or ID
+  let profiles: any;
+  try {
+    const src = new URL("/data/profiles.json", "https://navigen.io").toString();
+    const resp = await fetch(src, {
+      cf: { cacheTtl: 60, cacheEverything: true },
+      headers: { Accept: "application/json" }
+    });
+    if (!resp.ok) {
+      return json(
+        { error: { code: "upstream", message: "profiles.json not reachable" } },
+        502
+      );
+    }
+    profiles = await resp.json();
+  } catch {
+    profiles = { locations: [] };
+  }
 
-  const dataUrl =
-    `https://navigen.io/out/qr-scan/${encodeURIComponent(idForScan)}?to=${encodeURIComponent(`/s/${slugOrId}${c ? `?c=${c}` : ""}`)}`;
+  const locs: any[] = Array.isArray(profiles?.locations)
+    ? profiles.locations
+    : (profiles?.locations && typeof profiles.locations === "object")
+      ? Object.values(profiles.locations)
+      : [];
 
+  const hit = locs.find((p) => {
+    const slug = String(p?.locationID || "").trim();
+    const id   = String(p?.ID || p?.id || "").trim();
+    return slug === raw || id === raw;
+  });
+
+  // 2) Use qrUrl from the record if present; fallback to simple ?lp=<raw>
+  let dataUrl = "";
+  if (hit && hit.qrUrl) {
+    dataUrl = String(hit.qrUrl).trim();
+  } else {
+    const dest = new URL("/", "https://navigen.io");
+    dest.searchParams.set("lp", raw);
+    dataUrl = dest.toString();
+  }
+
+  // 3) Generate QR code with dataUrl as the payload (no /s, no /out)
   if (fmt === "svg") {
     const svg = await QRCode.toString(dataUrl, { type: "svg", width: size, margin: 0 });
     return new Response(svg, {
@@ -744,7 +775,7 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
         "Cache-Control": "public, max-age=86400",
         "Access-Control-Allow-Origin": "https://navigen.io",
         "Access-Control-Allow-Credentials": "true",
-        "Vary": "Origin"
+        Vary: "Origin"
       }
     });
   } else {
@@ -757,16 +788,6 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
       }
     });
   }
-
-  if (fmt === "png") {
-    const dataUrlPng: string = await QRCode.toDataURL(dataUrl, { width: size, margin: 0 });
-    const base64 = dataUrlPng.split(",")[1] || "";
-    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-    return new Response(bytes, {
-      headers: { "content-type": "image/png", "cache-control": "public, max-age=86400" }
-    });
-  }
-  return json({ error: { code: "invalid_request", message: "fmt must be svg or png" } }, 400);
 }
 
 async function handleTrack(req: Request, env: Env): Promise<Response> {
