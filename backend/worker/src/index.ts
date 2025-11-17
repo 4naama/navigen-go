@@ -756,26 +756,27 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
     return slug === raw || id === raw;
   });
 
-  // 2) Use qrUrl from the record if present; fallback to simple ?lp=<raw>, but always wrap in /out/qr-scan so scans are counted server-side
-  const slug = String(hit?.locationID || "").trim();
-  const id   = String(hit?.ID || hit?.id || "").trim();
-  const idForStats = (id || slug || raw).trim();
+  // 2) Use qrUrl from the record; always wrap in /out/qr-scan so the server counts the scan before redirect
+  const hitUrl = hit && hit.qrUrl ? String(hit.qrUrl).trim() : "";
 
-  // final landing target: either explicit qrUrl or basic ?lp=<raw> landing
-  let targetUrl: string;
-  if (hit && hit.qrUrl) {
-    targetUrl = String(hit.qrUrl).trim();
-  } else {
-    const dest = new URL("/", "https://navigen.io");
-    dest.searchParams.set("lp", raw);
-    targetUrl = dest.toString();
+  if (!hit || !hitUrl) {
+    // precise match is required; caller can show an apology toast instead of a fake/dead landing
+    return json(
+      { error: { code: "not_found", message: "QR profile not found for locationID" } },
+      404
+    );
   }
 
-  // QR payload: /out/qr-scan/:id?to=<targetUrl> → Pages _worker.js counts + redirects
-  let dataUrl = targetUrl;
+  // identifiers for stats: prefer canonical ULID, otherwise slug; canonicalId() on Pages side normalizes
+  const slug = String(hit.locationID || "").trim();
+  const id   = String((hit as any).ID ?? (hit as any).id ?? "").trim();
+  const idForStats = (id || slug || raw).trim();
+
+  // QR payload: /out/qr-scan/:id?to=<qrUrl> — Pages _worker.js will increment KV_STATS and then redirect
+  let dataUrl = hitUrl;
   if (idForStats) {
     const out = new URL(`/out/qr-scan/${encodeURIComponent(idForStats)}`, "https://navigen.io");
-    out.searchParams.set("to", targetUrl);
+    out.searchParams.set("to", hitUrl);
     dataUrl = out.toString();
   }
 

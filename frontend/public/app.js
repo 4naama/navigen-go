@@ -1296,41 +1296,29 @@ async function initEmergencyBlock(countryOverride) {
     // normalize groups now that geoPoints is ready
     normalizeGroupKeys(geoPoints);
 
-    // Open LPM on ?lp=<idOrSlug> (post-mapping, slug or ULID)
+    // Open LPM on ?lp=<id> (post-mapping, single source of truth)
     {
       const q   = new URLSearchParams(location.search);
-      const token = (q.get('lp') || '').trim();
+      const uid = (q.get('lp') || '').trim();
 
-      if (token && Array.isArray(geoPoints) && geoPoints.length) {
+      if (uid && Array.isArray(geoPoints) && geoPoints.length) {
         const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-        let rec = null;
-
-        // 1) try ULID match in ID/id slot
-        if (ULID.test(token)) {
-          rec = geoPoints.find(x => String(x?.ID || x?.id || '') === token) || null;
-        }
-
-        // 2) if not found, try slug match in locationID
-        if (!rec) {
-          rec = geoPoints.find(x => String(x?.locationID || '').trim() === token) || null;
-        }
-
+        const rec  = ULID.test(uid) ? geoPoints.find(x => String(x?.ID || x?.id || '') === uid) : null; // find by ULID in ID/id
         if (rec) {
           const media   = rec.media || {};
           const gallery = Array.isArray(media.images) ? media.images : [];
           const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
 
           const cover = (media.cover && String(media.cover).trim()) || images[0];
-          if (!cover) {
-            console.warn('Data error: cover required');
-          } else {
+          if (!cover) { console.warn('Data error: cover required'); }
+          else {
             const cc = String(rec["Coordinate Compound"] || rec.coord || "");
             const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
             showLocationProfileModal({
               // identifiers (single-field model)
-              locationID: String(rec?.locationID || ''),           // slug if present
-              id:         String(rec?.ID || rec?.id || token),     // ULID if known, else token
+              locationID: String(rec?.locationID || ''),           // human slug if present
+              id:         String(rec?.ID || rec?.id || uid),       // ULID
 
               // display
               displayName: String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
@@ -1357,60 +1345,59 @@ async function initEmergencyBlock(countryOverride) {
             });
           }
         }
-      } else if (token) {
-        // Fallback: fetch by id or slug when list for this context wasn’t loaded
+      } else if (uid) {
+        // Fallback: fetch by ULID when the list for this context wasn’t loaded
         try {
           const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-          const res = await fetch(
-            `${API_BASE}/api/data/item?id=${encodeURIComponent(token)}`,
-            { cache:'no-store', credentials:'omit' }
-          );
-          if (res.ok) {
-            const it    = await res.json();
-            const media = (it && typeof it.media === 'object') ? it.media : {};
-            const raw   = Array.isArray(media.images) ? media.images : (Array.isArray(it?.images) ? it.images : []);
-            const images= raw.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
-            const cover = (media.cover && String(media.cover).trim()) || images[0] || '';
+          if (ULID.test(uid)) {
+            const res = await fetch(`${API_BASE}/api/data/item?id=${encodeURIComponent(uid)}`, { cache:'no-store', credentials:'omit' });
+            if (res.ok) {
+              const it    = await res.json();
+              const media = (it && typeof it.media === 'object') ? it.media : {};
+              const raw   = Array.isArray(media.images) ? media.images : (Array.isArray(it?.images) ? it.images : []);
+              const images= raw.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
+              const cover = (media.cover && String(media.cover).trim()) || images[0] || '';
 
-            if (!cover) {
-              console.warn('Data error: cover required (QR)');
-            } else {
-              const cc = (() => {
-                if (typeof it?.coord === 'string') return it.coord;
-                if (it?.coord && it.coord.lat != null && it.coord.lng != null) return `${it.coord.lat},${it.coord.lng}`;
-                if (typeof it?.coordinateCompound === 'string') return it.coordinateCompound;
-                return '';
-              })();
-              const [lat, lng] = cc.includes(',') ? cc.split(',').map(s=>s.trim()) : ['',''];
-              const name = String((it?.locationName?.en ?? it?.locationName ?? 'Unnamed')).trim();
+              if (!cover) {
+                console.warn('Data error: cover required (QR)');
+              } else {
+                const cc = (() => {
+                  if (typeof it?.coord === 'string') return it.coord;
+                  if (it?.coord && it.coord.lat != null && it.coord.lng != null) return `${it.coord.lat},${it.coord.lng}`;
+                  if (typeof it?.coordinateCompound === 'string') return it.coordinateCompound;
+                  return '';
+                })();
+                const [lat, lng] = cc.includes(',') ? cc.split(',').map(s=>s.trim()) : ['',''];
+                const name = String((it?.locationName?.en ?? it?.locationName ?? 'Unnamed')).trim();
 
-              showLocationProfileModal({
-                // identifiers
-                locationID: String(it?.slug || it?.alias || it?.locationID || ''), // human if available
-                id:         String(it?.ID || it?.id || token),                      // ULID if known
+                showLocationProfileModal({
+                  // identifiers
+                  locationID: String(it?.slug || it?.alias || it?.locationID || ''), // human if available
+                  id:         String(it?.ID || it?.id || uid),                        // ULID
 
-                // display
-                displayName: name, name,
+                  // display
+                  displayName: name, name,
 
-                // geo
-                lat, lng,
+                  // geo
+                  lat, lng,
 
-                // media
-                imageSrc: cover,
-                images,
-                media,
+                  // media
+                  imageSrc: cover,
+                  images,
+                  media,
 
-                // meta
-                descriptions: it?.descriptions || {},
-                tags: Array.isArray(it?.tags) ? it.tags : [],
-                contactInformation: it?.contactInformation || {},
-                links: it?.links || {},
-                ratings: it?.ratings || {},
-                pricing: it?.pricing || {},
+                  // meta
+                  descriptions: it?.descriptions || {},
+                  tags: Array.isArray(it?.tags) ? it.tags : [],
+                  contactInformation: it?.contactInformation || {},
+                  links: it?.links || {},
+                  ratings: it?.ratings || {},
+                  pricing: it?.pricing || {},
 
-                // origin
-                originEl: null
-              });
+                  // origin
+                  originEl: null
+                });
+              }
             }
           }
         } catch (e) {
@@ -1423,7 +1410,7 @@ async function initEmergencyBlock(countryOverride) {
       const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
       history.replaceState({}, document.title, next);
     }
-     
+            
     const geoCtx = ACTIVE_PAGE
       ? geoPoints.filter(loc =>
           loc.Visible === 'Yes' && // keep: used by non-Popular groups
