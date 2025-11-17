@@ -238,7 +238,7 @@ export default {
 
     // duplicate /hit/* block removed — unified handler above handles all hit metrics
 
-    // /out/qr-scan/:id — count a physical QR scan server-side, then redirect to landing based on profile qrUrl
+    // /out/qr-scan/:id?to=<url> — count a physical QR scan, then redirect to landing
     {
       const p = url.pathname;
       if (p.startsWith('/out/')) {
@@ -263,25 +263,11 @@ export default {
           }
         } catch (_) { /* ignore */ }
 
-        // Resolve landing from API profile using canonical ULID; qrUrl is required for precise hit
-        let dest = '/';
-        try {
-          const api = new URL('/api/data/item', 'https://navigen-api.4naama.workers.dev');
-          api.searchParams.set('id', ulid);
-          const res = await fetch(api.toString(), { method: 'GET' });
-          if (res.ok) {
-            const item = await res.json();
-            const u = String(item?.qrUrl || '').trim();
-            if (u) dest = u;
-          }
-        } catch (_) {
-          // keep: stats already counted; redirect fallback remains minimal
-        }
+        // Redirect to landing (default /), allow only http(s) or same-origin paths
+        const target = url.searchParams.get('to') || '/';
 
-        if (dest === '/') {
-          // if no qrUrl could be resolved, treat as config error instead of fake/dead landing
-          return new Response('QR landing not configured', { status: 502 });
-        }
+        const safe   = /^(?:https?:)?\/\//i.test(target) || target.startsWith('/');
+        const dest   = safe ? target : '/';
 
         return Response.redirect(dest, 302);
       }
