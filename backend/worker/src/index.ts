@@ -756,29 +756,24 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
     return slug === raw || id === raw;
   });
 
-  // 2) Use qrUrl from the record; always wrap in /out/qr-scan so the server counts the scan before redirect
-  const hitUrl = hit && hit.qrUrl ? String(hit.qrUrl).trim() : "";
+  // 2) Build QR payload: always hit server-side scan endpoint; redirect target is resolved on navigen.io
+  const qrUrl = hit && hit.qrUrl ? String(hit.qrUrl).trim() : "";
 
-  if (!hit || !hitUrl) {
-    // precise match is required; caller can show an apology toast instead of a fake/dead landing
+  if (!hit || !qrUrl) {
+    // precise hit required; upstream UI can show an apology toast
     return json(
       { error: { code: "not_found", message: "QR profile not found for locationID" } },
       404
     );
   }
 
-  // identifiers for stats: prefer canonical ULID, otherwise slug; canonicalId() on Pages side normalizes
   const slug = String(hit.locationID || "").trim();
   const id   = String((hit as any).ID ?? (hit as any).id ?? "").trim();
-  const idForStats = (id || slug || raw).trim();
+  const idForScan = (slug || id || raw).trim();
 
-  // QR payload: /out/qr-scan/:id?to=<qrUrl> — Pages _worker.js will increment KV_STATS and then redirect
-  let dataUrl = hitUrl;
-  if (idForStats) {
-    const out = new URL(`/out/qr-scan/${encodeURIComponent(idForStats)}`, "https://navigen.io");
-    out.searchParams.set("to", hitUrl);
-    dataUrl = out.toString();
-  }
+  // short, stable scan URL; server counts qr-scan and redirects to qrUrl
+  const scanUrl = new URL(`/out/qr-scan/${encodeURIComponent(idForScan)}`, "https://navigen.io");
+  let dataUrl = scanUrl.toString();
 
   // 3) Generate QR code with dataUrl as the payload (no /s, no /out)
   if (fmt === "svg") {
