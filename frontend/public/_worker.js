@@ -4,8 +4,6 @@
 // - Sets Open Graph locale tags
 // - Injects <meta name="cf-country"> (you already read this in app.js)
 
-import QRCode from 'qrcode'
-
 // Add all locales we plan to serve (robots still block indexing; this only shapes HTML head)
 const SUPPORTED = [
   'en','fr','de','hu','it','he','uk','nl','ro','pl','cs','es','sk','da','sv','nb','sl','ru','pt','is','tr','zh','el','bg','hr','et','fi','lv','lt','mt','hi','ko','ja','ar'
@@ -44,60 +42,6 @@ function rateHit(req){
 export default {
   async fetch(req, env, ctx) { // include ctx so waitUntil works
     const url = new URL(req.url);
-    
-    // 🔹 QR generator for new-style QR URLs
-    // Handles: /api/qr?locationID=<slug-or-ulid>&size=256
-    if (url.pathname === '/api/qr') {
-      const search = url.searchParams
-      const rawId =
-        (search.get('locationID') ||
-          search.get('locationid') ||
-          search.get('id') ||
-          '').trim()
-
-      // default size if not provided
-      const size = Number(search.get('size') || '256') || 256
-
-      if (!rawId) {
-        return new Response('Missing locationID', { status: 400 })
-      }
-
-      const requestUrl = new URL(request.url)
-
-      // Fetch structure.json from the static assets (adjust path if yours differs)
-      const structUrl = new URL('/data/structure.json', requestUrl.origin)
-      const structRes = await env.ASSETS.fetch(structUrl)
-
-      if (!structRes.ok) {
-        return new Response('structure.json not found', { status: 500 })
-      }
-
-      let payload
-      try {
-        const json = await structRes.json()
-        // If your JSON is an array, use it directly; if it has a wrapper key, adjust here
-        const items = Array.isArray(json) ? json : json.locations || []
-        const idLower = rawId.toLowerCase()
-
-        const hit = items.find((item) => {
-          if (!item) return false
-          const locId = String(item.locationID || '').toLowerCase()
-          const ulid = String(item.id || '').toUpperCase()
-          return locId === idLower || ulid === rawId.toUpperCase()
-        })
-
-        if (hit && typeof hit.qrUrl === 'string' && hit.qrUrl) {
-          payload = String(hit.qrUrl)
-        } else {
-          // Fallback: behave like the old system – send ?lp=<id> to home
-          const lp = encodeURIComponent(rawId)
-          payload = `${requestUrl.origin}/?lp=${lp}`
-        }
-      } catch (e) {
-        // If parsing fails, still fall back to legacy behaviour
-        const lp = encodeURIComponent(rawId)
-        payload = `${requestUrl.origin}/?lp=${lp}`
-      }
 
       // Generate a PNG QR code for `payload`
       const dataUrl = await QRCode.toDataURL(payload, {
