@@ -756,14 +756,27 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
     return slug === raw || id === raw;
   });
 
-  // 2) Use qrUrl from the record if present; fallback to simple ?lp=<raw>
-  let dataUrl = "";
+  // 2) Use qrUrl from the record if present; fallback to simple ?lp=<raw>, but always wrap in /out/qr-scan so scans are counted server-side
+  const slug = String(hit?.locationID || "").trim();
+  const id   = String(hit?.ID || hit?.id || "").trim();
+  const idForStats = (id || slug || raw).trim();
+
+  // final landing target: either explicit qrUrl or basic ?lp=<raw> landing
+  let targetUrl: string;
   if (hit && hit.qrUrl) {
-    dataUrl = String(hit.qrUrl).trim();
+    targetUrl = String(hit.qrUrl).trim();
   } else {
     const dest = new URL("/", "https://navigen.io");
     dest.searchParams.set("lp", raw);
-    dataUrl = dest.toString();
+    targetUrl = dest.toString();
+  }
+
+  // QR payload: /out/qr-scan/:id?to=<targetUrl> → Pages _worker.js counts + redirects
+  let dataUrl = targetUrl;
+  if (idForStats) {
+    const out = new URL(`/out/qr-scan/${encodeURIComponent(idForStats)}`, "https://navigen.io");
+    out.searchParams.set("to", targetUrl);
+    dataUrl = out.toString();
   }
 
   // 3) Generate QR code with dataUrl as the payload (no /s, no /out)
