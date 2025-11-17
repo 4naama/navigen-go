@@ -775,7 +775,7 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
         "Cache-Control": "public, max-age=86400",
         "Access-Control-Allow-Origin": "https://navigen.io",
         "Access-Control-Allow-Credentials": "true",
-        Vary: "Origin"
+        "Vary": "Origin"
       }
     });
   } else {
