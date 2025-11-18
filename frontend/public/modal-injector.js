@@ -1552,8 +1552,7 @@ let myStuffItems = [];
 
 // 🌐 Import translation function for localized modal titles and text
 import { t } from './scripts/i18n.js';
-// QR generator import: fixes "QRCode is not defined" in QR modal
-import QRCode from 'qrcode';
+// QR generator uses getQRCodeLib() helper above; no direct import here
 
 // Stripe: only the donation action here (init comes from caller)
 import { handleDonation } from "./scripts/stripe.js";
