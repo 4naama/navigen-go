@@ -45,22 +45,21 @@ export default {
 
     // QR scan tracker: when a page has ?lp=<slug>, forward qr-scan to navigen-api.4naama.workers.dev, then continue normal handling
     {
-      const lpParam =
-        (url.searchParams.get('lp') || url.searchParams.get('locationID') || '').trim();
-      if (req.method === 'GET' && lpParam) {
-        const hitUrl =
-          `https://navigen-api.4naama.workers.dev/hit/qr-scan/${encodeURIComponent(lpParam)}`;
+      const lpSlug = (url.searchParams.get('lp') || '').trim();
+      if (lpSlug) {
+        const hitUrl = `https://navigen-api.4naama.workers.dev/hit/qr-scan/${encodeURIComponent(lpSlug)}`;
+        const options = { method: 'POST', keepalive: true };
         try {
-          const hit = fetch(hitUrl, { method: 'POST' });
           if (ctx && typeof ctx.waitUntil === 'function') {
-            ctx.waitUntil(hit.catch(() => {})); // keep tracking async and non-blocking
+            ctx.waitUntil(fetch(hitUrl, options).catch(() => {})); // do not block page load on tracking
           } else {
-            hit.catch(() => {}); // fallback when ctx is missing
+            fetch(hitUrl, options).catch(() => {}); // best-effort when ctx is not available
           }
         } catch (_) {
-          // ignore tracking failures; must not affect the main response
+          // keep behavior: ignore tracking failures; never affect response
         }
       }
+    }
 
       // Generate a PNG QR code for `payload`
       const dataUrl = await QRCode.toDataURL(payload, {
