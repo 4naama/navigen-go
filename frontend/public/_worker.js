@@ -61,7 +61,7 @@ export default {
       }
     }
 
-      // Generate a PNG QR code for `payload` (disabled here because QRCode/payload/size are not defined)
+    // Generate a PNG QR code for `payload` (disabled: QRCode/payload/size not defined here)
 
     }
     
