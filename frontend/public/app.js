@@ -123,6 +123,29 @@ function getUserLang() {
 
 const BACKEND_URL = "https://navigen-go.onrender.com";
 
+// Analytics: unified QR-scan tracker – mirror the devconsole helper for all real page loads.
+// Reason: when a page is opened with ?lp=<slug-or-ULID>, we must fire a POST to the
+// navigen-api /hit/qr-scan endpoint so that stats:<ULID>:YYYY-MM-DD:qr-scan is written in KV.
+// This makes qr-scan behave exactly like your manual devconsole snippet, but for every visitor.
+const TRACK_BASE = "https://navigen-api.4naama.workers.dev";
+
+(() => {
+  try {
+    const lp = (new URL(window.location.href).searchParams.get("lp") || "").trim();
+    if (!lp) return;
+
+    // Fire-and-forget; keepalive so it still goes out during navigations/tab close
+    fetch(`${TRACK_BASE}/hit/qr-scan/${encodeURIComponent(lp)}`, {
+      method: "POST",
+      keepalive: true
+    }).catch(() => {
+      // tracking must never break the app; errors are intentionally ignored
+    });
+  } catch {
+    // same here: if URL parsing or fetch fails, do nothing
+  }
+})();
+
 // ULID checker: keep client ULID-only (2 lines)
 const isUlid = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
 
