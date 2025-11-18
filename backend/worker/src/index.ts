@@ -68,11 +68,6 @@ export default {
     }
 
     try {
-      // --- QR short link: /s/{locationID}?c=....
-      if (pathname.startsWith("/s/")) {
-        return await handleShortLink(req, env);
-      }
-
       // --- QR image: /api/qr?locationID=...&c=...&fmt=svg|png&size=512
       if (pathname === "/api/qr") {
         return await handleQr(req, env);
@@ -634,84 +629,6 @@ async function nameForEntity(_id: string): Promise<string | undefined> {
 
 // ---------- handlers ----------
 
-async function handleShortLink(req: Request, env: Env): Promise<Response> {
-  const url = new URL(req.url);
-  const [, , idRaw = ""] = url.pathname.split("/"); // "/s/{id}"
-  const c = url.searchParams.get("c") || "";
-
-  const raw = idRaw.trim();
-  if (!raw) {
-    return Response.redirect(`${url.origin}/`, 302);
-  }
-
-  const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-
-  // slug → canonical ULID (via KV_ALIASES); fallback to raw
-  const mapped = await resolveUid(raw, env);
-  const ulid = mapped || raw;
-  const isUlid = ULID_RE.test(ulid);
-
-  // count qr-scan when we have a ULID and a mobile UA
-  if (isUlid) {
-    try {
-      const now = new Date();
-      const country = (req as any).cf?.country || "";
-      const day = dayKeyFor(now, undefined, country);
-      const ua = req.headers.get("User-Agent") || "";
-      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-      if (isMobile) {
-        await kvIncr(env.KV_STATS, `stats:${ulid}:${day}:qr-scan`);
-      }
-    } catch {
-      // ignore counting errors
-    }
-  }
-
-  // default destination: root + lp
-  let dest = `https://navigen.io/?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
-
-  // try to upgrade to context page when we have a ULID
-  if (isUlid) {
-    try {
-      const itemUrl = new URL(
-        `/api/data/item?id=${encodeURIComponent(ulid)}`,
-        "https://navigen-api.4naama.workers.dev"
-      ).toString();
-
-      const res = await fetch(itemUrl, { cf: { cacheEverything: false } });
-      if (res.ok) {
-        const item: any = await res.json().catch(() => null);
-        const ctxs: string[] = Array.isArray(item?.contexts) ? item.contexts : [];
-        if (ctxs.length) {
-          // pick the deepest context (most path segments)
-          const best = ctxs
-            .slice()
-            .sort((a, b) => b.split("/").length - a.split("/").length)[0];
-          const ctxPath = String(best || "")
-            .trim()
-            .replace(/^\/+|\/+$/g, "");
-          if (ctxPath) {
-            dest = `https://navigen.io/${ctxPath}?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ""}`;
-          }
-        }
-      }
-    } catch {
-      // fall back to root + lp on any error
-    }
-  }
-
-  return new Response(null, {
-    status: 302,
-    headers: {
-      "Location": dest,
-      "Cache-Control": "public, max-age=300",
-      "Access-Control-Allow-Origin": "https://navigen.io",
-      "Access-Control-Allow-Credentials": "true",
-      "Vary": "Origin"
-    }
-  });
-}
-
 async function handleQr(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
   const raw = (url.searchParams.get("locationID") || "").trim();
@@ -756,26 +673,24 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
     return slug === raw || id === raw;
   });
 
-  // 2) Build QR payload: always hit server-side scan endpoint; redirect target is resolved on navigen.io
-  const qrUrl = hit && hit.qrUrl ? String(hit.qrUrl).trim() : "";
-
-  if (!hit || !qrUrl) {
-    // precise hit required; upstream UI can show an apology toast
-    return json(
-      { error: { code: "not_found", message: "QR profile not found for locationID" } },
-      404
-    );
+  // 2) Resolve final landing URL (qrUrl, or fallback ?lp=<raw>), then wrap it in /out/qr-scan
+  let targetUrl = "";
+  if (hit && hit.qrUrl) {
+    targetUrl = String(hit.qrUrl).trim();
+  } else {
+    // Fallback: not expected in practice, but keep a sane default
+    const dest = new URL("/", "https://navigen.io");
+    dest.searchParams.set("lp", raw);
+    targetUrl = dest.toString();
   }
 
-  const slug = String(hit.locationID || "").trim();
-  const id   = String((hit as any).ID ?? (hit as any).id ?? "").trim();
-  const idForScan = (slug || id || raw).trim();
+  // Build tracked scan URL on navigen.io that will increment qr-scan, then redirect to targetUrl
+  const scanUrl = new URL(`/out/qr-scan/${encodeURIComponent(raw)}`, "https://navigen.io");
+  scanUrl.searchParams.set("to", targetUrl);
+  const dataUrl = scanUrl.toString();
 
-  // short, stable scan URL; server counts qr-scan and redirects to qrUrl
-  const scanUrl = new URL(`/out/qr-scan/${encodeURIComponent(idForScan)}`, "https://navigen.io");
-  let dataUrl = scanUrl.toString();
+  // 3) Generate QR code with dataUrl as the payload (tracked via /out/qr-scan, then redirected to qrUrl)
 
-  // 3) Generate QR code with dataUrl as the payload (no /s, no /out)
   if (fmt === "svg") {
     const svg = await QRCode.toString(dataUrl, { type: "svg", width: size, margin: 0 });
     return new Response(svg, {
