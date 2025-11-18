@@ -61,24 +61,8 @@ export default {
       }
     }
 
-      // Generate a PNG QR code for `payload`
-      const dataUrl = await QRCode.toDataURL(payload, {
-        width: size,
-        margin: 1,
-      })
+      // Generate a PNG QR code for `payload` (disabled here because QRCode/payload/size are not defined)
 
-      // dataUrl is "data:image/png;base64,AAAA..."
-      const base64 = dataUrl.split(',')[1] || ''
-      const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
-
-      return new Response(binary, {
-        status: 200,
-        headers: {
-          'content-type': 'image/png',
-          // You can tune caching as needed
-          'cache-control': 'public, max-age=31536000, immutable',
-        },
-      })
     }
     
     // CORS for local dev; echo Origin + allow credentials (localhost + LAN)
