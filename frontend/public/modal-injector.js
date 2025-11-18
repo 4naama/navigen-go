@@ -909,21 +909,27 @@ async function initLpmImageSlider(modal, data) {
             img.style.height = 'auto';
 
             const slugOrId = String(data?.locationID || data?.id || uid || '').trim();
+            const safeId = slugOrId || 'navigen'; // short fallback id so QR never gets empty payload
+            const qrPayload = (data && typeof data.qrUrl === 'string' && data.qrUrl.trim())
+              ? data.qrUrl.trim()
+              : `${location.origin}/?lp=${encodeURIComponent(safeId)}`;
 
             // Prefer qrUrl from the dataset; fall back to ?lp=<id> on the current origin
-            // ensure non-empty slug/id; fallback to safe homepage link
-            const safeId = slugOrId || data?.locationID || data?.id || '';
-            const qrPayload = safeId
-              ? `${location.origin}/?lp=${encodeURIComponent(safeId)}`
-              : `${location.origin}/`;   // guaranteed valid URL
+            const qrPayload = (data && typeof data.qrUrl === 'string' && data.qrUrl.trim())
+              ? data.qrUrl.trim()
+              : `${location.origin}/?lp=${encodeURIComponent(slugOrId)}`;
 
+            // ensure we always have a non-empty payload; fall back to current page if needed
+            const payload = qrPayload || `${location.origin}/?lp=${encodeURIComponent(slugOrId || '') || ''}`;
+
+            // try local QR generation only; QR must stay fully in-app
             getQRCodeLib()
               .then(({ default: QRCode }) => QRCode.toDataURL(qrPayload, { width: 512, margin: 1 }))
               .then((dataUrl) => {
                 img.src = dataUrl;
               })
               .catch((err) => {
-                console.warn('QR generation failed', err);
+                console.warn('QR generation failed', err); // keep: clarify generator error only
                 img.alt = 'QR unavailable';
               });
 
