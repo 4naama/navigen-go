@@ -43,6 +43,24 @@ export default {
   async fetch(req, env, ctx) { // include ctx so waitUntil works
     const url = new URL(req.url);
 
+    // QR scan tracker: when a page has ?lp=<slug>, forward qr-scan to navigen-api.4naama.workers.dev, then continue normal handling
+    {
+      const lpSlug = (url.searchParams.get('lp') || '').trim();
+      if (lpSlug) {
+        const hitUrl = `https://navigen-api.4naama.workers.dev/hit/qr-scan/${encodeURIComponent(lpSlug)}`;
+        const options = { method: 'POST', keepalive: true };
+        try {
+          if (ctx && typeof ctx.waitUntil === 'function') {
+            ctx.waitUntil(fetch(hitUrl, options).catch(() => {})); // do not block page load on tracking
+          } else {
+            fetch(hitUrl, options).catch(() => {}); // best-effort when ctx is not available
+          }
+        } catch (_) {
+          // keep behavior: ignore tracking failures; never affect response
+        }
+      }
+    }
+
       // Generate a PNG QR code for `payload`
       const dataUrl = await QRCode.toDataURL(payload, {
         width: size,
