@@ -53,13 +53,33 @@ export default {
         try {
           const hit = fetch(hitUrl, { method: 'POST' });
           if (ctx && typeof ctx.waitUntil === 'function') {
-            ctx.waitUntil(hit.catch(() => {})); // track async; do not block response
+            ctx.waitUntil(hit.catch(() => {})); // keep tracking async and non-blocking
           } else {
             hit.catch(() => {}); // fallback when ctx is missing
           }
         } catch (_) {
-          // keep main response safe even if tracking fails
+          // ignore tracking failures; must not affect the main response
         }
+      }
+
+      // Generate a PNG QR code for `payload`
+      const dataUrl = await QRCode.toDataURL(payload, {
+        width: size,
+        margin: 1,
+      })
+
+      // dataUrl is "data:image/png;base64,AAAA..."
+      const base64 = dataUrl.split(',')[1] || ''
+      const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+
+      return new Response(binary, {
+        status: 200,
+        headers: {
+          'content-type': 'image/png',
+          // You can tune caching as needed
+          'cache-control': 'public, max-age=31536000, immutable',
+        },
+      })
     }
     
     // CORS for local dev; echo Origin + allow credentials (localhost + LAN)
