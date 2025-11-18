@@ -673,9 +673,10 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
     return slug === raw || id === raw;
   });
 
-  // 2) Resolve final landing URL (qrUrl, or fallback ?lp=<raw>), then wrap it in /out/qr-scan
+  // 2) Resolve the final landing URL (qrUrl, or fallback ?lp=<raw>), then wrap it in this worker's /out/qr-scan redirect
   let targetUrl = "";
   if (hit && hit.qrUrl) {
+    // profiles.json should always provide qrUrl; we still keep a fallback for safety
     targetUrl = String(hit.qrUrl).trim();
   } else {
     // Fallback: not expected in practice, but keep a sane default
@@ -684,12 +685,15 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
     targetUrl = dest.toString();
   }
 
-  // Build tracked scan URL on navigen.io that will increment qr-scan, then redirect to targetUrl
-  const scanUrl = new URL(`/out/qr-scan/${encodeURIComponent(raw)}`, "https://navigen.io");
+  // Build tracked scan URL on the same origin as this request (navigen-api or navigen.io route),
+  // so it will hit this worker's /out/qr-scan handler and write stats:<ULID>:YYYY-MM-DD:qr-scan in KV_STATS
+  const reqUrl = new URL(req.url);
+  const scanUrl = new URL(`/out/qr-scan/${encodeURIComponent(raw)}`, reqUrl.origin);
   scanUrl.searchParams.set("to", targetUrl);
   const dataUrl = scanUrl.toString();
 
   // 3) Generate QR code with dataUrl as the payload (tracked via /out/qr-scan, then redirected to qrUrl)
+
 
   if (fmt === "svg") {
     const svg = await QRCode.toString(dataUrl, { type: "svg", width: size, margin: 0 });
