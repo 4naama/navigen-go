@@ -42,6 +42,44 @@ function rateHit(req){
 export default {
   async fetch(req, env, ctx) { // include ctx so waitUntil works
     const url = new URL(req.url);
+
+    // QR scan tracker: when a page has ?lp=<slug>, forward qr-scan to navigen-api.4naama.workers.dev, then continue normal handling
+    {
+      const lpSlug = (url.searchParams.get('lp') || '').trim();
+      if (lpSlug) {
+        const hitUrl = `https://navigen-api.4naama.workers.dev/hit/qr-scan/${encodeURIComponent(lpSlug)}`;
+        const options = { method: 'POST', keepalive: true };
+        try {
+          if (ctx && typeof ctx.waitUntil === 'function') {
+            ctx.waitUntil(fetch(hitUrl, options).catch(() => {})); // do not block page load on tracking
+          } else {
+            fetch(hitUrl, options).catch(() => {}); // best-effort when ctx is not available
+          }
+        } catch (_) {
+          // keep behavior: ignore tracking failures; never affect response
+        }
+      }
+    }
+
+      // Generate a PNG QR code for `payload`
+      const dataUrl = await QRCode.toDataURL(payload, {
+        width: size,
+        margin: 1,
+      })
+
+      // dataUrl is "data:image/png;base64,AAAA..."
+      const base64 = dataUrl.split(',')[1] || ''
+      const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+
+      return new Response(binary, {
+        status: 200,
+        headers: {
+          'content-type': 'image/png',
+          // You can tune caching as needed
+          'cache-control': 'public, max-age=31536000, immutable',
+        },
+      })
+    }
     
     // CORS for local dev; echo Origin + allow credentials (localhost + LAN)
     // Note: keeps prod strict (no wildcard with credentials)
@@ -114,49 +152,12 @@ export default {
       const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
     }
 
-    // /s/<ULID> — QR shortlink: resolve context via Item API → /{context}?lp=<ULID>
-    if (url.pathname.startsWith('/s/')) {
-      const ulid = (url.pathname.split('/')[2] || '').trim();
-      const c = url.searchParams.get('c') || '';
-      if (!ulid) return Response.redirect(`${url.origin}/`, 302);
-
-      // 1) Try Item API to get contexts[]; this avoids storing context in KV
-      let ctxPath = '';
-      try {
-        const api = new URL(`/api/data/item?id=${encodeURIComponent(ulid)}`, 'https://navigen-api.4naama.workers.dev');
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort('timeout'), 2500);
-        const res = await fetch(api.toString(), { redirect: 'follow', cf: { cacheEverything: false }, signal: ctrl.signal });
-        clearTimeout(timer);
-
-        if (res && res.ok) {
-          const item = await res.json();
-          const arr = Array.isArray(item?.contexts) ? item.contexts : [];
-          // pick first context (your client already supports multi-context via semi-colon join)
-          const primary = String(arr[0] || '').trim();
-          if (primary) ctxPath = primary.replace(/^\/+|\/+$/g, '');
-        }
-      } catch (_) { /* fall through to slug/KV or root fallback */ }
-
-      // 2) If API didn’t yield a context, try to infer from KV slug (optional, harmless)
-      if (!ctxPath) {
-        try {
-          const txt = await env.KV_ALIASES.get(ulid);
-          // (we intentionally do not build a path from slug — context is authoritative)
-        } catch (_) {}
-      }
-
-      // 3) Redirect: context path if known; else root with lp (client will still open LPM)
-      const dest = ctxPath
-        ? `${url.origin}/${ctxPath}?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ''}`
-        : `${url.origin}/?lp=${encodeURIComponent(ulid)}${c ? `&c=${encodeURIComponent(c)}` : ''}`;
-
-      return Response.redirect(dest, 302);
-    }
-
+    // QR scan tracker: when a page has ?lp=<slug>, forward qr-scan to navigen-api.4naama.workers.dev, then continue normal handling
+    const lpSlug = (url.searchParams.get('lp') || '').trim(); if (lpSlug) { const hitUrl = `https://navigen-api.4naama.workers.dev/hit/qr-scan/${encodeURIComponent(lpSlug)}`; try { if (ctx && typeof ctx.waitUntil === 'function') { ctx.waitUntil(fetch(hitUrl, { method: 'POST', keepalive: true }).catch(() => {})); } else { fetch(hitUrl, { method: 'POST', keepalive: true }).catch(() => {}); } } catch (_) {} }
     // PWA & modules: early pass-through for static assets and JS modules
 
-    // keeps .js/.mjs and /scripts/* from being rewritten to HTML
+    // keeps .js/.mjs and /scripts/* from being rewritten to HTML shell
+    
     if (
       url.pathname === '/manifest.webmanifest' ||
       url.pathname === '/sw.js' ||
