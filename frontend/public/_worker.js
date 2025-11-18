@@ -134,22 +134,10 @@ export default {
       const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
     }
 
-    // /s/<id> — legacy QR shortlink: fall back to root with ?lp=<id>
-    if (url.pathname.startsWith('/s/')) {
-      const [, , idRaw = ''] = url.pathname.split('/'); // ['', 's', '{id}']
-      const id = idRaw.trim();
-      const c  = url.searchParams.get('c') || '';
-
-      const dest = new URL('/', url.origin);
-      if (id) dest.searchParams.set('lp', id);
-      if (c)  dest.searchParams.set('c', c);
-
-      return Response.redirect(dest.toString(), 302);
-    }
-
     // PWA & modules: early pass-through for static assets and JS modules
 
-    // keeps .js/.mjs and /scripts/* from being rewritten to HTML
+    // keeps .js/.mjs and /scripts/* from being rewritten to HTML shell
+    
     if (
       url.pathname === '/manifest.webmanifest' ||
       url.pathname === '/sw.js' ||
