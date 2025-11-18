@@ -909,18 +909,10 @@ async function initLpmImageSlider(modal, data) {
             img.style.height = 'auto';
 
             const slugOrId = String(data?.locationID || data?.id || uid || '').trim();
-            const safeId = slugOrId || 'navigen'; // short fallback id so QR never gets empty payload
+            const safeId = slugOrId || 'navigen'; // keep comment: short fallback id so QR never gets empty payload
             const qrPayload = (data && typeof data.qrUrl === 'string' && data.qrUrl.trim())
               ? data.qrUrl.trim()
               : `${location.origin}/?lp=${encodeURIComponent(safeId)}`;
-
-            // Prefer qrUrl from the dataset; fall back to ?lp=<id> on the current origin
-            const qrPayload = (data && typeof data.qrUrl === 'string' && data.qrUrl.trim())
-              ? data.qrUrl.trim()
-              : `${location.origin}/?lp=${encodeURIComponent(slugOrId)}`;
-
-            // ensure we always have a non-empty payload; fall back to current page if needed
-            const payload = qrPayload || `${location.origin}/?lp=${encodeURIComponent(slugOrId || '') || ''}`;
 
             // try local QR generation only; QR must stay fully in-app
             getQRCodeLib()
