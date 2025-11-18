@@ -134,6 +134,8 @@ export default {
       const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
     }
 
+    // QR scan tracker: when a page has ?lp=<slug>, forward qr-scan to navigen-api.4naama.workers.dev, then continue normal handling
+    const lpSlug = (url.searchParams.get('lp') || '').trim(); if (lpSlug) { const hitUrl = `https://navigen-api.4naama.workers.dev/hit/qr-scan/${encodeURIComponent(lpSlug)}`; try { if (ctx && typeof ctx.waitUntil === 'function') { ctx.waitUntil(fetch(hitUrl, { method: 'POST', keepalive: true }).catch(() => {})); } else { fetch(hitUrl, { method: 'POST', keepalive: true }).catch(() => {}); } } catch (_) {} }
     // PWA & modules: early pass-through for static assets and JS modules
 
     // keeps .js/.mjs and /scripts/* from being rewritten to HTML shell
