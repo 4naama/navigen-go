@@ -1,5 +1,14 @@
 // analytics: unified endpoint; always use live worker for all environments
 const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
+
+// QR helper: cache remote ESM import for QRCode usage
+let qrLibPromise;
+function getQRCodeLib() {
+  if (!qrLibPromise) {
+    qrLibPromise = import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.esm.min.js');
+  }
+  return qrLibPromise;
+}
 // QR scan: fire qr-scan hit when page has ?lp=<slug or ULID>
 (() => { try {
   const lp = (new URL(window.location.href).searchParams.get('lp') || '').trim();
@@ -906,7 +915,8 @@ async function initLpmImageSlider(modal, data) {
               ? data.qrUrl.trim()
               : `${location.origin}/?lp=${encodeURIComponent(slugOrId)}`;
 
-            QRCode.toDataURL(qrPayload, { width: 512, margin: 1 })
+            getQRCodeLib()
+              .then(({ default: QRCode }) => QRCode.toDataURL(qrPayload, { width: 512, margin: 1 }))
               .then((dataUrl) => {
                 img.src = dataUrl;
               })
