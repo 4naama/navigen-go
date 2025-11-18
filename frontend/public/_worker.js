@@ -62,8 +62,6 @@ export default {
     }
 
     // Generate a PNG QR code for `payload` (disabled: QRCode/payload/size not defined here)
-
-    }
     
     // CORS for local dev; echo Origin + allow credentials (localhost + LAN)
     // Note: keeps prod strict (no wildcard with credentials)
