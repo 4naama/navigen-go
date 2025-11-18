@@ -911,9 +911,11 @@ async function initLpmImageSlider(modal, data) {
             const slugOrId = String(data?.locationID || data?.id || uid || '').trim();
 
             // Prefer qrUrl from the dataset; fall back to ?lp=<id> on the current origin
-            const qrPayload = (data && typeof data.qrUrl === 'string' && data.qrUrl.trim())
-              ? data.qrUrl.trim()
-              : `${location.origin}/?lp=${encodeURIComponent(slugOrId)}`;
+            // ensure non-empty slug/id; fallback to safe homepage link
+            const safeId = slugOrId || data?.locationID || data?.id || '';
+            const qrPayload = safeId
+              ? `${location.origin}/?lp=${encodeURIComponent(safeId)}`
+              : `${location.origin}/`;   // guaranteed valid URL
 
             getQRCodeLib()
               .then(({ default: QRCode }) => QRCode.toDataURL(qrPayload, { width: 512, margin: 1 }))
