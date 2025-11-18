@@ -1,5 +1,11 @@
 // analytics: unified endpoint; always use live worker for all environments
 const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
+// QR scan: fire qr-scan hit when page has ?lp=<slug or ULID>
+(() => { try {
+  const lp = (new URL(window.location.href).searchParams.get('lp') || '').trim();
+  if (!lp) return;
+  fetch(`${TRACK_BASE}/hit/qr-scan/${encodeURIComponent(lp)}`, { method:'POST', keepalive:true }).catch(() => {});
+} catch (_) { /* tracking must never break page load */ } })();
 
 // Resolve slug → canonical ULID via stats; returns '' if cannot resolve.
 // keeps ULID canonical across app while allowing slug inputs from UI.
