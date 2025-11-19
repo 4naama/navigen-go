@@ -3190,27 +3190,25 @@ export function createCommunicationModal({ name, contact = {}, id }) {
       a.appendChild(iconSpan);
       a.appendChild(labelSpan);
 
-      // tracking + open: send /hit/<metric>/<uid> then hand off to OS/app
+      // tracking + open: send /hit/<metric>/<idOrSlug> then hand off to OS/app
       if (row.metric && id) {
         a.addEventListener('click', async (ev) => {
           ev.preventDefault();
           const raw = String(id || '').trim();
           const openTarget = () => {
             if (row.href.startsWith('tel:') || row.href.startsWith('mailto:')) {
-              location.href = row.href;
+              location.href = row.href; // let OS dialer / mail client take over
             } else {
               window.open(row.href, '_blank', 'noopener,noreferrer');
             }
           };
 
           try {
-            const uid = await resolveULIDFor(raw);
-            if (uid) {
-              await fetch(`${TRACK_BASE}/hit/${encodeURIComponent(row.metric)}/${encodeURIComponent(uid)}`, {
-                method: 'POST',
-                keepalive: true
-              }).catch(() => {});
-            }
+            // let the Worker resolve slug → ULID via canonicalId(); no stats dependency
+            await fetch(
+              `${TRACK_BASE}/hit/${encodeURIComponent(row.metric)}/${encodeURIComponent(raw)}`,
+              { method: 'POST', keepalive: true }
+            ).catch(() => {});
           } catch {
             // tracking must not block the action
           }
