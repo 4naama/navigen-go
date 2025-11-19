@@ -570,8 +570,11 @@ async function handleList(req, env, url, extraHdr){
       (Array.isArray(p.media?.images) && p.media.images[0]?.src) || '';
 
     // links (social + official + booking + newsletter)
-    const links = Object.assign({}, p.links || {}, {
-      official: p.official_url || p.Official || p.official || '',
+    const baseLinks = p.links || {};
+    const officialFallback = p.official_url || p.Official || p.official || '';
+    const links = Object.assign({}, baseLinks, {
+      // keep existing links.official when present; fall back only if that is empty
+      official: (baseLinks.official && String(baseLinks.official).trim()) || officialFallback || '',
       Facebook: p.Facebook || '',
       Instagram: p.Instagram || '',
       Pinterest: p.Pinterest || '',
