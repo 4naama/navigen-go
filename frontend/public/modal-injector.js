@@ -5,10 +5,26 @@ const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 let qrLibPromise;
 function getQRCodeLib() {
   if (!qrLibPromise) {
-        qrLibPromise = import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.esm.js'); // ESM build (no 404)
+    // load UMD build once, then reuse in-memory QRCode reference for all profiles
+    qrLibPromise = new Promise((resolve, reject) => {
+      if (globalThis.QRCode) {            // already loaded in this tab
+        resolve(globalThis.QRCode);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.2.2/build/qrcode.min.js';
+      script.async = true;
+      script.onload = () => {
+        if (globalThis.QRCode) resolve(globalThis.QRCode);
+        else reject(new Error('QRCode global missing after load'));
+      };
+      script.onerror = () => reject(new Error('Failed to load QRCode library'));
+      document.head.appendChild(script);
+    });
   }
   return qrLibPromise;
 }
+
 // QR scan: fire qr-scan hit when page has ?lp=<slug or ULID>
 (() => { try {
   const lp = (new URL(window.location.href).searchParams.get('lp') || '').trim();
@@ -914,7 +930,7 @@ async function initLpmImageSlider(modal, data) {
             const qrPayload = qrUrl || `${location.origin}/?lp=${encodeURIComponent(slugOrId)}`;
 
             getQRCodeLib()
-              .then(({ default: QRCode }) => QRCode.toDataURL(qrPayload, { width: 512, margin: 1 }))
+              .then((QRCode) => QRCode.toDataURL(qrPayload, { width: 512, margin: 1 }))
               .then((dataUrl) => {
                 img.src = dataUrl;
               })
