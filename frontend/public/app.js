@@ -1251,6 +1251,7 @@ async function initEmergencyBlock(countryOverride) {
         "Coordinate Compound": cc,
         coord: cc,              // used by distance mode
         Context: ctx,
+        qrUrl: it?.qrUrl || '',
         tags: Array.isArray(it?.tags) ? it.tags : [],
         // keep: pass through cover + images; accept strings or {src}; never drop gallery
         media: (() => {
