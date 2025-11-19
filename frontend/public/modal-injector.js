@@ -949,9 +949,31 @@ async function initLpmImageSlider(modal, data) {
             shareBtn.title = 'Share';
             shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
             shareBtn.onclick = async () => {
-              const idStr = String(data?.id||'').trim();
-              if (idStr) { try { const __uid = await resolveULIDFor(idStr); if (__uid) await fetch(`${TRACK_BASE}/hit/share/${encodeURIComponent(__uid)}`, { method:'POST', keepalive:true }); } catch {} }
-              try { if (navigator.share) await navigator.share({ title: 'NaviGen QR', url: img.src }); } catch {}
+              const raw = String(data?.id || data?.locationID || '').trim();
+              const target = qrPayload || (raw ? `${location.origin}/?lp=${encodeURIComponent(raw)}` : '');
+
+              // count Share for this location (slug or ULID; Worker resolves via canonicalId)
+              if (raw) {
+                try {
+                  await fetch(
+                    `${TRACK_BASE}/hit/share/${encodeURIComponent(raw)}`,
+                    { method: 'POST', keepalive: true }
+                  ).catch(() => {});
+                } catch {
+                  // tracking must not block sharing
+                }
+              }
+
+              try {
+                if (navigator.share && target) {
+                  await navigator.share({ title: 'NaviGen QR', url: target });
+                } else if (target && navigator.clipboard) {
+                  await navigator.clipboard.writeText(target);
+                  showToast('Link copied to clipboard', 1600);
+                }
+              } catch (err) {
+                console.warn('QR share failed', err);
+              }
             };
 
             const printBtn = document.createElement('button');
