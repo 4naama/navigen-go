@@ -5,7 +5,7 @@ const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 let qrLibPromise;
 function getQRCodeLib() {
   if (!qrLibPromise) {
-    qrLibPromise = import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.esm.min.js');
+        qrLibPromise = import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.esm.js'); // ESM build (no 404)
   }
   return qrLibPromise;
 }
