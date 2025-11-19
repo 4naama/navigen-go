@@ -1659,7 +1659,7 @@ function makeLocationButton(loc) {
         imageSrc: cover,
         images,
         media,
-        qrUrl: loc?.qrUrl || '',
+        qrUrl: loc?.qrUrl || '',                                      // plain pass-through; no reconstruction
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
         tags: Array.isArray(loc?.tags) ? loc.tags : [],
         contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation

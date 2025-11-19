@@ -652,6 +652,7 @@ async function handleList(req, env, url, extraHdr){
       links,
       ratings,
       pricing,
+      qrUrl: p.qrUrl || '',  // pass qrUrl from profiles.json (canonical QR landing)
       descriptions: p.descriptions || {},
       media: { cover: mediaCover, images: Array.isArray(p.media?.images) ? p.media.images : [] },
       lang: p.Lang || p.lang || ''
