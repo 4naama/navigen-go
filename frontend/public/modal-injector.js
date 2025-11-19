@@ -1136,6 +1136,7 @@ async function initLpmImageSlider(modal, data) {
 
     // 🌍 Social Channels — open social modal (capture to beat other handlers)
     const socialBtn = modal.querySelector('#som-social');
+    const signalBtn = modal.querySelector('#som-signal'); // 📡 Communication (Call / Email / apps)
     if (socialBtn) {
       socialBtn.addEventListener('click', async (e) => {
         e.preventDefault();
@@ -1187,6 +1188,23 @@ async function initLpmImageSlider(modal, data) {
           links,
           contact,
           id: canId // pass LPM id for tracking
+        });
+      }, { capture: true, passive: false });
+    }    
+    if (signalBtn) {
+      signalBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const contact = (data && data.contactInformation) || {};
+        const name = String(data?.displayName ?? data?.name ?? 'Location').trim() || 'Location';
+        const rawId = String(data?.id || data?.locationID || '').trim();
+
+        createCommunicationModal({
+          name,
+          contact,
+          id: rawId
         });
       }, { capture: true, passive: false });
     }
@@ -3036,6 +3054,121 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
 
       // local guard identical to Navigation modal
       // removed beacon; server counts on redirect
+      list.appendChild(a);
+    });
+  }
+
+  setupTapOutClose(modalId);
+  showModal(modalId);
+}
+
+// ============================
+// 📡 Communication modal (Call / Email / apps)
+// ============================
+export function createCommunicationModal({ name, contact = {}, id }) {
+  const modalId = 'comm-modal';
+  document.getElementById(modalId)?.remove();
+
+  const modal = injectModal({
+    id: modalId,
+    title: '',
+    layout: 'action',
+    bodyHTML: `<div class="modal-menu-list" id="comm-modal-list"></div>`
+  });
+
+  // header bar (same style as Social / Navigation)
+  {
+    const top = document.createElement('div');
+    top.className = 'modal-top-bar';
+    top.innerHTML = `
+      <h2 class="modal-title">${String(name || 'Contact')}</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    `;
+    modal.querySelector('.modal-content')?.prepend(top);
+    top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
+  }
+
+  const list = modal.querySelector('#comm-modal-list');
+  if (!list) return;
+
+  const phone    = String(contact.phone || '').trim();
+  const email    = String(contact.email || '').trim();
+  const whatsapp = String(contact.whatsapp || '').trim();
+  const telegram = String(contact.telegram || '').trim();
+  const messenger= String(contact.messenger || '').trim();
+
+  const rows = [];
+
+  if (phone) {
+    rows.push({
+      label: 'Call',
+      icon: '📞',
+      href: `tel:${phone}`
+    });
+  }
+
+  if (email) {
+    rows.push({
+      label: 'Email',
+      icon: '✉️',
+      href: `mailto:${email}`
+    });
+  }
+
+  // helper: normalise number for wa.me
+  const waNumber = (whatsapp || phone || '')
+    .replace(/[^\d+]/g, '')
+    .replace(/^\+?/, '');
+  if (waNumber) {
+    rows.push({
+      label: 'WhatsApp',
+      icon: '🟢💬',
+      href: `https://wa.me/${waNumber}`
+    });
+  }
+
+  if (telegram) {
+    const handle = telegram.replace(/^@/, '').trim();
+    if (handle) {
+      rows.push({
+        label: 'Telegram',
+        icon: '🛩️',
+        href: `https://t.me/${handle}`
+      });
+    }
+  }
+
+  if (messenger) {
+    const handle = messenger.trim();
+    if (handle) {
+      rows.push({
+        label: 'Messenger',
+        icon: '💬',
+        href: `https://m.me/${handle}`
+      });
+    }
+  }
+
+  if (!rows.length) {
+    const empty = document.createElement('div');
+    empty.className = 'modal-menu-item';
+    empty.setAttribute('aria-disabled', 'true');
+    empty.style.pointerEvents = 'none';
+    empty.textContent = 'No direct contact channels configured.';
+    list.appendChild(empty);
+  } else {
+    rows.forEach(row => {
+      const a = document.createElement('a');
+      a.className = 'modal-menu-item';
+      a.href = row.href;
+      a.target = '_blank';
+      a.rel = 'noopener';
+
+      a.innerHTML = `
+        <span class="icon-img" aria-hidden="true">${row.icon}</span>
+        <span>${row.label}</span>
+      `;
+
       list.appendChild(a);
     });
   }
