@@ -908,12 +908,10 @@ async function initLpmImageSlider(modal, data) {
             img.style.maxWidth = '100%';
             img.style.height = 'auto';
 
+            // use profiles.json qrUrl when present; otherwise fall back to ?lp=<id>
             const slugOrId = String(data?.locationID || data?.id || uid || '').trim();
-
-            // Prefer qrUrl from the dataset; fall back to ?lp=<id> on the current origin
-            const qrPayload = (data && typeof data.qrUrl === 'string' && data.qrUrl.trim())
-              ? data.qrUrl.trim()
-              : `${location.origin}/?lp=${encodeURIComponent(slugOrId)}`;
+            const qrUrl = (typeof data?.qrUrl === 'string') ? data.qrUrl.trim() : '';
+            const qrPayload = qrUrl || `${location.origin}/?lp=${encodeURIComponent(slugOrId)}`;
 
             getQRCodeLib()
               .then(({ default: QRCode }) => QRCode.toDataURL(qrPayload, { width: 512, margin: 1 }))
@@ -921,7 +919,7 @@ async function initLpmImageSlider(modal, data) {
                 img.src = dataUrl;
               })
               .catch((err) => {
-                console.warn('QR generation failed', err);
+                console.warn('QR generation failed', err); // generator-only error; no external fallback
                 img.alt = 'QR unavailable';
               });
 
@@ -1645,6 +1643,7 @@ function makeLocationButton(loc) {
         imageSrc: cover,
         images,
         media,
+        qrUrl: loc?.qrUrl || '',                                     // use canonical QR URL from profiles.json
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
         tags: Array.isArray(loc?.tags) ? loc.tags : [],
         contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
