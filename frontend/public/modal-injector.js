@@ -327,6 +327,11 @@ export function createLocationProfileModal(data, injected = {}) {
         📤 <span class="cta-label">Share</span>
       </button>
 
+      <!-- 🤖 Assistant (penultimate, before dash/Stats) -->
+      <button class="modal-footer-button" id="som-bot" aria-label="Assistant">
+        🤖 <span class="cta-label">Bot</span>
+      </button>
+
       <!-- 📈 Dashboard (2nd row, last position) -->
       <button class="modal-footer-button" id="som-stats" aria-label="Statistics">
         📈 <span class="cta-label">Stats</span>
