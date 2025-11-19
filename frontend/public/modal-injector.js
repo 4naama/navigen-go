@@ -3102,7 +3102,7 @@ export function createCommunicationModal({ name, contact = {}, id }) {
   if (phone) {
     rows.push({
       label: 'Call',
-      icon: '📞',
+      icon: '📞',                    // plain emoji is fine for phone
       href: `tel:${phone}`
     });
   }
@@ -3110,7 +3110,7 @@ export function createCommunicationModal({ name, contact = {}, id }) {
   if (email) {
     rows.push({
       label: 'Email',
-      icon: '✉️',
+      icon: '✉️',                   // plain emoji is fine for email
       href: `mailto:${email}`
     });
   }
@@ -3122,7 +3122,7 @@ export function createCommunicationModal({ name, contact = {}, id }) {
   if (waNumber) {
     rows.push({
       label: 'WhatsApp',
-      icon: '🟢💬',
+      iconSrc: '/assets/social/icon-whatsapp.svg',     // real WhatsApp logo
       href: `https://wa.me/${waNumber}`
     });
   }
@@ -3132,7 +3132,7 @@ export function createCommunicationModal({ name, contact = {}, id }) {
     if (handle) {
       rows.push({
         label: 'Telegram',
-        icon: '🛩️',
+        iconSrc: '/assets/social/icons-telegram.svg',  // real Telegram logo
         href: `https://t.me/${handle}`
       });
     }
@@ -3143,7 +3143,7 @@ export function createCommunicationModal({ name, contact = {}, id }) {
     if (handle) {
       rows.push({
         label: 'Messenger',
-        icon: '💬',
+        iconSrc: '/assets/social/icons-messenger.svg', // real Messenger logo
         href: `https://m.me/${handle}`
       });
     }
@@ -3164,10 +3164,25 @@ export function createCommunicationModal({ name, contact = {}, id }) {
       a.target = '_blank';
       a.rel = 'noopener';
 
-      a.innerHTML = `
-        <span class="icon-img" aria-hidden="true">${row.icon}</span>
-        <span>${row.label}</span>
-      `;
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'icon-img';
+      iconSpan.setAttribute('aria-hidden', 'true');
+
+      if (row.iconSrc) {
+        const img = document.createElement('img');
+        img.src = row.iconSrc;
+        img.alt = '';
+        img.className = 'icon-img';
+        iconSpan.appendChild(img);
+      } else if (row.icon) {
+        iconSpan.textContent = row.icon;
+      }
+
+      const labelSpan = document.createElement('span');
+      labelSpan.textContent = row.label;
+
+      a.appendChild(iconSpan);
+      a.appendChild(labelSpan);
 
       list.appendChild(a);
     });
