@@ -186,7 +186,18 @@ export default {
     if (url.pathname.startsWith('/hit/')) {
       // keep comment, but clarify: this endpoint increments daily metric counters for non-redirect CTAs
       const [, , metric, idOrSlug] = url.pathname.split('/'); // ['', 'hit', ':metric', ':id']
-      const ALLOWED_HIT_METRICS = new Set(['qr-print', 'qr-view', 'qr-scan', 'share', 'lpm-open']); // added qr-scan for physical scans
+      const ALLOWED_HIT_METRICS = new Set([
+        'qr-print',
+        'qr-view',
+        'qr-scan',
+        'share',
+        'lpm-open',
+        'call',
+        'email',
+        'whatsapp',
+        'telegram',
+        'messenger'
+      ]); // include comm channels for dash stats
 
       if (!metric || !ALLOWED_HIT_METRICS.has(metric) || !idOrSlug) {
         return new Response('Bad Request', { status: 400 });
@@ -304,7 +315,18 @@ export default {
         // keys look like m:<ULID>:YYYY-MM-DD:metric
         const prefix = `m:${uid}:`;
         const listed = await env.KV_STATS.list({ prefix });
-        const ALLOWED_HIT_METRICS = new Set(['qr-print', 'qr-view', 'qr-scan', 'share', 'lpm-open']); // include qr-scan in stats aggregation
+        const ALLOWED_HIT_METRICS = new Set([
+          'qr-print',
+          'qr-view',
+          'qr-scan',
+          'share',
+          'lpm-open',
+          'call',
+          'email',
+          'whatsapp',
+          'telegram',
+          'messenger'
+        ]); // include comm channels in stats aggregation
         for (const { name } of listed.keys || []) {
           const [/*m*/, /*uid*/, d, metric] = name.split(':');
           if (d >= from && d <= to && ALLOWED_HIT_METRICS.has(metric)) {

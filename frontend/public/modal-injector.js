@@ -2999,8 +2999,9 @@ export function createSocialModal({ name, links = {}, contact = {}, id }) { // i
   // (Build the final rows explicitly so filtering can’t drop the Website row.)
   const officialRow = websiteHref ? {
     key: 'official',
-    label: '🌐 Website',   // keep existing label
-    icon: '',              // text-only row; no missing asset
+    label: 'Website',      // text label only
+    emoji: '🌐',           // globe icon rendered in the icon slot
+    icon: '',              // no SVG; emoji covers the icon role
     track: 'official',
     href: websiteHref
   } : null;
@@ -3102,16 +3103,18 @@ export function createCommunicationModal({ name, contact = {}, id }) {
   if (phone) {
     rows.push({
       label: 'Call',
-      icon: '📞',                    // plain emoji is fine for phone
-      href: `tel:${phone}`
+      icon: '📞',
+      href: `tel:${phone}`,
+      metric: 'call'
     });
   }
 
   if (email) {
     rows.push({
       label: 'Email',
-      icon: '✉️',                   // plain emoji is fine for email
-      href: `mailto:${email}`
+      icon: '✉️',
+      href: `mailto:${email}`,
+      metric: 'email'
     });
   }
 
@@ -3122,8 +3125,9 @@ export function createCommunicationModal({ name, contact = {}, id }) {
   if (waNumber) {
     rows.push({
       label: 'WhatsApp',
-      iconSrc: '/assets/social/icon-whatsapp.svg',     // real WhatsApp logo
-      href: `https://wa.me/${waNumber}`
+      iconSrc: '/assets/social/icon-whatsapp.svg',
+      href: `https://wa.me/${waNumber}`,
+      metric: 'whatsapp'
     });
   }
 
@@ -3132,8 +3136,9 @@ export function createCommunicationModal({ name, contact = {}, id }) {
     if (handle) {
       rows.push({
         label: 'Telegram',
-        iconSrc: '/assets/social/icons-telegram.svg',  // real Telegram logo
-        href: `https://t.me/${handle}`
+        iconSrc: '/assets/social/icons-telegram.svg',
+        href: `https://t.me/${handle}`,
+        metric: 'telegram'
       });
     }
   }
@@ -3143,8 +3148,9 @@ export function createCommunicationModal({ name, contact = {}, id }) {
     if (handle) {
       rows.push({
         label: 'Messenger',
-        iconSrc: '/assets/social/icons-messenger.svg', // real Messenger logo
-        href: `https://m.me/${handle}`
+        iconSrc: '/assets/social/icons-messenger.svg',
+        href: `https://m.me/${handle}`,
+        metric: 'messenger'
       });
     }
   }
@@ -3183,6 +3189,35 @@ export function createCommunicationModal({ name, contact = {}, id }) {
 
       a.appendChild(iconSpan);
       a.appendChild(labelSpan);
+
+      // tracking + open: send /hit/<metric>/<uid> then hand off to OS/app
+      if (row.metric && id) {
+        a.addEventListener('click', async (ev) => {
+          ev.preventDefault();
+          const raw = String(id || '').trim();
+          const openTarget = () => {
+            if (row.href.startsWith('tel:') || row.href.startsWith('mailto:')) {
+              location.href = row.href;
+            } else {
+              window.open(row.href, '_blank', 'noopener,noreferrer');
+            }
+          };
+
+          try {
+            const uid = await resolveULIDFor(raw);
+            if (uid) {
+              await fetch(`${TRACK_BASE}/hit/${encodeURIComponent(row.metric)}/${encodeURIComponent(uid)}`, {
+                method: 'POST',
+                keepalive: true
+              }).catch(() => {});
+            }
+          } catch {
+            // tracking must not block the action
+          }
+
+          openTarget();
+        }, { capture: true });
+      }
 
       list.appendChild(a);
     });
