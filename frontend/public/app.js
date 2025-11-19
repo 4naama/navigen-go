@@ -343,6 +343,7 @@ function renderPopularGroup(list = geoPoints) {
         imageSrc: cover,
         images,
         media,
+        qrUrl: loc?.qrUrl || '',
         descriptions: (loc && typeof loc.descriptions === 'object') ? loc.descriptions : {},
         tags: _tags,
         contactInformation: (loc && loc.contactInformation) || {},
