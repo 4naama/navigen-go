@@ -196,7 +196,9 @@ export default {
         'email',
         'whatsapp',
         'telegram',
-        'messenger'
+        'messenger',
+        'rating-sum',
+        'rating-avg'
       ]); // include comm channels for dash stats
 
       if (!metric || !ALLOWED_HIT_METRICS.has(metric) || !idOrSlug) {
@@ -209,7 +211,6 @@ export default {
 
       // daily bucket: m:<ULID>:YYYY-MM-DD:<metric>
       const date = new Date().toISOString().slice(0, 10);
-      const key = `m:${ulid}:${date}:${metric}`;
 
       // Safe KV increment (no-throw → always 204)
       try {
@@ -222,8 +223,26 @@ export default {
             },
           });
         }
-        const current = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
-        await env.KV_STATS.put(key, String(current + 1));
+
+        if (metric === 'rating') {
+          // 1) count how many ratings we received that day
+          const countKey = `m:${ulid}:${date}:rating-sum`;
+          const currentCount = parseInt((await env.KV_STATS.get(countKey)) || '0', 10) || 0;
+          await env.KV_STATS.put(countKey, String(currentCount + 1));
+
+          // 2) accumulate the 1–5 score to compute an average later
+          const scoreRaw = (url.searchParams.get('score') || '').trim();
+          const score = parseInt(scoreRaw, 10);
+          if (Number.isFinite(score) && score >= 1 && score <= 5) {
+            const scoreKey = `m:${ulid}:${date}:rating-score`;
+            const currentScore = parseInt((await env.KV_STATS.get(scoreKey)) || '0', 10) || 0;
+            await env.KV_STATS.put(scoreKey, String(currentScore + score));
+          }
+        } else {
+          const key = `m:${ulid}:${date}:${metric}`;
+          const current = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
+          await env.KV_STATS.put(key, String(current + 1));
+        }
       } catch (_) {
         // swallow and still return 204
       }
@@ -311,11 +330,14 @@ export default {
       if (!uid) return new Response('Not Found', { status: 404 });
 
       const days = {};
+      let ratedSum = 0;
+      let ratingScoreSum = 0;
+
       try {
         // keys look like m:<ULID>:YYYY-MM-DD:metric
         const prefix = `m:${uid}:`;
         const listed = await env.KV_STATS.list({ prefix });
-        const ALLOWED_HIT_METRICS = new Set([
+        const ALLOWED_METRICS = new Set([
           'qr-print',
           'qr-view',
           'qr-scan',
@@ -325,19 +347,34 @@ export default {
           'email',
           'whatsapp',
           'telegram',
-          'messenger'
-        ]); // include comm channels in stats aggregation
+          'messenger',
+          'rating-sum'
+        ]); // include comm channels in stats aggregation + rating-sum (count)
+
         for (const { name } of listed.keys || []) {
           const [/*m*/, /*uid*/, d, metric] = name.split(':');
-          if (d >= from && d <= to && ALLOWED_HIT_METRICS.has(metric)) {
-            const n = Number(await env.KV_STATS.get(name, 'text')) || 0;
-            if (!days[d]) days[d] = {};
-            days[d][metric] = (days[d][metric] || 0) + n;
+          if (d < from || d > to) continue;
+
+          if (metric === 'rating-score') {
+            const v = Number(await env.KV_STATS.get(name, 'text')) || 0;
+            ratingScoreSum += v;
+            continue; // rating-score is helper-only, never exposed as a row
           }
+
+          if (!ALLOWED_METRICS.has(metric)) continue;
+
+          const n = Number(await env.KV_STATS.get(name, 'text')) || 0;
+          if (!days[d]) days[d] = {};
+          days[d][metric] = (days[d][metric] || 0) + n;
+
+          if (metric === 'rating-sum') ratedSum += n;
         }
       } catch {}
 
-      const body = { locationID: uid, days };
+      const ratingAvg = ratedSum > 0 && ratingScoreSum > 0 ? (ratingScoreSum / ratedSum) : 0;
+
+      const body = { locationID: uid, days, rated_sum: ratedSum, rating_avg: ratingAvg };
+
       return new Response(JSON.stringify(body), {
         status: 200,
         headers: {
