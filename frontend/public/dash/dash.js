@@ -188,8 +188,7 @@ const METRIC_LABEL = Object.freeze({
   'map':      t('metric.map'),
   'qr-scan':  t('metric.qr-scan'),
   'qr-view':  t('metric.qr-view'),
-  'qr-print': t('metric.qr-print'),
-  'rating':   t('metric.rating')
+  'qr-print': t('metric.qr-print')
 });
 
 const HUMANIZE = (k) => {
