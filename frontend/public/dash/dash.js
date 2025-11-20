@@ -161,7 +161,7 @@ const ORDER = [
   'booking','newsletter',
   'share','map','qr-view','qr-scan','qr-print',  
   'official','facebook','instagram','pinterest','spotify','tiktok','youtube',
-  'call','email','whatsapp','telegram','messenger', 'rating-sum'
+  'call','email','whatsapp','telegram','messenger', 'rating'
 ]; // show scans, views, prints, and rating sum; average is shown in meta
 
 // display labels for metrics (ids must match ORDER exactly)
@@ -189,8 +189,8 @@ const METRIC_LABEL = Object.freeze({
   'qr-scan':      t('metric.qr-scan'),
   'qr-view':      t('metric.qr-view'),
   'qr-print':     t('metric.qr-print'),
-  'rating-sum':   t('metric.rating-sum'),
-  "rating-avg":   t('metric.rating-avg')
+  'rating':       t('metric.rating-sum'),
+  'rating-avg':   t('metric.rating-avg') // used by meta summary line only
 });
 
 const HUMANIZE = (k) => {
