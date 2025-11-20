@@ -827,7 +827,26 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
   if ((EVENT_ORDER as readonly string[]).includes(evKey)) {
     const day = dayKeyFor(now, tz, country);
     const key = `stats:${loc}:${day}:${evKey}`;
-    await kvIncr(env.KV_STATS, key);
+    await kvIncr(env.KV_STATS, key); // base counter (e.g. "rating" → how many rating events)
+
+    // For rating events, also accumulate the 1–5 score so /api/stats can compute an average.
+    if (evKey === "rating") {
+      const scoreRaw = (
+        payload?.score ??
+        payload?.rating ??
+        payload?.value ??
+        ""
+      ).toString().trim();
+      const score = parseInt(scoreRaw, 10);
+
+      if (Number.isFinite(score) && score >= 1 && score <= 5) {
+        const scoreKey = `stats:${loc}:${day}:rating-score`;
+        const cur = parseInt((await env.KV_STATS.get(scoreKey)) || "0", 10) || 0;
+        await env.KV_STATS.put(scoreKey, String(cur + score), {
+          expirationTtl: 60 * 60 * 24 * 366 // keep stats ~1 year like kvIncr()
+        });
+      }
+    }
   }
   
   // count by the metric key directly (event is canonical)
