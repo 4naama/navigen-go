@@ -389,7 +389,7 @@ function renderTable(json) {
         }
 
         const avgText = ratingAvg.toFixed(2);
-        ratingLine.textContent = `${t('stats.rated_sum')}: ${ratedTotal} • ${t('stats.rating_avg')}: ${avgText}`;
+        ratingLine.textContent = `${t('metric.rating-sum')}: ${ratedTotal} • ${t('metric.rating-avg')}: ${avgText}`;
       } else if (ratingLine) {
         ratingLine.remove();
       }
