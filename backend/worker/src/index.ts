@@ -243,32 +243,30 @@ export default {
       }
 
       // GET /api/stats?locationID=.
-
       if (url.pathname === "/api/stats" && req.method === "GET") {
-        const locRaw = (url.searchParams.get("locationID")||"").trim(); // accept alias or ULID
-        const loc    = (await resolveUid(locRaw, env)) || locRaw; // prefer canonical ULID for reads
-        const from = (url.searchParams.get("from")||"").trim();
-        const to   = (url.searchParams.get("to")  ||"").trim();
-        const tz   = (url.searchParams.get("tz")  ||"").trim() || undefined;
+        const locRaw = (url.searchParams.get("locationID") || "").trim();
+        const loc = (await resolveUid(locRaw, env)) || locRaw;
+        const from = (url.searchParams.get("from") || "").trim();
+        const to = (url.searchParams.get("to") || "").trim();
+        const tz = (url.searchParams.get("tz") || "").trim() || undefined;
+
         if (!loc || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-          return json({ error:{code:"invalid_request", message:"locationID, from, to required (YYYY-MM-DD)"} }, 400);
+          return json({ error: { code: "invalid_request", message: "locationID, from, to required (YYYY-MM-DD)" } }, 400);
         }
 
-        // list all keys for this location; keys look like stats:<loc>:YYYY-MM-DD:<event>
         const prefix = `stats:${loc}:`;
         const days: Record<string, Partial<Record<EventKey, number>>> = {};
-        let cursor: string|undefined = undefined;
+        let cursor: string | undefined = undefined;
 
-        // aggregate Rated (sum) and Rating (avg) across the requested window
-        let ratedSum = 0;        // total number of rating events
-        let ratingScoreSum = 0;  // total of all 1–5 scores
+        let ratedSum = 0;
+        let ratingScoreSum = 0;
 
         const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
 
         do {
           const page = await env.KV_STATS.list({ prefix, cursor });
           for (const k of page.keys) {
-            const name = k.name; // stats:<loc>:<day>:<event>
+            const name = k.name;
             const parts = name.split(":");
             if (parts.length !== 4) continue;
 
@@ -277,30 +275,29 @@ export default {
 
             const rawEv = (parts[3] as string).replaceAll("_", "-");
 
-            // sum of scores is stored under a special technical bucket "rating-score"
             if (rawEv === "rating-score") {
-              const scoreVal = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
-              ratingScoreSum += scoreVal;
+              const sv = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
+              ratingScoreSum += sv;
               continue;
             }
 
             if (!allowed.has(rawEv)) continue;
             const ev = rawEv as EventKey;
 
-            const n = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0; // safe read
+            const n = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
             if (!days[day]) days[day] = {};
             days[day][ev] = (days[day][ev] || 0) + n;
 
-            if (ev === "rating") {
-              ratedSum += n;
-            }
+            if (ev === "rating") ratedSum += n;
           }
           cursor = page.cursor || undefined;
         } while (cursor);
 
         const ratingAvg = ratedSum > 0 ? ratingScoreSum / ratedSum : 0;
 
-        const siteOrigin = req.headers.get("Origin") || "https://navigen.io"; // use caller's origin for profiles.json
+        const siteOrigin =
+          req.headers.get("Origin") || "https://navigen.io";
+
         return json(
           {
             locationID: loc,
@@ -315,6 +312,7 @@ export default {
           },
           200
         );
+      }
 
       // GET /api/stats/entity?entityID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
       if (url.pathname === "/api/stats/entity" && req.method === "GET") {
