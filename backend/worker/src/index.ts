@@ -8,7 +8,7 @@ const EVENT_ORDER = [
   "lpm-open","call","email","whatsapp","telegram","messenger",
   "official","booking","newsletter",
   "facebook","instagram","pinterest","spotify","tiktok","youtube",
-  "share","save","unsave","map","qr-print","qr-scan","qr-view"
+  "share","rating","save","unsave","map","qr-print","qr-scan","qr-view"
 ] as const;
 
 type EventKey = typeof EVENT_ORDER[number];
@@ -259,25 +259,62 @@ export default {
         const days: Record<string, Partial<Record<EventKey, number>>> = {};
         let cursor: string|undefined = undefined;
 
+        // aggregate Rated (sum) and Rating (avg) across the requested window
+        let ratedSum = 0;        // total number of rating events
+        let ratingScoreSum = 0;  // total of all 1–5 scores
+
+        const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
+
         do {
           const page = await env.KV_STATS.list({ prefix, cursor });
           for (const k of page.keys) {
             const name = k.name; // stats:<loc>:<day>:<event>
             const parts = name.split(":");
             if (parts.length !== 4) continue;
+
             const day = parts[2];
-            const ev = (parts[3] as string).replaceAll("_", "-") as EventKey;
             if (day < from || day > to) continue;
-            const n = parseInt((await env.KV_STATS.get(name))||"0",10) || 0; // safe read
+
+            const rawEv = (parts[3] as string).replaceAll("_", "-");
+
+            // sum of scores is stored under a special technical bucket "rating-score"
+            if (rawEv === "rating-score") {
+              const scoreVal = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
+              ratingScoreSum += scoreVal;
+              continue;
+            }
+
+            if (!allowed.has(rawEv)) continue;
+            const ev = rawEv as EventKey;
+
+            const n = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0; // safe read
             if (!days[day]) days[day] = {};
             days[day][ev] = (days[day][ev] || 0) + n;
+
+            if (ev === "rating") {
+              ratedSum += n;
+            }
           }
           cursor = page.cursor || undefined;
         } while (cursor);
 
+        const ratingAvg = ratedSum > 0 ? ratingScoreSum / ratedSum : 0;
+
         const siteOrigin = req.headers.get("Origin") || "https://navigen.io"; // use caller's origin for profiles.json
-        return json({ locationID: loc, locationName: await nameForLocation(loc, siteOrigin), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
-      }            
+        return json(
+          {
+            locationID: loc,
+            locationName: await nameForLocation(loc, siteOrigin),
+            from,
+            to,
+            tz: tz || TZ_FALLBACK,
+            order: EVENT_ORDER,
+            days,
+            rated_sum: ratedSum,
+            rating_avg: ratingAvg
+          },
+          200
+        );
 
       // GET /api/stats/entity?entityID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
       if (url.pathname === "/api/stats/entity" && req.method === "GET") {
@@ -384,14 +421,37 @@ export default {
         const parts = pathname.split("/").filter(Boolean); // ['hit','event','id']
         const ev = (parts[1] || "").toLowerCase().replaceAll("_","-");
         const idRaw = parts[2] || "";
+
         const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
-        if (!allowed.has(ev)) return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
+        if (!allowed.has(ev)) {
+          return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
+        }
 
-        const loc = await resolveUid(idRaw, env); if (!loc) return json({ error:{ code:"invalid_request", message:"bad id" } }, 400);
+        const loc = await resolveUid(idRaw, env);
+        if (!loc) {
+          return json({ error:{ code:"invalid_request", message:"bad id" } }, 400);
+        }
 
-        const now = new Date(); const country = (req as any).cf?.country || "";
+        const now = new Date();
+        const country = (req as any).cf?.country || "";
         const day = dayKeyFor(now, undefined, country);
+
+        // always increment the base event counter (e.g., 'rating' → how many people clicked a face)
         await kvIncr(env.KV_STATS, `stats:${loc}:${day}:${ev}`);
+
+        // For rating hits, also accumulate the score so we can compute an average later.
+        if (ev === "rating") {
+          const url = new URL(req.url);
+          const scoreRaw = (url.searchParams.get("score") || "").trim();
+          const score = parseInt(scoreRaw, 10);
+          if (Number.isFinite(score) && score >= 1 && score <= 5) {
+            const scoreKey = `stats:${loc}:${day}:rating-score`;
+            const cur = parseInt((await env.KV_STATS.get(scoreKey)) || "0", 10) || 0;
+            await env.KV_STATS.put(scoreKey, String(cur + score), {
+              expirationTtl: 60*60*24*366
+            });
+          }
+        }
 
         return new Response(null, {
           status: 204,
@@ -401,7 +461,7 @@ export default {
             "Vary": "Origin"
           }
         });
-      }            
+      }
 
       // (Stubs for later)
       // if (pathname === "/api/checkout") { ... }

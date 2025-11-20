@@ -1486,16 +1486,19 @@ async function initLpmImageSlider(modal, data) {
      modal.querySelector('#lpm-save')  ||
      btnClose)?.focus?.();
      
-    // 1–5 rating (localStorage); emoji radios; 24h cooldown
+    // 1–5 rating (localStorage + /hit/rating); emoji radios; 1h cooldown window for sending
     (function initRating(){
       const group = modal.querySelector('#lpm-rate-group');
       if (!group) return;
-      const id = String(data?.id || '');
-      if (!id) return;
 
-      const key   = `rating:${id}`;       // stored value 0..5
-      const tsKey = `rating_ts:${id}`;    // last rating timestamp
-      const COOLDOWN_MS = 24*60*60*1000;  // 24h per device
+      // accept either ULID or slug for this profile (keeps behavior aligned with other CTAs)
+      const rawId = String(data?.id || data?.locationID || '').trim();
+      if (!rawId) return;
+
+      const key      = `rating:${rawId}`;          // stored value 0..5 (last selected)
+      const tsKey    = `rating_ts:${rawId}`;       // last UI interaction timestamp
+      const sentKey  = `rating_sent_ts:${rawId}`;  // last time a hit was sent to dash
+      const COOLDOWN_MS = 60*60*1000;              // 1h per device for sending hits
 
       const btns = Array.from(group.querySelectorAll('.rate-btn'));
       const hint = modal.querySelector('.rate-hint');
@@ -1505,49 +1508,65 @@ async function initLpmImageSlider(modal, data) {
         if (hint) hint.textContent = n ? `Rated ${n}/5` : '';
       };
 
-      let val  = Number(localStorage.getItem(key))  || 0;  // 0 = no rating
-      let last = Number(localStorage.getItem(tsKey)) || 0;
+      let val      = Number(localStorage.getItem(key))     || 0; // 0 = no rating yet
+      let last     = Number(localStorage.getItem(tsKey))   || 0;
+      let lastSent = Number(localStorage.getItem(sentKey)) || 0;
 
-      const canRate = () => !last || (Date.now() - last >= COOLDOWN_MS);
+      const canSend = () => !lastSent || (Date.now() - lastSent >= COOLDOWN_MS);
 
-      // initial visual state
+      // initial visual state (no lock; user can always change the face)
       setUI(val);
-      if (!canRate() && val) {
-        // soft-lock UI in the current session
-        btns.forEach(b => b.disabled = true);
-      }
 
       const commit = (n) => {
-        val = n; last = Date.now();
-        localStorage.setItem(key,  String(n));
+        const nowTs = Date.now();
+        val = n;
+        last = nowTs;
+
+        localStorage.setItem(key,   String(n));
         localStorage.setItem(tsKey, String(last));
         setUI(n);
-        /* no server metric for rating yet; stored locally only */
+        /* send lightweight thanks toast; rating also sent to Worker when send window allows */
         showToast(`Thanks! Rated ${n}/5`, 1600);
 
-        // lock the row for this session
-        btns.forEach(b => b.disabled = true);
+        // fire /hit/rating only when outside the cooldown window; UI always updates
+        if (!canSend()) return;
+
+        lastSent = nowTs;
+        localStorage.setItem(sentKey, String(lastSent));
+
+        (async () => {
+          try {
+            const idOrSlug = String(data?.id || data?.locationID || '').trim();
+            if (!idOrSlug) return;
+
+            // resolve slug → ULID when possible; fall back to slug so Worker can still canonicalize
+            const uid = await resolveULIDFor(idOrSlug);
+            const target = uid || idOrSlug;
+            const url = `${TRACK_BASE}/hit/rating/${encodeURIComponent(target)}?score=${encodeURIComponent(n)}`;
+
+            await fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
+          } catch {
+            // tracking must not block rating UI
+          }
+        })();
       };
 
-      // click handlers
+      // click handlers — always allow face selection; sending is throttled by canSend()
       btns.forEach((b,i) => {
         b.addEventListener('click', () => {
-          if (!canRate()) {
-            showToast('You already rated today', 1600);
-            return;
-          }
           commit(i+1);  // 1..5
         });
       });
 
-      // keyboard support (only if allowed)
+      // keyboard support (no hard lock; still uses commit() which respects send cooldown)
       group.addEventListener('keydown', (e) => {
-        if (!canRate()) return;
         if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-          e.preventDefault(); commit(Math.min(5, (val || 0) + 1));
+          e.preventDefault();
+          commit(Math.min(5, (val || 0) + 1));
         }
         if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-          e.preventDefault(); commit(Math.max(1, (val || 1) - 1));
+          e.preventDefault();
+          commit(Math.max(1, (val || 1) - 1));
         }
       });
     })();
