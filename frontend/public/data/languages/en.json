@@ -386,6 +386,8 @@
   "metric.qr-view": "QR view",
   "metric.qr-scan": "QR scan",
   "metric.qr-print": "QR print",
+  "metric.rating-sum": "Rating sum",
+  "metric.rating-avg": "Rating average",
   "dash.label.location": "Location",
   "dash.label.period": "Period"
 }
