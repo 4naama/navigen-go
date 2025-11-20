@@ -187,8 +187,6 @@ const METRIC_LABEL = Object.freeze({
   'unsave':   t('metric.unsave'),
   'map':      t('metric.map'),
   'qr-scan':  t('metric.qr-scan'),
-  'qr-view':  t('metric.qr-view'), // keep view label
-  'qr-print': t('metric.qr-print') // new: QR → Print clicks  'qr-scan':  t('metric.qr-scan'),
   'qr-view':  t('metric.qr-view'),
   'qr-print': t('metric.qr-print'),
   'rating':   t('metric.rating')
