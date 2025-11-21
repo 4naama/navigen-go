@@ -1224,6 +1224,11 @@ body.large-text {
   width:20px; height:20px; display:block;
 }
 
+/* LPM: lift CTA band above phone gesture bar / safe area */
+#location-profile-modal .modal-footer.cta-compact{
+  padding-bottom: calc(0.5em + env(safe-area-inset-bottom)); /* extra space only on devices that define the safe area */
+}
+
 /* high-contrast support */
 body.high-contrast .cta-compact .modal-footer-button{
   background:#222 !important;
