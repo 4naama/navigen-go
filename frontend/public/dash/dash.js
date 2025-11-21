@@ -330,9 +330,21 @@ function renderTable(json) {
       metaEl.appendChild(copyBtn);
     }
 
-    // 3) ensure Info (ℹ️) button exists before Copy button
+    // 3) ensure Info (ℹ️) button and group both buttons on the right
+    // create a shared actions wrapper once: [date] ... [ℹ️ ⧉]
+    let actionsWrap = metaEl.querySelector('.meta-actions');
+    if (!actionsWrap) {
+      actionsWrap = document.createElement('span');
+      actionsWrap.className = 'meta-actions';
+      actionsWrap.style.display = 'flex';
+      actionsWrap.style.alignItems = 'center';
+      actionsWrap.style.gap = '4px';
+      actionsWrap.style.marginLeft = 'auto'; // pushes both buttons to the far right
+      metaEl.appendChild(actionsWrap);
+    }
+
     let infoBtn = document.getElementById('dash-info');
-    if (!infoBtn && copyBtn) {
+    if (!infoBtn) {
       infoBtn = document.createElement('button');
       infoBtn.id = 'dash-info';
       infoBtn.type = 'button';
@@ -341,11 +353,17 @@ function renderTable(json) {
       infoBtn.title = infoTitle;
       infoBtn.ariaLabel = infoTitle;
       infoBtn.textContent = 'ℹ️';
-      // insert directly before the Copy (⧉) button
-      metaEl.insertBefore(infoBtn, copyBtn);
       infoBtn.addEventListener('click', () => {
         // reserved for future info modal or help; no-op for now
       });
+    }
+
+    // move both buttons into the right-aligned actions wrapper
+    if (actionsWrap && infoBtn.parentElement !== actionsWrap) {
+      actionsWrap.appendChild(infoBtn);
+    }
+    if (actionsWrap && copyBtn.parentElement !== actionsWrap) {
+      actionsWrap.appendChild(copyBtn);
     }
 
     // Refresh removed; Copy button remains.
