@@ -2135,6 +2135,7 @@ button:hover {
   background:rgba(0, 0, 0, 0.5); backdrop-filter:blur(3px);
   align-items:flex-start; justify-content:center;
   padding:16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); /* lift card above bottom gesture area */
   overflow-y:hidden;           /* card scrolls; no screen-edge bar */
 }
 
