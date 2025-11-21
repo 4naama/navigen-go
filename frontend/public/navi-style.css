@@ -1101,7 +1101,7 @@ body.large-text {
 /* ──────────────── Modal Headers & Top Bar ──────────────── */
 /* Close sits in-row; header can wrap without shifting alignment */
 .modal-top-bar{
-  position: sticky; top: 0; z-index: 2;
+  position: sticky; top: 0; z-index: 20; /* sits above in-modal content like slider arrows */
   display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
   padding: 16px 16px 12px 16px;  /* in-row × → no right reserve */
   margin: 0 0 8px 0;
@@ -1375,7 +1375,9 @@ body.high-contrast .qr-cta{
   padding:0 .5rem;
   cursor:pointer;
   border-radius:6px;
+  z-index: 5; /* below .modal-top-bar (z-index:20) but above the image itself */
 }
+
 .lpm-prev{ left:10px; }
 .lpm-next{ right:10px; }
 .lpm-prev:hover,.lpm-next:hover{ background:rgba(0,0,0,.6); }
