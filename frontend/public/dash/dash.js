@@ -330,6 +330,24 @@ function renderTable(json) {
       metaEl.appendChild(copyBtn);
     }
 
+    // 3) ensure Info (ℹ️) button exists before Copy button
+    let infoBtn = document.getElementById('dash-info');
+    if (!infoBtn && copyBtn) {
+      infoBtn = document.createElement('button');
+      infoBtn.id = 'dash-info';
+      infoBtn.type = 'button';
+      // tooltip / SR label; visual content stays icon-only
+      const infoTitle = (typeof t === 'function' ? t('dash.info') : 'Info');
+      infoBtn.title = infoTitle;
+      infoBtn.ariaLabel = infoTitle;
+      infoBtn.textContent = 'ℹ️';
+      // insert directly before the Copy (⧉) button
+      metaEl.insertBefore(infoBtn, copyBtn);
+      infoBtn.addEventListener('click', () => {
+        // reserved for future info modal or help; no-op for now
+      });
+    }
+
     // Refresh removed; Copy button remains.
 
     // inline layout (once)
@@ -387,12 +405,20 @@ function renderTable(json) {
         if (!ratingLine) {
           ratingLine = document.createElement('span');
           ratingLine.className = 'meta-rating';
-          metaEl.appendChild(ratingLine);
+          // place rating line BEFORE the date range so layout becomes:
+          // Period… (outside meta) → ⭐ line → YYYY-MM-DD → YYYY-MM-DD
+          const rangeEl = metaEl.querySelector('.meta-range');
+          if (rangeEl) {
+            metaEl.insertBefore(ratingLine, rangeEl);
+          } else {
+            metaEl.appendChild(ratingLine);
+          }
         }
 
-        const avgText = ratingAvg.toFixed(1); // show one decimal to match "2.0" style
+        const avgText = ratingAvg.toFixed(1); // keep 2.0-style output
         ratingLine.textContent = `⭐ ${avgText} (${ratedTotal})`;
-
+        // ensure ⭐ line takes a full row in the flex container
+        ratingLine.style.flexBasis = '100%';
       } else if (ratingLine) {
         ratingLine.remove();
       }
