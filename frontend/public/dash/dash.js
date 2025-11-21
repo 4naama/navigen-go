@@ -410,24 +410,25 @@ function renderTable(json) {
         }
       }
     }
-      if (hasRating) {
-        if (!ratingLine) {
-          ratingLine = document.createElement('span');
-          ratingLine.className = 'meta-rating';
-          metaEl.appendChild(ratingLine);
-        }
-
-        const avgText = ratingAvg.toFixed(1);
-
-        // flip visual order: make rating line the first full-width row in the meta flex
-        ratingLine.style.flexBasis = '100%';
-        ratingLine.style.order = '-1';
-
-        // two spaces between pieces: ⭐␣␣2.0␣␣(3)
-        ratingLine.textContent = `⭐  ${avgText}  (${ratedTotal})`;
-      } else if (ratingLine) {
-        ratingLine.remove();
+    // rating summary (Rated + Average rating) when backend provides it
+    if (hasRating) {
+      if (!ratingLine) {
+        ratingLine = document.createElement('span');
+        ratingLine.className = 'meta-rating';
+        metaEl.appendChild(ratingLine);
       }
+
+      const avgText = ratingAvg.toFixed(1);
+
+      // flip visual order: make rating line the first full-width row in the meta flex
+      ratingLine.style.flexBasis = '100%';
+      ratingLine.style.order = '-1';
+
+      // two spaces between pieces: ⭐␣␣2.0␣␣(3)
+      ratingLine.textContent = `⭐  ${avgText}  (${ratedTotal})`;
+    } else if (ratingLine) {
+      ratingLine.remove();
+    }  
   }
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
