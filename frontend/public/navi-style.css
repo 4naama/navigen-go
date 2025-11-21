@@ -1156,14 +1156,9 @@ body.large-text {
   margin-top: auto;
   padding: 0.75em 1em 0.5em;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(245, 245, 245, 0.95);
-  backdrop-filter: blur(3px);
+  background: #f5f5f5;        /* solid bar: body text no longer shows through */
+  backdrop-filter: none;      /* keep it crisp instead of translucent blur */
   gap: 1em; flex-wrap: wrap;
-}
-
-/* LPM: keep compact CTA band slightly above bottom edge so phone gesture bar doesn't cut buttons */
-#location-profile-modal .modal-footer.cta-compact{
-  bottom: 8px; /* lift sticky CTA band 8px above viewport bottom */
 }
 
 /* ──────────────── Modal Footer Buttons ──────────────── */
@@ -1396,7 +1391,8 @@ body.high-contrast .qr-cta{
 /* LPM: header flush + keep content from sliding underneath */
 #location-profile-modal .modal-content{
   padding-top:0;                 /* header touches the top edge */
-  padding-bottom:0;              /* CTA band sits on card edge; no extra space below */
+  padding-bottom:0;              /* CTA band sits on card edge; no white band inside */
+  margin-bottom: env(safe-area-inset-bottom, 12px); /* lift whole card so CTA clears gesture bar */
 }
 
 #location-profile-modal .modal-top-bar{
@@ -1519,6 +1515,7 @@ body.high-contrast .qr-cta{
   padding-right: 0;  /* scrollbar flush right */
   padding-left:  0;  /* keep column centered; no side padding on scroller */
   padding-bottom: 0; /* scroller ends at card edge → footer sticks to bottom */
+  margin-bottom: env(safe-area-inset-bottom, 12px); /* keep card off the absolute bottom on mobile */
 }
 
 /* no mid-gutter on the scroll container */
