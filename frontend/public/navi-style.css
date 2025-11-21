@@ -1393,6 +1393,9 @@ body.high-contrast .qr-cta{
   margin-top:12px;               /* small buffer under header (like other modals) */
 }
 
+#location-profile-modal .modal-body-inner{
+  padding-bottom: 96px; /* keep description text from sliding under the CTA rows */
+}
 
 /* ──────────────── Modal Body Action Button ──────────────── */
 /* Used in body-action modals like "Share" */
