@@ -2391,9 +2391,12 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* sticky header */
 #dash-table-scroller thead{
-  position:sticky; top:0; z-index:100; /* header paints above all rows */
+  position:sticky;
+  top:-1px;                    /* pull header up 1px to close any visible gap */
+  z-index:100;                 /* header paints above all rows */
   background:var(--sum-bg);
-  box-shadow:0 2px 6px rgba(0,0,0,.08); border-bottom:1px solid var(--border);
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+  border-bottom:1px solid var(--border);
 }
 
 #dash-table-scroller thead th{ background-color:var(--sum-bg); font-weight:700; position:relative; z-index:5; }
