@@ -410,37 +410,24 @@ function renderTable(json) {
         }
       }
     }
-    // rating summary (Rated + Average rating) when backend provides it
-    {
-      const ratedTotal = Number(json.rated_sum ?? 0);
-      const ratingAvg = Number(json.rating_avg ?? 0);
-
-      // only render when we actually have rating data
-      const hasRating = Number.isFinite(ratedTotal) && ratedTotal > 0 && Number.isFinite(ratingAvg) && ratingAvg > 0;
-      let ratingLine = metaEl.querySelector('.meta-rating');
-
       if (hasRating) {
         if (!ratingLine) {
           ratingLine = document.createElement('span');
           ratingLine.className = 'meta-rating';
-          // place rating line BEFORE the date range so layout becomes:
-          // Period… (outside meta) → ⭐ line → YYYY-MM-DD → YYYY-MM-DD
-          const rangeEl = metaEl.querySelector('.meta-range');
-          if (rangeEl) {
-            metaEl.insertBefore(ratingLine, rangeEl);
-          } else {
-            metaEl.appendChild(ratingLine);
-          }
+          metaEl.appendChild(ratingLine);
         }
 
-        const avgText = ratingAvg.toFixed(1); // keep 2.0-style output
-        ratingLine.textContent = `⭐ ${avgText} (${ratedTotal})`;
-        // ensure ⭐ line takes a full row in the flex container
+        const avgText = ratingAvg.toFixed(1);
+
+        // flip visual order: make rating line the first full-width row in the meta flex
         ratingLine.style.flexBasis = '100%';
+        ratingLine.style.order = '-1';
+
+        // two spaces between pieces: ⭐␣␣2.0␣␣(3)
+        ratingLine.textContent = `⭐  ${avgText}  (${ratedTotal})`;
       } else if (ratingLine) {
         ratingLine.remove();
       }
-    }    
   }
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
