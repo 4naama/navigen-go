@@ -390,8 +390,9 @@ function renderTable(json) {
           metaEl.appendChild(ratingLine);
         }
 
-        const avgText = ratingAvg.toFixed(2);
-        ratingLine.textContent = `${t('metric.rating-sum')}: ${ratedTotal} • ${t('metric.rating-avg')}: ${avgText}`;
+        const avgText = ratingAvg.toFixed(1); // show one decimal to match "2.0" style
+        ratingLine.textContent = `⭐ ${avgText} (${ratedTotal})`;
+
       } else if (ratingLine) {
         ratingLine.remove();
       }
