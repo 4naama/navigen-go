@@ -1388,9 +1388,16 @@ body.high-contrast .qr-cta{
 }
 
 #location-profile-modal .modal-top-bar{
-  position:sticky; top:0; z-index:2;
+  position:sticky; 
+  top:0; 
+  z-index: 50;  /* ensure header stays above slider arrows */
+  position: sticky;
+  top: 0;
+  /* create own stacking context to dominate slider buttons */
+  isolation: isolate;
   background:#fff;               /* solid cover while sticky */
 }
+
 #location-profile-modal .modal-body{
   margin-top:12px;               /* small buffer under header (like other modals) */
 }
