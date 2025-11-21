@@ -413,31 +413,45 @@ function renderTable(json) {
     // rating summary (Rated + Average rating) when backend provides it
     {
       const ratedTotal = Number(json.rated_sum ?? 0);
-      const ratingAvg = Number(json.rating_avg ?? 0);
+      const ratingAvg  = Number(json.rating_avg ?? 0);
 
       // only render when we actually have rating data
-      const hasRating = Number.isFinite(ratedTotal) && ratedTotal > 0 && Number.isFinite(ratingAvg) && ratingAvg > 0;
-      let ratingLine = metaEl.querySelector('.meta-rating');
+      const hasRating =
+        Number.isFinite(ratedTotal) && ratedTotal > 0 &&
+        Number.isFinite(ratingAvg)  && ratingAvg  > 0;
+
+      // rating line can live outside #meta, so search the whole document
+      let ratingLine = document.querySelector('.meta-rating');
 
       if (hasRating) {
         if (!ratingLine) {
-          ratingLine = document.createElement('span');
+          ratingLine = document.createElement('div');
           ratingLine.className = 'meta-rating';
-          metaEl.appendChild(ratingLine);
         }
 
         const avgText = ratingAvg.toFixed(1);
 
-        // flip visual order: make rating line the first full-width row in the meta flex
-        ratingLine.style.flexBasis = '100%';
-        ratingLine.style.order = '-1';
-
         // two spaces between pieces: ⭐␣␣2.0␣␣(3)
         ratingLine.textContent = `⭐  ${avgText}  (${ratedTotal})`;
-      } else if (ratingLine) {
-        ratingLine.remove();
+
+        // place rating line BEFORE the Period row so order is:
+        // ⭐ line
+        // Period ...
+        // 2025-.. → 2025-..   ℹ️  ⧉
+        const periodRow = periodEl?.closest('.field') || periodEl?.parentElement;
+        if (periodRow && periodRow.parentElement) {
+          const parent = periodRow.parentElement;
+          if (ratingLine.parentElement !== parent || ratingLine.nextSibling !== periodRow) {
+            parent.insertBefore(ratingLine, periodRow);
+          }
+        } else if (metaEl && ratingLine.parentElement !== metaEl) {
+          // fallback: keep it inside #meta if Period row is not found
+          metaEl.prepend(ratingLine);
+        }
+      } else if (ratingLine && ratingLine.parentElement) {
+        ratingLine.parentElement.removeChild(ratingLine);
       }
-    }    
+    }   
   }
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
