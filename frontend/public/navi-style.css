@@ -1384,7 +1384,9 @@ body.high-contrast .qr-cta{
 /* LPM: header flush + keep content from sliding underneath */
 #location-profile-modal .modal-content{
   padding-top:0;                 /* header touches the top edge */
+  padding-bottom:0;              /* CTA band sits on card edge; no extra space below */
 }
+
 #location-profile-modal .modal-top-bar{
   position:sticky; top:0; z-index:2;
   background:#fff;               /* solid cover while sticky */
