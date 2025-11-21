@@ -1101,7 +1101,7 @@ body.large-text {
 /* ──────────────── Modal Headers & Top Bar ──────────────── */
 /* Close sits in-row; header can wrap without shifting alignment */
 .modal-top-bar{
-  position: sticky; top: 0; z-index: 2;
+  position: sticky; top: 0; z-index: 20; /* sits above in-modal content like slider arrows */
   display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
   padding: 16px 16px 12px 16px;  /* in-row × → no right reserve */
   margin: 0 0 8px 0;
@@ -1222,6 +1222,11 @@ body.large-text {
 /* CTA icon size for image-based buttons (e.g., Waze) */
 .cta-compact .modal-footer-button .cta-icon{
   width:20px; height:20px; display:block;
+}
+
+/* LPM: lift CTA band above phone gesture bar / safe area */
+#location-profile-modal .modal-footer.cta-compact{
+  padding-bottom: calc(0.5em + env(safe-area-inset-bottom)); /* extra space only on devices that define the safe area */
 }
 
 /* high-contrast support */
@@ -1375,7 +1380,9 @@ body.high-contrast .qr-cta{
   padding:0 .5rem;
   cursor:pointer;
   border-radius:6px;
+  z-index: 5; /* below .modal-top-bar (z-index:20) but above the image itself */
 }
+
 .lpm-prev{ left:10px; }
 .lpm-next{ right:10px; }
 .lpm-prev:hover,.lpm-next:hover{ background:rgba(0,0,0,.6); }
@@ -1384,15 +1391,28 @@ body.high-contrast .qr-cta{
 /* LPM: header flush + keep content from sliding underneath */
 #location-profile-modal .modal-content{
   padding-top:0;                 /* header touches the top edge */
+  padding-bottom:0;              /* CTA band sits on card edge; no white band inside */
+  margin-bottom: env(safe-area-inset-bottom, 12px); /* lift whole card so CTA clears gesture bar */
 }
+
 #location-profile-modal .modal-top-bar{
-  position:sticky; top:0; z-index:2;
+  position:sticky; 
+  top:0; 
+  z-index: 50;  /* ensure header stays above slider arrows */
+  position: sticky;
+  top: 0;
+  /* create own stacking context to dominate slider buttons */
+  isolation: isolate;
   background:#fff;               /* solid cover while sticky */
 }
+
 #location-profile-modal .modal-body{
   margin-top:12px;               /* small buffer under header (like other modals) */
 }
 
+#location-profile-modal .modal-body-inner{
+  padding-bottom: 96px; /* keep description text from sliding under the CTA rows */
+}
 
 /* ──────────────── Modal Body Action Button ──────────────── */
 /* Used in body-action modals like "Share" */
@@ -1495,6 +1515,7 @@ body.high-contrast .qr-cta{
   padding-right: 0;  /* scrollbar flush right */
   padding-left:  0;  /* keep column centered; no side padding on scroller */
   padding-bottom: 0; /* scroller ends at card edge → footer sticks to bottom */
+  margin-bottom: env(safe-area-inset-bottom, 12px); /* keep card off the absolute bottom on mobile */
 }
 
 /* no mid-gutter on the scroll container */
@@ -2116,6 +2137,7 @@ button:hover {
   background:rgba(0, 0, 0, 0.5); backdrop-filter:blur(3px);
   align-items:flex-start; justify-content:center;
   padding:16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); /* lift card above bottom gesture area */
   overflow-y:hidden;           /* card scrolls; no screen-edge bar */
 }
 
