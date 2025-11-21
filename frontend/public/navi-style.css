@@ -2406,7 +2406,7 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller tbody>tr>:first-child,
 #dash-table-scroller tfoot>tr>:first-child{
   position: sticky;
-  left: 0;                  /* lock to left edge (freeze) */
+  left: -1px; /* pull sticky metric column 1px left to close gap at scroll edge */
   top: auto; bottom: auto;  /* prevent vertical stickiness here */
   background-clip: padding-box;
   box-shadow: 1px 0 0 var(--border);
