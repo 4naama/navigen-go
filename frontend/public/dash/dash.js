@@ -410,7 +410,7 @@ function renderTable(json) {
         }
       }
     }
-    // rating summary combined into the period line
+    // rating summary shown inline on the Period row (after the dropdown)
     {
       const ratedTotal = Number(json.rated_sum ?? 0);
       const ratingAvg  = Number(json.rating_avg ?? 0);
@@ -419,25 +419,24 @@ function renderTable(json) {
         Number.isFinite(ratedTotal) && ratedTotal > 0 &&
         Number.isFinite(ratingAvg)  && ratingAvg  > 0;
 
-      // locate the period line (already in #meta)
-      const periodLine = metaEl.querySelector('.meta-range');
-      // remove any old rating chunk
-      const oldRating = metaEl.querySelector('.meta-rating');
+      // remove any previous inline rating badge (wherever it was)
+      const oldRating = document.querySelector('.meta-rating');
+      if (oldRating && oldRating.parentElement) {
+        oldRating.parentElement.removeChild(oldRating);
+      }
 
-      if (oldRating) oldRating.remove();
-
-      if (hasRating && periodLine) {
+      if (hasRating && periodEl) {
         const avgText = ratingAvg.toFixed(1);
 
-        // build inline ⭐ block with two spaces before it
         const span = document.createElement('span');
         span.className = 'meta-rating';
-        span.textContent = `  ⭐  ${avgText}  (${ratedTotal})`; // two spaces before the star
+        // two spaces before star: "Period 2 weeks (14 days)␣␣⭐ 3.0 (1)"
+        span.textContent = `  ⭐  ${avgText}  (${ratedTotal})`;
 
-        // append directly to the period line → merged into one row
-        periodLine.appendChild(span);
+        const parent = periodEl.parentElement;
+        if (parent) parent.appendChild(span); // attach right after the Period select
       }
-    }      
+    }   
   }
 
   // update hint to include selected name when available (keeps "Single location daily counts" otherwise)
