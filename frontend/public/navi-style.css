@@ -992,7 +992,9 @@ body.large-text {
    so the sticky footer remains fully visible above the bottom edge. */
 @media (max-width: 640px){
   #my-stuff-modal .modal-content{
-    max-height: calc(100vh - 7.5em); /* a bit smaller than the generic 6em gap */
+    max-height: calc(100vh - 7.5em); /* keep current shrink (footer visible) */
+    margin-top: -4px;                /* move card 4px closer to the top */
+    margin-bottom: 6px;              /* was 12px → reduce bottom gap by 6px */
   }
 }
 
@@ -1536,7 +1538,7 @@ body.high-contrast .qr-cta{
 
 /* restore inner spacing for content (keeps column visually centered) */
 #my-stuff-modal .modal-body-inner{
-  padding: 0 1.5em 3.5em 1.5em; /* extra bottom space so last button scrolls fully above footer */
+  padding: 0 1.5em 3em 1.5em; /* trim ~8px bottom space, still enough for last button above footer */
 }
 
 /* label wrapping (prevents text spill on narrow screens) */
