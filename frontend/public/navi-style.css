@@ -905,21 +905,13 @@ body.large-text {
   inset: 0;
   display: none;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* like LPM: card anchored to top with overlay padding gap */
   z-index: 1000;
   padding: var(--modal-pad);
   background: var(--modal-backdrop);
   /* subtle blur; keeps chars readable behind */
   -webkit-backdrop-filter: blur(var(--modal-blur));
   backdrop-filter: blur(var(--modal-blur));
-}
-
-/* On small screens, lift the My Stuff overlay slightly down from the very top
-   so the card has a comfortable top gap, similar to LPM. */
-@media (max-width: 640px){
-  #my-stuff-modal{
-    padding-top: calc(var(--modal-pad) + 40px); /* base pad + ~34px breathing room */
-  }
 }
 
 #my-stuff-modal:not(.hidden),
@@ -1516,6 +1508,7 @@ body.high-contrast .qr-cta{
 /* no mid-gutter on the scroll container */
 #my-stuff-modal .modal-body{
   padding: 0;
+  margin-top: 12px; /* same visual buffer under the header as LPM uses */
 }
 
 /* restore inner spacing for content (keeps column visually centered) */
