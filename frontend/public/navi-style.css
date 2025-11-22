@@ -981,6 +981,21 @@ body.large-text {
   box-sizing: border-box;                     /* ✅ Includes padding within declared width */
 }
 
+#my-stuff-modal .modal-content{
+  padding-top: 0;    /* attach sticky header to the top edge */
+  padding-right: 0;  /* scrollbar flush right */
+  padding-left:  0;  /* keep column centered; no side padding on scroller */
+  padding-bottom: 0; /* scroller ends at card edge → footer sticks to bottom */
+}
+
+/* On small screens, keep the My Stuff card slightly shorter
+   so the sticky footer remains fully visible above the bottom edge. */
+@media (max-width: 640px){
+  #my-stuff-modal .modal-content{
+    max-height: calc(100vh - 7.5em); /* a bit smaller than the generic 6em gap */
+  }
+}
+
 /* 🧾 Paragraph styling inside modals for consistent spacing and readability */
 /* Applies to direct <p> elements inside any modal-content container */
 .modal-content p {
