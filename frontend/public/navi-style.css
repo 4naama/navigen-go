@@ -1509,7 +1509,7 @@ body.high-contrast .qr-cta{
    so its top margin feels like LPM: not glued to the screen edge. */
 @media (max-width: 640px){
   #my-stuff-modal .modal-content{
-    margin-top: 12px; /* gentle top gap only on mobile */
+    margin-top: 20px; /* gentle top gap only on mobile */
   }
 }
 
