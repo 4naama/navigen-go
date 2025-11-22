@@ -2478,6 +2478,11 @@ body.high-contrast .modal-menu-item.is-active {
   align-content:flex-start;/* keep wrapped rows tight under the first line */
 }
 
+/* inline rating badge on the Period row */
+.meta-rating{
+  margin-left:0.75em;      /* visual gap between dropdown text and ⭐ block */
+}
+
 /* Single, explicit line-break helper: insert a bare element with this class */
 #meta .meta-linebreak{
   flex-basis:100%;   /* push following items to a new line */
@@ -2490,10 +2495,38 @@ body.high-contrast .modal-menu-item.is-active {
   margin-left:auto; font:inherit; line-height:1; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:#fff; cursor:pointer;
   transition:background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
+
 #copy-tsv:hover,#copy-tsv:focus-visible{
   background:#f8fafc; box-shadow:0 1px 2px rgba(0,0,0,.06); outline:none;
 }
+
+/* aspect selector buttons: Click Info / QR Info / Campaigns */
+#dash-aspect-tabs{
+  display:flex;
+  gap:8px;                 /* visual separation between buttons */
+  margin:4px 0;
+}
+
+#dash-aspect-tabs .dash-aspect-tab{
+  font:inherit;
+  line-height:1;
+  padding:4px 10px;
+  border:1px solid var(--border);
+  border-radius:9999px;    /* pill shape, similar to other controls */
+  background:#fff;
+  cursor:pointer;
+  transition:background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+/* selected tab */
+#dash-aspect-tabs .dash-aspect-tab.active{
+  background:var(--sum-bg);
+  font-weight:600;
+  box-shadow:0 1px 2px rgba(0,0,0,.06);
+}
+
 #copy-tsv.copied{
+
   background:#e2e8f0; border-color:#cbd5e1; box-shadow:inset 0 0 0 1px rgba(0,0,0,.02);
 }
 
