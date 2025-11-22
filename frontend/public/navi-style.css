@@ -914,6 +914,14 @@ body.large-text {
   backdrop-filter: blur(var(--modal-blur));
 }
 
+/* On small screens, lift the My Stuff overlay slightly down from the very top
+   so the card has a comfortable top gap, similar to LPM. */
+@media (max-width: 640px){
+  #my-stuff-modal{
+    padding-top: calc(var(--modal-pad) + 34px); /* base pad + ~34px breathing room */
+  }
+}
+
 #my-stuff-modal:not(.hidden),
 #help-modal:not(.hidden),
 #language-modal:not(.hidden),
@@ -1503,14 +1511,6 @@ body.high-contrast .qr-cta{
   padding-right: 0;  /* scrollbar flush right */
   padding-left:  0;  /* keep column centered; no side padding on scroller */
   padding-bottom: 0; /* scroller ends at card edge → footer sticks to bottom */
-}
-
-/* On small screens, pull the My Stuff card slightly down from the very top
-   so its top margin feels like LPM: not glued to the screen edge. */
-@media (max-width: 640px){
-  #my-stuff-modal .modal-content{
-    margin-top: 30px; /* gentle top gap only on mobile */
-  }
 }
 
 /* no mid-gutter on the scroll container */
