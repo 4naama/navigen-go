@@ -21,6 +21,9 @@ const periodEl = $('#period'); // single control drives the window
 const hintEl = $('#hint'), metaEl = $('#meta'), tblWrap = $('#table-wrap');
 const locWrap = $('#loc-wrap'), entWrap = $('#ent-wrap');
 
+let currentView = 'click-info';   // active aspect: click-info | qr-info | campaigns
+let lastStats = null;             // latest stats payload reused across views
+
 // Canonicalize client URL: ?locationID=<id> → /dash/<id> (ULID or slug; server will 302 slug→ULID in prod)
 (() => {
   const u = new URL(location.href);
@@ -143,6 +146,55 @@ function getISODate(input){
 
   if (modeEl && locWrap && entWrap) syncMode();
 }
+
+// build aspect selector tabs: Click Info / QR Info / Campaigns
+(function initAspectTabs(){
+  if (!locWrap || !locWrap.parentElement) return;
+
+  let tabRow = document.getElementById('dash-aspect-tabs');
+  if (tabRow) return; // already built
+
+  tabRow = document.createElement('div');
+  tabRow.id = 'dash-aspect-tabs';
+
+  const views = [
+    ['click-info', 'dash.tab.click-info', 'Click Info'],
+    ['qr-info',    'dash.tab.qr-info',   'QR Info'],
+    ['campaigns',  'dash.tab.campaigns', 'Campaigns']
+  ];
+
+  const buttons = new Map();
+
+  const updateActive = () => {
+    buttons.forEach((btn, view) => {
+      btn.classList.toggle('active', currentView === view);
+    });
+  };
+
+  for (const [view, labelKey, fallback] of views) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dash-aspect-tab';
+    const label = (typeof t === 'function' ? t(labelKey) : '') || fallback;
+    btn.textContent = label;
+
+    btn.addEventListener('click', () => {
+      if (currentView === view) return;
+      currentView = view;
+      updateActive();
+      renderCurrentView(); // swap visible table based on chosen aspect
+    });
+
+    if (currentView === view) btn.classList.add('active');
+    buttons.set(view, btn);
+    tabRow.appendChild(btn);
+  }
+
+  // insert new row between Location row and Period row
+  locWrap.parentElement.insertBefore(tabRow, locWrap.nextSibling);
+
+  updateActive();
+})();
 
 // only wire mode listener if the control exists
 if (modeEl) modeEl.addEventListener('change', syncMode);
@@ -431,7 +483,7 @@ function renderTable(json) {
         const span = document.createElement('span');
         span.className = 'meta-rating';
         // two spaces before star: "Period 2 weeks (14 days)␣␣⭐ 3.0 (1)"
-        span.textContent = `  ⭐  ${avgText}  (${ratedTotal})`;
+        span.textContent = `   ⭐  ${avgText}  (${ratedTotal})`;
 
         const parent = periodEl.parentElement;
         if (parent) parent.appendChild(span); // attach right after the Period select
@@ -448,6 +500,29 @@ function renderTable(json) {
   const metaBrkEl = metaEl.querySelector('.meta-linebreak');
   if (metaBrkEl) metaBrkEl.remove();
   if (hintEl) hintEl.textContent = '';
+}
+
+function renderCurrentView(){
+  // when stats are not yet loaded, only Click Info has something meaningful to show
+  if (!lastStats) {
+    if (currentView === 'click-info') {
+      tblWrap.textContent = t('dash.state.loading');
+    } else {
+      tblWrap.textContent = '…'; // keep non-click views empty until data arrives
+    }
+    return;
+  }
+
+  if (currentView === 'click-info') {
+    // existing CTA table view
+    renderTable(lastStats);
+  } else if (currentView === 'qr-info') {
+    // QR Info (per-scan) placeholder — backend wiring will replace this later
+    tblWrap.textContent = 'QR Info view will appear here for the selected period.';
+  } else if (currentView === 'campaigns') {
+    // Campaigns (per-campaign) placeholder — backend wiring will replace this later
+    tblWrap.textContent = 'QR Campaigns view will appear here for the selected period.';
+  }
 }
 
 // Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.
@@ -486,7 +561,9 @@ async function loadAndRender(){         // single entry point
       });
     }
 
-    renderTable(json);
+    // cache latest stats so all aspects can reuse the same payload
+    lastStats = json;
+    renderCurrentView(); // show active view (Click Info / QR Info / Campaigns)
   }catch(e){
     tblWrap.textContent = (e && e.message) ? e.message : t('dash.error.load-failed');
   }
