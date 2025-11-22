@@ -918,7 +918,7 @@ body.large-text {
    so the card has a comfortable top gap, similar to LPM. */
 @media (max-width: 640px){
   #my-stuff-modal{
-    padding-top: calc(var(--modal-pad) + 34px); /* base pad + ~34px breathing room */
+    padding-top: calc(var(--modal-pad) + 40px); /* base pad + ~34px breathing room */
   }
 }
 
