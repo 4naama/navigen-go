@@ -514,14 +514,68 @@ function renderCurrentView(){
   }
 
   if (currentView === 'click-info') {
-    // existing CTA table view
+    // existing CTA table view (A)
     renderTable(lastStats);
-  } else if (currentView === 'qr-info') {
-    // QR Info (per-scan) placeholder — backend wiring will replace this later
-    tblWrap.textContent = 'QR Info view will appear here for the selected period.';
+    return;
+  }
+
+  // shared helper: builds a stats-style table with bold headers (th already bold via CSS)
+  const buildTable = (cols, emptyKey, emptyFallback) => {
+    const labels = cols.map(([key, fallback]) => {
+      const txt = (typeof t === 'function' ? t(key) : '') || fallback;
+      return txt;
+    });
+    const thead = `<thead><tr>${labels.map(txt => `<th>${txt}</th>`).join('')}</tr></thead>`;
+    const emptyMsg = (typeof t === 'function' ? t(emptyKey) : '') || emptyFallback;
+    const tbody = `<tbody><tr><td colspan="${labels.length}" style="text-align:center;">${emptyMsg}</td></tr></tbody>`;
+    tblWrap.innerHTML = `
+      <div id="dash-table-scroller">
+        <table class="stats-table">
+          ${thead}
+          ${tbody}
+        </table>
+      </div>
+    `;
+  };
+
+  if (currentView === 'qr-info') {
+    // B) QR Info table (per-scan meta)
+    const cols = [
+      ['dash.qrinfo.col.time',     'Time'],
+      ['dash.qrinfo.col.source',   'Source'],
+      ['dash.qrinfo.col.location', 'Location'],
+      ['dash.qrinfo.col.device',   'Device'],
+      ['dash.qrinfo.col.browser',  'Browser'],
+      ['dash.qrinfo.col.lang',     'Lang'],
+      ['dash.qrinfo.col.scan-id',  'Scan ID'],
+      ['dash.qrinfo.col.visitor',  'Visitor'],
+      ['dash.qrinfo.col.campaign', 'Campaign'],
+      ['dash.qrinfo.col.signal',   'Signal']
+    ];
+    buildTable(
+      cols,
+      'dash.state.qr-info-empty',
+      'QR Info view will appear here for the selected period.'
+    );
   } else if (currentView === 'campaigns') {
-    // Campaigns (per-campaign) placeholder — backend wiring will replace this later
-    tblWrap.textContent = 'QR Campaigns view will appear here for the selected period.';
+    // C) QR Campaign table (per-campaign rollup)
+    const cols = [
+      ['dash.qrcamp.col.campaign',  'Campaign'],
+      ['dash.qrcamp.col.target',    'Target'],
+      ['dash.qrcamp.col.period',    'Period'],
+      ['dash.qrcamp.col.scans',     'Scans'],
+      ['dash.qrcamp.col.unique',    'Unique visitors'],
+      ['dash.qrcamp.col.repeat',    'Repeat %'],
+      ['dash.qrcamp.col.locations', 'Locations'],
+      ['dash.qrcamp.col.devices',   'Devices'],
+      ['dash.qrcamp.col.langs',     'Langs'],
+      ['dash.qrcamp.col.signals',   'Signals']
+    ];
+    buildTable(
+      cols,
+      'dash.state.campaigns-empty',
+      'QR Campaigns view will appear here for the selected period.'
+    );
   }
 }
 
