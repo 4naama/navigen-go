@@ -1175,13 +1175,16 @@ body.large-text {
 /* ──────────────── Modal Footer Layout ──────────────── */
 /* Shared footer layout for modals: My Stuff, Share, Alert, Confirm, Resolved, etc. */
 .modal-footer {
-  position: sticky; bottom: 0; z-index: 2; /* pinned inside the scroller */
+  position: sticky;
+  bottom: -1px; z-index: 2; /* pinned inside the scroller */
   display: flex; justify-content: center; align-items: center;
   margin-top: auto;
-  padding: 0.75em 1em 0.5em;
+  /* A) make footer ~4px taller: +0.125em top and bottom (≈2px + 2px at 16px base) */
+  padding: 0.875em 1em 0.625em;
   border-top: 1px solid rgba(0, 0, 0, 0.08);
-  background: #f5f5f5;        /* solid bar: body text no longer shows through */
-  backdrop-filter: none;      /* keep it crisp instead of translucent blur */
+  /* B) match header background: solid white, no translucency/blur */
+  background: #fff;
+  backdrop-filter: none;
   gap: 1em; flex-wrap: wrap;
 }
 
@@ -1408,6 +1411,7 @@ body.high-contrast .qr-cta{
 .lpm-prev:focus,.lpm-next:focus{ outline:2px solid rgba(255,255,255,.6); }
 
 /* LPM: header flush + keep content from sliding underneath */
+/* LPM: header flush + keep content from sliding underneath */
 #location-profile-modal .modal-content{
   padding-top:0;                 /* header touches the top edge */
 }
@@ -1425,6 +1429,15 @@ body.high-contrast .qr-cta{
   margin-top:12px;               /* small buffer under header (like other modals) */
 }
 
+/* On small screens, shorten LPM card a bit so its bottom edge
+   does not touch the screen bottom (CTA band no longer feels glued). */
+@media (max-width: 640px){
+  #location-profile-modal .modal-content{
+    max-height: calc(
+      100vh - 64px - env(safe-area-inset-bottom, 0px)
+    ); /* smaller than generic 100vh-32px → leaves a visible bottom gap */
+  }
+}
 
 /* ──────────────── Modal Body Action Button ──────────────── */
 /* Used in body-action modals like "Share" */
