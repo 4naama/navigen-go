@@ -1433,7 +1433,7 @@ body.high-contrast .qr-cta{
    does not touch or get cut by the screen bottom. */
 @media (max-width: 640px){
   #location-profile-modal .modal-content{
-    max-height: calc(100vh - 6em - 16px);
+    max-height: calc(100vh - 4em - 16px);
     /* default is 100vh - 6em; subtract ~16px extra so CTA band
        lifts off the physical bottom and gets a clear visual gap */
   }
