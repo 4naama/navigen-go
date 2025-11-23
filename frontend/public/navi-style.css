@@ -1343,12 +1343,12 @@ body.high-contrast .qr-cta{
   flex-wrap:wrap;                 /* wrap gracefully on narrow screens */
   gap:.5em;                       /* consistent spacing between buttons */
   margin:0;                       /* popover itself should not push any layout */
-  padding:.5em .75em .6em;        /* soft pill around the buttons, with a bit more at the bottom near the primary row */
+  padding:.5em .75em .6em;        /* soft rectangular pad around the buttons, with a bit more at the bottom near the primary row */
 
-  /* visual separation from the content underneath */
-  background:rgba(0,0,0,.84);     /* darker, calm surface; can be overridden by a theme variable if you add one later */
-  border-radius:999px;            /* pill-like shape that wraps multiple buttons */
-  box-shadow:0 6px 18px rgba(0,0,0,.45); /* subtle depth so it reads as a floating layer */
+  /* visual separation from the content underneath — match dash table thead / Click Info tone */
+  background:#f1f5f9;             /* same light tone as var(--sum-bg) used for dash table header & aspect tabs */
+  border-radius:10px;             /* obvious rounded-tip rectangle instead of a full pill */
+  box-shadow:0 6px 18px rgba(0,0,0,.18); /* lighter depth so the surface feels calm, not threatening */
 
   /* default hidden state for motion */
   opacity:0;                      /* hidden by default, but still measurable for smooth transitions */
