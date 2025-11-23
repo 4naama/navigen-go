@@ -1018,6 +1018,15 @@ body.large-text {
   text-align: center;        /* ✅ Center-align for modals like Share or Confirm */
 }
 
+/* Business Card modal: keep contact lines within card width and wrap long tokens */
+#bizcard-modal .modal-body-inner p{
+  text-align:left;           /* left-align contact person / phone / email for better scanability */
+  margin-left:0;             /* keep same inner margin as container; no extra horizontal offset */
+  margin-right:0;            /* avoid pushing into the right edge */
+  overflow-wrap:anywhere;    /* allow long emails/URLs to break mid-token if needed */
+  word-break:break-word;     /* safety net so extremely long chunks still wrap instead of clipping */
+}
+
 /* 🎁 Styled Stripe donation buttons inside modal */
 /* Applies only to buttons used for Stripe purchases */
 .modal-content form {
