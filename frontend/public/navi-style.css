@@ -1336,20 +1336,25 @@ body.high-contrast .qr-cta{
   margin-left:auto; /* 🎯 | 📅 | 🔳 | —— space —— | ⋮ */
 }
 
-/* secondary actions container above the main row, keeps primary row glued to bottom */
+/* secondary actions container above the main row, keeps primary row glued to bottom as a floating popover */
 #lpm-secondary-actions{
-  order:-1;          /* render on the first flex line so main row stays at the bottom of the sticky footer */
-  flex-basis:100%;   /* full-width row */
-  display:none;      /* hidden until ⋮ toggles */
-  margin-bottom:.5em;/* breathing room between secondary row and the main CTA row */
-  margin-top:0;      /* avoid pushing the footer content further up */
-  gap:.5em;
+  /* JS sets absolute positioning and anchors this above the primary row; CSS only handles layout, spacing and animation */
+  display:flex;             /* flex row for the popover content */
+  flex-wrap:wrap;           /* wrap gracefully on narrow screens */
+  gap:.5em;                 /* consistent spacing between buttons */
+  margin:0;                 /* popover itself should not push any layout */
+  padding-bottom:.5em;      /* subtle breathing room above the primary CTA row */
+  opacity:0;                /* hidden by default, but still measurable for smooth transitions */
+  transform:translateY(4px);/* tiny offset so opening feels like a micro slide-up */
+  pointer-events:none;      /* ignore pointer events while visually hidden */
+  transition:opacity .16s ease, transform .16s ease; /* subtle, snappy pop-in motion */
 }
 
-/* reveal when active */
+/* reveal when active: fade + slide the popover into place above the primary row */
 #lpm-secondary-actions.is-open{
-  display:flex;
-  flex-wrap:wrap;    /* wrap gracefully on narrow screens */
+  opacity:1;
+  transform:translateY(0);
+  pointer-events:auto;      /* clickable only while open */
 }
 
 /* ──────────────── LPM Image Slider ──────────────── */

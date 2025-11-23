@@ -280,6 +280,7 @@ export function createLocationProfileModal(data, injected = {}) {
   // ▸ Footer (pinned): primary (🏷️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // define footer first
   const footerEl = document.createElement('div');
   footerEl.className = 'modal-footer cta-compact';
+  footerEl.style.position = 'relative';       // footer becomes the anchor for the floating popover above the primary row
   footerEl.innerHTML = `
     <!-- Row 1: 🏷️ 📅 ⭐ 🔳 ⋮ -->
     <button class="modal-footer-button" id="lpm-tag" aria-label="Tag">
@@ -1240,10 +1241,83 @@ async function initLpmImageSlider(modal, data) {
     const moreBtn = modal.querySelector('#lpm-overflow');
     const secondary = modal.querySelector('#lpm-secondary-actions');
     if (moreBtn && secondary) {
-      moreBtn.addEventListener('click', () => {
-        const open = secondary.classList.toggle('is-open'); // CSS shows when .is-open
-        secondary.setAttribute('aria-hidden', String(!open));
-        moreBtn.setAttribute('aria-expanded', String(open));
+      // treat secondary row as a floating popover above the primary CTA row
+      moreBtn.setAttribute('aria-haspopup', 'menu');
+      moreBtn.setAttribute('aria-expanded', 'false');
+      secondary.setAttribute('role', 'menu');
+      secondary.setAttribute('aria-hidden', 'true');
+
+      // anchor popover to the footer; grow upwards over the content
+      const footer = moreBtn.closest('.modal-footer');
+      if (footer && getComputedStyle(footer).position === 'static') {
+        footer.style.position = 'relative'; // ensure we always have a positioning context
+      }
+      Object.assign(secondary.style, {
+        position: 'absolute',
+        left: '0',
+        right: '0',
+        bottom: '100%',   // always open above the primary row
+        zIndex: '10'      // float over body content
+      });
+
+      let isOpen = false;
+
+      const focusFirstItem = () => {
+        const first = secondary.querySelector('button, [href], [tabindex]:not([tabindex="-1"])');
+        if (first && typeof first.focus === 'function') {
+          first.focus();
+        }
+      };
+
+      const closePopover = () => {
+        if (!isOpen) return;
+        isOpen = false;
+        secondary.classList.remove('is-open');       // CSS can animate opacity/translate here
+        secondary.setAttribute('aria-hidden', 'true');
+        moreBtn.setAttribute('aria-expanded', 'false');
+        document.removeEventListener('click', onDocClick, true);
+        modal.removeEventListener('keydown', onKeyDown, true);
+      };
+
+      const onDocClick = (ev) => {
+        if (!isOpen) return;
+        if (secondary.contains(ev.target) || moreBtn.contains(ev.target)) return;
+        closePopover(); // tap-out closes only the popover, not the whole LPM
+      };
+
+      const onKeyDown = (ev) => {
+        if (!isOpen) return;
+        if (ev.key === 'Escape') {
+          ev.preventDefault();
+          ev.stopPropagation(); // keep ESC from closing the entire modal when only the popover is open
+          closePopover();
+          moreBtn.focus();
+        }
+      };
+
+      const openPopover = () => {
+        if (isOpen) return;
+        isOpen = true;
+        secondary.classList.add('is-open');          // hook for CSS: fade + tiny slide-up
+        secondary.setAttribute('aria-hidden', 'false');
+        moreBtn.setAttribute('aria-expanded', 'true');
+        document.addEventListener('click', onDocClick, { capture: true });
+        modal.addEventListener('keydown', onKeyDown, { capture: true });
+        focusFirstItem();
+      };
+
+      moreBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (isOpen) closePopover();
+        else openPopover();
+      });
+
+      // clicking any secondary action should execute its handler and then close the popover
+      secondary.addEventListener('click', (e) => {
+        const btn = e.target.closest('button, a');
+        if (!btn) return;
+        // let the action run first; hide popover right after
+        setTimeout(closePopover, 0);
       });
     }
 
