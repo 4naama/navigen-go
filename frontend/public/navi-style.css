@@ -1190,7 +1190,7 @@ body.large-text {
   /* B) match header background: solid white, no translucency/blur */
   background: #fff;
   backdrop-filter: none;
-gap: 1em; flex-wrap: wrap;
+  gap: 1em; flex-wrap: wrap;
 }
 
 /* My Stuff footer: slightly taller than the shared default (≈+4px total height) */
