@@ -1336,11 +1336,13 @@ body.high-contrast .qr-cta{
   margin-left:auto; /* 🎯 | 📅 | 🔳 | —— space —— | ⋮ */
 }
 
-/* secondary actions container under the main row */
+/* secondary actions container above the main row, keeps primary row glued to bottom */
 #lpm-secondary-actions{
-  flex-basis:100%;   /* clean break onto new line */
+  order:-1;          /* render on the first flex line so main row stays at the bottom of the sticky footer */
+  flex-basis:100%;   /* full-width row */
   display:none;      /* hidden until ⋮ toggles */
-  margin-top:.5em;
+  margin-bottom:.5em;/* breathing room between secondary row and the main CTA row */
+  margin-top:0;      /* avoid pushing the footer content further up */
   gap:.5em;
 }
 
