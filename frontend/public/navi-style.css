@@ -1339,14 +1339,21 @@ body.high-contrast .qr-cta{
 /* secondary actions container above the main row, keeps primary row glued to bottom as a floating popover */
 #lpm-secondary-actions{
   /* JS sets absolute positioning and anchors this above the primary row; CSS only handles layout, spacing and animation */
-  display:flex;             /* flex row for the popover content */
-  flex-wrap:wrap;           /* wrap gracefully on narrow screens */
-  gap:.5em;                 /* consistent spacing between buttons */
-  margin:0;                 /* popover itself should not push any layout */
-  padding-bottom:.5em;      /* subtle breathing room above the primary CTA row */
-  opacity:0;                /* hidden by default, but still measurable for smooth transitions */
-  transform:translateY(4px);/* tiny offset so opening feels like a micro slide-up */
-  pointer-events:none;      /* ignore pointer events while visually hidden */
+  display:flex;                   /* flex row for the popover content */
+  flex-wrap:wrap;                 /* wrap gracefully on narrow screens */
+  gap:.5em;                       /* consistent spacing between buttons */
+  margin:0;                       /* popover itself should not push any layout */
+  padding:.5em .75em .6em;        /* soft pill around the buttons, with a bit more at the bottom near the primary row */
+
+  /* visual separation from the content underneath */
+  background:rgba(0,0,0,.84);     /* darker, calm surface; can be overridden by a theme variable if you add one later */
+  border-radius:999px;            /* pill-like shape that wraps multiple buttons */
+  box-shadow:0 6px 18px rgba(0,0,0,.45); /* subtle depth so it reads as a floating layer */
+
+  /* default hidden state for motion */
+  opacity:0;                      /* hidden by default, but still measurable for smooth transitions */
+  transform:translateY(4px);      /* tiny offset so opening feels like a micro slide-up */
+  pointer-events:none;            /* ignore pointer events while visually hidden */
   transition:opacity .16s ease, transform .16s ease; /* subtle, snappy pop-in motion */
 }
 
@@ -1354,7 +1361,7 @@ body.high-contrast .qr-cta{
 #lpm-secondary-actions.is-open{
   opacity:1;
   transform:translateY(0);
-  pointer-events:auto;      /* clickable only while open */
+  pointer-events:auto;            /* clickable only while open */
 }
 
 /* ──────────────── LPM Image Slider ──────────────── */

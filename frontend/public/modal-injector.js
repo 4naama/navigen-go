@@ -279,8 +279,7 @@ export function createLocationProfileModal(data, injected = {}) {
 
   // ▸ Footer (pinned): primary (🏷️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // define footer first
   const footerEl = document.createElement('div');
-  footerEl.className = 'modal-footer cta-compact';
-  footerEl.style.position = 'relative';       // footer becomes the anchor for the floating popover above the primary row
+  footerEl.className = 'modal-footer cta-compact'; // sticky bottom behavior remains in CSS so this row stays glued to the LPM edge
   footerEl.innerHTML = `
     <!-- Row 1: 🏷️ 📅 ⭐ 🔳 ⋮ -->
     <button class="modal-footer-button" id="lpm-tag" aria-label="Tag">
