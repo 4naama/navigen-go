@@ -914,6 +914,11 @@ body.large-text {
   backdrop-filter: blur(var(--modal-blur));
 }
 
+/* My Stuff: align top gap with LPM while keeping side/bottom padding */
+#my-stuff-modal{
+  padding-top: 16px; /* match base .modal top padding so card opens at the same vertical position as LPM */
+}
+
 /* My Stuff: lift card above bottom gesture area on small screens only */
 @media (max-width: 640px){
   #my-stuff-modal{
