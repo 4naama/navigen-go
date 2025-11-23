@@ -1001,7 +1001,7 @@ body.large-text {
    so the sticky footer remains fully visible above the bottom edge. */
 @media (max-width: 640px){
   #my-stuff-modal .modal-content{
-    max-height: calc(100vh - 5em); /* match LPM’s mobile card height and positioning */
+    max-height: calc(100vh - 7.5em); /* a bit smaller than the generic 6em gap */
   }
 }
 
