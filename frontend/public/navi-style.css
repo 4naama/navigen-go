@@ -1430,12 +1430,12 @@ body.high-contrast .qr-cta{
 }
 
 /* On small screens, shorten LPM card a bit so its bottom edge
-   does not touch the screen bottom (CTA band no longer feels glued). */
+   does not touch or get cut by the screen bottom. */
 @media (max-width: 640px){
   #location-profile-modal .modal-content{
-    max-height: calc(
-      100vh - 64px - env(safe-area-inset-bottom, 0px)
-    ); /* smaller than generic 100vh-32px → leaves a visible bottom gap */
+    max-height: calc(100vh - 6em - 16px);
+    /* default is 100vh - 6em; subtract ~16px extra so CTA band
+       lifts off the physical bottom and gets a clear visual gap */
   }
 }
 
