@@ -1414,6 +1414,7 @@ body.high-contrast .qr-cta{
 /* LPM: header flush + keep content from sliding underneath */
 #location-profile-modal .modal-content{
   padding-top:0;                 /* header touches the top edge */
+  padding-bottom:0;              /* let sticky footer sit on the card edge so it doesn't float above */
 }
 #location-profile-modal .modal-top-bar{
   position:sticky; 
