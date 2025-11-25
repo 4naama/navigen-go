@@ -1461,7 +1461,7 @@ async function initLpmImageSlider(modal, data) {
 
     // ⭐ Save (secondary) handled by helper
 
-    // 📤 Share (placeholder; OS share → clipboard fallback)
+    // 📤 Share (LPM; OS share → clipboard fallback, use same URL as QR share)
     const shareBtn = modal.querySelector('#som-share');
     if (shareBtn) {
       shareBtn.addEventListener('click', async (e) => {
@@ -1481,21 +1481,32 @@ async function initLpmImageSlider(modal, data) {
           } catch {}
         }
 
-        // 2) then perform the OS share (or clipboard fallback)
+        // 2) build the same target URL as QR share uses
+        const slugOrId = String(data?.locationID || data?.id || raw || '').trim();
+        const qrUrl = (typeof data?.qrUrl === 'string') ? data.qrUrl.trim() : '';
+        const baseQr = qrUrl || (slugOrId ? `${location.origin}/?lp=${encodeURIComponent(slugOrId)}` : '');
+
+        // optional fallback: if for some legacy entry we still have only coords
+        const coords = [data?.lat, data?.lng]
+          .map(v => String(v ?? '').trim())
+          .filter(Boolean)
+          .join(', ');
+        const coordFallback = coords ? `${location.origin}/?at=${encodeURIComponent(coords)}` : '';
+
+        const target = baseQr || coordFallback;
         const name = String(data?.name || 'Location');
-        const coords = [data?.lat, data?.lng].filter(Boolean).join(', ');
-        const text = coords ? `${name} — ${coords}` : name;
+
         try {
-          if (navigator.share) {
-            await navigator.share({ title: name, text });
-          } else {
-            await navigator.clipboard.writeText(text);
-            showToast('Copied to clipboard', 1600);
+          if (navigator.share && target) {
+            await navigator.share({ title: name, url: target });
+          } else if (target && navigator.clipboard) {
+            await navigator.clipboard.writeText(target);
+            showToast('Link copied to clipboard', 1600);
           }
         } catch {}
       }, { passive: false });
     }
-        
+  
     // 📈 Stats (dashboard) — single-field locationID (alias or ULID): prefer payload, then cached DOM; fall back to ULID if needed
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
