@@ -1,5 +1,5 @@
 {
-  "locations": [      
+  "locations": [
     {
       "locationID": "hd-budakeszi-7088",
       "locationName": {
@@ -10,6 +10,7 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budakeszi-7088",
       "coord": {
         "lat": 47.502946,
         "lng": 18.917088
@@ -73,7 +74,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budakeszi-7088.json",
         "fileNameAscii": "hd-budakeszi-7088.json"
@@ -89,6 +90,7 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-nagykovacsi-9457",
       "coord": {
         "lat": 47.575766,
         "lng": 18.879457
@@ -152,7 +154,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-nagykovacsi-9457.json",
         "fileNameAscii": "hd-nagykovacsi-9457.json"
@@ -168,6 +170,7 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-esztergom-2883",
       "coord": {
         "lat": 47.781215,
         "lng": 18.732883
@@ -229,7 +232,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-esztergom-2883.json",
         "fileNameAscii": "hd-esztergom-2883.json"
@@ -245,6 +248,7 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-debrecen-hadhazi-8910",
       "coord": {
         "lat": 47.54224,
         "lng": 21.62891
@@ -312,7 +316,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-debrecen-hadhazi-8910.json",
         "fileNameAscii": "hd-debrecen-hadhazi-8910.json"
@@ -328,6 +332,7 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-debrecen-darabos-4026",
       "coord": {
         "lat": 47.53583,
         "lng": 21.624026
@@ -361,7 +366,13 @@
       "descriptions": {},
       "hours": {},
       "links": {
-        "official": "https://helendoron.hu/debrecen"
+        "official": "https://helendoron.hu/debrecen",
+        "facebook": "https://www.facebook.com/HelenDoronDebrecen/",
+        "instagram": "https://www.instagram.com/helendorondebrecen/",
+        "pinterest": "https://hu.pinterest.com/hdebrecen/",
+        "tiktok": "https://www.tiktok.com/@gyerekangoldebrecen",
+        "youtube": "https://www.youtube.com/channel/UCtCw9hCUVzdf8SgzuD_BdTg",
+        "bookingUrl": "https://www.angoldebrecen.hu/kapcsolat"
       },
       "amenities": [],
       "accessibility": {},
@@ -389,7 +400,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-debrecen-darabos-4026.json",
         "fileNameAscii": "hd-debrecen-darabos-4026.json"
@@ -405,15 +416,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-baja-0508",
       "coord": {
         "lat": 46.178907,
         "lng": 18.950508
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-baja-0508/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-baja-0508/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-baja-0508/cover.jpg",
+            "src": "/assets/location-profile-images/hd-baja-0508/icon-512-green.png",
+            "alt": "Helen Doron Baja",
+            "credit": "Helen Doron Baja",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -449,7 +464,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-baja-0508.json",
         "fileNameAscii": "hd-baja-0508.json"
@@ -465,15 +480,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-balatonlelle-1279",
       "coord": {
         "lat": 46.785824,
         "lng": 17.691279
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-balatonlelle-1279/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-balatonlelle-1279/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-balatonlelle-1279/cover.jpg",
+            "src": "/assets/location-profile-images/hd-balatonlelle-1279/icon-512-green.png",
+            "alt": "Helen Doron Balatonlelle",
+            "credit": "Helen Doron Balatonlelle",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -507,7 +526,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-balatonlelle-1279.json",
         "fileNameAscii": "hd-balatonlelle-1279.json"
@@ -523,15 +542,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-biatorbagy-6386",
       "coord": {
         "lat": 47.479768,
         "lng": 18.816386
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-biatorbagy-6386/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-biatorbagy-6386/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-biatorbagy-6386/cover.jpg",
+            "src": "/assets/location-profile-images/hd-biatorbagy-6386/icon-512-green.png",
+            "alt": "Helen Doron Biatorbágy",
+            "credit": "Helen Doron Biatorbágy",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -567,7 +590,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-biatorbagy-6386.json",
         "fileNameAscii": "hd-biatorbagy-6386.json"
@@ -583,15 +606,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest1-dezso-3648",
       "coord": {
         "lat": 47.492334,
         "lng": 19.033648
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest1-dezso-3648/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest1-dezso-3648/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest1-dezso-3648/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest1-dezso-3648/icon-512-green.png",
+            "alt": "Helen Doron Budapest1 Dezső",
+            "credit": "Helen Doron Budapest1 Dezső",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -627,7 +654,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest1-dezso-3648.json",
         "fileNameAscii": "hd-budapest1-dezso-3648.json"
@@ -643,15 +670,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest1-hattyu-9372",
       "coord": {
         "lat": 47.507519,
         "lng": 19.029372
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest1-hattyu-9372/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest1-hattyu-9372/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest1-hattyu-9372/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest1-hattyu-9372/icon-512-green.png",
+            "alt": "Helen Doron Budapest1 Hattyú",
+            "credit": "Helen Doron Budapest1 Hattyú",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -687,7 +718,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest1-hattyu-9372.json",
         "fileNameAscii": "hd-budapest1-hattyu-9372.json"
@@ -703,15 +734,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest2-rozsadomb-0977",
       "coord": {
         "lat": 47.511142,
         "lng": 19.030977
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest2-rozsadomb-0977/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest2-rozsadomb-0977/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest2-rozsadomb-0977/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest2-rozsadomb-0977/icon-512-green.png",
+            "alt": "Helen Doron Budapest2 Rózsadomb",
+            "credit": "Helen Doron Budapest2 Rózsadomb",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -747,7 +782,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest2-rozsadomb-0977.json",
         "fileNameAscii": "hd-budapest2-rozsadomb-0977.json"
@@ -763,15 +798,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest3-6635",
       "coord": {
         "lat": 47.592765,
         "lng": 19.046635
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest3-6635/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest3-6635/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest3-6635/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest3-6635/icon-512-green.png",
+            "alt": "Helen Doron Budapest3",
+            "credit": "Helen Doron Budapest3",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -807,7 +846,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest3-6635.json",
         "fileNameAscii": "hd-budapest3-6635.json"
@@ -823,15 +862,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest4-kaposztasmegyer-4587",
       "coord": {
         "lat": 47.580199,
         "lng": 19.114587
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest4-kaposztasmegyer-4587/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest4-kaposztasmegyer-4587/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest4-kaposztasmegyer-4587/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest4-kaposztasmegyer-4587/icon-512-green.png",
+            "alt": "Helen Doron Budapest4 Káposztásmegyer",
+            "credit": "Helen Doron Budapest4 Káposztásmegyer",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -867,7 +910,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest4-kaposztasmegyer-4587.json",
         "fileNameAscii": "hd-budapest4-kaposztasmegyer-4587.json"
@@ -883,15 +926,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest4-ujpest-5231",
       "coord": {
         "lat": 47.561893,
         "lng": 19.085231
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest4-ujpest-5231/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest4-ujpest-5231/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest4-ujpest-5231/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest4-ujpest-5231/icon-512-green.png",
+            "alt": "Helen Doron Budapest4 Újpest",
+            "credit": "Helen Doron Budapest4 Újpest",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -927,7 +974,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest4-ujpest-5231.json",
         "fileNameAscii": "hd-budapest4-ujpest-5231.json"
@@ -943,15 +990,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest10-ujhegyi-3449",
       "coord": {
         "lat": 47.470989,
         "lng": 19.163449
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest10-ujhegyi-3449/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest10-ujhegyi-3449/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest10-ujhegyi-3449/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest10-ujhegyi-3449/icon-512-green.png",
+            "alt": "Helen Doron Budapest10 Újhegyi",
+            "credit": "Helen Doron Budapest10 Újhegyi",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -987,7 +1038,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest10-ujhegyi-3449.json",
         "fileNameAscii": "hd-budapest10-ujhegyi-3449.json"
@@ -1003,15 +1054,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest10-ohegy-6257",
       "coord": {
         "lat": 47.479012,
         "lng": 19.136257
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest10-ohegy-6257/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest10-ohegy-6257/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest10-ohegy-6257/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest10-ohegy-6257/icon-512-green.png",
+            "alt": "Helen Doron Budapest10 Óhegy",
+            "credit": "Helen Doron Budapest10 Óhegy",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1047,7 +1102,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest10-ohegy-6257.json",
         "fileNameAscii": "hd-budapest10-ohegy-6257.json"
@@ -1063,15 +1118,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest11-etele-5968",
       "coord": {
         "lat": 47.464887,
         "lng": 19.025968
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest11-etele-5968/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest11-etele-5968/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest11-etele-5968/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest11-etele-5968/icon-512-green.png",
+            "alt": "Helen Doron Budapest11 Etele",
+            "credit": "Helen Doron Budapest11 Etele",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1107,7 +1166,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest11-etele-5968.json",
         "fileNameAscii": "hd-budapest11-etele-5968.json"
@@ -1123,15 +1182,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest11-fadrusz-3887",
       "coord": {
         "lat": 47.477803,
         "lng": 19.043887
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest11-fadrusz-3887/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest11-fadrusz-3887/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest11-fadrusz-3887/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest11-fadrusz-3887/icon-512-green.png",
+            "alt": "Helen Doron Budapest11 Fadrusz",
+            "credit": "Helen Doron Budapest11 Fadrusz",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1167,7 +1230,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest11-fadrusz-3887.json",
         "fileNameAscii": "hd-budapest11-fadrusz-3887.json"
@@ -1183,15 +1246,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest11-gazdagret-5034",
       "coord": {
         "lat": 47.467118,
         "lng": 19.005034
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest11-gazdagret-5034/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest11-gazdagret-5034/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest11-gazdagret-5034/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest11-gazdagret-5034/icon-512-green.png",
+            "alt": "Helen Doron Budapest11 Gazdagrét",
+            "credit": "Helen Doron Budapest11 Gazdagrét",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1227,7 +1294,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest11-gazdagret-5034.json",
         "fileNameAscii": "hd-budapest11-gazdagret-5034.json"
@@ -1243,15 +1310,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest11-gellert-2544",
       "coord": {
         "lat": 47.482604,
         "lng": 19.052544
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest11-gellert-2544/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest11-gellert-2544/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest11-gellert-2544/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest11-gellert-2544/icon-512-green.png",
+            "alt": "Helen Doron Budapest11 Gellért",
+            "credit": "Helen Doron Budapest11 Gellért",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1287,7 +1358,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest11-gellert-2544.json",
         "fileNameAscii": "hd-budapest11-gellert-2544.json"
@@ -1303,15 +1374,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest12-hegyvidek-2483",
       "coord": {
         "lat": 47.492872,
         "lng": 19.012483
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest12-hegyvidek-2483/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest12-hegyvidek-2483/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest12-hegyvidek-2483/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest12-hegyvidek-2483/icon-512-green.png",
+            "alt": "Helen Doron Budapest12 Hegyvidék",
+            "credit": "Helen Doron Budapest12 Hegyvidék",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1347,7 +1422,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest12-hegyvidek-2483.json",
         "fileNameAscii": "hd-budapest12-hegyvidek-2483.json"
@@ -1363,15 +1438,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest12-jokai-9012",
       "coord": {
         "lat": 47.498786,
         "lng": 18.989012
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest12-jokai-9012/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest12-jokai-9012/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest12-jokai-9012/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest12-jokai-9012/icon-512-green.png",
+            "alt": "Helen Doron Budapest12 Jókai",
+            "credit": "Helen Doron Budapest12 Jókai",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1407,7 +1486,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest12-jokai-9012.json",
         "fileNameAscii": "hd-budapest12-jokai-9012.json"
@@ -1423,15 +1502,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest13-9502",
       "coord": {
         "lat": 47.533112,
         "lng": 19.079502
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest13-9502/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest13-9502/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest13-9502/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest13-9502/icon-512-green.png",
+            "alt": "Helen Doron Budapest13",
+            "credit": "Helen Doron Budapest13",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1467,7 +1550,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest13-9502.json",
         "fileNameAscii": "hd-budapest13-9502.json"
@@ -1483,15 +1566,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest14-3053",
       "coord": {
         "lat": 47.515881,
         "lng": 19.113053
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest14-3053/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest14-3053/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest14-3053/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest14-3053/icon-512-green.png",
+            "alt": "Helen Doron Budapest14",
+            "credit": "Helen Doron Budapest14",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1527,7 +1614,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest14-3053.json",
         "fileNameAscii": "hd-budapest14-3053.json"
@@ -1543,15 +1630,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest15-8757",
       "coord": {
         "lat": 47.544471,
         "lng": 19.138757
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest15-8757/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest15-8757/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest15-8757/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest15-8757/icon-512-green.png",
+            "alt": "Helen Doron Budapest15",
+            "credit": "Helen Doron Budapest15",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1587,7 +1678,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest15-8757.json",
         "fileNameAscii": "hd-budapest15-8757.json"
@@ -1603,15 +1694,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest16-5556",
       "coord": {
         "lat": 47.399579,
         "lng": 19.115556
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest16-5556/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest16-5556/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest16-5556/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest16-5556/icon-512-green.png",
+            "alt": "Helen Doron Budapest16",
+            "credit": "Helen Doron Budapest16",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1647,7 +1742,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest16-5556.json",
         "fileNameAscii": "hd-budapest16-5556.json"
@@ -1663,15 +1758,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest17-csaba-haz-8939",
       "coord": {
         "lat": 47.489255,
         "lng": 19.288939
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest17-csaba-haz-8939/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest17-csaba-haz-8939/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest17-csaba-haz-8939/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest17-csaba-haz-8939/icon-512-green.png",
+            "alt": "Helen Doron Budapest17 Csaba-Ház",
+            "credit": "Helen Doron Budapest17 Csaba-Ház",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1707,7 +1806,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest17-csaba-haz-8939.json",
         "fileNameAscii": "hd-budapest17-csaba-haz-8939.json"
@@ -1723,15 +1822,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest17-pesti-7453",
       "coord": {
         "lat": 47.471853,
         "lng": 19.277453
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest17-pesti-7453/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest17-pesti-7453/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest17-pesti-7453/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest17-pesti-7453/icon-512-green.png",
+            "alt": "Helen Doron Budapest17 Pesti",
+            "credit": "Helen Doron Budapest17 Pesti",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1767,7 +1870,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest17-pesti-7453.json",
         "fileNameAscii": "hd-budapest17-pesti-7453.json"
@@ -1783,15 +1886,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest18-2321",
       "coord": {
         "lat": 47.442513,
         "lng": 19.182321
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest18-2321/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest18-2321/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest18-2321/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest18-2321/icon-512-green.png",
+            "alt": "Helen Doron Budapest18",
+            "credit": "Helen Doron Budapest18",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1827,7 +1934,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest18-2321.json",
         "fileNameAscii": "hd-budapest18-2321.json"
@@ -1843,15 +1950,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest22-barati-korok-6765",
       "coord": {
         "lat": 47.422235,
         "lng": 19.036765
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest22-barati-korok-6765/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest22-barati-korok-6765/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest22-barati-korok-6765/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest22-barati-korok-6765/icon-512-green.png",
+            "alt": "Helen Doron Budapest22 Baráti-Körök",
+            "credit": "Helen Doron Budapest22 Baráti-Körök",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1887,7 +1998,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest22-barati-korok-6765.json",
         "fileNameAscii": "hd-budapest22-barati-korok-6765.json"
@@ -1903,15 +2014,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest9-4526",
       "coord": {
         "lat": 47.481856,
         "lng": 19.074526
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest9-4526/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest9-4526/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest9-4526/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest9-4526/icon-512-green.png",
+            "alt": "Helen Doron Budapest9",
+            "credit": "Helen Doron Budapest9",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -1945,7 +2060,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest9-4526.json",
         "fileNameAscii": "hd-budapest9-4526.json"
@@ -1961,15 +2076,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest-csepel-7584",
       "coord": {
         "lat": 47.425245,
         "lng": 19.067584
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest-csepel-7584/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest-csepel-7584/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest-csepel-7584/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest-csepel-7584/icon-512-green.png",
+            "alt": "Helen Doron Budapest Csepel",
+            "credit": "Helen Doron Budapest Csepel",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2005,7 +2124,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest-csepel-7584.json",
         "fileNameAscii": "hd-budapest-csepel-7584.json"
@@ -2021,15 +2140,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest-nyugati-5721",
       "coord": {
         "lat": 47.511135,
         "lng": 19.055721
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest-nyugati-5721/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest-nyugati-5721/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest-nyugati-5721/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest-nyugati-5721/icon-512-green.png",
+            "alt": "Helen Doron Budapest Nyugati",
+            "credit": "Helen Doron Budapest Nyugati",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2065,7 +2188,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest-nyugati-5721.json",
         "fileNameAscii": "hd-budapest-nyugati-5721.json"
@@ -2081,15 +2204,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budapest-obuda-4227",
       "coord": {
         "lat": 47.541376,
         "lng": 19.034227
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budapest-obuda-4227/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budapest-obuda-4227/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budapest-obuda-4227/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budapest-obuda-4227/icon-512-green.png",
+            "alt": "Helen Doron Budapest Óbuda",
+            "credit": "Helen Doron Budapest Óbuda",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2123,7 +2250,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budapest-obuda-4227.json",
         "fileNameAscii": "hd-budapest-obuda-4227.json"
@@ -2139,15 +2266,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-budaors-torokbalint-1508",
       "coord": {
         "lat": 47.459453,
         "lng": 18.941508
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-budaors-torokbalint-1508/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-budaors-torokbalint-1508/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-budaors-torokbalint-1508/cover.jpg",
+            "src": "/assets/location-profile-images/hd-budaors-torokbalint-1508/icon-512-green.png",
+            "alt": "Helen Doron Budaörs Törökbálint",
+            "credit": "Helen Doron Budaörs Törökbálint",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2181,7 +2312,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-budaors-torokbalint-1508.json",
         "fileNameAscii": "hd-budaors-torokbalint-1508.json"
@@ -2197,15 +2328,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-bekescsaba-0271",
       "coord": {
         "lat": 46.674318,
         "lng": 21.110271
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-bekescsaba-0271/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-bekescsaba-0271/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-bekescsaba-0271/cover.jpg",
+            "src": "/assets/location-profile-images/hd-bekescsaba-0271/icon-512-green.png",
+            "alt": "Helen Doron Békéscsaba",
+            "credit": "Helen Doron Békéscsaba",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2241,7 +2376,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-bekescsaba-0271.json",
         "fileNameAscii": "hd-bekescsaba-0271.json"
@@ -2257,15 +2392,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-cegled-9461",
       "coord": {
         "lat": 47.170209,
         "lng": 19.789461
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-cegled-9461/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-cegled-9461/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-cegled-9461/cover.jpg",
+            "src": "/assets/location-profile-images/hd-cegled-9461/icon-512-green.png",
+            "alt": "Helen Doron Cegléd",
+            "credit": "Helen Doron Cegléd",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2301,7 +2440,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-cegled-9461.json",
         "fileNameAscii": "hd-cegled-9461.json"
@@ -2317,15 +2456,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-csomor-4453",
       "coord": {
         "lat": 47.540771,
         "lng": 19.224453
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-csomor-4453/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-csomor-4453/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-csomor-4453/cover.jpg",
+            "src": "/assets/location-profile-images/hd-csomor-4453/icon-512-green.png",
+            "alt": "Helen Doron Csömör",
+            "credit": "Helen Doron Csömör",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2361,7 +2504,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-csomor-4453.json",
         "fileNameAscii": "hd-csomor-4453.json"
@@ -2377,15 +2520,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-dunaharaszti-9481",
       "coord": {
         "lat": 47.355878,
         "lng": 19.089481
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-dunaharaszti-9481/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-dunaharaszti-9481/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-dunaharaszti-9481/cover.jpg",
+            "src": "/assets/location-profile-images/hd-dunaharaszti-9481/icon-512-green.png",
+            "alt": "Helen Doron Dunaharaszti",
+            "credit": "Helen Doron Dunaharaszti",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2421,7 +2568,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-dunaharaszti-9481.json",
         "fileNameAscii": "hd-dunaharaszti-9481.json"
@@ -2437,15 +2584,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-dunakeszi-fot-2916",
       "coord": {
         "lat": 47.645025,
         "lng": 19.132916
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-dunakeszi-fot-2916/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-dunakeszi-fot-2916/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-dunakeszi-fot-2916/cover.jpg",
+            "src": "/assets/location-profile-images/hd-dunakeszi-fot-2916/icon-512-green.png",
+            "alt": "Helen Doron Dunakeszi Fót",
+            "credit": "Helen Doron Dunakeszi Fót",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2481,7 +2632,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-dunakeszi-fot-2916.json",
         "fileNameAscii": "hd-dunakeszi-fot-2916.json"
@@ -2497,15 +2648,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-dunaujvaros-2936",
       "coord": {
         "lat": 46.962307,
         "lng": 18.932936
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-dunaujvaros-2936/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-dunaujvaros-2936/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-dunaujvaros-2936/cover.jpg",
+            "src": "/assets/location-profile-images/hd-dunaujvaros-2936/icon-512-green.png",
+            "alt": "Helen Doron Dunaújváros",
+            "credit": "Helen Doron Dunaújváros",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2541,7 +2696,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-dunaujvaros-2936.json",
         "fileNameAscii": "hd-dunaujvaros-2936.json"
@@ -2557,15 +2712,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-emod-4933",
       "coord": {
         "lat": 47.934126,
         "lng": 20.814933
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-emod-4933/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-emod-4933/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-emod-4933/cover.jpg",
+            "src": "/assets/location-profile-images/hd-emod-4933/icon-512-green.png",
+            "alt": "Helen Doron Emőd",
+            "credit": "Helen Doron Emőd",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2601,7 +2760,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-emod-4933.json",
         "fileNameAscii": "hd-emod-4933.json"
@@ -2617,15 +2776,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-gyula-4009",
       "coord": {
         "lat": 46.635451,
         "lng": 21.294009
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-gyula-4009/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-gyula-4009/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-gyula-4009/cover.jpg",
+            "src": "/assets/location-profile-images/hd-gyula-4009/icon-512-green.png",
+            "alt": "Helen Doron Gyula",
+            "credit": "Helen Doron Gyula",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2659,7 +2822,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-gyula-4009.json",
         "fileNameAscii": "hd-gyula-4009.json"
@@ -2675,15 +2838,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-gyal-6629",
       "coord": {
         "lat": 47.380399,
         "lng": 19.216629
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-gyal-6629/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-gyal-6629/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-gyal-6629/cover.jpg",
+            "src": "/assets/location-profile-images/hd-gyal-6629/icon-512-green.png",
+            "alt": "Helen Doron Gyál",
+            "credit": "Helen Doron Gyál",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2717,7 +2884,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-gyal-6629.json",
         "fileNameAscii": "hd-gyal-6629.json"
@@ -2733,15 +2900,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-gyomro-7674",
       "coord": {
         "lat": 47.424554,
         "lng": 19.397674
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-gyomro-7674/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-gyomro-7674/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-gyomro-7674/cover.jpg",
+            "src": "/assets/location-profile-images/hd-gyomro-7674/icon-512-green.png",
+            "alt": "Helen Doron Gyömrő",
+            "credit": "Helen Doron Gyömrő",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2775,7 +2946,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-gyomro-7674.json",
         "fileNameAscii": "hd-gyomro-7674.json"
@@ -2791,15 +2962,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-gyongyos-8185",
       "coord": {
         "lat": 47.784022,
         "lng": 19.928185
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-gyongyos-8185/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-gyongyos-8185/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-gyongyos-8185/cover.jpg",
+            "src": "/assets/location-profile-images/hd-gyongyos-8185/icon-512-green.png",
+            "alt": "Helen Doron Gyöngyös",
+            "credit": "Helen Doron Gyöngyös",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2835,7 +3010,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-gyongyos-8185.json",
         "fileNameAscii": "hd-gyongyos-8185.json"
@@ -2851,15 +3026,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-gyor-7718",
       "coord": {
         "lat": 47.687582,
         "lng": 17.637718
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-gyor-7718/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-gyor-7718/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-gyor-7718/cover.jpg",
+            "src": "/assets/location-profile-images/hd-gyor-7718/icon-512-green.png",
+            "alt": "Helen Doron Győr",
+            "credit": "Helen Doron Győr",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2893,7 +3072,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-gyor-7718.json",
         "fileNameAscii": "hd-gyor-7718.json"
@@ -2909,15 +3088,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-god-7017",
       "coord": {
         "lat": 47.679374,
         "lng": 19.147017
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-god-7017/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-god-7017/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-god-7017/cover.jpg",
+            "src": "/assets/location-profile-images/hd-god-7017/icon-512-green.png",
+            "alt": "Helen Doron Göd",
+            "credit": "Helen Doron Göd",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -2953,7 +3136,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-god-7017.json",
         "fileNameAscii": "hd-god-7017.json"
@@ -2969,15 +3152,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-halasztelek-1764",
       "coord": {
         "lat": 47.363092,
         "lng": 18.981764
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-halasztelek-1764/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-halasztelek-1764/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-halasztelek-1764/cover.jpg",
+            "src": "/assets/location-profile-images/hd-halasztelek-1764/icon-512-green.png",
+            "alt": "Helen Doron Halásztelek",
+            "credit": "Helen Doron Halásztelek",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3013,7 +3200,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-halasztelek-1764.json",
         "fileNameAscii": "hd-halasztelek-1764.json"
@@ -3029,15 +3216,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-hodmezovasarhely-0405",
       "coord": {
         "lat": 46.416204,
         "lng": 20.340405
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-hodmezovasarhely-0405/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-hodmezovasarhely-0405/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-hodmezovasarhely-0405/cover.jpg",
+            "src": "/assets/location-profile-images/hd-hodmezovasarhely-0405/icon-512-green.png",
+            "alt": "Helen Doron Hódmezővásárhely",
+            "credit": "Helen Doron Hódmezővásárhely",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3071,7 +3262,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-hodmezovasarhely-0405.json",
         "fileNameAscii": "hd-hodmezovasarhely-0405.json"
@@ -3087,15 +3278,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-kalocsa-3792",
       "coord": {
         "lat": 46.529453,
         "lng": 18.973792
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-kalocsa-3792/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-kalocsa-3792/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-kalocsa-3792/cover.jpg",
+            "src": "/assets/location-profile-images/hd-kalocsa-3792/icon-512-green.png",
+            "alt": "Helen Doron Kalocsa",
+            "credit": "Helen Doron Kalocsa",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3131,7 +3326,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-kalocsa-3792.json",
         "fileNameAscii": "hd-kalocsa-3792.json"
@@ -3147,15 +3342,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-kecskemet-4925",
       "coord": {
         "lat": 46.932228,
         "lng": 20.114925
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-kecskemet-4925/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-kecskemet-4925/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-kecskemet-4925/cover.jpg",
+            "src": "/assets/location-profile-images/hd-kecskemet-4925/icon-512-green.png",
+            "alt": "Helen Doron Kecskemét",
+            "credit": "Helen Doron Kecskemét",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3191,7 +3390,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-kecskemet-4925.json",
         "fileNameAscii": "hd-kecskemet-4925.json"
@@ -3207,15 +3406,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-kerepes-kistarcsa-8579",
       "coord": {
         "lat": 47.551221,
         "lng": 19.268579
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-kerepes-kistarcsa-8579/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-kerepes-kistarcsa-8579/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-kerepes-kistarcsa-8579/cover.jpg",
+            "src": "/assets/location-profile-images/hd-kerepes-kistarcsa-8579/icon-512-green.png",
+            "alt": "Helen Doron Kerepes Kistarcsa",
+            "credit": "Helen Doron Kerepes Kistarcsa",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3251,7 +3454,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-kerepes-kistarcsa-8579.json",
         "fileNameAscii": "hd-kerepes-kistarcsa-8579.json"
@@ -3267,15 +3470,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-keszthely-7477",
       "coord": {
         "lat": 46.763044,
         "lng": 17.237477
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-keszthely-7477/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-keszthely-7477/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-keszthely-7477/cover.jpg",
+            "src": "/assets/location-profile-images/hd-keszthely-7477/icon-512-green.png",
+            "alt": "Helen Doron Keszthely",
+            "credit": "Helen Doron Keszthely",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3311,7 +3518,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-keszthely-7477.json",
         "fileNameAscii": "hd-keszthely-7477.json"
@@ -3327,15 +3534,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-kiskoros-soltvadkert-8445",
       "coord": {
         "lat": 46.581692,
         "lng": 19.388445
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-kiskoros-soltvadkert-8445/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-kiskoros-soltvadkert-8445/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-kiskoros-soltvadkert-8445/cover.jpg",
+            "src": "/assets/location-profile-images/hd-kiskoros-soltvadkert-8445/icon-512-green.png",
+            "alt": "Helen Doron Kiskőrös Soltvadkert",
+            "credit": "Helen Doron Kiskőrös Soltvadkert",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3371,7 +3582,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-kiskoros-soltvadkert-8445.json",
         "fileNameAscii": "hd-kiskoros-soltvadkert-8445.json"
@@ -3387,15 +3598,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-kispest-shopmark-9698",
       "coord": {
         "lat": 47.463003,
         "lng": 19.129698
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-kispest-shopmark-9698/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-kispest-shopmark-9698/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-kispest-shopmark-9698/cover.jpg",
+            "src": "/assets/location-profile-images/hd-kispest-shopmark-9698/icon-512-green.png",
+            "alt": "Helen Doron Kispest Shopmark",
+            "credit": "Helen Doron Kispest Shopmark",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3431,7 +3646,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-kispest-shopmark-9698.json",
         "fileNameAscii": "hd-kispest-shopmark-9698.json"
@@ -3447,15 +3662,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-kisvarda-7077",
       "coord": {
         "lat": 48.220467,
         "lng": 22.077077
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-kisvarda-7077/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-kisvarda-7077/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-kisvarda-7077/cover.jpg",
+            "src": "/assets/location-profile-images/hd-kisvarda-7077/icon-512-green.png",
+            "alt": "Helen Doron Kisvárda",
+            "credit": "Helen Doron Kisvárda",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3491,7 +3710,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-kisvarda-7077.json",
         "fileNameAscii": "hd-kisvarda-7077.json"
@@ -3507,15 +3726,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-lajosmizse-9026",
       "coord": {
         "lat": 47.033975,
         "lng": 19.559026
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-lajosmizse-9026/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-lajosmizse-9026/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-lajosmizse-9026/cover.jpg",
+            "src": "/assets/location-profile-images/hd-lajosmizse-9026/icon-512-green.png",
+            "alt": "Helen Doron Lajosmizse",
+            "credit": "Helen Doron Lajosmizse",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3551,7 +3774,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-lajosmizse-9026.json",
         "fileNameAscii": "hd-lajosmizse-9026.json"
@@ -3567,15 +3790,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-marcali-0959",
       "coord": {
         "lat": 46.581151,
         "lng": 17.410959
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-marcali-0959/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-marcali-0959/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-marcali-0959/cover.jpg",
+            "src": "/assets/location-profile-images/hd-marcali-0959/icon-512-green.png",
+            "alt": "Helen Doron Marcali",
+            "credit": "Helen Doron Marcali",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3611,7 +3838,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-marcali-0959.json",
         "fileNameAscii": "hd-marcali-0959.json"
@@ -3627,15 +3854,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-miskolc-mindszent-3722",
       "coord": {
         "lat": 48.099501,
         "lng": 20.783722
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-miskolc-mindszent-3722/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-miskolc-mindszent-3722/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-miskolc-mindszent-3722/cover.jpg",
+            "src": "/assets/location-profile-images/hd-miskolc-mindszent-3722/icon-512-green.png",
+            "alt": "Helen Doron Miskolc Mindszent",
+            "credit": "Helen Doron Miskolc Mindszent",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3671,7 +3902,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-miskolc-mindszent-3722.json",
         "fileNameAscii": "hd-miskolc-mindszent-3722.json"
@@ -3687,15 +3918,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-monor-5795",
       "coord": {
         "lat": 47.348778,
         "lng": 19.435795
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-monor-5795/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-monor-5795/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-monor-5795/cover.jpg",
+            "src": "/assets/location-profile-images/hd-monor-5795/icon-512-green.png",
+            "alt": "Helen Doron Monor",
+            "credit": "Helen Doron Monor",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3729,7 +3964,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-monor-5795.json",
         "fileNameAscii": "hd-monor-5795.json"
@@ -3745,15 +3980,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-nagyatad-1158",
       "coord": {
         "lat": 46.230676,
         "lng": 17.361158
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-nagyatad-1158/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-nagyatad-1158/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-nagyatad-1158/cover.jpg",
+            "src": "/assets/location-profile-images/hd-nagyatad-1158/icon-512-green.png",
+            "alt": "Helen Doron Nagyatád",
+            "credit": "Helen Doron Nagyatád",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3789,7 +4028,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-nagyatad-1158.json",
         "fileNameAscii": "hd-nagyatad-1158.json"
@@ -3805,15 +4044,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-nagykanizsa-8154",
       "coord": {
         "lat": 46.456451,
         "lng": 16.998154
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-nagykanizsa-8154/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-nagykanizsa-8154/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-nagykanizsa-8154/cover.jpg",
+            "src": "/assets/location-profile-images/hd-nagykanizsa-8154/icon-512-green.png",
+            "alt": "Helen Doron Nagykanizsa",
+            "credit": "Helen Doron Nagykanizsa",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3847,7 +4090,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-nagykanizsa-8154.json",
         "fileNameAscii": "hd-nagykanizsa-8154.json"
@@ -3863,15 +4106,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-nyiregyhaza-6056",
       "coord": {
         "lat": 47.950681,
         "lng": 21.716056
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-nyiregyhaza-6056/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-nyiregyhaza-6056/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-nyiregyhaza-6056/cover.jpg",
+            "src": "/assets/location-profile-images/hd-nyiregyhaza-6056/icon-512-green.png",
+            "alt": "Helen Doron Nyíregyháza",
+            "credit": "Helen Doron Nyíregyháza",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3907,7 +4154,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-nyiregyhaza-6056.json",
         "fileNameAscii": "hd-nyiregyhaza-6056.json"
@@ -3923,15 +4170,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-miskolc-meggyesalja-2788",
       "coord": {
         "lat": 48.101316,
         "lng": 20.772788
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-miskolc-meggyesalja-2788/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-miskolc-meggyesalja-2788/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-miskolc-meggyesalja-2788/cover.jpg",
+            "src": "/assets/location-profile-images/hd-miskolc-meggyesalja-2788/icon-512-green.png",
+            "alt": "Helen Doron Miskolc Meggyesalja",
+            "credit": "Helen Doron Miskolc Meggyesalja",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -3967,7 +4218,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-miskolc-meggyesalja-2788.json",
         "fileNameAscii": "hd-miskolc-meggyesalja-2788.json"
@@ -3983,15 +4234,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-pilisszentivan-2739",
       "coord": {
         "lat": 47.607573,
         "lng": 18.902739
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-pilisszentivan-2739/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-pilisszentivan-2739/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-pilisszentivan-2739/cover.jpg",
+            "src": "/assets/location-profile-images/hd-pilisszentivan-2739/icon-512-green.png",
+            "alt": "Helen Doron Pilisszentiván",
+            "credit": "Helen Doron Pilisszentiván",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4027,7 +4282,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-pilisszentivan-2739.json",
         "fileNameAscii": "hd-pilisszentivan-2739.json"
@@ -4043,15 +4298,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-pomaz-7911",
       "coord": {
         "lat": 47.650645,
         "lng": 19.017911
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-pomaz-7911/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-pomaz-7911/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-pomaz-7911/cover.jpg",
+            "src": "/assets/location-profile-images/hd-pomaz-7911/icon-512-green.png",
+            "alt": "Helen Doron Pomáz",
+            "credit": "Helen Doron Pomáz",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4085,7 +4344,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-pomaz-7911.json",
         "fileNameAscii": "hd-pomaz-7911.json"
@@ -4101,15 +4360,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-pecs-3289",
       "coord": {
         "lat": 46.069082,
         "lng": 18.223289
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-pecs-3289/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-pecs-3289/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-pecs-3289/cover.jpg",
+            "src": "/assets/location-profile-images/hd-pecs-3289/icon-512-green.png",
+            "alt": "Helen Doron Pécs",
+            "credit": "Helen Doron Pécs",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4145,7 +4408,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-pecs-3289.json",
         "fileNameAscii": "hd-pecs-3289.json"
@@ -4161,15 +4424,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-siofok-2539",
       "coord": {
         "lat": 46.903852,
         "lng": 18.042539
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-siofok-2539/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-siofok-2539/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-siofok-2539/cover.jpg",
+            "src": "/assets/location-profile-images/hd-siofok-2539/icon-512-green.png",
+            "alt": "Helen Doron Siófok",
+            "credit": "Helen Doron Siófok",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4203,7 +4470,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-siofok-2539.json",
         "fileNameAscii": "hd-siofok-2539.json"
@@ -4219,15 +4486,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-sopron-7276",
       "coord": {
         "lat": 47.680455,
         "lng": 16.597276
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-sopron-7276/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-sopron-7276/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-sopron-7276/cover.jpg",
+            "src": "/assets/location-profile-images/hd-sopron-7276/icon-512-green.png",
+            "alt": "Helen Doron Sopron",
+            "credit": "Helen Doron Sopron",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4263,7 +4534,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-sopron-7276.json",
         "fileNameAscii": "hd-sopron-7276.json"
@@ -4279,15 +4550,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-szeged-3296",
       "coord": {
         "lat": 46.248667,
         "lng": 20.143296
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-szeged-3296/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-szeged-3296/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-szeged-3296/cover.jpg",
+            "src": "/assets/location-profile-images/hd-szeged-3296/icon-512-green.png",
+            "alt": "Helen Doron Szeged",
+            "credit": "Helen Doron Szeged",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4323,7 +4598,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-szeged-3296.json",
         "fileNameAscii": "hd-szeged-3296.json"
@@ -4339,15 +4614,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-szekszard-7726",
       "coord": {
         "lat": 46.352769,
         "lng": 18.707726
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-szekszard-7726/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-szekszard-7726/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-szekszard-7726/cover.jpg",
+            "src": "/assets/location-profile-images/hd-szekszard-7726/icon-512-green.png",
+            "alt": "Helen Doron Szekszárd",
+            "credit": "Helen Doron Szekszárd",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4381,7 +4660,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-szekszard-7726.json",
         "fileNameAscii": "hd-szekszard-7726.json"
@@ -4397,15 +4676,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-szentendre-6143",
       "coord": {
         "lat": 47.659331,
         "lng": 19.076143
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-szentendre-6143/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-szentendre-6143/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-szentendre-6143/cover.jpg",
+            "src": "/assets/location-profile-images/hd-szentendre-6143/icon-512-green.png",
+            "alt": "Helen Doron Szentendre",
+            "credit": "Helen Doron Szentendre",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4441,7 +4724,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-szentendre-6143.json",
         "fileNameAscii": "hd-szentendre-6143.json"
@@ -4457,15 +4740,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-szigetszentmiklos-6123",
       "coord": {
         "lat": 47.338672,
         "lng": 19.036123
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-szigetszentmiklos-6123/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-szigetszentmiklos-6123/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-szigetszentmiklos-6123/cover.jpg",
+            "src": "/assets/location-profile-images/hd-szigetszentmiklos-6123/icon-512-green.png",
+            "alt": "Helen Doron Szigetszentmiklós",
+            "credit": "Helen Doron Szigetszentmiklós",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4501,7 +4788,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-szigetszentmiklos-6123.json",
         "fileNameAscii": "hd-szigetszentmiklos-6123.json"
@@ -4517,15 +4804,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-szazhalombatta-9542",
       "coord": {
         "lat": 47.317657,
         "lng": 18.909542
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-szazhalombatta-9542/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-szazhalombatta-9542/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-szazhalombatta-9542/cover.jpg",
+            "src": "/assets/location-profile-images/hd-szazhalombatta-9542/icon-512-green.png",
+            "alt": "Helen Doron Százhalombatta",
+            "credit": "Helen Doron Százhalombatta",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4561,7 +4852,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-szazhalombatta-9542.json",
         "fileNameAscii": "hd-szazhalombatta-9542.json"
@@ -4577,15 +4868,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-szekesfehervar-8058",
       "coord": {
         "lat": 47.176308,
         "lng": 18.418058
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-szekesfehervar-8058/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-szekesfehervar-8058/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-szekesfehervar-8058/cover.jpg",
+            "src": "/assets/location-profile-images/hd-szekesfehervar-8058/icon-512-green.png",
+            "alt": "Helen Doron Székesfehérvár",
+            "credit": "Helen Doron Székesfehérvár",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4621,7 +4916,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-szekesfehervar-8058.json",
         "fileNameAscii": "hd-szekesfehervar-8058.json"
@@ -4637,15 +4932,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-tapolca-3851",
       "coord": {
         "lat": 46.881735,
         "lng": 17.433851
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-tapolca-3851/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-tapolca-3851/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-tapolca-3851/cover.jpg",
+            "src": "/assets/location-profile-images/hd-tapolca-3851/icon-512-green.png",
+            "alt": "Helen Doron Tapolca",
+            "credit": "Helen Doron Tapolca",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4681,7 +4980,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-tapolca-3851.json",
         "fileNameAscii": "hd-tapolca-3851.json"
@@ -4697,15 +4996,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-tata-5592",
       "coord": {
         "lat": 47.651971,
         "lng": 18.325592
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-tata-5592/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-tata-5592/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-tata-5592/cover.jpg",
+            "src": "/assets/location-profile-images/hd-tata-5592/icon-512-green.png",
+            "alt": "Helen Doron Tata",
+            "credit": "Helen Doron Tata",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4741,7 +5044,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-tata-5592.json",
         "fileNameAscii": "hd-tata-5592.json"
@@ -4757,15 +5060,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-tatabanya-2181",
       "coord": {
         "lat": 47.575038,
         "lng": 18.382181
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-tatabanya-2181/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-tatabanya-2181/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-tatabanya-2181/cover.jpg",
+            "src": "/assets/location-profile-images/hd-tatabanya-2181/icon-512-green.png",
+            "alt": "Helen Doron Tatabánya",
+            "credit": "Helen Doron Tatabánya",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4801,7 +5108,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-tatabanya-2181.json",
         "fileNameAscii": "hd-tatabanya-2181.json"
@@ -4817,15 +5124,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-tokol-1132",
       "coord": {
         "lat": 47.317031,
         "lng": 18.971132
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-tokol-1132/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-tokol-1132/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-tokol-1132/cover.jpg",
+            "src": "/assets/location-profile-images/hd-tokol-1132/icon-512-green.png",
+            "alt": "Helen Doron Tököl",
+            "credit": "Helen Doron Tököl",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4861,7 +5172,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-tokol-1132.json",
         "fileNameAscii": "hd-tokol-1132.json"
@@ -4877,15 +5188,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-vecses-4719",
       "coord": {
         "lat": 47.396678,
         "lng": 19.264719
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-vecses-4719/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-vecses-4719/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-vecses-4719/cover.jpg",
+            "src": "/assets/location-profile-images/hd-vecses-4719/icon-512-green.png",
+            "alt": "Helen Doron Vecsés",
+            "credit": "Helen Doron Vecsés",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4921,7 +5236,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-vecses-4719.json",
         "fileNameAscii": "hd-vecses-4719.json"
@@ -4937,15 +5252,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-gardony-velencei-to-5955",
       "coord": {
         "lat": 47.206027,
         "lng": 18.625955
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-gardony-velencei-to-5955/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-gardony-velencei-to-5955/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-gardony-velencei-to-5955/cover.jpg",
+            "src": "/assets/location-profile-images/hd-gardony-velencei-to-5955/icon-512-green.png",
+            "alt": "Helen Doron Gárdony Velencei-tó",
+            "credit": "Helen Doron Gárdony Velencei-tó",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -4981,7 +5300,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-gardony-velencei-to-5955.json",
         "fileNameAscii": "hd-gardony-velencei-to-5955.json"
@@ -4997,15 +5316,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-veszprem-7267",
       "coord": {
         "lat": 47.086115,
         "lng": 17.907267
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-veszprem-7267/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-veszprem-7267/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-veszprem-7267/cover.jpg",
+            "src": "/assets/location-profile-images/hd-veszprem-7267/icon-512-green.png",
+            "alt": "Helen Doron Veszprém",
+            "credit": "Helen Doron Veszprém",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -5041,7 +5364,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-veszprem-7267.json",
         "fileNameAscii": "hd-veszprem-7267.json"
@@ -5057,15 +5380,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-vac-5527",
       "coord": {
         "lat": 47.779973,
         "lng": 19.135527
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-vac-5527/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-vac-5527/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-vac-5527/cover.jpg",
+            "src": "/assets/location-profile-images/hd-vac-5527/icon-512-green.png",
+            "alt": "Helen Doron Vác",
+            "credit": "Helen Doron Vác",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -5101,7 +5428,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-vac-5527.json",
         "fileNameAscii": "hd-vac-5527.json"
@@ -5117,15 +5444,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-varpalota-0247",
       "coord": {
         "lat": 47.201565,
         "lng": 18.140247
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-varpalota-0247/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-varpalota-0247/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-varpalota-0247/cover.jpg",
+            "src": "/assets/location-profile-images/hd-varpalota-0247/icon-512-green.png",
+            "alt": "Helen Doron Várpalota",
+            "credit": "Helen Doron Várpalota",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -5161,7 +5492,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-varpalota-0247.json",
         "fileNameAscii": "hd-varpalota-0247.json"
@@ -5177,15 +5508,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-erd-diosd-7135",
       "coord": {
         "lat": 47.388759,
         "lng": 18.937135
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-erd-diosd-7135/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-erd-diosd-7135/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-erd-diosd-7135/cover.jpg",
+            "src": "/assets/location-profile-images/hd-erd-diosd-7135/icon-512-green.png",
+            "alt": "Helen Doron Érd Diósd",
+            "credit": "Helen Doron Érd Diósd",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -5219,7 +5554,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-erd-diosd-7135.json",
         "fileNameAscii": "hd-erd-diosd-7135.json"
@@ -5235,15 +5570,19 @@
       "groupKey": "🛎️ Services",
       "subgroupKey": "sub.language-schools",
       "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=hd-ullo-0662",
       "coord": {
         "lat": 47.384116,
         "lng": 19.350662
       },
       "media": {
-        "cover": "/assets/location-profile-images/hd-ullo-0662/cover.jpg",
+        "cover": "/assets/location-profile-images/hd-ullo-0662/icon-512-green.png",
         "images": [
           {
-            "src": "/assets/location-profile-images/hd-ullo-0662/cover.jpg",
+            "src": "/assets/location-profile-images/hd-ullo-0662/icon-512-green.png",
+            "alt": "Helen Doron Üllő",
+            "credit": "Helen Doron Üllő",
+            "license": "All rights reserved",
             "default": true
           }
         ]
@@ -5279,7 +5618,7 @@
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-11T18:04:48.516Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "hd-ullo-0662.json",
         "fileNameAscii": "hd-ullo-0662.json"
@@ -5294,7 +5633,8 @@
       "Priority": "Yes",
       "groupKey": "🛒 Shops",
       "subgroupKey": "sub.pharmacy",
-      "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+      "context": "pharmacies/hungary;pharmacies/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/pharmacies/hungary/budapest?lp=europa-patika-rakoczi-ter-1666",
       "coord": {
         "lat": 47.492389,
         "lng": 19.071666
@@ -5353,16 +5693,847 @@
       },
       "closedDates": [],
       "ratings": {},
-      "tags": ["💊 RapiChek influenza A/B+ Covid-19/RSV komb. teszt 1x"],
+      "tags": [],
       "i18n": {
         "availableLangs": []
       },
       "meta": {
-        "lastUpdated": "2025-10-16T22:09:22.691Z",
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
         "version": 1,
         "fileName": "europa-patika-rakoczi-ter-1666.json",
         "fileNameAscii": "europa-patika-rakoczi-ter-1666.json"
       }
-    }    
+    },
+    {
+      "locationID": "costes-restaurant-2236",
+      "locationName": {
+        "en": "Costes Restaurant"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "🍽️ Food & Drink",
+      "subgroupKey": "sub.restaurants",
+      "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/restaurants/hungary/budapest?lp=costes-restaurant-2236",
+      "coord": {
+        "lat": 47.488775,
+        "lng": 19.062236
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/costes-restaurant-2236/img-03.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/costes-restaurant-2236/img-01.png",
+            "alt": "Costes Restaurant",
+            "credit": "Costes Restaurant",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/costes-restaurant-2236/img-03.jpg",
+            "alt": "Costes Restaurant",
+            "credit": "Costes Restaurant",
+            "license": "All rights reserved",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Michelin-starred fine dining restaurant on Ráday utca, the first restaurant in Hungary to receive a Michelin star, offering contemporary European tasting menus in an intimate setting."
+      },
+      "hours": {},
+      "links": {
+        "official": "https://www.costesrestaurant.hu/",
+        "facebook": "https://www.facebook.com/costes.restaurant",
+        "bookingUrl": "https://www.sevenrooms.com"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "+36 20 926 7837",
+        "email": "reservations@costes.hu",
+        "address": "Ráday utca 4.",
+        "postalCode": "1092",
+        "city": "Budapest",
+        "adminArea": "Budapest",
+        "countryCode": "HU",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [
+        "fine dining",
+        "Michelin star",
+        "Costes Group"
+      ],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
+        "version": 1,
+        "fileName": "costes-restaurant-2236.json",
+        "fileNameAscii": "costes-restaurant-2236.json"
+      }
+    },
+    {
+      "locationID": "costes-downtown-8498",
+      "locationName": {
+        "en": "Costes Downtown"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "🍽️ Food & Drink",
+      "subgroupKey": "sub.restaurants",
+      "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/restaurants/hungary/budapest?lp=costes-downtown-8498",
+      "coord": {
+        "lat": 47.500991,
+        "lng": 19.048498
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/costes-downtown-8498/img-01.png",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/costes-downtown-8498/img-01.png",
+            "alt": "Costes Downtown",
+            "credit": "Costes Downtown",
+            "license": "All rights reserved",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/costes-downtown-8498/img-02.jpg",
+            "alt": "Costes Downtown",
+            "credit": "Costes Downtown",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/costes-downtown-8498/img-03.jpg",
+            "alt": "Costes Downtown",
+            "credit": "Costes Downtown",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/costes-downtown-8498/img-04.jpg",
+            "alt": "Costes Downtown",
+            "credit": "Costes Downtown",
+            "license": "All rights reserved",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Modern fine dining restaurant in downtown Budapest, located in the Prestige Hotel, offering a less formal but full fine dining experience and listed in the Michelin Guide every year since 2016."
+      },
+      "hours": {},
+      "links": {
+        "official": "https://costesdowntown.hu/",
+        "bookingUrl": "https://www.sevenrooms.com"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "+36 20 926 7837",
+        "email": "reservations@costesdowntown.hu",
+        "address": "Vigyázó Ferenc u. 5.",
+        "postalCode": "1051",
+        "city": "Budapest",
+        "adminArea": "Budapest",
+        "countryCode": "HU",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [
+        "fine dining",
+        "Michelin Guide",
+        "Costes Group"
+      ],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
+        "version": 1,
+        "fileName": "costes-downtown-8498.json",
+        "fileNameAscii": "costes-downtown-8498.json"
+      }
+    },
+    {
+      "locationID": "rumour-by-racz-jeno-0603",
+      "locationName": {
+        "en": "Rumour by Rácz Jenő"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "🍽️ Food & Drink",
+      "subgroupKey": "sub.restaurants",
+      "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/restaurants/hungary/budapest?lp=rumour-by-racz-jeno-0603",
+      "coord": {
+        "lat": 47.493696,
+        "lng": 19.050603
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/rumour-by-racz-jeno-0603/img-01.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/rumour-by-racz-jeno-0603/img-01.jpg",
+            "alt": "Rumour by Rácz Jenő",
+            "credit": "Rumour by Rácz Jenő",
+            "license": "All rights reserved",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/rumour-by-racz-jeno-0603/img-05.jpg",
+            "alt": "Rumour by Rácz Jenő",
+            "credit": "Rumour by Rácz Jenő",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/rumour-by-racz-jeno-0603/img-07.jpg",
+            "alt": "Rumour by Rácz Jenő",
+            "credit": "Rumour by Rácz Jenő",
+            "license": "All rights reserved",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Theatrical chef’s-table restaurant in central Budapest where guests sit around an open kitchen and enjoy an elaborate tasting menu inspired by Hungarian roots and global influences."
+      },
+      "hours": {},
+      "links": {
+        "official": "https://rumour.restaurant/",
+        "bookingUrl": "https://www.sevenrooms.com"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "+36 20 926 7837",
+        "email": "reservations@rumour.restaurant",
+        "address": "Petőfi tér 3-5.",
+        "postalCode": "1052",
+        "city": "Budapest",
+        "adminArea": "Budapest",
+        "countryCode": "HU",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [
+        "fine dining",
+        "chef's table",
+        "Michelin listed",
+        "Costes Group"
+      ],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
+        "version": 1,
+        "fileName": "rumour-by-racz-jeno-0603.json",
+        "fileNameAscii": "rumour-by-racz-jeno-0603.json"
+      }
+    },
+    {
+      "locationID": "mak-restaurant-8055",
+      "locationName": {
+        "en": "MÁK Restaurant"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "🍽️ Food & Drink",
+      "subgroupKey": "sub.restaurants",
+      "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/restaurants/hungary/budapest?lp=mak-restaurant-8055",
+      "coord": {
+        "lat": 47.501283,
+        "lng": 19.048055
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/mak-restaurant-8055/img-01.png",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/mak-restaurant-8055/img-01.png",
+            "alt": "MÁK Restaurant",
+            "credit": "MÁK Restaurant",
+            "license": "All rights reserved",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/mak-restaurant-8055/img-02.png",
+            "alt": "MÁK Restaurant",
+            "credit": "MÁK Restaurant",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/mak-restaurant-8055/img-03.png",
+            "alt": "MÁK Restaurant",
+            "credit": "MÁK Restaurant",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/mak-restaurant-8055/img-04.png",
+            "alt": "MÁK Restaurant",
+            "credit": "MÁK Restaurant",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/mak-restaurant-8055/img-05.png",
+            "alt": "MÁK Restaurant",
+            "credit": "MÁK Restaurant",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/mak-restaurant-8055/img-06.png",
+            "alt": "MÁK Restaurant",
+            "credit": "MÁK Restaurant",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/mak-restaurant-8055/img-07.png",
+            "alt": "MÁK Restaurant",
+            "credit": "MÁK Restaurant",
+            "license": "All rights reserved",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Progressive fine dining restaurant focusing on the Carpathian Basin’s producers and ingredients, offering modern tasting menus built around regional Hungarian terroirs."
+      },
+      "hours": {},
+      "links": {
+        "official": "https://mak.hu/",
+        "facebook": "https://www.facebook.com/makbudapest",
+        "instagram": "https://www.instagram.com/makbudapest",
+        "youtube": "https://www.youtube.com",
+        "bookingUrl": "https://www.sevenrooms.com/experiences/makrestaurant",
+        "newsletter": "https://mak.hu/hu/#newsletter"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "+36 20 926 7837",
+        "email": "reservation@mak.hu",
+        "address": "Vigyázó Ferenc utca 4.",
+        "postalCode": "1051",
+        "city": "Budapest",
+        "adminArea": "Budapest",
+        "countryCode": "HU",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {
+        "priceFrom": "21500",
+        "currency": "HUF"
+      },
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [
+        "fine dining",
+        "modern Hungarian",
+        "Michelin recommended",
+        "Costes Group partner"
+      ],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
+        "version": 1,
+        "fileName": "mak-restaurant-8055.json",
+        "fileNameAscii": "mak-restaurant-8055.json"
+      }
+    },
+    {
+      "locationID": "kismezo-budapest-9912",
+      "locationName": {
+        "en": "Kismező Budapest"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "🍽️ Food & Drink",
+      "subgroupKey": "sub.restaurants",
+      "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/restaurants/hungary/budapest?lp=kismezo-budapest-9912",
+      "coord": {
+        "lat": 47.504033,
+        "lng": 19.059912
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/kismezo-budapest-9912/img-01.png",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/kismezo-budapest-9912/img-01.png",
+            "alt": "Kismező Budapest",
+            "credit": "Kismező Budapest",
+            "license": "All rights reserved",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/kismezo-budapest-9912/img-03.jpg",
+            "alt": "Kismező Budapest",
+            "credit": "Kismező Budapest",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/kismezo-budapest-9912/img-05.png",
+            "alt": "Kismező Budapest",
+            "credit": "Kismező Budapest",
+            "license": "All rights reserved",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Authentic Hungarian restaurant on Nagymező utca: lively bistro by day and cozy dinner spot at night, serving regional Hungarian classics with a modern touch."
+      },
+      "hours": {},
+      "links": {
+        "official": "https://kismezo.hu/",
+        "facebook": "https://www.facebook.com/kismezobudapest",
+        "instagram": "https://www.instagram.com/kismezobudapest",
+        "bookingUrl": "https://www.sevenrooms.com"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "+36 1 951 4061",
+        "email": "info@kismezo.hu",
+        "address": "Nagymező u. 19.",
+        "postalCode": "1065",
+        "city": "Budapest",
+        "adminArea": "Budapest",
+        "countryCode": "HU",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [
+        "Hungarian cuisine",
+        "bistro",
+        "Costes Group partner"
+      ],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
+        "version": 1,
+        "fileName": "kismezo-budapest-9912.json",
+        "fileNameAscii": "kismezo-budapest-9912.json"
+      }
+    },
+    {
+      "locationID": "platan-gourmet-restaurant-8179",
+      "locationName": {
+        "en": "Platán Gourmet Restaurant"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "🍽️ Food & Drink",
+      "subgroupKey": "sub.restaurants",
+      "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/restaurants/hungary/budapest?lp=platan-gourmet-restaurant-8179",
+      "coord": {
+        "lat": 47.648017,
+        "lng": 18.318179
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/platan-gourmet-restaurant-8179/img-04.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/platan-gourmet-restaurant-8179/img-01.jpg",
+            "alt": "Kismező Budapest",
+            "credit": "Kismező Budapest",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/platan-gourmet-restaurant-8179/img-02.jpg",
+            "alt": "Platán Gourmet Restaurant",
+            "credit": "Platán Gourmet Restaurant",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/platan-gourmet-restaurant-8179/img-03.jpg",
+            "alt": "Platán Gourmet Restaurant",
+            "credit": "Platán Gourmet Restaurant",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/platan-gourmet-restaurant-8179/img-04.jpg",
+            "alt": "Platán Gourmet Restaurant",
+            "credit": "Platán Gourmet Restaurant",
+            "license": "All rights reserved",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Two-Michelin-star restaurant in Tata on the shore of the Old Lake, led by chef István Pesti, offering elaborate seasonal tasting menus with produce from its own garden."
+      },
+      "hours": {},
+      "links": {
+        "official": "https://platangourmet.com/",
+        "facebook": "https://www.facebook.com/gourmetplatan",
+        "bookingUrl": "https://platangourmet.com/kapcsolat/"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "+36 20 548 6876",
+        "email": "gourmet@platantata.hu",
+        "address": "Kastély tér 6.",
+        "postalCode": "2890",
+        "city": "Tata",
+        "adminArea": "Komárom-Esztergom",
+        "countryCode": "HU",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [
+        "fine dining",
+        "2 Michelin stars",
+        "countryside",
+        "Costes Group partner"
+      ],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
+        "version": 1,
+        "fileName": "platan-gourmet-restaurant-8179.json",
+        "fileNameAscii": "platan-gourmet-restaurant-8179.json"
+      }
+    },
+    {
+      "locationID": "vibe-budapest-7954",
+      "locationName": {
+        "en": "VIBE Budapest"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "🍽️ Food & Drink",
+      "subgroupKey": "sub.restaurants",
+      "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/restaurants/hungary/budapest?lp=vibe-budapest-7954",
+      "coord": {
+        "lat": 47.50037,
+        "lng": 19.047954
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/vibe-budapest-7954/icon-512-green.png",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/vibe-budapest-7954/icon-512-green.png",
+            "alt": "VIBE Budapest",
+            "credit": "VIBE Budapest",
+            "license": "All rights reserved",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Hybrid supper club in the city centre by the Chain Bridge where bold flavours, crafted cocktails, live DJs and acrobatic shows create a high-energy night-out experience."
+      },
+      "hours": {},
+      "links": {
+        "official": "https://vibebudapest.com/en/",
+        "facebook": "https://www.facebook.com/budapest.vibe",
+        "instagram": "https://www.instagram.com/vibe.budapest",
+        "bookingUrl": "https://www.sevenrooms.com"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "+36 20 984 8423",
+        "email": "info@vibebudapest.com",
+        "address": "Széchenyi István tér 7-8.",
+        "postalCode": "1051",
+        "city": "Budapest",
+        "adminArea": "Budapest",
+        "countryCode": "HU",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [
+        "supper club",
+        "cocktails",
+        "live show",
+        "nightlife",
+        "Costes Group lifestyle"
+      ],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
+        "version": 1,
+        "fileName": "vibe-budapest-7954.json",
+        "fileNameAscii": "vibe-budapest-7954.json"
+      }
+    },
+    {
+      "locationID": "lupa-event-hall-1118",
+      "locationName": {
+        "en": "Lupa Event Hall"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "🍽️ Food & Drink",
+      "subgroupKey": "sub.restaurants",
+      "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/restaurants/hungary/budapest?lp=lupa-event-hall-1118",
+      "coord": {
+        "lat": 47.623264,
+        "lng": 19.071118
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/lupa-event-hall-1118/img-03.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/lupa-event-hall-1118/img-01.jpg",
+            "alt": "Lupa Event Hall",
+            "credit": "Lupa Event Hall",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/lupa-event-hall-1118/img-02.jpg",
+            "alt": "Lupa Event Hall",
+            "credit": "Lupa Event Hall",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/lupa-event-hall-1118/img-03.jpg",
+            "alt": "Lupa Event Hall",
+            "credit": "Lupa Event Hall",
+            "license": "All rights reserved",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/lupa-event-hall-1118/img-04.jpg",
+            "alt": "Lupa Event Hall",
+            "credit": "Lupa Event Hall",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/lupa-event-hall-1118/img-05.jpg",
+            "alt": "Lupa Event Hall",
+            "credit": "Lupa Event Hall",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/lupa-event-hall-1118/img-06.jpg",
+            "alt": "Lupa Event Hall",
+            "credit": "Lupa Event Hall",
+            "license": "All rights reserved",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Lakeside event venue at Lupa-tó with a 375 m² indoor hall and 300 m² terrace, offering full-service event planning and catering in a green, tranquil setting near Budapest."
+      },
+      "hours": {},
+      "links": {
+        "official": "https://costes.group/hu/lupa-event-hall/"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "+36 30 174 2892",
+        "email": "info@lupaeventhall.hu",
+        "address": "Tó utca 1.",
+        "postalCode": "2011",
+        "city": "Budakalász",
+        "adminArea": "Pest",
+        "countryCode": "HU",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [
+        "event venue",
+        "lakeside",
+        "events & catering",
+        "Costes Group"
+      ],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
+        "version": 1,
+        "fileName": "lupa-event-hall-1118.json",
+        "fileNameAscii": "lupa-event-hall-1118.json"
+      }
+    },
+    {
+      "locationID": "costes-catering-0409",
+      "locationName": {
+        "en": "Costes Catering"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "🍽️ Food & Drink",
+      "subgroupKey": "sub.restaurants",
+      "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/restaurants/hungary/budapest?lp=costes-catering-0409",
+      "coord": {
+        "lat": 47.500311,
+        "lng": 19.050409
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/costes-catering-0409/icon-512-green.png",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/costes-catering-0409/icon-512-green.png",
+            "alt": "Costes Catering",
+            "credit": "Costes Catering",
+            "license": "All rights reserved",
+            "default": true
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Catering company of the Costes Group, combining Konyhakör’s creative concepts with Costes’ strict quality standards, serving corporate and private events, weddings and film catering."
+      },
+      "hours": {},
+      "links": {
+        "official": "https://costes.catering/en",
+        "facebook": "https://www.facebook.com/costescatering",
+        "bookingUrl": "https://costes.catering/en/get-in-touch"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "+36 30 985 4686",
+        "email": "hello@costes.catering",
+        "address": "Zrínyi u. 9., 2/21.",
+        "postalCode": "1051",
+        "city": "Budapest",
+        "adminArea": "Budapest",
+        "countryCode": "HU",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [
+        "event catering",
+        "corporate events",
+        "weddings",
+        "Costes Group"
+      ],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-11-24T22:33:24.759Z",
+        "version": 1,
+        "fileName": "costes-catering-0409.json",
+        "fileNameAscii": "costes-catering-0409.json"
+      }
+    }
   ]
-}  
+}
