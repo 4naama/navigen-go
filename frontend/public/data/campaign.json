@@ -1,0 +1,29 @@
+[
+  {
+    "locationID": "europa-patika-rakoczi-ter-1666",
+    "locationName": "Európa Patika Rákóczi tér",
+    "campaignKey": "1001",
+    "campaignName": "Test Campaign",
+    "brandKey": "",
+    "context": "",
+    "campaignType": "",
+    "targetChannels": [
+      "default-info"
+    ],
+    "startDate": "Thu May 01 2025 00:00:00 GMT+0200 (Central European Summer Time)",
+    "endDate": "Wed Dec 31 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "status": "planned",
+    "offerType": "info",
+    "discountKind": "",
+    "discountValue": 0.1,
+    "currency": "HUF",
+    "eligibilityType": "everyone",
+    "eligibilityNotes": "Eligibility test note",
+    "utmSource": "",
+    "utmMedium": "poster",
+    "utmCampaign": "",
+    "notes": "Test note",
+    "minPriceIndicator": 1000,
+    "maxPriceIndicator": 100000
+  }
+]
