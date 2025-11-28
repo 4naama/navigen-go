@@ -368,10 +368,9 @@ export default {
             const agg = campaignsAgg[bucketKey];
             agg.scans += 1;
 
-            // Here every qr-scan is treated as a potential redemption; once
-            // the dedicated redemption flow is wired, we can distinguish
-            // between plain scans vs. actual redemptions via entry.signal.
-            if (entry.signal === "redeem" || entry.signal === "scan") {
+            // Only count explicit "redeem" signals as redemptions.
+            // Plain scans (signal === "scan") are interest/visits, not true redemptions.
+            if (entry.signal === "redeem") {
               agg.redemptions += 1;
             }
 
@@ -394,18 +393,30 @@ export default {
           const uniqueCount = agg.uniqueVisitors.size;
           const repeatCount = agg.repeatVisitors.size;
 
+          // Period: prefer campaign start/end if available, otherwise stats window
+          const campaignStart = meta?.startDate || "";
+          const campaignEnd   = meta?.endDate || "";
+          const periodLabel = (campaignStart && campaignEnd)
+            ? `${campaignStart} → ${campaignEnd}`
+            : `${from} → ${to}`;
+
+          // Aggregate languages and countries for potential display
+          const langsSet = new Set<string>();
+          const countriesSet = new Set<string>();
+          // (we'll fill these from qrInfo below; see next edit if needed)
+
           return {
-            campaign: key || "",               // campaignKey (empty means "no campaign")
-            target: meta?.context || "",       // context string from campaign.json if available
-            period: `${from} → ${to}`,         // stats period
+            campaign: key || "",          // campaignKey (empty means "no campaign")
+            target: meta?.context || "",  // context string from campaign.json if available
+            period: periodLabel,
             scans: agg.scans,
             redemptions: agg.redemptions,
             uniqueVisitors: uniqueCount,
             repeatVisitors: repeatCount,
-            locations: 1,                      // one location per dashboard view
-            devices: [],                       // reserved for future aggregation
-            langs: [],                         // reserved for future aggregation
-            signals: {}                        // reserved for future signal breakdown
+            locations: 0,                 // will be filled once we aggregate countries, see below
+            devices: [],                  // reserved for future use
+            langs: [],                    // reserved for future use
+            signals: {}                   // reserved for future signal breakdown
           };
         });
 
@@ -1095,6 +1106,17 @@ interface CampaignDef {
  * Reads /data/campaign.json from the main site origin.
  */
 async function loadCampaigns(baseOrigin: string): Promise<CampaignDef[]> {
+  const normalizeDate = (v: any): string | undefined => {
+    if (!v) return undefined;
+    // Accept either a plain YYYY-MM-DD string or any JS Date-like string
+    const s = String(v).trim();
+    if (!s) return undefined;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return undefined;
+    return d.toISOString().slice(0, 10); // YYYY-MM-DD
+  };
+
   try {
     const src = new URL("/data/campaign.json", baseOrigin || "https://navigen.io").toString();
     const resp = await fetch(src, {
@@ -1109,8 +1131,8 @@ async function loadCampaigns(baseOrigin: string): Promise<CampaignDef[]> {
       campaignKey: String(r.campaignKey || "").trim(),
       campaignName: typeof r.campaignName === "string" ? r.campaignName : undefined,
       context: typeof r.context === "string" ? r.context : undefined,
-      startDate: typeof r.startDate === "string" ? r.startDate : undefined,
-      endDate: typeof r.endDate === "string" ? r.endDate : undefined,
+      startDate: normalizeDate(r.startDate),
+      endDate: normalizeDate(r.endDate),
       status: typeof r.status === "string" ? r.status : undefined
     })).filter(r => r.locationID && r.campaignKey);
   } catch {

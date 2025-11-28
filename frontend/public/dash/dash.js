@@ -553,13 +553,49 @@ function renderCurrentView(){
       tbody = `<tbody><tr><td colspan="${labels.length}" style="text-align:center;">${emptyMsg}</td></tr></tbody>`;
     } else {
       const rowsHtml = data.map(row => {
+        // 1) Time: format ISO → "MM-DD HH:MM" for compact mobile display
+        let prettyTime = row.time || '';
+        try {
+          const d = new Date(row.time);
+          if (!isNaN(d.getTime())) {
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            prettyTime = `${mm}-${dd} ${hh}:${min}`;
+          }
+        } catch {}
+
+        // 2) Device/Browser: derive simple buckets from UA (row.device holds UA)
+        const ua = String(row.device || row.browser || '').toLowerCase();
+        let deviceLabel = '';
+        if (ua.includes('android')) deviceLabel = 'Android';
+        else if (ua.includes('iphone') || ua.includes('ios')) deviceLabel = 'iOS';
+        else if (ua.includes('ipad')) deviceLabel = 'iPad';
+        else if (ua.includes('windows')) deviceLabel = 'Windows';
+        else if (ua.includes('macintosh') || ua.includes('mac os')) deviceLabel = 'macOS';
+        else if (ua.includes('linux')) deviceLabel = 'Linux';
+
+        let browserLabel = '';
+        if (ua.includes('chrome')) browserLabel = 'Chrome';
+        else if (ua.includes('safari') && !ua.includes('chrome')) browserLabel = 'Safari';
+        else if (ua.includes('firefox')) browserLabel = 'Firefox';
+        else if (ua.includes('edge')) browserLabel = 'Edge';
+        else if (ua.includes('opera') || ua.includes('opr/')) browserLabel = 'Opera';
+
+        // 3) Lang: keep only primary language (before comma)
+        let lang = row.lang || '';
+        if (lang && typeof lang === 'string' && lang.includes(',')) {
+          lang = lang.split(',')[0];
+        }
+
         const cells = [
-          row.time || '',
+          prettyTime,
           row.source || '',
           row.location || '',
-          row.device || '',
-          row.browser || '',
-          row.lang || '',
+          deviceLabel || '',
+          browserLabel || '',
+          lang,
           row.scanId || '',
           row.visitor || '',
           row.campaign || '',
@@ -567,6 +603,7 @@ function renderCurrentView(){
         ];
         return `<tr>${cells.map(v => `<td>${String(v)}</td>`).join('')}</tr>`;
       }).join('');
+
       tbody = `<tbody>${rowsHtml}</tbody>`;
     }
 
