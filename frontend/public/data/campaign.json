@@ -5,8 +5,8 @@
     "campaignKey": "1001",
     "campaignName": "Test Campaign",
     "brandKey": "",
-    "context": "",
-    "campaignType": "",
+    "context": "pharmacies/hungary/budapest",
+    "campaignType": "Test",
     "targetChannels": [
       "default-info"
     ],
