@@ -519,14 +519,23 @@ function renderCurrentView(){
     return;
   }
 
-  // shared helper: builds a stats-style table header
-  const buildHeader = (cols) => {
+  // shared helper: builds a stats-style table with bold headers (th already bold via CSS)
+  const buildTable = (cols, emptyKey, emptyFallback) => {
     const labels = cols.map(([key, fallback]) => {
       const txt = (typeof t === 'function' ? t(key) : '') || fallback;
       return txt;
     });
     const thead = `<thead><tr>${labels.map(txt => `<th>${txt}</th>`).join('')}</tr></thead>`;
-    return { labels, thead };
+    const emptyMsg = (typeof t === 'function' ? t(emptyKey) : '') || emptyFallback;
+    const tbody = `<tbody><tr><td colspan="${labels.length}" style="text-align:center;">${emptyMsg}</td></tr></tbody>`;
+    tblWrap.innerHTML = `
+      <div id="dash-table-scroller">
+        <table class="stats-table">
+          ${thead}
+          ${tbody}
+        </table>
+      </div>
+    `;
   };
 
   if (currentView === 'qr-info') {
@@ -543,52 +552,18 @@ function renderCurrentView(){
       ['dash.qrinfo.col.campaign', 'Campaign'],
       ['dash.qrinfo.col.signal',   'Signal']
     ];
-    const data = Array.isArray(lastStats.qrInfo) ? lastStats.qrInfo : [];
-    const { labels, thead } = buildHeader(cols);
-
-    let tbody = '';
-    if (!data.length) {
-      const emptyMsg = (typeof t === 'function' ? t('dash.state.qr-info-empty') : '') ||
-        'QR Info view will appear here for the selected period.';
-      tbody = `<tbody><tr><td colspan="${labels.length}" style="text-align:center;">${emptyMsg}</td></tr></tbody>`;
-    } else {
-      const rowsHtml = data.map(row => {
-        const cells = [
-          row.time || '',
-          row.source || '',
-          row.location || '',
-          row.device || '',
-          row.browser || '',
-          row.lang || '',
-          row.scanId || '',
-          row.visitor || '',
-          row.campaign || '',
-          row.signal || ''
-        ];
-        return `<tr>${cells.map(v => `<td>${String(v)}</td>`).join('')}</tr>`;
-      }).join('');
-      tbody = `<tbody>${rowsHtml}</tbody>`;
-    }
-
-    tblWrap.innerHTML = `
-      <div id="dash-table-scroller">
-        <table class="stats-table">
-          ${thead}
-          ${tbody}
-        </table>
-      </div>
-    `;
-    return;
-  }
-
-  if (currentView === 'campaigns') {
+    buildTable(
+      cols,
+      'dash.state.qr-info-empty',
+      'QR Info view will appear here for the selected period.'
+    );
+  } else if (currentView === 'campaigns') {
     // C) QR Campaign table (per-campaign rollup)
     const cols = [
       ['dash.qrcamp.col.campaign',  'Campaign'],
       ['dash.qrcamp.col.target',    'Target'],
       ['dash.qrcamp.col.period',    'Period'],
       ['dash.qrcamp.col.scans',     'Scans'],
-      ['dash.qrcamp.col.redemptions', 'Redemptions'],
       ['dash.qrcamp.col.unique',    'Unique visitors'],
       ['dash.qrcamp.col.repeat',    'Repeat %'],
       ['dash.qrcamp.col.locations', 'Locations'],
@@ -596,51 +571,11 @@ function renderCurrentView(){
       ['dash.qrcamp.col.langs',     'Langs'],
       ['dash.qrcamp.col.signals',   'Signals']
     ];
-    const data = Array.isArray(lastStats.campaigns) ? lastStats.campaigns : [];
-    const { labels, thead } = buildHeader(cols);
-
-    let tbody = '';
-    if (!data.length) {
-      const emptyMsg = (typeof t === 'function' ? t('dash.state.campaigns-empty') : '') ||
-        'QR Campaigns view will appear here for the selected period.';
-      tbody = `<tbody><tr><td colspan="${labels.length}" style="text-align:center;">${emptyMsg}</td></tr></tbody>`;
-    } else {
-      const rowsHtml = data.map(row => {
-        const scans = Number(row.scans ?? 0);
-        const redemptions = Number(row.redemptions ?? 0);
-        const uniq = Number(row.uniqueVisitors ?? 0);
-        const repeat = Number(row.repeatVisitors ?? 0);
-        const repeatPct = uniq > 0 ? ((repeat / uniq) * 100).toFixed(1) + '%' : '';
-
-        const cells = [
-          row.campaign || '',
-          row.target || '',
-          row.period || '',
-          scans,
-          redemptions,
-          uniq,
-          repeatPct,
-          row.locations ?? '',
-          (Array.isArray(row.devices) ? row.devices.join(', ') : ''),
-          (Array.isArray(row.langs) ? row.langs.join(', ') : ''),
-          typeof row.signals === 'object' && row.signals !== null
-            ? Object.entries(row.signals).map(([k,v]) => `${k}:${v}`).join(', ')
-            : ''
-        ];
-        return `<tr>${cells.map(v => `<td>${String(v)}</td>`).join('')}</tr>`;
-      }).join('');
-      tbody = `<tbody>${rowsHtml}</tbody>`;
-    }
-
-    tblWrap.innerHTML = `
-      <div id="dash-table-scroller">
-        <table class="stats-table">
-          ${thead}
-          ${tbody}
-        </table>
-      </div>
-    `;
-    return;
+    buildTable(
+      cols,
+      'dash.state.campaigns-empty',
+      'QR Campaigns view will appear here for the selected period.'
+    );
   }
 }
 
