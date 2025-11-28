@@ -306,6 +306,8 @@ export default {
           redemptions: number;
           uniqueVisitors: Set<string>;
           repeatVisitors: Set<string>;
+          langs: Set<string>;
+          countries: Set<string>;
         }> = {};
 
         // load campaigns once per stats call
@@ -339,10 +341,13 @@ export default {
             const scanId = parts[3];
 
             // Push into qrInfo array (shape aligned with dash expectations)
+            // Build QR Info row
             qrInfo.push({
               time: entry.time,
               source: entry.source || "",
-              location: loc,
+              // Location: use physical scanner country code (CF country), not the location ULID
+              location: entry.country || "",
+              // Device/Browser: keep UA here; frontend will bucketize into Device + Browser
               device: entry.ua || "",
               browser: entry.ua || "",
               lang: entry.lang || "",
@@ -362,28 +367,52 @@ export default {
                 scans: 0,
                 redemptions: 0,
                 uniqueVisitors: new Set<string>(),
-                repeatVisitors: new Set<string>()
+                repeatVisitors: new Set<string>(),
+                langs: new Set<string>(),
+                countries: new Set<string>()
               };
             }
             const agg = campaignsAgg[bucketKey];
             agg.scans += 1;
 
-            // Only count explicit "redeem" signals as redemptions.
-            // Plain scans (signal === "scan") are interest/visits, not true redemptions.
+            // Redemptions: only explicit "redeem" signals will count as true redemptions.
             if (entry.signal === "redeem") {
               agg.redemptions += 1;
             }
 
-            if (entry.visitor) {
-              if (agg.uniqueVisitors.has(entry.visitor)) {
-                agg.repeatVisitors.add(entry.visitor);
+            // Visitor identity (for now): derive from UA + country if visitor field is empty
+            const visitorKey = entry.visitor && entry.visitor.trim()
+              ? entry.visitor.trim()
+              : `${entry.ua || ''}|${entry.country || ''}`;
+
+            if (visitorKey) {
+              if (agg.uniqueVisitors.has(visitorKey)) {
+                agg.repeatVisitors.add(visitorKey);
               } else {
-                agg.uniqueVisitors.add(entry.visitor);
+                agg.uniqueVisitors.add(visitorKey);
               }
+            }
+
+            // Aggregate primary language and scanner country
+            if (entry.lang) {
+              const primaryLang = String(entry.lang).split(',')[0].trim();
+              if (primaryLang) agg.langs.add(primaryLang);
+            }
+            if (entry.country) {
+              agg.countries.add(entry.country);
             }
           }
           qrCursor = page.cursor || undefined;
         } while (qrCursor);
+        
+        // Sort QR Info rows by time (newest first)
+        qrInfo.sort((a, b) => {
+          const ta = String(a.time || '');
+          const tb = String(b.time || '');
+          if (ta < tb) return 1;   // reverse comparison for newest-first
+          if (ta > tb) return -1;
+          return 0;
+        });
 
         // Serialize campaignsAgg into a simple array
         const campaigns = Object.values(campaignsAgg).map((agg) => {
@@ -400,23 +429,22 @@ export default {
             ? `${campaignStart} → ${campaignEnd}`
             : `${from} → ${to}`;
 
-          // Aggregate languages and countries for potential display
-          const langsSet = new Set<string>();
-          const countriesSet = new Set<string>();
-          // (we'll fill these from qrInfo below; see next edit if needed)
-
           return {
-            campaign: key || "",          // campaignKey (empty means "no campaign")
-            target: meta?.context || "",  // context string from campaign.json if available
+            campaign: key || "",                // campaignKey (empty means "no campaign")
+            target: meta?.context || "",        // context string from campaign.json if available
             period: periodLabel,
             scans: agg.scans,
             redemptions: agg.redemptions,
             uniqueVisitors: uniqueCount,
             repeatVisitors: repeatCount,
-            locations: 0,                 // will be filled once we aggregate countries, see below
-            devices: [],                  // reserved for future use
-            langs: [],                    // reserved for future use
-            signals: {}                   // reserved for future signal breakdown
+            // Locations = distinct scanner countries
+            locations: agg.countries.size,
+            // Devices: reserved for later; for now keep empty
+            devices: [],
+            // Languages = distinct primary languages of scanners
+            langs: Array.from(agg.langs),
+            // Signals: reserved for future breakdown
+            signals: {}
           };
         });
 
