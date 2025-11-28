@@ -298,6 +298,117 @@ export default {
         const siteOrigin =
           req.headers.get("Origin") || "https://navigen.io";
 
+        // --- Build QR Info (per-scan logs) and Campaign aggregates --- //
+        const qrInfo: any[] = [];
+        const campaignsAgg: Record<string, {
+          campaignKey: string;
+          scans: number;
+          redemptions: number;
+          uniqueVisitors: Set<string>;
+          repeatVisitors: Set<string>;
+        }> = {};
+
+        // load campaigns once per stats call
+        const allCampaigns = await loadCampaigns(siteOrigin);
+
+        // QR logs live under qrlog:<loc>:<day>:<scanId>
+        const qrPrefix = `qrlog:${loc}:`;
+        let qrCursor: string | undefined = undefined;
+
+        do {
+          const page = await env.KV_STATS.list({ prefix: qrPrefix, cursor: qrCursor });
+          for (const k of page.keys) {
+            const name = k.name;
+            const parts = name.split(":"); // ['qrlog', '<loc>', '<day>', '<scanId>']
+            if (parts.length !== 4) continue;
+
+            const dayKey = parts[2];
+            if (dayKey < from || dayKey > to) continue;
+
+            const raw = await env.KV_STATS.get(name, "text");
+            if (!raw) continue;
+
+            let entry: QrLogEntry | null = null;
+            try {
+              entry = JSON.parse(raw) as QrLogEntry;
+            } catch {
+              entry = null;
+            }
+            if (!entry || entry.locationID !== loc) continue;
+
+            const scanId = parts[3];
+
+            // Push into qrInfo array (shape aligned with dash expectations)
+            qrInfo.push({
+              time: entry.time,
+              source: entry.source || "",
+              location: loc,
+              device: entry.ua || "",
+              browser: entry.ua || "",
+              lang: entry.lang || "",
+              scanId,
+              visitor: entry.visitor || "",
+              campaign: entry.campaignKey || "",
+              signal: entry.signal || "scan"
+            });
+
+            // Aggregate by campaignKey for Campaigns view
+            const cKey = entry.campaignKey || "";
+            const bucketKey = cKey || "_no_campaign";
+
+            if (!campaignsAgg[bucketKey]) {
+              campaignsAgg[bucketKey] = {
+                campaignKey: cKey,
+                scans: 0,
+                redemptions: 0,
+                uniqueVisitors: new Set<string>(),
+                repeatVisitors: new Set<string>()
+              };
+            }
+            const agg = campaignsAgg[bucketKey];
+            agg.scans += 1;
+
+            // Here every qr-scan is treated as a potential redemption; once
+            // the dedicated redemption flow is wired, we can distinguish
+            // between plain scans vs. actual redemptions via entry.signal.
+            if (entry.signal === "redeem" || entry.signal === "scan") {
+              agg.redemptions += 1;
+            }
+
+            if (entry.visitor) {
+              if (agg.uniqueVisitors.has(entry.visitor)) {
+                agg.repeatVisitors.add(entry.visitor);
+              } else {
+                agg.uniqueVisitors.add(entry.visitor);
+              }
+            }
+          }
+          qrCursor = page.cursor || undefined;
+        } while (qrCursor);
+
+        // Serialize campaignsAgg into a simple array
+        const campaigns = Object.values(campaignsAgg).map((agg) => {
+          const key = agg.campaignKey;
+          const meta = allCampaigns.find(c => c.locationID === loc && c.campaignKey === key) || null;
+
+          const uniqueCount = agg.uniqueVisitors.size;
+          const repeatCount = agg.repeatVisitors.size;
+
+          return {
+            campaign: key || "",               // campaignKey (empty means "no campaign")
+            target: meta?.context || "",       // context string from campaign.json if available
+            period: `${from} → ${to}`,         // stats period
+            scans: agg.scans,
+            redemptions: agg.redemptions,
+            uniqueVisitors: uniqueCount,
+            repeatVisitors: repeatCount,
+            locations: 1,                      // one location per dashboard view
+            devices: [],                       // reserved for future aggregation
+            langs: [],                         // reserved for future aggregation
+            signals: {}                        // reserved for future signal breakdown
+          };
+        });
+
         return json(
           {
             locationID: loc,
@@ -308,7 +419,9 @@ export default {
             order: EVENT_ORDER,
             days,
             rated_sum: ratedSum,
-            rating_avg: ratingAvg
+            rating_avg: ratingAvg,
+            qrInfo,
+            campaigns
           },
           200
         );
@@ -449,6 +562,11 @@ export default {
               expirationTtl: 60*60*24*366
             });
           }
+        }
+
+        // For QR scan events, also log a per-scan record (powers QR Info / Campaigns in the dash).
+        if (ev === "qr-scan") {
+          await logQrScan(env.KV_STATS, env, loc, req);
         }
 
         return new Response(null, {
@@ -945,4 +1063,141 @@ async function increment(kv: KVNamespace, key: string): Promise<void> {
   // Simple read-modify-write; good enough for MVP. Upgrade to Durable Object later.
   const current = parseInt((await kv.get(key)) || "0", 10) || 0;
   await kv.put(key, String(current + 1));
+}
+
+// -------- QR log helpers (per-scan metadata for QR Info / Campaigns) --------
+
+interface QrLogEntry {
+  time: string;          // ISO timestamp (UTC)
+  locationID: string;    // canonical ULID
+  day: string;           // YYYY-MM-DD (for quick filtering)
+  ua: string;            // User-Agent
+  lang: string;          // Accept-Language
+  country: string;       // Cloudflare country code
+  source: string;        // logical source (for now: "qr-scan")
+  signal: string;        // "scan" | "redeem" | other
+  visitor: string;       // optional visitor fingerprint (empty for now)
+  campaignKey: string;   // resolved from campaign.json when possible, else empty
+}
+
+interface CampaignDef {
+  locationID: string;
+  campaignKey: string;
+  campaignName?: string;
+  context?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+}
+
+/**
+ * Fetch campaign definitions once per request.
+ * Reads /data/campaign.json from the main site origin.
+ */
+async function loadCampaigns(baseOrigin: string): Promise<CampaignDef[]> {
+  try {
+    const src = new URL("/data/campaign.json", baseOrigin || "https://navigen.io").toString();
+    const resp = await fetch(src, {
+      cf: { cacheTtl: 60, cacheEverything: true },
+      headers: { "Accept": "application/json" }
+    });
+    if (!resp.ok) return [];
+    const data: any = await resp.json();
+    const rows: any[] = Array.isArray(data) ? data : (Array.isArray(data?.campaigns) ? data.campaigns : []);
+    return rows.map((r) => ({
+      locationID: String(r.locationID || "").trim(),
+      campaignKey: String(r.campaignKey || "").trim(),
+      campaignName: typeof r.campaignName === "string" ? r.campaignName : undefined,
+      context: typeof r.context === "string" ? r.context : undefined,
+      startDate: typeof r.startDate === "string" ? r.startDate : undefined,
+      endDate: typeof r.endDate === "string" ? r.endDate : undefined,
+      status: typeof r.status === "string" ? r.status : undefined
+    })).filter(r => r.locationID && r.campaignKey);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Given a locationID + day, find the best matching campaignKey.
+ * For now: pick any campaign for that location where:
+ *   - status is not "ended"
+ *   - and the scan day is between startDate and endDate (if those exist)
+ * If none match, return "".
+ */
+function pickCampaignForScan(
+  campaigns: CampaignDef[],
+  locationID: string,
+  day: string
+): string {
+  const candidates = campaigns.filter(c => c.locationID === locationID);
+  if (!candidates.length) return "";
+
+  const d = day;
+  let best: CampaignDef | null = null;
+
+  for (const c of candidates) {
+    const startOK = !c.startDate || d >= c.startDate;
+    const endOK = !c.endDate || d <= c.endDate;
+    const statusOK = !c.status || c.status.toLowerCase() !== "ended";
+    if (!startOK || !endOK || !statusOK) continue;
+    // Pick first matching; later we can add priority if needed.
+    best = c;
+    break;
+  }
+  return best?.campaignKey || "";
+}
+
+/**
+ * Log a QR scan into KV_STATS under qrlog:<loc>:<day>:<scanId>.
+ * This powers the QR Info and Campaigns views in the dashboard.
+ */
+async function logQrScan(
+  kv: KVNamespace,
+  env: Env,
+  loc: string,
+  req: Request
+): Promise<void> {
+  try {
+    const now = new Date();
+    const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
+    const timeISO = now.toISOString();
+
+    const ua = req.headers.get("User-Agent") || "";
+    const lang = req.headers.get("Accept-Language") || "";
+    const country = ((req as any).cf?.country || "").toString();
+    const source = "qr-scan"; // can be refined later (poster, in-app, etc.)
+    const signal = "scan";    // placeholder; "redeem" once the dedicated redemption flow is wired
+    const visitor = "";       // reserved for future anon visitor IDs
+
+    // base origin for campaign.json (always the app domain)
+    const baseOrigin = "https://navigen.io";
+    const campaigns = await loadCampaigns(baseOrigin);
+    const campaignKey = pickCampaignForScan(campaigns, loc, day);
+
+    // Generate a short random scan ID (base64-ish without padding)
+    const bytes = new Uint8Array(6);
+    (crypto as any).getRandomValues(bytes);
+    const scanId = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    const entry: QrLogEntry = {
+      time: timeISO,
+      locationID: loc,
+      day,
+      ua,
+      lang,
+      country,
+      source,
+      signal,
+      visitor,
+      campaignKey
+    };
+
+    const key = `qrlog:${loc}:${day}:${scanId}`;
+    // TTL: 56 days for QR logs (~8 weeks)
+    const ttlSeconds = 56 * 24 * 60 * 60;
+    await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
+  } catch {
+    // never throw from logging; stats must not break the main flow
+  }
 }
