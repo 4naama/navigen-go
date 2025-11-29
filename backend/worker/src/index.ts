@@ -311,7 +311,7 @@ export default {
         }> = {};
 
         // load campaigns once per stats call
-        const allCampaigns = await loadCampaigns(siteOrigin);
+        const allCampaigns = await loadCampaigns(siteOrigin, env);
 
         // QR logs live under qrlog:<loc>:<day>:<scanId>
         const qrPrefix = `qrlog:${loc}:`;
@@ -346,7 +346,9 @@ export default {
               time: entry.time,
               source: entry.source || "",
               // Location: use physical scanner country code (CF country), not the location ULID
-              location: entry.country || "",
+              location: entry.city
+                ? `${entry.city}, ${entry.country || ''}`.trim().replace(/,\s*$/, '')
+                : (entry.country || ""),
               // Device/Browser: keep UA here; frontend will bucketize into Device + Browser
               device: entry.ua || "",
               browser: entry.ua || "",
@@ -1108,14 +1110,15 @@ async function increment(kv: KVNamespace, key: string): Promise<void> {
 
 interface QrLogEntry {
   time: string;          // ISO timestamp (UTC)
-  locationID: string;    // canonical ULID
+  locationID: string;    // canonical ULID (location that owns this QR)
   day: string;           // YYYY-MM-DD (for quick filtering)
   ua: string;            // User-Agent
   lang: string;          // Accept-Language
-  country: string;       // Cloudflare country code
+  country: string;       // Cloudflare country code (scanner location, best-effort)
+  city: string;          // Cloudflare city (scanner location, best-effort)
   source: string;        // logical source (for now: "qr-scan")
   signal: string;        // "scan" | "redeem" | other
-  visitor: string;       // optional visitor fingerprint (empty for now)
+  visitor: string;       // provisional visitor fingerprint (e.g. UA+country)
   campaignKey: string;   // resolved from campaign.json when possible, else empty
 }
 
@@ -1133,10 +1136,9 @@ interface CampaignDef {
  * Fetch campaign definitions once per request.
  * Reads /data/campaign.json from the main site origin.
  */
-async function loadCampaigns(baseOrigin: string): Promise<CampaignDef[]> {
+async function loadCampaigns(baseOrigin: string, env: Env): Promise<CampaignDef[]> {
   const normalizeDate = (v: any): string | undefined => {
     if (!v) return undefined;
-    // Accept either a plain YYYY-MM-DD string or any JS Date-like string
     const s = String(v).trim();
     if (!s) return undefined;
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
@@ -1154,7 +1156,9 @@ async function loadCampaigns(baseOrigin: string): Promise<CampaignDef[]> {
     if (!resp.ok) return [];
     const data: any = await resp.json();
     const rows: any[] = Array.isArray(data) ? data : (Array.isArray(data?.campaigns) ? data.campaigns : []);
-    return rows.map((r) => ({
+
+    // First map raw rows
+    const rawDefs = rows.map((r) => ({
       locationID: String(r.locationID || "").trim(),
       campaignKey: String(r.campaignKey || "").trim(),
       campaignName: typeof r.campaignName === "string" ? r.campaignName : undefined,
@@ -1163,6 +1167,18 @@ async function loadCampaigns(baseOrigin: string): Promise<CampaignDef[]> {
       endDate: normalizeDate(r.endDate),
       status: typeof r.status === "string" ? r.status : undefined
     })).filter(r => r.locationID && r.campaignKey);
+
+    // Now canonicalize locationID to ULID when possible
+    const normalized: CampaignDef[] = [];
+    for (const def of rawDefs) {
+      const ulid = await resolveUid(def.locationID, env);
+      normalized.push({
+        ...def,
+        locationID: ulid || def.locationID
+      });
+    }
+
+    return normalized;
   } catch {
     return [];
   }
@@ -1216,16 +1232,19 @@ async function logQrScan(
     const ua = req.headers.get("User-Agent") || "";
     const lang = req.headers.get("Accept-Language") || "";
     const country = ((req as any).cf?.country || "").toString();
+    const city = ((req as any).cf?.city || "").toString();
     const source = "qr-scan"; // can be refined later (poster, in-app, etc.)
     const signal = "scan";    // placeholder; "redeem" once the dedicated redemption flow is wired
-    const visitor = "";       // reserved for future anon visitor IDs
+
+    // provisional visitor identity (UA + country); no IP stored
+    const visitor = `${ua}|${country}`;
 
     // base origin for campaign.json (always the app domain)
     const baseOrigin = "https://navigen.io";
-    const campaigns = await loadCampaigns(baseOrigin);
+    const campaigns = await loadCampaigns(baseOrigin, env);
     const campaignKey = pickCampaignForScan(campaigns, loc, day);
 
-    // Generate a short random scan ID (base64-ish without padding)
+    // Generate a short random scan ID (hex string)
     const bytes = new Uint8Array(6);
     (crypto as any).getRandomValues(bytes);
     const scanId = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
@@ -1237,6 +1256,7 @@ async function logQrScan(
       ua,
       lang,
       country,
+      city,
       source,
       signal,
       visitor,
