@@ -555,12 +555,19 @@ function renderCurrentView(){
       ['dash.qrinfo.col.signal',   'Signal']
     ];
 
-    // FILTER: keep only rows with meaningful client info (UA or Lang)
+    // FILTER: keep only rows with full, meaningful client info:
+    // - UA or Lang present
+    // - Visitor present (so we can show a hashed ID)
+    // - Campaign present (campaignKey set)
+    // - Location includes a city (contains ",")
     const rawData = Array.isArray(lastStats.qrInfo) ? lastStats.qrInfo : [];
     const data = rawData.filter(row => {
       const hasUA = typeof row.device === 'string' && row.device.trim().length > 0;
       const hasLang = typeof row.lang === 'string' && row.lang.trim().length > 0;
-      return hasUA || hasLang;
+      const hasVisitor = typeof row.visitor === 'string' && row.visitor.trim().length > 0;
+      const hasCampaign = typeof row.campaign === 'string' && row.campaign.trim().length > 0;
+      const hasCity = typeof row.location === 'string' && row.location.includes(',');
+      return (hasUA || hasLang) && hasVisitor && hasCampaign && hasCity;
     });
 
     const { labels, thead } = buildHeader(cols);
@@ -572,7 +579,7 @@ function renderCurrentView(){
       tbody = `<tbody><tr><td colspan="${labels.length}" style="text-align:center;">${emptyMsg}</td></tr></tbody>`;
     } else {
       const rowsHtml = data.map(row => {
-        // 1) Time: format ISO → "MM-DD HH:MM" for compact mobile display
+        // 1) Time: format ISO → "MM-DD · HH:MM" for compact mobile display
         let prettyTime = row.time || '';
         try {
           const d = new Date(row.time);
@@ -581,7 +588,7 @@ function renderCurrentView(){
             const dd = String(d.getDate()).padStart(2, '0');
             const hh = String(d.getHours()).padStart(2, '0');
             const min = String(d.getMinutes()).padStart(2, '0');
-            prettyTime = `${mm}-${dd} ${hh}:${min}`;
+            prettyTime = `${mm}-${dd} · ${hh}:${min}`;
           }
         } catch {}
 
@@ -639,6 +646,85 @@ function renderCurrentView(){
     `;
     return;
   }
+  
+  if (currentView === 'campaigns') {
+    // C) QR Campaign table (per-campaign rollup)
+    const cols = [
+      ['dash.qrcamp.col.campaign-id',   'Campaign ID'],
+      ['dash.qrcamp.col.campaign-name', 'Campaign Name'],
+      ['dash.qrcamp.col.target',        'Target'],
+      ['dash.qrcamp.col.brand',         'Brand'],
+      ['dash.qrcamp.col.period',        'Period'],
+      ['dash.qrcamp.col.scans',         'Scans'],
+      ['dash.qrcamp.col.redemptions',   'Redemptions'],
+      ['dash.qrcamp.col.unique',        'Unique visitors'],
+      ['dash.qrcamp.col.repeat',        'Repeat %'],
+      ['dash.qrcamp.col.locations',     'Locations'],
+      ['dash.qrcamp.col.devices',       'Devices'],
+      ['dash.qrcamp.col.langs',         'Languages'],
+      ['dash.qrcamp.col.signals',       'Signals']
+    ];
+
+    const data = Array.isArray(lastStats.campaigns) ? lastStats.campaigns : [];
+    const { labels, thead } = buildHeader(cols);
+
+    let tbody = '';
+    if (!data.length) {
+      const emptyMsg = (typeof t === 'function' ? t('dash.state.campaigns-empty') : '') ||
+        'QR Campaigns view will appear here for the selected period.';
+      tbody = `<tbody><tr><td colspan="${labels.length}" style="text-align:center;">${emptyMsg}</td></tr></tbody>`;
+    } else {
+      const rowsHtml = data.map(row => {
+        const scans = Number(row.scans ?? 0);
+        const redemptions = Number(row.redemptions ?? 0);
+        const uniq = Number(row.uniqueVisitors ?? 0);
+        const repeat = Number(row.repeatVisitors ?? 0);
+        const repeatPct = uniq > 0 ? ((repeat / uniq) * 100).toFixed(1) + '%' : '';
+
+        const devicesText = Array.isArray(row.devices) ? row.devices.join(', ') : '';
+        const langsText = Array.isArray(row.langs) ? row.langs.join(', ') : '';
+
+        // Signals: reserved; currently an empty object in the API
+        let signalsText = '';
+        if (row.signals && typeof row.signals === 'object') {
+          const entries = Object.entries(row.signals);
+          if (entries.length) {
+            signalsText = entries.map(([k, v]) => `${k}: ${v}`).join(', ');
+          }
+        }
+
+        const cells = [
+          row.campaign || '',          // Campaign ID
+          row.campaignName || '',      // Campaign Name
+          row.target || '',            // Target (context)
+          row.brand || '',             // Brand
+          row.period || '',
+          scans,
+          redemptions,
+          uniq,
+          repeatPct,
+          row.locations ?? '',
+          devicesText,
+          langsText,
+          signalsText
+        ];
+
+        return `<tr>${cells.map(v => `<td>${String(v)}</td>`).join('')}</tr>`;
+      }).join('');
+      tbody = `<tbody>${rowsHtml}</tbody>`;
+    }
+
+    tblWrap.innerHTML = `
+      <div id="dash-table-scroller">
+        <table class="stats-table">
+          ${thead}
+          ${tbody}
+        </table>
+      </div>
+    `;
+    return;
+  }
+    
 }
 
 // Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.
