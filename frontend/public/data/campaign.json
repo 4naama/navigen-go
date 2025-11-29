@@ -4,7 +4,7 @@
     "locationName": "Európa Patika Rákóczi tér",
     "campaignKey": "1001",
     "campaignName": "Test Campaign",
-    "brandKey": "",
+    "brandKey": "kulcs-patikak",
     "context": "pharmacies/hungary/budapest",
     "campaignType": "Test",
     "targetChannels": [
@@ -14,7 +14,7 @@
     "endDate": "Wed Dec 31 2025 00:00:00 GMT+0100 (Central European Standard Time)",
     "status": "planned",
     "offerType": "info",
-    "discountKind": "",
+    "discountKind": "percent",
     "discountValue": 0.1,
     "currency": "HUF",
     "eligibilityType": "everyone",
