@@ -256,6 +256,17 @@ const HUMANIZE = (k) => {
 };
 const labelFor = (k) => METRIC_LABEL[k] || HUMANIZE(k);
 
+function hashVisitorId(s) {
+  if (!s) return '';
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h) + s.charCodeAt(i);
+    h |= 0; // keep 32-bit
+  }
+  const hex = (h >>> 0).toString(16).padStart(8, '0');
+  return 'v-' + hex;
+}
+
 async function fetchStats() {
   // single source for all stats calls
   const base = 'https://navigen-api.4naama.workers.dev';
@@ -543,7 +554,15 @@ function renderCurrentView(){
       ['dash.qrinfo.col.campaign', 'Campaign'],
       ['dash.qrinfo.col.signal',   'Signal']
     ];
-    const data = Array.isArray(lastStats.qrInfo) ? lastStats.qrInfo : [];
+
+    // FILTER: keep only rows with meaningful client info (UA or Lang)
+    const rawData = Array.isArray(lastStats.qrInfo) ? lastStats.qrInfo : [];
+    const data = rawData.filter(row => {
+      const hasUA = typeof row.device === 'string' && row.device.trim().length > 0;
+      const hasLang = typeof row.lang === 'string' && row.lang.trim().length > 0;
+      return hasUA || hasLang;
+    });
+
     const { labels, thead } = buildHeader(cols);
 
     let tbody = '';
@@ -583,11 +602,14 @@ function renderCurrentView(){
         else if (ua.includes('edge')) browserLabel = 'Edge';
         else if (ua.includes('opera') || ua.includes('opr/')) browserLabel = 'Opera';
 
-        // 3) Lang: keep only primary language (before comma)
+        // 3) Lang: keep only primary language
         let lang = row.lang || '';
         if (lang && typeof lang === 'string' && lang.includes(',')) {
           lang = lang.split(',')[0];
         }
+
+        // 4) Visitor: show short hashed visitor ID
+        const visitorId = row.visitor ? hashVisitorId(String(row.visitor)) : '';
 
         const cells = [
           prettyTime,
@@ -597,75 +619,13 @@ function renderCurrentView(){
           browserLabel || '',
           lang,
           row.scanId || '',
-          row.visitor || '',
+          visitorId,
           row.campaign || '',
           row.signal || ''
         ];
         return `<tr>${cells.map(v => `<td>${String(v)}</td>`).join('')}</tr>`;
       }).join('');
 
-      tbody = `<tbody>${rowsHtml}</tbody>`;
-    }
-
-    tblWrap.innerHTML = `
-      <div id="dash-table-scroller">
-        <table class="stats-table">
-          ${thead}
-          ${tbody}
-        </table>
-      </div>
-    `;
-    return;
-  }
-
-  if (currentView === 'campaigns') {
-    // C) QR Campaign table (per-campaign rollup)
-    const cols = [
-      ['dash.qrcamp.col.campaign',  'Campaign'],
-      ['dash.qrcamp.col.target',    'Target'],
-      ['dash.qrcamp.col.period',    'Period'],
-      ['dash.qrcamp.col.scans',     'Scans'],
-      ['dash.qrcamp.col.redemptions', 'Redemptions'],
-      ['dash.qrcamp.col.unique',    'Unique visitors'],
-      ['dash.qrcamp.col.repeat',    'Repeat %'],
-      ['dash.qrcamp.col.locations', 'Locations'],
-      ['dash.qrcamp.col.devices',   'Devices'],
-      ['dash.qrcamp.col.langs',     'Langs'],
-      ['dash.qrcamp.col.signals',   'Signals']
-    ];
-    const data = Array.isArray(lastStats.campaigns) ? lastStats.campaigns : [];
-    const { labels, thead } = buildHeader(cols);
-
-    let tbody = '';
-    if (!data.length) {
-      const emptyMsg = (typeof t === 'function' ? t('dash.state.campaigns-empty') : '') ||
-        'QR Campaigns view will appear here for the selected period.';
-      tbody = `<tbody><tr><td colspan="${labels.length}" style="text-align:center;">${emptyMsg}</td></tr></tbody>`;
-    } else {
-      const rowsHtml = data.map(row => {
-        const scans = Number(row.scans ?? 0);
-        const redemptions = Number(row.redemptions ?? 0);
-        const uniq = Number(row.uniqueVisitors ?? 0);
-        const repeat = Number(row.repeatVisitors ?? 0);
-        const repeatPct = uniq > 0 ? ((repeat / uniq) * 100).toFixed(1) + '%' : '';
-
-        const cells = [
-          row.campaign || '',
-          row.target || '',
-          row.period || '',
-          scans,
-          redemptions,
-          uniq,
-          repeatPct,
-          row.locations ?? '',
-          (Array.isArray(row.devices) ? row.devices.join(', ') : ''),
-          (Array.isArray(row.langs) ? row.langs.join(', ') : ''),
-          typeof row.signals === 'object' && row.signals !== null
-            ? Object.entries(row.signals).map(([k,v]) => `${k}:${v}`).join(', ')
-            : ''
-        ];
-        return `<tr>${cells.map(v => `<td>${String(v)}</td>`).join('')}</tr>`;
-      }).join('');
       tbody = `<tbody>${rowsHtml}</tbody>`;
     }
 

@@ -308,6 +308,7 @@ export default {
           repeatVisitors: Set<string>;
           langs: Set<string>;
           countries: Set<string>;
+          devices: Set<string>;
         }> = {};
 
         // load campaigns once per stats call
@@ -371,9 +372,11 @@ export default {
                 uniqueVisitors: new Set<string>(),
                 repeatVisitors: new Set<string>(),
                 langs: new Set<string>(),
-                countries: new Set<string>()
+                countries: new Set<string>(),
+                devices: new Set<string>()
               };
             }
+
             const agg = campaignsAgg[bucketKey];
             agg.scans += 1;
 
@@ -403,6 +406,17 @@ export default {
             if (entry.country) {
               agg.countries.add(entry.country);
             }
+            // Device bucket derived from UA for campaign-level analytics
+            if (entry.ua) {
+              const ual = entry.ua.toLowerCase();
+              let deviceBucket = "";
+              if (ual.includes("android")) deviceBucket = "Android";
+              else if (ual.includes("iphone") || ual.includes("ipad") || ual.includes("ios")) deviceBucket = "iOS";
+              else if (ual.includes("windows")) deviceBucket = "Windows";
+              else if (ual.includes("macintosh") || ual.includes("mac os")) deviceBucket = "macOS";
+              else if (ual.includes("linux")) deviceBucket = "Linux";
+              if (deviceBucket) agg.devices.add(deviceBucket);
+            }            
           }
           qrCursor = page.cursor || undefined;
         } while (qrCursor);
@@ -417,38 +431,40 @@ export default {
         });
 
         // Serialize campaignsAgg into a simple array
-        const campaigns = Object.values(campaignsAgg).map((agg) => {
-          const key = agg.campaignKey;
-          const meta = allCampaigns.find(c => c.locationID === loc && c.campaignKey === key) || null;
+        const campaigns = Object.values(campaignsAgg)
+          // hide "_no_campaign" bucket (scans without a campaignKey)
+          .filter(agg => (agg.campaignKey || "").trim() !== "")
+          .map((agg) => {
+            const key = agg.campaignKey;
+            const meta = allCampaigns.find(c => c.locationID === loc && c.campaignKey === key) || null;
 
-          const uniqueCount = agg.uniqueVisitors.size;
-          const repeatCount = agg.repeatVisitors.size;
+            const uniqueCount = agg.uniqueVisitors.size;
+            const repeatCount = agg.repeatVisitors.size;
 
-          // Period: prefer campaign start/end if available, otherwise stats window
-          const campaignStart = meta?.startDate || "";
-          const campaignEnd   = meta?.endDate || "";
-          const periodLabel = (campaignStart && campaignEnd)
-            ? `${campaignStart} → ${campaignEnd}`
-            : `${from} → ${to}`;
+            // Period: prefer campaign start/end if available, otherwise stats window
+            const campaignStart = meta?.startDate || "";
+            const campaignEnd   = meta?.endDate || "";
+            const periodLabel = (campaignStart && campaignEnd)
+              ? `${campaignStart} → ${campaignEnd}`
+              : `${from} → ${to}`;
 
-          return {
-            campaign: key || "",                // campaignKey (empty means "no campaign")
-            target: meta?.context || "",        // context string from campaign.json if available
-            period: periodLabel,
-            scans: agg.scans,
-            redemptions: agg.redemptions,
-            uniqueVisitors: uniqueCount,
-            repeatVisitors: repeatCount,
-            // Locations = distinct scanner countries
-            locations: agg.countries.size,
-            // Devices: reserved for later; for now keep empty
-            devices: [],
-            // Languages = distinct primary languages of scanners
-            langs: Array.from(agg.langs),
-            // Signals: reserved for future breakdown
-            signals: {}
-          };
-        });
+            return {
+              // Campaign ID + Name + Brand for dashboard
+              campaign: key || "",
+              campaignName: meta?.campaignName || "",
+              brand: meta?.brandKey || "",
+              target: meta?.context || "",
+              period: periodLabel,
+              scans: agg.scans,
+              redemptions: agg.redemptions,
+              uniqueVisitors: uniqueCount,
+              repeatVisitors: repeatCount,
+              locations: agg.countries.size,
+              devices: Array.from(agg.devices),
+              langs: Array.from(agg.langs),
+              signals: {}
+            };
+          });
 
         return json(
           {
@@ -1126,6 +1142,7 @@ interface CampaignDef {
   locationID: string;
   campaignKey: string;
   campaignName?: string;
+  brandKey?: string;
   context?: string;
   startDate?: string;
   endDate?: string;
@@ -1142,8 +1159,14 @@ async function loadCampaigns(baseOrigin: string, env: Env): Promise<CampaignDef[
     const s = String(v).trim();
     if (!s) return undefined;
     if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
     const d = new Date(s);
     if (isNaN(d.getTime())) return undefined;
+
+    // SHIFT: add 12 hours before converting to ISO date to avoid
+    // off-by-one for midnight local times in campaign_data.
+    d.setHours(d.getHours() + 12);
+
     return d.toISOString().slice(0, 10); // YYYY-MM-DD
   };
 
@@ -1162,6 +1185,7 @@ async function loadCampaigns(baseOrigin: string, env: Env): Promise<CampaignDef[
       locationID: String(r.locationID || "").trim(),
       campaignKey: String(r.campaignKey || "").trim(),
       campaignName: typeof r.campaignName === "string" ? r.campaignName : undefined,
+      brandKey: typeof r.brandKey === "string" ? r.brandKey : undefined,
       context: typeof r.context === "string" ? r.context : undefined,
       startDate: normalizeDate(r.startDate),
       endDate: normalizeDate(r.endDate),
