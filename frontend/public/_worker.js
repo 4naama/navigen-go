@@ -48,7 +48,13 @@ export default {
       const lpSlug = (url.searchParams.get('lp') || '').trim();
       if (lpSlug) {
         const hitUrl = `https://navigen-api.4naama.workers.dev/hit/qr-scan/${encodeURIComponent(lpSlug)}`;
-        const options = { method: 'POST', keepalive: true };
+        const options = {
+          method: 'POST',
+          keepalive: true,
+          headers: {
+            'X-NG-QR-Source': 'pages-worker'
+          }
+        };
         try {
           if (ctx && typeof ctx.waitUntil === 'function') {
             ctx.waitUntil(fetch(hitUrl, options).catch(() => {})); // do not block page load on tracking

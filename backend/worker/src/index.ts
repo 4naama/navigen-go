@@ -595,6 +595,23 @@ export default {
           return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
         }
 
+        // Gate QR-scan metrics: only accept hits from the Pages worker.
+        // Other callers (legacy app code) hitting /hit/qr-scan without this header
+        // will be ignored to avoid double-counting.
+        if (ev === "qr-scan") {
+          const src = (req.headers.get("X-NG-QR-Source") || "").trim();
+          if (src !== "pages-worker") {
+            return new Response(null, {
+              status: 204,
+              headers: {
+                "Access-Control-Allow-Origin": "https://navigen.io",
+                "Access-Control-Allow-Credentials": "true",
+                "Vary": "Origin"
+              }
+            });
+          }
+        }
+
         const loc = await resolveUid(idRaw, env);
         if (!loc) {
           return json({ error:{ code:"invalid_request", message:"bad id" } }, 400);
