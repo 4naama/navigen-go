@@ -297,6 +297,54 @@ export default {
       }
     }
 
+    // /out/qr-redeem/:id — record a promotion redemption and return to the app shell
+    {
+      const p = url.pathname;
+      if (p.startsWith('/out/qr-redeem/')) {
+        const [, , , idOrSlug] = p.split('/'); // ['', 'out', 'qr-redeem', ':id']
+        if (!idOrSlug) {
+          return new Response('Not Found', { status: 404 });
+        }
+
+        // Resolve to canonical ULID (accept ULID or slug); same helper used elsewhere
+        const ulid = await canonicalId(env, idOrSlug);
+        if (!ulid) return new Response('Unknown location', { status: 404 });
+
+        // Extract campaignKey and redemption token from query (if present)
+        const campaignKey = (url.searchParams.get('camp') || '').trim();
+        const redeemToken = (url.searchParams.get('rt') || '').trim();
+
+        // Forward a redeem event to navigen-api.4naama.workers.dev
+        const apiBase = 'https://navigen-api.4naama.workers.dev';
+        const hitUrl = new URL(`/hit/qr-redeem/${encodeURIComponent(ulid)}`, apiBase).toString();
+
+        try {
+          const headers = {
+            'X-NG-QR-Source': 'pages-worker'
+          };
+          if (redeemToken) headers['X-NG-QR-Token'] = redeemToken;
+          if (campaignKey) headers['X-NG-Campaign'] = campaignKey;
+
+          const options = {
+            method: 'POST',
+            keepalive: true,
+            headers
+          };
+          if (ctx && typeof ctx.waitUntil === 'function') {
+            ctx.waitUntil(fetch(hitUrl, options).catch(() => {}));
+          } else {
+            fetch(hitUrl, options).catch(() => {});
+          }
+        } catch (_) {
+          // ignore tracking errors; never block app response
+        }
+
+        // Redirect back to the main app shell; we can signal redeem via query params.
+        const dest = `/?redeem=1&loc=${encodeURIComponent(idOrSlug)}`;
+        return Response.redirect(dest, 302);
+      }
+    }
+
     // /api/track: deprecated — previously no redirect; handled missing/invalid target gracefully
     if (url.pathname === '/api/track') {
       const target = url.searchParams.get('target') || '';

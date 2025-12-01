@@ -8,7 +8,7 @@ const EVENT_ORDER = [
   "lpm-open","call","email","whatsapp","telegram","messenger",
   "official","booking","newsletter",
   "facebook","instagram","pinterest","spotify","tiktok","youtube",
-  "share","rating","save","unsave","map","qr-print","qr-scan","qr-view"
+  "share","rating","save","unsave","map","qr-print","qr-scan","qr-view","qr-redeem"
 ] as const;
 
 type EventKey = typeof EVENT_ORDER[number];
@@ -74,6 +74,64 @@ export default {
       }
 
     // --- Admin purge (one-off): POST /api/admin/purge-legacy
+    
+      // --- Promotion QR URL: GET /api/promo-qr?locationID=...&campaignKey=...
+      if (pathname === "/api/promo-qr" && req.method === "GET") {
+        const u = new URL(req.url);
+        const locationRaw = (u.searchParams.get("locationID") || "").trim();
+        const campaignKeyRaw = (u.searchParams.get("campaignKey") || "").trim();
+
+        if (!locationRaw || !campaignKeyRaw) {
+          return json(
+            { error: { code: "invalid_request", message: "locationID and campaignKey required" } },
+            400
+          );
+        }
+
+        // Resolve slug → canonical ULID (or accept ULID as-is)
+        const locULID = (await resolveUid(locationRaw, env)) || locationRaw;
+        if (!locULID) {
+          return json(
+            { error: { code: "invalid_request", message: "unknown location" } },
+            400
+          );
+        }
+
+        const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
+        const campaigns = await loadCampaigns(siteOrigin, env);
+
+        // Ensure campaign exists & is active for this location
+        const dayISO = new Date();
+        dayISO.setHours(dayISO.getHours() + 12); // shift to avoid off-by-one
+        const today = dayISO.toISOString().slice(0, 10);
+
+        const campaign = campaigns.find(c =>
+          c.locationID === locULID &&
+          c.campaignKey === campaignKeyRaw &&
+          (!c.startDate || today >= c.startDate) &&
+          (!c.endDate || today <= c.endDate) &&
+          (!c.status || c.status.toLowerCase() !== "ended")
+        );
+
+        if (!campaign) {
+          return json(
+            { error: { code: "not_found", message: "campaign not active for this location" } },
+            404
+          );
+        }
+
+        // Create redeem token
+        const token = await createRedeemToken(env.KV_STATS, locULID, campaignKeyRaw);
+
+        // Build Promotion QR URL using the original locationRaw (slug), not ULID
+        const qrBase = siteOrigin || "https://navigen.io";
+        const qrUrlObj = new URL(`/out/qr-redeem/${encodeURIComponent(locationRaw)}`, qrBase);
+        qrUrlObj.searchParams.set("camp", campaignKeyRaw);
+        qrUrlObj.searchParams.set("rt", token);
+
+        return json({ qrUrl: qrUrlObj.toString() }, 200);
+      }
+    
     // Merges stats:<loc>:<day>:<event_with_underscores> → hyphen, or burns legacy keys entirely.
     if (pathname === "/api/admin/purge-legacy" && req.method === "POST") {
       const auth = req.headers.get("Authorization") || "";
@@ -378,9 +436,13 @@ export default {
             }
 
             const agg = campaignsAgg[bucketKey];
-            agg.scans += 1;
 
-            // Redemptions: only explicit "redeem" signals will count as true redemptions.
+            // Scans: only count entries with signal="scan"
+            if (entry.signal === "scan") {
+              agg.scans += 1;
+            }
+
+            // Redemptions: only explicit "redeem" signals count as true redemptions.
             if (entry.signal === "redeem") {
               agg.redemptions += 1;
             }
@@ -595,10 +657,10 @@ export default {
           return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
         }
 
-        // Gate QR-scan metrics: only accept hits from the Pages worker.
-        // Other callers (legacy app code) hitting /hit/qr-scan without this header
+        // Gate QR-scan and QR-redeem metrics: only accept hits from the Pages worker.
+        // Other callers (legacy app code) hitting /hit/qr-scan or /hit/qr-redeem without this header
         // will be ignored to avoid double-counting.
-        if (ev === "qr-scan") {
+        if (ev === "qr-scan" || ev === "qr-redeem") {
           const src = (req.headers.get("X-NG-QR-Source") || "").trim();
           if (src !== "pages-worker") {
             return new Response(null, {
@@ -641,6 +703,42 @@ export default {
         // For QR scan events, also log a per-scan record (powers QR Info / Campaigns in the dash).
         if (ev === "qr-scan") {
           await logQrScan(env.KV_STATS, env, loc, req);
+        }
+
+        // For QR redeem events, validate token and log "redeem" vs "invalid".
+        if (ev === "qr-redeem") {
+          const token = (req.headers.get("X-NG-QR-Token") || "").trim();
+          const campaignHeader = (req.headers.get("X-NG-Campaign") || "").trim();
+
+          // If no campaignKey header, we can still try to infer via loadCampaigns,
+          // but for now require it for clarity.
+          const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
+          const campaigns = await loadCampaigns(siteOrigin, env);
+          const todayShift = new Date();
+          todayShift.setHours(todayShift.getHours() + 12);
+          const today = todayShift.toISOString().slice(0, 10);
+
+          // Pick the active campaign for this location and header key.
+          const campaign = campaigns.find(c =>
+            c.locationID === loc &&
+            c.campaignKey === campaignHeader &&
+            (!c.startDate || today >= c.startDate) &&
+            (!c.endDate || today <= c.endDate) &&
+            (!c.status || c.status.toLowerCase() !== "ended")
+          );
+
+          if (!campaign || !campaignHeader) {
+            // No matching active campaign; log as invalid redeem attempt.
+            // We reuse logQrRedeem but override signal via a separate helper if needed.
+            await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
+          } else {
+            const result = await consumeRedeemToken(env.KV_STATS, token, loc, campaignHeader);
+            if (result === "ok") {
+              await logQrRedeem(env.KV_STATS, env, loc, req);
+            } else {
+              await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
+            }
+          }
         }
 
         return new Response(null, {
@@ -1256,10 +1354,10 @@ function pickCampaignForScan(
 }
 
 /**
- * Log a QR scan into KV_STATS under qrlog:<loc>:<day>:<scanId>.
+ * Log a QR redeem into KV_STATS under qrlog:<loc>:<day>:<scanId>.
  * This powers the QR Info and Campaigns views in the dashboard.
  */
-async function logQrScan(
+async function logQrRedeem(
   kv: KVNamespace,
   env: Env,
   loc: string,
@@ -1274,8 +1372,8 @@ async function logQrScan(
     const lang = req.headers.get("Accept-Language") || "";
     const country = ((req as any).cf?.country || "").toString();
     const city = ((req as any).cf?.city || "").toString();
-    const source = "qr-scan"; // can be refined later (poster, in-app, etc.)
-    const signal = "scan";    // placeholder; "redeem" once the dedicated redemption flow is wired
+    const source = "qr-redeem"; // logical source for Promotion QR redemptions
+    const signal = "redeem";    // distinguishes redeem events from scans
 
     // provisional visitor identity (UA + country); no IP stored
     const visitor = `${ua}|${country}`;
@@ -1312,3 +1410,131 @@ async function logQrScan(
     // never throw from logging; stats must not break the main flow
   }
 }
+
+/**
+ * Log an invalid QR redeem attempt into KV_STATS (signal="invalid").
+ */
+async function logQrRedeemInvalid(
+  kv: KVNamespace,
+  env: Env,
+  loc: string,
+  req: Request
+): Promise<void> {
+  try {
+    const now = new Date();
+    const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
+    const timeISO = now.toISOString();
+
+    const ua = req.headers.get("User-Agent") || "";
+    const lang = req.headers.get("Accept-Language") || "";
+    const country = ((req as any).cf?.country || "").toString();
+    const city = ((req as any).cf?.city || "").toString();
+    const source = "qr-redeem"; // same logical source
+    const signal = "invalid";   // distinguishes invalid attempts
+
+    // provisional visitor identity (UA + country); no IP stored
+    const visitor = `${ua}|${country}`;
+
+    const baseOrigin = "https://navigen.io";
+    const campaigns = await loadCampaigns(baseOrigin, env);
+    const campaignKey = pickCampaignForScan(campaigns, loc, day);
+
+    const bytes = new Uint8Array(6);
+    (crypto as any).getRandomValues(bytes);
+    const scanId = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    const entry: QrLogEntry = {
+      time: timeISO,
+      locationID: loc,
+      day,
+      ua,
+      lang,
+      country,
+      city,
+      source,
+      signal,
+      visitor,
+      campaignKey
+    };
+
+    const key = `qrlog:${loc}:${day}:${scanId}`;
+    const ttlSeconds = 56 * 24 * 60 * 60;
+    await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
+  } catch {
+    // never throw from logging; stats must not break the main flow
+  }
+}
+
+// -------- Redeem token helpers (one-time Promotion QR tokens) --------
+
+interface RedeemTokenRecord {
+  locationID: string;
+  campaignKey: string;
+  status: "fresh" | "redeemed" | "invalid";
+  createdAt: string;
+}
+
+/**
+ * Create a fresh redeem token for a given location + campaignKey.
+ * Token is a short random hex string, stored under redeem:<token>.
+ */
+async function createRedeemToken(
+  kv: KVNamespace,
+  locationID: string,
+  campaignKey: string
+): Promise<string> {
+  // Generate 8-byte random token (16 hex chars)
+  const bytes = new Uint8Array(8);
+  (crypto as any).getRandomValues(bytes);
+  const token = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+
+  const record: RedeemTokenRecord = {
+    locationID,
+    campaignKey,
+    status: "fresh",
+    createdAt: new Date().toISOString()
+  };
+
+  const key = `redeem:${token}`;
+  const ttlSeconds = 56 * 24 * 60 * 60; // align with QR logs (~8 weeks)
+  await kv.put(key, JSON.stringify(record), { expirationTtl: ttlSeconds });
+
+  return token;
+}
+
+/**
+ * Try to consume a redeem token for a given location + campaignKey.
+ * Returns "ok" if token is valid and now marked redeemed, otherwise "invalid".
+ */
+async function consumeRedeemToken(
+  kv: KVNamespace,
+  token: string,
+  locationID: string,
+  campaignKey: string
+): Promise<"ok" | "invalid"> {
+  if (!token) return "invalid";
+  const key = `redeem:${token}`;
+  const raw = await kv.get(key, "text");
+  if (!raw) return "invalid";
+
+  let rec: RedeemTokenRecord;
+  try {
+    rec = JSON.parse(raw) as RedeemTokenRecord;
+  } catch {
+    return "invalid";
+  }
+
+  if (
+    rec.status !== "fresh" ||
+    rec.locationID !== locationID ||
+    rec.campaignKey !== campaignKey
+  ) {
+    return "invalid";
+  }
+
+  // Mark as redeemed
+  rec.status = "redeemed";
+  await kv.put(key, JSON.stringify(rec));
+  return "ok";
+}
+

@@ -298,6 +298,174 @@ export default {
         const siteOrigin =
           req.headers.get("Origin") || "https://navigen.io";
 
+        // --- Build QR Info (per-scan logs) and Campaign aggregates --- //
+        const qrInfo: any[] = [];
+        const campaignsAgg: Record<string, {
+          campaignKey: string;
+          scans: number;
+          redemptions: number;
+          uniqueVisitors: Set<string>;
+          repeatVisitors: Set<string>;
+          langs: Set<string>;
+          countries: Set<string>;
+          devices: Set<string>;
+        }> = {};
+
+        // load campaigns once per stats call
+        const allCampaigns = await loadCampaigns(siteOrigin, env);
+
+        // QR logs live under qrlog:<loc>:<day>:<scanId>
+        const qrPrefix = `qrlog:${loc}:`;
+        let qrCursor: string | undefined = undefined;
+
+        do {
+          const page = await env.KV_STATS.list({ prefix: qrPrefix, cursor: qrCursor });
+          for (const k of page.keys) {
+            const name = k.name;
+            const parts = name.split(":"); // ['qrlog', '<loc>', '<day>', '<scanId>']
+            if (parts.length !== 4) continue;
+
+            const dayKey = parts[2];
+            if (dayKey < from || dayKey > to) continue;
+
+            const raw = await env.KV_STATS.get(name, "text");
+            if (!raw) continue;
+
+            let entry: QrLogEntry | null = null;
+            try {
+              entry = JSON.parse(raw) as QrLogEntry;
+            } catch {
+              entry = null;
+            }
+            if (!entry || entry.locationID !== loc) continue;
+
+            const scanId = parts[3];
+
+            // Push into qrInfo array (shape aligned with dash expectations)
+            // Build QR Info row
+            qrInfo.push({
+              time: entry.time,
+              source: entry.source || "",
+              // Location: use physical scanner country code (CF country), not the location ULID
+              location: entry.city
+                ? `${entry.city}, ${entry.country || ''}`.trim().replace(/,\s*$/, '')
+                : (entry.country || ""),
+              // Device/Browser: keep UA here; frontend will bucketize into Device + Browser
+              device: entry.ua || "",
+              browser: entry.ua || "",
+              lang: entry.lang || "",
+              scanId,
+              visitor: entry.visitor || "",
+              campaign: entry.campaignKey || "",
+              signal: entry.signal || "scan"
+            });
+
+            // Aggregate by campaignKey for Campaigns view
+            const cKey = entry.campaignKey || "";
+            const bucketKey = cKey || "_no_campaign";
+
+            if (!campaignsAgg[bucketKey]) {
+              campaignsAgg[bucketKey] = {
+                campaignKey: cKey,
+                scans: 0,
+                redemptions: 0,
+                uniqueVisitors: new Set<string>(),
+                repeatVisitors: new Set<string>(),
+                langs: new Set<string>(),
+                countries: new Set<string>(),
+                devices: new Set<string>()
+              };
+            }
+
+            const agg = campaignsAgg[bucketKey];
+            agg.scans += 1;
+
+            // Redemptions: only explicit "redeem" signals will count as true redemptions.
+            if (entry.signal === "redeem") {
+              agg.redemptions += 1;
+            }
+
+            // Visitor identity (for now): derive from UA + country if visitor field is empty
+            const visitorKey = entry.visitor && entry.visitor.trim()
+              ? entry.visitor.trim()
+              : `${entry.ua || ''}|${entry.country || ''}`;
+
+            if (visitorKey) {
+              if (agg.uniqueVisitors.has(visitorKey)) {
+                agg.repeatVisitors.add(visitorKey);
+              } else {
+                agg.uniqueVisitors.add(visitorKey);
+              }
+            }
+
+            // Aggregate primary language and scanner country
+            if (entry.lang) {
+              const primaryLang = String(entry.lang).split(',')[0].trim();
+              if (primaryLang) agg.langs.add(primaryLang);
+            }
+            if (entry.country) {
+              agg.countries.add(entry.country);
+            }
+            // Device bucket derived from UA for campaign-level analytics
+            if (entry.ua) {
+              const ual = entry.ua.toLowerCase();
+              let deviceBucket = "";
+              if (ual.includes("android")) deviceBucket = "Android";
+              else if (ual.includes("iphone") || ual.includes("ipad") || ual.includes("ios")) deviceBucket = "iOS";
+              else if (ual.includes("windows")) deviceBucket = "Windows";
+              else if (ual.includes("macintosh") || ual.includes("mac os")) deviceBucket = "macOS";
+              else if (ual.includes("linux")) deviceBucket = "Linux";
+              if (deviceBucket) agg.devices.add(deviceBucket);
+            }            
+          }
+          qrCursor = page.cursor || undefined;
+        } while (qrCursor);
+        
+        // Sort QR Info rows by time (newest first)
+        qrInfo.sort((a, b) => {
+          const ta = String(a.time || '');
+          const tb = String(b.time || '');
+          if (ta < tb) return 1;   // reverse comparison for newest-first
+          if (ta > tb) return -1;
+          return 0;
+        });
+
+        // Serialize campaignsAgg into a simple array
+        const campaigns = Object.values(campaignsAgg)
+          // hide "_no_campaign" bucket (scans without a campaignKey)
+          .filter(agg => (agg.campaignKey || "").trim() !== "")
+          .map((agg) => {
+            const key = agg.campaignKey;
+            const meta = allCampaigns.find(c => c.locationID === loc && c.campaignKey === key) || null;
+
+            const uniqueCount = agg.uniqueVisitors.size;
+            const repeatCount = agg.repeatVisitors.size;
+
+            // Period: prefer campaign start/end if available, otherwise stats window
+            const campaignStart = meta?.startDate || "";
+            const campaignEnd   = meta?.endDate || "";
+            const periodLabel = (campaignStart && campaignEnd)
+              ? `${campaignStart} → ${campaignEnd}`
+              : `${from} → ${to}`;
+
+            return {
+              // Campaign ID + Name + Brand for dashboard
+              campaign: key || "",
+              campaignName: meta?.campaignName || "",
+              brand: meta?.brandKey || "",
+              target: meta?.context || "",
+              period: periodLabel,
+              scans: agg.scans,
+              redemptions: agg.redemptions,
+              uniqueVisitors: uniqueCount,
+              repeatVisitors: repeatCount,
+              locations: agg.countries.size,
+              devices: Array.from(agg.devices),
+              langs: Array.from(agg.langs),
+              signals: {}
+            };
+          });
+
         return json(
           {
             locationID: loc,
@@ -308,7 +476,9 @@ export default {
             order: EVENT_ORDER,
             days,
             rated_sum: ratedSum,
-            rating_avg: ratingAvg
+            rating_avg: ratingAvg,
+            qrInfo,
+            campaigns
           },
           200
         );
@@ -425,6 +595,23 @@ export default {
           return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
         }
 
+        // Gate QR-scan metrics: only accept hits from the Pages worker.
+        // Other callers (legacy app code) hitting /hit/qr-scan without this header
+        // will be ignored to avoid double-counting.
+        if (ev === "qr-scan") {
+          const src = (req.headers.get("X-NG-QR-Source") || "").trim();
+          if (src !== "pages-worker") {
+            return new Response(null, {
+              status: 204,
+              headers: {
+                "Access-Control-Allow-Origin": "https://navigen.io",
+                "Access-Control-Allow-Credentials": "true",
+                "Vary": "Origin"
+              }
+            });
+          }
+        }
+
         const loc = await resolveUid(idRaw, env);
         if (!loc) {
           return json({ error:{ code:"invalid_request", message:"bad id" } }, 400);
@@ -449,6 +636,11 @@ export default {
               expirationTtl: 60*60*24*366
             });
           }
+        }
+
+        // For QR scan events, also log a per-scan record (powers QR Info / Campaigns in the dash).
+        if (ev === "qr-scan") {
+          await logQrScan(env.KV_STATS, env, loc, req);
         }
 
         return new Response(null, {
@@ -945,4 +1137,178 @@ async function increment(kv: KVNamespace, key: string): Promise<void> {
   // Simple read-modify-write; good enough for MVP. Upgrade to Durable Object later.
   const current = parseInt((await kv.get(key)) || "0", 10) || 0;
   await kv.put(key, String(current + 1));
+}
+
+// -------- QR log helpers (per-scan metadata for QR Info / Campaigns) --------
+
+interface QrLogEntry {
+  time: string;          // ISO timestamp (UTC)
+  locationID: string;    // canonical ULID (location that owns this QR)
+  day: string;           // YYYY-MM-DD (for quick filtering)
+  ua: string;            // User-Agent
+  lang: string;          // Accept-Language
+  country: string;       // Cloudflare country code (scanner location, best-effort)
+  city: string;          // Cloudflare city (scanner location, best-effort)
+  source: string;        // logical source (for now: "qr-scan")
+  signal: string;        // "scan" | "redeem" | other
+  visitor: string;       // provisional visitor fingerprint (e.g. UA+country)
+  campaignKey: string;   // resolved from campaign.json when possible, else empty
+}
+
+interface CampaignDef {
+  locationID: string;
+  campaignKey: string;
+  campaignName?: string;
+  brandKey?: string;
+  context?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+}
+
+/**
+ * Fetch campaign definitions once per request.
+ * Reads /data/campaign.json from the main site origin.
+ */
+async function loadCampaigns(baseOrigin: string, env: Env): Promise<CampaignDef[]> {
+  const normalizeDate = (v: any): string | undefined => {
+    if (!v) return undefined;
+    const s = String(v).trim();
+    if (!s) return undefined;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return undefined;
+
+    // SHIFT: add 12 hours before converting to ISO date to avoid
+    // off-by-one for midnight local times in campaign_data.
+    d.setHours(d.getHours() + 12);
+
+    return d.toISOString().slice(0, 10); // YYYY-MM-DD
+  };
+
+  try {
+    const src = new URL("/data/campaign.json", baseOrigin || "https://navigen.io").toString();
+    const resp = await fetch(src, {
+      cf: { cacheTtl: 60, cacheEverything: true },
+      headers: { "Accept": "application/json" }
+    });
+    if (!resp.ok) return [];
+    const data: any = await resp.json();
+    const rows: any[] = Array.isArray(data) ? data : (Array.isArray(data?.campaigns) ? data.campaigns : []);
+
+    // First map raw rows
+    const rawDefs = rows.map((r) => ({
+      locationID: String(r.locationID || "").trim(),
+      campaignKey: String(r.campaignKey || "").trim(),
+      campaignName: typeof r.campaignName === "string" ? r.campaignName : undefined,
+      brandKey: typeof r.brandKey === "string" ? r.brandKey : undefined,
+      context: typeof r.context === "string" ? r.context : undefined,
+      startDate: normalizeDate(r.startDate),
+      endDate: normalizeDate(r.endDate),
+      status: typeof r.status === "string" ? r.status : undefined
+    })).filter(r => r.locationID && r.campaignKey);
+
+    // Now canonicalize locationID to ULID when possible
+    const normalized: CampaignDef[] = [];
+    for (const def of rawDefs) {
+      const ulid = await resolveUid(def.locationID, env);
+      normalized.push({
+        ...def,
+        locationID: ulid || def.locationID
+      });
+    }
+
+    return normalized;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Given a locationID + day, find the best matching campaignKey.
+ * For now: pick any campaign for that location where:
+ *   - status is not "ended"
+ *   - and the scan day is between startDate and endDate (if those exist)
+ * If none match, return "".
+ */
+function pickCampaignForScan(
+  campaigns: CampaignDef[],
+  locationID: string,
+  day: string
+): string {
+  const candidates = campaigns.filter(c => c.locationID === locationID);
+  if (!candidates.length) return "";
+
+  const d = day;
+  let best: CampaignDef | null = null;
+
+  for (const c of candidates) {
+    const startOK = !c.startDate || d >= c.startDate;
+    const endOK = !c.endDate || d <= c.endDate;
+    const statusOK = !c.status || c.status.toLowerCase() !== "ended";
+    if (!startOK || !endOK || !statusOK) continue;
+    // Pick first matching; later we can add priority if needed.
+    best = c;
+    break;
+  }
+  return best?.campaignKey || "";
+}
+
+/**
+ * Log a QR scan into KV_STATS under qrlog:<loc>:<day>:<scanId>.
+ * This powers the QR Info and Campaigns views in the dashboard.
+ */
+async function logQrScan(
+  kv: KVNamespace,
+  env: Env,
+  loc: string,
+  req: Request
+): Promise<void> {
+  try {
+    const now = new Date();
+    const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
+    const timeISO = now.toISOString();
+
+    const ua = req.headers.get("User-Agent") || "";
+    const lang = req.headers.get("Accept-Language") || "";
+    const country = ((req as any).cf?.country || "").toString();
+    const city = ((req as any).cf?.city || "").toString();
+    const source = "qr-scan"; // can be refined later (poster, in-app, etc.)
+    const signal = "scan";    // placeholder; "redeem" once the dedicated redemption flow is wired
+
+    // provisional visitor identity (UA + country); no IP stored
+    const visitor = `${ua}|${country}`;
+
+    // base origin for campaign.json (always the app domain)
+    const baseOrigin = "https://navigen.io";
+    const campaigns = await loadCampaigns(baseOrigin, env);
+    const campaignKey = pickCampaignForScan(campaigns, loc, day);
+
+    // Generate a short random scan ID (hex string)
+    const bytes = new Uint8Array(6);
+    (crypto as any).getRandomValues(bytes);
+    const scanId = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    const entry: QrLogEntry = {
+      time: timeISO,
+      locationID: loc,
+      day,
+      ua,
+      lang,
+      country,
+      city,
+      source,
+      signal,
+      visitor,
+      campaignKey
+    };
+
+    const key = `qrlog:${loc}:${day}:${scanId}`;
+    // TTL: 56 days for QR logs (~8 weeks)
+    const ttlSeconds = 56 * 24 * 60 * 60;
+    await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
+  } catch {
+    // never throw from logging; stats must not break the main flow
+  }
 }
