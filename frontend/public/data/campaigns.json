@@ -2,6 +2,7 @@
   {
     "locationID": "europa-patika-rakoczi-ter-1666",
     "locationName": "Európa Patika Rákóczi tér",
+    "sectorKey": "pharmacy",
     "campaignKey": "1001",
     "campaignName": "Test Campaign",
     "brandKey": "kulcs-patikak",
@@ -16,14 +17,11 @@
     "offerType": "info",
     "discountKind": "percent",
     "discountValue": 0.1,
-    "currency": "HUF",
     "eligibilityType": "everyone",
     "eligibilityNotes": "Eligibility test note",
-    "utmSource": "",
+    "utmSource": "google",
     "utmMedium": "poster",
-    "utmCampaign": "",
-    "notes": "Test note",
-    "minPriceIndicator": 1000,
-    "maxPriceIndicator": 100000
+    "utmCampaign": "winter_sale",
+    "notes": "Test note"
   }
 ]

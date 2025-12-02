@@ -431,7 +431,7 @@
   "dash.qrinfo.col.signal": "Señal",
   "dash.qrcamp.col.campaign": "Campaña",
   "dash.qrcamp.col.target": "Objetivo",
-  "dash.qrcamp.col.period": "Período",
+  "ddash.qrcamp.col.campaign-period": "Periodo de campaña",
   "dash.qrcamp.col.scans": "Escaneos",
   "dash.qrcamp.col.unique": "Visitantes únicos",
   "dash.qrcamp.col.repeat": "% repetición",

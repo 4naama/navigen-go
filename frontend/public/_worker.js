@@ -324,6 +324,8 @@ export default {
           };
           if (redeemToken) headers['X-NG-QR-Token'] = redeemToken;
           if (campaignKey) headers['X-NG-Campaign'] = campaignKey;
+          if (clientUA) headers['X-NG-UA'] = clientUA;
+          if (clientLang) headers['X-NG-Lang'] = clientLang;
 
           const options = {
             method: 'POST',

@@ -1,0 +1,98 @@
+[
+  {
+    "sectorKey": "Pharmacy",
+    "countryCode": "HU",
+    "currency": "EUR",
+    "minPrice": 10,
+    "maxPrice": 65,
+    "estMinSpend": 10,
+    "estMedianSpend": 25,
+    "estMaxSpend": 120,
+    "campFee": 1,
+    "campFeeRate": 0.0004
+  },
+  {
+    "sectorKey": "Restaurant",
+    "countryCode": "HU",
+    "currency": "EUR",
+    "minPrice": 10,
+    "maxPrice": 80,
+    "estMinSpend": 25,
+    "estMedianSpend": 40,
+    "estMaxSpend": 120,
+    "campFee": 1.5,
+    "campFeeRate": 0.000375
+  },
+  {
+    "sectorKey": "Sporting goods",
+    "countryCode": "HU",
+    "currency": "EUR",
+    "minPrice": 10,
+    "maxPrice": 200,
+    "estMinSpend": 40,
+    "estMedianSpend": 40,
+    "estMaxSpend": 400,
+    "campFee": 1.5,
+    "campFeeRate": 0.000375
+  },
+  {
+    "sectorKey": "Electronics",
+    "countryCode": "HU",
+    "currency": "EUR",
+    "minPrice": 10,
+    "maxPrice": 750,
+    "estMinSpend": 60,
+    "estMedianSpend": 100,
+    "estMaxSpend": 2200,
+    "campFee": 2,
+    "campFeeRate": 0.0002
+  },
+  {
+    "sectorKey": "Language school",
+    "countryCode": "HU",
+    "currency": "EUR",
+    "minPrice": 10,
+    "maxPrice": 200,
+    "estMinSpend": 40,
+    "estMedianSpend": 60,
+    "estMaxSpend": 400,
+    "campFee": 2,
+    "campFeeRate": 0.0003333333333333333
+  },
+  {
+    "sectorKey": "Hairdresser",
+    "countryCode": "HU",
+    "currency": "EUR",
+    "minPrice": 10,
+    "maxPrice": 65,
+    "estMinSpend": 15,
+    "estMedianSpend": 20,
+    "estMaxSpend": 80,
+    "campFee": 1,
+    "campFeeRate": 0.0005
+  },
+  {
+    "sectorKey": "Souvenir shop",
+    "countryCode": "HU",
+    "currency": "EUR",
+    "minPrice": 10,
+    "maxPrice": 40,
+    "estMinSpend": 15,
+    "estMedianSpend": 25,
+    "estMaxSpend": 100,
+    "campFee": 1,
+    "campFeeRate": 0.0004
+  },
+  {
+    "sectorKey": "Medical service provider",
+    "countryCode": "HU",
+    "currency": "EUR",
+    "minPrice": 20,
+    "maxPrice": 250,
+    "estMinSpend": 40,
+    "estMedianSpend": 70,
+    "estMaxSpend": 400,
+    "campFee": 2,
+    "campFeeRate": 0.000286
+  }
+]

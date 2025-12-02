@@ -1383,8 +1383,9 @@ async function logQrRedeem(
     const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
     const timeISO = now.toISOString();
 
-    const ua = req.headers.get("User-Agent") || "";
-    const lang = req.headers.get("Accept-Language") || "";
+    const ua = req.headers.get("X-NG-UA") || req.headers.get("User-Agent") || "";
+    const lang = req.headers.get("X-NG-Lang") || req.headers.get("Accept-Language") || "";
+
     const country = ((req as any).cf?.country || "").toString();
     const city = ((req as any).cf?.city || "").toString();
     const source = "qr-redeem"; // logical source for Promotion QR redemptions
@@ -1440,8 +1441,9 @@ async function logQrRedeemInvalid(
     const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
     const timeISO = now.toISOString();
 
-    const ua = req.headers.get("User-Agent") || "";
-    const lang = req.headers.get("Accept-Language") || "";
+    const ua = req.headers.get("X-NG-UA") || req.headers.get("User-Agent") || "";
+    const lang = req.headers.get("X-NG-Lang") || req.headers.get("Accept-Language") || "";
+
     const country = ((req as any).cf?.country || "").toString();
     const city = ((req as any).cf?.city || "").toString();
     const source = "qr-redeem"; // same logical source

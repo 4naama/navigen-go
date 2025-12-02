@@ -431,7 +431,7 @@
   "dash.qrinfo.col.signal": "איתות",
   "dash.qrcamp.col.campaign": "קמפיין",
   "dash.qrcamp.col.target": "יעד",
-  "dash.qrcamp.col.period": "תקופה",
+  "ddash.qrcamp.col.campaign-period": "תקופת הקמפיין",
   "dash.qrcamp.col.scans": "סריקות",
   "dash.qrcamp.col.unique": "מבקרים ייחודיים",
   "dash.qrcamp.col.repeat": "אחוז חזרה",

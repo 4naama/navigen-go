@@ -759,6 +759,8 @@ async function loadAndRender(){         // single entry point
       // merge server-specified order; backend guarantees correct keys (underscored)
       json.order.forEach((kRaw) => {
         const k = String(kRaw).replaceAll('_', '-'); // normalize legacy ids
+        // Do not add qr-redeem to ORDER; keep Click Info focused on scans
+        if (k === 'qr-redeem') return;
         if (!ORDER.includes(k)) ORDER.push(k);
       });
     }
