@@ -659,10 +659,7 @@ function renderCurrentView(){
       ['dash.qrcamp.col.redemptions',   'Redemptions'],
       ['dash.qrcamp.col.unique',        'Unique visitors'],
       ['dash.qrcamp.col.repeat',        'Repeat %'],
-      ['dash.qrcamp.col.locations',     'Locations'],
-      ['dash.qrcamp.col.devices',       'Devices'],
-      ['dash.qrcamp.col.langs',         'Languages'],
-      ['dash.qrcamp.col.signals',       'Signals']
+      ['dash.qrcamp.col.locations',     'Locations']
     ];
 
     const data = Array.isArray(lastStats.campaigns) ? lastStats.campaigns : [];
@@ -696,17 +693,14 @@ function renderCurrentView(){
         const cells = [
           row.campaign || '',          // Campaign ID
           row.campaignName || '',      // Campaign Name
-          row.target || '',            // Target (context)
+          row.target || '',            // Target
           row.brand || '',             // Brand
           row.period || '',
           scans,
           redemptions,
           uniq,
           repeatPct,
-          row.locations ?? '',
-          devicesText,
-          langsText,
-          signalsText
+          row.locations ?? ''
         ];
 
         return `<tr>${cells.map(v => `<td>${String(v)}</td>`).join('')}</tr>`;

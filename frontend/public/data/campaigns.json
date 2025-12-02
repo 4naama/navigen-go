@@ -1,5 +1,30 @@
 [
   {
+    "locationID": "world-of-souvenir-deak-1655",
+    "locationName": "World of Souvenir Deák",
+    "sectorKey": "souvenir-shop",
+    "campaignKey": "2001",
+    "campaignName": "10% off your purchase",
+    "brandKey": "world-of-souvenir",
+    "context": "souvenirs/hungary;souvenirs/hungary/budapest",
+    "campaignType": "discount",
+    "targetChannels": [
+      "qr"
+    ],
+    "startDate": "Mon Dec 01 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "endDate": "Wed Dec 31 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "status": "active",
+    "offerType": "discount",
+    "discountKind": "percent",
+    "discountValue": 10,
+    "eligibilityType": "everyone",
+    "eligibilityNotes": "",
+    "utmSource": "google",
+    "utmMedium": "",
+    "utmCampaign": "",
+    "notes": ""
+  },
+  {
     "locationID": "europa-patika-rakoczi-ter-1666",
     "locationName": "Európa Patika Rákóczi tér",
     "sectorKey": "pharmacy",
@@ -16,7 +41,7 @@
     "status": "planned",
     "offerType": "info",
     "discountKind": "percent",
-    "discountValue": 0.1,
+    "discountValue": 10,
     "eligibilityType": "everyone",
     "eligibilityNotes": "Eligibility test note",
     "utmSource": "google",
