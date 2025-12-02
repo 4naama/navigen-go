@@ -25,6 +25,95 @@ function getQRCodeLib() {
   return qrLibPromise;
 }
 
+// Promotion QR helper: builds and shows a Promotion QR modal for the current LPM
+async function openPromotionQrModal(modal, data) {
+  try {
+    // Prefer cached slug from DOM; fall back to payload locationID or id
+    const slugFromDom = String(modal?.getAttribute('data-locationid') || '').trim();
+    const slugFromData = String(data?.locationID || '').trim();
+    const idFromData = String(data?.id || '').trim();
+    const locationIdOrSlug = slugFromDom || slugFromData || idFromData;
+
+    if (!locationIdOrSlug) {
+      showToast('Promotions unavailable for this location', 1600);
+      return;
+    }
+
+    // Call Promotion QR API on navigen-api Worker
+    const origin = location.origin || 'https://navigen.io';
+    const apiUrl = new URL('/api/promo-qr', origin);
+    apiUrl.searchParams.set('locationID', locationIdOrSlug);
+
+    const res = await fetch(apiUrl.toString(), { cache: 'no-store', credentials: 'include' });
+    if (!res.ok) {
+      console.warn('openPromotionQrModal: /api/promo-qr error', res.status);
+      showToast('No active promotions for this location', 2000);
+      return;
+    }
+
+    const payload = await res.json().catch(() => null);
+    const qrUrl = String(payload?.qrUrl || '').trim();
+    if (!qrUrl) {
+      console.warn('openPromotionQrModal: missing qrUrl in API response');
+      showToast('Promotion QR unavailable', 1600);
+      return;
+    }
+
+    // Build a Promotion QR modal (similar to Business QR, but no share/print)
+    const id = 'promo-qr-modal';
+    document.getElementById(id)?.remove();
+
+    const wrap = document.createElement('div');
+    wrap.className = 'modal visible';
+    wrap.id = id;
+
+    const card = document.createElement('div');
+    card.className = 'modal-content modal-layout';
+
+    const top = document.createElement('div');
+    top.className = 'modal-top-bar';
+    top.innerHTML = `<h2 class="modal-title">Promotion QR code</h2><button class="modal-close" aria-label="Close">&times;</button>`;
+    top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
+
+    const body = document.createElement('div');
+    body.className = 'modal-body';
+    const inner = document.createElement('div');
+    inner.className = 'modal-body-inner';
+
+    const p = document.createElement('p');
+    p.textContent = 'Show this QR to the cashier to redeem your discount.';
+    inner.appendChild(p);
+
+    const img = document.createElement('img');
+    img.alt = 'Promotion QR code';
+    img.style.maxWidth = '100%';
+    img.style.height = 'auto';
+
+    inner.appendChild(img);
+    body.appendChild(inner);
+    card.appendChild(top);
+    card.appendChild(body);
+    wrap.appendChild(card);
+    document.body.appendChild(wrap);
+
+    // Generate QR image from qrUrl using the same QR library
+    getQRCodeLib()
+      .then((QRCode) => QRCode.toDataURL(qrUrl, { width: 512, margin: 1 }))
+      .then((dataUrl) => {
+        img.src = dataUrl;
+      })
+      .catch((err) => {
+        console.warn('Promotion QR generation failed', err);
+        img.alt = 'QR unavailable';
+      });
+
+    showModal(id);
+  } catch (err) {
+    console.warn('openPromotionQrModal failed', err);
+    showToast('Promotions unavailable for this location', 2000);
+  }
+}
+
 // QR scan: fire qr-scan hit when page has ?lp=<slug or ULID>
 (() => { try {
   const lp = (new URL(window.location.href).searchParams.get('lp') || '').trim();
@@ -866,6 +955,20 @@ async function initLpmImageSlider(modal, data) {
           showToast('Booking link coming soon', 1600);
         }, { passive: false });
         btnBook.dataset.lpmWired = '1'; // ← mark bound
+      }
+    }
+
+    // 🏷️ Tag → Promotion QR (if promotions are available for this location)
+    {
+      const tagBtn = modal.querySelector('#lpm-tag');
+      if (tagBtn) {
+        tagBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+
+          openPromotionQrModal(modal, data);
+        }, { passive: false });
       }
     }
 

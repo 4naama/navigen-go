@@ -75,18 +75,78 @@ export default {
 
     // --- Admin purge (one-off): POST /api/admin/purge-legacy
     
-      // --- Promotion QR URL: GET /api/promo-qr?locationID=...&campaignKey=...
+      // --- Promotion QR URL: GET /api/promo-qr?locationID=... [&campaignKey=...]
       if (pathname === "/api/promo-qr" && req.method === "GET") {
         const u = new URL(req.url);
         const locationRaw = (u.searchParams.get("locationID") || "").trim();
-        const campaignKeyRaw = (u.searchParams.get("campaignKey") || "").trim();
+        const campaignKeyRaw = (u.searchParams.get("campaignKey") || "").trim(); // optional
 
-        if (!locationRaw || !campaignKeyRaw) {
+        if (!locationRaw) {
           return json(
-            { error: { code: "invalid_request", message: "locationID and campaignKey required" } },
+            { error: { code: "invalid_request", message: "locationID required" } },
             400
           );
         }
+
+        // Resolve slug → canonical ULID (or accept ULID as-is)
+        const locULID = (await resolveUid(locationRaw, env)) || locationRaw;
+        if (!locULID) {
+          return json(
+            { error: { code: "invalid_request", message: "unknown location" } },
+            400
+          );
+        }
+
+        const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
+        const campaigns = await loadCampaigns(siteOrigin, env);
+
+        // Build today's date (shifted) for campaign active checks
+        const dayISO = new Date();
+        dayISO.setHours(dayISO.getHours() + 12); // shift to avoid off-by-one
+        const today = dayISO.toISOString().slice(0, 10);
+
+        // Filter candidates for this location + active period
+        const candidates = campaigns.filter(c =>
+          c.locationID === locULID &&
+          (!c.startDate || today >= c.startDate) &&
+          (!c.endDate || today <= c.endDate) &&
+          (!c.status || c.status.toLowerCase() !== "ended")
+        );
+
+        if (!candidates.length) {
+          return json(
+            { error: { code: "not_found", message: "no active campaign for this location" } },
+            404
+          );
+        }
+
+        // If campaignKeyRaw is provided, pick that one; else use the first active one.
+        let campaign: CampaignDef | undefined;
+        if (campaignKeyRaw) {
+          campaign = candidates.find(c => c.campaignKey === campaignKeyRaw);
+          if (!campaign) {
+            return json(
+              { error: { code: "not_found", message: "specified campaignKey not active for this location" } },
+              404
+            );
+          }
+        } else {
+          campaign = candidates[0];
+        }
+
+        const chosenKey = campaign.campaignKey;
+
+        // Create redeem token for this location + campaign
+        const token = await createRedeemToken(env.KV_STATS, locULID, chosenKey);
+
+        // Build Promotion QR URL using the original locationRaw (slug), not ULID
+        const qrBase = siteOrigin || "https://navigen.io";
+        const qrUrlObj = new URL(`/out/qr-redeem/${encodeURIComponent(locationRaw)}`, qrBase);
+        qrUrlObj.searchParams.set("camp", chosenKey);
+        qrUrlObj.searchParams.set("rt", token);
+
+        return json({ qrUrl: qrUrlObj.toString() }, 200);
+      }
 
         // Resolve slug → canonical ULID (or accept ULID as-is)
         const locULID = (await resolveUid(locationRaw, env)) || locationRaw;
