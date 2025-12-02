@@ -46,8 +46,12 @@ async function openPromotionQrModal(modal, data) {
 
     const res = await fetch(apiUrl.toString(), { cache: 'no-store', credentials: 'include' });
     if (!res.ok) {
-      console.warn('openPromotionQrModal: /api/promo-qr error', res.status);
-      showToast('No active promotions for this location', 2000);
+      if (res.status === 404) {
+        showToast('Promotions will appear here soon.', 2000);
+      } else {
+        console.warn('openPromotionQrModal: /api/promo-qr error', res.status);
+        showToast('Promotions unavailable for this location', 2000);
+      }
       return;
     }
 

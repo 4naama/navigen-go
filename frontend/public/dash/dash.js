@@ -654,7 +654,7 @@ function renderCurrentView(){
       ['dash.qrcamp.col.campaign-name', 'Campaign Name'],
       ['dash.qrcamp.col.target',        'Target'],
       ['dash.qrcamp.col.brand',         'Brand'],
-      ['dash.qrcamp.col.period',        'Period'],
+      ['dash.qrcamp.col.campaign-period', 'Campaign period'],
       ['dash.qrcamp.col.scans',         'Scans'],
       ['dash.qrcamp.col.redemptions',   'Redemptions'],
       ['dash.qrcamp.col.unique',        'Unique visitors'],

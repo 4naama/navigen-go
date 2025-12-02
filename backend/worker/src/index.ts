@@ -69,12 +69,10 @@ export default {
 
     try {
       // --- QR image: /api/qr?locationID=...&c=...&fmt=svg|png&size=512
-      if (pathname === "/api/qr") {
+      if (pathname === "/api/qr" && req.method === "GET") {
         return await handleQr(req, env);
       }
 
-    // --- Admin purge (one-off): POST /api/admin/purge-legacy
-    
       // --- Promotion QR URL: GET /api/promo-qr?locationID=... [&campaignKey=...]
       if (pathname === "/api/promo-qr" && req.method === "GET") {
         const u = new URL(req.url);
@@ -148,95 +146,52 @@ export default {
         return json({ qrUrl: qrUrlObj.toString() }, 200);
       }
 
-        // Resolve slug → canonical ULID (or accept ULID as-is)
-        const locULID = (await resolveUid(locationRaw, env)) || locationRaw;
-        if (!locULID) {
-          return json(
-            { error: { code: "invalid_request", message: "unknown location" } },
-            400
-          );
+      // --- Admin purge (one-off): POST /api/admin/purge-legacy
+      // Merges stats:<loc>:<day>:<event_with_underscores> → hyphen, or burns legacy keys entirely.
+      if (pathname === "/api/admin/purge-legacy" && req.method === "POST") {
+        const auth = req.headers.get("Authorization") || "";
+        if (!auth.startsWith("Bearer ")) {
+          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
+        }
+        const token = auth.slice(7).trim();
+        if (!token || token !== env.JWT_SECRET) {
+          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
         }
 
-        const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
-        const campaigns = await loadCampaigns(siteOrigin, env);
+        const body = await req.json().catch(() => ({}));
+        const mode = (body?.mode || "merge").toString(); // 'merge' or 'burn'
 
-        // Ensure campaign exists & is active for this location
-        const dayISO = new Date();
-        dayISO.setHours(dayISO.getHours() + 12); // shift to avoid off-by-one
-        const today = dayISO.toISOString().slice(0, 10);
+        let cursor: string|undefined = undefined;
+        let migrated = 0, removed = 0;
 
-        const campaign = campaigns.find(c =>
-          c.locationID === locULID &&
-          c.campaignKey === campaignKeyRaw &&
-          (!c.startDate || today >= c.startDate) &&
-          (!c.endDate || today <= c.endDate) &&
-          (!c.status || c.status.toLowerCase() !== "ended")
-        );
+        do {
+          const page = await env.KV_STATS.list({ prefix: "stats:", cursor });
+          for (const k of page.keys) {
+            // keys look like: stats:<loc>:YYYY-MM-DD:<event>
+            const name = k.name;
+            const parts = name.split(":");
+            if (parts.length !== 4) continue;
 
-        if (!campaign) {
-          return json(
-            { error: { code: "not_found", message: "campaign not active for this location" } },
-            404
-          );
-        }
+            const ev = parts[3];
+            if (!ev.includes("_")) continue; // only legacy
 
-        // Create redeem token
-        const token = await createRedeemToken(env.KV_STATS, locULID, campaignKeyRaw);
-
-        // Build Promotion QR URL using the original locationRaw (slug), not ULID
-        const qrBase = siteOrigin || "https://navigen.io";
-        const qrUrlObj = new URL(`/out/qr-redeem/${encodeURIComponent(locationRaw)}`, qrBase);
-        qrUrlObj.searchParams.set("camp", campaignKeyRaw);
-        qrUrlObj.searchParams.set("rt", token);
-
-        return json({ qrUrl: qrUrlObj.toString() }, 200);
-      }
-    
-    // Merges stats:<loc>:<day>:<event_with_underscores> → hyphen, or burns legacy keys entirely.
-    if (pathname === "/api/admin/purge-legacy" && req.method === "POST") {
-      const auth = req.headers.get("Authorization") || "";
-      if (!auth.startsWith("Bearer ")) {
-        return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
-      }
-      const token = auth.slice(7).trim();
-      if (!token || token !== env.JWT_SECRET) {
-        return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
-      }
-
-      const body = await req.json().catch(() => ({}));
-      const mode = (body?.mode || "merge").toString(); // 'merge' or 'burn'
-
-      let cursor: string|undefined = undefined;
-      let migrated = 0, removed = 0;
-
-      do {
-        const page = await env.KV_STATS.list({ prefix: "stats:", cursor });
-        for (const k of page.keys) {
-          // keys look like: stats:<loc>:YYYY-MM-DD:<event>
-          const name = k.name;
-          const parts = name.split(":");
-          if (parts.length !== 4) continue;
-
-          const ev = parts[3];
-          if (!ev.includes("_")) continue; // only legacy
-
-          if (mode === "merge") {
-            const n = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
-            if (!n) { await env.KV_STATS.delete(name); removed++; continue; } // drop empty
-            const hyphen = ev.replaceAll("_","-");
-            const target = `stats:${parts[1]}:${parts[2]}:${hyphen}`;
-            const cur = parseInt((await env.KV_STATS.get(target)) || "0", 10) || 0;
-            await env.KV_STATS.put(target, String(cur + n), { expirationTtl: 60*60*24*366 });
-            migrated++;
+            if (mode === "merge") {
+              const n = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
+              if (!n) { await env.KV_STATS.delete(name); removed++; continue; } // drop empty
+              const hyphen = ev.replaceAll("_","-");
+              const target = `stats:${parts[1]}:${parts[2]}:${hyphen}`;
+              const cur = parseInt((await env.KV_STATS.get(target)) || "0", 10) || 0;
+              await env.KV_STATS.put(target, String(cur + n), { expirationTtl: 60*60*24*366 });
+              migrated++;
+            }
+            // 'burn' deletes legacy without merging
+            await env.KV_STATS.delete(name);
+            removed++;
           }
-          // 'burn' deletes legacy without merging
-          await env.KV_STATS.delete(name);
-          removed++;
-        }
-        cursor = page.cursor || undefined;
-      } while (cursor);
+          cursor = page.cursor || undefined;
+        } while (cursor);
 
-      return json({ ok:true, mode, migrated, removed }, 200);
+        return json({ ok:true, mode, migrated, removed }, 200);
       }
 
       // --- Admin backfill: POST /api/admin/backfill-slug-stats
@@ -1346,7 +1301,7 @@ async function loadCampaigns(baseOrigin: string, env: Env): Promise<CampaignDef[
   };
 
   try {
-    const src = new URL("/data/campaign.json", baseOrigin || "https://navigen.io").toString();
+    const src = new URL("/data/campaigns.json", baseOrigin || "https://navigen.io").toString();
     const resp = await fetch(src, {
       cf: { cacheTtl: 60, cacheEverything: true },
       headers: { "Accept": "application/json" }
