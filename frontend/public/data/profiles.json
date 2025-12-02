@@ -5791,7 +5791,7 @@
         "en": "Costes Downtown"
       },
       "Visible": "Yes",
-      "Priority": "Yes",
+      "Priority": "No",
       "groupKey": "🍽️ Food & Drink",
       "subgroupKey": "sub.restaurants",
       "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",

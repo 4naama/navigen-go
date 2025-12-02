@@ -5791,7 +5791,7 @@
         "en": "Costes Downtown"
       },
       "Visible": "Yes",
-      "Priority": "Yes",
+      "Priority": "No",
       "groupKey": "🍽️ Food & Drink",
       "subgroupKey": "sub.restaurants",
       "context": "restaurants/hungary;restaurants/hungary/budapest;language-schools/helen-doron/hungary",
@@ -6534,6 +6534,236 @@
         "fileName": "costes-catering-0409.json",
         "fileNameAscii": "costes-catering-0409.json"
       }
-    }
+    },
+    {
+      "locationID": "world-of-souvenir-deak-1655",
+      "locationName": {
+        "en": "World of Souvenir Deák"
+      },
+      "Visible": "Yes",
+      "Priority": "Yes",
+      "groupKey": "🛒 Shops",
+      "subgroupKey": "sub.souvenirs",
+      "context": "souvenirs/hungary;souvenirs/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=world-of-souvenir-deak-1655",
+      "coord": {
+        "lat": 47.496486,
+        "lng": 19.051655
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/world-of-souvenir-deak-1655/D10_kivagott.original.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-deak-1655/D10_kivagott.original.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-deak-1655/305412040_531556682214671_3738039351967506735_n.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-deak-1655/_DSC1746_s.original.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-deak-1655/_DSC1751_s.original.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-deak-1655/107396503_585069005542743_8335250033938635560_n.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-deak-1655/108337184_585069042209406_5566443769471249306_n.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-deak-1655/117155249_598045304245113_5477875408431367290_n.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "We are World of Souvenir & you are probably visiting one of the most beautiful cities in the world right now"
+      },
+      "hours": {},
+      "links": {
+        "official": "https://www.worldofsouvenir.hu/en/",
+        "facebook": "https://www.facebook.com/worldofsouvenirhungary/",
+        "instagram": "https://www.instagram.com/worldofsouvenir/"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "",
+        "email": "",
+        "address": "",
+        "postalCode": "",
+        "city": "",
+        "adminArea": "",
+        "countryCode": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-12-02T16:17:23.848Z",
+        "version": 1,
+        "fileName": "world-of-souvenir-deak-1655.json",
+        "fileNameAscii": "world-of-souvenir-deak-1655.json"
+      }
+    },
+    {
+      "locationID": "world-of-souvenir-kiraly-7451",
+      "locationName": {
+        "en": "World of Souvenir Király"
+      },
+      "Visible": "Yes",
+      "Priority": "No",
+      "groupKey": "🛒 Shops",
+      "subgroupKey": "sub.souvenirs",
+      "context": "souvenirs/hungary;souvenirs/hungary/budapest;language-schools/helen-doron/hungary",
+      "qrUrl": "https://navigen.io/language-schools/helen-doron/hungary?lp=world-of-souvenir-kiraly-7451",
+      "coord": {
+        "lat": 47.498784,
+        "lng": 19.057451
+      },
+      "media": {
+        "cover": "/assets/location-profile-images/world-of-souvenir-kiraly-7451/107700900_585214032194907_2537275474524042971_n.jpg",
+        "images": [
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-kiraly-7451/107700900_585214032194907_2537275474524042971_n.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": true
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-kiraly-7451/305412040_531556682214671_3738039351967506735_n.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-kiraly-7451/305412040_531556682214671_3738039351967506735_n.png",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-kiraly-7451/_DSC1746_s.original.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-kiraly-7451/_DSC1751_s.original.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-kiraly-7451/107396503_585069005542743_8335250033938635560_n.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-kiraly-7451/108337184_585069042209406_5566443769471249306_n.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          },
+          {
+            "src": "/assets/location-profile-images/world-of-souvenir-kiraly-7451/117155249_598045304245113_5477875408431367290_n.jpg",
+            "alt": "World of Souvenir",
+            "credit": "World of Souvenir",
+            "license": "All rights reserved",
+            "default": false
+          }
+        ]
+      },
+      "descriptions": {
+        "en": "Magyarország legtrendibb ajándékboltja, a World of Souvenir Budapest belvárosának szívében"
+      },
+      "hours": {},
+      "links": {
+        "facebook": "https://www.facebook.com/worldofsouvenirhungary/",
+        "instagram": "https://www.instagram.com/worldofsouvenir/"
+      },
+      "amenities": [],
+      "accessibility": {},
+      "contactInformation": {
+        "contactPerson": "",
+        "phone": "",
+        "email": "",
+        "address": "",
+        "postalCode": "",
+        "city": "",
+        "adminArea": "",
+        "countryCode": "",
+        "whatsapp": "",
+        "telegram": "",
+        "messenger": ""
+      },
+      "admission": {},
+      "seasonal": {
+        "en": ""
+      },
+      "closedDates": [],
+      "ratings": {},
+      "tags": [],
+      "i18n": {
+        "availableLangs": [
+          "en"
+        ]
+      },
+      "meta": {
+        "lastUpdated": "2025-12-02T16:17:23.848Z",
+        "version": 1,
+        "fileName": "world-of-souvenir-kiraly-7451.json",
+        "fileNameAscii": "world-of-souvenir-kiraly-7451.json"
+      }
+    }    
   ]
 }
