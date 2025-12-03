@@ -143,7 +143,15 @@ export default {
         qrUrlObj.searchParams.set("camp", chosenKey);
         qrUrlObj.searchParams.set("rt", token);
 
-        return json({ qrUrl: qrUrlObj.toString() }, 200);
+        return json({
+          qrUrl: qrUrlObj.toString(),
+          campaignName: campaign.campaignName || "",
+          startDate: campaign.startDate || "",
+          endDate: campaign.endDate || "",
+          eligibilityType: campaign.eligibilityType || "",
+          discountKind: campaign.discountKind || "",
+          discountValue: campaign.discountValue
+        }, 200);
       }
 
       // --- Admin purge (one-off): POST /api/admin/purge-legacy
@@ -1310,6 +1318,10 @@ interface CampaignDef {
   startDate?: string;
   endDate?: string;
   status?: string;
+  sectorKey?: string;
+  eligibilityType?: string;
+  discountKind?: string;
+  discountValue?: number | null;
 }
 
 /**
@@ -1352,7 +1364,11 @@ async function loadCampaigns(baseOrigin: string, env: Env): Promise<CampaignDef[
       context: typeof r.context === "string" ? r.context : undefined,
       startDate: normalizeDate(r.startDate),
       endDate: normalizeDate(r.endDate),
-      status: typeof r.status === "string" ? r.status : undefined
+      status: typeof r.status === "string" ? r.status : undefined,
+      sectorKey: typeof r.sectorKey === "string" ? r.sectorKey : undefined,
+      eligibilityType: typeof r.eligibilityType === "string" ? r.eligibilityType : undefined,
+      discountKind: typeof r.discountKind === "string" ? r.discountKind : undefined,
+      discountValue: typeof r.discountValue === "number" ? r.discountValue : null
     })).filter(r => r.locationID && r.campaignKey);
 
     // Now canonicalize locationID to ULID when possible

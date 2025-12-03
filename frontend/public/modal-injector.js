@@ -25,7 +25,63 @@ function getQRCodeLib() {
   return qrLibPromise;
 }
 
-// Promotion QR helper: builds and shows a Promotion QR modal for the current LPM
+// Show Promotion QR Code in its own modal (QR only, like Business QR size)
+function showPromotionQrModal(qrUrl) {
+  const id = 'promo-qr-modal';
+  document.getElementById(id)?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">Promotion QR Code</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  const qrContainer = document.createElement('div');
+  qrContainer.className = 'qr-wrapper';
+
+  const img = document.createElement('img');
+  img.alt = 'Promotion QR code';
+  img.className = 'qr-image';
+  img.style.maxWidth = '80%';
+  img.style.height = 'auto';
+  img.style.display = 'block';
+  img.style.margin = '0 auto';
+
+  qrContainer.appendChild(img);
+  inner.appendChild(qrContainer);
+  body.appendChild(inner);
+
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  getQRCodeLib()
+    .then((QRCode) => QRCode.toDataURL(qrUrl, { width: 512, margin: 1 }))
+    .then((dataUrl) => { img.src = dataUrl; })
+    .catch((err) => {
+      console.warn('Promotion QR generation failed', err);
+      img.alt = 'QR unavailable';
+    });
+
+  showModal(id);
+}
+
+// Promotion helper: show campaign details + button to open the Redemption QR modal
 async function openPromotionQrModal(modal, data) {
   try {
     const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
@@ -36,17 +92,14 @@ async function openPromotionQrModal(modal, data) {
     const alias    = String(data?.alias || '').trim();
     const rawId    = String(data?.id || '').trim();
 
-    // Prefer a non-ULID slug/alias; fallback to rawId only if nothing else
     const candidates = [domId, payloadId, alias, rawId]
       .map(v => String(v || '').trim())
       .filter(Boolean);
 
     let locationIdOrSlug = '';
-    // 1) pick first non-ULID candidate (slug/alias)
     for (const c of candidates) {
       if (!ULID.test(c)) { locationIdOrSlug = c; break; }
     }
-    // 2) if none found, fallback to the first candidate (likely a ULID)
     if (!locationIdOrSlug && candidates.length) {
       locationIdOrSlug = candidates[0];
     }
@@ -73,20 +126,47 @@ async function openPromotionQrModal(modal, data) {
 
     const payload = await res.json().catch(() => null);
     const qrUrl = String(payload?.qrUrl || '').trim();
+    const campaignName = String(payload?.campaignName || '').trim();
+    const startDate = String(payload?.startDate || '').trim();
+    const endDate = String(payload?.endDate || '').trim();
+    const eligibilityType = String(payload?.eligibilityType || '').trim();
+    const discountKind = String(payload?.discountKind || '').trim();
+    const discountValue = typeof payload?.discountValue === 'number' ? payload.discountValue : null;
+
     if (!qrUrl) {
       console.warn('openPromotionQrModal: missing qrUrl in API response');
       showToast('Promotion QR unavailable', 1600);
       return;
     }
 
-    // Remove any previous Promotion QR modal
-    const existing = document.getElementById('promo-qr-modal');
-    if (existing && existing.parentElement) existing.parentElement.removeChild(existing);
+    const locName = String(data?.name || data?.displayName || 'this location').trim() || 'this location';
 
-    // Build a Promotion QR modal using existing modal structure
+    // Build sentence like: "10% off your purchase at World of Souvenir Deák"
+    let promoLine = campaignName;
+    if (discountKind === 'percent' && typeof discountValue === 'number') {
+      promoLine = `${discountValue.toFixed(0)}% off your purchase`;
+    }
+    if (promoLine) {
+      promoLine = `${promoLine} at ${locName}`;
+    } else {
+      promoLine = `Promotion at ${locName}`;
+    }
+
+    const periodLine = (startDate && endDate)
+      ? `The offer runs: ${startDate} → ${endDate}`
+      : '';
+
+    const eligibilityLabel = eligibilityType
+      ? `Eligibility: ${eligibilityType.charAt(0).toUpperCase()}${eligibilityType.slice(1)}`
+      : '';
+
+    // Remove any previous Promotion modal
+    const modalId = 'promotion-modal';
+    document.getElementById(modalId)?.remove();
+
     const wrap = document.createElement('div');
-    wrap.className = 'modal visible';
-    wrap.id = 'promo-qr-modal';
+    wrap.className = 'modal hidden';
+    wrap.id = modalId;
 
     const card = document.createElement('div');
     card.className = 'modal-content modal-layout';
@@ -94,32 +174,61 @@ async function openPromotionQrModal(modal, data) {
     const top = document.createElement('div');
     top.className = 'modal-top-bar';
     top.innerHTML = `
-      <h2 class="modal-title">Promotion QR code</h2>
+      <h2 class="modal-title">Promotion</h2>
       <button class="modal-close" aria-label="Close">&times;</button>
     `;
-    const closeBtn = top.querySelector('.modal-close');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        if (wrap.parentElement) wrap.parentElement.removeChild(wrap);
-      });
-    }
+    top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
 
     const body = document.createElement('div');
     body.className = 'modal-body';
     const inner = document.createElement('div');
     inner.className = 'modal-body-inner';
 
-    const text = document.createElement('p');
-    text.textContent = 'Show this QR to the cashier when paying to redeem your discount. Each code is valid for one purchase.';
-    inner.appendChild(text);
+    if (promoLine) {
+      const p1 = document.createElement('p');
+      p1.textContent = promoLine;
+      p1.style.textAlign = 'left';
+      inner.appendChild(p1);
+    }
 
-    const qrContainer = document.createElement('div');
-    qrContainer.className = 'qr-wrapper';
-    const img = document.createElement('img');
-    img.alt = 'Promotion QR code';
-    img.className = 'qr-image';
-    qrContainer.appendChild(img);
-    inner.appendChild(qrContainer);
+    if (periodLine) {
+      const p2 = document.createElement('p');
+      p2.textContent = periodLine;
+      p2.style.textAlign = 'left';
+      inner.appendChild(p2);
+    }
+
+    if (eligibilityLabel) {
+      const p3 = document.createElement('p');
+      p3.textContent = eligibilityLabel;
+      p3.style.textAlign = 'left';
+      inner.appendChild(p3);
+    }
+
+    const p4 = document.createElement('p');
+    p4.textContent = 'Each code is valid for one purchase.';
+    p4.style.textAlign = 'left';
+    inner.appendChild(p4);
+
+    const p5 = document.createElement('p');
+    p5.textContent = 'Show this QR to the cashier when paying.';
+    p5.style.textAlign = 'left';
+    inner.appendChild(p5);
+
+    const btnWrap = document.createElement('div');
+    btnWrap.className = 'modal-actions';
+
+    const qrBtn = document.createElement('button');
+    qrBtn.type = 'button';
+    qrBtn.className = 'modal-body-button';
+    qrBtn.textContent = 'Redemption QR Code';
+    qrBtn.addEventListener('click', () => {
+      hideModal(modalId);
+      showPromotionQrModal(qrUrl);
+    });
+
+    btnWrap.appendChild(qrBtn);
+    inner.appendChild(btnWrap);
 
     body.appendChild(inner);
     card.appendChild(top);
@@ -127,16 +236,7 @@ async function openPromotionQrModal(modal, data) {
     wrap.appendChild(card);
     document.body.appendChild(wrap);
 
-    // Generate QR image from qrUrl using the same QR library
-    getQRCodeLib()
-      .then((QRCode) => QRCode.toDataURL(qrUrl, { width: 512, margin: 1 }))
-      .then((dataUrl) => { img.src = dataUrl; })
-      .catch((err) => {
-        console.warn('Promotion QR generation failed', err);
-        img.alt = 'QR unavailable';
-      });
-
-    showModal('promo-qr-modal');
+    showModal(modalId);
   } catch (err) {
     console.warn('openPromotionQrModal failed', err);
     showToast('Promotions unavailable for this location', 2000);
