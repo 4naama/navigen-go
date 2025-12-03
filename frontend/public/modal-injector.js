@@ -39,7 +39,6 @@ async function openPromotionQrModal(modal, data) {
       return;
     }
 
-    // Call Promotion QR API on navigen-api Worker
     const origin = location.origin || 'https://navigen.io';
     const apiUrl = new URL('/api/promo-qr', origin);
     apiUrl.searchParams.set('locationID', locationIdOrSlug);
@@ -63,37 +62,48 @@ async function openPromotionQrModal(modal, data) {
       return;
     }
 
-    // Build a Promotion QR modal (similar to Business QR, but no share/print)
-    const id = 'promo-qr-modal';
-    document.getElementById(id)?.remove();
+    // Remove any previous Promotion QR modal
+    const existing = document.getElementById('promo-qr-modal');
+    if (existing && existing.parentElement) existing.parentElement.removeChild(existing);
 
+    // Build a Promotion QR modal using existing modal structure
     const wrap = document.createElement('div');
     wrap.className = 'modal visible';
-    wrap.id = id;
+    wrap.id = 'promo-qr-modal';
 
     const card = document.createElement('div');
     card.className = 'modal-content modal-layout';
 
     const top = document.createElement('div');
     top.className = 'modal-top-bar';
-    top.innerHTML = `<h2 class="modal-title">Promotion QR code</h2><button class="modal-close" aria-label="Close">&times;</button>`;
-    top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
+    top.innerHTML = `
+      <h2 class="modal-title">Promotion QR code</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    `;
+    const closeBtn = top.querySelector('.modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        if (wrap.parentElement) wrap.parentElement.removeChild(wrap);
+      });
+    }
 
     const body = document.createElement('div');
     body.className = 'modal-body';
     const inner = document.createElement('div');
     inner.className = 'modal-body-inner';
 
-    const p = document.createElement('p');
-    p.textContent = 'Show this QR to the cashier to redeem your discount.';
-    inner.appendChild(p);
+    const text = document.createElement('p');
+    text.textContent = 'Show this QR to the cashier when paying to redeem your discount. Each code is valid for one purchase.';
+    inner.appendChild(text);
 
+    const qrContainer = document.createElement('div');
+    qrContainer.className = 'qr-wrapper';
     const img = document.createElement('img');
     img.alt = 'Promotion QR code';
-    img.style.maxWidth = '100%';
-    img.style.height = 'auto';
+    img.className = 'qr-image';
+    qrContainer.appendChild(img);
+    inner.appendChild(qrContainer);
 
-    inner.appendChild(img);
     body.appendChild(inner);
     card.appendChild(top);
     card.appendChild(body);
@@ -103,15 +113,13 @@ async function openPromotionQrModal(modal, data) {
     // Generate QR image from qrUrl using the same QR library
     getQRCodeLib()
       .then((QRCode) => QRCode.toDataURL(qrUrl, { width: 512, margin: 1 }))
-      .then((dataUrl) => {
-        img.src = dataUrl;
-      })
+      .then((dataUrl) => { img.src = dataUrl; })
       .catch((err) => {
         console.warn('Promotion QR generation failed', err);
         img.alt = 'QR unavailable';
       });
 
-    showModal(id);
+    showModal('promo-qr-modal');
   } catch (err) {
     console.warn('openPromotionQrModal failed', err);
     showToast('Promotions unavailable for this location', 2000);
@@ -962,7 +970,7 @@ async function initLpmImageSlider(modal, data) {
       }
     }
 
-    // 🏷️ Tag → Promotion QR (if promotions are available for this location)
+    // 🏷 Tag → Promotion QR (if promotions are available for this location)
     {
       const tagBtn = modal.querySelector('#lpm-tag');
       if (tagBtn) {
