@@ -650,16 +650,20 @@ function renderCurrentView(){
   if (currentView === 'campaigns') {
     // C) QR Campaign table (per-campaign rollup)
     const cols = [
-      ['dash.qrcamp.col.campaign-id',   'Campaign ID'],
-      ['dash.qrcamp.col.campaign-name', 'Campaign Name'],
-      ['dash.qrcamp.col.target',        'Target'],
-      ['dash.qrcamp.col.brand',         'Brand'],
-      ['dash.qrcamp.col.campaign-period', 'Campaign period'],
-      ['dash.qrcamp.col.scans',         'Scans'],
-      ['dash.qrcamp.col.redemptions',   'Redemptions'],
-      ['dash.qrcamp.col.unique',        'Unique visitors'],
-      ['dash.qrcamp.col.repeat',        'Repeat %'],
-      ['dash.qrcamp.col.locations',     'Locations']
+      ['dash.qrcamp.col.campaign-id',       'Campaign ID'],
+      ['dash.qrcamp.col.campaign-name',     'Campaign Name'],
+      ['dash.qrcamp.col.target',            'Target'],
+      ['dash.qrcamp.col.brand',             'Brand'],
+      ['dash.qrcamp.col.campaign-period',   'Campaign period'],
+      ['dash.qrcamp.col.scans',             'Scans'],
+      ['dash.qrcamp.col.redemptions',       'Redemptions'],
+      ['dash.qrcamp.col.efficiency',        'Efficiency %'],
+      ['dash.qrcamp.col.invalids',          'Invalid attempts'],
+      ['dash.qrcamp.col.unique',            'Unique visitors'],
+      ['dash.qrcamp.col.repeat',            'Repeat %'],
+      ['dash.qrcamp.col.new-redeemers',     'New redeemers'],
+      ['dash.qrcamp.col.repeat-redeemers',  'Repeat redeemers'],
+      ['dash.qrcamp.col.locations',         'Locations']
     ];
 
     const data = Array.isArray(lastStats.campaigns) ? lastStats.campaigns : [];
@@ -674,21 +678,19 @@ function renderCurrentView(){
       const rowsHtml = data.map(row => {
         const scans = Number(row.scans ?? 0);
         const redemptions = Number(row.redemptions ?? 0);
+        const invalids = Number(row.invalids ?? 0);
+
         const uniq = Number(row.uniqueVisitors ?? 0);
         const repeat = Number(row.repeatVisitors ?? 0);
         const repeatPct = uniq > 0 ? ((repeat / uniq) * 100).toFixed(1) + '%' : '';
 
-        const devicesText = Array.isArray(row.devices) ? row.devices.join(', ') : '';
-        const langsText = Array.isArray(row.langs) ? row.langs.join(', ') : '';
+        const uniqueRedeemers = Number(row.uniqueRedeemers ?? 0);
+        const repeatRedeemers = Number(row.repeatRedeemers ?? 0);
+        const newRedeemers = Math.max(uniqueRedeemers - repeatRedeemers, 0);
 
-        // Signals: reserved; currently an empty object in the API
-        let signalsText = '';
-        if (row.signals && typeof row.signals === 'object') {
-          const entries = Object.entries(row.signals);
-          if (entries.length) {
-            signalsText = entries.map(([k, v]) => `${k}: ${v}`).join(', ');
-          }
-        }
+        const effPct = (scans > 0 && redemptions > 0)
+          ? ((redemptions / scans) * 100).toFixed(1) + '%'
+          : '';
 
         const cells = [
           row.campaign || '',          // Campaign ID
@@ -698,8 +700,12 @@ function renderCurrentView(){
           row.period || '',
           scans,
           redemptions,
+          effPct,
+          invalids,
           uniq,
           repeatPct,
+          newRedeemers,
+          repeatRedeemers,
           row.locations ?? ''
         ];
 
@@ -718,7 +724,7 @@ function renderCurrentView(){
     `;
     return;
   }
-    
+ 
 }
 
 // Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.

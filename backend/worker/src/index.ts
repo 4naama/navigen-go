@@ -377,11 +377,13 @@ export default {
           campaignKey: string;
           scans: number;
           redemptions: number;
+          invalids: number;
           uniqueVisitors: Set<string>;
           repeatVisitors: Set<string>;
+          uniqueRedeemers: Set<string>;
+          repeatRedeemers: Set<string>;
           langs: Set<string>;
           countries: Set<string>;
-          devices: Set<string>;
         }> = {};
 
         // load campaigns once per stats call
@@ -442,11 +444,13 @@ export default {
                 campaignKey: cKey,
                 scans: 0,
                 redemptions: 0,
+                invalids: 0,
                 uniqueVisitors: new Set<string>(),
                 repeatVisitors: new Set<string>(),
+                uniqueRedeemers: new Set<string>(),
+                repeatRedeemers: new Set<string>(),
                 langs: new Set<string>(),
-                countries: new Set<string>(),
-                devices: new Set<string>()
+                countries: new Set<string>()
               };
             }
 
@@ -462,38 +466,43 @@ export default {
               agg.redemptions += 1;
             }
 
+            // Invalid attempts (expired/used/invalid tokens)
+            if (entry.signal === "invalid") {
+              agg.invalids += 1;
+            }
+
             // Visitor identity (for now): derive from UA + country if visitor field is empty
             const visitorKey = entry.visitor && entry.visitor.trim()
               ? entry.visitor.trim()
-              : `${entry.ua || ''}|${entry.country || ''}`;
+              : `${entry.ua || ""}|${entry.country || ""}`;
 
             if (visitorKey) {
+              // All visitors (scan + redeem + invalid)
               if (agg.uniqueVisitors.has(visitorKey)) {
                 agg.repeatVisitors.add(visitorKey);
               } else {
                 agg.uniqueVisitors.add(visitorKey);
               }
+
+              // Redeemers: only consider entries with signal="redeem"
+              if (entry.signal === "redeem") {
+                if (agg.uniqueRedeemers.has(visitorKey)) {
+                  agg.repeatRedeemers.add(visitorKey);
+                } else {
+                  agg.uniqueRedeemers.add(visitorKey);
+                }
+              }
             }
 
             // Aggregate primary language and scanner country
             if (entry.lang) {
-              const primaryLang = String(entry.lang).split(',')[0].trim();
+              const primaryLang = String(entry.lang).split(",")[0].trim();
               if (primaryLang) agg.langs.add(primaryLang);
             }
             if (entry.country) {
               agg.countries.add(entry.country);
             }
-            // Device bucket derived from UA for campaign-level analytics
-            if (entry.ua) {
-              const ual = entry.ua.toLowerCase();
-              let deviceBucket = "";
-              if (ual.includes("android")) deviceBucket = "Android";
-              else if (ual.includes("iphone") || ual.includes("ipad") || ual.includes("ios")) deviceBucket = "iOS";
-              else if (ual.includes("windows")) deviceBucket = "Windows";
-              else if (ual.includes("macintosh") || ual.includes("mac os")) deviceBucket = "macOS";
-              else if (ual.includes("linux")) deviceBucket = "Linux";
-              if (deviceBucket) agg.devices.add(deviceBucket);
-            }            
+         
           }
           qrCursor = page.cursor || undefined;
         } while (qrCursor);
@@ -517,6 +526,8 @@ export default {
 
             const uniqueCount = agg.uniqueVisitors.size;
             const repeatCount = agg.repeatVisitors.size;
+            const uniqueRedeemerCount = agg.uniqueRedeemers.size;
+            const repeatRedeemerCount = agg.repeatRedeemers.size;
 
             // Period: prefer campaign start/end if available, otherwise stats window
             const campaignStart = meta?.startDate || "";
@@ -534,12 +545,12 @@ export default {
               period: periodLabel,
               scans: agg.scans,
               redemptions: agg.redemptions,
+              invalids: agg.invalids,
               uniqueVisitors: uniqueCount,
               repeatVisitors: repeatCount,
-              locations: agg.countries.size,
-              devices: Array.from(agg.devices),
-              langs: Array.from(agg.langs),
-              signals: {}
+              uniqueRedeemers: uniqueRedeemerCount,
+              repeatRedeemers: repeatRedeemerCount,
+              locations: agg.countries.size
             };
           });
 
@@ -672,10 +683,8 @@ export default {
           return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
         }
 
-        // Gate QR-scan and QR-redeem metrics: only accept hits from the Pages worker.
-        // Other callers (legacy app code) hitting /hit/qr-scan or /hit/qr-redeem without this header
-        // will be ignored to avoid double-counting.
-        if (ev === "qr-scan" || ev === "qr-redeem") {
+        // Gate only QR-redeem. QR-scan must be accepted from the app so qrInfo/Campaigns work.
+        if (ev === "qr-redeem") {
           const src = (req.headers.get("X-NG-QR-Source") || "").trim();
           if (src !== "pages-worker") {
             return new Response(null, {
@@ -744,16 +753,40 @@ export default {
 
           if (!campaign || !campaignHeader) {
             // No matching active campaign; log as invalid redeem attempt.
-            // We reuse logQrRedeem but override signal via a separate helper if needed.
             await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
           } else {
             const result = await consumeRedeemToken(env.KV_STATS, token, loc, campaignHeader);
             if (result === "ok") {
               await logQrRedeem(env.KV_STATS, env, loc, req);
+
+              // Billing: write one ledger entry using finance.json for this sector + country.
+              try {
+                const siteBase = req.headers.get("Origin") || "https://navigen.io";
+                const financeRows = await loadFinance(siteBase, env);
+                const sectorKey = (campaign as any)?.sectorKey || "";
+                // For now, pick the first matching sector row (all current rows are HU).
+                const feeRow = financeRows.find(f => f.sectorKey === sectorKey) || null;
+                if (feeRow && typeof feeRow.campFee === "number") {
+                  const rec: BillingRecord = {
+                    locationID: loc,
+                    campaignKey: campaignHeader,
+                    sectorKey,
+                    countryCode: feeRow.countryCode,
+                    currency: feeRow.currency,
+                    timestamp: now.toISOString(),
+                    campFee: feeRow.campFee,
+                    campFeeRate: feeRow.campFeeRate
+                  };
+                  await writeBillingRecord(env.KV_STATS, rec);
+                }
+              } catch {
+                // billing write should never break redeem flow
+              }
             } else {
               await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
             }
           }
+
         }
 
         return new Response(null, {
@@ -1338,6 +1371,39 @@ async function loadCampaigns(baseOrigin: string, env: Env): Promise<CampaignDef[
   }
 }
 
+interface FinanceRow {
+  sectorKey: string;
+  countryCode: string;
+  currency: string;
+  campFee: number | null;
+  campFeeRate: number | null;
+}
+
+/**
+ * Load finance (sector-based fee) definitions from /data/finance.json.
+ */
+async function loadFinance(baseOrigin: string, env: Env): Promise<FinanceRow[]> {
+  try {
+    const src = new URL("/data/finance.json", baseOrigin || "https://navigen.io").toString();
+    const resp = await fetch(src, {
+      cf: { cacheTtl: 60, cacheEverything: true },
+      headers: { "Accept": "application/json" }
+    });
+    if (!resp.ok) return [];
+    const data: any = await resp.json();
+    const rows: any[] = Array.isArray(data) ? data : (Array.isArray(data?.finance) ? data.finance : []);
+    return rows.map((r) => ({
+      sectorKey: String(r.sectorKey || "").trim(),
+      countryCode: String(r.countryCode || "").trim(),
+      currency: String(r.currency || "").trim(),
+      campFee: typeof r.campFee === "number" ? r.campFee : null,
+      campFeeRate: typeof r.campFeeRate === "number" ? r.campFeeRate : null
+    })).filter(r => r.sectorKey && r.countryCode);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Given a locationID + day, find the best matching campaignKey.
  * For now: pick any campaign for that location where:
@@ -1366,6 +1432,66 @@ function pickCampaignForScan(
     break;
   }
   return best?.campaignKey || "";
+}
+
+/**
+ * Log a QR scan into KV_STATS under qrlog:<loc>:<day>:<scanId>.
+ * This powers the QR Info and Campaigns views in the dashboard.
+ */
+async function logQrScan(
+  kv: KVNamespace,
+  env: Env,
+  loc: string,
+  req: Request
+): Promise<void> {
+  try {
+    const now = new Date();
+    const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
+    const timeISO = now.toISOString();
+
+    // For scans coming directly from the app, we use the browser UA/lang.
+    const ua = req.headers.get("User-Agent") || "";
+    const lang = req.headers.get("Accept-Language") || "";
+
+    const country = ((req as any).cf?.country || "").toString();
+    const city = ((req as any).cf?.city || "").toString();
+    const source = "qr-scan"; // logical source for Business/Promotion QR views
+    const signal = "scan";    // distinguishes scan events from redeems/invalids
+
+    // provisional visitor identity (UA + country); no IP stored
+    const visitor = `${ua}|${country}`;
+
+    // base origin for campaign data
+    const baseOrigin = "https://navigen.io";
+    const campaigns = await loadCampaigns(baseOrigin, env);
+    const campaignKey = pickCampaignForScan(campaigns, loc, day);
+
+    // Generate a short random scan ID (hex string)
+    const bytes = new Uint8Array(6);
+    (crypto as any).getRandomValues(bytes);
+    const scanId = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    const entry: QrLogEntry = {
+      time: timeISO,
+      locationID: loc,
+      day,
+      ua,
+      lang,
+      country,
+      city,
+      source,
+      signal,
+      visitor,
+      campaignKey
+    };
+
+    const key = `qrlog:${loc}:${day}:${scanId}`;
+    // TTL: 56 days for QR logs (~8 weeks)
+    const ttlSeconds = 56 * 24 * 60 * 60;
+    await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
+  } catch {
+    // never throw from logging; stats must not break the main flow
+  }
 }
 
 /**
@@ -1555,3 +1681,29 @@ async function consumeRedeemToken(
   return "ok";
 }
 
+interface BillingRecord {
+  locationID: string;
+  campaignKey: string;
+  sectorKey: string;
+  countryCode: string;
+  currency: string;
+  timestamp: string;
+  campFee: number;
+  campFeeRate: number | null;
+}
+
+/**
+ * Write a billing ledger record into KV_STATS under billing:YYYY-MM:<loc>:<id>.
+ * For now we reuse KV_STATS as storage; later this can be moved to its own namespace.
+ */
+async function writeBillingRecord(kv: KVNamespace, rec: BillingRecord): Promise<void> {
+  const d = new Date(rec.timestamp || new Date().toISOString());
+  const ym = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  // random 6-byte id
+  const bytes = new Uint8Array(6);
+  (crypto as any).getRandomValues(bytes);
+  const rid = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+
+  const key = `billing:${ym}:${rec.locationID}:${rid}`;
+  await kv.put(key, JSON.stringify(rec), { expirationTtl: 60 * 60 * 24 * 366 });
+}
