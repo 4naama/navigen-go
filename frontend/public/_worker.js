@@ -265,13 +265,13 @@ export default {
     // /out/qr-scan/:id?to=<url> — count a physical QR scan, then redirect to landing
     {
       const p = url.pathname;
-      if (p.startsWith('/out/')) {
+      if (p.startsWith('/out/qr-scan/')) {
         const [, , metric, idOrSlug] = p.split('/'); // ['', 'out', ':metric', ':id']
         if (metric !== 'qr-scan' || !idOrSlug) {
           // keep behavior minimal; only qr-scan supported here
           return new Response('Not Found', { status: 404 });
         }
-
+        
         // Resolve to canonical ULID (accept ULID or slug); same helper used elsewhere
         const ulid = await canonicalId(env, idOrSlug);
         if (!ulid) return new Response('Unknown location', { status: 404 });
@@ -341,9 +341,10 @@ export default {
           // ignore tracking errors; never block app response
         }
 
-        // Redirect back to the main app shell; we can signal redeem via query params.
-        const dest = `/?redeem=1&loc=${encodeURIComponent(idOrSlug)}`;
+        // Redirect to LPM shell with lp=<slug> (opens the location profile)
+        const dest = `/?lp=${encodeURIComponent(idOrSlug)}`;
         return Response.redirect(dest, 302);
+
       }
     }
 

@@ -191,9 +191,9 @@ async function openPromotionQrModal(modal, data) {
       inner.appendChild(p1);
     }
 
-    if (periodLine) {
+    if (startDate && endDate) {
       const p2 = document.createElement('p');
-      p2.textContent = periodLine;
+      p2.innerHTML = `The offer runs:<br>${startDate} → ${endDate}`;
       p2.style.textAlign = 'left';
       inner.appendChild(p2);
     }
@@ -221,7 +221,7 @@ async function openPromotionQrModal(modal, data) {
     const qrBtn = document.createElement('button');
     qrBtn.type = 'button';
     qrBtn.className = 'modal-body-button';
-    qrBtn.textContent = 'Redemption QR Code';
+    qrBtn.textContent = '🔳  Redemption QR Code';
     qrBtn.addEventListener('click', () => {
       hideModal(modalId);
       showPromotionQrModal(qrUrl);
