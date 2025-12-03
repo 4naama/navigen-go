@@ -688,9 +688,10 @@ function renderCurrentView(){
         const repeatRedeemers = Number(row.repeatRedeemers ?? 0);
         const newRedeemers = Math.max(uniqueRedeemers - repeatRedeemers, 0);
 
-        const effPct = (scans > 0 && redemptions > 0)
-          ? ((redemptions / scans) * 100).toFixed(1) + '%'
-          : '';
+        let effPct = '';
+        if (scans > 0) {
+          effPct = ((redemptions / scans) * 100).toFixed(1) + '%';
+        }
 
         const cells = [
           row.campaign || '',          // Campaign ID
