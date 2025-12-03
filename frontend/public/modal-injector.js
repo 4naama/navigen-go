@@ -56,11 +56,11 @@ async function openPromotionQrModal(modal, data) {
       return;
     }
 
-    const origin = location.origin || 'https://navigen.io';
-    const apiUrl = new URL('/api/promo-qr', origin);
+    const apiUrl = new URL('/api/promo-qr', TRACK_BASE);
     apiUrl.searchParams.set('locationID', locationIdOrSlug);
 
-    const res = await fetch(apiUrl.toString(), { cache: 'no-store', credentials: 'include' });
+    const res = await fetch(apiUrl.toString(), { cache: 'no-store' });
+
     if (!res.ok) {
       if (res.status === 404) {
         showToast('Promotions will appear here soon.', 2000);
