@@ -28,11 +28,28 @@ function getQRCodeLib() {
 // Promotion QR helper: builds and shows a Promotion QR modal for the current LPM
 async function openPromotionQrModal(modal, data) {
   try {
-    // Prefer cached slug from DOM; fall back to payload locationID or id
-    const slugFromDom = String(modal?.getAttribute('data-locationid') || '').trim();
-    const slugFromData = String(data?.locationID || '').trim();
-    const idFromData = String(data?.id || '').trim();
-    const locationIdOrSlug = slugFromDom || slugFromData || idFromData;
+    const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+
+    // Collect possible identifiers
+    const domId    = String(modal?.getAttribute('data-locationid') || '').trim();
+    const payloadId= String(data?.locationID || '').trim();
+    const alias    = String(data?.alias || '').trim();
+    const rawId    = String(data?.id || '').trim();
+
+    // Prefer a non-ULID slug/alias; fallback to rawId only if nothing else
+    const candidates = [domId, payloadId, alias, rawId]
+      .map(v => String(v || '').trim())
+      .filter(Boolean);
+
+    let locationIdOrSlug = '';
+    // 1) pick first non-ULID candidate (slug/alias)
+    for (const c of candidates) {
+      if (!ULID.test(c)) { locationIdOrSlug = c; break; }
+    }
+    // 2) if none found, fallback to the first candidate (likely a ULID)
+    if (!locationIdOrSlug && candidates.length) {
+      locationIdOrSlug = candidates[0];
+    }
 
     if (!locationIdOrSlug) {
       showToast('Promotions unavailable for this location', 1600);
