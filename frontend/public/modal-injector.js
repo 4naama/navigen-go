@@ -85,12 +85,21 @@ function showPromotionQrModal(qrUrl) {
 async function openPromotionQrModal(modal, data) {
   try {
     const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+    const hasT = (typeof t === 'function');
+
+    const tmpl = (key, fallback) => {
+      const raw = hasT ? (t(key) || '') : '';
+      return raw && typeof raw === 'string' ? raw : fallback;
+    };
+
+    const applyTemplate = (str, vars) =>
+      String(str || '').replace(/{{(\w+)}}/g, (m, k) => (vars && k in vars ? String(vars[k]) : m));
 
     // Collect possible identifiers
-    const domId    = String(modal?.getAttribute('data-locationid') || '').trim();
-    const payloadId= String(data?.locationID || '').trim();
-    const alias    = String(data?.alias || '').trim();
-    const rawId    = String(data?.id || '').trim();
+    const domId     = String(modal?.getAttribute('data-locationid') || '').trim();
+    const payloadId = String(data?.locationID || '').trim();
+    const alias     = String(data?.alias || '').trim();
+    const rawId     = String(data?.id || '').trim();
 
     const candidates = [domId, payloadId, alias, rawId]
       .map(v => String(v || '').trim())
@@ -100,20 +109,18 @@ async function openPromotionQrModal(modal, data) {
     for (const c of candidates) {
       if (!ULID.test(c)) { locationIdOrSlug = c; break; }
     }
-    if (!locationIdOrSlug && candidates.length) {
-      locationIdOrSlug = candidates[0];
-    }
+    if (!locationIdOrSlug && candidates.length) locationIdOrSlug = candidates[0];
 
     if (!locationIdOrSlug) {
       showToast('Promotions unavailable for this location', 1600);
       return;
     }
 
+    // Call promo-qr on navigen-api; no cookies needed
     const apiUrl = new URL('/api/promo-qr', TRACK_BASE);
     apiUrl.searchParams.set('locationID', locationIdOrSlug);
 
     const res = await fetch(apiUrl.toString(), { cache: 'no-store' });
-
     if (!res.ok) {
       if (res.status === 404) {
         showToast('Promotions will appear here soon.', 2000);
@@ -126,12 +133,12 @@ async function openPromotionQrModal(modal, data) {
 
     const payload = await res.json().catch(() => null);
     const qrUrl = String(payload?.qrUrl || '').trim();
-    const campaignName = String(payload?.campaignName || '').trim();
-    const startDate = String(payload?.startDate || '').trim();
-    const endDate = String(payload?.endDate || '').trim();
-    const eligibilityType = String(payload?.eligibilityType || '').trim();
-    const discountKind = String(payload?.discountKind || '').trim();
-    const discountValue = typeof payload?.discountValue === 'number' ? payload.discountValue : null;
+    const campaignName   = String(payload?.campaignName || '').trim();
+    const startDate      = String(payload?.startDate || '').trim();
+    const endDate        = String(payload?.endDate || '').trim();
+    const eligibilityType= String(payload?.eligibilityType || '').trim();
+    const discountKind   = String(payload?.discountKind || '').trim();
+    const discountValue  = typeof payload?.discountValue === 'number' ? payload.discountValue : null;
 
     if (!qrUrl) {
       console.warn('openPromotionQrModal: missing qrUrl in API response');
@@ -141,24 +148,27 @@ async function openPromotionQrModal(modal, data) {
 
     const locName = String(data?.name || data?.displayName || 'this location').trim() || 'this location';
 
-    // Build sentence like: "10% off your purchase at World of Souvenir Deák"
-    let promoLine = campaignName;
-    if (discountKind === 'percent' && typeof discountValue === 'number') {
-      promoLine = `${discountValue.toFixed(0)}% off your purchase`;
-    }
-    if (promoLine) {
-      promoLine = `${promoLine} at ${locName}`;
-    } else {
-      promoLine = `Promotion at ${locName}`;
-    }
+    // Build discount line, e.g. "10% off your purchase at Stage X"
+    const discountText = (discountKind === 'percent' && typeof discountValue === 'number')
+      ? `${discountValue.toFixed(0)}% off your purchase`
+      : (campaignName || 'Promotion');
 
-    const periodLine = (startDate && endDate)
-      ? `The offer runs: ${startDate} → ${endDate}`
-      : '';
+    const offerTemplate = tmpl('promotion.offer-line', '{{discount}} at {{locationName}}');
+    const promoLine = applyTemplate(offerTemplate, {
+      discount: discountText,
+      locationName: locName
+    });
 
-    const eligibilityLabel = eligibilityType
-      ? `Eligibility: ${eligibilityType.charAt(0).toUpperCase()}${eligibilityType.slice(1)}`
-      : '';
+    // Compute "Expires in {{days}}"
+    let daysLeftText = '';
+    if (endDate) {
+      const now = new Date();
+      const end = new Date(endDate + 'T23:59:59Z');
+      const diffMs = end.getTime() - now.getTime();
+      const diffDays = Math.max(Math.ceil(diffMs / (1000 * 60 * 60 * 24)), 0);
+      const expiresTemplate = tmpl('promotion.period-expires', 'Expires in {{days}}');
+      daysLeftText = applyTemplate(expiresTemplate, { days: diffDays });
+    }
 
     // Remove any previous Promotion modal
     const modalId = 'promotion-modal';
@@ -172,9 +182,10 @@ async function openPromotionQrModal(modal, data) {
     card.className = 'modal-content modal-layout';
 
     const top = document.createElement('div');
+    const promoTitle = tmpl('promotion.title', 'Promotion');
     top.className = 'modal-top-bar';
     top.innerHTML = `
-      <h2 class="modal-title">Promotion</h2>
+      <h2 class="modal-title">${promoTitle}</h2>
       <button class="modal-close" aria-label="Close">&times;</button>
     `;
     top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
@@ -184,6 +195,7 @@ async function openPromotionQrModal(modal, data) {
     const inner = document.createElement('div');
     inner.className = 'modal-body-inner';
 
+    // 1) Main offer line
     if (promoLine) {
       const p1 = document.createElement('p');
       p1.textContent = promoLine;
@@ -191,42 +203,66 @@ async function openPromotionQrModal(modal, data) {
       inner.appendChild(p1);
     }
 
+    // 2) Period label + range + expiry
     if (startDate && endDate) {
+      const label = tmpl('promotion.period-label', 'The offer runs:');
+      const rangeTemplate = tmpl('promotion.period-range', '{{startDate}} → {{endDate}}');
+      const rangeLine = applyTemplate(rangeTemplate, { startDate, endDate });
+
       const p2 = document.createElement('p');
-      p2.innerHTML = `The offer runs:<br>${startDate} → ${endDate}`;
+      p2.innerHTML = `${label}<br>${rangeLine}`;
       p2.style.textAlign = 'left';
       inner.appendChild(p2);
+
+      if (daysLeftText) {
+        const p2b = document.createElement('p');
+        p2b.textContent = daysLeftText;
+        p2b.style.textAlign = 'left';
+        inner.appendChild(p2b);
+      }
     }
 
-    if (eligibilityLabel) {
+    // 3) Eligibility
+    if (eligibilityType) {
+      const eligibilityTemplate = tmpl('promotion.eligibility-label', 'Eligibility: {{eligibility}}');
+      const eligibilityLabel = applyTemplate(eligibilityTemplate, {
+        eligibility: eligibilityType.charAt(0).toUpperCase() + eligibilityType.slice(1)
+      });
       const p3 = document.createElement('p');
       p3.textContent = eligibilityLabel;
       p3.style.textAlign = 'left';
       inner.appendChild(p3);
     }
 
+    // 4) Code note: "Each code is valid for one purchase."
+    const codeNote = tmpl('promotion.code-note', 'Each code is valid for one purchase.');
     const p4 = document.createElement('p');
-    p4.textContent = 'Each code is valid for one purchase.';
+    p4.textContent = codeNote;
     p4.style.textAlign = 'left';
     inner.appendChild(p4);
 
+    // 5) Show QR instructions
+    const showQrText = tmpl('promotion.show-qr', 'Show this QR code to the cashier when paying.');
     const p5 = document.createElement('p');
-    p5.textContent = 'Show this QR code to the cashier when paying.';
+    p5.textContent = showQrText;
     p5.style.textAlign = 'left';
     inner.appendChild(p5);
 
+    // 6) Terms
+    const termsText = tmpl('campaign.redeem-terms', 'By redeeming, I agree to the offer terms.');
     const terms = document.createElement('p');
-    terms.textContent = 'By redeeming, I agree to the offer terms.';
+    terms.textContent = termsText;
     terms.style.textAlign = 'left';
     inner.appendChild(terms);
 
+    // 7) Button: 🔳 Redeem Coupon
     const btnWrap = document.createElement('div');
     btnWrap.className = 'modal-actions';
 
     const qrBtn = document.createElement('button');
     qrBtn.type = 'button';
     qrBtn.className = 'modal-body-button';
-    qrBtn.textContent = '🔳  Redeem Coupon';
+    qrBtn.textContent = tmpl('campaign.redeem-button', '🔳 Redeem Coupon');
     qrBtn.addEventListener('click', () => {
       hideModal(modalId);
       showPromotionQrModal(qrUrl);

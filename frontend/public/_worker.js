@@ -313,6 +313,8 @@ export default {
         // Extract campaignKey and redemption token from query (if present)
         const campaignKey = (url.searchParams.get('camp') || '').trim();
         const redeemToken = (url.searchParams.get('rt') || '').trim();
+        const clientUA = req.headers.get('User-Agent') || '';
+        const clientLang = req.headers.get('Accept-Language') || '';
 
         // Forward a redeem event to navigen-api.4naama.workers.dev
         const apiBase = 'https://navigen-api.4naama.workers.dev';
