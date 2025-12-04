@@ -467,7 +467,7 @@
   "promotion.offer-line": "{{discount}} ב-{{locationName}}",
   "promotion.period-label": "המבצע בתוקף:",
   "promotion.period-range": "{{startDate}} → {{endDate}}",
-  "promotion.period-expires": "פג תוקף בעוד {{days}}",
+  "promotion.period-expires": "פג תוקף בעוד {{days}} ימים",
   "promotion.eligibility-label": "זכאות: {{eligibility}}",
   "promotion.code-note": "כל קוד תקף לרכישה אחת.",
   "promotion.show-qr": "הצג קוד QR זה בקופה בעת התשלום.",

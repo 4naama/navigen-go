@@ -467,7 +467,7 @@
   "promotion.offer-line": "{{discount}} at {{locationName}}",
   "promotion.period-label": "The offer runs:",
   "promotion.period-range": "{{startDate}} → {{endDate}}",
-  "promotion.period-expires": "Expires in {{days}}",
+  "promotion.period-expires": "Expires in {{days}} days",
   "promotion.eligibility-label": "Eligibility: {{eligibility}}",
   "promotion.code-note": "Each code is valid for one purchase.",
   "promotion.show-qr": "Show this QR code to the cashier when paying.",

@@ -467,7 +467,7 @@
   "promotion.offer-line": "{{discount}} en {{locationName}}",
   "promotion.period-label": "La oferta es válida:",
   "promotion.period-range": "{{startDate}} → {{endDate}}",
-  "promotion.period-expires": "Caduca en {{days}}",
+  "promotion.period-expires": "Caduca en {{days}} días",
   "promotion.eligibility-label": "Eligibilidad: {{eligibility}}",
   "promotion.code-note": "Cada código es válido para una compra.",
   "promotion.show-qr": "Muestre este código QR en la caja al pagar.",

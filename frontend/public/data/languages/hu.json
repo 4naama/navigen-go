@@ -467,7 +467,7 @@
   "promotion.offer-line": "{{discount}} a {{locationName}}-nál",
   "promotion.period-label": "Az ajánlat érvényes:",
   "promotion.period-range": "{{startDate}} → {{endDate}}",
-  "promotion.period-expires": "Lejár: {{days}}",
+  "promotion.period-expires": "Lejár {{days}} nap múlva",
   "promotion.eligibility-label": "Jogosultság: {{eligibility}}",
   "promotion.code-note": "Minden kód egy vásárlásra érvényes.",
   "promotion.show-qr": "Fizetéskor mutassa be a pénztárnál ezt a QR-kódot.",
