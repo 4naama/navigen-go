@@ -211,9 +211,14 @@ async function openPromotionQrModal(modal, data) {
     inner.appendChild(p4);
 
     const p5 = document.createElement('p');
-    p5.textContent = 'Show this QR to the cashier when paying.';
+    p5.textContent = 'Show this QR code to the cashier when paying.';
     p5.style.textAlign = 'left';
     inner.appendChild(p5);
+
+    const terms = document.createElement('p');
+    terms.textContent = 'By redeeming, I agree to the offer terms.';
+    terms.style.textAlign = 'left';
+    inner.appendChild(terms);
 
     const btnWrap = document.createElement('div');
     btnWrap.className = 'modal-actions';
@@ -221,7 +226,7 @@ async function openPromotionQrModal(modal, data) {
     const qrBtn = document.createElement('button');
     qrBtn.type = 'button';
     qrBtn.className = 'modal-body-button';
-    qrBtn.textContent = '🔳  Redemption QR Code';
+    qrBtn.textContent = '🔳  Redeem Coupon';
     qrBtn.addEventListener('click', () => {
       hideModal(modalId);
       showPromotionQrModal(qrUrl);

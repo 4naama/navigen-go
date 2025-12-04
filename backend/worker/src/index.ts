@@ -740,61 +740,31 @@ export default {
         // For QR redeem events, validate token and log "redeem" vs "invalid".
         if (ev === "qr-redeem") {
           const token = (req.headers.get("X-NG-QR-Token") || "").trim();
-          const campaignHeader = (req.headers.get("X-NG-Campaign") || "").trim();
 
-          // If no campaignKey header, we can still try to infer via loadCampaigns,
-          // but for now require it for clarity.
           const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
           const campaigns = await loadCampaigns(siteOrigin, env);
-          const todayShift = new Date();
-          todayShift.setHours(todayShift.getHours() + 12);
-          const today = todayShift.toISOString().slice(0, 10);
 
-          // Pick the active campaign for this location and header key.
-          const campaign = campaigns.find(c =>
-            c.locationID === loc &&
-            c.campaignKey === campaignHeader &&
-            (!c.startDate || today >= c.startDate) &&
-            (!c.endDate || today <= c.endDate) &&
-            (!c.status || c.status.toLowerCase() !== "ended")
-          );
+          // Build today's date for campaign active checks (same shift as in promo-qr)
+          const dayISO = new Date();
+          dayISO.setHours(dayISO.getHours() + 12);
+          const today = dayISO.toISOString().slice(0, 10);
 
-          if (!campaign || !campaignHeader) {
-            // No matching active campaign; log as invalid redeem attempt.
+          // Pick the active campaign for this location and date
+          const campaignKey = pickCampaignForScan(campaigns, loc, today);
+          const campaign = campaigns.find(c => c.locationID === loc && c.campaignKey === campaignKey) || null;
+
+          if (!campaignKey || !campaign) {
+            // No active campaign found: log invalid
             await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
           } else {
-            const result = await consumeRedeemToken(env.KV_STATS, token, loc, campaignHeader);
+            const result = await consumeRedeemToken(env.KV_STATS, token, loc, campaignKey);
             if (result === "ok") {
               await logQrRedeem(env.KV_STATS, env, loc, req);
-
-              // Billing: write one ledger entry using finance.json for this sector + country.
-              try {
-                const siteBase = req.headers.get("Origin") || "https://navigen.io";
-                const financeRows = await loadFinance(siteBase, env);
-                const sectorKey = (campaign as any)?.sectorKey || "";
-                // For now, pick the first matching sector row (all current rows are HU).
-                const feeRow = financeRows.find(f => f.sectorKey === sectorKey) || null;
-                if (feeRow && typeof feeRow.campFee === "number") {
-                  const rec: BillingRecord = {
-                    locationID: loc,
-                    campaignKey: campaignHeader,
-                    sectorKey,
-                    countryCode: feeRow.countryCode,
-                    currency: feeRow.currency,
-                    timestamp: now.toISOString(),
-                    campFee: feeRow.campFee,
-                    campFeeRate: feeRow.campFeeRate
-                  };
-                  await writeBillingRecord(env.KV_STATS, rec);
-                }
-              } catch {
-                // billing write should never break redeem flow
-              }
+              // Billing write will go here later; for now keep redeem logic simple.
             } else {
               await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
             }
           }
-
         }
 
         return new Response(null, {
