@@ -166,7 +166,7 @@ async function openPromotionQrModal(modal, data) {
       const end = new Date(endDate + 'T23:59:59Z');
       const diffMs = end.getTime() - now.getTime();
       const diffDays = Math.max(Math.ceil(diffMs / (1000 * 60 * 60 * 24)), 0);
-      const expiresTemplate = tmpl('promotion.period-expires', 'Expires in {{days}}');
+      const expiresTemplate = tmpl('promotion.period-expires', 'Expires in {{days}} days');
       daysLeftText = applyTemplate(expiresTemplate, { days: diffDays });
     }
 

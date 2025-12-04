@@ -297,7 +297,7 @@ export default {
       }
     }
 
-    // /out/qr-redeem/:id — record a promotion redemption and return to the app shell
+    // /out/qr-redeem/:id — record a promotion redemption and return to LPM shell
     {
       const p = url.pathname;
       if (p.startsWith('/out/qr-redeem/')) {
@@ -306,46 +306,48 @@ export default {
           return new Response('Not Found', { status: 404 });
         }
 
-        // Resolve to canonical ULID (accept ULID or slug); same helper used elsewhere
-        const ulid = await canonicalId(env, idOrSlug);
-        if (!ulid) return new Response('Unknown location', { status: 404 });
-
-        // Extract campaignKey and redemption token from query (if present)
-        const campaignKey = (url.searchParams.get('camp') || '').trim();
-        const redeemToken = (url.searchParams.get('rt') || '').trim();
-        const clientUA = req.headers.get('User-Agent') || '';
-        const clientLang = req.headers.get('Accept-Language') || '';
-
-        // Forward a redeem event to navigen-api.4naama.workers.dev
-        const apiBase = 'https://navigen-api.4naama.workers.dev';
-        const hitUrl = new URL(`/hit/qr-redeem/${encodeURIComponent(ulid)}`, apiBase).toString();
-
+        // Always try to resolve to ULID, but never throw if it fails
+        let ulid = null;
         try {
-          const headers = {
-            'X-NG-QR-Source': 'pages-worker'
-          };
-          if (redeemToken) headers['X-NG-QR-Token'] = redeemToken;
-          if (clientUA) headers['X-NG-UA'] = clientUA;
-          if (clientLang) headers['X-NG-Lang'] = clientLang;
-
-          const options = {
-            method: 'POST',
-            keepalive: true,
-            headers
-          };
-          if (ctx && typeof ctx.waitUntil === 'function') {
-            ctx.waitUntil(fetch(hitUrl, options).catch(() => {}));
-          } else {
-            fetch(hitUrl, options).catch(() => {});
-          }
+          ulid = await canonicalId(env, idOrSlug);
         } catch (_) {
-          // ignore tracking errors; never block app response
+          ulid = null;
         }
 
-        // Redirect to LPM shell with lp=<slug> (opens the location profile)
+        const redeemToken = (url.searchParams.get('rt') || '').trim();
+        const clientUA    = req.headers.get('User-Agent') || '';
+        const clientLang  = req.headers.get('Accept-Language') || '';
+
+        if (ulid) {
+          const apiBase = 'https://navigen-api.4naama.workers.dev';
+          const hitUrl  = new URL(`/hit/qr-redeem/${encodeURIComponent(ulid)}`, apiBase).toString();
+
+          try {
+            const headers = {
+              'X-NG-QR-Source': 'pages-worker'
+            };
+            if (redeemToken) headers['X-NG-QR-Token'] = redeemToken;
+            if (clientUA)    headers['X-NG-UA']       = clientUA;
+            if (clientLang)  headers['X-NG-Lang']     = clientLang;
+
+            const options = {
+              method: 'POST',
+              keepalive: true,
+              headers
+            };
+            if (ctx && typeof ctx.waitUntil === 'function') {
+              ctx.waitUntil(fetch(hitUrl, options).catch(() => {}));
+            } else {
+              fetch(hitUrl, options).catch(() => {});
+            }
+          } catch (_) {
+            // ignore tracking errors; never block app response
+          }
+        }
+
+        // Always redirect user back to the LPM shell
         const dest = `/?lp=${encodeURIComponent(idOrSlug)}`;
         return Response.redirect(dest, 302);
-
       }
     }
 
