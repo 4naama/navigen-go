@@ -2532,13 +2532,14 @@ export function hideModal(id) {
   modal.style.display = "none"; // ✅ Explicitly hide for clean next show
 }
 
-// Toast: single instance; header+close supported; links don’t dismiss.
+// Toast: single instance; header+close supported.
 // Accepts number (duration) or opts { duration, title, manualCloseOnly }.
-export function showToast(message, opts = 0) {
+// Default: 4s, closable by tap anywhere or ESC (unless manualCloseOnly).
+export function showToast(message, opts = 4000) {
   // ensure one active toast; remove existing
   document.querySelectorAll('.toast').forEach(t => t.remove());
 
-  const { duration = 0, title = '', manualCloseOnly = false } =
+  const { duration = 4000, title = '', manualCloseOnly = false } =
     typeof opts === 'number' ? { duration: opts } : (opts || {});
 
   const toast = document.createElement('div');
@@ -2560,11 +2561,8 @@ export function showToast(message, opts = 0) {
     btn.type = 'button';
     btn.setAttribute('aria-label', 'Close');
     btn.textContent = '✖';
-    btn.addEventListener('click', () => {
-      toast.classList.remove('visible');
-      setTimeout(() => toast.remove(), 400);
-    });
 
+    btn.addEventListener('click', () => hideToast());
     header.appendChild(h);
     header.appendChild(btn);
     toast.appendChild(header);
@@ -2578,21 +2576,42 @@ export function showToast(message, opts = 0) {
   document.body.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add('visible'));
 
-  // only allow tap-to-close when NOT manualCloseOnly
-  if (!manualCloseOnly) {
-    toast.addEventListener('click', (e) => {
-      if (e.target.closest('a, .toast-close')) return;
-      toast.classList.remove('visible');
-      setTimeout(() => toast.remove(), 400);
-    }, { passive: true });
-  }
+  let timerId = null;
 
-  // auto-close only when NOT manualCloseOnly
-  if (duration > 0 && !manualCloseOnly) {
-    setTimeout(() => {
-      toast.classList.remove('visible');
-      setTimeout(() => toast.remove(), 400);
-    }, duration);
+  const removeGlobalListeners = () => {
+    document.removeEventListener('click', onDocClick, true);
+    document.removeEventListener('keydown', onKeyDown, true);
+  };
+
+  const hideToast = () => {
+    toast.classList.remove('visible');
+    removeGlobalListeners();
+    if (timerId) {
+      clearTimeout(timerId);
+      timerId = null;
+    }
+    setTimeout(() => toast.remove(), 400);
+  };
+
+  const onDocClick = () => {
+    // tap anywhere closes (except when manualCloseOnly)
+    if (!manualCloseOnly) hideToast();
+  };
+
+  const onKeyDown = (e) => {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      hideToast();
+    }
+  };
+
+  if (!manualCloseOnly) {
+    // tap-anywhere + ESC close
+    document.addEventListener('click', onDocClick, true);
+    document.addEventListener('keydown', onKeyDown, true);
+
+    if (duration > 0) {
+      timerId = setTimeout(hideToast, duration);
+    }
   }
 }
 

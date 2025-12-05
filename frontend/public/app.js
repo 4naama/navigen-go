@@ -2157,7 +2157,7 @@ async function initEmergencyBlock(countryOverride) {
       const aiTitle = 'AI Assistant';
       const aiBtn = makeBtn('ai-assistant-button', '🤖', aiTitle);
       aiBtn.addEventListener('click', () => {
-        showToast('AI assistant coming soon');
+        showToast('AI assistant is coming soon');
       });
 
       // 3) 🏠 Home → open My Stuff
@@ -2187,7 +2187,7 @@ async function initEmergencyBlock(countryOverride) {
           id: 'nav-alerts',
           icon: '📣',
           title: 'List of alerts are coming soon',
-          handler: () => showToast('List of alerts are coming soon')
+          handler: () => showToast('List of alerts is coming soon')
         },
         {
           id: 'nav-info',
