@@ -715,4 +715,132 @@ Dash uses:
 
 with horizontal scroll enabled on mobile.
 
+13. SEARCH CAPABILITIES (UPDATED)
+13.1 Current Search – Location-First Navigation
+
+The main shell includes a universal search bar:
+
+🔍 “Type Destination…”
+
+The search engine supports:
+
+Location name search (stages, venues, facilities, shops, services)
+
+Tag/keyword search (e.g., “toilet”, “first aid”, “vegan”, “merch”)
+
+Context-aware ranking: top results prioritize the user’s current area and frequently accessed locations
+
+Instant LPM open upon selection
+
+Search is optimized for:
+
+Fast fuzzy matching
+
+Multi-language input
+
+Festival-scale result sets (hundreds of dynamic places)
+
+13.2 AI-Augmented Search (in progress)
+A) Main-Shell AI Assistant (🤖 bottom band)
+
+The AI assistant will enhance search with contextual reasoning:
+
+Understands broad festival questions:
+“Hol találok most jó ételt?”, “Mi van hozzám legközelebb?”, “Hol a következő koncert?”
+
+Provides information about the current festival context (e.g., today’s program, important updates)
+
+Allows dynamic context switching (e.g., food-only, music-only, emergency-only modes)
+
+Combines search + natural language + navigation into a single interface
+
+The assistant acts as a 0–24 walkie-talkie, answering instantly without menus.
+
+B) LPM-Level AI Search & Knowledge
+
+Each Location Profile Modal (LPM) receives its own AI layer:
+
+AI can answer:
+
+Questions about that specific location
+
+“Mi lesz itt a következő program?”, “Mikor kezdődik a következő fellépő?”
+
+Describe the history / role / type of that stage or service
+
+Explain ongoing promotions, how to redeem, expiry, availability
+
+Suggest nearby related locations based on tags (food, drink, emergency, transport, attractions)
+
+The assistant speaks the user’s chosen language automatically.
+
+13.3 MSM – Search-Related User Tools
+
+The “My Stuff” area (MSM) supports several features linked to search relevance:
+
+🌐 Language Settings
+
+Full multilingual UI
+
+Search results are ranked and displayed according to the user’s chosen language
+
+💳 Purchase History
+
+Future integration: searchable/filterable record of purchases, tickets, services
+
+📄 Data & Privacy Center
+
+Manages search data retention preferences
+
+Clear display of what data impacts personalized search
+
+📍 My Location History
+
+Search-adaptive: frequently visited or scanned locations surface higher
+
+Helps AI ranking
+
+🧩 Community Zone
+
+Topics the user cares about influence search prioritization
+(music genres, food preferences, accessibility needs, etc.)
+
+13.4 Bottom-Band Tools That Extend Search
+
+The bottom band and overflow menu contribute additional search domains:
+
+☎️ Emergency Call / Help Modal
+
+Always-available quick action
+
+Anchors search in safety-related contexts
+
+AI uses it to prioritize emergency responses when needed
+
+📅 Context-Specific Agenda / Timetable
+
+Allows looking up daily schedules
+
+Search understands queries like:
+“Mikor kezdődik a következő élményprogram?”
+“Hol játszik ma ez az előadó?”
+
+ℹ️ My Contact Card (QR-Based)
+
+Allows quick self-identification or sharing
+
+AI can refer to the user’s general profile (never personal data) to personalize search suggestions
+
+📣 List of Alerts
+
+Search results deprioritize closed / unavailable locations
+
+AI can explain active alerts (e.g., weather, crowded area alerts)
+
+📈 My Stats
+
+Not a search function itself, but informs ranking
+
+Frequently interacted locations are boosted in the result list
+
 END OF SPEC
