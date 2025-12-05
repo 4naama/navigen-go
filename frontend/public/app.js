@@ -18,7 +18,9 @@ import {
   showThankYouToast as showThankYouToastUI,
   openViewSettingsModal,
   createFavoritesModal,
-  showFavoritesModal
+  showFavoritesModal,
+  createPromotionsModal,
+  showPromotionsModal
 } from './modal-injector.js';
 
 // PWA: register SW only in production (keeps install prompt there)
@@ -2278,7 +2280,7 @@ if (helpButton) {
   });
 }
 
-/* insert ⭐ next to 🎯; resolve anchor locally (no cross-scope refs) */
+/* insert ⭐ and 🏷️ in the search row; resolve anchor locally (no cross-scope refs) */
 (() => {
   const row = document.getElementById("search-container");
   if (!row || document.getElementById("fav-button")) return;
@@ -2291,13 +2293,43 @@ if (helpButton) {
   fav.setAttribute("aria-label", t("favorites"));
 
   const here = document.getElementById("here-button");
-  if (here) row.insertBefore(fav, here);      // place left of 🎯
-  else if (row.firstElementChild) row.insertBefore(fav, row.firstElementChild);
-  else row.appendChild(fav);
+
+  if (here) {
+    row.insertBefore(fav, here); // place left of original 🎯
+  } else if (row.firstElementChild) {
+    row.insertBefore(fav, row.firstElementChild);
+  } else {
+    row.appendChild(fav);
+  }
+
+  const promo = document.createElement("button");
+  promo.id = "promo-button";
+  promo.type = "button";
+  promo.textContent = "🏷️";
+  promo.title = t("promotions");
+  promo.setAttribute("aria-label", t("promotions"));
+
+  if (here && fav.nextSibling === here) {
+    row.insertBefore(promo, here); // visible order: ⭐ 🏷️ (🎯 stays hidden)
+  } else if (here) {
+    row.insertBefore(promo, here);
+  } else {
+    row.appendChild(promo);
+  }
+
+  // Hide 🎯 from the main shell row but keep it usable for bottom-band "Share my location".
+  if (here) {
+    here.style.display = "none";
+  }
 
   fav.addEventListener("click", () => {
     if (!document.getElementById("favorites-modal")) createFavoritesModal();
     showFavoritesModal();
+  });
+
+  promo.addEventListener("click", () => {
+    if (!document.getElementById("promotions-modal")) createPromotionsModal();
+    showPromotionsModal();
   });
 })();
 

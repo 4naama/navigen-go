@@ -574,15 +574,8 @@ export default {
           }
         }
       });
-    let out;
-    try {
-      out = await rewriter.transform(res);
-      out.headers.set('x-ng-worker', 'ok'); // persists on HTML too
-    } catch (err) {
-      // If any HTMLRewriter handler throws (1101), fall back to original HTML shell
-      out = res;
-      out.headers.set('x-ng-worker', 'rewriter-fallback');
-    }
+    const out = await rewriter.transform(res);
+    out.headers.set('x-ng-worker', 'ok'); // persists on HTML too
     return out;
   }
 };

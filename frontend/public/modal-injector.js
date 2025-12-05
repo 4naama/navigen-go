@@ -2712,6 +2712,149 @@ export function createFavoritesModal() {
   topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("favorites-modal"));
 }
 
+export function createPromotionsModal() {
+  if (document.getElementById("promotions-modal")) return;
+
+  const modal = injectModal({
+    id: "promotions-modal",
+    className: "modal modal-menu",
+    bodyHTML: `<div id="promotions-body" class="modal-body"></div>`
+  });
+
+  modal.classList.add("hidden");
+
+  const topBar = document.createElement("div");
+  topBar.className = "modal-top-bar";
+  topBar.innerHTML = `
+    <h2 class="modal-header">${t("promotions")}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  modal.querySelector(".modal-content")?.prepend(topBar);
+  topBar
+    .querySelector(".modal-close")
+    ?.addEventListener("click", () => hideModal("promotions-modal"));
+}
+
+export function showPromotionsModal() {
+  if (!document.getElementById("promotions-modal")) {
+    createPromotionsModal();
+  }
+
+  const modal = document.getElementById("promotions-modal");
+  const body = modal?.querySelector("#promotions-body");
+  const title = modal?.querySelector(".modal-header");
+  if (!modal || !body || !title) return;
+
+  title.textContent = t("promotions");
+  body.innerHTML = "";
+
+  const list = document.createElement("div");
+  list.className = "modal-menu-list";
+  body.appendChild(list);
+
+  const renderEmpty = (msg) => {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = msg;
+    list.appendChild(empty);
+  };
+
+  const now = new Date();
+
+  fetch("/data/campaigns.json", { cache: "no-store" })
+    .then((res) => (res.ok ? res.json() : []))
+    .then((campaigns) => {
+      if (!Array.isArray(campaigns) || campaigns.length === 0) {
+        renderEmpty(t("no.promotions.yet") || "No promotions are running right now.");
+        showModal("promotions-modal");
+        setupTapOutClose("promotions-modal");
+        return;
+      }
+
+      // derive pageKey from URL, same pattern as ACTIVE_PAGE in app.js
+      const segs = location.pathname.split("/").filter(Boolean);
+      if (/^[a-z]{2}$/i.test(segs[0] || "")) segs.shift();
+      const pageKey =
+        segs.length >= 2
+          ? `${segs[0].toLowerCase()}/${segs.slice(1).join("/").toLowerCase()}`
+          : "";
+
+      const running = campaigns.filter((c) => {
+        const statusOk = String(c.status || "").toLowerCase() === "active";
+        if (!statusOk) return false;
+
+        const start = c.startDate ? new Date(c.startDate) : null;
+        const end = c.endDate ? new Date(c.endDate) : null;
+        if (start && now < start) return false;
+        if (end && now > end) return false;
+
+        if (!pageKey) return true;
+
+        const ctx = String(c.context || "").toLowerCase();
+        if (!ctx) return true;
+        return ctx
+          .split(";")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .includes(pageKey);
+      });
+
+      if (!running.length) {
+        renderEmpty(t("no.promotions.yet") || "No promotions are running right now.");
+        showModal("promotions-modal");
+        setupTapOutClose("promotions-modal");
+        return;
+      }
+
+      const formatDate = (value) => {
+        if (!value) return "";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return "";
+        return d.toISOString().slice(0, 10);
+      };
+
+      running.forEach((camp) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "modal-menu-item promotion-item";
+
+        const campaignName = String(camp.campaignName || "").trim();
+        const locationName = String(camp.locationName || "").trim();
+        const startStr = formatDate(camp.startDate);
+        const endStr = formatDate(camp.endDate);
+        const range = startStr && endStr ? `${startStr} \u2192 ${endStr}` : "";
+
+        row.innerHTML = `
+          <div class="label" style="flex:1 1 auto; min-width:0;">
+            <strong>${campaignName || (t("promotion.unnamed") || "Promotion")}</strong><br>
+            ${locationName ? `<small>${locationName}</small><br>` : ""}
+            ${range ? `<small>${range}</small>` : ""}
+          </div>
+        `;
+
+        row.addEventListener("click", () => {
+          hideModal("promotions-modal");
+          openPromotionQrModal(row, {
+            locationID: camp.locationID,
+            locationName: camp.locationName,
+            name: camp.locationName,
+            displayName: camp.locationName
+          });
+        });
+
+        list.appendChild(row);
+      });
+
+      showModal("promotions-modal");
+      setupTapOutClose("promotions-modal");
+    })
+    .catch(() => {
+      renderEmpty(t("promotions.error") || "Promotions are unavailable right now.");
+      showModal("promotions-modal");
+      setupTapOutClose("promotions-modal");
+    });
+}
+
 export function showFavoritesModal() {
   if (!document.getElementById("favorites-modal")) createFavoritesModal();
 
