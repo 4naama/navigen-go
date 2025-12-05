@@ -42,13 +42,6 @@ function rateHit(req){
 export default {
   async fetch(req, env, ctx) { // include ctx so waitUntil works
     const url = new URL(req.url);
-    
-    // 🔒 Minimal safety: for any request with ?lp=... just serve the app shell as-is.
-    // This bypasses all HTML rewriting/transform logic that might throw (1101)
-    // and ensures the LPM can open normally from lp-based links (Info or Promo QR).
-    if (url.searchParams.has('lp')) {
-      return env.ASSETS.fetch(req, env, ctx);
-    }
 
     // QR scan tracker: when a page has ?lp=<slug>, forward qr-scan to navigen-api.4naama.workers.dev, then continue normal handling
     {
@@ -581,8 +574,15 @@ export default {
           }
         }
       });
-    const out = await rewriter.transform(res);
-    out.headers.set('x-ng-worker', 'ok'); // persists on HTML too
+    let out;
+    try {
+      out = await rewriter.transform(res);
+      out.headers.set('x-ng-worker', 'ok'); // persists on HTML too
+    } catch (err) {
+      // If any HTMLRewriter handler throws (1101), fall back to original HTML shell
+      out = res;
+      out.headers.set('x-ng-worker', 'rewriter-fallback');
+    }
     return out;
   }
 };
