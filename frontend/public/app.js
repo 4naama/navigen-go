@@ -2132,6 +2132,129 @@ async function initEmergencyBlock(countryOverride) {
     }
   }, 3000);
 
+    // ---------- Bottom band: ♿ 🤖 🏠 ⋮ ----------
+    function initBottomBand() {
+      const band = document.getElementById('bottom-band');
+      if (!band) return;
+
+      band.innerHTML = '';
+
+      const makeBtn = (id, emoji, title) => {
+        const btn = document.createElement('button');
+        btn.id = id;
+        btn.type = 'button';
+        btn.textContent = emoji;
+        if (title) btn.title = title;
+        band.appendChild(btn);
+        return btn;
+      };
+
+      // 1) ♿ Accessibility — keep existing toggle behavior via #accessibility-button wiring
+      const accTitle = (typeof t === 'function' ? (t('tooltip.accessibility') || '') : '') || 'Accessibility';
+      makeBtn('accessibility-button', '♿', accTitle);
+
+      // 2) 🤖 AI Assistant — toast only
+      const aiTitle = 'AI Assistant';
+      const aiBtn = makeBtn('ai-assistant-button', '🤖', aiTitle);
+      aiBtn.addEventListener('click', () => {
+        showToast('AI assistant coming soon');
+      });
+
+      // 3) 🏠 Home → open My Stuff
+      const homeTitle = (typeof t === 'function' ? (t('tooltip.myStuff') || '') : '') || 'Home';
+      makeBtn('home-button', '🏠', homeTitle);
+
+      // 4) ⋮ Overflow
+      const moreBtn = makeBtn('bottom-more-button', '⋮', 'More');
+
+      // Build overflow bubble
+      let bubble = document.getElementById('bottom-more-menu');
+      if (!bubble) {
+        bubble = document.createElement('div');
+        bubble.id = 'bottom-more-menu';
+        document.body.appendChild(bubble);
+      }
+      bubble.innerHTML = '';
+
+      const overflowDefs = [
+        {
+          id: 'nav-calendar',
+          icon: '📅',
+          title: 'Full program is coming soon',
+          handler: () => showToast('Full program is coming soon')
+        },
+        {
+          id: 'nav-alerts',
+          icon: '📣',
+          title: 'List of alerts are coming soon',
+          handler: () => showToast('List of alerts are coming soon')
+        },
+        {
+          id: 'nav-info',
+          icon: 'ℹ️',
+          title: 'My contact card is coming soon',
+          handler: () => showToast('My contact card is coming soon')
+        },
+        {
+          id: 'help-button',                  // reuse existing Help/Emergency wiring
+          icon: '☎️',
+          title: 'Call / Help',
+          handler: () => {
+            const help = document.getElementById('help-button');
+            if (help) {
+              help.click();
+            } else {
+              showToast('Help is coming soon');
+            }
+          }
+        },
+        {
+          id: 'nav-stats',
+          icon: '📈',
+          title: 'My stats is coming soon',
+          handler: () => showToast('My stats is coming soon')
+        },
+        {
+          id: 'nav-here',
+          icon: '🎯',
+          title: 'Share my location',
+          handler: () => {
+            const here = document.getElementById('here-button');
+            if (here) here.click();
+            else showToast('Location share is coming soon');
+          }
+        }
+      ];
+
+      overflowDefs.forEach(def => {
+        const b = document.createElement('button');
+        b.id = def.id;
+        b.type = 'button';
+        b.textContent = def.icon;
+        if (def.title) b.title = def.title;
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          bubble.classList.remove('visible');
+          def.handler();
+        });
+        bubble.appendChild(b);
+      });
+
+      const toggleBubble = () => {
+        bubble.classList.toggle('visible');
+      };
+
+      moreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleBubble();
+      });
+
+      document.addEventListener('click', () => bubble.classList.remove('visible'));
+    }
+
+    // Build bottom band once DOM is ready
+    initBottomBand();
+
 // Footer: Call/Help + Home
 const helpButton = document.getElementById("help-button") || document.getElementById("call-button");
 const helpModal   = document.getElementById("help-modal");
@@ -2140,11 +2263,10 @@ const homeButton  = document.getElementById("home-button");
 // Button refs (no early modal refs: we create alert modal when needed)
 const alertButton = document.getElementById("alert-button");
 
-/* 🏠 Home: close any open modal and scroll list to top */
+/* 🏠 Home: open My Stuff modal */
 if (homeButton) {
   homeButton.addEventListener("click", () => {
-    document.querySelectorAll('[id$="-modal"]').forEach(m => m.classList.add("hidden"));
-    document.getElementById("locations-scroll")?.scrollTo({ top: 0, behavior: "smooth" });
+    showMyStuffModal("menu");
   });
 }
 
