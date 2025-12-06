@@ -463,6 +463,8 @@
   "dash.info.campaigns": "מציג את ביצועי הקמפיין, כולל מימושים ומדדי לקוחות.",
   "dash.note.qrinfo-retention": "נתוני מימוש QR נשמרים למשך 56 ימים.",
   "dash.note.campaign-retention": "ניתוחי הקמפיין כוללים פעילות מה־56 ימים האחרונים.",
+  "promotions": "מבצעים",
+  "no.promotions.yet": "אין מבצעים פעילים עבור דף זה כעת.",
   "promotion.title": "מבצע",
   "promotion.offer-line": "{{discount}} ב-{{locationName}}",
   "promotion.period-label": "המבצע בתוקף:",

@@ -463,6 +463,8 @@
   "dash.info.campaigns": "A kampány teljesítményét mutatja, beleértve a beváltásokat és a vásárlói mutatókat.",
   "dash.note.qrinfo-retention": "A QR-beváltási adatok 56 napig kerülnek megőrzésre.",
   "dash.note.campaign-retention": "A kampányanalitika az elmúlt 56 nap tevékenységeit tartalmazza.",
+  "promotions": "Promóciók",
+  "no.promotions.yet": "Jelenleg nincs aktív promóció ezen az oldalon.",
   "promotion.title": "Promóció",
   "promotion.offer-line": "{{discount}} a {{locationName}}-nál",
   "promotion.period-label": "Az ajánlat érvényes:",

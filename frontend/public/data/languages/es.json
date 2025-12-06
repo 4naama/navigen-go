@@ -463,6 +463,8 @@
   "dash.info.campaigns": "Muestra el rendimiento de la campaña, incluidos los canjes y las métricas de clientes.",
   "dash.note.qrinfo-retention": "Los datos de canje de QR se conservan durante 56 días.",
   "dash.note.campaign-retention": "El análisis de la campaña incluye la actividad de los últimos 56 días.",
+  "promotions": "Promociones",
+  "no.promotions.yet": "No hay promociones activas para esta página en este momento.",
   "promotion.title": "Promoción",
   "promotion.offer-line": "{{discount}} en {{locationName}}",
   "promotion.period-label": "La oferta es válida:",

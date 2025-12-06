@@ -463,6 +463,8 @@
   "dash.info.campaigns": "Shows campaign performance, including redemptions and customer metrics.",
   "dash.note.qrinfo-retention": "QR redemption data is retained for 56 days.",
   "dash.note.campaign-retention": "Campaign analytics include activity from the last 56 days.",
+  "promotions": "Promotions",
+  "no.promotions.yet": "No active promotions for this page right now.",
   "promotion.title": "Promotion",
   "promotion.offer-line": "{{discount}} at {{locationName}}",
   "promotion.period-label": "The offer runs:",

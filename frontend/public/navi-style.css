@@ -2096,7 +2096,8 @@ button:hover {
   border:1px solid var(--search-border, #d6dbe1);
   border-radius:6px;
   height:36px;
-  min-width:auto;
+  width:auto;              /* override 34px square */
+  min-width:36px;          /* keep tap target */
   padding:8px 14px;
 }
 #bottom-more-button:hover{
