@@ -2168,6 +2168,13 @@ async function initEmergencyBlock(countryOverride) {
 
       // 4) ⋮ Overflow
       const moreBtn = makeBtn('bottom-more-button', '⋮', 'More');
+      // ensure ⋮ uses the tested grey squared style, independent of external CSS
+      moreBtn.style.backgroundColor = '#e2e8f0';
+      moreBtn.style.border = '1px solid #d6dbe1';
+      moreBtn.style.borderRadius = '6px';
+      moreBtn.style.height = '34px';
+      moreBtn.style.width = '34px';
+      moreBtn.style.padding = '0';
 
       // Build overflow bubble
       let bubble = document.getElementById('bottom-more-menu');
