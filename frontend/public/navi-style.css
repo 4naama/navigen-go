@@ -2080,9 +2080,9 @@ button:hover {
   cursor: pointer;
   padding: 0;
   border-radius: 0.5em;
-  height: 34px;         /* reduced from 40px */
-  min-width: 34px;      /* keep minimum tap target */
-  width: auto;          /* allow pills like ⋮ to widen */
+  height: 34px;        /* reduced from 40px */
+  min-width: 34px;     /* keep tap target */
+  width: auto;         /* allow ⋮ (and others) to grow like chips */
 }
 
 #bottom-band button:hover {

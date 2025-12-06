@@ -25,7 +25,7 @@
 <div class="header-bar">
   <img alt="Logo Icon" height="24" id="logo-icon" src="/assets/logo-icon.svg" width="24" />
   <h2 id="page-title"></h2>
-  <div class="header-pin">🔖</div>
+  <div class="header-pin">📌</div>
 </div>
 <p class="page-subtext"></p>
 
@@ -44,8 +44,8 @@
     <button id="clear-search" aria-label="Clear search" type="button">X</button>
   </div>
 
-  <!-- 📍 "Here" button -->
-  <button id="here-button">📍 Here</button>
+  <!-- Hidden "Here" trigger: used by Share Location, not shown in the row -->
+  <button id="here-button" type="button" style="display:none;">🎯</button>
 
 </div>
 
@@ -64,12 +64,12 @@
     </div>    
   </div>
 
-  <!-- 🧭 BOTTOM BAND: User Action Panel -->
+  <!-- 🧭 BOTTOM BAND: User Action Panel (final layout) -->
   <div id="bottom-band">
-    <button id="my-stuff-toggle" title="">🏠</button>
-    <button id="alert-button" title="">💬</button>
-    <button id="help-button" title="">☎️</button>
     <button id="accessibility-button" title="">♿</button>
+    <button id="ai-assistant-button" title="">🤖</button>
+    <button id="home-button" title="">🏠</button>
+    <button id="bottom-more-button" title="">⋮</button>
   </div>
 
 </div>
