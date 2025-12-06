@@ -2082,7 +2082,7 @@ button:hover {
   border-radius: 0.5em;
   height: 34px;        /* reduced from 40px */
   min-width: 34px;     /* keep tap target */
-  width: auto;         /* allow ⋮ (and others) to grow like chips */
+  width: auto;         /* allow ⋮ to widen into a pill */
 }
 
 #bottom-band button:hover {
@@ -2090,17 +2090,18 @@ button:hover {
   transition: background-color 0.2s ease;
 }
 
-/* Bottom-band ⋮ — match ⭐ / 🎁 grey pill look */
+/* Bottom-band ⋮ — pill, “hover look” as base */
 #bottom-more-button{
-  background-color:#f1f5f9;
+  background-color:#e2e8f0;                 /* same as previous hover */
   border:1px solid var(--search-border, #d6dbe1);
-  border-radius:6px;
-  height:36px;
-  min-width:auto;
-  padding:8px 14px;
+  border-radius:9999px;                     /* hard pill */
+  height:34px;                              /* match band height */
+  padding:0 14px;                           /* width > height → pill */
 }
+
+/* Slightly stronger feedback on actual hover */
 #bottom-more-button:hover{
-  background-color:#e2e8f0;
+  background-color:#edf2ff;
   border-color:var(--search-border, #d6dbe1);
 }
 
