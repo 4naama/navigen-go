@@ -536,13 +536,13 @@ export function createLocationProfileModal(data, injected = {}) {
     inner.appendChild(rate);
   }
 
-  // ▸ Footer (pinned): primary (🏷️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // define footer first
+  // ▸ Footer (pinned): primary (🎁️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // define footer first
   const footerEl = document.createElement('div');
   footerEl.className = 'modal-footer cta-compact'; // sticky bottom behavior remains in CSS so this row stays glued to the LPM edge
   footerEl.innerHTML = `
-    <!-- Row 1: 🏷️ 📅 ⭐ 🔳 ⋮ -->
+    <!-- Row 1: 🎁️ 📅 ⭐ 🔳 ⋮ -->
     <button class="modal-footer-button" id="lpm-tag" aria-label="Tag">
-      🏷️ <span class="cta-label">Tag</span>
+      🎁️ <span class="cta-label">Tag</span>
     </button>
 
     <button class="modal-footer-button" id="lpm-book" aria-label="Book">
@@ -1128,7 +1128,7 @@ async function initLpmImageSlider(modal, data) {
       }
     }
 
-    // 🏷 Tag → Promotion QR (if promotions are available for this location)
+    // 🎁 Tag → Promotion QR (if promotions are available for this location)
     {
       const tagBtn = modal.querySelector('#lpm-tag');
       if (tagBtn) {

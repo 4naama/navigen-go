@@ -7,21 +7,46 @@
     "campaignName": "10% off your purchase",
     "brandKey": "world-of-souvenir",
     "context": "souvenirs/hungary;souvenirs/hungary/budapest",
-    "campaignType": "discount",
+    "campaignType": "Discount",
     "targetChannels": [
-      "qr"
+      "QR"
     ],
     "startDate": "Mon Dec 01 2025 00:00:00 GMT+0100 (Central European Standard Time)",
     "endDate": "Wed Dec 31 2025 00:00:00 GMT+0100 (Central European Standard Time)",
-    "status": "active",
-    "offerType": "discount",
-    "discountKind": "percent",
+    "status": "Active",
+    "offerType": "Discount",
+    "discountKind": "Percent",
     "discountValue": 10,
-    "eligibilityType": "everyone",
+    "eligibilityType": "Everyone",
     "eligibilityNotes": "",
     "utmSource": "google",
     "utmMedium": "",
-    "utmCampaign": "",
+    "utmCampaign": "winter_sale",
+    "notes": ""
+  },
+  {
+    "locationID": "hd-debrecen-hadhazi-8910",
+    "locationName": "HD Debrecen Hadházi",
+    "sectorKey": "language-school",
+    "campaignKey": "3001",
+    "campaignName": "10% off your sign-up",
+    "brandKey": "helen-doron",
+    "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+    "campaignType": "Discount",
+    "targetChannels": [
+      "QR"
+    ],
+    "startDate": "Tue Dec 02 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "endDate": "Thu Jan 01 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "status": "Active",
+    "offerType": "Discount",
+    "discountKind": "Percent",
+    "discountValue": 15,
+    "eligibilityType": "",
+    "eligibilityNotes": "",
+    "utmSource": "google",
+    "utmMedium": "",
+    "utmCampaign": "winter_sale",
     "notes": ""
   },
   {
@@ -33,20 +58,18 @@
     "brandKey": "kulcs-patikak",
     "context": "pharmacies/hungary/budapest",
     "campaignType": "Test",
-    "targetChannels": [
-      "default-info"
-    ],
-    "startDate": "Thu May 01 2025 00:00:00 GMT+0200 (Central European Summer Time)",
-    "endDate": "Wed Dec 31 2025 00:00:00 GMT+0100 (Central European Standard Time)",
-    "status": "planned",
-    "offerType": "info",
-    "discountKind": "percent",
+    "targetChannels": [],
+    "startDate": "",
+    "endDate": "",
+    "status": "Paused",
+    "offerType": "",
+    "discountKind": "",
     "discountValue": 10,
-    "eligibilityType": "everyone",
+    "eligibilityType": "Everyone",
     "eligibilityNotes": "Eligibility test note",
     "utmSource": "google",
     "utmMedium": "poster",
-    "utmCampaign": "winter_sale",
+    "utmCampaign": "",
     "notes": "Test note"
   }
 ]

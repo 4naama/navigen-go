@@ -2280,7 +2280,7 @@ if (helpButton) {
   });
 }
 
-/* insert ⭐ and 🏷️ in the search row; resolve anchor locally (no cross-scope refs) */
+/* insert ⭐ and 🎁️ in the search row; resolve anchor locally (no cross-scope refs) */
 (() => {
   const row = document.getElementById("search-container");
   if (!row || document.getElementById("fav-button")) return;
@@ -2305,12 +2305,12 @@ if (helpButton) {
   const promo = document.createElement("button");
   promo.id = "promo-button";
   promo.type = "button";
-  promo.textContent = "🏷️";
+  promo.textContent = "🎁";
   promo.title = t("promotions");
   promo.setAttribute("aria-label", t("promotions"));
 
   if (here && fav.nextSibling === here) {
-    row.insertBefore(promo, here); // visible order: ⭐ 🏷️ (🎯 stays hidden)
+    row.insertBefore(promo, here); // visible order: ⭐ 🎁️ (🎯 stays hidden)
   } else if (here) {
     row.insertBefore(promo, here);
   } else {
