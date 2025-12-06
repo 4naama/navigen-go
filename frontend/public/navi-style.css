@@ -1064,8 +1064,6 @@ body.large-text {
 /* Donation amount cards (3 / 5 / 10 EUR) — full-width tiles inside the modal */
 .donation-option{
   width:100%;
-  max-width:420px;        /* keeps a nice line length on desktop */
-  margin:0 auto;
   padding:0.75em 1.1em;
   border-radius:10px;
   border:1px solid #e5e7eb;
@@ -1073,6 +1071,7 @@ body.large-text {
   text-align:left;
   box-sizing:border-box;
 }
+
 .donation-option:hover{
   border-color:#1a73e8;
   background:#eef2ff;
@@ -2081,8 +2080,9 @@ button:hover {
   cursor: pointer;
   padding: 0;
   border-radius: 0.5em;
-  height: 34px; /* reduced from 40px */
-  width: 34px;  /* keep square */
+  height: 34px;         /* reduced from 40px */
+  min-width: 34px;      /* keep minimum tap target */
+  width: auto;          /* allow pills like ⋮ to widen */
 }
 
 #bottom-band button:hover {
@@ -2096,8 +2096,7 @@ button:hover {
   border:1px solid var(--search-border, #d6dbe1);
   border-radius:6px;
   height:36px;
-  width:auto;              /* override 34px square */
-  min-width:36px;          /* keep tap target */
+  min-width:auto;
   padding:8px 14px;
 }
 #bottom-more-button:hover{
