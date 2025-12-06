@@ -2379,6 +2379,23 @@ button:hover {
   opacity:0.7;                /* softer than primary label */
 }
 
+/* Promotions modal: reduce inner horizontal padding so the grey card can use more width */
+#promotions-modal .modal-body {
+  padding-inline: 0;              /* keep only the modal-content side padding for this modal */
+}
+
+#promotions-modal .modal-body-inner {
+  padding-inline: clamp(0.6rem, 3vw, 0.9rem);
+  /* ↓ explanation:
+     - 0.6rem lower bound keeps some gutter even on tiny screens
+     - 3vw lets spacing scale with viewport width
+     - 0.9rem cap stops it from ballooning on very wide screens */
+}
+
+#promotions-modal #promotions-body.modal-body {
+  padding-inline: 0;              /* inner container adds no extra gutter */
+}
+
 /* View Settings selected option */
 .modal-menu-item.is-active {
   background:#e8f0fe;
