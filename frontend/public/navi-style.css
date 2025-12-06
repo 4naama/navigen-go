@@ -2368,6 +2368,17 @@ button:hover {
   transition:background .2s ease;
   width:100%;                 /* stretch across modal for better card width */
   box-sizing:border-box;      /* include padding in width */
+  margin-left:-4px;           /* let the grey card extend 4px into the modal padding on the left */
+  margin-right:-4px;          /* and 4px on the right → net 8px wider card without changing modal size */
+}
+
+/* Chevron indicator for promotions: implies expandable/open action */
+.promotion-item::after{
+  content:'▾';                /* downwards chevron */
+  flex:0 0 auto;              /* keep icon from shrinking */
+  margin-left:auto;           /* push chevron to the far right inside the card */
+  font-size:0.9em;            /* slightly smaller than main text */
+  opacity:0.7;                /* softer than primary label */
 }
 
 /* View Settings selected option */
@@ -2410,7 +2421,7 @@ body.high-contrast .modal-menu-item.is-active {
 /* Used for: Final donation/product checkout */
 
 .modal-shop-item {
-  padding: 1.5em 0.75em;    /* keep vertical padding, tighten left/right so grey cards sit closer to modal edges */
+  padding: 1.5em;
 }
 
 .modal-shop-item .price {
