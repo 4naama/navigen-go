@@ -389,6 +389,7 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
 /* keep fixed-size controls aligned in search row */
 #search-container #view-filter,
 #search-container #fav-button,
+#search-container #promo-button,
 #search-container #here-button {
   flex: 0 0 auto;
 }
@@ -1055,9 +1056,26 @@ body.large-text {
 .donation-options {
   display: flex;
   flex-direction: column;
-  align-items: center;  /* ✅ Center buttons horizontally */
-  gap: 0.6rem;          /* ✅ Space between buttons */
+  align-items: stretch;  /* ✅ Cards can stretch to full modal width */
+  gap: 0.6rem;           /* ✅ Space between buttons */
   margin-bottom: 1.4rem;
+}
+
+/* Donation amount cards (3 / 5 / 10 EUR) — full-width tiles inside the modal */
+.donation-option{
+  width:100%;
+  max-width:420px;        /* keeps a nice line length on desktop */
+  margin:0 auto;
+  padding:0.75em 1.1em;
+  border-radius:10px;
+  border:1px solid #e5e7eb;
+  background:#f9f9fc;
+  text-align:left;
+  box-sizing:border-box;
+}
+.donation-option:hover{
+  border-color:#1a73e8;
+  background:#eef2ff;
 }
 
 .smiley {
@@ -1939,6 +1957,30 @@ button:hover {
   border-color:var(--search-border, #d6dbe1);
 }
 
+/* 🎁 Promotions — same neutral grey button as ⭐ */
+#promo-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:36px;
+  padding:8px 14px;
+  font-size:16px;
+  font-weight:bold;
+  border-radius:6px;
+  background-color:#f1f5f9;                 /* grey fill */
+  border:1px solid var(--search-border, #d6dbe1);
+  color:black;
+  cursor:pointer;
+  line-height:1;
+  white-space:nowrap;
+  box-sizing:border-box;
+  transition:background-color .2s ease, border-color .2s ease;
+}
+#promo-button:hover{
+  background-color:#e2e8f0;                 /* slightly darker grey */
+  border-color:var(--search-border, #d6dbe1);
+}
+
 /* 🎯 Share location — neutral grey button to match ⭐ */  /* 2-line: remove red hover */
 #here-button {
   display: inline-flex;
@@ -2046,6 +2088,20 @@ button:hover {
 #bottom-band button:hover {
   background-color: rgba(0, 0, 0, 0.05);
   transition: background-color 0.2s ease;
+}
+
+/* Bottom-band ⋮ — match ⭐ / 🎁 grey pill look */
+#bottom-more-button{
+  background-color:#f1f5f9;
+  border:1px solid var(--search-border, #d6dbe1);
+  border-radius:6px;
+  height:36px;
+  min-width:auto;
+  padding:8px 14px;
+}
+#bottom-more-button:hover{
+  background-color:#e2e8f0;
+  border-color:var(--search-border, #d6dbe1);
 }
 
 /* Overflow menu bubble for bottom band (⋮) */
@@ -2287,12 +2343,29 @@ button:hover {
   padding: 0 1.5em 1.5em;   /* header attached; content spaced */
 }
 
-.modal-menu-list{ display:flex; flex-direction:column; gap:.75em; } /* helper */
+.modal-menu-list{
+  display:flex;
+  flex-direction:column;
+  gap:.75em;
+  width:100%;
+  align-items:stretch;
+} /* helper */
+
 .modal-menu-item{
-  display:flex; align-items:center; gap:12px;
-  padding:12px 16px; background:#f8f8f8; border:1px solid #e0e0e0;
-  border-radius:10px; font:inherit; font-size:1rem; text-align:left;
-  cursor:pointer; transition:background .2s ease;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 16px;
+  background:#f8f8f8;
+  border:1px solid #e0e0e0;
+  border-radius:10px;
+  font:inherit;
+  font-size:1rem;
+  text-align:left;
+  cursor:pointer;
+  transition:background .2s ease;
+  width:100%;                 /* stretch across modal for better card width */
+  box-sizing:border-box;      /* include padding in width */
 }
 
 /* View Settings selected option */
