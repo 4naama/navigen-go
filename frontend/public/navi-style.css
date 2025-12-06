@@ -2091,6 +2091,22 @@ button:hover {
 }
 
 /* Bottom-band ⋮ — grey rounded square (matches tested console style) */
+#bottom-more-button {
+  background-color: #e2e8f0;                 /* grey fill, always on */
+  border: 1px solid var(--search-border, #d6dbe1);
+  border-radius: 6px;                        /* squared corners */
+  height: 34px;
+  width: 34px;
+  padding: 0;
+}
+
+/* keep hover from “popping” to another shape */
+#bottom-more-button:hover {
+  background-color: #e2e8f0;
+  border-color: var(--search-border, #d6dbe1);
+}
+
+/* Bottom-band ⋮ — grey rounded square (matches tested console style) */
 #bottom-more-button{
   background-color:#e2e8f0;                 /* same grey you liked in console */
   border:1px solid var(--search-border, #d6dbe1);
