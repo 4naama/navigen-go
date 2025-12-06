@@ -2090,18 +2090,19 @@ button:hover {
   transition: background-color 0.2s ease;
 }
 
-/* Bottom-band ⋮ — pill, “hover look” as base */
+/* Bottom-band ⋮ — grey rounded square (matches tested console style) */
 #bottom-more-button{
-  background-color:#e2e8f0;                 /* same as previous hover */
+  background-color:#e2e8f0;                 /* same grey you liked in console */
   border:1px solid var(--search-border, #d6dbe1);
-  border-radius:9999px;                     /* hard pill */
-  height:34px;                              /* match band height */
-  padding:0 14px;                           /* width > height → pill */
+  border-radius:6px;                         /* rounded square, not circle */
+  height:34px;                               /* match #bottom-band button height */
+  width:34px;                                /* explicit square, same as console */
+  padding:0;                                 /* let the emoji sit centered */
 }
 
-/* Slightly stronger feedback on actual hover */
+/* small extra feedback on hover, but same shape */
 #bottom-more-button:hover{
-  background-color:#edf2ff;
+  background-color:#e2e8f0;
   border-color:var(--search-border, #d6dbe1);
 }
 
