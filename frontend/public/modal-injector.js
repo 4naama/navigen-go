@@ -2718,7 +2718,7 @@ export function createPromotionsModal() {
   const modal = injectModal({
     id: "promotions-modal",
     className: "modal modal-menu",
-    bodyHTML: `<div id="promotions-body" class="modal-body"></div>`
+    bodyHTML: `<div id="promotions-body"></div>`
   });
 
   modal.classList.add("hidden");

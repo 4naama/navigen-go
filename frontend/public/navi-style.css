@@ -985,7 +985,7 @@ body.large-text {
   border-radius: 0.5em;                       /* ✅ Rounded corners for visual clarity */
   padding: 1.5em;                             /* ✅ Inner spacing for typical modals */
 
-  width: min(95vw, 880px);                    /* ✅ Responsive width: slightly wider cap so card stacks (Promotions/Donations) use space better */
+  width: min(95vw, 720px);                    /* ✅ Responsive width: stretches up to a limit */
   max-height: calc(100vh - 6em);              /* ✅ Prevents modal from touching screen edges vertically */
   overflow-y: auto;                           /* ✅ Enables scroll inside modal body if content overflows */
 
@@ -2410,7 +2410,7 @@ body.high-contrast .modal-menu-item.is-active {
 /* Used for: Final donation/product checkout */
 
 .modal-shop-item {
-  padding: 1.5em;
+  padding: 1.5em 0.75em;    /* keep vertical padding, tighten left/right so grey cards sit closer to modal edges */
 }
 
 .modal-shop-item .price {
