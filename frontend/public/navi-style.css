@@ -2368,8 +2368,6 @@ button:hover {
   transition:background .2s ease;
   width:100%;                 /* stretch across modal for better card width */
   box-sizing:border-box;      /* include padding in width */
-  margin-left:-4px;           /* let the grey card extend 4px into the modal padding on the left */
-  margin-right:-4px;          /* and 4px on the right → net 8px wider card without changing modal size */
 }
 
 /* Chevron indicator for promotions: implies expandable/open action */
@@ -2379,6 +2377,23 @@ button:hover {
   margin-left:auto;           /* push chevron to the far right inside the card */
   font-size:0.9em;            /* slightly smaller than main text */
   opacity:0.7;                /* softer than primary label */
+}
+
+/* Promotions modal: reduce inner horizontal padding so the grey card can use more width */
+#promotions-modal .modal-body {
+  padding-inline: 0;              /* keep only the modal-content side padding for this modal */
+}
+
+#promotions-modal .modal-body-inner {
+  padding-inline: clamp(0.6rem, 3vw, 0.9rem);
+  /* ↓ explanation:
+     - 0.6rem lower bound keeps some gutter even on tiny screens
+     - 3vw lets spacing scale with viewport width
+     - 0.9rem cap stops it from ballooning on very wide screens */
+}
+
+#promotions-modal #promotions-body.modal-body {
+  padding-inline: 0;              /* inner container adds no extra gutter */
 }
 
 /* View Settings selected option */
