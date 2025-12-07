@@ -1,64 +1,14 @@
-// Minimal dashboard: fetches /api/stats* and renders daily / QR / campaign data.
-// Unified i18n bootstrap: choose language by device locale → app’s recent setting → English,
-// then load translations from the absolute script or fall back to the local copy.
+// Minimal dashboard: pulls /api/stats* and renders a fixed-order daily table.
+// Robust i18n loader: tries local and absolute; falls back to key-echo if server serves HTML
 let t = (k) => k; // safe fallback so UI renders even if i18n.js isn’t served as JS
 try {
-  // helper: device language → app's recent setting → English
-  const pickLang = async (mod) => {
-    let lang = '';
-
-    // 1) device/browser language (primary tag, e.g. "hu" from "hu-HU")
-    try {
-      const navRaw =
-        (Array.isArray(navigator.languages) && navigator.languages[0]) ||
-        navigator.language ||
-        '';
-      const primary = (navRaw.split(/[-_]/)[0] || '').trim();
-      if (primary) lang = primary;
-    } catch {
-      // ignore navigator errors, fall through to next source
-    }
-
-    // 2) app's most recent lang setting (stored by the main app)
-    if (!lang) {
-      lang = (localStorage.getItem('lang') || '').trim();
-    }
-
-    // 3) fallback: English
-    if (!lang) {
-      lang = 'en';
-    }
-
-    // Optional: ensure the chosen lang is actually in the translated catalog
-    if (mod && typeof mod.fetchTranslatedLangs === 'function') {
-      try {
-        const supported = await mod.fetchTranslatedLangs();
-        if (Array.isArray(supported) && supported.length && !supported.includes(lang)) {
-          lang = 'en';
-        }
-      } catch {
-        // ignore catalog errors; keep chosen lang
-      }
-    }
-
-    return lang || 'en';
-  };
-
   // try absolute prod path first; fall back to local root copy
   try {
-    const __i18nA = await import('/scripts/i18n.js');
-    ({ t } = __i18nA);
-    const lang = await pickLang(__i18nA);
-    if (typeof __i18nA.loadTranslations === 'function') {
-      await __i18nA.loadTranslations(lang);
-    }
+    // keep URL; call loader so t() has strings
+    const __i18nA = await import('/scripts/i18n.js'); ({ t } = __i18nA);
+    await __i18nA.loadTranslations(document.documentElement.lang || localStorage.getItem('lang') || 'en');
   } catch (_e1) {
-    const __i18nB = await import(new URL('./i18n.js', import.meta.url).href); // local minimal build
-    ({ t } = __i18nB);
-    const lang = await pickLang(__i18nB);
-    if (typeof __i18nB.loadTranslations === 'function') {
-      await __i18nB.loadTranslations(lang);
-    }
+    ({ t } = await import(new URL('./i18n.js', import.meta.url).href)); // local minimal build
   }
 
 } catch (_e) {
