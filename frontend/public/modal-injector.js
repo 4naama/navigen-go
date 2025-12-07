@@ -63,6 +63,29 @@ function showPromotionQrModal(qrUrl) {
 
   qrContainer.appendChild(img);
   inner.appendChild(qrContainer);
+
+  // Show QR instructions directly under the QR image
+  const hasT = (typeof t === 'function');
+  const showQrText =
+    (hasT ? (t('promotion.show-qr') || '') : '') ||
+    'Show this QR code to the cashier when paying.';
+  const termsText =
+    (hasT ? (t('campaign.redeem-terms') || '') : '') ||
+    'By redeeming, I agree to the offer terms.';
+
+  const pInstr = document.createElement('p');
+  pInstr.textContent = showQrText;
+  pInstr.style.textAlign = 'center';
+  pInstr.style.marginTop = '1rem';
+  inner.appendChild(pInstr);
+
+  const pTerms = document.createElement('p');
+  pTerms.textContent = termsText;
+  pTerms.style.textAlign = 'center';
+  pTerms.style.fontSize = '0.9em';
+  pTerms.style.opacity = '0.8';
+  inner.appendChild(pTerms);
+
   body.appendChild(inner);
 
   card.appendChild(top);
@@ -182,7 +205,7 @@ async function openPromotionQrModal(modal, data) {
     card.className = 'modal-content modal-layout';
 
     const top = document.createElement('div');
-    const promoTitle = tmpl('promotion.title', 'Promotion');
+    const promoTitle = tmpl('promotion.title', 'Promotion Details');
     top.className = 'modal-top-bar';
     top.innerHTML = `
       <h2 class="modal-title">${promoTitle}</h2>
@@ -203,18 +226,27 @@ async function openPromotionQrModal(modal, data) {
       inner.appendChild(p1);
     }
 
-    // 2) Period label + range + expiry
+    // 1b) State: AVAILABLE (shown textually under the offer line)
+    const stateText = tmpl('promotion.state.available', 'State: AVAILABLE');
+    const pState = document.createElement('p');
+    pState.textContent = stateText;
+    pState.style.textAlign = 'left';
+    pState.style.fontSize = '0.85em';
+    pState.style.opacity = '0.8';
+    inner.appendChild(pState);
+
+    // 2) Period label + range + expiry (single paragraph, no blank line)
     if (startDate && endDate) {
       const label = tmpl('promotion.period-label', 'The offer runs:');
       const rangeTemplate = tmpl('promotion.period-range', '{{startDate}} → {{endDate}}');
       const rangeLine = applyTemplate(rangeTemplate, { startDate, endDate });
 
       const p2 = document.createElement('p');
-      let periodHtml = `${label}<br>${rangeLine}`;
+      let html = `${label}<br>${rangeLine}`;
       if (daysLeftText) {
-        periodHtml += `<br>${daysLeftText}`;
+        html += `<br>${daysLeftText}`;
       }
-      p2.innerHTML = periodHtml;
+      p2.innerHTML = html;
       p2.style.textAlign = 'left';
       inner.appendChild(p2);
     }
@@ -238,28 +270,14 @@ async function openPromotionQrModal(modal, data) {
     p4.style.textAlign = 'left';
     inner.appendChild(p4);
 
-    // 5) Show QR instructions
-    const showQrText = tmpl('promotion.show-qr', 'Show this QR code to the cashier when paying.');
-    const p5 = document.createElement('p');
-    p5.textContent = showQrText;
-    p5.style.textAlign = 'left';
-    inner.appendChild(p5);
-
-    // 6) Terms
-    const termsText = tmpl('campaign.redeem-terms', 'By redeeming, I agree to the offer terms.');
-    const terms = document.createElement('p');
-    terms.textContent = termsText;
-    terms.style.textAlign = 'left';
-    inner.appendChild(terms);
-
-    // 7) Button: 🔳 Redeem Coupon
+    // 5) Button: “I’m at the cashier — 🔳 show my code”
     const btnWrap = document.createElement('div');
     btnWrap.className = 'modal-actions';
 
     const qrBtn = document.createElement('button');
     qrBtn.type = 'button';
     qrBtn.className = 'modal-body-button';
-    qrBtn.textContent = tmpl('campaign.redeem-button', '🔳 Redeem Coupon');
+    qrBtn.textContent = tmpl('campaign.redeem-button', "I'm at the cashier — 🔳 show my code");
     qrBtn.addEventListener('click', () => {
       hideModal(modalId);
       showPromotionQrModal(qrUrl);
@@ -267,6 +285,15 @@ async function openPromotionQrModal(modal, data) {
 
     btnWrap.appendChild(qrBtn);
     inner.appendChild(btnWrap);
+
+    // 6) Small hint under the button
+    const hintText = tmpl('promotion.redeem-hint', "Only tap this when you're ready to pay.");
+    const hint = document.createElement('p');
+    hint.textContent = hintText;
+    hint.style.textAlign = 'left';
+    hint.style.fontSize = '0.85em';
+    hint.style.opacity = '0.8';
+    inner.appendChild(hint);
 
     body.appendChild(inner);
     card.appendChild(top);

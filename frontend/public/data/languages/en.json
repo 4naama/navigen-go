@@ -456,8 +456,8 @@
   "dash.qrcamp.col.new-redeemers": "New redeemers",
   "qr.role.business-info-label": "Business Info QR",
   "qr.role.campaign-redeem-label": "Campaign Redemption QR",
-  "qr.role.campaign-redeem-desc": "Show this QR at the store to redeem your campaign offer.",
-  "qr.role.campaign-redeem-warning": "For in-store redemption only. Time-limited for security.",
+  "qr.role.campaign-redeem-desc": "Show this QR to the cashier when paying to redeem your campaign offer.",
+  "qr.role.campaign-redeem-warning": "For in-store redemption only. The offer is valid only when scanned by the cashier.",
   "dash.info.click": "Shows daily CTA interactions for the selected period.",
   "dash.info.qrinfo": "Shows QR scans and redemptions for the selected period.",
   "dash.info.campaigns": "Shows campaign performance, including redemptions and customer metrics.",
@@ -465,7 +465,7 @@
   "dash.note.campaign-retention": "Campaign analytics include activity from the last 56 days.",
   "promotions": "Promotions",
   "no.promotions.yet": "No active promotions for this page right now.",
-  "promotion.title": "Promotion",
+  "promotion.title": "Promotion Details",
   "promotion.offer-line": "{{discount}} at {{locationName}}",
   "promotion.period-label": "The offer runs:",
   "promotion.period-range": "{{startDate}} → {{endDate}}",
@@ -473,6 +473,8 @@
   "promotion.eligibility-label": "Eligibility: {{eligibility}}",
   "promotion.code-note": "Each code is valid for one purchase.",
   "promotion.show-qr": "Show this QR code to the cashier when paying.",
+  "promotion.state.available": "State: AVAILABLE",
+  "promotion.redeem-hint": "Only tap this when you're ready to pay.",
   "campaign.redeem-terms": "By redeeming, I agree to the offer terms.",
-  "campaign.redeem-button": "🔳 Redeem Coupon"
+  "campaign.redeem-button": "I'm at the cashier — 🔳 show my code"
 }

@@ -456,8 +456,8 @@
   "dash.qrcamp.col.new-redeemers": "מממשים חדשים",
   "qr.role.business-info-label": "QR מידע עסקי",
   "qr.role.campaign-redeem-label": "‏QR לפדיון קמפיין",
-  "qr.role.campaign-redeem-desc": "הצג QR זה בחנות למימוש ההצעה.",
-  "qr.role.campaign-redeem-warning": "למימוש בחנות בלבד. מוגבל בזמן מטעמי אבטחה.",
+  "qr.role.campaign-redeem-desc": "הצג את ה-QR הזה לקופאי בעת התשלום כדי לממש את הצעת הקמפיין שלך.",
+  "qr.role.campaign-redeem-warning": "למימוש בחנות בלבד. ההצעה תקפה רק כאשר הקופאי סורק אותה.",
   "dash.info.click": "מציג אינטראקציות יומיות עבור התקופה שנבחרה.",
   "dash.info.qrinfo": "מציג סריקות QR ומימושים עבור התקופה שנבחרה.",
   "dash.info.campaigns": "מציג את ביצועי הקמפיין, כולל מימושים ומדדי לקוחות.",
@@ -465,7 +465,7 @@
   "dash.note.campaign-retention": "ניתוחי הקמפיין כוללים פעילות מה־56 ימים האחרונים.",
   "promotions": "מבצעים",
   "no.promotions.yet": "אין מבצעים פעילים עבור דף זה כעת.",
-  "promotion.title": "מבצע",
+  "promotion.title": "פרטי מבצע",
   "promotion.offer-line": "{{discount}} ב-{{locationName}}",
   "promotion.period-label": "המבצע בתוקף:",
   "promotion.period-range": "{{startDate}} → {{endDate}}",
@@ -473,6 +473,8 @@
   "promotion.eligibility-label": "זכאות: {{eligibility}}",
   "promotion.code-note": "כל קוד תקף לרכישה אחת.",
   "promotion.show-qr": "הצג קוד QR זה בקופה בעת התשלום.",
+  "promotion.state.available": "מצב: זמין",
+  "promotion.redeem-hint": "הקש כאן רק כשאתה מוכן לשלם.",
   "campaign.redeem-terms": "בעצם המימוש אני מסכים לתנאי ההצעה.",
-  "campaign.redeem-button": "🔳 מימוש קופון"
+  "campaign.redeem-button": "אני בקופה — 🔳 הצג את הקוד שלי"
 }

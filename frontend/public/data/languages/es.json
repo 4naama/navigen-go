@@ -456,8 +456,8 @@
   "dash.qrcamp.col.new-redeemers": "Nuevos canjeadores",
   "qr.role.business-info-label": "QR de información comercial",
   "qr.role.campaign-redeem-label": "QR de canje de campaña",
-  "qr.role.campaign-redeem-desc": "Muestre este QR en la tienda para canjear la oferta.",
-  "qr.role.campaign-redeem-warning": "Solo en tienda. Limitado en el tiempo por seguridad.",
+  "qr.role.campaign-redeem-desc": "Muestra este código QR al cajero al pagar para canjear tu oferta de campaña.",
+  "qr.role.campaign-redeem-warning": "Solo para canje en tienda. La oferta es válida únicamente cuando el cajero la escanea.",
   "dash.info.click": "Muestra las interacciones diarias del período seleccionado.",
   "dash.info.qrinfo": "Muestra las escaneos QR y los canjes del período seleccionado.",
   "dash.info.campaigns": "Muestra el rendimiento de la campaña, incluidos los canjes y las métricas de clientes.",
@@ -465,7 +465,7 @@
   "dash.note.campaign-retention": "El análisis de la campaña incluye la actividad de los últimos 56 días.",
   "promotions": "Promociones",
   "no.promotions.yet": "No hay promociones activas para esta página en este momento.",
-  "promotion.title": "Promoción",
+  "promotion.title": "Detalles de la promoción",
   "promotion.offer-line": "{{discount}} en {{locationName}}",
   "promotion.period-label": "La oferta es válida:",
   "promotion.period-range": "{{startDate}} → {{endDate}}",
@@ -473,6 +473,8 @@
   "promotion.eligibility-label": "Eligibilidad: {{eligibility}}",
   "promotion.code-note": "Cada código es válido para una compra.",
   "promotion.show-qr": "Muestre este código QR en la caja al pagar.",
+  "promotion.state.available": "Estado: DISPONIBLE",
+  "promotion.redeem-hint": "Toque aquí solo cuando esté listo para pagar.",
   "campaign.redeem-terms": "Al canjear, acepto los términos de la oferta.",
-  "campaign.redeem-button": "🔳 Canjear cupón"
+  "campaign.redeem-button": "Estoy en la caja — 🔳 mostrar mi código"
 }
