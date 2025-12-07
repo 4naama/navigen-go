@@ -2623,6 +2623,7 @@ body.high-contrast .modal-menu-item.is-active {
 #dash-table-scroller table{
   margin:0; border-collapse:collapse; width:max-content; font-size:var(--fs-base); background:var(--bg);
 }
+
 #dash-table-scroller th,#dash-table-scroller td{
   padding:var(--pad-cell-y) var(--pad-cell-x); white-space:nowrap; text-align:right; border:1px solid var(--border);
 }
@@ -2636,6 +2637,86 @@ body.high-contrast .modal-menu-item.is-active {
   overflow-y: hidden;               /* no vertical scrollbars within cells */
   white-space: nowrap;              /* keep everything on one line */
   -webkit-overflow-scrolling: touch;/* smoother inner scroll on mobile */
+}
+
+/* Analytics report layout + mini summary tables */
+.analytics-report{
+  padding: 8px 4px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.analytics-section{
+  margin-bottom: 1.5em;
+}
+
+.analytics-section h3{
+  margin: 0 0 0.5em;
+  font-size: 1.05rem;
+}
+
+.analytics-mini-table{
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5em;
+}
+
+.analytics-mini-table th,
+.analytics-mini-table td{
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.analytics-mini-table th{
+  font-weight: 500;
+  text-align: left;
+}
+
+.analytics-mini-table td{
+  text-align: right;
+}
+
+/* Compact bar charts under Analytics mini tables */
+.analytics-bars{
+  margin-top: 0.5em;
+}
+
+.analytics-bar-row{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.analytics-bar-label{
+  flex: 0 0 45%;
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-bar-track{
+  flex: 1 1 auto;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.analytics-bar-fill{
+  height: 100%;
+  border-radius: 999px;
+  background: #60a5fa;
+}
+
+.analytics-bar-fill.remaining{
+  background: #dbeafe;
+}
+
+.analytics-bar-value{
+  flex: 0 0 auto;
+  font-size: 0.85em;
 }
 
 /* sticky header */

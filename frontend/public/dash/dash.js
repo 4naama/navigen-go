@@ -821,6 +821,27 @@ function renderCurrentView(){
     `;
 
     // Helper: build simple horizontal bar chart rows using divs
+    // Helper: build small 2-column summary table (label + value)
+    const buildMiniTable = (items) => {
+      if (!items.length) return '<p>No data available for this period.</p>';
+
+      const rows = items.map(({ label, value }) => `
+        <tr>
+          <th scope="row">${label}</th>
+          <td>${value}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <table class="analytics-mini-table">
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      `;
+    };
+
+    // Helper: build simple horizontal bar chart rows using divs
     const buildBarRows = (items) => {
       if (!items.length) return '<p>No data available for this period.</p>';
       const maxVal = Math.max(...items.map(i => i.value));
@@ -916,11 +937,13 @@ function renderCurrentView(){
     // C) QR Info section (scan, armed, redeem, invalid)
     const qrRows = Array.isArray(stats.qrInfo) ? stats.qrInfo : [];
     let qrSummary = '';
+    let qrTableHtml = '';
     let qrBarsHtml = '';
 
     if (!qrRows.length) {
       qrSummary = 'No QR activity recorded for this period.';
-      qrBarsHtml = '<p>No QR data to display.</p>';
+      qrTableHtml = '<p>No QR data to display.</p>';
+      qrBarsHtml = '';
     } else {
       const counts = { scan: 0, armed: 0, redeem: 0, invalid: 0 };
       for (const row of qrRows) {
@@ -961,12 +984,13 @@ function renderCurrentView(){
       qrSummary = parts.join(' ');
 
       const qrItems = [
-        counts.scan   ? { label: 'Static scans',       value: counts.scan }   : null,
-        counts.armed  ? { label: 'Promo QR shown',     value: counts.armed }  : null,
-        counts.redeem ? { label: 'Redemptions',        value: counts.redeem } : null,
-        counts.invalid? { label: 'Invalid attempts',   value: counts.invalid }: null
+        counts.scan   ? { label: 'Static scans',     value: counts.scan }   : null,
+        counts.armed  ? { label: 'Promo QR shown',   value: counts.armed }  : null,
+        counts.redeem ? { label: 'Redemptions',      value: counts.redeem } : null,
+        counts.invalid? { label: 'Invalid attempts', value: counts.invalid }: null
       ].filter(Boolean);
 
+      qrTableHtml = buildMiniTable(qrItems);
       qrBarsHtml = buildBarRows(qrItems);
     }
 
@@ -974,6 +998,7 @@ function renderCurrentView(){
       <section class="analytics-section analytics-qr">
         <h3>QR Info</h3>
         <p>${qrSummary}</p>
+        ${qrTableHtml}
         ${qrBarsHtml}
       </section>
     `;
@@ -981,12 +1006,14 @@ function renderCurrentView(){
     // D) Campaigns section (armed vs redemptions per campaign)
     const campaigns = Array.isArray(stats.campaigns) ? stats.campaigns : [];
     let campSummary = '';
+    let campTableHtml = '';
     let campBarsHtml = '';
     let campFooterNote = '';
 
     if (!campaigns.length) {
       campSummary = 'No promotion campaigns active or tracked in this period.';
-      campBarsHtml = '<p>No campaign data to display.</p>';
+      campTableHtml = '<p>No campaign data to display.</p>';
+      campBarsHtml = '';
     } else {
       let totalArmed = 0;
       let totalRedeems = 0;
@@ -1023,8 +1050,17 @@ function renderCurrentView(){
         }));
 
       if (!barItems.length) {
-        campBarsHtml = '<p>No campaign data to display.</p>';
+        campTableHtml = '<p>No campaign data to display.</p>';
+        campBarsHtml = '';
       } else {
+        // Table: "Campaign" + "red / armed"
+        const tableItems = barItems.map(i => ({
+          label: i.label,
+          value: `${i.redeemed} / ${i.value}`
+        }));
+        campTableHtml = buildMiniTable(tableItems);
+
+        // Bar chart: stacked filled/remaining, same as before
         const maxArmed = Math.max(...barItems.map(i => i.value));
         const rows = barItems.map(i => {
           const totalWidth = Math.max(4, (i.value / maxArmed) * 100);
@@ -1051,7 +1087,7 @@ function renderCurrentView(){
           if (compliance < threshold) {
             const msg =
               (typeof t === 'function' ? t('dash.analytics.scan-hint') : '') ||
-              'Many promotions are opened by customers but not scanned at checkout. Please ensure cashiers scan Navigen codes when applying discounts.';
+              'Many promotions are opened by customers but not scanned at checkout. Please ensure cashiers scan promotion codes when applying discounts.';
             campFooterNote = `<p class="analytics-note">${msg}</p>`;
           }
         }
@@ -1062,6 +1098,7 @@ function renderCurrentView(){
       <section class="analytics-section analytics-campaigns">
         <h3>Campaigns</h3>
         <p>${campSummary}</p>
+        ${campTableHtml}
         ${campBarsHtml}
         ${campFooterNote}
       </section>
@@ -1083,7 +1120,7 @@ function renderCurrentView(){
           border-bottom:1px solid #ccc;
           margin-bottom:0.75em;
         "></div>
-        <small>${ts} | Business report powered by NaviGen @ 2025</small>
+        <small>${ts} | Business report powered by NaviGen @2026</small>
       </footer>
     `;
 
