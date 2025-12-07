@@ -210,16 +210,13 @@ async function openPromotionQrModal(modal, data) {
       const rangeLine = applyTemplate(rangeTemplate, { startDate, endDate });
 
       const p2 = document.createElement('p');
-      p2.innerHTML = `${label}<br>${rangeLine}`;
+      let periodHtml = `${label}<br>${rangeLine}`;
+      if (daysLeftText) {
+        periodHtml += `<br>${daysLeftText}`;
+      }
+      p2.innerHTML = periodHtml;
       p2.style.textAlign = 'left';
       inner.appendChild(p2);
-
-      if (daysLeftText) {
-        const p2b = document.createElement('p');
-        p2b.textContent = daysLeftText;
-        p2b.style.textAlign = 'left';
-        inner.appendChild(p2b);
-      }
     }
 
     // 3) Eligibility

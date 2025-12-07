@@ -844,3 +844,78 @@ Not a search function itself, but informs ranking
 Frequently interacted locations are boosted in the result list
 
 END OF SPEC
+***
+
+✔️ Legality
+
+You can use the IP for:
+
+Transient analysis
+
+City-level geolocation
+
+Security
+
+You must:
+
+Not store the raw IP permanently
+
+Not use it for fingerprinting
+
+Use aggregate/city-level data if retaining
+
+A compliant approach is:
+
+Immediately geolocate the IP
+
+Store only: {city, country, region, lat, lon (rounded)}
+
+Discard the IP itself
+
+This avoids GDPR issues and is standard practice.
+
+✅ 3. Cloudflare provides FREE device geolocation
+
+Cloudflare automatically performs an internal MaxMind lookup and injects metadata into Workers:
+
+request.cf.city
+request.cf.country
+request.cf.regionCode
+request.cf.latitude
+request.cf.longitude
+
+
+These values are derived from the real client IP, not the Cloudflare POP.
+
+Example:
+export default {
+  async fetch(request) {
+    const info = request.cf;
+    const data = {
+      city: info.city,
+      country: info.country,
+      region: info.region,
+      lat: info.latitude,
+      lon: info.longitude,
+    };
+    // Store the city-level data only
+    // ...
+    return new Response(JSON.stringify(data));
+  }
+}
+
+✔️ This is the best and safest solution
+
+No storing IPs
+
+No running your own geolocation
+
+No extra cost
+
+City-level accuracy is typically correct
+
+✔ NEVER store raw IPs
+
+Store only:
+
+{ "city": "...", "country": "...", "lat": xx.x, "lon": yy.y } //* No lat lon either

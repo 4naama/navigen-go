@@ -137,6 +137,9 @@ export default {
         // Create redeem token for this location + campaign
         const token = await createRedeemToken(env.KV_STATS, locULID, chosenKey);
 
+        // Record that a promotion QR was shown (ARMED) for this campaign/location
+        await logQrArmed(env.KV_STATS, env, locULID, req, chosenKey);
+
         // Build Promotion QR URL using the original locationRaw (slug), not ULID
         const qrBase = siteOrigin || "https://navigen.io";
         const qrUrlObj = new URL(`/out/qr-redeem/${encodeURIComponent(locationRaw)}`, qrBase);
@@ -386,6 +389,7 @@ export default {
           scans: number;
           redemptions: number;
           invalids: number;
+          armed: number;                 // how many times a promotion QR was shown (ARMED)
           uniqueVisitors: Set<string>;
           repeatVisitors: Set<string>;
           uniqueRedeemers: Set<string>;
@@ -453,6 +457,7 @@ export default {
                 scans: 0,
                 redemptions: 0,
                 invalids: 0,
+                armed: 0,                         // promo QR shown counter
                 uniqueVisitors: new Set<string>(),
                 repeatVisitors: new Set<string>(),
                 uniqueRedeemers: new Set<string>(),
@@ -477,6 +482,11 @@ export default {
             // Invalid attempts (expired/used/invalid tokens)
             if (entry.signal === "invalid") {
               agg.invalids += 1;
+            }
+
+            // Promo QR shown (ARMED): track how many times a promotion QR was displayed
+            if (entry.signal === "armed") {
+              agg.armed += 1;
             }
 
             // Visitor identity (for now): derive from UA + country if visitor field is empty
@@ -510,11 +520,11 @@ export default {
             if (entry.country) {
               agg.countries.add(entry.country);
             }
-         
+
           }
           qrCursor = page.cursor || undefined;
         } while (qrCursor);
-        
+
         // Sort QR Info rows by time (newest first)
         qrInfo.sort((a, b) => {
           const ta = String(a.time || '');
@@ -551,6 +561,7 @@ export default {
               brand: meta?.brandKey || "",
               target: meta?.context || "",
               period: periodLabel,
+              armed: agg.armed,                     // Promo QR shown (ARMED)
               scans: agg.scans,
               redemptions: agg.redemptions,
               invalids: agg.invalids,
@@ -1474,6 +1485,59 @@ async function logQrScan(
     const key = `qrlog:${loc}:${day}:${scanId}`;
     // TTL: 56 days for QR logs (~8 weeks)
     const ttlSeconds = 56 * 24 * 60 * 60;
+    await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
+  } catch {
+    // never throw from logging; stats must not break the main flow
+  }
+}
+
+/**
+ * Log that a promotion QR was shown (ARMED) for a given campaign.
+ * This is called when /api/promo-qr is used to generate a promo QR code.
+ */
+async function logQrArmed(
+  kv: KVNamespace,
+  _env: Env,
+  loc: string,
+  req: Request,
+  campaignKey: string
+): Promise<void> {
+  try {
+    const now = new Date();
+    const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
+    const timeISO = now.toISOString();
+
+    const ua = req.headers.get("User-Agent") || "";
+    const lang = req.headers.get("Accept-Language") || "";
+
+    const country = ((req as any).cf?.country || "").toString();
+    const city = ((req as any).cf?.city || "").toString();
+    const source = "qr-redeem"; // same logical family as promotion QR
+    const signal = "armed";     // distinguishes promo QR shown from scans/redeems
+
+    const visitor = `${ua}|${country}`;
+
+    // explicit campaignKey: promo QR is always tied to a campaign
+    const keyBytes = new Uint8Array(6);
+    (crypto as any).getRandomValues(keyBytes);
+    const scanId = Array.from(keyBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    const entry: QrLogEntry = {
+      time: timeISO,
+      locationID: loc,
+      day,
+      ua,
+      lang,
+      country,
+      city,
+      source,
+      signal,
+      visitor,
+      campaignKey
+    };
+
+    const key = `qrlog:${loc}:${day}:${scanId}`;
+    const ttlSeconds = 56 * 24 * 60 * 60; // align with other QR logs (~8 weeks)
     await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
   } catch {
     // never throw from logging; stats must not break the main flow

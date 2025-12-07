@@ -412,12 +412,24 @@ function renderTable(json) {
       infoBtn.id = 'dash-info';
       infoBtn.type = 'button';
       // tooltip / SR label; visual content stays icon-only
-      const infoTitle = (typeof t === 'function' ? t('dash.info') : 'Info');
+      const infoTitle = (typeof t === 'function' ? t('dash.analytics') : 'Analytics');
       infoBtn.title = infoTitle;
       infoBtn.ariaLabel = infoTitle;
-      infoBtn.textContent = 'ℹ️';
+      infoBtn.textContent = '📊';
       infoBtn.addEventListener('click', () => {
-        // reserved for future info modal or help; no-op for now
+        // show a brief, text-only hint about scan compliance for promotions
+        const msg =
+          (typeof t === 'function' ? t('dash.analytics.scan-hint') : '') ||
+          'Many promotions are opened by customers but not scanned at checkout.\nPlease ensure cashiers scan Navigen codes when applying discounts.';
+        let hintSpan = metaEl.querySelector('.meta-analytics');
+        if (!hintSpan) {
+          hintSpan = document.createElement('span');
+          hintSpan.className = 'meta-analytics';
+          hintSpan.style.whiteSpace = 'pre-line';
+          hintSpan.style.marginLeft = '0.5rem';
+          metaEl.appendChild(hintSpan);
+        }
+        hintSpan.textContent = msg;
       });
     }
 
@@ -655,8 +667,10 @@ function renderCurrentView(){
       ['dash.qrcamp.col.target',            'Target'],
       ['dash.qrcamp.col.brand',             'Brand'],
       ['dash.qrcamp.col.campaign-period',   'Campaign period'],
+      ['dash.qrcamp.col.armed',             'Promo QR shown'],           // ARMED: times promo QR was displayed
       ['dash.qrcamp.col.scans',             'Scans'],
       ['dash.qrcamp.col.redemptions',       'Redemptions'],
+      ['dash.qrcamp.col.scan-compliance',   'Scan compliance %'],        // redemptions / armed
       ['dash.qrcamp.col.efficiency',        'Efficiency %'],
       ['dash.qrcamp.col.invalids',          'Invalid attempts'],
       ['dash.qrcamp.col.unique',            'Unique visitors'],
@@ -676,6 +690,7 @@ function renderCurrentView(){
       tbody = `<tbody><tr><td colspan="${labels.length}" style="text-align:center;">${emptyMsg}</td></tr></tbody>`;
     } else {
       const rowsHtml = data.map(row => {
+        const armed = Number(row.armed ?? 0);
         const scans = Number(row.scans ?? 0);
         const redemptions = Number(row.redemptions ?? 0);
         const invalids = Number(row.invalids ?? 0);
@@ -688,6 +703,11 @@ function renderCurrentView(){
         const repeatRedeemers = Number(row.repeatRedeemers ?? 0);
         const newRedeemers = Math.max(uniqueRedeemers - repeatRedeemers, 0);
 
+        let scanCompliance = '';
+        if (armed > 0) {
+          scanCompliance = ((redemptions / armed) * 100).toFixed(1) + '%';
+        }
+
         let effPct = '';
         if (scans > 0) {
           effPct = ((redemptions / scans) * 100).toFixed(1) + '%';
@@ -699,8 +719,10 @@ function renderCurrentView(){
           row.target || '',            // Target
           row.brand || '',             // Brand
           row.period || '',
+          armed,
           scans,
           redemptions,
+          scanCompliance,
           effPct,
           invalids,
           uniq,
