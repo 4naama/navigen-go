@@ -417,20 +417,11 @@ function renderTable(json) {
       infoBtn.ariaLabel = infoTitle;
       infoBtn.textContent = '📊';
       infoBtn.addEventListener('click', () => {
-        // show a brief, text-only hint about scan compliance for promotions
-        const msg =
-          (typeof t === 'function' ? t('dash.analytics.scan-hint') : '') ||
-          'Many promotions are opened by customers but not scanned at checkout.\nPlease ensure cashiers scan Navigen codes when applying discounts.';
-        let hintSpan = metaEl.querySelector('.meta-analytics');
-        if (!hintSpan) {
-          hintSpan = document.createElement('span');
-          hintSpan.className = 'meta-analytics';
-          hintSpan.style.whiteSpace = 'pre-line';
-          hintSpan.style.marginLeft = '0.5rem';
-          metaEl.appendChild(hintSpan);
-        }
-        hintSpan.textContent = msg;
+        // switch to Analytics view (4th tab-equivalent) and render a textual+chart report
+        currentView = 'analytics';
+        renderCurrentView();
       });
+
     }
 
     // move both buttons into the right-aligned actions wrapper
@@ -747,7 +738,312 @@ function renderCurrentView(){
     `;
     return;
   }
- 
+
+  if (currentView === 'analytics') {
+    // D) Analytics report (non-table view)
+    const stats = lastStats || {};
+    const days = stats.days || {};
+    const dateKeys = Object.keys(days).sort();
+    const hasData = dateKeys.length > 0;
+
+    // Header: location/entity + period + rating summary
+    const name = (stats.locationName || stats.entityName || '').trim();
+    const from = (stats.from || '').trim();
+    const to = (stats.to || '').trim();
+
+    const ratedTotal = Number(stats.rated_sum ?? 0);
+    const ratingAvg  = Number(stats.rating_avg ?? 0);
+    let ratingSentence = '';
+    if (ratedTotal > 0 && ratingAvg > 0) {
+      const avgText = ratingAvg.toFixed(1);
+      ratingSentence = `⭐ ${avgText} (${ratedTotal}) — Average rating ${avgText} from ${ratedTotal} review${ratedTotal === 1 ? '' : 's'} in this period.`;
+    } else {
+      ratingSentence = 'No customer ratings were recorded in this period.';
+    }
+
+    const headerHtml = `
+      <section class="analytics-header">
+        <h2>${(typeof t === 'function' ? t('dash.analytics') : 'Analytics')}</h2>
+        <p>${name ? `Location: ${name}` : ''}</p>
+        <p>${from && to ? `Period: ${from} → ${to}` : ''}</p>
+        <p>${ratingSentence}</p>
+      </section>
+    `;
+
+    // Helper: build simple horizontal bar chart rows using divs
+    const buildBarRows = (items) => {
+      if (!items.length) return '<p>No data available for this period.</p>';
+      const maxVal = Math.max(...items.map(i => i.value));
+      if (maxVal <= 0) return '<p>No data available for this period.</p>';
+
+      const rows = items.map(({ label, value }) => {
+        const width = Math.max(4, (value / maxVal) * 100); // keep a visible minimum
+        return `
+          <div class="analytics-bar-row">
+            <span class="analytics-bar-label">${label}</span>
+            <div class="analytics-bar-track">
+              <div class="analytics-bar-fill" style="width:${width}%;"></div>
+            </div>
+            <span class="analytics-bar-value">${value}</span>
+          </div>
+        `;
+      }).join('');
+      return `<div class="analytics-bars">${rows}</div>`;
+    };
+
+    // B) Click Info section (totals per metric, top 5 with data)
+    let clickSummary = '';
+    let clickBarsHtml = '';
+
+    if (!hasData) {
+      clickSummary = 'No click events recorded for this period.';
+      clickBarsHtml = '<p>No click data to display.</p>';
+    } else {
+      const totals = new Map();
+      for (const d of dateKeys) {
+        const row = days[d] || {};
+        for (const metric of ORDER) {
+          const alt = metric.replaceAll('-', '_');
+          const v = Number(row[metric] ?? row[alt] ?? 0);
+          if (!v) continue;
+          totals.set(metric, (totals.get(metric) || 0) + v);
+        }
+      }
+      const items = Array.from(totals.entries())
+        .filter(([, v]) => v > 0)
+        .map(([metric, value]) => ({ metric, value, label: labelFor(metric) }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
+
+      if (!items.length) {
+        clickSummary = 'No click events recorded for this period.';
+        clickBarsHtml = '<p>No click data to display.</p>';
+      } else {
+        const names = items.map(i => i.label);
+        const firstLine = `The most-used actions in this period were: ${names.join(', ')}.`;
+
+        // Compare last day vs previous day for these top metrics (simple trend sentence)
+        let trendLine = '';
+        if (dateKeys.length >= 2) {
+          const lastDate = dateKeys[dateKeys.length - 1];
+          const prevDate = dateKeys[dateKeys.length - 2];
+          const lastRow = days[lastDate] || {};
+          const prevRow = days[prevDate] || {};
+
+          const describeDelta = (metric) => {
+            const alt = metric.replaceAll('-', '_');
+            const a = Number(prevRow[metric] ?? prevRow[alt] ?? 0);
+            const b = Number(lastRow[metric] ?? lastRow[alt] ?? 0);
+            if (b > a) return 'increased';
+            if (b < a) return 'decreased';
+            return 'stayed about the same';
+          };
+
+          const phrases = items.slice(0, 3).map(i => {
+            const trend = describeDelta(i.metric);
+            return `${i.label} ${trend}`;
+          });
+          trendLine = `Compared to the previous day, ${phrases.join(', ')}.`;
+        }
+
+        clickSummary = [firstLine, trendLine].filter(Boolean).join(' ');
+
+        clickBarsHtml = buildBarRows(items.map(i => ({
+          label: i.label,
+          value: i.value
+        })));
+      }
+    }
+
+    const clickSectionHtml = `
+      <section class="analytics-section analytics-clicks">
+        <h3>Click Info</h3>
+        <p>${clickSummary}</p>
+        ${clickBarsHtml}
+      </section>
+    `;
+
+    // C) QR Info section (scan, armed, redeem, invalid)
+    const qrRows = Array.isArray(stats.qrInfo) ? stats.qrInfo : [];
+    let qrSummary = '';
+    let qrBarsHtml = '';
+
+    if (!qrRows.length) {
+      qrSummary = 'No QR activity recorded for this period.';
+      qrBarsHtml = '<p>No QR data to display.</p>';
+    } else {
+      const counts = { scan: 0, armed: 0, redeem: 0, invalid: 0 };
+      for (const row of qrRows) {
+        const sig = (row.signal || '').toLowerCase();
+        if (sig === 'scan') counts.scan++;
+        else if (sig === 'armed') counts.armed++;
+        else if (sig === 'redeem') counts.redeem++;
+        else if (sig === 'invalid') counts.invalid++;
+      }
+      const totalEvents = counts.scan + counts.armed + counts.redeem + counts.invalid;
+
+      const parts = [];
+      if (totalEvents > 0) {
+        parts.push(`There were ${totalEvents} QR events in this period:`);
+        const detailBits = [];
+        if (counts.scan)   detailBits.push(`${counts.scan} scans`);
+        if (counts.armed)  detailBits.push(`${counts.armed} promo QR shown`);
+        if (counts.redeem) detailBits.push(`${counts.redeem} redemptions`);
+        if (counts.invalid)detailBits.push(`${counts.invalid} invalid attempts`);
+        if (detailBits.length) parts.push(detailBits.join(', ') + '.');
+
+        if (counts.armed > 0) {
+          const redRate = ((counts.redeem / counts.armed) * 100).toFixed(1);
+          parts.push(`Most QR activity came from promotions, with ${redRate}% of promo QR shown leading to a redemption.`);
+        } else if (counts.scan > 0) {
+          const redFromScans = ((counts.redeem / counts.scan) * 100).toFixed(1);
+          parts.push(`Most QR activity came from static scans, with ${redFromScans}% leading to a redemption.`);
+        }
+
+        if (counts.invalid > 0 && totalEvents > 0) {
+          const invalidRate = ((counts.invalid / totalEvents) * 100).toFixed(1);
+          parts.push(`Invalid attempts were ${invalidRate}% of QR events, which indicates customers mostly use valid codes.`);
+        }
+      } else {
+        parts.push('No QR activity recorded for this period.');
+      }
+
+      qrSummary = parts.join(' ');
+
+      const qrItems = [
+        counts.scan   ? { label: 'Static scans',       value: counts.scan }   : null,
+        counts.armed  ? { label: 'Promo QR shown',     value: counts.armed }  : null,
+        counts.redeem ? { label: 'Redemptions',        value: counts.redeem } : null,
+        counts.invalid? { label: 'Invalid attempts',   value: counts.invalid }: null
+      ].filter(Boolean);
+
+      qrBarsHtml = buildBarRows(qrItems);
+    }
+
+    const qrSectionHtml = `
+      <section class="analytics-section analytics-qr">
+        <h3>QR Info</h3>
+        <p>${qrSummary}</p>
+        ${qrBarsHtml}
+      </section>
+    `;
+
+    // D) Campaigns section (armed vs redemptions per campaign)
+    const campaigns = Array.isArray(stats.campaigns) ? stats.campaigns : [];
+    let campSummary = '';
+    let campBarsHtml = '';
+    let campFooterNote = '';
+
+    if (!campaigns.length) {
+      campSummary = 'No promotion campaigns active or tracked in this period.';
+      campBarsHtml = '<p>No campaign data to display.</p>';
+    } else {
+      let totalArmed = 0;
+      let totalRedeems = 0;
+      let totalInvalid = 0;
+
+      const perCampItems = campaigns.map(c => {
+        const armed = Number(c.armed ?? 0);
+        const red = Number(c.redemptions ?? 0);
+        const inv = Number(c.invalids ?? 0);
+        totalArmed += armed;
+        totalRedeems += red;
+        totalInvalid += inv;
+        const name = c.campaignName || c.campaign || '';
+        return { name, armed, red };
+      });
+
+      const bits = [];
+      bits.push(`Promotions were shown ${totalArmed} times, with ${totalRedeems} redemptions in this period.`);
+      if (totalArmed > 0) {
+        const compliance = ((totalRedeems / totalArmed) * 100).toFixed(1);
+        bits.push(`This gives a scan compliance of ${compliance}% for the period.`);
+      }
+      if (totalInvalid > 0) {
+        bits.push(`There were ${totalInvalid} invalid redemption attempts across all campaigns.`);
+      }
+      campSummary = bits.join(' ');
+
+      const barItems = perCampItems
+        .filter(i => i.armed > 0 || i.red > 0)
+        .map(i => ({
+          label: i.name || 'Campaign',
+          value: i.armed,
+          redeemed: i.red
+        }));
+
+      if (!barItems.length) {
+        campBarsHtml = '<p>No campaign data to display.</p>';
+      } else {
+        const maxArmed = Math.max(...barItems.map(i => i.value));
+        const rows = barItems.map(i => {
+          const totalWidth = Math.max(4, (i.value / maxArmed) * 100);
+          const redPart = i.value > 0 ? (i.redeemed / i.value) : 0;
+          const redeemedWidth = totalWidth * redPart;
+          const remainingWidth = totalWidth - redeemedWidth;
+          return `
+            <div class="analytics-bar-row">
+              <span class="analytics-bar-label">${i.label}</span>
+              <div class="analytics-bar-track">
+                <div class="analytics-bar-fill" style="width:${Math.max(0, redeemedWidth)}%;"></div>
+                <div class="analytics-bar-fill remaining" style="width:${Math.max(0, remainingWidth)}%;"></div>
+              </div>
+              <span class="analytics-bar-value">${i.redeemed} / ${i.value}</span>
+            </div>
+          `;
+        }).join('');
+        campBarsHtml = `<div class="analytics-bars">${rows}</div>`;
+
+        // Non-compliance note if overall scan compliance is under threshold (e.g. 90%)
+        if (totalArmed > 0) {
+          const compliance = totalRedeems / totalArmed;
+          const threshold = 0.9;
+          if (compliance < threshold) {
+            const msg =
+              (typeof t === 'function' ? t('dash.analytics.scan-hint') : '') ||
+              'Many promotions are opened by customers but not scanned at checkout. Please ensure cashiers scan Navigen codes when applying discounts.';
+            campFooterNote = `<p class="analytics-note">${msg}</p>`;
+          }
+        }
+      }
+    }
+
+    const campaignsSectionHtml = `
+      <section class="analytics-section analytics-campaigns">
+        <h3>Campaigns</h3>
+        <p>${campSummary}</p>
+        ${campBarsHtml}
+        ${campFooterNote}
+      </section>
+    `;
+
+    // E) Footer with timestamp
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ts = `${y}-${m}-${d} · ${hh}:${mm}`;
+
+    const footerHtml = `
+      <footer class="analytics-footer">
+        <small>${ts} | Business report powered by NaviGen @ 2025</small>
+      </footer>
+    `;
+
+    // Assemble full report
+    tblWrap.innerHTML = `
+      <div class="analytics-report">
+        ${headerHtml}
+        ${clickSectionHtml}
+        ${qrSectionHtml}
+        ${campaignsSectionHtml}
+        ${footerHtml}
+      </div>
+    `;
+    return;
+  } 
 }
 
 // Build TSV from the current table (thead + tbody + tfoot). Comments stay concise.
