@@ -730,7 +730,7 @@ function renderCurrentView(){
 
     tblWrap.innerHTML = `
       <div id="dash-table-scroller">
-        <table class="stats-table">
+        <table class="stats-table campaigns-table">
           ${thead}
           ${tbody}
         </table>

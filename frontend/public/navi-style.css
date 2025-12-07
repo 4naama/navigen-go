@@ -2591,12 +2591,32 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* unified scrollport: owns the bottom floor; no ::after, no table margins */
 #dash-table-scroller{
-  flex:1 1 auto; min-height:0; max-height:60vh; /* desktop/tablet cap */
-  overflow-y:auto; overflow-x:auto; -webkit-overflow-scrolling:touch;
-  padding-bottom:56px;             /* single source of floor on desktop */
-  scroll-padding-bottom:56px;      /* mirror for programmatic scroll */
-  scrollbar-gutter:stable both-edges;
-  box-sizing:border-box; max-width:100%; text-align:left;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 60vh;                         /* desktop/tablet cap */
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  /* single source of floor for all views (tables + Analytics report);
+     includes extra room for footer and physical safe-area on mobile */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 20px));
+  scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom, 20px));
+
+  scrollbar-gutter: stable both-edges;
+  box-sizing: border-box;
+  max-width: 100%;
+  text-align: left;
+}
+
+/* Mobile/touch: dynamic viewport height; reuse same floor padding */
+@media (pointer:coarse), (max-width:640px){
+  #dash-table-scroller{
+    max-height: 60svh;   /* svh tracks visible viewport on mobile */
+    height: auto;
+    -webkit-overflow-scrolling: touch;
+    /* padding-bottom / scroll-padding-bottom inherited from base */
+  }
 }
 
 /* table fit */
@@ -2607,6 +2627,16 @@ body.high-contrast .modal-menu-item.is-active {
   padding:var(--pad-cell-y) var(--pad-cell-x); white-space:nowrap; text-align:right; border:1px solid var(--border);
 }
 #dash-table-scroller th:first-child,#dash-table-scroller td:first-child{ text-align:left; }
+
+/* Campaigns table: cap column width; allow full text via inner horizontal scroll */
+#dash-table-scroller table.campaigns-table th,
+#dash-table-scroller table.campaigns-table td {
+  max-width: 16ch;                  /* ≈ width of "Scan compliance %" */
+  overflow-x: auto;                 /* inner horizontal scroll for long labels */
+  overflow-y: hidden;               /* no vertical scrollbars within cells */
+  white-space: nowrap;              /* keep everything on one line */
+  -webkit-overflow-scrolling: touch;/* smoother inner scroll on mobile */
+}
 
 /* sticky header */
 #dash-table-scroller thead{
@@ -2774,24 +2804,6 @@ body.high-contrast .modal-menu-item.is-active {
   background:#f8fafc;
   box-shadow:0 1px 2px rgba(0,0,0,.06);
   outline:none;
-}
-
-/* desktop/tablet: scale the floor with row-height when available */
-@supports (height:1lh){
-  #dash-table-scroller{
-    padding-bottom:clamp(32px, 1.25lh, 7dvh);     /* ≈ two rows room */
-    scroll-padding-bottom:clamp(32px, 1.25lh, 7dvh);
-  }
-}
-
-/* Mobile/touch: dynamic viewport + safe-area; same single source */
-@media (pointer:coarse), (max-width:640px){
-  #dash-table-scroller{
-    max-height:60svh; height:auto; /* svh tracks visible space */
-    padding-bottom:calc(clamp(20px, 1.5lh, 8dvh) + env(safe-area-inset-bottom,0px));
-    scroll-padding-bottom:calc(clamp(20px, 1.5lh, 8dvh) + env(safe-area-inset-bottom,0px));
-    -webkit-overflow-scrolling:touch;
-  }
 }
 
 /* one-line label+input; scroll when narrow */
