@@ -1685,7 +1685,9 @@ async function initEmergencyBlock(countryOverride) {
       if (sub) {
         // pick context from meta or path; fallback to default key
         const metaCtx = document.querySelector('meta[name="navigen-context"]')?.content?.trim() || "";
-        const ctxFromPath = location.pathname.replace(/^\/(?:en|hu|he|es)\//, "").replace(/\/$/, "");
+        const ctxFromPath = location.pathname
+          .replace(/^\/[a-z]{2}\//i, "")  // strip ANY 2-letter lang prefix like /en/, /de/, /it/ …
+          .replace(/\/$/, "");
         const ctx = (metaCtx || ctxFromPath).toLowerCase();
         const snake = (s) => s.replace(/[^\w]+/g, "_");
 

@@ -1077,7 +1077,12 @@ function renderCurrentView(){
     const ts = `${y}-${m}-${d} · ${hh}:${mm}`;
 
     const footerHtml = `
-      <footer class="analytics-footer">
+      <footer class="analytics-footer" style="margin-top:3em; text-align:center;">
+        <div style="
+          width:100%;
+          border-bottom:1px solid #ccc;
+          margin-bottom:0.75em;
+        "></div>
         <small>${ts} | Business report powered by NaviGen @ 2025</small>
       </footer>
     `;
