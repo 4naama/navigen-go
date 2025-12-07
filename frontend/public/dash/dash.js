@@ -411,7 +411,7 @@ function renderTable(json) {
       infoBtn = document.createElement('button');
       infoBtn.id = 'dash-info';
       infoBtn.type = 'button';
-      // tooltip / SR label; visual content stays icon-only
+      // tooltip / screen-reader label for the Analytics view button
       const infoTitle = (typeof t === 'function' ? t('dash.analytics') : 'Analytics');
       infoBtn.title = infoTitle;
       infoBtn.ariaLabel = infoTitle;
@@ -1032,16 +1032,19 @@ function renderCurrentView(){
       </footer>
     `;
 
-    // Assemble full report
+    // Assemble full report inside the existing scroll container
     tblWrap.innerHTML = `
-      <div class="analytics-report">
-        ${headerHtml}
-        ${clickSectionHtml}
-        ${qrSectionHtml}
-        ${campaignsSectionHtml}
-        ${footerHtml}
+      <div id="dash-table-scroller">
+        <div class="analytics-report">
+          ${headerHtml}
+          ${clickSectionHtml}
+          ${qrSectionHtml}
+          ${campaignsSectionHtml}
+          ${footerHtml}
+        </div>
       </div>
     `;
+
     return;
   } 
 }
