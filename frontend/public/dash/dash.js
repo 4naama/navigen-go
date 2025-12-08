@@ -1027,7 +1027,6 @@ function renderCurrentView(){
       <section class="analytics-section analytics-qr">
         <h3>QR Info</h3>
         <p>${qrSummary}</p>
-        ${qrTableHtml}
         ${qrBarsHtml}
       </section>
     `;
