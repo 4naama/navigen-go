@@ -471,8 +471,8 @@ function renderTable(json) {
       metaEl.appendChild(copyBtn);
     }
 
-    // 3) ensure Info (ℹ️) button and group both buttons on the right
-    // create a shared actions wrapper once: [date] ... [ℹ️ ⧉]
+    // 3) ensure Analytics (📊) button and group both buttons on the right
+    // create a shared actions wrapper once: [date range] ... [📊 ⧉]
     let actionsWrap = metaEl.querySelector('.meta-actions');
     if (!actionsWrap) {
       actionsWrap = document.createElement('span');
@@ -1002,18 +1002,27 @@ function renderCurrentView(){
     // D) Campaigns section (armed vs redemptions per campaign)
     const campaigns = Array.isArray(stats.campaigns) ? stats.campaigns : [];
     let campSummary = '';
-    let campTableHtml = '';
     let campBarsHtml = '';
-    let campFooterNote = '';
+
+    // totals used both for Cards and QA
+    let totalArmed = 0;
+    let totalRedeems = 0;
+    let totalInvalid = 0;
 
     if (!campaigns.length) {
       campSummary = 'No promotion campaigns active or tracked in this period.';
-      campTableHtml = '<p>No campaign data to display.</p>';
       campBarsHtml = '';
     } else {
-      let totalArmed = 0;
-      let totalRedeems = 0;
-      let totalInvalid = 0;
+      const perCampItems = campaigns.map(c => {
+        const armed = Number(c.armed ?? 0);
+        const red = Number(c.redemptions ?? 0);
+        const inv = Number(c.invalids ?? 0);
+        totalArmed += armed;
+        totalRedeems += red;
+        totalInvalid += inv;
+        const name = c.campaignName || c.campaign || '';
+        return { name, armed, red };
+      });
 
       const perCampItems = campaigns.map(c => {
         const armed = Number(c.armed ?? 0);
