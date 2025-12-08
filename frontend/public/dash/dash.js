@@ -419,42 +419,57 @@ function renderTable(json) {
     range.textContent = `${startISO} → ${endISO}`;
 
     // 2) ensure Copy button exists (id is stable)
-    copyBtn.addEventListener('click', async () => {
-      let payload = '';
+    let copyBtn = document.getElementById('copy-tsv');
+    if (!copyBtn) {
+      copyBtn = document.createElement('button');
+      copyBtn.id = 'copy-tsv';
+      copyBtn.type = 'button';
+      copyBtn.title = t('dash.copy.tsv');
+      copyBtn.ariaLabel = t('dash.copy.tsv');
+      copyBtn.textContent = '⧉';
+      copyBtn.addEventListener('click', async () => {
+        let payload = '';
 
-      const table = tblWrap.querySelector('table.stats-table');
-      if (table) {
-        // Click / QR / Campaigns views: TSV from stats table (existing behavior)
-        payload = toTSV(table);
-      } else if (typeof currentView === 'string' && currentView === 'analytics') {
-        // Analytics view: copy full written report as plain text
-        const report = tblWrap.querySelector('.analytics-report') || tblWrap;
-        payload = report.innerText.trim();
-      } else {
-        return; // no suitable source
-      }
-
-      if (!payload) return;
-
-      try{
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(payload);
-        } else if (document.execCommand) {
-          const textarea = document.createElement('textarea');
-          textarea.value = payload;
-          textarea.style.position = 'fixed';
-          textarea.style.opacity = '0';
-          document.body.appendChild(textarea);
-          textarea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textarea);
+        const table = tblWrap.querySelector('table.stats-table');
+        if (table) {
+          // Click / QR / Campaigns views: TSV from stats table
+          payload = toTSV(table);
+        } else if (typeof currentView === 'string' && currentView === 'analytics') {
+          // Analytics view: copy full written report as plain text
+          const report = tblWrap.querySelector('.analytics-report') || tblWrap;
+          payload = report.innerText.trim();
+        } else {
+          return; // no suitable source
         }
-        copyBtn.classList.add('copied');
-        const oldTitle = copyBtn.title;
-        copyBtn.title = t('dash.copy.copied');
-        setTimeout(() => { copyBtn.classList.remove('copied'); copyBtn.title = oldTitle; }, 2500);
-      }catch(_e){ /* noop */ }
-    });
+
+        if (!payload) return;
+
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(payload);
+          } else if (document.execCommand) {
+            const textarea = document.createElement('textarea');
+            textarea.value = payload;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+          }
+          copyBtn.classList.add('copied');
+          const oldTitle = copyBtn.title;
+          copyBtn.title = t('dash.copy.copied');
+          setTimeout(() => {
+            copyBtn.classList.remove('copied');
+            copyBtn.title = oldTitle;
+          }, 2500);
+        } catch (_e) {
+          // noop on copy failure
+        }
+      });
+      metaEl.appendChild(copyBtn);
+    }
 
     // 3) ensure Info (ℹ️) button and group both buttons on the right
     // create a shared actions wrapper once: [date] ... [ℹ️ ⧉]
@@ -827,27 +842,6 @@ function renderCurrentView(){
     `;
 
     // Helper: build simple horizontal bar chart rows using divs
-    // Helper: build small 2-column summary table (label + value)
-    const buildMiniTable = (items) => {
-      if (!items.length) return '<p>No data available for this period.</p>';
-
-      const rows = items.map(({ label, value }) => `
-        <tr>
-          <th scope="row">${label}</th>
-          <td>${value}</td>
-        </tr>
-      `).join('');
-
-      return `
-        <table class="analytics-mini-table">
-          <tbody>
-            ${rows}
-          </tbody>
-        </table>
-      `;
-    };
-
-    // Helper: build simple horizontal bar chart rows using divs
     const buildBarRows = (items) => {
       if (!items.length) return '<p>No data available for this period.</p>';
       const maxVal = Math.max(...items.map(i => i.value));
@@ -943,13 +937,11 @@ function renderCurrentView(){
     // C) QR Info section (scan, armed, redeem, invalid)
     const qrRows = Array.isArray(stats.qrInfo) ? stats.qrInfo : [];
     let qrSummary = '';
-    let qrTableHtml = '';
     let qrBarsHtml = '';
 
     if (!qrRows.length) {
       qrSummary = 'No QR activity recorded for this period.';
-      qrTableHtml = '<p>No QR data to display.</p>';
-      qrBarsHtml = '';
+      qrBarsHtml = '<p>No QR data to display.</p>';
     } else {
       const counts = { scan: 0, armed: 0, redeem: 0, invalid: 0 };
       for (const row of qrRows) {
@@ -996,7 +988,6 @@ function renderCurrentView(){
         counts.invalid? { label: 'Invalid attempts', value: counts.invalid }: null
       ].filter(Boolean);
 
-      qrTableHtml = buildMiniTable(qrItems);
       qrBarsHtml = buildBarRows(qrItems);
     }
 
@@ -1004,7 +995,6 @@ function renderCurrentView(){
       <section class="analytics-section analytics-qr">
         <h3>QR Info</h3>
         <p>${qrSummary}</p>
-        ${qrTableHtml}
         ${qrBarsHtml}
       </section>
     `;
