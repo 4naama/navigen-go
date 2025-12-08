@@ -2781,6 +2781,109 @@ export function showThankYouToast() {
   return showToast("💖 Thank you for your support!", 4000);
 }
 
+// Cashier-side Redeem Confirmation modal.
+// Shown only on the device that followed the /out/qr-redeem redirect,
+// separate from the LPM rating widget. Logs redeem-confirmation-cashier via /hit.
+export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = '' }) {
+  const modalId = 'cashier-redeem-confirmation-modal';
+  const existing = document.getElementById(modalId);
+  if (existing) existing.remove();
+
+  if (!locationIdOrSlug) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = modalId;
+  wrap.className = 'modal hidden';
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+
+  const hasT = (typeof t === 'function');
+  const titleTxt =
+    (hasT ? (t('redeem.confirm.title') || '') : '') ||
+    'Redeem Confirmation';
+
+  top.innerHTML = `
+    <h2 class="modal-title">${titleTxt}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  const closeBtn = top.querySelector('.modal-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => hideModal(modalId));
+  }
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  const questionTxt =
+    (hasT ? (t('redeem.confirm.question') || '') : '') ||
+    'How smooth did the redeem event go?';
+
+  const pQ = document.createElement('p');
+  pQ.textContent = questionTxt;
+  pQ.style.textAlign = 'center';
+  pQ.style.marginBottom = '0.75rem';
+  inner.appendChild(pQ);
+
+  const row = document.createElement('div');
+  row.style.display = 'flex';
+  row.style.justifyContent = 'center';
+  row.style.gap = '0.5rem';
+
+  const faces = [
+    { emoji: '😕', score: 1 },
+    { emoji: '😐', score: 2 },
+    { emoji: '🙂', score: 3 },
+    { emoji: '😄', score: 4 },
+    { emoji: '🤩', score: 5 }
+  ];
+
+  const sendConfirmation = (score) => {
+    try {
+      const base = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';
+      const url = new URL(`/hit/redeem-confirmation-cashier/${encodeURIComponent(locationIdOrSlug)}`, base);
+      url.searchParams.set('score', String(score));
+      if (campaignKey) url.searchParams.set('campaignKey', campaignKey);
+
+      fetch(url.toString(), {
+        method: 'POST',
+        keepalive: true
+      }).catch(() => {});
+    } catch (_e) {
+      // logging must never break UI
+    }
+  };
+
+  faces.forEach((f) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = f.emoji;
+    btn.style.fontSize = '1.6rem';
+    btn.style.border = 'none';
+    btn.style.background = 'transparent';
+    btn.style.cursor = 'pointer';
+    btn.addEventListener('click', () => {
+      sendConfirmation(f.score);
+      hideModal(modalId);
+    });
+    row.appendChild(btn);
+  });
+
+  inner.appendChild(row);
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  showModal(modalId);
+}
+
 /**
  * Modal Injector: My Stuff
  *
