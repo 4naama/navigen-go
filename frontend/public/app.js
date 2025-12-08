@@ -176,28 +176,10 @@ if (window.visualViewport) visualViewport.addEventListener('resize', setVH);
 
 const state = {};
 
-// Cashier Redeem Confirmation: if /?lp=...&redeemed=1[&camp=...] is present, show a one-shot modal.
-// This runs only on the device that followed the /out/qr-redeem redirect (cashier side).
-(function initCashierRedeemConfirmation() {
-  try {
-    const u = new URL(window.location.href);
-    const redeemed = u.searchParams.get('redeemed');
-    const lp = (u.searchParams.get('lp') || '').trim();
-    const camp = (u.searchParams.get('camp') || '').trim();
-
-    if (redeemed !== '1' || !lp) {
-      return; // no redeem redirect context; nothing to do
-    }
-
-    // Show a lightweight confirmation modal; modal-injector will handle the actual /hit/ call.
-    showRedeemConfirmationModal({
-      locationIdOrSlug: lp,
-      campaignKey: camp || ''
-    });
-  } catch (_e) {
-    // keep app resilient; redeem confirmation must never break shell
-  }
-})();
+// Cashier Redeem Confirmation:
+// The redeem confirmation modal is now shown from the ?lp handler
+// after the Location Profile Modal (LPM) has been opened, so it stays on top
+// of the LPM instead of flashing underneath.
 
 let geoPoints = [];
 let structure_data = [];
@@ -1436,12 +1418,25 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
 
-      // drop only ?lp; keep others
+      // After LPM has been opened, show cashier Redeem Confirmation (if this load came from a redeem redirect).
+      {
+        const redeemed = (q.get('redeemed') || '').trim();
+        const camp     = (q.get('camp') || '').trim();
+        // Use the same uid that triggered the LPM; this can be a slug or a ULID.
+        if (redeemed === '1' && uid) {
+          showRedeemConfirmationModal({
+            locationIdOrSlug: uid,
+            campaignKey: camp || ''
+          });
+        }
+      }
+
+      // drop only ?lp; keep others (e.g. redeemed, camp)
       q.delete('lp');
       const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
       history.replaceState({}, document.title, next);
     }
-            
+   
     const geoCtx = ACTIVE_PAGE
       ? geoPoints.filter(loc =>
           loc.Visible === 'Yes' && // keep: used by non-Popular groups
