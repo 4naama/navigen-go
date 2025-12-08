@@ -818,6 +818,17 @@ function renderCurrentView(){
     const dateKeys = Object.keys(days).sort();
     const hasData = dateKeys.length > 0;
 
+    // Aggregate confirmation metrics once for this period; reused by Campaigns + QA.
+    let cashierConfs = 0;
+    let customerConfs = 0;
+    for (const dayKey of dateKeys) {
+      const bucket = days[dayKey] || {};
+      const cashierVal = Number(bucket['redeem-confirmation-cashier'] ?? bucket['redeem_confirmation_cashier'] ?? 0);
+      const customerVal = Number(bucket['redeem-confirmation-customer'] ?? bucket['redeem_confirmation_customer'] ?? 0);
+      if (cashierVal) cashierConfs += cashierVal;
+      if (customerVal) customerConfs += customerVal;
+    }
+
     // Header: location/entity + period + rating summary
     const name = (stats.locationName || stats.entityName || '').trim();
     const from = (stats.from || '').trim();
@@ -1060,6 +1071,33 @@ function renderCurrentView(){
       // NOTE: Scan compliance (redemptions / armed) is computed and interpreted only in the Quality Assurance section.
       campSummary = bits.join(' ');
 
+      // Merchant-facing operational status (OK / Needs attention) — no ratios exposed.
+      let opsStatusHtml = '';
+      const hasPromoActivity = totalArmed > 0 || totalRedeems > 0 || totalInvalid > 0;
+      if (hasPromoActivity) {
+        const totalRedeemAttempts = totalRedeems + totalInvalid;
+        const complianceRatio = totalArmed > 0 ? (totalRedeems / totalArmed) : null;
+        const invalidRatio = totalRedeemAttempts > 0 ? (totalInvalid / totalRedeemAttempts) : 0;
+        const cashierCoverage = totalRedeems > 0 ? (cashierConfs / totalRedeems) : null;
+
+        let needsAttention = false;
+        if (complianceRatio !== null && complianceRatio < 0.7) {
+          needsAttention = true;
+        }
+        if (invalidRatio > 0.10 && totalInvalid >= 3) {
+          needsAttention = true;
+        }
+        if (cashierCoverage !== null && cashierCoverage < 0.8) {
+          needsAttention = true;
+        }
+
+        const statusLabel = needsAttention
+          ? 'Operational status: Needs attention'
+          : 'Operational status: OK';
+
+        opsStatusHtml = `<p class="analytics-status">${statusLabel}</p>`;
+      }
+
       const barItems = perCampItems
         .filter(i => i.armed > 0 || i.red > 0)
         .map(i => ({
@@ -1099,6 +1137,10 @@ function renderCurrentView(){
         }).join('');
         campBarsHtml = `<div class="analytics-bars">${rows}</div>`;
       }
+
+      // Append opsStatusHtml into the summary area
+      campSummary = `${campSummary}${opsStatusHtml ? ' ' : ''}`;
+      campFooterNote = opsStatusHtml + campFooterNote;
     }
 
     const campaignsSectionHtml = `
@@ -1120,15 +1162,8 @@ function renderCurrentView(){
     const invalidRatio = totalRedeemAttempts > 0 ? (totalInvalid / totalRedeemAttempts) : 0;
 
     // Aggregate confirmation metrics from daily buckets (redeem-confirmation-* events)
-    let cashierConfs = 0;
-    let customerConfs = 0;
-    for (const dayKey of dateKeys) {
-      const bucket = days[dayKey] || {};
-      const cashierVal = Number(bucket['redeem-confirmation-cashier'] ?? bucket['redeem_confirmation_cashier'] ?? 0);
-      const customerVal = Number(bucket['redeem-confirmation-customer'] ?? bucket['redeem_confirmation_customer'] ?? 0);
-      if (cashierVal) cashierConfs += cashierVal;
-      if (customerVal) customerConfs += customerVal;
-    }
+    // cashierConfs / customerConfs are pre-aggregated once above for this period
+    // (no re-aggregation here; reuse the shared values for coverage diagnostics)
 
     const cashierCoverage = totalRedeems > 0 ? (cashierConfs / totalRedeems) : null;
     const customerCoverage = totalArmed > 0 ? (customerConfs / totalArmed) : null;

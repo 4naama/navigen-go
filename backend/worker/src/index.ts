@@ -537,7 +537,20 @@ export default {
         });
 
         // Serialize campaignsAgg into a simple array
-        const campaigns = Object.values(campaignsAgg)
+        const campaignAggValues = Object.values(campaignsAgg);
+
+        // Aggregate promo QR + redeem metrics across all campaigns for QA tagging.
+        let totalArmed = 0;
+        let totalRedeems = 0;
+        let totalInvalid = 0;
+        for (const agg of campaignAggValues) {
+          if ((agg.campaignKey || "").trim() === "") continue; // ignore "_no_campaign"
+          totalArmed += agg.armed;
+          totalRedeems += agg.redemptions;
+          totalInvalid += agg.invalids;
+        }
+
+        const campaigns = campaignAggValues
           // hide "_no_campaign" bucket (scans without a campaignKey)
           .filter(agg => (agg.campaignKey || "").trim() !== "")
           .map((agg) => {
@@ -574,6 +587,53 @@ export default {
               locations: agg.countries.size
             };
           });
+
+        // Silent QA auto-tagging per location (internal only: admin dashboards, monitoring).
+        try {
+          const hasPromoActivity = totalArmed > 0 || totalRedeems > 0 || totalInvalid > 0;
+          if (hasPromoActivity) {
+            // Sum confirmation metrics from daily buckets
+            let cashierConfs = 0;
+            let customerConfs = 0;
+            for (const dayKey of Object.keys(days)) {
+              const bucket: any = (days as any)[dayKey] || {};
+              const cashierVal = Number(bucket["redeem-confirmation-cashier"] ?? bucket["redeem_confirmation_cashier"] ?? 0);
+              const customerVal = Number(bucket["redeem-confirmation-customer"] ?? bucket["redeem_confirmation_customer"] ?? 0);
+              if (cashierVal) cashierConfs += cashierVal;
+              if (customerVal) customerConfs += customerVal;
+            }
+
+            const totalRedeemAttempts = totalRedeems + totalInvalid;
+            const complianceRatio = totalArmed > 0 ? (totalRedeems / totalArmed) : null;
+            const invalidRatio = totalRedeemAttempts > 0 ? (totalInvalid / totalRedeemAttempts) : 0;
+            const cashierCoverage = totalRedeems > 0 ? (cashierConfs / totalRedeems) : null;
+            const customerCoverage = totalArmed > 0 ? (customerConfs / totalArmed) : null;
+
+            const flags: string[] = [];
+
+            if (complianceRatio !== null && complianceRatio < 0.7) {
+              flags.push("low-scan-discipline");
+            }
+            if (invalidRatio > 0.10 && totalInvalid >= 3) {
+              flags.push("high-invalid-attempts");
+            }
+            if (cashierCoverage !== null && cashierCoverage < 0.8) {
+              flags.push("low-cashier-coverage");
+            }
+            if (customerCoverage !== null && totalArmed >= 10 && customerCoverage < 0.5) {
+              flags.push("low-customer-confirmation");
+            }
+
+            if (!flags.length) {
+              flags.push("qa-ok");
+            }
+
+            // Fire-and-forget: do not delay the stats response.
+            ctx.waitUntil(writeQaFlags(env, loc, flags));
+          }
+        } catch {
+          // tagging errors must never break stats
+        }
 
         return json(
           {
@@ -1291,6 +1351,26 @@ function statusKey(locationID: string): string {
 
 function aliasKey(legacy: string): string {
   return `alias:${legacy}`;
+}
+
+// Silent QA auto-tagging: store per-location QA flags alongside status/tier in KV_STATUS.
+// Flags are internal-only (admin dashboards, monitoring); merchants never see them.
+async function writeQaFlags(env: Env, locationID: string, flags: string[]): Promise<void> {
+  try {
+    const key = statusKey(locationID);
+    const raw = await env.KV_STATUS.get(key, "json");
+    const base: any = raw && typeof raw === "object" ? raw : {};
+
+    const next = {
+      ...base,
+      qaFlags: Array.isArray(flags) ? flags : [],
+      qaUpdatedAt: new Date().toISOString()
+    };
+
+    await env.KV_STATUS.put(key, JSON.stringify(next));
+  } catch {
+    // never throw from QA tagging; stats endpoint must not fail because of tagging
+  }
 }
 
 async function resolveUid(idOrAlias: string, env: Env): Promise<string | null> {

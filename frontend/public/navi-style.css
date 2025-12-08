@@ -2660,6 +2660,11 @@ body.high-contrast .modal-menu-item.is-active {
   margin-bottom: 1.5em;
 }
 
+/* Ensure QA emojis (⚠, 🙂, etc.) use color-emoji fonts where available */
+.analytics-qa p{
+  font-family: var(--font-sans), 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+
 .analytics-section h3{
   margin: 0 0 0.5em;
   font-size: 1.05rem;
