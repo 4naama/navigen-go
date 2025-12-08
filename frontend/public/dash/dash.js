@@ -1117,7 +1117,7 @@ function renderCurrentView(){
     const underline = '_'.repeat(brand.length);
 
     const footerHtml = `
-      <footer class="analytics-footer" style="margin-top:3em; text-align:center;">
+      <footer class="analytics-footer" style="margin-top:3em; text-align:left;">
         <div><small>${ts}</small></div>
         <div style="font-family:monospace;">${underline}</div>
         <div style="font-family:monospace;"><small>${brand}</small></div>
