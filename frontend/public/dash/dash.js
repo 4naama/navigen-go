@@ -1113,14 +1113,14 @@ function renderCurrentView(){
     const mm = String(now.getMinutes()).padStart(2, '0');
     const ts = `${y}-${m}-${d} · ${hh}:${mm}`;
 
+    const brand = `${y} @ NaviGen — Business Report`;
+    const underline = '_'.repeat(brand.length);
+
     const footerHtml = `
       <footer class="analytics-footer" style="margin-top:3em; text-align:center;">
-        <div style="
-          width:100%;
-          border-bottom:1px solid #ccc;
-          margin-bottom:0.75em;
-        "></div>
-        <small>${ts} | Business report powered by NaviGen @2026</small>
+        <div><small>${ts}</small></div>
+        <div style="font-family:monospace;">${underline}</div>
+        <div style="font-family:monospace;"><small>${brand}</small></div>
       </footer>
     `;
 
