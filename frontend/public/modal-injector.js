@@ -4420,103 +4420,14 @@ export function createDonationModal(isRepeat = false) {
 
 }
 
-// Cashier-side Redeem Confirmation modal: shown once after a successful promo redeem.
-// Asks an alibi question and logs a single confirmation metric for QA.
-export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = '' }) {
-  const modalId = 'redeem-confirmation-modal';
-  document.getElementById(modalId)?.remove(); // remove stale instance
-
-  const wrap = document.createElement('div');
-  wrap.className = 'modal hidden';
-  wrap.id = modalId;
-
-  const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
-
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  const hasT = (typeof t === 'function');
-  const titleTxt =
-    (hasT ? (t('redeem.confirm.title') || '') : '') ||
-    'Redeem Confirmation';
-  top.innerHTML = `
-    <h2 class="modal-title">${titleTxt}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  const closeBtn = top.querySelector('.modal-close');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => hideModal(modalId));
-  }
-
-  const body = document.createElement('div');
-  body.className = 'modal-body';
-  const inner = document.createElement('div');
-  inner.className = 'modal-body-inner';
-
-  const questionTxt =
-    (hasT ? (t('redeem.confirm.question') || '') : '') ||
-    'How smooth did the redeem event go?';
-
-  const pQ = document.createElement('p');
-  pQ.textContent = questionTxt;
-  pQ.style.textAlign = 'center';
-  pQ.style.marginBottom = '0.75rem';
-  inner.appendChild(pQ);
-
-  const row = document.createElement('div');
-  row.style.display = 'flex';
-  row.style.justifyContent = 'center';
-  row.style.gap = '0.5rem';
-
-  const faces = [
-    { emoji: '😕', score: 1 },
-    { emoji: '😐', score: 2 },
-    { emoji: '🙂', score: 3 },
-    { emoji: '😄', score: 4 },
-    { emoji: '🤩', score: 5 }
-  ];
-
-  const sendConfirmation = (score) => {
-    try {
-      if (!locationIdOrSlug) return;
-      const base = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';
-      const url = new URL(`/hit/redeem-confirmation-cashier/${encodeURIComponent(locationIdOrSlug)}`, base);
-      // score is optional; backend treats this as a simple counter event.
-      url.searchParams.set('score', String(score));
-      if (campaignKey) url.searchParams.set('campaignKey', campaignKey);
-
-      fetch(url.toString(), {
-        method: 'POST',
-        keepalive: true
-      }).catch(() => {});
-    } catch {
-      // never block UI on logging errors
-    }
-  };
-
-  faces.forEach((f) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = f.emoji;
-    btn.style.fontSize = '1.5rem';
-    btn.style.border = 'none';
-    btn.style.background = 'transparent';
-    btn.style.cursor = 'pointer';
-    btn.addEventListener('click', () => {
-      sendConfirmation(f.score);
-      hideModal(modalId);
-    });
-    row.appendChild(btn);
-  });
-
-  inner.appendChild(row);
-  body.appendChild(inner);
-  card.appendChild(top);
-  card.appendChild(body);
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
-
-  showModal(modalId);
+// Cashier-side Redeem Confirmation modal (legacy alias).
+// Older code paths may still import this name; delegate to the primary
+// showRedeemConfirmationModal implementation defined earlier.
+export function showRedeemConfirmationModalLegacy(args) {
+  // The main cashier modal lives above in this module and handles:
+  // - rendering the question / smileys
+  // - sending /hit/redeem-confirmation-cashier
+  return showRedeemConfirmationModal(args);
 }
 
 /**
