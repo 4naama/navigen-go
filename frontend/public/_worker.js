@@ -346,7 +346,15 @@ export default {
         }
 
         // Always redirect user back to the LPM shell
-        const dest = `/?lp=${encodeURIComponent(idOrSlug)}`;
+        // Include redeem context so the app can show a confirmation flow on the cashier device
+        const camp = (url.searchParams.get('camp') || '').trim();
+        const lpmUrl = new URL('/', url.origin);
+        lpmUrl.searchParams.set('lp', idOrSlug);
+        lpmUrl.searchParams.set('redeemed', '1'); // signals that a redeem event just occurred
+        if (camp) {
+          lpmUrl.searchParams.set('camp', camp); // optional campaign key for UI context
+        }
+        const dest = lpmUrl.toString();
         return Response.redirect(dest, 302);
       }
     }

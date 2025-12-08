@@ -1111,14 +1111,27 @@ function renderCurrentView(){
       </section>
     `;
 
-    // E) Footer with timestamp
-    // E) Quality Assurance Analysis (scan discipline and invalid attempts live only here)
+    // E) Quality Assurance Analysis (scan discipline, invalid attempts, and confirmation coverage live only here)
     let qaLines = [];
 
     const hasPromoActivity = totalArmed > 0 || totalRedeems > 0 || totalInvalid > 0;
     const totalRedeemAttempts = totalRedeems + totalInvalid;
     const complianceRatio = totalArmed > 0 ? (totalRedeems / totalArmed) : null; // redemptions / armed
     const invalidRatio = totalRedeemAttempts > 0 ? (totalInvalid / totalRedeemAttempts) : 0;
+
+    // Aggregate confirmation metrics from daily buckets (redeem-confirmation-* events)
+    let cashierConfs = 0;
+    let customerConfs = 0;
+    for (const dayKey of dateKeys) {
+      const bucket = days[dayKey] || {};
+      const cashierVal = Number(bucket['redeem-confirmation-cashier'] ?? bucket['redeem_confirmation_cashier'] ?? 0);
+      const customerVal = Number(bucket['redeem-confirmation-customer'] ?? bucket['redeem_confirmation_customer'] ?? 0);
+      if (cashierVal) cashierConfs += cashierVal;
+      if (customerVal) customerConfs += customerVal;
+    }
+
+    const cashierCoverage = totalRedeems > 0 ? (cashierConfs / totalRedeems) : null;
+    const customerCoverage = totalArmed > 0 ? (customerConfs / totalArmed) : null;
 
     if (!hasPromoActivity) {
       qaLines.push(
@@ -1161,6 +1174,40 @@ function renderCurrentView(){
         const pct = (invalidRatio * 100).toFixed(1);
         qaLines.push(
           `QA: Invalid redemption attempts look normal for this period (≈ ${pct}% of ${totalRedeemAttempts} redemption tries).`
+        );
+      }
+
+      // Cashier confirmation coverage: how many recorded redeems have a matching cashier confirmation event
+      if (cashierCoverage === null) {
+        qaLines.push(
+          'QA: Cashier confirmation coverage could not be evaluated because there were no recorded redemptions in this period.'
+        );
+      } else if (cashierCoverage < 0.8) {
+        const pct = (cashierCoverage * 100).toFixed(1);
+        qaLines.push(
+          `⚠ QA: Cashier confirmations cover only about ${pct}% of recorded redemptions (${cashierConfs} of ${totalRedeems}). This may indicate that some discounts are applied without completing the full promo QR flow at the register.`
+        );
+      } else {
+        const pct = (cashierCoverage * 100).toFixed(1);
+        qaLines.push(
+          `QA: Cashier confirmations cover most recorded redemptions (≈ ${pct}%, ${cashierConfs} of ${totalRedeems}), which is consistent with a healthy scan-and-redeem process.`
+        );
+      }
+
+      // Customer confirmation coverage: how many promo QR shown events are followed by a customer confirmation
+      if (customerCoverage === null) {
+        qaLines.push(
+          'QA: Customer confirmation coverage could not be evaluated because no promo QR was shown in this period.'
+        );
+      } else if (customerCoverage < 0.5 && totalArmed >= 10) {
+        const pct = (customerCoverage * 100).toFixed(1);
+        qaLines.push(
+          `⚠ QA: Customer confirmations are low compared to promo QR shown (≈ ${pct}%, ${customerConfs} confirmations from ${totalArmed} promo displays). This may indicate that promotions are not consistently converted into a completed redeem experience.`
+        );
+      } else if (totalArmed > 0) {
+        const pct = (customerCoverage * 100).toFixed(1);
+        qaLines.push(
+          `QA: Customer confirmations are within an expected range for this period (≈ ${pct}%, ${customerConfs} confirmations from ${totalArmed} promo displays).`
         );
       }
     }

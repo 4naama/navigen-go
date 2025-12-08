@@ -334,6 +334,175 @@ Locations (distinct countries)
 
 Devices/Languages/Signals columns are removed from UI.
 
+✏️ UPDATED LINE — Scan compliance column removed from UI
+The “Scan compliance %” field previously visible in Campaigns is removed from the dashboard table.
+It exists only as an internal value consumed by the Analytics QA Block and must not appear in merchant views.
+
+4.4 Analytics View (Written Report Mode)
+The Analytics view is a fourth dashboard mode in addition to Click Info, QR Info, and Campaigns.
+It provides a narrative, human-readable business report constructed entirely on the client side from the same /api/stats payload.
+
+Components of the Analytics Report
+
+Header Block
+
+Displays the selected date range
+
+Shows location or entity name
+
+Uses translation engine (t(key))
+
+Prefixed with NaviGen Business Report header and timestamp
+
+Click Analytics Summary
+
+Aggregated description of core interaction categories
+
+No ratios or compliance metrics
+
+QR Analytics Summary
+
+Narrative summary derived from QR Info data
+
+Highlights meaningful patterns such as increases in scans or redeems
+
+Does not include compliance or operational diagnostics
+
+Campaigns Summary (Merchant-Safe)
+(Replaces the older behavior with compliance in the merchant-facing narrative.)
+
+✏️ UPDATED LINE — Removed mention of scan-compliance from merchant narrative
+
+Only neutral counts are presented:
+
+Promo QR shown (armed)
+
+Redemptions
+
+Invalid attempts
+
+No ratios (e.g., compliance %, invalid %)
+
+No anomaly language
+
+Per-campaign mini-table and stacked bars remain as descriptive (redeemed/armed)
+
+4.5 Quality Assurance Analysis (QA Block)
+A dedicated diagnostic block only in Analytics mode, positioned after the Campaigns Summary.
+This block is not shown in Click Info, QR Info, or Campaigns views.
+
+Purpose
+
+The QA block interprets operational quality, not merchant performance.
+It evaluates internal process discipline using ratios that must not appear in merchant-facing sections.
+
+Inputs
+
+Computed globally across the chosen date window:
+
+totalArmed (promo QR shown events)
+
+totalRedeems
+
+totalInvalid
+
+totalAttempts = totalRedeems + totalInvalid
+
+compliance = totalRedeems / totalArmed (when totalArmed > 0)
+
+invalidRatio = totalInvalid / totalAttempts
+
+Diagnostics & Required Behaviors
+
+Neutral QA Message
+
+When compliance ≥ ~70%
+
+And invalidRatio not elevated
+
+Example:
+“QA: Promo scanning appears within a normal range.”
+
+Low Scan Discipline Warning (⚠)
+Trigger conditions:
+
+compliance < 0.7
+
+Armed > 0
+Content:
+
+Operational guidance
+
+No merchant-blaming
+
+Includes approximate % value
+
+Invalid Attempt Warning (⚠)
+Trigger conditions:
+
+invalidRatio > 0.1
+
+AND totalInvalid ≥ 3
+Meaning:
+
+Indicates expired/used/out-of-window QR usage patterns
+
+>100% Compliance Interpretation (⚠)
+Trigger conditions:
+
+compliance > 1.05
+Meaning:
+
+Time-window misalignment (QR armed earlier than current reporting window)
+
+Never interpreted as “excellent performance”
+
+No Activity Case
+If no promo activity recorded:
+“QA: No promotion QR activity recorded; scan discipline cannot be evaluated.”
+
+Placement
+
+Always the last analytical block before the footer
+
+Never shown in tables or TSV exports
+
+Included when copying the Analytics report via ⧉
+
+4.6 Export Behavior (⧉ Copy Button)
+The dashboard includes a unified copy/export button used across all views.
+
+Required Behaviors
+
+Click Info / QR Info / Campaigns
+
+⧉ copies the visible table as TSV
+
+Column order matches the rendered DOM
+
+Analytics View
+
+⧉ copies the full written Analytics report as plain text
+
+Includes:
+
+Header
+
+Click Summary
+
+QR Summary
+
+Campaigns Summary
+
+Quality Assurance Analysis
+
+Footer
+
+Does not copy hidden DOM elements or styling
+
+Parity Requirement
+All four views (Click Info, QR Info, Campaigns, Analytics) must be equally exportable.
+
 5. BILLING SYSTEM
 5.1 Billing Ledger Record
 

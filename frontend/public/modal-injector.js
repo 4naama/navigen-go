@@ -26,7 +26,8 @@ function getQRCodeLib() {
 }
 
 // Show Promotion QR Code in its own modal (QR only, like Business QR size)
-function showPromotionQrModal(qrUrl) {
+// locationIdOrSlug is used for optional customer-side confirmation logging.
+function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   const id = 'promo-qr-modal';
   document.getElementById(id)?.remove();
 
@@ -92,6 +93,141 @@ function showPromotionQrModal(qrUrl) {
   card.appendChild(body);
   wrap.appendChild(card);
   document.body.appendChild(wrap);
+
+  // Customer-side redeem status polling (token-aware, short-lived).
+  // When the token is redeemed on the cashier device, we can ask the customer for quick feedback.
+  try {
+    const urlObj = new URL(qrUrl);
+    const redeemToken = (urlObj.searchParams.get('rt') || '').trim();
+    let stopped = false;
+
+    const stop = () => { stopped = true; };
+
+    // Stop polling if modal is closed by the user
+    top.querySelector('.modal-close')?.addEventListener('click', stop);
+
+    const base = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';
+
+    const showCustomerConfirm = () => {
+      if (!locationIdOrSlug) return;
+      const id = 'customer-redeem-feedback';
+      document.getElementById(id)?.remove();
+
+      const wrap2 = document.createElement('div');
+      wrap2.className = 'modal hidden';
+      wrap2.id = id;
+
+      const card2 = document.createElement('div');
+      card2.className = 'modal-content modal-layout';
+
+      const top2 = document.createElement('div');
+      top2.className = 'modal-top-bar';
+      const hasT = (typeof t === 'function');
+      const titleTxt =
+        (hasT ? (t('redeem.customer.title') || '') : '') ||
+        'Thank you!';
+      top2.innerHTML = `
+        <h2 class="modal-title">${titleTxt}</h2>
+        <button class="modal-close" aria-label="Close">&times;</button>
+      `;
+      top2.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+      const body2 = document.createElement('div');
+      body2.className = 'modal-body';
+      const inner2 = document.createElement('div');
+      inner2.className = 'modal-body-inner';
+
+      const qTxt =
+        (hasT ? (t('redeem.customer.question') || '') : '') ||
+        'How was your redeem experience?';
+
+      const pQ2 = document.createElement('p');
+      pQ2.textContent = qTxt;
+      pQ2.style.textAlign = 'center';
+      pQ2.style.marginBottom = '0.75rem';
+      inner2.appendChild(pQ2);
+
+      const row2 = document.createElement('div');
+      row2.style.display = 'flex';
+      row2.style.justifyContent = 'center';
+      row2.style.gap = '0.5rem';
+
+      const faces2 = [
+        { emoji: '😕', score: 1 },
+        { emoji: '😐', score: 2 },
+        { emoji: '🙂', score: 3 },
+        { emoji: '😄', score: 4 },
+        { emoji: '🤩', score: 5 }
+      ];
+
+      const sendCustomerConfirm = (score) => {
+        try {
+          const hit = new URL(`/hit/redeem-confirmation-customer/${encodeURIComponent(locationIdOrSlug)}`, base);
+          hit.searchParams.set('score', String(score));
+          fetch(hit.toString(), { method: 'POST', keepalive: true }).catch(() => {});
+        } catch {
+          // don't break UI on logging errors
+        }
+      };
+
+      faces2.forEach((f) => {
+        const btn2 = document.createElement('button');
+        btn2.type = 'button';
+        btn2.textContent = f.emoji;
+        btn2.style.fontSize = '1.5rem';
+        btn2.style.border = 'none';
+        btn2.style.background = 'transparent';
+        btn2.style.cursor = 'pointer';
+        btn2.addEventListener('click', () => {
+          sendCustomerConfirm(f.score);
+          hideModal(id);
+        });
+        row2.appendChild(btn2);
+      });
+
+      inner2.appendChild(row2);
+      body2.appendChild(inner2);
+      card2.appendChild(top2);
+      card2.appendChild(body2);
+      wrap2.appendChild(card2);
+      document.body.appendChild(wrap2);
+      showModal(id);
+    };
+
+    const pollStatus = async () => {
+      if (stopped || !redeemToken) return;
+      try {
+        const statusUrl = new URL('/api/redeem-status', base);
+        statusUrl.searchParams.set('token', redeemToken);
+        const res = await fetch(statusUrl.toString(), { cache: 'no-store' });
+        if (res.ok) {
+          const payload = await res.json().catch(() => null);
+          const status = String(payload?.status || '').toLowerCase();
+          if (status === 'redeemed') {
+            stopped = true;
+            showCustomerConfirm();
+            return;
+          }
+          if (status === 'invalid') {
+            stopped = true;
+            return;
+          }
+        }
+      } catch {
+        // ignore transient errors; keep trying a few times
+      }
+      if (!stopped) {
+        setTimeout(pollStatus, 3000); // short poll cadence
+      }
+    };
+
+    // Start polling after a brief delay to allow the cashier to scan the code
+    if (redeemToken) {
+      setTimeout(pollStatus, 5000);
+    }
+  } catch {
+    // ignore QR URL parse errors; promotion modal still works without status polling
+  }
 
   getQRCodeLib()
     .then((QRCode) => QRCode.toDataURL(qrUrl, { width: 512, margin: 1 }))
@@ -280,7 +416,8 @@ async function openPromotionQrModal(modal, data) {
     qrBtn.textContent = tmpl('campaign.redeem-button', "I'm at the cashier — 🔳 show my code");
     qrBtn.addEventListener('click', () => {
       hideModal(modalId);
-      showPromotionQrModal(qrUrl);
+      // Open the Promotion QR modal and pass location ID/slug for customer confirmation tracking
+      showPromotionQrModal(qrUrl, locationIdOrSlug);
     });
 
     btnWrap.appendChild(qrBtn);
@@ -4180,9 +4317,107 @@ export function createDonationModal(isRepeat = false) {
 
 }
 
+// Cashier-side Redeem Confirmation modal: shown once after a successful promo redeem.
+// Asks an alibi question and logs a single confirmation metric for QA.
+export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = '' }) {
+  const modalId = 'redeem-confirmation-modal';
+  document.getElementById(modalId)?.remove(); // remove stale instance
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = modalId;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  const hasT = (typeof t === 'function');
+  const titleTxt =
+    (hasT ? (t('redeem.confirm.title') || '') : '') ||
+    'Redeem Confirmation';
+  top.innerHTML = `
+    <h2 class="modal-title">${titleTxt}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  const closeBtn = top.querySelector('.modal-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => hideModal(modalId));
+  }
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  const questionTxt =
+    (hasT ? (t('redeem.confirm.question') || '') : '') ||
+    'How smooth did the redeem event go?';
+
+  const pQ = document.createElement('p');
+  pQ.textContent = questionTxt;
+  pQ.style.textAlign = 'center';
+  pQ.style.marginBottom = '0.75rem';
+  inner.appendChild(pQ);
+
+  const row = document.createElement('div');
+  row.style.display = 'flex';
+  row.style.justifyContent = 'center';
+  row.style.gap = '0.5rem';
+
+  const faces = [
+    { emoji: '😕', score: 1 },
+    { emoji: '😐', score: 2 },
+    { emoji: '🙂', score: 3 },
+    { emoji: '😄', score: 4 },
+    { emoji: '🤩', score: 5 }
+  ];
+
+  const sendConfirmation = (score) => {
+    try {
+      if (!locationIdOrSlug) return;
+      const base = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';
+      const url = new URL(`/hit/redeem-confirmation-cashier/${encodeURIComponent(locationIdOrSlug)}`, base);
+      // score is optional; backend treats this as a simple counter event.
+      url.searchParams.set('score', String(score));
+      if (campaignKey) url.searchParams.set('campaignKey', campaignKey);
+
+      fetch(url.toString(), {
+        method: 'POST',
+        keepalive: true
+      }).catch(() => {});
+    } catch {
+      // never block UI on logging errors
+    }
+  };
+
+  faces.forEach((f) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = f.emoji;
+    btn.style.fontSize = '1.5rem';
+    btn.style.border = 'none';
+    btn.style.background = 'transparent';
+    btn.style.cursor = 'pointer';
+    btn.addEventListener('click', () => {
+      sendConfirmation(f.score);
+      hideModal(modalId);
+    });
+    row.appendChild(btn);
+  });
+
+  inner.appendChild(row);
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  showModal(modalId);
+}
+
 /**
  * Saves a received coordinate into Location History.
- * Called when a user opens a link like ?at=47.4979,19.0402
  * Prevents immediate duplicates and stores newest first.
  */
 export function saveToLocationHistory(coords) {

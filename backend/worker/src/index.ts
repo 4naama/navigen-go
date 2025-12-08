@@ -8,7 +8,9 @@ const EVENT_ORDER = [
   "lpm-open","call","email","whatsapp","telegram","messenger",
   "official","booking","newsletter",
   "facebook","instagram","pinterest","spotify","tiktok","youtube",
-  "share","rating","save","unsave","map","qr-print","qr-scan","qr-view","qr-redeem"
+  "share","rating","save","unsave","map","qr-print","qr-scan","qr-view","qr-redeem",
+  "redeem-confirmation-cashier",    // cashier confirmed that a redeem event completed
+  "redeem-confirmation-customer"    // customer confirmed that a redeem event completed
 ] as const;
 
 type EventKey = typeof EVENT_ORDER[number];
@@ -637,6 +639,39 @@ export default {
       // --- Status: GET /api/status?locationID=...
       if (pathname === "/api/status" && req.method === "GET") {
         return await handleStatus(req, env);
+      }
+
+      // --- Redeem token status: GET /api/redeem-status?token=... (or &rt=...)
+      // Used by the customer device to detect when a promo QR token was actually redeemed.
+      if (pathname === "/api/redeem-status" && req.method === "GET") {
+        const u = new URL(req.url);
+        const token =
+          (u.searchParams.get("token") || "").trim() ||
+          (u.searchParams.get("rt") || "").trim();
+
+        if (!token) {
+          return json(
+            { error: { code: "invalid_request", message: "token required" } },
+            400
+          );
+        }
+
+        const key = `redeem:${token}`;
+        const raw = await env.KV_STATS.get(key, "text");
+
+        let status: "pending" | "redeemed" | "invalid" = "invalid";
+        if (raw) {
+          try {
+            const rec = JSON.parse(raw) as RedeemTokenRecord;
+            if (rec && rec.status === "fresh") status = "pending";
+            else if (rec && rec.status === "redeemed") status = "redeemed";
+            else status = "invalid";
+          } catch {
+            status = "invalid";
+          }
+        }
+
+        return json({ token, status }, 200);
       }
 
       // --- Outbound tracked redirect: /out/{event}/{id}?to=<url>

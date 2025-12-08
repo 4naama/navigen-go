@@ -20,7 +20,8 @@ import {
   createFavoritesModal,
   showFavoritesModal,
   createPromotionsModal,
-  showPromotionsModal
+  showPromotionsModal,
+  showRedeemConfirmationModal       // cashier-side redeem confirmation UX
 } from './modal-injector.js';
 
 // PWA: register SW only in production (keeps install prompt there)
@@ -174,6 +175,30 @@ window.addEventListener('pageshow', async () => {
 if (window.visualViewport) visualViewport.addEventListener('resize', setVH);
 
 const state = {};
+
+// Cashier Redeem Confirmation: if /?lp=...&redeemed=1[&camp=...] is present, show a one-shot modal.
+// This runs only on the device that followed the /out/qr-redeem redirect (cashier side).
+(function initCashierRedeemConfirmation() {
+  try {
+    const u = new URL(window.location.href);
+    const redeemed = u.searchParams.get('redeemed');
+    const lp = (u.searchParams.get('lp') || '').trim();
+    const camp = (u.searchParams.get('camp') || '').trim();
+
+    if (redeemed !== '1' || !lp) {
+      return; // no redeem redirect context; nothing to do
+    }
+
+    // Show a lightweight confirmation modal; modal-injector will handle the actual /hit/ call.
+    showRedeemConfirmationModal({
+      locationIdOrSlug: lp,
+      campaignKey: camp || ''
+    });
+  } catch (_e) {
+    // keep app resilient; redeem confirmation must never break shell
+  }
+})();
+
 let geoPoints = [];
 let structure_data = [];
 let deferredPrompt = null;
