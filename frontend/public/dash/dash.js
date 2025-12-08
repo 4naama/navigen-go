@@ -419,58 +419,42 @@ function renderTable(json) {
     range.textContent = `${startISO} → ${endISO}`;
 
     // 2) ensure Copy button exists (id is stable)
-    let copyBtn = document.getElementById('copy-tsv');
-    if (!copyBtn) {
-      copyBtn = document.createElement('button');
-      copyBtn.id = 'copy-tsv';
-      copyBtn.type = 'button';
-      copyBtn.title = t('dash.copy.tsv');
-      copyBtn.ariaLabel = t('dash.copy.tsv');
-      copyBtn.textContent = '⧉';
-      copyBtn.addEventListener('click', async () => {
-        let payload = '';
+    copyBtn.addEventListener('click', async () => {
+      let payload = '';
 
-        // 1) Click Info / QR Info / Campaigns: TSV from stats table (existing behavior)
-        const table = tblWrap.querySelector('table.stats-table');
-        if (table) {
-          payload = toTSV(table);
-        } else if (typeof currentView === 'string' && currentView === 'analytics') {
-          // 2) Analytics view: copy full written report as plain text
-          const report = tblWrap.querySelector('.analytics-report') || tblWrap;
-          payload = report.innerText.trim();
-        } else {
-          return; // no suitable source to copy
+      const table = tblWrap.querySelector('table.stats-table');
+      if (table) {
+        // Click / QR / Campaigns views: TSV from stats table (existing behavior)
+        payload = toTSV(table);
+      } else if (typeof currentView === 'string' && currentView === 'analytics') {
+        // Analytics view: copy full written report as plain text
+        const report = tblWrap.querySelector('.analytics-report') || tblWrap;
+        payload = report.innerText.trim();
+      } else {
+        return; // no suitable source
+      }
+
+      if (!payload) return;
+
+      try{
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(payload);
+        } else if (document.execCommand) {
+          const textarea = document.createElement('textarea');
+          textarea.value = payload;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
         }
-
-        if (!payload) return;
-
-        try {
-          if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(payload);
-          } else if (document.execCommand) {
-            // legacy path: copy by injecting a hidden textarea
-            const textarea = document.createElement('textarea');
-            textarea.value = payload;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-          }
-          copyBtn.classList.add('copied');
-          const oldTitle = copyBtn.title;
-          copyBtn.title = t('dash.copy.copied');
-          setTimeout(() => {
-            copyBtn.classList.remove('copied');
-            copyBtn.title = oldTitle;
-          }, 2500);
-        } catch (_e) {
-          // ignore copy failures
-        }
-      });
-      metaEl.appendChild(copyBtn);
-    }
+        copyBtn.classList.add('copied');
+        const oldTitle = copyBtn.title;
+        copyBtn.title = t('dash.copy.copied');
+        setTimeout(() => { copyBtn.classList.remove('copied'); copyBtn.title = oldTitle; }, 2500);
+      }catch(_e){ /* noop */ }
+    });
 
     // 3) ensure Info (ℹ️) button and group both buttons on the right
     // create a shared actions wrapper once: [date] ... [ℹ️ ⧉]
@@ -740,7 +724,6 @@ function renderCurrentView(){
       ['dash.qrcamp.col.armed',             'Promo QR shown'],           // ARMED: times promo QR was displayed
       ['dash.qrcamp.col.scans',             'Scans'],
       ['dash.qrcamp.col.redemptions',       'Redemptions'],
-      ['dash.qrcamp.col.scan-compliance',   'Scan compliance %'],        // redemptions / armed
       ['dash.qrcamp.col.efficiency',        'Efficiency %'],
       ['dash.qrcamp.col.invalids',          'Invalid attempts'],
       ['dash.qrcamp.col.unique',            'Unique visitors'],
@@ -773,11 +756,6 @@ function renderCurrentView(){
         const repeatRedeemers = Number(row.repeatRedeemers ?? 0);
         const newRedeemers = Math.max(uniqueRedeemers - repeatRedeemers, 0);
 
-        let scanCompliance = '';
-        if (armed > 0) {
-          scanCompliance = ((redemptions / armed) * 100).toFixed(1) + '%';
-        }
-
         let effPct = '';
         if (scans > 0) {
           effPct = ((redemptions / scans) * 100).toFixed(1) + '%';
@@ -792,7 +770,6 @@ function renderCurrentView(){
           armed,
           scans,
           redemptions,
-          scanCompliance,
           effPct,
           invalids,
           uniq,
@@ -1061,10 +1038,6 @@ function renderCurrentView(){
 
       const bits = [];
       bits.push(`Promotions were shown ${totalArmed} times, with ${totalRedeems} redemptions in this period.`);
-      if (totalArmed > 0) {
-        const compliance = ((totalRedeems / totalArmed) * 100).toFixed(1);
-        bits.push(`This gives a scan compliance of ${compliance}% for the period.`);
-      }
       if (totalInvalid > 0) {
         bits.push(`There were ${totalInvalid} invalid redemption attempts across all campaigns.`);
       }
@@ -1079,17 +1052,8 @@ function renderCurrentView(){
         }));
 
       if (!barItems.length) {
-        campTableHtml = '<p>No campaign data to display.</p>';
-        campBarsHtml = '';
+        campBarsHtml = '<p>No campaign data to display.</p>';
       } else {
-        // Table: "Campaign" + "red / armed"
-        const tableItems = barItems.map(i => ({
-          label: i.label,
-          value: `${i.redeemed} / ${i.value}`
-        }));
-        campTableHtml = buildMiniTable(tableItems);
-
-        // Bar chart: stacked filled/remaining, same as before
         const maxArmed = Math.max(...barItems.map(i => i.value));
         const rows = barItems.map(i => {
           const totalWidth = Math.max(4, (i.value / maxArmed) * 100);
@@ -1108,18 +1072,6 @@ function renderCurrentView(){
           `;
         }).join('');
         campBarsHtml = `<div class="analytics-bars">${rows}</div>`;
-
-        // Non-compliance note if overall scan compliance is under threshold (e.g. 90%)
-        if (totalArmed > 0) {
-          const compliance = totalRedeems / totalArmed;
-          const threshold = 0.9;
-          if (compliance < threshold) {
-            const msg =
-              (typeof t === 'function' ? t('dash.analytics.scan-hint') : '') ||
-              'Many promotions are opened by customers but not scanned at checkout. Please ensure cashiers scan promotion codes when applying discounts.';
-            campFooterNote = `<p class="analytics-note">${msg}</p>`;
-          }
-        }
       }
     }
 
@@ -1127,9 +1079,65 @@ function renderCurrentView(){
       <section class="analytics-section analytics-campaigns">
         <h3>Campaigns</h3>
         <p>${campSummary}</p>
-        ${campTableHtml}
         ${campBarsHtml}
-        ${campFooterNote}
+      </section>
+    `;
+
+    // Quality Assurance Analysis section (uses the same totals)
+    let qaSummary = '';
+    if (!campaigns.length || (totalArmed === 0 && totalRedeems === 0 && totalInvalid === 0)) {
+      qaSummary = 'QA: No promotion scanning data was recorded in this period.';
+    } else {
+      const partsQA = [];
+
+      if (totalArmed > 0) {
+        const compliance = totalRedeems / totalArmed;
+        const compliancePct = (compliance * 100).toFixed(1);
+
+        if (compliance > 1) {
+          partsQA.push(
+            `⚠ QA: Reported scan compliance is ${compliancePct}% (>100%), which indicates redemptions from promo QR shown outside this period or from earlier tracking versions.`
+          );
+        } else if (compliance < 0.7) {
+          partsQA.push(
+            `⚠ QA: Scan discipline appears low in this period (compliance ${compliancePct}%). Consider reinforcing the process to scan promotion codes at checkout.`
+          );
+        } else {
+          partsQA.push(
+            `QA: Promo scan compliance (${compliancePct}%) appears within the expected range for this period.`
+          );
+        }
+      } else if (totalRedeems > 0) {
+        partsQA.push(
+          '⚠ QA: Redemptions were recorded without matching promo QR shown in this period. This may indicate redemptions for earlier promo openings or incomplete ARMED logging.'
+        );
+      }
+
+      if (totalInvalid > 0) {
+        const denom = totalRedeems + totalInvalid;
+        const invalidRate = denom > 0 ? (totalInvalid / denom) : 0;
+        const invalidPct = (invalidRate * 100).toFixed(1);
+
+        if (invalidRate > 0.1) {
+          partsQA.push(
+            `⚠ QA: Invalid redemption attempts are elevated (${invalidPct}% of redemption tries). This may indicate repeated use of expired or already-used codes.`
+          );
+        } else {
+          partsQA.push(
+            `QA: Invalid redemption attempts are present (${invalidPct}% of redemption tries) but remain within a normal range for this period.`
+          );
+        }
+      } else {
+        partsQA.push('QA: No invalid redemption attempts were recorded in this period.');
+      }
+
+      qaSummary = partsQA.join(' ');
+    }
+
+    const qaSectionHtml = `
+      <section class="analytics-section analytics-qa">
+        <h3>Quality Assurance Analysis</h3>
+        <p>${qaSummary}</p>
       </section>
     `;
 
@@ -1161,6 +1169,7 @@ function renderCurrentView(){
           ${clickSectionHtml}
           ${qrSectionHtml}
           ${campaignsSectionHtml}
+          ${qaSectionHtml}
           ${footerHtml}
         </div>
       </div>
