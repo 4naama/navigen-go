@@ -740,7 +740,6 @@ function renderCurrentView(){
       ['dash.qrcamp.col.armed',             'Promo QR shown'],           // ARMED: times promo QR was displayed
       ['dash.qrcamp.col.scans',             'Scans'],
       ['dash.qrcamp.col.redemptions',       'Redemptions'],
-      ['dash.qrcamp.col.scan-compliance',   'Scan compliance %'],        // redemptions / armed
       ['dash.qrcamp.col.efficiency',        'Efficiency %'],
       ['dash.qrcamp.col.invalids',          'Invalid attempts'],
       ['dash.qrcamp.col.unique',            'Unique visitors'],
@@ -773,11 +772,6 @@ function renderCurrentView(){
         const repeatRedeemers = Number(row.repeatRedeemers ?? 0);
         const newRedeemers = Math.max(uniqueRedeemers - repeatRedeemers, 0);
 
-        let scanCompliance = '';
-        if (armed > 0) {
-          scanCompliance = ((redemptions / armed) * 100).toFixed(1) + '%';
-        }
-
         let effPct = '';
         if (scans > 0) {
           effPct = ((redemptions / scans) * 100).toFixed(1) + '%';
@@ -792,7 +786,6 @@ function renderCurrentView(){
           armed,
           scans,
           redemptions,
-          scanCompliance,
           effPct,
           invalids,
           uniq,
@@ -1036,17 +1029,18 @@ function renderCurrentView(){
     let campSummary = '';
     let campTableHtml = '';
     let campBarsHtml = '';
-    let campFooterNote = '';
+    let campFooterNote = ''; // kept for structure; QA-specific notes move to the QA section
+
+    // aggregated totals reused by the Quality Assurance block (scan discipline / invalid ratios)
+    let totalArmed = 0;
+    let totalRedeems = 0;
+    let totalInvalid = 0;
 
     if (!campaigns.length) {
       campSummary = 'No promotion campaigns active or tracked in this period.';
       campTableHtml = '<p>No campaign data to display.</p>';
       campBarsHtml = '';
     } else {
-      let totalArmed = 0;
-      let totalRedeems = 0;
-      let totalInvalid = 0;
-
       const perCampItems = campaigns.map(c => {
         const armed = Number(c.armed ?? 0);
         const red = Number(c.redemptions ?? 0);
@@ -1060,19 +1054,16 @@ function renderCurrentView(){
 
       const bits = [];
       bits.push(`Promotions were shown ${totalArmed} times, with ${totalRedeems} redemptions in this period.`);
-      if (totalArmed > 0) {
-        const compliance = ((totalRedeems / totalArmed) * 100).toFixed(1);
-        bits.push(`This gives a scan compliance of ${compliance}% for the period.`);
-      }
       if (totalInvalid > 0) {
         bits.push(`There were ${totalInvalid} invalid redemption attempts across all campaigns.`);
       }
+      // NOTE: Scan compliance (redemptions / armed) is computed and interpreted only in the Quality Assurance section.
       campSummary = bits.join(' ');
 
       const barItems = perCampItems
         .filter(i => i.armed > 0 || i.red > 0)
         .map(i => ({
-          label: i.name || 'Campaign',
+          label: i.label || 'Campaign',
           value: i.armed,
           redeemed: i.red
         }));
@@ -1088,7 +1079,7 @@ function renderCurrentView(){
         }));
         campTableHtml = buildMiniTable(tableItems);
 
-        // Bar chart: stacked filled/remaining, same as before
+        // Bar chart: stacked filled/remaining (armed vs redeemed)
         const maxArmed = Math.max(...barItems.map(i => i.value));
         const rows = barItems.map(i => {
           const totalWidth = Math.max(4, (i.value / maxArmed) * 100);
@@ -1107,18 +1098,6 @@ function renderCurrentView(){
           `;
         }).join('');
         campBarsHtml = `<div class="analytics-bars">${rows}</div>`;
-
-        // Non-compliance note if overall scan compliance is under threshold (e.g. 90%)
-        if (totalArmed > 0) {
-          const compliance = totalRedeems / totalArmed;
-          const threshold = 0.9;
-          if (compliance < threshold) {
-            const msg =
-              (typeof t === 'function' ? t('dash.analytics.scan-hint') : '') ||
-              'Many promotions are opened by customers but not scanned at checkout. Please ensure cashiers scan promotion codes when applying discounts.';
-            campFooterNote = `<p class="analytics-note">${msg}</p>`;
-          }
-        }
       }
     }
 
@@ -1133,6 +1112,67 @@ function renderCurrentView(){
     `;
 
     // E) Footer with timestamp
+    // E) Quality Assurance Analysis (scan discipline and invalid attempts live only here)
+    let qaLines = [];
+
+    const hasPromoActivity = totalArmed > 0 || totalRedeems > 0 || totalInvalid > 0;
+    const totalRedeemAttempts = totalRedeems + totalInvalid;
+    const complianceRatio = totalArmed > 0 ? (totalRedeems / totalArmed) : null; // redemptions / armed
+    const invalidRatio = totalRedeemAttempts > 0 ? (totalInvalid / totalRedeemAttempts) : 0;
+
+    if (!hasPromoActivity) {
+      qaLines.push(
+        'QA: No promotion QR activity was recorded in this period, so scan discipline and invalid use cannot be evaluated.'
+      );
+    } else {
+      // Scan discipline: interpret scan compliance as a diagnostic (not exposed in the Campaigns summary)
+      if (complianceRatio === null) {
+        qaLines.push(
+          'QA: Redemptions were recorded without any matching "promo QR shown" events in this reporting window. This usually means that promo QR codes were displayed outside the selected period.'
+        );
+      } else if (complianceRatio > 1.05) {
+        const pct = (complianceRatio * 100).toFixed(1);
+        qaLines.push(
+          `⚠ QA: Reported scan discipline is above 100% (≈ ${pct}%). This typically indicates that redemptions in this period come from promo QR shown earlier, outside the current reporting window.`
+        );
+      } else if (complianceRatio < 0.7) {
+        const pct = (complianceRatio * 100).toFixed(1);
+        qaLines.push(
+          `⚠ QA: Scan discipline appears low in this period (≈ ${pct}%). Promotions were shown ${totalArmed} times, with ${totalRedeems} redemptions. Consider reinforcing the in-store process so that cashiers always scan promotion codes at checkout.`
+        );
+      } else {
+        const pct = (complianceRatio * 100).toFixed(1);
+        qaLines.push(
+          `QA: Promo scanning appears within a normal range for this period. Roughly ${pct}% of "promo QR shown" events led to a recorded redemption.`
+        );
+      }
+
+      // Invalid attempts: interpret as a QA signal rather than a merchant metric
+      if (totalRedeemAttempts === 0) {
+        qaLines.push(
+          'QA: No redemption attempts were recorded, so invalid use cannot be evaluated.'
+        );
+      } else if (invalidRatio > 0.1 && totalInvalid >= 3) {
+        const pct = (invalidRatio * 100).toFixed(1);
+        qaLines.push(
+          `⚠ QA: Invalid redemption attempts are elevated (≈ ${pct}% of redemption tries, ${totalInvalid} of ${totalRedeemAttempts}). This may indicate repeated use of expired, already-used, or out-of-window codes.`
+        );
+      } else {
+        const pct = (invalidRatio * 100).toFixed(1);
+        qaLines.push(
+          `QA: Invalid redemption attempts look normal for this period (≈ ${pct}% of ${totalRedeemAttempts} redemption tries).`
+        );
+      }
+    }
+
+    const qaSectionHtml = `
+      <section class="analytics-section analytics-qa">
+        <h3>Quality Assurance Analysis</h3>
+        ${qaLines.map(line => `<p>${line}</p>`).join('')}
+      </section>
+    `;
+
+    // F) Footer with timestamp
     const now = new Date();
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -1160,6 +1200,7 @@ function renderCurrentView(){
           ${clickSectionHtml}
           ${qrSectionHtml}
           ${campaignsSectionHtml}
+          ${qaSectionHtml}
           ${footerHtml}
         </div>
       </div>
