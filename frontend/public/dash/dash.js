@@ -428,17 +428,46 @@ function renderTable(json) {
       copyBtn.ariaLabel = t('dash.copy.tsv');
       copyBtn.textContent = '⧉';
       copyBtn.addEventListener('click', async () => {
+        let payload = '';
+
+        // 1) Click Info / QR Info / Campaigns: TSV from stats table (existing behavior)
         const table = tblWrap.querySelector('table.stats-table');
-        if (!table) return;
-        const tsv = toTSV(table);
-        try{
-          if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(tsv);
-          else if (document.execCommand) document.execCommand('copy');
+        if (table) {
+          payload = toTSV(table);
+        } else if (typeof currentView === 'string' && currentView === 'analytics') {
+          // 2) Analytics view: copy full written report as plain text
+          const report = tblWrap.querySelector('.analytics-report') || tblWrap;
+          payload = report.innerText.trim();
+        } else {
+          return; // no suitable source to copy
+        }
+
+        if (!payload) return;
+
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(payload);
+          } else if (document.execCommand) {
+            // legacy path: copy by injecting a hidden textarea
+            const textarea = document.createElement('textarea');
+            textarea.value = payload;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+          }
           copyBtn.classList.add('copied');
           const oldTitle = copyBtn.title;
           copyBtn.title = t('dash.copy.copied');
-          setTimeout(() => { copyBtn.classList.remove('copied'); copyBtn.title = oldTitle; }, 2500);
-        }catch(_e){ /* noop */ }
+          setTimeout(() => {
+            copyBtn.classList.remove('copied');
+            copyBtn.title = oldTitle;
+          }, 2500);
+        } catch (_e) {
+          // ignore copy failures
+        }
       });
       metaEl.appendChild(copyBtn);
     }
