@@ -2087,72 +2087,85 @@ async function initEmergencyBlock(countryOverride) {
     "alert-modal"
   ].forEach(setupTapOutClose);
 
-  // Get reference to the logo icon
-  const logo = document.getElementById('logo-icon');
-
-  // If the logo exists, add a click listener to reload the page when clicked
-  if (logo) {
-    logo.addEventListener('click', () => {
-      location.reload();
-    });
-  }
-
   // PWA Install Behavior
   const headerPin  = document.querySelector('.header-pin');
-  
-  // PWA: set initial pin state early; BIP listener may refine later
-  if (headerPin) {
-    if (isStandalone()) {
-      // standalone: support 👋 opens donation modal (no prompt override)
-      headerPin.style.display = 'block';
-      headerPin.textContent = '👋'; // show support in PWA
-      headerPin.onclick = () => {
-        try {
-          const hasDonated = localStorage.getItem("hasDonated") === "true";
-          createDonationModal(hasDonated); // existing modal factory
-        } catch {
-          showModal('donation-modal'); // fallback open
-        }
-      };
-    } else {
-      // browser tab: default to 📌; BIP listener will hook prompt on click
-      headerPin.style.display = 'block';
-      headerPin.textContent = '📌'; // install (replaced by BIP if available)
-      headerPin.onclick = () => showModal('pinned-modal');
-    }
-  }
-    
-  const pinnedModal = document.getElementById('pinned-modal');
 
-  // 2-line: module-scoped prompt holder; not on window
+  // Helper: wire 👋 support handler (donation entry point)
+  const attachSupportHandler = (pinEl) => {
+    if (!pinEl) return;
+    pinEl.style.display = 'block';
+    pinEl.textContent = '👋';
+    pinEl.onclick = () => {
+      try {
+        const hasDonated = localStorage.getItem('hasDonated') === 'true';
+        createDonationModal(hasDonated);
+      } catch {
+        showModal('donation-modal');
+      }
+    };
+  };
+
+  // Helper: wire 📌 install fallback (pinned-modal instructions)
+  const attachInstallFallback = (pinEl) => {
+    if (!pinEl) return;
+    pinEl.style.display = 'block';
+    pinEl.textContent = '📌';
+    pinEl.onclick = () => showModal('pinned-modal');
+  };
+
+  // Module-scoped BIP event holder (used only if available)
   let promptEvent = null;
 
-  // 2-line: listen on globalThis (no globals created)
-  globalThis.addEventListener('beforeinstallprompt', (e) => {
-    if (isStandalone()) return;           // keep
-    e.preventDefault();                   // keep
-    promptEvent = e;                      // stays in module scope
-    if (headerPin) headerPin.dataset.bip = '1'; // mark that BIP fired
-
-    if (headerPin) {
-      headerPin.style.display = 'block';
-      headerPin.textContent = '📌';
-      headerPin.onclick = () => {
-        // 2-line: use stored event; no global vars
-        promptEvent?.prompt();
-        promptEvent?.userChoice.then(choice => {
-          if (choice.outcome === 'accepted') setTimeout(() => location.reload(), 800);
-        });
-      };
+  // Initial pin state based on runtime mode
+  if (headerPin) {
+    if (isStandalone()) {
+      // Already running as standalone PWA → show 👋 support
+      attachSupportHandler(headerPin);
+    } else {
+      // Browser tab → show 📌 (install); BIP listener may refine behavior
+      attachInstallFallback(headerPin);
     }
+  }
+
+  // Listen for the OS-level PWA install prompt (Chrome/Edge, etc.)
+  globalThis.addEventListener('beforeinstallprompt', (e) => {
+    if (isStandalone()) return; // no need to handle in PWA
+    e.preventDefault();
+    promptEvent = e;
+    if (!headerPin) return;
+
+    headerPin.dataset.bip = '1';
+    headerPin.style.display = 'block';
+    headerPin.textContent = '📌';
+
+    // When user taps 📌 and BIP is available → show OS install prompt
+    headerPin.onclick = () => {
+      // If for any reason promptEvent is gone, fall back to manual instructions
+      if (!promptEvent) {
+        attachInstallFallback(headerPin);
+        headerPin.onclick(); // open pinned-modal
+        return;
+      }
+
+      promptEvent.prompt();
+      promptEvent.userChoice.then((choice) => {
+        if (choice.outcome === 'accepted') {
+          // Mark in localStorage and flip to 👋 in this session (no reload)
+          try { localStorage.setItem('pwaInstalled', 'true'); } catch {}
+          attachSupportHandler(headerPin);
+        } else {
+          // User dismissed OS prompt → keep 📌 as manual install entry point
+          attachInstallFallback(headerPin);
+        }
+        promptEvent = null;
+      });
+    };
   });
 
-  // 2-line: fallback if BIP never fires; reuse existing modal flow
+  // If BIP never fires (Safari / unsupported), keep 📌 as pinned-modal entry
   setTimeout(() => {
     if (!isStandalone() && headerPin && headerPin.dataset.bip !== '1') {
-      headerPin.style.display = 'block';
-      headerPin.textContent = '📌';
-      headerPin.onclick = () => showModal('pinned-modal');
+      attachInstallFallback(headerPin);
     }
   }, 3000);
 
