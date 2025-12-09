@@ -7,38 +7,35 @@ try {
   const pickLang = async (mod) => {
     let lang = '';
 
-    // 1) device/browser language (primary tag, e.g. "hu" from "hu-HU")
+    // 1) app's explicit language (user-chosen)
     try {
-      const navRaw =
-        (Array.isArray(navigator.languages) && navigator.languages[0]) ||
-        navigator.language ||
-        '';
-      const primary = (navRaw.split(/[-_]/)[0] || '').trim();
-      if (primary) lang = primary;
-    } catch {
-      // ignore navigator errors, fall through to next source
-    }
+      const stored = (localStorage.getItem('lang') || '').trim();
+      if (stored) lang = stored;
+    } catch {}
 
-    // 2) app's most recent lang setting (stored by the main app)
+    // 2) device/browser language (fallback only)
     if (!lang) {
-      lang = (localStorage.getItem('lang') || '').trim();
+      try {
+        const navRaw =
+          (Array.isArray(navigator.languages) && navigator.languages[0]) ||
+          navigator.language ||
+          '';
+        const primary = (navRaw.split(/[-_]/)[0] || '').trim();
+        if (primary) lang = primary;
+      } catch {}
     }
 
     // 3) fallback: English
-    if (!lang) {
-      lang = 'en';
-    }
+    if (!lang) lang = 'en';
 
-    // Optional: ensure the chosen lang is actually in the translated catalog
+    // Validate that the lang exists in the translated catalog
     if (mod && typeof mod.fetchTranslatedLangs === 'function') {
       try {
         const supported = await mod.fetchTranslatedLangs();
         if (Array.isArray(supported) && supported.length && !supported.includes(lang)) {
           lang = 'en';
         }
-      } catch {
-        // ignore catalog errors; keep chosen lang
-      }
+      } catch {}
     }
 
     return lang || 'en';

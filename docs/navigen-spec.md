@@ -1012,6 +1012,63 @@ Not a search function itself, but informs ranking
 
 Frequently interacted locations are boosted in the result list
 
+14. ADMIN & QA SYSTEMS (INTERNAL ONLY)
+
+14.1 Silent QA Auto-Tagging (Location Integrity Signals)
+
+The Worker derives operational quality signals for each location whenever
+/api/stats?locationID=... is requested.  
+These signals are **internal-only** and are never exposed in merchant or public UI.
+
+Tags are written to:
+
+KV_STATUS:
+  status:<locationID> => {
+    status: "...",
+    tier: "...",
+    qaFlags: [...],
+    qaUpdatedAt: "ISO timestamp"
+  }
+
+qaFlags may include:
+  "low-scan-discipline"         // complianceRatio < 0.7
+  "high-invalid-attempts"       // invalidRatio > 0.10 AND invalid >= 3
+  "low-cashier-coverage"        // cashier confirmations < 80% of redeems
+  "low-customer-confirmation"   // customer confirmations < 50% of armed (when armed >= 10)
+  "qa-ok"                       // no issues detected
+
+14.2 NaviGen Admin Dashboard (future)
+
+The Admin Dashboard reads qaFlags from KV_STATUS to surface:
+  • location-level operational integrity  
+  • health summaries per sector / merchant  
+  • sortable lists by severity of QA issues  
+  • drill-down into compliance anomalies across time windows  
+
+These insights remain visible only to internal operators.
+
+14.3 Internal Monitoring & Alerting
+
+Internal services may subscribe to qaFlags and:
+  • trigger alerts when locations repeatedly show “low-scan-discipline”  
+  • detect emerging fraud patterns or misuse (invalids, skipped-scans)  
+  • notify operations teams about merchant behaviour deviations  
+
+Alert thresholds are configurable and may use rolling averages or daily snapshots.
+
+14.4 Future Auto-Prioritization Per Location
+
+qaFlags feed into automated prioritization systems, enabling:
+  • ranking locations by operational risk  
+  • suggesting which merchants require onboarding support  
+  • scheduling automated outreach or audits  
+  • optimizing field operations and compliance efforts  
+
+These mechanisms do not affect the merchant-facing dashboard and remain internal.
+
+END ADMIN & QA SYSTEMS
+
+
 END OF SPEC
 ***
 
