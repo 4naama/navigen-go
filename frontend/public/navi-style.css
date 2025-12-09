@@ -2640,7 +2640,7 @@ body.high-contrast .modal-menu-item.is-active {
 /* Campaigns table: cap column width; allow full text via inner horizontal scroll */
 #dash-table-scroller table.campaigns-table th,
 #dash-table-scroller table.campaigns-table td {
-  max-width: 14ch;                  /* ≈ width of "Scan compliance %" */
+  max-width: 16ch;                  /* ≈ width of "Scan compliance %" */
   overflow-x: auto;                 /* inner horizontal scroll for long labels */
   overflow-y: hidden;               /* no vertical scrollbars within cells */
   white-space: nowrap;              /* keep everything on one line */
@@ -2650,7 +2650,7 @@ body.high-contrast .modal-menu-item.is-active {
 /* Click Info metric column: cap width and allow inner horizontal scroll for long labels */
 #dash-table-scroller table.stats-table:not(.campaigns-table) th:first-child,
 #dash-table-scroller table.stats-table:not(.campaigns-table) td:first-child {
-  max-width: 14ch;                  /* ~half of "Redeem-confirmation-cashier" */
+  max-width: 16ch;                  /* ~half of "Redeem-confirmation-cashier" */
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;

@@ -841,11 +841,16 @@ function renderCurrentView(){
       ratingSentence = 'No customer ratings were recorded in this period.';
     }
 
+    const locLabel =
+      (typeof t === 'function' ? t('dash.analytics.header.location') : '') || 'Location';
+    const periodLabel =
+      (typeof t === 'function' ? t('dash.analytics.header.period') : '') || 'Period';
+
     const headerHtml = `
       <section class="analytics-header">
         <h2>${(typeof t === 'function' ? t('dash.analytics') : 'Analytics')}</h2>
-        <p>${name ? `Location: ${name}` : ''}</p>
-        <p>${from && to ? `Period: ${from} → ${to}` : ''}</p>
+        <p>${name ? `${locLabel}: ${name}` : ''}</p>
+        <p>${from && to ? `${periodLabel}: ${from} → ${to}` : ''}</p>
         <p>${ratingSentence}</p>
       </section>
     `;
@@ -896,9 +901,16 @@ function renderCurrentView(){
     let clickSummary = '';
     let clickBarsHtml = '';
 
+    const clickEmptyText =
+      (typeof t === 'function' ? t('dash.analytics.click.empty') : '') ||
+      'No click events recorded for this period.';
+    const clickEmptyTable =
+      (typeof t === 'function' ? t('dash.analytics.click.empty-table') : '') ||
+      'No click data to display.';
+
     if (!hasData) {
-      clickSummary = 'No click events recorded for this period.';
-      clickBarsHtml = '<p>No click data to display.</p>';
+      clickSummary = clickEmptyText;
+      clickBarsHtml = `<p>${clickEmptyTable}</p>`;
     } else {
       const totals = new Map();
       for (const d of dateKeys) {
@@ -917,11 +929,14 @@ function renderCurrentView(){
         .slice(0, 5);
 
       if (!items.length) {
-        clickSummary = 'No click events recorded for this period.';
-        clickBarsHtml = '<p>No click data to display.</p>';
+        clickSummary = clickEmptyText;
+        clickBarsHtml = `<p>${clickEmptyTable}</p>`;
       } else {
-        const names = items.map(i => i.label);
-        const firstLine = `The most-used actions in this period were: ${names.join(', ')}.`;
+        const names = items.map(i => i.label).join(', ');
+        const mostUsedTpl =
+          (typeof t === 'function' ? t('dash.analytics.click.most-used') : '') ||
+          'The most-used actions in this period were: {actions}.';
+        const firstLine = mostUsedTpl.replace('{actions}', names);
 
         // Compare last day vs previous day for these top metrics (simple trend sentence)
         let trendLine = '';
@@ -931,34 +946,56 @@ function renderCurrentView(){
           const lastRow = days[lastDate] || {};
           const prevRow = days[prevDate] || {};
 
+          const incLabel =
+            (typeof t === 'function' ? t('dash.analytics.click.trend-increased') : '') ||
+            'increased';
+          const decLabel =
+            (typeof t === 'function' ? t('dash.analytics.click.trend-decreased') : '') ||
+            'decreased';
+          const sameLabel =
+            (typeof t === 'function' ? t('dash.analytics.click.trend-same') : '') ||
+            'stayed about the same';
+          const trendPrefixTpl =
+            (typeof t === 'function' ? t('dash.analytics.click.trend-prefix') : '') ||
+            'Compared to the previous day, {trend}.';
+
           const describeDelta = (metric) => {
             const alt = metric.replaceAll('-', '_');
             const a = Number(prevRow[metric] ?? prevRow[alt] ?? 0);
             const b = Number(lastRow[metric] ?? lastRow[alt] ?? 0);
-            if (b > a) return 'increased';
-            if (b < a) return 'decreased';
-            return 'stayed about the same';
+            if (b > a) return incLabel;
+            if (b < a) return decLabel;
+            return sameLabel;
           };
 
           const phrases = items.slice(0, 3).map(i => {
             const trend = describeDelta(i.metric);
             return `${i.label} ${trend}`;
           });
-          trendLine = `Compared to the previous day, ${phrases.join(', ')}.`;
+          const trendText = phrases.join(', ');
+          trendLine = trendText
+            ? trendPrefixTpl.replace('{trend}', trendText)
+            : '';
         }
 
         clickSummary = [firstLine, trendLine].filter(Boolean).join(' ');
 
-        clickBarsHtml = buildBarRows(items.map(i => ({
-          label: i.label,
-          value: i.value
-        })));
+        clickBarsHtml = buildBarRows(
+          items.map(i => ({
+            label: i.label,
+            value: i.value
+          }))
+        );
       }
     }
 
+    const clickHeading =
+      (typeof t === 'function' ? t('dash.analytics.click.heading') : '') ||
+      'Click Info';
+
     const clickSectionHtml = `
       <section class="analytics-section analytics-clicks">
-        <h3>Click Info</h3>
+        <h3>${clickHeading}</h3>
         <p>${clickSummary}</p>
         ${clickBarsHtml}
       </section>
@@ -970,9 +1007,16 @@ function renderCurrentView(){
     let qrTableHtml = '';
     let qrBarsHtml = '';
 
+    const qrEmptyText =
+      (typeof t === 'function' ? t('dash.analytics.qr.empty') : '') ||
+      'No QR activity recorded for this period.';
+    const qrEmptyTable =
+      (typeof t === 'function' ? t('dash.analytics.qr.empty-table') : '') ||
+      'No QR data to display.';
+
     if (!qrRows.length) {
-      qrSummary = 'No QR activity recorded for this period.';
-      qrTableHtml = '<p>No QR data to display.</p>';
+      qrSummary = qrEmptyText;
+      qrTableHtml = `<p>${qrEmptyTable}</p>`;
       qrBarsHtml = '';
     } else {
       const counts = { scan: 0, armed: 0, redeem: 0, invalid: 0 };
@@ -987,46 +1031,63 @@ function renderCurrentView(){
 
       const parts = [];
       if (totalEvents > 0) {
-        parts.push(`There were ${totalEvents} QR events in this period:`);
+        const summaryIntroTpl =
+          (typeof t === 'function' ? t('dash.analytics.qr.summary-intro') : '') ||
+          'There were {total} QR events in this period:';
+        parts.push(summaryIntroTpl.replace('{total}', String(totalEvents)));
+
         const detailBits = [];
-        if (counts.scan)   detailBits.push(`${counts.scan} scans`);
-        if (counts.armed)  detailBits.push(`${counts.armed} promo QR shown`);
-        if (counts.redeem) detailBits.push(`${counts.redeem} redemptions`);
-        if (counts.invalid)detailBits.push(`${counts.invalid} invalid attempts`);
+        if (counts.scan)   detailBits.push(`${counts.scan} ${((typeof t === 'function' ? t('dash.analytics.qr.label-static') : '') || 'scans')}`);
+        if (counts.armed)  detailBits.push(`${counts.armed} ${((typeof t === 'function' ? t('dash.analytics.qr.label-armed') : '') || 'promo QR shown')}`);
+        if (counts.redeem) detailBits.push(`${counts.redeem} ${((typeof t === 'function' ? t('dash.analytics.qr.label-redeem') : '') || 'redemptions')}`);
+        if (counts.invalid)detailBits.push(`${counts.invalid} ${((typeof t === 'function' ? t('dash.analytics.qr.label-invalid') : '') || 'invalid attempts')}`);
         if (detailBits.length) parts.push(detailBits.join(', ') + '.');
 
         if (counts.armed > 0) {
           const redRate = ((counts.redeem / counts.armed) * 100).toFixed(1);
-          parts.push(`Most QR activity came from promotions, with ${redRate}% of promo QR shown leading to a redemption.`);
+          const fromPromosTpl =
+            (typeof t === 'function' ? t('dash.analytics.qr.summary-from-promos') : '') ||
+            'Most QR activity came from promotions, with {percent}% of promo QR shown leading to a redemption.';
+          parts.push(fromPromosTpl.replace('{percent}', redRate));
         } else if (counts.scan > 0) {
           const redFromScans = ((counts.redeem / counts.scan) * 100).toFixed(1);
-          parts.push(`Most QR activity came from static scans, with ${redFromScans}% leading to a redemption.`);
+          const fromStaticTpl =
+            (typeof t === 'function' ? t('dash.analytics.qr.summary-from-static') : '') ||
+            'Most QR activity came from static scans, with {percent}% leading to a redemption.';
+          parts.push(fromStaticTpl.replace('{percent}', redFromScans));
         }
 
         if (counts.invalid > 0 && totalEvents > 0) {
           const invalidRate = ((counts.invalid / totalEvents) * 100).toFixed(1);
-          parts.push(`Invalid attempts were ${invalidRate}% of QR events, which indicates customers mostly use valid codes.`);
+          const invalidSummaryTpl =
+            (typeof t === 'function' ? t('dash.analytics.qr.summary-invalid') : '') ||
+            'Invalid attempts were {percent}% of QR events, which indicates customers mostly use valid codes.';
+          parts.push(invalidSummaryTpl.replace('{percent}', invalidRate));
         }
       } else {
-        parts.push('No QR activity recorded for this period.');
+        parts.push(qrEmptyText);
       }
 
       qrSummary = parts.join(' ');
 
       const qrItems = [
-        counts.scan   ? { label: 'Static scans',     value: counts.scan }   : null,
-        counts.armed  ? { label: 'Promo QR shown',   value: counts.armed }  : null,
-        counts.redeem ? { label: 'Redemptions',      value: counts.redeem } : null,
-        counts.invalid? { label: 'Invalid attempts', value: counts.invalid }: null
+        counts.scan   ? { label: (typeof t === 'function' ? t('dash.analytics.qr.label-static') : '') || 'Static scans',     value: counts.scan }   : null,
+        counts.armed  ? { label: (typeof t === 'function' ? t('dash.analytics.qr.label-armed')  : '') || 'Promo QR shown',   value: counts.armed }  : null,
+        counts.redeem ? { label: (typeof t === 'function' ? t('dash.analytics.qr.label-redeem') : '') || 'Redemptions',      value: counts.redeem } : null,
+        counts.invalid? { label: (typeof t === 'function' ? t('dash.analytics.qr.label-invalid'): '') || 'Invalid attempts', value: counts.invalid }: null
       ].filter(Boolean);
 
       qrTableHtml = buildMiniTable(qrItems);
       qrBarsHtml = buildBarRows(qrItems);
     }
 
+    const qrHeading =
+      (typeof t === 'function' ? t('dash.analytics.qr.heading') : '') ||
+      'QR Info';
+
     const qrSectionHtml = `
       <section class="analytics-section analytics-qr">
-        <h3>QR Info</h3>
+        <h3>${qrHeading}</h3>
         <p>${qrSummary}</p>
         ${qrBarsHtml}
       </section>
@@ -1039,14 +1100,21 @@ function renderCurrentView(){
     let campBarsHtml = '';
     let campFooterNote = ''; // kept for structure; QA-specific notes move to the QA section
 
+    const campEmptyText =
+      (typeof t === 'function' ? t('dash.analytics.campaigns.empty') : '') ||
+      'No promotion campaigns active or tracked in this period.';
+    const campEmptyTable =
+      (typeof t === 'function' ? t('dash.analytics.campaigns.empty-table') : '') ||
+      'No campaign data to display.';
+
     // aggregated totals reused by the Quality Assurance block (scan discipline / invalid ratios)
     let totalArmed = 0;
     let totalRedeems = 0;
     let totalInvalid = 0;
 
     if (!campaigns.length) {
-      campSummary = 'No promotion campaigns active or tracked in this period.';
-      campTableHtml = '<p>No campaign data to display.</p>';
+      campSummary = campEmptyText;
+      campTableHtml = `<p>${campEmptyTable}</p>`;
       campBarsHtml = '';
     } else {
       const perCampItems = campaigns.map(c => {
@@ -1060,10 +1128,21 @@ function renderCurrentView(){
         return { name, armed, red };
       });
 
+      const summaryTpl =
+        (typeof t === 'function' ? t('dash.analytics.campaigns.summary') : '') ||
+        'Promotions were shown {armed} times, with {redeems} redemptions in this period.';
+      const invalidTpl =
+        (typeof t === 'function' ? t('dash.analytics.campaigns.invalid-summary') : '') ||
+        'There were {invalid} invalid redemption attempts across all campaigns.';
+
       const bits = [];
-      bits.push(`Promotions were shown ${totalArmed} times, with ${totalRedeems} redemptions in this period.`);
+      bits.push(
+        summaryTpl
+          .replace('{armed}', String(totalArmed))
+          .replace('{redeems}', String(totalRedeems))
+      );
       if (totalInvalid > 0) {
-        bits.push(`There were ${totalInvalid} invalid redemption attempts across all campaigns.`);
+        bits.push(invalidTpl.replace('{invalid}', String(totalInvalid)));
       }
       // NOTE: Scan compliance (redemptions / armed) is computed and interpreted only in the Quality Assurance section.
       campSummary = bits.join(' ');
@@ -1088,9 +1167,14 @@ function renderCurrentView(){
           needsAttention = true;
         }
 
-        const statusLabel = needsAttention
+        const statusKey = needsAttention
+          ? 'dash.analytics.status.needs-attention'
+          : 'dash.analytics.status.ok';
+        const statusFallback = needsAttention
           ? 'Operational status: Needs attention'
           : 'Operational status: OK';
+        const statusLabel =
+          (typeof t === 'function' ? t(statusKey) : '') || statusFallback;
 
         opsStatusHtml = `<p class="analytics-status">${statusLabel}</p>`;
       }
@@ -1098,13 +1182,13 @@ function renderCurrentView(){
       const barItems = perCampItems
         .filter(i => i.armed > 0 || i.red > 0)
         .map(i => ({
-          label: i.label || 'Campaign',
+          label: i.name || (typeof t === 'function' ? t('dash.analytics.campaigns.label') : '') || 'Campaign',
           value: i.armed,
           redeemed: i.red
         }));
 
       if (!barItems.length) {
-        campTableHtml = '<p>No campaign data to display.</p>';
+        campTableHtml = `<p>${campEmptyTable}</p>`;
         campBarsHtml = '';
       } else {
         // Table: "Campaign" + "red / armed"
@@ -1140,9 +1224,13 @@ function renderCurrentView(){
       campFooterNote = opsStatusHtml + campFooterNote;
     }
 
+    const campaignsHeading =
+      (typeof t === 'function' ? t('dash.analytics.campaigns.heading') : '') ||
+      'Campaigns';
+
     const campaignsSectionHtml = `
       <section class="analytics-section analytics-campaigns">
-        <h3>Campaigns</h3>
+        <h3>${campaignsHeading}</h3>
         <p>${campSummary}</p>
         ${campTableHtml}
         ${campBarsHtml}
@@ -1244,9 +1332,13 @@ function renderCurrentView(){
       }
     }
 
+    const qaHeading =
+      (typeof t === 'function' ? t('dash.analytics.qa.heading') : '') ||
+      'Quality Assurance Analysis';
+
     const qaSectionHtml = `
       <section class="analytics-section analytics-qa">
-        <h3>Quality Assurance Analysis</h3>
+        <h3>${qaHeading}</h3>
         ${qaLines.map(line => `<p>${line}</p>`).join('')}
       </section>
     `;
