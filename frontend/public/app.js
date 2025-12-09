@@ -2126,7 +2126,7 @@ async function initEmergencyBlock(countryOverride) {
     const msg = document.createElement('p');
     msg.textContent =
       (hasT ? (t('install.body') || '') : '') ||
-      'To keep NaviGen handy, add it to your home screen from your browser menu.';
+      'To keep NaviGen handy during the event, add it to your home screen from your browser menu.';
     inner.appendChild(msg);
 
     const note = document.createElement('p');
@@ -2136,8 +2136,22 @@ async function initEmergencyBlock(countryOverride) {
       'On most devices, look for “Add to Home Screen” or “Install app” in the browser’s menu.';
     inner.appendChild(note);
 
+    // Primary action button (acknowledge / consent)
+    const actionWrap = document.createElement('div');
+    actionWrap.className = 'modal-actions';
+    const actionBtn = document.createElement('button');
+    actionBtn.type = 'button';
+    actionBtn.className = 'modal-body-button';
+    actionBtn.textContent =
+      (hasT ? (t('install.action') || '') : '') ||
+      '✅ Got it';
+    actionBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+    actionWrap.appendChild(actionBtn);
+    inner.appendChild(actionWrap);
+
     body.appendChild(inner);
-    card.appendChild(top);
     card.appendChild(body);
     modal.appendChild(card);
     document.body.appendChild(modal);
