@@ -322,12 +322,12 @@
   "myStuff.reset.subtitle": "Clear settings, restart",
   "myStuff.data.title": "Data We Store",
   "myStuff.data.subtitle": "Transparent view of stored preferences and history",
-  "myStuff.data.bodyIntro ": "Below is a summary of what’s stored locally in your browser.",
-  "myStuff.data.includes ": "This may include:",
-  "myStuff.data.item.purchase ": "Purchase history (if any),",
-  "myStuff.data.item.language ": "Language preference,",
-  "myStuff.data.item.location ": "Location pins you've saved",
-  "myStuff.data.warning ": "No data is sent to external servers. Everything stays on your device.",
+  "myStuff.data.bodyIntro": "Below is a summary of what’s stored locally in your browser.",
+  "myStuff.data.includes": "This may include:",
+  "myStuff.data.item.purchase": "Purchase history (if any),",
+  "myStuff.data.item.language": "Language preference,",
+  "myStuff.data.item.location": "Location pins you've saved",
+  "myStuff.data.warning": "No data is sent to external servers. Everything stays on your device.",
   "myStuff.data.resetPrompt": "Want to start fresh? Use Reset App to clear all local data.",
   "myStuff.data.viewPolicy": "View Full Privacy Policy",
   "myStuff.terms.title": "Terms & Privacy",
@@ -525,5 +525,8 @@
   "dash.analytics.status.ok": "Operational status: OK",
   "dash.analytics.status.needs-attention": "Operational status: Needs attention",
   "dash.analytics.qa.unknown": "Quality Assurance status could not be fully evaluated for this period.",
-  "dash.analytics.qa.scan-borderline": "Promo scanning is slightly below the preferred range. Monitoring is recommended."
+  "dash.analytics.qa.scan-borderline": "Promo scanning is slightly below the preferred range. Monitoring is recommended.",
+  "install.title": "Install NaviGen",
+  "install.body": "To keep NaviGen handy during the event, add it to your home screen from your browser menu.",
+  "install.tip": "On most devices, look for “Add to Home Screen” or “Install app” in the browser’s menu."
 }
