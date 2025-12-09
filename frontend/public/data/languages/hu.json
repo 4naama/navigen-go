@@ -566,5 +566,12 @@
   "dash.qrinfo.browser.safari": "Safari",
   "dash.qrinfo.browser.firefox": "Firefox",
   "dash.qrinfo.browser.edge": "Edge",
-  "dash.qrinfo.browser.opera": "Opera"
+  "dash.qrinfo.browser.opera": "Opera",
+  "dash.meta.total-daily-counts-for": "Napi összesített darabszám",
+  "dash.mode.location": "Helyszín",
+  "dash.mode.entity": "Entitás (Összeg)",
+  "dash.period": "Időszak",
+  "dash.label.entity": "Entitás",
+  "metric.redeem-confirmation-cashier": "Beváltás megerősítése (pénztáros)",
+  "metric.redeem-confirmation-customer": "Beváltás megerősítése (vásárló)"
 }

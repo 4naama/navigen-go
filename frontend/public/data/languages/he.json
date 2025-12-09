@@ -566,5 +566,12 @@
   "dash.qrinfo.browser.safari": "ספארי",
   "dash.qrinfo.browser.firefox": "פיירפוקס",
   "dash.qrinfo.browser.edge": "אדג’",
-  "dash.qrinfo.browser.opera": "אופרה"
+  "dash.qrinfo.browser.opera": "אופרה",
+  "dash.meta.total-daily-counts-for": "סך הספירות היומיות עבור",
+  "dash.mode.location": "מיקום",
+  "dash.mode.entity": "ישות (סיכום)",
+  "dash.period": "תקופה",
+  "dash.label.entity": "ישות",
+  "metric.redeem-confirmation-cashier": "אישור מימוש (קופאי)",
+  "metric.redeem-confirmation-customer": "אישור מימוש (לקוח)"
 }

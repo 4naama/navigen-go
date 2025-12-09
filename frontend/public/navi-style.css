@@ -2650,7 +2650,7 @@ body.high-contrast .modal-menu-item.is-active {
 /* Click Info metric column: cap width and allow inner horizontal scroll for long labels */
 #dash-table-scroller table.stats-table:not(.campaigns-table) th:first-child,
 #dash-table-scroller table.stats-table:not(.campaigns-table) td:first-child {
-  max-width: 16ch;                  /* ~half of "Redeem-confirmation-cashier" */
+  max-width: 18ch;                  /* ~half of "Redeem-confirmation-cashier" */
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
@@ -2660,7 +2660,7 @@ body.high-contrast .modal-menu-item.is-active {
 /* Analytics report layout + mini summary tables */
 .analytics-report{
   padding: 8px 4px 0;
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1.5;
   max-width: 900px;      /* cap analytics content width */
   margin: 0 auto;        /* center inside dashboard */

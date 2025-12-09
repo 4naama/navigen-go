@@ -566,5 +566,12 @@
   "dash.qrinfo.browser.safari": "Safari",
   "dash.qrinfo.browser.firefox": "Firefox",
   "dash.qrinfo.browser.edge": "Edge",
-  "dash.qrinfo.browser.opera": "Opera"
+  "dash.qrinfo.browser.opera": "Opera",
+  "dash.meta.total-daily-counts-for": "Comptes quotidiens totaux pour",
+  "dash.mode.location": "Emplacement",
+  "dash.mode.entity": "Entité (Somme)",
+  "dash.period": "Période",
+  "dash.label.entity": "Entité",
+  "metric.redeem-confirmation-cashier": "Confirmation de remboursement (caissier)",
+  "metric.redeem-confirmation-customer": "Confirmation de remboursement (client)"
 }

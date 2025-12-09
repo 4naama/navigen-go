@@ -352,7 +352,11 @@ const METRIC_LABEL = Object.freeze({
   'qr-view':      t('metric.qr-view'),
   'qr-print':     t('metric.qr-print'),
   'rating':       t('metric.rating-sum'),
-  'rating-avg':   t('metric.rating-avg') // used by meta summary line only
+  'rating-avg':   t('metric.rating-avg'), // used by meta summary line only
+
+  // NEW: QA-related confirmation metrics
+  'redeem-confirmation-cashier':   t('metric.redeem-confirmation-cashier'),
+  'redeem-confirmation-customer':  t('metric.redeem-confirmation-customer')
 });
 
 const HUMANIZE = (k) => {
@@ -917,9 +921,9 @@ function renderCurrentView(){
     }
 
     const locLabel =
-      (typeof t === 'function' ? t('dash.analytics.header.location') : '') || 'Location';
+      (typeof t === 'function' ? t('dash.label.location') : '') || 'Location';
     const periodLabel =
-      (typeof t === 'function' ? t('dash.analytics.header.period') : '') || 'Period';
+      (typeof t === 'function' ? t('dash.period') : '') || 'Period';
 
     const headerHtml = `
       <section class="analytics-header">
@@ -1065,7 +1069,7 @@ function renderCurrentView(){
     }
 
     const clickHeading =
-      (typeof t === 'function' ? t('dash.analytics.click.heading') : '') ||
+      (typeof t === 'function' ? t('dash.tab.click-info') : '') ||
       'Click Info';
 
     const clickSectionHtml = `
@@ -1157,7 +1161,7 @@ function renderCurrentView(){
     }
 
     const qrHeading =
-      (typeof t === 'function' ? t('dash.analytics.qr.heading') : '') ||
+      (typeof t === 'function' ? t('dash.tab.qr-info') : '') ||
       'QR Info';
 
     const qrSectionHtml = `
@@ -1300,7 +1304,7 @@ function renderCurrentView(){
     }
 
     const campaignsHeading =
-      (typeof t === 'function' ? t('dash.analytics.campaigns.heading') : '') ||
+      (typeof t === 'function' ? t('dash.tab.campaigns') : '') ||
       'Campaigns';
 
     const campaignsSectionHtml = `

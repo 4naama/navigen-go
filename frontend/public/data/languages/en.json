@@ -566,5 +566,12 @@
   "dash.qrinfo.browser.safari": "Safari",
   "dash.qrinfo.browser.firefox": "Firefox",
   "dash.qrinfo.browser.edge": "Edge",
-  "dash.qrinfo.browser.opera": "Opera"
+  "dash.qrinfo.browser.opera": "Opera",
+  "dash.meta.total-daily-counts-for": "Total daily counts for",
+  "dash.mode.location": "Location",
+  "dash.mode.entity": "Entity (Sum)",
+  "dash.period": "Period",
+  "dash.label.entity": "Entity",
+  "metric.redeem-confirmation-cashier": "Redeem confirmation (cashier)",
+  "metric.redeem-confirmation-customer": "Redeem confirmation (customer)"
 }
