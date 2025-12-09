@@ -2084,8 +2084,69 @@ async function initEmergencyBlock(countryOverride) {
     "help-modal",
     "social-modal",
     "pinned-modal",
-    "alert-modal"
+    "share-location-modal",
+    "donation-modal"
   ].forEach(setupTapOutClose);
+
+  // Ensure the pinned/install modal exists; create lazily if missing.
+  const ensurePinnedModal = () => {
+    let modal = document.getElementById('pinned-modal');
+    if (modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = 'pinned-modal';
+    modal.classList.add('hidden'); // CSS uses :not(.hidden) to show
+
+    // Modal card
+    const card = document.createElement('div');
+    card.className = 'modal-content modal-layout';
+
+    // Sticky top bar with title + close
+    const top = document.createElement('div');
+    top.className = 'modal-top-bar';
+    const hasT = (typeof t === 'function');
+    const titleTxt =
+      (hasT ? (t('install.title') || '') : '') ||
+      'Install NaviGen';
+    top.innerHTML = `
+      <h2>${titleTxt}</h2>
+      <button class="modal-close" aria-label="Close">&times;</button>
+    `;
+    const closeBtn = top.querySelector('.modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    }
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'modal-body';
+    const inner = document.createElement('div');
+    inner.className = 'modal-body-inner';
+
+    const msg = document.createElement('p');
+    msg.textContent =
+      (hasT ? (t('install.body') || '') : '') ||
+      'To keep NaviGen handy, add it to your home screen from your browser menu.';
+    inner.appendChild(msg);
+
+    const note = document.createElement('p');
+    note.className = 'muted';
+    note.textContent =
+      (hasT ? (t('install.tip') || '') : '') ||
+      'On most devices, look for “Add to Home Screen” or “Install app” in the browser’s menu.';
+    inner.appendChild(note);
+
+    body.appendChild(inner);
+    card.appendChild(top);
+    card.appendChild(body);
+    modal.appendChild(card);
+    document.body.appendChild(modal);
+
+    // Tap-out close + ESC handled by global setupTapOutClose + keydown block
+    setupTapOutClose('pinned-modal');
+
+    return modal;
+  };
 
   // PWA Install Behavior
   const headerPin  = document.querySelector('.header-pin');
@@ -2110,7 +2171,12 @@ async function initEmergencyBlock(countryOverride) {
     if (!pinEl) return;
     pinEl.style.display = 'block';
     pinEl.textContent = '📌';
-    pinEl.onclick = () => showModal('pinned-modal');
+    pinEl.onclick = () => {
+      const modal = ensurePinnedModal();
+      if (modal) {
+        showModal('pinned-modal');
+      }
+    };
   };
 
   // Module-scoped BIP event holder (used only if available)
