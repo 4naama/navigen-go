@@ -189,6 +189,69 @@ function getISODate(input){
     }
   }
 
+  // Localize meta-lead ("Total daily counts for") and Period label
+  {
+    const metaLead = document.getElementById('meta-lead');
+    if (metaLead) {
+      const textNode = metaLead.firstChild;
+      const leadTxt =
+        (typeof t === 'function' ? t('dash.meta.total-daily-counts-for') : '') ||
+        'Total daily counts for';
+      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+        textNode.textContent = leadTxt + '\u00A0\u00A0'; // keep the two non-breaking spaces
+      }
+    }
+
+    // Localize mode options if desired
+    if (modeEl) {
+      const locOpt = modeEl.querySelector('option[value="location"]');
+      const entOpt = modeEl.querySelector('option[value="entity"]');
+      if (locOpt) {
+        locOpt.textContent =
+          (typeof t === 'function' ? t('dash.mode.location') : '') ||
+          'Location';
+      }
+      if (entOpt) {
+        entOpt.textContent =
+          (typeof t === 'function' ? t('dash.mode.entity') : '') ||
+          'Entity (Sum)';
+      }
+    }
+
+    // Localize Period label
+    const labels = Array.from(document.querySelectorAll('#dash-header label'));
+    const periodLabelNode = labels.find(l => l.querySelector('#period'));
+    if (periodLabelNode) {
+      const txtNode = periodLabelNode.firstChild;
+      const periodTxt =
+        (typeof t === 'function' ? t('dash.period') : '') ||
+        'Period';
+      if (txtNode && txtNode.nodeType === Node.TEXT_NODE) {
+        txtNode.textContent = periodTxt + ' ';
+      }
+    }
+
+    // Localize location / entity labels if desired
+    if (locWrap) {
+      const txtNode = locWrap.firstChild;
+      if (txtNode && txtNode.nodeType === Node.TEXT_NODE) {
+        const locTxt =
+          (typeof t === 'function' ? t('dash.label.location') : '') ||
+          'Location';
+        txtNode.textContent = locTxt + ' ';
+      }
+    }
+    if (entWrap) {
+      const txtNode = entWrap.firstChild;
+      if (txtNode && txtNode.nodeType === Node.TEXT_NODE) {
+        const entTxt =
+          (typeof t === 'function' ? t('dash.label.entity') : '') ||
+          'entityID';
+        txtNode.textContent = entTxt + ' ';
+      }
+    }
+  }
+
   if (entEl) entEl.value = eid;
 
   if (modeEl && locWrap && entWrap) syncMode();
@@ -833,12 +896,24 @@ function renderCurrentView(){
 
     const ratedTotal = Number(stats.rated_sum ?? 0);
     const ratingAvg  = Number(stats.rating_avg ?? 0);
+    const ratedTotal = Number(stats.rated_sum ?? 0);
+    const ratingAvg  = Number(stats.rating_avg ?? 0);
     let ratingSentence = '';
     if (ratedTotal > 0 && ratingAvg > 0) {
       const avgText = ratingAvg.toFixed(1);
-      ratingSentence = `⭐ ${avgText} (${ratedTotal}) — Average rating ${avgText} from ${ratedTotal} review${ratedTotal === 1 ? '' : 's'} in this period.`;
+      const plural = ratedTotal === 1 ? '' : 's';
+      const tpl =
+        (typeof t === 'function' ? t('dash.analytics.rating.summary') : '') ||
+        '⭐ {avg} ({count}) — Average rating {avg} from {count} review{plural} in this period.';
+      ratingSentence = tpl
+        .replace(/{avg}/g, avgText)
+        .replace(/{count}/g, String(ratedTotal))
+        .replace('{plural}', plural);
     } else {
-      ratingSentence = 'No customer ratings were recorded in this period.';
+      const noneTpl =
+        (typeof t === 'function' ? t('dash.analytics.rating.none') : '') ||
+        'No customer ratings were recorded in this period.';
+      ratingSentence = noneTpl;
     }
 
     const locLabel =
