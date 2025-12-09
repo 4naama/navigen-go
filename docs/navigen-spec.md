@@ -1012,13 +1012,22 @@ Not a search function itself, but informs ranking
 
 Frequently interacted locations are boosted in the result list
 
-14. ADMIN & QA SYSTEMS (INTERNAL ONLY)
+90. EXTENSION ARCHITECTURE (INTERNAL ONLY)
 
-14.1 Silent QA Auto-Tagging (Location Integrity Signals)
+The NaviGen specification uses sections 1–13 as a stable architectural spine.
+All new internal subsystems, admin tooling, QA mechanisms, monitoring layers,
+and operational models are defined under the 90.x namespace to avoid collision
+with core system numbering and preserve long-term clarity.
 
-The Worker derives operational quality signals for each location whenever
-/api/stats?locationID=... is requested.  
-These signals are **internal-only** and are never exposed in merchant or public UI.
+90.x modules do not alter merchant-facing behavior unless explicitly elevated
+to the core specification.
+
+--------------------------------------------------------------------
+
+90.1 Silent QA Auto-Tagging (Location Integrity Signals)
+
+The navigen-api Worker derives operational quality signals for each location
+whenever /api/stats?locationID=... is requested.
 
 Tags are written to:
 
@@ -1032,116 +1041,151 @@ KV_STATUS:
 
 qaFlags may include:
   "low-scan-discipline"         // complianceRatio < 0.7
-  "high-invalid-attempts"       // invalidRatio > 0.10 AND invalid >= 3
+  "high-invalid-attempts"       // invalidRatio > 0.10 AND totalInvalid ≥ 3
   "low-cashier-coverage"        // cashier confirmations < 80% of redeems
-  "low-customer-confirmation"   // customer confirmations < 50% of armed (when armed >= 10)
+  "low-customer-confirmation"   // customer confirmations < 50% of armed (armed ≥ 10)
   "qa-ok"                       // no issues detected
 
-14.2 NaviGen Admin Dashboard (future)
+These flags are strictly internal and never rendered in merchant UI.
 
-The Admin Dashboard reads qaFlags from KV_STATUS to surface:
-  • location-level operational integrity  
-  • health summaries per sector / merchant  
-  • sortable lists by severity of QA issues  
-  • drill-down into compliance anomalies across time windows  
+--------------------------------------------------------------------
 
-These insights remain visible only to internal operators.
+90.2 NaviGen Admin Dashboard (Future Module)
 
-14.3 Internal Monitoring & Alerting
+The Admin Dashboard consumes qaFlags from KV_STATUS and provides
+internal operational visibility:
 
-Internal services may subscribe to qaFlags and:
-  • trigger alerts when locations repeatedly show “low-scan-discipline”  
-  • detect emerging fraud patterns or misuse (invalids, skipped-scans)  
-  • notify operations teams about merchant behaviour deviations  
+  • Location-level operational integrity  
+  • Sector / merchant risk summaries  
+  • Sortable anomaly and health lists  
+  • Drill-down on compliance deviations over time  
+  • Tools for internal support, QA, and compliance teams  
 
-Alert thresholds are configurable and may use rolling averages or daily snapshots.
+Merchant-facing dashboards remain unaffected.
 
-14.4 Future Auto-Prioritization Per Location
+--------------------------------------------------------------------
 
-qaFlags feed into automated prioritization systems, enabling:
-  • ranking locations by operational risk  
-  • suggesting which merchants require onboarding support  
-  • scheduling automated outreach or audits  
-  • optimizing field operations and compliance efforts  
+90.3 Internal Monitoring & Alerting
 
-These mechanisms do not affect the merchant-facing dashboard and remain internal.
+Internal monitoring systems may subscribe to qaFlags and:
 
-END ADMIN & QA SYSTEMS
+  • Trigger alerts on repeated low scan discipline  
+  • Detect invalid or out-of-window redemption patterns  
+  • Identify missing cashier confirmations  
+  • Flag suspicious operational behavior for review  
+  • Support rolling or threshold-based alerting strategies  
 
+Alerting is strictly internal and not surfaced to merchants.
+
+--------------------------------------------------------------------
+
+90.4 Auto-Prioritization Per Location (Operational Support)
+
+qaFlags feed internal prioritization mechanisms.
+
+Uses include:
+  • Ranking locations by operational risk  
+  • Highlighting merchants needing onboarding or retraining  
+  • Scheduling field-ops follow-up  
+  • Supporting fraud-risk models  
+  • Improving future campaign integrity  
+
+This system is not visible to merchants.
+
+--------------------------------------------------------------------
+
+90.5 Onboarding Playbook (New Business)
+
+Purpose:  
+Ensure a newly added merchant/business is fully operational in NaviGen with
+working Info QR, Promo QR, Dash analytics, and future billing compatibility.
+
+90.5.1 Data Preparation (GSheets → JSON)
+
+(A) location_data → profiles.json  
+  • locationID (slug, stable, unique)  
+  • locationName (multilingual)  
+  • groupKey / subgroupKey  
+  • context (primary landing path, e.g. souvenirs/hungary/budapest)  
+  • coordinates  
+  • contact & media fields  
+  • QR URL override (optional; Info QR defaults to <context>?lp=<id>)  
+
+(B) campaign_data → campaigns.json  
+  • locationID  
+  • campaignKey + campaignName  
+  • brandKey, context override (optional)  
+  • startDate, endDate, status  
+  • discountKind, campaignDiscountValue  
+  • eligibilityType  
+  • UTM metadata (optional)  
+
+(C) finance_data → finance.json  
+  • sectorKey + countryCode  
+  • currency  
+  • campFee, campFeeRate  
+
+(D) contexts_data → contexts.json  
+  Defines all valid navigational URL shells:
+    /souvenirs
+    /souvenirs/hungary  
+    /souvenirs/hungary/budapest  
+    /giftshops/hungary/budapest  
+  Each context row includes visibility flag, title, languages, ordering.
+
+90.5.2 JSON Export Pipeline
+
+A scheduled Apps Script exports the four sheets into:
+  • /data/profiles.json  
+  • /data/campaigns.json  
+  • /data/finance.json  
+  • /data/contexts.json  
+
+Workers always operate on these files.
+
+90.5.3 Alias / ULID Seeding
+
+New slugs must be mapped to canonical ULIDs:
+
+  POST /api/admin/seed-alias-ulids
+
+Worker creates:
+  alias:<slug> => { locationID: "<ULID>" }
+
+From then on:
+  • All APIs accept slug or ULID  
+  • Dash works at /dash/<slug> or /dash/<ULID>  
+  • Stats, QR, Promo flows normalize to ULID internally  
+
+90.5.4 Onboarding Smoke Tests
+
+Info QR:
+  • GET /api/qr?locationID=<slug>  
+  • Scan → LPM opens correctly  
+
+Promo QR:
+  • GET /api/promo-qr?locationID=<slug>  
+  • Validate ARMED log  
+  • Scan redeem QR → REDEEM or INVALID logged  
+
+Dash:
+  • /dash/<slug>  
+  • Click Info → qr-scan increments  
+  • QR Info → scan / redeem / invalid rows present  
+  • Campaigns → Armed / Scans / Redemptions / Invalids  
+  • Analytics → QA section populated  
+
+90.5.5 Launch Readiness
+
+A business is production-ready once:
+  • Info QR and Promo QR flows validated  
+  • /api/stats reflects all event types  
+  • Dash displays full analytics  
+  • Admin systems generate qaFlags  
+  • Billing can be enabled later without schema changes  
+
+--------------------------------------------------------------------
+
+END 90.x EXTENSION ARCHITECTURE
 
 END OF SPEC
-***
-
-✔️ Legality
-
-You can use the IP for:
-
-Transient analysis
-
-City-level geolocation
-
-Security
-
-You must:
-
-Not store the raw IP permanently
-
-Not use it for fingerprinting
-
-Use aggregate/city-level data if retaining
-
-A compliant approach is:
-
-Immediately geolocate the IP
-
-Store only: {city, country, region, lat, lon (rounded)}
-
-Discard the IP itself
-
-This avoids GDPR issues and is standard practice.
-
-✅ 3. Cloudflare provides FREE device geolocation
-
-Cloudflare automatically performs an internal MaxMind lookup and injects metadata into Workers:
-
-request.cf.city
-request.cf.country
-request.cf.regionCode
-request.cf.latitude
-request.cf.longitude
-
-
-These values are derived from the real client IP, not the Cloudflare POP.
-
-Example:
-export default {
-  async fetch(request) {
-    const info = request.cf;
-    const data = {
-      city: info.city,
-      country: info.country,
-      region: info.region,
-      lat: info.latitude,
-      lon: info.longitude,
-    };
-    // Store the city-level data only
-    // ...
-    return new Response(JSON.stringify(data));
-  }
-}
-
-✔️ This is the best and safest solution
-
-No storing IPs
-
-No running your own geolocation
-
-No extra cost
-
-City-level accuracy is typically correct
-
-✔ NEVER store raw IPs
-
-Store only:
-
-{ "city": "...", "country": "...", "lat": xx.x, "lon": yy.y } //* No lat lon either
