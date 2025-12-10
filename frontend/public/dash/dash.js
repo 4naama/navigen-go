@@ -1137,17 +1137,14 @@ function renderCurrentView(){
       qrTableHtml = `<p>${qrEmptyTable}</p>`;
       qrBarsHtml = '';
     } else {
-      const counts = { scan: 0, armed: 0, redeem: 0, invalid: 0 };
-      for (const row of qrRows) {
-        const sig = (row.signal || '').toLowerCase();
-        if (sig === 'scan') counts.scan++;
-        else if (sig === 'armed') counts.armed++;
-        else if (sig === 'redeem') counts.redeem++;
-        else if (sig === 'invalid') counts.invalid++;
-      }
       const totalEvents = counts.scan + counts.armed + counts.redeem + counts.invalid;
 
       const parts = [];
+      const labelStatic   = (typeof t === 'function' ? t('dash.analytics.qr.label-static')   : '') || 'Static scans';
+      const labelArmed    = (typeof t === 'function' ? t('dash.analytics.qr.label-armed')    : '') || 'Promo QR shown';
+      const labelRedeem   = (typeof t === 'function' ? t('dash.analytics.qr.label-redeem')   : '') || 'Redemptions';
+      const labelInvalid  = (typeof t === 'function' ? t('dash.analytics.qr.label-invalid')  : '') || 'Invalid attempts';
+
       if (totalEvents > 0) {
         const summaryIntroTpl =
           (typeof t === 'function' ? t('dash.analytics.qr.summary-intro') : '') ||
@@ -1155,11 +1152,6 @@ function renderCurrentView(){
         parts.push(summaryIntroTpl.replace('{total}', String(totalEvents)));
 
         const detailBits = [];
-        const labelStatic   = (typeof t === 'function' ? t('dash.analytics.qr.label-static')   : '') || 'Static scans';
-        const labelArmed    = (typeof t === 'function' ? t('dash.analytics.qr.label-armed')    : '') || 'Promo QR shown';
-        const labelRedeem   = (typeof t === 'function' ? t('dash.analytics.qr.label-redeem')   : '') || 'Redemptions';
-        const labelInvalid  = (typeof t === 'function' ? t('dash.analytics.qr.label-invalid')  : '') || 'Invalid attempts';
-
         if (counts.scan)   detailBits.push(`${labelStatic} - ${counts.scan}`);
         if (counts.armed)  detailBits.push(`${labelArmed} - ${counts.armed}`);
         if (counts.redeem) detailBits.push(`${labelRedeem} - ${counts.redeem}`);
@@ -1199,6 +1191,9 @@ function renderCurrentView(){
         counts.redeem ? { label: labelRedeem,  value: counts.redeem } : null,
         counts.invalid? { label: labelInvalid, value: counts.invalid }: null
       ].filter(Boolean);
+
+      qrTableHtml = buildMiniTable(qrItems);
+      qrBarsHtml = buildBarRows(qrItems);
 
       qrTableHtml = buildMiniTable(qrItems);
       qrBarsHtml = buildBarRows(qrItems);
