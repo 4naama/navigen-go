@@ -1137,6 +1137,16 @@ function renderCurrentView(){
       qrTableHtml = `<p>${qrEmptyTable}</p>`;
       qrBarsHtml = '';
     } else {
+      // Aggregate QR event counts from qrRows
+      const counts = { scan: 0, armed: 0, redeem: 0, invalid: 0 };
+      for (const row of qrRows) {
+        const sig = String(row.signal || '').toLowerCase();
+        if (sig === 'scan')    counts.scan++;
+        else if (sig === 'armed')  counts.armed++;
+        else if (sig === 'redeem') counts.redeem++;
+        else if (sig === 'invalid')counts.invalid++;
+      }
+
       const totalEvents = counts.scan + counts.armed + counts.redeem + counts.invalid;
 
       const parts = [];
@@ -1186,14 +1196,11 @@ function renderCurrentView(){
       qrSummary = parts.join(' ');
 
       const qrItems = [
-        counts.scan   ? { label: labelStatic,  value: counts.scan }   : null,
-        counts.armed  ? { label: labelArmed,   value: counts.armed }  : null,
-        counts.redeem ? { label: labelRedeem,  value: counts.redeem } : null,
-        counts.invalid? { label: labelInvalid, value: counts.invalid }: null
+        counts.scan    ? { label: labelStatic,  value: counts.scan }    : null,
+        counts.armed   ? { label: labelArmed,   value: counts.armed }   : null,
+        counts.redeem  ? { label: labelRedeem,  value: counts.redeem }  : null,
+        counts.invalid ? { label: labelInvalid, value: counts.invalid } : null
       ].filter(Boolean);
-
-      qrTableHtml = buildMiniTable(qrItems);
-      qrBarsHtml = buildBarRows(qrItems);
 
       qrTableHtml = buildMiniTable(qrItems);
       qrBarsHtml = buildBarRows(qrItems);
