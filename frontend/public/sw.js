@@ -2,7 +2,7 @@
 // dev = localhost only (SW not registered on pages.dev anymore)
 const IS_DEV = /\blocalhost$|\b127\.0\.0\.1$/.test(self.location.hostname);
 
-const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v58"; // bump to evict stale cache
+const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v59"; // bump to evict stale cache
 
 // Precache core shell for offline; keep list lean
 self.addEventListener("install", event => {
