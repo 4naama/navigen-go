@@ -2604,6 +2604,7 @@ body.high-contrast .modal-menu-item.is-active {
   max-height: 60vh;                         /* desktop/tablet cap */
   overflow-y: auto;
   overflow-x: auto;
+  padding-right:12px;     /* match dash-table left padding */
   -webkit-overflow-scrolling: touch;
 
   /* single source of floor for all views (tables + Analytics report);
@@ -2916,7 +2917,7 @@ body.high-contrast .modal-menu-item.is-active {
 /* one-line label+input; scroll when narrow */
 #dash-header #loc-wrap{ display:inline-flex; align-items:center; gap:8px; white-space:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 /* compact input */
-#dash-header #loc-wrap input#locationID{ width:24ch; flex:0 0 auto; min-width:10ch; }
+#dash-header #loc-wrap input#locationID{ width:28ch; flex:0 0 auto; min-width:10ch; }
 
 /* Decorative refresh glyph after Period selector (UI-only) */
 #period-refresh{

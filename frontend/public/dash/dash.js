@@ -198,11 +198,11 @@ function getISODate(input){
         (typeof t === 'function' ? t('dash.meta.total-daily-counts-for') : '') ||
         'Total daily counts for';
       if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-        textNode.textContent = leadTxt + '\u00A0\u00A0'; // keep the two non-breaking spaces
+        textNode.textContent = leadTxt + '\u00A0\u00A0';
       }
     }
 
-    // Localize mode options if desired
+    // Localize mode options ...
     if (modeEl) {
       const locOpt = modeEl.querySelector('option[value="location"]');
       const entOpt = modeEl.querySelector('option[value="entity"]');
@@ -218,7 +218,7 @@ function getISODate(input){
       }
     }
 
-    // Localize Period label
+    // Localize Period label and values
     const labels = Array.from(document.querySelectorAll('#dash-header label'));
     const periodLabelNode = labels.find(l => l.querySelector('#period'));
     if (periodLabelNode) {
@@ -228,6 +228,41 @@ function getISODate(input){
         'Period';
       if (txtNode && txtNode.nodeType === Node.TEXT_NODE) {
         txtNode.textContent = periodTxt + ' ';
+      }
+    }
+
+    const periodEl = document.getElementById('period');
+    if (periodEl) {
+      const opt1  = periodEl.querySelector('option[value="1"]');
+      const opt7  = periodEl.querySelector('option[value="7"]');
+      const opt14 = periodEl.querySelector('option[value="14"]');
+      const opt28 = periodEl.querySelector('option[value="28"]');
+      const opt56= periodEl.querySelector('option[value="56"]');
+
+      if (opt1) {
+        opt1.textContent =
+          (typeof t === 'function' ? t('dash.period.option.1') : '') ||
+          '1 day (24h)';
+      }
+      if (opt7) {
+        opt7.textContent =
+          (typeof t === 'function' ? t('dash.period.option.7') : '') ||
+          '1 week (7 days)';
+      }
+      if (opt14) {
+        opt14.textContent =
+          (typeof t === 'function' ? t('dash.period.option.14') : '') ||
+          '2 weeks (14 days)';
+      }
+      if (opt28) {
+        opt28.textContent =
+          (typeof t === 'function' ? t('dash.period.option.28') : '') ||
+          '4 weeks (28 days)';
+      }
+      if (opt56) {
+        opt56.textContent =
+          (typeof t === 'function' ? t('dash.period.option.56') : '') ||
+          '8 weeks (56 days)';
       }
     }
 
@@ -843,7 +878,7 @@ function renderCurrentView(){
 
         const cells = [
           row.campaign || '',          // Campaign ID
-          row.campaignName || '',      // Campaign Name
+          row.campaignName ? `"${row.campaignName}"` : '',
           row.target || '',            // Target
           row.brand || '',             // Brand
           row.period || '',
@@ -903,14 +938,20 @@ function renderCurrentView(){
     let ratingSentence = '';
     if (ratedTotal > 0 && ratingAvg > 0) {
       const avgText = ratingAvg.toFixed(1);
-      const plural = ratedTotal === 1 ? '' : 's';
-      const tpl =
-        (typeof t === 'function' ? t('dash.analytics.rating.summary') : '') ||
-        '⭐ {avg} ({count}) — Average rating {avg} from {count} review{plural} in this period.';
+      const isSingular = ratedTotal === 1;
+
+      const tplSing =
+        (typeof t === 'function' ? t('dash.analytics.rating.summary.singular') : '') ||
+        '⭐ {avg} (1) — Average rating {avg} from 1 review in this period.';
+      const tplPlural =
+        (typeof t === 'function' ? t('dash.analytics.rating.summary.plural') : '') ||
+        '⭐ {avg} ({count}) — Average rating {avg} from {count} reviews in this period.';
+
+      const tpl = isSingular ? tplSing : tplPlural;
+
       ratingSentence = tpl
         .replace(/{avg}/g, avgText)
-        .replace(/{count}/g, String(ratedTotal))
-        .replace('{plural}', plural);
+        .replace(/{count}/g, String(ratedTotal));
     } else {
       const noneTpl =
         (typeof t === 'function' ? t('dash.analytics.rating.none') : '') ||
@@ -1114,10 +1155,15 @@ function renderCurrentView(){
         parts.push(summaryIntroTpl.replace('{total}', String(totalEvents)));
 
         const detailBits = [];
-        if (counts.scan)   detailBits.push(`${counts.scan} ${((typeof t === 'function' ? t('dash.analytics.qr.label-static') : '') || 'scans')}`);
-        if (counts.armed)  detailBits.push(`${counts.armed} ${((typeof t === 'function' ? t('dash.analytics.qr.label-armed') : '') || 'promo QR shown')}`);
-        if (counts.redeem) detailBits.push(`${counts.redeem} ${((typeof t === 'function' ? t('dash.analytics.qr.label-redeem') : '') || 'redemptions')}`);
-        if (counts.invalid)detailBits.push(`${counts.invalid} ${((typeof t === 'function' ? t('dash.analytics.qr.label-invalid') : '') || 'invalid attempts')}`);
+        const labelStatic   = (typeof t === 'function' ? t('dash.analytics.qr.label-static')   : '') || 'Static scans';
+        const labelArmed    = (typeof t === 'function' ? t('dash.analytics.qr.label-armed')    : '') || 'Promo QR shown';
+        const labelRedeem   = (typeof t === 'function' ? t('dash.analytics.qr.label-redeem')   : '') || 'Redemptions';
+        const labelInvalid  = (typeof t === 'function' ? t('dash.analytics.qr.label-invalid')  : '') || 'Invalid attempts';
+
+        if (counts.scan)   detailBits.push(`${labelStatic} - ${counts.scan}`);
+        if (counts.armed)  detailBits.push(`${labelArmed} - ${counts.armed}`);
+        if (counts.redeem) detailBits.push(`${labelRedeem} - ${counts.redeem}`);
+        if (counts.invalid)detailBits.push(`${labelInvalid} - ${counts.invalid}`);
         if (detailBits.length) parts.push(detailBits.join(', ') + '.');
 
         if (counts.armed > 0) {
@@ -1148,10 +1194,10 @@ function renderCurrentView(){
       qrSummary = parts.join(' ');
 
       const qrItems = [
-        counts.scan   ? { label: (typeof t === 'function' ? t('dash.analytics.qr.label-static') : '') || 'Static scans',     value: counts.scan }   : null,
-        counts.armed  ? { label: (typeof t === 'function' ? t('dash.analytics.qr.label-armed')  : '') || 'Promo QR shown',   value: counts.armed }  : null,
-        counts.redeem ? { label: (typeof t === 'function' ? t('dash.analytics.qr.label-redeem') : '') || 'Redemptions',      value: counts.redeem } : null,
-        counts.invalid? { label: (typeof t === 'function' ? t('dash.analytics.qr.label-invalid'): '') || 'Invalid attempts', value: counts.invalid }: null
+        counts.scan   ? { label: labelStatic,  value: counts.scan }   : null,
+        counts.armed  ? { label: labelArmed,   value: counts.armed }  : null,
+        counts.redeem ? { label: labelRedeem,  value: counts.redeem } : null,
+        counts.invalid? { label: labelInvalid, value: counts.invalid }: null
       ].filter(Boolean);
 
       qrTableHtml = buildMiniTable(qrItems);
@@ -1201,10 +1247,11 @@ function renderCurrentView(){
         totalArmed += armed;
         totalRedeems += red;
         totalInvalid += inv;
-        const name = c.campaignName || c.campaign || '';
+        const rawName = c.campaignName || c.campaign || '';
+        const name = rawName ? `"${rawName}"` : '';
         return { name, armed, red };
       });
-
+      
       const summaryTpl =
         (typeof t === 'function' ? t('dash.analytics.campaigns.summary') : '') ||
         'Promotions were shown {armed} times, with {redeems} redemptions in this period.';
@@ -1256,14 +1303,18 @@ function renderCurrentView(){
         opsStatusHtml = `<p class="analytics-status">${statusLabel}</p>`;
       }
 
+      const defaultCampLabel =
+        (typeof t === 'function' ? t('dash.analytics.campaigns.label') : '') ||
+        'Campaign';
+
       const barItems = perCampItems
         .filter(i => i.armed > 0 || i.red > 0)
         .map(i => ({
-          label: i.name || (typeof t === 'function' ? t('dash.analytics.campaigns.label') : '') || 'Campaign',
+          label: i.name || defaultCampLabel,
           value: i.armed,
           redeemed: i.red
         }));
-
+        
       if (!barItems.length) {
         campTableHtml = `<p>${campEmptyTable}</p>`;
         campBarsHtml = '';
@@ -1320,94 +1371,145 @@ function renderCurrentView(){
 
     const hasPromoActivity = totalArmed > 0 || totalRedeems > 0 || totalInvalid > 0;
     const totalRedeemAttempts = totalRedeems + totalInvalid;
-    const complianceRatio = totalArmed > 0 ? (totalRedeems / totalArmed) : null; // redemptions / armed
+    const complianceRatio = totalArmed > 0 ? (totalRedeems / totalArmed) : null;
     const invalidRatio = totalRedeemAttempts > 0 ? (totalInvalid / totalRedeemAttempts) : 0;
 
-    // Aggregate confirmation metrics from daily buckets (redeem-confirmation-* events)
-    // cashierConfs / customerConfs are pre-aggregated once above for this period
-    // (no re-aggregation here; reuse the shared values for coverage diagnostics)
-
-    const cashierCoverage = totalRedeems > 0 ? (cashierConfs / totalRedeems) : null;
-    const customerCoverage = totalArmed > 0 ? (customerConfs / totalArmed) : null;
-
     if (!hasPromoActivity) {
-      qaLines.push(
-        'QA: No promotion QR activity was recorded in this period, so scan discipline and invalid use cannot be evaluated.'
-      );
+      const msg =
+        (typeof t === 'function' ? t('dash.analytics.qa.no-promo-activity') : '') ||
+        'No promotional QR activity was recorded in this period, so scan discipline and invalid use cannot be evaluated.';
+      qaLines.push(msg);
     } else {
-      // Scan discipline: interpret scan compliance as a diagnostic (not exposed in the Campaigns summary)
+      // Scan discipline
       if (complianceRatio === null) {
-        qaLines.push(
-          'QA: Redemptions were recorded without any matching "promo QR shown" events in this reporting window. This usually means that promo QR codes were displayed outside the selected period.'
-        );
+        const msg =
+          (typeof t === 'function' ? t('dash.analytics.qa.scan-missing') : '') ||
+          'Redemptions were recorded without any matching "promo QR shown" events in this reporting window. This usually means that promo QR codes were displayed outside the selected period.';
+        qaLines.push(msg);
       } else if (complianceRatio > 1.05) {
         const pct = (complianceRatio * 100).toFixed(1);
-        qaLines.push(
-          `⚠ QA: Reported scan discipline is above 100% (≈ ${pct}%). This typically indicates that redemptions in this period come from promo QR shown earlier, outside the current reporting window.`
-        );
+        const tpl =
+          (typeof t === 'function' ? t('dash.analytics.qa.scan-over-100') : '') ||
+          '⚠ QA: Reported scan discipline is above 100% (≈ {percent}%). This typically indicates that some redemptions in this period originate from promo QR shown outside the selected reporting window.';
+        qaLines.push(tpl.replace('{percent}', pct));
       } else if (complianceRatio < 0.7) {
         const pct = (complianceRatio * 100).toFixed(1);
+        const tpl =
+          (typeof t === 'function' ? t('dash.analytics.qa.scan-low') : '') ||
+          '⚠ QA: Scan discipline appears low in this period (≈ {percent}%). Promotions were shown {armed} times, with {redeems} redemptions. Consider reinforcing the in-store process so that cashiers always scan promotion codes at checkout.';
         qaLines.push(
-          `⚠ QA: Scan discipline appears low in this period (≈ ${pct}%). Promotions were shown ${totalArmed} times, with ${totalRedeems} redemptions. Consider reinforcing the in-store process so that cashiers always scan promotion codes at checkout.`
+          tpl
+            .replace('{percent}', pct)
+            .replace('{armed}', String(totalArmed))
+            .replace('{redeems}', String(totalRedeems))
         );
       } else {
         const pct = (complianceRatio * 100).toFixed(1);
-        qaLines.push(
-          `QA: Promo scanning appears within a normal range for this period. Roughly ${pct}% of "promo QR shown" events led to a recorded redemption.`
-        );
+        const tpl =
+          (typeof t === 'function' ? t('dash.analytics.qa.scan-normal') : '') ||
+          'QA: Promo scanning appears within a normal range for this period. Roughly {percent}% of "promo QR shown" events led to a recorded redemption.';
+        qaLines.push(tpl.replace('{percent}', pct));
       }
 
-      // Invalid attempts: interpret as a QA signal rather than a merchant metric
+      // Invalid attempts
       if (totalRedeemAttempts === 0) {
-        qaLines.push(
-          'QA: No redemption attempts were recorded, so invalid use cannot be evaluated.'
-        );
-      } else if (invalidRatio > 0.1 && totalInvalid >= 3) {
+        const msg =
+          (typeof t === 'function' ? t('dash.analytics.qa.invalid-no-attempts') : '') ||
+          'No redemption attempts were recorded in this period, so invalid use cannot be evaluated.';
+        qaLines.push(msg);
+      } else if (invalidRatio > 0.10 && totalInvalid >= 3) {
         const pct = (invalidRatio * 100).toFixed(1);
+        const tpl =
+          (typeof t === 'function' ? t('dash.analytics.qa.invalid-elevated') : '') ||
+          '⚠ QA: Invalid redemption attempts are elevated in this period (≈ {percent}% of {tries} redemption tries). This may indicate repeated use of expired or already-used codes, or attempts outside the valid campaign window.';
         qaLines.push(
-          `⚠ QA: Invalid redemption attempts are elevated (≈ ${pct}% of redemption tries, ${totalInvalid} of ${totalRedeemAttempts}). This may indicate repeated use of expired, already-used, or out-of-window codes.`
+          tpl
+            .replace('{percent}', pct)
+            .replace('{tries}', String(totalRedeemAttempts))
         );
       } else {
         const pct = (invalidRatio * 100).toFixed(1);
+        const tpl =
+          (typeof t === 'function' ? t('dash.analytics.qa.invalid-normal') : '') ||
+          'QA: Invalid redemption attempts look normal for this period (≈ {percent}% of {tries} redemption tries).';
         qaLines.push(
-          `QA: Invalid redemption attempts look normal for this period (≈ ${pct}% of ${totalRedeemAttempts} redemption tries).`
+          tpl
+            .replace('{percent}', pct)
+            .replace('{tries}', String(totalRedeemAttempts))
         );
       }
 
-      // Cashier confirmation coverage: how many recorded redeems have a matching cashier confirmation event
+      // Cashier coverage
       if (cashierCoverage === null) {
-        qaLines.push(
-          'QA: Cashier confirmation coverage could not be evaluated because there were no recorded redemptions in this period.'
-        );
+        const msg =
+          (typeof t === 'function' ? t('dash.analytics.qa.cashier-coverage-missing') : '') ||
+          'Cashier confirmation coverage could not be evaluated because there were no recorded redemptions in this period.';
+        qaLines.push(msg);
       } else if (cashierCoverage < 0.8) {
         const pct = (cashierCoverage * 100).toFixed(1);
+        const tpl =
+          (typeof t === 'function' ? t('dash.analytics.qa.cashier-coverage-low') : '') ||
+          '⚠ QA: Cashier confirmations cover only about {percent}% of recorded redemptions ({confirmations} of {redeems}). This may indicate that some discounts are applied without completing the full promo QR flow at the register.';
         qaLines.push(
-          `⚠ QA: Cashier confirmations cover only about ${pct}% of recorded redemptions (${cashierConfs} of ${totalRedeems}). This may indicate that some discounts are applied without completing the full promo QR flow at the register.`
+          tpl
+            .replace('{percent}', pct)
+            .replace('{confirmations}', String(cashierConfs))
+            .replace('{redeems}', String(totalRedeems))
         );
       } else {
         const pct = (cashierCoverage * 100).toFixed(1);
+        const tpl =
+          (typeof t === 'function' ? t('dash.analytics.qa.cashier-coverage-ok') : '') ||
+          'QA: Cashier confirmations cover most recorded redemptions (≈ {percent}%, {confirmations} of {redeems}), which is consistent with a healthy scan-and-redeem process.';
         qaLines.push(
-          `QA: Cashier confirmations cover most recorded redemptions (≈ ${pct}%, ${cashierConfs} of ${totalRedeems}), which is consistent with a healthy scan-and-redeem process.`
+          tpl
+            .replace('{percent}', pct)
+            .replace('{confirmations}', String(cashierConfs))
+            .replace('{redeems}', String(totalRedeems))
         );
       }
 
-      // Customer confirmation coverage: how many promo QR shown events are followed by a customer confirmation
+      // Customer coverage
       if (customerCoverage === null) {
-        qaLines.push(
-          'QA: Customer confirmation coverage could not be evaluated because no promo QR was shown in this period.'
-        );
+        const msg =
+          (typeof t === 'function' ? t('dash.analytics.qa.customer-coverage-missing') : '') ||
+          'Customer confirmation coverage could not be evaluated because no promo QR was shown in this period.';
+        qaLines.push(msg);
       } else if (customerCoverage < 0.5 && totalArmed >= 10) {
         const pct = (customerCoverage * 100).toFixed(1);
+        const tpl =
+          (typeof t === 'function' ? t('dash.analytics.qa.customer-coverage-low') : '') ||
+          '⚠ QA: Customer confirmations are low compared to promo QR shown (≈ {percent}%, {confirmations} confirmations from {armed} promo displays). This may indicate that promotions are not consistently converted into a completed redeem experience.';
         qaLines.push(
-          `⚠ QA: Customer confirmations are low compared to promo QR shown (≈ ${pct}%, ${customerConfs} confirmations from ${totalArmed} promo displays). This may indicate that promotions are not consistently converted into a completed redeem experience.`
+          tpl
+            .replace('{percent}', pct)
+            .replace('{confirmations}', String(customerConfs))
+            .replace('{armed}', String(totalArmed))
         );
       } else if (totalArmed > 0) {
         const pct = (customerCoverage * 100).toFixed(1);
+        const tpl =
+          (typeof t === 'function' ? t('dash.analytics.qa.customer-coverage-ok') : '') ||
+          'QA: Customer confirmations are within an expected range for this period (≈ {percent}%, {confirmations} confirmations from {armed} promo displays).';
         qaLines.push(
-          `QA: Customer confirmations are within an expected range for this period (≈ ${pct}%, ${customerConfs} confirmations from ${totalArmed} promo displays).`
+          tpl
+            .replace('{percent}', pct)
+            .replace('{confirmations}', String(customerConfs))
+            .replace('{armed}', String(totalArmed))
         );
       }
     }
+
+    const qaHeading =
+      (typeof t === 'function' ? t('dash.analytics.qa.heading') : '') ||
+      'Quality Assurance Analysis';
+
+    const qaSectionHtml = `
+      <section class="analytics-section analytics-qa">
+        <h3>${qaHeading}</h3>
+        ${qaLines.map(line => `<p>${line}</p>`).join('')}
+      </section>
+    `;
 
     const qaHeading =
       (typeof t === 'function' ? t('dash.analytics.qa.heading') : '') ||
@@ -1429,7 +1531,10 @@ function renderCurrentView(){
     const mm = String(now.getMinutes()).padStart(2, '0');
     const ts = `${y}-${m}-${d} · ${hh}:${mm}`;
 
-    const brand = `${y} @ NaviGen — Business Report`;
+    const brandTpl =
+      (typeof t === 'function' ? t('dash.analytics.footer.brand') : '') ||
+      '{year} @ NaviGen — Business Report';
+    const brand = brandTpl.replace('{year}', String(y));
     const underline = '_'.repeat(brand.length);
 
     const footerHtml = `
