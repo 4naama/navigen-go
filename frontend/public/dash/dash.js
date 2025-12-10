@@ -1511,17 +1511,6 @@ function renderCurrentView(){
       </section>
     `;
 
-    const qaHeading =
-      (typeof t === 'function' ? t('dash.analytics.qa.heading') : '') ||
-      'Quality Assurance Analysis';
-
-    const qaSectionHtml = `
-      <section class="analytics-section analytics-qa">
-        <h3>${qaHeading}</h3>
-        ${qaLines.map(line => `<p>${line}</p>`).join('')}
-      </section>
-    `;
-
     // F) Footer with timestamp
     const now = new Date();
     const y = now.getFullYear();
