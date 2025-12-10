@@ -900,8 +900,6 @@ function renderCurrentView(){
 
     const ratedTotal = Number(stats.rated_sum ?? 0);
     const ratingAvg  = Number(stats.rating_avg ?? 0);
-    const ratedTotal = Number(stats.rated_sum ?? 0);
-    const ratingAvg  = Number(stats.rating_avg ?? 0);
     let ratingSentence = '';
     if (ratedTotal > 0 && ratingAvg > 0) {
       const avgText = ratingAvg.toFixed(1);
