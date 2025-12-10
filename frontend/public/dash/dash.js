@@ -1376,6 +1376,10 @@ function renderCurrentView(){
     const complianceRatio = totalArmed > 0 ? (totalRedeems / totalArmed) : null;
     const invalidRatio = totalRedeemAttempts > 0 ? (totalInvalid / totalRedeemAttempts) : 0;
 
+    // coverage (derived from aggregates computed earlier)
+    const cashierCoverage  = totalRedeems > 0 ? (cashierConfs  / totalRedeems) : null;
+    const customerCoverage = totalArmed   > 0 ? (customerConfs / totalArmed)   : null;
+
     if (!hasPromoActivity) {
       const msg =
         (typeof t === 'function' ? t('dash.analytics.qa.no-promo-activity') : '') ||
