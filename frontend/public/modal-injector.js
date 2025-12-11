@@ -57,6 +57,15 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   const inner = document.createElement('div');
   inner.className = 'modal-body-inner';
 
+  // Show QR instructions directly under the QR image
+  const descText =
+    (hasT ? (t('qr.role.campaign-redeem-desc') || '') : '') ||
+    'Show this QR to the cashier when paying to redeem your campaign offer.';
+
+  const termsText =
+    (hasT ? (t('campaign.redeem-terms') || '') : '') ||
+    'By redeeming, I agree to the offer terms.';
+
   const qrContainer = document.createElement('div');
   qrContainer.className = 'qr-wrapper';
 
@@ -70,17 +79,6 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
 
   qrContainer.appendChild(img);
   inner.appendChild(qrContainer);
-
-  // Show QR instructions directly under the QR image
-  const descText =
-    (hasT ? (t('qr.role.campaign-redeem-desc') || '') : '') ||
-    'Show this QR to the cashier when paying to redeem your campaign offer.';
-
-  const termsText =
-    (hasT ? (t('campaign.redeem-terms') || '') : '') ||
-    'By redeeming, I agree to the offer terms.';
-
-  const labelText = 'Promotion QR code';
 
   const waitText = 'Wait until redeem confirmation arrives. It may take up to 10–20 seconds.';
 
