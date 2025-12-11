@@ -438,7 +438,7 @@ async function openPromotionQrModal(modal, data) {
 
     // 4b) In-store warning under code note
     const warnText = tmpl(
-      'qr.role.campaign-redeem-warning',
+      'promo.qr.wait',
       'For in-store redemption only. The offer is valid only when scanned by the cashier.'
     );
     const pWarn = document.createElement('p');
