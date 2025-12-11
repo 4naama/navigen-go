@@ -1584,6 +1584,156 @@ Section 4 does not specify:
 
 These belong to Sections 3, 7, 8, 12, and 90.x.
 
+--------------------------------------------------------------------
+
+4.20 BUSINESS REPORT MODULE
+
+4.20.1 Purpose
+
+The Business Report module provides merchants and authorized entities with a 
+progressively expanding suite of analytical insights. These insights extend 
+beyond basic counts into behaviour, timing, performance, competition, and 
+profile optimization.
+
+The system is designed for staged rollout. Each phase introduces new metrics 
+that remain fully compatible with the underlying navigation, promotion, QR, 
+and stats systems.
+
+--------------------------------------------------------------------------
+
+4.20.2 Design Principles
+
+• All insights derive from existing event data (stats, qrlog, confirmation metrics)  
+• No personal identifiers are collected or stored  
+• Default Dashboard remains merchant-safe; advanced intelligence requires unlock  
+• Premium insights remain gated behind Stripe payments  
+• All computation runs on the backend; the frontend displays results only  
+• Data interpretation favors clarity, not raw statistical noise  
+
+--------------------------------------------------------------------------
+
+4.20.3 Indicator Families
+
+The Business Report organizes insights into these major indicator groups:
+
+A) Action Drivers  
+    - Top CTAs  
+    - Static QR scans  
+    - Promo QR shown  
+    - Redemptions & invalids  
+    - Confirmation coverage (cashier/customer)
+
+B) Time Intelligence  
+    - Peak days  
+    - Peak hours*  
+    - Week-over-week change*
+
+C) Audience Behavior  
+    - New vs returning visitors  
+    - Context→location displacement patterns*  
+    - Visitor switching across nearby LPMs*
+
+D) Competition Intelligence  
+    - Cannibalization across contexts*  
+    - Nearby competitor overlap*  
+    - Category replacements / alternatives*
+
+E) Profile Optimization  
+    - Profile completeness score  
+    - Missing attribute suggestions  
+    - Broken link diagnostics*
+
+F) Promotion Performance  
+    - Efficiency evolution over time  
+    - Invalid attempt diagnostics  
+    - Redemption quality patterns  
+
+G) Ratings & Social Indicators*  
+    - Rating change  
+    - Review volume change
+
+(*) Indicates metrics requiring backend expansion or new computation pipelines.
+
+--------------------------------------------------------------------------
+
+4.20.4 Gating & Unlock Model
+
+The Business Report is partially gated:
+
+• Free Tier  
+    - Top CTAs  
+    - Static QR scans  
+    - Promo QR shown  
+    - Redemptions and invalids  
+    - Profile completeness score  
+    - Basic promotional diagnostics  
+
+• Premium (Unlocked via Stripe Payment)  
+    - Peak hours  
+    - Competition & Cannibalization  
+    - Audience displacement  
+    - Broken link monitoring  
+    - Trend analysis (week/week, month/month)  
+    - Promotion efficiency evolution  
+    - Premium profile recommendations  
+
+• Internal Only (NaviGen Ops)  
+    - QA ratios (scan discipline, invalid ratios, cashier/customer coverage)  
+    - Raw QR log events  
+    - Advanced behavioural queries  
+
+Unlock interactions must:
+
+• mask gated values (blur, star, or “LOCKED” overlay)  
+• show “Unlock report” button, linking to Stripe Checkout  
+• reveal metrics immediately upon webhook confirmation
+
+--------------------------------------------------------------------------
+
+4.20.5 Development Phases
+
+Phase 1 (Immediate)
+    1. Rename “QR scan” → “Static QR scan”  
+    2. Add customer guidance line to Promo QR modal  
+    3. Add profile completeness score  
+    4. Add missing field suggestions  
+    5. Add “Peak days” (from existing daily totals)  
+    6. Prepare gating UX (masking + unlock button)
+
+Phase 2 (Merchant Platform Foundations)
+    1. Build Merchant Platform (Section 92) with login + Stripe unlock flow  
+    2. Gated indicators appear with unlock button  
+    3. Campaign balance & basic financials  
+    4. Profile edit tools
+
+Phase 3 (Premium Intelligence)
+    1. Hourly histograms for peak hours  
+    2. Cannibalization metrics  
+    3. Audience displacement metrics  
+    4. Broken link health checker (cron)  
+    5. Promo efficiency evolution over time  
+    6. Enhanced profile optimization tips
+
+Phase 4 (Advanced / Future)
+    1. Ratings & review change detection  
+    2. Multi-location competitive intelligence  
+    3. Predictive analytics (burn rate, staffing hints, “best time to promote”)  
+    4. Event anomaly detection pipelines  
+
+--------------------------------------------------------------------------
+
+4.20.6 Out-of-Scope
+
+This module does not define:
+• Worker logic (Section 9)  
+• Billing calculation (Section 5)  
+• Merchant Platform UX (Section 92)  
+• Admin Portal roadmap (Appendix C)
+
+Business Report covers analytical surface, interpretation logic, and gating design.
+
+--------------------------------------------------------------------
+
 5. BILLING
 
 5.1 Purpose

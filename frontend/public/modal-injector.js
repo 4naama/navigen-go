@@ -41,7 +41,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
   top.innerHTML = `
-    <h2 class="modal-title">Promotion QR Code</h2>
+    t('qr.role.campaign-redeem-label') || 'Campaign Redemption QR'
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
@@ -67,24 +67,42 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
 
   // Show QR instructions directly under the QR image
   const hasT = (typeof t === 'function');
-  const showQrText =
-    (hasT ? (t('promotion.show-qr') || '') : '') ||
-    'Show this QR code to the cashier when paying.';
+
+  const descText =
+    (hasT ? (t('qr.role.campaign-redeem-desc') || '') : '') ||
+    'Show this QR to the cashier when paying to redeem your campaign offer.';
+
+  const waitText =
+    (hasT ? (t('qr.role.campaign-redeem-warning') || '') : '') ||
+    'Wait until redeem confirmation arrives. It may take up to 10–20 seconds.';
+
   const termsText =
     (hasT ? (t('campaign.redeem-terms') || '') : '') ||
     'By redeeming, I agree to the offer terms.';
 
+  // main instruction
   const pInstr = document.createElement('p');
-  pInstr.textContent = showQrText;
+  pInstr.textContent = descText;
   pInstr.style.textAlign = 'center';
   pInstr.style.marginTop = '1rem';
   inner.appendChild(pInstr);
 
+  // waiting hint
+  const pWait = document.createElement('p');
+  pWait.textContent = waitText;
+  pWait.style.textAlign = 'center';
+  pWait.style.fontSize = '0.9em';
+  pWait.style.opacity = '0.8';
+  pWait.style.marginTop = '0.35rem';
+  inner.appendChild(pWait);
+
+  // terms
   const pTerms = document.createElement('p');
   pTerms.textContent = termsText;
   pTerms.style.textAlign = 'center';
   pTerms.style.fontSize = '0.9em';
   pTerms.style.opacity = '0.8';
+  pTerms.style.marginTop = '0.75rem';
   inner.appendChild(pTerms);
 
   body.appendChild(inner);
