@@ -80,6 +80,8 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
     (hasT ? (t('campaign.redeem-terms') || '') : '') ||
     'By redeeming, I agree to the offer terms.';
 
+  const labelText = 'Promotion QR code';
+
   const waitText = 'Wait until redeem confirmation arrives. It may take up to 10–20 seconds.';
 
   // main instruction
