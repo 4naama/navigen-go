@@ -72,8 +72,6 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   inner.appendChild(qrContainer);
 
   // Show QR instructions directly under the QR image
-  const hasT = (typeof t === 'function');
-
   const descText =
     (hasT ? (t('qr.role.campaign-redeem-desc') || '') : '') ||
     'Show this QR to the cashier when paying to redeem your campaign offer.';
