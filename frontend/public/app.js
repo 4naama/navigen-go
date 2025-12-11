@@ -1423,11 +1423,16 @@ async function initEmergencyBlock(countryOverride) {
         const redeemed = (q.get('redeemed') || '').trim();
         const camp     = (q.get('camp') || '').trim();
         // Use the same uid that triggered the LPM; this can be a slug or a ULID.
-        if (redeemed === '1' && uid) {
-          showRedeemConfirmationModal({
-            locationIdOrSlug: uid,
-            campaignKey: camp || ''
-          });
+        if (redeemed === '1' && uid && typeof showRedeemConfirmationModal === 'function') {
+          try {
+            showRedeemConfirmationModal({
+              locationIdOrSlug: uid,
+              campaignKey: camp || ''
+            });
+          } catch (err) {
+            console.warn('⚠ Cashier redeem confirmation modal failed:', err);
+            // Do not break the app; continue with normal LPM view.
+          }
         }
       }
 
