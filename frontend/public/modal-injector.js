@@ -40,8 +40,14 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
 
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
+
+  const hasT = (typeof t === 'function');
+  const titleText =
+    (hasT ? (t('qr.role.campaign-redeem-label') || '') : '') ||
+    'Campaign Redemption QR';
+
   top.innerHTML = `
-    t('qr.role.campaign-redeem-label') || 'Campaign Redemption QR'
+    <h2 class="modal-title">${titleText}</h2>
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
@@ -72,13 +78,13 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
     (hasT ? (t('qr.role.campaign-redeem-desc') || '') : '') ||
     'Show this QR to the cashier when paying to redeem your campaign offer.';
 
-  const waitText =
-    (hasT ? (t('qr.role.campaign-redeem-warning') || '') : '') ||
-    'Wait until redeem confirmation arrives. It may take up to 10–20 seconds.';
-
   const termsText =
     (hasT ? (t('campaign.redeem-terms') || '') : '') ||
     'By redeeming, I agree to the offer terms.';
+
+  const labelText = 'Promotion QR code';
+
+  const waitText = 'Wait until redeem confirmation arrives. It may take up to 10–20 seconds.';
 
   // main instruction
   const pInstr = document.createElement('p');
@@ -86,6 +92,23 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   pInstr.style.textAlign = 'center';
   pInstr.style.marginTop = '1rem';
   inner.appendChild(pInstr);
+
+  // terms
+  const pTerms = document.createElement('p');
+  pTerms.textContent = termsText;
+  pTerms.style.textAlign = 'center';
+  pTerms.style.fontSize = '0.9em';
+  pTerms.style.opacity = '0.8';
+  pTerms.style.marginTop = '0.5rem';
+  inner.appendChild(pTerms);
+
+  // label line: Promotion QR code
+  const pLabel = document.createElement('p');
+  pLabel.textContent = labelText;
+  pLabel.style.textAlign = 'center';
+  pLabel.style.marginTop = '0.75rem';
+  pLabel.style.fontWeight = '600';
+  inner.appendChild(pLabel);
 
   // waiting hint
   const pWait = document.createElement('p');
@@ -95,15 +118,6 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   pWait.style.opacity = '0.8';
   pWait.style.marginTop = '0.35rem';
   inner.appendChild(pWait);
-
-  // terms
-  const pTerms = document.createElement('p');
-  pTerms.textContent = termsText;
-  pTerms.style.textAlign = 'center';
-  pTerms.style.fontSize = '0.9em';
-  pTerms.style.opacity = '0.8';
-  pTerms.style.marginTop = '0.75rem';
-  inner.appendChild(pTerms);
 
   body.appendChild(inner);
 
@@ -424,8 +438,19 @@ async function openPromotionQrModal(modal, data) {
     p4.style.textAlign = 'left';
     inner.appendChild(p4);
 
+    // 4b) In-store warning under code note
+    const warnText = tmpl(
+      'qr.role.campaign-redeem-warning',
+      'For in-store redemption only. The offer is valid only when scanned by the cashier.'
+    );
+    const pWarn = document.createElement('p');
+    pWarn.textContent = warnText;
+    pWarn.style.textAlign = 'left';
+    inner.appendChild(pWarn);
+
     // 5) Button: “I’m at the cashier — 🔳 show my code”
     const btnWrap = document.createElement('div');
+
     btnWrap.className = 'modal-actions';
 
     const qrBtn = document.createElement('button');
