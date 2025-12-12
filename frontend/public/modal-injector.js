@@ -395,6 +395,7 @@ async function openPromotionQrModal(modal, data) {
 
       // 3) Date range (as is)
       const rangeTemplate = tmpl('promotion.period-range', '{{startDate}} → {{endDate}}');
+      const pRange = document.createElement('p');
       pRange.textContent = applyTemplate(rangeTemplate, { startDate, endDate });
       pRange.style.textAlign = 'left';
       inner.appendChild(pRange);
