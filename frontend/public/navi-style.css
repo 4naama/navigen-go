@@ -2370,13 +2370,38 @@ button:hover {
   box-sizing:border-box;      /* include padding in width */
 }
 
-/* Chevron indicator for promotions: implies expandable/open action */
+/* Promotions modal row: custom right column (chevron top, ➡️ bottom) */
 .promotion-item::after{
-  content:'▾';                /* downwards chevron */
-  flex:0 0 auto;              /* keep icon from shrinking */
-  margin-left:auto;           /* push chevron to the far right inside the card */
-  font-size:0.9em;            /* slightly smaller than main text */
-  opacity:0.7;                /* softer than primary label */
+  content:'';                 /* disable legacy inline chevron (avoid duplicates) */
+  display:none;
+}
+
+/* Right-side stacked actions */
+.promotion-actions-col{
+  margin-left:auto;           /* push to far right */
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between; /* chevron top, ➡️ bottom */
+  align-items:center;
+  min-width:32px;             /* stable column width */
+  align-self:stretch;         /* match the card height */
+}
+
+/* Top chevron (visual only) */
+.promotion-chevron{
+  font-size:0.95em;
+  opacity:0.7;
+  line-height:1;
+}
+
+/* Bottom ➡️ (clickable) */
+.promotion-lpm-link{
+  border:0;
+  background:transparent;
+  padding:0;
+  cursor:pointer;
+  line-height:1;
+  font-size:1.1em;
 }
 
 /* Promotions modal: reduce inner horizontal padding so the grey card can use more width */
