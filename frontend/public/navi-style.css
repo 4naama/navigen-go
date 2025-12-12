@@ -108,16 +108,21 @@ body {
   to { transform: rotate(360deg); }
 }
 
-#logo-icon.logo-refreshing-ring::after{
-  content: '';
+/* Progress ring (no logo motion): rendered as a real child for <img> compatibility */
+#logo-icon .logo-refresh-ring{
   position: absolute;
-  inset: -6px;                 /* ring radius around the icon */
+  inset: -6px;                  /* ring radius around the icon */
   border-radius: 9999px;
   border: 2px solid currentColor;
-  border-top-color: transparent; /* creates the “arc” */
+  border-top-color: transparent; /* arc */
   opacity: 0.85;
-  animation: logo-refresh-ring 240ms linear 1;
   pointer-events: none;
+  display: none;                /* only shown while refreshing */
+}
+
+#logo-icon.logo-refreshing-ring .logo-refresh-ring{
+  display: block;
+  animation: logo-refresh-ring 240ms linear 1;
 }
 
 /* Accessibility: reduce motion */

@@ -34,7 +34,17 @@ export function wireLogoRefresh({
     void el.offsetWidth; // reflow ensures animation restarts
 
     if (!prefersReduced) {
-      el.classList.add(mode === 'ring' ? clsRing : clsNudge);
+      // Ring mode needs a real child element (pseudo-elements may not render on <img>)
+      if (mode === 'ring') {
+        if (!el.querySelector('.logo-refresh-ring')) {
+          const ring = document.createElement('span');
+          ring.className = 'logo-refresh-ring';
+          el.appendChild(ring);
+        }
+        el.classList.add(clsRing);
+      } else {
+        el.classList.add(clsNudge);
+      }
     }
 
     // Reload after a short delay so the effect is seen
