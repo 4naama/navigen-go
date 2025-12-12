@@ -75,13 +75,13 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
     (hasT ? (t('qr.role.campaign-redeem-desc') || '') : '') ||
     'Show this QR code to the cashier when paying to redeem your campaign offer.';
 
-  const termsText =
-    (hasT ? (t('campaign.redeem-terms') || '') : '') ||
-    'By redeeming, I agree to the offer terms.';
-
   const warningText =
     (hasT ? (t('qr.role.campaign-redeem-warning') || '') : '') ||
     'After scanning, wait for confirmation (10–20 seconds).';
+
+  const termsText =
+    (hasT ? (t('campaign.redeem-terms') || '') : '') ||
+    'By redeeming, I agree to the offer terms.';
 
   // 1) main instruction
   const pInstr = document.createElement('p');
@@ -107,9 +107,6 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
 
   // 3) actual QR code
   inner.appendChild(qrContainer);
-
-  // insert one empty line before the thank-you text
-  inner.appendChild(document.createElement('br'));
 
   // 4) post-QR thanks line (t(key); shown under QR)
   const thanksText =
