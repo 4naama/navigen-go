@@ -478,6 +478,7 @@
   "qr.role.campaign-redeem-desc": "Zeigen Sie diesen QR-Code beim Bezahlen an der Kasse, um Ihr Kampagnenangebot einzulösen.",
   "campaign.redeem-terms": "Mit der Einlösung akzeptiere ich die Angebotsbedingungen.",
   "qr.role.campaign-redeem-warning": "Nach dem Scannen warten Sie auf die Bestätigung (10–20 Sekunden).",
+  "qr.role.campaign-redeem-thanks": "Danke!",
   "qr.role.business-info-label": "Geschäftsinfo-QR",
   "dash.qrcamp.col.armed": "QR-Promo angezeigt",
   "dash.qrcamp.col.scan-compliance": "Scan-Compliance %",

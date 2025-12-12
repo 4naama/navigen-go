@@ -478,6 +478,7 @@
   "qr.role.campaign-redeem-desc": "Muestre este código QR al cajero al pagar para canjear su oferta de campaña.",
   "campaign.redeem-terms": "Al canjear, acepto los términos de la oferta.",
   "qr.role.campaign-redeem-warning": "Después de escanear, espere la confirmación (10–20 segundos).",
+  "qr.role.campaign-redeem-thanks": "¡Gracias!",
   "qr.role.business-info-label": "QR de información comercial",
   "dash.qrcamp.col.armed": "Promo QR mostrado",
   "dash.qrcamp.col.scan-compliance": "% de cumplimiento de escaneo",

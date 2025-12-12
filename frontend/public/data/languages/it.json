@@ -478,6 +478,7 @@
   "qr.role.campaign-redeem-desc": "Mostra questo codice QR al cassiere al momento del pagamento per riscattare l’offerta della campagna.",
   "campaign.redeem-terms": "Riscattando accetto i termini dell’offerta.",
   "qr.role.campaign-redeem-warning": "Dopo la scansione, attendere la conferma (10–20 secondi).",
+  "qr.role.campaign-redeem-thanks": "Grazie!",
   "qr.role.business-info-label": "QR informazioni aziendali",
   "dash.qrcamp.col.armed": "Promo QR mostrato",
   "dash.qrcamp.col.scan-compliance": "Conformità scansione %",

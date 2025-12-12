@@ -478,6 +478,7 @@
   "qr.role.campaign-redeem-desc": "Présentez ce code QR au caissier lors du paiement pour utiliser votre offre de campagne.",
   "campaign.redeem-terms": "By redeeming, I agree to the offer terms.",
   "qr.role.campaign-redeem-warning": "Après le scan, attendez la confirmation (10–20 secondes).",
+  "qr.role.campaign-redeem-thanks": "Merci !",
   "qr.role.business-info-label": "QR d’informations commerciales",
   "dash.qrcamp.col.armed": "QR promo affiché",
   "dash.qrcamp.col.scan-compliance": "Conformité de scan %",

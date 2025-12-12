@@ -108,6 +108,17 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   // 3) actual QR code
   inner.appendChild(qrContainer);
 
+  // 4) post-QR thanks line (t(key); shown under QR)
+  const thanksText =
+    (hasT ? (t('qr.role.campaign-redeem-thanks') || '') : '') ||
+    'Thank you!';
+
+  const pThanks = document.createElement('p');
+  pThanks.textContent = thanksText;
+  pThanks.style.textAlign = 'center';
+  pThanks.style.marginTop = '0.75rem';
+  inner.appendChild(pThanks);
+
   body.appendChild(inner);
 
   card.appendChild(top);

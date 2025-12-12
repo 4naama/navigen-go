@@ -478,6 +478,7 @@
   "qr.role.campaign-redeem-desc": "Fizetéskor mutassa meg ezt a QR-kódot a pénztárosnak, hogy beváltsa a kampányajánlatát.",
   "campaign.redeem-terms": "A kupon beváltásával elfogadom az ajánlat feltételeit.",
   "qr.role.campaign-redeem-warning": "A beolvasás után várjon a megerősítésre (10–20 másodperc).",
+  "qr.role.campaign-redeem-thanks": "Köszönjük!",
   "qr.role.business-info-label": "Üzleti információs QR",
   "dash.qrcamp.col.armed": "Promó QR megjelenítve",
   "dash.qrcamp.col.scan-compliance": "Lekérdezési megfelelés %",

@@ -478,6 +478,7 @@
   "qr.role.campaign-redeem-desc": "הציגו קוד QR זה לקופאי בעת התשלום כדי לממש את הצעת הקמפיין.",
   "campaign.redeem-terms": "בעצם המימוש אני מסכים לתנאי ההצעה.",
   "qr.role.campaign-redeem-warning": "לאחר הסריקה, המתינו לאישור (10–20 שניות).",
+  "qr.role.campaign-redeem-thanks": "תודה!",
   "qr.role.business-info-label": "QR מידע עסקי",
   "dash.qrcamp.col.armed": "קוד QR של מבצע מוצג",
   "dash.qrcamp.col.scan-compliance": "אחוז עמידה בסריקות",
