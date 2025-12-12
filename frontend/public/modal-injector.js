@@ -69,29 +69,28 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   img.style.margin = '0 auto';
 
   qrContainer.appendChild(img);
-  inner.appendChild(qrContainer);
 
-  // Show QR instructions directly under the QR image
+  // Show QR instructions and terms above the QR image
   const descText =
     (hasT ? (t('qr.role.campaign-redeem-desc') || '') : '') ||
-    'Show this QR to the cashier when paying to redeem your campaign offer.';
+    'Show this QR code to the cashier when paying to redeem your campaign offer.';
 
   const termsText =
     (hasT ? (t('campaign.redeem-terms') || '') : '') ||
     'By redeeming, I agree to the offer terms.';
 
-  const labelText = 'Promotion QR code';
+  const warningText =
+    (hasT ? (t('qr.role.campaign-redeem-warning') || '') : '') ||
+    'After scanning the code, wait until the redemption confirmation arrives. It may take 10–20 seconds.';
 
-  const waitText = 'Wait until redeem confirmation arrives. It may take up to 10–20 seconds.';
-
-  // main instruction
+  // 1) main instruction
   const pInstr = document.createElement('p');
   pInstr.textContent = descText;
   pInstr.style.textAlign = 'center';
   pInstr.style.marginTop = '1rem';
   inner.appendChild(pInstr);
 
-  // terms
+  // 2) terms
   const pTerms = document.createElement('p');
   pTerms.textContent = termsText;
   pTerms.style.textAlign = 'center';
@@ -100,22 +99,17 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   pTerms.style.marginTop = '0.5rem';
   inner.appendChild(pTerms);
 
-  // label line: Promotion QR code
-  const pLabel = document.createElement('p');
-  pLabel.textContent = labelText;
-  pLabel.style.textAlign = 'center';
-  pLabel.style.marginTop = '0.75rem';
-  pLabel.style.fontWeight = '600';
-  inner.appendChild(pLabel);
+  // 3) actual QR code
+  inner.appendChild(qrContainer);
 
-  // waiting hint
-  const pWait = document.createElement('p');
-  pWait.textContent = waitText;
-  pWait.style.textAlign = 'center';
-  pWait.style.fontSize = '0.9em';
-  pWait.style.opacity = '0.8';
-  pWait.style.marginTop = '0.35rem';
-  inner.appendChild(pWait);
+  // 4) final warning line under the QR code
+  const pWarn = document.createElement('p');
+  pWarn.textContent = warningText;
+  pWarn.style.textAlign = 'center';
+  pWarn.style.fontSize = '0.9em';
+  pWarn.style.opacity = '0.8';
+  pWarn.style.marginTop = '0.5rem';
+  inner.appendChild(pWarn);
 
   body.appendChild(inner);
 
