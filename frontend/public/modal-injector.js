@@ -400,9 +400,6 @@ async function openPromotionQrModal(modal, data) {
       pPeriod.innerHTML = html;
 
       inner.appendChild(pPeriod);
-
-      // empty line here (between A and B groups)
-      inner.appendChild(document.createElement('br'));
     }
 
     // 3) Meta group (B): keep State / Eligibility / Code note together with single spacing (small)
@@ -427,9 +424,6 @@ async function openPromotionQrModal(modal, data) {
       `<br>${codeNote}`;
 
     inner.appendChild(pMeta);
-
-    // empty line here (after B group, before in-store warning)
-    inner.appendChild(document.createElement('br'));
 
     // 8) In-store warning (as is)
     const warnText = tmpl(
