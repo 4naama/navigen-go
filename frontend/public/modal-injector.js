@@ -103,8 +103,6 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   inner.appendChild(qrContainer);
 
   // 4) final warning line under the QR code
-  inner.appendChild(document.createElement('br'));
-
   const pWarn = document.createElement('p');
   pWarn.textContent = warningText;
   pWarn.style.textAlign = 'center';
