@@ -378,7 +378,7 @@ async function openPromotionQrModal(modal, data) {
     const inner = document.createElement('div');
     inner.className = 'modal-body-inner';
 
-    // 1) Main offer line
+    // 1) Main offer line (as is)
     if (promoLine) {
       const p1 = document.createElement('p');
       p1.textContent = promoLine;
@@ -386,32 +386,42 @@ async function openPromotionQrModal(modal, data) {
       inner.appendChild(p1);
     }
 
-    // 1b) State: AVAILABLE (shown textually under the offer line)
+    // 2) The offer runs: (as is)
+    if (startDate && endDate) {
+      const pRuns = document.createElement('p');
+      pRuns.textContent = tmpl('promotion.period-label', 'The offer runs:');
+      pRuns.style.textAlign = 'left';
+      inner.appendChild(pRuns);
+
+      // 3) Date range (as is)
+      const rangeTemplate = tmpl('promotion.period-range', '{{startDate}} → {{endDate}}');
+      const pRange = document.createElement('p');
+      pRange.textContent = applyTemplate(rangeTemplate, { startDate, endDate });
+      pRange.style.textAlign = 'left';
+      inner.appendChild(pRange);
+
+      // 4) Expires in X days (as is)
+      if (daysLeftText) {
+        const pExpires = document.createElement('p');
+        pExpires.textContent = daysLeftText;
+        pExpires.style.textAlign = 'left';
+        inner.appendChild(pExpires);
+      }
+
+      // empty line here
+      inner.appendChild(document.createElement('br'));
+    }
+
+    // 5) State: AVAILABLE (small) — no empty after
     const stateText = tmpl('promotion.state.available', 'State: AVAILABLE');
     const pState = document.createElement('p');
     pState.textContent = stateText;
     pState.style.textAlign = 'left';
-    pState.style.fontSize = '0.85em';
+    pState.style.fontSize = '0.85em'; // small
     pState.style.opacity = '0.8';
     inner.appendChild(pState);
 
-    // 2) Period label + range + expiry (single paragraph, no blank line)
-    if (startDate && endDate) {
-      const label = tmpl('promotion.period-label', 'The offer runs:');
-      const rangeTemplate = tmpl('promotion.period-range', '{{startDate}} → {{endDate}}');
-      const rangeLine = applyTemplate(rangeTemplate, { startDate, endDate });
-
-      const p2 = document.createElement('p');
-      let html = `${label}<br>${rangeLine}`;
-      if (daysLeftText) {
-        html += `<br>${daysLeftText}`;
-      }
-      p2.innerHTML = html;
-      p2.style.textAlign = 'left';
-      inner.appendChild(p2);
-    }
-
-    // 3) Eligibility
+    // 6) Eligibility: Everyone (small) — no empty after
     if (eligibilityType) {
       const eligibilityTemplate = tmpl('promotion.eligibility-label', 'Eligibility: {{eligibility}}');
       const eligibilityLabel = applyTemplate(eligibilityTemplate, {
@@ -420,17 +430,24 @@ async function openPromotionQrModal(modal, data) {
       const p3 = document.createElement('p');
       p3.textContent = eligibilityLabel;
       p3.style.textAlign = 'left';
+      p3.style.fontSize = '0.85em'; // small
+      p3.style.opacity = '0.8';
       inner.appendChild(p3);
     }
 
-    // 4) Code note: "Each code is valid for one purchase."
+    // 7) Each code is valid for one purchase. (small)
     const codeNote = tmpl('promotion.code-note', 'Each code is valid for one purchase.');
     const p4 = document.createElement('p');
     p4.textContent = codeNote;
     p4.style.textAlign = 'left';
+    p4.style.fontSize = '0.85em'; // small
+    p4.style.opacity = '0.8';
     inner.appendChild(p4);
 
-    // 4b) In-store warning under code note
+    // empty line here
+    inner.appendChild(document.createElement('br'));
+
+    // 8) In-store warning (as is)
     const warnText = tmpl(
       'promo.qr.wait',
       'For in-store redemption only. The offer is valid only when scanned by the cashier.'
@@ -440,9 +457,11 @@ async function openPromotionQrModal(modal, data) {
     pWarn.style.textAlign = 'left';
     inner.appendChild(pWarn);
 
-    // 5) Button: “I’m at the cashier — 🔳 show my code”
-    const btnWrap = document.createElement('div');
+    // empty line here
+    inner.appendChild(document.createElement('br'));
 
+    // 9) Button: “I’m at the cashier — 🔳 show my code”
+    const btnWrap = document.createElement('div');
     btnWrap.className = 'modal-actions';
 
     const qrBtn = document.createElement('button');
@@ -458,12 +477,15 @@ async function openPromotionQrModal(modal, data) {
     btnWrap.appendChild(qrBtn);
     inner.appendChild(btnWrap);
 
-    // 6) Small hint under the button
+    // empty line here
+    inner.appendChild(document.createElement('br'));
+
+    // 10) Only tap this when you're ready to pay. (small)
     const hintText = tmpl('promotion.redeem-hint', "Only tap this when you're ready to pay.");
     const hint = document.createElement('p');
     hint.textContent = hintText;
     hint.style.textAlign = 'left';
-    hint.style.fontSize = '0.85em';
+    hint.style.fontSize = '0.85em'; // small
     hint.style.opacity = '0.8';
     inner.appendChild(hint);
 
