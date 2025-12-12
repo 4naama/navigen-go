@@ -402,20 +402,21 @@ async function openPromotionQrModal(modal, data) {
       inner.appendChild(pPeriod);
     }
 
-    // 3) Meta group (B): keep State + Code note together with single spacing (small)
-    const stateText = tmpl('promotion.state.available', 'State: AVAILABLE');
-    const codeNote = tmpl('promotion.code-note', 'Each code is valid for one purchase.');
+    // 3) Meta group (B): keep State + In-store + Code note together with single spacing (small)
+    const stateText   = tmpl('promotion.state.available', 'State: AVAILABLE');
+    const inStoreOnly = tmpl('promotion.instore-only', 'For in-store redemption.');
+    const codeNote    = tmpl('promotion.code-note', 'Each code is valid for one purchase.');
 
     const pMeta = document.createElement('p');
     pMeta.style.textAlign = 'left';
     pMeta.style.fontSize = '0.85em'; // small
     pMeta.style.opacity = '0.8';
 
-    pMeta.innerHTML =
-      `${stateText}` +
-      `<br>${codeNote}`;
+    // Order is explicit: State → In-store → Code note
+    pMeta.innerHTML = `${stateText}<br>${inStoreOnly}<br>${codeNote}`;
 
     inner.appendChild(pMeta);
+
 
     // 8) In-store warning (as is)
     const warnText = tmpl(
@@ -442,10 +443,6 @@ async function openPromotionQrModal(modal, data) {
       showPromotionQrModal(qrUrl, locationIdOrSlug);
     });
 
-    btnWrap.appendChild(qrBtn);
-    inner.appendChild(btnWrap);
-
-
     // 10) Only tap this when you're ready to pay. (small)
     const hintText = tmpl('promotion.redeem-hint', "Only tap this when you're ready to pay.");
     const hint = document.createElement('p');
@@ -454,6 +451,9 @@ async function openPromotionQrModal(modal, data) {
     hint.style.fontSize = '0.85em'; // small
     hint.style.opacity = '0.8';
     inner.appendChild(hint);
+
+    btnWrap.appendChild(qrBtn);
+    inner.appendChild(btnWrap);
 
     body.appendChild(inner);
     card.appendChild(top);
