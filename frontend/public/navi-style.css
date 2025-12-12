@@ -75,6 +75,9 @@ body {
   color: inherit;
   flex-shrink: 0;
   transition: transform 0.2s ease;
+
+  /* Refresh FX support: allow ring positioning without layout shift */
+  position: relative;
 }
 
 #logo-icon:hover {
@@ -84,6 +87,45 @@ body {
 /* animate on tap/click too (not just hover) */
 #logo-icon:active {
   transform: scale(1.2) rotate(-5deg);
+}
+
+/* Logo refresh FX (shared by App + Dash via scripts/logo-refresh.js)
+   Mode A: quarter-turn “nudge” (minimal logo motion)
+   Mode B: progress ring (logo stays still) */
+@keyframes logo-refresh-nudge {
+  0%   { transform: rotate(0deg) scale(1); }
+  60%  { transform: rotate(75deg) scale(1.06); }  /* quarter-ish nudge */
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+/* Applied briefly before reload; avoids :active “stuck” states on mobile */
+#logo-icon.logo-refreshing-nudge{
+  animation: logo-refresh-nudge 200ms ease-out 1;
+}
+
+/* Progress ring (no logo motion): a short arc spins once around the logo */
+@keyframes logo-refresh-ring {
+  to { transform: rotate(360deg); }
+}
+
+#logo-icon.logo-refreshing-ring::after{
+  content: '';
+  position: absolute;
+  inset: -6px;                 /* ring radius around the icon */
+  border-radius: 9999px;
+  border: 2px solid currentColor;
+  border-top-color: transparent; /* creates the “arc” */
+  opacity: 0.85;
+  animation: logo-refresh-ring 240ms linear 1;
+  pointer-events: none;
+}
+
+/* Accessibility: reduce motion */
+@media (prefers-reduced-motion: reduce){
+  #logo-icon.logo-refreshing-nudge,
+  #logo-icon.logo-refreshing-ring::after{
+    animation: none !important;
+  }
 }
 
 /* Logo refresh: deterministic spin used by shared JS (works on mobile + PWA + dash) */

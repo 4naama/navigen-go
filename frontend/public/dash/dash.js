@@ -91,8 +91,8 @@ const TODAY = new Date();
 const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 
-// Single-source logo refresh (Dash): deterministic spin + reload
-wireLogoRefresh();
+// Single-source logo refresh (Dash): quarter-turn nudge + reload
+wireLogoRefresh({ mode: 'ring' });
 
 // Logo refresh is wired via wireLogoRefresh() (single source shared with App)
 

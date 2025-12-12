@@ -1,32 +1,48 @@
 // scripts/logo-refresh.js
-// Reason: single source of truth for logo refresh (App + Dash + PWA).
-export function wireLogoRefresh({ selector = '#logo-icon', spinMs = 220 } = {}) {
+// Single source of truth for logo refresh (App + Dash + PWA).
+// - mode: 'nudge' (quarter-turn) or 'ring' (no logo motion)
+// - deterministic timing (no :active reliance)
+// - guarded against double-trigger on mobile
+
+export function wireLogoRefresh({
+  selector = '#logo-icon',
+  mode = 'nudge',        // 'nudge' | 'ring'
+  reloadMs = 220         // should match CSS animation duration closely
+} = {}) {
   const el = document.querySelector(selector);
   if (!el) return;
 
   let busy = false;
 
-  const run = async (ev) => {
+  const prefersReduced =
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const clsNudge = 'logo-refreshing-nudge';
+  const clsRing  = 'logo-refreshing-ring';
+
+  const run = (ev) => {
     ev?.preventDefault?.();
 
-    // Guard: prevent double-trigger (mobile click + pointerup, etc.)
+    // Guard: prevent double-trigger (touch + click, etc.)
     if (busy) return;
     busy = true;
 
-    // Start animation (class-based, not :active)
-    el.classList.remove('logo-refreshing');
-    // Force reflow so animation reliably restarts
-    void el.offsetWidth;
-    el.classList.add('logo-refreshing');
+    // Clear both modes first (safe reset)
+    el.classList.remove(clsNudge, clsRing);
+    void el.offsetWidth; // reflow ensures animation restarts
 
-    // Give the browser at least one paint, then reload after the spin window
-    await new Promise((r) => requestAnimationFrame(() => r()));
-    setTimeout(() => {
-      // Reload works in browser and installed PWA; no globals, no SW-specific hacks
+    if (!prefersReduced) {
+      el.classList.add(mode === 'ring' ? clsRing : clsNudge);
+    }
+
+    // Reload after a short delay so the effect is seen
+    window.setTimeout(() => {
       window.location.reload();
-    }, spinMs);
+    }, prefersReduced ? 0 : reloadMs);
   };
 
-  // Use click only; pointerdown often conflicts with scrolling/tap states
+  // Use click only (most reliable across Android/iOS/PWA)
   el.addEventListener('click', run, { passive: false });
 }

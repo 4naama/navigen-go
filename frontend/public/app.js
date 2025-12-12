@@ -986,8 +986,8 @@ async function initEmergencyBlock(countryOverride) {
     setupMyStuffModalLogic();           // 🧩 Setup tab handling inside modal
     flagStyler();                       // 🌐 Apply title/alt to any flag icons
 
-    // Single-source logo refresh (App + PWA): click logo to spin + reload
-    wireLogoRefresh();
+    // Single-source logo refresh (App + PWA): quarter-turn nudge + reload
+    wireLogoRefresh({ mode: 'nudge' });
 
     // Single-source "?at" flow (App + PWA): store + toast + drop ?at from URL
     handleIncomingAtParamOnce();
