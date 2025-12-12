@@ -401,6 +401,7 @@ async function openPromotionQrModal(modal, data) {
 
       // 4) Expires in X days (as is)
       if (daysLeftText) {
+        const pExpires = document.createElement('p');
         pExpires.textContent = daysLeftText;
         pExpires.style.textAlign = 'left';
         inner.appendChild(pExpires);
@@ -412,6 +413,7 @@ async function openPromotionQrModal(modal, data) {
 
     // 5) State: AVAILABLE (small) — no empty after
     const stateText = tmpl('promotion.state.available', 'State: AVAILABLE');
+    const pState = document.createElement('p');
     pState.textContent = stateText;
     pState.style.textAlign = 'left';
     pState.style.fontSize = '0.85em'; // small
@@ -424,6 +426,7 @@ async function openPromotionQrModal(modal, data) {
       const eligibilityLabel = applyTemplate(eligibilityTemplate, {
         eligibility: eligibilityType.charAt(0).toUpperCase() + eligibilityType.slice(1)
       });
+      const p3 = document.createElement('p');
       p3.textContent = eligibilityLabel;
       p3.style.textAlign = 'left';
       p3.style.fontSize = '0.85em'; // small
