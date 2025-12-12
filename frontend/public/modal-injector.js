@@ -116,6 +116,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
 
   // post-QR thanks line (t(key); shown under QR)
   const pThanks = document.createElement('p');
+  pThanks.style.marginBottom = '0'; // eliminate space after "Thank you!"
   pThanks.textContent = thanksText;
   pThanks.style.textAlign = 'center';
   inner.appendChild(pThanks);
