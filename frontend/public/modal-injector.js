@@ -390,7 +390,6 @@ async function openPromotionQrModal(modal, data) {
 
     // 2) Period group (A): keep the three lines together with single spacing
     if (startDate && endDate) {
-      const label = tmpl('promotion.period-label', 'The offer runs:');
       const rangeTemplate = tmpl('promotion.period-range', '{{startDate}} → {{endDate}}');
       const rangeLine = applyTemplate(rangeTemplate, { startDate, endDate });
 
