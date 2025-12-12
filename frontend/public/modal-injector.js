@@ -101,7 +101,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   // 1) Agreement line
   // 2) Scan → confirmation wait line
   pTerms.innerHTML =
-    `${termsText}<br><br>${warningText}`;
+    `${warningText}<br><br>${termsText}`;
 
   inner.appendChild(pTerms);
 
