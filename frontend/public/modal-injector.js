@@ -386,61 +386,50 @@ async function openPromotionQrModal(modal, data) {
       inner.appendChild(p1);
     }
 
-    // 2) The offer runs:
+    // 2) Period group (A): keep the three lines together with single spacing (as is)
     if (startDate && endDate) {
-      const pRuns = document.createElement('p');
-      pRuns.textContent = tmpl('promotion.period-label', 'The offer runs:');
-      pRuns.style.textAlign = 'left';
-      inner.appendChild(pRuns);
-
-      // 3) Date range
+      const label = tmpl('promotion.period-label', 'The offer runs:');
       const rangeTemplate = tmpl('promotion.period-range', '{{startDate}} → {{endDate}}');
-      const pRange = document.createElement('p');
-      pRange.textContent = applyTemplate(rangeTemplate, { startDate, endDate });
-      pRange.style.textAlign = 'left';
-      inner.appendChild(pRange);
+      const rangeLine = applyTemplate(rangeTemplate, { startDate, endDate });
 
-      // 4) Expires in X days
-      if (daysLeftText) {
-        const pExpires = document.createElement('p');
-        pExpires.textContent = daysLeftText;
-        pExpires.style.textAlign = 'left';
-        inner.appendChild(pExpires);
-      }
+      const pPeriod = document.createElement('p');
+      pPeriod.style.textAlign = 'left';
+
+      let html = `${label}<br>${rangeLine}`;
+      if (daysLeftText) html += `<br>${daysLeftText}`;
+      pPeriod.innerHTML = html;
+
+      inner.appendChild(pPeriod);
+
+      // empty line here (between A and B groups)
+      inner.appendChild(document.createElement('br'));
     }
 
-    // 5) State: AVAILABLE (small) — no empty after
+    // 3) Meta group (B): keep State / Eligibility / Code note together with single spacing (small)
     const stateText = tmpl('promotion.state.available', 'State: AVAILABLE');
-    const pState = document.createElement('p');
-    pState.textContent = stateText;
-    pState.style.textAlign = 'left';
-    pState.style.fontSize = '0.85em'; // small
-    pState.style.opacity = '0.8';
-    inner.appendChild(pState);
+    const eligibilityTemplate = tmpl('promotion.eligibility-label', 'Eligibility: {{eligibility}}');
+    const eligibilityLabel = eligibilityType
+      ? applyTemplate(eligibilityTemplate, {
+          eligibility: eligibilityType.charAt(0).toUpperCase() + eligibilityType.slice(1)
+        })
+      : '';
 
-    // 6) Eligibility: Everyone (small) — no empty after
-    if (eligibilityType) {
-      const eligibilityTemplate = tmpl('promotion.eligibility-label', 'Eligibility: {{eligibility}}');
-      const eligibilityLabel = applyTemplate(eligibilityTemplate, {
-        eligibility: eligibilityType.charAt(0).toUpperCase() + eligibilityType.slice(1)
-      });
-      const p3 = document.createElement('p');
-      p3.textContent = eligibilityLabel;
-      p3.style.textAlign = 'left';
-      p3.style.fontSize = '0.85em'; // small
-      p3.style.opacity = '0.8';
-      inner.appendChild(p3);
-    }
-
-    // 7) Each code is valid for one purchase. (small)
     const codeNote = tmpl('promotion.code-note', 'Each code is valid for one purchase.');
-    const p4 = document.createElement('p');
-    p4.textContent = codeNote;
-    p4.style.textAlign = 'left';
-    p4.style.fontSize = '0.85em'; // small
-    p4.style.opacity = '0.8';
-    inner.appendChild(p4);
 
+    const pMeta = document.createElement('p');
+    pMeta.style.textAlign = 'left';
+    pMeta.style.fontSize = '0.85em'; // small
+    pMeta.style.opacity = '0.8';
+
+    pMeta.innerHTML =
+      `${stateText}` +
+      (eligibilityLabel ? `<br>${eligibilityLabel}` : '') +
+      `<br>${codeNote}`;
+
+    inner.appendChild(pMeta);
+
+    // empty line here (after B group, before in-store warning)
+    inner.appendChild(document.createElement('br'));
 
     // 8) In-store warning (as is)
     const warnText = tmpl(
