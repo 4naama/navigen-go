@@ -101,21 +101,12 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   // 1) Agreement line
   // 2) Scan → confirmation wait line
   pTerms.innerHTML =
-    `${termsText}<br>${warningText}`;
+    `${termsText}<br><br>${warningText}`;
 
   inner.appendChild(pTerms);
 
   // 3) actual QR code
   inner.appendChild(qrContainer);
-
-  // 4) final warning line under the QR code
-  const pWarn = document.createElement('p');
-  pWarn.textContent = warningText;
-  pWarn.style.textAlign = 'center';
-  pWarn.style.fontSize = '0.9em';
-  pWarn.style.opacity = '0.8';
-  pWarn.style.marginTop = '0.5rem';
-  inner.appendChild(pWarn);
 
   body.appendChild(inner);
 
