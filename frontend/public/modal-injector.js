@@ -88,6 +88,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   pInstr.textContent = descText;
   pInstr.style.textAlign = 'center';
   pInstr.style.marginTop = '1rem';
+  pInstr.style.marginBottom = '0'; // eliminate space before the next paragraph
   inner.appendChild(pInstr);
 
   // 2) terms + scan wait notice (kept together, single spacing)
@@ -95,7 +96,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   pTerms.style.textAlign = 'center';
   pTerms.style.fontSize = '0.9em';
   pTerms.style.opacity = '0.8';
-  pTerms.style.marginTop = '0.5rem';
+  pTerms.style.marginTop = '0'; // eliminate space after instruction paragraph
 
   // Order is explicit:
   // 1) Agreement line
