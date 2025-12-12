@@ -81,7 +81,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
 
   const warningText =
     (hasT ? (t('qr.role.campaign-redeem-warning') || '') : '') ||
-    'After scanning the code, wait until the redemption confirmation arrives. It may take 10–20 seconds.';
+    'After scanning, wait for confirmation (10–20 seconds).';
 
   // 1) main instruction
   const pInstr = document.createElement('p');
@@ -90,13 +90,19 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   pInstr.style.marginTop = '1rem';
   inner.appendChild(pInstr);
 
-  // 2) terms
+  // 2) terms + scan wait notice (kept together, single spacing)
   const pTerms = document.createElement('p');
-  pTerms.textContent = termsText;
   pTerms.style.textAlign = 'center';
   pTerms.style.fontSize = '0.9em';
   pTerms.style.opacity = '0.8';
   pTerms.style.marginTop = '0.5rem';
+
+  // Order is explicit:
+  // 1) Agreement line
+  // 2) Scan → confirmation wait line
+  pTerms.innerHTML =
+    `${termsText}<br>${warningText}`;
+
   inner.appendChild(pTerms);
 
   // 3) actual QR code
