@@ -132,6 +132,40 @@ const isUlid = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
 // ✅ Stripe Block
 import { initStripe, handleDonation } from "./scripts/stripe.js";
 
+// Single-source logo refresh (App + PWA): shared with Dash
+import { wireLogoRefresh } from "./scripts/logo-refresh.js";
+
+// Single-source "?at" handler (App + PWA)
+// - Stores incoming coords in history
+// - Shows the toast once
+// - Removes only ?at from the URL (keeps other params)
+function handleIncomingAtParamOnce() {
+  const q = new URLSearchParams(location.search);
+  const at = String(q.get("at") || "").trim();
+  if (!at) return;
+
+  // Store silently in local history
+  saveToLocationHistory(at);
+
+  // Build Google Maps link
+  const atSafe = encodeURIComponent(at);
+  const gmaps = `https://maps.google.com/?q=${atSafe}`;
+
+  // Toast stays until user closes it
+  showToast(
+    `open in <a class="toast-link" href="${gmaps}" target="_blank" rel="noopener">Google Maps</a><br><br>
+     📌 to save NaviGen<br>
+     🏠 → 📍 for this message<br>
+     👋 to support NaviGen`,
+    { title: "📍 Friend’s location received", manualCloseOnly: true, duration: 0 }
+  );
+
+  // Remove only ?at; keep all other params + hash intact
+  q.delete("at");
+  const next = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
+  history.replaceState({}, document.title, next);
+}
+
 // ✅ Stripe public key (inject securely in production)
 const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
 
@@ -951,6 +985,12 @@ async function initEmergencyBlock(countryOverride) {
 
     setupMyStuffModalLogic();           // 🧩 Setup tab handling inside modal
     flagStyler();                       // 🌐 Apply title/alt to any flag icons
+
+    // Single-source logo refresh (App + PWA): click logo to spin + reload
+    wireLogoRefresh();
+
+    // Single-source "?at" flow (App + PWA): store + toast + drop ?at from URL
+    handleIncomingAtParamOnce();
 
     // measure bottom band; update CSS var
     const setBottomBandH = () => {
@@ -2724,67 +2764,7 @@ if (alertButton) {
 
 });  // ✅ End of DOMContentLoaded  
 
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("📡 DOM loaded — checking for ?at parameter");
-
-  // ——— ?at flow ———
-  const at = new URLSearchParams(location.search).get("at");
-  if (at) {
-    saveToLocationHistory(at); // store silently in local history
-
-    const atSafe = encodeURIComponent(at.trim());
-    const gmaps = `https://maps.google.com?q=${atSafe}`;
-    console.log("🔗 Google Maps link:", gmaps);
-
-    showToast(
-      `open in <a class="toast-link" href="${gmaps}" target="_blank" rel="noopener">Google Maps</a><br><br>
-       📌 to save NaviGen<br>
-       🏠 → 📍 for this message<br>
-       👋 to support NaviGen`,
-      { title: '📍 Friend’s location received', manualCloseOnly: true, duration: 0 }
-    );
-  }
-
-  // Drop only ?at after storing; preserve other params.
-  {
-    const q = new URLSearchParams(location.search);
-    if (q.has("at")) {
-      q.delete("at");
-      const newUrl = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
-      history.replaceState({}, document.title, newUrl);
-    }
-  }
-});
-
-  // ——— ?at flow — store and suggest map link ———
-  const atRaw = new URLSearchParams(location.search).get("at");
-  const at = (atRaw || "").trim();
-  if (at) {
-    saveToLocationHistory(at); // store silently in local history
-
-    // sanitize for link; toast stays until closed
-    const atSafe = encodeURIComponent(at);
-    const gmaps = `https://maps.google.com/?q=${atSafe}`;
-    console.log("🔗 Google Maps link:", gmaps);
-
-    showToast(
-      `open in <a class="toast-link" href="${gmaps}" target="_blank" rel="noopener">Google Maps</a><br><br>
-       📌 to save NaviGen<br>
-       🏠 → 📍 for this message<br>
-       👋 to support NaviGen`,
-      { title: '📍 Friend’s location received', manualCloseOnly: true, duration: 0 }
-    );
-  }
-
-  // Drop ?at after storing; keep other params
-  {
-    const q = new URLSearchParams(location.search);
-    if (q.has("at")) {
-      q.delete("at");
-      const next = location.pathname + (q.toString() ? `?${q}` : "") + location.hash;
-      history.replaceState({}, document.title, next);
-    }
-  }
+// (removed) legacy duplicate ?at handlers — handled once by handleIncomingAtParamOnce()
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {

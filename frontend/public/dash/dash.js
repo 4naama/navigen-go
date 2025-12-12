@@ -1,6 +1,10 @@
 // Minimal dashboard: fetches /api/stats* and renders daily / QR / campaign data.
 // Unified i18n bootstrap: choose language by device locale → app’s recent setting → English,
 // then load translations from the absolute script or fall back to the local copy.
+
+// Single-source logo refresh (Dash): shared with App
+import { wireLogoRefresh } from "/scripts/logo-refresh.js";
+
 let t = (k) => k; // safe fallback so UI renders even if i18n.js isn’t served as JS
 try {
   // helper: device language → app's recent setting → English
@@ -87,17 +91,10 @@ const TODAY = new Date();
 const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 
-// Match app behavior: reload when tapping the logo
-const dashLogo = document.getElementById('logo-icon');
-// tap anim first, then reload (keeps comments concise)
-if (dashLogo) {
-  dashLogo.addEventListener('animationend', () => dashLogo.classList.remove('animating'));
-  dashLogo.addEventListener('click', (e) => {
-    e.preventDefault();                       // allow anim to play
-    dashLogo.classList.add('animating');      // trigger CSS keyframes
-    setTimeout(() => location.reload(), 280); // reload after brief pop
-  }, { passive: false });
-}
+// Single-source logo refresh (Dash): deterministic spin + reload
+wireLogoRefresh();
+
+// Logo refresh is wired via wireLogoRefresh() (single source shared with App)
 
 // Open Donation (👋) modal directly on dashboard; skip pin/install.
 // Works if #donation-modal exists; otherwise no-ops silently.

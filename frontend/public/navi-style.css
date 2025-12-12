@@ -86,6 +86,16 @@ body {
   transform: scale(1.2) rotate(-5deg);
 }
 
+/* Logo refresh: deterministic spin used by shared JS (works on mobile + PWA + dash) */
+@keyframes logo-refresh-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Applied briefly before reload; avoids :active “stuck” states */
+#logo-icon.logo-refreshing{
+  animation: logo-refresh-spin 220ms linear 1;
+}
+
 #page-title {
   flex: 1;
   font-size: 20px;
