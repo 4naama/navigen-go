@@ -386,7 +386,7 @@ async function openPromotionQrModal(modal, data) {
       inner.appendChild(p1);
     }
 
-    // 2) Period group (A): keep the three lines together with single spacing (as is)
+    // 2) Period group (A): keep the three lines together with single spacing
     if (startDate && endDate) {
       const label = tmpl('promotion.period-label', 'The offer runs:');
       const rangeTemplate = tmpl('promotion.period-range', '{{startDate}} → {{endDate}}');
@@ -402,15 +402,8 @@ async function openPromotionQrModal(modal, data) {
       inner.appendChild(pPeriod);
     }
 
-    // 3) Meta group (B): keep State / Eligibility / Code note together with single spacing (small)
+    // 3) Meta group (B): keep State + Code note together with single spacing (small)
     const stateText = tmpl('promotion.state.available', 'State: AVAILABLE');
-    const eligibilityTemplate = tmpl('promotion.eligibility-label', 'Eligibility: {{eligibility}}');
-    const eligibilityLabel = eligibilityType
-      ? applyTemplate(eligibilityTemplate, {
-          eligibility: eligibilityType.charAt(0).toUpperCase() + eligibilityType.slice(1)
-        })
-      : '';
-
     const codeNote = tmpl('promotion.code-note', 'Each code is valid for one purchase.');
 
     const pMeta = document.createElement('p');
@@ -420,7 +413,6 @@ async function openPromotionQrModal(modal, data) {
 
     pMeta.innerHTML =
       `${stateText}` +
-      (eligibilityLabel ? `<br>${eligibilityLabel}` : '') +
       `<br>${codeNote}`;
 
     inner.appendChild(pMeta);
