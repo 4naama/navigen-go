@@ -388,7 +388,7 @@ async function openPromotionQrModal(modal, data) {
       inner.appendChild(p1);
     }
 
-    // 2) Period group (A): keep the three lines together with single spacing
+    // 2) Period group (A): keep the two lines together with single spacing (no label line)
     if (startDate && endDate) {
       const rangeTemplate = tmpl('promotion.period-range', '{{startDate}} → {{endDate}}');
       const rangeLine = applyTemplate(rangeTemplate, { startDate, endDate });
@@ -396,7 +396,8 @@ async function openPromotionQrModal(modal, data) {
       const pPeriod = document.createElement('p');
       pPeriod.style.textAlign = 'left';
 
-      let html = `${label}<br>${rangeLine}`;
+      // Order is explicit: Range → Expires (single-spacing group)
+      let html = `${rangeLine}`;
       if (daysLeftText) html += `<br>${daysLeftText}`;
       pPeriod.innerHTML = html;
 
