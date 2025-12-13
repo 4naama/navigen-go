@@ -90,8 +90,7 @@ body {
 }
 
 /* Logo refresh FX (shared by App + Dash via scripts/logo-refresh.js)
-   Mode A: quarter-turn “nudge” (minimal logo motion)
-   Mode B: progress ring (logo stays still) */
+   Nudge-only: quarter-turn “nudge” (minimal logo motion) */
 @keyframes logo-refresh-nudge {
   0%   { transform: rotate(0deg) scale(1); }
   60%  { transform: rotate(75deg) scale(1.06); }  /* quarter-ish nudge */
@@ -103,44 +102,11 @@ body {
   animation: logo-refresh-nudge 200ms ease-out 1;
 }
 
-/* Progress ring (no logo motion): a short arc spins once around the logo */
-@keyframes logo-refresh-ring {
-  to { transform: rotate(360deg); }
-}
-
-/* Progress ring (no logo motion): rendered as a real child for <img> compatibility */
-#logo-icon .logo-refresh-ring{
-  position: absolute;
-  inset: -6px;                  /* ring radius around the icon */
-  border-radius: 9999px;
-  border: 2px solid currentColor;
-  border-top-color: transparent; /* arc */
-  opacity: 0.85;
-  pointer-events: none;
-  display: none;                /* only shown while refreshing */
-}
-
-#logo-icon.logo-refreshing-ring .logo-refresh-ring{
-  display: block;
-  animation: logo-refresh-ring 240ms linear 1;
-}
-
 /* Accessibility: reduce motion */
 @media (prefers-reduced-motion: reduce){
-  #logo-icon.logo-refreshing-nudge,
-  #logo-icon.logo-refreshing-ring::after{
+  #logo-icon.logo-refreshing-nudge{
     animation: none !important;
   }
-}
-
-/* Logo refresh: deterministic spin used by shared JS (works on mobile + PWA + dash) */
-@keyframes logo-refresh-spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Applied briefly before reload; avoids :active “stuck” states */
-#logo-icon.logo-refreshing{
-  animation: logo-refresh-spin 220ms linear 1;
 }
 
 #page-title {
