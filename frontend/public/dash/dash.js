@@ -91,8 +91,8 @@ const TODAY = new Date();
 const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 
-// Single-source logo refresh (Dash): nudge + reload (shared with App)
-wireLogoRefresh();
+// Single-source logo refresh (Dash): nudge + SOFT refresh (refetch + rerender, no shell reload)
+wireLogoRefresh({ onRefresh: () => loadAndRender() });
 
 // Open Donation (👋) modal directly on dashboard; skip pin/install.
 // Works if #donation-modal exists; otherwise no-ops silently.
