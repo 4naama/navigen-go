@@ -4416,7 +4416,7 @@ export function createDonationModal(isRepeat = false) {
     title: "",                        // header rendered via modal-top-bar
     layout: "action", // Keep action layout so Donation uses the same modal-content variant as Promotions
     bodyHTML: `
-      <div class="modal-shop-item">
+      <div>
         <p>${intro}</p>
 
         <div class="donation-note-wrapper">
