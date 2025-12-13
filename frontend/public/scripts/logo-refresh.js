@@ -23,10 +23,15 @@ export function wireLogoRefresh({
 
   const clsNudge = 'logo-refreshing-nudge';
 
-  const doRefresh = () => {
+  const finish = () => {
+    busy = false;
+    el.classList.remove(clsNudge); // avoid any “stuck” visual state after soft refresh
+  };
+
+  const doRefresh = async () => {
     // Allow host to supply a soft-refresh (recommended for Dash data reloads)
     if (typeof onRefresh === 'function') {
-      onRefresh();
+      await onRefresh();
       return;
     }
     window.location.reload();
@@ -50,8 +55,13 @@ export function wireLogoRefresh({
     }
 
     // Refresh after a short delay so the effect is seen
-    window.setTimeout(() => {
-      doRefresh();
+    window.setTimeout(async () => {
+      try {
+        await doRefresh();
+      } finally {
+        // Soft refresh path must unlock; hard refresh path won’t return anyway.
+        finish();
+      }
     }, prefersReduced ? 0 : reloadMs);
   };
 
@@ -83,7 +93,7 @@ export function wireLogoRefresh({
 
   // If the page is restored from bfcache, release the guard safely
   window.addEventListener('pageshow', () => {
-    busy = false;
+    finish();
   });
 }
 
