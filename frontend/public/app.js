@@ -2230,16 +2230,41 @@ async function initEmergencyBlock(countryOverride) {
     if (!pinEl) return;
     pinEl.style.display = 'block';
     pinEl.textContent = '📌';
-    pinEl.onclick = () => {
-      const modal = ensurePinnedModal();
-      if (modal) {
-        showModal('pinned-modal');
+
+    // Prompt-first: if OS install is available, show it; otherwise show instructions.
+    pinEl.onclick = async () => {
+      if (isStandalone()) {
+        attachSupportHandler(pinEl);
+        return;
       }
+
+      // If we have a captured BIP event, we can show the native install prompt.
+      if (deferredPrompt) {
+        try {
+          deferredPrompt.prompt();
+          const choice = await deferredPrompt.userChoice;
+
+          if (choice?.outcome === 'accepted') {
+            try { localStorage.setItem('pwaInstalled', 'true'); } catch {}
+            attachSupportHandler(pinEl);
+          } else {
+            const modal = ensurePinnedModal();
+            if (modal) showModal('pinned-modal');
+          }
+        } finally {
+          deferredPrompt = null; // consume once; OS decides when it’s offered again
+        }
+        return;
+      }
+
+      // No OS prompt available → show manual install instructions
+      const modal = ensurePinnedModal();
+      if (modal) showModal('pinned-modal');
     };
   };
 
   // Module-scoped BIP event holder (used only if available)
-  let promptEvent = null;
+  // reuse module-scoped deferredPrompt for beforeinstallprompt storage
 
   // Initial pin state based on runtime mode
   if (headerPin) {
@@ -2247,45 +2272,30 @@ async function initEmergencyBlock(countryOverride) {
       // Already running as standalone PWA → show 👋 support
       attachSupportHandler(headerPin);
     } else {
-      // Browser tab → show 📌 (install); BIP listener may refine behavior
+      // Browser tab → show 📌 (install); click is prompt-first if OS supports it
       attachInstallFallback(headerPin);
     }
   }
+
+  // If installation completes, flip 📌 → 👋 immediately (Chromium/Android/desktop)
+  globalThis.addEventListener('appinstalled', () => {
+    if (headerPin) attachSupportHandler(headerPin);
+    deferredPrompt = null;
+  });
 
   // Listen for the OS-level PWA install prompt (Chrome/Edge, etc.)
   globalThis.addEventListener('beforeinstallprompt', (e) => {
     if (isStandalone()) return; // no need to handle in PWA
     e.preventDefault();
-    promptEvent = e;
+    deferredPrompt = e;
     if (!headerPin) return;
 
     headerPin.dataset.bip = '1';
     headerPin.style.display = 'block';
     headerPin.textContent = '📌';
 
-    // When user taps 📌 and BIP is available → show OS install prompt
-    headerPin.onclick = () => {
-      // If for any reason promptEvent is gone, fall back to manual instructions
-      if (!promptEvent) {
-        attachInstallFallback(headerPin);
-        headerPin.onclick(); // open pinned-modal
-        return;
-      }
-
-      promptEvent.prompt();
-      promptEvent.userChoice.then((choice) => {
-        if (choice.outcome === 'accepted') {
-          // Mark in localStorage and flip to 👋 in this session (no reload)
-          try { localStorage.setItem('pwaInstalled', 'true'); } catch {}
-          attachSupportHandler(headerPin);
-        } else {
-          // User dismissed OS prompt → keep 📌 as manual install entry point
-          attachInstallFallback(headerPin);
-        }
-        promptEvent = null;
-      });
-    };
-  });
+    // Keep 📌 wired to prompt-first behavior (attachInstallFallback checks deferredPrompt)
+    attachInstallFallback(headerPin);
 
   // If BIP never fires (Safari / unsupported), keep 📌 as pinned-modal entry
   setTimeout(() => {
