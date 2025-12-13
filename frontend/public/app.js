@@ -2207,7 +2207,7 @@ async function initEmergencyBlock(countryOverride) {
     return modal;
   };
 
-  // PWA Install Behavior
+  // PWA Install Behavior (single click handler; store BIP event only)
   const headerPin  = document.querySelector('.header-pin');
 
   // Helper: wire 👋 support handler (donation entry point)
@@ -2230,79 +2230,58 @@ async function initEmergencyBlock(countryOverride) {
     if (!pinEl) return;
     pinEl.style.display = 'block';
     pinEl.textContent = '📌';
-
-    // Prompt-first: if OS install is available, show it; otherwise show instructions.
-    pinEl.onclick = async () => {
-      if (isStandalone()) {
-        attachSupportHandler(pinEl);
-        return;
-      }
-
-      // If we have a captured BIP event, we can show the native install prompt.
-      if (deferredPrompt) {
-        try {
-          deferredPrompt.prompt();
-          const choice = await deferredPrompt.userChoice;
-
-          if (choice?.outcome === 'accepted') {
-            try { localStorage.setItem('pwaInstalled', 'true'); } catch {}
-            attachSupportHandler(pinEl);
-          } else {
-            const modal = ensurePinnedModal();
-            if (modal) showModal('pinned-modal');
-          }
-        } finally {
-          deferredPrompt = null; // consume once; OS decides when it’s offered again
-        }
-        return;
-      }
-
-      // No OS prompt available → show manual install instructions
+    pinEl.onclick = () => {
       const modal = ensurePinnedModal();
-      if (modal) showModal('pinned-modal');
+      if (modal) {
+        showModal('pinned-modal');
+      }
     };
   };
 
   // Module-scoped BIP event holder (used only if available)
-  // reuse module-scoped deferredPrompt for beforeinstallprompt storage
+  let promptEvent = null;
 
-  // Initial pin state based on runtime mode
+  // One authoritative click handler; decides at click-time
   if (headerPin) {
-    if (isStandalone()) {
+    headerPin.style.display = 'block';
+    headerPin.textContent = isStandalone() ? '👋' : '📌';
+
+    headerPin.onclick = () => {
       // Already running as standalone PWA → show 👋 support
-      attachSupportHandler(headerPin);
-    } else {
-      // Browser tab → show 📌 (install); click is prompt-first if OS supports it
+      if (isStandalone()) {
+        attachSupportHandler(headerPin);
+        headerPin.onclick(); // delegate to support handler
+        return;
+      }
+
+      // Native install prompt available → trigger it
+      if (promptEvent) {
+        promptEvent.prompt();
+        promptEvent.userChoice.then((choice) => {
+          if (choice.outcome === 'accepted') {
+            try { localStorage.setItem('pwaInstalled', 'true'); } catch {}
+            attachSupportHandler(headerPin);
+          } else {
+            attachInstallFallback(headerPin);
+          }
+          promptEvent = null;
+        });
+        return;
+      }
+
+      // No BIP → show instruction modal (existing text unchanged)
       attachInstallFallback(headerPin);
-    }
+      headerPin.onclick();
+    };
   }
 
-  // If installation completes, flip 📌 → 👋 immediately (Chromium/Android/desktop)
-  globalThis.addEventListener('appinstalled', () => {
-    if (headerPin) attachSupportHandler(headerPin);
-    deferredPrompt = null;
-  });
-
   // Listen for the OS-level PWA install prompt (Chrome/Edge, etc.)
-  globalThis.addEventListener('beforeinstallprompt', (e) => {
+  // Store only; do not rewire click handlers here.
+  addEventListener('beforeinstallprompt', (e) => {
     if (isStandalone()) return; // no need to handle in PWA
     e.preventDefault();
-    deferredPrompt = e;
-    if (!headerPin) return;
-
-    headerPin.dataset.bip = '1';
-    headerPin.style.display = 'block';
-    headerPin.textContent = '📌';
-
-    // Keep 📌 wired to prompt-first behavior (attachInstallFallback checks deferredPrompt)
-    attachInstallFallback(headerPin);
-
-  // If BIP never fires (Safari / unsupported), keep 📌 as pinned-modal entry
-  setTimeout(() => {
-    if (!isStandalone() && headerPin && headerPin.dataset.bip !== '1') {
-      attachInstallFallback(headerPin);
-    }
-  }, 3000);
+    promptEvent = e;
+  });
 
     // ---------- Bottom band: ♿ 🤖 🏠 ⋮ ----------
     function initBottomBand() {
