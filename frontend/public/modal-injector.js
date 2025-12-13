@@ -4284,6 +4284,7 @@ export function createShareModal() {
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   modal.querySelector(".modal-content")?.prepend(topBar);
+  modal.querySelector(".modal-content")?.classList.add("modal-action"); // Match Promotions modal-content sizing/padding
 
   // Close via red X
   topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("share-location-modal"));
@@ -4413,7 +4414,7 @@ export function createDonationModal(isRepeat = false) {
   const modal = injectModal({
     id: "donation-modal",
     title: "",                        // header rendered via modal-top-bar
-    layout: "action",
+    layout: "action", // Keep action layout so Donation uses the same modal-content variant as Promotions
     bodyHTML: `
       <div class="modal-shop-item">
         <p>${intro}</p>
