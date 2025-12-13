@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Raleway:wght@600&display=swap');
 
+:root{ --css-canary: "2025-12-13-donation"; }
+
 #page-title,
 h1,
 h2,
