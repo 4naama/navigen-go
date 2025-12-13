@@ -1077,7 +1077,7 @@ body.large-text {
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
-  padding: 0 12px 12px;
+  padding: 0 0 12px;          /* ✅ remove horizontal padding */
   box-sizing: border-box;
 }
 
