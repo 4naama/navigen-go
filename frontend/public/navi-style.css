@@ -1,7 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Raleway:wght@600&display=swap');
 
-:root{ --css-canary: "2025-12-13-donation"; }
-
 #page-title,
 h1,
 h2,
@@ -1053,16 +1051,13 @@ body.large-text {
   word-break:break-word;     /* safety net so extremely long chunks still wrap instead of clipping */
 }
 
-/* 🎁 Styled Stripe donation buttons inside modal */
-/* Applies to native submit buttons AND Stripe-generated markup for purchases */
-#donation-modal .modal-content form{
-  display: block;             /* ✅ Stripe markup behaves more predictably than flex here */
-  margin: 0;                  /* ✅ Spacing handled by sibling rule below */
-}
-
-/* ✅ Add spacing between each donation button form */
-#donation-modal .modal-content form + form{
-  margin-top: 12px;           /* ✅ Promotions-like rhythm (less cramped) */
+/* 🎁 Donation modal buttons + layout (matches Promotions modal feel)
+   Donation uses .donation-option.donate-btn and #donation-decline (NOT submit/Stripe markup) */
+#donation-modal.modal{
+  /* Keep card away from screen edges, including iOS safe-area */
+  padding: max(20px, env(safe-area-inset-top, 0px)) 16px
+           max(20px, env(safe-area-inset-bottom, 0px)) 16px;
+  box-sizing: border-box;
 }
 
 #donation-modal .donation-note-wrapper{
@@ -1077,8 +1072,8 @@ body.large-text {
   line-height: 1.5;
 }
 
-/* Donation modal uses the same layout model as Promotions */
-.donation-options{
+/* Donation options stack like Promotions cards */
+#donation-modal .donation-options{
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
@@ -1086,20 +1081,35 @@ body.large-text {
   box-sizing: border-box;
 }
 
-/* Donation amount cards (3 / 5 / 10 EUR) — full-width tiles inside the modal */
-.donation-option{
+/* Donation amount cards (3 / 5 / 10 EUR) */
+#donation-modal .donation-option.donate-btn{
   width: 100%;
-  padding: 16px 18px;         /* Promotions card density */
+  display: block;
+  padding: 16px 18px;         /* Promotions-like density */
   border-radius: 14px;
   border: 1px solid #e5e7eb;
   background: #f9f9fc;
   text-align: left;
   box-sizing: border-box;
+
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
-#donation-modal .donation-option:hover{
+#donation-modal .donation-option.donate-btn:hover{
   border-color: #1a73e8;
   background: #eef2ff;
+  transform: translateY(-2px);
+}
+
+/* Secondary line under the main donation label */
+#donation-modal .donation-option .donation-sub{
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  line-height: 1.35;
 }
 
 #donation-modal .smiley{
@@ -1109,56 +1119,10 @@ body.large-text {
   color: #666;
 }
 
-/* ✅ Full-width Stripe + native buttons (Stripe injects .stripe-button-el > span) */
-#donation-modal .modal-content button[type="submit"],
-#donation-modal .modal-content .stripe-button-el,
-#donation-modal .modal-content .stripe-button-el > span{
-  width: 100%;                                /* ✅ Full-width tile/button like Promotions */
-  box-sizing: border-box;                     /* ✅ Prevent width + padding overflow */
-}
-
-/* Stripe outer wrapper should behave like a full-width tile */
-#donation-modal .modal-content .stripe-button-el{
-  display: block;
-  padding: 0;                                 /* inner span handles padding */
-  border: none;
-  border-radius: 14px;                        /* ✅ Match donation-option radius */
-  background: linear-gradient(to right, #ffeac4, #fff5e5); /* ✅ Keep your existing style */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);  /* ✅ Subtle shadow for depth */
-  cursor: pointer;                            /* ✅ Clickable feel */
-  transition: all 0.2s ease;                  /* ✅ Smooth hover animation */
-}
-
-/* Stripe inner span is the visible button surface */
-#donation-modal .modal-content .stripe-button-el > span{
-  display: block;
-  padding: 1rem 1.2rem;                       /* ✅ Comfortable without looking bulky */
-  font-size: 16px;                            /* ✅ Keep readable size */
-  font-weight: 600;                           /* ✅ Strong readable label */
-  color: #5a3e00;                             /* ✅ Warm, friendly text color */
-  text-align: center;
-  border-radius: 14px;                        /* ✅ Match outer radius */
-}
-
-/* Native submit fallback (if you also render your own button) */
-#donation-modal .modal-content button[type="submit"]{
-  padding: 1rem 1.2rem;                       /* ✅ Comfortable without looking bulky */
-  font-size: 16px;                            /* ✅ Keep readable size */
-  font-weight: 600;                           /* ✅ Strong readable label */
-  border: none;                               /* ✅ Clean borderless look */
-  border-radius: 14px;                        /* ✅ Match donation-option radius */
-  background: linear-gradient(to right, #ffeac4, #fff5e5); /* ✅ Keep your existing style */
-  color: #5a3e00;                             /* ✅ Warm, friendly text color */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);  /* ✅ Subtle shadow for depth */
-  cursor: pointer;                            /* ✅ Clickable feel */
-  transition: all 0.2s ease;                  /* ✅ Smooth hover animation */
-}
-
-/* Hover state for both Stripe and native */
-#donation-modal .modal-content button[type="submit"]:hover,
-#donation-modal .modal-content .stripe-button-el:hover{
-  background: #ffe1b0;                        /* ✅ Slight darkening on hover */
-  transform: translateY(-2px);                /* ✅ Subtle lift on hover */
+/* Decline button: full-width and not cramped */
+#donation-modal #donation-decline.modal-body-button{
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ──────────────── Scrollable Content Area ──────────────── */
