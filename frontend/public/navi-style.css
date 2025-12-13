@@ -1084,9 +1084,7 @@ body.large-text {
 /* Donation amount cards (3 / 5 / 10 EUR) */
 #donation-modal .donation-option.donate-btn{
   width: 100%;
-  display: flex;              /* match .modal-menu-item row feel */
-  align-items: center;
-  gap: 12px;
+  display: block;             /* Donation content is single-column, not row-based */
 
   padding: 12px 16px;         /* match Promotions card padding */
   border-radius: 10px;        /* match Promotions card radius */
@@ -1118,7 +1116,7 @@ body.large-text {
 /* Secondary line under the main donation label */
 #donation-modal .donation-option .donation-sub{
   display: block;
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 14px;
   font-weight: 500;
   color: #666;
