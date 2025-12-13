@@ -1076,19 +1076,20 @@ body.large-text {
   line-height: 1.5;
 }
 
-#donation-modal .donation-options {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;       /* ✅ Cards stretch to full modal width */
-  gap: 0.75rem;               /* ✅ More breathing room */
-  margin-bottom: 1.25rem;
+/* Donation modal uses the same layout model as Promotions */
+.donation-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 0 12px 12px;
+  box-sizing: border-box;
 }
 
 /* Donation amount cards (3 / 5 / 10 EUR) — full-width tiles inside the modal */
-#donation-modal .donation-option{
+.donation-option{
   width: 100%;
-  padding: 1em 1.25em;        /* ✅ Wider “Promotions-like” card feel */
-  border-radius: 14px;        /* ✅ Softer corners */
+  padding: 16px 18px;        /* Promotions card density */
+  border-radius: 14px;
   border: 1px solid #e5e7eb;
   background: #f9f9fc;
   text-align: left;
@@ -1109,7 +1110,7 @@ body.large-text {
 
 #donation-modal .modal-content button[type="submit"] {
   width: 100%;                                /* ✅ Full-width tile/button like Promotions */
-  padding: 0.95rem 1.2rem;                    /* ✅ Comfortable without looking bulky */
+  padding: 1rem 1.2rem;                       /* ✅ Comfortable without looking bulky */
   font-size: 16px;                            /* ✅ Keep readable size */
   font-weight: 600;                           /* ✅ Strong readable label */
   border: none;                               /* ✅ Clean borderless look */
