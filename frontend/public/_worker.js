@@ -186,9 +186,9 @@ export default {
     // (handled above in the early /s/{id}?c=... block)
     
     // /hit/:metric/:id — unified client-side event counter (allows a small, explicit list)
-    // NOTE: replaces the qr-print only logic and any duplicate /hit blocks below.
+    // NOTE: This handler forwards hits to the API Worker (authoritative) to avoid parallel keyspaces.
     if (url.pathname.startsWith('/hit/')) {
-      // keep comment, but clarify: this endpoint increments daily metric counters for non-redirect CTAs
+      // keep comment, but clarify: this endpoint forwards event counters to the authoritative API Worker
       const [, , metric, idOrSlug] = url.pathname.split('/'); // ['', 'hit', ':metric', ':id']
       const ALLOWED_HIT_METRICS = new Set([
         'qr-print',
@@ -202,53 +202,46 @@ export default {
         'telegram',
         'messenger',
         'rating-sum',
-        'rating-avg'
-      ]); // include comm channels for dash stats
+        'rating-avg',
+        'redeem-confirmation-cashier',
+        'redeem-confirmation-customer'
+      ]); // include comm channels + confirmations for dash stats (authoritative in API Worker)
 
       if (!metric || !ALLOWED_HIT_METRICS.has(metric) || !idOrSlug) {
         return new Response('Bad Request', { status: 400 });
       }
 
-      // resolve to ULID for canonical counting (works with ULID or slug)
-      const ulid = await canonicalId(env, idOrSlug);
-      if (!ulid) return new Response('Unknown location', { status: 404 });
+      // Forward to API Worker as the single source of truth.
+      // IMPORTANT: do not write m:* here; the API Worker owns canonical stats/qrlog and confirmation signals.
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(`/hit/${encodeURIComponent(metric)}/${encodeURIComponent(idOrSlug)}`, apiBase);
 
-      // daily bucket: m:<ULID>:YYYY-MM-DD:<metric>
-      const date = new Date().toISOString().slice(0, 10);
+      // Preserve query string (e.g., rating score, etc.)
+      target.search = url.search;
 
-      // Safe KV increment (no-throw → always 204)
       try {
-        if (!env || !env.KV_STATS) {
-          return new Response(null, {
-            status: 204,
-            headers: {
-              'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-            },
-          });
-        }
+        // Preserve method semantics: GET stays GET; POST stays POST; OPTIONS stays OPTIONS.
+        const method = req.method === 'OPTIONS' ? 'OPTIONS' : req.method;
 
-        if (metric === 'rating') {
-          // 1) count how many ratings we received that day
-          const countKey = `m:${ulid}:${date}:rating-sum`;
-          const currentCount = parseInt((await env.KV_STATS.get(countKey)) || '0', 10) || 0;
-          await env.KV_STATS.put(countKey, String(currentCount + 1));
-
-          // 2) accumulate the 1–5 score to compute an average later
-          const scoreRaw = (url.searchParams.get('score') || '').trim();
-          const score = parseInt(scoreRaw, 10);
-          if (Number.isFinite(score) && score >= 1 && score <= 5) {
-            const scoreKey = `m:${ulid}:${date}:rating-score`;
-            const currentScore = parseInt((await env.KV_STATS.get(scoreKey)) || '0', 10) || 0;
-            await env.KV_STATS.put(scoreKey, String(currentScore + score));
+        // Best-effort forwarding: never block the user flow on telemetry.
+        // Use waitUntil when available so the request can outlive the response.
+        const forward = fetch(target.toString(), {
+          method,
+          keepalive: true,
+          headers: {
+            'X-NG-Source': 'pages-worker',
+            'X-NG-QR-Source': 'pages-worker'
           }
+        }).catch(() => {});
+
+        if (ctx && typeof ctx.waitUntil === 'function') {
+          ctx.waitUntil(forward);
         } else {
-          const key = `m:${ulid}:${date}:${metric}`;
-          const current = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
-          await env.KV_STATS.put(key, String(current + 1));
+          // fallback when ctx is not available
+          void forward;
         }
       } catch (_) {
-        // swallow and still return 204
+        // keep behavior: ignore forwarding failures; never affect response
       }
 
       return new Response(null, {
