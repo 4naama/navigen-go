@@ -1104,6 +1104,13 @@ body.large-text {
   transform: translateY(-1px);
 }
 
+/* Pressed state: slightly stronger border for better UX */
+#donation-modal .donation-option.donate-btn:active{
+  background: #ededed;
+  border-color: #bdbdbd;
+  transform: translateY(0);
+}
+
 /* Donation intro line: match the "Heads up..." note size */
 #donation-modal .modal-shop-item > p:first-of-type{
   font-size: 15px;

@@ -47,7 +47,7 @@ export default {
     {
       const lpSlug = (url.searchParams.get('lp') || '').trim();
       if (lpSlug) {
-        const hitUrl = `https://navigen-api.4naama.workers.dev/hit/qr-scan/${encodeURIComponent(lpSlug)}`;
+        const hitUrl = `https://navigen-api.4naama.workers.dev/hit/lpm-open/${encodeURIComponent(lpSlug)}`;
         const options = {
           method: 'POST',
           keepalive: true,
@@ -276,15 +276,13 @@ export default {
         const ulid = await canonicalId(env, idOrSlug);
         if (!ulid) return new Response('Unknown location', { status: 404 });
 
-        // Increment daily bucket: m:<ULID>:YYYY-MM-DD:qr-scan (same KV_STATS used by /hit + /api/stats)
-        // Safe KV increment; never block redirect
+        // Canonical QR scan logging: forward to API Worker (authoritative)
         try {
-          if (env && env.KV_STATS) {
-            const date = new Date().toISOString().slice(0, 10);
-            const key  = `m:${ulid}:${date}:qr-scan`;
-            const cur  = parseInt((await env.KV_STATS.get(key)) || '0', 10) || 0;
-            await env.KV_STATS.put(key, String(cur + 1));
-          }
+          const apiBase = 'https://navigen-api.4naama.workers.dev';
+          const hitUrl  = new URL(`/hit/qr-scan/${encodeURIComponent(ulid)}`, apiBase).toString();
+          const options = { method: 'POST', keepalive: true, headers: { 'X-NG-QR-Source': 'pages-worker' } };
+          if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(fetch(hitUrl, options).catch(() => {}));
+          else fetch(hitUrl, options).catch(() => {});
         } catch (_) { /* ignore */ }
 
         // Redirect to landing (default /), allow only http(s) or same-origin paths
@@ -382,72 +380,30 @@ export default {
       });
     }
 
-    // /api/stats — minimal reader (ULID or slug; returns daily buckets the dash expects)
+    // /api/stats — proxy to API Worker (single canonical source of truth)
     if (url.pathname === '/api/stats') {
-      const q = url.searchParams;
-      const idOrSlug = (q.get('locationID') || '').trim();
-      const from = (q.get('from') || '').trim(); // YYYY-MM-DD
-      const to   = (q.get('to')   || '').trim(); // YYYY-MM-DD
-      if (!idOrSlug || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-        return new Response('Bad Request', { status: 400 });
-      }
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
 
-      const uid = await canonicalId(env, idOrSlug); // slug → ULID (or passthrough)
-      if (!uid) return new Response('Not Found', { status: 404 });
-
-      const days = {};
-      let ratedSum = 0;
-      let ratingScoreSum = 0;
-
-      try {
-        // keys look like m:<ULID>:YYYY-MM-DD:metric
-        const prefix = `m:${uid}:`;
-        const listed = await env.KV_STATS.list({ prefix });
-        const ALLOWED_METRICS = new Set([
-          'qr-print',
-          'qr-view',
-          'qr-scan',
-          'share',
-          'lpm-open',
-          'call',
-          'email',
-          'whatsapp',
-          'telegram',
-          'messenger',
-          'rating-sum'
-        ]); // include comm channels in stats aggregation + rating-sum (count)
-
-        for (const { name } of listed.keys || []) {
-          const [/*m*/, /*uid*/, d, metric] = name.split(':');
-          if (d < from || d > to) continue;
-
-          if (metric === 'rating-score') {
-            const v = Number(await env.KV_STATS.get(name, 'text')) || 0;
-            ratingScoreSum += v;
-            continue; // rating-score is helper-only, never exposed as a row
-          }
-
-          if (!ALLOWED_METRICS.has(metric)) continue;
-
-          const n = Number(await env.KV_STATS.get(name, 'text')) || 0;
-          if (!days[d]) days[d] = {};
-          days[d][metric] = (days[d][metric] || 0) + n;
-
-          if (metric === 'rating-sum') ratedSum += n;
-        }
-      } catch {}
-
-      const ratingAvg = ratedSum > 0 && ratingScoreSum > 0 ? (ratingScoreSum / ratedSum) : 0;
-
-      const body = { locationID: uid, days, rated_sum: ratedSum, rating_avg: ratingAvg };
-
-      return new Response(JSON.stringify(body), {
-        status: 200,
+      const r = await fetch(target.toString(), {
+        method: 'GET',
         headers: {
-          'content-type': 'application/json',
+          'Accept': 'application/json',
+          'X-NG-Source': 'pages-worker'
+        }
+      });
+
+      const body = await r.text();
+
+      // Keep CORS behavior consistent with existing public endpoints
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
           'Cache-Control': 'no-store',
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+          'Access-Control-Allow-Headers': req.headers.get('access-control-request-headers') || 'Content-Type'
         }
       });
     }

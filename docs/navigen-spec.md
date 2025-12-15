@@ -670,6 +670,46 @@ and producing analytics and operational diagnostics. It is implemented as:
 The architecture separates *merchant-visible UX* from *internal diagnostics*
 and enforces anti-circumvention at every point in the promotion lifecycle.
 
+--------------------------------------------------------------------
+
+1.12 Interpretive Guardrails (Non-Negotiable)
+
+The following clarifications summarize core platform rules that are enforced
+throughout the system and must not be reinterpreted or relaxed.
+
+A) Ownership is not identity
+Ownership is a time-limited operational state derived from payment.
+There are no user accounts, no login identities, and no persistent owner records.
+
+B) Public analytics are structurally safe
+When an LPM is unowned, analytics may be public.
+Public analytics include counts and trends only.
+They never expose ratios, diagnostics, QA signals, or performance efficiency.
+
+C) Owner analytics are exclusive
+When an LPM is owned, analytics become exclusive to the Owner.
+No partial or metric-level visibility tiers exist.
+
+D) Access mechanisms do not define authority
+Signed links and cookies provide access continuity only.
+Authority is defined exclusively by backend ownership state.
+
+E) Agents initiate; owners operate
+Agents may initiate onboarding and receive attribution.
+Agents never acquire ownership or access to owner-only analytics.
+
+F) Payment effects are single-purpose
+Payment establishes operational authority or prepaid balance only.
+It does not imply legal verification, identity persistence, or entitlement beyond scope.
+
+G) Creation does not imply ownership
+LPM creation (by owner, agent, or NaviGen) does not grant ownership.
+Ownership always begins at payment confirmation.
+
+These guardrails exist to prevent feature drift and preserve platform integrity.
+
+--------------------------------------------------------------------
+
 1.2 Major Subsystems
 
 The system consists of the following cooperating layers:
@@ -734,6 +774,81 @@ The system consists of the following cooperating layers:
 7) **Translation System (Section 7)**  
    Responsible for loading t(key) dictionaries, fallback behavior, and
    language-specific rendering of complex analytics text.
+
+--------------------------------------------------------------------
+1.2.1 Owner Platform (Core Authority Layer)
+
+### Purpose
+
+The Owner Platform defines how economic actors gain operational control over
+locations (LPMs), campaigns, and gated analytics within NaviGen.
+
+It is not a traditional merchant account system.
+It is a payment-led authority layer operating without persistent user accounts.
+
+### Scope
+
+The Owner Platform governs:
+
+• who may run or suspend campaigns  
+• who may edit limited LPM profile fields  
+• who may unlock gated analytics or exclusive visibility  
+• how prepaid campaign budgets are created and consumed  
+
+It does not govern:
+• QR logic
+• redeem validity
+• analytics computation
+• billing calculation
+
+Those remain exclusively backend-controlled.
+
+### Actor Model
+
+An **Owner** is any economic actor who funds a campaign:
+• merchant
+• venue
+• individual
+• organizer
+• university
+• brand
+• temporary operator
+
+An **Agent** is a third party who assists an Owner in onboarding and campaign
+activation and may receive compensation from campaign fees.
+
+Ownership is economic, not identity-based.
+
+### Authority Model
+
+• Successful prepaid payment establishes operational authority
+• No persistent user accounts are required
+• No identity verification (KYC) is performed beyond payment
+• The system never trusts the client or browser
+• The API Worker is the sole authority for state changes
+
+### Separation Rule
+
+Owner Platform authority MUST NOT influence:
+
+• redeem token creation or validation
+• promo integrity logic
+• QA diagnostics
+• billing correctness
+
+Owner actions are subject to backend enforcement at all times.
+
+NaviGen does not introduce persistent Owner accounts.
+
+Operational authority is derived from:
+• successful payment events
+• active unlock or exclusivity windows
+• backend-recognized control scope
+
+Authority is time-bound and capability-based.
+It is not tied to long-lived user identity, login credentials, or personal accounts.
+
+--------------------------------------------------------------------
 
 1.3 Identity & Location Resolution
 
@@ -1243,7 +1358,7 @@ Analytics and QA derive compliance patterns from these 5 signals.
 
 Each redeem event includes:
 
-  • locationUID  
+  • locationID (slug), resolved server-side to canonical ULID  
   • campaignKey  
   • token ULID  
   • timestamp  
@@ -1656,37 +1771,186 @@ G) Ratings & Social Indicators*
 
 --------------------------------------------------------------------------
 
-4.20.4 Gating & Unlock Model
+--------------------------------------------------------------------------
 
-The Business Report is partially gated:
+4.20.4 Ownership & Visibility Model
 
-• Free Tier  
-    - Top CTAs  
-    - Static QR scans  
-    - Promo QR shown  
-    - Redemptions and invalids  
-    - Profile completeness score  
-    - Basic promotional diagnostics  
+NaviGen applies a binary ownership model to Location Profile Modals (LPMs)
+and their associated analytics.
 
-• Premium (Unlocked via Stripe Payment)  
-    - Peak hours  
-    - Competition & Cannibalization  
-    - Audience displacement  
-    - Broken link monitoring  
-    - Trend analysis (week/week, month/month)  
-    - Promotion efficiency evolution  
-    - Premium profile recommendations  
+An LPM is always in one of two states:
 
-• Internal Only (NaviGen Ops)  
-    - QA ratios (scan discipline, invalid ratios, cashier/customer coverage)  
-    - Raw QR log events  
-    - Advanced behavioural queries  
+• Unowned  
+• Owned  
 
-Unlock interactions must:
+There is no metric-level or field-level gating in the merchant-facing model.
 
-• mask gated values (blur, star, or “LOCKED” overlay)  
-• show “Unlock report” button, linking to Stripe Checkout  
-• reveal metrics immediately upon webhook confirmation
+--------------------------------------------------------------------------
+
+Ownership States
+
+A) Unowned LPM (Public State)
+
+An unowned LPM is fully public.
+
+Characteristics:
+• The LPM is publicly visible.
+• Dashboard analytics are publicly browsable.
+• All analytics remain merchant-safe (counts-only, no ratios, no QA).
+• No party has exclusive control or visibility.
+• No profile edits beyond public data ingestion are permitted.
+
+Unowned LPMs commonly originate from:
+• public data ingestion
+• scraping and normalization pipelines
+• commissioned or system-generated profiles
+
+Public analytics serve as:
+• transparency for visitors
+• value demonstration for potential owners
+• marketing surface for NaviGen itself
+
+Public vs. Owner-Only Visibility (Explicit)
+
+When an LPM is unowned and analytics are publicly visible, the following apply:
+
+Publicly visible analytics may include:
+• counts (e.g., scans, redemptions)
+• trends over time
+• volume indicators
+• generic interest signals
+
+Public analytics must never reveal:
+• compliance ratios
+• conversion efficiency metrics
+• campaign performance ratios
+• internal QA diagnostics or flags
+• exclusivity or ownership-related insights
+
+All sensitive interpretations, ratios, diagnostics, and performance evaluations
+are restricted to Owner-only or internal analytics surfaces.
+
+--------------------------------------------------------------------------
+
+B) Owned LPM (Exclusive State)
+
+An LPM becomes owned when an economic action establishes authority.
+
+Ownership is established by:
+• running a paid campaign, or
+• activating an Exclusive Operation Period
+
+Characteristics:
+• Analytics access becomes exclusive to the Owner.
+• Dashboard views are no longer publicly accessible.
+• Profile edit permissions are granted to the Owner.
+• Ownership is time-bound and revocable.
+• No other party may claim or operate the LPM during ownership.
+
+Ownership is:
+• payment-based
+• capability-based
+• time-limited
+• not identity- or account-based
+
+--------------------------------------------------------------------------
+
+Ownership Duration & Expiry
+
+Ownership persists for the duration of:
+• an active campaign, or
+• an active Exclusive Operation Period
+
+When ownership expires:
+• the LPM returns to the unowned (public) state
+• analytics become publicly visible again
+• no historical data is deleted or altered
+
+This transition is automatic and backend-enforced.
+
+Renewal Behavior
+
+Exclusive Operation Periods renew through explicit payment only.
+
+• Each €5 payment adds one new 30-day period
+• Renewals extend the current expiry forward
+• Periods stack linearly; they do not overlap
+• There is no proration or partial duration
+• There is no automatic renewal
+• Unused time is not refunded
+
+Renewal uses the same authority model as campaigns:
+payment creates a new, time-bounded authority window.
+
+Proportional scaling (e.g., paying more to buy longer single periods) is not supported by design.
+
+Expiry Awareness & Renewal Reminders
+
+NaviGen minimizes reminder noise by design.
+
+Ownership expiry is communicated through:
+
+• in-context UI indicators on owner-only surfaces
+• a single, optional reminder email
+
+UI surfaces always display:
+• current ownership state
+• exact expiry date
+• a direct “Extend” action when applicable
+
+Email reminders:
+• are sent at most once per ownership period
+• are triggered 5 days before expiry
+• include a single Stripe payment CTA
+• do not require login or account access
+• are never repeated or escalated
+
+NaviGen does not send countdown or daily reminder emails.
+
+
+--------------------------------------------------------------------------
+
+Non-Goals (Explicit)
+
+NaviGen does NOT implement:
+• metric-level visibility tiers
+• partial unlocks of individual indicators
+• teaser or masked analytics
+• progressive upsell through withheld data
+• subscription billing
+• automatic renewals
+• recurring reminder campaigns
+• account-based renewal flows
+
+Analytics monetization is achieved through:
+• exclusive access
+• operational control
+• campaign execution
+
+Not through information fragmentation.
+
+--------------------------------------------------------------------------
+
+Internal Systems
+
+Internally, NaviGen may maintain finer-grained controls for:
+• QA systems
+• operational diagnostics
+• internal tooling (90.x)
+
+These controls are never exposed to merchants and do not influence
+the product-facing ownership model.
+
+--------------------------------------------------------------------------
+
+Implications
+
+This model ensures:
+• conceptual simplicity
+• predictable authorization rules
+• strong alignment with payment-as-authority
+• elimination of account-based ownership assumptions
+• reduced implementation and maintenance complexity
 
 --------------------------------------------------------------------------
 
@@ -1700,8 +1964,8 @@ Phase 1 (Immediate)
     5. Add “Peak days” (from existing daily totals)  
     6. Prepare gating UX (masking + unlock button)
 
-Phase 2 (Merchant Platform Foundations)
-    1. Build Merchant Platform (Section 92) with login + Stripe unlock flow  
+Phase 2 (Owner Platform Foundations)
+    1. Build Owner Platform (Section 92) with signed link access + Stripe checkout  
     2. Gated indicators appear with unlock button  
     3. Campaign balance & basic financials  
     4. Profile edit tools
@@ -1727,8 +1991,6 @@ Phase 4 (Advanced / Future)
 This module does not define:
 • Worker logic (Section 9)  
 • Billing calculation (Section 5)  
-• Merchant Platform UX (Section 92)  
-• Admin Portal roadmap (Appendix C)
 
 Business Report covers analytical surface, interpretation logic, and gating design.
 
@@ -2410,6 +2672,8 @@ These belong to:
 
 Section 7 provides the translation architecture — not the dictionary.
 
+--------------------------------------------------------------------
+
 8. DATA MODEL
 
 8.1 Purpose
@@ -2426,6 +2690,8 @@ objects consumed by:
 All files described here are generated from controlled datasets (GSheets or
 internal pipelines) and consumed client-side or server-side as read-only resources.
 
+--------------------------------------------------------------------
+
 8.2 File Overview
 
 The platform loads a small number of structured JSON files:
@@ -2438,12 +2704,13 @@ The platform loads a small number of structured JSON files:
 
 These files are immutable at runtime; updates are applied by redeploying the dataset.
 
+--------------------------------------------------------------------
+
 8.3 profiles.json (Location Profiles)
 
 Each profile corresponds to a single location and includes:
 
   • locationID (slug)                          – human identifier
-  • uid (optional, deprecated in file)         – ULID derived at runtime (KV alias)
   • locationName (multilingual)
   • groupKey / subgroupKey                     – high-level grouping
   • context                                    – primary navigation path (e.g. souvenirs/hungary/budapest)
@@ -2458,6 +2725,53 @@ Each profile corresponds to a single location and includes:
 Profiles do **not** store campaign, QA, or stats information.  
 They are pure metadata.
 
+--------------------------------------------------------------------
+
+8.3.1 Canonical Profile Schema & Source Attribution
+
+profiles.json is the canonical, UI-facing representation of a location profile.
+It defines the normalized field names and shapes consumed by:
+
+• App Shell (LPM)
+• Dashboard (Dash)
+• Pages Worker routing (qrUrl, context)
+• API Worker list/profile endpoints
+
+External datasets (e.g., OpenStreetMap/OSM, commercial directories, manual research)
+are treated as ingestion sources, not parallel schemas.
+
+NaviGen does not expose OSM tag structures to the UI layer.
+OSM tags and geometries are mapped into the normalized profiles.json fields.
+
+--------------------------------------------------------------------
+Minimal sources structure (non-redundant)
+
+Each profile may include an optional `sources` object containing provenance only.
+This block must not duplicate normalized profile fields.
+
+Example (conceptual):
+
+sources: {
+  osm?: {
+    id: string,                // e.g., "way/11643310" or "node/..."
+    type?: string,             // optional: "node" | "way" | "relation"
+    fetchedAt: ISO-8601,       // when ingested
+    license: string,           // e.g., "ODbL"
+    rawTagsRef?: string        // optional pointer/ref to raw tag archive, not in profiles.json
+  },
+  other?: [
+    { name: string, ref?: string, fetchedAt?: ISO-8601 }
+  ]
+}
+
+Rules:
+• sources are metadata only (provenance + audit).
+• Normalized profile fields remain single-source-of-truth for the UI.
+• Raw OSM tags are not embedded in profiles.json; they may be stored separately if needed.
+• Attribution and licensing requirements must be satisfied via sources metadata.
+
+--------------------------------------------------------------------
+
 8.4 campaigns.json (Campaign Definitions)
 
 Structure (per row):
@@ -2469,10 +2783,31 @@ Structure (per row):
   • context (optional)                          – override for promo injection
   • sectorKey                                   – lookup into finance.json
   • startDate / endDate                         – active window
-  • status                                      – active / inactive / scheduled
+  • status                                      – Active | Paused | Finished | Suspended
   • discountKind, discountValue                 – percent, fixed, BOGO, etc.
   • eligibilityType / notes                     – optional restrictions
   • metadata (utmSource, utmCampaign, notes)    – analytics enrichment only
+
+Campaign status semantics are enforced server-side and interpreted consistently
+across promo issuance, redeem validation, billing, and dashboard rendering.
+
+• Active  
+  Campaign is eligible for promo QR issuance and redeem within its time window.
+
+• Paused  
+  Owner-initiated temporary stop. Campaign remains defined but is not eligible
+  for promo QR issuance or redeem until resumed by the Owner.
+
+• Finished  
+  Terminal end state reached after campaign completion. Finished campaigns
+  are never eligible for promo QR issuance or redeem.
+
+• Suspended  
+  Owner-initiated freeze, typically triggered by dispute or waiver. Suspended
+  campaigns are hard-blocked until explicitly reactivated by the Owner.
+
+NaviGen does not automatically suspend campaigns due to payment disputes.
+Campaign status is authoritative only when enforced by the API Worker.
 
 Campaigns.json defines **what** can be promoted; the actual promo/redeem events are logged elsewhere.
 
@@ -2671,6 +3006,46 @@ Workers form NaviGen’s execution substrate. They run on Cloudflare and provide
 
 Workers are stateless per request and rely on KV storage for all counters,
 QR logs, aliases, and token states.
+
+--------------------------------------------------------------------
+
+Worker Boundary Clarification (Pages vs API)
+
+NaviGen uses two distinct Cloudflare Worker projects with different roles
+and binding scopes.
+
+A) Pages Worker (navigen.io)
+
+• Deployed as part of the Pages project
+• Source file: _worker.js
+• Serves the app shell and static assets
+• Handles QR redirect endpoints (/out/qr-*)
+• May log lightweight routing or hit signals
+• May forward signals to the API Worker
+• NEVER decides redeem validity, ownership, billing, or QA state
+
+Pages Worker is non-authoritative by design.
+
+B) API Worker (navigen-api)
+
+• Deployed via wrangler (wrangler.toml)
+• Source file: index.ts
+• Holds authoritative KV bindings
+• Issues and consumes redeem tokens
+• Writes stats, qrlog, QA flags
+• Enforces ownership and access
+• Performs billing and attribution logic
+
+API Worker is the sole authority for all business decisions.
+
+C) KV Binding Scope
+
+Both Workers may have KV bindings, but with different intent:
+
+• Pages Worker KV is observational and non-critical
+• API Worker KV is canonical and authoritative
+
+No business decision may depend on Pages Worker state alone.
 
 --------------------------------------------------------------------
 9.1 Pages Worker (Routing, Static Hosting, QR Redirects)
@@ -3160,7 +3535,7 @@ Test Mode activates automatically when any of the following is true:
   • Query parameters contain flags:
         ?test=1 or ?mode=test
   • Environment variables or build flags enable test routing (internal use).
-  • The caller resolves to a known internal/test UID alias.
+  • The caller resolves to a known internal or test alias that maps to a canonical ULID.
 
 Test Mode must **not** be exposed to external users accidentally.
 
@@ -3783,98 +4158,609 @@ A business is production-ready once:
 
 91.1 Purpose
 
-This section defines how merchants become authorized operators of their
-locations on NaviGen, how campaigns are funded, and how billing is conducted.
-The model prioritizes automation, zero-friction onboarding, and minimal legal
-exposure, while maintaining high operational integrity.
+This section defines how commercial actors establish operational authority over
+locations on NaviGen, how campaigns are funded, and how billing is applied.
 
-Onboarding requires no manual document review. Payment acts as verification.
+The model prioritizes:
+• immediate activation
+• minimal friction
+• clear responsibility
+• strong operational integrity
+
+NaviGen does not require manual document review or account creation.
+Operational authority is established through successful payment.
 
 --------------------------------------------------------------------
 
 91.2 Merchant Entity Definition
 
-A "merchant entity" in NaviGen is any legal or natural person who:
+A merchant entity in NaviGen is any legal or natural person who funds a campaign
+through Stripe Checkout.
 
-  • Runs or funds a promotion campaign, AND
-  • Completes payment through Stripe Checkout.
+The payor is recognized as the authorized operator of that campaign and its
+associated location for the duration of the ownership window.
 
-The payor becomes the authorized operator of that campaign. This rule avoids
-traditional KYC friction and supports global, scalable onboarding.
+This model avoids traditional KYC friction while preserving clear economic
+responsibility.
 
 --------------------------------------------------------------------
 
 91.3 Onboarding Entry Points
 
-91.3.1 Existing LPM (Prebuilt by NaviGen)
-  Merchants discover their location profile (LPM) via:
-    • NaviGen navigation (context domains)
-    • Direct link / QR sent by NaviGen (outreach)
-    • Organic search discovery
+Onboarding defines how a Location Profile Modal (LPM) is created and how
+operational authority is established.
 
-  Flow:
-    1) Merchant opens LPM
-    2) Selects “Run Campaign”
-    3) Completes Stripe Checkout top-up
-    4) NaviGen auto-creates or updates entityID
-    5) Entity becomes Verified
-    6) Campaign activates with prepaid budget
+An LPM may be created through three entry paths.
+All paths share the same invariant:
 
-91.3.2 No Existing LPM (Merchant Platform Self-Setup)
-  Merchants may create their own presence through the Merchant Platform:
-    • Business name
-    • Address
-    • Website or source link
-    • One optional image (free tier)
-  
-  After payment:
-    • LPM is auto-generated
-    • Entity becomes Verified
-    • First campaign is funded and activated
-
-91.3.3 Commissioned LPM Creation (Free Tier)
-  Merchants may request NaviGen to build an LPM if insufficient data exists.
-    • One image allowed (free)
-    • Basic details completed from merchant input
-    • Merchant may later refine limited attributes
+• No LPM is created without a paid campaign.
+• Payment establishes ownership.
+• Creation method does not affect authority.
 
 --------------------------------------------------------------------
 
-91.4 Entity Verification Model
+A) Owner Platform Creation (Automated)
 
-Verification requires no manual review.
-Verification occurs automatically when:
+Description:
+A Location Profile Modal (LPM) is created through NaviGen’s automated
+Owner Platform using structured input provided for the business.
 
-  • A Stripe Checkout payment succeeds
-  • Billing profile data is available from Stripe
-  • entityID is created or updated
-  • entity_outlet_map places the payor as Owner/Operator
+This flow may be initiated by:
+• the business owner
+• an agent acting on behalf of the owner
+• NaviGen personnel acting in a facilitation or outreach role
 
-Verification Rules:
-  • Payment = verification event
-  • Email, billing name, address (from Stripe) provide KYC-lite identity
-  • VAT ID collected only if merchant provides it or Stripe supports it
-  
+All initiators use the same platform tools and data requirements.
+
+Required inputs (standardized):
+• business name
+• address
+• contact details (phone, email)
+• website or reference links
+• social links (optional)
+• images (optional, within limits)
+
+Flow:
+1) Initiator completes the Owner Platform creation form.
+2) Owner completes Stripe Checkout for a campaign.
+3) LPM is created automatically.
+4) Ownership is established immediately.
+5) Campaign activates.
+
+Notes:
+• There is exactly one LPM creation mechanism.
+• Creation method does not affect ownership rules.
+• Authority is established only through payment.
+
+--------------------------------------------------------------------
+
+C) Agent-Initiated Creation (Referral / Deal Flow)
+
+Description:
+An Agent introduces a store to NaviGen and initiates the onboarding process.
+
+Flow:
+1) Agent initiates LPM creation for a store.
+2) Agent attribution is recorded.
+3) Store completes Stripe Checkout for a campaign.
+4) LPM is created.
+5) Ownership is established for the store.
+6) Campaign activates.
+7) Agent becomes eligible for referral compensation.
+
+Notes:
+• Agents never gain ownership.
+• Agent attribution must be captured before or at payment time.
+• Leads without payment are not recognized.
+
+--------------------------------------------------------------------
+Convergence Rules (Non-Negotiable)
+
+• Campaign payment is required for all LPM creation.
+• Ownership always belongs to the store operator.
+• Creation path (self, assisted, agent) does not alter authority.
+• There is no free, reserved, or pending LPM state.
+• All onboarding paths converge at payment-based ownership.
+
+--------------------------------------------------------------------
+
+91.3.4 Agent Attribution & Deal Qualification
+
+### Agent Role
+
+An Agent is a third party who identifies and assists an Owner in creating or
+activating an LPM and campaign on NaviGen.
+
+Agents do not gain ownership rights.
+
+### Deal Qualification Rule
+
+A deal is recognized ONLY when a campaign is successfully paid.
+
+• Leads without payment are not honored
+• Attribution occurs at campaign payment time
+• Agent initiation must be explicitly recorded
+
+### Attribution Invariant
+
+Agent attribution is bound to:
+• a paid campaign
+• a specific location
+• a specific campaignKey
+
+Agent compensation derives from campaign fees and is calculated internally.
+
+--------------------------------------------------------------------
+
+Invariant:
+
+NaviGen provides a single, automated LPM creation mechanism.
+Differences between Owner, Agent, or NaviGen-initiated onboarding affect
+attribution and compensation only, not platform behavior or authority.
+
+--------------------------------------------------------------------
+
+Clarification on Section Scope
+
+Section 91.3 defines how Location Profile Modals (LPMs) come into existence and
+how onboarding is initiated.
+
+Section 92.2 defines how ownership is established over an LPM once it exists.
+
+The overlap between these sections is intentional.
+Onboarding and ownership are related but distinct concerns and are specified
+separately to preserve clarity and enforceability.
+
+--------------------------------------------------------------------
+
+91.4 Operational Authority Model
+
+NaviGen does not perform identity verification in the traditional sense.
+Authority in NaviGen is operational, not legal.
+
+--------------------------------------------------------------------
+
+A) Authority Triggers (Authoritative Events)
+
+Operational authority over an LPM is established automatically when all of the
+following conditions are met:
+
+• A Stripe Checkout payment succeeds
+• Billing profile data is available from Stripe
+• ownership record (ownership:<ULID>) is created or updated
+• internal ownership mapping assigns the payor as Owner/Operator
+
+Authority is established only by verified backend payment events.
+
+--------------------------------------------------------------------
+
+B) Authority Rules (Invariants)
+
+• Payment establishes operational authority.
+• Authority is time-limited and revocable.
+• Authority is capability-based, not identity-based.
+• Authority is enforced exclusively by backend logic.
+
+Operational authority may be established through:
+• an active campaign, or
+• a paid Exclusive Operation Period
+
+Both mechanisms are time-limited and equivalent in authority.
+
+--------------------------------------------------------------------
+
+C) Stripe Customer Records (Explicit Non-Identity)
+
+Stripe Customer records are not treated as user accounts.
+
+They are used exclusively for:
+• payment processing
+• invoicing
+• tax handling
+• internal reconciliation
+
+They do not define:
+• login identity
+• session continuity
+• ownership persistence
+
+--------------------------------------------------------------------
+
+D) Commercial Attribution & VAT
+
+• Stripe billing details provide sufficient commercial attribution.
+• VAT data is collected only when required by jurisdiction
+  or explicitly provided by the payor.
+• NaviGen does not perform KYC beyond Stripe-provided billing signals.
+
+--------------------------------------------------------------------
+
+E) Verification Scope & Liability
+
+Verification in NaviGen is operational, not legal.
+
+By completing a prepaid campaign payment, the payor asserts authorization to:
+• operate the selected campaign opportunity
+• act on behalf of the associated business location
+
+NaviGen acts solely as a technology vendor providing campaign infrastructure.
+It does not participate in, arbitrate, or guarantee the underlying commercial
+transaction between business and customer.
+
+--------------------------------------------------------------------
+
+F) Suspension & Misuse Handling
+
+Campaign suspension is not driven by chargebacks or payment disputes.
+
+Suspension occurs only through:
+• explicit Owner action, or
+• staff-initiated reports from the business location
+
 Unintended campaigns:
-  • Cashier may flag: “Report unintended campaign”
-  • NaviGen immediately pauses campaign and contacts payor
+• Cashier may flag “Report unintended campaign”.
+• NaviGen immediately pauses the campaign.
+• NaviGen contacts the payor for resolution.
+
+Suspension revokes operational authority until resolved.
+
+--------------------------------------------------------------------
+
+91.4.1 Ownership Record (Authoritative KV State)
+
+Definitions:
+• Ownership record: the authoritative server-side state describing current ownership for one LPM.
+• KV key name: the exact key used to store and retrieve the ownership record for an LPM ULID.
+• Fields: the JSON properties stored under the ownership key.
+• Writer: the only component allowed to create/update the ownership record.
+• Readers: components allowed to read the record for enforcement and UX.
+
+KV key name:
+• ownership:<ULID>
+
+Fields (JSON):
+• uid: <ULID>                         // canonical location identity
+• state: "unowned" | "owned"          // derived from exclusiveUntil but stored for clarity
+• exclusiveUntil: ISO-8601 timestamp  // ownership is active iff now < exclusiveUntil
+• source: "campaign" | "exclusive"    // what established/extended ownership
+• lastEventId: string                 // idempotency anchor (e.g., Stripe payment_intent.id or checkout.session.id)
+• updatedAt: ISO-8601 timestamp       // last write time
+
+Writer (authoritative):
+• Stripe webhook processor (server-side) is the only writer of ownership:<ULID>.
+• Ownership is established or extended only upon verified payment events.
+
+Readers (enforcement):
+• API Worker: enforces owner-only capabilities (Dash access, campaign control, profile edits).
+• Pages Worker: may read to render “Owned/#x” UI hints, but must not grant access.
+• Dash: consumes API responses only; it does not read KV directly.
+
+Invariants:
+• Ownership never becomes active based on client input.
+• Cookies and signed links provide access continuity, not authority.
+• Any owner-only capability requires now < exclusiveUntil at request time.
+
+--------------------------------------------------------------------
+
+91.4.2 Stripe Metadata Contract (Ownership & Attribution)
+
+Definitions:
+• Stripe metadata contract: required metadata keys attached to Stripe objects to drive ownership and attribution.
+• Canonical Stripe object: the Stripe object treated as authoritative for successful payment.
+• Idempotency anchor: the unique identifier ensuring exactly-once processing.
+• Initiation type: identifies who initiated onboarding.
+• Agent attribution: optional linkage to an agent for compensation tracking.
+
+--------------------------------------------------------------------
+
+A) Canonical Stripe Object
+
+• The canonical object is PaymentIntent.
+• checkout.session.completed is used as the entry webhook, but ownership and billing
+  must be keyed to the underlying payment_intent.id.
+
+Rationale:
+• PaymentIntent represents finalized funds movement.
+• Webhook retries and ordering are idempotently resolved via payment_intent.id.
+
+--------------------------------------------------------------------
+
+B) Required Metadata (Mandatory)
+
+The following metadata keys MUST be present on the Checkout Session
+and MUST be copied onto the PaymentIntent.
+
+• locationID (slug)     // external identifier; resolved server-side to a canonical ULID
+• initiationType        // "owner" | "agent" | "platform"
+• ownershipSource       // "campaign" | "exclusive"
+• navigenVersion        // spec/app version for audit/debug
+
+Rules:
+• locationID (slug) is the only external identifier and MUST be resolved
+  server-side to a canonical ULID via the alias system.
+• Clients and Stripe metadata must never supply ULIDs directly.
+• initiationType controls attribution logic only; it does not affect authority.
+• ownershipSource determines which ownership window is extended.
+
+--------------------------------------------------------------------
+
+C) Optional Metadata (Conditional)
+
+• agentId               // required if initiationType="agent"
+• campaignKey           // required if ownershipSource="campaign"
+
+Rules:
+• agentId MUST be present at payment time to qualify for attribution.
+• Missing agentId means no agent attribution, even if an agent was involved earlier.
+
+--------------------------------------------------------------------
+
+D) Idempotency & Exactly-Once Processing
+
+• payment_intent.id is the idempotency anchor.
+• Each payment_intent.id may produce:
+    - at most one ownership extension, and
+    - at most one ledger TopUp entry.
+• Duplicate or out-of-order webhooks must be ignored safely.
+
+--------------------------------------------------------------------
+
+E) Writer Responsibilities (Webhook Processor)
+
+On successful payment confirmation, the webhook processor MUST:
+
+1) Validate presence and correctness of required metadata.
+2) Resolve ownership record:
+     • extend exclusiveUntil according to ownershipSource rules.
+3) Write/update ownership:<ULID> using payment_intent.id as lastEventId.
+4) Write billing ledger TopUp entry.
+5) If agentId present:
+     • write agent attribution record (see Mini-spec #4).
+
+No other component may establish ownership.
+
+--------------------------------------------------------------------
+
+F) Non-Goals (Explicit)
+
+The Stripe metadata contract does NOT:
+• define pricing or fee calculation
+• create user or owner accounts
+• store personal data beyond Stripe-provided billing info
+• imply legal ownership or identity verification
+
+It exists solely to provide deterministic, auditable backend state transitions.
+
+--------------------------------------------------------------------
+
+91.4.3 Agent Attribution Record & Cap Tracking
+
+Definitions:
+• Agent attribution record: authoritative linkage between an agent, an LPM, and a payment event.
+• Attributed LPM: a location whose qualifying revenue contributes toward an agent’s cap.
+• Revenue share: percentage of qualifying revenue allocated to the agent.
+• Cap: maximum commission amount per agent per LPM.
+• Cap tracking: accumulation of commission until the cap is reached.
+
+--------------------------------------------------------------------
+
+A) Attribution Creation (Authoritative Event)
+
+An agent attribution record is created only when:
+
+• initiationType = "agent" in Stripe metadata
+• agentId is present at payment time
+• a Stripe payment succeeds (PaymentIntent confirmed)
+
+Attribution MUST be established at payment time.
+Attribution cannot be added, modified, or retroactively applied later.
+
+--------------------------------------------------------------------
+
+B) Attribution Record (Data Model)
+
+For each attributed LPM, the system stores:
+
+agent_attribution:<agentId>:<ULID> = {
+  agentId: string,
+  ulid: <ULID>,
+  tier: "starter" | "active" | "strategic",
+  sharePercent: number,          // e.g. 30 | 40 | 50
+  capAmount: number,             // e.g. 500 | 1000 | 1500 (EUR)
+  accruedAmount: number,         // total commission accrued so far
+  createdAt: ISO-8601,
+  lastUpdatedAt: ISO-8601
+}
+
+This record is authoritative for cap enforcement.
+
+--------------------------------------------------------------------
+
+C) Qualifying Revenue Sources
+
+The following revenue sources contribute toward agent commission:
+
+• campaign setup fees
+• redeem-based fees
+• Exclusive Operation Period fees
+
+The following do NOT contribute:
+
+• refunds
+• internal adjustments
+• penalties
+• non-monetary credits
+
+--------------------------------------------------------------------
+
+D) Revenue Share Calculation
+
+For each qualifying revenue event:
+
+1) Compute agentShare = grossAmount × sharePercent.
+2) If accruedAmount + agentShare ≤ capAmount:
+     • allocate full agentShare.
+3) If accruedAmount + agentShare > capAmount:
+     • allocate only (capAmount − accruedAmount).
+4) Update accruedAmount accordingly.
+5) Once accruedAmount = capAmount:
+     • no further revenue is shared for this LPM.
+
+Revenue sharing is strictly capped and non-recurring beyond the cap.
+
+--------------------------------------------------------------------
+
+E) Tier Assignment & Promotion
+
+Agent tier determines sharePercent and capAmount.
+
+Tier assignment rules:
+• Starter: 30% share, €500 cap
+• Active: 40% share, €1,000 cap
+• Strategic: 50% share, €1,500 cap
+
+Promotion is automatic and irreversible.
+
+Promotion criteria (OR condition):
+• revenue-based threshold reached, or
+• minimum number of LPMs with ≥1 paid campaign reached
+
+Tier changes apply only to future attribution records.
+Existing records retain their original tier and cap.
+
+--------------------------------------------------------------------
+
+F) Enforcement & Audit
+
+• Agent attribution records are written once and never deleted.
+• Cap tracking is append-only and monotonic.
+• Commission allocation is computed server-side only.
+• Dash and merchant UI never expose agent attribution or commission data.
+
+--------------------------------------------------------------------
+
+G) Non-Goals (Explicit)
+
+Agent attribution does NOT:
+• grant ownership rights
+• affect campaign pricing for merchants
+• alter billing calculations
+• support retroactive attribution
+• allow uncapped or perpetual revenue sharing
+
+Agent compensation is bounded, auditable, and deterministic.
 
 --------------------------------------------------------------------
 
 91.5 Billing Model (Prepaid Wallet)
 
-Campaigns operate on prepaid balances:
-  • Merchant tops up budget via Stripe
-  • NaviGen assigns amount to CampaignBalance
-  • Each REDEEM event deducts a fee (Section 5)
-  • When balance reaches zero, campaign auto-pauses
+Billing in NaviGen converts verified backend events into financial charges.
+It is fully prepaid, backend-driven, and independent of client behavior.
 
-Billing events are stored in BillingLedger:
-  • TopUp
-  • RedeemCharge
-  • Adjust / Refund (internal only)
+--------------------------------------------------------------------
 
-NaviGen never stores card data; Stripe is the payment processor.
+A) Billing Preconditions
+
+• All billable activity requires a prepaid balance.
+• No credit, postpaid, or deferred billing is supported.
+• Campaigns and Exclusive Operation Periods operate only while prepaid funds exist.
+
+--------------------------------------------------------------------
+
+B) Billable Event Definition
+
+A billable event occurs only when:
+
+• A redeem token transitions from "fresh" → "ok"
+• The transition is executed by the API Worker
+• A REDEEM event is logged server-side
+
+No other event is billable.
+
+The following are never billable:
+• ARMED events
+• SCAN events
+• INVALID events
+• cashier/customer confirmation events
+• client-side signals of any kind
+
+--------------------------------------------------------------------
+
+C) Pricing Inputs (Authoritative)
+
+Billing calculations rely exclusively on:
+
+• redeem event metadata
+• campaignKey
+• sectorKey
+• countryCode
+• finance.json pricing definitions
+
+Billing does not trust:
+• client UI state
+• URLs or query parameters
+• timestamps supplied by devices
+
+--------------------------------------------------------------------
+
+D) Balance Handling
+
+• Each campaign has an associated prepaid balance.
+• Redeem charges deduct from the balance atomically.
+• When balance reaches zero:
+    - the campaign is automatically paused
+    - no further redeems are accepted
+• Balance may never become negative.
+
+--------------------------------------------------------------------
+
+E) Ledger & Audit Trail
+
+All billing activity is recorded in an internal ledger.
+
+Ledger entry types include:
+• TopUp
+• RedeemCharge
+• Adjust (internal only)
+• Refund (internal only)
+
+Ledger entries are:
+• append-only
+• immutable
+• timestamped
+• fully auditable
+
+--------------------------------------------------------------------
+
+F) Separation from UI & Analytics
+
+• Billing logic is never executed on the client.
+• Billing data is never exposed in Dash.
+• Analytics and QA signals do not affect billing amounts.
+
+Billing correctness depends solely on backend token consumption.
+
+--------------------------------------------------------------------
+
+G) Failure & Edge Handling
+
+• Duplicate webhook deliveries must be idempotent.
+• Partial failures must not corrupt balances or ledgers.
+• Expired or reused tokens never generate charges.
+• Out-of-window redeems are rejected before billing.
+
+--------------------------------------------------------------------
+
+H) Non-Goals (Explicit)
+
+Billing does not implement:
+• subscriptions
+• recurring charges
+• automatic renewals
+• client-side balance calculations
+• merchant-visible cost breakdowns
+
+Billing exists solely to convert verified redeem events into charges.
 
 --------------------------------------------------------------------
 
@@ -3882,7 +4768,7 @@ NaviGen never stores card data; Stripe is the payment processor.
 
 VAT data is collected only when:
   • Stripe provides billing_details.address.country
-  • Merchant optionally enters VAT ID on Merchant Platform
+  • Merchant optionally enters VAT ID on Owner Platform
 
 Invoices:
   • Stripe invoices include VAT based on Stripe Tax logic
@@ -3911,90 +4797,531 @@ NaviGen may:
   • Billing computation (Section 5)
   • Legal contract text (separate ToS)
   • Full Merchant Portal UI (future expansion)
-  • Merchant platform user flows (Section 92)
-
+  • Owner platform user flows (Section 92)
+  
 --------------------------------------------------------------------
 
-92. MERCHANT PLATFORM UX & FLOWS
+92. OWNER PLATFORM UX & FLOWS
 
+--------------------------------------------------------------------
 92.1 Purpose
-The Merchant Platform provides a low-friction, self-service interface for entities
-to create or claim their presence on NaviGen and to activate campaigns using
-the prepaid billing model defined in Section 91.
 
-The platform minimizes verification friction by treating successful Stripe
-payments as verification events.
+The Owner Platform provides a controlled interface through which economic
+actors establish and exercise ownership over a Location Profile Modal (LPM).
+
+It is not a merchant dashboard and not an account-based system.
+
+The Owner Platform exists to:
+• establish ownership through payment
+• grant exclusive access to analytics and profile control
+• enable safe, auditable profile editing
+• collect verified, high-quality business data for NaviGen
+
+Ownership is time-bound, payment-based, and capability-driven.
+
+--------------------------------------------------------------------
+92.2 Ownership Entry Points
+
+Ownership may be established through two primary flows:
+
+A) Existing LPM (Claim by Operation)
+
+• An LPM exists publicly (scraped, commissioned, or system-generated).
+• Any actor may view it in the unowned (public) state.
+• Selecting “Run Campaign” or “Protect This Location” initiates ownership.
+• Successful payment establishes ownership immediately.
+
+This model treats *operation* as proof of authority.
+
+B) New LPM Creation (Owner-Initiated)
+
+• An actor creates a new location via the Owner Platform.
+• Minimal required inputs:
+    - business name
+    - address
+    - reference link or website
+    - one image (free tier)
+• Ownership is not granted until payment completes.
+• After payment:
+    - LPM is created
+    - ownership is established
+    - analytics and editing become exclusive
+
+There is no concept of “reserved” or “pending” ownership without payment.
+
+--------------------------------------------------------------------
+Exclusive Operation Period (Non-Campaign)
+
+An Exclusive Operation Period is a paid, time-limited state that grants an
+actor exclusive operational authority over a Location Profile Modal (LPM)
+without requiring an active promotion campaign.
+
+It exists to:
+• prevent unauthorized edits or interference
+• establish accountable control without running ads
+• discourage malicious or speculative claims
+
+An Exclusive Operation Period:
+• does not imply legal ownership
+• does not create an account
+• does not grant permanence
+• is equivalent in authority to an active campaign
+
+Operational authority during this period is enforced identically to campaign-based ownership.
+
+Duration & Expiry
+
+Each Exclusive Operation Period has a fixed duration of **30 days**.
+
+• Duration is fixed and non-configurable
+• Periods are measured in full calendar days
+• Expiry is enforced server-side
+
+Exclusive Operation Periods are never permanent.
 
 --------------------------------------------------------------------
 
-92.2 Entry Modes
+92.3 Ownership Capabilities
 
-A) Existing LPM
-    The merchant discovers their prebuilt profile and selects “Run Campaign”.
-    The platform transitions directly into Stripe Checkout.
+Ownership grants a bounded set of exclusive capabilities for a specific LPM
+while ownership is active (exclusiveUntil > now).
 
-B) Self-Setup (No LPM Exists)
-    Merchants may create:
-      • business name
-      • website or reference link
-      • address
-      • one image (free tier)
-    After payment, NaviGen generates an LPM for the entity.
+Capabilities are payment-derived, time-limited, and enforced server-side.
+No capability exists outside an active ownership window.
 
-C) Commissioned Setup (Free Tier)
-    Merchant provides minimal input, and NaviGen constructs the LPM from that
-    data and public sources, requiring no fee unless additional services are added.
+--------------------------------------------------------------------
+A) Capability Categories
+
+Ownership capabilities fall into three categories:
+
+1) Visibility
+2) Campaign Operations
+3) Profile Editing
+
+Each category is defined independently and enforced explicitly.
+
+--------------------------------------------------------------------
+B) Visibility Capabilities
+
+While owned:
+
+• Dashboard analytics for the LPM are private.
+• Only the Owner may access Dash views for that location.
+• Analytics remain merchant-safe (counts-only; no QA internals).
+
+When ownership expires:
+
+• Dashboard analytics revert to the public state.
+• No historical data is deleted or altered.
+
+Visibility is binary; there are no partial or metric-level visibility tiers.
+
+--------------------------------------------------------------------
+C) Campaign Operations
+
+While owned, the Owner may:
+
+• Start a new campaign.
+• Pause an active campaign.
+• Resume a paused campaign.
+• Finish a campaign permanently.
+• Top up campaign budget.
+
+Rules:
+
+• Campaign operations are permitted only if ownership is active.
+• Campaign activity may extend or maintain ownership.
+• Campaign definitions remain constrained by campaigns.json and finance.json.
+• Owners cannot modify campaign identity, pricing rules, or sector mappings.
+
+--------------------------------------------------------------------
+D) Profile Editing Capabilities (Payment-Gated)
+
+While owned, the Owner may edit a limited, explicitly defined subset of LPM fields.
+
+Editable fields (whitelist):
+
+• business description
+• contact details (phone, email, website)
+• links and social profiles
+• images (within defined limits)
+• opening hours
+
+Editing rules:
+
+• Editing is permitted only while ownership is active.
+• All edits are validated server-side.
+• All edits are attributable to a paying actor.
+• All edits are logged for audit.
+• Edits may be reverted internally if misuse is detected.
+
+Non-editable fields (hard restrictions):
+
+• locationID / slug
+• ULID / alias mappings
+• coordinates
+• sectorKey
+• finance mappings
+• internal classification
+• QA flags or diagnostics
+
+Rationale:
+
+Payment establishes economic accountability.
+This prevents prank edits, vandalism, and malicious data poisoning.
+
+--------------------------------------------------------------------
+E) Capability Enforcement
+
+All ownership capabilities are enforced exclusively by backend logic.
+
+Rules:
+
+• Client UI may display capabilities but must never infer them.
+• API Worker checks ownership state (exclusiveUntil > now) for every operation.
+• Cookies or signed links provide access continuity, not authority.
+• Authority is never inferred from navigation context or UI state.
+
+--------------------------------------------------------------------
+F) Capability Revocation
+
+Capabilities are revoked immediately when:
+
+• ownership expires, or
+• ownership is suspended due to reported misuse.
+
+Revocation effects:
+
+• Campaign operations are blocked.
+• Profile editing is blocked.
+• Exclusive analytics access is removed.
+
+Revocation does not affect:
+
+• historical analytics data
+• public LPM visibility after reversion
 
 --------------------------------------------------------------------
 
-92.3 Primary User Flows
+92.3.1 Profile Edit API (Owner-Only)
 
-92.3.1 Run Campaign Flow
-    1. Merchant opens LPM or self-setup form
-    2. Selects campaign template or campaignKey
-    3. Sets budget amount
-    4. Completes Stripe Checkout
-    5. Entity becomes Verified
-    6. Campaign activates automatically
-
-92.3.2 Budget Top-Up
-    1. Merchant selects “Top Up Budget”
-    2. Enters amount
-    3. Checkout via Stripe
-    4. CampaignBalance updated
-    5. Campaign resumes if paused
-
-92.3.3 Edit Business Info
-    Merchants may update limited profile fields:
-      • links
-      • text
-      • images (up to limit)
-      • contact details
-
-    Sensitive identity fields (legal name, VAT, billing address) come only from:
-      • Stripe billing_details
-      • Merchant Platform explicit input
+Definitions:
+• Profile Edit API: backend endpoint handling owner-initiated profile updates.
+• Editable whitelist: the fixed set of fields owners may modify.
+• Override record: owner-provided values stored separately from base profiles.json.
+• Audit log: append-only record of all edit operations.
+• Ownership gate: enforcement of exclusiveUntil > now.
 
 --------------------------------------------------------------------
 
-92.4 Visual UX Principles
+A) Endpoint Definition
 
-  • Single CTA per flow (“Run Campaign”, “Top Up”, “Create Profile”)
-  • Stripe Checkout pages open instantly, pre-filled where available
-  • Clear messaging: “Payment activates your campaign instantly”
-  • All invoices are accessible via Stripe-hosted invoice links
+• Method: POST
+• Path: /api/profile/update
+• Auth requirement: active ownership (exclusiveUntil > now)
+• Input format: JSON
+• Side effects: writes override + audit records only
+
+Client UI must never attempt local profile mutation.
 
 --------------------------------------------------------------------
 
-92.5 Abuse & Safety UX
+B) Ownership Gate (Mandatory)
 
-  • Every LPM has a “Report unintended campaign” link (cashier-focused)
-  • Merchant Platform displays campaign status flags:
-        - Active
-        - Paused (Insufficient budget)
-        - Suspended (by report)
-  • Merchant sees freeze reason when suspended:
-        “This campaign was reported by staff. Contact support.”
+The API Worker MUST verify before processing any edit:
+
+• ownership:<ULID>.exclusiveUntil > now
+
+If the check fails:
+• Request is rejected (403 Forbidden).
+• No partial writes occur.
+
+Cookies, signed links, or UI state must never bypass this check.
+
+--------------------------------------------------------------------
+
+C) Editable Field Whitelist
+
+Owners MAY edit only the following fields:
+
+• description
+• contact.phone
+• contact.email
+• contact.website
+• contact.whatsapp
+• contact.telegram
+• contact.messenger
+• links.social (facebook, instagram, tiktok, youtube, spotify, etc.)
+• openingHours
+• media.coverImage
+• media.images[]
+
+All other fields are immutable.
+
+--------------------------------------------------------------------
+
+D) Hard Non-Editable Fields
+
+The following fields MUST NEVER be editable via this API:
+
+• locationID / slug
+• ULID / alias mappings
+• coordinates (lat, lng)
+• sectorKey / groupKey / subgroupKey
+• finance mappings
+• campaign definitions or metadata
+• QA flags or internal diagnostics
+• sources / provenance metadata
+
+Requests attempting to modify these fields must be rejected.
+
+--------------------------------------------------------------------
+
+E) Validation Rules
+
+• URLs must be https:// and syntactically valid.
+• Email must match basic RFC format.
+• Phone numbers must contain ≥7 digits after normalization.
+• Images:
+    - allowed types: jpg, png, webp
+    - max file size: 2 MB
+    - max count: implementation-defined (recommended ≤8)
+• Text fields must respect length limits and pass basic profanity filtering.
+
+Validation failures return a structured error response.
+
+--------------------------------------------------------------------
+
+F) Storage Model (Non-Destructive)
+
+Profile edits MUST NOT mutate profiles.json.
+
+Instead, the API Worker writes:
+
+• override:<ULID>           // current effective override snapshot
+• override_log:<ULID>:<ts>  // append-only audit entry
+
+Rules:
+• overrides shadow base profile fields at read time.
+• base profiles.json remains immutable.
+• override deletion or rollback is possible internally.
+
+--------------------------------------------------------------------
+
+G) Audit & Attribution
+
+Each audit entry MUST include:
+• ULID
+• edited fields
+• timestamp
+• payment_intent.id (from ownership record)
+• initiationType ("owner" | "agent" | "platform")
+
+Audit logs are internal-only and never exposed in UI.
+
+--------------------------------------------------------------------
+
+H) Non-Goals (Explicit)
+
+The Profile Edit API does NOT:
+• allow partial ownership or delegation
+• support draft or pending edits
+• permit bulk or cross-location edits
+• expose edit history to merchants
+• bypass ingestion or QA pipelines
+
+Profile editing is a controlled, owner-only capability.
+
+--------------------------------------------------------------------
+
+92.4 Ownership Duration, Expiry, and Reversion
+
+Ownership persists for the duration of:
+• an active campaign, or
+• an Exclusive Operation Period
+
+Ownership is always time-limited.
+
+When ownership expires:
+• exclusive analytics access is revoked
+• profile editing rights are revoked
+• the LPM returns to the unowned (public) state
+• all historical data remains intact
+
+No manual action is required.
+Transitions are enforced automatically by backend logic.
+
+--------------------------------------------------------------------
+92.4.1 Expiry Reminders & Renewal UX
+
+A) One-time email reminder (D-5)
+• A single reminder email is sent 5 days before exclusiveUntil.
+• The email contains one Stripe Checkout link that renews +30 days.
+• No recurring reminders are sent (no D-1, no sequences).
+
+B) Always-visible UI countdown (only while Owned)
+• Dash displays:
+    “Exclusive operation active until <date>” + “Extend in #x”.
+• LPM displays an emoji-style badge showing “#x” days remaining.
+  The badge may be publicly visible.
+• Countdown is always visible while the LPM is owned.
+
+C) Campaign control area
+• Displays the same expiry line and “Extend in #x” action.
+
+All renewal actions route directly to Stripe Checkout.
+No accounts or login flows are required.
+
+--------------------------------------------------------------------
+
+92.4.2 Dash Access Without Accounts (Signed Link → Cookie Session)
+
+Purpose:
+Enable owner-only Dash access without user accounts, using payment-derived authority.
+
+Core principle:
+• Ownership state (exclusiveUntil > now) is authoritative.
+• Signed links and cookies are access mechanisms only; they do not define ownership.
+
+--------------------------------------------------------------------
+A) Policy Overview
+
+• Access is initiated via a time-limited signed link.
+• Signed link is exchanged server-side for an HttpOnly cookie scoped to owner-only surfaces.
+• Dash URLs remain clean (no long-lived tokens in query strings).
+• Cookie may persist for the duration of the active ownership window and becomes invalid when ownership expires.
+• Owner-only access is never inferred from public navigation.
+
+--------------------------------------------------------------------
+B) Entry Points & Where Owners Find Access
+
+Owners receive “Owner access” via email:
+• Immediately after successful payment confirmation.
+• Once at D-5 before expiry (per reminder policy).
+
+Each message contains:
+• “Open Owner Dash” (signed link)
+• “Extend exclusive operation” (Stripe link, when applicable)
+
+Fallback reference:
+• Stripe receipt/invoice email for the same payment (audit trail + location reference).
+
+--------------------------------------------------------------------
+C) Normal Flow (Happy Path)
+
+1) Owner clicks “Open Owner Dash” from the email.
+2) Link opens a same-origin exchange endpoint.
+3) System validates signature + expiry, then sets HttpOnly cookie for owner-only routes.
+4) System redirects to /dash/<location> with a clean URL (no token visible).
+5) Owner uses Dash normally while ownership is active.
+
+--------------------------------------------------------------------
+D) Signed Link Rules (Capability)
+
+Signed links are access capabilities, not ownership records.
+
+• Short-lived (default validity: 15 minutes).
+• Single-use:
+    - once exchanged successfully, the link is invalidated server-side.
+• After exchange, the user is redirected to a clean URL (token removed).
+• A signed link may become unusable either by expiry (unused) or by consumption (used).
+
+--------------------------------------------------------------------
+E) Cookie Rules (Continuity)
+
+Cookie purpose:
+• Preserve owner access on the current device/browser without accounts.
+
+Cookie behavior:
+• HttpOnly, scoped to owner-only surfaces (e.g., /dash/*, /owner/*).
+• May persist until the active ownership window ends.
+• Must not grant access if exclusiveUntil ≤ now (ownership expired).
+• Can be cleared via “Sign out on this device”.
+
+--------------------------------------------------------------------
+F) Failure Modes & Required UX Responses
+
+1) Signed link expired (unused)
+• Exchange is denied.
+• User is prompted to obtain a fresh signed link (e.g., “Use your most recent Owner access email” or “Resend Owner access link”).
+
+2) Signed link already used (consumed)
+• Exchange is denied.
+• User is prompted to obtain a fresh signed link (same as above).
+
+3) Cookie missing/cleared/expired (ownership still active)
+• /dash/<location> must not render owner data.
+• Show an access-required interstitial.
+• Provide a path to obtain a fresh signed link (use email or “Resend Owner access link”).
+
+4) Owner attempts access from public LPM navigation
+• No public navigation path may escalate privileges.
+• Public LPM may display “Owned” state but must not grant owner access without the signed-link exchange.
+
+5) Ownership expired (exclusiveUntil ≤ now)
+• Owner-only access is denied regardless of cookie presence.
+• Dash returns to the public (unowned) state.
+• Public analytics are rendered according to the binary ownership model.
+
+--------------------------------------------------------------------
+G) Recovery: Resend Owner Access Link (Optional but Recommended)
+
+The access-required interstitial may offer:
+• “Resend Owner access link”
+
+Rules:
+• Sends a new signed link to the payor’s email address.
+• Rate-limited and safe against abuse.
+• Does not create an account or login identity.
+
+--------------------------------------------------------------------
+H) Exchange Security Requirements
+
+• Exchange endpoint must validate:
+    - signature correctness
+    - link expiry
+    - single-use status
+• Exchange must be idempotent and safe under retries.
+• No persistent account identity is created or implied.
+
+--------------------------------------------------------------------
+I) Session Revocation (Shared-Device Safety)
+
+Owner-only surfaces should provide:
+• “Sign out on this device”
+
+Behavior:
+• Clears the HttpOnly cookie on the current device/browser.
+• Does not affect ownership state or other devices.
+
+--------------------------------------------------------------------
+
+92.5 Abuse, Safety, and Auditability
+
+The Owner Platform is designed to be abuse-resistant by construction.
+
+Safety mechanisms include:
+
+• Payment-gated authority:
+    Editing and control require real economic cost.
+
+• Attribution:
+    All ownership actions and edits are linked to a verified payment trail.
+
+• Immediate suspension:
+    If a location reports an unintended campaign or misuse:
+      - ownership is suspended
+      - campaigns are paused
+      - editing rights are revoked
+
+• No anonymous control:
+    Unpaid actors cannot edit, override, or suppress content.
+
+• Internal audit:
+    All edits and ownership changes are logged internally.
+    QA and ops teams may review and revert changes if necessary.
+
+The platform assumes good intent but enforces accountability by design.
 
 --------------------------------------------------------------------
 
@@ -4003,14 +5330,6 @@ C) Commissioned Setup (Free Tier)
   • Billing computation details (Section 5)
   • Worker logic (Section 9)
   • QA diagnostics (Section 90.x)
-
---------------------------------------------------------------------
-
-93. MERCHANT PORTAL (RESERVED)
-
-This section is intentionally reserved for a future fully-featured Merchant
-Portal specification. Until that time, merchant portal concepts remain in
-Appendix C.
 
 --------------------------------------------------------------------
 
@@ -4499,80 +5818,112 @@ or exhibit harmful behavior.
 
 --------------------------------------------------------------------
 
-✅ MERCHANT PLATFORM PAGE (Business-Friendly Version)
+✅ OWNER PLATFORM — BUSINESS EDITION
 
-Perfect for onboarding or marketing.
-This is conversational but authoritative — ideal for the landing page.
+Simple ownership. Real-world control. No accounts.
 
-Merchant Platform — Your Promotions, Your Way
-Promote your business in minutes — no forms, no paperwork.
+NaviGen lets any business take control of its location on the platform in minutes.
+No sign-up forms. No waiting. No dashboards to configure.
 
-NaviGen lets any business run customer-facing QR promotions instantly.
-Just choose a campaign, fund it, and you’re live.
-
-Why it works so smoothly:
-You already exist on NaviGen.
-
-We’ve built a live profile (LPM) for thousands of businesses from public data.
-
-Just find your page → press Run Campaign → pay via Stripe → done.
-
-Your payment verifies you as the operator of that business.
-There is no manual verification step, no waiting, no overhead.
-
-Don’t see your business yet?
-
-You can create your profile in minutes:
-
-Add your business name
-
-Add your website or a link we can use
-
-Add one image (free tier)
-
-Activate your first promotion via Stripe
-
-We’ll generate your profile, QR codes, and analytics instantly.
-
-What you get:
-
-Customer-facing promotion QR codes
-
-Real-time campaign analytics
-
-A dedicated business page (LPM)
-
-Control over your information
-
-Prepaid, fully predictable costs
-
-Invoices from Stripe you can reclaim VAT on
-
-A “pause campaign” button any time
-
-Safe for merchants:
-
-If someone mistakenly starts a campaign for your business (very rare):
-
-Your cashier can tap “Report unintended campaign”
-
-The campaign freezes instantly
-
-We contact the payor directly
-
-No customer receives unauthorized discounts
-
-Because campaigns require real payments, abuse is extraordinarily unlikely.
-
-Pay as you go:
-
-You prepay your campaign budget.
-Each redeemed promotion deducts a small fee.
-When the budget runs out, your campaign pauses automatically.
-
-NaviGen = instant promotion engine for the real world.
+If your location exists on NaviGen, you can operate it.
 
 --------------------------------------------------------------------
+
+How it works
+
+Many business locations already exist on NaviGen.
+We build them from public data so customers can discover places instantly.
+
+When you want to run a promotion or take control of your information:
+
+• Find your location  
+• Choose “Run Campaign” or “Protect This Location”  
+• Complete payment via Stripe  
+
+That’s it.
+
+Your payment establishes you as the current operator of that location.
+
+--------------------------------------------------------------------
+
+What ownership means
+
+While you are the Owner of a location:
+
+• Your analytics are private  
+• You control promotions  
+• You can update your business information  
+• No one else can operate or interfere  
+
+Ownership is time-based and tied to real activity.
+There are no permanent accounts and no hidden commitments.
+
+When ownership ends, the location simply becomes public again.
+
+--------------------------------------------------------------------
+
+Safe by design
+
+NaviGen does not rely on usernames or passwords.
+
+Control is established by real payment and enforced by the system.
+This prevents impersonation, prank edits, and misuse.
+
+If someone mistakenly starts a campaign for your location:
+
+• Your staff can report it instantly  
+• The campaign is frozen immediately  
+• We contact the payor directly  
+
+Because control requires real payment, abuse is extremely rare.
+
+--------------------------------------------------------------------
+
+Predictable costs
+
+NaviGen uses a prepaid model.
+
+• You fund a campaign budget upfront  
+• Each redeemed promotion deducts a small, fixed fee  
+• When the budget runs out, the campaign pauses automatically  
+
+No subscriptions.
+No long-term contracts.
+No surprise invoices.
+
+Stripe handles all payments and invoices.
+
+--------------------------------------------------------------------
+
+Why this works
+
+Traditional ads spend money on clicks.
+NaviGen only charges when real customers redeem offers.
+
+You get:
+
+• Customer-facing QR promotions  
+• Verifiable redemptions  
+• Clear, merchant-safe analytics  
+• Control over your public presence  
+
+All without accounts, paperwork, or setup friction.
+
+--------------------------------------------------------------------
+
+NaviGen is built for the real world:
+places, people, and promotions that actually happen.
+
+--------------------------------------------------------------------
+
+Authority Notice
+
+This appendix documents Stripe integration mechanics only.
+
+The authoritative rules for ownership, attribution, idempotency, and access
+are defined in Sections 91.4.1–91.4.3.
+
+In case of discrepancy, Sections 91.4.x take precedence.
 
 APPENDIX B — STRIPE INTEGRATION SPEC
 
@@ -4594,11 +5945,14 @@ B2. Required Checkout Configuration
   tax_id_collection:
       enabled: true   // optional but recommended
   metadata:
-      locationID
+      locationID (slug)
       campaignKey
-      entityID (if known)
+      initiationType: "owner" | "agent" | "platform"
+      ownershipSource: "campaign" | "exclusive"
       navigenVersion
-      onboardingMethod: "existingLPM" | "selfSetup" | "commissioned"
+
+  locationID (slug) is resolved server-side to a canonical ULID via the alias system.
+  ULIDs must never be supplied by clients or Stripe metadata.
 
 B3. Webhook Processing (checkout.session.completed)
   Extract:
@@ -4611,13 +5965,13 @@ B3. Webhook Processing (checkout.session.completed)
     • payment_intent
 
   Steps:
-    1. Identify or create entityID
-    2. Mark entity as Verified
-    3. Update billing profile using Stripe billing-details
-    4. Attach stripeCustomerId to entity
-    5. Add BillingLedger entry (TopUp)
-    6. Increment CampaignBalance
-    7. Activate campaign if eligible
+    1. Validate required metadata (locationID, initiationType, ownershipSource)
+    2. Resolve canonical ULID from locationID via the alias system
+    3. Resolve ownership record for the canonical ULID
+    4. Extend ownership window based on ownershipSource
+    5. Write billing ledger TopUp entry
+    6. Activate campaign if applicable
+    7. Write agent attribution record if agentId present
 
 B4. VAT & Tax Handling
   • Country derived from billing_details.address.country
@@ -4645,66 +5999,148 @@ B7. Security Boundaries
 
 B8. Recommended Logging
   • sessionId
-  • entityID
-  • locationID
-  • campaignKey
-  • stripeCustomerId
   • paymentIntentId
+  • locationID (slug)
+  • resolvedULID (internal)
+  • campaignKey
+  • initiationType
+  • ownershipSource
+  • agentId (if present)
   • amount / currency
   • VAT/tax metadata (optional)
 
---------------------------------------------------------------------
-
-APPENDIX C — MERCHANT PORTAL ROADMAP
-
-C1. Purpose
-The Merchant Portal will eventually replace or augment the Merchant Platform
-with authenticated dashboards, multi-location management, and financial tools.
-It is intentionally deferred to reduce friction in early adoption.
+  locationID is logged as received; resolvedULID is logged for internal traceability only.
 
 --------------------------------------------------------------------
+Appendix D — LPM Creation, Ownership & Attribution
 
-C2. Phase 1 — Minimal Portal (Optional)
-  • Login via magic link
-  • View active campaigns
-  • View prepaid balances
-  • View billing history (from Stripe)
-  • Pause / resume campaigns
+1. Unified Creation Mechanism
+
+All Location Profile Modals (LPMs) are created using NaviGen’s automated
+platform tools.
+
+There is no manual, privileged, or offline creation process.
+
+LPMs may be initiated by:
+• the business owner
+• an authorized agent
+• NaviGen personnel acting in a facilitation role
+
+All initiators use the same platform interfaces and data requirements.
+
+--------------------------------------------------------------------
+2. Ownership Establishment
+
+Ownership of an LPM is established exclusively through payment.
+
+• Creation alone does not grant ownership.
+• Ownership begins only after successful campaign payment.
+• Ownership is time-limited and revocable.
+• Ownership always belongs to the business operator.
+
+--------------------------------------------------------------------
+3. Role of Agents
+
+Agents may:
+• introduce businesses to NaviGen
+• initiate LPM creation on behalf of businesses
+• assist businesses during onboarding
+• be compensated via referral or revenue-sharing agreements
+
+Agents never acquire ownership rights.
+
+Agent attribution is recognized only if recorded before or at payment time.
+
+--------------------------------------------------------------------
+4. Role of NaviGen
+
+NaviGen may:
+• provide platform tools for automated LPM creation
+• facilitate onboarding using the same tools available to others
+• ensure data quality, QA, and platform integrity
+
+NaviGen does not claim ownership of LPMs it facilitates.
+
+--------------------------------------------------------------------
+5. No Preferential Treatment
+
+All LPMs, regardless of who initiated creation:
+• follow the same ownership rules
+• require the same payment thresholds
+• are subject to the same pricing and visibility policies
+
+There is no preferential access, pricing, or reservation.
+
+--------------------------------------------------------------------
+6. Data Responsibility
+
+All information provided during LPM creation must be accurate.
+
+The business operator remains responsible for the correctness of submitted data,
+regardless of who assisted in entering it.
 
 --------------------------------------------------------------------
 
-C3. Phase 2 — Multi-Location Management
-  • Display all locations mapped to an entityID
-  • Role assignment (Owner, Operator, Franchise)
-  • Limited profile editing per location
+Appendix E — Owner Access UX Contracts
+
+Access-Required Interstitial (Owner Recovery)
+
+When ownership is active (exclusiveUntil > now) but the requester lacks:
+• a valid owner cookie, and
+• a valid signed-link exchange,
+
+the system MUST present a dedicated access-required interstitial.
+
+Primary message:
+• “Owner access required.”
+
+Secondary message:
+• “This location is currently under exclusive operation.”
+• “To open the Owner Dash, use your most recent Owner access email.”
+
+Primary action:
+• “Resend Owner access link”
+
+Rules:
+• The interstitial must not reveal owner-only data.
+• The interstitial must not infer or grant ownership.
+• The “Resend Owner access link” action sends a new signed link to the payor’s email.
+• No login, account creation, or identity prompt is permitted.
 
 --------------------------------------------------------------------
 
-C4. Phase 3 — Campaign Management Console
-  • Create new campaigns from templates
-  • Set budget, target periods, visibility
-  • Preview QR assets
-  • Historical performance (Dash summaries embedded)
+Appendix F — Implementation Map (Spec → Code)
 
---------------------------------------------------------------------
+This appendix maps specification sections to concrete implementation artifacts.
+It exists to clarify what is already implemented, what is partially implemented,
+and what is still planned.
 
-C5. Phase 4 — Financial & Compliance Layer
-  • Stripe Customer Portal integration
-  • VAT info entry / edit
-  • Download invoices
-  • Ledger export (TopUp, RedeemCharge, Refund)
+This appendix is non-normative:
+• It does not define behavior.
+• It documents conformance and readiness only.
 
---------------------------------------------------------------------
+The authoritative rules remain in Sections 1–13, 91.x, and 92.x.
 
-C6. Phase 5 — Automation & Intelligence
-  • Predictive burn-rate alerts
-  • Budget auto-top-up rules
-  • QA-driven operational alerts
-  • Recommended campaigns based on Dash insights
+(See Appendix F table for spec → app.js / dash.js / Pages Worker / API Worker mapping.)
 
---------------------------------------------------------------------
-
-C7. Non-Goals
-  • Full website builder
-  • POS integration (optional future)
-  • Inventory or e-commerce functionality
+| Spec area                                        | Runtime component         | Entry points in code                                                                                              | Storage / keys                                                 | Authority              | Status                                                                                  |
+| ------------------------------------------------ | ------------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------- |
+| LPM open from `?lp=`                             | App Shell                 | `app.js` reads `?lp=...`, opens LPM via `showLocationProfileModal()`                                              | none                                                           | App Shell              | ✅ implemented                                                                          |
+| LPM modal composition                            | App Shell                 | `modal-injector.js`: `createLocationProfileModal()`, `showLocationProfileModal()`, `wireLocationProfileModal()`   | localStorage (UI state only)                                   | App Shell              | ✅ implemented                                                                          |
+| Info QR tracking                                 | Pages Worker + API Worker | `_worker.js` → /out/qr-scan, `index.ts` → /hit/qr-scan                                                            | `KV_STATS`                                                     | API Worker             | ✅ layered implementation (Pages = routing/logging, API = authoritative state)          |
+| Promo QR issuance                                | API Worker                | `index.ts`: `GET /api/promo-qr?locationID=...`                                                                    | `redeem:<token>`, `qrlog:*`, `stats:*`                         | API Worker             | ✅ implemented (needs status enum alignment)                                            |
+| Promo redeem redirect                            | Pages Worker              | `_worker.js`: `/out/qr-redeem/:slug` forwards token headers to API Worker                                         | none                                                           | API Worker             | ✅ implemented                                                                          |
+| Token consumption + redeem/invalid               | API Worker                | `index.ts`: `POST /hit/qr-redeem/:id` consumes `redeem:<token>` and logs redeem/invalid                           | `redeem:<token>`, `qrlog:*`, `stats:*`                         | API Worker             | ✅ implemented (campaignKey reselected server-side; must be bound to token metadata)    |
+| Customer confirmation                            | App Shell                 | `modal-injector.js`: polls `/api/redeem-status`; sends `/hit/redeem-confirmation-customer/:id`                    | `stats:*`                                                      | API Worker             | ✅ implemented                                                                          |
+| Cashier confirmation                             | App Shell                 | `app.js` shows modal; `modal-injector.js` sends `/hit/redeem-confirmation-cashier/:id`                            | `stats:*`                                                      | API Worker             | ✅ implemented                                                                          |
+| Dash stats aggregation                           | API Worker                | `index.ts`: `GET /api/stats?locationID&from&to` aggregates stats + qrlog + campaigns                              | `stats:*`, `qrlog:*`, `status:*`                               | API Worker             | ✅ implemented (QA tagging included)                                                    |
+| Dash routing canonicalization                    | Pages Worker              | `_worker.js` canonicalizes `/dash?locationID=...` → `/dash/<ULID>`                                                | `KV_ALIASES`                                                   | Pages Worker           | ✅ implemented                                                                          |
+| Dataset list by context                          | App Shell → API           | `app.js` calls `API_BASE /api/data/list?context=...`                                                              | dataset JSON                                                   | API Worker             | ✅ implemented                                                                          |
+| Modal system                                     | App Shell                 | `modal-injector.js`: `injectModal/showModal/hideModal/setupTapOutClose`                                           | DOM                                                            | App Shell              | ✅ implemented                                                                          |
+| Translations                                     | Pages Worker + App Shell  | `_worker.js` sets `<html lang>`; `app.js` loads i18n bundles                                                      | `/data/i18n/*.json`, localStorage `lang`                       | Pages Worker / App     | ✅ implemented                                                                          |
+| Donation purchases (MSM “myPurchases”)           | App Shell                 | `app.js` handles Stripe return `?sid=...`; `modal-injector.js` renders history                                    | `localStorage.myPurchases`                                     | App Shell              | ✅ implemented (donations only; not billing)                                            |
+| Billing ledger (per redeem / prepaid)            | API Worker                | `index.ts` contains `writeBillingRecord()` stub                                                                   | `billing:*` (KV)                                               | API Worker             | ❌ not implemented end-to-end                                                           |
+| Owner Platform ownership KV (`ownership:<ULID>`) | —                         | not present in these code files                                                                                   | `ownership:<ULID>`                                             | API Worker             | ❌ not implemented yet (spec-only)                                                      |
+| Signed link → cookie exchange                    | —                         | not present in these code files                                                                                   | HttpOnly cookie                                                | API Worker             | ❌ not implemented yet (spec-only)                                                      |
+| Profile edit API `/api/profile/update`           | —                         | not present in these code files                                                                                   | `override:*`, `override_log:*`                                 | API Worker             | ❌ not implemented yet (spec-only)                                                      |
+| Agent attribution KV + cap tracking              | —                         | not present in these code files                                                                                   | `agent_attribution:*`                                          | API Worker             | ❌ not implemented yet (spec-only)                                                      |
