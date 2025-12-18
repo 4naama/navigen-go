@@ -299,7 +299,7 @@ function getISODate(input){
 
   const views = [
     ['click-info', 'dash.tab.click-info', 'Click Info'],
-    ['qr-info',    'dash.tab.qr-info',   'QR Info'],
+    ['qr-info',    'dash.tab.qr-info',   'Promo QR'],
     ['campaigns',  'dash.tab.campaigns', 'Campaigns']
   ];
 
@@ -834,7 +834,7 @@ function renderCurrentView(){
       ['dash.qrcamp.col.armed',             'Promo QR shown'],           // ARMED: times promo QR was displayed
       ['dash.qrcamp.col.scans',             'Scans'],
       ['dash.qrcamp.col.redemptions',       'Redemptions'],
-      ['dash.qrcamp.col.efficiency',        'Efficiency %'],
+      // ['dash.qrcamp.col.efficiency',     'Efficiency %'], // keep ratios out of Campaigns table; QA handles compliance
       ['dash.qrcamp.col.invalids',          'Invalid attempts'],
       ['dash.qrcamp.col.unique',            'Unique visitors'],
       ['dash.qrcamp.col.repeat',            'Repeat %'],
@@ -866,10 +866,7 @@ function renderCurrentView(){
         const repeatRedeemers = Number(row.repeatRedeemers ?? 0);
         const newRedeemers = Math.max(uniqueRedeemers - repeatRedeemers, 0);
 
-        let effPct = '';
-        if (scans > 0) {
-          effPct = ((redemptions / scans) * 100).toFixed(1) + '%';
-        }
+        // Efficiency % intentionally not rendered here (ratios belong to QA/monitoring tools)
 
         const cells = [
           row.campaign || '',          // Campaign ID
@@ -880,7 +877,7 @@ function renderCurrentView(){
           armed,
           scans,
           redemptions,
-          effPct,
+          // (no Efficiency % cell)
           invalids,
           uniq,
           repeatPct,

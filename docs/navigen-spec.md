@@ -42,10 +42,24 @@ This creates a cryptographically robust promotion flow without accounts.
 
 0.D Canonical Auditable Event Chain
 
-Every redeem operation flows through:
-  • ARMED → SCAN → REDEEM → CONFIRM_CASH → CONFIRM_CUST
+Promo QR flow follows the canonical chain:
+
+ARMED → SCAN → REDEEM → CONFIRM (cashier / customer)
+
+Where:
+
+- ARMED denotes that a promotion is activated for a visitor, but the promo QR
+  has not yet been revealed.
+- SCAN denotes the physical scanning of the promo QR by a cashier.
+  This is a promo-specific scan and is distinct from any business Info QR scan.
+- REDEEM denotes the logical processing result of the promotion following the
+  physical promo QR scan (successful redemption or invalid attempt).
+- CONFIRM denotes backward confirmation signals emitted by cashier and/or customer
+  after redemption.
 
 This chain is deterministic, logged, and auditable.
+Note: Although the signal name SCAN is shared, the canonical ARMED → SCAN → REDEEM
+chain refers specifically to the promo (cashier) flow, not to Info QR navigation scans.
 
 --------------------------------------------------------------------
 
@@ -71,6 +85,9 @@ Merchant-visible surfaces never expose:
   • sensitive patterns
 
 Dashboard Campaigns view is **counts-only**, ensuring safe interpretation.
+Merchant-facing dashboards must present factual counts only.
+Any ratios, percentages, or interpretive performance indicators are strictly non-merchant
+surfaces and are used solely for QA, compliance, and internal monitoring.
 
 --------------------------------------------------------------------
 
@@ -139,11 +156,18 @@ Dash transforms data into narrative insights using translation templates.
 
 0.L Privacy by Design
 
-NaviGen:
-  • does not store PII
+NaviGen is privacy-first by design.
+
+NaviGen storage (KV, datasets, logs):
+  • does not store PII (no names, emails, phone numbers, billing addresses)
   • does not track users
   • does not personalize analytics
   • uses anonymous visitor signals only for aggregate insight
+
+Owner Platform clarification:
+  • Stripe is the system of record for billing identity (email, billing details, tax/VAT data).
+  • NaviGen may transiently process Stripe-provided email solely to deliver Owner access emails.
+  • NaviGen MUST NOT persist Stripe email or billing identity fields into KV/logs/datasets.
 
 Privacy emerges from architectural minimalism, not patchwork compliance.
 
@@ -595,7 +619,7 @@ All manipulation attempts lead to either:
 
 NaviGen enforces strict privacy:
 
-  • No PII collected or inferred  
+  • No PII stored in NaviGen systems; billing identity is handled by Stripe only  
   • No cookies used for tracking  
   • No cross-site profiling  
   • VisitorID optional and anonymous  
@@ -610,9 +634,15 @@ This allows deployment in jurisdictions with strict privacy laws without modific
 
   • Workers deployed via Cloudflare with immutable builds  
   • Dataset updates are atomic and controlled  
-  • Service worker updates require versioning to prevent stale-cache issues  
+  • Service worker behavior is explicitly constrained (see Section 6.5)  
   • All production keys, tokens, and configs isolated from frontend  
   • No secret keys ever appear in client bundles  
+
+Service Worker invariants (security-critical):
+
+  • Owner-sensitive endpoints MUST NEVER be served from cache.
+  • Authority, ownership, and access decisions MUST always reflect live backend state.
+  • Stale service worker code MUST NOT grant access, privacy, or control.
 
 --------------------------------------------------------------------
 
@@ -1059,19 +1089,39 @@ QR system never assumes state solely from URL parameters.
 --------------------------------------------------------------------
 2.4 QR Event Semantics (Canonical Signals)
 
-Every QR interaction falls into one of four canonical signals:
+Every QR interaction emits one of the following canonical signals.
+Signal meaning depends on QR type and context.
 
-  • **ARMED**   – promo QR revealed to customer (token issued)
-  • **SCAN**    – QR scanned by device (Info or Promo)
-  • **REDEEM**  – valid token consumed (first-use)
-  • **INVALID** – token reuse, expired, or incorrect
+• **ARMED**  
+  Promo-only signal.
+  Emitted when a customer reveals a Promo QR and a redeem token is issued.
+  No physical scan has occurred yet.
+
+• **SCAN**  
+  A physical QR scan event.
+
+  Context-dependent meaning:
+  - For **Info QR**, SCAN represents a visitor physically scanning a static,
+    navigational QR code to enter the Location Profile Modal (LPM).
+  - For **Promo QR**, SCAN represents the physical scanning of the promo QR
+    by a cashier device as part of the redeem process.
+
+  SCAN does not imply redeem success.
+
+• **REDEEM**  
+  Promo-only signal.
+  Emitted when the backend consumes a redeem token successfully
+  (first valid use following a promo QR scan).
+
+• **INVALID**  
+  Promo-only signal.
+  Emitted when a redeem token is reused, expired, or otherwise invalid.
 
 These signals populate:
+• stats:<ULID>:<day>:<metric>
+• qrlog:<ULID>:<day>:<scanId>
 
-  • stats:<ULID>:<day>:<metric>
-  • qrlog:<ULID>:<day>:<scanId>
-
-These are the **foundation** of all analytics (Section 4) and QA (Section 90.x).
+Signal names are shared, but **their interpretation is context-bound**.
 
 --------------------------------------------------------------------
 2.5 Info QR Flow (Customer)
@@ -1548,31 +1598,30 @@ Narrative summary includes:
 
 Tables use simple “label – value” rows; bar-chart visualizer is available.
 
-4.8 Campaigns View (Merchant-Safe)
+4.8 Campaigns View (Merchant-facing)
 
-Campaigns view presents **only counts**, no ratios:
+The Campaigns view is a merchant-facing, operational summary of promotional activity.
 
-  • Promo QR shown (armed)
-  • Scans (promo-related)
-  • Redemptions
-  • Invalid attempts
+It MUST expose only absolute counts and non-interpretive facts, including:
+- Promo QR shown (count)
+- Redemptions (count)
+- Invalid attempts (count)
+- Unique visitors
+- Repeat redeemers
+- Locations
+- Campaign period and status
 
-Rules:
+The Campaigns view MUST NOT expose ratios, percentages, or derived performance metrics
+(e.g. “Efficiency %”, “Conversion rate”, “Scan discipline”).
 
-  • Campaign names appear quoted: e.g., “10% off your purchase”
-  • No scan-compliance % is ever shown in the Campaigns table
-  • No anomaly language in this view
-  • Data is aggregated per campaign key across the selected time window
+All ratios and interpretive metrics are reserved exclusively for:
+- internal monitoring,
+- quality assurance,
+- compliance analysis,
+- and management tooling.
 
-Merchant-Safe Operational Status:
-
-  • A single line: “Operational status: OK” or “Needs attention”
-  • Logic defensively reuses QA criteria without revealing ratios:
-        - low scan discipline
-        - elevated invalid attempts
-        - low cashier confirmation coverage
-
-This gives merchants a simple health indicator without exposing internal diagnostics.
+These metrics MAY be calculated and used by the system, but MUST NOT be rendered in
+merchant-facing Campaigns tables or dashboards.
 
 4.9 Analytics View (Written Report)
 
@@ -1771,188 +1820,141 @@ G) Ratings & Social Indicators*
 
 --------------------------------------------------------------------------
 
---------------------------------------------------------------------------
-
 4.20.4 Ownership & Visibility Model
 
-NaviGen applies a binary ownership model to Location Profile Modals (LPMs)
-and their associated analytics.
+Dashboard analytics are a paid operational feature.
 
-An LPM is always in one of two states:
+Real analytics for a Location Profile Modal (LPM) are visible
+only to the active Owner of that location.
 
-• Unowned  
-• Owned  
+An LPM is always in one of two visibility states with respect to Dash:
 
-There is no metric-level or field-level gating in the merchant-facing model.
-
---------------------------------------------------------------------------
-
-Ownership States
-
-A) Unowned LPM (Public State)
-
-An unowned LPM is fully public.
-
-Characteristics:
-• The LPM is publicly visible.
-• Dashboard analytics are publicly browsable.
-• All analytics remain merchant-safe (counts-only, no ratios, no QA).
-• No party has exclusive control or visibility.
-• No profile edits beyond public data ingestion are permitted.
-
-Unowned LPMs commonly originate from:
-• public data ingestion
-• scraping and normalization pipelines
-• commissioned or system-generated profiles
-
-Public analytics serve as:
-• transparency for visitors
-• value demonstration for potential owners
-• marketing surface for NaviGen itself
-
-Public vs. Owner-Only Visibility (Explicit)
-
-When an LPM is unowned and analytics are publicly visible, the following apply:
-
-Publicly visible analytics may include:
-• counts (e.g., scans, redemptions)
-• trends over time
-• volume indicators
-• generic interest signals
-
-Public analytics must never reveal:
-• compliance ratios
-• conversion efficiency metrics
-• campaign performance ratios
-• internal QA diagnostics or flags
-• exclusivity or ownership-related insights
-
-All sensitive interpretations, ratios, diagnostics, and performance evaluations
-are restricted to Owner-only or internal analytics surfaces.
+• Unowned (No Analytics Access)
+• Owned (Exclusive Analytics Access)
 
 --------------------------------------------------------------------------
 
-B) Owned LPM (Exclusive State)
+A) Unowned LPM (No Real Dash Access)
 
-An LPM becomes owned when an economic action establishes authority.
+When an LPM is unowned (exclusiveUntil ≤ now):
 
-Ownership is established by:
-• running a paid campaign, or
-• activating an Exclusive Operation Period
+• Dashboard analytics for that LPM are NOT accessible.
+• /dash/<location> requests MUST NOT return real data.
+• Analytics are neither partially revealed nor masked.
 
-Characteristics:
-• Analytics access becomes exclusive to the Owner.
-• Dashboard views are no longer publicly accessible.
-• Profile edit permissions are granted to the Owner.
-• Ownership is time-bound and revocable.
-• No other party may claim or operate the LPM during ownership.
+Rationale:
+• Real analytics incur infrastructure cost.
+• Analytics are an ownership capability, not a public right.
+• Public exposure of real analytics creates uncontrolled free-riding.
 
-Ownership is:
-• payment-based
-• capability-based
-• time-limited
-• not identity- or account-based
+Unowned LPMs remain fully public in the App (LPM):
+• profile information
+• contact channels
+• promotions (if any)
+• ratings and saves
 
---------------------------------------------------------------------------
-
-Ownership Duration & Expiry
-
-Ownership persists for the duration of:
-• an active campaign, or
-• an active Exclusive Operation Period
-
-When ownership expires:
-• the LPM returns to the unowned (public) state
-• analytics become publicly visible again
-• no historical data is deleted or altered
-
-This transition is automatic and backend-enforced.
-
-Renewal Behavior
-
-Exclusive Operation Periods renew through explicit payment only.
-
-• Each €5 payment adds one new 30-day period
-• Renewals extend the current expiry forward
-• Periods stack linearly; they do not overlap
-• There is no proration or partial duration
-• There is no automatic renewal
-• Unused time is not refunded
-
-Renewal uses the same authority model as campaigns:
-payment creates a new, time-bounded authority window.
-
-Proportional scaling (e.g., paying more to buy longer single periods) is not supported by design.
-
-Expiry Awareness & Renewal Reminders
-
-NaviGen minimizes reminder noise by design.
-
-Ownership expiry is communicated through:
-
-• in-context UI indicators on owner-only surfaces
-• a single, optional reminder email
-
-UI surfaces always display:
-• current ownership state
-• exact expiry date
-• a direct “Extend” action when applicable
-
-Email reminders:
-• are sent at most once per ownership period
-• are triggered 5 days before expiry
-• include a single Stripe payment CTA
-• do not require login or account access
-• are never repeated or escalated
-
-NaviGen does not send countdown or daily reminder emails.
-
+Only Dash analytics are restricted.
 
 --------------------------------------------------------------------------
 
-Non-Goals (Explicit)
+B) Owned LPM (Exclusive Analytics Access)
 
-NaviGen does NOT implement:
-• metric-level visibility tiers
-• partial unlocks of individual indicators
-• teaser or masked analytics
-• progressive upsell through withheld data
-• subscription billing
-• automatic renewals
-• recurring reminder campaigns
-• account-based renewal flows
+When an LPM is owned (exclusiveUntil > now):
 
-Analytics monetization is achieved through:
-• exclusive access
-• operational control
-• campaign execution
+• Dashboard analytics become exclusively accessible to the Owner.
+• Access requires:
+    - active ownership, and
+    - a valid owner access session.
 
-Not through information fragmentation.
+Analytics visibility remains:
+• count-only (merchant-safe)
+• free of QA ratios or internal diagnostics.
 
 --------------------------------------------------------------------------
 
-Internal Systems
+C) Demo Analytics (Non-Location-Specific)
 
-Internally, NaviGen may maintain finer-grained controls for:
-• QA systems
-• operational diagnostics
-• internal tooling (90.x)
+NaviGen may provide one or more Demo Dash views showing example analytics.
 
-These controls are never exposed to merchants and do not influence
-the product-facing ownership model.
+Demo Dash:
+• is not tied to any real LPM.
+• may use synthetic or curated datasets.
+• exists solely to demonstrate analytics structure and interpretation.
+
+Demo Dash MUST be clearly labeled as example data
+and MUST NOT be confused with real location analytics.
+
+Demo Dash does not affect ownership rules.
+
+--------------------------------------------------------------------------
+
+E) Example Dash (Real Data, Designated Locations)
+
+When Dash access is blocked for an unowned LPM, NaviGen MAY present
+links to analytics views of designated Example Locations.
+
+Example Dash properties:
+• Uses real Dash views and real analytics data.
+• Is always tied to real, existing LPMs.
+• Is never derived from or related to the requested LPM.
+• Exists solely to demonstrate how analytics look and behave.
+
+Rules:
+• Example Dash locations MUST be explicitly flagged by NaviGen.
+• Example Dash MUST NOT display analytics for the requested LPM.
+• Example Dash is optional and supplemental to the access-required interstitial.
+
+Example Dash does not alter ownership rules.
+Access to real analytics for a specific LPM still requires ownership.
 
 --------------------------------------------------------------------------
 
-Implications
+4.20.4.1 Ownership Gating Matrix (Authoritative)
 
-This model ensures:
-• conceptual simplicity
-• predictable authorization rules
-• strong alignment with payment-as-authority
-• elimination of account-based ownership assumptions
-• reduced implementation and maintenance complexity
+This matrix defines how ownership state affects access to all major NaviGen surfaces.
+It is authoritative and overrides any implicit assumptions elsewhere in the spec.
 
---------------------------------------------------------------------------
+Ownership states:
+• Unowned        → exclusiveUntil ≤ now OR no ownership record
+• Owned          → exclusiveUntil > now
+
+Access states:
+• Public         → accessible to any visitor
+• Owner-only     → requires active ownership AND valid owner access session
+• Blocked        → explicitly denied
+
+--------------------------------------------------------------------
+Surface / Endpoint                     | Unowned LPM | Owned LPM (no session) | Owned LPM (with session)
+--------------------------------------------------------------------
+Location Profile Modal (LPM)           | Public      | Public                 | Public
+Info QR                                | Public      | Public                 | Public
+Promo QR (customer)                    | Public*     | Public*                | Public*
+Promo QR (cashier redeem)              | Backend     | Backend                | Backend
+
+/dashboard (/dash/<location>)          | Blocked     | Blocked → Interstitial | Owner-only
+/api/stats                             | Blocked     | Blocked                | Owner-only
+
+--------------------------------------------------------------------
+
+Notes:
+• “Blocked” means no real analytics data is returned under any circumstance.
+• Blocked Dash requests MUST render either:
+    - the Access-Required Interstitial (Appendix E), or
+    - redirect to Demo Dash (example analytics), depending on entry point.
+• Demo Dash is non-location-specific and never displays real LPM data.
+• Promo QR customer flows remain accessible regardless of ownership state;
+  ownership never blocks customer-facing promotions.
+• Backend-only operations (redeem validation, billing) are never gated by UI state.
+
+When Dash access is blocked for an unowned LPM:
+
+• Real analytics for that LPM are not shown.
+• The UI MAY present:
+    - an access-required interstitial, and
+    - links to analytics views of designated example locations.
+• Example locations use real data and are not tied to the requested LPM.
+
+--------------------------------------------------------------------
 
 4.20.5 Development Phases
 
@@ -2273,6 +2275,76 @@ Identical behavior with adaptive layout:
 6.2.7 Out-of-Scope  
 Promo logic defined in Section 3, modals defined in Section 12.
 
+6.2.8 Owner Platform Entry Points (LPM)
+
+The Location Profile Modal (LPM) is the primary surface where ownership actions
+are initiated or accessed.
+
+Owner-related CTAs in the LPM are strictly state-driven and mutually exclusive.
+
+--------------------------------------------------------------------
+A) Unowned LPM
+
+When an LPM is unowned (exclusiveUntil ≤ now):
+
+Visible CTAs:
+• “Run Campaign”
+• “Protect This Location” (optional alternative wording)
+
+Behavior:
+• Opens Owner Platform onboarding or campaign initiation flow.
+• Successful payment establishes ownership immediately.
+
+Rules:
+• No Owner Dashboard access is available.
+• No ownership indicators are shown.
+
+--------------------------------------------------------------------
+B) Owned LPM (Ownership active, no owner session)
+
+When an LPM is owned but the visitor lacks a valid owner session:
+
+Visible indicators:
+• Ownership badge (e.g. “Owned”, shield/emoji allowed)
+
+Visible CTAs:
+• “Owner Dashboard”
+
+Behavior:
+• Attempts to open /dash/<location>.
+• MUST trigger Access-Required Interstitial if no valid owner session exists.
+
+Rules:
+• No campaign initiation CTAs are shown.
+• Ownership badge must not imply access without session.
+
+--------------------------------------------------------------------
+C) Owned LPM (Ownership active, valid owner session)
+
+When an LPM is owned and the visitor has a valid owner session:
+
+Visible indicators:
+• Ownership badge
+
+Visible CTAs:
+• “Owner Dashboard”
+• Owner-only campaign and edit actions (as defined elsewhere)
+
+Behavior:
+• Owner Dashboard opens directly.
+• Owner capabilities are fully available.
+
+--------------------------------------------------------------------
+D) Ownership Expiry Transition
+
+When ownership expires while viewing the LPM:
+
+• Ownership badge MUST be removed on next data refresh.
+• Owner Dashboard access MUST revert to public behavior.
+• “Run Campaign / Protect This Location” CTAs become visible again.
+
+Transitions are backend-enforced and do not require page reload.
+
 --------------------------------------------------------------------
 
 6.3 My Stuff Modal (MSM)
@@ -2430,6 +2502,52 @@ Service worker ensures:
   • Promo QR display works offline  
   • promo-qr issuance and redeem always require network  
   • redeem-status polling requires network
+
+6.5.7.1 Cache Policy Matrix (Authoritative)
+
+The service worker MUST apply different caching strategies
+based on the sensitivity of the requested resource.
+
+--------------------------------------------------------------------
+Resource Class                     | Cache Policy
+--------------------------------------------------------------------
+App shell (index.html)              | Network-first
+JS bundles (app.js, dash.js, etc.)  | Network-first with versioning
+CSS / images / fonts                | Cache-first (hashed assets only)
+Translation bundles (/data/i18n)    | Cache-first with version bump
+--------------------------------------------------------------------
+/api/* endpoints                    | Network-only (no cache)
+/dash/* routes                      | Network-only (no cache)
+/owner/* endpoints                  | Network-only (no cache)
+--------------------------------------------------------------------
+Owner interstitial responses        | Network-only
+Signed-link exchange (/owner/exchange) | Network-only
+--------------------------------------------------------------------
+
+Rules:
+• Network-only means the request MUST bypass service worker cache entirely.
+• No fallback-to-cache is permitted for owner- or authority-sensitive routes.
+• Cached responses MUST NEVER be used to infer ownership or access.
+
+6.5.7.2 Service Worker Update Strategy (Authority-Safe)
+
+The service worker update strategy MUST prioritize correctness
+over aggressive offline continuity.
+
+Update rules:
+
+• The service worker MUST call skipWaiting() on install.
+• The service worker MUST call clientsClaim() on activation.
+• Old service worker instances MUST NOT continue serving UI after activation.
+
+Rationale:
+• Ownership, access, and analytics visibility may change at any time.
+• Delayed activation risks stale authority or privacy state.
+• Immediate takeover ensures UI always reflects current backend truth.
+
+Failure handling:
+• If a service worker update fails, the app MUST fall back to
+  network-delivered resources rather than cached authority-sensitive content.
 
 6.5.8 Deep Links & QR in PWA  
 Info QR:
@@ -2772,6 +2890,144 @@ Rules:
 
 --------------------------------------------------------------------
 
+8.3.1.1 Example Location Flag (Analytics Showcase)
+
+NaviGen may designate certain locations as Example Locations
+for the purpose of analytics demonstration.
+
+Example Location flag:
+• is a boolean attribute set internally by NaviGen.
+• is not editable by Owners.
+• is not derived from campaign or ownership state.
+
+Rules:
+• Only locations explicitly flagged as Example Locations
+  may be used for Example Dash routing.
+• Example Locations use real analytics and real campaigns (if any).
+• Example Locations MUST NOT imply endorsement or performance guarantees.
+• Example Locations MUST be visually marked as examples in the UI.
+
+Example Location designation exists solely for onboarding
+and product demonstration purposes.
+
+--------------------------------------------------------------------
+
+8.3.2 Profile Override Model (Owner Edits)
+
+NaviGen supports owner-provided profile edits via a non-destructive override layer.
+
+Overrides allow Owners to modify a limited subset of profile fields
+without mutating the base profiles.json dataset.
+
+--------------------------------------------------------------------
+A) Override Storage Model
+
+Overrides are stored per location as server-side KV entries.
+
+Keys:
+• override:<ULID>                // current effective override snapshot
+• override_log:<ULID>:<ts>       // append-only audit trail
+
+The base profile (profiles.json) is immutable at runtime.
+
+--------------------------------------------------------------------
+B) Override Schema (Partial, Field-Level)
+
+The override object is a **partial structure** matching the shape of profiles.json,
+restricted to the editable whitelist defined in Section 92.3.
+
+Rules:
+• Overrides MAY include only whitelisted fields.
+• Overrides MUST NOT include fields outside the editable whitelist.
+• Missing fields in override do NOT imply deletion.
+
+Example (conceptual):
+
+override:<ULID> = {
+  description: "Updated business description",
+  contact: {
+    phone: "+39 55 123 4567",
+    website: "https://example.com"
+  },
+  openingHours: "...",
+  media: {
+    coverImage: "...",
+    images: [ ... ]
+  }
+}
+
+--------------------------------------------------------------------
+C) Merge Rules (Deterministic)
+
+The effective profile is computed server-side using a deterministic merge:
+
+effectiveProfile = deepMerge(baseProfile, override)
+
+Rules:
+• Base profile fields remain the default.
+• Override fields replace corresponding base fields.
+• Nested objects are deep-merged.
+• Arrays in override REPLACE base arrays entirely.
+• Null values are NOT permitted to remove base fields.
+
+Deletion semantics:
+• Owners cannot delete base fields.
+• To “remove” optional data, owners must set the field to an empty value
+  allowed by validation (e.g. empty string or empty array).
+
+--------------------------------------------------------------------
+D) Read Path (Authoritative)
+
+All profile reads MUST return the merged effective profile.
+
+Authoritative read path:
+• App Shell: /api/data/profile?id=<slug>
+• Dash:     /api/data/profile?id=<slug>
+
+Rules:
+• API Worker performs the merge before returning profile data.
+• Clients MUST NOT attempt to merge base and override themselves.
+• Clients MUST NOT access override KV entries directly.
+
+--------------------------------------------------------------------
+E) Consistency & Caching Rules
+
+• Overrides take effect immediately after successful write.
+• No client-side caching of merged profiles is permitted beyond
+  normal HTTP caching rules for API responses.
+• Service Worker MUST NOT cache profile responses that include overrides.
+
+--------------------------------------------------------------------
+F) Audit & Safety
+
+• Every override write MUST produce an override_log entry.
+• Override logs are append-only and timestamped.
+• Logs include:
+    - ULID
+    - edited fields
+    - timestamp
+    - payment_intent.id
+    - initiationType
+
+Override logs are internal-only and never exposed in UI.
+
+--------------------------------------------------------------------
+G) Non-Goals (Explicit)
+
+Profile overrides do NOT:
+• create new profile fields
+• allow deletion or mutation of base data
+• permit bulk edits across locations
+• expose edit history to Owners
+• bypass QA, ingestion, or normalization pipelines
+• affect location existence, public accessibility, or navigation inclusion
+• suppress discoverability or materially disadvantage competing locations
+
+Overrides exist solely to allow accountable, reversible presentation-layer edits
+by an economically attributable Owner.
+
+--------------------------------------------------------------------
+
 8.4 campaigns.json (Campaign Definitions)
 
 Structure (per row):
@@ -3026,6 +3282,11 @@ A) Pages Worker (navigen.io)
 
 Pages Worker is non-authoritative by design.
 
+Explicitly:
+• Pages Worker MUST NOT process Stripe webhooks.
+• Pages Worker MUST NOT write ownership:<ULID>, ledger entries, or any billing-related state.
+• Pages Worker MAY only forward observational hit signals to the API Worker.
+
 B) API Worker (navigen-api)
 
 • Deployed via wrangler (wrangler.toml)
@@ -3211,6 +3472,20 @@ J) **Data Integrity Rules Enforced by the API Worker**
    • Confirmation metrics are append-only.
    • Campaign time windows enforced server-side.
    • ULID resolution must succeed; otherwise reject.
+
+K) **Stripe Webhook Processing (Authority Source)**
+
+API Worker receives Stripe webhook events and performs authoritative, idempotent state transitions for:
+• ownership:<ULID>
+• prepaid ledger top-ups
+• agent attribution records (if applicable)
+
+Webhook processing is the only source of truth for ownership establishment and renewal.
+
+Note:
+Stripe webhook processing is not performed by Pages Worker.
+Ownership and prepaid balance updates originate only from the Stripe webhook processor,
+which may run outside the Worker stack. API Worker consumes the resulting state for enforcement.
 
 --------------------------------------------------------------------
 9.3 Auxiliary API Endpoints
@@ -4406,6 +4681,27 @@ Suspension revokes operational authority until resolved.
 
 --------------------------------------------------------------------
 
+G) Ownership Acquisition Paths (Clarified)
+
+Ownership may be established through either of the following prepaid paths:
+
+1) Campaign-Based Ownership
+• Starting a paid campaign establishes ownership automatically.
+• Minimum campaign buy-in is defined by finance and product policy (e.g. €50).
+• Campaign budget size does NOT determine ownership duration beyond the planned campaign calendar.
+
+2) Exclusive Operation Period (Non-Campaign)
+• Ownership may be acquired without running a campaign.
+• Price: €5 per 30-day period.
+• Grants operational authority, analytics privacy, and profile editing.
+• Does NOT include promotional exposure or redeem eligibility.
+
+Rationale:
+This admits cautious operators who wish to observe and prepare before
+committing to promotional spend, without weakening authority guarantees.
+
+--------------------------------------------------------------------
+
 91.4.1 Ownership Record (Authoritative KV State)
 
 Definitions:
@@ -4423,22 +4719,38 @@ Fields (JSON):
 • state: "unowned" | "owned"          // derived from exclusiveUntil but stored for clarity
 • exclusiveUntil: ISO-8601 timestamp  // ownership is active iff now < exclusiveUntil
 • source: "campaign" | "exclusive"    // what established/extended ownership
-• lastEventId: string                 // idempotency anchor (e.g., Stripe payment_intent.id or checkout.session.id)
+• lastEventId: string                 // idempotency anchor (Stripe payment_intent.id)
 • updatedAt: ISO-8601 timestamp       // last write time
 
+Ownership vs Campaign Separation (Authoritative)
+
+Ownership, campaign budget, and campaign calendar are independent dimensions.
+
+Rules:
+• Ownership represents operational authority and analytics privacy.
+• Campaign budget represents promotional volume (redeem capacity).
+• Campaign calendar represents when a promotion is visible.
+
+Constraints:
+• Campaign budget size MUST NOT affect ownership duration.
+• Campaign performance (redeems, traffic) MUST NOT extend or shorten ownership.
+• Campaign top-ups that do not extend the campaign calendar MUST NOT extend ownership.
+
 Writer (authoritative):
-• Stripe webhook processor (server-side) is the only writer of ownership:<ULID>.
-• Ownership is established or extended only upon verified payment events.
+• API Worker is the Stripe webhook processor and is the only writer of ownership:<ULID>.
+• Ownership is established or extended only upon verified Stripe webhook events processed by the API Worker.
+• Pages Worker MUST NOT create, extend, or mutate ownership records under any circumstances.
 
 Readers (enforcement):
 • API Worker: enforces owner-only capabilities (Dash access, campaign control, profile edits).
-• Pages Worker: may read to render “Owned/#x” UI hints, but must not grant access.
+• Pages Worker: may read to display non-authoritative “Owned” hints, but MUST NOT grant access.
 • Dash: consumes API responses only; it does not read KV directly.
 
 Invariants:
 • Ownership never becomes active based on client input.
 • Cookies and signed links provide access continuity, not authority.
 • Any owner-only capability requires now < exclusiveUntil at request time.
+• Webhook deliveries MUST be processed idempotently using payment_intent.id.
 
 --------------------------------------------------------------------
 
@@ -4934,6 +5246,13 @@ Rules:
 • Campaign definitions remain constrained by campaigns.json and finance.json.
 • Owners cannot modify campaign identity, pricing rules, or sector mappings.
 
+Campaign Performance Independence
+
+• Campaign underperformance MUST NOT require ownership extension.
+• Low redeem volume MUST NOT coerce additional exclusivity payments.
+• Campaign budget exhaustion pauses promotion but does not revoke ownership.
+• Ownership exists to control and observe, not to guarantee performance.
+
 --------------------------------------------------------------------
 D) Profile Editing Capabilities (Payment-Gated)
 
@@ -5000,6 +5319,66 @@ Revocation does not affect:
 
 • historical analytics data
 • public LPM visibility after reversion
+
+--------------------------------------------------------------------
+
+G) Non-Destructive & Accountable Authority (Critical Invariant)
+
+Ownership in NaviGen grants the ability to modify presentation data,
+but never the ability to cause irreversible harm.
+
+Invariants:
+
+• No owner action can remove an LPM from public access.
+• No owner action can suppress a competitor’s discoverability.
+• No owner action can erase historical analytics, QR logs, or stats.
+• No owner action can alter navigation contexts or ranking logic.
+
+Accountability rules:
+
+• All owner edits are logged server-side with:
+    - ULID
+    - edited fields
+    - timestamp
+    - payment_intent.id
+    - initiationType
+
+• Ownership is explicitly non-anonymous.
+  Every edit is economically attributable via Stripe payment records.
+
+• In case of reported misuse or dispute:
+    - edits can be reviewed internally,
+    - reverted by NaviGen,
+    - and traced to the responsible payor.
+
+Rationale:
+Low-cost ownership lowers entry friction, not accountability.
+Malicious edits are discouraged by traceability, not by technical barriers.
+
+--------------------------------------------------------------------
+
+Edit Accountability Notice (Mandatory UX)
+
+Before submitting any profile edit, the UI MUST present a clear accountability notice.
+
+The notice MUST state:
+
+• “Profile edits are logged and attributable to the payment used to claim this location.”
+• “Edits may be reviewed and reverted in case of misleading, malicious, or wrongful changes.”
+• “Ownership does not grant anonymity or permanent control.”
+
+The notice MUST also include a reference to the applicable Terms & Conditions:
+• “Edits are subject to NaviGen’s Terms & Conditions.”
+
+UX rules:
+• The notice must be shown at least once per ownership period.
+• It may be presented as a toast, inline warning, or modal hint.
+• It must not be permanently dismissible.
+
+Rationale:
+In a no-account system, deterrence relies on explicit accountability,
+economic attribution, and clear contractual framing rather than technical prevention.
+
 
 --------------------------------------------------------------------
 
@@ -5136,20 +5515,36 @@ Profile editing is a controlled, owner-only capability.
 
 92.4 Ownership Duration, Expiry, and Reversion
 
-Ownership persists for the duration of:
-• an active campaign, or
-• an Exclusive Operation Period
+Ownership is always prepaid and time-limited.
 
-Ownership is always time-limited.
+Ownership duration is determined by:
+• the planned campaign calendar at creation time, or
+• the sum of purchased Exclusive Operation Periods.
 
-When ownership expires:
-• exclusive analytics access is revoked
-• profile editing rights are revoked
-• the LPM returns to the unowned (public) state
-• all historical data remains intact
+Ownership duration is measured in fixed 30-day periods.
 
-No manual action is required.
-Transitions are enforced automatically by backend logic.
+--------------------------------------------------------------------
+Hybrid Rule: Ownership Expiry During Active Campaign
+
+If ownership expires while a campaign is still active:
+
+• The campaign MAY continue serving customers.
+• Promo issuance, redeem, and billing remain unaffected.
+• Ownership-based capabilities are revoked immediately.
+
+Effects of ownership expiry:
+• Dashboard analytics revert to public visibility.
+• Profile editing is disabled.
+• Campaign control (pause/resume/finish) is disabled.
+
+Owner choice:
+• The Owner may explicitly extend ownership (€5 per 30 days)
+  at any time to restore privacy and control.
+• No extension is automatic or implicit.
+
+Rationale:
+Campaign delivery must not be interrupted by authority expiry.
+Privacy and control remain prepaid privileges.
 
 --------------------------------------------------------------------
 92.4.1 Expiry Reminders & Renewal UX
@@ -5165,6 +5560,9 @@ B) Always-visible UI countdown (only while Owned)
 • LPM displays an emoji-style badge showing “#x” days remaining.
   The badge may be publicly visible.
 • Countdown is always visible while the LPM is owned.
+
+All effects of ownership expiry MUST be communicated clearly in advance,
+including the transition of analytics from private to public visibility.
 
 C) Campaign control area
 • Displays the same expiry line and “Extend in #x” action.
@@ -5189,7 +5587,7 @@ A) Policy Overview
 • Access is initiated via a time-limited signed link.
 • Signed link is exchanged server-side for an HttpOnly cookie scoped to owner-only surfaces.
 • Dash URLs remain clean (no long-lived tokens in query strings).
-• Cookie may persist for the duration of the active ownership window and becomes invalid when ownership expires.
+• Cookie may persist while ownership is active but becomes invalid when ownership expires.
 • Owner-only access is never inferred from public navigation.
 
 --------------------------------------------------------------------
@@ -5207,92 +5605,139 @@ Fallback reference:
 • Stripe receipt/invoice email for the same payment (audit trail + location reference).
 
 --------------------------------------------------------------------
-C) Normal Flow (Happy Path)
+C) Signed Link Token Contract (Exact)
 
-1) Owner clicks “Open Owner Dash” from the email.
-2) Link opens a same-origin exchange endpoint.
-3) System validates signature + expiry, then sets HttpOnly cookie for owner-only routes.
-4) System redirects to /dash/<location> with a clean URL (no token visible).
-5) Owner uses Dash normally while ownership is active.
+Signed link format (conceptual):
+• https://navigen.io/owner/exchange?tok=<TOKEN>&sig=<SIGNATURE>
+
+Signature:
+• HMAC-SHA256 over the token payload using a secret stored only in the API Worker.
+• Signature is URL-safe base64 (or hex) encoded.
+
+Token payload fields (logical contents; serialization is implementation-defined):
+• ver: number                 // token schema version (start at 1)
+• ulid: <ULID>                // canonical location identity
+• iat: unixSeconds            // issued-at timestamp (server time)
+• exp: unixSeconds            // expiry timestamp; exp = iat + 15 minutes
+• jti: string                 // unique token id (random or ULID), required for single-use
+• purpose: "owner-dash"       // fixed value; prevents token reuse for other purposes
+
+Validity rules:
+• Token is valid only if:
+    - signature verifies, AND
+    - now <= exp, AND
+    - purpose == "owner-dash", AND
+    - token has not been consumed (single-use), AND
+    - ownership:<ULID>.exclusiveUntil > now
+
+Timing rule:
+• “15 minutes” is measured from iat (issue time), not from email open.
+
+Single-use enforcement (KV key):
+• ownerlink_used:<jti> = { ulid, usedAt }
+Rules:
+• On successful exchange, API Worker MUST write ownerlink_used:<jti>.
+• If ownerlink_used:<jti> already exists, exchange MUST be denied.
 
 --------------------------------------------------------------------
-D) Signed Link Rules (Capability)
+D) Cookie Contract (Owner Session Cookie)
 
-Signed links are access capabilities, not ownership records.
+Cookie name:
+• op_sess
 
-• Short-lived (default validity: 15 minutes).
-• Single-use:
-    - once exchanged successfully, the link is invalidated server-side.
-• After exchange, the user is redirected to a clean URL (token removed).
-• A signed link may become unusable either by expiry (unused) or by consumption (used).
+Cookie contents:
+• A random, unguessable session id (opaque string). No ULID is stored in the cookie.
 
---------------------------------------------------------------------
-E) Cookie Rules (Continuity)
+Cookie attributes (mandatory):
+• HttpOnly
+• Secure
+• SameSite=Lax
+• Path=/
+• Max-Age: bounded by session expiry (see below)
 
 Cookie purpose:
 • Preserve owner access on the current device/browser without accounts.
 
-Cookie behavior:
-• HttpOnly, scoped to owner-only surfaces (e.g., /dash/*, /owner/*).
-• May persist until the active ownership window ends.
-• Must not grant access if exclusiveUntil ≤ now (ownership expired).
-• Can be cleared via “Sign out on this device”.
+--------------------------------------------------------------------
+E) Owner Session Record (Server-Side, KV-backed)
+
+Session record key:
+• opsess:<sessionId>
+
+Session record value (JSON):
+• ver: number                 // session schema version (start at 1)
+• ulid: <ULID>                // single location scope for this session
+• createdAt: ISO-8601
+• expiresAt: ISO-8601         // MUST NOT exceed ownership.exclusiveUntil
+• lastSeenAt?: ISO-8601       // optional (for audit/ops only)
+
+Session creation rules:
+• On successful signed-link exchange, API Worker creates opsess:<sessionId>.
+• expiresAt MUST be computed as:
+    expiresAt = min(ownership:<ULID>.exclusiveUntil, createdAt + sessionMaxAge)
+  Where sessionMaxAge may be set equal to ownership window (default) unless overridden.
+
+Session validation rules (enforcement):
+• Any owner-only request MUST be allowed only if:
+    - op_sess cookie is present, AND
+    - opsess:<sessionId> exists, AND
+    - now < opsess.expiresAt, AND
+    - ownership:<ULID>.exclusiveUntil > now
+
+If ownership expires, the session MUST be treated as invalid even if cookie/session still exists.
 
 --------------------------------------------------------------------
-F) Failure Modes & Required UX Responses
+F) Normal Flow (Happy Path)
 
-1) Signed link expired (unused)
-• Exchange is denied.
-• User is prompted to obtain a fresh signed link (e.g., “Use your most recent Owner access email” or “Resend Owner access link”).
-
-2) Signed link already used (consumed)
-• Exchange is denied.
-• User is prompted to obtain a fresh signed link (same as above).
-
-3) Cookie missing/cleared/expired (ownership still active)
-• /dash/<location> must not render owner data.
-• Show an access-required interstitial.
-• Provide a path to obtain a fresh signed link (use email or “Resend Owner access link”).
-
-4) Owner attempts access from public LPM navigation
-• No public navigation path may escalate privileges.
-• Public LPM may display “Owned” state but must not grant owner access without the signed-link exchange.
-
-5) Ownership expired (exclusiveUntil ≤ now)
-• Owner-only access is denied regardless of cookie presence.
-• Dash returns to the public (unowned) state.
-• Public analytics are rendered according to the binary ownership model.
+1) Owner clicks “Open Owner Dash” from the email.
+2) Link opens the exchange endpoint (/owner/exchange).
+3) API Worker validates signature + expiry + single-use + ownership active.
+4) API Worker creates opsess:<sessionId> and sets cookie op_sess=<sessionId>.
+5) API Worker redirects to /dash/<location> with a clean URL (no token visible).
+6) Owner uses Dash normally while ownership is active.
 
 --------------------------------------------------------------------
-G) Recovery: Resend Owner Access Link (Optional but Recommended)
+G) Owner Access Recovery (Guided, No Resend)
 
-The access-required interstitial may offer:
-• “Resend Owner access link”
+NaviGen does not provide a “resend owner access link” endpoint.
 
-Rules:
-• Sends a new signed link to the payor’s email address.
-• Rate-limited and safe against abuse.
-• Does not create an account or login identity.
+Instead, recovery is handled through guided instructions using existing,
+authoritative Stripe emails.
+
+Supported recovery cases:
+• Signed link expired before use.
+• Signed link already consumed on another device.
+• Owner wants to open Dash on a different device later.
+
+Recovery guidance shown to the user:
+• “Use the most recent Owner access email sent after payment.”
+• “You can also find your Stripe receipt or invoice email and open the
+   ‘Open Owner Dash’ link from there.”
+
+Rationale:
+• Stripe emails are already delivered, searchable, and tied to payment authority.
+• NaviGen does not implement identity or payment recovery flows.
+• Avoids spam, probing, and account-like recovery abuse vectors.
 
 --------------------------------------------------------------------
-H) Exchange Security Requirements
-
-• Exchange endpoint must validate:
-    - signature correctness
-    - link expiry
-    - single-use status
-• Exchange must be idempotent and safe under retries.
-• No persistent account identity is created or implied.
-
---------------------------------------------------------------------
-I) Session Revocation (Shared-Device Safety)
+H) Session Revocation (Device-Local)
 
 Owner-only surfaces should provide:
 • “Sign out on this device”
 
 Behavior:
-• Clears the HttpOnly cookie on the current device/browser.
+• Clears the op_sess cookie on the current device/browser.
+• API Worker deletes opsess:<sessionId> (best-effort).
 • Does not affect ownership state or other devices.
+
+--------------------------------------------------------------------
+I) Non-Goals (Explicit)
+
+This mechanism does NOT:
+• create user accounts
+• create persistent identities
+• permit cross-location access within one session (single location scope)
+• define ownership authority (exclusiveUntil remains authoritative)
 
 --------------------------------------------------------------------
 
@@ -5954,7 +6399,18 @@ B2. Required Checkout Configuration
   locationID (slug) is resolved server-side to a canonical ULID via the alias system.
   ULIDs must never be supplied by clients or Stripe metadata.
 
-B3. Webhook Processing (checkout.session.completed)
+B3. Webhook Processing (checkout.session.completed → API Worker)
+
+The Stripe webhook receiver is implemented in the API Worker.
+
+Endpoint:
+• POST /api/stripe/webhook
+
+Rules:
+• Stripe signature verification is mandatory.
+• The webhook receiver MUST be idempotent using payment_intent.id.
+• Ownership and ledger writes occur only inside this endpoint.
+• No client-initiated request may establish ownership.
   Extract:
     • stripeCustomerId
     • email
@@ -5963,6 +6419,7 @@ B3. Webhook Processing (checkout.session.completed)
     • tax_ids (if any)
     • amount_total, currency
     • payment_intent
+• Stripe-provided email may be used to send Owner access emails but MUST NOT be stored in NaviGen KV/logs/datasets.
 
   Steps:
     1. Validate required metadata (locationID, initiationType, ownershipSource)
@@ -6099,13 +6556,92 @@ Secondary message:
 • “To open the Owner Dash, use your most recent Owner access email.”
 
 Primary action:
-• “Resend Owner access link”
+• “Find your Owner access email”
+
+Secondary guidance text:
+• “Search your inbox for your Stripe receipt or NaviGen payment email.”
+• “The Owner Dash link is included in that message.”
 
 Rules:
 • The interstitial must not reveal owner-only data.
 • The interstitial must not infer or grant ownership.
 • The “Resend Owner access link” action sends a new signed link to the payor’s email.
 • No login, account creation, or identity prompt is permitted.
+
+--------------------------------------------------------------------
+
+Access-Required Interstitial (Analytics → Unowned LPM)
+
+Trigger:
+This interstitial is shown when a user attempts to access
+/dashboard (/dash/<location>) for an unowned LPM.
+
+--------------------------------------------------------------------
+
+Title:
+Analytics access required
+
+--------------------------------------------------------------------
+
+Body:
+Analytics for this location are available to its active operator.
+
+To view real analytics, activate ownership by running a campaign
+or starting an exclusive operation period.
+
+--------------------------------------------------------------------
+
+Primary action:
+Activate analytics for this location
+
+Behavior:
+• Routes to Owner Platform onboarding for the requested LPM.
+• Initiates either campaign setup or Exclusive Operation Period purchase.
+
+--------------------------------------------------------------------
+
+Secondary action:
+See how analytics look for other locations
+
+Behavior:
+• Opens the Example Dash selector.
+• Does not grant access to analytics for the requested LPM.
+
+--------------------------------------------------------------------
+
+UI Note (mandatory):
+Example analytics shown here belong to other locations
+and are not related to this business.
+
+--------------------------------------------------------------------
+
+Example Dash Selector (UX Contract)
+
+• Displays a list of designated Example Locations.
+• Uses real Dash views and real analytics data.
+• Shows no more than 3–6 example cards at a time.
+• Uses the same card visual language as the Promotion modal.
+• Cards are presented as a simple vertical list (no grouping required).
+
+Each card MUST include:
+• Location name
+• Sector label (translated)
+• “Example” badge
+
+Card action:
+Open analytics
+
+Behavior:
+• Routes to /dash/<example-location>.
+• Displays the real Dash for that Example Location.
+
+--------------------------------------------------------------------
+
+Rules:
+• The interstitial MUST NOT reveal any analytics for the requested LPM.
+• The interstitial MUST NOT display synthetic or fake data.
+• Example Dash routing MUST NOT imply endorsement or performance guarantees.
+• Ownership rules remain unchanged by viewing Example Dash locations.
 
 --------------------------------------------------------------------
 

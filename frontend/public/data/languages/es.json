@@ -416,7 +416,7 @@
   "dash.label.location": "Ubicación",
   "dash.label.period": "Período",
   "dash.tab.click-info": "Información de clics",
-  "dash.tab.qr-info": "Información QR",
+  "dash.tab.qr-info": "QR promocional",
   "dash.tab.campaigns": "Campañas",
   "dash.state.qr-info-empty": "La vista de información QR aparecerá aquí para el período seleccionado.",
   "dash.state.campaigns-empty": "La vista de campañas QR aparecerá aquí para el período seleccionado.",

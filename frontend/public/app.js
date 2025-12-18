@@ -403,6 +403,142 @@ function renderPopularGroup(list = geoPoints) {
   container.prepend(section);
 }
 
+// ✅ Render Business Owners group (root/no-context only)
+// Uses BO card styles (bo-menu-list / bo-menu-item) — never quick-button.
+function renderBusinessOwnersGroup() {
+  const container = document.querySelector("#locations");
+  if (!container) { console.warn('⚠️ #locations not found; skipping Business Owners group'); return; }
+
+  // Avoid duplicate insertion on soft reloads / rerenders
+  if (document.querySelector('.group-header-button[data-group="group.business-owners"]')) return;
+
+  const section = document.createElement("div");
+  section.classList.add("accordion-section");
+
+  const groupKey = "group.business-owners";
+  const groupLabel = (typeof t === 'function' ? t(groupKey) : '') || "Owner settings";
+
+  const header = document.createElement("button");
+  header.classList.add("group-header-button");
+  header.setAttribute("data-group", groupKey);
+  header.style.backgroundColor = 'var(--group-color)';
+  header.innerHTML = `
+    <span class="header-title">${groupLabel}</span>
+    <span class="header-meta"></span>
+    <span class="header-arrow"></span>
+  `;
+
+  const content = document.createElement("div");
+  content.className = "accordion-body";
+  content.style.display = "block"; // expanded by default on root
+
+  // BO cards container (NOT subgroup-items)
+  const list = document.createElement("div");
+  list.className = "bo-menu-list";
+  content.appendChild(list);
+
+  // helper: create one BO action card
+  const addCard = ({ icon, title, desc, onClick }) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "bo-menu-item";
+    btn.innerHTML = `
+      <span class="bo-icon">${icon}</span>
+      <span class="bo-label">
+        ${title}
+        ${desc ? `<small>${desc}</small>` : ``}
+      </span>
+    `;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      onClick?.();
+    });
+    list.appendChild(btn);
+  };
+
+  // Actions (wire to your real modals when available)
+  addCard({
+    icon: "🎯",
+    title: "Run campaign",
+    desc: "Start a promotion and unlock analytics for a location.",
+    onClick: () => {
+      // TODO: open Campaign Setup modal
+      showToast("Campaign setup is coming soon");
+    }
+  });
+
+  addCard({
+    icon: "🛡️",
+    title: "Protect this location",
+    desc: "Unlock analytics and control without running a campaign (€5 / 30 days).",
+    onClick: () => {
+      // TODO: open Protect This Location modal
+      showToast("Protection purchase is coming soon");
+    }
+  });
+
+  addCard({
+    icon: "🔑",
+    title: "Restore access",
+    desc: "Use your owner access email (or Stripe receipt) to restore your session.",
+    onClick: () => {
+      // TODO: open Restore Access modal
+      showToast("Access restore is coming soon");
+    }
+  });
+
+  addCard({
+    icon: "📈",
+    title: "See example dashboards",
+    desc: "Open real dashboards of designated example locations.",
+    onClick: () => {
+      // TODO: open Example Dashboards modal
+      showToast("Example dashboards are coming soon");
+    }
+  });
+
+  // Optional: “Find my location” (if you add a selector modal later)
+  addCard({
+    icon: "🔎",
+    title: "Find my location",
+    desc: "Search for your business and open its profile.",
+    onClick: () => {
+      // TODO: open Location Selector modal
+      const el = document.getElementById("search");
+      if (el) el.focus();
+    }
+  });
+
+  header.addEventListener("click", () => {
+    const scroller = document.getElementById('locations-scroll');
+    const wasOpen = header.classList.contains("open");
+    const { top: beforeTop } = header.getBoundingClientRect();
+
+    document.querySelectorAll(".accordion-body").forEach(b => b.style.display = "none");
+    document.querySelectorAll(".accordion-button, .group-header-button").forEach(b => b.classList.remove("open"));
+
+    if (!wasOpen) {
+      content.style.display = "block";
+      header.classList.add("open");
+    }
+
+    if (scroller) {
+      const { top: afterTop } = header.getBoundingClientRect();
+      const delta = afterTop - beforeTop;
+      if (Math.abs(delta) > 4) scroller.scrollTop += delta;
+    }
+  });
+
+  section.appendChild(header);
+  section.appendChild(content);
+
+  // Put BO above Popular
+  container.prepend(section);
+
+  // mark header open state for visuals
+  header.classList.add("open");
+}
+
 function navigate(name, lat, lon) {
   const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
   window.open(url, '_blank');
@@ -1501,11 +1637,13 @@ async function initEmergencyBlock(countryOverride) {
             .includes(ACTIVE_PAGE)
         )
       : geoPoints;
-
-    /**
-     * 5) Render: grouped → DOM (buildAccordion), flat → header styling (wireAccordionGroups)
-     */
-    renderPopularGroup(popularCtx);
+      
+    // Root/no-context shell: show BO group and skip Popular/Accordion rendering
+    if (!ACTIVE_PAGE || (Array.isArray(apiItems) && apiItems.length === 0)) {
+      renderBusinessOwnersGroup();
+    } else {
+      renderPopularGroup(popularCtx);
+    }
 
     // i18n labels for the current lang (keys → labels)
     const modeLabelByKey = {

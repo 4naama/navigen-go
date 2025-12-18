@@ -1573,10 +1573,8 @@ async function logQrScan(
     // provisional visitor identity (UA + country); no IP stored
     const visitor = `${ua}|${country}`;
 
-    // base origin for campaign data
-    const baseOrigin = "https://navigen.io";
-    const campaigns = await loadCampaigns(baseOrigin, env);
-    const campaignKey = pickCampaignForScan(campaigns, loc, day);
+    // Info QR scans must remain detached from campaigns
+    const campaignKey = ""; // Info QR scans must never attach to campaigns
 
     // Generate a short random scan ID (hex string)
     const bytes = new Uint8Array(6);
