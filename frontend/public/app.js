@@ -403,25 +403,27 @@ function renderPopularGroup(list = geoPoints) {
   container.prepend(section);
 }
 
-// ✅ Render Business Owners group (root/no-context only)
-// Uses BO card styles (bo-menu-list / bo-menu-item) — never quick-button.
-function renderBusinessOwnersGroup() {
+// ✅ Root-shell action groups (non-geo): Business Owners + Individuals
+// - Uses BO card styles (bo-menu-list / bo-menu-item)
+// - Collapsed by default
+// - All text via t(keys)
+function renderRootActionGroup({ groupKey, defaultTitleKey, cards }) {
   const container = document.querySelector("#locations");
-  if (!container) { console.warn('⚠️ #locations not found; skipping Business Owners group'); return; }
+  if (!container) { console.warn(`⚠️ #locations not found; skipping ${groupKey}`); return; }
 
   // Avoid duplicate insertion on soft reloads / rerenders
-  if (document.querySelector('.group-header-button[data-group="group.business-owners"]')) return;
+  if (document.querySelector(`.group-header-button[data-group="${groupKey}"]`)) return;
 
   const section = document.createElement("div");
   section.classList.add("accordion-section");
-
-  const groupKey = "group.business-owners";
-  const groupLabel = (typeof t === 'function' ? t(groupKey) : '') || "Owner settings";
 
   const header = document.createElement("button");
   header.classList.add("group-header-button");
   header.setAttribute("data-group", groupKey);
   header.style.backgroundColor = 'var(--group-color)';
+
+  const groupLabel = (typeof t === 'function' ? t(groupKey) : '') || (typeof t === 'function' ? t(defaultTitleKey) : '') || groupKey;
+
   header.innerHTML = `
     <span class="header-title">${groupLabel}</span>
     <span class="header-meta"></span>
@@ -430,15 +432,16 @@ function renderBusinessOwnersGroup() {
 
   const content = document.createElement("div");
   content.className = "accordion-body";
-  content.style.display = "block"; // expanded by default on root
+  content.style.display = "none"; // ✅ collapsed by default
 
-  // BO cards container (NOT subgroup-items)
   const list = document.createElement("div");
   list.className = "bo-menu-list";
   content.appendChild(list);
 
-  // helper: create one BO action card
-  const addCard = ({ icon, title, desc, onClick }) => {
+  const addCard = ({ icon, titleKey, descKey, onClick }) => {
+    const title = (typeof t === 'function' ? t(titleKey) : '') || titleKey;
+    const desc  = (typeof t === 'function' ? t(descKey)  : '') || descKey;
+
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "bo-menu-item";
@@ -456,64 +459,14 @@ function renderBusinessOwnersGroup() {
     list.appendChild(btn);
   };
 
-  // Actions (wire to your real modals when available)
-  addCard({
-    icon: "🎯",
-    title: "Run campaign",
-    desc: "Start a promotion and unlock analytics for a location.",
-    onClick: () => {
-      // TODO: open Campaign Setup modal
-      showToast("Campaign setup is coming soon");
-    }
-  });
-
-  addCard({
-    icon: "🛡️",
-    title: "Protect this location",
-    desc: "Unlock analytics and control without running a campaign (€5 / 30 days).",
-    onClick: () => {
-      // TODO: open Protect This Location modal
-      showToast("Protection purchase is coming soon");
-    }
-  });
-
-  addCard({
-    icon: "🔑",
-    title: "Restore access",
-    desc: "Use your owner access email (or Stripe receipt) to restore your session.",
-    onClick: () => {
-      // TODO: open Restore Access modal
-      showToast("Access restore is coming soon");
-    }
-  });
-
-  addCard({
-    icon: "📈",
-    title: "See example dashboards",
-    desc: "Open real dashboards of designated example locations.",
-    onClick: () => {
-      // TODO: open Example Dashboards modal
-      showToast("Example dashboards are coming soon");
-    }
-  });
-
-  // Optional: “Find my location” (if you add a selector modal later)
-  addCard({
-    icon: "🔎",
-    title: "Find my location",
-    desc: "Search for your business and open its profile.",
-    onClick: () => {
-      // TODO: open Location Selector modal
-      const el = document.getElementById("search");
-      if (el) el.focus();
-    }
-  });
+  (Array.isArray(cards) ? cards : []).forEach(addCard);
 
   header.addEventListener("click", () => {
     const scroller = document.getElementById('locations-scroll');
     const wasOpen = header.classList.contains("open");
     const { top: beforeTop } = header.getBoundingClientRect();
 
+    // close other groups (same behavior as your groups)
     document.querySelectorAll(".accordion-body").forEach(b => b.style.display = "none");
     document.querySelectorAll(".accordion-button, .group-header-button").forEach(b => b.classList.remove("open"));
 
@@ -531,12 +484,113 @@ function renderBusinessOwnersGroup() {
 
   section.appendChild(header);
   section.appendChild(content);
+  container.prepend(section); // inserted above Popular
+}
 
-  // Put BO above Popular
-  container.prepend(section);
+function renderBusinessOwnersGroup() {
+  renderRootActionGroup({
+    groupKey: "group.business-owners",
+    defaultTitleKey: "group.business-owners",
+    cards: [
+      {
+        icon: "🎯",
+        titleKey: "bo.card.runCampaign.title",
+        descKey: "bo.card.runCampaign.desc",
+        onClick: () => {
+          // TODO: open Campaign Setup modal
+          showToast(t("bo.toast.campaignSetupSoon"));
+        }
+      },
+      {
+        icon: "🛡️",
+        titleKey: "bo.card.protect.title",
+        descKey: "bo.card.protect.desc",
+        onClick: () => {
+          // TODO: open Protect This Location modal (€5/30)
+          showToast(t("bo.toast.protectSoon"));
+        }
+      },
+      {
+        icon: "🔑",
+        titleKey: "bo.card.restore.title",
+        descKey: "bo.card.restore.desc",
+        onClick: () => {
+          // TODO: open Restore Access modal (email guidance)
+          showToast(t("bo.toast.restoreSoon"));
+        }
+      },
+      {
+        icon: "📈",
+        titleKey: "bo.card.exampleDash.title",
+        descKey: "bo.card.exampleDash.desc",
+        onClick: () => {
+          // TODO: open Example Dashboards modal
+          showToast(t("bo.toast.exampleDashSoon"));
+        }
+      },
+      {
+        icon: "🔎",
+        titleKey: "bo.card.findLocation.title",
+        descKey: "bo.card.findLocation.desc",
+        onClick: () => {
+          // Optional: focus search for now
+          document.getElementById("search")?.focus();
+        }
+      }
+    ]
+  });
+}
 
-  // mark header open state for visuals
-  header.classList.add("open");
+function renderIndividualsGroup() {
+  renderRootActionGroup({
+    groupKey: "group.individuals",
+    defaultTitleKey: "group.individuals",
+    cards: [
+      {
+        icon: "❓",
+        titleKey: "ind.card.howItWorks.title",
+        descKey: "ind.card.howItWorks.desc",
+        onClick: () => {
+          // TODO: open "How it works" modal
+          showToast(t("ind.toast.howItWorksSoon"));
+        }
+      },
+      {
+        icon: "📌",
+        titleKey: "ind.card.installSupport.title",
+        descKey: "ind.card.installSupport.desc",
+        onClick: () => {
+          // Reuse your existing header pin behavior; here we just explain/trigger
+          document.querySelector('.header-pin')?.click?.();
+        }
+      },
+      {
+        icon: "🏠",
+        titleKey: "ind.card.myStuff.title",
+        descKey: "ind.card.myStuff.desc",
+        onClick: () => {
+          showMyStuffModal("menu");
+        }
+      },
+      {
+        icon: "🎁",
+        titleKey: "ind.card.promotions.title",
+        descKey: "ind.card.promotions.desc",
+        onClick: () => {
+          if (!document.getElementById("promotions-modal")) createPromotionsModal();
+          showPromotionsModal();
+        }
+      },
+      {
+        icon: "☎️",
+        titleKey: "ind.card.help.title",
+        descKey: "ind.card.help.desc",
+        onClick: () => {
+          showModal("help-modal");
+        }
+      }
+    ]
+  });
 }
 
 function navigate(name, lat, lon) {
@@ -1638,9 +1692,10 @@ async function initEmergencyBlock(countryOverride) {
         )
       : geoPoints;
       
-    // Root/no-context shell: show BO group and skip Popular/Accordion rendering
+    // Root/no-context shell: show action groups and skip Popular/Accordion rendering
     if (!ACTIVE_PAGE || (Array.isArray(apiItems) && apiItems.length === 0)) {
       renderBusinessOwnersGroup();
+      renderIndividualsGroup();
     } else {
       renderPopularGroup(popularCtx);
     }
