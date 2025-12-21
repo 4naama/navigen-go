@@ -38,7 +38,134 @@ export interface Env {
   KV_STATS: KVNamespace;
   JWT_SECRET: string; // set via wrangler secret
   // STRIPE_SECRET_KEY?: string;
-  // STRIPE_WEBHOOK_SECRET?: string;
+  STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
+}
+
+// --- Stripe webhook verification (HMAC SHA-256) ---
+// Lead: keep verification server-side only; never expose secrets to clients.
+function parseStripeSigHeader(h: string): { t: string; v1: string[] } | null {
+  const parts = String(h || '').split(',').map(s => s.trim()).filter(Boolean);
+  const out: { t: string; v1: string[] } = { t: '', v1: [] };
+  for (const p of parts) {
+    const [k, v] = p.split('=').map(s => s.trim());
+    if (!k || !v) continue;
+    if (k === 't') out.t = v;
+    if (k === 'v1') out.v1.push(v);
+  }
+  if (!out.t || !out.v1.length) return null;
+  return out;
+}
+
+function bytesToHex(b: Uint8Array): string {
+  return Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+async function hmacSha256Hex(secret: string, msg: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(msg));
+  return bytesToHex(new Uint8Array(sig));
+}
+
+// Lead: Stripe tolerates minor clock skew; keep tolerance conservative.
+async function verifyStripeSignature(rawBody: string, sigHeader: string, secret: string, toleranceSec = 300): Promise<boolean> {
+  const parsed = parseStripeSigHeader(sigHeader);
+  if (!parsed) return false;
+
+  const ts = Number(parsed.t);
+  if (!Number.isFinite(ts)) return false;
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSec - ts) > toleranceSec) return false;
+
+  const signedPayload = `${parsed.t}.${rawBody}`;
+  const expected = await hmacSha256Hex(secret, signedPayload);
+
+  // accept if any v1 matches (Stripe may send multiple)
+  return parsed.v1.some(v => v === expected);
+}
+
+// --- Ownership writer (Phase 1): KV_STATUS keys ---
+// - ownership:<ULID>
+// - stripe_processed:<payment_intent.id>
+async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
+  const sig = req.headers.get('Stripe-Signature') || '';
+  if (!sig) return new Response('Missing Stripe-Signature header', { status: 400 });
+
+  // Raw body is required for signature verification
+  const rawBuf = await req.arrayBuffer();
+  const rawBody = new TextDecoder().decode(rawBuf);
+
+  const ok = await verifyStripeSignature(rawBody, sig, env.STRIPE_WEBHOOK_SECRET);
+  if (!ok) return new Response('Invalid Stripe signature', { status: 400 });
+
+  let evt: any = null;
+  try { evt = JSON.parse(rawBody); } catch { return new Response('Invalid JSON', { status: 400 }); }
+
+  const type = String(evt?.type || '').trim();
+  // Phase 1: only accept checkout.session.completed as ownership-confirming
+  if (type !== 'checkout.session.completed') return new Response('Ignored', { status: 200 });
+
+  const session = evt?.data?.object || {};
+  const paymentIntentId = String(session?.payment_intent || '').trim();
+  if (!paymentIntentId) return new Response('Missing payment_intent', { status: 400 });
+
+  const meta = (session?.metadata && typeof session.metadata === 'object') ? session.metadata : {};
+  const locationID = String(meta.locationID || '').trim();
+  const ownershipSource = String(meta.ownershipSource || '').trim();   // "campaign" | "exclusive"
+  const initiationType = String(meta.initiationType || '').trim();     // "owner" | "agent" | "platform"
+
+  if (!locationID || !ownershipSource || !initiationType) {
+    return new Response('Missing required metadata (locationID/ownershipSource/initiationType)', { status: 400 });
+  }
+
+  // Resolve slug → ULID (authoritative)
+  const ulid = await resolveUid(locationID, env);
+  if (!ulid || !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(ulid)) {
+    return new Response('locationID did not resolve to a canonical ULID', { status: 400 });
+  }
+
+  // Idempotency
+  const idemKey = `stripe_processed:${paymentIntentId}`;
+  const seen = await env.KV_STATUS.get(idemKey);
+  if (seen) return new Response('OK', { status: 200 });
+
+  const ownKey = `ownership:${ulid}`;
+  const current = await env.KV_STATUS.get(ownKey, { type: 'json' }) as any;
+
+  const now = new Date();
+  const curUntil = current?.exclusiveUntil ? new Date(String(current.exclusiveUntil)) : null;
+  const base = (curUntil && !Number.isNaN(curUntil.getTime()) && curUntil > now) ? curUntil : now;
+
+  // Phase 1: minimum ownership extension = 30 days (campaign coverage logic can expand later)
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+  const newUntil = new Date(base.getTime() + THIRTY_DAYS_MS);
+
+  const rec = {
+    uid: ulid,
+    state: 'owned',
+    exclusiveUntil: newUntil.toISOString(),
+    source: ownershipSource,
+    lastEventId: paymentIntentId,
+    updatedAt: now.toISOString()
+  };
+
+  // Write ownership first; only then write idempotency marker
+  await env.KV_STATUS.put(ownKey, JSON.stringify(rec));
+  await env.KV_STATUS.put(idemKey, JSON.stringify({
+    paymentIntentId,
+    ulid,
+    ownershipSource,
+    processedAt: now.toISOString()
+  }));
+
+  return new Response('OK', { status: 200 });
 }
 
 export default {
@@ -70,6 +197,11 @@ export default {
     }
 
     try {
+      // --- Stripe webhook: /api/stripe/webhook (Phase 1: ownership writer)
+      if (pathname === "/api/stripe/webhook" && req.method === "POST") {
+        return await handleStripeWebhook(req, env);
+      }
+
       // --- QR image: /api/qr?locationID=...&c=...&fmt=svg|png&size=512
       if (pathname === "/api/qr" && req.method === "GET") {
         return await handleQr(req, env);

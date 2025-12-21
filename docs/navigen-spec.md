@@ -711,10 +711,19 @@ A) Ownership is not identity
 Ownership is a time-limited operational state derived from payment.
 There are no user accounts, no login identities, and no persistent owner records.
 
-B) Public analytics are structurally safe
-When an LPM is unowned, analytics may be public.
-Public analytics include counts and trends only.
-They never expose ratios, diagnostics, QA signals, or performance efficiency.
+B) Dash analytics are owner-gated
+
+Dash analytics are an owner capability and are not visible for unowned locations.
+
+When an LPM is unowned:
+• Dash access is blocked.
+• No real analytics are exposed (no partial metrics, no masked summaries).
+
+When an LPM is owned:
+• Dash access is exclusive to the Owner (requires valid owner session).
+• Merchant-facing Dash remains counts-only and merchant-safe.
+
+Example Dash is permitted only for NaviGen-designated Example Locations.
 
 C) Owner analytics are exclusive
 When an LPM is owned, analytics become exclusive to the Owner.
@@ -1938,12 +1947,11 @@ Promo QR (cashier redeem)              | Backend     | Backend                | 
 
 Notes:
 • “Blocked” means no real analytics data is returned under any circumstance.
-• Blocked Dash requests MUST render either:
-    - the Access-Required Interstitial (Appendix E), or
-    - redirect to Demo Dash (example analytics), depending on entry point.
-• Demo Dash is non-location-specific and never displays real LPM data.
-• Promo QR customer flows remain accessible regardless of ownership state;
-  ownership never blocks customer-facing promotions.
+• When Dash is blocked due to ownership state, the App must guide the user via:
+    - the “Owner settings” modal (when entry originated from an LPM), or
+    - the Owner Recovery page (when Dash is opened directly without LPM context).
+• Example Dash locations are permitted only when explicitly flagged (Section 8.3.1.1).
+• Promo QR customer flows remain accessible regardless of ownership state.
 • Backend-only operations (redeem validation, billing) are never gated by UI state.
 
 When Dash access is blocked for an unowned LPM:
@@ -2275,75 +2283,62 @@ Identical behavior with adaptive layout:
 6.2.7 Out-of-Scope  
 Promo logic defined in Section 3, modals defined in Section 12.
 
+--------------------------------------------------------------------
+
 6.2.8 Owner Platform Entry Points (LPM)
 
-The Location Profile Modal (LPM) is the primary surface where ownership actions
-are initiated or accessed.
+The Location Profile Modal (LPM) is the primary contextual entry point for owner actions.
 
-Owner-related CTAs in the LPM are strictly state-driven and mutually exclusive.
+Owner actions are invoked through a dedicated modal:
+• “Owner settings”
 
---------------------------------------------------------------------
-A) Unowned LPM
+Trigger:
+• User taps the 📈 (Stats) entry on the LPM.
 
-When an LPM is unowned (exclusiveUntil ≤ now):
-
-Visible CTAs:
-• “Run Campaign”
-• “Protect This Location” (optional alternative wording)
-
-Behavior:
-• Opens Owner Platform onboarding or campaign initiation flow.
-• Successful payment establishes ownership immediately.
-
-Rules:
-• No Owner Dashboard access is available.
-• No ownership indicators are shown.
+Behavior is state-driven:
 
 --------------------------------------------------------------------
-B) Owned LPM (Ownership active, no owner session)
+A) Owned LPM + Valid Owner Session
 
-When an LPM is owned but the visitor lacks a valid owner session:
-
-Visible indicators:
-• Ownership badge (e.g. “Owned”, shield/emoji allowed)
-
-Visible CTAs:
-• “Owner Dashboard”
-
-Behavior:
-• Attempts to open /dash/<location>.
-• MUST trigger Access-Required Interstitial if no valid owner session exists.
-
-Rules:
-• No campaign initiation CTAs are shown.
-• Ownership badge must not imply access without session.
+• 📈 opens the Dash normally for that LPM.
+• No owner prompt is shown.
 
 --------------------------------------------------------------------
-C) Owned LPM (Ownership active, valid owner session)
+B) Owned LPM + No Owner Session
 
-When an LPM is owned and the visitor has a valid owner session:
+• Dash access is blocked.
+• 📈 MUST open the “Owner settings” modal (not a redirect).
 
-Visible indicators:
-• Ownership badge
+“Owner settings” modal (owned/no-session) MUST include:
+• Restore access
+    - instruction: use most recent Owner access email / Stripe receipt
+    - CTA: opens Restore Access modal
+• See example dashboards
+    - CTA: opens Example Dashboards modal (3–6 example cards)
 
-Visible CTAs:
-• “Owner Dashboard”
-• Owner-only campaign and edit actions (as defined elsewhere)
-
-Behavior:
-• Owner Dashboard opens directly.
-• Owner capabilities are fully available.
+No campaign purchase actions are shown in this state.
 
 --------------------------------------------------------------------
-D) Ownership Expiry Transition
+C) Unowned LPM
 
-When ownership expires while viewing the LPM:
+• Dash access is blocked.
+• 📈 MUST open the “Owner settings” modal (not a redirect).
 
-• Ownership badge MUST be removed on next data refresh.
-• Owner Dashboard access MUST revert to public behavior.
-• “Run Campaign / Protect This Location” CTAs become visible again.
+“Owner settings” modal (unowned) MUST include:
+• Run campaign
+    - CTA: opens Campaign Setup modal (contextual to this LPM)
+• Protect this location
+    - CTA: opens Exclusive Operation Period modal (€5 / 30 days)
+• See example dashboards
+    - CTA: opens Example Dashboards modal (3–6 example cards)
 
-Transitions are backend-enforced and do not require page reload.
+--------------------------------------------------------------------
+D) Owner Settings Modal UI Contract
+
+• The modal is opened in-context from the LPM and must be dismissible (X).
+• Modal content MUST be translation-driven (t(key)).
+• The modal MUST NOT show any real analytics data for blocked states.
+• The modal MAY include a “Find my location” helper action (optional).
 
 --------------------------------------------------------------------
 
@@ -2618,6 +2613,39 @@ Share, Map, Contact, Save, Promo.
 
 6.7.5 Out-of-Scope  
 Component implementation details belong to Section 12.
+
+6.7.6 Root Shell Entry (No-Context)
+
+When the app is opened without a navigation context (root shell / no context list),
+NaviGen presents two non-location action groups above all other groups:
+
+• Business Owners
+• Individual Users
+
+These groups provide clear entry points without requiring an LPM context.
+
+Rules:
+• Business Owners and Individual Users are not data-driven location lists.
+• They must not reuse Popular/Accordion location button styles.
+• Their entries are rendered as card-style action buttons (modal-card language).
+• Both groups are collapsed by default when both are present.
+• In root/no-context mode, Popular should not be shown if it would be empty.
+
+Business Owners actions (minimum set):
+• Run campaign → opens Campaign Setup modal
+• Protect this location → opens Exclusive Operation Period modal (€5/30)
+• Restore access → opens Restore Access modal (email guidance)
+• See example dashboards → opens Example Dashboards modal
+• (Optional) Find my location → location selector / search helper
+
+Individual Users actions (minimum set):
+• How it works? → opens an explanatory modal
+• Install / Support → opens install/support UX entry
+• My Stuff → opens MSM
+• Promotions → opens Promotions modal
+• Help / Emergency → opens Help modal
+
+All labels and descriptions in these groups MUST be translation-driven (t(key)).
 
 --------------------------------------------------------------------
 
@@ -5223,7 +5251,8 @@ While owned:
 
 When ownership expires:
 
-• Dashboard analytics revert to the public state.
+• Dash access becomes blocked for that LPM.
+• No real analytics are exposed.
 • No historical data is deleted or altered.
 
 Visibility is binary; there are no partial or metric-level visibility tiers.
@@ -5533,7 +5562,7 @@ If ownership expires while a campaign is still active:
 • Ownership-based capabilities are revoked immediately.
 
 Effects of ownership expiry:
-• Dashboard analytics revert to public visibility.
+• Dash access becomes blocked for that LPM (no analytics shown).
 • Profile editing is disabled.
 • Campaign control (pause/resume/finish) is disabled.
 
@@ -6565,16 +6594,21 @@ Secondary guidance text:
 Rules:
 • The interstitial must not reveal owner-only data.
 • The interstitial must not infer or grant ownership.
-• The “Resend Owner access link” action sends a new signed link to the payor’s email.
+• No resend mechanism exists; recovery is guided via the most recent Owner access email / Stripe receipt.
 • No login, account creation, or identity prompt is permitted.
 
 --------------------------------------------------------------------
 
-Access-Required Interstitial (Analytics → Unowned LPM)
+Access-Blocked (Unowned LPM — LPM Entry)
 
-Trigger:
-This interstitial is shown when a user attempts to access
-/dashboard (/dash/<location>) for an unowned LPM.
+When a user attempts to open Dash for an unowned LPM via the LPM 📈 entry,
+the system MUST NOT render analytics or an analytics interstitial.
+
+Instead, the App MUST open the “Owner settings” modal (Section 6.2.8),
+providing contextual actions:
+• Run campaign
+• Protect this location (€5 / 30 days)
+• See example dashboards (Example Locations only)
 
 --------------------------------------------------------------------
 

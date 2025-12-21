@@ -587,6 +587,7 @@
   "dash.analytics.campaigns.label": "קמפיין",
   "dash.analytics.footer.brand": "{year} @ NaviGen — דוח עסקי",
   "dash.analytics.qa.scan-missing": "נרשמו מימושים ללא אירועי „QR פרסומי שהוצג” תואמים בתקופת הדוח. לרוב זה מצביע על כך שקודי ה-QR הוצגו מחוץ לטווח שנבחר.",
+  "dash.analytics.click.disclaimer": "הערה: ספירות הסריקות והקליקים עשויות להשתנות מעט בהתאם למכשיר ולהתנהגות המצלמה או קורא ה-QR, שאינן בשליטת NaviGen.",
   "group.business-owners": "",
   "group.individuals": "",
   "bo.card.runCampaign.title": "",

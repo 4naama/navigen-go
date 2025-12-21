@@ -587,6 +587,7 @@
   "dash.analytics.campaigns.label": "Campagne",
   "dash.analytics.footer.brand": "{year} @ NaviGen — Rapport d’activité",
   "dash.analytics.qa.scan-missing": "Des remboursements ont été enregistrés sans événements « QR promo affiché » correspondants dans cette période. Cela indique généralement que des QR promotionnels ont été affichés en dehors de la période sélectionnée.",
+  "dash.analytics.click.disclaimer": "Remarque : les nombres de scans et de clics peuvent varier légèrement selon l’appareil et le comportement de la caméra ou du lecteur QR, indépendamment du contrôle de NaviGen.",
   "group.business-owners": "",
   "group.individuals": "",
   "bo.card.runCampaign.title": "",

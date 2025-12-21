@@ -832,7 +832,7 @@ function renderCurrentView(){
       ['dash.qrcamp.col.brand',             'Brand'],
       ['dash.qrcamp.col.campaign-period',   'Campaign period'],
       ['dash.qrcamp.col.armed',             'Promo QR shown'],           // ARMED: times promo QR was displayed
-      ['dash.qrcamp.col.scans',             'Scans'],
+      // ['dash.qrcamp.col.scans',          'Scans'], // deprecated: static scans must not appear in campaign view
       ['dash.qrcamp.col.redemptions',       'Redemptions'],
       // ['dash.qrcamp.col.efficiency',     'Efficiency %'], // keep ratios out of Campaigns table; QA handles compliance
       ['dash.qrcamp.col.invalids',          'Invalid attempts'],
@@ -854,7 +854,7 @@ function renderCurrentView(){
     } else {
       const rowsHtml = data.map(row => {
         const armed = Number(row.armed ?? 0);
-        const scans = Number(row.scans ?? 0);
+        // const scans = Number(row.scans ?? 0); // deprecated: do not render campaign "scans"
         const redemptions = Number(row.redemptions ?? 0);
         const invalids = Number(row.invalids ?? 0);
 
@@ -875,7 +875,7 @@ function renderCurrentView(){
           row.brand || '',             // Brand
           row.period || '',
           armed,
-          scans,
+          // (no campaign scans cell)
           redemptions,
           // (no Efficiency % cell)
           invalids,
@@ -1103,11 +1103,16 @@ function renderCurrentView(){
       (typeof t === 'function' ? t('dash.tab.click-info') : '') ||
       'Click Info';
 
+    const clickDisclaimer =
+      (typeof t === 'function' ? t('dash.analytics.click.disclaimer') : '') ||
+      'Note: Scan and click counts can vary slightly by device and camera/QR reader behavior outside NaviGen’s control.';
+
     const clickSectionHtml = `
       <section class="analytics-section analytics-clicks">
         <h3>${clickHeading}</h3>
         <p>${clickSummary}</p>
         ${clickBarsHtml}
+        <p><small>${clickDisclaimer}</small></p>
       </section>
     `;
 

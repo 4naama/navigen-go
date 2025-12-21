@@ -8,7 +8,9 @@ const EVENT_ORDER = [
   "lpm-open","call","email","whatsapp","telegram","messenger",
   "official","booking","newsletter",
   "facebook","instagram","pinterest","spotify","tiktok","youtube",
-  "share","rating","save","unsave","map","qr-print","qr-scan","qr-view","qr-redeem"
+  "share","rating","save","unsave","map","qr-print","qr-scan","qr-view","qr-redeem",
+  "redeem-confirmation-cashier",    // cashier confirmed that a redeem event completed
+  "redeem-confirmation-customer"    // customer confirmed that a redeem event completed
 ] as const;
 
 type EventKey = typeof EVENT_ORDER[number];
@@ -136,6 +138,9 @@ export default {
 
         // Create redeem token for this location + campaign
         const token = await createRedeemToken(env.KV_STATS, locULID, chosenKey);
+
+        // Record that a promotion QR was shown (ARMED) for this campaign/location
+        await logQrArmed(env.KV_STATS, env, locULID, req, chosenKey);
 
         // Build Promotion QR URL using the original locationRaw (slug), not ULID
         const qrBase = siteOrigin || "https://navigen.io";
@@ -386,6 +391,7 @@ export default {
           scans: number;
           redemptions: number;
           invalids: number;
+          armed: number;                 // how many times a promotion QR was shown (ARMED)
           uniqueVisitors: Set<string>;
           repeatVisitors: Set<string>;
           uniqueRedeemers: Set<string>;
@@ -453,6 +459,7 @@ export default {
                 scans: 0,
                 redemptions: 0,
                 invalids: 0,
+                armed: 0,                         // promo QR shown counter
                 uniqueVisitors: new Set<string>(),
                 repeatVisitors: new Set<string>(),
                 uniqueRedeemers: new Set<string>(),
@@ -477,6 +484,11 @@ export default {
             // Invalid attempts (expired/used/invalid tokens)
             if (entry.signal === "invalid") {
               agg.invalids += 1;
+            }
+
+            // Promo QR shown (ARMED): track how many times a promotion QR was displayed
+            if (entry.signal === "armed") {
+              agg.armed += 1;
             }
 
             // Visitor identity (for now): derive from UA + country if visitor field is empty
@@ -510,11 +522,11 @@ export default {
             if (entry.country) {
               agg.countries.add(entry.country);
             }
-         
+
           }
           qrCursor = page.cursor || undefined;
         } while (qrCursor);
-        
+
         // Sort QR Info rows by time (newest first)
         qrInfo.sort((a, b) => {
           const ta = String(a.time || '');
@@ -525,7 +537,20 @@ export default {
         });
 
         // Serialize campaignsAgg into a simple array
-        const campaigns = Object.values(campaignsAgg)
+        const campaignAggValues = Object.values(campaignsAgg);
+
+        // Aggregate promo QR + redeem metrics across all campaigns for QA tagging.
+        let totalArmed = 0;
+        let totalRedeems = 0;
+        let totalInvalid = 0;
+        for (const agg of campaignAggValues) {
+          if ((agg.campaignKey || "").trim() === "") continue; // ignore "_no_campaign"
+          totalArmed += agg.armed;
+          totalRedeems += agg.redemptions;
+          totalInvalid += agg.invalids;
+        }
+
+        const campaigns = campaignAggValues
           // hide "_no_campaign" bucket (scans without a campaignKey)
           .filter(agg => (agg.campaignKey || "").trim() !== "")
           .map((agg) => {
@@ -551,6 +576,7 @@ export default {
               brand: meta?.brandKey || "",
               target: meta?.context || "",
               period: periodLabel,
+              armed: agg.armed,                     // Promo QR shown (ARMED)
               scans: agg.scans,
               redemptions: agg.redemptions,
               invalids: agg.invalids,
@@ -561,6 +587,53 @@ export default {
               locations: agg.countries.size
             };
           });
+
+        // Silent QA auto-tagging per location (internal only: admin dashboards, monitoring).
+        try {
+          const hasPromoActivity = totalArmed > 0 || totalRedeems > 0 || totalInvalid > 0;
+          if (hasPromoActivity) {
+            // Sum confirmation metrics from daily buckets
+            let cashierConfs = 0;
+            let customerConfs = 0;
+            for (const dayKey of Object.keys(days)) {
+              const bucket: any = (days as any)[dayKey] || {};
+              const cashierVal = Number(bucket["redeem-confirmation-cashier"] ?? bucket["redeem_confirmation_cashier"] ?? 0);
+              const customerVal = Number(bucket["redeem-confirmation-customer"] ?? bucket["redeem_confirmation_customer"] ?? 0);
+              if (cashierVal) cashierConfs += cashierVal;
+              if (customerVal) customerConfs += customerVal;
+            }
+
+            const totalRedeemAttempts = totalRedeems + totalInvalid;
+            const complianceRatio = totalArmed > 0 ? (totalRedeems / totalArmed) : null;
+            const invalidRatio = totalRedeemAttempts > 0 ? (totalInvalid / totalRedeemAttempts) : 0;
+            const cashierCoverage = totalRedeems > 0 ? (cashierConfs / totalRedeems) : null;
+            const customerCoverage = totalArmed > 0 ? (customerConfs / totalArmed) : null;
+
+            const flags: string[] = [];
+
+            if (complianceRatio !== null && complianceRatio < 0.7) {
+              flags.push("low-scan-discipline");
+            }
+            if (invalidRatio > 0.10 && totalInvalid >= 3) {
+              flags.push("high-invalid-attempts");
+            }
+            if (cashierCoverage !== null && cashierCoverage < 0.8) {
+              flags.push("low-cashier-coverage");
+            }
+            if (customerCoverage !== null && totalArmed >= 10 && customerCoverage < 0.5) {
+              flags.push("low-customer-confirmation");
+            }
+
+            if (!flags.length) {
+              flags.push("qa-ok");
+            }
+
+            // Fire-and-forget: do not delay the stats response.
+            ctx.waitUntil(writeQaFlags(env, loc, flags));
+          }
+        } catch {
+          // tagging errors must never break stats
+        }
 
         return json(
           {
@@ -626,6 +699,39 @@ export default {
       // --- Status: GET /api/status?locationID=...
       if (pathname === "/api/status" && req.method === "GET") {
         return await handleStatus(req, env);
+      }
+
+      // --- Redeem token status: GET /api/redeem-status?token=... (or &rt=...)
+      // Used by the customer device to detect when a promo QR token was actually redeemed.
+      if (pathname === "/api/redeem-status" && req.method === "GET") {
+        const u = new URL(req.url);
+        const token =
+          (u.searchParams.get("token") || "").trim() ||
+          (u.searchParams.get("rt") || "").trim();
+
+        if (!token) {
+          return json(
+            { error: { code: "invalid_request", message: "token required" } },
+            400
+          );
+        }
+
+        const key = `redeem:${token}`;
+        const raw = await env.KV_STATS.get(key, "text");
+
+        let status: "pending" | "redeemed" | "invalid" = "invalid";
+        if (raw) {
+          try {
+            const rec = JSON.parse(raw) as RedeemTokenRecord;
+            if (rec && rec.status === "fresh") status = "pending";
+            else if (rec && rec.status === "redeemed") status = "redeemed";
+            else status = "invalid";
+          } catch {
+            status = "invalid";
+          }
+        }
+
+        return json({ token, status }, 200);
       }
 
       // --- Outbound tracked redirect: /out/{event}/{id}?to=<url>
@@ -1247,6 +1353,26 @@ function aliasKey(legacy: string): string {
   return `alias:${legacy}`;
 }
 
+// Silent QA auto-tagging: store per-location QA flags alongside status/tier in KV_STATUS.
+// Flags are internal-only (admin dashboards, monitoring); merchants never see them.
+async function writeQaFlags(env: Env, locationID: string, flags: string[]): Promise<void> {
+  try {
+    const key = statusKey(locationID);
+    const raw = await env.KV_STATUS.get(key, "json");
+    const base: any = raw && typeof raw === "object" ? raw : {};
+
+    const next = {
+      ...base,
+      qaFlags: Array.isArray(flags) ? flags : [],
+      qaUpdatedAt: new Date().toISOString()
+    };
+
+    await env.KV_STATUS.put(key, JSON.stringify(next));
+  } catch {
+    // never throw from QA tagging; stats endpoint must not fail because of tagging
+  }
+}
+
 async function resolveUid(idOrAlias: string, env: Env): Promise<string | null> {
   if (!idOrAlias) return null;
   // If it looks like a ULID, accept directly; else try alias map
@@ -1447,10 +1573,8 @@ async function logQrScan(
     // provisional visitor identity (UA + country); no IP stored
     const visitor = `${ua}|${country}`;
 
-    // base origin for campaign data
-    const baseOrigin = "https://navigen.io";
-    const campaigns = await loadCampaigns(baseOrigin, env);
-    const campaignKey = pickCampaignForScan(campaigns, loc, day);
+    // Info QR scans must remain detached from campaigns
+    const campaignKey = ""; // Info QR scans must never attach to campaigns
 
     // Generate a short random scan ID (hex string)
     const bytes = new Uint8Array(6);
@@ -1474,6 +1598,59 @@ async function logQrScan(
     const key = `qrlog:${loc}:${day}:${scanId}`;
     // TTL: 56 days for QR logs (~8 weeks)
     const ttlSeconds = 56 * 24 * 60 * 60;
+    await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
+  } catch {
+    // never throw from logging; stats must not break the main flow
+  }
+}
+
+/**
+ * Log that a promotion QR was shown (ARMED) for a given campaign.
+ * This is called when /api/promo-qr is used to generate a promo QR code.
+ */
+async function logQrArmed(
+  kv: KVNamespace,
+  _env: Env,
+  loc: string,
+  req: Request,
+  campaignKey: string
+): Promise<void> {
+  try {
+    const now = new Date();
+    const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
+    const timeISO = now.toISOString();
+
+    const ua = req.headers.get("User-Agent") || "";
+    const lang = req.headers.get("Accept-Language") || "";
+
+    const country = ((req as any).cf?.country || "").toString();
+    const city = ((req as any).cf?.city || "").toString();
+    const source = "qr-redeem"; // same logical family as promotion QR
+    const signal = "armed";     // distinguishes promo QR shown from scans/redeems
+
+    const visitor = `${ua}|${country}`;
+
+    // explicit campaignKey: promo QR is always tied to a campaign
+    const keyBytes = new Uint8Array(6);
+    (crypto as any).getRandomValues(keyBytes);
+    const scanId = Array.from(keyBytes).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    const entry: QrLogEntry = {
+      time: timeISO,
+      locationID: loc,
+      day,
+      ua,
+      lang,
+      country,
+      city,
+      source,
+      signal,
+      visitor,
+      campaignKey
+    };
+
+    const key = `qrlog:${loc}:${day}:${scanId}`;
+    const ttlSeconds = 56 * 24 * 60 * 60; // align with other QR logs (~8 weeks)
     await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
   } catch {
     // never throw from logging; stats must not break the main flow
