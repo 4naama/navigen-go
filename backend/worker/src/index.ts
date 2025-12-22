@@ -146,6 +146,8 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
   // Raw body is required for signature verification
   const rawBuf = await req.arrayBuffer();
   const rawBytes = new Uint8Array(rawBuf);
+  // Decode once for optional text-based verification fallback (do NOT parse until verified).
+  const rawText = new TextDecoder().decode(rawBytes);
 
   // Verify against raw bytes (Stripe signs exact bytes)
   let secretRaw = String(env.STRIPE_WEBHOOK_SECRET || "").trim();
@@ -159,15 +161,40 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
   }
 
   // Safe fingerprint: lets us confirm which secret is deployed without exposing it.
-  const secretFpBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secretRaw));
+  const enc = new TextEncoder();
+  const secretFpBuf = await crypto.subtle.digest('SHA-256', enc.encode(secretRaw));
   const secretFp = hexPrefix(secretFpBuf, 6); // 12 hex chars
 
   // Allow a comma/whitespace-separated list to support safe multi-env deployments (test+live).
   const secrets = secretRaw.split(/[\s,]+/g).map(s => s.trim()).filter(Boolean);
 
-  let ok = false;
+  // Per-secret fingerprinting (safe): helps identify which candidate secrets are present.
+  const secretFps: string[] = [];
   for (const s of secrets) {
-    if (await verifyStripeSignatureBytes(rawBytes, sig, s)) { ok = true; break; }
+    const b = await crypto.subtle.digest('SHA-256', enc.encode(s));
+    secretFps.push(hexPrefix(b, 6)); // 12 hex chars each
+  }
+
+  // Fail loudly if the secret is not configured. (A silent 400 looks like a bad Stripe delivery.)
+  if (!secrets.length) {
+    const u = new URL(req.url);
+    console.error('stripe_webhook: secret_not_configured', { host: u.host, path: u.pathname });
+    return new Response('Stripe webhook secret not configured', { status: 500 });
+  }
+
+  let ok = false;
+  let verifyMode: 'bytes' | 'text' | null = null;
+  let bytesOk = false;
+  let textOk = false;
+
+  for (const s of secrets) {
+    // Try bytes first (canonical)
+    bytesOk = await verifyStripeSignatureBytes(rawBytes, sig, s);
+    if (bytesOk) { ok = true; verifyMode = 'bytes'; break; }
+
+    // Then try text fallback (diagnostic)
+    textOk = await verifyStripeSignature(rawText, sig, s);
+    if (textOk) { ok = true; verifyMode = 'text'; break; }
   }
 
   if (!ok) {
@@ -185,6 +212,7 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
 
     const nowSec = Math.floor(Date.now() / 1000);
 
+    const parsedForLog = parseStripeSigHeader(sig);
     console.warn('stripe_webhook: sig_invalid', {
       host: u.host,
       path: u.pathname,
@@ -192,14 +220,32 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
       contentEncoding: req.headers.get('content-encoding') || null,
       contentType: req.headers.get('content-type') || null,
       bodyLen: rawBytes.length,
-      secretFp
+
+      // Header parse diagnostics
+      sigParsed: !!parsedForLog,
+      v1Count: parsedForLog?.v1?.length || 0,
+      stripeAccount: req.headers.get("Stripe-Account") || "",
+
+      // Secret diagnostics
+      secretsCount: secrets.length,
+      secretFp,          // keep legacy combined fingerprint
+      secretFps,         // per-candidate fingerprints (safe)
+      bytesOk,
+      textOk
     });
 
     return new Response('Invalid Stripe signature', {
       status: 400,
       headers: {
-        // Safe diagnostics: helps prove which secret is deployed and whether body mutation/skew exists.
+        // Safe diagnostics: helps prove which secret is deployed and whether header parse looks sane.
         "x-ng-secretfp": secretFp,
+        "x-ng-secretfps": secretFps.join(","),      // per-candidate fingerprints
+        "x-ng-secrets": String(secrets.length),
+        "x-ng-worker": "navigen-api",
+        "x-ng-sigparsed": String(!!parsedForLog),
+        "x-ng-v1count": String(parsedForLog?.v1?.length || 0),
+
+        "x-ng-verify": verifyMode || "",
         "x-ng-skewsec": String(ts === null ? "" : (nowSec - ts)),
         "x-ng-encoding": req.headers.get("content-encoding") || "",
         "x-ng-bodylen": String(rawBytes.length)
@@ -270,7 +316,7 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
     processedAt: now.toISOString()
   }));
 
-  return new Response('OK', { status: 200 });
+  return new Response('OK', { status: 200, headers: { "x-ng-verify": verifyMode || "" } });
 }
 
 export default {
@@ -302,6 +348,19 @@ export default {
     }
 
     try {
+      // --- Stripe diag: /api/_diag/stripe-secret (safe fingerprint only)
+      if (normPath === "/api/_diag/stripe-secret" && req.method === "GET") {
+        const secretRaw = (env.STRIPE_WEBHOOK_SECRET || "").trim();
+        const enc = new TextEncoder();
+        const fpBuf = await crypto.subtle.digest("SHA-256", enc.encode(secretRaw));
+        const fp = hexPrefix(fpBuf, 6);
+        return new Response(JSON.stringify({
+          hasSecret: !!secretRaw,
+          secretLen: secretRaw.length,
+          secretFp: fp
+        }), { status: 200, headers: { "content-type": "application/json", "x-ng-worker": "navigen-api" } });
+      }
+
       // --- Stripe webhook: /api/stripe/webhook (Phase 1: ownership writer)
       if (normPath === "/api/stripe/webhook" && req.method === "POST") {
         return await handleStripeWebhook(req, env);
