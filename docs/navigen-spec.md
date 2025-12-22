@@ -1619,6 +1619,7 @@ It MUST expose only absolute counts and non-interpretive facts, including:
 - Repeat redeemers
 - Locations
 - Campaign period and status
+- (No campaign “Scans” column; static scans are not campaign metrics)
 
 The Campaigns view MUST NOT expose ratios, percentages, or derived performance metrics
 (e.g. “Efficiency %”, “Conversion rate”, “Scan discipline”).

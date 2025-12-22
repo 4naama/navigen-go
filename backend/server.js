@@ -43,10 +43,16 @@ const priceIds = {
 //};
 
 app.post('/create-checkout-session', async (req, res) => {
-  const { amount } = req.body;
+  const { amount, locationID } = req.body;
   const priceId = priceIds[amount];
 
   if (!priceId) return res.status(400).json({ error: 'Invalid donation amount' });
+  const isOwnership = Boolean(String(locationID || '').trim());
+
+  // Ownership checkouts require a real locationID; donations do not.
+  if (isOwnership && !String(locationID || '').trim()) {
+    return res.status(400).json({ error: 'Missing locationID for ownership checkout' });
+  }
 
   try {
     console.log("amount:", amount, "priceId:", priceId); // ✅ inside try
@@ -57,6 +63,23 @@ app.post('/create-checkout-session', async (req, res) => {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: 'https://navigen.io/?thanks&sid={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://navigen.io/?cancel',
+
+      // 🔑 Ownership metadata (Phase 1)
+      // Include a fingerprint so Stripe Events prove which creator produced the session.
+      metadata: {
+        ng_source: "backend_server_js",
+        locationID: String(locationID).trim(),
+        ownershipSource: "exclusive",
+        initiationType: "owner"
+      },
+      payment_intent_data: {
+        metadata: {
+          ng_source: "backend_server_js",
+          locationID: String(locationID).trim(),
+          ownershipSource: "exclusive",
+          initiationType: "owner"
+        }
+      }
     });
 
     res.json({ sessionId: session.id });
@@ -84,8 +107,11 @@ app.get("/stripe/session", async (req, res) => {
 
     // Extract minimal fields needed
     const result = {
+      id: session.id,
       amount_total: session.amount_total,
-      currency: session.currency
+      currency: session.currency,
+      session_metadata: session.metadata || {},
+      payment_intent: session.payment_intent || null
     };
 
     res.json(result);

@@ -88,7 +88,48 @@ async function verifyStripeSignature(rawBody: string, sigHeader: string, secret:
   const expected = await hmacSha256Hex(secret, signedPayload);
 
   // accept if any v1 matches (Stripe may send multiple)
-  return parsed.v1.some(v => v === expected);
+  return parsed.v1.some(v => v.toLowerCase() === expected.toLowerCase());
+}
+
+// Stripe signs the exact raw request bytes: HMAC_SHA256(secret, `${t}.${rawBody}`).
+// This verifier avoids decode/re-encode mismatches and must be used for webhook authenticity checks.a
+async function verifyStripeSignatureBytes(rawBody: Uint8Array, sigHeader: string, secret: string, toleranceSec = 300): Promise<boolean> {
+  const parsed = parseStripeSigHeader(sigHeader);
+  if (!parsed) return false;
+
+  const ts = Number(parsed.t);
+  if (!Number.isFinite(ts)) return false;
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSec - ts) > toleranceSec) return false;
+
+  const enc = new TextEncoder();
+  const prefix = enc.encode(`${parsed.t}.`);
+  const signed = new Uint8Array(prefix.length + rawBody.length);
+  signed.set(prefix, 0);
+  signed.set(rawBody, prefix.length);
+
+  const expected = await (async () => {
+    const key = await crypto.subtle.importKey(
+      'raw',
+      enc.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, signed);
+    return bytesToHex(new Uint8Array(sig));
+  })();
+
+  return parsed.v1.some(v => v.toLowerCase() === expected.toLowerCase());
+}
+
+function hexPrefix(buf: ArrayBuffer, nBytes = 4): string {
+  const bytes = new Uint8Array(buf);
+  const take = Math.min(bytes.length, nBytes);
+  let out = '';
+  for (let i = 0; i < take; i++) out += bytes[i].toString(16).padStart(2, '0');
+  return out;
 }
 
 // --- Ownership writer (Phase 1): KV_STATUS keys ---
@@ -96,15 +137,77 @@ async function verifyStripeSignature(rawBody: string, sigHeader: string, secret:
 // - stripe_processed:<payment_intent.id>
 async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
   const sig = req.headers.get('Stripe-Signature') || '';
-  if (!sig) return new Response('Missing Stripe-Signature header', { status: 400 });
+  if (!sig) {
+    const u = new URL(req.url);
+    console.warn('stripe_webhook: missing_signature_header', { host: u.host, path: u.pathname });
+    return new Response('Missing Stripe-Signature header', { status: 400 });
+  }
 
   // Raw body is required for signature verification
   const rawBuf = await req.arrayBuffer();
-  const rawBody = new TextDecoder().decode(rawBuf);
+  const rawBytes = new Uint8Array(rawBuf);
 
-  const ok = await verifyStripeSignature(rawBody, sig, env.STRIPE_WEBHOOK_SECRET);
-  if (!ok) return new Response('Invalid Stripe signature', { status: 400 });
+  // Verify against raw bytes (Stripe signs exact bytes)
+  let secretRaw = String(env.STRIPE_WEBHOOK_SECRET || "").trim();
+  // Guard against accidental surrounding quotes (common when pasting secrets via shells/UIs).
+  if (
+    (secretRaw.startsWith('"') && secretRaw.endsWith('"')) ||
+    (secretRaw.startsWith("'") && secretRaw.endsWith("'")) ||
+    (secretRaw.startsWith("`") && secretRaw.endsWith("`"))
+  ) {
+    secretRaw = secretRaw.slice(1, -1).trim();
+  }
 
+  // Safe fingerprint: lets us confirm which secret is deployed without exposing it.
+  const secretFpBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secretRaw));
+  const secretFp = hexPrefix(secretFpBuf, 6); // 12 hex chars
+
+  // Allow a comma/whitespace-separated list to support safe multi-env deployments (test+live).
+  const secrets = secretRaw.split(/[\s,]+/g).map(s => s.trim()).filter(Boolean);
+
+  let ok = false;
+  for (const s of secrets) {
+    if (await verifyStripeSignatureBytes(rawBytes, sig, s)) { ok = true; break; }
+  }
+
+  if (!ok) {
+    const u = new URL(req.url);
+
+    // Parse Stripe timestamp to detect tolerance/skew issues (without trusting clocks blindly).
+    let ts: number | null = null;
+    try {
+      const parsed = parseStripeSigHeader(sig);
+      ts = parsed ? Number(parsed.t) : null;
+      if (ts !== null && !Number.isFinite(ts)) ts = null;
+    } catch {
+      ts = null;
+    }
+
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    console.warn('stripe_webhook: sig_invalid', {
+      host: u.host,
+      path: u.pathname,
+      skewSec: ts === null ? null : (nowSec - ts),
+      contentEncoding: req.headers.get('content-encoding') || null,
+      contentType: req.headers.get('content-type') || null,
+      bodyLen: rawBytes.length,
+      secretFp
+    });
+
+    return new Response('Invalid Stripe signature', {
+      status: 400,
+      headers: {
+        // Safe diagnostics: helps prove which secret is deployed and whether body mutation/skew exists.
+        "x-ng-secretfp": secretFp,
+        "x-ng-skewsec": String(ts === null ? "" : (nowSec - ts)),
+        "x-ng-encoding": req.headers.get("content-encoding") || "",
+        "x-ng-bodylen": String(rawBytes.length)
+      }
+    });
+  }
+
+  const rawBody = new TextDecoder().decode(rawBytes); // decode only after signature verification
   let evt: any = null;
   try { evt = JSON.parse(rawBody); } catch { return new Response('Invalid JSON', { status: 400 }); }
 
@@ -121,8 +224,10 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
   const ownershipSource = String(meta.ownershipSource || '').trim();   // "campaign" | "exclusive"
   const initiationType = String(meta.initiationType || '').trim();     // "owner" | "agent" | "platform"
 
+  // Non-ownership checkouts (e.g. donations) may have empty metadata.
+  // We must acknowledge the webhook to prevent Stripe retries and simply ignore it.
   if (!locationID || !ownershipSource || !initiationType) {
-    return new Response('Missing required metadata (locationID/ownershipSource/initiationType)', { status: 400 });
+    return new Response('Ignored (no ownership metadata)', { status: 200 });
   }
 
   // Resolve slug → ULID (authoritative)
@@ -198,7 +303,7 @@ export default {
 
     try {
       // --- Stripe webhook: /api/stripe/webhook (Phase 1: ownership writer)
-      if (pathname === "/api/stripe/webhook" && req.method === "POST") {
+      if (normPath === "/api/stripe/webhook" && req.method === "POST") {
         return await handleStripeWebhook(req, env);
       }
 

@@ -12,7 +12,7 @@ routes = [
   { pattern = "navigen.io/api/status",          zone_name = "navigen.io" },
   { pattern = "navigen.io/api/stats",           zone_name = "navigen.io" },
   { pattern = "navigen.io/api/stats/entity",    zone_name = "navigen.io" },
-  { pattern = "navigen.io/api/stripe/webhook",  zone_name = "navigen.io" }
+  { pattern = "navigen.io/api/stripe/webhook*",  zone_name = "navigen.io" }
 ]
 
 [vars]
