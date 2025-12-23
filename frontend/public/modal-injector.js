@@ -411,32 +411,29 @@ async function openPromotionQrModal(modal, data) {
       inner.appendChild(summary);
     }
 
-    // 3) Meta group (B): keep State + In-store + Code note together with single spacing (small)
-    const stateText   = tmpl('promotion.state.available', 'State: AVAILABLE');
-    const inStoreOnly = tmpl('promotion.instore-only', 'For in-store redemption.');
-    const codeNote    = tmpl('promotion.code-note', 'Each code is valid for one purchase.');
+    // Expires line (under the grey card)
+    if (daysLeftText) {
+      const pExpires = document.createElement('p');
+      pExpires.textContent = daysLeftText; // promotion.period-expires
+      pExpires.style.textAlign = 'left';
+      pExpires.style.fontSize = '0.85em';
+      pExpires.style.opacity = '0.8';
+      inner.appendChild(pExpires);
+    }
 
-    const pMeta = document.createElement('p');
-    pMeta.style.textAlign = 'left';
-    pMeta.style.fontSize = '0.85em'; // small
-    pMeta.style.opacity = '0.8';
-
-    // Order is explicit: State → In-store → Code note
-    pMeta.innerHTML = `${stateText}<br>${inStoreOnly}<br>${codeNote}`;
-
-    inner.appendChild(pMeta);
-
-
-    // 8) In-store warning (as is)
-    const warnText = tmpl(
-      'promo.qr.wait',
-      'For in-store redemption only. The offer is valid only when scanned by the cashier.'
-    );
-    const pWarn = document.createElement('p');
-    pWarn.textContent = warnText;
-    pWarn.style.textAlign = 'left';
-    inner.appendChild(pWarn);
-
+    // Single in-store + scan rule line
+    {
+      const warnText = tmpl(
+        'promo.qr.wait',
+        'The offer is valid for in-store redemption and only when scanned by the cashier.'
+      );
+      const pWarn = document.createElement('p');
+      pWarn.textContent = warnText;
+      pWarn.style.textAlign = 'left';
+      pWarn.style.fontSize = '0.85em';
+      pWarn.style.opacity = '0.8';
+      inner.appendChild(pWarn);
+    }
 
     // 9) Button: “I’m at the cashier — 🔳 show my code”
     const btnWrap = document.createElement('div');
