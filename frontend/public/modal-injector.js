@@ -3142,7 +3142,7 @@ export function showPromotionsModal() {
 
       showModal("promotions-modal");
       setupTapOutClose("promotions-modal");
-    })
+    }
     .catch(() => {
       renderEmpty(t("promotions.error") || "Promotions are unavailable right now.");
       showModal("promotions-modal");
