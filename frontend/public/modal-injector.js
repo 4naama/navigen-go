@@ -3131,11 +3131,7 @@ export function showPromotionsModal() {
           </div>
         `;
 
-          const lp = String(camp.locationID || '').trim();
-          if (!lp) return;
-
-          window.location.href = `${location.origin}/?lp=${encodeURIComponent(lp)}`;
-        });
+        // promotion cards are informational only (no click handlers)
 
         list.appendChild(row);
       });
