@@ -165,6 +165,13 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
   const secretFpBuf = await crypto.subtle.digest('SHA-256', enc.encode(secretRaw));
   const secretFp = hexPrefix(secretFpBuf, 6); // 12 hex chars
 
+  // Reject obviously invalid/misconfigured secrets early.
+  // Stripe webhook signing secrets are "whsec_..." and are long; anything else is a config error.
+  if (secretRaw.length < 20 || !secretRaw.startsWith("whsec_")) {
+    console.error("stripe_webhook: secret_invalid", { secretLen: secretRaw.length, secretFp });
+    return new Response("Stripe webhook secret invalid/misconfigured", { status: 500 });
+  }
+
   // Allow a comma/whitespace-separated list to support safe multi-env deployments (test+live).
   const secrets = secretRaw.split(/[\s,]+/g).map(s => s.trim()).filter(Boolean);
 
