@@ -2480,31 +2480,6 @@ button:hover {
   font-size:1.1em;
 }
 
-/* Promotions modal — static informational cards */
-.promotion-static {
-  cursor: default;
-}
-
-.promotion-static:hover {
-  background: #f8f8f8; /* no lift, no affordance */
-  border-color: #e0e0e0;
-  transform: none;
-}
-
-.promotion-static .promotion-actions-col {
-  display: none; /* hide chevron + arrow entirely */
-}
-
-.promotion-static .promo-location {
-  font-size: 0.9em;
-  opacity: 0.75;
-}
-
-.promotion-static .promo-dates {
-  font-size: 0.85em;
-  opacity: 0.7;
-}
-
 /* Promotions modal: reduce inner horizontal padding so the grey card can use more width */
 #promotions-modal .modal-body {
   padding-inline: 0;              /* keep only the modal-content side padding for this modal */
