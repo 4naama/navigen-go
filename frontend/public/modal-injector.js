@@ -388,28 +388,27 @@ async function openPromotionQrModal(modal, data) {
     const inner = document.createElement('div');
     inner.className = 'modal-body-inner';
 
-    // 1) Main offer line
-    if (promoLine) {
-      const p1 = document.createElement('p');
-      p1.textContent = promoLine;
-      p1.style.textAlign = 'left';
-      inner.appendChild(p1);
-    }
+    // 1–2) Promotion summary card (non-clickable; no chevron/arrow)
+    {
+      const safeDate = (v) => {
+        const s = String(v || '').trim();
+        return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+      };
 
-    // 2) Period group (A): keep the two lines together with single spacing (no label line)
-    if (startDate && endDate) {
-      const rangeTemplate = tmpl('promotion.period-range', '{{startDate}} → {{endDate}}');
-      const rangeLine = applyTemplate(rangeTemplate, { startDate, endDate });
+      const startStr = safeDate(startDate);
+      const endStr = safeDate(endDate);
+      const range = (startStr && endStr) ? `${startStr} \u2192 ${endStr}` : '';
 
-      const pPeriod = document.createElement('p');
-      pPeriod.style.textAlign = 'left';
-
-      // Order is explicit: Range → Expires (single-spacing group)
-      let html = `${rangeLine}`;
-      if (daysLeftText) html += `<br>${daysLeftText}`;
-      pPeriod.innerHTML = html;
-
-      inner.appendChild(pPeriod);
+      const summary = document.createElement('div');
+      summary.className = 'modal-menu-item promo-summary-card';
+      summary.innerHTML = `
+        <div class="label" style="flex:1 1 auto; min-width:0;">
+          <strong>${discountText}</strong><br>
+          <small>${locName}</small><br>
+          ${range ? `<small>${range}</small>` : ``}
+        </div>
+      `;
+      inner.appendChild(summary);
     }
 
     // 3) Meta group (B): keep State + In-store + Code note together with single spacing (small)
@@ -3105,9 +3104,9 @@ export function showPromotionsModal() {
 
       const formatDate = (value) => {
         if (!value) return "";
-        const d = new Date(value);
-        if (Number.isNaN(d.getTime())) return "";
-        return d.toISOString().slice(0, 10);
+        // Sheet dates are already YYYY-MM-DD; render as-is to avoid timezone shifts.
+        const s = String(value).trim();
+        return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
       };
 
       running.forEach((camp) => {

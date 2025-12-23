@@ -2497,6 +2497,14 @@ button:hover {
   padding-inline: 0;              /* inner container adds no extra gutter */
 }
 
+/* Promotion Details: summary card is informational only (no pointer affordance) */
+.promo-summary-card{
+  cursor: default;
+}
+.promo-summary-card:hover{
+  background:#f8f8f8;      /* keep same grey; no hover affordance */
+}
+
 /* Donation modal: match Promotions roomy card feel + keep a bottom gap */
 #donation-modal .modal-body {
   padding-inline: 0;              /* cards get width from modal-content; inner handles gutters */
