@@ -3111,9 +3111,8 @@ export function showPromotionsModal() {
       };
 
       running.forEach((camp) => {
-        const row = document.createElement("button");
-        row.type = "button";
-        row.className = "modal-menu-item promotion-item";
+        const row = document.createElement("div");
+        row.className = "modal-menu-item promotion-item promotion-static";
 
         const campaignName = String(camp.campaignName || "").trim();
         const locationName = String(camp.locationName || "").trim();
@@ -3127,31 +3126,10 @@ export function showPromotionsModal() {
         row.innerHTML = `
           <div class="label" style="flex:1 1 auto; min-width:0;">
             <strong>${campaignName || (t("promotion.unnamed") || "Promotion")}</strong><br>
-            ${locationName ? `<small>${locationName}</small><br>` : ""}
-            ${range ? `<small>${range}</small>` : ""}
-          </div>
-
-          <div class="promotion-actions-col" aria-hidden="false">
-            <span class="promotion-chevron" aria-hidden="true">▾</span>
-            <button type="button" class="promotion-lpm-link" aria-label="Open location">➡️</button>
+            ${locationName ? `<div class="promo-location">${locationName}</div>` : ""}
+            ${range ? `<div class="promo-dates">${range}</div>` : ""}
           </div>
         `;
-
-        row.addEventListener("click", () => {
-          hideModal("promotions-modal");
-          openPromotionQrModal(row, {
-            locationID: camp.locationID,
-            locationName: camp.locationName,
-            name: camp.locationName,
-            displayName: camp.locationName
-          });
-        });
-
-        // ➡️ opens the LPM hosting the campaign (same-tab navigation; app boot opens ?lp=...).
-        row.querySelector('.promotion-lpm-link')?.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          hideModal("promotions-modal");
 
           const lp = String(camp.locationID || '').trim();
           if (!lp) return;
