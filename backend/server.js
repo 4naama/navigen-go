@@ -26,6 +26,12 @@ app.options('*', cors());
 
 app.use(express.json());
 
+// 🔎 Runtime identity marker (deploy/debug only)
+app.use((req, res, next) => {
+  res.set("x-ng-backend", "navigen-go-serverjs-IDENTITY-2025-12-23");
+  next();
+});
+
 // 💳 Stripe Price IDs
 
 // 🔒 Live mode (commented out)
@@ -64,25 +70,31 @@ app.post('/create-checkout-session', async (req, res) => {
       success_url: 'https://navigen.io/?thanks&sid={CHECKOUT_SESSION_ID}',
       cancel_url: 'https://navigen.io/?cancel',
 
-      // 🔑 Ownership metadata (Phase 1)
-      // Include a fingerprint so Stripe Events prove which creator produced the session.
-      metadata: {
+      // 🔑 Ownership / Donation metadata (Phase 1)
+      // Ownership is explicit and requires a real locationID.
+      metadata: isOwnership ? {
         ng_source: "backend_server_js",
         locationID: String(locationID).trim(),
         ownershipSource: "exclusive",
         initiationType: "owner"
+      } : {
+        ng_source: "backend_server_js",
+        initiationType: "donation"
       },
       payment_intent_data: {
-        metadata: {
+        metadata: isOwnership ? {
           ng_source: "backend_server_js",
           locationID: String(locationID).trim(),
           ownershipSource: "exclusive",
           initiationType: "owner"
+        } : {
+          ng_source: "backend_server_js",
+          initiationType: "donation"
         }
       }
     });
 
-    res.json({ sessionId: session.id });
+    res.json({ sessionId: session.id, url: session.url });
   } catch (err) {
     console.error("Stripe error:", err.message);
     res.status(500).json({ error: err.message });
@@ -103,7 +115,7 @@ app.get("/stripe/session", async (req, res) => {
   if (!sessionId) return res.status(400).json({ error: "Missing session ID" });
 
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ["payment_intent"] });
 
     // Extract minimal fields needed
     const result = {
@@ -111,9 +123,11 @@ app.get("/stripe/session", async (req, res) => {
       amount_total: session.amount_total,
       currency: session.currency,
       session_metadata: session.metadata || {},
-      payment_intent: session.payment_intent || null
+      payment_intent: session.payment_intent || null,
+      url: session.url || null
     };
 
+    res.set("x-ng-backend", "server-js-v3");
     res.json(result);
   } catch (err) {
     console.error("Stripe session fetch error:", err.message);
