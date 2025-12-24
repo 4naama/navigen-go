@@ -403,7 +403,7 @@ function renderPopularGroup(list = geoPoints) {
   container.prepend(section);
 }
 
-// ✅ Root-shell action groups (non-geo): Business Owners + Individuals
+// ✅ Root-shell action groups (non-geo): Business Owners + Individual Users
 // - Uses BO card styles (bo-menu-list / bo-menu-item)
 // - Collapsed by default
 // - All text via t(keys)
@@ -541,10 +541,10 @@ function renderBusinessOwnersGroup() {
   });
 }
 
-function renderIndividualsGroup() {
+function renderIndividualUsersGroup() {
   renderRootActionGroup({
-    groupKey: "group.individuals",
-    defaultTitleKey: "group.individuals",
+    groupKey: "group.individual-users",
+    defaultTitleKey: "group.individual-users",
     cards: [
       {
         icon: "❓",
@@ -1694,7 +1694,7 @@ async function initEmergencyBlock(countryOverride) {
       
     // Root/no-context shell: show action groups and skip Popular/Accordion rendering
     if (!ACTIVE_PAGE || (Array.isArray(apiItems) && apiItems.length === 0)) {
-      renderIndividualsGroup();
+      renderIndividualUsersGroup();
       renderBusinessOwnersGroup();
     } else {
       renderPopularGroup(popularCtx);

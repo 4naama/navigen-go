@@ -585,7 +585,7 @@
   "dash.analytics.qa.scan-missing": "Redemptions were recorded without any matching \"promo QR shown\" events in this reporting window. This usually means that promo QR codes were displayed outside the selected period.",
   "dash.analytics.click.disclaimer": "Note: Scan and click counts can vary slightly by device and camera/QR reader behavior outside NaviGen’s control.",
   "group.business-owners": "Business Owners",
-  "group.individuals": "Individual Users",
+  "group.individual-users": "Individual Users",
   "bo.card.runCampaign.title": "Run campaign",
   "bo.card.runCampaign.desc": "Start a promotion and unlock analytics for a location.",
   "bo.card.protect.title": "Protect this location",

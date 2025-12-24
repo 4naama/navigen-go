@@ -2511,6 +2511,12 @@ button:hover {
   font-weight:600;
 }
 
+/* Campaign Redemption QR modal: highlight wait time (soft red) */
+.qr-wait-highlight{
+  color:#b42318;
+  font-weight:600;
+}
+
 /* Donation modal: match Promotions roomy card feel + keep a bottom gap */
 #donation-modal .modal-body {
   padding-inline: 0;              /* cards get width from modal-content; inner handles gutters */

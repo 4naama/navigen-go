@@ -86,23 +86,27 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   // 1) main instruction
   const pInstr = document.createElement('p');
   pInstr.textContent = descText;
-  pInstr.style.textAlign = 'center';
+  pInstr.style.textAlign = 'left';
+  pInstr.style.fontSize = '0.85em';
   pInstr.style.marginTop = '1rem';
   pInstr.style.marginBottom = '0'; // eliminate space before the next paragraph
   inner.appendChild(pInstr);
 
   // 2) terms + scan wait notice (kept together, single spacing)
   const pTerms = document.createElement('p');
-  pTerms.style.textAlign = 'center';
-  pTerms.style.fontSize = '0.9em';
+  pTerms.style.textAlign = 'left';
+  pTerms.style.fontSize = '0.85em';
   pTerms.style.opacity = '0.8';
   pTerms.style.marginTop = '0'; // eliminate space after instruction paragraph
 
   // Order is explicit:
   // 1) Agreement line
   // 2) Scan → confirmation wait line
-  pTerms.innerHTML =
-    `${warningText}<br><br>${termsText}`;
+  const warningHtml = String(warningText).replace(
+    /10–20 seconds|10-20 seconds/i,
+    `<span class="qr-wait-highlight">$&</span>`
+  );
+  pTerms.innerHTML = `${warningHtml}<br><br>${termsText}`;
 
   inner.appendChild(pTerms);
 
