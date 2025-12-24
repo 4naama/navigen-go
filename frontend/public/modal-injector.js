@@ -414,7 +414,11 @@ async function openPromotionQrModal(modal, data) {
     // Expires line (under the grey card)
     if (daysLeftText) {
       const pExpires = document.createElement('p');
-      pExpires.textContent = daysLeftText; // promotion.period-expires
+      // Highlight the "N days" tail (soft-alert color)
+      const m = String(daysLeftText).match(/^(.*?)(\b\d+\s+days\b.*)$/i);
+      pExpires.innerHTML = m
+        ? `${m[1]}<span class="promo-expires-days">${m[2]}</span>`
+        : String(daysLeftText);
       pExpires.style.textAlign = 'left';
       pExpires.style.fontSize = '0.85em';
       pExpires.style.opacity = '0.8';

@@ -1694,8 +1694,8 @@ async function initEmergencyBlock(countryOverride) {
       
     // Root/no-context shell: show action groups and skip Popular/Accordion rendering
     if (!ACTIVE_PAGE || (Array.isArray(apiItems) && apiItems.length === 0)) {
-      renderBusinessOwnersGroup();
       renderIndividualsGroup();
+      renderBusinessOwnersGroup();
     } else {
       renderPopularGroup(popularCtx);
     }
