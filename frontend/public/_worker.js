@@ -373,6 +373,24 @@ export default {
       });
     }
 
+    // /owner/* — proxy to API Worker (Owner Platform sensitive routes must be network-only)
+    if (url.pathname.startsWith('/owner/')) {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const r = await fetch(target.toString(), {
+        method: req.method,
+        headers: req.headers,
+        redirect: 'manual'
+      });
+
+      // Pass through Set-Cookie + Location and force no-store to avoid any intermediary caching.
+      const h = new Headers(r.headers);
+      h.set('Cache-Control', 'no-store');
+
+      return new Response(r.body, { status: r.status, headers: h });
+    }
+
     // /api/_diag/* — proxy to API Worker (safe diagnostics only; keep Pages non-authoritative)
     if (url.pathname.startsWith('/api/_diag/')) {
       const apiBase = 'https://navigen-api.4naama.workers.dev';

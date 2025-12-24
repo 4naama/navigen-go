@@ -23,6 +23,7 @@ routes = [
 # JWT_SECRET = ""
 # STRIPE_SECRET_KEY = ""
 # STRIPE_WEBHOOK_SECRET = ""
+# OWNER_LINK_HMAC_SECRET = ""
 
 # --- KV bindings (PROD) ---
 [[kv_namespaces]]

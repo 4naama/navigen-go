@@ -39,6 +39,7 @@ export interface Env {
   JWT_SECRET: string; // set via wrangler secret
   // STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
+  OWNER_LINK_HMAC_SECRET: string; // HMAC secret for signed owner access links (Phase 2)
 }
 
 // --- Stripe webhook verification (HMAC SHA-256) ---
@@ -130,6 +131,209 @@ function hexPrefix(buf: ArrayBuffer, nBytes = 4): string {
   let out = '';
   for (let i = 0; i < take; i++) out += bytes[i].toString(16).padStart(2, '0');
   return out;
+}
+
+// --- Owner access session (Phase 2) ---
+// Signed link token exchange: /owner/exchange?tok=...&sig=...
+// - Verifies HMAC signature (server-only secret)
+// - Enforces exp + purpose
+// - Enforces single-use via ownerlink_used:<jti> (KV_STATUS)
+// - Verifies active ownership via ownership:<ULID>.exclusiveUntil
+// - Creates opsess:<sessionId> and sets HttpOnly cookie op_sess=<sessionId>
+
+const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+
+function b64urlToBytes(s: string): Uint8Array {
+  const pad = s.length % 4 === 0 ? "" : "=".repeat(4 - (s.length % 4));
+  const b64 = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function bytesToB64url(bytes: Uint8Array): string {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+async function hmacSha256B64url(secret: string, msgBytes: Uint8Array): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, msgBytes);
+  return bytesToB64url(new Uint8Array(sig));
+}
+
+// Constant-time-ish compare to reduce timing signal. (Edge runtime; keep simple and deterministic.)
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= (a.charCodeAt(i) ^ b.charCodeAt(i));
+  return out === 0;
+}
+
+type OwnerLinkPayload = {
+  ver: number;
+  ulid: string;
+  iat: number;
+  exp: number;
+  jti: string;
+  purpose: string;
+};
+
+function parseOwnerLinkPayload(payloadBytes: Uint8Array): OwnerLinkPayload | null {
+  try {
+    const txt = new TextDecoder().decode(payloadBytes);
+    const j = JSON.parse(txt) as any;
+
+    const ver = Number(j?.ver);
+    const ulid = String(j?.ulid || "").trim();
+    const iat = Number(j?.iat);
+    const exp = Number(j?.exp);
+    const jti = String(j?.jti || "").trim();
+    const purpose = String(j?.purpose || "").trim();
+
+    if (!Number.isFinite(ver) || ver < 1) return null;
+    if (!ULID_RE.test(ulid)) return null;
+    if (!Number.isFinite(iat) || !Number.isFinite(exp)) return null;
+    if (!jti) return null;
+    if (purpose !== "owner-dash") return null;
+
+    return { ver, ulid, iat, exp, jti, purpose };
+  } catch {
+    return null;
+  }
+}
+
+function cookieSerialize(name: string, value: string, attrs: Record<string, string | boolean | number | undefined>): string {
+  const parts: string[] = [`${name}=${value}`];
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === undefined) continue;
+    if (v === true) parts.push(k);
+    else parts.push(`${k}=${String(v)}`);
+  }
+  return parts.join("; ");
+}
+
+async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
+  const u = new URL(req.url);
+  const tok = (u.searchParams.get("tok") || "").trim();
+  const sig = (u.searchParams.get("sig") || "").trim();
+
+  if (!tok || !sig) {
+    return new Response("Denied", { status: 400, headers: { "cache-control": "no-store" } });
+  }
+
+  const secret = String(env.OWNER_LINK_HMAC_SECRET || "").trim();
+  if (secret.length < 32) {
+    // Misconfiguration: fail closed (do not create sessions).
+    console.error("owner_exchange: secret_invalid", { secretLen: secret.length });
+    return new Response("Owner exchange misconfigured", { status: 500, headers: { "cache-control": "no-store" } });
+  }
+
+  // Verify signature over the *exact* tok bytes (base64url string → bytes).
+  // This avoids JSON re-serialization mismatches. Issuer must sign the same tok bytes.
+  let tokBytes: Uint8Array;
+  try {
+    tokBytes = b64urlToBytes(tok);
+  } catch {
+    return new Response("Denied", { status: 400, headers: { "cache-control": "no-store" } });
+  }
+
+  const expected = await hmacSha256B64url(secret, tokBytes);
+  if (!safeEqual(expected, sig)) {
+    return new Response("Denied", { status: 403, headers: { "cache-control": "no-store" } });
+  }
+
+  const payload = parseOwnerLinkPayload(tokBytes);
+  if (!payload) {
+    return new Response("Denied", { status: 403, headers: { "cache-control": "no-store" } });
+  }
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (nowSec > payload.exp) {
+    return new Response("Denied", { status: 403, headers: { "cache-control": "no-store" } });
+  }
+
+  // Enforce single-use
+  const usedKey = `ownerlink_used:${payload.jti}`;
+  const used = await env.KV_STATUS.get(usedKey);
+  if (used) {
+    return new Response("Denied", { status: 403, headers: { "cache-control": "no-store" } });
+  }
+
+  // Verify active ownership
+  const ownKey = `ownership:${payload.ulid}`;
+  const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+
+  const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+  const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+  if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+    return new Response("Denied", { status: 403, headers: { "cache-control": "no-store" } });
+  }
+
+  // Create sessionId (unguessable)
+  const sidBytes = new Uint8Array(18);
+  (crypto as any).getRandomValues(sidBytes);
+  const sessionId = bytesToB64url(sidBytes);
+
+  const createdAt = new Date();
+  // Phase 2: session expiry MUST NOT exceed ownership.exclusiveUntil.
+  const expiresAt = exclusiveUntil;
+
+  const sessKey = `opsess:${sessionId}`;
+  const sessVal = {
+    ver: 1,
+    ulid: payload.ulid,
+    createdAt: createdAt.toISOString(),
+    expiresAt: expiresAt.toISOString()
+  };
+
+  // Compute Max-Age (seconds), bounded and non-negative
+  const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - createdAt.getTime()) / 1000));
+
+  // Two-step write; ensure ownerlink_used is not written unless session is created.
+  try {
+    await env.KV_STATUS.put(sessKey, JSON.stringify(sessVal), { expirationTtl: Math.max(60, maxAge) });
+
+    try {
+      await env.KV_STATUS.put(
+        usedKey,
+        JSON.stringify({ ulid: payload.ulid, usedAt: createdAt.toISOString() }),
+        { expirationTtl: 60 * 60 * 24 * 7 } // keep single-use markers for a week
+      );
+    } catch (e) {
+      // Fail closed: do not leave an orphan session if single-use marker failed.
+      try { await env.KV_STATUS.delete(sessKey); } catch {}
+      throw e;
+    }
+  } catch {
+    return new Response("Denied", { status: 500, headers: { "cache-control": "no-store" } });
+  }
+
+  const cookie = cookieSerialize("op_sess", sessionId, {
+    Path: "/",
+    HttpOnly: true,
+    Secure: true,
+    SameSite: "Lax",
+    "Max-Age": maxAge
+  });
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      "Set-Cookie": cookie,
+      "Location": `/dash/${encodeURIComponent(payload.ulid)}`,
+      "cache-control": "no-store"
+    }
+  });
 }
 
 // --- Ownership writer (Phase 1): KV_STATUS keys ---
@@ -368,6 +572,11 @@ export default {
         }), { status: 200, headers: { "content-type": "application/json", "x-ng-worker": "navigen-api" } });
       }
 
+      // --- Owner exchange: /owner/exchange (Phase 2: signed link → cookie session)
+      if (normPath === "/owner/exchange" && req.method === "GET") {
+        return await handleOwnerExchange(req, env);
+      }
+
       // --- Stripe webhook: /api/stripe/webhook (Phase 1: ownership writer)
       if (normPath === "/api/stripe/webhook" && req.method === "POST") {
         return await handleStripeWebhook(req, env);
@@ -460,6 +669,80 @@ export default {
           discountKind: campaign.discountKind || "",
           discountValue: campaign.discountValue
         }, 200);
+      }
+
+      // --- Admin mint (TEMP): GET /api/admin/mint-ownerlink?ulid=<ULID>&ttl=<seconds>
+      // Returns a signed owner access link for Phase 2 testing (no accounts).
+      // Guarded by Authorization: Bearer <JWT_SECRET>. Remove after Phase 2 validation.
+      if (pathname === "/api/admin/mint-ownerlink" && req.method === "GET") {
+        const auth = req.headers.get("Authorization") || "";
+        if (!auth.startsWith("Bearer ")) {
+          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
+        }
+        const token = auth.slice(7).trim();
+        if (!token || token !== env.JWT_SECRET) {
+          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
+        }
+
+        const u = new URL(req.url);
+        const ulid = (u.searchParams.get("ulid") || "").trim();
+        const ttlRaw = (u.searchParams.get("ttl") || "900").trim(); // default 15 min
+        const ttl = Math.max(60, Math.min(3600, parseInt(ttlRaw, 10) || 900)); // clamp: 1m..60m
+
+        if (!ULID_RE.test(ulid)) {
+          return json({ error:{ code:"bad_request", message:"Invalid ulid" } }, 400);
+        }
+
+        const secret = String(env.OWNER_LINK_HMAC_SECRET || "").trim();
+        if (secret.length < 32) {
+          return json({ error:{ code:"misconfigured", message:"OWNER_LINK_HMAC_SECRET missing/too short" } }, 500);
+        }
+
+        // Require active ownership at mint-time to avoid generating links for inactive locations.
+        const ownKey = `ownership:${ulid}`;
+        const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+        const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+        const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+
+        if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+          return json({ error:{ code:"forbidden", message:"No active ownership for ulid" } }, 403);
+        }
+
+        const nowSec = Math.floor(Date.now() / 1000);
+
+        // jti: unguessable unique id
+        const jtiBytes = new Uint8Array(12);
+        (crypto as any).getRandomValues(jtiBytes);
+        const jti = bytesToB64url(jtiBytes);
+
+        const payload: OwnerLinkPayload = {
+          ver: 1,
+          ulid,
+          iat: nowSec,
+          exp: nowSec + ttl,
+          jti,
+          purpose: "owner-dash"
+        };
+
+        const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
+        const tok = bytesToB64url(payloadBytes);
+
+        // IMPORTANT: sign the decoded tok bytes (which are exactly payloadBytes).
+        const sig = await hmacSha256B64url(secret, payloadBytes);
+
+        const exchangePath = `/owner/exchange?tok=${encodeURIComponent(tok)}&sig=${encodeURIComponent(sig)}`;
+
+        return json({
+          ok: true,
+          ulid,
+          ttl,
+          tok,
+          sig,
+          exchangePath,
+          // Convenience: some clients want explicit timestamps too.
+          expiresAt: new Date((payload.exp) * 1000).toISOString(),
+          jti
+        }, 200, { "cache-control": "no-store" });
       }
 
       // --- Admin purge (one-off): POST /api/admin/purge-legacy
