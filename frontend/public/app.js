@@ -1947,7 +1947,11 @@ async function initEmergencyBlock(countryOverride) {
           .replace(/^\/[a-z]{2}\//i, "")  // strip ANY 2-letter lang prefix like /en/, /de/, /it/ …
           .replace(/\/$/, "");
         const ctx = (metaCtx || ctxFromPath).toLowerCase();
-        const snake = (s) => s.replace(/[^\w]+/g, "_");
+        const snake = (s) => String(s || '')
+          .toLowerCase()
+          .replace(/\./g, '_')          // never allow dotted suffixes (e.g. ".de")
+          .replace(/[^a-z0-9]+/g, "_")  // stable: only underscores as separators
+          .replace(/^_+|_+$/g, "");     // trim
 
         // build cascade: full ctx → parents → default
         const parts = ctx ? ctx.split("/").filter(Boolean) : [];

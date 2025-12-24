@@ -89,7 +89,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   pInstr.style.textAlign = 'left';
   pInstr.style.fontSize = '0.85em';
   pInstr.style.marginTop = '1rem';
-  pInstr.style.marginBottom = '0'; // eliminate space before the next paragraph
+  pInstr.style.marginBottom = '1rem'; // blank line before the next paragraph
   inner.appendChild(pInstr);
 
   // 2) terms + scan wait notice (kept together, single spacing)
@@ -97,7 +97,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   pTerms.style.textAlign = 'left';
   pTerms.style.fontSize = '0.85em';
   pTerms.style.opacity = '0.8';
-  pTerms.style.marginTop = '0'; // eliminate space after instruction paragraph
+  pTerms.style.marginTop = '0'; // keep top flush; spacing is owned by pInstr marginBottom
 
   // Order is explicit:
   // 1) Agreement line
@@ -3483,38 +3483,6 @@ export function showFavoritesModal() {
         }
 
         renderLocationHistory(); // 📍 Inject saved locations or empty state
-      }
-
-      else if (item.view === "social") {
-        
-      modal.classList.remove("modal-menu", "modal-language", "modal-action", "modal-alert");
-      modal.classList.add("modal-social");     
-        
-        body.innerHTML = `
-          <!-- 🌐 Social Links -->
-          <div class="modal-social-body">
-            <div class="social-link-grid">
-              <a href="https://www.facebook.com/SzigetFestival" class="social-icon" target="_blank" rel="noopener">
-                <img src="/assets/social/icons-facebook.svg" alt="Facebook">
-              </a>
-              <a href="https://www.instagram.com/szigetofficial/" class="social-icon" target="_blank" rel="noopener">
-                <img src="/assets/social/icons-instagram.svg" alt="Instagram">
-              </a>
-              <a href="https://www.youtube.com/user/szigetofficial" class="social-icon" target="_blank" rel="noopener">
-                <img src="/assets/social/icons-youtube.svg" alt="YouTube">
-              </a>
-              <a href="https://www.tiktok.com/@szigetofficial/" class="social-icon" target="_blank" rel="noopener">
-                <img src="/assets/social/icons-tiktok.svg" alt="TikTok">
-              </a>
-              <a href="https://open.spotify.com/user/szigetfestivalofficial" class="social-icon" target="_blank" rel="noopener">
-                <img src="/assets/social/icons-spotify.svg" alt="Spotify">
-              </a>
-              <a href="https://www.linkedin.com/company/sziget-cultural-management-ltd/" class="social-icon" target="_blank" rel="noopener">
-                <img src="/assets/social/icons-linkedin.svg" alt="LinkedIn">
-              </a>
-            </div>
-          </div>
-        `;
       }
 
       else if (item.view === "reset") {
