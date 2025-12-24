@@ -1944,14 +1944,10 @@ async function initEmergencyBlock(countryOverride) {
         // pick context from meta or path; fallback to default key
         const metaCtx = document.querySelector('meta[name="navigen-context"]')?.content?.trim() || "";
         const ctxFromPath = location.pathname
-          .replace(/^\/[a-z]{2}\//i, "")  // strip ANY 2-letter lang prefix like /en/, /de/, /it/ …
+          .replace(/^\/[a-z]{2}(?:\/|$)/i, "")  // strip lang prefix for BOTH "/de" and "/de/..."
           .replace(/\/$/, "");
         const ctx = (metaCtx || ctxFromPath).toLowerCase();
-        const snake = (s) => String(s || '')
-          .toLowerCase()
-          .replace(/\./g, '_')          // never allow dotted suffixes (e.g. ".de")
-          .replace(/[^a-z0-9]+/g, "_")  // stable: only underscores as separators
-          .replace(/^_+|_+$/g, "");     // trim
+        const snake = (s) => s.replace(/[^\w]+/g, "_");
 
         // build cascade: full ctx → parents → default
         const parts = ctx ? ctx.split("/").filter(Boolean) : [];
