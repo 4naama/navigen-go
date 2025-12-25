@@ -428,10 +428,7 @@ export default {
         status: r.status,
         headers: {
           'content-type': r.headers.get('content-type') || 'application/json',
-          'Cache-Control': 'no-store',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-          'Access-Control-Allow-Headers': req.headers.get('access-control-request-headers') || 'Content-Type'
+          'Cache-Control': 'no-store'
         }
       });
     }
@@ -479,6 +476,16 @@ export default {
       const out = new Response(shell.body, { status: 200, headers: new Headers(shell.headers) });
       out.headers.set('x-ng-worker', 'ok'); // keep debug header
       return out;
+    }
+
+    // Phase 3: block dashboard shell if no owner session cookie is present.
+    // Keeps unauthorized users from loading a shell that cannot fetch data.
+    if (url.pathname === '/dash' || url.pathname.startsWith('/dash/')) {
+      const cookie = req.headers.get('cookie') || '';
+      const hasSess = /\bop_sess=/.test(cookie);
+      if (!hasSess) {
+        return Response.redirect(`${url.origin}/`, 302);
+      }
     }
 
     // Serve Dashboard shell for /dash and /dash/* (returns /dash/index.html)

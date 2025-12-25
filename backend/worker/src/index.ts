@@ -222,6 +222,67 @@ function cookieSerialize(name: string, value: string, attrs: Record<string, stri
   return parts.join("; ");
 }
 
+function readCookie(header: string, name: string): string {
+  const h = String(header || "");
+  const parts = h.split(";");
+  for (const p of parts) {
+    const [k, ...rest] = p.trim().split("=");
+    if (!k) continue;
+    if (k === name) return rest.join("=").trim();
+  }
+  return "";
+}
+
+type OwnerSession = {
+  ver: number;
+  ulid: string;
+  createdAt: string;
+  expiresAt: string;
+};
+
+async function requireOwnerSession(req: Request, env: Env): Promise<{ ulid: string } | Response> {
+  const sid = readCookie(req.headers.get("Cookie") || "", "op_sess");
+  if (!sid) {
+    return new Response("Denied", {
+      status: 401,
+      headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+    });
+  }
+
+  const sessKey = `opsess:${sid}`;
+  const sess = await env.KV_STATUS.get(sessKey, { type: "json" }) as OwnerSession | null;
+  if (!sess || !sess.ulid) {
+    return new Response("Denied", {
+      status: 401,
+      headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+    });
+  }
+
+  const exp = new Date(String(sess.expiresAt || ""));
+  if (Number.isNaN(exp.getTime()) || exp.getTime() <= Date.now()) {
+    // Session expired; fail closed. (We do not rely on cookie expiry alone.)
+    return new Response("Denied", {
+      status: 401,
+      headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+    });
+  }
+
+  // Ensure ownership is still active for this ULID (defense-in-depth)
+  const ownKey = `ownership:${sess.ulid}`;
+  const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+
+  const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+  const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+  if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+    return new Response("Denied", {
+      status: 403,
+      headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+    });
+  }
+
+  return { ulid: String(sess.ulid).trim() };
+}
+
 async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
   const u = new URL(req.url);
   const tok = (u.searchParams.get("tok") || "").trim();
@@ -858,9 +919,27 @@ export default {
       }
 
       // GET /api/stats?locationID=.
+      // Phase 3: owner session required; requested location must match the session ULID.
       if (url.pathname === "/api/stats" && req.method === "GET") {
+        const auth = await requireOwnerSession(req, env);
+        if (auth instanceof Response) return auth;
+
         const locRaw = (url.searchParams.get("locationID") || "").trim();
-        const loc = (await resolveUid(locRaw, env)) || locRaw;
+        const locResolved = (await resolveUid(locRaw, env)) || locRaw;
+        const loc = String(locResolved || "").trim();
+
+        if (!loc || !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(loc)) {
+          return json({ error: { code: "invalid_request", message: "locationID, from, to required (YYYY-MM-DD)" } }, 400);
+        }
+
+        // Enforce single-ULID session binding
+        if (loc !== auth.ulid) {
+          return new Response("Denied", {
+            status: 403,
+            headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+          });
+        }
+
         const from = (url.searchParams.get("from") || "").trim();
         const to = (url.searchParams.get("to") || "").trim();
         const tz = (url.searchParams.get("tz") || "").trim() || undefined;
@@ -1183,8 +1262,13 @@ export default {
       }
 
       // GET /api/stats/entity?entityID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
+      // Phase 3: owner session required; entity access allowed only if the session ULID is in entity:<id>:locations.
       if (url.pathname === "/api/stats/entity" && req.method === "GET") {
+        const auth = await requireOwnerSession(req, env);
+        if (auth instanceof Response) return auth;
+
         const ent  = (url.searchParams.get("entityID")||"").trim();
+
         const from = (url.searchParams.get("from")||"").trim();
         const to   = (url.searchParams.get("to")  ||"").trim();
         const tz   = (url.searchParams.get("tz")  ||"").trim() || undefined;
@@ -1196,6 +1280,15 @@ export default {
         // Format: KV key entity:<entityID>:locations => JSON array of locationIDs
         const raw = await env.KV_STATUS.get(`entity:${ent}:locations`);
         const locs: string[] = raw ? JSON.parse(raw) : [];
+
+        // Single-ULID session binding: entity sums are allowed only if the session ULID is explicitly part of the entity.
+        if (!Array.isArray(locs) || !locs.includes(auth.ulid)) {
+          return new Response("Denied", {
+            status: 403,
+            headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+          });
+        }
+
         const days: Record<string, Partial<Record<EventKey, number>>> = {};
 
         for (const loc of locs) {

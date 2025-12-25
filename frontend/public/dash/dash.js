@@ -413,7 +413,7 @@ function hashVisitorId(s) {
 
 async function fetchStats() {
   // single source for all stats calls
-  const base = 'https://navigen-api.4naama.workers.dev';
+  const base = location.origin;
   const periodDays = Number(periodEl?.value) || 14;
   const end = day(TODAY);                               // today (local)
   const start = new Date(end.getTime() - (periodDays - 1) * 86400e3);
@@ -431,7 +431,7 @@ async function fetchStats() {
     ? new URL(`/api/stats/entity?entityID=${encodeURIComponent(entEl.value)}&from=${from}&to=${to}`, base)
     : new URL(`/api/stats?locationID=${encodeURIComponent(locId)}&from=${from}&to=${to}`, base);
 
-  const res = await fetch(q, { cache: 'no-store' });
+  const res = await fetch(q, { cache: 'no-store', credentials: 'include' });
   if (!res.ok) {
     const txt = await res.text().catch(()=>String(res.status));
     throw new Error(`Stats error ${res.status}: ${txt}`);
