@@ -387,6 +387,7 @@ export default {
       // Pass through Set-Cookie + Location and force no-store to avoid any intermediary caching.
       const h = new Headers(r.headers);
       h.set('Cache-Control', 'no-store');
+      h.set('Referrer-Policy', 'no-referrer');
 
       return new Response(r.body, { status: r.status, headers: h });
     }

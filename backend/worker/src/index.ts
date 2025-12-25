@@ -227,15 +227,17 @@ async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
   const tok = (u.searchParams.get("tok") || "").trim();
   const sig = (u.searchParams.get("sig") || "").trim();
 
+  const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+
   if (!tok || !sig) {
-    return new Response("Denied", { status: 400, headers: { "cache-control": "no-store" } });
+    return new Response("Denied", { status: 400, headers: noStoreHeaders });
   }
 
   const secret = String(env.OWNER_LINK_HMAC_SECRET || "").trim();
   if (secret.length < 32) {
     // Misconfiguration: fail closed (do not create sessions).
     console.error("owner_exchange: secret_invalid", { secretLen: secret.length });
-    return new Response("Owner exchange misconfigured", { status: 500, headers: { "cache-control": "no-store" } });
+    return new Response("Owner exchange misconfigured", { status: 500, headers: noStoreHeaders });
   }
 
   // Verify signature over the *exact* tok bytes (base64url string → bytes).
@@ -244,29 +246,29 @@ async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
   try {
     tokBytes = b64urlToBytes(tok);
   } catch {
-    return new Response("Denied", { status: 400, headers: { "cache-control": "no-store" } });
+    return new Response("Denied", { status: 400, headers: noStoreHeaders });
   }
 
   const expected = await hmacSha256B64url(secret, tokBytes);
   if (!safeEqual(expected, sig)) {
-    return new Response("Denied", { status: 403, headers: { "cache-control": "no-store" } });
+    return new Response("Denied", { status: 403, headers: noStoreHeaders });
   }
 
   const payload = parseOwnerLinkPayload(tokBytes);
   if (!payload) {
-    return new Response("Denied", { status: 403, headers: { "cache-control": "no-store" } });
+    return new Response("Denied", { status: 403, headers: noStoreHeaders });
   }
 
   const nowSec = Math.floor(Date.now() / 1000);
   if (nowSec > payload.exp) {
-    return new Response("Denied", { status: 403, headers: { "cache-control": "no-store" } });
+    return new Response("Denied", { status: 403, headers: noStoreHeaders });
   }
 
   // Enforce single-use
   const usedKey = `ownerlink_used:${payload.jti}`;
   const used = await env.KV_STATUS.get(usedKey);
   if (used) {
-    return new Response("Denied", { status: 403, headers: { "cache-control": "no-store" } });
+    return new Response("Denied", { status: 403, headers: noStoreHeaders });
   }
 
   // Verify active ownership
@@ -276,7 +278,7 @@ async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
   const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
   const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
   if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
-    return new Response("Denied", { status: 403, headers: { "cache-control": "no-store" } });
+    return new Response("Denied", { status: 403, headers: noStoreHeaders });
   }
 
   // Create sessionId (unguessable)
@@ -315,7 +317,7 @@ async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
       throw e;
     }
   } catch {
-    return new Response("Denied", { status: 500, headers: { "cache-control": "no-store" } });
+    return new Response("Denied", { status: 500, headers: noStoreHeaders });
   }
 
   const cookie = cookieSerialize("op_sess", sessionId, {
@@ -331,7 +333,7 @@ async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
     headers: {
       "Set-Cookie": cookie,
       "Location": `/dash/${encodeURIComponent(payload.ulid)}`,
-      "cache-control": "no-store"
+      ...noStoreHeaders
     }
   });
 }
@@ -671,80 +673,6 @@ export default {
         }, 200);
       }
 
-      // --- Admin mint (TEMP): GET /api/admin/mint-ownerlink?ulid=<ULID>&ttl=<seconds>
-      // Returns a signed owner access link for Phase 2 testing (no accounts).
-      // Guarded by Authorization: Bearer <JWT_SECRET>. Remove after Phase 2 validation.
-      if (pathname === "/api/admin/mint-ownerlink" && req.method === "GET") {
-        const auth = req.headers.get("Authorization") || "";
-        if (!auth.startsWith("Bearer ")) {
-          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
-        }
-        const token = auth.slice(7).trim();
-        if (!token || token !== env.JWT_SECRET) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
-        }
-
-        const u = new URL(req.url);
-        const ulid = (u.searchParams.get("ulid") || "").trim();
-        const ttlRaw = (u.searchParams.get("ttl") || "900").trim(); // default 15 min
-        const ttl = Math.max(60, Math.min(3600, parseInt(ttlRaw, 10) || 900)); // clamp: 1m..60m
-
-        if (!ULID_RE.test(ulid)) {
-          return json({ error:{ code:"bad_request", message:"Invalid ulid" } }, 400);
-        }
-
-        const secret = String(env.OWNER_LINK_HMAC_SECRET || "").trim();
-        if (secret.length < 32) {
-          return json({ error:{ code:"misconfigured", message:"OWNER_LINK_HMAC_SECRET missing/too short" } }, 500);
-        }
-
-        // Require active ownership at mint-time to avoid generating links for inactive locations.
-        const ownKey = `ownership:${ulid}`;
-        const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
-        const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
-        const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
-
-        if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
-          return json({ error:{ code:"forbidden", message:"No active ownership for ulid" } }, 403);
-        }
-
-        const nowSec = Math.floor(Date.now() / 1000);
-
-        // jti: unguessable unique id
-        const jtiBytes = new Uint8Array(12);
-        (crypto as any).getRandomValues(jtiBytes);
-        const jti = bytesToB64url(jtiBytes);
-
-        const payload: OwnerLinkPayload = {
-          ver: 1,
-          ulid,
-          iat: nowSec,
-          exp: nowSec + ttl,
-          jti,
-          purpose: "owner-dash"
-        };
-
-        const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
-        const tok = bytesToB64url(payloadBytes);
-
-        // IMPORTANT: sign the decoded tok bytes (which are exactly payloadBytes).
-        const sig = await hmacSha256B64url(secret, payloadBytes);
-
-        const exchangePath = `/owner/exchange?tok=${encodeURIComponent(tok)}&sig=${encodeURIComponent(sig)}`;
-
-        return json({
-          ok: true,
-          ulid,
-          ttl,
-          tok,
-          sig,
-          exchangePath,
-          // Convenience: some clients want explicit timestamps too.
-          expiresAt: new Date((payload.exp) * 1000).toISOString(),
-          jti
-        }, 200, { "cache-control": "no-store" });
-      }
-
       // --- Admin purge (one-off): POST /api/admin/purge-legacy
       // Merges stats:<loc>:<day>:<event_with_underscores> → hyphen, or burns legacy keys entirely.
       if (pathname === "/api/admin/purge-legacy" && req.method === "POST") {
@@ -753,8 +681,13 @@ export default {
           return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
         }
         const token = auth.slice(7).trim();
-        if (!token || token !== env.JWT_SECRET) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
+        const expected = String(env.JWT_SECRET || "").trim();
+        if (!expected) {
+          // Misconfiguration must be explicit; otherwise you chase ghosts.
+          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
+        }
+        if (!token || token.trim() !== expected) {
+          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control": "no-store" });
         }
 
         const body = await req.json().catch(() => ({}));
@@ -801,8 +734,13 @@ export default {
           return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
         }
         const token = auth.slice(7).trim();
-        if (!token || token !== env.JWT_SECRET) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
+        const expected = String(env.JWT_SECRET || "").trim();
+        if (!expected) {
+          // Misconfiguration must be explicit; otherwise you chase ghosts.
+          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
+        }
+        if (!token || token.trim() !== expected) {
+          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control": "no-store" });
         }
 
         let cursor: string|undefined = undefined;
@@ -850,8 +788,13 @@ export default {
           return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
         }
         const token = auth.slice(7).trim();
-        if (!token || token !== env.JWT_SECRET) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403);
+        const expected = String(env.JWT_SECRET || "").trim();
+        if (!expected) {
+          // Misconfiguration must be explicit; otherwise you chase ghosts.
+          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
+        }
+        if (!token || token.trim() !== expected) {
+          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control": "no-store" });
         }
 
         // Load profiles.json from caller origin (keeps staging/prod safe)

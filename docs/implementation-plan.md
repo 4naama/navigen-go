@@ -60,6 +60,37 @@ Ship gate:
 • Stripe retries never mutate ownership state twice
 
 --------------------------------------------------------------------
+📌 Phase 1 status (locked)
+--------------------------------------------------------------------
+
+✅ Stripe webhook endpoint live (API Worker authoritative)
+
+✅ Stripe signature verification enforced
+
+✅ Required ownership metadata validated
+    (locationID, ownershipSource, initiationType)
+
+✅ Alias → ULID resolution working
+
+✅ Idempotency enforced by payment_intent.id
+
+✅ Ownership record written exactly once
+    (ownership:<ULID> in KV_STATUS)
+
+✅ Ownership extension is monotonic (exclusiveUntil)
+
+✅ Replay / resend safe
+    (stripe_processed:<payment_intent.id>)
+
+✅ Invalid / partial events produce no writes
+
+✅ API Worker is the sole ownership writer
+
+✅ No UI, no sessions, no Dash coupling (scope respected)
+
+✅ No spec changes required
+
+--------------------------------------------------------------------
 PHASE 2 — OWNER ACCESS SESSION (NO ACCOUNTS)
 --------------------------------------------------------------------
 
@@ -269,6 +300,26 @@ Phase 2 is complete when:
 • Expired/invalid links never create sessions
 • Ownership expiry invalidates sessions (by contract, enforced later)
 • Existing QR/promo/stats behaviors remain unchanged
+
+--------------------------------------------------------------------
+📌 Phase 2 status (locked)
+--------------------------------------------------------------------
+
+✅ Signed owner links
+
+✅ Single-use enforced
+
+✅ Ownership validated
+
+✅ Session cookie hardened
+
+✅ Replay blocked
+
+✅ Referrer leakage prevented
+
+✅ TEMP endpoints removed
+
+✅ No spec changes required
 
 --------------------------------------------------------------------
 PHASE 3 — DASH & STATS GATING (OWNER-ONLY ANALYTICS)
