@@ -413,12 +413,13 @@ export default {
       const apiBase = 'https://navigen-api.4naama.workers.dev';
       const target = new URL(url.pathname + url.search, apiBase);
 
+      const h = new Headers(req.headers);         // forward Cookie + all client headers
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
       const r = await fetch(target.toString(), {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'X-NG-Source': 'pages-worker'
-        }
+        headers: h
       });
 
       const body = await r.text();
