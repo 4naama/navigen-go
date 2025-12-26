@@ -44,3 +44,8 @@ public/data/data-safe/
 backend/worker/node_modules/
 backend/worker/package-lock.json
 
+
+# secrets
+backend/worker/ownerlink_secret.txt
+ownerlink_secret.txt
+
