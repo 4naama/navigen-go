@@ -36,6 +36,17 @@ Thumbs.db
 .idea/
 *.swp
 
+# Prevent runbooks anywhere (defense-in-depth)
+**/runbook.md
+**/runbook*.md
+**/RUNBOOK.md
+**/RUNBOOK*.md
+
+# Internal / operational docs (must never ship)
+docs/runbook.md
+docs/runbook*.md
+docs/internal/
+
 # Do not commit private data
 public/data/data-safe/
 !public/data/data-safe/.gitkeep
