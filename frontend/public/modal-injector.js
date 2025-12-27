@@ -501,7 +501,7 @@ async function resolveULIDFor(idOrSlug) {
   const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
 
   try {
-    const url = `${TRACK_BASE}/api/stats?locationID=${encodeURIComponent(s)}&from=${iso(today)}&to=${iso(today)}`;
+    const url = `${location.origin}/api/stats?locationID=${encodeURIComponent(s)}&from=${iso(today)}&to=${iso(today)}`;
     const r = await fetch(url, { cache: 'no-store' });
     if (!r.ok) return '';
     const j = await r.json().catch(() => null);
