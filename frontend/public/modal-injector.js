@@ -2001,7 +2001,7 @@ async function initLpmImageSlider(modal, data) {
         // We never infer authority from the client; this is only to choose the correct Owner settings variant.
         const isOwnedByStatus = async () => {
           try {
-            const u = new URL('/api/status', TRACK_BASE);
+            const u = new URL('/api/status', location.origin);
             u.searchParams.set('locationID', target);
             const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
             if (!r.ok) return false;
@@ -2021,7 +2021,7 @@ async function initLpmImageSlider(modal, data) {
           const from = iso(today), to = iso(today);
 
           try {
-            const u = new URL('/api/stats', TRACK_BASE);
+            const u = new URL('/api/stats', location.origin);
             u.searchParams.set('locationID', target); // may be ULID or slug; backend resolves to canonical ULID
             u.searchParams.set('from', from);
             u.searchParams.set('to', to);
