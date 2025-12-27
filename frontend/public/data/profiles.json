@@ -6543,6 +6543,7 @@
         "en": "World of Souvenir Deák"
       },
       "Visible": "Yes",
+      "exampleLocation": true,
       "Priority": "Yes",
       "groupKey": "🛒 Shops",
       "subgroupKey": "sub.souvenirs",

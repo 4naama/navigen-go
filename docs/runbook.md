@@ -306,3 +306,104 @@ Visibility is enforced by backend only.
 If this invariant holds, the Owner Platform is safe.
 
 ***End of RUNBOOK.md***
+
+Test plan (save for later)
+0) Preconditions (what you need ready)
+
+You need three identities to run the full matrix later:
+
+Unowned location (slug/ULID)
+
+no ownership:<ULID> or exclusiveUntil expired
+
+Owned location (slug/ULID)
+
+real ownership exists and is active (exclusiveUntil in future)
+
+Example location (optional but recommended for early Dash validation)
+
+a location explicitly flagged as example in the dataset (once you implement that mechanism)
+
+You also need two browser states:
+
+With owner session (after using /owner/exchange link, cookie op_sess present)
+
+Without owner session (incognito or cleared cookie)
+
+1) Test Case — Unowned → Owner settings (claim)
+
+Steps
+
+Open LPM for an unowned location
+
+Click 📈
+
+Expected
+
+Dash does not open
+
+Owner settings modal opens (Claim variant)
+
+Shows: Run campaign / Protect / Example dashboards
+
+No analytics rendered
+
+2) Test Case — Owned + NO session → Owner settings (restore)
+
+Steps
+
+Ensure location is owned
+
+Ensure browser has no op_sess (incognito)
+
+Open owned LPM
+
+Click 📈
+
+Expected
+
+Dash does not open
+
+Owner settings modal opens (Restore variant)
+
+Shows: Restore access / Example dashboards
+
+Does not show: Run campaign / Protect
+
+3) Test Case — Owned + session → Dash opens
+
+Steps
+
+Ensure location is owned
+
+Establish owner session by visiting /owner/exchange?... (cookie set)
+
+Open owned LPM
+
+Click 📈
+
+Expected
+
+Opens https://navigen.io/dash/<ULID> in new tab
+
+No Owner settings modal
+
+4) Test Case — Example dashboards path
+
+Steps
+
+From any Owner settings modal, click See example dashboards
+
+Open one of the example entries
+
+Expected
+
+Dash opens normally for that example location
+
+Analytics loads (counts, QR Info, Campaigns, Analytics)
+
+5) Abuse / resilience checks
+
+Rapidly click 📈 multiple times → only one modal instance
+
+Set DevTools Offline → click 📈 → must fail closed (no Dash, no analytics)
