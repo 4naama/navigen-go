@@ -277,6 +277,7 @@ git add .
 git commit -m "Backend deploy"
 git push origin main
 
+cd C:\Users\USER\Documents\a_git\navigen-go\backend\worker
 wrangler deploy
 
 If nothing changed (force rebuild):

@@ -491,6 +491,8 @@ export default {
         let isExample = false;
         try {
           const seg = (url.pathname.split('/')[2] || '').trim(); // /dash/<seg>
+          // Canonicalize seg so example allow survives /dash/<slug> → /dash/<ULID> redirects.
+          const segUid = await canonicalId(env, seg);
           if (seg) {
             const prof = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url)));
             if (prof.ok) {
@@ -501,7 +503,12 @@ export default {
                   ? Object.values(data.locations)
                   : [];
 
-              const rec = locs.find(r => String(r?.locationID || '').trim() === seg || String(r?.ID || r?.id || '').trim() === seg);
+              const rec = locs.find(r => {
+                const slug = String(r?.locationID || r?.slug || r?.alias || '').trim();
+                const rid  = String(r?.ID || r?.id || r?.locationID || '').trim(); // tolerate legacy schemas
+                const uid  = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rid) ? rid : '';
+                return slug === seg || uid === seg || (segUid && uid === segUid);
+              });
               const v = rec?.exampleLocation ?? rec?.isExample ?? rec?.example ?? rec?.exampleDash ?? rec?.flags?.example;
               isExample = (v === true || v === 1 || String(v || '').toLowerCase() === 'true' || String(v || '').toLowerCase() === 'yes');
             }
