@@ -921,19 +921,55 @@ export default {
       // GET /api/stats?locationID=.
       // Phase 3: owner session required; requested location must match the session ULID.
       if (url.pathname === "/api/stats" && req.method === "GET") {
-        const auth = await requireOwnerSession(req, env);
-        if (auth instanceof Response) return auth;
+        // Allow Example Locations without a session (real stats; no synthetic data).
+        // For all non-example locations, require an owner session (fail closed).
+        let auth: { ulid: string } | null = null;
 
         const locRaw = (url.searchParams.get("locationID") || "").trim();
         const locResolved = (await resolveUid(locRaw, env)) || locRaw;
         const loc = String(locResolved || "").trim();
 
+        let isExample = false;
+        try {
+          // Load profiles.json once and check the example flag for this location.
+          const base = req.headers.get("Origin") || "https://navigen.io";
+          const src = new URL("/data/profiles.json", base).toString();
+          const resp = await fetch(src, { cf: { cacheTtl: 60, cacheEverything: true }, headers: { "Accept": "application/json" } });
+          if (resp.ok) {
+            const data: any = await resp.json().catch(() => null);
+            const locs: any[] = Array.isArray(data?.locations)
+              ? data.locations
+              : (data?.locations && typeof data.locations === "object")
+                ? Object.values(data.locations)
+                : [];
+
+            const rec = locs.find(r => String(r?.locationID || "").trim() === locRaw || String(r?.ID || r?.id || "").trim() === locRaw || String(r?.ID || r?.id || "").trim() === loc);
+            const v = rec?.exampleLocation ?? rec?.isExample ?? rec?.example ?? rec?.exampleDash ?? rec?.flags?.example;
+            isExample = (v === true || v === 1 || String(v || "").toLowerCase() === "true" || String(v || "").toLowerCase() === "yes");
+          }
+        } catch {
+          isExample = false; // fail closed
+        }
+
+        if (!isExample) {
+          const a = await requireOwnerSession(req, env);
+          if (a instanceof Response) return a;
+          auth = a;
+        }
+        if (auth instanceof Response) return auth;
+
+        // locRaw resolved above
+
+        // locResolved resolved above
+
+        // loc resolved above
+
         if (!loc || !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(loc)) {
           return json({ error: { code: "invalid_request", message: "locationID, from, to required (YYYY-MM-DD)" } }, 400);
         }
 
-        // Enforce single-ULID session binding
-        if (loc !== auth.ulid) {
+        // Enforce single-ULID session binding (example locations bypass session checks by design)
+        if (auth && loc !== auth.ulid) {
           return new Response("Denied", {
             status: 403,
             headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }

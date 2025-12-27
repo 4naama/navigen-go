@@ -479,13 +479,40 @@ export default {
       return out;
     }
 
-    // Phase 3: block dashboard shell if no owner session cookie is present.
+    // Phase 3: block dashboard shell unless owner session exists OR location is flagged as an Example Location.
     // Keeps unauthorized users from loading a shell that cannot fetch data.
     if (url.pathname === '/dash' || url.pathname.startsWith('/dash/')) {
       const cookie = req.headers.get('cookie') || '';
       const hasSess = /\bop_sess=/.test(cookie);
+
       if (!hasSess) {
-        return Response.redirect(`${url.origin}/`, 302);
+        // Allow Example Dashboards: these are real locations explicitly flagged in /data/profiles.json.
+        // All other locations remain blocked (redirect to main shell).
+        let isExample = false;
+        try {
+          const seg = (url.pathname.split('/')[2] || '').trim(); // /dash/<seg>
+          if (seg) {
+            const prof = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url)));
+            if (prof.ok) {
+              const data = await prof.json().catch(() => null);
+              const locs = Array.isArray(data?.locations)
+                ? data.locations
+                : (data?.locations && typeof data.locations === 'object')
+                  ? Object.values(data.locations)
+                  : [];
+
+              const rec = locs.find(r => String(r?.locationID || '').trim() === seg || String(r?.ID || r?.id || '').trim() === seg);
+              const v = rec?.exampleLocation ?? rec?.isExample ?? rec?.example ?? rec?.exampleDash ?? rec?.flags?.example;
+              isExample = (v === true || v === 1 || String(v || '').toLowerCase() === 'true' || String(v || '').toLowerCase() === 'yes');
+            }
+          }
+        } catch {
+          isExample = false; // fail closed
+        }
+
+        if (!isExample) {
+          return Response.redirect(`${url.origin}/`, 302);
+        }
       }
     }
 
