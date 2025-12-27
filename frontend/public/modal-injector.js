@@ -2709,19 +2709,10 @@ export async function createExampleDashboardsModal() {
 
   body.appendChild(inner);
 
-  const actions = document.createElement('div');
-  actions.className = 'modal-footer cta-compact';
-
-  const back = document.createElement('button');
-  back.className = 'modal-footer-button';
-  back.type = 'button';
-  back.textContent = _ownerText('common.back', 'Back');
-  back.addEventListener('click', () => hideModal(id));
-  actions.appendChild(back);
+  // No footer actions for Example Dashboards: close via the top-right × only.
 
   card.appendChild(top);
   card.appendChild(body);
-  card.appendChild(actions);
   wrap.appendChild(card);
   document.body.appendChild(wrap);
 }
