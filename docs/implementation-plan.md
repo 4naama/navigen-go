@@ -399,6 +399,9 @@ Blocked response contract:
 • MUST NOT include any analytics fields
 • MUST be distinguishable by Dash UI
 
+A wrong-ULID request must return 403 Forbidden only after a valid owner session is established.
+If no valid session exists, 401 Unauthorized takes precedence.
+
 --------------------------------------------------------------------
 3.3 Dash UI behavior on blocked responses
 --------------------------------------------------------------------

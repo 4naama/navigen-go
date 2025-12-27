@@ -635,18 +635,6 @@ export default {
         }), { status: 200, headers: { "content-type": "application/json", "x-ng-worker": "navigen-api" } });
       }
 
-      // --- OwnerLink diag: /api/_diag/ownerlink-secret-len (length only; no disclosure)
-      if (normPath === "/api/_diag/ownerlink-secret-len" && req.method === "GET") {
-        const s = String(env.OWNER_LINK_HMAC_SECRET || "").trim();
-        return new Response(JSON.stringify({
-          hasSecret: !!s,
-          secretLen: s.length
-        }), {
-          status: 200,
-          headers: { "content-type": "application/json", "cache-control": "no-store" }
-        });
-      }
-
       // --- Owner exchange: /owner/exchange (Phase 2: signed link → cookie session)
       if (normPath === "/owner/exchange" && req.method === "GET") {
         return await handleOwnerExchange(req, env);

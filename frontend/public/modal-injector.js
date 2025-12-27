@@ -1978,10 +1978,11 @@ async function initLpmImageSlider(modal, data) {
       }, { passive: false });
     }
   
-    // 📈 Stats (dashboard) — single-field locationID (alias or ULID): prefer payload, then cached DOM; fall back to ULID if needed
+    // 📈 Stats (dashboard)
+    // Phase 4: intercept before navigation; open Owner settings modal when Dash is blocked.
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
-      statsBtn.addEventListener('click', (e) => {
+      statsBtn.addEventListener('click', async (e) => {
         e.preventDefault();
 
         const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i; // keep ULID shape check
@@ -1990,29 +1991,79 @@ async function initLpmImageSlider(modal, data) {
         const payloadLocationId = String(data?.locationID || '').trim();                      // passed in payload
         const rawULID           = String(data?.id || '').trim();                              // ULID (if known)
 
-        let target = (payloadLocationId || cachedLocationId || rawULID).trim(); // prefer payload; fallback to cached or ULID
+        const target = (payloadLocationId || cachedLocationId || rawULID).trim(); // prefer payload; fallback to cached or ULID
         if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
         // Sync DOM cache for next time; leave data.* untouched
         modal.setAttribute('data-locationid', target);
 
-        // Clean URL: /dash/<ULID>. Save human slug for the dashboard to read (no hash in URL).
-        const seg = ULID.test(rawULID) ? rawULID : target; // ULID if available, else slug (server will 302 → ULID)
+        // Read-only ownership hint (no analytics): status/tier from API Worker.
+        // We never infer authority from the client; this is only to choose the correct Owner settings variant.
+        const isOwnedByStatus = async () => {
+          try {
+            const u = new URL('/api/status', TRACK_BASE);
+            u.searchParams.set('locationID', target);
+            const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+            if (!r.ok) return false;
+            const j = await r.json().catch(() => null);
+            const status = String(j?.status || '').toLowerCase();
+            const tier   = String(j?.tier || '').toLowerCase();
+            // Conservative rule: anything other than "free" is treated as owned.
+            return (!!status && status !== 'free') || (!!tier && tier !== 'free');
+          } catch { return false; }
+        };
 
-        // persist human slug for UI (if we have one); also leave a short-lived pending hint for redirects
-        try {
-          const isHuman = (target && !ULID.test(target));
-          if (isHuman) {
-            // if we already know the ULID now, bind it directly
-            if (ULID.test(rawULID)) localStorage.setItem(`navigen.slug:${rawULID}`, target);
-            // always drop a pending slug to be picked up after redirect
-            localStorage.setItem('navigen.pendingSlug', JSON.stringify({ value: target, ts: Date.now() }));
-          }
-        } catch { /* ignore storage errors */ }
+        // Determine if we have a valid owner session by probing /api/stats with a minimal 1-day window.
+        // This call is still owner-gated and returns no analytics when blocked.
+        const hasOwnerSession = async () => {
+          const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+          const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+          const from = iso(today), to = iso(today);
 
-        const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-        window.open(href, '_blank', 'noopener,noreferrer');
+          try {
+            const u = new URL('/api/stats', TRACK_BASE);
+            u.searchParams.set('locationID', target); // may be ULID or slug; backend resolves to canonical ULID
+            u.searchParams.set('from', from);
+            u.searchParams.set('to', to);
 
+            const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
+            if (r.ok) return { ok: true, code: 200 };
+            return { ok: false, code: r.status || 0 };
+          } catch { return { ok: false, code: 0 }; }
+        };
+
+        const owned = await isOwnedByStatus();
+        const sess = await hasOwnerSession();
+
+        // A) Owned + valid session → open Dash normally
+        if (sess.ok) {
+          // Clean URL: /dash/<ULID>. Save human slug for the dashboard to read (no hash in URL).
+          const seg = ULID.test(rawULID) ? rawULID : target; // ULID if available, else slug (server will 302 → ULID)
+
+          // persist human slug for UI (if we have one); also leave a short-lived pending hint for redirects
+          try {
+            const isHuman = (target && !ULID.test(target));
+            if (isHuman) {
+              // if we already know the ULID now, bind it directly
+              if (ULID.test(rawULID)) localStorage.setItem(`navigen.slug:${rawULID}`, target);
+              // always drop a pending slug to be picked up after redirect
+              localStorage.setItem('navigen.pendingSlug', JSON.stringify({ value: target, ts: Date.now() }));
+            }
+          } catch { /* ignore storage errors */ }
+
+          const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
+          window.open(href, '_blank', 'noopener,noreferrer');
+          return;
+        }
+
+        // B) Owned + no session → Owner settings (restore)
+        // C) Unowned → Owner settings (claim)
+        const variant = owned ? 'restore' : 'claim';
+        showOwnerSettingsModal({
+          variant,
+          locationIdOrSlug: target,
+          locationName: String(data?.displayName ?? data?.name ?? '').trim()
+        });
       }, { capture: true });
     }
 
@@ -2464,6 +2515,361 @@ function appendResolvedButton(actions, modalId = "my-stuff-modal") {
 
     actions.appendChild(resolvedBtn);
   }
+}
+
+// ————————————————————————————
+// Phase 4 — Owner Settings modals (LPM 📈 gating UX)
+// - No analytics are fetched or displayed inside these modals.
+// - All copy is t(key)-driven with safe English fallbacks.
+// ————————————————————————————
+
+function _ownerText(key, fallback) {
+  const hasT = (typeof t === 'function');
+  const raw = hasT ? (t(key) || '') : '';
+  return (raw && typeof raw === 'string') ? raw : String(fallback || key);
+}
+
+export function createRestoreAccessModal() {
+  const id = 'owner-restore-access-modal';
+  document.getElementById(id)?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${_ownerText('owner.restore.title', 'Restore access')}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  const p1 = document.createElement('p');
+  p1.textContent = _ownerText(
+    'owner.restore.body',
+    'To open the Owner Dash, use your most recent Owner access email or Stripe receipt. The Owner Dash link is included in that message.'
+  );
+  p1.style.textAlign = 'left';
+  p1.style.fontSize = '0.95em';
+  inner.appendChild(p1);
+
+  const hint = document.createElement('p');
+  hint.textContent = _ownerText(
+    'owner.restore.hint',
+    'Tip: search your inbox for “Stripe” or “NaviGen”.'
+  );
+  hint.style.textAlign = 'left';
+  hint.style.fontSize = '0.85em';
+  hint.style.opacity = '0.8';
+  inner.appendChild(hint);
+
+  body.appendChild(inner);
+
+  const actions = document.createElement('div');
+  actions.className = 'modal-footer cta-compact';
+
+  const ok = document.createElement('button');
+  ok.className = 'modal-footer-button';
+  ok.type = 'button';
+  ok.textContent = _ownerText('common.ok', 'OK');
+  ok.addEventListener('click', () => hideModal(id));
+  actions.appendChild(ok);
+
+  card.appendChild(top);
+  card.appendChild(body);
+  card.appendChild(actions);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+}
+
+export function showRestoreAccessModal() {
+  const id = 'owner-restore-access-modal';
+  if (!document.getElementById(id)) createRestoreAccessModal();
+  showModal(id);
+}
+
+function _exampleFlag(rec) {
+  // Accept multiple schema variants; fail closed.
+  const v = rec?.exampleLocation ?? rec?.isExample ?? rec?.example ?? rec?.exampleDash ?? rec?.flags?.example;
+  return v === true || v === 1 || String(v || '').toLowerCase() === 'true' || String(v || '').toLowerCase() === 'yes';
+}
+
+function _nameOf(rec) {
+  const ln = (document.documentElement.lang || 'en').toLowerCase().split('-')[0];
+  const n = rec?.locationName;
+  if (n && typeof n === 'object') return String(n[ln] || n.en || Object.values(n)[0] || '').trim();
+  return String(n || rec?.name || '').trim();
+}
+
+export async function createExampleDashboardsModal() {
+  const id = 'example-dashboards-modal';
+  document.getElementById(id)?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${_ownerText('owner.examples.title', 'Example dashboards')}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  const note = document.createElement('p');
+  note.textContent = _ownerText(
+    'owner.examples.note',
+    'Example analytics shown here belong to other locations and are not related to this business.'
+  );
+  note.style.textAlign = 'left';
+  note.style.fontSize = '0.85em';
+  note.style.opacity = '0.8';
+  inner.appendChild(note);
+
+  const list = document.createElement('div');
+  list.className = 'modal-menu-list';
+  inner.appendChild(list);
+
+  // Load example locations from the shipped dataset.
+  // This is informational only; it does not grant access to a blocked location.
+  let examples = [];
+  try {
+    const r = await fetch('/data/profiles.json', { cache: 'no-store' });
+    if (r.ok) {
+      const j = await r.json().catch(() => null);
+      const locs = Array.isArray(j?.locations)
+        ? j.locations
+        : (j?.locations && typeof j.locations === 'object')
+          ? Object.values(j.locations)
+          : [];
+
+      examples = (Array.isArray(locs) ? locs : [])
+        .filter(_exampleFlag)
+        .map(rec => ({
+          id: String(rec?.ID || rec?.id || '').trim(),
+          slug: String(rec?.locationID || rec?.slug || rec?.alias || '').trim(),
+          name: _nameOf(rec),
+          sector: String(rec?.sectorKey || rec?.groupKey || rec?.Group || '').trim()
+        }))
+        .filter(x => x.name && (x.id || x.slug))
+        .slice(0, 6);
+    }
+  } catch {
+    examples = [];
+  }
+
+  if (!examples.length) {
+    const empty = document.createElement('p');
+    empty.textContent = _ownerText('owner.examples.empty', 'No example dashboards are available right now.');
+    empty.style.textAlign = 'left';
+    empty.style.opacity = '0.8';
+    inner.appendChild(empty);
+  } else {
+    examples.forEach((ex) => {
+      const label = ex.name;
+      const sector = ex.sector ? ex.sector : _ownerText('owner.examples.sector.unknown', '');
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'modal-menu-item';
+      btn.innerHTML = `
+        <span class="icon-img">📊</span>
+        <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+          <strong>${label}</strong> <span class="example-badge" style="font-size:.75em; opacity:.8;">${_ownerText('owner.examples.badge', 'Example')}</span>
+          ${sector ? `<br><small>${sector}</small>` : ''}
+        </span>
+      `;
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const seg = ex.id || ex.slug;
+        const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
+        window.open(href, '_blank', 'noopener,noreferrer');
+      });
+      list.appendChild(btn);
+    });
+  }
+
+  body.appendChild(inner);
+
+  const actions = document.createElement('div');
+  actions.className = 'modal-footer cta-compact';
+
+  const back = document.createElement('button');
+  back.className = 'modal-footer-button';
+  back.type = 'button';
+  back.textContent = _ownerText('common.back', 'Back');
+  back.addEventListener('click', () => hideModal(id));
+  actions.appendChild(back);
+
+  card.appendChild(top);
+  card.appendChild(body);
+  card.appendChild(actions);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+}
+
+export async function showExampleDashboardsModal() {
+  const id = 'example-dashboards-modal';
+  if (!document.getElementById(id)) await createExampleDashboardsModal();
+  showModal(id);
+}
+
+export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationName }) {
+  const id = 'owner-settings-modal';
+  document.getElementById(id)?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${_ownerText('owner.settings.title', 'Owner settings')}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  if (locationName) {
+    const pLoc = document.createElement('p');
+    pLoc.textContent = locationName;
+    pLoc.style.textAlign = 'left';
+    pLoc.style.opacity = '0.9';
+    pLoc.style.marginBottom = '0.75rem';
+    inner.appendChild(pLoc);
+  }
+
+  const expl = document.createElement('p');
+  expl.textContent = (variant === 'restore')
+    ? _ownerText('owner.settings.restore.explain', 'You already own this location, but your access session has expired.')
+    : _ownerText('owner.settings.claim.explain', 'Analytics and owner controls are available to the active operator.');
+  expl.style.textAlign = 'left';
+  expl.style.fontSize = '0.95em';
+  inner.appendChild(expl);
+
+  const menu = document.createElement('div');
+  menu.className = 'modal-menu-list';
+
+  const addItem = ({ id, icon, title, desc, onClick }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'modal-menu-item';
+    btn.id = id;
+    btn.innerHTML = `
+      <span class="icon-img">${icon}</span>
+      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+        <strong>${title}</strong>${desc ? `<br><small>${desc}</small>` : ''}
+      </span>
+    `;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      onClick?.();
+    });
+    menu.appendChild(btn);
+  };
+
+  if (variant === 'restore') {
+    addItem({
+      id: 'owner-restore-access',
+      icon: '🔑',
+      title: _ownerText('owner.settings.restore.action.title', 'Restore access'),
+      desc: _ownerText('owner.settings.restore.action.desc', 'Use your most recent Owner access email / Stripe receipt.'),
+      onClick: () => {
+        hideModal(id);
+        showRestoreAccessModal();
+      }
+    });
+
+    addItem({
+      id: 'owner-example-dash',
+      icon: '📈',
+      title: _ownerText('owner.settings.examples.action.title', 'See example dashboards'),
+      desc: _ownerText('owner.settings.examples.action.desc', 'View analytics for designated example locations.'),
+      onClick: () => {
+        hideModal(id);
+        showExampleDashboardsModal();
+      }
+    });
+
+  } else {
+    addItem({
+      id: 'owner-run-campaign',
+      icon: '🎯',
+      title: _ownerText('owner.settings.claim.runCampaign.title', 'Run campaign'),
+      desc: _ownerText('owner.settings.claim.runCampaign.desc', 'Activate analytics by running a campaign for this location.'),
+      onClick: () => {
+        // Phase 4 scope: hook into existing campaign setup when available.
+        // Keep as a safe no-op with toast until Campaign Setup modal is wired.
+        showToast(_ownerText('owner.toast.campaignSetupSoon', 'Campaign setup will appear here soon.'), 2000);
+      }
+    });
+
+    addItem({
+      id: 'owner-protect',
+      icon: '🛡️',
+      title: _ownerText('owner.settings.claim.protect.title', 'Protect this location'),
+      desc: _ownerText('owner.settings.claim.protect.desc', 'Start an exclusive operation period (€5 / 30 days).'),
+      onClick: () => {
+        // Phase 4 scope: hook into Exclusive Operation Period purchase when available.
+        showToast(_ownerText('owner.toast.protectSoon', 'Protect this location will appear here soon.'), 2000);
+      }
+    });
+
+    addItem({
+      id: 'owner-example-dash',
+      icon: '📈',
+      title: _ownerText('owner.settings.examples.action.title', 'See example dashboards'),
+      desc: _ownerText('owner.settings.examples.action.desc', 'View analytics for designated example locations.'),
+      onClick: () => {
+        hideModal(id);
+        showExampleDashboardsModal();
+      }
+    });
+  }
+
+  inner.appendChild(menu);
+  body.appendChild(inner);
+
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  // Store context on the modal for follow-up actions.
+  wrap.setAttribute('data-locationid', String(locationIdOrSlug || '').trim());
+  wrap.setAttribute('data-variant', String(variant || '').trim());
+}
+
+export function showOwnerSettingsModal({ variant, locationIdOrSlug, locationName }) {
+  const id = 'owner-settings-modal';
+  if (!document.getElementById(id)) createOwnerSettingsModal({ variant, locationIdOrSlug, locationName });
+  showModal(id);
 }
 
 // ✅ Helper: View-by settings modal (button-less; uses standard .modal shell)
