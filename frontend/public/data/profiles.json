@@ -6538,12 +6538,13 @@
       }
     },
     {
-      "locationID": "world-of-souvenir-deak-1655",
+      "locationID": "world-of-souvenir-deak-1655",      
       "locationName": {
         "en": "World of Souvenir Deák"
       },
       "Visible": "Yes",
       "exampleLocation": true,
+      "ID": "06A1YABW03MMAG8E1TJETYWNJ4",
       "Priority": "Yes",
       "groupKey": "🛒 Shops",
       "subgroupKey": "sub.souvenirs",
