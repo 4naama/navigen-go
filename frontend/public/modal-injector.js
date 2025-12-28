@@ -2708,7 +2708,9 @@ export async function createExampleDashboardsModal() {
         e.preventDefault();
         const seg = ex.id || ex.slug;
         const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-        window.open(href, '_blank', 'noopener,noreferrer');
+        const w = window.open(href, '_blank', 'noopener,noreferrer');
+        // If the browser blocks popups, fall back to same-tab navigation.
+        if (!w) window.location.href = href;
       });
       list.appendChild(btn);
     });
