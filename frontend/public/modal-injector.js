@@ -2056,7 +2056,13 @@ async function initLpmImageSlider(modal, data) {
           } catch { /* ignore storage errors */ }
 
           const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-          window.open(href, '_blank', 'noopener,noreferrer');
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            window.open(href, '_blank', 'noopener,noreferrer');
+          });
           return;
         }
 
@@ -2706,11 +2712,12 @@ export async function createExampleDashboardsModal() {
       `;
       btn.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
         const seg = ex.id || ex.slug;
         const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-        const w = window.open(href, '_blank', 'noopener,noreferrer');
-        // If the browser blocks popups, fall back to same-tab navigation.
-        if (!w) window.location.href = href;
+        window.open(href, '_blank', 'noopener,noreferrer');
       });
       list.appendChild(btn);
     });
