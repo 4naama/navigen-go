@@ -482,10 +482,20 @@ async function openPromotionQrModal(modal, data) {
   }
 }
 
-// QR scan: fire qr-scan hit when page has ?lp=<slug or ULID>
+// QR scan: fire qr-scan hit only for external arrivals to ?lp=...
+// Internal app navigations set a one-time sessionStorage marker to suppress phantom scan counts.
 (() => { try {
-  const lp = (new URL(window.location.href).searchParams.get('lp') || '').trim();
+  const url = new URL(window.location.href);
+  const lp = (url.searchParams.get('lp') || '').trim();
   if (!lp) return;
+
+  // If the app itself navigated to ?lp=..., do NOT count as a QR scan.
+  const k = 'navigen.internalLpNav';
+  if (sessionStorage.getItem(k) === '1') {
+    sessionStorage.removeItem(k); // one-time suppression
+    return;
+  }
+
   fetch(`${TRACK_BASE}/hit/qr-scan/${encodeURIComponent(lp)}`, { method:'POST', keepalive:true }).catch(() => {});
 } catch (_) { /* tracking must never break page load */ } })();
 
@@ -3565,6 +3575,7 @@ export function showPromotionsModal() {
           const lp = String(camp.locationID || '').trim();
           if (!lp) return;
 
+          sessionStorage.setItem('navigen.internalLpNav', '1');
           window.location.href = `${location.origin}/?lp=${encodeURIComponent(lp)}`;
         });
 
