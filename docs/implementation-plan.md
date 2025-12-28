@@ -704,6 +704,19 @@ S2 — Dash gating unchanged
 S3 — Example Dash unaffected
 • Example locations still load Dash normally
 
+S4 — No phantom Static QR scan
+• Navigate to /?lp=<slug> via in-app links (Campaigns list, root shell, etc.)
+  Expected: Static QR scan does not increment
+• Scan a real Info QR externally (camera scan to ...?lp=<slug>)
+  Expected: Static QR scan increments exactly once 
+
+S5 — Discoverability decay (courtesy window)
+• Set ownership:<ULID>.exclusiveUntil to a time more than 60 days in the past (test env).
+Expected:
+• /api/data/list?context=... does not include the location (hidden from discovery).
+• Direct link /?lp=<slug> still opens the LPM.
+• LPM shows an “inactive” notice (informational only).
+
 --------------------------------------------------------------------
 4.9 Ship gate (Phase 4 complete)
 --------------------------------------------------------------------
@@ -714,6 +727,13 @@ Phase 4 is complete when:
 • Correct modal variant is shown for ownership/session state
 • No analytics data is ever shown inside the modal
 • Existing LPM behavior is unchanged
+
+--------------------------------------------------------------------
+Phase4 status (locked)
+--------------------------------------------------------------------
+
+✅ Root shell entry points open Example Dashboards (no toast-only dead ends)
+✅ Internal /?lp= navigations do not emit qr-scan hits (prevents phantom “Static QR scan” counts)
 
 --------------------------------------------------------------------
 PHASE 5 — ROOT SHELL ONBOARDING (BUSINESS OWNERS & INDIVIDUALS)
@@ -955,6 +975,7 @@ Rules:
 • No OP-sensitive route may be served from cache.
 • No stale UI may grant access, privacy, or control.
 • Network failure must fail closed (no analytics shown).
+• Client-side heuristics (e.g., internal LP navigation markers) must not be broken by SW-cached shell reloads.
 
 --------------------------------------------------------------------
 6.2 Route classification (authoritative)
@@ -1454,9 +1475,7 @@ System state:
 
 A business operator decides to take control of the location.
 
-They choose one of:
-• Run Campaign, or
-• Protect This Location (€5 / 30 days).
+They start a paid campaign (e.g., €50 / 30 days).
 
 Stripe Checkout is completed successfully.
 
@@ -1601,7 +1620,7 @@ Former owner clicks 📈:
 • “Owner settings” modal opens (unowned variant).
 • Options shown:
   - Run campaign,
-  - Protect this location,
+  - (Optional) Keep visible (deferred),
   - See example dashboards.
 
 Random user clicks 📈:

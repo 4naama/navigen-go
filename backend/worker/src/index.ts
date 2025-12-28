@@ -918,6 +918,88 @@ export default {
         return json({ ok:true, wrote, skipped, total: aliases.length }, 200);
       }
 
+      // --- Admin mint: POST /api/admin/mint-owner-link
+      // Mint a short-lived signed owner access link for manual Phase 2 testing (no email required).
+      // Guarded by JWT_SECRET; remove after ship-gating.
+      if (pathname === "/api/admin/mint-owner-link" && req.method === "POST") {
+        const auth = req.headers.get("Authorization") || "";
+        if (!auth.startsWith("Bearer ")) {
+          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401, { "cache-control": "no-store" });
+        }
+        const token = auth.slice(7).trim();
+        const expected = String(env.JWT_SECRET || "").trim();
+        if (!expected) {
+          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
+        }
+        if (!token || token !== expected) {
+          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control": "no-store" });
+        }
+
+        // Parse input (JSON): { locationID: "<slug-or-ulid>" }
+        let payloadIn: any = null;
+        try { payloadIn = await req.json(); } catch { payloadIn = null; }
+        const raw = String(payloadIn?.locationID || "").trim();
+        if (!raw) {
+          return json({ error:{ code:"invalid_request", message:"locationID required" } }, 400, { "cache-control": "no-store" });
+        }
+
+        // Resolve to canonical ULID
+        const mapped = (await resolveUid(raw, env)) || raw;
+        const ulid = String(mapped || "").trim();
+        if (!ULID_RE.test(ulid)) {
+          return json({ error:{ code:"invalid_request", message:"locationID not resolvable to ULID" } }, 400, { "cache-control": "no-store" });
+        }
+
+        // Must have active ownership to mint an owner link (aligns with /owner/exchange validation).
+        const ownKey = `ownership:${ulid}`;
+        const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+        const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+        const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+        if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+          return json({ error:{ code:"blocked", message:"Ownership not active for this ULID" } }, 403, { "cache-control": "no-store" });
+        }
+
+        // HMAC secret must be configured (same requirement as /owner/exchange).
+        const secret = String(env.OWNER_LINK_HMAC_SECRET || "").trim();
+        if (secret.length < 32) {
+          return json({ error:{ code:"misconfigured", message:"OWNER_LINK_HMAC_SECRET not set or too short" } }, 500, { "cache-control": "no-store" });
+        }
+
+        // Build token payload (15 minute expiry)
+        const nowSec = Math.floor(Date.now() / 1000);
+        const expSec = nowSec + 15 * 60;
+
+        // jti (random, URL-safe)
+        const jtiBytes = new Uint8Array(18);
+        (crypto as any).getRandomValues(jtiBytes);
+        const jti = bytesToB64url(jtiBytes);
+
+        const tokObj = {
+          ver: 1,
+          ulid,
+          iat: nowSec,
+          exp: expSec,
+          jti,
+          purpose: "owner-dash"
+        };
+
+        // IMPORTANT: /owner/exchange verifies signature over the exact tok bytes after base64url decode,
+        // then parses JSON. So we must sign JSON bytes and then base64url encode the same bytes.
+        const tokJson = JSON.stringify(tokObj);
+        const tokBytes = new TextEncoder().encode(tokJson);
+        const tok = bytesToB64url(tokBytes);
+        const sig = await hmacSha256B64url(secret, tokBytes);
+
+        const origin = req.headers.get("Origin") || "https://navigen.io";
+        const exchangeUrl = `${origin}/owner/exchange?tok=${encodeURIComponent(tok)}&sig=${encodeURIComponent(sig)}`;
+
+        return json(
+          { ok:true, ulid, exclusiveUntil: exclusiveUntil.toISOString(), tok, sig, exchangeUrl },
+          200,
+          { "cache-control": "no-store" }
+        );
+      }
+
       // GET /api/stats?locationID=.
       // Phase 3: owner session required; requested location must match the session ULID.
       if (url.pathname === "/api/stats" && req.method === "GET") {
@@ -1562,10 +1644,50 @@ export default {
         }
 
         const body = await r.text();
-        return new Response(body, {
+
+        // Discoverability policy (Business-first):
+        // Filter out locations whose visibilityState is "hidden" so inactive businesses do not appear in discovery lists.
+        // This does not affect direct-link LPM access; it only controls in-app discovery surfaces.
+        let outBody = body;
+
+        try {
+          // Only filter successful JSON responses.
+          if (r.ok) {
+            const parsed = JSON.parse(body);
+
+            const arr: any[] = Array.isArray(parsed?.locations)
+              ? parsed.locations
+              : (parsed?.locations && typeof parsed.locations === "object")
+                ? Object.values(parsed.locations)
+                : [];
+
+            const filtered: any[] = [];
+            for (const rec of arr) {
+              const slug = String(rec?.locationID || "").trim();
+              const ulid = (await resolveUid(slug, env)) || ""; // canonical ULID (required for ownership lookup)
+
+              // If we can't resolve a ULID, fail open (keep visible).
+              if (!ulid || !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(ulid)) {
+                filtered.push(rec);
+                continue;
+              }
+
+              const vis = await computeVisibilityState(env, ulid);
+              if (vis.visibilityState !== "hidden") filtered.push(rec);
+            }
+
+            // Preserve original shape: if upstream returned { locations: [...] }, keep that.
+            outBody = JSON.stringify({ ...parsed, locations: filtered });
+          }
+        } catch {
+          // Fail open: never break list loading due to a filtering error.
+          outBody = body;
+        }
+
+        return new Response(outBody, {
           status: r.status,
           headers: {
-            "Content-Type": r.headers.get("Content-Type") || "application/json; charset=utf-8",
+            "Content-Type": "application/json; charset=utf-8",
             "Access-Control-Allow-Origin": "https://navigen.io",
             "Access-Control-Allow-Credentials": "true",
             "Vary": "Origin",
@@ -1960,8 +2082,18 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
   const tier = raw?.tier || "free";
 
   // return minimal status payload for the app (no caching to reflect live changes)
+  const vis = await computeVisibilityState(env, locID);
+
   return json(
-    { locationID: locID, status, tier },
+    {
+      locationID: locID,
+      status,
+      tier,
+      ownedNow: vis.ownedNow,
+      visibilityState: vis.visibilityState,
+      exclusiveUntil: vis.exclusiveUntil,
+      courtesyUntil: vis.courtesyUntil
+    },
     200,
     { "cache-control": "no-store" }
   );
@@ -2029,6 +2161,59 @@ async function writeQaFlags(env: Env, locationID: string, flags: string[]): Prom
   } catch {
     // never throw from QA tagging; stats endpoint must not fail because of tagging
   }
+}
+
+// Visibility policy (Business-first):
+// - "promoted": campaign/exclusive operation is active (paid window).
+// - "visible": courtesy visibility after paid window ends (Y=2 → 60 days).
+// - "hidden": not discoverable inside NaviGen (direct link may still open LPM later).
+// This is a NaviGen-internal discoverability concept, not web indexing.
+type VisibilityState = "promoted" | "visible" | "hidden";
+
+async function computeVisibilityState(env: Env, ulid: string, nowMs = Date.now()): Promise<{
+  visibilityState: VisibilityState;
+  ownedNow: boolean;
+  exclusiveUntil: string;   // ISO or ""
+  courtesyUntil: string;    // ISO or ""
+}> {
+  // Courtesy window approved: Y = 2 → 60 days
+  const COURTESY_MS = 60 * 24 * 60 * 60 * 1000;
+
+  const ownKey = `ownership:${ulid}`;
+  const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+
+  const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+  const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+
+  // No ownership record → treat as publicly discoverable.
+  if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime())) {
+    return {
+      visibilityState: "visible",
+      ownedNow: false,
+      exclusiveUntil: "",
+      courtesyUntil: ""
+    };
+  }
+
+  const ownedNow = exclusiveUntil.getTime() > nowMs;
+  if (ownedNow) {
+    return {
+      visibilityState: "promoted",
+      ownedNow: true,
+      exclusiveUntil: exclusiveUntil.toISOString(),
+      courtesyUntil: new Date(exclusiveUntil.getTime() + COURTESY_MS).toISOString()
+    };
+  }
+
+  const courtesyUntil = new Date(exclusiveUntil.getTime() + COURTESY_MS);
+  const isCourtesy = courtesyUntil.getTime() > nowMs;
+
+  return {
+    visibilityState: isCourtesy ? "visible" : "hidden",
+    ownedNow: false,
+    exclusiveUntil: exclusiveUntil.toISOString(),
+    courtesyUntil: courtesyUntil.toISOString()
+  };
 }
 
 async function resolveUid(idOrAlias: string, env: Env): Promise<string | null> {

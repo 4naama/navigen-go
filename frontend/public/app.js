@@ -167,6 +167,56 @@ function handleIncomingAtParamOnce() {
   history.replaceState({}, document.title, next);
 }
 
+// LPM visibility notice (Business-first):
+// Direct links (?lp=) may still open an LPM even when the location is not discoverable inside NaviGen.
+// If the API reports visibilityState="hidden", show a gentle in-LPM notice (no blocking, no redirects).
+async function maybeShowLpmInactiveNotice(idOrSlug) {
+  const raw = String(idOrSlug || '').trim();
+  if (!raw) return;
+
+  try {
+    const u = new URL('/api/status', location.origin);
+    u.searchParams.set('locationID', raw);
+
+    const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+    if (!r.ok) return;
+
+    const j = await r.json().catch(() => null);
+    const state = String(j?.visibilityState || '').toLowerCase();
+
+    if (state !== 'hidden') return;
+
+    // Insert a small notice at the top of the LPM body (idempotent).
+    const modal = document.getElementById('location-profile-modal');
+    const inner = modal?.querySelector?.('.modal-body-inner');
+    if (!inner) return;
+
+    const id = 'lpm-inactive-note';
+    if (inner.querySelector(`#${id}`)) return;
+
+    const box = document.createElement('div');
+    box.id = id;
+    box.style.border = '1px solid rgba(0,0,0,0.12)';
+    box.style.borderRadius = '10px';
+    box.style.padding = '0.6rem 0.75rem';
+    box.style.margin = '0.5rem 0 0.75rem';
+    box.style.opacity = '0.9';
+    box.style.fontSize = '0.9em';
+
+    // Translation-first with safe fallback
+    const msg =
+      (typeof t === 'function' ? (t('lpm.visibility.inactive') || '') : '') ||
+      'This business is currently inactive on NaviGen. Start a campaign to become discoverable again.';
+
+    box.textContent = msg;
+
+    // Ensure it appears above the description/media blocks
+    inner.insertBefore(box, inner.firstChild);
+  } catch {
+    // fail closed: no notice
+  }
+}
+
 // ✅ Stripe public key (inject securely in production)
 const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
 
@@ -1648,6 +1698,8 @@ async function initEmergencyBlock(countryOverride) {
           console.warn('QR fallback fetch failed', e);
         }
       }
+      
+      await maybeShowLpmInactiveNotice(uid);
 
       // After LPM has been opened, show cashier Redeem Confirmation (if this load came from a redeem redirect).
       {

@@ -1144,6 +1144,8 @@ The Info QR journey is:
   5) User may explore: contact, media, social, ratings, promotions
 
 Info QR has no security constraints and must never block access.
+Static QR scan (Info QR SCAN) must only be logged by the QR redirect endpoint (/out/qr-scan/<slug>).
+Loading /?lp=<slug> inside the app (internal navigation) MUST NOT be interpreted as a QR scan.
 
 --------------------------------------------------------------------
 2.6 Promo QR Flow (Customer → Cashier)
@@ -2253,6 +2255,7 @@ The LPM appears when:
   • The app deep-links via scanned Info QR
   • A business is tapped in a results list
   • Dash links redirect to the location page
+  • LPM may be opened by deep link (?lp=) or internal navigation; only deep links originating from /out/qr-scan/… represent a Static QR scan event.
 
 6.2.3 Structure  
 The LPM contains:
@@ -2328,8 +2331,8 @@ C) Unowned LPM
 “Owner settings” modal (unowned) MUST include:
 • Run campaign
     - CTA: opens Campaign Setup modal (contextual to this LPM)
-• Protect this location
-    - CTA: opens Exclusive Operation Period modal (€5 / 30 days)
+• (Deferred) Keep visible
+    - CTA: extends courtesy visibility for 30 days (pricing deferred)
 • See example dashboards
     - CTA: opens Example Dashboards modal (3–6 example cards)
 
@@ -5577,6 +5580,20 @@ Campaign delivery must not be interrupted by authority expiry.
 Privacy and control remain prepaid privileges.
 
 --------------------------------------------------------------------
+Discoverability After Campaign Ends (Courtesy Visibility)
+
+NaviGen manages discoverability inside the NaviGen app independently of web indexing.
+
+Rules (business-first):
+• During an active campaign, the LPM is promoted and discoverable.
+• After a campaign ends, the LPM remains discoverable inside NaviGen for a courtesy period of 60 days (Y = 2).
+• After the courtesy period ends, the LPM becomes not discoverable inside NaviGen:
+    - removed from search results and discovery lists
+    - not shown in context lists (Popular / Accordion / Search-in-context)
+• Direct link access may still open the LPM. Direct link access does not imply discoverability.
+• Creation does not imply discoverability. Discoverability is granted by time-bounded participation.
+
+--------------------------------------------------------------------
 92.4.1 Expiry Reminders & Renewal UX
 
 A) One-time email reminder (D-5)
@@ -6608,7 +6625,7 @@ the system MUST NOT render analytics or an analytics interstitial.
 Instead, the App MUST open the “Owner settings” modal (Section 6.2.8),
 providing contextual actions:
 • Run campaign
-• Protect this location (€5 / 30 days)
+• (Deferred) Keep visible
 • See example dashboards (Example Locations only)
 
 --------------------------------------------------------------------
