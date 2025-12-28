@@ -2056,13 +2056,7 @@ async function initLpmImageSlider(modal, data) {
           } catch { /* ignore storage errors */ }
 
           const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-
-            window.open(href, '_blank', 'noopener,noreferrer');
-          });
+          window.open(href, '_blank', 'noopener,noreferrer');
           return;
         }
 
