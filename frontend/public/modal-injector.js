@@ -1984,6 +1984,10 @@ async function initLpmImageSlider(modal, data) {
     if (statsBtn) {
       statsBtn.addEventListener('click', async (e) => {
         e.preventDefault();
+        // Guard: avoid double-open when user taps rapidly (async probes race).
+        if (statsBtn.dataset.busy === '1') return;
+        statsBtn.dataset.busy = '1';
+        try {
 
         const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i; // keep ULID shape check
 
@@ -2029,7 +2033,7 @@ async function initLpmImageSlider(modal, data) {
             const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
             if (r.ok) return { ok: true, code: 200 };
             return { ok: false, code: r.status || 0 };
-          } catch { return { ok: false, code: 0 }; }
+          } catch { return { ok: false, code: -1 }; } // -1 = network/offline
         };
 
         const owned = await isOwnedByStatus();
@@ -2064,6 +2068,9 @@ async function initLpmImageSlider(modal, data) {
           locationIdOrSlug: target,
           locationName: String(data?.displayName ?? data?.name ?? '').trim()
         });
+        } finally {
+          statsBtn.dataset.busy = '0';
+        }        
       }, { capture: true });
     }
 

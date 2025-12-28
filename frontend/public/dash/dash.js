@@ -133,6 +133,51 @@ function getISODate(input){
   const eid   = u.searchParams.get('entityID') || '';
   const segs  = location.pathname.split('/').filter(Boolean);
   const pathId= (segs[0] === 'dash' && segs[1]) ? segs[1] : '';       // /dash/<id>
+  // Example dashboards: show a read-only badge when the location is flagged in /data/profiles.json.
+  // This does not grant access; server still enforces all gates.
+  (async () => {
+    try {
+      const prof = await fetch('/data/profiles.json', { cache: 'no-store' });
+      if (!prof.ok) return;
+
+      const data = await prof.json().catch(() => null);
+      const locs = Array.isArray(data?.locations)
+        ? data.locations
+        : (data?.locations && typeof data.locations === 'object')
+          ? Object.values(data.locations)
+          : [];
+
+      const seg = String(pathId || '').trim();
+      if (!seg) return;
+
+      const rec = locs.find(r => {
+        const slug = String(r?.locationID || r?.slug || r?.alias || '').trim();
+        const id   = String(r?.ID || r?.id || '').trim();
+        return slug === seg || id === seg;
+      });
+
+      const v = rec?.exampleLocation ?? rec?.isExample ?? rec?.example ?? rec?.exampleDash ?? rec?.flags?.example;
+      const isExample = (v === true || v === 1 || String(v || '').toLowerCase() === 'true' || String(v || '').toLowerCase() === 'yes');
+      if (!isExample) return;
+
+      const title = document.getElementById('page-title');
+      if (!title) return;
+
+      const badge = document.createElement('span');
+      badge.textContent = (typeof t === 'function' && t('owner.examples.badge')) || 'Example';
+      badge.style.fontSize = '0.75em';
+      badge.style.opacity = '0.75';
+      badge.style.marginLeft = '0.5rem';
+      badge.style.padding = '0.12rem 0.4rem';
+      badge.style.borderRadius = '9999px';
+      badge.style.border = '1px solid rgba(0,0,0,0.15)';
+
+      title.appendChild(badge);
+    } catch {
+      // fail closed: no badge
+    }
+  })();
+    
   const ULID  = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
   if (modeEl) modeEl.value = m;

@@ -17,6 +17,7 @@ import {
   showLocationProfileModal,
   showThankYouToast as showThankYouToastUI,
   openViewSettingsModal,
+  showExampleDashboardsModal,
   createFavoritesModal,
   showFavoritesModal,
   createPromotionsModal,
@@ -525,7 +526,7 @@ function renderBusinessOwnersGroup() {
         descKey: "bo.card.exampleDash.desc",
         onClick: () => {
           // TODO: open Example Dashboards modal
-          showToast(t("bo.toast.exampleDashSoon"));
+          showExampleDashboardsModal();
         }
       },
       {
@@ -2563,7 +2564,7 @@ async function initEmergencyBlock(countryOverride) {
           id: 'nav-stats',
           icon: '📈',
           title: 'My stats is coming soon',
-          handler: () => showToast('My stats is coming soon')
+          handler: () => showExampleDashboardsModal()
         },
         {
           id: 'nav-here',
