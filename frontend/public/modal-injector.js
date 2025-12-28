@@ -2706,11 +2706,10 @@ export async function createExampleDashboardsModal() {
       `;
       btn.addEventListener('click', (e) => {
         e.preventDefault();
+
         const seg = ex.id || ex.slug;
         const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-        const w = window.open(href, '_blank', 'noopener,noreferrer');
-        // If the browser blocks popups, fall back to same-tab navigation.
-        if (!w) window.location.href = href;
+        window.open(href, '_blank', 'noopener,noreferrer');
       });
       list.appendChild(btn);
     });
