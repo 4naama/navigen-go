@@ -8,7 +8,7 @@ const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v63"; // bump to evic
 self.addEventListener("install", event => {
   event.waitUntil((async () => {
     if (IS_DEV) { // dev: no precache; install fast
-      await self.skipWaiting(); // apply new SW immediately after install
+      await self.skipWaiting(); // apply new SW immediately after install (dev + prod)
       return;
     }
     const cache = await caches.open(CACHE_NAME);
@@ -26,8 +26,9 @@ self.addEventListener("install", event => {
         if (res && res.ok) await cache.put(assetUrl, res.clone());
       } catch {}
     })); // close map + allSettled
+    
+    await self.skipWaiting(); // prod: apply new SW immediately after install
   })()); // invoke the async IIFE so waitUntil gets a Promise
-
 });
 
 // cleanup old caches; claim clients so new SW controls pages now
@@ -62,8 +63,13 @@ self.addEventListener("fetch", event => {
   const accept = req.headers.get("accept") || "";
   const isHTML = req.mode === "navigate" || accept.includes("text/html");
 
-  // API: never cache; always hit network
-  if (u.pathname.startsWith('/api/')) {
+  // OP-sensitive routes: never cache; always hit network (fail closed).
+  // Includes API, Dash, and Owner session/exchange routes.
+  if (
+    u.pathname.startsWith('/api/') ||
+    u.pathname === '/dash' || u.pathname.startsWith('/dash/') ||
+    u.pathname.startsWith('/owner/')
+  ) {
     event.respondWith(fetch(req, { cache: 'no-store' }));
     return;
   }

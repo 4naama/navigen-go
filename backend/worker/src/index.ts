@@ -918,87 +918,11 @@ export default {
         return json({ ok:true, wrote, skipped, total: aliases.length }, 200);
       }
 
-      // --- Admin mint: POST /api/admin/mint-owner-link
-      // Mint a short-lived signed owner access link for manual Phase 2 testing (no email required).
-      // Guarded by JWT_SECRET; remove after ship-gating.
-      if (pathname === "/api/admin/mint-owner-link" && req.method === "POST") {
-        const auth = req.headers.get("Authorization") || "";
-        if (!auth.startsWith("Bearer ")) {
-          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401, { "cache-control": "no-store" });
-        }
-        const token = auth.slice(7).trim();
-        const expected = String(env.JWT_SECRET || "").trim();
-        if (!expected) {
-          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
-        }
-        if (!token || token !== expected) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control": "no-store" });
-        }
+      // (removed) /api/admin/diag-auth — temporary Phase 2 test endpoint
 
-        // Parse input (JSON): { locationID: "<slug-or-ulid>" }
-        let payloadIn: any = null;
-        try { payloadIn = await req.json(); } catch { payloadIn = null; }
-        const raw = String(payloadIn?.locationID || "").trim();
-        if (!raw) {
-          return json({ error:{ code:"invalid_request", message:"locationID required" } }, 400, { "cache-control": "no-store" });
-        }
+      // (removed) /api/admin/mint-owner-link — temporary Phase 2 test endpoint
 
-        // Resolve to canonical ULID
-        const mapped = (await resolveUid(raw, env)) || raw;
-        const ulid = String(mapped || "").trim();
-        if (!ULID_RE.test(ulid)) {
-          return json({ error:{ code:"invalid_request", message:"locationID not resolvable to ULID" } }, 400, { "cache-control": "no-store" });
-        }
-
-        // Must have active ownership to mint an owner link (aligns with /owner/exchange validation).
-        const ownKey = `ownership:${ulid}`;
-        const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
-        const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
-        const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
-        if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
-          return json({ error:{ code:"blocked", message:"Ownership not active for this ULID" } }, 403, { "cache-control": "no-store" });
-        }
-
-        // HMAC secret must be configured (same requirement as /owner/exchange).
-        const secret = String(env.OWNER_LINK_HMAC_SECRET || "").trim();
-        if (secret.length < 32) {
-          return json({ error:{ code:"misconfigured", message:"OWNER_LINK_HMAC_SECRET not set or too short" } }, 500, { "cache-control": "no-store" });
-        }
-
-        // Build token payload (15 minute expiry)
-        const nowSec = Math.floor(Date.now() / 1000);
-        const expSec = nowSec + 15 * 60;
-
-        // jti (random, URL-safe)
-        const jtiBytes = new Uint8Array(18);
-        (crypto as any).getRandomValues(jtiBytes);
-        const jti = bytesToB64url(jtiBytes);
-
-        const tokObj = {
-          ver: 1,
-          ulid,
-          iat: nowSec,
-          exp: expSec,
-          jti,
-          purpose: "owner-dash"
-        };
-
-        // IMPORTANT: /owner/exchange verifies signature over the exact tok bytes after base64url decode,
-        // then parses JSON. So we must sign JSON bytes and then base64url encode the same bytes.
-        const tokJson = JSON.stringify(tokObj);
-        const tokBytes = new TextEncoder().encode(tokJson);
-        const tok = bytesToB64url(tokBytes);
-        const sig = await hmacSha256B64url(secret, tokBytes);
-
-        const origin = req.headers.get("Origin") || "https://navigen.io";
-        const exchangeUrl = `${origin}/owner/exchange?tok=${encodeURIComponent(tok)}&sig=${encodeURIComponent(sig)}`;
-
-        return json(
-          { ok:true, ulid, exclusiveUntil: exclusiveUntil.toISOString(), tok, sig, exchangeUrl },
-          200,
-          { "cache-control": "no-store" }
-        );
-      }
+        // (removed) leftover mint-owner-link body (fully deleted)
 
       // GET /api/stats?locationID=.
       // Phase 3: owner session required; requested location must match the session ULID.

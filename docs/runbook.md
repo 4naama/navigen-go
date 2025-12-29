@@ -281,6 +281,8 @@ git push origin main
 cd C:\Users\USER\Documents\a_git\navigen-go\backend\worker
 wrangler deploy
 
+bxz7mbe.jac4PMA!rmj
+
 If nothing changed (force rebuild):
 git commit --allow-empty -m "Backend deploy"
 git push origin main
@@ -308,6 +310,27 @@ Visibility is enforced by backend only.
 If this invariant holds, the Owner Platform is safe.
 
 ***End of RUNBOOK.md***
+
+***JWT_SECRET change***
+
+# put your real JWT secret into a file with no trailing newline
+$jwt = "<YOUR_64_CHAR_JWT_SECRET>"
+[System.IO.File]::WriteAllText("$pwd\jwt_secret.txt", $jwt)
+
+# set it in Cloudflare Workers (no prompt paste)
+Get-Content -Raw .\jwt_secret.txt | wrangler secret put JWT_SECRET
+
+# redeploy
+wrangler deploy
+
+***Check JWT_SECRET***
+
+$secret = Get-Content -Raw .\jwt_secret.txt
+$uri = "https://navigen-api.4naama.workers.dev/api/admin/diag-auth"
+Invoke-RestMethod -Method Get -Uri $uri -Headers @{ Authorization = "Bearer $secret" }
+
+***End of JWT_SECRET change***
+
 
 Timeline management with NaviGen-level tools (not search engines)
 What you control today (the real levers)
