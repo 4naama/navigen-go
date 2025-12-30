@@ -543,7 +543,6 @@ function renderRootActionGroup({ groupKey, defaultTitleKey, cards }) {
 
 function renderBusinessOwnersGroup() {
   renderRootActionGroup({
-    // Phase 5: Business Owners onboarding (root shell)
     groupKey: "root.bo.title",
     defaultTitleKey: "root.bo.title",
     cards: [
@@ -552,12 +551,8 @@ function renderBusinessOwnersGroup() {
         titleKey: "root.bo.startCampaign.title",
         descKey: "root.bo.startCampaign.desc",
         onClick: async () => {
-          // Start campaign requires selecting an existing location (manual LPM creation stays admin-only for now).
           const picked = await showSelectLocationModal();
           if (!picked) return;
-
-          // Next step (Phase 5 checkout wiring): open checkout for selected location.
-          // For now, reuse the LPM so the owner can verify they picked the right business.
           showLocationProfileModal(picked);
         }
       },
@@ -565,25 +560,19 @@ function renderBusinessOwnersGroup() {
         icon: "🔑",
         titleKey: "root.bo.restore.title",
         descKey: "root.bo.restore.desc",
-        onClick: () => {
-          showRestoreAccessModal();
-        }
+        onClick: () => showRestoreAccessModal()
       },
       {
         icon: "📈",
         titleKey: "root.bo.examples.title",
         descKey: "root.bo.examples.desc",
-        onClick: () => {
-          showExampleDashboardsModal();
-        }
+        onClick: () => showExampleDashboardsModal()
       },
       {
         icon: "➕",
         titleKey: "root.bo.notListed.title",
         descKey: "root.bo.notListed.desc",
-        onClick: () => {
-          showRequestListingModal();
-        }
+        onClick: () => showRequestListingModal()
       }
     ]
   });

@@ -2258,6 +2258,164 @@ import { t } from './scripts/i18n.js';
 // Stripe: only the donation action here (init comes from caller)
 import { handleDonation } from "./scripts/stripe.js";
 
+// Phase 5 — Select Location modal (uses existing rendered location buttons + root search styling)
+// This avoids introducing new list APIs/contracts before self-serve LPM creation exists.
+export function createSelectLocationModal() {
+  const id = 'select-location-modal';
+  document.getElementById(id)?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${(t('root.bo.selectLocation.title') || 'Select your business')}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  // Clone the existing root search input for identical styling (fallback to a plain input).
+  const rootSearch =
+    document.getElementById('search') ||
+    document.querySelector('input#search') ||
+    document.querySelector('input[type="search"]');
+
+  const input = rootSearch
+    ? rootSearch.cloneNode(true)
+    : document.createElement('input');
+
+  input.id = 'select-location-search';
+  input.value = '';
+  input.placeholder = t('root.bo.selectLocation.placeholder') || 'Search here…';
+  input.autocomplete = 'off';
+
+  // Ensure it's an input element
+  if (!(input instanceof HTMLInputElement)) {
+    // fallback
+    const tmp = document.createElement('input');
+    tmp.id = 'select-location-search';
+    tmp.placeholder = t('root.bo.selectLocation.placeholder') || 'Search here…';
+    tmp.autocomplete = 'off';
+    inner.appendChild(tmp);
+  } else {
+    inner.appendChild(input);
+  }
+
+  const list = document.createElement('div');
+  list.className = 'modal-menu-list';
+  list.style.marginTop = '0.75rem';
+  inner.appendChild(list);
+
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  setupTapOutClose(id);
+}
+
+export async function showSelectLocationModal() {
+  const id = 'select-location-modal';
+  if (!document.getElementById(id)) createSelectLocationModal();
+  showModal(id);
+
+  const modal = document.getElementById(id);
+  const input = modal?.querySelector('#select-location-search');
+  const list = modal?.querySelector('.modal-menu-list');
+  if (!modal || !list) return null;
+
+  // Source: existing location buttons already built by app.js/modal-injector wiring
+  const buttons = Array.from(document.querySelectorAll('.location-button')) || [];
+
+  const items = buttons.map(btn => {
+    const name = String(btn.getAttribute('data-name') || btn.textContent || '').trim();
+    const slug = String(btn.getAttribute('data-locationid') || '').trim();
+    const uid  = String(btn.getAttribute('data-id') || '').trim();
+    const addr = String(btn.getAttribute('data-addr') || '').trim();
+    return { name, slug, uid, addr };
+  }).filter(x => x.name && x.slug);
+
+  const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+
+  const render = (q) => {
+    const needle = norm(q);
+    list.innerHTML = '';
+
+    const filtered = items
+      .filter(x => {
+        if (!needle) return true;
+        const n = norm(x.name);
+        const a = norm(x.addr);
+        return n.includes(needle) || a.includes(needle);
+      })
+      .slice(0, 30);
+
+    if (!filtered.length) {
+      const p = document.createElement('p');
+      p.className = 'muted';
+      p.textContent = t('root.bo.selectLocation.none') || 'No matches.';
+      list.appendChild(p);
+      return;
+    }
+
+    filtered.forEach(x => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'modal-menu-item';
+      btn.innerHTML = `
+        <span class="icon-img">📍</span>
+        <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+          <strong>${x.name}</strong><br><small>${x.slug}</small>
+        </span>
+      `;
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideModal(id);
+
+        // Compatible with showLocationProfileModal
+        const payload = {
+          locationID: x.slug,
+          id: x.uid || x.slug,
+          displayName: x.name,
+          name: x.name
+        };
+        modal.dataset.pick = JSON.stringify(payload);
+      });
+      list.appendChild(btn);
+    });
+  };
+
+  render('');
+  if (input) input.addEventListener('input', () => render(input.value));
+
+  return await new Promise((resolve) => {
+    const tick = setInterval(() => {
+      const picked = modal.dataset.pick;
+      if (picked) {
+        clearInterval(tick);
+        modal.dataset.pick = '';
+        try { resolve(JSON.parse(picked)); } catch { resolve(null); }
+      }
+      if (modal.classList.contains('hidden')) {
+        clearInterval(tick);
+        resolve(null);
+      }
+    }, 150);
+  });
+}
+
 // canonical API; ULID-only responses (no same-origin)
 const API = (path) => new URL(path, 'https://navigen-api.4naama.workers.dev').toString();
 
@@ -2768,23 +2926,55 @@ export function createRequestListingModal() {
   inner.className = 'modal-body-inner';
 
   inner.innerHTML = `
-    <label style="display:block;margin:0.5rem 0 0.25rem;">Business name</label>
-    <input id="rl-name" type="text" style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+  inner.querySelector('#rl-has-coord')?.addEventListener('change', (e) => {
+    const on = !!e.target?.checked;
+    const w = inner.querySelector('#rl-coord-wrap');
+    if (w) w.style.display = on ? 'block' : 'none';
+  });
+    
+    <label style="display:block;margin:0.5rem 0 0.25rem;">Business name *</label>
+    <input id="rl-name" type="text" maxlength="80"
+      style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
 
-    <label style="display:block;margin:0.75rem 0 0.25rem;">Address</label>
-    <input id="rl-address" type="text" style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+    <label style="display:block;margin:0.75rem 0 0.25rem;">Street address *</label>
+    <input id="rl-address" type="text" maxlength="120"
+      style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+      <div style="flex:1 1 12rem;min-width:12rem;">
+        <label style="display:block;margin:0.75rem 0 0.25rem;">City *</label>
+        <input id="rl-city" type="text" maxlength="60"
+          style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+      </div>
+      <div style="flex:1 1 10rem;min-width:10rem;">
+        <label style="display:block;margin:0.75rem 0 0.25rem;">Country code *</label>
+        <input id="rl-country" type="text" maxlength="2" placeholder="HU"
+          style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);text-transform:uppercase;" />
+      </div>
+    </div>
 
     <label style="display:block;margin:0.75rem 0 0.25rem;">Optional: Website or Google Maps link</label>
-    <input id="rl-link" type="text" style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+    <input id="rl-link" type="text" maxlength="200"
+      style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
 
-    <label style="display:block;margin:0.75rem 0 0.25rem;">Optional: Coordinates (lat,lng)</label>
-    <input id="rl-coord" type="text" placeholder="47.4979,19.0402" style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+    <div style="margin-top:0.75rem;">
+      <label style="display:flex;align-items:center;gap:0.5rem;">
+        <input id="rl-has-coord" type="checkbox" />
+        <span>Optional: I have coordinates</span>
+      </label>
+      <div id="rl-coord-wrap" style="display:none;margin-top:0.5rem;">
+        <label style="display:block;margin:0 0 0.25rem;">Coordinates (lat,lng) — 6 decimals</label>
+        <input id="rl-coord" type="text" placeholder="52.519983, 13.381121"
+          style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+        <small style="opacity:0.75;display:block;margin-top:0.25rem;">Tip: you can copy this from Google Maps.</small>
+      </div>
+    </div>
   `;
 
   body.appendChild(inner);
 
   const actions = document.createElement('div');
-  actions.className = 'modal-footer cta-compact';
+  actions.className = 'modal-footer';
 
   const send = document.createElement('button');
   send.className = 'modal-footer-button';
@@ -2794,12 +2984,37 @@ export function createRequestListingModal() {
   send.addEventListener('click', async () => {
     const name = String(document.getElementById('rl-name')?.value || '').trim();
     const address = String(document.getElementById('rl-address')?.value || '').trim();
+    const city = String(document.getElementById('rl-city')?.value || '').trim();
+    const country = String(document.getElementById('rl-country')?.value || '').trim().toUpperCase();
     const link = String(document.getElementById('rl-link')?.value || '').trim();
     const coord = String(document.getElementById('rl-coord')?.value || '').trim();
 
-    if (!name || !address) {
-      showToast('Please provide business name and address.', 2000);
+    if (!name || !address || !city || !country || country.length !== 2) {
+      showToast('Please provide name, street address, city, and 2-letter country code.', 2200);
       return;
+    }
+
+    // Normalize name for admin handling (no slug creation here)
+    const nameNorm = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^\p{L}\p{N}\s\-\&\.\']/gu, '')  // keep common business punctuation
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80);
+
+    // Optional coords validation (if provided)
+    let coordNorm = '';
+    if (coord) {
+      const m = coord.match(/^\s*(-?\d+(?:\.\d{1,6})?)\s*,\s*(-?\d+(?:\.\d{1,6})?)\s*$/);
+      if (!m) {
+        showToast('Coordinates must be "lat,lng" with up to 6 decimals.', 2200);
+        return;
+      }
+      const lat = Number(m[1]), lng = Number(m[2]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        showToast('Coordinates are out of range.', 2200);
+        return;
+      }
+      coordNorm = `${lat.toFixed(6)},${lng.toFixed(6)}`;
     }
 
     // Manual pipeline: store locally for now; admin can copy out later.
@@ -3076,7 +3291,13 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       onClick: () => {
         // Phase 4 scope: hook into existing campaign setup when available.
         // Keep as a safe no-op with toast until Campaign Setup modal is wired.
-        showToast(_ownerText('owner.toast.campaignSetupSoon', 'Campaign setup will appear here soon.'), 2000);
+        (async () => {
+          hideModal(id);
+          const picked = await showSelectLocationModal();
+          if (!picked) return;
+          // Phase 5: for now, open the LPM so the owner can verify the business before checkout wiring.
+          showLocationProfileModal(picked);
+        })();
       }
     });
 
