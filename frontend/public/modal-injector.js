@@ -2741,6 +2741,247 @@ export async function showExampleDashboardsModal() {
   showModal(id);
 }
 
+// Phase 5 — Request Listing modal (manual onboarding pipeline)
+// Owners can request listing creation; no instant LPM creation is performed here.
+export function createRequestListingModal() {
+  const id = 'request-listing-modal';
+  document.getElementById(id)?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${t('modal.requestListing.title') || 'Request a listing'}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  inner.innerHTML = `
+    <label style="display:block;margin:0.5rem 0 0.25rem;">Business name</label>
+    <input id="rl-name" type="text" style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+
+    <label style="display:block;margin:0.75rem 0 0.25rem;">Address</label>
+    <input id="rl-address" type="text" style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+
+    <label style="display:block;margin:0.75rem 0 0.25rem;">Optional: Website or Google Maps link</label>
+    <input id="rl-link" type="text" style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+
+    <label style="display:block;margin:0.75rem 0 0.25rem;">Optional: Coordinates (lat,lng)</label>
+    <input id="rl-coord" type="text" placeholder="47.4979,19.0402" style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+  `;
+
+  body.appendChild(inner);
+
+  const actions = document.createElement('div');
+  actions.className = 'modal-footer cta-compact';
+
+  const send = document.createElement('button');
+  send.className = 'modal-footer-button';
+  send.type = 'button';
+  send.textContent = t('modal.requestListing.submit') || 'Send request';
+
+  send.addEventListener('click', async () => {
+    const name = String(document.getElementById('rl-name')?.value || '').trim();
+    const address = String(document.getElementById('rl-address')?.value || '').trim();
+    const link = String(document.getElementById('rl-link')?.value || '').trim();
+    const coord = String(document.getElementById('rl-coord')?.value || '').trim();
+
+    if (!name || !address) {
+      showToast('Please provide business name and address.', 2000);
+      return;
+    }
+
+    // Manual pipeline: store locally for now; admin can copy out later.
+    try {
+      const key = 'navigen.requestListing';
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      const next = Array.isArray(arr) ? arr : [];
+      next.unshift({ name, address, link, coord, ts: Date.now() });
+      localStorage.setItem(key, JSON.stringify(next));
+    } catch {}
+
+    showToast(t('modal.requestListing.success') || 'Thanks! We’ll add your listing soon.', 2500);
+    hideModal(id);
+  });
+
+  const cancel = document.createElement('button');
+  cancel.className = 'modal-footer-button';
+  cancel.type = 'button';
+  cancel.textContent = t('common.cancel') || 'Cancel';
+  cancel.addEventListener('click', () => hideModal(id));
+
+  actions.appendChild(cancel);
+  actions.appendChild(send);
+
+  card.appendChild(top);
+  card.appendChild(body);
+  card.appendChild(actions);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  setupTapOutClose(id);
+}
+
+export function showRequestListingModal() {
+  const id = 'request-listing-modal';
+  if (!document.getElementById(id)) createRequestListingModal();
+  showModal(id);
+}
+
+// Phase 5 — Select Location modal (pick an existing listing before starting a campaign)
+export function createSelectLocationModal() {
+  const id = 'select-location-modal';
+  document.getElementById(id)?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">Select your business</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Search by name…';
+  input.style.width = '100%';
+  input.style.padding = '0.6rem';
+  input.style.borderRadius = '8px';
+  input.style.border = '1px solid rgba(0,0,0,0.15)';
+  inner.appendChild(input);
+
+  const list = document.createElement('div');
+  list.className = 'modal-menu-list';
+  list.style.marginTop = '0.75rem';
+  inner.appendChild(list);
+
+  body.appendChild(inner);
+
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  setupTapOutClose(id);
+}
+
+export async function showSelectLocationModal() {
+  const id = 'select-location-modal';
+  if (!document.getElementById(id)) createSelectLocationModal();
+  showModal(id);
+
+  const modal = document.getElementById(id);
+  const input = modal?.querySelector('input');
+  const list = modal?.querySelector('.modal-menu-list');
+  if (!input || !list) return null;
+
+  // Load current discoverable locations from the API (already filtered by visibilityState in /api/data/list).
+  let items = [];
+  try {
+    const ctx = ''; // root shell: no context filter; backend may return empty items today
+    const u = new URL('/api/data/list', 'https://navigen-api.4naama.workers.dev');
+    if (ctx) u.searchParams.set('context', ctx);
+    u.searchParams.set('limit', '99');
+
+    const r = await fetch(u.toString(), { cache: 'no-store' });
+    const j = r.ok ? await r.json().catch(() => null) : null;
+    items = Array.isArray(j?.items) ? j.items : [];
+  } catch {
+    items = [];
+  }
+
+  // Render helper
+  const render = (q) => {
+    const needle = String(q || '').toLowerCase().trim();
+    list.innerHTML = '';
+
+    const filtered = items
+      .map(it => ({
+        raw: it,
+        name: String(it?.locationName?.en ?? it?.locationName ?? '').trim(),
+        slug: String(it?.locationID || it?.slug || it?.alias || '').trim(),
+        id: String(it?.ID || it?.id || '').trim(),
+        coord: it?.coord || it?.coordinateCompound || ''
+      }))
+      .filter(x => x.name && (!needle || x.name.toLowerCase().includes(needle)))
+      .slice(0, 25);
+
+    if (!filtered.length) {
+      const p = document.createElement('p');
+      p.className = 'muted';
+      p.textContent = 'No matches.';
+      list.appendChild(p);
+      return;
+    }
+
+    filtered.forEach(x => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'modal-menu-item';
+      btn.innerHTML = `<span class="icon-img">📍</span><span class="label"><strong>${x.name}</strong><br><small>${x.slug}</small></span>`;
+      btn.addEventListener('click', () => {
+        hideModal(id);
+
+        // Return a payload compatible with showLocationProfileModal()
+        const payload = {
+          locationID: x.slug,
+          id: x.id || x.slug,
+          displayName: x.name,
+          name: x.name,
+          coord: x.coord
+        };
+        modal.dataset.pick = JSON.stringify(payload);
+      });
+      list.appendChild(btn);
+    });
+  };
+
+  // Initial render
+  render('');
+
+  input.oninput = () => render(input.value);
+
+  // Await pick
+  return await new Promise((resolve) => {
+    const tick = setInterval(() => {
+      const picked = modal.dataset.pick;
+      if (picked) {
+        clearInterval(tick);
+        modal.dataset.pick = '';
+        try { resolve(JSON.parse(picked)); } catch { resolve(null); }
+      }
+      // closed without pick
+      if (modal.classList.contains('hidden')) {
+        clearInterval(tick);
+        resolve(null);
+      }
+    }, 150);
+  });
+}
+
 export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationName }) {
   const id = 'owner-settings-modal';
   document.getElementById(id)?.remove();
@@ -2836,17 +3077,6 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
         // Phase 4 scope: hook into existing campaign setup when available.
         // Keep as a safe no-op with toast until Campaign Setup modal is wired.
         showToast(_ownerText('owner.toast.campaignSetupSoon', 'Campaign setup will appear here soon.'), 2000);
-      }
-    });
-
-    addItem({
-      id: 'owner-protect',
-      icon: '🛡️',
-      title: _ownerText('owner.settings.claim.protect.title', 'Protect this location'),
-      desc: _ownerText('owner.settings.claim.protect.desc', 'Start an exclusive operation period (€5 / 30 days).'),
-      onClick: () => {
-        // Phase 4 scope: hook into Exclusive Operation Period purchase when available.
-        showToast(_ownerText('owner.toast.protectSoon', 'Protect this location will appear here soon.'), 2000);
       }
     });
 

@@ -18,6 +18,9 @@ import {
   showThankYouToast as showThankYouToastUI,
   openViewSettingsModal,
   showExampleDashboardsModal,
+  showRestoreAccessModal,
+  showRequestListingModal,
+  showSelectLocationModal,
   createFavoritesModal,
   showFavoritesModal,
   createPromotionsModal,
@@ -540,52 +543,46 @@ function renderRootActionGroup({ groupKey, defaultTitleKey, cards }) {
 
 function renderBusinessOwnersGroup() {
   renderRootActionGroup({
-    groupKey: "group.business-owners",
-    defaultTitleKey: "group.business-owners",
+    // Phase 5: Business Owners onboarding (root shell)
+    groupKey: "root.bo.title",
+    defaultTitleKey: "root.bo.title",
     cards: [
       {
         icon: "🎯",
-        titleKey: "bo.card.runCampaign.title",
-        descKey: "bo.card.runCampaign.desc",
-        onClick: () => {
-          // TODO: open Campaign Setup modal
-          showToast(t("bo.toast.campaignSetupSoon"));
-        }
-      },
-      {
-        icon: "🛡️",
-        titleKey: "bo.card.protect.title",
-        descKey: "bo.card.protect.desc",
-        onClick: () => {
-          // TODO: open Protect This Location modal (€5/30)
-          showToast(t("bo.toast.protectSoon"));
+        titleKey: "root.bo.startCampaign.title",
+        descKey: "root.bo.startCampaign.desc",
+        onClick: async () => {
+          // Start campaign requires selecting an existing location (manual LPM creation stays admin-only for now).
+          const picked = await showSelectLocationModal();
+          if (!picked) return;
+
+          // Next step (Phase 5 checkout wiring): open checkout for selected location.
+          // For now, reuse the LPM so the owner can verify they picked the right business.
+          showLocationProfileModal(picked);
         }
       },
       {
         icon: "🔑",
-        titleKey: "bo.card.restore.title",
-        descKey: "bo.card.restore.desc",
+        titleKey: "root.bo.restore.title",
+        descKey: "root.bo.restore.desc",
         onClick: () => {
-          // TODO: open Restore Access modal (email guidance)
-          showToast(t("bo.toast.restoreSoon"));
+          showRestoreAccessModal();
         }
       },
       {
         icon: "📈",
-        titleKey: "bo.card.exampleDash.title",
-        descKey: "bo.card.exampleDash.desc",
+        titleKey: "root.bo.examples.title",
+        descKey: "root.bo.examples.desc",
         onClick: () => {
-          // TODO: open Example Dashboards modal
           showExampleDashboardsModal();
         }
       },
       {
-        icon: "🔎",
-        titleKey: "bo.card.findLocation.title",
-        descKey: "bo.card.findLocation.desc",
+        icon: "➕",
+        titleKey: "root.bo.notListed.title",
+        descKey: "root.bo.notListed.desc",
         onClick: () => {
-          // Optional: focus search for now
-          document.getElementById("search")?.focus();
+          showRequestListingModal();
         }
       }
     ]
