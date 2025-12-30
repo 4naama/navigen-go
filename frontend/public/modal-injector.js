@@ -2749,19 +2749,9 @@ export function createRestoreAccessModal() {
 
   body.appendChild(inner);
 
-  const actions = document.createElement('div');
-  actions.className = 'modal-footer cta-compact';
-
-  const ok = document.createElement('button');
-  ok.className = 'modal-footer-button';
-  ok.type = 'button';
-  ok.textContent = _ownerText('common.ok', 'OK');
-  ok.addEventListener('click', () => hideModal(id));
-  actions.appendChild(ok);
-
   card.appendChild(top);
   card.appendChild(body);
-  card.appendChild(actions);
+
   wrap.appendChild(card);
   document.body.appendChild(wrap);
 }
@@ -2926,12 +2916,6 @@ export function createRequestListingModal() {
   inner.className = 'modal-body-inner';
 
   inner.innerHTML = `
-  inner.querySelector('#rl-has-coord')?.addEventListener('change', (e) => {
-    const on = !!e.target?.checked;
-    const w = inner.querySelector('#rl-coord-wrap');
-    if (w) w.style.display = on ? 'block' : 'none';
-  });
-    
     <label style="display:block;margin:0.5rem 0 0.25rem;">Business name *</label>
     <input id="rl-name" type="text" maxlength="80"
       style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
@@ -2964,12 +2948,18 @@ export function createRequestListingModal() {
       </label>
       <div id="rl-coord-wrap" style="display:none;margin-top:0.5rem;">
         <label style="display:block;margin:0 0 0.25rem;">Coordinates (lat,lng) — 6 decimals</label>
-        <input id="rl-coord" type="text" placeholder="52.519983, 13.381121"
+        <input id="rl-coord" type="text" placeholder="47.497900,19.040200"
           style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
         <small style="opacity:0.75;display:block;margin-top:0.25rem;">Tip: you can copy this from Google Maps.</small>
       </div>
     </div>
   `;
+
+  inner.querySelector('#rl-has-coord')?.addEventListener('change', (e) => {
+    const on = !!e.target?.checked;
+    const w = inner.querySelector('#rl-coord-wrap');
+    if (w) w.style.display = on ? 'block' : 'none';
+  });
 
   body.appendChild(inner);
 
@@ -3022,7 +3012,16 @@ export function createRequestListingModal() {
       const key = 'navigen.requestListing';
       const arr = JSON.parse(localStorage.getItem(key) || '[]');
       const next = Array.isArray(arr) ? arr : [];
-      next.unshift({ name, address, link, coord, ts: Date.now() });
+      next.unshift({
+        name,
+        nameNorm,
+        address,
+        city,
+        country,
+        link,
+        coord: coordNorm,
+        ts: Date.now()
+      });
       localStorage.setItem(key, JSON.stringify(next));
     } catch {}
 
@@ -3052,55 +3051,6 @@ export function showRequestListingModal() {
   const id = 'request-listing-modal';
   if (!document.getElementById(id)) createRequestListingModal();
   showModal(id);
-}
-
-// Phase 5 — Select Location modal (pick an existing listing before starting a campaign)
-export function createSelectLocationModal() {
-  const id = 'select-location-modal';
-  document.getElementById(id)?.remove();
-
-  const wrap = document.createElement('div');
-  wrap.className = 'modal hidden';
-  wrap.id = id;
-
-  const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
-
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  top.innerHTML = `
-    <h2 class="modal-title">Select your business</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
-
-  const body = document.createElement('div');
-  body.className = 'modal-body';
-  const inner = document.createElement('div');
-  inner.className = 'modal-body-inner';
-
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.placeholder = 'Search by name…';
-  input.style.width = '100%';
-  input.style.padding = '0.6rem';
-  input.style.borderRadius = '8px';
-  input.style.border = '1px solid rgba(0,0,0,0.15)';
-  inner.appendChild(input);
-
-  const list = document.createElement('div');
-  list.className = 'modal-menu-list';
-  list.style.marginTop = '0.75rem';
-  inner.appendChild(list);
-
-  body.appendChild(inner);
-
-  card.appendChild(top);
-  card.appendChild(body);
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
-
-  setupTapOutClose(id);
 }
 
 export async function showSelectLocationModal() {
