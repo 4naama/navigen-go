@@ -716,6 +716,9 @@ Expected:
 • /api/data/list?context=... does not include the location (hidden from discovery).
 • Direct link /?lp=<slug> still opens the LPM.
 • LPM shows an “inactive” notice (informational only).
+• Discoverability is granted by time-bounded participation, not by existence.
+• A location may exist indefinitely, but it is only discoverable inside NaviGen while within an active campaign or courtesy visibility window.
+• Ownership expiry affects discoverability, not identity.
 
 --------------------------------------------------------------------
 4.9 Ship gate (Phase 4 complete)

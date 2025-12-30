@@ -5788,6 +5788,173 @@ This mechanism does NOT:
 
 --------------------------------------------------------------------
 
+92.4.3 Discoverability After Campaign Ends (Courtesy Visibility)
+
+--------------------------------------------------------------------
+
+## Timeline management with NaviGen-level tools (not search engines)
+
+### What we control today (the real levers)
+
+Inside NaviGen, we control only **in-product discoverability and attention**, not external indexing.
+
+**Discoverability**
+- Appears in search results and lists
+- Appears in “Popular”, “Nearby”, and similar surfaces
+- Appears while users browse NaviGen
+
+**Ranking / prominence**
+- Order in results
+- Featured vs buried placement
+
+**Capabilities**
+- Campaigns
+- Analytics
+- Dash access
+- Owner CTAs
+
+**UI messaging**
+- What the owner sees
+- What the public sees
+
+That is sufficient to manage visibility and value.
+
+--------------------------------------------------------------------
+
+## The finalized timeline (internal operations view)
+
+Phases are named by **what the system does**, not how it feels to the user.
+
+--------------------------------------------------------------------
+
+### Phase 1 — Active campaign  
+*(€50 / 30 days)*
+
+**System behavior**
+- LPM discoverable: **true**
+- Ranking: **boosted**
+- Campaigns: **enabled**
+- Analytics: **enabled**
+- Exclusive operation: **enforced**
+
+**Owner message**
+> “Your business is actively promoted.”
+
+**Public**
+- Sees the business everywhere it should appear
+
+--------------------------------------------------------------------
+
+### Phase 2 — Courtesy visibility  
+*(free, Y × 30 days; Y = 2)*
+
+**System behavior**
+- LPM discoverable: **true**
+- Ranking: **reduced (natural fall)**
+- Campaigns: **disabled**
+- Analytics: **disabled**
+- Exclusive operation: **off** (no one else promoted yet)
+
+**Owner message**
+> “Your campaign ended, but we’re keeping your business visible so customers can still find you.”
+
+**Public**
+- Still finds the business
+- It is less prominent
+
+This is the “nice guy” phase.
+
+--------------------------------------------------------------------
+
+### Phase 3 — Held visibility  
+*(€5 / 30 days, optional)*
+
+This is **not protection**.  
+This is **holding a place**.
+
+**System behavior**
+- LPM discoverable: **true**
+- Ranking: **stabilized** (no further decay)
+- Campaigns: **disabled**
+- Analytics: **disabled**
+
+**Owner message**
+> “If you’d like to keep your place visible while you decide what’s next, you can hold it for a little longer.”
+
+**Public**
+- Business still appears
+- Not promoted
+- Not highlighted
+
+**Important**
+- If the owner does nothing, the system proceeds to Phase 4 automatically.
+
+--------------------------------------------------------------------
+
+### Phase 4 — Not discoverable  
+*(after long inactivity, e.g. 6–12 months)*
+
+This is the decisive state.
+
+> “We simply set the LPM to not discoverable.”
+
+**System behavior**
+- LPM discoverable: **false**
+- Removed from:
+  - search results
+  - lists
+  - browsing
+
+**Direct link**
+- May still open the LPM initially
+- Does not appear anywhere organically
+
+**Owner message**
+> “Your business is currently inactive on NaviGen.  
+> Start a campaign anytime to become visible again.”
+
+**Public**
+- Will not encounter the business organically
+
+This solves:
+- orphaned LPM cost
+- clutter
+- false presence
+
+No deletion is required.
+
+--------------------------------------------------------------------
+
+## Why this works without “indexing”
+
+NaviGen does not control Google.  
+NaviGen controls **attention inside the product**.
+
+From a business owner’s perspective:
+- “Visible on NaviGen” = valuable
+- “Hidden on NaviGen” = effectively gone
+
+Whether a direct link technically works is irrelevant unless:
+- it is shared intentionally, and
+- someone already knows it
+
+That is acceptable free residue, not value leakage.
+
+--------------------------------------------------------------------
+
+## One subtle but important rule (prevents abuse)
+
+**Discoverability is granted by time-bounded participation, not by existence.**
+
+This means:
+- Creating an LPM does **not** guarantee visibility
+- Visibility is earned by activity (campaign or courtesy)
+- Inactivity leads to quiet removal
+
+This is fair, intuitive, and scalable.
+
+--------------------------------------------------------------------
+
 92.5 Abuse, Safety, and Auditability
 
 The Owner Platform is designed to be abuse-resistant by construction.
