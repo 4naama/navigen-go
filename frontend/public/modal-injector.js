@@ -2986,7 +2986,7 @@ export function createRequestListingModal() {
 
     // Normalize name for admin handling (no slug creation here)
     const nameNorm = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^\p{L}\p{N}\s\-\&\.\']/gu, '')  // keep common business punctuation
+      .replace(/[^a-z0-9\s\-\&\.\']/gi, '')      // keep common business punctuation (ASCII-safe after NFD)
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 80);
