@@ -2336,117 +2336,89 @@ export async function showSelectLocationModal() {
   const list = modal?.querySelector('.modal-menu-list');
   if (!modal || !list) return null;
 
-  // Build a local, deterministic search index.
-  // Source priority:
-  // 1) Existing rendered location buttons (context pages)
-  // 2) Full /data/profiles.json (root shell / no context)
   const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
-  const norm = (s) => String(s || '')
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[-_.\/]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const norm = (s) =>
+    String(s || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[-_.\/]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
   const tokensOf = (q) => norm(q).split(/\s+/).filter(Boolean);
 
-  // IMPORTANT: modal reuse can otherwise accumulate listeners.
-  // Keep a per-open monotonic nonce and ignore stale async work.
-  const openNonce = String(Date.now());
-  modal.dataset.openNonce = openNonce;
-
-  const fromDomButtons = () => {
-    // include Popular buttons too when present
-    const buttons = Array.from(document.querySelectorAll('.location-button, .popular-button')) || [];
-    return buttons
-      .map(btn => {
-        const name = String(btn.getAttribute('data-name') || btn.textContent || '').trim();
-        const slug = String(btn.getAttribute('data-locationid') || '').trim();
-        const uid  = String(btn.getAttribute('data-id') || '').trim();
-        const addr = String(btn.getAttribute('data-addr') || '').trim();
-        const tags = String(btn.getAttribute('data-tags') || '').trim();
-        const contact = String(btn.getAttribute('data-contact') || '').trim();
-        const person  = String(btn.getAttribute('data-contact-person') || '').trim();
-
-        // Search is token-AND across all available local metadata.
-        const hay = norm([name, slug, addr, tags, person, contact].filter(Boolean).join(' '));
-        return { name, slug, uid, addr, hay };
-      })
-      .filter(x => x.name && x.slug);
-  };
-
-  const fromProfilesJson = async () => {
+  const loadProfiles = async () => {
     try {
-      const r = await fetch('/data/profiles.json', { cache: 'no-store' });
-      if (!r.ok) return [];
-      const j = await r.json().catch(() => null);
-      const locs = Array.isArray(j?.locations)
-        ? j.locations
-        : (j?.locations && typeof j.locations === 'object')
-          ? Object.values(j.locations)
-          : [];
+      const res = await fetch('/data/profiles.json', { cache: 'no-store' });
+      if (!res.ok) return [];
+      const j = await res.json().catch(() => null);
+      if (!j) return [];
 
-      return (Array.isArray(locs) ? locs : [])
-        .map(rec => {
-          const locName = (rec?.locationName && typeof rec.locationName === 'object')
-            ? String(rec.locationName.en || Object.values(rec.locationName)[0] || '').trim()
-            : String(rec?.locationName || '').trim();
+      // Accept multiple shapes:
+      // - Array
+      // - { locations: [...] } or { locations: {..} }
+      // - Object map
+      let arr = [];
+      if (Array.isArray(j)) arr = j;
+      else if (Array.isArray(j.locations)) arr = j.locations;
+      else if (j.locations && typeof j.locations === 'object') arr = Object.values(j.locations);
+      else if (typeof j === 'object') arr = Object.values(j);
 
-          const slug = String(rec?.locationID || rec?.slug || rec?.alias || '').trim();
-          const uid  = String(rec?.ID || rec?.id || '').trim();
+      return (Array.isArray(arr) ? arr : [])
+        .map((rec) => {
+          const locName =
+            rec?.locationName && typeof rec.locationName === 'object'
+              ? String(rec.locationName.en || Object.values(rec.locationName)[0] || '').trim()
+              : String(rec?.locationName || '').trim();
+
+          const slug = String(rec?.locationID || rec?.slug || '').trim();
+          const rawId = String(rec?.ID || rec?.id || '').trim();
+          const uid = ULID.test(rawId) ? rawId : '';
 
           const c = (rec && rec.contactInformation) || {};
-          const addrBits = [c.address, c.city, c.adminArea, c.postalCode, c.countryCode]
+
+          // Display: street + city only
+          const addrDisplay = [c.address, c.city]
             .filter(Boolean)
-            .map(v => String(v).trim());
-          const addr = addrBits.join(' ');
+            .map((v) => String(v).trim())
+            .join(', ');
+
+          // Search: keep full surface (adminArea/countryCode remain searchable)
+          const addrSearch = [c.address, c.city, c.adminArea, c.postalCode, c.countryCode]
+            .filter(Boolean)
+            .map((v) => String(v).trim())
+            .join(' ');
 
           const tags = Array.isArray(rec?.tags)
-            ? rec.tags.map(k => String(k).replace(/^tag\./,'')).join(' ')
+            ? rec.tags.map((k) => String(k).replace(/^tag\./, '')).join(' ')
             : '';
 
           const person = String(c.contactPerson || '').trim();
           const contact = [c.phone, c.email, c.whatsapp, c.telegram, c.messenger]
             .filter(Boolean)
-            .map(v => String(v).trim())
+            .map((v) => String(v).trim())
             .join(' ');
 
-          // Search is token-AND across all available profile metadata.
-          const hay = norm([locName, slug, addr, tags, person, contact].filter(Boolean).join(' '));
+          const hay = norm([locName, slug, addrSearch, tags, person, contact].filter(Boolean).join(' '));
 
-          return {
-            name: locName,
-            slug,
-            uid: ULID.test(uid) ? uid : '',
-            addr,
-            hay
-          };
+          return { name: locName, slug, uid, addrDisplay, hay };
         })
-        .filter(x => x.name && x.slug);
+        .filter((x) => x.name && x.slug);
     } catch {
       return [];
     }
   };
 
-  let items = fromDomButtons();
-  if (!items.length) {
-    // root shell: load the full shipped dataset for selection
-    items = await fromProfilesJson();
-  }
+  const items = await loadProfiles();
 
   const render = (q) => {
-    // Stale open guard: ignore late renders from older modal opens.
-    if (modal.dataset.openNonce !== openNonce) return;
-
     const toks = tokensOf(q);
     list.innerHTML = '';
 
     const filtered = items
-      .filter(x => {
-        if (!toks.length) return true;
-        return toks.every(tok => x.hay.includes(tok));
-      })
+      .filter((x) => (toks.length ? toks.every((tok) => x.hay.includes(tok)) : true))
       .slice(0, 40);
 
     if (!filtered.length) {
@@ -2457,22 +2429,24 @@ export async function showSelectLocationModal() {
       return;
     }
 
-    filtered.forEach(x => {
+    filtered.forEach((x) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'modal-menu-item';
+
+      const line2 = x.addrDisplay ? x.addrDisplay : x.slug;
+
       btn.innerHTML = `
         <span class="icon-img">📍</span>
         <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-          <strong>${x.name}</strong>
-          ${x.addr ? `<br><small>${x.addr}</small>` : `<br><small>${x.slug}</small>`}
+          <strong>${x.name}</strong><br><small>${line2}</small>
         </span>
       `;
+
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         hideModal(id);
 
-        // Compatible with showLocationProfileModal
         const payload = {
           locationID: x.slug,
           id: x.uid || x.slug,
@@ -2481,20 +2455,13 @@ export async function showSelectLocationModal() {
         };
         modal.dataset.pick = JSON.stringify(payload);
       });
+
       list.appendChild(btn);
     });
   };
 
   render('');
-  if (input) {
-    // Avoid accumulating listeners across repeated opens
-    if (input._navigenBoundSelectSearch) {
-      try { input._navigenBoundSelectSearch.abort(); } catch {}
-    }
-    const ac = new AbortController();
-    input._navigenBoundSelectSearch = ac;
-    input.addEventListener('input', () => render(input.value), { signal: ac.signal });
-  }
+  if (input) input.addEventListener('input', () => render(input.value));
 
   return await new Promise((resolve) => {
     const tick = setInterval(() => {
@@ -2502,7 +2469,11 @@ export async function showSelectLocationModal() {
       if (picked) {
         clearInterval(tick);
         modal.dataset.pick = '';
-        try { resolve(JSON.parse(picked)); } catch { resolve(null); }
+        try {
+          resolve(JSON.parse(picked));
+        } catch {
+          resolve(null);
+        }
       }
       if (modal.classList.contains('hidden')) {
         clearInterval(tick);
