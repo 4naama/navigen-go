@@ -2487,6 +2487,7 @@ button:hover {
 
 #promotions-modal .modal-body-inner {
   padding-inline: clamp(0.6rem, 3vw, 0.9rem);
+  padding-bottom: calc(0.9rem + env(safe-area-inset-bottom, 0px)); /* end-of-list comfort like My Stuff */
   /* ↓ explanation:
      - 0.6rem lower bound keeps some gutter even on tiny screens
      - 3vw lets spacing scale with viewport width
