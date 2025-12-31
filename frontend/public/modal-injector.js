@@ -2384,7 +2384,7 @@ export async function showSelectLocationModal() {
           const c = (rec && rec.contactInformation) || {};
 
           // Display: street + city only
-          const addrDisplay = [c.address, c.city, c.postalCode].filter(Boolean).map(v => String(v).trim()).join(', ');
+          const addrDisplay = [c.address, c.city, c.postalCode]
             .filter(Boolean)
             .map((v) => String(v).trim())
             .join(', ');
