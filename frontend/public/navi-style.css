@@ -2486,20 +2486,7 @@ button:hover {
 }
 
 #promotions-modal .modal-body-inner {
-  padding-inline: clamp(0.6rem, 3vw, 0.9rem);
-  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); /* give the last row breathing room */
-  /* ↓ explanation:
-     - 0.6rem lower bound keeps some gutter even on tiny screens
-     - 3vw lets spacing scale with viewport width
-     - 0.9rem cap stops it from ballooning on very wide screens */
-}
-
-/* On small screens, keep the Promotions card slightly above the bottom edge
-   so the last item doesn't visually collide with the gesture/safe-area region. */
-@media (max-width: 640px){
-  #promotions-modal .modal-content{
-    margin-bottom: 12px;
-  }
+  padding: 0 1.5em 3.25em 1.5em; /* match My Stuff bottom floor */
 }
 
 #promotions-modal #promotions-body.modal-body {
