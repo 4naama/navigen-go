@@ -334,3 +334,4 @@ Invoke-RestMethod -Method Get -Uri $uri -Headers @{ Authorization = "Bearer $sec
 
 
 cd "$env:USERPROFILE\Documents\a_git\kede\kede-site"
+hugo server -D --bind 127.0.0.1 --port 1313 --baseURL http://127.0.0.1:1313/ --disableFastRender

@@ -2493,10 +2493,12 @@ button:hover {
   padding-inline: 0;              /* inner container adds no extra gutter */
 }
 
-/* Promotions modal: lift card slightly off the physical bottom edge on small screens (matches My Stuff comfort) */
+/* Promotions modal: lift the whole modal off the bottom gesture/safe-area region on small screens (match My Stuff) */
 @media (max-width: 640px){
-  #promotions-modal .modal-content{
-    margin-bottom: 12px;
+  #promotions-modal{
+    padding-bottom: calc(
+      var(--modal-pad) + env(safe-area-inset-bottom, 24px)
+    ); /* base pad + extra bottom room */
   }
 }
 
