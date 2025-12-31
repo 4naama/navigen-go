@@ -2494,6 +2494,14 @@ button:hover {
      - 0.9rem cap stops it from ballooning on very wide screens */
 }
 
+/* On small screens, keep the Promotions card slightly above the bottom edge
+   so the last item doesn't visually collide with the gesture/safe-area region. */
+@media (max-width: 640px){
+  #promotions-modal .modal-content{
+    margin-bottom: 12px;
+  }
+}
+
 #promotions-modal #promotions-body.modal-body {
   padding-inline: 0;              /* inner container adds no extra gutter */
 }
