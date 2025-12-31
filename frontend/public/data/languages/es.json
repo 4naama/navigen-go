@@ -634,5 +634,8 @@
   "root.bo.notListed.desc": "Solicita el registro — lo añadiremos.",
   "modal.requestListing.title": "Solicitar registro",
   "modal.requestListing.submit": "Enviar solicitud",
-  "modal.requestListing.success": "¡Gracias! Añadiremos tu negocio pronto."
+  "modal.requestListing.success": "¡Gracias! Añadiremos tu negocio pronto.",
+  "root.bo.selectLocation.title": "Selecciona tu negocio",
+  "root.bo.selectLocation.placeholder": "Busca aquí…",
+  "root.bo.selectLocation.none": "Sin resultados."
 }

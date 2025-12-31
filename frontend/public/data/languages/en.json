@@ -634,5 +634,8 @@
   "root.bo.notListed.desc": "Request a listing — we’ll add it.",
   "modal.requestListing.title": "Request a listing",
   "modal.requestListing.submit": "Send request",
-  "modal.requestListing.success": "Thanks! We’ll add your listing soon."
+  "modal.requestListing.success": "Thanks! We’ll add your listing soon.",
+  "root.bo.selectLocation.title": "Select your business",
+  "root.bo.selectLocation.placeholder": "Search here…",
+  "root.bo.selectLocation.none": "No matches."
 }

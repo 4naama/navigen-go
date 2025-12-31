@@ -634,5 +634,8 @@
   "root.bo.notListed.desc": "בקש הוספה — נוסיף אותו.",
   "modal.requestListing.title": "בקש הוספה",
   "modal.requestListing.submit": "שלח בקשה",
-  "modal.requestListing.success": "תודה! נוסיף את הרישום שלך בקרוב."
+  "modal.requestListing.success": "תודה! נוסיף את הרישום שלך בקרוב.",
+  "root.bo.selectLocation.title": "בחר את העסק שלך",
+  "root.bo.selectLocation.placeholder": "חפש כאן…",
+  "root.bo.selectLocation.none": "אין התאמות."
 }

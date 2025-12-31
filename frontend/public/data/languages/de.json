@@ -634,5 +634,8 @@
   "root.bo.notListed.desc": "Eintrag anfordern — wir fügen ihn hinzu.",
   "modal.requestListing.title": "Eintrag anfordern",
   "modal.requestListing.submit": "Anfrage senden",
-  "modal.requestListing.success": "Vielen Dank! Wir fügen Ihren Eintrag bald hinzu."
+  "modal.requestListing.success": "Vielen Dank! Wir fügen Ihren Eintrag bald hinzu.",
+  "root.bo.selectLocation.title": "Wählen Sie Ihr Unternehmen aus",
+  "root.bo.selectLocation.placeholder": "Hier suchen…",
+  "root.bo.selectLocation.none": "Keine Treffer."
 }

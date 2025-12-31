@@ -634,5 +634,8 @@
   "root.bo.notListed.desc": "Demandez un référencement — nous l’ajouterons.",
   "modal.requestListing.title": "Demander un référencement",
   "modal.requestListing.submit": "Envoyer la demande",
-  "modal.requestListing.success": "Merci ! Nous ajouterons votre fiche bientôt."
+  "modal.requestListing.success": "Merci ! Nous ajouterons votre fiche bientôt.",
+  "root.bo.selectLocation.title": "Sélectionnez votre entreprise",
+  "root.bo.selectLocation.placeholder": "Recherchez ici…",
+  "root.bo.selectLocation.none": "Aucun résultat."
 }

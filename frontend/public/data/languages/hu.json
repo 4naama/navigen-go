@@ -634,5 +634,8 @@
   "root.bo.notListed.desc": "Listázás kérése — hozzáadjuk.",
   "modal.requestListing.title": "Listázás kérése",
   "modal.requestListing.submit": "Kérés elküldése",
-  "modal.requestListing.success": "Köszönjük! Hamarosan hozzáadjuk a listához."
+  "modal.requestListing.success": "Köszönjük! Hamarosan hozzáadjuk a listához.",
+  "root.bo.selectLocation.title": "Válassza ki vállalkozását",
+  "root.bo.selectLocation.placeholder": "Keresés itt…",
+  "root.bo.selectLocation.none": "Nincs találat."
 }

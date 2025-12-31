@@ -634,5 +634,8 @@
   "root.bo.notListed.desc": "Richiedi l’inserimento — lo aggiungeremo.",
   "modal.requestListing.title": "Richiedi inserimento",
   "modal.requestListing.submit": "Invia richiesta",
-  "modal.requestListing.success": "Grazie! Aggiungeremo presto la tua attività."
+  "modal.requestListing.success": "Grazie! Aggiungeremo presto la tua attività.",
+  "root.bo.selectLocation.title": "Seleziona la tua attività",
+  "root.bo.selectLocation.placeholder": "Cerca qui…",
+  "root.bo.selectLocation.none": "Nessun risultato."
 }
