@@ -2270,7 +2270,7 @@ export function createSelectLocationModal() {
     id,
     title: '',                 // header rendered via .modal-top-bar (avoid double title)
     layout: 'menu',            // menu modal layout parity
-    bodyHTML: `<div class="modal-body"><div class="modal-body-inner"></div></div>`
+    bodyHTML: ``
   });
 
   // Ensure it's hidden after injection (same pattern used elsewhere)
