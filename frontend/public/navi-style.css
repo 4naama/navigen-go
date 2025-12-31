@@ -1619,11 +1619,6 @@ body.high-contrast .qr-cta{
   padding: 0 1.5em 3.25em 1.5em; /* bottom padding reduced by ~4px so the last item sits a bit closer to the footer, but still scrolls fully above the sticky band */
 }
 
-/* Select Location modal: bottom floor parity with My Stuff */
-#select-location-modal .modal-body-inner{
-  padding: 0 1.5em 3.25em 1.5em; /* match My Stuff bottom floor */
-}
-
 /* label wrapping (prevents text spill on narrow screens) */
 .my-stuff-item .label{
   display: flex;
@@ -2509,24 +2504,6 @@ button:hover {
   }
 }
 
-/* Select Location modal: match My Stuff bottom floor so last row never hits rounded edge */
-#select-location-modal .modal-body-inner{
-  padding: 0 1.5em 3.25em 1.5em; /* match My Stuff / Promotions floor */
-}
-
-/* Select Location modal: header flush + edge scrollbar (My Stuff parity) */
-#select-location-modal .modal-content{
-  padding-top: 0;    /* sticky header touches top edge */
-  padding-right: 0;  /* scrollbar flush right */
-  padding-left:  0;  /* no mid-gutter */
-  padding-bottom: 0; /* floor handled by .modal-body-inner */
-}
-
-#select-location-modal .modal-body{
-  padding: 0;        /* no inset scroll gutter */
-  margin-top: 8px;   /* match My Stuff’s under-header buffer */
-}
-
 /* Promotion Details: summary card is informational only (no pointer affordance) */
 .promo-summary-card{
   cursor: default;
@@ -2573,6 +2550,31 @@ button:hover {
   outline:2px solid #1a73e8;
   outline-offset:2px;
 }
+
+/* ==========================================================================
+   Select Location — hard lock to My Stuff menu geometry
+   Reason: avoid cascade conflicts between dual modal systems in this file.
+   ========================================================================== */
+
+/* Card geometry: match My Stuff (header flush, no inner side padding) */
+#select-location-modal .modal-content{
+  padding-top: 0;    /* attach sticky header to top edge */
+  padding-right: 0;  /* scrollbar flush right */
+  padding-left:  0;  /* no mid-gutter */
+  padding-bottom: 0; /* floor handled by modal-body-inner */
+}
+
+/* Scroll viewport geometry: match My Stuff */
+#select-location-modal .modal-body{
+  padding: 0;
+  margin-top: 8px;   /* same under-header rhythm as My Stuff */
+}
+
+/* Bottom floor: identical to My Stuff / Promotions */
+#select-location-modal .modal-body-inner{
+  padding: 0 1.5em 3.25em 1.5em;
+}
+
 body.high-contrast .modal-menu-item.is-active {
   background:#333;
   border-color:#fff;
