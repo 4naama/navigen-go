@@ -2502,6 +2502,24 @@ button:hover {
   }
 }
 
+/* Select Location modal: match My Stuff bottom floor so last row never hits rounded edge */
+#select-location-modal .modal-body-inner{
+  padding: 0 1.5em 3.25em 1.5em; /* match My Stuff / Promotions floor */
+}
+
+/* Select Location modal: header flush + edge scrollbar (My Stuff parity) */
+#select-location-modal .modal-content{
+  padding-top: 0;    /* sticky header touches top edge */
+  padding-right: 0;  /* scrollbar flush right */
+  padding-left:  0;  /* no mid-gutter */
+  padding-bottom: 0; /* floor handled by .modal-body-inner */
+}
+
+#select-location-modal .modal-body{
+  padding: 0;        /* no inset scroll gutter */
+  margin-top: 8px;   /* match My Stuff’s under-header buffer */
+}
+
 /* Promotion Details: summary card is informational only (no pointer affordance) */
 .promo-summary-card{
   cursor: default;

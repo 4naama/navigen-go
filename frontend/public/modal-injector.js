@@ -53,9 +53,10 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
 
   const body = document.createElement('div');
-  body.className = 'modal-body';
+  body.className = 'modal-body'; // scroll owner (My Stuff parity)
+
   const inner = document.createElement('div');
-  inner.className = 'modal-body-inner';
+  inner.className = 'modal-body-inner'; // padding + floor owner
 
   const qrContainer = document.createElement('div');
   qrContainer.className = 'qr-wrapper';
@@ -2314,7 +2315,6 @@ export function createSelectLocationModal() {
 
   const list = document.createElement('div');
   list.className = 'modal-menu-list';
-  list.style.marginTop = '0.75rem';
   inner.appendChild(list);
 
   body.appendChild(inner);

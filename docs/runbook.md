@@ -300,6 +300,16 @@ git commit --allow-empty -m "Deploy: rebuild prod"
 git push origin main
 
 --------------------------------------------------------------------
+HUGO
+--------------------------------------------------------------------
+
+cd "$env:USERPROFILE\Documents\a_git\kede\kede-site"
+hugo server -D --bind 127.0.0.1 --port 1313 --baseURL http://127.0.0.1:1313/ --disableFastRender
+
+
+https://themes.gohugo.io/themes/hugo-bootstrap-theme/?utm_source=chatgpt.com
+
+--------------------------------------------------------------------
 ## 13) Final Invariant (Memorize This)
 --------------------------------------------------------------------
 
@@ -331,7 +341,40 @@ Invoke-RestMethod -Method Get -Uri $uri -Headers @{ Authorization = "Bearer $sec
 
 ***End of JWT_SECRET change***
 
+--------------------------------------------------------------------
 
+(async () => {
+  const originalFetch = window.fetch.bind(window);
 
-cd "$env:USERPROFILE\Documents\a_git\kede\kede-site"
-hugo server -D --bind 127.0.0.1 --port 1313 --baseURL http://127.0.0.1:1313/ --disableFastRender
+  const fakeCampaigns = Array.from({ length: 10 }, (_, i) => ({
+    status: "active",
+    campaignName: `Test Promo ${i + 1}`,
+    locationName: `Test Location ${i + 1}`,
+    locationID: `test-location-${i + 1}`,
+    startDate: "2025-12-01",
+    endDate: "2026-01-31",
+    context: ""
+  }));
+
+  window.fetch = async (input, init) => {
+    const url = typeof input === "string" ? input : (input?.url || "");
+    if (url.includes("/data/campaigns.json")) {
+      return new Response(JSON.stringify(fakeCampaigns), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+    return originalFetch(input, init);
+  };
+
+  try {
+    // If your build serves modules from a different base, update this path.
+    const m = await import("./modal-injector.js");
+    if (!document.getElementById("promotions-modal")) m.createPromotionsModal();
+    m.showPromotionsModal();
+  } finally {
+    setTimeout(() => {
+      window.fetch = originalFetch;
+    }, 1500);
+  }
+})();
