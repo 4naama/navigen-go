@@ -2497,6 +2497,13 @@ button:hover {
   padding-inline: 0;              /* inner container adds no extra gutter */
 }
 
+/* Promotions modal: lift card slightly off the physical bottom edge on small screens (matches My Stuff comfort) */
+@media (max-width: 640px){
+  #promotions-modal .modal-content{
+    margin-bottom: 12px;
+  }
+}
+
 /* Promotion Details: summary card is informational only (no pointer affordance) */
 .promo-summary-card{
   cursor: default;

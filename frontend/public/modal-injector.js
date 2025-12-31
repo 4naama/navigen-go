@@ -3816,7 +3816,7 @@ export function createPromotionsModal() {
 
   const modal = injectModal({
     id: "promotions-modal",
-    className: "modal modal-menu",
+    layout: "menu", // ensures .modal-content.modal-menu → header sits flush (matches My Stuff pattern)
     bodyHTML: `<div id="promotions-body" class="modal-body"></div>`
   });
 
