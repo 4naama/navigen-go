@@ -421,6 +421,35 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
 #search-container #fav-button { margin: 0; }
 #search-container #here-button { margin: 0; }
 
+/* Select Location: make modal search look like the root #search input */
+#select-location-modal #select-location-search{
+  width: 100%;
+  box-sizing: border-box;
+
+  height: 36px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid var(--search-border, #d7dde4);
+  border-radius: 6px;
+
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  outline: none;
+}
+
+#select-location-modal #select-location-search::placeholder{
+  font-weight: 400;
+  color: #666;
+  opacity: 1;
+}
+
+#select-location-modal #select-location-search:focus,
+#select-location-modal #select-location-search:focus-visible{
+  border-color: var(--search-focus, #7aa2ff);
+  box-shadow: 0 0 0 3px var(--search-shadow, rgba(122,162,255,.2));
+}
 
 /* ==============================
    📜 Main content + scroll zone
@@ -2351,6 +2380,24 @@ button:hover {
   padding: 0 1.5em 1.5em;   /* header attached; content spaced */
 }
 
+/* Select Location — hard lock to My Stuff menu geometry (wins against later .modal rules) */
+#select-location-modal .modal-content{
+  padding-top: 0;    /* header flush */
+  padding-right: 0;  /* edge scrollbar */
+  padding-left:  0;  /* no mid-gutter */
+  padding-bottom: 0; /* floor owned by modal-body-inner */
+}
+
+#select-location-modal .modal-body{
+  padding: 0;        /* no inset scroll gutter */
+  margin-top: 8px;   /* same rhythm under header as My Stuff */
+}
+
+/* Bottom “floor” so the last row never sits on the rounded edge */
+#select-location-modal .modal-body-inner{
+  padding: 0 1.5em 3.25em 1.5em; /* identical to My Stuff / Promotions */
+}
+
 .modal-menu-list{
   display:flex;
   flex-direction:column;
@@ -2374,6 +2421,24 @@ button:hover {
   transition:background .2s ease;
   width:100%;                 /* stretch across modal for better card width */
   box-sizing:border-box;      /* include padding in width */
+}
+
+/* Select Location — hard lock to My Stuff menu geometry (wins against later .modal rules) */
+#select-location-modal .modal-content{
+  padding-top: 0;    /* header flush */
+  padding-right: 0;  /* edge scrollbar */
+  padding-left:  0;  /* no mid-gutter */
+  padding-bottom: 0; /* floor owned by modal-body-inner */
+}
+
+#select-location-modal .modal-body{
+  padding: 0;        /* no inset scroll gutter */
+  margin-top: 8px;   /* same rhythm under header as My Stuff */
+}
+
+/* Bottom “floor” so the last row never sits on the rounded edge */
+#select-location-modal .modal-body-inner{
+  padding: 0 1.5em 3.25em 1.5em; /* identical to My Stuff / Promotions */
 }
 
 /* ==============================

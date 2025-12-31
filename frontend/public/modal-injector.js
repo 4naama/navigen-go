@@ -2298,10 +2298,13 @@ export function createSelectLocationModal() {
     ? rootSearch.cloneNode(true)
     : document.createElement('input');
 
+  input.type = 'search';
   input.id = 'select-location-search';
+  input.spellcheck = false;
+  input.autocapitalize = 'off';
+  input.autocomplete = 'off';
   input.value = '';
   input.placeholder = t('root.bo.selectLocation.placeholder') || 'Search here…';
-  input.autocomplete = 'off';
 
   // Ensure it's an input element
   if (!(input instanceof HTMLInputElement)) {
