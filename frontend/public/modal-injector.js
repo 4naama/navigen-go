@@ -2423,7 +2423,7 @@ export async function showSelectLocationModal() {
 
     const filtered = items
       .filter((x) => (toks.length ? toks.every((tok) => x.hay.includes(tok)) : true))
-      .slice(0, 40);
+      .slice(0, 100);
 
     if (!filtered.length) {
       const p = document.createElement('p');
