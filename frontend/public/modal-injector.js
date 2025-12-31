@@ -2326,6 +2326,10 @@ export function createSelectLocationModal() {
   setupTapOutClose(id);
 }
 
+// Phase 5 BO: Select Location must not depend on pre-rendered DOM lists.
+// Root shell can have zero/partial `.location-button` nodes, so we load the full candidate set from `/data/profiles.json`
+// and perform token-AND, accent-insensitive search over name/slug/address/adminArea/postalCode/countryCode/tags/contact.
+// UI rows display only "street, city" (no adminArea/countryCode/postalCode shown), but those fields remain searchable.
 export async function showSelectLocationModal() {
   const id = 'select-location-modal';
   if (!document.getElementById(id)) createSelectLocationModal();
@@ -2380,7 +2384,7 @@ export async function showSelectLocationModal() {
           const c = (rec && rec.contactInformation) || {};
 
           // Display: street + city only
-          const addrDisplay = [c.address, c.city]
+          const addrDisplay = [c.address, c.city, c.postalCode].filter(Boolean).map(v => String(v).trim()).join(', ');
             .filter(Boolean)
             .map((v) => String(v).trim())
             .join(', ');
