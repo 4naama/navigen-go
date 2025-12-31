@@ -2383,7 +2383,7 @@ export async function showSelectLocationModal() {
 
           const c = (rec && rec.contactInformation) || {};
 
-          // Display: street + city only
+          // Display: street, postalCode, city (postalCode must be visible on the card)
           const addrDisplay = [c.address, c.city, c.postalCode]
             .filter(Boolean)
             .map((v) => String(v).trim())
@@ -2416,6 +2416,11 @@ export async function showSelectLocationModal() {
   };
 
   const items = await loadProfiles();
+
+  // De-dupe by authoritative slug (locationID) only
+  const bySlug = new Map();
+  items.forEach((x) => bySlug.set(x.slug, x));
+  const uniqItems = Array.from(bySlug.values());
 
   const render = (q) => {
     const toks = tokensOf(q);
