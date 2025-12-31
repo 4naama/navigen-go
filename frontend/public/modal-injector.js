@@ -2265,26 +2265,28 @@ export function createSelectLocationModal() {
   const id = 'select-location-modal';
   document.getElementById(id)?.remove();
 
-  const wrap = document.createElement('div');
-  wrap.className = 'modal hidden';
-  wrap.id = id;
+  // Build using the same modal universe + layout variant as My Stuff/Promotions
+  const modal = injectModal({
+    id,
+    title: '',                 // header rendered via .modal-top-bar (avoid double title)
+    layout: 'menu',            // menu modal layout parity
+    bodyHTML: `<div class="modal-body"><div class="modal-body-inner"></div></div>`
+  });
 
-  const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
+  // Ensure it's hidden after injection (same pattern used elsewhere)
+  modal.classList.add('hidden');
 
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  top.innerHTML = `
+  const topBar = document.createElement('div');
+  topBar.className = 'modal-top-bar';
+  topBar.innerHTML = `
     <h2 class="modal-title">${(t('root.bo.selectLocation.title') || 'Select your business')}</h2>
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+  modal.querySelector('.modal-content')?.prepend(topBar);
+  topBar.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
 
-  const body = document.createElement('div');
-  body.className = 'modal-body';
-
-  const inner = document.createElement('div');
-  inner.className = 'modal-body-inner';
+  const inner = modal.querySelector('.modal-body-inner');
+  if (!inner) return;
 
   // Clone the existing root search input for identical styling (fallback to a plain input).
   const rootSearch =
@@ -2316,12 +2318,6 @@ export function createSelectLocationModal() {
   const list = document.createElement('div');
   list.className = 'modal-menu-list';
   inner.appendChild(list);
-
-  body.appendChild(inner);
-  card.appendChild(top);
-  card.appendChild(body);
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
 
   setupTapOutClose(id);
 }

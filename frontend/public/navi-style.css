@@ -924,7 +924,8 @@ body.large-text {
 #alert-modal,
 #pinned-modal,
 #share-location-modal,
-#donation-modal {
+#donation-modal,
+#select-location-modal {
   position: fixed;
   inset: 0;
   display: none;
@@ -959,7 +960,8 @@ body.large-text {
 #alert-modal:not(.hidden),
 #pinned-modal:not(.hidden),
 #share-location-modal:not(.hidden),
-#donation-modal:not(.hidden) {
+#donation-modal:not(.hidden),
+#select-location-modal:not(.hidden) {
   display: flex;
 }
 
@@ -1615,6 +1617,11 @@ body.high-contrast .qr-cta{
 /* restore inner spacing for content (keeps column visually centered) */
 #my-stuff-modal .modal-body-inner{
   padding: 0 1.5em 3.25em 1.5em; /* bottom padding reduced by ~4px so the last item sits a bit closer to the footer, but still scrolls fully above the sticky band */
+}
+
+/* Select Location modal: bottom floor parity with My Stuff */
+#select-location-modal .modal-body-inner{
+  padding: 0 1.5em 3.25em 1.5em; /* match My Stuff bottom floor */
 }
 
 /* label wrapping (prevents text spill on narrow screens) */
