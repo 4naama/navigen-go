@@ -2628,37 +2628,34 @@ button:hover {
   padding-right: 0;  /* scrollbar flush right */
   padding-left:  0;  /* no mid-gutter */
   padding-bottom: 0; /* floor handled by modal-body-inner */
+  overflow: hidden;  /* ✅ IMPORTANT: disable card scroll so .modal-body is the only scroller */
 }
 
 #select-location-modal .modal-body{
+  overflow-y: auto;  /* ✅ single scroll container (list scrolls) */
+  flex-grow: 1;      /* ✅ take remaining height under header */
   padding: 0;        /* no inset scroll gutter */
   margin-top: 8px;   /* same rhythm under header as My Stuff */
-  position: relative;/* establishes sticky containment reliably */
 
   /* Ensure Select Location does not inherit the generic modal-body side padding.
      Gutter must be owned ONLY by .modal-body-inner (like My Stuff). */
   padding-inline: 0;
 }
 
-/* Keep the Select Location search row pinned under the sticky modal header
-   while ONLY the results list scrolls beneath it. */
-#select-location-modal .modal-body{
-  position: relative;      /* establishes sticky containment reliably */
-  overflow-y: auto;        /* modal body is the scroller for the list */
-}
-
-/* Anchor + sticky pin for the whole SYB search row (input + ×) */
+/* Keep the Select Location search row pinned WITHOUT duplicating the input rule.
+   The card (.modal-content) is the scroller, and the header (.modal-top-bar) is sticky at top:0. */
 #select-location-modal .modal-body-inner:has(#select-location-search){
-  position: relative;      /* safe; does not affect layout */
+  position: relative;
 }
 
+/* Sticky: the input stays under the sticky header while the list scrolls */
+/* Sticky: pin the whole SYB search-left wrapper (input + ×) */
 #select-location-modal .select-location-search-left{
   position: sticky;
-  top: 0;                  /* sticks to top of the modal-body scrollport */
-  z-index: 10;             /* below header (20), above list items */
-  background: #fff;        /* prevents list painting through */
-  padding-top: 0;          /* keeps alignment tight under header */
-  margin-bottom: 12px;     /* spacing before results */
+  top: 0;                 /* header is already sticky */
+  z-index: 10;            /* below header (20), above list items */
+  background: #fff;       /* prevents list painting through */
+  margin-bottom: 12px;    /* spacing before results */
 }
 
 /* Select Location: if a clear button exists, place it inside the input like the main shell */
