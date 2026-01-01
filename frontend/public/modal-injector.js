@@ -2473,7 +2473,15 @@ export async function showSelectLocationModal() {
 
           const hay = norm([locName, slug, addrSearch, tags, person, contact].filter(Boolean).join(' '));
 
-          return { name: locName, slug, uid, addrDisplay, hay };
+          // Preserve media so LPM can render images when opened from SYB
+          const media = (rec && typeof rec.media === 'object') ? rec.media : {};
+          const cover = String((media?.cover || rec?.imageSrc || '')).trim();
+
+          // Keep explicit images list if present (either top-level or under media)
+          const images = Array.isArray(rec?.images) ? rec.images
+            : (Array.isArray(media?.images) ? media.images : []);
+
+          return { name: locName, slug, uid, addrDisplay, hay, media, images, cover };
         })
         .filter((x) => x.name && x.slug);
     } catch {
@@ -2526,7 +2534,15 @@ export async function showSelectLocationModal() {
           locationID: x.slug,
           id: x.uid || x.slug,
           displayName: x.name,
-          name: x.name
+          name: x.name,
+
+          // Provide image inputs the LPM already understands
+          imageSrc: x.cover || '',
+          media: {
+            ...(x.media || {}),
+            cover: x.cover || (x.media && x.media.cover) || ''
+          },
+          images: Array.isArray(x.images) ? x.images : (x.media && Array.isArray(x.media.images) ? x.media.images : [])
         };
         modal.dataset.pick = JSON.stringify(payload);
       });
