@@ -1680,10 +1680,10 @@ body.high-contrast .qr-cta{
     ); /* base pad + extra bottom room */
   }
 
-  /* Also keep the card itself off the physical bottom + use svh (visible viewport) */
+  /* SYB card height on mobile: svh tracks the *visible* viewport.
+     Subtract an extra 12px so the card can never touch the physical bottom edge. */
   #select-location-modal .modal-content{
-    margin-bottom: 12px; /* visible gap above the device/browser bottom region */
-    max-height: calc(100svh - 32px - env(safe-area-inset-bottom, 0px));
+    max-height: calc(100svh - 32px - env(safe-area-inset-bottom, 0px) - 12px);
   }
 }
 
@@ -2710,13 +2710,6 @@ button:hover {
   display:block;
   height: 3.25em;     /* matches My Stuff/Promotions comfort depth */
   pointer-events:none;/* structural only */
-}
-
-/* On small screens, lift SYB card off the physical bottom edge (same fix as Donation) */
-@media (max-width: 640px){
-  #select-location-modal .modal-content{
-    margin-bottom: 12px; /* visible gap under the card */
-  }
 }
 
 body.high-contrast .modal-menu-item.is-active {
