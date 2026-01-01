@@ -2646,11 +2646,35 @@ button:hover {
   position: relative; /* safe; does not affect layout */
 }
 
+/* Select Location (SYB): search wrapper mirrors #search-left so the × sits INSIDE the field */
+#select-location-modal .select-location-search-left{
+  position: relative;         /* anchor for #select-location-clear-search */
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Reserve room for the × only after typing (same as shell) */
+#select-location-modal #select-location-search:not(:placeholder-shown){
+  padding-right: 2.25rem;
+}
+
+/* Place the × inside the search input */
 #select-location-modal #select-location-clear-search{
-  position: sticky;         /* stays aligned with the pinned search input */
-  top: 0;
-  z-index: 11;              /* above the input (10) */
-  margin-left: auto;        /* if it’s in-flow, push right */
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  display: none;              /* JS toggles; CSS also reveals on value */
+  z-index: 1;
+}
+
+/* CSS-only reveal when the input has content */
+#select-location-modal #select-location-search:not(:placeholder-shown) + #select-location-clear-search{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */

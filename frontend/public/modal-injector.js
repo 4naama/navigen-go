@@ -2304,7 +2304,9 @@ export function createSelectLocationModal() {
   input.autocapitalize = 'off';
   input.autocomplete = 'off';
   input.value = '';
-  input.placeholder = t('root.bo.selectLocation.placeholder') || 'Search here…';
+  // ensure 🔍 prefix (even when i18n provides a string)
+  const _ph = (t('root.bo.selectLocation.placeholder') || 'Search here…').trim();
+  input.placeholder = _ph.startsWith('🔍') ? _ph : `🔍 ${_ph}`;
 
   // Ensure it's an input element
   if (!(input instanceof HTMLInputElement)) {
@@ -2465,7 +2467,7 @@ export async function showSelectLocationModal() {
     const toks = tokensOf(q);
     list.innerHTML = '';
 
-    const filtered = items
+    const filtered = uniqItems
       .filter((x) => (toks.length ? toks.every((tok) => x.hay.includes(tok)) : true))
       .slice(0, 40);
 
