@@ -282,6 +282,10 @@ cd C:\Users\USER\Documents\a_git\navigen-go\backend\worker
 wrangler deploy
 
 bxz7mbe.jac4PMA!rmj
+index.ts: 
+const amountCents = 5000;
+for testing changed to
+const amountCents = 100; // change it back for prod
 
 If nothing changed (force rebuild):
 git commit --allow-empty -m "Backend deploy"

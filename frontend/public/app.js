@@ -3094,7 +3094,24 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
 (async function handleStripeReturn() {
   const url = new URL(window.location.href);
   const sessionId = url.searchParams.get("sid");
+  const flow = String(url.searchParams.get("flow") || "").trim().toLowerCase();
   if (!sessionId) return;
+  // Campaign checkout return is webhook-authoritative.
+  // Do NOT call the donation session endpoint or store "myPurchases".
+  if (flow === "campaign") {
+    try {
+      // Clean URL (avoid re-processing on refresh)
+      url.searchParams.delete("sid");
+      url.searchParams.delete("flow");
+      // keep locationID if present (useful for UI follow-up), but remove noise flags
+      url.searchParams.delete("canceled");
+      history.replaceState({}, document.title, url.toString());
+    } catch { /* ignore history errors */ }
+
+    // Minimal UX signal; ownership activation is async via Stripe webhook.
+    alert("Payment received. Ownership is activating—please reopen Owner settings in a few seconds.");
+    return;
+  }
 
   try {
     // 1. Call your backend to get Stripe session details

@@ -1573,7 +1573,7 @@ export default {
         }
 
         // Price: €50 / 30 days (spec: Campaign) — single fixed SKU for now
-        const amountCents = 5000;
+        const amountCents = 100;
         const currency = "eur";
 
         // Build redirect URLs on the web app origin (not the API Worker origin)
