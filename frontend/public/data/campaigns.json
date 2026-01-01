@@ -25,6 +25,31 @@
     "notes": ""
   },
   {
+    "locationID": "world-of-souvenir-deak-1655",
+    "locationName": "World of Souvenir Deák",
+    "sectorKey": "souvenir-shop",
+    "campaignKey": "2002",
+    "campaignName": "10% off your purchase",
+    "brandKey": "world-of-souvenir",
+    "context": "souvenirs/hungary;souvenirs/hungary/budapest",
+    "campaignType": "Discount",
+    "targetChannels": [
+      "QR"
+    ],
+    "startDate": "Thu Jan 01 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "endDate": "Sat Jan 31 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "status": "Active",
+    "offerType": "Discount",
+    "discountKind": "Percent",
+    "discountValue": 10,
+    "eligibilityType": "Everyone",
+    "eligibilityNotes": "",
+    "utmSource": "google",
+    "utmMedium": "",
+    "utmCampaign": "new_year_sale",
+    "notes": ""
+  },
+  {
     "locationID": "hd-debrecen-hadhazi-8910",
     "locationName": "HD Debrecen Hadházi",
     "sectorKey": "language-school",
@@ -47,6 +72,31 @@
     "utmSource": "google",
     "utmMedium": "",
     "utmCampaign": "winter_sale",
+    "notes": ""
+  },
+  {
+    "locationID": "hd-debrecen-hadhazi-8910",
+    "locationName": "HD Debrecen Hadházi",
+    "sectorKey": "language-school",
+    "campaignKey": "3002",
+    "campaignName": "15% off your sign-up",
+    "brandKey": "helen-doron",
+    "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+    "campaignType": "Discount",
+    "targetChannels": [
+      "QR"
+    ],
+    "startDate": "Wed Dec 03 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "endDate": "Fri Jan 02 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "status": "Active",
+    "offerType": "Discount",
+    "discountKind": "Percent",
+    "discountValue": 15,
+    "eligibilityType": "",
+    "eligibilityNotes": "",
+    "utmSource": "google",
+    "utmMedium": "",
+    "utmCampaign": "new_year_sale",
     "notes": ""
   },
   {
