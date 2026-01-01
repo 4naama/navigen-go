@@ -367,7 +367,8 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   box-shadow: 0 0 0 3px var(--search-shadow, rgba(122,162,255,.2));
 }
 
-/* ❌ Clear / Remove button — shared visual style (search clear + favorites remove) */
+/* ❌ Clear / Remove button — shared visual style (search clear + favorites remove)
+   Note: positioning is handled by #clear-search (shell) and #select-location-clear-search (Select Location). */
 #clear-search,
 .clear-x {
   width: 24px;
@@ -392,6 +393,27 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   transform: translateY(-50%);
   display: none;              /* JS toggles; CSS also reveals on value */
   z-index: 1;                 /* above input */
+}
+
+/* Select Location: clear button sits inside the input (same geometry as shell search) */
+#select-location-modal .select-location-search-left{
+  position: relative; /* anchor for #select-location-clear-search */
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+#select-location-modal #select-location-search{
+  padding-right: 2.25rem; /* reserve space for the clear X */
+}
+
+#select-location-modal #select-location-clear-search{
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  z-index: 2;
 }
 
 #clear-search:hover, .clear-x:hover { background: #f1f5f9; color: #334155; }
@@ -1228,10 +1250,10 @@ body.large-text {
 /* My Stuff + Select Location: center title; keep × on the same top line (right) */
 #my-stuff-modal .modal-top-bar,
 #select-location-modal .modal-top-bar{
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: flex-start;
-  gap: 12px;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:flex-start;
+  gap:12px;
   /* padding/background/border inherit from base block above */
 }
 
@@ -1239,22 +1261,22 @@ body.large-text {
 #my-stuff-modal .modal-top-bar h2,
 #select-location-modal .modal-top-bar h1,
 #select-location-modal .modal-top-bar h2{
-  grid-column: 2;
-  justify-self: center;
-  text-align: center;
-  margin: 0;
-  line-height: 1.2;
-  min-width: 0; /* prevents overflow forcing wraps */
+  grid-column:2;
+  justify-self:center;
+  text-align:center;
+  margin:0;
+  line-height:1.2;
+  min-width:0;
 }
 
 #my-stuff-modal .modal-top-bar .modal-close,
 #select-location-modal .modal-top-bar .modal-close{
-  position: static;
-  grid-column: 3;
-  justify-self: end;
-  align-self: flex-start;
-  margin-left: 0;
-  white-space: nowrap; /* never drop the × */
+  position:static;
+  grid-column:3;
+  justify-self:end;
+  align-self:flex-start;
+  margin:0;
+  white-space:nowrap;
 }
 
 /* ──────────────── Modal Footer Layout ──────────────── */
@@ -2628,12 +2650,22 @@ button:hover {
 /* Keep the search input pinned while the results list scrolls
    - No extra side margins: it must share the same gutters as the cards */
 #select-location-modal #select-location-search{
-  /* behavior-only override: keep search pinned while results scroll */
+  /* sticky within the card scroller; sits directly under the sticky header */
   position: sticky;
-  top: 0;
-  z-index: 6;
-  background: #fff;            /* prevents rows painting underneath */
-  margin: 0 0 12px 0;          /* spacing before results */
+  top: 0;                  /* stick to the top of the card scrollport */
+  z-index: 15;             /* under .modal-top-bar (20), above list rows */
+  background: #fff;
+  margin: 0 0 12px 0;
+}
+
+/* Select Location: the header is sticky, so reserve its height for the sticky search */
+#select-location-modal .modal-body-inner{
+  padding-top: 0; /* keep; search itself provides spacing */
+}
+
+#select-location-modal .modal-top-bar + .modal-body{
+  /* ensure content starts below header consistently */
+  margin-top: 0; /* neutralize any unexpected offsets for sticky stacking */
 }
 
 /* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */
