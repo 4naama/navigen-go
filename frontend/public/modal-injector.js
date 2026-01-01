@@ -1211,7 +1211,15 @@ async function initLpmImageSlider(modal, data) {
     const enc = encodeURI(s);
     if (enc !== s) add(enc);
 
-    // 4) /assets/location-profile-images/<id>/<filename>
+    // 4) /assets/location-profile-images/<slug-or-id>/<filename>
+    // Prefer slug folder (matches repo), keep ULID as a fallback.
+    const locSlug = String(loc?.locationID || '').trim();
+    if (locSlug) {
+      add(`/assets/location-profile-images/${locSlug}/${fname}`);
+      const encF = encodeURI(fname);
+      if (encF !== fname) add(`/assets/location-profile-images/${locSlug}/${encF}`);
+    }
+
     const locId = loc?.id || loc?.ID;
     if (locId) {
       add(`/assets/location-profile-images/${locId}/${fname}`);
@@ -1234,7 +1242,7 @@ async function initLpmImageSlider(modal, data) {
       imgEl.addEventListener('load', onLoad, { once: true });
       imgEl.addEventListener('error', onError, { once: true });
       imgEl.src = u;
-      if (imgEl.complete) onLoad(); // cached path
+      if (imgEl.complete && imgEl.naturalWidth > 0) onLoad(); // cached path only if pixels exist
     });
 
     for (let i = 0; i < cand.length; i++) {
