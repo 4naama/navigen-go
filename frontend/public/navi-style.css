@@ -2416,32 +2416,6 @@ button:hover {
   box-sizing:border-box;      /* include padding in width */
 }
 
-/* Select Location — hard lock to My Stuff menu geometry (wins against later .modal rules) */
-#select-location-modal .modal-content{
-  padding-top: 0;    /* header flush */
-  padding-right: 0;  /* edge scrollbar */
-  padding-left:  0;  /* no mid-gutter */
-  padding-bottom: 0; /* floor owned by modal-body-inner */
-}
-
-#select-location-modal .modal-body{
-  padding: 0;        /* no inset scroll gutter */
-  margin-top: 8px;   /* same rhythm under header as My Stuff */
-}
-
-/* Bottom “floor” so the last row never sits on the rounded edge */
-#select-location-modal .modal-body-inner{
-  padding: 0 1.5em 0 1.5em; /* bottom floor is owned by ::after so it behaves like a real spacer */
-}
-
-/* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */
-#select-location-modal .modal-body-inner::after{
-  content:"";
-  display:block;
-  height:3.25em;            /* matches My Stuff/Promotions comfort depth */
-  pointer-events:none;      /* structural only */
-}
-
 /* ==============================
    Business Owners (BO) cards
    - Used ONLY in the root/no-context shell
@@ -2630,15 +2604,21 @@ button:hover {
   padding-bottom: 0; /* floor handled by modal-body-inner */
 }
 
-/* Scroll viewport geometry: match My Stuff */
 #select-location-modal .modal-body{
-  padding: 0;
-  margin-top: 8px;   /* same under-header rhythm as My Stuff */
+  padding: 0;        /* no inset scroll gutter */
+  margin-top: 8px;   /* same rhythm under header as My Stuff */
 }
 
-/* Bottom floor: identical to My Stuff / Promotions */
+/* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */
 #select-location-modal .modal-body-inner{
-  padding: 0 1.5em 3.25em 1.5em;
+  padding: 0 1.5em 0 1.5em; /* side gutters match My Stuff; bottom floor provided by ::after */
+}
+
+#select-location-modal .modal-body-inner::after{
+  content:"";
+  display:block;
+  height: 3.25em;     /* matches My Stuff/Promotions comfort depth */
+  pointer-events:none;/* structural only */
 }
 
 body.high-contrast .modal-menu-item.is-active {
