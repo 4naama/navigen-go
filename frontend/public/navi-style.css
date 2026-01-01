@@ -2628,14 +2628,12 @@ button:hover {
   padding-right: 0;  /* scrollbar flush right */
   padding-left:  0;  /* no mid-gutter */
   padding-bottom: 0; /* floor handled by modal-body-inner */
-  overflow: hidden;  /* ✅ IMPORTANT: disable card scroll so .modal-body is the only scroller */
 }
 
 #select-location-modal .modal-body{
-  overflow-y: auto;  /* ✅ single scroll container (list scrolls) */
-  flex-grow: 1;      /* ✅ take remaining height under header */
   padding: 0;        /* no inset scroll gutter */
   margin-top: 8px;   /* same rhythm under header as My Stuff */
+  position: relative;/* establishes sticky containment reliably */
 
   /* Ensure Select Location does not inherit the generic modal-body side padding.
      Gutter must be owned ONLY by .modal-body-inner (like My Stuff). */
@@ -2652,7 +2650,7 @@ button:hover {
 /* Sticky: pin the whole SYB search-left wrapper (input + ×) */
 #select-location-modal .select-location-search-left{
   position: sticky;
-  top: 0;                 /* header is already sticky */
+  top: 56px;              /* stick BELOW the sticky .modal-top-bar (16+~20+12 + 8 margin ≈ 56px) */
   z-index: 10;            /* below header (20), above list items */
   background: #fff;       /* prevents list painting through */
   margin-bottom: 12px;    /* spacing before results */
