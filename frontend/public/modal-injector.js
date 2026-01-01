@@ -2380,16 +2380,17 @@ export function createSelectLocationModal() {
   list.className = 'modal-menu-list';
   inner.appendChild(list);
 
-  setupTapOutClose(id);
-}
-
-  // SYB: add a sticky bottom band (same concept as My Stuff footer) to "cover" list end
+  // SYB: add a sticky bottom cover band (same concept as My Stuff footer)
+  // Keep it non-interactive so it never blocks taps/scroll.
   if (!modal.querySelector('.modal-footer')) {
     const footer = document.createElement('div');
     footer.className = 'modal-footer';
-    footer.setAttribute('aria-hidden', 'true'); // UI-only band, not interactive content
+    footer.setAttribute('aria-hidden', 'true');
     modal.querySelector('.modal-content')?.appendChild(footer);
   }
+
+  setupTapOutClose(id);
+}
 
 // Phase 5 BO: Select Location must not depend on pre-rendered DOM lists.
 // Root shell can have zero/partial `.location-button` nodes, so we load the full candidate set from `/data/profiles.json`
