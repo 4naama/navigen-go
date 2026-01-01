@@ -2646,8 +2646,17 @@ button:hover {
   flex-wrap: wrap; /* title + close on first line, search on its own line */
 }
 
+/* Keep title + close on the first row, and force search onto the next full-width row */
+#select-location-modal .modal-top-bar h2{
+  order: 1;            /* first row */
+}
+#select-location-modal .modal-top-bar .modal-close{
+  order: 1;            /* first row (right side) */
+}
+
 /* Search row lives inside the sticky top bar (full width, below title/close) */
 #select-location-modal .modal-top-bar .select-location-search-row{
+  order: 2;            /* always below title + close */
   flex: 1 0 100%;
   margin-top: 8px;     /* spacing under the title row */
   margin-bottom: 0;    /* list spacing is handled in the body */

@@ -2283,7 +2283,18 @@ export function createSelectLocationModal() {
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   modal.querySelector('.modal-content')?.prepend(topBar);
-  topBar.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+  // Keep CSS sticky offsets in sync with the real rendered header height (no hardcoded px guessing)
+  const ac = new AbortController();
+  const setTopbarHeightVar = () => {
+    modal.style.setProperty('--select-location-topbar-h', `${topBar.offsetHeight}px`);
+  };
+  requestAnimationFrame(setTopbarHeightVar);
+  window.addEventListener('resize', setTopbarHeightVar, { signal: ac.signal });
+
+  topBar.querySelector('.modal-close')?.addEventListener('click', () => {
+    ac.abort(); // cleanup listeners when the modal closes
+    hideModal(id);
+  });
 
   const inner = modal.querySelector('.modal-body-inner');
   if (!inner) return;
