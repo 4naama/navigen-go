@@ -1248,6 +1248,11 @@ body.large-text {
   /* padding/background/border inherit from base block above */
 }
 
+/* Select Location: match body-inner side gutter (1.5em) so the search aligns with cards */
+#select-location-modal .modal-top-bar{
+  padding: 16px 1.5em 12px 1.5em; /* same top/bottom as base; side matches .modal-body-inner */
+}
+
 #my-stuff-modal .modal-top-bar h1,
 #my-stuff-modal .modal-top-bar h2,
 #select-location-modal .modal-top-bar h1,
