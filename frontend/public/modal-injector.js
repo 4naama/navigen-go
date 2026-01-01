@@ -856,7 +856,16 @@ export async function showLocationProfileModal(data) {
   // Ensure hero is available before first paint.
   // Some callers pass only {locationID, name...} and omit media; the green icon is a valid hero when present.
   const locKey = String(data?.locationID || '').trim();
-  const hasCover = Boolean(String(data?.media?.cover || data?.imageSrc || '').trim());
+  const hasCover = (() => {
+    // A "cover" is only valid if it is a usable URL/path.
+    // Bare filenames must not block the cover alignment step.
+    const s = String(data?.media?.cover || data?.imageSrc || '').trim();
+    if (!s) return false;
+    if (/^https?:\/\//i.test(s)) return true;
+    if (s.startsWith('/')) return true;
+    if (/^assets\//i.test(s)) return true;
+    return false;
+  })();
 
   if (!hasCover && locKey) {
     const hero = `/assets/location-profile-images/${locKey}/icon-512-green.png`;
@@ -1211,15 +1220,7 @@ async function initLpmImageSlider(modal, data) {
     const enc = encodeURI(s);
     if (enc !== s) add(enc);
 
-    // 4) /assets/location-profile-images/<slug-or-id>/<filename>
-    // Prefer slug folder (matches repo), keep ULID as a fallback.
-    const locSlug = String(loc?.locationID || '').trim();
-    if (locSlug) {
-      add(`/assets/location-profile-images/${locSlug}/${fname}`);
-      const encF = encodeURI(fname);
-      if (encF !== fname) add(`/assets/location-profile-images/${locSlug}/${encF}`);
-    }
-
+    // 4) /assets/location-profile-images/<id>/<filename>
     const locId = loc?.id || loc?.ID;
     if (locId) {
       add(`/assets/location-profile-images/${locId}/${fname}`);
@@ -1242,7 +1243,7 @@ async function initLpmImageSlider(modal, data) {
       imgEl.addEventListener('load', onLoad, { once: true });
       imgEl.addEventListener('error', onError, { once: true });
       imgEl.src = u;
-      if (imgEl.complete && imgEl.naturalWidth > 0) onLoad(); // cached path only if pixels exist
+      if (imgEl.complete) onLoad(); // cached path
     });
 
     for (let i = 0; i < cand.length; i++) {
