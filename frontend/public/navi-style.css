@@ -2712,6 +2712,13 @@ button:hover {
   pointer-events:none;/* structural only */
 }
 
+/* On small screens, lift SYB card off the physical bottom edge (same fix as Donation) */
+@media (max-width: 640px){
+  #select-location-modal .modal-content{
+    margin-bottom: 12px; /* visible gap under the card */
+  }
+}
+
 body.high-contrast .modal-menu-item.is-active {
   background:#333;
   border-color:#fff;
