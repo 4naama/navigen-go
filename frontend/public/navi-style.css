@@ -2626,15 +2626,31 @@ button:hover {
   padding-inline: 0;
 }
 
-/* Keep the search input pinned while the results list scrolls
-   - No extra side margins: it must share the same gutters as the cards */
-#select-location-modal #select-location-search{
-  /* keep search pinned inside the SAME scroller as My Stuff (the card) */
+/* Keep the Select Location search row pinned WITHOUT duplicating the input rule.
+   The card (.modal-content) is the scroller, and the header (.modal-top-bar) is sticky at top:0. */
+#select-location-modal .modal-body-inner:has(#select-location-search){
+  position: relative;
+}
+
+/* Sticky: the input stays under the sticky header while the list scrolls */
+#select-location-modal .modal-body-inner:has(#select-location-search) #select-location-search{
   position: sticky;
-  top: calc(16px + 12px + 20px); /* header padding-top + padding-bottom + ~title line-height */
-  z-index: 30;                   /* above list rows, below top-bar’s z-index if needed */
-  background:#fff;
-  margin: 0 0 12px 0;
+  top: 0;                 /* header is already sticky; input sticks to top of scrollport */
+  z-index: 10;            /* below header (20), above list items */
+  background: #fff;       /* prevents list painting through */
+  margin-bottom: 12px;    /* spacing before results */
+}
+
+/* Select Location: if a clear button exists, place it inside the input like the main shell */
+#select-location-modal .modal-body-inner:has(#select-location-clear-search){
+  position: relative; /* safe; does not affect layout */
+}
+
+#select-location-modal #select-location-clear-search{
+  position: sticky;         /* stays aligned with the pinned search input */
+  top: 0;
+  z-index: 11;              /* above the input (10) */
+  margin-left: auto;        /* if it’s in-flow, push right */
 }
 
 /* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */
