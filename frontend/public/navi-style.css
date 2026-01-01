@@ -1325,11 +1325,11 @@ body.large-text {
   align-self: center; /* tidy alignment */
 }
 
-/* Select Location: bottom cover band (footer exists only to cover list end like My Stuff) */
+/* Select Location: bottom cover band — match My Stuff footer height */
 #select-location-modal .modal-footer{
-  padding: 0;              /* no button padding */
-  min-height: 3.25em;      /* same “floor” depth you used before */
-  pointer-events: none;    /* never blocks clicks/scroll */
+  padding: 1em 1em 0.75em; /* same as #my-stuff-modal .modal-footer */
+  min-height: 0;           /* height is governed by padding like My Stuff */
+  pointer-events: none;    /* cover band only; never blocks taps/scroll */
 }
 
 /* compact CTA bar: emoji-only buttons; labels stay for SR */
@@ -1678,6 +1678,12 @@ body.high-contrast .qr-cta{
     padding-bottom: calc(
       var(--modal-pad) + env(safe-area-inset-bottom, 24px)
     ); /* base pad + extra bottom room */
+  }
+
+  /* Also keep the card itself off the physical bottom + use svh (visible viewport) */
+  #select-location-modal .modal-content{
+    margin-bottom: 12px; /* visible gap above the device/browser bottom region */
+    max-height: calc(100svh - 32px - env(safe-area-inset-bottom, 0px));
   }
 }
 
