@@ -2646,21 +2646,21 @@ button:hover {
   position: relative;
 }
 
-/* Sticky: the input stays under the sticky header while the list scrolls */
-/* Sticky: pin the whole SYB search-left wrapper (input + ×) */
-/* Sticky: pin the whole SYB search row (input + ×) so it never scrolls with the list */
-#select-location-modal .select-location-search-row{
-  position: sticky;
-  top: 0;                 /* sits directly under the sticky .modal-top-bar (which is already top:0) */
-  z-index: 10;            /* below header (20), above list items */
-  background: #fff;       /* prevents list painting through */
-  padding-top: 8px;       /* keeps spacing consistent under the header */
-  margin-bottom: 12px;    /* spacing before results */
+/* Select Location: allow the top bar to wrap so the search row can live under the title */
+#select-location-modal .modal-top-bar{
+  flex-wrap: wrap; /* title + close on first line, search on its own line */
 }
 
-/* Keep the inner wrapper as a stable anchor for the absolute × */
+/* Search row lives inside the sticky top bar (full width, below title/close) */
+#select-location-modal .modal-top-bar .select-location-search-row{
+  flex: 1 0 100%;
+  margin-top: 8px;     /* spacing under the title row */
+  margin-bottom: 0;    /* list spacing is handled in the body */
+}
+
+/* Anchor for the absolute clear × inside the input */
 #select-location-modal .select-location-search-left{
-  position: relative;     /* anchor for #select-location-clear-search */
+  position: relative;
 }
 
 /* Select Location: if a clear button exists, place it inside the input like the main shell */

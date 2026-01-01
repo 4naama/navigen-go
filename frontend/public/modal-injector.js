@@ -2340,7 +2340,15 @@ export function createSelectLocationModal() {
     searchLeft.appendChild(input);
     searchLeft.appendChild(clearBtn);
     searchRow.appendChild(searchLeft);
-    inner.appendChild(searchRow);
+    /* Sticky: the input stays under the sticky header while the list scrolls */
+    /* Sticky: pin the whole SYB search-left wrapper (input + ×) */
+    #select-location-modal .select-location-search-left{
+      position: sticky;
+      top: 56px;              /* stick BELOW the sticky .modal-top-bar (16+~20+12 + 8 margin ≈ 56px) */
+      z-index: 10;            /* below header (20), above list items */
+      background: #fff;       /* prevents list painting through */
+      margin-bottom: 12px;    /* spacing before results */
+    }
 
     // Behavior: show/hide X and clear value
     const syncClear = () => {
