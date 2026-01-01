@@ -2431,7 +2431,15 @@ button:hover {
 
 /* Bottom “floor” so the last row never sits on the rounded edge */
 #select-location-modal .modal-body-inner{
-  padding: 0 1.5em 3.25em 1.5em; /* identical to My Stuff / Promotions */
+  padding: 0 1.5em 0 1.5em; /* bottom floor is owned by ::after so it behaves like a real spacer */
+}
+
+/* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */
+#select-location-modal .modal-body-inner::after{
+  content:"";
+  display:block;
+  height:3.25em;            /* matches My Stuff/Promotions comfort depth */
+  pointer-events:none;      /* structural only */
 }
 
 /* ==============================
