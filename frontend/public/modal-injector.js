@@ -684,12 +684,22 @@ export function createLocationProfileModal(data, injected = {}) {
     descHTML = formatDescHTML(chosenText);
   }
 
-  // Rootize hero src; prefer media.cover → imageSrc. No placeholders.
+  // Rootize hero src; prefer media.cover → imageSrc → first media/images entry. (Green icon is a valid cover.)
   const body = document.createElement('div');
   body.className = 'modal-body';
 
   const heroSrc = (() => {
-    const raw = String((payload?.media?.cover || payload.imageSrc || '')).trim();
+    const pickFirstSrc = (arr) => {
+      const a = Array.isArray(arr) ? arr : [];
+      const v = a[0];
+      return String((v && typeof v === 'object') ? (v.src || '') : (v || '')).trim();
+    };
+
+    const raw =
+      String((payload?.media?.cover || payload?.imageSrc || '')).trim() ||
+      pickFirstSrc(payload?.media?.images) ||
+      pickFirstSrc(payload?.images);
+
     if (!raw) return '';
     if (/^https?:\/\//i.test(raw)) return raw;
     if (raw.startsWith('/')) return raw;
@@ -939,8 +949,18 @@ async function initLpmImageSlider(modal, data) {
   if (!mediaFigure) return;
 
   // Use the provided cover/imageSrc as-is (green PNG is a valid cover)
-  const cover = String(data?.media?.cover || data?.imageSrc || '').trim();
+  // Use cover if present; otherwise fall back to the first declared image (green icon is valid).
+  const pickFirstSrc = (arr) => {
+    const a = Array.isArray(arr) ? arr : [];
+    const v = a[0];
+    return String((v && typeof v === 'object') ? (v.src || '') : (v || '')).trim();
+  };
 
+  const cover = (
+    String(data?.media?.cover || data?.imageSrc || '').trim() ||
+    pickFirstSrc(data?.images) ||
+    pickFirstSrc(data?.media?.images)
+  );
 
   // helpers (no guessing)
   const uniq = (a) => Array.from(new Set(a.filter(Boolean)));
