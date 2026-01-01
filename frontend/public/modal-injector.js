@@ -2315,7 +2315,47 @@ export function createSelectLocationModal() {
     tmp.autocomplete = 'off';
     inner.appendChild(tmp);
   } else {
-    inner.appendChild(input);
+    // Search row wrapper so we can:
+    // 1) keep it sticky (search stays put while results scroll)
+    // 2) add the same bordered red clear X affordance as the main shell
+    const searchRow = document.createElement('div');
+    searchRow.className = 'select-location-search-row';
+
+    // Mirror the main shell structure: a relative wrapper around input + clear button
+    const searchLeft = document.createElement('div');
+    searchLeft.className = 'select-location-search-left';
+
+    // clear button (visual + behavior like main shell)
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'clear-x';
+    clearBtn.id = 'select-location-clear-search';
+    clearBtn.textContent = 'x';
+    clearBtn.style.display = 'none'; // only show when there is content
+    clearBtn.setAttribute('aria-label', 'Clear search');
+
+    // Build row: [ input + clear ]
+    searchLeft.appendChild(input);
+    searchLeft.appendChild(clearBtn);
+    searchRow.appendChild(searchLeft);
+    inner.appendChild(searchRow);
+
+    // Behavior: show/hide X and clear value
+    const syncClear = () => {
+      const hasValue = !!String(input.value || '').trim();
+      clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
+    };
+    input.addEventListener('input', syncClear);
+
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
+      syncClear();
+    });
+
+    // initial state
+    syncClear();
   }
 
   const list = document.createElement('div');
