@@ -75,3 +75,50 @@ export async function handleDonation(amount, meta = {}) {
     alert("Error contacting payment system. Please try again.");
   }
 }
+
+/**
+ * 💳 Start a campaign checkout (Owner path: SYB → Campaign)
+ *
+ * @param {Object} args
+ * @param {string} args.locationID - slug (never ULID)
+ * @param {string} args.campaignKey - required for ownershipSource="campaign"
+ * @param {string} args.navigenVersion - optional audit tag
+ */
+export async function handleCampaignCheckout({ locationID, campaignKey, navigenVersion = "phase5" }) {
+  if (!stripe) {
+    console.error("❌ Stripe not initialized");
+    return;
+  }
+
+  const payload = {
+    locationID,
+    campaignKey,
+    initiationType: "owner",
+    ownershipSource: "campaign",
+    navigenVersion
+  };
+
+  try {
+    // Use the authoritative API Worker to create the session (it owns the metadata contract)
+    const res = await fetch("https://navigen-api.4naama.workers.dev/api/stripe/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.sessionId) {
+      const fallback = await res.text().catch(() => "");
+      console.error("❌ Campaign session create failed:", data || fallback);
+      throw new Error("Invalid session response");
+    }
+
+    const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+    if (result.error) {
+      console.error("❌ Stripe redirect error:", result.error.message);
+    }
+  } catch (err) {
+    console.error("❌ Failed to start campaign checkout:", err);
+    alert("Error contacting payment system. Please try again.");
+  }
+}

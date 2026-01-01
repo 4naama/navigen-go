@@ -37,7 +37,7 @@ export interface Env {
   KV_OVERRIDES: KVNamespace;
   KV_STATS: KVNamespace;
   JWT_SECRET: string; // set via wrangler secret
-  // STRIPE_SECRET_KEY?: string;
+  STRIPE_SECRET_KEY: string; // Stripe secret key for creating Checkout Sessions (server-only)
   STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
   OWNER_LINK_HMAC_SECRET: string; // HMAC secret for signed owner access links (Phase 2)
 }
@@ -1545,6 +1545,96 @@ export default {
             "Vary": "Origin"
           }
         });
+      }
+
+      // --- Stripe: create Checkout Session for campaign purchase (Phase 5)
+      // Server-only: uses STRIPE_SECRET_KEY; client never sees Stripe secret.
+      if (normPath === "/api/stripe/create-checkout-session" && req.method === "POST") {
+        const noStore = { "cache-control": "no-store" };
+
+        // Fail closed if not configured
+        const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+        if (!sk) return json({ error: { code: "misconfigured", message: "STRIPE_SECRET_KEY not set" } }, 500, noStore);
+
+        const body = await req.json().catch(() => null) as any;
+        const locationID = String(body?.locationID || "").trim();           // MUST be slug (no ULID)
+        const campaignKey = String(body?.campaignKey || "").trim();         // required for ownershipSource="campaign"
+        const initiationType = String(body?.initiationType || "").trim();   // "owner"
+        const ownershipSource = String(body?.ownershipSource || "").trim(); // "campaign"
+        const navigenVersion = String(body?.navigenVersion || "").trim() || "phase5";
+
+        if (!locationID || !campaignKey || initiationType !== "owner" || ownershipSource !== "campaign") {
+          return json({ error: { code: "invalid_request", message: "locationID, campaignKey, initiationType='owner', ownershipSource='campaign' required" } }, 400, noStore);
+        }
+
+        // Enforce the spec invariant: clients must never supply ULIDs as locationID
+        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationID)) {
+          return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore);
+        }
+
+        // Price: €50 / 30 days (spec: Campaign) — single fixed SKU for now
+        const amountCents = 5000;
+        const currency = "eur";
+
+        // Build redirect URLs on the web app origin (not the API Worker origin)
+        const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
+        const successUrl = new URL("/", siteOrigin);
+        successUrl.searchParams.set("flow", "campaign");
+        successUrl.searchParams.set("locationID", locationID);
+        successUrl.searchParams.set("sid", "{CHECKOUT_SESSION_ID}");
+
+        const cancelUrl = new URL("/", siteOrigin);
+        cancelUrl.searchParams.set("flow", "campaign");
+        cancelUrl.searchParams.set("locationID", locationID);
+        cancelUrl.searchParams.set("canceled", "1");
+
+        // Stripe Checkout Session create (no SDK; direct API call)
+        const form = new URLSearchParams();
+        form.set("mode", "payment");
+        form.set("customer_creation", "if_required");
+        form.set("billing_address_collection", "auto");
+        form.set("success_url", successUrl.toString());
+        form.set("cancel_url", cancelUrl.toString());
+
+        // One line item (fixed amount)
+        form.set("line_items[0][quantity]", "1");
+        form.set("line_items[0][price_data][currency]", currency);
+        form.set("line_items[0][price_data][unit_amount]", String(amountCents));
+        form.set("line_items[0][price_data][product_data][name]", "NaviGen Campaign — 30 days");
+
+        // Metadata contract (MUST be copied to PaymentIntent)
+        form.set("metadata[locationID]", locationID);
+        form.set("metadata[campaignKey]", campaignKey);
+        form.set("metadata[initiationType]", initiationType);
+        form.set("metadata[ownershipSource]", ownershipSource);
+        form.set("metadata[navigenVersion]", navigenVersion);
+
+        // Ensure metadata is also on PaymentIntent (spec requirement)
+        form.set("payment_intent_data[metadata][locationID]", locationID);
+        form.set("payment_intent_data[metadata][campaignKey]", campaignKey);
+        form.set("payment_intent_data[metadata][initiationType]", initiationType);
+        form.set("payment_intent_data[metadata][ownershipSource]", ownershipSource);
+        form.set("payment_intent_data[metadata][navigenVersion]", navigenVersion);
+
+        const r = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${sk}`,
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: form.toString()
+        });
+
+        const txt = await r.text();
+        let out: any = null;
+        try { out = JSON.parse(txt); } catch { out = null; }
+
+        if (!r.ok || !out?.id) {
+          // fail closed; do not leak secrets; return Stripe error code/message only
+          return json({ error: { code: "stripe_error", message: String(out?.error?.message || "Stripe create session failed") } }, 502, noStore);
+        }
+
+        return json({ sessionId: out.id }, 200, noStore);
       }
 
       // (Stubs for later)

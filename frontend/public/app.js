@@ -134,7 +134,7 @@ const BACKEND_URL = "https://navigen-go.onrender.com";
 const isUlid = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
 
 // ✅ Stripe Block
-import { initStripe, handleDonation } from "./scripts/stripe.js";
+import { initStripe, handleDonation, handleCampaignCheckout } from "./scripts/stripe.js";
 
 // Single-source logo refresh (App + PWA): shared with Dash
 import { wireLogoRefresh } from "./scripts/logo-refresh.js";
@@ -553,7 +553,19 @@ function renderBusinessOwnersGroup() {
         onClick: async () => {
           const picked = await showSelectLocationModal();
           if (!picked) return;
+
+          // Keep showing the LPM (context), but proceed immediately to checkout for the owner path.
           showLocationProfileModal(picked);
+
+          // CampaignKey: stable SKU key (required by metadata contract for campaign purchases)
+          const slug = String(picked?.locationID || "").trim();
+          if (!slug) return;
+
+          await handleCampaignCheckout({
+            locationID: slug,
+            campaignKey: "campaign-30d",
+            navigenVersion: "phase5"
+          });
         }
       },
       {
