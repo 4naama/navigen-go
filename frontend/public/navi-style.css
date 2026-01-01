@@ -1325,6 +1325,13 @@ body.large-text {
   align-self: center; /* tidy alignment */
 }
 
+/* Select Location: bottom cover band (footer exists only to cover list end like My Stuff) */
+#select-location-modal .modal-footer{
+  padding: 0;              /* no button padding */
+  min-height: 3.25em;      /* same “floor” depth you used before */
+  pointer-events: none;    /* never blocks clicks/scroll */
+}
+
 /* compact CTA bar: emoji-only buttons; labels stay for SR */
 .cta-compact .modal-footer-button{
   width:44px; height:44px;           /* 44px tap target */

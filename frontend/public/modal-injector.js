@@ -2383,6 +2383,14 @@ export function createSelectLocationModal() {
   setupTapOutClose(id);
 }
 
+  // SYB: add a sticky bottom band (same concept as My Stuff footer) to "cover" list end
+  if (!modal.querySelector('.modal-footer')) {
+    const footer = document.createElement('div');
+    footer.className = 'modal-footer';
+    footer.setAttribute('aria-hidden', 'true'); // UI-only band, not interactive content
+    modal.querySelector('.modal-content')?.appendChild(footer);
+  }
+
 // Phase 5 BO: Select Location must not depend on pre-rendered DOM lists.
 // Root shell can have zero/partial `.location-button` nodes, so we load the full candidate set from `/data/profiles.json`
 // and perform token-AND, accent-insensitive search over name/slug/address/adminArea/postalCode/countryCode/tags/contact.
