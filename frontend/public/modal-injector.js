@@ -853,6 +853,22 @@ export async function showLocationProfileModal(data) {
   }
 
   // 3. Build fresh modal from factory (now seeded with short slug)
+  // Ensure hero is available before first paint.
+  // Some callers pass only {locationID, name...} and omit media; the green icon is a valid hero when present.
+  const locKey = String(data?.locationID || '').trim();
+  const hasCover = Boolean(String(data?.media?.cover || data?.imageSrc || '').trim());
+
+  if (!hasCover && locKey) {
+    const hero = `/assets/location-profile-images/${locKey}/icon-512-green.png`;
+    data.media = (data.media && typeof data.media === 'object') ? data.media : {};
+    data.media.cover = hero;
+    // Keep images aligned with cover so the slider can initialize consistently
+    if (!Array.isArray(data.media.images) || !data.media.images.length) {
+      data.media.images = [{ src: hero, alt: data?.name || '', default: true }];
+    }
+    if (!data.imageSrc) data.imageSrc = hero;
+  }
+
   const modal = createLocationProfileModal(data);
 
   // 4. Append to body and expose identifier to handlers (prefer alias for URL; fallback to short; never cache ULID)
