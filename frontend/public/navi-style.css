@@ -2602,16 +2602,21 @@ button:hover {
   padding: 0;        /* no inset scroll gutter */
   margin-top: 8px;   /* same rhythm under header as My Stuff */
   position: relative;/* establishes sticky containment reliably */
+
+  /* Ensure Select Location does not inherit the generic modal-body side padding.
+     Gutter must be owned ONLY by .modal-body-inner (like My Stuff). */
+  padding-inline: 0;
 }
 
-/* Keep the search input pinned while the results list scrolls */
+/* Keep the search input pinned while the results list scrolls
+   - No extra side margins: it must share the same gutters as the cards */
 #select-location-modal #select-location-search{
+  /* behavior-only override: keep search pinned while results scroll */
   position: sticky;
   top: 0;
   z-index: 6;
-  background: #fff;             /* prevents list rows showing through while scrolling */
-  margin: 0 1.5em;              /* align with modal-body-inner side gutters */
-  margin-bottom: 12px;          /* space before results */
+  background: #fff;            /* prevents rows painting underneath */
+  margin: 0 0 12px 0;          /* spacing before results */
 }
 
 /* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */
