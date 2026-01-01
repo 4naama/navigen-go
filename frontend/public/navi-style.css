@@ -442,6 +442,23 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   outline: none;
 }
 
+/* Anchor absolute × inside the sticky wrapper */
+#select-location-modal .select-location-search-left{
+  position: sticky;         /* already set above */
+}
+
+/* Reserve room for × only when user typed something */
+#select-location-modal #select-location-search:not(:placeholder-shown){
+  padding-right: 2.25rem;
+}
+
+/* CSS-only reveal when input has content (input + button are siblings in JS) */
+#select-location-modal #select-location-search:not(:placeholder-shown) + #select-location-clear-search{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 #select-location-modal #select-location-search::placeholder{
   font-weight: 400;
   color: #666;
@@ -2633,9 +2650,10 @@ button:hover {
 }
 
 /* Sticky: the input stays under the sticky header while the list scrolls */
-#select-location-modal .modal-body-inner:has(#select-location-search) #select-location-search{
+/* Sticky: pin the whole SYB search-left wrapper (input + ×) */
+#select-location-modal .select-location-search-left{
   position: sticky;
-  top: 0;                 /* header is already sticky; input sticks to top of scrollport */
+  top: 0;                 /* header is already sticky */
   z-index: 10;            /* below header (20), above list items */
   background: #fff;       /* prevents list painting through */
   margin-bottom: 12px;    /* spacing before results */
@@ -2646,35 +2664,14 @@ button:hover {
   position: relative; /* safe; does not affect layout */
 }
 
-/* Select Location (SYB): search wrapper mirrors #search-left so the × sits INSIDE the field */
-#select-location-modal .select-location-search-left{
-  position: relative;         /* anchor for #select-location-clear-search */
-  display: inline-flex;
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-}
-
-/* Reserve room for the × only after typing (same as shell) */
-#select-location-modal #select-location-search:not(:placeholder-shown){
-  padding-right: 2.25rem;
-}
-
-/* Place the × inside the search input */
+/* SYB clear × sits inside the sticky search wrapper (same idea as #clear-search) */
 #select-location-modal #select-location-clear-search{
   position: absolute;
   top: 50%;
   right: 10px;
   transform: translateY(-50%);
-  display: none;              /* JS toggles; CSS also reveals on value */
-  z-index: 1;
-}
-
-/* CSS-only reveal when the input has content */
-#select-location-modal #select-location-search:not(:placeholder-shown) + #select-location-clear-search{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: none;            /* revealed when there is content */
+  z-index: 11;              /* above the input */
 }
 
 /* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */
