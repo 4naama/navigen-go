@@ -856,16 +856,7 @@ export async function showLocationProfileModal(data) {
   // Ensure hero is available before first paint.
   // Some callers pass only {locationID, name...} and omit media; the green icon is a valid hero when present.
   const locKey = String(data?.locationID || '').trim();
-  const hasCover = (() => {
-    // A "cover" is only valid if it is a usable URL/path.
-    // Bare filenames must not block the cover alignment step.
-    const s = String(data?.media?.cover || data?.imageSrc || '').trim();
-    if (!s) return false;
-    if (/^https?:\/\//i.test(s)) return true;
-    if (s.startsWith('/')) return true;
-    if (/^assets\//i.test(s)) return true;
-    return false;
-  })();
+  const hasCover = Boolean(String(data?.media?.cover || data?.imageSrc || '').trim());
 
   if (!hasCover && locKey) {
     const hero = `/assets/location-profile-images/${locKey}/icon-512-green.png`;
