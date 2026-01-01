@@ -395,27 +395,6 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   z-index: 1;                 /* above input */
 }
 
-/* Select Location: clear button sits inside the input (same geometry as shell search) */
-#select-location-modal .select-location-search-left{
-  position: relative; /* anchor for #select-location-clear-search */
-  display: inline-flex;
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-}
-
-#select-location-modal #select-location-search{
-  padding-right: 2.25rem; /* reserve space for the clear X */
-}
-
-#select-location-modal #select-location-clear-search{
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  z-index: 2;
-}
-
 #clear-search:hover, .clear-x:hover { background: #f1f5f9; color: #334155; }
 #clear-search:active { transform: translateY(-50%) scale(0.98); }
 
@@ -2650,22 +2629,12 @@ button:hover {
 /* Keep the search input pinned while the results list scrolls
    - No extra side margins: it must share the same gutters as the cards */
 #select-location-modal #select-location-search{
-  /* sticky within the card scroller; sits directly under the sticky header */
+  /* keep search pinned inside the SAME scroller as My Stuff (the card) */
   position: sticky;
-  top: 0;                  /* stick to the top of the card scrollport */
-  z-index: 15;             /* under .modal-top-bar (20), above list rows */
-  background: #fff;
+  top: calc(16px + 12px + 20px); /* header padding-top + padding-bottom + ~title line-height */
+  z-index: 30;                   /* above list rows, below top-bar’s z-index if needed */
+  background:#fff;
   margin: 0 0 12px 0;
-}
-
-/* Select Location: the header is sticky, so reserve its height for the sticky search */
-#select-location-modal .modal-body-inner{
-  padding-top: 0; /* keep; search itself provides spacing */
-}
-
-#select-location-modal .modal-top-bar + .modal-body{
-  /* ensure content starts below header consistently */
-  margin-top: 0; /* neutralize any unexpected offsets for sticky stacking */
 }
 
 /* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */
