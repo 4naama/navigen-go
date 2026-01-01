@@ -442,11 +442,6 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   outline: none;
 }
 
-/* Anchor absolute × inside the sticky wrapper */
-#select-location-modal .select-location-search-left{
-  position: sticky;         /* already set above */
-}
-
 /* Reserve room for × only when user typed something */
 #select-location-modal #select-location-search:not(:placeholder-shown){
   padding-right: 2.25rem;

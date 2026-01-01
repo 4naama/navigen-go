@@ -2340,17 +2340,9 @@ export function createSelectLocationModal() {
     searchLeft.appendChild(input);
     searchLeft.appendChild(clearBtn);
     searchRow.appendChild(searchLeft);
-    /* Sticky: the input stays under the sticky header while the list scrolls */
-    /* Sticky: pin the whole SYB search-left wrapper (input + ×) */
-    #select-location-modal .select-location-search-left{
-      position: sticky;
-      top: 56px;              /* stick BELOW the sticky .modal-top-bar (16+~20+12 + 8 margin ≈ 56px) */
-      z-index: 10;            /* below header (20), above list items */
-      background: #fff;       /* prevents list painting through */
-      margin-bottom: 12px;    /* spacing before results */
-    }
 
     // Behavior: show/hide X and clear value
+
     const syncClear = () => {
       const hasValue = !!String(input.value || '').trim();
       clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
@@ -2366,6 +2358,11 @@ export function createSelectLocationModal() {
 
     // initial state
     syncClear();
+    
+    // Insert the search row into the sticky top bar so it never scrolls with the list
+    const closeInBar = topBar.querySelector('.modal-close');
+    if (closeInBar) topBar.insertBefore(searchRow, closeInBar);
+    else topBar.appendChild(searchRow);    
   }
 
   const list = document.createElement('div');
