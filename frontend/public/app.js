@@ -564,7 +564,7 @@ function renderBusinessOwnersGroup() {
           await handleCampaignCheckout({
             locationID: slug,
             campaignKey: "campaign-30d",
-            navigenVersion: "phase5"
+            navigenVersion: "v1"
           });
         }
       },
@@ -3093,6 +3093,15 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
 // This should run on page load (in app.js or similar init script)
 (async function handleStripeReturn() {
   const url = new URL(window.location.href);
+  // Campaign cancel return has no sid; normalize back to main shell deterministically.
+  {
+    const flow = String(url.searchParams.get("flow") || "").trim().toLowerCase();
+    const canceled = String(url.searchParams.get("canceled") || "").trim();
+    if (flow === "campaign" && canceled === "1" && !url.searchParams.get("sid")) {
+      history.replaceState({}, document.title, "/");
+    }
+  }
+  
   const sessionId = url.searchParams.get("sid");
   const flow = String(url.searchParams.get("flow") || "").trim().toLowerCase();
   if (!sessionId) return;

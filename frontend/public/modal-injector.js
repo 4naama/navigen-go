@@ -1020,9 +1020,10 @@ async function initLpmImageSlider(modal, data) {
   let playlist = candidates.slice();
 
   // Fallback: if <2, pull images from the profile API once (prod-safe).
-  if (playlist.length < 2 && data?.id && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(data.id))) {
+  if (playlist.length < 2 && String(data?.locationID || data?.id || '').trim()) {
     try {
-      const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(data.id)}`), { cache: 'no-store', credentials: 'include' }); // use Worker
+      const key = String(data?.locationID || data?.id || '').trim(); // slug first
+      const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(key)}`), { cache: 'no-store', credentials: 'include' }); // use Worker
       if (r.ok) {
         const p = await r.json();
         const dir2 = getDir(String(p?.media?.cover || cover));           // keep: resolve relatives near cover
@@ -2238,8 +2239,8 @@ async function initLpmImageSlider(modal, data) {
     ;(async () => {
       try {
         // accept locationID too; skip when missing
-        const id = String(data?.id || data?.locationID || '').trim();
-        if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(id)) return;
+        const id = String(data?.locationID || data?.id || '').trim(); // prefer slug; ULID may not exist in profile index
+        if (!id) return;
         const needEnrich =
           !data?.descriptions ||
           !data?.media?.cover ||
