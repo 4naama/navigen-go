@@ -2640,20 +2640,25 @@ button:hover {
   padding-inline: 0;
 }
 
-/* Keep the Select Location search row pinned WITHOUT duplicating the input rule.
-   The card (.modal-content) is the scroller, and the header (.modal-top-bar) is sticky at top:0. */
-#select-location-modal .modal-body-inner:has(#select-location-search){
-  position: relative;
+/* Keep the Select Location search row pinned under the sticky modal header
+   while ONLY the results list scrolls beneath it. */
+#select-location-modal .modal-body{
+  position: relative;      /* establishes sticky containment reliably */
+  overflow-y: auto;        /* modal body is the scroller for the list */
 }
 
-/* Sticky: the input stays under the sticky header while the list scrolls */
-/* Sticky: pin the whole SYB search-left wrapper (input + ×) */
+/* Anchor + sticky pin for the whole SYB search row (input + ×) */
+#select-location-modal .modal-body-inner:has(#select-location-search){
+  position: relative;      /* safe; does not affect layout */
+}
+
 #select-location-modal .select-location-search-left{
   position: sticky;
-  top: 0;                 /* header is already sticky */
-  z-index: 10;            /* below header (20), above list items */
-  background: #fff;       /* prevents list painting through */
-  margin-bottom: 12px;    /* spacing before results */
+  top: 0;                  /* sticks to top of the modal-body scrollport */
+  z-index: 10;             /* below header (20), above list items */
+  background: #fff;        /* prevents list painting through */
+  padding-top: 0;          /* keeps alignment tight under header */
+  margin-bottom: 12px;     /* spacing before results */
 }
 
 /* Select Location: if a clear button exists, place it inside the input like the main shell */
