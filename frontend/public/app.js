@@ -3133,8 +3133,23 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
       history.replaceState({}, document.title, url.toString());
     } catch { /* ignore history errors */ }
 
-    // Minimal UX signal; ownership activation is async via Stripe webhook.
-    alert("Payment received. Ownership is activating—please reopen Owner settings in a few seconds.");
+    // Campaign return: mint owner session from sid, then return to the shell (which will open LPM via ?lp=...).
+    try {
+      const current = new URL(window.location.href);
+
+      // Build next URL (keep lp/locationID; drop sid/flow noise).
+      current.searchParams.delete("sid");
+      current.searchParams.delete("flow");
+      current.searchParams.delete("canceled");
+
+      const next = current.pathname + (current.search ? current.search : "") + (current.hash || "");
+
+      // Server-side exchange sets HttpOnly op_sess and redirects back to `next`.
+      window.location.href = `/owner/stripe-exchange?sid=${encodeURIComponent(sessionId)}&next=${encodeURIComponent(next)}`;
+    } catch {
+      // If URL parsing fails, fail closed to main shell.
+      window.location.href = "/";
+    }
     return;
   }
 

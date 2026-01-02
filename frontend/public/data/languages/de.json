@@ -637,5 +637,6 @@
   "modal.requestListing.success": "Vielen Dank! Wir fügen Ihren Eintrag bald hinzu.",
   "root.bo.selectLocation.title": "Wählen Sie Ihr Unternehmen aus",
   "root.bo.selectLocation.placeholder": "Hier suchen…",
-  "root.bo.selectLocation.none": "Keine Treffer."
+  "root.bo.selectLocation.none": "Keine Treffer.",
+  "lpm.owned.badge": ""
 }

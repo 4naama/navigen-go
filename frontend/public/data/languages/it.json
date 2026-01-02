@@ -637,5 +637,6 @@
   "modal.requestListing.success": "Grazie! Aggiungeremo presto la tua attività.",
   "root.bo.selectLocation.title": "Seleziona la tua attività",
   "root.bo.selectLocation.placeholder": "Cerca qui…",
-  "root.bo.selectLocation.none": "Nessun risultato."
+  "root.bo.selectLocation.none": "Nessun risultato.",
+  "lpm.owned.badge": ""
 }

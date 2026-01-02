@@ -637,5 +637,6 @@
   "modal.requestListing.success": "Thanks! We’ll add your listing soon.",
   "root.bo.selectLocation.title": "Select your business",
   "root.bo.selectLocation.placeholder": "Search here…",
-  "root.bo.selectLocation.none": "No matches."
+  "root.bo.selectLocation.none": "No matches.",
+  "lpm.owned.badge": "```tsv"
 }

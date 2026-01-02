@@ -63,6 +63,8 @@ export async function handleDonation(amount, meta = {}) {
       throw new Error("Invalid session response");
     }
 
+    sessionStorage.setItem('navigen.internalLpNav', '1');
+
     // 🚀 Redirect using sessionId (best practice)
     const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
 

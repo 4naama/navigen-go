@@ -637,5 +637,6 @@
   "modal.requestListing.success": "Köszönjük! Hamarosan hozzáadjuk a listához.",
   "root.bo.selectLocation.title": "Válassza ki vállalkozását",
   "root.bo.selectLocation.placeholder": "Keresés itt…",
-  "root.bo.selectLocation.none": "Nincs találat."
+  "root.bo.selectLocation.none": "Nincs találat.",
+  "lpm.owned.badge": ""
 }

@@ -399,6 +399,100 @@ async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
   });
 }
 
+async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Response> {
+  const u = new URL(req.url);
+  const sid = String(u.searchParams.get("sid") || "").trim();
+  const nextRaw = String(u.searchParams.get("next") || "").trim();
+
+  const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+
+  if (!sid) return new Response("Denied", { status: 400, headers: noStoreHeaders });
+
+  // Prevent open redirects: allow only same-origin relative paths.
+  const isSafeNext = (p: string) =>
+    p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
+  const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "";
+
+  const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+  if (!sk) return new Response("Misconfigured", { status: 500, headers: noStoreHeaders });
+
+  // Fetch Stripe Checkout Session and verify payment.
+  const stripeUrl = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sid)}`;
+  const r = await fetch(stripeUrl, {
+    method: "GET",
+    headers: { "Authorization": `Bearer ${sk}` }
+  });
+
+  const txt = await r.text();
+  let sess: any = null;
+  try { sess = JSON.parse(txt); } catch { sess = null; }
+  if (!r.ok || !sess) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+
+  const paymentStatus = String(sess?.payment_status || "").toLowerCase();
+  const status = String(sess?.status || "").toLowerCase();
+  if (paymentStatus !== "paid" || status !== "complete") {
+    return new Response("Denied", { status: 403, headers: noStoreHeaders });
+  }
+
+  const meta = sess?.metadata || {};
+  const locationID = String(meta?.locationID || "").trim();
+  if (!locationID) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+
+  // Resolve slug → ULID (aliases are preseeded by design).
+  const ulid = await resolveUid(locationID, env);
+  if (!ulid) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+
+  // Verify active ownership (defense-in-depth).
+  const ownKey = `ownership:${ulid}`;
+  const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+
+  const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+  const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+  if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+    return new Response("Denied", { status: 403, headers: noStoreHeaders });
+  }
+
+  // Create sessionId (unguessable) and store opsess:<sid> (same as /owner/exchange).
+  const sidBytes = new Uint8Array(18);
+  (crypto as any).getRandomValues(sidBytes);
+  const sessionId = bytesToB64url(sidBytes);
+
+  const createdAt = new Date();
+  const expiresAt = exclusiveUntil;
+
+  const sessKey = `opsess:${sessionId}`;
+  const sessVal = {
+    ver: 1,
+    ulid,
+    createdAt: createdAt.toISOString(),
+    expiresAt: expiresAt.toISOString()
+  };
+
+  const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - createdAt.getTime()) / 1000));
+  try {
+    await env.KV_STATUS.put(sessKey, JSON.stringify(sessVal), { expirationTtl: Math.max(60, maxAge) });
+  } catch {
+    return new Response("Denied", { status: 500, headers: noStoreHeaders });
+  }
+
+  const cookie = cookieSerialize("op_sess", sessionId, {
+    Path: "/",
+    HttpOnly: true,
+    Secure: true,
+    SameSite: "Lax",
+    "Max-Age": maxAge
+  });
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      "Set-Cookie": cookie,
+      "Location": next || `/dash/${encodeURIComponent(ulid)}`,
+      ...noStoreHeaders
+    }
+  });
+}
+
 // --- Ownership writer (Phase 1): KV_STATUS keys ---
 // - ownership:<ULID>
 // - stripe_processed:<payment_intent.id>
@@ -638,6 +732,11 @@ export default {
       // --- Owner exchange: /owner/exchange (Phase 2: signed link → cookie session)
       if (normPath === "/owner/exchange" && req.method === "GET") {
         return await handleOwnerExchange(req, env);
+      }
+
+      // --- Owner exchange from Stripe Checkout (Phase 5: sid → cookie session)
+      if (normPath === "/owner/stripe-exchange" && req.method === "GET") {
+        return await handleOwnerStripeExchange(req, env);
       }
 
       // --- Stripe webhook: /api/stripe/webhook (Phase 1: ownership writer)
@@ -1581,6 +1680,7 @@ export default {
         const successUrl = new URL("/", siteOrigin);
         successUrl.searchParams.set("flow", "campaign");
         successUrl.searchParams.set("locationID", locationID);
+        successUrl.searchParams.set("lp", locationID); // boot opens LPM (post-checkout)
         successUrl.searchParams.set("sid", "{CHECKOUT_SESSION_ID}");
 
         const cancelUrl = new URL("/", siteOrigin);

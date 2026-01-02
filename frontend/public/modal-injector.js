@@ -714,6 +714,7 @@ export function createLocationProfileModal(data, injected = {}) {
              alt="${payload.name || 'Location'} image"
              style="width:100%;height:auto;border-radius:8px;${heroSrc ? 'display:block;' : 'display:none;'}">
       </figure>
+      <div class="lpm-owned-badge" style="display:none;margin-top:0.5rem;font-size:0.9em;opacity:0.9;"></div>
 
       ${
         (Array.isArray(payload?.tags) && payload.tags.length)
@@ -873,6 +874,45 @@ export async function showLocationProfileModal(data) {
 
   // 4. Append to body and expose identifier to handlers (prefer alias for URL; fallback to short; never cache ULID)
   document.body.appendChild(modal);
+  ;(async () => {
+    try {
+      const slug = String(data?.locationID || '').trim();
+      if (!slug) return;
+
+      const u = new URL('/api/status', location.origin);
+      u.searchParams.set('locationID', slug);
+
+      const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+      if (!r.ok) return;
+
+      const j = await r.json().catch(() => null);
+      if (j?.ownedNow !== true) return;
+
+      const untilIso = String(j?.exclusiveUntil || '').trim();
+      if (!untilIso) return;
+
+      const until = new Date(untilIso);
+      if (Number.isNaN(until.getTime())) return;
+
+      const dateTxt = new Intl.DateTimeFormat(
+        document.documentElement.lang || 'en',
+        { month: 'short', day: 'numeric' }
+      ).format(until);
+
+      const el = modal.querySelector('.lpm-owned-badge');
+      if (!el) return;
+
+      const tpl =
+        (typeof t === 'function' && t('lpm.owned.badge')) ||
+        '🟢 Already active · Campaign running until {{date}}';
+
+      el.textContent = tpl.replace('{{date}}', dateTxt);
+      el.style.display = 'block';
+    } catch {
+      // never break LPM
+    }
+  })();
+  
   // Keep data.* intact; only cache the dataset slug for click handlers (no alias/short selection).
   {
     const pref   = String(data?.locationID || '').trim();

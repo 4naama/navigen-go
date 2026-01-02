@@ -637,5 +637,6 @@
   "modal.requestListing.success": "¡Gracias! Añadiremos tu negocio pronto.",
   "root.bo.selectLocation.title": "Selecciona tu negocio",
   "root.bo.selectLocation.placeholder": "Busca aquí…",
-  "root.bo.selectLocation.none": "Sin resultados."
+  "root.bo.selectLocation.none": "Sin resultados.",
+  "lpm.owned.badge": ""
 }
