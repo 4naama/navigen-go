@@ -2058,11 +2058,12 @@ async function initLpmImageSlider(modal, data) {
             const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
             if (!r.ok) return false;
             const j = await r.json().catch(() => null);
-            const status = String(j?.status || '').toLowerCase();
-            const tier   = String(j?.tier || '').toLowerCase();
-            // Conservative rule: anything other than "free" is treated as owned.
-            return (!!status && status !== 'free') || (!!tier && tier !== 'free');
-          } catch { return false; }
+
+            // ✅ Authoritative ownership signal
+            return j?.ownedNow === true;
+          } catch {
+            return false;
+          }
         };
 
         // Determine if we have a valid owner session by probing /api/stats with a minimal 1-day window.
