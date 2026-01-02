@@ -638,5 +638,5 @@
   "root.bo.selectLocation.title": "Seleziona la tua attività",
   "root.bo.selectLocation.placeholder": "Cerca qui…",
   "root.bo.selectLocation.none": "Nessun risultato.",
-  "lpm.owned.badge": ""
+  "lpm.owned.badge": "🟢 Già attivo · Campagna in corso fino al {{date}}"
 }

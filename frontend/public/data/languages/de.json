@@ -638,5 +638,5 @@
   "root.bo.selectLocation.title": "Wählen Sie Ihr Unternehmen aus",
   "root.bo.selectLocation.placeholder": "Hier suchen…",
   "root.bo.selectLocation.none": "Keine Treffer.",
-  "lpm.owned.badge": ""
+  "lpm.owned.badge": "🟢 Bereits aktiv · Kampagne läuft bis {{date}}"
 }

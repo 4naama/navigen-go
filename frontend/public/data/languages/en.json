@@ -638,5 +638,5 @@
   "root.bo.selectLocation.title": "Select your business",
   "root.bo.selectLocation.placeholder": "Search here…",
   "root.bo.selectLocation.none": "No matches.",
-  "lpm.owned.badge": "```tsv"
+  "lpm.owned.badge": "🟢 Already active · Campaign running until {{date}}"
 }

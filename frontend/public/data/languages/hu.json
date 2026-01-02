@@ -638,5 +638,5 @@
   "root.bo.selectLocation.title": "Válassza ki vállalkozását",
   "root.bo.selectLocation.placeholder": "Keresés itt…",
   "root.bo.selectLocation.none": "Nincs találat.",
-  "lpm.owned.badge": ""
+  "lpm.owned.badge": "🟢 Már aktív · A kampány {{date}}-ig fut"
 }

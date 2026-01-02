@@ -638,5 +638,5 @@
   "root.bo.selectLocation.title": "בחר את העסק שלך",
   "root.bo.selectLocation.placeholder": "חפש כאן…",
   "root.bo.selectLocation.none": "אין התאמות.",
-  "lpm.owned.badge": ""
+  "lpm.owned.badge": "🟢 כבר פעיל · הקמפיין פעיל עד {{date}}"
 }
