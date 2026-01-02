@@ -1790,7 +1790,13 @@ async function initLpmImageSlider(modal, data) {
       const closePopover = () => {
         if (!isOpen) return;
         isOpen = false;
-        secondary.classList.remove('is-open');       // CSS can animate opacity/translate here
+
+        // If focus is inside the popover, return it to the trigger before hiding from AT.
+        if (secondary.contains(document.activeElement)) {
+          moreBtn.focus();
+        }
+
+        secondary.classList.remove('is-open');
         secondary.setAttribute('aria-hidden', 'true');
         moreBtn.setAttribute('aria-expanded', 'false');
         document.removeEventListener('click', onDocClick, true);
