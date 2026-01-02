@@ -554,18 +554,35 @@ function renderBusinessOwnersGroup() {
           const picked = await showSelectLocationModal();
           if (!picked) return;
 
-          // Keep showing the LPM (context), but proceed immediately to checkout for the owner path.
+          // Always open the LPM first so the owner can verify the business before any checkout.
           showLocationProfileModal(picked);
 
-          // CampaignKey: stable SKU key (required by metadata contract for campaign purchases)
           const slug = String(picked?.locationID || "").trim();
           if (!slug) return;
+
+          // If already owned, do NOT start checkout again. Guide to Restore flow instead.
+          try {
+            const u = new URL('/api/status', location.origin);
+            u.searchParams.set('locationID', slug);
+            const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+            const j = r.ok ? await r.json().catch(() => null) : null;
+
+            if (j?.ownedNow === true) {
+              showToast('This location is already active. Open 📈 to restore access.', 2400);
+              return;
+            }
+          } catch {
+            // If status check fails, fail closed: do not charge.
+            showToast('Unable to verify ownership status. Please try again.', 2200);
+            return;
+          }
 
           await handleCampaignCheckout({
             locationID: slug,
             campaignKey: "campaign-30d",
             navigenVersion: "v1"
           });
+
         }
       },
       {
@@ -2949,7 +2966,6 @@ if (alertButton) {
   const indicator = document.getElementById("alert-indicator");
 
   if (!indicator) {
-    console.warn("🚫 #alert-indicator not found in DOM.");
   } else {
     indicator.addEventListener("click", async () => {
       console.log("✅ Alert indicator clicked");
