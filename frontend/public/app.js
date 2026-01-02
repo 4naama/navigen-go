@@ -3124,30 +3124,20 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   // Campaign checkout return is webhook-authoritative.
   // Do NOT call the donation session endpoint or store "myPurchases".
   if (flow === "campaign") {
-    try {
-      // Clean URL (avoid re-processing on refresh)
-      url.searchParams.delete("sid");
-      url.searchParams.delete("flow");
-      // keep locationID if present (useful for UI follow-up), but remove noise flags
-      url.searchParams.delete("canceled");
-      history.replaceState({}, document.title, url.toString());
-    } catch { /* ignore history errors */ }
-
-    // Campaign return: mint owner session from sid, then return to the shell (which will open LPM via ?lp=...).
+    // Campaign return: mint owner session from sid, then return to a clean URL that still contains lp (to open LPM).
     try {
       const current = new URL(window.location.href);
 
-      // Build next URL (keep lp/locationID; drop sid/flow noise).
+      // Keep lp/locationID; remove one-time params so refresh won't re-run exchange.
       current.searchParams.delete("sid");
       current.searchParams.delete("flow");
       current.searchParams.delete("canceled");
 
       const next = current.pathname + (current.search ? current.search : "") + (current.hash || "");
 
-      // Server-side exchange sets HttpOnly op_sess and redirects back to `next`.
+      // Exchange sets HttpOnly op_sess and then redirects back to `next`.
       window.location.href = `/owner/stripe-exchange?sid=${encodeURIComponent(sessionId)}&next=${encodeURIComponent(next)}`;
     } catch {
-      // If URL parsing fails, fail closed to main shell.
       window.location.href = "/";
     }
     return;

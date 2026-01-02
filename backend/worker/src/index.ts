@@ -1681,6 +1681,7 @@ export default {
         successUrl.searchParams.set("flow", "campaign");
         successUrl.searchParams.set("locationID", locationID);
         successUrl.searchParams.set("lp", locationID); // boot opens LPM (post-checkout)
+        successUrl.searchParams.set("lp", locationID);
         successUrl.searchParams.set("sid", "{CHECKOUT_SESSION_ID}");
 
         const cancelUrl = new URL("/", siteOrigin);
