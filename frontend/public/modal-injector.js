@@ -2571,7 +2571,7 @@ export async function showSelectLocationModal() {
           const images = Array.isArray(rec?.images) ? rec.images
             : (Array.isArray(media?.images) ? media.images : []);
 
-          return { name: locName, slug, uid, addrDisplay, hay, media, images, cover };
+          return { name: locName, slug, uid, addrDisplay, hay, media, images, cover, raw: rec };
         })
         .filter((x) => x.name && x.slug);
     } catch {
@@ -2632,8 +2632,15 @@ export async function showSelectLocationModal() {
             ...(x.media || {}),
             cover: x.cover || (x.media && x.media.cover) || ''
           },
-          images: Array.isArray(x.images) ? x.images : (x.media && Array.isArray(x.media.images) ? x.media.images : [])
+          images: Array.isArray(x.images) ? x.images : (x.media && Array.isArray(x.media.images) ? x.media.images : []),
+
+          // Pass-through fields the LPM wiring expects (keeps BO-opened LPM identical to ctx-opened LPM)
+          tags: Array.isArray((x.raw && x.raw.tags)) ? x.raw.tags : [],
+          descriptions: (x.raw && typeof x.raw.descriptions === 'object') ? x.raw.descriptions : {},
+          contactInformation: (x.raw && typeof x.raw.contactInformation === 'object') ? x.raw.contactInformation : {},
+          links: (x.raw && typeof x.raw.links === 'object') ? x.raw.links : {}
         };
+
         modal.dataset.pick = JSON.stringify(payload);
       });
 

@@ -557,7 +557,7 @@ function renderBusinessOwnersGroup() {
           // Always open the LPM first so the owner can verify the business before any checkout.
           showLocationProfileModal(picked);
 
-          const slug = String(picked?.locationID || "").trim();
+          const slug = String(picked?.locationID || picked?.alias || "").trim();
           if (!slug) return;
 
           // If already owned, do NOT start checkout again. Guide to Restore flow instead.
