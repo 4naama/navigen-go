@@ -586,22 +586,22 @@ function renderBusinessOwnersGroup() {
         }
       },
       {
-        icon: "🔑",
-        titleKey: "root.bo.restore.title",
-        descKey: "root.bo.restore.desc",
-        onClick: () => showRestoreAccessModal()
+        icon: "➕",
+        titleKey: "root.bo.notListed.title",
+        descKey: "root.bo.notListed.desc",
+        onClick: () => showRequestListingModal()
       },
       {
         icon: "📈",
         titleKey: "root.bo.examples.title",
         descKey: "root.bo.examples.desc",
         onClick: () => showExampleDashboardsModal()
-      },
+      },      
       {
-        icon: "➕",
-        titleKey: "root.bo.notListed.title",
-        descKey: "root.bo.notListed.desc",
-        onClick: () => showRequestListingModal()
+        icon: "🔑",
+        titleKey: "root.bo.restore.title",
+        descKey: "root.bo.restore.desc",
+        onClick: () => showRestoreAccessModal()
       }
     ]
   });
