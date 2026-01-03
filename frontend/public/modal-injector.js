@@ -512,8 +512,8 @@ async function resolveULIDFor(idOrSlug) {
   const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
 
   try {
-    const url = `${location.origin}/api/stats?locationID=${encodeURIComponent(s)}&from=${iso(today)}&to=${iso(today)}`;
-    const r = await fetch(url, { cache: 'no-store' });
+    const url = `${location.origin}/api/status?locationID=${encodeURIComponent(s)}`;
+    const r = await fetch(url, { cache: 'no-store', credentials: 'omit' });
     if (!r.ok) return '';
     const j = await r.json().catch(() => null);
     const uid = String(j?.locationID || '').trim();
@@ -1063,7 +1063,7 @@ async function initLpmImageSlider(modal, data) {
   if (playlist.length < 2 && String(data?.locationID || data?.id || '').trim()) {
     try {
       const key = String(data?.locationID || data?.id || '').trim(); // slug first
-      const r = await fetch(API(`/api/data/profile?id=${encodeURIComponent(key)}`), { cache: 'no-store', credentials: 'include' }); // use Worker
+      const r = await fetch(API(`/api/data/item?id=${encodeURIComponent(key)}`), { cache: 'no-store', credentials: 'include' }); // use Worker
       if (r.ok) {
         const p = await r.json();
         const dir2 = getDir(String(p?.media?.cover || cover));           // keep: resolve relatives near cover
@@ -2300,7 +2300,7 @@ async function initLpmImageSlider(modal, data) {
           (Array.isArray(data?.media?.images) && data.media.images.length < 2);
         if (!needEnrich) return; // skip network when local data is complete
 
-        const res = await fetch(API(`/api/data/profile?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
+        const res = await fetch(API(`/api/data/item?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
         if (!res.ok) return;
         const payload = await res.json();
         
