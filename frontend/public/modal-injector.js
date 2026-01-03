@@ -2608,6 +2608,7 @@ export async function showSelectLocationModal() {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'modal-menu-item';
+      btn.dataset.slug = String(x.slug || '').trim(); // used by post-render owned-dot pass
 
       const line2 = x.addrDisplay ? x.addrDisplay : x.slug;
 
@@ -2618,37 +2619,8 @@ export async function showSelectLocationModal() {
         </span>
         <span class="syb-owned-dot" style="display:none;width:10px;height:10px;border-radius:999px;background:#22c55e;flex:0 0 auto;"></span>
       `;
-
-      // Owned indicator (green dot): show only when /api/status says ownedNow:true.
-      // Cost control: only check rendered rows (max 40) and cache results in-memory.
-      ;(async () => {
-        try {
-          const slug = String(x.slug || '').trim();
-          if (!slug) return;
-
-          const dot = btn.querySelector('.syb-owned-dot');
-          if (!dot) return;
-
-          if (ownedCache.has(slug)) {
-            if (ownedCache.get(slug) === true) dot.style.display = 'inline-block';
-            return;
-          }
-
-          const u = new URL('/api/status', location.origin);
-          u.searchParams.set('locationID', slug);
-
-          const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
-          if (!r.ok) { ownedCache.set(slug, false); return; }
-
-          const j = await r.json().catch(() => null);
-          const owned = (j?.ownedNow === true);
-
-          ownedCache.set(slug, owned);
-          if (owned) dot.style.display = 'inline-block';
-        } catch {
-          // fail closed: no dot
-        }
-      })();
+      
+      // Owned dot is applied in a single post-render pass (prevents async races on rerender).
 
       btn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -2680,6 +2652,37 @@ export async function showSelectLocationModal() {
 
       list.appendChild(btn);
     });
+    
+    // Apply owned dots in a single post-render pass (works even when list rerenders quickly).
+    ;(async () => {
+      const rows = Array.from(list.querySelectorAll('button.modal-menu-item'));
+      await Promise.all(rows.map(async (el) => {
+        try {
+          const slug = String(el.dataset.slug || '').trim();
+          if (!slug) return;
+
+          const dot = el.querySelector('.syb-owned-dot');
+          if (!dot) return;
+
+          if (ownedCache.has(slug)) {
+            dot.style.display = ownedCache.get(slug) ? 'inline-block' : 'none';
+            return;
+          }
+
+          const u = new URL('/api/status', location.origin);
+          u.searchParams.set('locationID', slug);
+
+          const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+          if (!r.ok) { ownedCache.set(slug, false); dot.style.display = 'none'; return; }
+
+          const j = await r.json().catch(() => null);
+          const owned = (j?.ownedNow === true);
+          ownedCache.set(slug, owned);
+          dot.style.display = owned ? 'inline-block' : 'none';
+        } catch {}
+      }));
+    })();
+        
   };
 
   render('');
