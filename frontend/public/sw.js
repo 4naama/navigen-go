@@ -70,7 +70,7 @@ self.addEventListener("fetch", event => {
     u.pathname === '/dash' || u.pathname.startsWith('/dash/') ||
     u.pathname.startsWith('/owner/')
   ) {
-    event.respondWith(fetch(req, { cache: 'no-store' }));
+    event.respondWith(fetch(req));
     return;
   }
 
