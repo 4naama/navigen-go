@@ -3124,18 +3124,28 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   // Campaign checkout return is webhook-authoritative.
   // Do NOT call the donation session endpoint or store "myPurchases".
   if (flow === "campaign") {
-    // Campaign return: mint owner session from sid, then return to a clean URL that still contains lp (to open LPM).
     try {
       const current = new URL(window.location.href);
 
-      // Keep lp/locationID; remove one-time params so refresh won't re-run exchange.
+      // Keep locationID; add lp only for the post-exchange landing so LPM opens once.
+      const loc = String(current.searchParams.get("locationID") || "").trim();
+      if (loc && !current.searchParams.get("lp")) {
+        current.searchParams.set("lp", loc);
+      }
+
+      // Suppress QR-scan + LPM-open counting for the post-checkout auto-open.
+      try {
+        sessionStorage.setItem('navigen.internalLpNav', '1');        // suppress qr-scan once
+        sessionStorage.setItem('navigen.suppressLpmOpenOnce', '1');  // suppress lpm-open once
+      } catch {}
+
+      // Remove one-time params so refresh won't re-run exchange.
       current.searchParams.delete("sid");
       current.searchParams.delete("flow");
       current.searchParams.delete("canceled");
 
       const next = current.pathname + (current.search ? current.search : "") + (current.hash || "");
 
-      // Exchange sets HttpOnly op_sess and then redirects back to `next`.
       window.location.href = `/owner/stripe-exchange?sid=${encodeURIComponent(sessionId)}&next=${encodeURIComponent(next)}`;
     } catch {
       window.location.href = "/";

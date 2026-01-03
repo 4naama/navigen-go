@@ -1654,6 +1654,12 @@ async function initLpmImageSlider(modal, data) {
       } catch (err) { console.warn('lpm-open tracking failed', err); }
     })();
 
+      // Suppress one auto-open after Stripe checkout return (owner self-traffic).
+      if (sessionStorage.getItem('navigen.suppressLpmOpenOnce') === '1') {
+        sessionStorage.removeItem('navigen.suppressLpmOpenOnce');
+        return;
+      }
+
     // Delegated client beacons removed — server counts via /out/* and /hit/*
 
     // ⭐ Save → toggle + update icon (⭐ → ✩ when saved)

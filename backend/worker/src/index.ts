@@ -1677,12 +1677,12 @@ export default {
 
         // Build redirect URLs on the web app origin (not the API Worker origin)
         const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
-        const successUrl = new URL("/", siteOrigin);
-        successUrl.searchParams.set("flow", "campaign");
-        successUrl.searchParams.set("locationID", locationID);
-        successUrl.searchParams.set("lp", locationID); // boot opens LPM (post-checkout)
-        successUrl.searchParams.set("lp", locationID);
-        successUrl.searchParams.set("sid", "{CHECKOUT_SESSION_ID}");
+        // IMPORTANT: keep {CHECKOUT_SESSION_ID} unencoded or Stripe will not substitute it.
+        const successUrl =
+          `${siteOrigin}/?flow=campaign` +
+          `&locationID=${encodeURIComponent(locationID)}` +
+          `&sid={CHECKOUT_SESSION_ID}`;
+
 
         const cancelUrl = new URL("/", siteOrigin);
         cancelUrl.searchParams.set("flow", "campaign");
@@ -1694,7 +1694,7 @@ export default {
         form.set("mode", "payment");
         form.set("customer_creation", "if_required");
         form.set("billing_address_collection", "auto");
-        form.set("success_url", successUrl.toString());
+        form.set("success_url", successUrl);
         form.set("cancel_url", cancelUrl.toString());
 
         // One line item (fixed amount)
