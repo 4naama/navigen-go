@@ -5640,6 +5640,14 @@ A) Policy Overview
 --------------------------------------------------------------------
 B) Entry Points & Where Owners Find Access
 
+Primary (real-time, same device)
+
+• Immediately after successful Stripe Checkout, the app redirects through /owner/stripe-exchange.
+• The server verifies the completed Checkout Session and sets an owner session (op_sess).
+• The browser is redirected back into the app and the dashboard opens without waiting for email.
+
+Secondary (email-based recovery)
+
 Owners receive “Owner access” via email:
 • Immediately after successful payment confirmation.
 • Once at D-5 before expiry (per reminder policy).

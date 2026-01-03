@@ -2189,7 +2189,8 @@ async function handleTrack(req: Request, env: Env): Promise<Response> {
 async function handleStatus(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
   const idParam = url.searchParams.get("locationID") || "";
-  const locID = (await resolveUid(idParam, env)) || "";
+  const idRaw = String(idParam || "").trim();
+  const locID = ULID_RE.test(idRaw) ? idRaw : ((await resolveUid(idRaw, env)) || "");  
   if (!locID) return json({ error: { code: "invalid_request", message: "locationID required" } }, 400);
 
   const raw = await env.KV_STATUS.get(statusKey(locID), "json");

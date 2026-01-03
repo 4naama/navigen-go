@@ -204,6 +204,48 @@ Important:
 • This endpoint must be Network-only (SW must not cache /owner/*)
 
 --------------------------------------------------------------------
+2.3a /owner/stripe-exchange endpoint (API Worker) — post-checkout session minting
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------
+2.3a /owner/stripe-exchange endpoint (API Worker) — post-checkout session minting
+--------------------------------------------------------------------
+
+Plain language:
+The post-checkout exchange endpoint converts a completed Stripe Checkout Session
+into an owner session cookie immediately after payment, enabling the real-time flow:
+
+  Start campaign → Checkout → Pay → Redirect → LPM opens → Dash opens
+
+Endpoint:
+• GET /owner/stripe-exchange?sid=<CHECKOUT_SESSION_ID>&next=<relativePath>
+
+Inputs:
+• sid: Stripe Checkout Session id (cs_...)
+• next: same-origin relative path (e.g. "/?locationID=<slug>&lp=<slug>")
+
+Validation rules:
+• Fetch Checkout Session using STRIPE_SECRET_KEY
+• Require payment_status="paid" and status="complete"
+• Require metadata.locationID
+• Resolve locationID → ULID via KV_ALIASES
+• Verify ownership:<ULID>.exclusiveUntil > now
+
+Output:
+• Set HttpOnly cookie: op_sess=<id>; Max-Age bounded by exclusiveUntil
+• Redirect (302) to next (or /dash/<ULID> if next missing)
+
+Notes:
+• success_url MUST keep "{CHECKOUT_SESSION_ID}" literal (not URL-encoded)
+• Does not replace /owner/exchange
+• /owner/exchange remains recovery-only
+
+Happy-path test H3:
+1) Complete Checkout (cs_...)
+2) GET /owner/stripe-exchange?sid=<cs_...>&next=/?locationID=<slug>&lp=<slug>
+3) Confirm op_sess cookie + /api/stats returns 200
+
+--------------------------------------------------------------------
 2.4 Owner session validation contract (used in later phases)
 --------------------------------------------------------------------
 

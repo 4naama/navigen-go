@@ -1278,9 +1278,7 @@ async function initEmergencyBlock(countryOverride) {
     // Static: actions/structure; contexts is static on Pages/local, API on navigen.io.
 
     // Prefer same-origin contexts on Pages/local; API on navigen.io (avoids CORS).
-    const CONTEXTS_URL = (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost'))
-      ? '/data/contexts.json'
-      : 'https://navigen.io/api/data/contexts';
+    const CONTEXTS_URL = '/data/contexts.json';
 
     // guard all three; 2-line comment: avoid boot break on 404/500
     const safeJson = async (p, fb) => { const r = await p.catch(() => null); return (r && r.ok) ? r.json() : fb; };

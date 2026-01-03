@@ -2106,7 +2106,7 @@ async function initLpmImageSlider(modal, data) {
         const isOwnedByStatus = async () => {
           try {
             const u = new URL('/api/status', location.origin);
-            u.searchParams.set('locationID', target);
+            u.searchParams.set('locationID', (ULID.test(rawULID) ? rawULID : target));
             const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
             if (!r.ok) return false;
             const j = await r.json().catch(() => null);
