@@ -2585,6 +2585,8 @@ export async function showSelectLocationModal() {
   const bySlug = new Map();
   items.forEach((x) => bySlug.set(x.slug, x));
   const uniqItems = Array.from(bySlug.values());
+  // Cache ownership probes per tab to avoid repeated /api/status calls during SYB browsing.
+  const ownedCache = new Map(); // slug -> boolean
 
   const render = (q) => {
     const toks = tokensOf(q);
@@ -2614,7 +2616,39 @@ export async function showSelectLocationModal() {
         <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
           <strong>${x.name}</strong><br><small>${line2}</small>
         </span>
+        <span class="syb-owned-dot" style="display:none;width:10px;height:10px;border-radius:999px;background:#22c55e;flex:0 0 auto;"></span>
       `;
+
+      // Owned indicator (green dot): show only when /api/status says ownedNow:true.
+      // Cost control: only check rendered rows (max 40) and cache results in-memory.
+      ;(async () => {
+        try {
+          const slug = String(x.slug || '').trim();
+          if (!slug) return;
+
+          const dot = btn.querySelector('.syb-owned-dot');
+          if (!dot) return;
+
+          if (ownedCache.has(slug)) {
+            if (ownedCache.get(slug) === true) dot.style.display = 'inline-block';
+            return;
+          }
+
+          const u = new URL('/api/status', location.origin);
+          u.searchParams.set('locationID', slug);
+
+          const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+          if (!r.ok) { ownedCache.set(slug, false); return; }
+
+          const j = await r.json().catch(() => null);
+          const owned = (j?.ownedNow === true);
+
+          ownedCache.set(slug, owned);
+          if (owned) dot.style.display = 'inline-block';
+        } catch {
+          // fail closed: no dot
+        }
+      })();
 
       btn.addEventListener('click', (e) => {
         e.preventDefault();
