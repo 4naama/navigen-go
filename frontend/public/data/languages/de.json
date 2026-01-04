@@ -600,9 +600,9 @@
   "owner.settings.title": "Inhabereinstellungen",
   "owner.settings.restore.explain": "Sie besitzen diesen Standort bereits, aber Ihre Zugriffssitzung ist abgelaufen.",
   "owner.settings.restore.action.title": "Zugriff wiederherstellen",
-  "owner.settings.restore.action.desc": "Verwenden Sie Ihre neueste Eigentümer-Zugriffs-E-Mail oder den letzten Stripe-Beleg.",
+  "owner.settings.restore.action.desc": "Verwenden Sie Ihre neueste Owner-Zugriffs-E-Mail oder Stripe-Quittung.",
   "owner.restore.title": "Zugriff wiederherstellen",
-  "owner.restore.body": "Um das Owner-Dashboard zu öffnen, verwenden Sie Ihre neueste Eigentümer-Zugriffs-E-Mail oder den Stripe-Beleg. Der Link ist in der Nachricht enthalten.",
+  "owner.restore.body": "Um das Owner-Dashboard zu öffnen, verwenden Sie Ihre neueste Owner-Zugriffs-E-Mail oder Stripe-Quittung. Der Link ist in der Nachricht enthalten.",
   "owner.restore.hint": "Tipp: Suchen Sie in Ihrem Posteingang nach „Stripe“ oder „NaviGen“.",
   "owner.settings.claim.explain": "Analysen und Eigentümersteuerungen sind für den aktiven Betreiber verfügbar.",
   "owner.settings.claim.runCampaign.title": "Kampagne starten",
@@ -638,5 +638,8 @@
   "root.bo.selectLocation.title": "Wählen Sie Ihr Unternehmen aus",
   "root.bo.selectLocation.placeholder": "Hier suchen…",
   "root.bo.selectLocation.none": "Keine Treffer.",
-  "lpm.owned.badge": "🟢 Bereits aktiv · Kampagne läuft bis {{date}}"
+  "lpm.owned.badge": "🟢 Bereits aktiv · Kampagne läuft bis {{date}}",
+  "status.badge.stillVisible": "Weiterhin sichtbar",
+  "status.badge.inactive": "Inaktiv",
+  "exampleDash.disclaimer.body": "Diese Analysen gehören zu anderen Standorten und dienen nur zu Demonstrationszwecken."
 }

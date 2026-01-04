@@ -610,7 +610,7 @@
   "owner.settings.claim.protect.title": "Proteger esta ubicación",
   "owner.settings.claim.protect.desc": "Inicia un período de operación exclusivo (5 € / 30 días).",
   "owner.settings.examples.action.title": "Ver paneles de ejemplo",
-  "owner.settings.examples.action.desc": "Ver analíticas de ubicaciones de ejemplo designadas.",
+  "owner.settings.examples.action.desc": "Ver analíticas para ubicaciones de ejemplo designadas.",
   "owner.examples.title": "Paneles de ejemplo",
   "owner.examples.note": "Las analíticas de ejemplo mostradas aquí pertenecen a otras ubicaciones y no están relacionadas con este negocio.",
   "owner.examples.badge": "Ejemplo",
@@ -638,5 +638,8 @@
   "root.bo.selectLocation.title": "Selecciona tu negocio",
   "root.bo.selectLocation.placeholder": "Busca aquí…",
   "root.bo.selectLocation.none": "Sin resultados.",
-  "lpm.owned.badge": "🟢 Ya activo · La campaña se ejecuta hasta {{date}}"
+  "lpm.owned.badge": "🟢 Ya activo · La campaña se ejecuta hasta {{date}}",
+  "status.badge.stillVisible": "Todavía visible",
+  "status.badge.inactive": "Inactivo",
+  "exampleDash.disclaimer.body": "Estas analíticas pertenecen a otras ubicaciones y se muestran solo con fines demostrativos."
 }

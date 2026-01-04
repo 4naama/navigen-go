@@ -600,11 +600,11 @@
   "owner.settings.title": "Impostazioni proprietario",
   "owner.settings.restore.explain": "Sei già proprietario di questa sede, ma la sessione di accesso è scaduta.",
   "owner.settings.restore.action.title": "Ripristina accesso",
-  "owner.settings.restore.action.desc": "Usa l’email di accesso proprietario più recente o la ricevuta Stripe.",
+  "owner.settings.restore.action.desc": "Usa l’e-mail di accesso proprietario più recente o la ricevuta Stripe.",
   "owner.restore.title": "Ripristina accesso",
-  "owner.restore.body": "Per aprire la dashboard del proprietario, usa l’email di accesso più recente o la ricevuta Stripe. Il link è incluso nel messaggio.",
+  "owner.restore.body": "Per aprire la dashboard del proprietario, usa l’e-mail di accesso più recente o la ricevuta Stripe. Il link è incluso nel messaggio.",
   "owner.restore.hint": "Suggerimento: cerca “Stripe” o “NaviGen” nella tua posta.",
-  "owner.settings.claim.explain": "Le analisi e i controlli proprietario sono disponibili per l’operatore attivo.",
+  "owner.settings.claim.explain": "Le analisi e i controlli del proprietario sono disponibili per l’operatore attivo.",
   "owner.settings.claim.runCampaign.title": "Avvia campagna",
   "owner.settings.claim.runCampaign.desc": "Attiva le analisi avviando una campagna per questa sede.",
   "owner.settings.claim.protect.title": "Proteggi questa sede",
@@ -638,5 +638,8 @@
   "root.bo.selectLocation.title": "Seleziona la tua attività",
   "root.bo.selectLocation.placeholder": "Cerca qui…",
   "root.bo.selectLocation.none": "Nessun risultato.",
-  "lpm.owned.badge": "🟢 Già attivo · Campagna in corso fino al {{date}}"
+  "lpm.owned.badge": "🟢 Già attivo · Campagna in corso fino al {{date}}",
+  "status.badge.stillVisible": "Ancora visibile",
+  "status.badge.inactive": "Inattivo",
+  "exampleDash.disclaimer.body": "Queste analisi appartengono ad altre sedi e sono mostrate solo a scopo dimostrativo."
 }
