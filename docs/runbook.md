@@ -271,12 +271,6 @@ git add backend\server.js backend\package.json backend\package-lock.json
 git commit -m "Backend server deploy"
 git push origin main
 
-cd C:\Users\USER\Documents\a_git\navigen-go
-git status
-git add frontend\public\sw.js
-git commit -m "SW: do not wrap fetch for /api,/owner,/dash"
-git push origin main
-
 ### 12.2 Backend — API Worker (Production)
 
 cd C:\Users\USER\Documents\a_git\navigen-go\backend\worker
