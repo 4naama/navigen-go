@@ -504,48 +504,11 @@ export default {
       return out;
     }
 
-    // Phase 3: block dashboard shell unless owner session exists OR location is flagged as an Example Location.
-    // Keeps unauthorized users from loading a shell that cannot fetch data.
+    // Dash shell must always be reachable.
+    // Access is enforced by /api/stats (401/403), and Dash UI renders interstitials accordingly.
+    // Example dashboards remain supported by the stats endpoint; Pages should not redirect here.
     if (url.pathname === '/dash' || url.pathname.startsWith('/dash/')) {
-      const cookie = req.headers.get('cookie') || '';
-      const hasSess = /\bop_sess=/.test(cookie);
-
-      if (!hasSess) {
-        // Allow Example Dashboards: these are real locations explicitly flagged in /data/profiles.json.
-        // All other locations remain blocked (redirect to main shell).
-        let isExample = false;
-        try {
-          const seg = (url.pathname.split('/')[2] || '').trim(); // /dash/<seg>
-          // Canonicalize seg so example allow survives /dash/<slug> → /dash/<ULID> redirects.
-          const segUid = await canonicalId(env, seg);
-          if (seg) {
-            const prof = await env.ASSETS.fetch(new Request(new URL('/data/profiles.json', url)));
-            if (prof.ok) {
-              const data = await prof.json().catch(() => null);
-              const locs = Array.isArray(data?.locations)
-                ? data.locations
-                : (data?.locations && typeof data.locations === 'object')
-                  ? Object.values(data.locations)
-                  : [];
-
-              const rec = locs.find(r => {
-                const slug = String(r?.locationID || r?.slug || r?.alias || '').trim();
-                const rid  = String(r?.ID || r?.id || r?.locationID || '').trim(); // tolerate legacy schemas
-                const uid  = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rid) ? rid : '';
-                return slug === seg || uid === seg || (segUid && uid === segUid);
-              });
-              const v = rec?.exampleLocation ?? rec?.isExample ?? rec?.example ?? rec?.exampleDash ?? rec?.flags?.example;
-              isExample = (v === true || v === 1 || String(v || '').toLowerCase() === 'true' || String(v || '').toLowerCase() === 'yes');
-            }
-          }
-        } catch {
-          isExample = false; // fail closed
-        }
-
-        if (!isExample) {
-          return Response.redirect(`${url.origin}/`, 302);
-        }
-      }
+      // no-op: fall through to the Dash shell handler below
     }
 
     // Serve Dashboard shell for /dash and /dash/* (returns /dash/index.html)
