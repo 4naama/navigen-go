@@ -621,14 +621,23 @@ function renderAccessBlocked({ status, detail }) {
   const boundBtn = document.getElementById('dash-open-bound-location');
   boundBtn?.addEventListener('click', () => {
     try {
-      // Open Dash for the location this session is actually bound to.
-      // This prevents a confusing dead-end when the cookie is for another ULID.
-      // We use the ULID so it is canonical.
+      // Prefer the already computed mismatchHint to avoid extra network calls.
+      const ulid = (mismatchHint && mismatchHint.ulid) ? String(mismatchHint.ulid).trim() : '';
+      if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(ulid)) {
+        // Same-tab navigation keeps context and avoids pop-up blockers.
+        window.location.href = `https://navigen.io/dash/${encodeURIComponent(ulid)}`;
+        return;
+      }
+
+      // Fallback: resolve again if mismatchHint wasn't available for some reason.
       getSessionBoundLocationHint().then((h) => {
-        if (h && h.ulid) window.open(`https://navigen.io/dash/${encodeURIComponent(h.ulid)}`, '_blank', 'noopener,noreferrer');
-      });
+        const u = h && h.ulid ? String(h.ulid).trim() : '';
+        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(u)) {
+          window.location.href = `https://navigen.io/dash/${encodeURIComponent(u)}`;
+        }
+      }).catch(() => {});
     } catch {}
-  });  
+  }); 
 }
 
 async function fetchStats() {
