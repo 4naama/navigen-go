@@ -267,19 +267,8 @@ async function requireOwnerSession(req: Request, env: Env): Promise<{ ulid: stri
     });
   }
 
-  // Ensure ownership is still active for this ULID (defense-in-depth)
-  const ownKey = `ownership:${sess.ulid}`;
-  const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
-
-  const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
-  const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
-  if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
-    return new Response("Denied", {
-      status: 403,
-      headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
-    });
-  }
-
+  // Authentication only: session validity + ULID binding.
+  // Campaign entitlement is enforced by the endpoint itself, not here.
   return { ulid: String(sess.ulid).trim() };
 }
 
@@ -1073,12 +1062,28 @@ export default {
           return json({ error: { code: "invalid_request", message: "locationID, from, to required (YYYY-MM-DD)" } }, 400);
         }
 
-        // Enforce single-ULID session binding (example locations bypass session checks by design)
+        // Enforce single-ULID session binding
         if (auth && loc !== auth.ulid) {
           return new Response("Denied", {
             status: 403,
             headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
           });
+        }
+
+        // Enforce campaign entitlement (Dash access gate)
+        {
+          const ownKey = `ownership:${loc}`;
+          const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+
+          const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+          const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+
+          if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+            return new Response("Campaign required", {
+              status: 403,
+              headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+            });
+          }
         }
 
         const from = (url.searchParams.get("from") || "").trim();

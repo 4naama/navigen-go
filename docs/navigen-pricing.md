@@ -38,7 +38,8 @@ When your campaign ends, we don’t drop your business immediately.
 **For 60 days**
 - Your business stays visible inside NaviGen
 - Visibility is reduced naturally
-- Promotion and analytics are paused
+- Promotion is paused
+- Analytics continue to be collected, but dashboard access is paused
 
 **How it feels**
 > “People can still find me while I decide what’s next.”
@@ -56,16 +57,18 @@ If you’re not ready to run another campaign yet, you can keep your place visib
 - Prevents further fade-out
 - Does not include promotion or analytics
 
-This is not protection or access — just time to decide.
+This does not unlock analytics or dashboard access.
+It only keeps your business visible while you decide what to do next.
 
 --------------------------------------------------------------------
 
-## Paused listings
+## Inactive listings
 
 If you don’t run a campaign and don’t extend visibility, your business becomes inactive on NaviGen.
 
 **What that means**
-- It won’t appear in search or lists
+- It won’t appear in public search or browsing
+- It may still appear when you search for your business to restart a campaign
 - It’s not promoted
 - You can restart a campaign anytime
 
@@ -77,7 +80,7 @@ Your listing is never deleted.
 
 Free.
 
-If you already ran a campaign but lost access to your dashboard, you can restore it using your Stripe receipt or owner access link.
+If you already ran a campaign and your dashboard is active, but you lost access, you can restore it using your Stripe receipt or owner access link.
 
 This is a recovery feature, not a paid product.
 

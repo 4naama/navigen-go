@@ -2120,42 +2120,12 @@ async function initLpmImageSlider(modal, data) {
 
         // Determine if we have a valid owner session by probing /api/stats with a minimal 1-day window.
         // This call is still owner-gated and returns no analytics when blocked.
-        const hasOwnerSession = async () => {
-          const iso = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-          const today = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
-          const from = iso(today), to = iso(today);
-
-          try {
-            const u = new URL('/api/stats', location.origin);
-            u.searchParams.set('locationID', target); // may be ULID or slug; backend resolves to canonical ULID
-            u.searchParams.set('from', from);
-            u.searchParams.set('to', to);
-
-            const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
-            if (r.ok) return { ok: true, code: 200 };
-            return { ok: false, code: r.status || 0 };
-          } catch { return { ok: false, code: -1 }; } // -1 = network/offline
-        };
-
         const owned = await isOwnedByStatus();
-        const sess = await hasOwnerSession();
 
-        // A) Owned + valid session → open Dash normally
-        if (sess.ok) {
-          // Clean URL: /dash/<ULID>. Save human slug for the dashboard to read (no hash in URL).
-          const seg = ULID.test(rawULID) ? rawULID : target; // ULID if available, else slug (server will 302 → ULID)
-
-          // persist human slug for UI (if we have one); also leave a short-lived pending hint for redirects
-          try {
-            const isHuman = (target && !ULID.test(target));
-            if (isHuman) {
-              // if we already know the ULID now, bind it directly
-              if (ULID.test(rawULID)) localStorage.setItem(`navigen.slug:${rawULID}`, target);
-              // always drop a pending slug to be picked up after redirect
-              localStorage.setItem('navigen.pendingSlug', JSON.stringify({ value: target, ts: Date.now() }));
-            }
-          } catch { /* ignore storage errors */ }
-
+        // When owned, always open Dash.
+        // Dash itself handles 401 / 403 deterministically.
+        if (owned) {
+          const seg = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawULID) ? rawULID : target;
           const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
           window.open(href, '_blank', 'noopener,noreferrer');
           return;

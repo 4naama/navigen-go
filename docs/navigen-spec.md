@@ -683,6 +683,209 @@ predictability that define NaviGen as a high-quality, production-grade platform.
 
 --------------------------------------------------------------------
 
+0.S Core Definitions (Authority & Access)
+
+--------------------------------------------------------------------
+
+## Core Definitions (Authority & Access)
+
+### Owner Exchange
+
+Owner Exchange is the server-side step that follows a successful payment
+or signed owner access link.
+
+During Owner Exchange:
+- ownership is verified server-side
+- an Operator Session is minted
+- the browser is bound to a single location
+
+Owner Exchange does NOT grant Dash access by itself.
+
+--------------------------------------------------------------------
+
+### Operator Session
+
+An Operator Session is a short-lived, browser-bound authentication credential.
+
+Properties:
+- scoped to one browser and one location
+- implemented as a secure HttpOnly cookie
+- backed by a server-side session record
+- proves authentication only
+
+Operator Session:
+- does NOT represent ownership
+- does NOT represent campaign activity
+- does NOT guarantee Dash access
+
+--------------------------------------------------------------------
+
+### Restore Access
+
+Restore Access is the recovery of a missing or expired Operator Session.
+
+Restore Access:
+- is free
+- does not modify ownership
+- does not extend campaigns
+- only restores authentication
+
+--------------------------------------------------------------------
+
+### Campaign Entitlement
+
+Campaign Entitlement is the time-bounded authorization that permits Dash access.
+
+It is derived from the active campaign window.
+
+Campaign Entitlement:
+- is independent of Operator Session
+- controls Dash and analytics access
+- must be active for Dash to open
+
+--------------------------------------------------------------------
+
+## Dash Access Decision Matrix (authoritative)
+
+Dash access is governed by **two independent conditions**:
+
+1) Operator Session (authentication)
+2) Campaign Entitlement (authorization)
+
+Both conditions MUST be satisfied to open Dash.
+
+--------------------------------------------------------------------------------|
+| Ownership | Operator Session | Campaign Entitlement | Result                  |
+|-----------|------------------|----------------------|-------------------------|
+| No        | —                | —                    | Claim / Run campaign    |
+| Yes       | No               | —                    | Restore access          |
+| Yes       | Yes              | No                   | Campaign renewal needed |
+| Yes       | Yes              | Yes                  | Open Dash               |
+--------------------------------------------------------------------------------|
+
+Notes:
+- “Restore access” recovers a missing Operator Session only.
+- Campaign renewal is required when ownership exists but the campaign is inactive.
+- Dash MUST NOT open unless both conditions are true.
+
+Dash access is permitted **only when**:
+- a valid Operator Session exists, AND
+- Campaign Entitlement is active
+
+This rule is enforced server-side and MUST NOT be inferred by the client.
+
+--------------------------------------------------------------------
+
+## Dash Access — HTTP Semantics (Authoritative)
+
+The API Worker MUST use HTTP status codes to reflect
+authentication vs authorization vs entitlement state.
+
+The client MUST interpret these codes strictly and MUST NOT infer state.
+
+--------------------------------------------------------------------
+
+### /api/stats and /dash Access Semantics
+
+| HTTP Status | Meaning | Authoritative Condition | Required UI Action |
+|-------------|--------|-------------------------|--------------------|
+| 200 OK | Access granted | Operator Session valid AND Campaign Entitlement active | Open Dash |
+| 401 Unauthorized | Authentication missing or expired | Operator Session missing or invalid | Show Restore Access UI |
+| 403 Forbidden | Authorization denied | Operator Session valid BUT Campaign Entitlement inactive OR ownership expired | Show Campaign Required UI |
+| 404 Not Found | Location not resolvable | Invalid slug/ULID | Show safe error / fallback |
+
+--------------------------------------------------------------------
+
+### Invariants
+
+• 401 MUST NEVER be used for campaign inactivity.  
+• 403 MUST NEVER be used for missing session.  
+• 200 MUST NEVER be returned unless both conditions are satisfied.  
+
+--------------------------------------------------------------------
+
+### Client Responsibilities
+
+• Client MUST NOT:
+  – guess entitlement state
+  – open Dash on non-200 responses
+  – downgrade 403 into “restore”
+
+• Client MUST:
+  – treat 401 as **session recovery**
+  – treat 403 as **campaign renewal required**
+  – treat ownership as orthogonal (from /api/status)
+
+--------------------------------------------------------------------
+
+### Server Responsibilities
+
+• API Worker is the sole authority for:
+  – ownership checks
+  – entitlement checks
+  – session validation
+
+• Pages Worker and client UI:
+  – present guidance only
+  – never decide access
+
+--------------------------------------------------------------------
+
+## UI Copy Alignment (Owner-Facing, Authoritative)
+
+This section defines the **exact semantic intent** of owner-facing UI copy.
+All strings MUST be implemented via translation keys (t(key)).
+
+The UI MUST NOT invent additional meanings beyond what is defined here.
+
+--------------------------------------------------------------------
+
+### Visibility Status Labels (LPM badges, lists)
+
+| UI Label        | Meaning (authoritative)                                         | When shown |
+|-----------------|------------------------------------------------------------------|-----------|
+| Active campaign | Campaign Entitlement is active                                   | exclusiveUntil > now AND campaign active |
+| Still visible   | Courtesy or Hold visibility; no campaign                         | campaign inactive, courtesy/hold window |
+| Inactive        | Not discoverable in public surfaces                              | after courtesy + holds expire |
+
+Notes:
+• “Still visible” NEVER implies analytics or Dash access.  
+• “Inactive” NEVER implies deletion or loss of ownership eligibility.
+
+--------------------------------------------------------------------
+
+### Dash Access Blocking Messages (Owner-facing)
+
+| Situation | Primary message | Secondary clarification |
+|---------|-----------------|-------------------------|
+| Owned + no Operator Session | “Owner access required” | “Use your most recent Owner access email or Stripe receipt.” |
+| Owned + session + no Campaign Entitlement | “Campaign required for analytics” | “Analytics are collected, but dashboard access requires an active campaign.” |
+| Unowned | “Analytics access required” | “Activate ownership by running a campaign.” |
+
+Rules:
+• Messages must be factual, non-salesy, and non-alarming.  
+• UI MUST NOT suggest data loss when analytics are merely gated.
+
+--------------------------------------------------------------------
+
+### Restore Access Messaging (strict)
+
+Restore Access UI copy MUST:
+• Refer only to **session recovery**
+• NEVER imply campaign renewal
+• NEVER imply analytics activation
+
+Allowed phrasing:
+• “Restore access”
+• “Recover owner access on this device”
+
+Forbidden phrasing:
+• “Reactivate analytics”
+• “Resume campaign”
+• “Unlock dashboard” (ambiguous)
+
+--------------------------------------------------------------------
+
 1. CORE SYSTEM OVERVIEW
 
 1.1 Architectural Intent
