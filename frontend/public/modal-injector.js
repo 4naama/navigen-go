@@ -320,7 +320,13 @@ async function openPromotionQrModal(modal, data) {
 
     const res = await fetch(apiUrl.toString(), { cache: 'no-store' });
     if (!res.ok) {
-      if (res.status === 404) {
+      if (res.status === 403) {
+        // Campaign required for promos (owner-gated). Use existing owner copy.
+        const msg =
+          (typeof t === 'function' && t('owner.settings.claim.runCampaign.desc')) ||
+          'Activate analytics by running a campaign for this location.';
+        showToast(msg, 2400);
+      } else if (res.status === 404) {
         showToast('Promotions will appear here soon.', 2000);
       } else {
         console.warn('openPromotionQrModal: /api/promo-qr error', res.status);
@@ -2131,14 +2137,13 @@ async function initLpmImageSlider(modal, data) {
           return;
         }
 
-        // B) Owned + no session → Owner settings (restore)
-        // C) Unowned → Owner settings (claim)
-        const variant = owned ? 'restore' : 'claim';
+        // Unowned → Owner settings (claim)
         showOwnerSettingsModal({
-          variant,
+          variant: 'claim',
           locationIdOrSlug: target,
           locationName: String(data?.displayName ?? data?.name ?? '').trim()
         });
+
         } finally {
           statsBtn.dataset.busy = '0';
         }        

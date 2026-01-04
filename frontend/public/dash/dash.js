@@ -456,6 +456,115 @@ function hashVisitorId(s) {
   return 'v-' + hex;
 }
 
+function renderAccessBlocked({ status, detail }) {
+  const title =
+    (typeof t === 'function' && t('owner.settings.title')) ||
+    'Owner settings';
+
+  // Keep messaging aligned with the i18n keys you already have in en.json.
+  const msg401 =
+    (typeof t === 'function' && t('owner.restore.body')) ||
+    'To open the Owner Dash, use your most recent Owner access email or Stripe receipt. The Owner Dash link is included in that message.';
+
+  const hint401 =
+    (typeof t === 'function' && t('owner.restore.hint')) ||
+    'Tip: search your inbox for “Stripe” or “NaviGen”.';
+
+  const msg403 =
+    (typeof t === 'function' && t('owner.settings.claim.runCampaign.desc')) ||
+    'Activate analytics by running a campaign for this location.';
+
+  const examplesTitle =
+    (typeof t === 'function' && t('owner.settings.examples.action.title')) ||
+    'See example dashboards';
+
+  const examplesDesc =
+    (typeof t === 'function' && t('owner.settings.examples.action.desc')) ||
+    'View analytics for designated example locations.';
+
+  const restoreTitle =
+    (typeof t === 'function' && t('owner.settings.restore.action.title')) ||
+    'Restore access';
+
+  const restoreDesc =
+    (typeof t === 'function' && t('owner.settings.restore.action.desc')) ||
+    'Use your most recent Owner access email or Stripe receipt.';
+
+  // Clear existing table area and render an interstitial card.
+  tblWrap.innerHTML = `
+    <div id="dash-table-scroller">
+      <div class="analytics-report" style="max-width:720px;margin:0 auto;">
+        <section class="analytics-section">
+          <h3>${title}</h3>
+          <p>${status === 401 ? msg401 : msg403}</p>
+          ${status === 401 ? `<p style="opacity:.8;font-size:.9em;">${hint401}</p>` : ``}
+
+          <div class="modal-menu-list" style="margin-top:1rem;">
+            ${
+              status === 401
+                ? `
+                  <button type="button" class="modal-menu-item" id="dash-restore-access">
+                    <span class="icon-img">🔑</span>
+                    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+                      <strong>${restoreTitle}</strong><br><small>${restoreDesc}</small>
+                    </span>
+                  </button>
+                `
+                : `
+                  <button type="button" class="modal-menu-item" id="dash-run-campaign">
+                    <span class="icon-img">🎯</span>
+                    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+                      <strong>${
+                        (typeof t === 'function' && t('owner.settings.claim.runCampaign.title')) || 'Run campaign'
+                      }</strong><br><small>${msg403}</small>
+                    </span>
+                  </button>
+                `
+            }
+
+            <button type="button" class="modal-menu-item" id="dash-example-dashboards">
+              <span class="icon-img">📈</span>
+              <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+                <strong>${examplesTitle}</strong><br><small>${examplesDesc}</small>
+              </span>
+            </button>
+          </div>
+
+          ${
+            detail
+              ? `<p style="margin-top:1rem;opacity:.6;font-size:.85em;">${String(detail).slice(0,160)}</p>`
+              : ``
+          }
+        </section>
+      </div>
+    </div>
+  `;
+
+  // Wire actions using existing modal-injector exports if available globally.
+  const exBtn = document.getElementById('dash-example-dashboards');
+  exBtn?.addEventListener('click', () => {
+    try {
+      if (typeof window.showExampleDashboardsModal === 'function') window.showExampleDashboardsModal();
+      else window.open('https://navigen.io/?lp=', '_blank'); // safe fallback (never blocks)
+    } catch {}
+  });
+
+  const restoreBtn = document.getElementById('dash-restore-access');
+  restoreBtn?.addEventListener('click', () => {
+    try {
+      if (typeof window.showRestoreAccessModal === 'function') window.showRestoreAccessModal();
+    } catch {}
+  });
+
+  const runBtn = document.getElementById('dash-run-campaign');
+  runBtn?.addEventListener('click', () => {
+    try {
+      // Dash does not initiate checkout directly; it routes user back to the app shell.
+      window.open('https://navigen.io/', '_blank', 'noopener,noreferrer');
+    } catch {}
+  });
+}
+
 async function fetchStats() {
   // single source for all stats calls
   const base = location.origin;
@@ -465,23 +574,21 @@ async function fetchStats() {
   const from = iso(start), to = iso(end);               // API window
 
   const isEntity = (modeEl?.value || 'location') === 'entity';
+  const locId = String((locEl?.value || locEl?.dataset?.canonicalId || '')).trim();
 
-  // Accept either ULID or slug — pass through; backend resolves slug → ULID (KV aliases)
-  // Prefer what the user sees (slug) over the stashed ULID for request composition,
-  // but keep the stashed ULID available for advanced flows if needed.
-  let locId = String((locEl?.value || locEl?.dataset?.canonicalId || '')).trim();
-
-  // Always send locationID=; backend resolves ULID or slug via KV aliases (no client pre-resolution)
   const q = isEntity
     ? new URL(`/api/stats/entity?entityID=${encodeURIComponent(entEl.value)}&from=${from}&to=${to}`, base)
     : new URL(`/api/stats?locationID=${encodeURIComponent(locId)}&from=${from}&to=${to}`, base);
 
   const res = await fetch(q, { cache: 'no-store', credentials: 'include' });
-  if (!res.ok) {
-    const txt = await res.text().catch(()=>String(res.status));
-    throw new Error(`Stats error ${res.status}: ${txt}`);
+
+  if (res.ok) {
+    return { ok: true, status: 200, json: await res.json() };
   }
-  return res.json();
+
+  // Read small detail (never dump large HTML/text).
+  const detail = await res.text().catch(() => '');
+  return { ok: false, status: res.status || 0, detail: String(detail || '').trim() };
 }
 
 function renderTable(json) {
@@ -1627,7 +1734,23 @@ function toTSV(table){
 async function loadAndRender(){         // single entry point
   try{
     tblWrap.textContent = t('dash.state.loading');
-    const json = await fetchStats();
+    const result = await fetchStats();
+
+    if (!result || result.ok !== true) {
+      const code = Number(result?.status || 0);
+
+      if (code === 401 || code === 403) {
+        renderAccessBlocked({ status: code, detail: result?.detail || '' });
+        return;
+      }
+
+      const fallback = (typeof t === 'function' && t('dash.error.load-failed')) || 'Failed to load stats';
+      const d = String(result?.detail || '').trim();
+      tblWrap.textContent = d ? `${fallback}: ${d}` : fallback;
+      return;
+    }
+
+    const json = result.json;
     if (Array.isArray(json.order) && json.order.length){
       // merge server-specified order; backend guarantees correct keys (underscored)
       json.order.forEach((kRaw) => {
@@ -1641,7 +1764,8 @@ async function loadAndRender(){         // single entry point
     // cache latest stats so all aspects can reuse the same payload
     lastStats = json;
     renderCurrentView(); // show active view (Click Info / QR Info / Campaigns)
-  }catch(e){
+  } catch (e) {
+    // fetchStats now returns structured results; if we got here, it's an unexpected crash.
     tblWrap.textContent = (e && e.message) ? e.message : t('dash.error.load-failed');
   }
 }

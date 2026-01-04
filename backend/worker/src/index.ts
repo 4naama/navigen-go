@@ -760,6 +760,23 @@ export default {
           );
         }
 
+        // Promo access is owner-gated: require active ownership window.
+        {
+          const ownKey = `ownership:${locULID}`;
+          const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+
+          const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+          const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+
+          if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+            return json(
+              { error: { code: "forbidden", message: "campaign required" } },
+              403,
+              { "cache-control": "no-store" }
+            );
+          }
+        }
+
         const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
         const campaigns = await loadCampaigns(siteOrigin, env);
 
@@ -1615,6 +1632,28 @@ export default {
         if (ev === "qr-redeem") {
           const token = (req.headers.get("X-NG-QR-Token") || "").trim();
 
+          // Promo redeem must be owner-gated: require active ownership window.
+          {
+            const ownKey = `ownership:${loc}`;
+            const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+
+            const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+            const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+
+            if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+              // Fail closed: log as invalid and return (no redeem, no billing).
+              await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
+              return new Response(null, {
+                status: 204,
+                headers: {
+                  "Access-Control-Allow-Origin": "https://navigen.io",
+                  "Access-Control-Allow-Credentials": "true",
+                  "Vary": "Origin"
+                }
+              });
+            }
+          }
+
           const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
           const campaigns = await loadCampaigns(siteOrigin, env);
 
@@ -1677,7 +1716,7 @@ export default {
         }
 
         // Price: €50 / 30 days (spec: Campaign) — single fixed SKU for now
-        const amountCents = 100;
+        const amountCents = 100; // Kept at €1.00 for testing €50.00
         const currency = "eur";
 
         // Build redirect URLs on the web app origin (not the API Worker origin)
