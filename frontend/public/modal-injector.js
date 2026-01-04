@@ -323,8 +323,9 @@ async function openPromotionQrModal(modal, data) {
       if (res.status === 403) {
         // Campaign required for promos (owner-gated). Use existing owner copy.
         const msg =
-          (typeof t === 'function' && t('owner.settings.claim.runCampaign.desc')) ||
-          'Activate analytics by running a campaign for this location.';
+          (typeof t === 'function' && t('promo.gated.campaignRequired')) ||
+          'Promotions are available only while this business is running an active NaviGen campaign.';
+
         showToast(msg, 2400);
       } else if (res.status === 404) {
         showToast('Promotions will appear here soon.', 2000);

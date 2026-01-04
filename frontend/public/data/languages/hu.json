@@ -641,5 +641,6 @@
   "lpm.owned.badge": "🟢 Már aktív · A kampány {{date}}-ig fut",
   "status.badge.stillVisible": "Továbbra is látható",
   "status.badge.inactive": "Inaktív",
-  "exampleDash.disclaimer.body": "Ezek az elemzések más helyszínekhez tartoznak, és csak bemutatási célokat szolgálnak."
+  "exampleDash.disclaimer.body": "Ezek az elemzések más helyszínekhez tartoznak, és csak bemutatási célokat szolgálnak.",
+  "promo.gated.campaignRequired": "A promóciók csak akkor érhetők el, amíg ez a vállalkozás aktív NaviGen-kampányt futtat."
 }

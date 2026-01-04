@@ -785,7 +785,7 @@ export default {
           );
         }
 
-        // Promo access is owner-gated: require active ownership window.
+        // Promo infra is campaign-paid: require active ownership window (entitlement).
         {
           const ownKey = `ownership:${locULID}`;
           const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
@@ -795,7 +795,7 @@ export default {
 
           if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
             return json(
-              { error: { code: "forbidden", message: "campaign required" } },
+              { error: { code: "forbidden", message: "campaign required for promos" } },
               403,
               { "cache-control": "no-store" }
             );
@@ -1656,6 +1656,28 @@ export default {
         // For QR redeem events, validate token and log "redeem" vs "invalid".
         if (ev === "qr-redeem") {
           const token = (req.headers.get("X-NG-QR-Token") || "").trim();
+          
+          // Promo redeem is campaign-paid: require active ownership window (entitlement).
+          {
+            const ownKey = `ownership:${loc}`;
+            const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+
+            const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+            const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+
+            if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+              // Fail closed: log invalid attempt and stop (no redeem, no billing).
+              await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
+              return new Response(null, {
+                status: 204,
+                headers: {
+                  "Access-Control-Allow-Origin": "https://navigen.io",
+                  "Access-Control-Allow-Credentials": "true",
+                  "Vary": "Origin"
+                }
+              });
+            }
+          }          
 
           // Promo redeem must be owner-gated: require active ownership window.
           {

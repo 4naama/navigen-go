@@ -641,5 +641,6 @@
   "lpm.owned.badge": "🟢 Bereits aktiv · Kampagne läuft bis {{date}}",
   "status.badge.stillVisible": "Weiterhin sichtbar",
   "status.badge.inactive": "Inaktiv",
-  "exampleDash.disclaimer.body": "Diese Analysen gehören zu anderen Standorten und dienen nur zu Demonstrationszwecken."
+  "exampleDash.disclaimer.body": "Diese Analysen gehören zu anderen Standorten und dienen nur zu Demonstrationszwecken.",
+  "promo.gated.campaignRequired": "Aktionen sind nur verfügbar, solange dieses Unternehmen eine aktive NaviGen-Kampagne durchführt."
 }

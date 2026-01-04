@@ -641,5 +641,6 @@
   "lpm.owned.badge": "🟢 כבר פעיל · הקמפיין פעיל עד {{date}}",
   "status.badge.stillVisible": "עדיין גלוי",
   "status.badge.inactive": "לא פעיל",
-  "exampleDash.disclaimer.body": "ניתוחים אלה שייכים למיקומים אחרים ומוצגים לצורכי הדגמה בלבד."
+  "exampleDash.disclaimer.body": "ניתוחים אלה שייכים למיקומים אחרים ומוצגים לצורכי הדגמה בלבד.",
+  "promo.gated.campaignRequired": "מבצעים זמינים רק כאשר העסק מפעיל קמפיין פעיל של NaviGen."
 }
