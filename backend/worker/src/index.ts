@@ -718,6 +718,31 @@ export default {
         }), { status: 200, headers: { "content-type": "application/json", "x-ng-worker": "navigen-api" } });
       }
 
+      // --- Owner session diag: /api/_diag/opsess (safe; no secrets)
+      if (normPath === "/api/_diag/opsess" && req.method === "GET") {
+        const cookieHdr = req.headers.get("Cookie") || "";
+        const sid = readCookie(cookieHdr, "op_sess");
+
+        const sessKey = sid ? `opsess:${sid}` : "";
+        const sess = sid
+          ? await env.KV_STATUS.get(sessKey, { type: "json" })
+          : null;
+
+        return json(
+          {
+            hasCookieHeader: !!cookieHdr,
+            cookieHeaderLen: cookieHdr.length,
+            hasOpSessCookie: !!sid,
+            opSessLen: sid ? String(sid).length : 0,
+            kvHit: !!sess,
+            kvKey: sessKey ? `opsess:<redacted>` : "",
+            ulid: (sess && typeof sess === "object") ? String((sess as any).ulid || "") : ""
+          },
+          200,
+          { "cache-control": "no-store", "x-ng-worker": "navigen-api" }
+        );
+      }
+
       // --- Owner exchange: /owner/exchange (Phase 2: signed link → cookie session)
       if (normPath === "/owner/exchange" && req.method === "GET") {
         return await handleOwnerExchange(req, env);

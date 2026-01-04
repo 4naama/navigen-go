@@ -456,6 +456,33 @@ function hashVisitorId(s) {
   return 'v-' + hex;
 }
 
+async function getSessionBoundLocationHint() {
+  try {
+    // 1) Ask server which ULID this op_sess is bound to (cookie-authenticated)
+    const diag = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
+    if (!diag.ok) return null;
+    const dj = await diag.json().catch(() => null);
+    const ulid = String(dj?.ulid || '').trim();
+    if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(ulid)) return null;
+
+    // 2) Resolve ULID -> slug/name via the authoritative Worker origin (route stability)
+    const item = await fetch(`https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(ulid)}`, { cache: 'no-store' });
+    if (!item.ok) return { ulid, slug: '', name: '' };
+
+    const ij = await item.json().catch(() => null);
+    const slug = String(ij?.locationID || '').trim();
+    const ln = ij?.locationName;
+    const name =
+      (ln && typeof ln === 'object' && (ln.en || ln.default)) ? String(ln.en || ln.default).trim()
+      : (typeof ln === 'string') ? ln.trim()
+      : '';
+
+    return { ulid, slug, name };
+  } catch {
+    return null;
+  }
+}
+
 function renderAccessBlocked({ status, detail }) {
   const title =
     (typeof t === 'function' && t('owner.settings.title')) ||
@@ -470,7 +497,7 @@ function renderAccessBlocked({ status, detail }) {
     (typeof t === 'function' && t('owner.restore.hint')) ||
     'Tip: search your inbox for “Stripe” or “NaviGen”.';
 
-  const msg403 =
+  const msg403Default =
     (typeof t === 'function' && t('owner.settings.claim.runCampaign.desc')) ||
     'Activate analytics by running a campaign for this location.';
 
@@ -489,6 +516,19 @@ function renderAccessBlocked({ status, detail }) {
   const restoreDesc =
     (typeof t === 'function' && t('owner.settings.restore.action.desc')) ||
     'Use your most recent Owner access email or Stripe receipt.';
+
+  // 403 can be either:
+  // A) campaign required (entitlement inactive), or
+  // B) session is valid but for a different location (ULID mismatch).
+  // Detect B and show an explicit hint to reduce operator confusion.
+  let mismatchHint = null;
+  if (status === 403) {
+    mismatchHint = await getSessionBoundLocationHint();
+  }
+
+  const msg403 = mismatchHint
+    ? `You are signed in for a different location: ${mismatchHint.name || mismatchHint.slug || mismatchHint.ulid}`
+    : msg403Default;
 
   // Clear existing table area and render an interstitial card.
   tblWrap.innerHTML = `
@@ -511,6 +551,20 @@ function renderAccessBlocked({ status, detail }) {
                   </button>
                 `
                 : `
+                  ${
+                    (mismatchHint && mismatchHint.ulid)
+                      ? `
+                        <button type="button" class="modal-menu-item" id="dash-open-bound-location">
+                          <span class="icon-img">📍</span>
+                          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+                            <strong>Open my signed-in location</strong><br>
+                            <small>${mismatchHint.name || mismatchHint.slug || mismatchHint.ulid}</small>
+                          </span>
+                        </button>
+                      `
+                      : ``
+                  }
+
                   <button type="button" class="modal-menu-item" id="dash-run-campaign">
                     <span class="icon-img">🎯</span>
                     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
@@ -563,6 +617,18 @@ function renderAccessBlocked({ status, detail }) {
       window.open('https://navigen.io/', '_blank', 'noopener,noreferrer');
     } catch {}
   });
+  
+  const boundBtn = document.getElementById('dash-open-bound-location');
+  boundBtn?.addEventListener('click', () => {
+    try {
+      // Open Dash for the location this session is actually bound to.
+      // This prevents a confusing dead-end when the cookie is for another ULID.
+      // We use the ULID so it is canonical.
+      getSessionBoundLocationHint().then((h) => {
+        if (h && h.ulid) window.open(`https://navigen.io/dash/${encodeURIComponent(h.ulid)}`, '_blank', 'noopener,noreferrer');
+      });
+    } catch {}
+  });  
 }
 
 async function fetchStats() {
