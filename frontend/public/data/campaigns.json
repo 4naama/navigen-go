@@ -211,8 +211,8 @@
     "targetChannels": [
       "QR"
     ],
-    "startDate": "Mon Jan 05 2026 00:00:00 GMT+0100 (Central European Standard Time)",
-    "endDate": "Wed Feb 04 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "startDate": "Sun Jan 04 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "endDate": "Tue Feb 03 2026 00:00:00 GMT+0100 (Central European Standard Time)",
     "status": "Active",
     "offerType": "Discount",
     "discountKind": "Percent",
