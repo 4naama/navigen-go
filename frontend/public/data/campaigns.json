@@ -273,5 +273,30 @@
     "utmMedium": "",
     "utmCampaign": "new_year_sale",
     "notes": ""
+  },
+  {
+    "locationID": "hd-budapest12-jokai-9012",
+    "locationName": "HD Budapest12 Jókai",
+    "sectorKey": "language-school",
+    "campaignKey": "3007",
+    "campaignName": "15% off your sign-up",
+    "brandKey": "helen-doron",
+    "context": "language-schools/helen-doron;language-schools/helen-doron/hungary",
+    "campaignType": "Discount",
+    "targetChannels": [
+      "QR"
+    ],
+    "startDate": "Mon Jan 05 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "endDate": "Wed Feb 04 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "status": "Active",
+    "offerType": "Discount",
+    "discountKind": "Percent",
+    "discountValue": 15,
+    "eligibilityType": "Everyone",
+    "eligibilityNotes": "",
+    "utmSource": "google",
+    "utmMedium": "",
+    "utmCampaign": "new_year_sale",
+    "notes": ""
   }
 ]
