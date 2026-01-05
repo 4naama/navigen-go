@@ -557,26 +557,27 @@ async function renderAccessBlocked({ status, detail }) {
   const exBtn = document.getElementById('dash-example-dashboards');
   exBtn?.addEventListener('click', () => {
     try {
-      if (typeof window.showExampleDashboardsModal === 'function') window.showExampleDashboardsModal();
-      else window.open('https://navigen.io/?lp=', '_blank'); // safe fallback (never blocks)
+      // Main shell owns modals; pass an explicit intent.
+      window.location.href = 'https://navigen.io/?bo=1&open=examples';
     } catch {}
   });
 
   const restoreBtn = document.getElementById('dash-restore-access');
   restoreBtn?.addEventListener('click', () => {
     try {
-      if (typeof window.showRestoreAccessModal === 'function') window.showRestoreAccessModal();
+      // Main shell owns Restore Access modal; pass an explicit intent.
+      window.location.href = 'https://navigen.io/?bo=1&open=restore';
     } catch {}
   });
 
   const runBtn = document.getElementById('dash-run-campaign');
   runBtn?.addEventListener('click', () => {
     try {
-      // Dash does not initiate checkout directly; it routes user back to the app shell.
-      window.open('https://navigen.io/', '_blank', 'noopener,noreferrer');
+      // Main shell owns campaign purchase flow; pass an explicit intent.
+      window.location.href = 'https://navigen.io/?bo=1&open=campaign';
     } catch {}
   });
-  
+
   const boundBtn = document.getElementById('dash-open-bound-location');
   boundBtn?.addEventListener('click', () => {
     try {

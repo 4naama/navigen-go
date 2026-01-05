@@ -1248,6 +1248,38 @@ async function initEmergencyBlock(countryOverride) {
     // Single-source "?at" flow (App + PWA): store + toast + drop ?at from URL
     handleIncomingAtParamOnce();
 
+    // Dash → Main shell intents (v1.1)
+    // Allows Dash interstitial actions to open the correct owner modal here.
+    (function handleDashIntentOnce() {
+      try {
+        const u = new URL(window.location.href);
+        const open = String(u.searchParams.get('open') || '').trim().toLowerCase();
+        const bo = String(u.searchParams.get('bo') || '').trim();
+
+        if (!open) return;
+
+        // Consume once (prevents loops on refresh)
+        u.searchParams.delete('open');
+        u.searchParams.delete('bo');
+        history.replaceState({}, document.title, u.pathname + (u.searchParams.toString() ? `?${u.searchParams}` : '') + (u.hash || ''));
+
+        if (open === 'examples') {
+          showExampleDashboardsModal();
+          return;
+        }
+        if (open === 'restore') {
+          showRestoreAccessModal();
+          return;
+        }
+        if (open === 'campaign') {
+          // Route into the BO flow: Select Location first, then campaign checkout lives there.
+          showToast('Select your business to start a campaign.', 2200);
+          showSelectLocationModal();
+          return;
+        }
+      } catch {}
+    })();
+
     // measure bottom band; update CSS var
     const setBottomBandH = () => {
       const el = document.getElementById('bottom-band');
