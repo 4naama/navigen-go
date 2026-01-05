@@ -642,5 +642,7 @@
   "status.badge.stillVisible": "Weiterhin sichtbar",
   "status.badge.inactive": "Inaktiv",
   "exampleDash.disclaimer.body": "Diese Analysen gehören zu anderen Standorten und dienen nur zu Demonstrationszwecken.",
-  "promo.gated.campaignRequired": "Aktionen sind nur verfügbar, solange dieses Unternehmen eine aktive NaviGen-Kampagne durchführt."
+  "promo.gated.campaignRequired": "Aktionen sind nur verfügbar, solange dieses Unternehmen eine aktive NaviGen-Kampagne durchführt.",
+  "dash.blocked.mismatch.title": "Für einen anderen Standort angemeldet",
+  "dash.blocked.mismatch.openBoundLocation": "Meinen angemeldeten Standort öffnen"
 }

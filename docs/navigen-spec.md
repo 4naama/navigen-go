@@ -745,6 +745,24 @@ Campaign Entitlement:
 
 --------------------------------------------------------------------
 
+### Promotion (NaviGen-specific)
+
+In NaviGen, “Promotion” does **not** refer to advertising, SEO, paid placement,
+or external marketing.
+
+Promotion means **preferential visibility inside NaviGen discovery surfaces only**.
+
+During an active campaign (visibilityState = "promoted"):
+- locations MUST be ordered ahead of non-promoted locations
+- this ordering applies only within NaviGen lists (e.g. Popular, context lists)
+- no external ranking or distribution is implied or claimed
+
+Implementation reference:
+- Deterministic ordering enforced at `GET /api/data/list`
+- promoted → visible → hidden (excluded)
+
+--------------------------------------------------------------------
+
 ## Dash Access Decision Matrix (authoritative)
 
 Dash access is governed by **two independent conditions**:
@@ -842,11 +860,11 @@ The UI MUST NOT invent additional meanings beyond what is defined here.
 
 ### Visibility Status Labels (LPM badges, lists)
 
-| UI Label        | Meaning (authoritative)                                         | When shown |
-|-----------------|------------------------------------------------------------------|-----------|
-| Active campaign | Campaign Entitlement is active                                   | exclusiveUntil > now AND campaign active |
-| Still visible   | Courtesy or Hold visibility; no campaign                         | campaign inactive, courtesy/hold window |
-| Inactive        | Not discoverable in public surfaces                              | after courtesy + holds expire |
+| UI Label        | Meaning (authoritative)                    | When shown                               |
+|-----------------|--------------------------------------------|------------------------------------------|
+| Active campaign | Campaign Entitlement is active             | exclusiveUntil > now AND campaign active |
+| Still visible   | Courtesy or Hold visibility; no campaign   | campaign inactive, courtesy/hold window  |
+| Inactive        | Not discoverable in public surfaces        | after courtesy + holds expire            |
 
 Notes:
 • “Still visible” NEVER implies analytics or Dash access.  
@@ -5795,6 +5813,24 @@ Rules (business-first):
     - not shown in context lists (Popular / Accordion / Search-in-context)
 • Direct link access may still open the LPM. Direct link access does not imply discoverability.
 • Creation does not imply discoverability. Discoverability is granted by time-bounded participation.
+
+Preferential visibility inside NaviGen (v1.1, authoritative)
+
+During an active campaign (visibilityState="promoted"), NaviGen MUST provide
+preferential visibility inside NaviGen discovery surfaces only.
+
+This is implemented as deterministic ordering at the API Worker list boundary:
+
+Endpoint:
+• GET /api/data/list?context=<ctx>&limit=<n>
+
+Ordering rule (deterministic, lightweight):
+• promoted items first
+• then visible items
+• hidden items excluded
+
+No external ranking/ads/SEO are implied or claimed.
+This is strictly in-product ordering inside NaviGen lists (Popular / Accordion / context lists).
 
 --------------------------------------------------------------------
 92.4.1 Expiry Reminders & Renewal UX

@@ -642,5 +642,7 @@
   "status.badge.stillVisible": "Still visible",
   "status.badge.inactive": "Inactive",
   "exampleDash.disclaimer.body": "These analytics belong to other locations and are shown for demonstration only.",
-  "promo.gated.campaignRequired": "Promotions are available only while this business is running an active NaviGen campaign."
+  "promo.gated.campaignRequired": "Promotions are available only while this business is running an active NaviGen campaign.",
+  "dash.blocked.mismatch.title": "Signed in for a different location",
+  "dash.blocked.mismatch.openBoundLocation": "Open my signed-in location"
 }

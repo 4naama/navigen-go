@@ -642,5 +642,7 @@
   "status.badge.stillVisible": "Toujours visible",
   "status.badge.inactive": "Inactif",
   "exampleDash.disclaimer.body": "Ces analyses appartiennent à d’autres lieux et sont affichées à titre de démonstration uniquement.",
-  "promo.gated.campaignRequired": "Les promotions sont disponibles uniquement lorsque cette entreprise mène une campagne NaviGen active."
+  "promo.gated.campaignRequired": "Les promotions sont disponibles uniquement lorsque cette entreprise mène une campagne NaviGen active.",
+  "dash.blocked.mismatch.title": "Connecté à un autre établissement",
+  "dash.blocked.mismatch.openBoundLocation": "Ouvrir mon établissement connecté"
 }

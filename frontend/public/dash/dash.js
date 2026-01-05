@@ -442,7 +442,7 @@ async function getSessionBoundLocationHint() {
   }
 }
 
-function renderAccessBlocked({ status, detail }) {
+async function renderAccessBlocked({ status, detail }) {
   const title =
     (typeof t === 'function' && t('owner.settings.title')) ||
     'Owner settings';
@@ -1774,7 +1774,7 @@ async function loadAndRender(){         // single entry point
       const code = Number(result?.status || 0);
 
       if (code === 401 || code === 403) {
-        renderAccessBlocked({ status: code, detail: result?.detail || '' });
+        await renderAccessBlocked({ status: code, detail: result?.detail || '' });
         return;
       }
 

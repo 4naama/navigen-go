@@ -13,7 +13,7 @@ It is **keeping a business present in people’s awareness**.
 ## How visibility feels (human mental model)
 
 | Phase    | What NaviGen is doing    | What the owner feels            |
-| -------- | ------------------------ | -------------------------------- |
+| -------- | ------------------------ | --------------------------------|
 | Promote  | Actively bringing people | “I’m running ads”               |
 | Remember | Keeping me present       | “People can still find me”      |
 | Fade     | Letting me slip back     | “I’m becoming less visible”     |
@@ -41,16 +41,16 @@ End users (visitors) never pay.
 
 ### €50 Campaign (core revenue)
 
-| Aspect          | Details                                   |
-|-----------------|-------------------------------------------|
-| Duration        | 30 days                                   |
-| Payment timing  | Upfront                                   |
-| Discoverability | High (search, lists, browse)              |
-| Promotion       | Enabled                                   |
-| Analytics       | Enabled                                   |
-| Dash access     | Enabled                                   |
-| Operation       | **Exclusive** (no other operator allowed) |
-| UI status       | “Active campaign”                         |
+| Aspect          | Details                                                               |
+|-----------------|-----------------------------------------------------------------------|
+| Duration        | 30 days                                                               |
+| Payment timing  | Upfront                                                               |
+| Discoverability | High (search, lists, browse) — preferential visibility inside NaviGen |
+| Promotion       | Enabled (preferential visibility inside NaviGen surfaces only)             |
+| Analytics       | Enabled                                                               |
+| Dash access     | Enabled                                                               |
+| Operation       | **Exclusive** (no other operator allowed)                             |
+| UI status       | “Active campaign”                                                     |
 
 **Owner mental model**
 > “I pay €50 and for 30 days NaviGen actively brings customers to my business.”
@@ -63,16 +63,16 @@ This is the **main and mandatory** monetization path.
 
 ### Courtesy visibility (free)
 
-| Aspect          | Details                                            |
-|-----------------|----------------------------------------------------|
-| Duration        | 60 days (Y = 2)                                    |
-| Cost            | Free                                               |
-| Discoverability | Yes (reduced ranking)                              |
-| Promotion       | Disabled                                           |
-| Analytics       | Collected (internal) / Disabled (owner-facing)     |
-| Dash access     | Disabled (no owner access outside active campaign) |
-| Operation       | Not exclusive                                      |
-| UI status       | “Still visible”                                    |
+| Aspect          | Details                                                                  |
+|-----------------|--------------------------------------------------------------------------|
+| Duration        | 60 days (Y = 2)                                                          |
+| Cost            | Free                                                                     |
+| Discoverability | Yes (reduced ranking)                                                    |
+| Promotion       | Preferential visibility: Disabled (no ordering advantage inside NaviGen) |
+| Analytics       | Collected (internal) / Disabled (owner-facing)                           |
+| Dash access     | Disabled (no owner access outside active campaign)                       |
+| Operation       | Not exclusive                                                            |
+| UI status       | “Still visible”                                                          |
 
 **Owner mental model**
 > “My campaign ended, but NaviGen is not dropping me immediately.”
@@ -191,14 +191,14 @@ Example locations are **admin-controlled**.
 
 ## Summary (one glance)
 
-| Phase           | Owner pays | Amount | What they get                             |
-|-----------------|------------|--------|-------------------------------------------|
-| Campaign        | Yes        | €50    | Promotion, analytics, exclusive operation |
-| Courtesy        | No         | €0     | Reduced visibility                        |
-| Hold visibility | Optional   | €5     | Keep discoverable without promotion       |
-| Inactive        | No         | €0     | Exists but hidden                         |
-| Restore access  | No         | €0     | Session recovery                          |
-| Examples        | No         | €0     | Demo only                                 |
+| Phase           | Owner pays | Amount | What they get                                                     |
+|-----------------|------------|--------|-------------------------------------------------------------------|
+| Campaign        | Yes        | €50    | Preferential visibility (NaviGen), analytics, exclusive operation |
+| Courtesy        | No         | €0     | Reduced visibility                                                |
+| Hold visibility | Optional   | €5     | Keep discoverable without promotion                               |
+| Inactive        | No         | €0     | Exists but hidden                                                 |
+| Restore access  | No         | €0     | Session recovery                                                  |
+| Examples        | No         | €0     | Demo only                                                         |
 
 --------------------------------------------------------------------
 

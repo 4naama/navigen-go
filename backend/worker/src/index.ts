@@ -1677,28 +1677,6 @@ export default {
                 }
               });
             }
-          }          
-
-          // Promo redeem must be owner-gated: require active ownership window.
-          {
-            const ownKey = `ownership:${loc}`;
-            const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
-
-            const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
-            const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
-
-            if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
-              // Fail closed: log as invalid and return (no redeem, no billing).
-              await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
-              return new Response(null, {
-                status: 204,
-                headers: {
-                  "Access-Control-Allow-Origin": "https://navigen.io",
-                  "Access-Control-Allow-Credentials": "true",
-                  "Vary": "Origin"
-                }
-              });
-            }
           }
 
           const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
@@ -1861,29 +1839,54 @@ export default {
           if (r.ok) {
             const parsed = JSON.parse(body);
 
-            const arr: any[] = Array.isArray(parsed?.locations)
-              ? parsed.locations
-              : (parsed?.locations && typeof parsed.locations === "object")
-                ? Object.values(parsed.locations)
-                : [];
+            const arr: any[] = Array.isArray(parsed?.items)
+              ? parsed.items
+              : (parsed?.items && typeof parsed.items === "object")
+                ? Object.values(parsed.items)
+                : (Array.isArray(parsed?.locations)
+                    ? parsed.locations
+                    : (parsed?.locations && typeof parsed.locations === "object")
+                      ? Object.values(parsed.locations)
+                      : []);
 
-            const filtered: any[] = [];
+            // Build discovery list with preferential visibility:
+            // - "promoted" (paid active) first
+            // - then "visible" (courtesy/hold)
+            // - "hidden" excluded
+            //
+            // NOTE: this is a deterministic, lightweight ordering (no ML, no ads).
+            const ranked: Array<{ rec: any; rank: number }> = [];
+
             for (const rec of arr) {
-              const slug = String(rec?.locationID || "").trim();
+              const slug = String(rec?.alias || rec?.locationID || "").trim();
               const ulid = (await resolveUid(slug, env)) || ""; // canonical ULID (required for ownership lookup)
 
-              // If we can't resolve a ULID, fail open (keep visible).
+              // If we can't resolve a ULID, fail open (treat as visible but non-promoted).
               if (!ulid || !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(ulid)) {
-                filtered.push(rec);
+                ranked.push({ rec, rank: 0 });
                 continue;
               }
 
               const vis = await computeVisibilityState(env, ulid);
-              if (vis.visibilityState !== "hidden") filtered.push(rec);
+
+              // Exclude hidden from discovery lists
+              if (vis.visibilityState === "hidden") continue;
+
+              // Preferential visibility weight (highest first)
+              const rank =
+                vis.visibilityState === "promoted" ? 2 :
+                vis.visibilityState === "visible"  ? 1 : 0;
+
+              ranked.push({ rec, rank });
             }
 
+            // Stable ordering: promoted first, then visible, then the rest
+            ranked.sort((a, b) => b.rank - a.rank);
+
+            const filtered = ranked.map(x => x.rec);
+
             // Preserve original shape: if upstream returned { locations: [...] }, keep that.
-            outBody = JSON.stringify({ ...parsed, locations: filtered });
+            outBody = JSON.stringify(parsed?.items ? { ...parsed, items: filtered } : { ...parsed, locations: filtered });
           }
         } catch {
           // Fail open: never break list loading due to a filtering error.
@@ -1898,7 +1901,8 @@ export default {
             "Access-Control-Allow-Credentials": "true",
             "Vary": "Origin",
             "Cache-Control": "no-store",
-            "x-navigen-route": "/api/data/list"
+            "x-navigen-route": "/api/data/list",
+            "x-ng-list-order": "promoted-first"
           }
         });
       }

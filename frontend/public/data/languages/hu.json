@@ -642,5 +642,7 @@
   "status.badge.stillVisible": "Továbbra is látható",
   "status.badge.inactive": "Inaktív",
   "exampleDash.disclaimer.body": "Ezek az elemzések más helyszínekhez tartoznak, és csak bemutatási célokat szolgálnak.",
-  "promo.gated.campaignRequired": "A promóciók csak akkor érhetők el, amíg ez a vállalkozás aktív NaviGen-kampányt futtat."
+  "promo.gated.campaignRequired": "A promóciók csak akkor érhetők el, amíg ez a vállalkozás aktív NaviGen-kampányt futtat.",
+  "dash.blocked.mismatch.title": "Egy másik helyszínhez van bejelentkezve",
+  "dash.blocked.mismatch.openBoundLocation": "A bejelentkezett helyszín megnyitása"
 }
