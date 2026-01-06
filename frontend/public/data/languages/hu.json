@@ -644,5 +644,10 @@
   "exampleDash.disclaimer.body": "Ezek az elemzések más helyszínekhez tartoznak, és csak bemutatási célokat szolgálnak.",
   "promo.gated.campaignRequired": "A promóciók csak akkor érhetők el, amíg ez a vállalkozás aktív NaviGen-kampányt futtat.",
   "dash.blocked.mismatch.title": "Egy másik helyszínhez van bejelentkezve",
-  "dash.blocked.mismatch.openBoundLocation": "A bejelentkezett helyszín megnyitása"
+  "dash.blocked.mismatch.openBoundLocation": "A bejelentkezett helyszín megnyitása",
+  "root.bo.ownerCenter.title": "Tulajdonosi központ",
+  "root.bo.ownerCenter.desc": "Váltson az ezen az eszközön kezelt helyszínek között.",
+  "owner.center.title": "Tulajdonosi központ",
+  "owner.center.empty": "Ezen az eszközön még nincs mentett tulajdonosi munkamenet.",
+  "owner.center.note": "A tulajdonosi hozzáférés biztonsági okokból ezen az eszközön van tárolva. Új eszközön egy helyszín hozzáadásához egyszer használja a Hozzáférés visszaállítása funkciót."
 }

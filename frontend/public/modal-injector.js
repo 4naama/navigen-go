@@ -3456,6 +3456,115 @@ export function showOwnerSettingsModal({ variant, locationIdOrSlug, locationName
   showModal(id);
 }
 
+export async function createOwnerCenterModal() {
+  const id = 'owner-center-modal';
+  document.getElementById(id)?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${(typeof t === 'function' && t('owner.center.title')) || 'Owner Center'}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  const note = document.createElement('p');
+  note.textContent =
+    (typeof t === 'function' && t('owner.center.note')) ||
+    'Owner access is stored on this device for security. To add a location on a new device, use Restore access once.';
+  note.style.textAlign = 'left';
+  note.style.fontSize = '0.85em';
+  note.style.opacity = '0.8';
+  inner.appendChild(note);
+
+  const list = document.createElement('div');
+  list.className = 'modal-menu-list';
+  inner.appendChild(list);
+
+  // Load device-bound ULIDs
+  let ulids = [];
+  try {
+    const r = await fetch('/api/owner/sessions', { cache: 'no-store', credentials: 'include' });
+    const j = r.ok ? await r.json().catch(() => null) : null;
+    ulids = Array.isArray(j?.items) ? j.items : [];
+  } catch { ulids = []; }
+
+  if (!ulids.length) {
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.textContent = (typeof t === 'function' && t('owner.center.empty')) || 'No saved owner sessions on this device yet.';
+    list.appendChild(p);
+  } else {
+    // Resolve each ULID to slug/name via Worker item endpoint
+    for (const ulid of ulids) {
+      const u = String(ulid || '').trim();
+      if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(u)) continue;
+
+      let slug = '';
+      let name = '';
+
+      try {
+        const rr = await fetch(`https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(u)}`, { cache: 'no-store' });
+        const jj = rr.ok ? await rr.json().catch(() => null) : null;
+        slug = String(jj?.locationID || '').trim();
+        const ln = jj?.locationName;
+        name =
+          (ln && typeof ln === 'object' && (ln.en || ln.default)) ? String(ln.en || ln.default).trim()
+          : (typeof ln === 'string') ? ln.trim()
+          : '';
+      } catch {}
+
+      const label = name || slug || u;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'modal-menu-item';
+      btn.innerHTML = `
+        <span class="icon-img">📍</span>
+        <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+          <strong>${label}</strong>
+          ${slug ? `<br><small>${slug}</small>` : ``}
+        </span>
+        <span class="icon-img" aria-hidden="true">⇄</span>
+      `;
+
+      btn.addEventListener('click', () => {
+        // Switch server-side and open Dash for that ULID
+        const next = `/dash/${encodeURIComponent(u)}`;
+        window.location.href = `/owner/switch?ulid=${encodeURIComponent(u)}&next=${encodeURIComponent(next)}`;
+      });
+
+      list.appendChild(btn);
+    }
+  }
+
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  setupTapOutClose(id);
+}
+
+export async function showOwnerCenterModal() {
+  const id = 'owner-center-modal';
+  if (!document.getElementById(id)) await createOwnerCenterModal();
+  showModal(id);
+}
+
 // ✅ Helper: View-by settings modal (button-less; uses standard .modal shell)
 export function openViewSettingsModal({ title, contextLine, options, currentKey, resetLabel, onPick }) {
   const doc=document, body=doc.body;

@@ -644,5 +644,10 @@
   "exampleDash.disclaimer.body": "These analytics belong to other locations and are shown for demonstration only.",
   "promo.gated.campaignRequired": "Promotions are available only while this business is running an active NaviGen campaign.",
   "dash.blocked.mismatch.title": "Signed in for a different location",
-  "dash.blocked.mismatch.openBoundLocation": "Open my signed-in location"
+  "dash.blocked.mismatch.openBoundLocation": "Open my signed-in location",
+  "root.bo.ownerCenter.title": "Owner Center",
+  "root.bo.ownerCenter.desc": "Switch between locations you manage on this device.",
+  "owner.center.title": "Owner Center",
+  "owner.center.empty": "No saved owner sessions on this device yet.",
+  "owner.center.note": "Owner access is stored on this device for security. To add a location on a new device, use Restore access once."
 }

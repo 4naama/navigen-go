@@ -233,6 +233,19 @@ function readCookie(header: string, name: string): string {
   return "";
 }
 
+function readDeviceId(req: Request): string {
+  const dev = readCookie(req.headers.get("Cookie") || "", "ng_dev");
+  return String(dev || "").trim();
+}
+
+function devSessKey(dev: string, ulid: string): string {
+  return `devsess:${dev}:${ulid}`;
+}
+
+function devIndexKey(dev: string): string {
+  return `devsess:${dev}:index`;
+}
+
 type OwnerSession = {
   ver: number;
   ulid: string;
@@ -370,6 +383,26 @@ async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
     return new Response("Denied", { status: 500, headers: noStoreHeaders });
   }
 
+  // Register this session to the current device so Owner Center can switch without email receipts.
+  try {
+    const dev = readDeviceId(req);
+    if (dev) {
+      const mapKey = devSessKey(dev, payload.ulid);
+      await env.KV_STATUS.put(mapKey, sessionId, { expirationTtl: Math.max(60, maxAge) });
+
+      const idxKey = devIndexKey(dev);
+      const rawIdx = await env.KV_STATUS.get(idxKey, "text");
+      let arr: string[] = [];
+      try { arr = rawIdx ? (JSON.parse(rawIdx) as any) : []; } catch { arr = []; }
+      if (!Array.isArray(arr)) arr = [];
+      if (!arr.includes(payload.ulid)) arr.unshift(payload.ulid);
+      arr = arr.slice(0, 24);
+      await env.KV_STATUS.put(idxKey, JSON.stringify(arr), { expirationTtl: 60 * 60 * 24 * 366 });
+    }
+  } catch {
+    // device registry must never block owner exchange
+  }
+
   const cookie = cookieSerialize("op_sess", sessionId, {
     Path: "/",
     HttpOnly: true,
@@ -462,6 +495,28 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
     await env.KV_STATUS.put(sessKey, JSON.stringify(sessVal), { expirationTtl: Math.max(60, maxAge) });
   } catch {
     return new Response("Denied", { status: 500, headers: noStoreHeaders });
+  }
+
+  // Register this session to the current device so Owner Center can switch without email receipts.
+  // Device id is a non-HttpOnly cookie set by the app shell (per-device).
+  try {
+    const dev = readDeviceId(req);
+    if (dev) {
+      const mapKey = devSessKey(dev, ulid);
+      await env.KV_STATUS.put(mapKey, sessionId, { expirationTtl: Math.max(60, maxAge) });
+
+      const idxKey = devIndexKey(dev);
+      const rawIdx = await env.KV_STATUS.get(idxKey, "text");
+      let arr: string[] = [];
+      try { arr = rawIdx ? (JSON.parse(rawIdx) as any) : []; } catch { arr = []; }
+      if (!Array.isArray(arr)) arr = [];
+      if (!arr.includes(ulid)) arr.unshift(ulid);
+      // keep small, deterministic list (most recent first)
+      arr = arr.slice(0, 24);
+      await env.KV_STATUS.put(idxKey, JSON.stringify(arr), { expirationTtl: 60 * 60 * 24 * 366 });
+    }
+  } catch {
+    // device registry must never block owner exchange
   }
 
   const cookie = cookieSerialize("op_sess", sessionId, {
@@ -718,6 +773,31 @@ export default {
         }), { status: 200, headers: { "content-type": "application/json", "x-ng-worker": "navigen-api" } });
       }
 
+      // --- Owner Center: list device-bound locations (no secrets)
+      if (normPath === "/api/owner/sessions" && req.method === "GET") {
+        const dev = readDeviceId(req);
+        if (!dev) {
+          return json({ items: [] }, 200, { "cache-control": "no-store" });
+        }
+
+        const idxKey = devIndexKey(dev);
+        const rawIdx = await env.KV_STATUS.get(idxKey, "text");
+        let ulids: string[] = [];
+        try { ulids = rawIdx ? JSON.parse(rawIdx) : []; } catch { ulids = []; }
+        if (!Array.isArray(ulids)) ulids = [];
+
+        // Only return ULIDs that still have a mapped session id
+        const out: string[] = [];
+        for (const u of ulids) {
+          const ulid = String(u || "").trim();
+          if (!ULID_RE.test(ulid)) continue;
+          const sid = await env.KV_STATUS.get(devSessKey(dev, ulid), "text");
+          if (sid) out.push(ulid);
+        }
+
+        return json({ items: out }, 200, { "cache-control": "no-store" });
+      }
+
       // --- Owner session diag: /api/_diag/opsess (safe; no secrets)
       if (normPath === "/api/_diag/opsess" && req.method === "GET") {
         const cookieHdr = req.headers.get("Cookie") || "";
@@ -751,6 +831,57 @@ export default {
       // --- Owner exchange from Stripe Checkout (Phase 5: sid → cookie session)
       if (normPath === "/owner/stripe-exchange" && req.method === "GET") {
         return await handleOwnerStripeExchange(req, env);
+      }
+
+      // --- Owner Center: switch active op_sess to a device-bound location
+      if (normPath === "/owner/switch" && req.method === "GET") {
+        const u = new URL(req.url);
+        const ulid = String(u.searchParams.get("ulid") || "").trim();
+        const nextRaw = String(u.searchParams.get("next") || "").trim();
+
+        const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+
+        if (!ULID_RE.test(ulid)) return new Response("Denied", { status: 400, headers: noStoreHeaders });
+
+        const isSafeNext = (p: string) =>
+          p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
+
+        const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : `/dash/${encodeURIComponent(ulid)}`;
+
+        const dev = readDeviceId(req);
+        if (!dev) return new Response("Denied", { status: 401, headers: noStoreHeaders });
+
+        const sid = await env.KV_STATUS.get(devSessKey(dev, ulid), "text");
+        if (!sid) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+
+        // Validate session still exists and is not expired
+        const sessKey = `opsess:${sid}`;
+        const sess = await env.KV_STATUS.get(sessKey, { type: "json" }) as OwnerSession | null;
+        if (!sess || !sess.ulid) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+
+        const exp = new Date(String(sess.expiresAt || ""));
+        if (Number.isNaN(exp.getTime()) || exp.getTime() <= Date.now()) {
+          return new Response("Denied", { status: 401, headers: noStoreHeaders });
+        }
+
+        // Set cookie to the mapped session id
+        const maxAge = Math.max(0, Math.floor((exp.getTime() - Date.now()) / 1000));
+        const cookie = cookieSerialize("op_sess", sid, {
+          Path: "/",
+          HttpOnly: true,
+          Secure: true,
+          SameSite: "Lax",
+          "Max-Age": maxAge
+        });
+
+        return new Response(null, {
+          status: 302,
+          headers: {
+            "Set-Cookie": cookie,
+            "Location": next,
+            ...noStoreHeaders
+          }
+        });
       }
 
       // --- Stripe webhook: /api/stripe/webhook (Phase 1: ownership writer)

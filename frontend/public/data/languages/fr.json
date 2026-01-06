@@ -644,5 +644,10 @@
   "exampleDash.disclaimer.body": "Ces analyses appartiennent à d’autres lieux et sont affichées à titre de démonstration uniquement.",
   "promo.gated.campaignRequired": "Les promotions sont disponibles uniquement lorsque cette entreprise mène une campagne NaviGen active.",
   "dash.blocked.mismatch.title": "Connecté à un autre établissement",
-  "dash.blocked.mismatch.openBoundLocation": "Ouvrir mon établissement connecté"
+  "dash.blocked.mismatch.openBoundLocation": "Ouvrir mon établissement connecté",
+  "root.bo.ownerCenter.title": "Centre propriétaire",
+  "root.bo.ownerCenter.desc": "Basculez entre les établissements que vous gérez sur cet appareil.",
+  "owner.center.title": "Centre propriétaire",
+  "owner.center.empty": "Aucune session propriétaire enregistrée sur cet appareil pour le moment.",
+  "owner.center.note": "L’accès propriétaire est stocké sur cet appareil pour des raisons de sécurité. Pour ajouter un établissement sur un nouvel appareil, utilisez une fois Restaurer l’accès."
 }

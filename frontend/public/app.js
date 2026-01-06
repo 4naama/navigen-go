@@ -19,6 +19,7 @@ import {
   openViewSettingsModal,
   showExampleDashboardsModal,
   showRestoreAccessModal,
+  showOwnerCenterModal,
   showRequestListingModal,
   showSelectLocationModal,
   createFavoritesModal,
@@ -38,6 +39,22 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW reg failed', err));
   }
 }
+
+// Owner Center: per-device id cookie (non-HttpOnly) so the Worker can bind sessions to this device.
+// Security posture: owner access is stored per device; switching devices requires Restore Access.
+(() => {
+  try {
+    const has = document.cookie && /(?:^|;\s*)ng_dev=/.test(document.cookie);
+    if (has) return;
+
+    const bytes = new Uint8Array(12);
+    crypto.getRandomValues(bytes);
+    const id = Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
+
+    // 12 months; Lax; Secure (prod)
+    document.cookie = `ng_dev=${id}; Path=/; Max-Age=${60*60*24*366}; SameSite=Lax; Secure`;
+  } catch {}
+})();
 
 // Force phones to forget old cache on new deploy; one-time per BUILD_ID. (Disabled: no redirect, no purge)
 const BUILD_ID = '2025-08-30-03'; // disabled cache-buster
@@ -583,6 +600,14 @@ function renderBusinessOwnersGroup() {
             navigenVersion: "v1"
           });
 
+        }
+      },
+            {
+        icon: "🗂️",
+        titleKey: "root.bo.ownerCenter.title",
+        descKey: "root.bo.ownerCenter.desc",
+        onClick: async () => {
+          showOwnerCenterModal();
         }
       },
       {

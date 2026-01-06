@@ -644,5 +644,10 @@
   "exampleDash.disclaimer.body": "Queste analisi appartengono ad altre sedi e sono mostrate solo a scopo dimostrativo.",
   "promo.gated.campaignRequired": "Le promozioni sono disponibili solo mentre questa attività esegue una campagna NaviGen attiva.",
   "dash.blocked.mismatch.title": "Accesso effettuato per un’altra sede",
-  "dash.blocked.mismatch.openBoundLocation": "Apri la sede a cui sei connesso"
+  "dash.blocked.mismatch.openBoundLocation": "Apri la sede a cui sei connesso",
+  "root.bo.ownerCenter.title": "Centro proprietario",
+  "root.bo.ownerCenter.desc": "Passa tra le sedi che gestisci su questo dispositivo.",
+  "owner.center.title": "Centro proprietario",
+  "owner.center.empty": "Nessuna sessione proprietario salvata su questo dispositivo.",
+  "owner.center.note": "L’accesso proprietario è memorizzato su questo dispositivo per motivi di sicurezza. Per aggiungere una sede su un nuovo dispositivo, usa una volta Ripristina accesso."
 }

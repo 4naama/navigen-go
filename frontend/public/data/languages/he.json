@@ -644,5 +644,10 @@
   "exampleDash.disclaimer.body": "ניתוחים אלה שייכים למיקומים אחרים ומוצגים לצורכי הדגמה בלבד.",
   "promo.gated.campaignRequired": "מבצעים זמינים רק כאשר העסק מפעיל קמפיין פעיל של NaviGen.",
   "dash.blocked.mismatch.title": "מחובר למיקום אחר",
-  "dash.blocked.mismatch.openBoundLocation": "פתח את המיקום שאליו אני מחובר"
+  "dash.blocked.mismatch.openBoundLocation": "פתח את המיקום שאליו אני מחובר",
+  "root.bo.ownerCenter.title": "מרכז בעלים",
+  "root.bo.ownerCenter.desc": "החלף בין המיקומים שאתה מנהל במכשיר זה.",
+  "owner.center.title": "מרכז בעלים",
+  "owner.center.empty": "אין עדיין סשנים שמורים של בעלים במכשיר זה.",
+  "owner.center.note": "גישת הבעלים נשמרת במכשיר זה מטעמי אבטחה. כדי להוסיף מיקום במכשיר חדש, השתמש פעם אחת ב־שחזור גישה."
 }
