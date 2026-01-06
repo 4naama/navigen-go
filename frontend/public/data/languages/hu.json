@@ -604,6 +604,8 @@
   "owner.restore.title": "Hozzáférés visszaállítása",
   "owner.restore.body": "A Tulajdonosi irányítópult megnyitásához használja a legutóbbi tulajdonosi hozzáférési e-mailt vagy Stripe nyugtát. A hivatkozás az üzenetben található.",
   "owner.restore.hint": "Tipp: keressen a postaládájában a „Stripe” vagy „NaviGen” kifejezésre.",
+  "owner.restore.pi.label": "Illessze be a fizetési azonosítót (pi_...), hogy visszaállítsa a hozzáférést ezen az eszközön:",
+  "owner.restore.pi.submit": "Hozzáférés visszaállítása",
   "owner.settings.claim.explain": "Az elemzések és tulajdonosi vezérlők az aktív üzemeltető számára érhetők el.",
   "owner.settings.claim.runCampaign.title": "Kampány indítása",
   "owner.settings.claim.runCampaign.desc": "Elemzések aktiválása kampány indításával ehhez a helyszínhez.",

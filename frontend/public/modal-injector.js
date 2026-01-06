@@ -326,7 +326,7 @@ async function openPromotionQrModal(modal, data) {
           (typeof t === 'function' && t('promo.gated.campaignRequired')) ||
           'Promotions are available only while this business is running an active NaviGen campaign.';
 
-        showToast(msg, 3000);
+        showToast(msg, 3500);
       } else if (res.status === 404) {
         showToast('Promotions will appear here soon.', 2000);
       } else {
@@ -3014,6 +3014,46 @@ export function createRestoreAccessModal() {
   hint.style.fontSize = '0.85em';
   hint.style.opacity = '0.8';
   inner.appendChild(hint);
+
+  // PaymentIntent restore (pi_...) — cross-device recovery without emails/links
+  const label = document.createElement('p');
+  label.textContent =
+    (typeof t === 'function' && t('owner.restore.pi.label')) ||
+    'Paste your Payment ID (pi_...) to restore access on this device:';
+  label.style.textAlign = 'left';
+  label.style.fontSize = '0.9em';
+  label.style.marginTop = '1rem';
+  inner.appendChild(label);
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.id = 'owner-restore-pi';
+  input.placeholder = 'pi_...';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.style.width = '100%';
+  input.style.padding = '0.6rem';
+  input.style.borderRadius = '8px';
+  input.style.border = '1px solid rgba(0,0,0,0.15)';
+  inner.appendChild(input);
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'modal-body-button';
+  btn.id = 'owner-restore-pi-submit';
+  btn.textContent =
+    (typeof t === 'function' && t('owner.restore.pi.submit')) ||
+    'Restore';
+  btn.style.marginTop = '0.75rem';
+
+  btn.addEventListener('click', () => {
+    const pi = String(input.value || '').trim();
+    if (!pi) { showToast('Missing Payment ID', 1800); return; }
+    const next = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `/owner/restore?pi=${encodeURIComponent(pi)}&next=${next}`;
+  });
+
+  inner.appendChild(btn);
 
   body.appendChild(inner);
 

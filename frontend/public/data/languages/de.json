@@ -604,6 +604,8 @@
   "owner.restore.title": "Zugriff wiederherstellen",
   "owner.restore.body": "Um das Owner-Dashboard zu öffnen, verwenden Sie Ihre neueste Owner-Zugriffs-E-Mail oder Stripe-Quittung. Der Link ist in der Nachricht enthalten.",
   "owner.restore.hint": "Tipp: Suchen Sie in Ihrem Posteingang nach „Stripe“ oder „NaviGen“.",
+  "owner.restore.pi.label": "Fügen Sie Ihre Zahlungs-ID (pi_...) ein, um den Zugriff auf diesem Gerät wiederherzustellen:",
+  "owner.restore.pi.submit": "Zugriff wiederherstellen",
   "owner.settings.claim.explain": "Analysen und Eigentümersteuerungen sind für den aktiven Betreiber verfügbar.",
   "owner.settings.claim.runCampaign.title": "Kampagne starten",
   "owner.settings.claim.runCampaign.desc": "Aktivieren Sie Analysen, indem Sie eine Kampagne für diesen Standort starten.",

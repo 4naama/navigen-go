@@ -604,6 +604,8 @@
   "owner.restore.title": "Ripristina accesso",
   "owner.restore.body": "Per aprire la dashboard del proprietario, usa l’e-mail di accesso più recente o la ricevuta Stripe. Il link è incluso nel messaggio.",
   "owner.restore.hint": "Suggerimento: cerca “Stripe” o “NaviGen” nella tua posta.",
+  "owner.restore.pi.label": "Incolla il tuo ID di pagamento (pi_...) per ripristinare l’accesso su questo dispositivo:",
+  "owner.restore.pi.submit": "Ripristina",
   "owner.settings.claim.explain": "Le analisi e i controlli del proprietario sono disponibili per l’operatore attivo.",
   "owner.settings.claim.runCampaign.title": "Avvia campagna",
   "owner.settings.claim.runCampaign.desc": "Attiva le analisi avviando una campagna per questa sede.",

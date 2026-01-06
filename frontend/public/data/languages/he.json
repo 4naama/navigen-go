@@ -604,6 +604,8 @@
   "owner.restore.title": "שחזור גישה",
   "owner.restore.body": "כדי לפתוח את לוח הבקרה לבעלים, השתמש באימייל הגישה האחרון או בקבלה מ-Stripe. הקישור כלול בהודעה.",
   "owner.restore.hint": "טיפ: חפש בתיבת הדואר “Stripe” או “NaviGen”.",
+  "owner.restore.pi.label": "הדבק את מזהה התשלום שלך (pi_...) כדי לשחזר גישה במכשיר זה:",
+  "owner.restore.pi.submit": "שחזור גישה",
   "owner.settings.claim.explain": "ניתוחים ושליטת בעלים זמינים למפעיל הפעיל.",
   "owner.settings.claim.runCampaign.title": "הפעל קמפיין",
   "owner.settings.claim.runCampaign.desc": "הפעל ניתוחים באמצעות הפעלת קמפיין למיקום זה.",

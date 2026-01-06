@@ -833,6 +833,104 @@ export default {
         return await handleOwnerStripeExchange(req, env);
       }
 
+      // --- Restore by PaymentIntent id (pi_...) for cross-device recovery
+      if (normPath === "/owner/restore" && req.method === "GET") {
+        const u = new URL(req.url);
+        const pi = String(u.searchParams.get("pi") || "").trim();
+        const nextRaw = String(u.searchParams.get("next") || "").trim();
+
+        const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+
+        if (!pi || !/^pi_/i.test(pi)) return new Response("Denied", { status: 400, headers: noStoreHeaders });
+
+        const isSafeNext = (p: string) =>
+          p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
+
+        const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "";
+
+        const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+        if (!sk) return new Response("Misconfigured", { status: 500, headers: noStoreHeaders });
+
+        // Find the Checkout Session by payment_intent
+        const listUrl = `https://api.stripe.com/v1/checkout/sessions?payment_intent=${encodeURIComponent(pi)}&limit=1`;
+        const rr = await fetch(listUrl, { method: "GET", headers: { "Authorization": `Bearer ${sk}` } });
+        const txt = await rr.text();
+        let out: any = null;
+        try { out = JSON.parse(txt); } catch { out = null; }
+
+        const sess = out?.data && Array.isArray(out.data) && out.data.length ? out.data[0] : null;
+        if (!rr.ok || !sess) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+
+        const paymentStatus = String(sess?.payment_status || "").toLowerCase();
+        const status = String(sess?.status || "").toLowerCase();
+        if (paymentStatus !== "paid" || status !== "complete") {
+          return new Response("Denied", { status: 403, headers: noStoreHeaders });
+        }
+
+        const meta = sess?.metadata || {};
+        const locationID = String(meta?.locationID || "").trim();
+        if (!locationID) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+
+        // Resolve slug → ULID and verify entitlement window
+        const ulid = await resolveUid(locationID, env);
+        if (!ulid) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+
+        const ownKey = `ownership:${ulid}`;
+        const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+        const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+        const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+        if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+          return new Response("Denied", { status: 403, headers: noStoreHeaders });
+        }
+
+        // Mint op_sess exactly like handleOwnerStripeExchange
+        const sidBytes = new Uint8Array(18);
+        (crypto as any).getRandomValues(sidBytes);
+        const sessionId = bytesToB64url(sidBytes);
+
+        const createdAt = new Date();
+        const expiresAt = exclusiveUntil;
+        const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - createdAt.getTime()) / 1000));
+
+        const sessKey = `opsess:${sessionId}`;
+        const sessVal = { ver: 1, ulid, createdAt: createdAt.toISOString(), expiresAt: expiresAt.toISOString() };
+
+        await env.KV_STATUS.put(sessKey, JSON.stringify(sessVal), { expirationTtl: Math.max(60, maxAge) });
+
+        // Register to device (if ng_dev exists) so Owner Center works on this device
+        try {
+          const dev = readDeviceId(req);
+          if (dev) {
+            await env.KV_STATUS.put(devSessKey(dev, ulid), sessionId, { expirationTtl: Math.max(60, maxAge) });
+            const idxKey = devIndexKey(dev);
+            const rawIdx = await env.KV_STATUS.get(idxKey, "text");
+            let arr: string[] = [];
+            try { arr = rawIdx ? JSON.parse(rawIdx) : []; } catch { arr = []; }
+            if (!Array.isArray(arr)) arr = [];
+            if (!arr.includes(ulid)) arr.unshift(ulid);
+            arr = arr.slice(0, 24);
+            await env.KV_STATUS.put(idxKey, JSON.stringify(arr), { expirationTtl: 60 * 60 * 24 * 366 });
+          }
+        } catch {}
+
+        const cookie = cookieSerialize("op_sess", sessionId, {
+          Path: "/",
+          HttpOnly: true,
+          Secure: true,
+          SameSite: "Lax",
+          "Max-Age": maxAge
+        });
+
+        return new Response(null, {
+          status: 302,
+          headers: {
+            "Set-Cookie": cookie,
+            "Location": next || `/dash/${encodeURIComponent(ulid)}`,
+            ...noStoreHeaders
+          }
+        });
+      }
+
       // --- Owner Center: switch active op_sess to a device-bound location
       if (normPath === "/owner/switch" && req.method === "GET") {
         const u = new URL(req.url);

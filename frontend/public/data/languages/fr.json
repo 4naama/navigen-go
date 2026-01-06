@@ -604,6 +604,8 @@
   "owner.restore.title": "Restaurer l’accès",
   "owner.restore.body": "Pour ouvrir le tableau de bord propriétaire, utilisez votre dernier e-mail d’accès propriétaire ou reçu Stripe. Le lien est inclus dans ce message.",
   "owner.restore.hint": "Astuce : recherchez « Stripe » ou « NaviGen » dans votre boîte de réception.",
+  "owner.restore.pi.label": "Collez votre identifiant de paiement (pi_...) pour restaurer l’accès sur cet appareil :",
+  "owner.restore.pi.submit": "Restaurer",
   "owner.settings.claim.explain": "Les analyses et contrôles propriétaire sont disponibles pour l’opérateur actif.",
   "owner.settings.claim.runCampaign.title": "Lancer une campagne",
   "owner.settings.claim.runCampaign.desc": "Activez les analyses en lançant une campagne pour ce lieu.",
