@@ -326,7 +326,7 @@ async function openPromotionQrModal(modal, data) {
           (typeof t === 'function' && t('promo.gated.campaignRequired')) ||
           'Promotions are available only while this business is running an active NaviGen campaign.';
 
-        showToast(msg, 2400);
+        showToast(msg, 3000);
       } else if (res.status === 404) {
         showToast('Promotions will appear here soon.', 2000);
       } else {
