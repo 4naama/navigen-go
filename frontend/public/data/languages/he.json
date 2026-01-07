@@ -654,5 +654,6 @@
   "owner.center.note": "גישת הבעלים נשמרת במכשיר זה מטעמי אבטחה. כדי להוסיף מיקום במכשיר חדש, השתמש פעם אחת ב־שחזור גישה.",
   "campaign.funding.title": "מימון קמפיין",
   "campaign.funding.amountLabel": "סכום (EUR)",
-  "campaign.funding.continue": "המשך לתשלום"
+  "campaign.funding.continue": "המשך לתשלום",
+  "campaign.funding.minNotice": "המימון המינימלי לקמפיין הוא €50."
 }

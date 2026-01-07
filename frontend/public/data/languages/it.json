@@ -654,5 +654,6 @@
   "owner.center.note": "L’accesso proprietario è memorizzato su questo dispositivo per motivi di sicurezza. Per aggiungere una sede su un nuovo dispositivo, usa una volta Ripristina accesso.",
   "campaign.funding.title": "Finanziamento della campagna",
   "campaign.funding.amountLabel": "Importo (EUR)",
-  "campaign.funding.continue": "Procedi al pagamento"
+  "campaign.funding.continue": "Procedi al pagamento",
+  "campaign.funding.minNotice": "Il finanziamento minimo della campagna è di 50 €."
 }

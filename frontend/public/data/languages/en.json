@@ -654,5 +654,6 @@
   "owner.center.note": "Owner access is stored on this device for security. To add a location on a new device, use Restore access once.",
   "campaign.funding.title": "Campaign funding",
   "campaign.funding.amountLabel": "Amount (EUR)",
-  "campaign.funding.continue": "Continue to payment"
+  "campaign.funding.continue": "Continue to payment",
+  "campaign.funding.minNotice": "Minimum campaign funding is €50."
 }

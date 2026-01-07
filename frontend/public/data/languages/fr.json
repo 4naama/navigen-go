@@ -654,5 +654,6 @@
   "owner.center.note": "L’accès propriétaire est stocké sur cet appareil pour des raisons de sécurité. Pour ajouter un établissement sur un nouvel appareil, utilisez une fois Restaurer l’accès.",
   "campaign.funding.title": "Financement de la campagne",
   "campaign.funding.amountLabel": "Montant (EUR)",
-  "campaign.funding.continue": "Continuer vers le paiement"
+  "campaign.funding.continue": "Continuer vers le paiement",
+  "campaign.funding.minNotice": "Le financement minimum de la campagne est de 50 €."
 }

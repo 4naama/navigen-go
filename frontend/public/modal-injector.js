@@ -3407,11 +3407,13 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
   inner.className = 'modal-body-inner';
 
   inner.innerHTML = `
-    <div class="campaign-funding-chips">
+    <div class="campaign-funding-warning">${(typeof t === 'function' && t('campaign.funding.minNotice')) || 'Minimum campaign funding is €50.'}</div><div class="campaign-funding-chips">
       <button type="button" class="campaign-funding-chip is-selected" data-eur="50">€50</button>
       <button type="button" class="campaign-funding-chip" data-eur="75">€75</button>
       <button type="button" class="campaign-funding-chip" data-eur="100">€100</button>
       <button type="button" class="campaign-funding-chip" data-eur="150">€150</button>
+      <button type="button" class="campaign-funding-chip" data-eur="200">€200</button>
+      <button type="button" class="campaign-funding-chip" data-eur="300">€300</button>
     </div>
 
     <div class="campaign-funding-input-row">
@@ -3429,18 +3431,38 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
   `;
 
   const eurInput = inner.querySelector('#campaign-funding-eur');
+  const continueBtn = inner.querySelector('#campaign-funding-continue');
+  const MIN_EUR = 50;
+
+  function applyFundingValidity() {
+    const eur = Math.floor(Number(String(eurInput.value || '').trim()));
+    const ok = Number.isFinite(eur) && eur >= MIN_EUR;
+
+    eurInput.classList.toggle('is-invalid', !ok);
+    eurInput.setAttribute('aria-invalid', ok ? 'false' : 'true');
+
+    if (continueBtn) continueBtn.disabled = !ok;
+    return ok;
+  }
+
+  // initial state (input is prefilled to 50)
+  applyFundingValidity();
+
+  eurInput.addEventListener('input', () => {
+    applyFundingValidity();
+  });
 
   inner.querySelectorAll('.campaign-funding-chip').forEach(btn => {
     btn.addEventListener('click', () => {
       inner.querySelectorAll('.campaign-funding-chip').forEach(b => b.classList.remove('is-selected'));
       btn.classList.add('is-selected');
       const eur = Number(btn.getAttribute('data-eur') || '50');
-      eurInput.value = String(Number.isFinite(eur) ? eur : 50);
+      eurInput.value = String(Number.isFinite(eur) ? eur : 50); applyFundingValidity();
     });
   });
 
   inner.querySelector('#campaign-funding-continue')?.addEventListener('click', async () => {
-    const eur = Math.floor(Number(String(eurInput.value || '').trim()));
+    if (!applyFundingValidity()) { showToast('Minimum is €50.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
     if (!Number.isFinite(eur) || eur <= 0) { showToast('Enter a valid EUR amount.', 1800); return; }
 
     const amountCents = eur * 100;

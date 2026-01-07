@@ -2719,6 +2719,15 @@ body.high-contrast .modal-menu-item.is-active {
 }
 
 /* Campaign funding modal — chips + input (fixed amount selection; Stripe does not expose custom amount in this build) */
+.campaign-funding-warning{
+  border:1px solid #f1c7c6;
+  background:#fce8e6;
+  color:#5f2120;
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:13px;
+}
+
 .campaign-funding-chips{
   display:flex;
   gap:8px;
@@ -2766,6 +2775,11 @@ body.high-contrast .modal-menu-item.is-active {
   border-radius:10px;
   padding:10px 12px;
   font:inherit;
+}
+
+.campaign-funding-input.is-invalid{
+  border-color:#d93025;
+  box-shadow:0 0 0 2px rgba(217,48,37,.15);
 }
 
 /* Layout variant — general forms/content (Share Location, Help) */
