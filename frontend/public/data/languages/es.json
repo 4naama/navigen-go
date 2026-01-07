@@ -651,5 +651,8 @@
   "root.bo.ownerCenter.desc": "Cambia entre las ubicaciones que gestionas en este dispositivo.",
   "owner.center.title": "Centro del propietario",
   "owner.center.empty": "Aún no hay sesiones de propietario guardadas en este dispositivo.",
-  "owner.center.note": "El acceso del propietario se almacena en este dispositivo por seguridad. Para añadir una ubicación en un dispositivo nuevo, usa Restaurar acceso una vez."
+  "owner.center.note": "El acceso del propietario se almacena en este dispositivo por seguridad. Para añadir una ubicación en un dispositivo nuevo, usa Restaurar acceso una vez.",
+  "campaign.funding.title": "Financiación de la campaña",
+  "campaign.funding.amountLabel": "Cantidad (EUR)",
+  "campaign.funding.continue": "Continuar al pago"
 }

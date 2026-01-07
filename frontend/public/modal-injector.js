@@ -3411,6 +3411,7 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
       <button type="button" class="campaign-funding-chip is-selected" data-eur="50">€50</button>
       <button type="button" class="campaign-funding-chip" data-eur="75">€75</button>
       <button type="button" class="campaign-funding-chip" data-eur="100">€100</button>
+      <button type="button" class="campaign-funding-chip" data-eur="150">€150</button>
     </div>
 
     <div class="campaign-funding-input-row">

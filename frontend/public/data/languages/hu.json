@@ -651,5 +651,8 @@
   "root.bo.ownerCenter.desc": "Váltson az ezen az eszközön kezelt helyszínek között.",
   "owner.center.title": "Tulajdonosi központ",
   "owner.center.empty": "Ezen az eszközön még nincs mentett tulajdonosi munkamenet.",
-  "owner.center.note": "A tulajdonosi hozzáférés biztonsági okokból ezen az eszközön van tárolva. Új eszközön egy helyszín hozzáadásához egyszer használja a Hozzáférés visszaállítása funkciót."
+  "owner.center.note": "A tulajdonosi hozzáférés biztonsági okokból ezen az eszközön van tárolva. Új eszközön egy helyszín hozzáadásához egyszer használja a Hozzáférés visszaállítása funkciót.",
+  "campaign.funding.title": "Kampány finanszírozása",
+  "campaign.funding.amountLabel": "Összeg (EUR)",
+  "campaign.funding.continue": "Tovább a fizetéshez"
 }

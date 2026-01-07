@@ -651,5 +651,8 @@
   "root.bo.ownerCenter.desc": "Wechseln Sie zwischen den Standorten, die Sie auf diesem Gerät verwalten.",
   "owner.center.title": "Owner Center",
   "owner.center.empty": "Auf diesem Gerät sind noch keine Owner-Sitzungen gespeichert.",
-  "owner.center.note": "Der Owner-Zugriff wird aus Sicherheitsgründen auf diesem Gerät gespeichert. Um einen Standort auf einem neuen Gerät hinzuzufügen, verwenden Sie einmal „Zugriff wiederherstellen“."
+  "owner.center.note": "Der Owner-Zugriff wird aus Sicherheitsgründen auf diesem Gerät gespeichert. Um einen Standort auf einem neuen Gerät hinzuzufügen, verwenden Sie einmal „Zugriff wiederherstellen“.",
+  "campaign.funding.title": "Kampagnenfinanzierung",
+  "campaign.funding.amountLabel": "Betrag (EUR)",
+  "campaign.funding.continue": "Zur Zahlung fortfahren"
 }

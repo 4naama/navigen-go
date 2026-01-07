@@ -651,5 +651,8 @@
   "root.bo.ownerCenter.desc": "Passa tra le sedi che gestisci su questo dispositivo.",
   "owner.center.title": "Centro proprietario",
   "owner.center.empty": "Nessuna sessione proprietario salvata su questo dispositivo.",
-  "owner.center.note": "L’accesso proprietario è memorizzato su questo dispositivo per motivi di sicurezza. Per aggiungere una sede su un nuovo dispositivo, usa una volta Ripristina accesso."
+  "owner.center.note": "L’accesso proprietario è memorizzato su questo dispositivo per motivi di sicurezza. Per aggiungere una sede su un nuovo dispositivo, usa una volta Ripristina accesso.",
+  "campaign.funding.title": "Finanziamento della campagna",
+  "campaign.funding.amountLabel": "Importo (EUR)",
+  "campaign.funding.continue": "Procedi al pagamento"
 }
