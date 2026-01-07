@@ -3361,6 +3361,107 @@ export function showRequestListingModal() {
   showModal(id);
 }
 
+// Campaign selection: resolve a professional campaignKey by lookup in /data/campaigns.json.
+// Reason: Owner Settings needs a deterministic campaignKey without introducing a new selector yet.
+async function resolveCampaignKeyForLocation(locationID) {
+  const slug = String(locationID || '').trim();
+  if (!slug) return '';
+
+  try {
+    const r = await fetch('/data/campaigns.json', { cache: 'no-store' });
+    if (!r.ok) return '';
+    const rows = await r.json().catch(() => null);
+    const arr = Array.isArray(rows) ? rows : [];
+
+    // First matching row is deterministic and stable if your dataset ordering is stable.
+    const hit = arr.find(c => String(c?.locationID || '').trim() === slug);
+    return String(hit?.campaignKey || '').trim();
+  } catch {
+    return '';
+  }
+}
+
+// Campaign funding modal (chips + input); sends fixed amountCents to Stripe via handleCampaignCheckout().
+function showCampaignFundingModal({ locationID, campaignKey }) {
+  const id = 'campaign-funding-modal';
+  document.getElementById(id)?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${(typeof t === 'function' && t('campaign.funding.title')) || 'Campaign funding'}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  inner.innerHTML = `
+    <div class="campaign-funding-chips">
+      <button type="button" class="campaign-funding-chip is-selected" data-eur="50">€50</button>
+      <button type="button" class="campaign-funding-chip" data-eur="75">€75</button>
+      <button type="button" class="campaign-funding-chip" data-eur="100">€100</button>
+    </div>
+
+    <div class="campaign-funding-input-row">
+      <label class="campaign-funding-label" for="campaign-funding-eur">
+        ${(typeof t === 'function' && t('campaign.funding.amountLabel')) || 'Amount (EUR)'}
+      </label>
+      <input id="campaign-funding-eur" class="campaign-funding-input" inputmode="numeric" pattern="[0-9]*" value="50" />
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="modal-body-button" id="campaign-funding-continue">
+        ${(typeof t === 'function' && t('campaign.funding.continue')) || 'Continue to payment'}
+      </button>
+    </div>
+  `;
+
+  const eurInput = inner.querySelector('#campaign-funding-eur');
+
+  inner.querySelectorAll('.campaign-funding-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      inner.querySelectorAll('.campaign-funding-chip').forEach(b => b.classList.remove('is-selected'));
+      btn.classList.add('is-selected');
+      const eur = Number(btn.getAttribute('data-eur') || '50');
+      eurInput.value = String(Number.isFinite(eur) ? eur : 50);
+    });
+  });
+
+  inner.querySelector('#campaign-funding-continue')?.addEventListener('click', async () => {
+    const eur = Math.floor(Number(String(eurInput.value || '').trim()));
+    if (!Number.isFinite(eur) || eur <= 0) { showToast('Enter a valid EUR amount.', 1800); return; }
+
+    const amountCents = eur * 100;
+
+    await handleCampaignCheckout({
+      locationID: String(locationID || '').trim(),
+      campaignKey: String(campaignKey || '').trim(),
+      amountCents,
+      navigenVersion: "v1.1"
+    });
+  });
+
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  setupTapOutClose(id);
+  showModal(id);
+}
+
 export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationName }) {
   const id = 'owner-settings-modal';
   document.getElementById(id)?.remove();
@@ -3453,14 +3554,19 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       title: _ownerText('owner.settings.claim.runCampaign.title', 'Run campaign'),
       desc: _ownerText('owner.settings.claim.runCampaign.desc', 'Activate analytics by running a campaign for this location.'),
       onClick: () => {
-        // Phase 4 scope: hook into existing campaign setup when available.
-        // Keep as a safe no-op with toast until Campaign Setup modal is wired.
         (async () => {
           hideModal(id);
-          const picked = await showSelectLocationModal();
-          if (!picked) return;
-          // Phase 5: for now, open the LPM so the owner can verify the business before checkout wiring.
-          showLocationProfileModal(picked);
+
+          // Prefer the current LPM context when available; otherwise ask the user to pick.
+          const baseSlug = String(locationIdOrSlug || '').trim();
+          const picked = baseSlug ? { locationID: baseSlug } : await showSelectLocationModal();
+          const slug = String(picked?.locationID || '').trim();
+          if (!slug) return;
+
+          const campaignKey = await resolveCampaignKeyForLocation(slug);
+          if (!campaignKey) { showToast('No campaign template found for this location.', 2200); return; }
+
+          showCampaignFundingModal({ locationID: slug, campaignKey });
         })();
       }
     });

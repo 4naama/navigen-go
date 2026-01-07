@@ -2009,8 +2009,7 @@ export default {
         form.set("line_items[0][price_data][currency]", currency);
         // Stripe supports custom unit amounts for Checkout Sessions line items.
         // This renders an adjustable amount input at checkout while preserving a deterministic server minimum.
-        form.set("line_items[0][price_data][custom_unit_amount][minimum]", String(MIN_AMOUNT_CENTS));
-        form.set("line_items[0][price_data][custom_unit_amount][preset]", String(amountCents));
+        form.set("line_items[0][price_data][unit_amount]", String(amountCents));
         form.set("line_items[0][price_data][product_data][name]", "NaviGen Campaign — 30 days");
 
         // Metadata contract (MUST be copied to PaymentIntent)

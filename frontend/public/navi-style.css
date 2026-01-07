@@ -2718,6 +2718,56 @@ body.high-contrast .modal-menu-item.is-active {
   box-shadow:0 0 0 2px rgba(255,255,255,.3) inset;
 }
 
+/* Campaign funding modal — chips + input (fixed amount selection; Stripe does not expose custom amount in this build) */
+.campaign-funding-chips{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+.campaign-funding-chip{
+  border:1px solid #e0e0e0;
+  background:#f8f8f8;
+  border-radius:10px;
+  padding:10px 12px;
+  cursor:pointer;
+  transition:background .15s ease, border-color .15s ease, transform .08s ease;
+}
+
+.campaign-funding-chip:hover{
+  background:#f1f1f1;
+  border-color:#d7d7d7;
+  transform:translateY(-1px);
+}
+
+.campaign-funding-chip.is-selected{
+  background:#e8f0fe;
+  border-color:#1a73e8;
+  box-shadow:0 0 0 2px rgba(26,115,232,.15) inset;
+}
+
+.campaign-funding-input-row{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:12px;
+}
+
+.campaign-funding-label{
+  font-size:12px;
+  opacity:.8;
+  text-align:left;
+}
+
+.campaign-funding-input{
+  border:1px solid #e0e0e0;
+  background:#fff;
+  border-radius:10px;
+  padding:10px 12px;
+  font:inherit;
+}
+
 /* Layout variant — general forms/content (Share Location, Help) */
 .modal .modal-content.modal-layout{ padding:1.5em; }
 .modal-layout .modal-body p{
