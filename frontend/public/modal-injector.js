@@ -3363,7 +3363,7 @@ export function showRequestListingModal() {
 
 // Campaign selection: resolve a professional campaignKey by lookup in /data/campaigns.json.
 // Reason: Owner Settings needs a deterministic campaignKey without introducing a new selector yet.
-async function resolveCampaignKeyForLocation(locationID) {
+export async function resolveCampaignKeyForLocation(locationID) {
   const slug = String(locationID || '').trim();
   if (!slug) return '';
 
@@ -3382,7 +3382,7 @@ async function resolveCampaignKeyForLocation(locationID) {
 }
 
 // Campaign funding modal (chips + input); sends fixed amountCents to Stripe via handleCampaignCheckout().
-function showCampaignFundingModal({ locationID, campaignKey }) {
+export function showCampaignFundingModal({ locationID, campaignKey }) {
   const id = 'campaign-funding-modal';
   document.getElementById(id)?.remove();
 

@@ -22,6 +22,8 @@ import {
   showOwnerCenterModal,
   showRequestListingModal,
   showSelectLocationModal,
+  showCampaignFundingModal,
+  resolveCampaignKeyForLocation,
   createFavoritesModal,
   showFavoritesModal,
   createPromotionsModal,
@@ -594,12 +596,14 @@ function renderBusinessOwnersGroup() {
             return;
           }
 
-          await handleCampaignCheckout({
-            locationID: slug,
-            campaignKey: "campaign-30d",
-            navigenVersion: "v1"
-          });
-
+          // Route through the Campaign Funding modal (chips + input) instead of sending the user straight to Stripe.
+          // Resolve the campaignKey from /data/campaigns.json so dataset keys can be professional (brandKey__locationID__seq).
+          const campaignKey = await resolveCampaignKeyForLocation(slug);
+          if (!campaignKey) {
+            showToast('No campaign template found for this location.', 2200);
+            return;
+          }
+          showCampaignFundingModal({ locationID: slug, campaignKey });
         }
       },
             {
