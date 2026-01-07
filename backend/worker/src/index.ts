@@ -1969,9 +1969,15 @@ export default {
           return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore);
         }
 
-        // Price: €50 / 30 days (spec: Campaign) — single fixed SKU for now
-        const amountCents = 100; // Kept at €1.00 for testing €50.00
+        // Price: Campaign funding is owner-chosen, but must be >= minimum.
+        // Entitlement remains identical regardless of amount (v1.1).
+        const MIN_AMOUNT_CENTS = 100; // TESTING: set to 5000 for €50.00 minimum in production
+        const amountCents = Math.floor(Number(body?.amountCents ?? MIN_AMOUNT_CENTS));
         const currency = "eur";
+
+        if (!Number.isFinite(amountCents) || amountCents < MIN_AMOUNT_CENTS) {
+          return json({ error: { code: "invalid_request", message: `amountCents must be >= ${MIN_AMOUNT_CENTS}` } }, 400, noStore);
+        }
 
         // Build redirect URLs on the web app origin (not the API Worker origin)
         const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
@@ -1998,7 +2004,13 @@ export default {
         // One line item (fixed amount)
         form.set("line_items[0][quantity]", "1");
         form.set("line_items[0][price_data][currency]", currency);
-        form.set("line_items[0][price_data][unit_amount]", String(amountCents));
+        // One line item (owner-adjustable, with a server-enforced minimum)
+        form.set("line_items[0][quantity]", "1");
+        form.set("line_items[0][price_data][currency]", currency);
+        // Stripe supports custom unit amounts for Checkout Sessions line items.
+        // This renders an adjustable amount input at checkout while preserving a deterministic server minimum.
+        form.set("line_items[0][price_data][custom_unit_amount][minimum]", String(MIN_AMOUNT_CENTS));
+        form.set("line_items[0][price_data][custom_unit_amount][preset]", String(amountCents));
         form.set("line_items[0][price_data][product_data][name]", "NaviGen Campaign — 30 days");
 
         // Metadata contract (MUST be copied to PaymentIntent)

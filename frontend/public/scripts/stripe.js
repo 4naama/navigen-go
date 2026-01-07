@@ -86,19 +86,21 @@ export async function handleDonation(amount, meta = {}) {
  * @param {string} args.campaignKey - required for ownershipSource="campaign"
  * @param {string} args.navigenVersion - optional audit tag
  */
-export async function handleCampaignCheckout({ locationID, campaignKey, navigenVersion = "phase5" }) {
+export async function handleCampaignCheckout({ locationID, campaignKey, amountCents, navigenVersion = "v1.1" }) {
   if (!stripe) {
     console.error("❌ Stripe not initialized");
     return;
   }
 
-  const payload = {
-    locationID,
-    campaignKey,
-    initiationType: "owner",
-    ownershipSource: "campaign",
-    navigenVersion
-  };
+const payload = {
+  locationID,
+  campaignKey,
+  // Optional: allows owner-chosen funding presets; API Worker enforces a minimum.
+  amountCents,
+  initiationType: "owner",
+  ownershipSource: "campaign",
+  navigenVersion
+};
 
   try {
     // Use the authoritative API Worker to create the session (it owns the metadata contract)

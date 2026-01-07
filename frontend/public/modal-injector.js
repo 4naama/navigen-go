@@ -2323,7 +2323,7 @@ import { t } from './scripts/i18n.js';
 // QR generator uses getQRCodeLib() helper above; no direct import here
 
 // Stripe: only the donation action here (init comes from caller)
-import { handleDonation } from "./scripts/stripe.js";
+import { handleDonation, handleCampaignCheckout } from "./scripts/stripe.js";
 
 // Phase 5 — Select Location modal (uses existing rendered location buttons + root search styling)
 // This avoids introducing new list APIs/contracts before self-serve LPM creation exists.

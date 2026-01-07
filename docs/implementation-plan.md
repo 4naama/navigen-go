@@ -207,10 +207,6 @@ Important:
 2.3a /owner/stripe-exchange endpoint (API Worker) — post-checkout session minting
 --------------------------------------------------------------------
 
---------------------------------------------------------------------
-2.3a /owner/stripe-exchange endpoint (API Worker) — post-checkout session minting
---------------------------------------------------------------------
-
 Plain language:
 The post-checkout exchange endpoint converts a completed Stripe Checkout Session
 into an owner session cookie immediately after payment, enabling the real-time flow:
@@ -244,6 +240,48 @@ Happy-path test H3:
 1) Complete Checkout (cs_...)
 2) GET /owner/stripe-exchange?sid=<cs_...>&next=/?locationID=<slug>&lp=<slug>
 3) Confirm op_sess cookie + /api/stats returns 200
+
+--------------------------------------------------------------------
+2.3b /owner/restore endpoint (API Worker) — recovery by PaymentIntent id (pi_*)
+--------------------------------------------------------------------
+
+Plain language:
+Owners frequently restore access on a new device where email does not contain a usable
+Checkout Session id (cs_*). Stripe emails reliably contain a Payment ID (pi_*).
+
+Endpoint:
+• GET /owner/restore?pi=<PAYMENT_INTENT_ID>&next=<relativePath>
+
+Validation rules:
+• Lookup Checkout Session by payment_intent=pi_*
+• Require payment_status="paid" AND status="complete"
+• Require metadata.locationID
+• Resolve locationID → ULID via KV_ALIASES
+• Verify ownership:<ULID>.exclusiveUntil > now
+
+Output:
+• Set HttpOnly cookie: op_sess=<id>; Max-Age bounded by exclusiveUntil
+• Redirect (302) to next (or /dash/<ULID> if next missing)
+
+Happy-path test H4:
+1) Take Payment ID (pi_*) from Stripe email
+2) GET /owner/restore?pi=<pi_*>&next=/dash/<slug-or-ulid>
+3) Confirm op_sess cookie + /api/stats returns 200 for the location
+
+--------------------------------------------------------------------
+2.3c Device-bound session registry (Owner Center)
+--------------------------------------------------------------------
+
+To reduce friction for owners managing multiple locations on one device:
+
+• The system stores a per-device mapping:
+  - devsess:<deviceId>:<ULID> = <sessionId>
+  - devsess:<deviceId>:index = [<ULID>, ...] (most recent first)
+
+• DeviceId is stored as a non-HttpOnly cookie: ng_dev
+• Owner exchange endpoints (stripe-exchange, exchange, restore) register sessions to the device
+
+This enables an Owner Center UI to switch locations without email recovery.
 
 --------------------------------------------------------------------
 2.4 Owner session validation contract (used in later phases)

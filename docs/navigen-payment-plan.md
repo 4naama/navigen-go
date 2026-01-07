@@ -46,14 +46,23 @@ End users (visitors) never pay.
 | Duration        | 30 days                                                               |
 | Payment timing  | Upfront                                                               |
 | Discoverability | High (search, lists, browse) — preferential visibility inside NaviGen |
-| Promotion       | Enabled (preferential visibility inside NaviGen surfaces only)             |
+| Promotion       | Enabled (preferential visibility inside NaviGen surfaces only)        |
 | Analytics       | Enabled                                                               |
 | Dash access     | Enabled                                                               |
 | Operation       | **Exclusive** (no other operator allowed)                             |
 | UI status       | “Active campaign”                                                     |
 
 **Owner mental model**
-> “I pay €50 and for 30 days NaviGen actively brings customers to my business.”
+> “I pay €50 and for 30 days NaviGen keeps my business at the top inside NaviGen.”
+
+Optional add-on within an active campaign:
+- The owner may run a **campaign offer** (Promo QR) to make the listing more appealing.
+- Example offer types (non-exhaustive):
+  - Discount (percent / fixed)
+  - Early bird (first N redeemers)
+  - Happy hour (time window)
+  - Reservations / booking CTA
+  - Dash access as an internal operator tool (not a consumer offer)
 
 This is the **main and mandatory** monetization path.
 
@@ -67,7 +76,7 @@ This is the **main and mandatory** monetization path.
 |-----------------|--------------------------------------------------------------------------|
 | Duration        | 60 days (Y = 2)                                                          |
 | Cost            | Free                                                                     |
-| Discoverability | Yes (reduced ranking)                                                    |
+| Discoverability | Yes (still discoverable, but without preferential ordering)              |
 | Promotion       | Preferential visibility: Disabled (no ordering advantage inside NaviGen) |
 | Analytics       | Collected (internal) / Disabled (owner-facing)                           |
 | Dash access     | Disabled (no owner access outside active campaign)                       |
@@ -88,15 +97,15 @@ Purpose:
 
 ### €5 Hold Visibility (optional, secondary revenue)
 
-| Aspect          | Details                                          |
-|-----------------|--------------------------------------------------|
-| Duration        | 30 days per purchase                             |
-| Cost            | €5                                               |
-| Discoverability | Yes (ranking stabilized)                         |
-| Promotion       | Disabled                                         |
-| Analytics       | Collected (internal) / Disabled (owner-facing)   |
-| Dash access     | Disabled (campaign required for owner analytics) |
-| UI framing      | “Keep your place visible”                        |
+| Aspect          | Details                                                        |
+|-----------------|----------------------------------------------------------------|
+| Duration        | 30 days per purchase                                           |
+| Cost            | €5                                                             |
+| Discoverability | Yes (restores visibility back to the non-fading baseline)      |
+| Promotion       | Preferential visibility: Disabled (no paid ordering advantage) |
+| Analytics       | Collected (internal) / Disabled (owner-facing)                 |
+| Dash access     | Disabled (campaign required for owner analytics)               |
+| UI framing      | “Keep your place visible”                                      |
 
 **Important**
 - This is not protection.
@@ -114,16 +123,16 @@ This option may be introduced later.
 
 ### Inactive / Not discoverable
 
-| Aspect                     | Details                                        |
-|----------------------------|------------------------------------------------|
-| When                       | After courtesy + any holds expire              |
-| Discoverability            | No                                             |
-| Appears in search/lists    | No (public discovery surfaces only)            |
-| Appears in owner selection | Yes (Select your business / claim flows)       |
-| Direct link                | May still open                                 |
-| Analytics                  | Collected (internal) / Disabled (owner-facing) |
-| Dash access                | No                                             |
-| UI status                  | “Inactive”                                     |
+| Aspect                     | Details                                                                 |
+|----------------------------|-------------------------------------------------------------------------|
+| When                       | After courtesy + any holds expire                                       |
+| Discoverability            | No                                                                      |
+| Appears in search/lists    | No (NaviGen public discovery surfaces; not promoted for search engines) |
+| Appears in owner selection | Yes (Select your business / claim flows)                                |
+| Direct link                | May still open                                                          |
+| Analytics                  | Collected (internal) / Disabled (owner-facing)                          |
+| Dash access                | No                                                                      |
+| UI status                  | “Inactive”                                                              |
 
 **Owner mental model**
 > “My business is paused on NaviGen. I can restart anytime.”
@@ -139,15 +148,15 @@ No deletion is required.
 
 ## Restore access (not a product)
 
-| Aspect        | Details                                 |
-|---------------|-----------------------------------------|
-| Cost          | Free                                    |
-| Purpose       | Session recovery                        |
-| When          | Ownership exists but session is missing |
-| How           | Via Stripe receipt or owner access link |
-| What it gives | Dash access only                        |
+| Aspect        | Details                                                                                     |
+|---------------|---------------------------------------------------------------------------------------------|
+| Cost          | Free                                                                                        |
+| Purpose       | Session recovery                                                                            |
+| When          | Ownership exists but session is missing                                                     |
+| How           | Via Payment ID (pi_...) from Stripe email, or owner access link                             |
+| What it gives | Restores owner access on this device (Dash + owner tools during the active campaign window) |
 
-Restore is a **support / recovery path**, never a paid product.
+Restore is a **support / recovery path**, never a paid product (state-of-the-art convenience for no-sign-in operation).
 
 --------------------------------------------------------------------
 
@@ -195,7 +204,7 @@ Example locations are **admin-controlled**.
 |-----------------|------------|--------|-------------------------------------------------------------------|
 | Campaign        | Yes        | €50    | Preferential visibility (NaviGen), analytics, exclusive operation |
 | Courtesy        | No         | €0     | Reduced visibility                                                |
-| Hold visibility | Optional   | €5     | Keep discoverable without promotion                               |
+| Hold visibility | Optional   | €5     | Stay visible without paid ordering advantage (avoid fading out) |
 | Inactive        | No         | €0     | Exists but hidden                                                 |
 | Restore access  | No         | €0     | Session recovery                                                  |
 | Examples        | No         | €0     | Demo only                                                         |

@@ -283,9 +283,7 @@ wrangler deploy
 
 bxz7mbe.jac4PMA!rmj
 index.ts: 
-const amountCents = 5000;
-for testing changed to
-const amountCents = 100; // change it back for prod
+const MIN_AMOUNT_CENTS = 100; // TESTING: set to 5000 for €50.00 minimum in production
 
 If nothing changed (force rebuild):
 git commit --allow-empty -m "Backend deploy"
@@ -304,13 +302,17 @@ git commit --allow-empty -m "Deploy: rebuild prod"
 git push origin main
 
 --------------------------------------------------------------------
-HUGO
+KEDE
 --------------------------------------------------------------------
 
 cd "$env:USERPROFILE\Documents\a_git\kede\kede-site"
-hugo server -D --bind 127.0.0.1 --port 1313 --baseURL "http://127.0.0.1:1313/" --disableFastRender --ignoreCache --cleanDestinationDir
+npm run dev
 
-https://themes.gohugo.io/themes/hugo-bootstrap-theme/?utm_source=chatgpt.com
+http://localhost:3000/
+
+Search by visible text
+cd "$env:USERPROFILE\Doc2.15/ig<uments\a_git\kede\kede-site"
+Select-String -Path ".\public\en\*.html" -Pattern "YOUR EXACT TEXT"
 
 --------------------------------------------------------------------
 ## 13) Final Invariant (Memorize This)

@@ -720,6 +720,22 @@ Operator Session:
 
 --------------------------------------------------------------------
 
+### Owner Center (Device-bound)
+
+Owner Center is a Business Owner surface in the main shell that allows an owner
+to switch between locations previously authenticated on the current device.
+
+Key properties:
+• Device-scoped (per browser/device), no accounts
+• Lists only locations that have had a successful Owner Exchange on this device
+• Supports “Switch & Open Dash” without requiring email recovery each time
+
+Security posture:
+• Switching devices requires Restore Access (one-time per device per location)
+• Owner access is stored per device for security and privacy
+
+--------------------------------------------------------------------
+
 ### Restore Access
 
 Restore Access is the recovery of a missing or expired Operator Session.
@@ -729,6 +745,40 @@ Restore Access:
 - does not modify ownership
 - does not extend campaigns
 - only restores authentication
+
+Restore Access — Cross-device recovery (Payment ID)
+
+When restoring access on a different device, the owner may not have a usable
+Checkout Session link (cs_...) in their email.
+
+Therefore, NaviGen MUST support recovery using the Stripe PaymentIntent ID:
+
+• Owner provides: Payment ID (pi_...)
+• System performs: server-side lookup of the associated Checkout Session
+• System validates: payment_status="paid" AND status="complete"
+• System resolves: metadata.locationID → ULID
+• System mints: op_sess cookie and opsess:<sessionId> record
+• System redirects: /dash/<ULID>
+
+This restores access on the current device without requiring accounts.
+
+--------------------------------------------------------------------
+
+### Restore Access Messaging (strict)
+
+Restore Access UI copy MUST:
+• Refer only to **session recovery**
+• NEVER imply campaign renewal
+• NEVER imply analytics activation
+
+Allowed phrasing:
+• “Restore access”
+• “Recover owner access on this device”
+
+Forbidden phrasing:
+• “Reactivate analytics”
+• “Resume campaign”
+• “Unlock dashboard” (ambiguous)
 
 --------------------------------------------------------------------
 
@@ -883,24 +933,6 @@ Notes:
 Rules:
 • Messages must be factual, non-salesy, and non-alarming.  
 • UI MUST NOT suggest data loss when analytics are merely gated.
-
---------------------------------------------------------------------
-
-### Restore Access Messaging (strict)
-
-Restore Access UI copy MUST:
-• Refer only to **session recovery**
-• NEVER imply campaign renewal
-• NEVER imply analytics activation
-
-Allowed phrasing:
-• “Restore access”
-• “Recover owner access on this device”
-
-Forbidden phrasing:
-• “Reactivate analytics”
-• “Resume campaign”
-• “Unlock dashboard” (ambiguous)
 
 --------------------------------------------------------------------
 
