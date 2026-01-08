@@ -656,5 +656,6 @@
   "campaign.funding.amountLabel": "Importo (EUR)",
   "campaign.funding.continue": "Procedi al pagamento",
   "campaign.funding.minNotice": "Il finanziamento minimo della campagna è di 50 €.",
-  "campaign.funding.stripeNote": "Il pagamento è elaborato da Stripe. Riceverai un’e-mail di conferma del pagamento."
+  "campaign.funding.stripeNote": "Il pagamento è elaborato da Stripe. Riceverai un’e-mail di conferma del pagamento.",
+  "root.bo.selectLocation.legend": "🔴 Occupato (già gestito)\\n🟢 Libero (disponibile)\\n🔵 Ancora visibile (cortesia / mantenuto)\\n🟠 Parcheggiato (inattivo)\\n🎁 Promosso (campagna attiva)"
 }

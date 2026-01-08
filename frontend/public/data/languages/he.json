@@ -656,5 +656,6 @@
   "campaign.funding.amountLabel": "סכום (EUR)",
   "campaign.funding.continue": "המשך לתשלום",
   "campaign.funding.minNotice": "המימון המינימלי לקמפיין הוא €50.",
-  "campaign.funding.stripeNote": "התשלום מעובד על ידי Stripe. יישלח אליך אימייל לאישור התשלום."
+  "campaign.funding.stripeNote": "התשלום מעובד על ידי Stripe. יישלח אליך אימייל לאישור התשלום.",
+  "root.bo.selectLocation.legend": "🔴 תפוס (כבר מופעל)\\n🟢 פנוי (זמין)\\n🔵 עדיין גלוי (אדיבות / שמירה)\\n🟠 חונה (לא פעיל)\\n🎁 מקודם (קמפיין פעיל)"
 }

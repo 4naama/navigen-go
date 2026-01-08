@@ -656,5 +656,6 @@
   "campaign.funding.amountLabel": "Montant (EUR)",
   "campaign.funding.continue": "Continuer vers le paiement",
   "campaign.funding.minNotice": "Le financement minimum de la campagne est de 50 €.",
-  "campaign.funding.stripeNote": "Le paiement est traité par Stripe. Un e-mail de confirmation de paiement vous sera envoyé."
+  "campaign.funding.stripeNote": "Le paiement est traité par Stripe. Un e-mail de confirmation de paiement vous sera envoyé.",
+  "root.bo.selectLocation.legend": "🔴 Pris (déjà exploité)\\n🟢 Libre (disponible)\\n🔵 Toujours visible (courtoisie / maintien)\\n🟠 En pause (inactif)\\n🎁 Promu (campagne active)"
 }
