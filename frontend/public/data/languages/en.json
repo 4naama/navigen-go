@@ -657,5 +657,5 @@
   "campaign.funding.continue": "Continue to payment",
   "campaign.funding.minNotice": "Minimum campaign funding is €50.",
   "campaign.funding.stripeNote": "Checkout is processed by Stripe. A payment confirmation email will be sent to you.",
-  "root.bo.selectLocation.legend": "🔴 Taken — already operated\\n🟢 Free — available\\n🔵 Still visible — courtesy/hold\\n🟠 Parked — inactive\\n🎁 Promoted — active campaign"
+  "root.bo.selectLocation.legend": "🔴 Taken\\nAlready operated.\\n\\n🟢 Free\\nAvailable.\\n\\n🔵 Still visible\\nCourtesy/hold.\\n\\n🟠 Parked\\nInactive.\\n\\n🎁 Promoted\\nActive campaign."
 }
