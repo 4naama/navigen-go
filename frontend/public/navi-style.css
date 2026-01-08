@@ -2720,18 +2720,21 @@ body.high-contrast .modal-menu-item.is-active {
 
 /* Campaign funding modal — chips + input (fixed amount selection; Stripe does not expose custom amount in this build) */
 .campaign-funding-warning{
-  border:1px solid #f1c7c6;
-  background:#fce8e6;
-  color:#5f2120;
-  border-radius:10px;
-  padding:10px 12px;
   font-size:13px;
+  opacity:.9;
+  text-align:left;
+  margin-bottom:6px; /* gentle separation between lines */
+}
+
+.campaign-funding-spacer{
+  height:8px; /* blank line before chips */
 }
 
 .campaign-funding-chips{
   display:flex;
   gap:8px;
   flex-wrap:wrap;
+  justify-content:center; /* center rows when wrapped */
   margin-bottom:12px;
 }
 
@@ -2764,8 +2767,8 @@ body.high-contrast .modal-menu-item.is-active {
 }
 
 .campaign-funding-label{
-  font-size:12px;
-  opacity:.8;
+  font-size:13px; /* match the notice size */
+  opacity:.85;
   text-align:left;
 }
 

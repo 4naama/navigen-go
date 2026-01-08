@@ -3407,7 +3407,10 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
   inner.className = 'modal-body-inner';
 
   inner.innerHTML = `
-    <div class="campaign-funding-warning">${(typeof t === 'function' && t('campaign.funding.minNotice')) || 'Minimum campaign funding is €50.'}</div><div class="campaign-funding-chips">
+    <div class="campaign-funding-warning">${(typeof t === 'function' && t('campaign.funding.minNotice')) || 'Minimum campaign funding is €50.'}</div>
+    <div class="campaign-funding-warning">${(typeof t === 'function' && t('campaign.funding.stripeNote')) || 'Checkout is processed by Stripe. A payment confirmation email will be sent to you.'}</div>
+    <div class="campaign-funding-spacer"></div>
+    <div class="campaign-funding-chips">
       <button type="button" class="campaign-funding-chip is-selected" data-eur="50">€50</button>
       <button type="button" class="campaign-funding-chip" data-eur="75">€75</button>
       <button type="button" class="campaign-funding-chip" data-eur="100">€100</button>
