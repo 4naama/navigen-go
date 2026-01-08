@@ -3584,7 +3584,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
           if (!slug) return;
 
           const campaignKey = await resolveCampaignKeyForLocation(slug);
-          if (!campaignKey) campaignKey = "campaign-30d";
+          if (!campaignKey) { showToast('No campaign template found for this location.', 2200); return; }
 
           showCampaignFundingModal({ locationID: slug, campaignKey });
         })();
