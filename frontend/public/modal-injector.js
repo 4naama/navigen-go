@@ -3411,9 +3411,6 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
       <button type="button" class="campaign-funding-chip is-selected" data-eur="50">€50</button>
       <button type="button" class="campaign-funding-chip" data-eur="75">€75</button>
       <button type="button" class="campaign-funding-chip" data-eur="100">€100</button>
-      <button type="button" class="campaign-funding-chip" data-eur="150">€150</button>
-      <button type="button" class="campaign-funding-chip" data-eur="200">€200</button>
-      <button type="button" class="campaign-funding-chip" data-eur="300">€300</button>
     </div>
 
     <div class="campaign-funding-input-row">
@@ -3587,7 +3584,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
           if (!slug) return;
 
           const campaignKey = await resolveCampaignKeyForLocation(slug);
-          if (!campaignKey) campaignKey = "campaign-30d";
+          if (!campaignKey) { showToast('No campaign template found for this location.', 2200); return; }
 
           showCampaignFundingModal({ locationID: slug, campaignKey });
         })();
