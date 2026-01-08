@@ -2445,23 +2445,23 @@ button:hover {
 } /* helper */
 
 /* SYB modal only: search row shorter + ℹ️ pinned right */
-#select-location-modal .select-location-search-row{
+.syb-modal .select-location-search-row{
   position:relative;
   display:flex;
   align-items:center;
 }
 
-#select-location-modal .select-location-search-left{
+.syb-modal .select-location-search-left{
   flex:1 1 auto;
   padding-right:46px; /* reserved space for ℹ️ */
   max-width:none; /* keep the row full width */
 }
 
-#select-location-modal .select-location-search-left input{
+.syb-modal .select-location-search-left input{
   width:72%;
 }
 
-#select-location-modal .select-location-info-btn{
+.syb-modal .select-location-info-btn{
   position:absolute;
   top:0;
   right:0;
