@@ -655,5 +655,6 @@
   "campaign.funding.title": "Kampagnenfinanzierung",
   "campaign.funding.amountLabel": "Betrag (EUR)",
   "campaign.funding.continue": "Zur Zahlung fortfahren",
-  "campaign.funding.minNotice": "Die Mindestfinanzierung für eine Kampagne beträgt 50 €."
+  "campaign.funding.minNotice": "Die Mindestfinanzierung für eine Kampagne beträgt 50 €.",
+  "campaign.funding.stripeNote": "Der Checkout wird von Stripe abgewickelt. Sie erhalten eine E-Mail zur Zahlungsbestätigung."
 }

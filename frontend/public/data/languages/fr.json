@@ -655,5 +655,6 @@
   "campaign.funding.title": "Financement de la campagne",
   "campaign.funding.amountLabel": "Montant (EUR)",
   "campaign.funding.continue": "Continuer vers le paiement",
-  "campaign.funding.minNotice": "Le financement minimum de la campagne est de 50 €."
+  "campaign.funding.minNotice": "Le financement minimum de la campagne est de 50 €.",
+  "campaign.funding.stripeNote": "Le paiement est traité par Stripe. Un e-mail de confirmation de paiement vous sera envoyé."
 }

@@ -655,5 +655,6 @@
   "campaign.funding.title": "Campaign funding",
   "campaign.funding.amountLabel": "Amount (EUR)",
   "campaign.funding.continue": "Continue to payment",
-  "campaign.funding.minNotice": "Minimum campaign funding is €50."
+  "campaign.funding.minNotice": "Minimum campaign funding is €50.",
+  "campaign.funding.stripeNote": "Checkout is processed by Stripe. A payment confirmation email will be sent to you."
 }

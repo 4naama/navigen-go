@@ -655,5 +655,6 @@
   "campaign.funding.title": "Kampány finanszírozása",
   "campaign.funding.amountLabel": "Összeg (EUR)",
   "campaign.funding.continue": "Tovább a fizetéshez",
-  "campaign.funding.minNotice": "A kampány minimális finanszírozása 50 €."
+  "campaign.funding.minNotice": "A kampány minimális finanszírozása 50 €.",
+  "campaign.funding.stripeNote": "A fizetést a Stripe dolgozza fel. Fizetési visszaigazoló e-mailt kap."
 }
