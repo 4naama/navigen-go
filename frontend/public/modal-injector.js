@@ -2637,11 +2637,13 @@ export async function showSelectLocationModal() {
           const slug = String(el.dataset.slug || '').trim();
           if (!slug) return;
 
-          const dot = el.querySelector('.syb-owned-dot');
+          const dot = el.querySelector('.syb-status-dot');
           if (!dot) return;
 
           if (ownedCache.has(slug)) {
-            dot.style.display = ownedCache.get(slug) ? 'inline-block' : 'none';
+            const owned = ownedCache.get(slug) === true;
+            dot.classList.toggle('syb-taken', owned); // 🔴 taken (owned)
+            dot.classList.toggle('syb-free', !owned); // 🟢 free (unowned)
             return;
           }
 
@@ -2649,12 +2651,22 @@ export async function showSelectLocationModal() {
           u.searchParams.set('locationID', slug);
 
           const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
-          if (!r.ok) { ownedCache.set(slug, false); dot.style.display = 'none'; return; }
+          if (!r.ok) {
+            ownedCache.set(slug, false);
+            dot.classList.add('syb-free');
+            dot.classList.remove('syb-taken');
+            return;
+          }
 
           const j = await r.json().catch(() => null);
-          const owned = (j?.ownedNow === true);
+          const owned = (j?.ownedNow === true); // internal: owned
+          const vis = String(j?.visibilityState || '').trim(); // promoted | visible | hidden (per platform)
           ownedCache.set(slug, owned);
-          dot.style.display = owned ? 'inline-block' : 'none';
+
+          dot.classList.toggle('syb-taken', owned);              // 🔴 taken (owned)
+          dot.classList.toggle('syb-free', !owned && vis !== 'hidden'); // 🟢 free (unowned + discoverable)
+          dot.classList.toggle('syb-parked', !owned && vis === 'hidden'); // 🟠 parked (unowned + not discoverable)
+          dot.classList.toggle('syb-held', !owned && vis === 'visible');  // 🔵 held/visible (courtesy/hold)
         } catch {}
       }));
     })();
@@ -3703,13 +3715,19 @@ export async function createOwnerCenterModal() {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'modal-menu-item';
+      btn.classList.add('syb-card');
+
       btn.innerHTML = `
         <span class="icon-img">📍</span>
         <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-          <strong>${label}</strong>
-          ${slug ? `<br><small>${slug}</small>` : ``}
+          <strong>${x.name}</strong><br><small>${line2}</small>
         </span>
-        <span class="icon-img" aria-hidden="true">⇄</span>
+
+        <!-- Status dot (top-right): 🟢 free by default, becomes 🔴 if owned -->
+        <span class="syb-status-dot syb-free" aria-hidden="true"></span>
+
+        <!-- Gift (bottom-right) -->
+        <span class="syb-gift" aria-hidden="true">🎁</span>
       `;
 
       btn.addEventListener('click', () => {
