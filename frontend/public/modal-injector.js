@@ -3586,7 +3586,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
           const slug = String(picked?.locationID || '').trim();
           if (!slug) return;
 
-          const campaignKey = await resolveCampaignKeyForLocation(slug);
+          let campaignKey = await resolveCampaignKeyForLocation(slug);
           if (!campaignKey) campaignKey = "campaign-30d";
 
           showCampaignFundingModal({ locationID: slug, campaignKey });
