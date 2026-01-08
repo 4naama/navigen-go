@@ -2438,6 +2438,29 @@ button:hover {
   align-items:stretch;
 } /* helper */
 
+/* SYB modal only: search row shorter + ℹ️ pinned right */
+#select-location-modal .select-location-search-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+#select-location-modal .select-location-search-left{
+  flex:1 1 auto;
+  max-width:78%;
+}
+
+#select-location-modal .select-location-info-btn{
+  flex:0 0 auto;
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,.08);
+  background:#fff;
+  cursor:pointer;
+  line-height:1;
+}
+
 /* Select your business (SYB) cards: corner affordances (status + gift) */
 .modal-menu-item.syb-card{
   position:relative;

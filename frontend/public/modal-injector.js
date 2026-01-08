@@ -2418,6 +2418,22 @@ export function createSelectLocationModal() {
     searchLeft.appendChild(clearBtn);
     searchRow.appendChild(searchLeft);
 
+    // ℹ️ legend (dot meanings + 🎁)
+    const infoBtn = document.createElement('button');
+    infoBtn.type = 'button';
+    infoBtn.className = 'select-location-info-btn';
+    infoBtn.textContent = 'ℹ️';
+    infoBtn.setAttribute('aria-label', 'Info');
+
+    infoBtn.addEventListener('click', () => {
+      const msg =
+        (typeof t === 'function' && t('root.bo.selectLocation.legend')) ||
+        '🔴 Taken (already operated)\n🟢 Free (available)\n🔵 Still visible (courtesy/hold)\n🟠 Parked (inactive)\n🎁 Promoted (active campaign)';
+      showToast(msg, 4500);
+    });
+
+    searchRow.appendChild(infoBtn);
+
     // Behavior: show/hide X and clear value
 
     const syncClear = () => {
