@@ -2475,6 +2475,11 @@ button:hover {
   bottom:10px;
   font-size:16px;
   line-height:1;
+  display:none; /* default off */
+}
+
+.modal-menu-item.syb-card .syb-gift.syb-gift-on{
+  display:block; /* on only when promoted */
 }
 
 .modal-menu-item{

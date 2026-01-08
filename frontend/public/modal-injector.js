@@ -2562,7 +2562,7 @@ export async function showSelectLocationModal() {
   items.forEach((x) => bySlug.set(x.slug, x));
   const uniqItems = Array.from(bySlug.values());
   // Cache ownership probes per tab to avoid repeated /api/status calls during SYB browsing.
-  const ownedCache = new Map(); // slug -> boolean
+  const ownedCache = new Map(); // slug -> { owned:boolean, vis:string, courtesyUntil:string }
 
   const render = (q) => {
     const toks = tokensOf(q);
@@ -2642,12 +2642,30 @@ export async function showSelectLocationModal() {
           if (!slug) return;
 
           const dot = el.querySelector('.syb-status-dot');
+          const gift = el.querySelector('.syb-gift');
           if (!dot) return;
 
           if (ownedCache.has(slug)) {
-            const owned = ownedCache.get(slug) === true;
-            dot.classList.toggle('syb-taken', owned); // 🔴 taken (owned)
-            dot.classList.toggle('syb-free', !owned); // 🟢 free (unowned)
+            const s = ownedCache.get(slug) || {};
+            const owned = s.owned === true;
+            const vis = String(s.vis || '').trim();
+            const courtesyUntil = String(s.courtesyUntil || '').trim();
+
+            // 🔴 taken (owned)
+            dot.classList.toggle('syb-taken', owned);
+
+            // 🟠 parked (unowned + hidden)
+            dot.classList.toggle('syb-parked', !owned && vis === 'hidden');
+
+            // 🔵 held/courtesy (unowned + courtesy window)
+            dot.classList.toggle('syb-held', !owned && !!courtesyUntil);
+
+            // 🟢 free (unowned + discoverable baseline)
+            dot.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
+
+            // 🎁 only when promoted
+            gift.classList.toggle('syb-gift-on', vis === 'promoted');
+
             return;
           }
 
@@ -2663,14 +2681,26 @@ export async function showSelectLocationModal() {
           }
 
           const j = await r.json().catch(() => null);
-          const owned = (j?.ownedNow === true); // internal: owned
-          const vis = String(j?.visibilityState || '').trim(); // promoted | visible | hidden (per platform)
-          ownedCache.set(slug, owned);
+          const owned = (j?.ownedNow === true);
+          const vis = String(j?.visibilityState || '').trim();
+          const courtesyUntil = String(j?.courtesyUntil || '').trim();
 
-          dot.classList.toggle('syb-taken', owned);              // 🔴 taken (owned)
-          dot.classList.toggle('syb-free', !owned && vis !== 'hidden'); // 🟢 free (unowned + discoverable)
-          dot.classList.toggle('syb-parked', !owned && vis === 'hidden'); // 🟠 parked (unowned + not discoverable)
-          dot.classList.toggle('syb-held', !owned && vis === 'visible');  // 🔵 held/visible (courtesy/hold)
+          ownedCache.set(slug, { owned, vis, courtesyUntil });
+
+          // 🔴 taken (owned)
+          dot.classList.toggle('syb-taken', owned);
+
+          // 🟠 parked (unowned + hidden)
+          dot.classList.toggle('syb-parked', !owned && vis === 'hidden');
+
+          // 🔵 held/courtesy (unowned + courtesy window)
+          dot.classList.toggle('syb-held', !owned && !!courtesyUntil);
+
+          // 🟢 free (unowned + discoverable baseline)
+          dot.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
+
+          // 🎁 only when promoted
+          gift.classList.toggle('syb-gift-on', vis === 'promoted');
         } catch {}
       }));
     })();
