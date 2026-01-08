@@ -2426,10 +2426,14 @@ export function createSelectLocationModal() {
     infoBtn.setAttribute('aria-label', 'Info');
 
     infoBtn.addEventListener('click', () => {
-      const msg =
+      const raw =
         (typeof t === 'function' && t('root.bo.selectLocation.legend')) ||
-        '🔴 Taken (already operated)\n🟢 Free (available)\n🔵 Still visible (courtesy/hold)\n🟠 Parked (inactive)\n🎁 Promoted (active campaign)';
-      showToast(msg, 4500);
+        '🔴 Taken — already operated\n🟢 Free — available\n🔵 Still visible — courtesy/hold\n🟠 Parked — inactive\n🎁 Promoted — active campaign';
+
+      const lines = String(raw).replace(/\\n/g, '\n').split('\n').map(s => s.trim()).filter(Boolean);
+      const msg = lines.map(s => `• ${s}`).join('\n');
+
+      showToast(String(msg).replace(/\\n/g, '\n'), 4500);
     });
 
     searchRow.appendChild(infoBtn);

@@ -657,5 +657,5 @@
   "campaign.funding.continue": "Zur Zahlung fortfahren",
   "campaign.funding.minNotice": "Die Mindestfinanzierung für eine Kampagne beträgt 50 €.",
   "campaign.funding.stripeNote": "Der Checkout wird von Stripe abgewickelt. Sie erhalten eine E-Mail zur Zahlungsbestätigung.",
-  "root.bo.selectLocation.legend": "🔴 Belegt (bereits betrieben)\\n🟢 Frei (verfügbar)\\n🔵 Weiterhin sichtbar (Kulanz / gehalten)\\n🟠 Geparkt (inaktiv)\\n🎁 Beworben (aktive Kampagne)"
+  "root.bo.selectLocation.legend": "🔴 Belegt — bereits betrieben\\n🟢 Frei — verfügbar\\n🔵 Weiterhin sichtbar — Kulanz / gehalten\\n🟠 Geparkt — inaktiv\\n🎁 Beworben — aktive Kampagne"
 }

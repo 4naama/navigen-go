@@ -657,5 +657,5 @@
   "campaign.funding.continue": "Tovább a fizetéshez",
   "campaign.funding.minNotice": "A kampány minimális finanszírozása 50 €.",
   "campaign.funding.stripeNote": "A fizetést a Stripe dolgozza fel. Fizetési visszaigazoló e-mailt kap.",
-  "root.bo.selectLocation.legend": "🔴 Foglalt (már üzemeltetve)\\n🟢 Szabad (elérhető)\\n🔵 Továbbra is látható (udvariasság / tartás)\\n🟠 Parkoltatva (inaktív)\\n🎁 Promótált (aktív kampány)"
+  "root.bo.selectLocation.legend": "🔴 Foglalt — már üzemeltetve\\n🟢 Szabad — elérhető\\n🔵 Továbbra is látható — udvariasság / tartás\\n🟠 Parkoltatva — inaktív\\n🎁 Promótált — aktív kampány"
 }
