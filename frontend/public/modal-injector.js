@@ -2588,14 +2588,18 @@ export async function showSelectLocationModal() {
 
       const line2 = x.addrDisplay ? x.addrDisplay : x.slug;
 
+      btn.classList.add('syb-card');
+
       btn.innerHTML = `
         <span class="icon-img">📍</span>
         <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
           <strong>${x.name}</strong><br><small>${line2}</small>
         </span>
-        <span class="syb-owned-dot" style="display:none;width:10px;height:10px;border-radius:999px;background:#22c55e;flex:0 0 auto;"></span>
+
+        <span class="syb-status-dot syb-free" aria-hidden="true"></span>
+        <span class="syb-gift" aria-hidden="true">🎁</span>
       `;
-      
+
       // Owned dot is applied in a single post-render pass (prevents async races on rerender).
 
       btn.addEventListener('click', (e) => {
