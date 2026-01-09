@@ -895,40 +895,69 @@ export async function showLocationProfileModal(data) {
       const j = await r.json().catch(() => null);
       if (j?.ownedNow !== true) return;
 
-      const untilIso = String(j?.exclusiveUntil || '').trim();
-      if (!untilIso) return;
-
-      const until = new Date(untilIso);
-      if (Number.isNaN(until.getTime())) return;
-
-      const dateTxt = new Intl.DateTimeFormat(
-        document.documentElement.lang || 'en',
-        { year: 'numeric', month: 'long', day: 'numeric' }
-      ).format(until);
-
       const el = modal.querySelector('.lpm-owned-badge');
       if (!el) return;
+
+      // 🎁 is campaign-only. If no active campaign, show ONLY the taken line.
+      let campaignEndISO = '';
+
+      try {
+        const slug = String(data?.locationID || '').trim();
+        if (slug) {
+          const rCamp = await fetch('/data/campaigns.json', { cache: 'no-store' });
+          if (rCamp.ok) {
+            const rows = await rCamp.json().catch(() => null);
+            const arr = Array.isArray(rows) ? rows : [];
+
+            const now = new Date();
+            const active = arr.filter((c) => {
+              if (String(c?.locationID || '').trim() !== slug) return false;
+              if (String(c?.status || '').trim().toLowerCase() !== 'active') return false;
+
+              const start = new Date(String(c?.startDate || '').trim());
+              const end   = new Date(String(c?.endDate || '').trim());
+
+              // If dates are malformed but status=Active, still allow the 🎁 hint.
+              if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return true;
+              return now >= start && now <= end;
+            });
+
+            // pick the soonest endDate if multiple are active
+            const ends = active
+              .map(c => String(c?.endDate || '').trim())
+              .filter(Boolean)
+              .sort(); // YYYY-MM-DD sorts lexicographically correctly
+
+            campaignEndISO = ends[0] || '';
+          }
+        }
+      } catch {
+        // never break LPM; fallback is just 🔴 Taken
+      }
+
+      // No active campaign → omit 🎁 and omit date entirely
+      if (!campaignEndISO) {
+        el.innerHTML = (typeof t === 'function' && t('lpm.owned.badge.simple')) || '🔴 Taken';
+        el.style.display = 'block';
+        return;
+      }
+
+      // Active campaign → render 🎁 lines using campaign endDate (NOT exclusiveUntil)
+      const end = new Date(`${campaignEndISO}T00:00:00Z`);
+      const dateTxt = Number.isNaN(end.getTime())
+        ? campaignEndISO
+        : new Intl.DateTimeFormat(
+            document.documentElement.lang || 'en',
+            { year: 'numeric', month: 'long', day: 'numeric' }
+          ).format(end);
 
       const tpl =
         (typeof t === 'function' && t('lpm.owned.badge')) ||
         '🔴 Taken<br>🎁️ Campaign active until<br>{{date}}';
 
-      let html = tpl.replace('{{date}}', dateTxt);
-
-      // Normalize legacy "🔴 Taken · Campaign active until<br>{{date}}" into 3 lines
-      if (html.includes('·') && !html.includes('🎁️')) {
-        const [left, ...rest] = html.split('·');
-        html = `${left.trim()}<br>🎁️ ${rest.join('·').trim()}`;
-      }
-
-      // Ensure the date is always on its own line
-      if (dateTxt && !html.includes(`<br>${dateTxt}`)) {
-        html = html.replace(dateTxt, `<br>${dateTxt}`);
-      }
-
-      el.innerHTML = html;
-
+      el.innerHTML = String(tpl).replace('{{date}}', dateTxt);
       el.style.display = 'block';
+
     } catch {
       // never break LPM
     }
