@@ -2452,21 +2452,12 @@ button:hover {
 }
 
 .syb-modal .select-location-search-left{
-  flex: 1 1 auto;
-  margin-right: 46px; /* reserve space for ℹ️ without pushing the clear X outside the input */
-  max-width: none;    /* keep the row full width */
-  min-width: 0;       /* allow proper shrinking in flex */
-}
+  flex:1 1 auto;
+  padding-right:46px; /* reserved space for ℹ️ */
+  max-width:none; /* keep the row full width */
 
-/* #3 Replace this line:
-   .syb-modal #select-location-search-left{
-     position: relative; /* anchor for input + × */
-   }
-*/
-
-/* #3 Replace with this line: */
-.syb-modal .select-location-search-left{
-  position: relative; /* anchor for input + × */
+  /* Make the input group shorter (like main page), without breaking X positioning */
+  width:72%;
 }
 
 .syb-modal .select-location-search-left input{
@@ -2783,7 +2774,7 @@ button:hover {
 }
 
 /* SYB clear × — align to the actual input width (not the wrapper) */
-.syb-modal #select-location-search-left{
+.syb-modal .select-location-search-left{
   position: relative; /* anchor for input + × */
 }
 
@@ -2791,7 +2782,7 @@ button:hover {
   position: relative; /* make input the visual reference */
 }
 
-.syb-modal #select-location-clear-search{
+.syb-modal .select-location-search-left #select-location-clear-search{
   position: absolute;
   top: 50%;
   right: 10px;              /* same as main search */
