@@ -2455,10 +2455,13 @@ button:hover {
   flex:1 1 auto;
   padding-right:46px; /* reserved space for ℹ️ */
   max-width:none; /* keep the row full width */
+
+  /* Make the input group shorter (like main page), without breaking X positioning */
+  width:72%;
 }
 
 .syb-modal .select-location-search-left input{
-  width:72%;
+  width:100%;
 }
 
 .syb-modal .select-location-info-btn{
@@ -2782,9 +2785,9 @@ button:hover {
 .syb-modal #select-location-clear-search{
   position: absolute;
   top: 50%;
-  left: calc(72%);   /* align with input’s right edge */
+  right: 10px;              /* same as main search */
   transform: translateY(-50%);
-  display: none;            /* revealed when there is content */
+  display: none;
   z-index: 11;
 }
 
