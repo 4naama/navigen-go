@@ -2770,14 +2770,22 @@ button:hover {
   position: relative; /* safe; does not affect layout */
 }
 
-/* SYB clear × sits inside the sticky search wrapper (same idea as #clear-search) */
-#select-location-modal #select-location-clear-search{
+/* SYB clear × — align to the actual input width (not the wrapper) */
+.syb-modal #select-location-search-left{
+  position: relative; /* anchor for input + × */
+}
+
+.syb-modal #select-location-search{
+  position: relative; /* make input the visual reference */
+}
+
+.syb-modal #select-location-clear-search{
   position: absolute;
   top: 50%;
-  right: 10px;
+  left: calc(72% - 26px);   /* align with input’s right edge */
   transform: translateY(-50%);
   display: none;            /* revealed when there is content */
-  z-index: 11;              /* above the input */
+  z-index: 11;
 }
 
 /* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */
