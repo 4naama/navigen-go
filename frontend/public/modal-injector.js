@@ -2587,7 +2587,6 @@ export async function showSelectLocationModal() {
   };
 
   const items = await loadProfiles();
-  activeCampaignSlugs = await loadActiveCampaignSlugs();
 
   // De-dupe by authoritative slug (locationID) only
   const bySlug = new Map();
@@ -2614,25 +2613,25 @@ export async function showSelectLocationModal() {
         const st = String(c?.status || '').trim().toLowerCase();
         if (st !== 'active') return false;
 
-        // dates in campaigns.json are not ISO; Date(...) parse is acceptable here (client-only hint).
         const start = new Date(String(c?.startDate || '').trim());
         const end   = new Date(String(c?.endDate || '').trim());
         if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return true; // fail-open on bad dates for UI hint
         return now >= start && now <= end;
       };
 
-      const slugs = new Set(
+      return new Set(
         arr
           .filter(isActiveRow)
           .map(c => String(c?.locationID || '').trim())
           .filter(Boolean)
       );
-
-      return slugs;
     } catch {
       return new Set();
     }
   };
+
+  // Load once per SYB open (before first render)
+  activeCampaignSlugs = await loadActiveCampaignSlugs();
 
   const render = (q) => {
     const toks = tokensOf(q);
@@ -2674,8 +2673,6 @@ export async function showSelectLocationModal() {
       if (activeCampaignSlugs.has(String(x.slug || '').trim())) {
         btn.querySelector('.syb-gift')?.classList.add('syb-gift-on');
       }
-
-      if (activeCampaignSlugs.has(String(x.slug || '').trim())) btn.querySelector('.syb-gift')?.classList.add('syb-gift-on');
 
       // Owned dot is applied in a single post-render pass (prevents async races on rerender).
 
