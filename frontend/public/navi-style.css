@@ -2782,7 +2782,7 @@ button:hover {
 .syb-modal #select-location-clear-search{
   position: absolute;
   top: 50%;
-  left: calc(72% - 5px);   /* align with input’s right edge */
+  left: calc(72%);   /* align with input’s right edge */
   transform: translateY(-50%);
   display: none;            /* revealed when there is content */
   z-index: 11;
