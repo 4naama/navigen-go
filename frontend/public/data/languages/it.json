@@ -640,7 +640,7 @@
   "root.bo.selectLocation.title": "Seleziona la tua attività",
   "root.bo.selectLocation.placeholder": "Cerca qui…",
   "root.bo.selectLocation.none": "Nessun risultato.",
-  "lpm.owned.badge": "🔴 Occupato · Campagna attiva fino al<br>{{date}}",
+  "lpm.owned.badge": "🔴 Occupato<br>🎁️ Campagna attiva fino al<br>{{date}}",
   "status.badge.stillVisible": "Ancora visibile",
   "status.badge.inactive": "Inattivo",
   "exampleDash.disclaimer.body": "Queste analisi appartengono ad altre sedi e sono mostrate solo a scopo dimostrativo.",

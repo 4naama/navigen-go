@@ -911,9 +911,23 @@ export async function showLocationProfileModal(data) {
 
       const tpl =
         (typeof t === 'function' && t('lpm.owned.badge')) ||
-        '🔴 Taken · Campaign active until<br>{{date}}';
+        '🔴 Taken<br>🎁️ Campaign active until<br>{{date}}';
 
-      el.innerHTML = tpl.replace('{{date}}', dateTxt).replace(' · ', ' · ').replace(' until ', ' until<br>');
+      let html = tpl.replace('{{date}}', dateTxt);
+
+      // Normalize legacy "🔴 Taken · Campaign active until<br>{{date}}" into 3 lines
+      if (html.includes('·') && !html.includes('🎁️')) {
+        const [left, ...rest] = html.split('·');
+        html = `${left.trim()}<br>🎁️ ${rest.join('·').trim()}`;
+      }
+
+      // Ensure the date is always on its own line
+      if (dateTxt && !html.includes(`<br>${dateTxt}`)) {
+        html = html.replace(dateTxt, `<br>${dateTxt}`);
+      }
+
+      el.innerHTML = html;
+
       el.style.display = 'block';
     } catch {
       // never break LPM
