@@ -937,7 +937,7 @@ export async function showLocationProfileModal(data) {
 
       // No active campaign → omit 🎁 and omit date entirely
       if (!campaignEndISO) {
-        el.innerHTML = (typeof t === 'function' && t('lpm.owned.badge.simple')) || '🔴 Taken';
+        el.innerHTML = (typeof t === 'function' && t('lpm.owned.badge.taken')) || '🔴 Taken';
         el.style.display = 'block';
         return;
       }
@@ -951,9 +951,15 @@ export async function showLocationProfileModal(data) {
             { year: 'numeric', month: 'long', day: 'numeric' }
           ).format(end);
 
-      const tpl =
-        (typeof t === 'function' && t('lpm.owned.badge')) ||
-        '🔴 Taken<br>🎁️ Campaign active until<br>{{date}}';
+      const takenLine =
+        (typeof t === 'function' && t('lpm.owned.badge.taken')) ||
+        '🔴 Taken';
+
+      const campaignTpl =
+        (typeof t === 'function' && t('lpm.owned.badge.campaignActive')) ||
+        '🎁️ Campaign active until<br>{{date}}';
+
+      el.innerHTML = `${takenLine}<br>${String(campaignTpl).replace('{{date}}', dateTxt)}`;
 
       el.innerHTML = String(tpl).replace('{{date}}', dateTxt);
       el.style.display = 'block';
