@@ -640,7 +640,7 @@
   "root.bo.selectLocation.title": "Select your business",
   "root.bo.selectLocation.placeholder": "Search here…",
   "root.bo.selectLocation.none": "No matches.",
-  "lpm.owned.badge": "🔴 Taken · Campaign active until {{date}}",
+  "lpm.owned.badge": "🔴 Taken · Campaign active until<br>{{date}}",
   "status.badge.stillVisible": "Still visible",
   "status.badge.inactive": "Inactive",
   "exampleDash.disclaimer.body": "These analytics belong to other locations and are shown for demonstration only.",

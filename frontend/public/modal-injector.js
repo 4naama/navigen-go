@@ -903,7 +903,7 @@ export async function showLocationProfileModal(data) {
 
       const dateTxt = new Intl.DateTimeFormat(
         document.documentElement.lang || 'en',
-        { month: 'short', day: 'numeric' }
+        { year: 'numeric', month: 'long', day: 'numeric' }
       ).format(until);
 
       const el = modal.querySelector('.lpm-owned-badge');
@@ -911,9 +911,9 @@ export async function showLocationProfileModal(data) {
 
       const tpl =
         (typeof t === 'function' && t('lpm.owned.badge')) ||
-        '🔴 Taken · Campaign active until {{date}}';
+        '🔴 Taken · Campaign active until<br>{{date}}';
 
-      el.textContent = tpl.replace('{{date}}', dateTxt);
+      el.innerHTML = tpl.replace('{{date}}', dateTxt).replace(' · ', ' · ').replace(' until ', ' until<br>');
       el.style.display = 'block';
     } catch {
       // never break LPM
