@@ -911,7 +911,7 @@ export async function showLocationProfileModal(data) {
 
       const tpl =
         (typeof t === 'function' && t('lpm.owned.badge')) ||
-        '🟢 Already active · Campaign running until {{date}}';
+        '🔴 Taken · Campaign active until {{date}}';
 
       el.textContent = tpl.replace('{{date}}', dateTxt);
       el.style.display = 'block';

@@ -587,7 +587,7 @@ function renderBusinessOwnersGroup() {
             const j = r.ok ? await r.json().catch(() => null) : null;
 
             if (j?.ownedNow === true) {
-              showToast('This location is already active. Open 📈 to restore access.', 2400);
+              showToast('This location is already taken.\n\nAccess was created on a different device.\nOpen 📈 to manage this location here.', 4000);
               return;
             }
           } catch {

@@ -640,7 +640,7 @@
   "root.bo.selectLocation.title": "Válassza ki vállalkozását",
   "root.bo.selectLocation.placeholder": "Keresés itt…",
   "root.bo.selectLocation.none": "Nincs találat.",
-  "lpm.owned.badge": "🟢 Már aktív · A kampány {{date}}-ig fut",
+  "lpm.owned.badge": "🔴 Foglalt · A kampány aktív {{date}}-ig",
   "status.badge.stillVisible": "Továbbra is látható",
   "status.badge.inactive": "Inaktív",
   "exampleDash.disclaimer.body": "Ezek az elemzések más helyszínekhez tartoznak, és csak bemutatási célokat szolgálnak.",

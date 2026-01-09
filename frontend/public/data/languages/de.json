@@ -640,7 +640,7 @@
   "root.bo.selectLocation.title": "Wählen Sie Ihr Unternehmen aus",
   "root.bo.selectLocation.placeholder": "Hier suchen…",
   "root.bo.selectLocation.none": "Keine Treffer.",
-  "lpm.owned.badge": "🟢 Bereits aktiv · Kampagne läuft bis {{date}}",
+  "lpm.owned.badge": "🔴 Belegt · Kampagne aktiv bis {{date}}",
   "status.badge.stillVisible": "Weiterhin sichtbar",
   "status.badge.inactive": "Inaktiv",
   "exampleDash.disclaimer.body": "Diese Analysen gehören zu anderen Standorten und dienen nur zu Demonstrationszwecken.",
