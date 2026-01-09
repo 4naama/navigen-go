@@ -2341,6 +2341,7 @@ export function createSelectLocationModal() {
 
   // Ensure it's hidden after injection (same pattern used elsewhere)
   modal.classList.add('hidden');
+  modal.classList.add('syb-modal'); // SYB scope: Select your business modal only
 
   const topBar = document.createElement('div');
   topBar.className = 'modal-top-bar';
@@ -4295,7 +4296,6 @@ export function createMyStuffModal() {
 
   // ✅ Ensure it's hidden after injection
   modal.classList.add('hidden');
-  modal.classList.add('syb-modal'); // SYB scope: prevents main-page search styling bleed
 
   const topBar = document.createElement('div');
   topBar.className = 'modal-top-bar';
