@@ -660,5 +660,5 @@
   "campaign.funding.stripeNote": "El pago es procesado por Stripe. Se te enviará un correo electrónico de confirmación del pago.",
   "root.bo.selectLocation.legend": "🔴 Ocupado\\nYa operado.\\n\\n🟢 Libre\\nDisponible.\\n\\n🔵 Todavía visible\\nCortesía / retenido.\\n\\n🟠 Aparcado\\nInactivo.\\n\\n🎁 Promocionado\\nCampaña activa.",
   "bo.toast.takenAccessOtherDevice": "Esta ubicación ya está ocupada.\\n\\nEl acceso se creó en otro dispositivo.\\nHaz clic en el botón 📈 para gestionar esta ubicación aquí.",
-  "bo.toast.noCampaignTemplate": "No se encontró ninguna plantilla de campaña para esta ubicación."
+  "bo.toast.noCampaignTemplate": "Esta ubicación no tiene ninguna campaña configurada actualmente."
 }
