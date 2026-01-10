@@ -944,15 +944,16 @@ export async function showLocationProfileModal(data) {
 
       // Active campaign → render 🎁 lines using campaign endDate (NOT exclusiveUntil)
       const end = new Date(`${campaignEndISO}T00:00:00Z`);
+      const endSafe = Number.isNaN(end.getTime()) ? new Date(campaignEndISO) : end;
       const lang = document.documentElement.lang || 'en';
       const safeLang = /^en/i.test(lang) ? 'en-US' : lang;
 
-      const dateTxt = Number.isNaN(end.getTime())
-        ? String(campaignEndISO || '')
-        : `${new Intl.DateTimeFormat(safeLang, { weekday: 'short' }).format(end)} - ${new Intl.DateTimeFormat(
-            safeLang,
+      const dateTxt = Number.isNaN(endSafe.getTime())
+        ? ''
+        : `${new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(endSafe)} - ${new Intl.DateTimeFormat(
+            'en-US',
             { month: 'short', day: '2-digit', year: 'numeric' }
-          ).format(end)}`;
+          ).format(endSafe)}`;
 
       const takenLine =
         (typeof t === 'function' && t('lpm.owned.badge.taken')) ||
