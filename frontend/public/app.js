@@ -587,7 +587,11 @@ function renderBusinessOwnersGroup() {
             const j = r.ok ? await r.json().catch(() => null) : null;
 
             if (j?.ownedNow === true) {
-              showToast('This location is already taken.\n\nAccess was created on a different device.\nOpen 📈 to manage this location here.', 4000);
+              showToast(
+                (typeof t === 'function' && t('bo.toast.takenAccessOtherDevice')) ||
+                'This location is already taken.\n\nAccess was created on a different device.\nOpen 📈 to manage this location here.',
+                5000
+              );
               return;
             }
           } catch {
@@ -600,7 +604,11 @@ function renderBusinessOwnersGroup() {
           // Resolve the campaignKey from /data/campaigns.json so dataset keys can be professional (brandKey__locationID__seq).
           const campaignKey = await resolveCampaignKeyForLocation(slug);
           if (!campaignKey) {
-            showToast('No campaign template found for this location.', 2200);
+            showToast(
+              (typeof t === 'function' && t('bo.toast.noCampaignTemplate')) ||
+              'No campaign template found for this location.',
+              2200
+            );
             return;
           }
           showCampaignFundingModal({ locationID: slug, campaignKey });

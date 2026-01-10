@@ -961,7 +961,7 @@ export async function showLocationProfileModal(data) {
 
       el.innerHTML = `${takenLine}<br>${String(campaignTpl).replace('{{date}}', dateTxt)}`;
 
-      el.innerHTML = String(tpl).replace('{{date}}', dateTxt);
+      // keep composed output (takenLine + campaignTpl); do not overwrite
       el.style.display = 'block';
 
     } catch {
