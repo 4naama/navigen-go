@@ -4208,7 +4208,8 @@ export function showToast(message, opts = 4000) {
 
   const body = document.createElement('div');
   body.className = 'toast-body';
-  body.innerHTML = message;
+  // Normalize literal "\n" sequences from translations into real line breaks in HTML
+  body.innerHTML = String(message).replace(/\\n/g, '\n').replace(/\n/g, '<br>');
   toast.appendChild(body);
 
   document.body.appendChild(toast);
