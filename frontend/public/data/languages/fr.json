@@ -658,5 +658,7 @@
   "campaign.funding.continue": "Continuer vers le paiement",
   "campaign.funding.minNotice": "Le financement minimum de la campagne est de 50 €.",
   "campaign.funding.stripeNote": "Le paiement est traité par Stripe. Un e-mail de confirmation de paiement vous sera envoyé.",
-  "root.bo.selectLocation.legend": "🔴 Pris\\nDéjà exploité.\\n\\n🟢 Libre\\nDisponible.\\n\\n🔵 Toujours visible\\nCourtoisie / maintien.\\n\\n🟠 En pause\\nInactif.\\n\\n🎁 Promu\\nCampagne active."
+  "root.bo.selectLocation.legend": "🔴 Pris\\nDéjà exploité.\\n\\n🟢 Libre\\nDisponible.\\n\\n🔵 Toujours visible\\nCourtoisie / maintien.\\n\\n🟠 En pause\\nInactif.\\n\\n🎁 Promu\\nCampagne active.",
+  "bo.toast.takenAccessOtherDevice": "Cet emplacement est déjà utilisé.\\n\\nL’accès a été créé sur un autre appareil.\\nCliquez sur le bouton 📈 pour gérer cet emplacement ici.",
+  "bo.toast.noCampaignTemplate": "Aucun modèle de campagne n’a été trouvé pour cet emplacement."
 }
