@@ -2182,12 +2182,33 @@ async function initLpmImageSlider(modal, data) {
         // This call is still owner-gated and returns no analytics when blocked.
         const owned = await isOwnedByStatus();
 
-        // When owned, always open Dash.
-        // Dash itself handles 401 / 403 deterministically.
+        // When owned, decide the correct owner path on THIS device:
+        // - session for this location exists -> Open Dash
+        // - session exists but for another location -> show Owner Settings with Owner Center CTA
+        // - no session on device -> show Owner Settings with Restore access CTA
         if (owned) {
-          const seg = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawULID) ? rawULID : target;
-          const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-          window.open(href, '_blank', 'noopener,noreferrer');
+          let ulids = [];
+          try {
+            const r = await fetch('/api/owner/sessions', { cache: 'no-store', credentials: 'include' });
+            const j = r.ok ? await r.json().catch(() => null) : null;
+            ulids = Array.isArray(j?.items) ? j.items : [];
+          } catch { ulids = []; }
+
+          const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawULID);
+          const hasThis = isUlid ? ulids.includes(rawULID) : false;
+
+          if (hasThis) {
+            const href = `https://navigen.io/dash/${encodeURIComponent(rawULID)}`;
+            window.open(href, '_blank', 'noopener,noreferrer');
+            return;
+          }
+
+          // If we have any device-bound sessions, but not for this LPM, guide to switch.
+          // If none, guide to restore.
+          showOwnerSettingsModal({
+            variant: 'restore',
+            locationIdOrSlug: target
+          });
           return;
         }
 
@@ -3726,6 +3747,18 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       onClick: () => {
         hideModal(id);
         showRestoreAccessModal();
+      }
+    });
+
+    // Offer explicit switching (Owner Center) when the user is signed-in for another location on this device.
+    addItem({
+      id: 'owner-center',
+      icon: '🗂️',
+      title: _ownerText('owner.center.title', 'Owner Center'),
+      desc: _ownerText('root.bo.ownerCenter.desc', 'Switch between locations you manage on this device.'),
+      onClick: () => {
+        hideModal(id);
+        showOwnerCenterModal();
       }
     });
 
