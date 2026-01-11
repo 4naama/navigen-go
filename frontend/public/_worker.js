@@ -378,9 +378,14 @@ export default {
       const apiBase = 'https://navigen-api.4naama.workers.dev';
       const target = new URL(url.pathname + url.search, apiBase);
 
+      const h = new Headers(req.headers);
+      // Ensure Cookie is forwarded to the API Worker (ng_dev is required for devsess indexing).
+      h.set('Cookie', req.headers.get('cookie') || '');
+      h.set('X-NG-Source', 'pages-worker');
+
       const r = await fetch(target.toString(), {
         method: req.method,
-        headers: req.headers,
+        headers: h,
         redirect: 'manual'
       });
 
@@ -397,9 +402,13 @@ export default {
       const apiBase = 'https://navigen-api.4naama.workers.dev';
       const target = new URL(url.pathname + url.search, apiBase);
 
+      const h = new Headers(req.headers);
+      h.set('Cookie', req.headers.get('cookie') || '');
+      h.set('X-NG-Source', 'pages-worker');
+
       const r = await fetch(target.toString(), {
         method: req.method,
-        headers: req.headers
+        headers: h
       });
 
       return new Response(r.body, {
