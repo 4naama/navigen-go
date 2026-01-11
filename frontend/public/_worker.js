@@ -42,6 +42,20 @@ function rateHit(req){
 export default {
   async fetch(req, env, ctx) { // include ctx so waitUntil works
     const url = new URL(req.url);
+    
+    // Pages-side diag: confirms whether the Pages Worker receives the browser Cookie header.
+    // Remove after verification.
+    if (url.pathname === '/_diag/pages-cookie') {
+      const c = req.headers.get('cookie') || '';
+      return new Response(JSON.stringify({
+        hasCookieHeader: !!c,
+        cookieHeaderLen: c.length,
+        hasNgDev: /(?:^|;\s*)ng_dev=/.test(c)
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+      });
+    }  
 
     // QR scan tracker: when a page has ?lp=<slug>, forward qr-scan to navigen-api.4naama.workers.dev, then continue normal handling
     {
@@ -390,11 +404,11 @@ export default {
       });
 
       // Pass through Set-Cookie + Location and force no-store to avoid any intermediary caching.
-      const h = new Headers(r.headers);
-      h.set('Cache-Control', 'no-store');
-      h.set('Referrer-Policy', 'no-referrer');
+      const hRes = new Headers(r.headers);
+      hRes.set('Cache-Control', 'no-store');
+      hRes.set('Referrer-Policy', 'no-referrer');
 
-      return new Response(r.body, { status: r.status, headers: h });
+      return new Response(r.body, { status: r.status, headers: hRes });
     }
 
     // /api/_diag/* — proxy to API Worker (safe diagnostics only; keep Pages non-authoritative)
