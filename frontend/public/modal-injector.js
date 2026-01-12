@@ -3885,6 +3885,44 @@ export async function createOwnerCenterModal() {
     ulids = Array.isArray(j?.items) ? j.items : [];
   } catch { ulids = []; }
 
+  // 🎁 Campaign presence cache for Owner Center:
+  // Source of truth: /data/campaigns.json rows where status=Active AND today is within [startDate,endDate].
+  let activeCampaignSlugs = new Set();
+
+  const loadActiveCampaignSlugs = async () => {
+    try {
+      const r = await fetch('/data/campaigns.json', { cache: 'no-store' });
+      if (!r.ok) return new Set();
+
+      const rows = await r.json().catch(() => null);
+      const arr = Array.isArray(rows) ? rows : [];
+
+      const now = new Date();
+
+      const isActiveRow = (c) => {
+        const st = String(c?.status || '').trim().toLowerCase();
+        if (st !== 'active') return false;
+
+        const start = new Date(String(c?.startDate || '').trim());
+        const end   = new Date(String(c?.endDate || '').trim());
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return true; // fail-open on bad dates for UI hint
+        return now >= start && now <= end;
+      };
+
+      return new Set(
+        arr
+          .filter(isActiveRow)
+          .map(c => String(c?.locationID || '').trim())
+          .filter(Boolean)
+      );
+    } catch {
+      return new Set();
+    }
+  };
+
+  // Load once per Owner Center open (before rendering rows)
+  activeCampaignSlugs = await loadActiveCampaignSlugs();
+
   if (!ulids.length) {
     const p = document.createElement('p');
     p.className = 'muted';
@@ -3931,6 +3969,53 @@ export async function createOwnerCenterModal() {
         <!-- Gift (bottom-right) -->
         <span class="syb-gift" aria-hidden="true">🎁</span>
       `;
+
+      // Decorate status dot + 🎁 gift (SYB parity)
+      // - 🎁: active campaign in /data/campaigns.json (loaded once per modal)
+      // - dot: /api/status (authoritative ownership signal; no creds)
+      ;(async () => {
+        try {
+          const dotEl = btn.querySelector('.syb-status-dot');
+          const giftEl = btn.querySelector('.syb-gift');
+
+          // 🎁 Campaign hint: show only if this location has an active campaign in campaigns.json
+          if (giftEl && slug && activeCampaignSlugs.has(String(slug).trim())) {
+            giftEl.classList.add('syb-gift-on');
+          }
+
+          if (!dotEl) return;
+
+          // Prefer slug for status calls (status endpoint accepts both; slug keeps it readable)
+          const q = String(slug || u || '').trim();
+          if (!q) return;
+
+          const st = new URL('/api/status', location.origin);
+          st.searchParams.set('locationID', q);
+
+          const r = await fetch(st.toString(), { cache: 'no-store', credentials: 'omit' });
+          if (!r.ok) return;
+
+          const j = await r.json().catch(() => null);
+          const owned = (j?.ownedNow === true);
+          const vis = String(j?.visibilityState || '').trim();
+          const courtesyUntil = String(j?.courtesyUntil || '').trim();
+
+          // 🔴 taken (owned)
+          dotEl.classList.toggle('syb-taken', owned);
+
+          // 🟠 parked (unowned + hidden)
+          dotEl.classList.toggle('syb-parked', !owned && vis === 'hidden');
+
+          // 🔵 held/courtesy (unowned + courtesy window)
+          dotEl.classList.toggle('syb-held', !owned && !!courtesyUntil);
+
+          // 🟢 free (unowned + discoverable baseline)
+          dotEl.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
+
+        } catch {
+          // never break Owner Center rendering
+        }
+      })();
 
       btn.addEventListener('click', () => {
         // Switch server-side and open Dash for that ULID
