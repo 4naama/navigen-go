@@ -2194,21 +2194,12 @@ async function initLpmImageSlider(modal, data) {
             ulids = Array.isArray(j?.items) ? j.items : [];
           } catch { ulids = []; }
 
+          // Owned locations should open Dash freely once ownership is confirmed by /api/status.
+          // Session portability is handled by /owner/restore; do not add a second client-side allowlist gate here.
           const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawULID);
-          const hasThis = isUlid ? ulids.includes(rawULID) : false;
-
-          if (hasThis) {
-            const href = `https://navigen.io/dash/${encodeURIComponent(rawULID)}`;
-            window.open(href, '_blank', 'noopener,noreferrer');
-            return;
-          }
-
-          // If we have any device-bound sessions, but not for this LPM, guide to switch.
-          // If none, guide to restore.
-          showOwnerSettingsModal({
-            variant: 'restore',
-            locationIdOrSlug: target
-          });
+          const seg = isUlid ? rawULID : target; // allow slug if ULID missing in payload
+          const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
+          window.open(href, '_blank', 'noopener,noreferrer');
           return;
         }
 
