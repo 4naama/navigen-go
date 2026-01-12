@@ -3900,10 +3900,12 @@ export async function createOwnerCenterModal() {
       btn.className = 'modal-menu-item';
       btn.classList.add('syb-card');
 
+      // Render using local variables from this loop (label/slug/u).
+      // Reason: this modal does not have SYB row context (no x/line2 in scope).
       btn.innerHTML = `
         <span class="icon-img">📍</span>
         <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-          <strong>${x.name}</strong><br><small>${line2}</small>
+          <strong>${label}</strong><br><small>${slug || u}</small>
         </span>
 
         <!-- Status dot (top-right): 🟢 free by default, becomes 🔴 if owned -->
