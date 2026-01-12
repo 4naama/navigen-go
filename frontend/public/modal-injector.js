@@ -2192,7 +2192,24 @@ async function initLpmImageSlider(modal, data) {
         // - session exists but for another location -> show Owner Settings with Owner Center CTA
         // - no session on device -> show Owner Settings with Restore access CTA
         if (owned) {
-          // Owned locations should open Dash freely once ownership is confirmed by /api/status.
+          // Owned locations: open Dash only when this device already holds a valid owner session.
+          // Otherwise guide to Restore access so we don't land on a Denied dashboard.
+          let hasOwnerSession = false;
+          try {
+            const r = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
+            const j = r.ok ? await r.json().catch(() => null) : null;
+            hasOwnerSession = (j?.hasOpSessCookie === true) && (j?.kvHit === true);
+          } catch { hasOwnerSession = false; }
+
+          if (!hasOwnerSession) {
+            showOwnerSettingsModal({
+              variant: 'restore',
+              locationIdOrSlug: target,
+              locationName: String(data?.displayName ?? data?.name ?? '').trim()
+            });
+            return;
+          }
+
           // Always prefer the canonical ULID returned by /api/status to avoid slug/alias drift across devices.
           const seg = ownedRes.canonicalULID || String(rawULID || target).trim();
           const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
