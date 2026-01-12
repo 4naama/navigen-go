@@ -3237,8 +3237,14 @@ export function createRestoreAccessModal() {
   btn.addEventListener('click', () => {
     const pi = String(input.value || '').trim();
     if (!pi) { showToast('Missing Payment ID', 1800); return; }
-    const next = encodeURIComponent(window.location.pathname + window.location.search);
-    window.location.href = `/owner/restore?pi=${encodeURIComponent(pi)}&next=${next}`;
+    const qp = new URLSearchParams(window.location.search);
+    const loc = String(qp.get('locationID') || '').trim();
+    // If we know which location the user is on, go straight to that dash (slug is OK).
+    // Otherwise omit next so /owner/restore defaults to /dash/<resolved ulid>.
+    const next = loc ? encodeURIComponent(`/dash/${encodeURIComponent(loc)}`) : '';
+    window.location.href = next
+      ? `/owner/restore?pi=${encodeURIComponent(pi)}&next=${next}`
+      : `/owner/restore?pi=${encodeURIComponent(pi)}`;
   });
 
   inner.appendChild(btn);

@@ -632,7 +632,7 @@ function renderBusinessOwnersGroup() {
         icon: "📈",
         titleKey: "root.bo.examples.title",
         descKey: "root.bo.examples.desc",
-        onClick: () => showExampleDashboardsModal()
+        onClick: () => showOwnerCenterModal()
       },      
       {
         icon: "🔑",
