@@ -42,20 +42,6 @@ function rateHit(req){
 export default {
   async fetch(req, env, ctx) { // include ctx so waitUntil works
     const url = new URL(req.url);
-    
-    // Pages-side diag: confirms whether the Pages Worker receives the browser Cookie header.
-    // Remove after verification.
-    if (url.pathname === '/_diag/pages-cookie') {
-      const c = req.headers.get('cookie') || '';
-      return new Response(JSON.stringify({
-        hasCookieHeader: !!c,
-        cookieHeaderLen: c.length,
-        hasNgDev: /(?:^|;\s*)ng_dev=/.test(c)
-      }), {
-        status: 200,
-        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
-      });
-    }  
 
     // QR scan tracker: when a page has ?lp=<slug>, forward qr-scan to navigen-api.4naama.workers.dev, then continue normal handling
     {
@@ -394,7 +380,11 @@ export default {
 
       const h = new Headers(req.headers);
       // Ensure Cookie is forwarded to the API Worker (ng_dev is required for devsess indexing).
-      h.set('Cookie', req.headers.get('cookie') || '');
+      const cookieIn = req.headers.get('cookie') || '';
+      const ngDev = (cookieIn.match(/(?:^|;\s*)ng_dev=([^;]+)/) || [])[1] || '';
+      const opSess = (cookieIn.match(/(?:^|;\s*)op_sess=([^;]+)/) || [])[1] || '';
+      if (ngDev) h.set('X-NG-Dev', ngDev);
+      if (opSess) h.set('X-NG-OpSess', opSess);
       h.set('X-NG-Source', 'pages-worker');
 
       const r = await fetch(target.toString(), {
@@ -417,7 +407,11 @@ export default {
       const target = new URL(url.pathname + url.search, apiBase);
 
       const h = new Headers(req.headers);
-      h.set('Cookie', req.headers.get('cookie') || '');
+      const cookieIn = req.headers.get('cookie') || '';
+      const ngDev = (cookieIn.match(/(?:^|;\s*)ng_dev=([^;]+)/) || [])[1] || '';
+      const opSess = (cookieIn.match(/(?:^|;\s*)op_sess=([^;]+)/) || [])[1] || '';
+      if (ngDev) h.set('X-NG-Dev', ngDev);
+      if (opSess) h.set('X-NG-OpSess', opSess);
       h.set('X-NG-Source', 'pages-worker');
 
       const r = await fetch(target.toString(), {
@@ -439,6 +433,12 @@ export default {
       const h = new Headers(req.headers);         // forward Cookie + all client headers
       h.set('Accept', 'application/json');
       h.set('X-NG-Source', 'pages-worker');
+      
+      const cookieIn = req.headers.get('cookie') || '';
+      const ngDev = (cookieIn.match(/(?:^|;\s*)ng_dev=([^;]+)/) || [])[1] || '';
+      const opSess = (cookieIn.match(/(?:^|;\s*)op_sess=([^;]+)/) || [])[1] || '';
+      if (ngDev) h.set('X-NG-Dev', ngDev);
+      if (opSess) h.set('X-NG-OpSess', opSess);
 
       const r = await fetch(target.toString(), {
         method: 'GET',
@@ -465,6 +465,12 @@ export default {
       const h = new Headers(req.headers);
       h.set('Accept', 'application/json');
       h.set('X-NG-Source', 'pages-worker');
+
+      const cookieIn = req.headers.get('cookie') || '';
+      const ngDev = (cookieIn.match(/(?:^|;\s*)ng_dev=([^;]+)/) || [])[1] || '';
+      const opSess = (cookieIn.match(/(?:^|;\s*)op_sess=([^;]+)/) || [])[1] || '';
+      if (ngDev) h.set('X-NG-Dev', ngDev);
+      if (opSess) h.set('X-NG-OpSess', opSess);
 
       const r = await fetch(target.toString(), {
         method: 'GET',

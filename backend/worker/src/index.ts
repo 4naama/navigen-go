@@ -234,6 +234,9 @@ function readCookie(header: string, name: string): string {
 }
 
 function readDeviceId(req: Request): string {
+  const devHdr = String(req.headers.get("X-NG-Dev") || req.headers.get("x-ng-dev") || "").trim();
+  if (devHdr) return devHdr;
+
   const dev = readCookie(req.headers.get("Cookie") || "", "ng_dev");
   return String(dev || "").trim();
 }
@@ -254,7 +257,8 @@ type OwnerSession = {
 };
 
 async function requireOwnerSession(req: Request, env: Env): Promise<{ ulid: string } | Response> {
-  const sid = readCookie(req.headers.get("Cookie") || "", "op_sess");
+  const sidHdr = String(req.headers.get("X-NG-OpSess") || req.headers.get("x-ng-opsess") || "").trim();
+  const sid = sidHdr || readCookie(req.headers.get("Cookie") || "", "op_sess");
   if (!sid) {
     return new Response("Denied", {
       status: 401,
@@ -801,7 +805,8 @@ export default {
         // This prevents "Owner Center empty" when sessions exist but were never indexed to ng_dev.
         try {
           const cookieHdr = req.headers.get("Cookie") || "";
-          const opSid = readCookie(cookieHdr, "op_sess");
+          const opSidHdr = String(req.headers.get("X-NG-OpSess") || req.headers.get("x-ng-opsess") || "").trim();
+          const opSid = opSidHdr || readCookie(cookieHdr, "op_sess");
           if (opSid) {
             const sessKey = `opsess:${opSid}`;
             const sess = await env.KV_STATUS.get(sessKey, { type: "json" }) as OwnerSession | null;
@@ -864,7 +869,8 @@ export default {
       // --- Device cookie diag: /api/_diag/ng-dev (safe; no secrets)
       if (normPath === "/api/_diag/ng-dev" && req.method === "GET") {
         const cookieHdr = req.headers.get("Cookie") || "";
-        const dev = readCookie(cookieHdr, "ng_dev");
+        const devHdr = String(req.headers.get("X-NG-Dev") || req.headers.get("x-ng-dev") || "").trim();
+        const dev = devHdr || readCookie(cookieHdr, "ng_dev");
 
         return json(
           {
