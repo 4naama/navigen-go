@@ -3599,6 +3599,7 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
     <div class="campaign-funding-warning">${(typeof t === 'function' && t('campaign.funding.stripeNote')) || 'Checkout is processed by Stripe. A payment confirmation email will be sent to you.'}</div>
     <div class="campaign-funding-spacer"></div>
     <div class="campaign-funding-chips">
+      <button type="button" class="campaign-funding-chip" data-eur="1">€1</button>
       <button type="button" class="campaign-funding-chip is-selected" data-eur="50">€50</button>
       <button type="button" class="campaign-funding-chip" data-eur="75">€75</button>
       <button type="button" class="campaign-funding-chip" data-eur="100">€100</button>
@@ -3623,7 +3624,7 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
 
   const eurInput = inner.querySelector('#campaign-funding-eur');
   const continueBtn = inner.querySelector('#campaign-funding-continue');
-  const MIN_EUR = 50;
+  const MIN_EUR = 1; // TESTING (live): temporarily lowered; restore to 50 for production
 
   function applyFundingValidity() {
     const eur = Math.floor(Number(String(eurInput.value || '').trim()));
@@ -3653,7 +3654,7 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
   });
 
   inner.querySelector('#campaign-funding-continue')?.addEventListener('click', async () => {
-    if (!applyFundingValidity()) { showToast('Minimum is €50.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
+    if (!applyFundingValidity()) { showToast('Minimum is €1.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
     if (!Number.isFinite(eur) || eur <= 0) { showToast('Enter a valid EUR amount.', 1800); return; }
 
     const amountCents = eur * 100;

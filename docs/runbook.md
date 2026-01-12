@@ -285,6 +285,14 @@ bxz7mbe.jac4PMA!rmj
 index.ts: 
 const MIN_AMOUNT_CENTS = 100; // TESTING: set to 5000 for €50.00 minimum in production
 
+modal-injector.js
+const MIN_EUR = 1; // TESTING (live): temporarily lowered; restore to 50 for production
+test:
+if (!applyFundingValidity()) { showToast('Minimum is €1.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
+
+for production back to: 
+if (!applyFundingValidity()) { showToast('Minimum is €50.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
+
 If nothing changed (force rebuild):
 git commit --allow-empty -m "Backend deploy"
 git push origin main
