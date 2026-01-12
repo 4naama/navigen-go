@@ -234,6 +234,9 @@ function readCookie(header: string, name: string): string {
 }
 
 function readDeviceId(req: Request): string {
+  const devHdr = String(req.headers.get("X-NG-Dev") || req.headers.get("x-ng-dev") || "").trim();
+  if (devHdr) return devHdr;
+
   const dev = readCookie(req.headers.get("Cookie") || "", "ng_dev");
   return String(dev || "").trim();
 }
@@ -254,7 +257,8 @@ type OwnerSession = {
 };
 
 async function requireOwnerSession(req: Request, env: Env): Promise<{ ulid: string } | Response> {
-  const sid = readCookie(req.headers.get("Cookie") || "", "op_sess");
+  const sidHdr = String(req.headers.get("X-NG-OpSess") || req.headers.get("x-ng-opsess") || "").trim();
+  const sid = sidHdr || readCookie(req.headers.get("Cookie") || "", "op_sess");
   if (!sid) {
     return new Response("Denied", {
       status: 401,
@@ -776,26 +780,65 @@ export default {
       // --- Owner Center: list device-bound locations (no secrets)
       if (normPath === "/api/owner/sessions" && req.method === "GET") {
         const dev = readDeviceId(req);
-        if (!dev) {
-          return json({ items: [] }, 200, { "cache-control": "no-store" });
-        }
 
-        const idxKey = devIndexKey(dev);
-        const rawIdx = await env.KV_STATUS.get(idxKey, "text");
+        // 1) Read device index (if present)
         let ulids: string[] = [];
-        try { ulids = rawIdx ? JSON.parse(rawIdx) : []; } catch { ulids = []; }
-        if (!Array.isArray(ulids)) ulids = [];
+        if (dev) {
+          const idxKey = devIndexKey(dev);
+          const rawIdx = await env.KV_STATUS.get(idxKey, "text");
+          try { ulids = rawIdx ? JSON.parse(rawIdx) : []; } catch { ulids = []; }
+          if (!Array.isArray(ulids)) ulids = [];
+        }
 
         // Only return ULIDs that still have a mapped session id
         const out: string[] = [];
-        for (const u of ulids) {
-          const ulid = String(u || "").trim();
-          if (!ULID_RE.test(ulid)) continue;
-          const sid = await env.KV_STATUS.get(devSessKey(dev, ulid), "text");
-          if (sid) out.push(ulid);
+        if (dev) {
+          for (const u of ulids) {
+            const ulid = String(u || "").trim();
+            if (!ULID_RE.test(ulid)) continue;
+            const sid = await env.KV_STATUS.get(devSessKey(dev, ulid), "text");
+            if (sid) out.push(ulid);
+          }
+        }
+
+        // 2) Fallback: include the current op_sess binding (even if dev index is missing)
+        // This prevents "Owner Center empty" when sessions exist but were never indexed to ng_dev.
+        try {
+          const cookieHdr = req.headers.get("Cookie") || "";
+          const opSidHdr = String(req.headers.get("X-NG-OpSess") || req.headers.get("x-ng-opsess") || "").trim();
+          const opSid = opSidHdr || readCookie(cookieHdr, "op_sess");
+          if (opSid) {
+            const sessKey = `opsess:${opSid}`;
+            const sess = await env.KV_STATUS.get(sessKey, { type: "json" }) as OwnerSession | null;
+
+            const ulid = String(sess?.ulid || "").trim();
+            const exp = new Date(String(sess?.expiresAt || ""));
+
+            if (ULID_RE.test(ulid) && !Number.isNaN(exp.getTime()) && exp.getTime() > Date.now()) {
+              if (!out.includes(ulid)) out.unshift(ulid);
+
+              // Best-effort backfill: if we have ng_dev, register this session under the device index
+              if (dev) {
+                const maxAge = Math.max(60, Math.floor((exp.getTime() - Date.now()) / 1000));
+                await env.KV_STATUS.put(devSessKey(dev, ulid), opSid, { expirationTtl: maxAge });
+
+                const idxKey = devIndexKey(dev);
+                let arr: string[] = [];
+                const rawIdx = await env.KV_STATUS.get(idxKey, "text");
+                try { arr = rawIdx ? JSON.parse(rawIdx) : []; } catch { arr = []; }
+                if (!Array.isArray(arr)) arr = [];
+                if (!arr.includes(ulid)) arr.unshift(ulid);
+                arr = arr.slice(0, 24);
+                await env.KV_STATUS.put(idxKey, JSON.stringify(arr), { expirationTtl: 60 * 60 * 24 * 366 });
+              }
+            }
+          }
+        } catch {
+          // fallback must never break listing
         }
 
         return json({ items: out }, 200, { "cache-control": "no-store" });
+
       }
 
       // --- Owner session diag: /api/_diag/opsess (safe; no secrets)
@@ -817,6 +860,24 @@ export default {
             kvHit: !!sess,
             kvKey: sessKey ? `opsess:<redacted>` : "",
             ulid: (sess && typeof sess === "object") ? String((sess as any).ulid || "") : ""
+          },
+          200,
+          { "cache-control": "no-store", "x-ng-worker": "navigen-api" }
+        );
+      }
+
+      // --- Device cookie diag: /api/_diag/ng-dev (safe; no secrets)
+      if (normPath === "/api/_diag/ng-dev" && req.method === "GET") {
+        const cookieHdr = req.headers.get("Cookie") || "";
+        const devHdr = String(req.headers.get("X-NG-Dev") || req.headers.get("x-ng-dev") || "").trim();
+        const dev = devHdr || readCookie(cookieHdr, "ng_dev");
+
+        return json(
+          {
+            hasCookieHeader: !!cookieHdr,
+            cookieHeaderLen: cookieHdr.length,
+            hasNgDev: !!dev,
+            ngDevLen: dev ? String(dev).length : 0
           },
           200,
           { "cache-control": "no-store", "x-ng-worker": "navigen-api" }
