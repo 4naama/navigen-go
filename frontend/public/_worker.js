@@ -488,6 +488,37 @@ export default {
       });
     }
 
+    // /api/owner/sessions — proxy to API Worker (Owner Center)
+    if (url.pathname === '/api/owner/sessions') {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
+      const cookieIn = req.headers.get('cookie') || '';
+      const ngDev = (cookieIn.match(/(?:^|;\s*)ng_dev=([^;]+)/) || [])[1] || '';
+      const opSess = (cookieIn.match(/(?:^|;\s*)op_sess=([^;]+)/) || [])[1] || '';
+      if (ngDev) h.set('X-NG-Dev', ngDev);
+      if (opSess) h.set('X-NG-OpSess', opSess);
+
+      const r = await fetch(target.toString(), {
+        method: 'GET',
+        headers: h
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+
     // 401 gate disabled; RL/Bot Fight protect /api/data/*
     if (url.pathname.startsWith('/api/data/')) {
 
