@@ -2168,36 +2168,33 @@ async function initLpmImageSlider(modal, data) {
             const u = new URL('/api/status', location.origin);
             u.searchParams.set('locationID', (ULID.test(rawULID) ? rawULID : target));
             const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
-            if (!r.ok) return false;
+            if (!r.ok) return { owned: false, canonicalULID: '' };
+
             const j = await r.json().catch(() => null);
 
-            // ✅ Authoritative ownership signal
-            return j?.ownedNow === true;
+            // ✅ Authoritative ownership signal + canonical ULID
+            const owned = j?.ownedNow === true;
+            const canonical = String(j?.locationID || '').trim();
+
+            return { owned, canonicalULID: (ULID.test(canonical) ? canonical : '') };
           } catch {
-            return false;
+            return { owned: false, canonicalULID: '' };
           }
         };
 
         // Determine if we have a valid owner session by probing /api/stats with a minimal 1-day window.
         // This call is still owner-gated and returns no analytics when blocked.
-        const owned = await isOwnedByStatus();
+        const ownedRes = await isOwnedByStatus();
+        const owned = ownedRes.owned === true;
 
         // When owned, decide the correct owner path on THIS device:
         // - session for this location exists -> Open Dash
         // - session exists but for another location -> show Owner Settings with Owner Center CTA
         // - no session on device -> show Owner Settings with Restore access CTA
         if (owned) {
-          let ulids = [];
-          try {
-            const r = await fetch('/api/owner/sessions', { cache: 'no-store', credentials: 'include' });
-            const j = r.ok ? await r.json().catch(() => null) : null;
-            ulids = Array.isArray(j?.items) ? j.items : [];
-          } catch { ulids = []; }
-
           // Owned locations should open Dash freely once ownership is confirmed by /api/status.
-          // Session portability is handled by /owner/restore; do not add a second client-side allowlist gate here.
-          const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(rawULID);
-          const seg = isUlid ? rawULID : target; // allow slug if ULID missing in payload
+          // Always prefer the canonical ULID returned by /api/status to avoid slug/alias drift across devices.
+          const seg = ownedRes.canonicalULID || String(rawULID || target).trim();
           const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
           window.open(href, '_blank', 'noopener,noreferrer');
           return;
