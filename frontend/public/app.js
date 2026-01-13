@@ -83,7 +83,8 @@ function markBusy(el, on = true) {
   let dot = node.querySelector('.syb-status-dot');
   if (!dot) {
     dot = document.createElement('span');
-    dot.className = 'syb-status-dot syb-free'; // baseline class; CSS positions it
+    dot.className = 'syb-status-dot'; // WIP-only dot (no status class)
+    dot.dataset.wipTemp = '1';        // mark: safe to remove on release
     dot.setAttribute('aria-hidden', 'true');
     node.appendChild(dot);
   }
@@ -98,6 +99,9 @@ function markBusy(el, on = true) {
     node.classList.remove('is-busy');
     dot.classList.remove('syb-busy');
     node.style.pointerEvents = '';
+
+    // Remove temporary WIP-only dot so it never stains the UI
+    if (dot.dataset.wipTemp === '1') dot.remove();
   }
 }
 
