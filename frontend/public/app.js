@@ -466,10 +466,10 @@ function renderPopularGroup(list = geoPoints) {
       const __t = setTimeout(() => markBusy(btn, false), 8000);
 
       const done = () => {
-        requestAnimationFrame(() => {
+        setTimeout(() => {
           clearTimeout(__t);
-          markBusyLocal(btn, false);
-        });
+          markBusy(btn, false);
+        }, 250);
       };
 
       // Always prefer profiles.json media (cover + images) for slider
@@ -507,7 +507,7 @@ function renderPopularGroup(list = geoPoints) {
         pricing: (loc && loc.pricing) || {},
         originEl: btn
       });
-      requestAnimationFrame(() => done());
+      done();
     });
 
     subWrap.appendChild(btn);
