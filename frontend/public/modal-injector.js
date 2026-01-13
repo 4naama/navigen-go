@@ -25,11 +25,10 @@ function getQRCodeLib() {
   return qrLibPromise;
 }
 
-// UI: mark a card/button as "busy" (WIP dot + click suppression)
-// Reason: prevents tap storms and gives immediate feedback without heavy UI.
-function markBusyLocal(el, on = true) {
+function markBusyLocal(el, on = true, opts = {}) {
   const node = el instanceof HTMLElement ? el : null;
   if (!node) return;
+  const { showDelayMs = 150, minVisibleMs = 450 } = opts || {};
 
   let dot = node.querySelector('.syb-status-dot');
   if (!dot) {
@@ -42,15 +41,41 @@ function markBusyLocal(el, on = true) {
 
   if (on) {
     node.dataset.busy = '1';
-    dot.classList.add('syb-busy');
     node.style.pointerEvents = 'none';
+
+    // Delay showing the busy dot to avoid "flash" on fast operations
+    const tShow = setTimeout(() => {
+      if (node.dataset.busy !== '1') return;
+      dot.classList.add('syb-busy');
+      dot.dataset.wipShownAt = String(Date.now());
+    }, Number(showDelayMs) || 0);
+
+    node.dataset.wipShowTimer = String(tShow);
+
   } else {
     node.dataset.busy = '0';
-    dot.classList.remove('syb-busy');
     node.style.pointerEvents = '';
 
-    // Remove temporary WIP-only dot so it never stains the UI
-    if (dot.dataset.wipTemp === '1') dot.remove();
+    // Cancel pending show (if we finished before the delay)
+    const tShowRaw = Number(node.dataset.wipShowTimer || '');
+    if (Number.isFinite(tShowRaw) && tShowRaw) clearTimeout(tShowRaw);
+    node.dataset.wipShowTimer = '';
+
+    // If the dot was shown, keep it visible for a minimum time to be perceptible
+    const shownAt = Number(dot.dataset.wipShownAt || '0');
+    const elapsed = shownAt ? (Date.now() - shownAt) : 0;
+    const needHold = shownAt && elapsed < (Number(minVisibleMs) || 0);
+
+    const finish = () => {
+      dot.classList.remove('syb-busy');
+      dot.dataset.wipShownAt = '';
+
+      // Remove temporary WIP-only dot so it never stains the UI
+      if (dot.dataset.wipTemp === '1') dot.remove();
+    };
+
+    if (needHold) setTimeout(finish, (Number(minVisibleMs) || 0) - elapsed);
+    else finish();
   }
 }
 
