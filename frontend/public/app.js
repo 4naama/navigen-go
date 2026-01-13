@@ -73,6 +73,34 @@ function matchesQueryByNameOrTag(loc, q) {
   return tokens.every(tok => name.includes(tok) || tags.some(tag => tag.includes(tok)));
 }
 
+// UI: mark a card/button as "busy" (WIP dot + click suppression)
+// Reason: prevents tap storms and gives immediate feedback without heavy UI.
+function markBusy(el, on = true) {
+  const node = el instanceof HTMLElement ? el : null;
+  if (!node) return;
+
+  // Support cards that already have a status dot (SYB/Owner Center), else create one.
+  let dot = node.querySelector('.syb-status-dot');
+  if (!dot) {
+    dot = document.createElement('span');
+    dot.className = 'syb-status-dot syb-free'; // baseline class; CSS positions it
+    dot.setAttribute('aria-hidden', 'true');
+    node.appendChild(dot);
+  }
+
+  if (on) {
+    node.dataset.busy = '1';
+    node.classList.add('is-busy');
+    dot.classList.add('syb-busy');
+    node.style.pointerEvents = 'none'; // hard-stop extra taps on this element only
+  } else {
+    node.dataset.busy = '0';
+    node.classList.remove('is-busy');
+    dot.classList.remove('syb-busy');
+    node.style.pointerEvents = '';
+  }
+}
+
 // 🌍 Emergency data + localization helpers
 // Served as a static ES module from /public/scripts
 import {
@@ -432,6 +460,15 @@ function renderPopularGroup(list = geoPoints) {
 
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+      if (btn.dataset.busy === '1') return;
+
+      markBusy(btn, true);
+      const __t = setTimeout(() => markBusy(btn, false), 8000);
+
+      const done = () => {
+        clearTimeout(__t);
+        markBusy(btn, false);
+      };
 
       // Always prefer profiles.json media (cover + images) for slider
       const media   = (loc && typeof loc.media === 'object') ? loc.media : {};
@@ -441,14 +478,14 @@ function renderPopularGroup(list = geoPoints) {
       const cover = (media.cover && String(media.cover).trim()) || images[0];
 
       // guard for strict data model; require cover only (align with Accordion)
-      if (!cover) { console.warn('Data error: cover required'); return; }
+      if (!cover) { console.warn('Data error: cover required'); done(); return; }
 
       // prefer ULID from data-id; fallback to human slug from data-locationid
       const uid   = String(btn.getAttribute('data-id') || '').trim();            // ULID if present
       const locid = String(btn.getAttribute('data-locationid') || '').trim();    // human slug
 
       // need at least one identifier (ULID or slug)
-      if (!uid && !locid) { console.warn('Data error: identifier missing (Popular)'); return; }
+      if (!uid && !locid) { console.warn('Data error: identifier missing (Popular)'); done(); return; }
 
       // single-field payload: locationID from the button’s slug attribute; id stays ULID-only
       showLocationProfileModal({
@@ -468,6 +505,7 @@ function renderPopularGroup(list = geoPoints) {
         pricing: (loc && loc.pricing) || {},
         originEl: btn
       });
+      done();   
     });
 
     subWrap.appendChild(btn);
@@ -525,9 +563,25 @@ function renderRootActionGroup({ groupKey, defaultTitleKey, cards }) {
         ${desc ? `<small>${desc}</small>` : ``}
       </span>
     `;
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", async (e) => {
       e.preventDefault();
-      onClick?.();
+      if (btn.dataset.busy === '1') return;
+
+      markBusy(btn, true);
+
+      // failsafe: never leave the UI stuck if something throws
+      const t = setTimeout(() => markBusy(btn, false), 8000);
+
+      const done = () => {
+        clearTimeout(t);
+        markBusy(btn, false);
+      };
+
+      try {
+        await onClick?.();
+      } finally {
+        done();
+      }
     });
     list.appendChild(btn);
   };

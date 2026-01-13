@@ -2538,6 +2538,19 @@ button:hover {
   box-sizing:border-box;      /* include padding in width */
 }
 
+/* WIP/busy dot: same legend shape, lightweight opacity pulse (no layout thrash) */
+.syb-status-dot.syb-busy {
+  background: #67e8f9; /* WIP dot color */
+  opacity: 0.9;
+  animation: navigenBusyPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes navigenBusyPulse {
+  0%   { opacity: 0.35; }
+  50%  { opacity: 0.95; }
+  100% { opacity: 0.35; }
+}
+
 /* ==============================
    Business Owners (BO) cards
    - Used ONLY in the root/no-context shell

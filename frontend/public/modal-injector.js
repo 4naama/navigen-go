@@ -25,6 +25,31 @@ function getQRCodeLib() {
   return qrLibPromise;
 }
 
+// UI: mark a card/button as "busy" (WIP dot + click suppression)
+// Reason: prevents tap storms and gives immediate feedback without heavy UI.
+function markBusyLocal(el, on = true) {
+  const node = el instanceof HTMLElement ? el : null;
+  if (!node) return;
+
+  let dot = node.querySelector('.syb-status-dot');
+  if (!dot) {
+    dot = document.createElement('span');
+    dot.className = 'syb-status-dot syb-free';
+    dot.setAttribute('aria-hidden', 'true');
+    node.appendChild(dot);
+  }
+
+  if (on) {
+    node.dataset.busy = '1';
+    dot.classList.add('syb-busy');
+    node.style.pointerEvents = 'none';
+  } else {
+    node.dataset.busy = '0';
+    dot.classList.remove('syb-busy');
+    node.style.pointerEvents = '';
+  }
+}
+
 // Show Promotion QR Code in its own modal (QR only, like Business QR size)
 // locationIdOrSlug is used for optional customer-side confirmation logging.
 function showPromotionQrModal(qrUrl, locationIdOrSlug) {
@@ -2932,6 +2957,11 @@ function makeLocationButton(loc) {
   // Always open LPM on click (coords optional)
   btn.addEventListener('click', (e) => {
     e.preventDefault();
+    if (btn.dataset.busy === '1') return;
+
+    markBusyLocal(btn, true);
+    const __t = setTimeout(() => markBusyLocal(btn, false), 8000);
+
     e.stopPropagation();
     e.stopImmediatePropagation(); // prevent duplicate opens/reopens on rebuilds
 
@@ -2974,6 +3004,8 @@ function makeLocationButton(loc) {
         originEl: btn
       });
     }
+    clearTimeout(__t);
+    markBusyLocal(btn, false);    
   }); // ✅ close addEventListener('click', ...)
 
   return btn;
@@ -4018,6 +4050,8 @@ export async function createOwnerCenterModal() {
       })();
 
       btn.addEventListener('click', () => {
+        if (btn.dataset.busy === '1') return;
+        markBusyLocal(btn, true);
         // Switch server-side and open Dash for that ULID
         const next = `/dash/${encodeURIComponent(u)}`;
         window.location.href = `/owner/switch?ulid=${encodeURIComponent(u)}&next=${encodeURIComponent(next)}`;
