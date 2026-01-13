@@ -2551,6 +2551,26 @@ button:hover {
   100% { opacity: 0.35; }
 }
 
+/* Base status dot (universal) — makes the dot visible even outside SYB cards */
+.syb-status-dot{
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:12px;
+  height:12px;
+  border-radius:9999px;
+  background:#9ca3af;        /* neutral fallback */
+  box-shadow:0 0 0 2px rgba(255,255,255,0.85); /* readable on dark cards */
+  pointer-events:none;        /* dot never steals taps */
+}
+
+/* Containers that can host a dot must establish positioning context */
+.bo-menu-item,
+.location-button,
+.modal-menu-item{
+  position:relative;
+}
+
 /* ==============================
    Business Owners (BO) cards
    - Used ONLY in the root/no-context shell
