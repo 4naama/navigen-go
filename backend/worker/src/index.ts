@@ -1933,8 +1933,14 @@ export default {
 
         // For QR redeem events, validate token and log "redeem" vs "invalid".
         if (ev === "qr-redeem") {
-          const token = (req.headers.get("X-NG-QR-Token") || "").trim();
-          
+          // Accept token from header OR query string.
+          // Reason: real QR scans open a URL and cannot send custom headers.
+          const u = new URL(req.url);
+          const token =
+            (req.headers.get("X-NG-QR-Token") || "").trim() ||
+            (u.searchParams.get("rt") || "").trim() ||
+            (u.searchParams.get("token") || "").trim();
+
           // DIAG (temporary): confirm token plumbing without exposing token value
           try {
             const hasTok = !!token;
