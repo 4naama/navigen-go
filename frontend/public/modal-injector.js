@@ -199,7 +199,8 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
     // Stop polling if modal is closed by the user
     top.querySelector('.modal-close')?.addEventListener('click', stop);
 
-    const base = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';
+    // Redeem token status is owned by the site worker (same origin as the QR URL), not TRACK_BASE.
+    const base = location.origin;
 
     const showCustomerConfirm = () => {
       if (!locationIdOrSlug) return;
