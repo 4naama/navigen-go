@@ -1898,20 +1898,7 @@ export default {
           return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
         }
 
-        // Gate only QR-redeem. QR-scan must be accepted from the app so qrInfo/Campaigns work.
-        if (ev === "qr-redeem") {
-          const src = (req.headers.get("X-NG-QR-Source") || "").trim();
-          if (src !== "pages-worker") {
-            return new Response(null, {
-              status: 204,
-              headers: {
-                "Access-Control-Allow-Origin": "https://navigen.io",
-                "Access-Control-Allow-Credentials": "true",
-                "Vary": "Origin"
-              }
-            });
-          }
-        }
+        // QR-redeem must be accepted broadly; token + KV record enforce validity.
 
         const loc = await resolveUid(idRaw, env);
         if (!loc) {

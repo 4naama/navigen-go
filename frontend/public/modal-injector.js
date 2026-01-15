@@ -568,6 +568,9 @@ async function openPromotionQrModal(modal, data) {
   const lp = (url.searchParams.get('lp') || '').trim();
   if (!lp) return;
 
+  // Promo redeem and promo QR flows may also navigate via ?lp=...; never count those as static QR scans.
+  if (url.searchParams.get('rt') || url.searchParams.get('camp') || url.searchParams.get('redeemed')) return;
+
   // If the app itself navigated to ?lp=..., do NOT count as a QR scan.
   const k = 'navigen.internalLpNav';
   if (sessionStorage.getItem(k) === '1') {
