@@ -200,7 +200,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
     top.querySelector('.modal-close')?.addEventListener('click', stop);
 
     // Redeem token status is owned by the site worker (navigen.io).
-    const statusBase = location.origin;
+    const statusBase = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';
 
     // Customer confirmation logging is analytics and belongs to TRACK_BASE.
     const hitBase = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';

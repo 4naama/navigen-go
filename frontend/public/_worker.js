@@ -459,6 +459,31 @@ export default {
       });
     }
 
+    // /api/redeem-status — proxy to API Worker (authoritative redeem token status)
+    if (url.pathname === '/api/redeem-status') {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: 'GET',
+        headers: h
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+
     // 401 gate disabled; RL/Bot Fight protect /api/data/*
     if (url.pathname.startsWith('/api/data/')) {
 
