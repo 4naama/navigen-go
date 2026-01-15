@@ -199,8 +199,11 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
     // Stop polling if modal is closed by the user
     top.querySelector('.modal-close')?.addEventListener('click', stop);
 
-    // Redeem token status is owned by the site worker (same origin as the QR URL), not TRACK_BASE.
-    const base = location.origin;
+    // Redeem token status is owned by the site worker (navigen.io).
+    const statusBase = location.origin;
+
+    // Customer confirmation logging is analytics and belongs to TRACK_BASE.
+    const hitBase = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';
 
     const showCustomerConfirm = () => {
       if (!locationIdOrSlug) return;
@@ -256,7 +259,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
 
       const sendCustomerConfirm = (score) => {
         try {
-          const hit = new URL(`/hit/redeem-confirmation-customer/${encodeURIComponent(locationIdOrSlug)}`, base);
+          const hit = new URL(`/hit/redeem-confirmation-customer/${encodeURIComponent(locationIdOrSlug)}`, hitBase);
           hit.searchParams.set('score', String(score));
           fetch(hit.toString(), { method: 'POST', keepalive: true }).catch(() => {});
         } catch {
@@ -303,7 +306,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
     const pollStatus = async () => {
       if (stopped || !redeemToken) return;
       try {
-        const statusUrl = new URL('/api/redeem-status', base);
+        const statusUrl = new URL('/api/redeem-status', statusBase);
         statusUrl.searchParams.set('token', redeemToken);
         const res = await fetch(statusUrl.toString(), { cache: 'no-store' });
         if (res.ok) {
@@ -381,8 +384,9 @@ async function openPromotionQrModal(modal, data) {
       return;
     }
 
-    // Call promo-qr on navigen-api; no cookies needed
-    const apiUrl = new URL('/api/promo-qr', TRACK_BASE);
+    // Call promo-qr on the site worker (authoritative KV campaigns live here)
+    const apiUrl = new URL('/api/promo-qr', location.origin);
+
     apiUrl.searchParams.set('locationID', locationIdOrSlug);
 
     const res = await fetch(apiUrl.toString(), { cache: 'no-store' });
