@@ -284,6 +284,18 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
       card2.appendChild(body2);
       wrap2.appendChild(card2);
       document.body.appendChild(wrap2);
+
+      // Ensure customer confirmation is not visually or interaction-wise overpainted by the LPM.
+      // Hide the LPM if it's currently visible; it can be reopened after feedback.
+      try {
+        const lpm = document.getElementById('location-profile-modal');
+        if (lpm && !lpm.classList.contains('hidden')) {
+          hideModal('location-profile-modal');
+        }
+      } catch {
+        // never break feedback UX
+      }
+
       showModal(id);
     };
 

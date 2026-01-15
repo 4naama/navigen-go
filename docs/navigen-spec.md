@@ -3352,6 +3352,54 @@ Campaign status is authoritative only when enforced by the API Worker.
 
 Campaigns.json defines **what** can be promoted; the actual promo/redeem events are logged elsewhere.
 
+--------------------------------------------------------------------
+
+8.4.1 Campaign Entitlement Spine (authoritative)
+
+### Campaign row interpretation (source-of-truth)
+
+A campaign row is considered **entitling** (i.e., contributes to `CampaignEntitled=true`) when:
+
+- `status` is `Active`
+- `statusOverride` does not force-disable the campaign (override rules are authoritative)
+- today is within `[startDate, endDate]` (inclusive)
+
+If multiple rows exist for a location:
+- the location is CampaignEntitled if **any** row is entitling
+- only **one** row should be presented as the “primary active campaign” in UI (choose the one with the earliest `endDate` or newest `startDate`, but keep the rule deterministic)
+
+### Ownership vs Campaign vs Session (hard gate)
+
+- Ownership (`exclusiveUntil`) controls who is allowed to operate the listing.
+- Campaign entitlement controls whether Dash analytics + promotion surfaces are enabled.
+- Operator session controls whether the current device is authorized for owner tools.
+
+Dash access requires: `OwnedNow AND SessionValid AND CampaignEntitled`.
+
+### Visibility states (backend-computed)
+
+- `promoted` when CampaignEntitled is true
+- `visible` when courtesy window (post-campaign) or hold-visibility window is active
+- `hidden` when neither is active
+
+These are presentation states only; they do not grant owner permissions.
+
+--------------------------------------------------------------------
+
+### campaignKey (naming contract)
+
+`campaignKey` must be stable, deterministic, and namespace-safe. Recommended structure:
+
+`<brandKey>/<locationID>/<campaignType>/<YYYYMMDD-start>`
+
+Rules:
+- `brandKey` is mandatory when a brand exists
+- `locationID` is the canonical slug (not ULID) for human readability; backend resolves to ULID
+- `campaignType` comes from the controlled vocabulary
+- start date ensures uniqueness for repeats without random IDs
+
+--------------------------------------------------------------------
+
 8.5 finance.json (Sector Pricing)
 
 Per row:

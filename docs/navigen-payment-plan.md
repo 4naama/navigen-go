@@ -65,6 +65,10 @@ Optional add-on within an active campaign:
   - Dash access as an internal operator tool (not a consumer offer)
 
 This is the **main and mandatory** monetization path.
+**Why campaigns are not automatic**
+Ownership expresses **control** (exclusive operation + privacy). Campaigns express **intent** (marketing action).  
+Payment unlocks the ability to run campaigns; the owner explicitly starts/renews campaigns to avoid “campaigns appear out of the blue.”
+
 
 --------------------------------------------------------------------
 
@@ -180,8 +184,49 @@ Both conditions MUST be satisfied to open Dash.
 
 Notes:
 - “Restore access” recovers a missing Operator Session only.
-- Campaign renewal is required when ownership exists but the campaign is inactive.
+- Campaign renewal is required when ownership exists but CampaignEntitled is false (campaign inactive/ended/paused).
 - Dash MUST NOT open unless both conditions are true.
+
+--------------------------------------------------------------------
+
+## State & Transition Spine (authoritative)
+
+This section defines the **backend state machine** that governs:
+- visibility inside NaviGen (attention),
+- ownership (exclusive operation),
+- campaign entitlement (analytics + promotion),
+- operator session (device access / restore).
+
+### Canonical conditions (computed server-side)
+
+- **OwnedNow**: ownership exists and `exclusiveUntil > now`.
+- **SessionValid**: an `op_sess` cookie is present and resolves to a non-expired owner session for the same `locationID`.
+- **CampaignEntitled**: there is at least one campaign row for the location where:
+  - status is `Active` (and not overridden to a disabling state),
+  - and today is within the campaign’s active window (`startDate..endDate`).
+
+### Primary derived outcomes
+
+- **Dash access** requires: `OwnedNow AND SessionValid AND CampaignEntitled`.
+- **Promotion (“Active campaign” in the UI)** is true when `CampaignEntitled` is true.
+- **Courtesy visibility (“Still visible”)** applies after campaign ends for a limited window, without Dash access.
+- **Hold visibility (€5)** extends discoverability only; it does not grant ownership, campaigns, or Dash.
+
+### Phases (operational meaning)
+
+| Phase    | Condition summary       | Discoverability | Promotion | Dash                  | Notes                          |
+|----------|-------------------------|-----------------|-----------|-----------------------|--------------------------------|
+| Promote  | CampaignEntitled = true | High            | Yes       | Yes (if SessionValid) | Primary paid state (€50)       |
+| Remember | Courtesy window active  | Yes             | No        | No                    | Free goodwill period           |
+| Park     | Hold visibility active  | Yes             | No        | No                    | €5 “time to decide”            |
+| Inactive | No courtesy/hold        | No              | No        | No                    | Hidden from discovery surfaces |
+
+### Transitions (what causes state changes)
+
+- **€50 Campaign payment** → sets/extends ownership and creates or activates campaign entitlement for the purchased window.
+- **Campaign window ends** → CampaignEntitled becomes false; Courtesy window begins.
+- **€5 Hold payment (optional)** → extends discoverability baseline without campaign entitlement.
+- **Restore access (pi_...)** → restores SessionValid on the current device only (no entitlement changes).
 
 --------------------------------------------------------------------
 

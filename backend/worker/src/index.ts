@@ -1014,61 +1014,24 @@ export default {
           );
         }
 
-        // Promo infra is campaign-paid: require active ownership window (entitlement).
-        {
-          const ownKey = `ownership:${locULID}`;
-          const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
-
-          const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
-          const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
-
-          if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
-            return json(
-              { error: { code: "forbidden", message: "campaign required for promos" } },
-              403,
-              { "cache-control": "no-store" }
-            );
-          }
-        }
-
         const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
-        const campaigns = await loadCampaigns(siteOrigin, env);
 
-        // Build today's date (shifted) for campaign active checks
-        const dayISO = new Date();
-        dayISO.setHours(dayISO.getHours() + 12); // shift to avoid off-by-one
-        const today = dayISO.toISOString().slice(0, 10);
-
-        // Filter candidates for this location + active period
-        const candidates = campaigns.filter(c =>
-          c.locationID === locULID &&
-          (!c.startDate || today >= c.startDate) &&
-          (!c.endDate || today <= c.endDate) &&
-          (!c.status || c.status.toLowerCase() !== "ended")
-        );
-
-        if (!candidates.length) {
+        // Resolve active campaign from KV (authoritative)
+        const activeRow = await activeCampaignRowForUlid(env, locULID);
+        if (!activeRow) {
           return json(
-            { error: { code: "not_found", message: "no active campaign for this location" } },
-            404
+            { error: { code: "forbidden", message: "campaign required" } },
+            403
           );
         }
 
-        // If campaignKeyRaw is provided, pick that one; else use the first active one.
-        let campaign: CampaignDef | undefined;
-        if (campaignKeyRaw) {
-          campaign = candidates.find(c => c.campaignKey === campaignKeyRaw);
-          if (!campaign) {
-            return json(
-              { error: { code: "not_found", message: "specified campaignKey not active for this location" } },
-              404
-            );
-          }
-        } else {
-          campaign = candidates[0];
+        const chosenKey = String(activeRow.campaignKey || "").trim();
+        if (!chosenKey) {
+          return json(
+            { error: { code: "forbidden", message: "campaign required" } },
+            403
+          );
         }
-
-        const chosenKey = campaign.campaignKey;
 
         // Create redeem token for this location + campaign
         const token = await createRedeemToken(env.KV_STATS, locULID, chosenKey);
@@ -1082,14 +1045,20 @@ export default {
         qrUrlObj.searchParams.set("camp", chosenKey);
         qrUrlObj.searchParams.set("rt", token);
 
+        const dvRaw = (activeRow.campaignDiscountValue != null) ? activeRow.campaignDiscountValue : null;
+        const discountValue =
+          (typeof dvRaw === "number") ? dvRaw :
+          (typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw))) ? Number(dvRaw) :
+          null;
+
         return json({
           qrUrl: qrUrlObj.toString(),
-          campaignName: campaign.campaignName || "",
-          startDate: campaign.startDate || "",
-          endDate: campaign.endDate || "",
-          eligibilityType: campaign.eligibilityType || "",
-          discountKind: campaign.discountKind || "",
-          discountValue: campaign.discountValue
+          campaignName: String(activeRow.campaignName || "").trim(),
+          startDate: String(activeRow.startDate || "").trim(),
+          endDate: String(activeRow.endDate || "").trim(),
+          eligibilityType: String(activeRow.eligibilityType || "").trim(),
+          discountKind: String(activeRow.discountKind || "").trim(),
+          discountValue
         }, 200);
       }
 
@@ -1277,6 +1246,103 @@ export default {
         return json({ ok:true, wrote, skipped, total: aliases.length }, 200);
       }
 
+      // --- Admin seed: POST /api/admin/seed-campaigns
+      // Seeds KV_STATUS campaigns:byUlid:<ULID> from a batch of campaign rows (preseed step).
+      // Auth: Bearer <JWT_SECRET> (same pattern as other admin endpoints).
+      if (pathname === "/api/admin/seed-campaigns" && req.method === "POST") {
+        const auth = req.headers.get("Authorization") || "";
+        if (!auth.startsWith("Bearer ")) {
+          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
+        }
+        const token = auth.slice(7).trim();
+        const expected = String(env.JWT_SECRET || "").trim();
+        if (!expected) {
+          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
+        }
+        if (!token || token.trim() !== expected) {
+          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control": "no-store" });
+        }
+
+        const body = await req.json().catch(() => null) as any;
+        const rowsRaw: any[] =
+          Array.isArray(body) ? body :
+          Array.isArray(body?.rows) ? body.rows :
+          Array.isArray(body?.campaigns) ? body.campaigns : [];
+
+        if (!Array.isArray(rowsRaw) || !rowsRaw.length) {
+          return json({ error:{ code:"invalid_request", message:"rows[] required" } }, 400);
+        }
+
+        // Group by ULID after resolving slug/alias where needed.
+        const byUlid = new Map<string, CampaignRow[]>();
+        let total = 0, wrote = 0, skipped = 0, unresolved = 0;
+
+        for (const r of rowsRaw) {
+          total++;
+          try {
+            const locIn = String(r?.locationID || "").trim();
+            if (!locIn) { skipped++; continue; }
+
+            const locResolved = ULID_RE.test(locIn) ? locIn : ((await resolveUid(locIn, env)) || "");
+            if (!locResolved || !ULID_RE.test(locResolved)) { unresolved++; continue; }
+
+            const ulid = locResolved;
+
+            const startDate = String(r?.startDate || "").trim();
+            const endDate   = String(r?.endDate   || "").trim();
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) { skipped++; continue; }
+
+            const row: CampaignRow = {
+              locationID: ulid,
+              campaignKey: String(r?.campaignKey || "").trim(),
+              campaignName: typeof r?.campaignName === "string" ? r.campaignName : undefined,
+              sectorKey: typeof r?.sectorKey === "string" ? r.sectorKey : undefined,
+              brandKey: typeof r?.brandKey === "string" ? r.brandKey : undefined,
+              context: typeof r?.context === "string" ? r.context : undefined,
+
+              startDate,
+              endDate,
+              status: String(r?.status || "").trim() || "Draft",
+              statusOverride: (r?.statusOverride != null) ? String(r.statusOverride).trim() : undefined,
+
+              campaignType: (r?.campaignType != null) ? String(r.campaignType).trim() : undefined,
+              targetChannels: r?.targetChannels,
+              offerType: (r?.offerType != null) ? String(r.offerType).trim() : undefined,
+              discountKind: (r?.discountKind != null) ? String(r.discountKind).trim() : undefined,
+              campaignDiscountValue: (r?.campaignDiscountValue != null) ? r.campaignDiscountValue : undefined,
+              eligibilityType: (r?.eligibilityType != null) ? String(r.eligibilityType).trim() : undefined,
+              eligibilityNotes: (r?.eligibilityNotes != null) ? String(r.eligibilityNotes).trim() : undefined,
+
+              utmSource: (r?.utmSource != null) ? String(r.utmSource).trim() : undefined,
+              utmMedium: (r?.utmMedium != null) ? String(r.utmMedium).trim() : undefined,
+              utmCampaign: (r?.utmCampaign != null) ? String(r.utmCampaign).trim() : undefined,
+
+              notes: (r?.notes != null) ? String(r.notes).trim() : undefined
+            };
+
+            if (!row.campaignKey) { skipped++; continue; }
+
+            const arr = byUlid.get(ulid) || [];
+            arr.push(row);
+            byUlid.set(ulid, arr);
+
+          } catch {
+            skipped++;
+          }
+        }
+
+        for (const [ulid, arr] of byUlid.entries()) {
+          try {
+            await env.KV_STATUS.put(campaignsByUlidKey(ulid), JSON.stringify(arr));
+            wrote++;
+          } catch {
+            // keep going; seed should be best-effort
+          }
+        }
+
+        return json({ ok:true, total, wrote, skipped, unresolved, ulids: byUlid.size }, 200, { "cache-control": "no-store" });
+      }
+
       // (removed) /api/admin/diag-auth — temporary Phase 2 test endpoint
 
       // (removed) /api/admin/mint-owner-link — temporary Phase 2 test endpoint
@@ -1343,13 +1409,8 @@ export default {
 
         // Enforce campaign entitlement (Dash access gate)
         {
-          const ownKey = `ownership:${loc}`;
-          const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
-
-          const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
-          const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
-
-          if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+          const camp = await campaignEntitlementForUlid(env, loc);
+          if (!camp.entitled) {
             return new Response("Campaign required", {
               status: 403,
               headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
@@ -1426,7 +1487,8 @@ export default {
         }> = {};
 
         // load campaigns once per stats call
-        const allCampaigns = await loadCampaigns(siteOrigin, env);
+        const allCampaigns = await env.KV_STATUS.get(campaignsByUlidKey(loc), { type: "json" }) as any;
+        const allCampaignRows: CampaignRow[] = Array.isArray(allCampaigns) ? allCampaigns : [];
 
         // QR logs live under qrlog:<loc>:<day>:<scanId>
         const qrPrefix = `qrlog:${loc}:`;
@@ -1580,7 +1642,7 @@ export default {
           .filter(agg => (agg.campaignKey || "").trim() !== "")
           .map((agg) => {
             const key = agg.campaignKey;
-            const meta = allCampaigns.find(c => c.locationID === loc && c.campaignKey === key) || null;
+            const meta = allCampaignRows.find(c => String(c.locationID || "").trim() === loc && String(c.campaignKey || "").trim() === key) || null;
 
             const uniqueCount = agg.uniqueVisitors.size;
             const repeatCount = agg.repeatVisitors.size;
@@ -1588,8 +1650,8 @@ export default {
             const repeatRedeemerCount = agg.repeatRedeemers.size;
 
             // Period: prefer campaign start/end if available, otherwise stats window
-            const campaignStart = meta?.startDate || "";
-            const campaignEnd   = meta?.endDate || "";
+            const campaignStart = meta ? String((meta as any).startDate || "").trim() : "";
+            const campaignEnd   = meta ? String((meta as any).endDate || "").trim() : "";
             const periodLabel = (campaignStart && campaignEnd)
               ? `${campaignStart} → ${campaignEnd}`
               : `${from} → ${to}`;
@@ -1597,9 +1659,9 @@ export default {
             return {
               // Campaign ID + Name + Brand for dashboard
               campaign: key || "",
-              campaignName: meta?.campaignName || "",
-              brand: meta?.brandKey || "",
-              target: meta?.context || "",
+              campaignName: meta ? (String((meta as any).campaignName || "").trim()) : "",
+              brand: meta ? (String((meta as any).brandKey || "").trim()) : "",
+              target: meta ? (String((meta as any).context || "").trim()) : "",
               period: periodLabel,
               armed: agg.armed,                     // Promo QR shown (ARMED)
               scans: agg.scans,
@@ -1886,51 +1948,93 @@ export default {
         if (ev === "qr-redeem") {
           const token = (req.headers.get("X-NG-QR-Token") || "").trim();
           
-          // Promo redeem is campaign-paid: require active ownership window (entitlement).
-          {
-            const ownKey = `ownership:${loc}`;
-            const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+          // DIAG (temporary): confirm token plumbing without exposing token value
+          try {
+            const hasTok = !!token;
+            const tokLen = token ? token.length : 0;
+            const recRaw0 = token ? await env.KV_STATS.get(`redeem:${token}`, "text") : null;
+            const rec0 = recRaw0 ? (() => { try { return JSON.parse(recRaw0) as any; } catch { return null; } })() : null;
 
-            const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
-            const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+            console.log("qr_redeem_diag", JSON.stringify({
+              loc,
+              hasTok,
+              tokLen,
+              hasRec: !!rec0,
+              recStatus: rec0?.status || "",
+              recLoc: rec0?.locationID || "",
+              recCamp: rec0?.campaignKey || ""
+            }));
+          } catch {
+            // ignore diag failures
+          }
+          
+          // Promo redeem is campaign-paid: campaign entitlement is enforced below via activeCampaignRowForUlid + tokenCampaignKey match.
 
-            if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
-              // Fail closed: log invalid attempt and stop (no redeem, no billing).
-              await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
-              return new Response(null, {
-                status: 204,
-                headers: {
-                  "Access-Control-Allow-Origin": "https://navigen.io",
-                  "Access-Control-Allow-Credentials": "true",
-                  "Vary": "Origin"
-                }
-              });
-            }
+          // Token is required (single-use redeem)
+          if (!token) {
+            await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
+            return new Response(null, {
+              status: 204,
+              headers: {
+                "Access-Control-Allow-Origin": "https://navigen.io",
+                "Access-Control-Allow-Credentials": "true",
+                "Vary": "Origin"
+              }
+            });
           }
 
-          const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
-          const campaigns = await loadCampaigns(siteOrigin, env);
+          // Read token record to obtain the campaignKey that was issued when the Promo QR was generated
+          const recRaw = await env.KV_STATS.get(`redeem:${token}`, "text");
+          let tokenCampaignKey = "";
+          try {
+            const rec = recRaw ? (JSON.parse(recRaw) as RedeemTokenRecord) : null;
+            tokenCampaignKey = String(rec?.campaignKey || "").trim();
+          } catch {
+            tokenCampaignKey = "";
+          }
 
-          // Build today's date for campaign active checks (same shift as in promo-qr)
-          const dayISO = new Date();
-          dayISO.setHours(dayISO.getHours() + 12);
-          const today = dayISO.toISOString().slice(0, 10);
-
-          // Pick the active campaign for this location and date
-          const campaignKey = pickCampaignForScan(campaigns, loc, today);
-          const campaign = campaigns.find(c => c.locationID === loc && c.campaignKey === campaignKey) || null;
-
-          if (!campaignKey || !campaign) {
-            // No active campaign found: log invalid
+          if (!tokenCampaignKey) {
             await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
+            return new Response(null, {
+              status: 204,
+              headers: {
+                "Access-Control-Allow-Origin": "https://navigen.io",
+                "Access-Control-Allow-Credentials": "true",
+                "Vary": "Origin"
+              }
+            });
+          }
+
+          // Validate: campaign must still be active for this ULID and must match the token's campaignKey
+          const activeRow = await activeCampaignRowForUlid(env, loc);
+          if (!activeRow || String(activeRow.campaignKey || "").trim() !== tokenCampaignKey) {
+            await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
+            return new Response(null, {
+              status: 204,
+              headers: {
+                "Access-Control-Allow-Origin": "https://navigen.io",
+                "Access-Control-Allow-Credentials": "true",
+                "Vary": "Origin"
+              }
+            });
+          }
+
+          // Consume token (single use)
+          const result = await consumeRedeemToken(env.KV_STATS, token, loc, tokenCampaignKey);
+
+          // DIAG (temporary): log consume result (no token)
+          try {
+            console.log("qr_redeem_consume", JSON.stringify({
+              loc,
+              result,
+              tokenCamp: tokenCampaignKey
+            }));
+          } catch {}
+
+          if (result === "ok") {
+            await logQrRedeem(env.KV_STATS, env, loc, req, tokenCampaignKey);
           } else {
-            const result = await consumeRedeemToken(env.KV_STATS, token, loc, campaignKey);
-            if (result === "ok") {
-              await logQrRedeem(env.KV_STATS, env, loc, req);
-              // Billing write will go here later; for now keep redeem logic simple.
-            } else {
-              await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
-            }
+            await logQrRedeemInvalid(env.KV_STATS, env, loc, req, tokenCampaignKey);
           }
         }
 
@@ -2535,6 +2639,9 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
   // return minimal status payload for the app (no caching to reflect live changes)
   const vis = await computeVisibilityState(env, locID);
 
+  // campaign entitlement (authoritative, KV-backed)
+  const camp = await campaignEntitlementForUlid(env, locID);
+
   return json(
     {
       locationID: locID,
@@ -2543,7 +2650,12 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
       ownedNow: vis.ownedNow,
       visibilityState: vis.visibilityState,
       exclusiveUntil: vis.exclusiveUntil,
-      courtesyUntil: vis.courtesyUntil
+      courtesyUntil: vis.courtesyUntil,
+
+      // Campaign entitlement spine (authoritative)
+      campaignEntitled: camp.entitled,
+      campaignEndsAt: camp.endDate,
+      activeCampaignKey: camp.campaignKey
     },
     200,
     { "cache-control": "no-store" }
@@ -2612,6 +2724,178 @@ async function writeQaFlags(env: Env, locationID: string, flags: string[]): Prom
   } catch {
     // never throw from QA tagging; stats endpoint must not fail because of tagging
   }
+}
+
+// -------- Campaign KV model + entitlement resolver (authoritative) --------
+
+// Storage keys (KV_STATUS):
+// - campaigns:byUlid:<ULID> -> CampaignRow[] (rules/rich model)
+// - campaigns:activeIndex:<ULID> -> { entitled:boolean, campaignKey:string, endDate:string } (optional fast path)
+function campaignsByUlidKey(ulid: string): string {
+  return `campaigns:byUlid:${ulid}`;
+}
+
+type CampaignStatus =
+  | "Active"
+  | "Paused"
+  | "Finished"
+  | "Suspended"
+  | "Draft";
+
+interface CampaignRow {
+  // Identity
+  locationID: string;              // canonical ULID (required in KV representation)
+  campaignKey: string;
+  campaignName?: string;
+  sectorKey?: string;
+  brandKey?: string;
+  context?: string;
+
+  // Core lifecycle
+  startDate: string;               // YYYY-MM-DD
+  endDate: string;                 // YYYY-MM-DD
+  status: CampaignStatus | string; // tolerate legacy capitalization
+  statusOverride?: CampaignStatus | string;
+
+  // Rules (rich model; validated/used progressively)
+  campaignType?: string;
+  targetChannels?: string[] | string;
+  offerType?: string;
+  discountKind?: string;           // Percent | Amount | None
+  campaignDiscountValue?: number | string;
+  eligibilityType?: string;
+  eligibilityNotes?: string;
+
+  // Attribution
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+
+  // Misc
+  notes?: string;
+}
+
+// Safe date parsing: accept only YYYY-MM-DD; return ms at UTC midnight
+function parseYmdUtcMs(s: string): number {
+  const v = String(s || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return NaN;
+  const t = Date.parse(`${v}T00:00:00Z`);
+  return Number.isFinite(t) ? t : NaN;
+}
+
+function normStatus(v: unknown): string {
+  return String(v || "").trim().toLowerCase();
+}
+
+function effectiveCampaignStatus(row: CampaignRow): string {
+  const ov = normStatus(row.statusOverride);
+  if (ov) return ov;
+  return normStatus(row.status);
+}
+
+async function campaignEntitlementForUlid(
+  env: Env,
+  ulid: string,
+  nowMs = Date.now()
+): Promise<{ entitled: boolean; campaignKey: string; endDate: string }> {
+  // Optional fast path (can be written later during seed / updates)
+  try {
+    const fast = await env.KV_STATUS.get(`campaigns:activeIndex:${ulid}`, { type: "json" }) as any;
+    if (fast && typeof fast === "object") {
+      const entitled = fast.entitled === true;
+      const campaignKey = String(fast.campaignKey || "").trim();
+      const endDate = String(fast.endDate || "").trim();
+      if (entitled && campaignKey && /^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+        const endMs = parseYmdUtcMs(endDate);
+        if (Number.isFinite(endMs) && endMs >= nowMs) {
+          return { entitled: true, campaignKey, endDate };
+        }
+      }
+      // If fast says not entitled, we still fall through (fast index may be stale)
+    }
+  } catch {
+    // fall through to full evaluation
+  }
+
+  const raw = await env.KV_STATUS.get(campaignsByUlidKey(ulid), { type: "json" }) as any;
+  const rows: CampaignRow[] = Array.isArray(raw) ? raw : [];
+
+  if (!rows.length) return { entitled: false, campaignKey: "", endDate: "" };
+
+  // Entitling rule:
+  // - effective status is "active"
+  // - today within [startDate, endDate] inclusive (UTC dates)
+  const active: Array<{ row: CampaignRow; startMs: number; endMs: number }> = [];
+
+  for (const row of rows) {
+    if (!row || String(row.locationID || "").trim() !== ulid) continue;
+
+    const st = effectiveCampaignStatus(row);
+    if (st !== "active") continue;
+
+    const startMs = parseYmdUtcMs(String(row.startDate || ""));
+    const endMs = parseYmdUtcMs(String(row.endDate || ""));
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
+
+    // inclusive window: start <= now <= end+24h-1ms; easier: compare date-midnights
+    if (nowMs < startMs) continue;
+    if (nowMs > (endMs + 24 * 60 * 60 * 1000 - 1)) continue;
+
+    active.push({ row, startMs, endMs });
+  }
+
+  if (!active.length) return { entitled: false, campaignKey: "", endDate: "" };
+
+  // Deterministic "primary" selection:
+  // 1) earliest endDate wins (soonest to expire)
+  // 2) if tie, latest startDate wins
+  active.sort((a, b) => {
+    if (a.endMs !== b.endMs) return a.endMs - b.endMs;
+    return b.startMs - a.startMs;
+  });
+
+  const winner = active[0].row;
+  const campaignKey = String(winner.campaignKey || "").trim();
+  const endDate = String(winner.endDate || "").trim();
+
+  return { entitled: true, campaignKey, endDate };
+}
+
+async function activeCampaignRowForUlid(
+  env: Env,
+  ulid: string,
+  nowMs = Date.now()
+): Promise<CampaignRow | null> {
+  const raw = await env.KV_STATUS.get(campaignsByUlidKey(ulid), { type: "json" }) as any;
+  const rows: CampaignRow[] = Array.isArray(raw) ? raw : [];
+  if (!rows.length) return null;
+
+  const active: Array<{ row: CampaignRow; startMs: number; endMs: number }> = [];
+
+  for (const row of rows) {
+    if (!row || String(row.locationID || "").trim() !== ulid) continue;
+
+    const st = effectiveCampaignStatus(row);
+    if (st !== "active") continue;
+
+    const startMs = parseYmdUtcMs(String(row.startDate || ""));
+    const endMs = parseYmdUtcMs(String(row.endDate || ""));
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
+
+    if (nowMs < startMs) continue;
+    if (nowMs > (endMs + 24 * 60 * 60 * 1000 - 1)) continue;
+
+    active.push({ row, startMs, endMs });
+  }
+
+  if (!active.length) return null;
+
+  active.sort((a, b) => {
+    if (a.endMs !== b.endMs) return a.endMs - b.endMs;
+    return b.startMs - a.startMs;
+  });
+
+  return active[0].row || null;
 }
 
 // Visibility policy (Business-first):
@@ -2959,7 +3243,8 @@ async function logQrRedeem(
   kv: KVNamespace,
   env: Env,
   loc: string,
-  req: Request
+  req: Request,
+  campaignKey: string = ""
 ): Promise<void> {
   try {
     const now = new Date();
@@ -2977,10 +3262,7 @@ async function logQrRedeem(
     // provisional visitor identity (UA + country); no IP stored
     const visitor = `${ua}|${country}`;
 
-    // base origin for campaign.json (always the app domain)
-    const baseOrigin = "https://navigen.io";
-    const campaigns = await loadCampaigns(baseOrigin, env);
-    const campaignKey = pickCampaignForScan(campaigns, loc, day);
+    const ck = String(campaignKey || "").trim();
 
     // Generate a short random scan ID (hex string)
     const bytes = new Uint8Array(6);
@@ -2998,7 +3280,7 @@ async function logQrRedeem(
       source,
       signal,
       visitor,
-      campaignKey
+      campaignKey: ck
     };
 
     const key = `qrlog:${loc}:${day}:${scanId}`;
@@ -3017,7 +3299,8 @@ async function logQrRedeemInvalid(
   kv: KVNamespace,
   env: Env,
   loc: string,
-  req: Request
+  req: Request,
+  campaignKey: string = ""
 ): Promise<void> {
   try {
     const now = new Date();
@@ -3035,9 +3318,7 @@ async function logQrRedeemInvalid(
     // provisional visitor identity (UA + country); no IP stored
     const visitor = `${ua}|${country}`;
 
-    const baseOrigin = "https://navigen.io";
-    const campaigns = await loadCampaigns(baseOrigin, env);
-    const campaignKey = pickCampaignForScan(campaigns, loc, day);
+    const ck = String(campaignKey || "").trim();
 
     const bytes = new Uint8Array(6);
     (crypto as any).getRandomValues(bytes);
@@ -3054,7 +3335,7 @@ async function logQrRedeemInvalid(
       source,
       signal,
       visitor,
-      campaignKey
+      campaignKey: ck
     };
 
     const key = `qrlog:${loc}:${day}:${scanId}`;

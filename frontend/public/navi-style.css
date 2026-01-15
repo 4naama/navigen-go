@@ -2424,6 +2424,14 @@ button:hover {
   gap:.75em; margin-top:1.5em;
 }
 
+/* Customer redeem feedback modal must stay above all other modals (LPM, Owner Settings, etc.) */
+#customer-redeem-feedback.modal {
+  z-index: 20000;
+}
+#customer-redeem-feedback .modal-content {
+  z-index: 20001; /* defensive: ensure card stays above backdrop */
+}
+
 /* ─────────────── Variants (attach to .modal-content) ─────────────── */
 
 /* Header flush to top; content retains side/bottom padding */
