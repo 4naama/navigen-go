@@ -1441,7 +1441,8 @@ export default {
         }
 
         // Enforce campaign entitlement (Dash access gate)
-        {
+        // Example locations must bypass campaign entitlement so Example Dashboards always load.
+        if (!isExample) {
           const camp = await campaignEntitlementForUlid(env, loc);
           if (!camp.entitled) {
             return new Response("Campaign required", {
