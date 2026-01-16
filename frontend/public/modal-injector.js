@@ -4371,6 +4371,10 @@ export function showModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
 
+  // Ensure the modal is topmost among other .modal siblings (DOM order defines stacking for equal z-index).
+  // Reason: previously created modals (e.g., Owner Center) can end up behind newly appended LPMs.
+  document.body.appendChild(modal);
+
   modal.classList.remove("hidden");              // For any manual .hidden (avoid first-tap miss)
   modal.style.display = "flex";                  // ✅ Force visible immediately
   void modal.offsetWidth;                        // ✅ Reflow to flush styles before showing
