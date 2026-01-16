@@ -3453,7 +3453,11 @@ export async function createExampleDashboardsModal() {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
 
-        const seg = ex.id || ex.slug;
+        // Prefer slug for Example Dashboards.
+        // Reason: some datasets may not provide a resolvable ULID for examples, but slug is always stable in profiles.json.
+        const seg = ex.slug || ex.id;
+        if (!seg) return;
+
         const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
         window.open(href, '_blank', 'noopener,noreferrer');
       });
