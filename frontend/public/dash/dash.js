@@ -599,8 +599,10 @@ async function renderAccessBlocked({ status, detail }) {
   const exBtn = document.getElementById('dash-example-dashboards');
   exBtn?.addEventListener('click', () => {
     try {
-      // Main shell owns modals; pass an explicit intent.
-      window.location.href = 'https://navigen.io/?bo=1&open=examples';
+      // Open Example Dashboards directly from Dash context (no shell redirect).
+      if (typeof showExampleDashboardsModal === 'function') {
+        showExampleDashboardsModal();
+      }
     } catch {}
   });
 
