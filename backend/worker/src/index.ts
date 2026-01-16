@@ -931,6 +931,38 @@ export default {
         });
       }
 
+      // --- Owner session clear: /owner/clear-session
+      // Clears the active op_sess cookie on this device (HttpOnly, so JS can't delete it).
+      if (normPath === "/owner/clear-session" && req.method === "GET") {
+        const u = new URL(req.url);
+        const nextRaw = String(u.searchParams.get("next") || "").trim();
+
+        const isSafeNext = (p: string) =>
+          p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
+
+        const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "/";
+
+        const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+
+        // Expire cookie. We do not need to delete opsess:<id> in KV; it expires naturally.
+        const cookie = cookieSerialize("op_sess", "", {
+          Path: "/",
+          HttpOnly: true,
+          Secure: true,
+          SameSite: "Lax",
+          "Max-Age": 0
+        });
+
+        return new Response(null, {
+          status: 302,
+          headers: {
+            "Set-Cookie": cookie,
+            "Location": next,
+            ...noStoreHeaders
+          }
+        });
+      }
+
       // --- Owner Center: switch active op_sess to a device-bound location
       if (normPath === "/owner/switch" && req.method === "GET") {
         const u = new URL(req.url);

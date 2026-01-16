@@ -436,7 +436,18 @@ async function getSessionBoundLocationHint() {
       : (typeof ln === 'string') ? ln.trim()
       : '';
 
-    return { ulid, slug, name };
+    // Also check whether this signed-in location is actually eligible for Dash (campaignEntitled).
+    // Reason: avoid offering "Open my signed-in location" when it would just loop back to "Campaign required".
+    let campaignEntitled = false;
+    try {
+      const st = await fetch(`/api/status?locationID=${encodeURIComponent(ulid)}`, { cache: 'no-store', credentials: 'omit' });
+      if (st.ok) {
+        const sj = await st.json().catch(() => null);
+        campaignEntitled = sj?.campaignEntitled === true;
+      }
+    } catch {}
+
+    return { ulid, slug, name, campaignEntitled };
   } catch {
     return null;
   }
@@ -511,7 +522,7 @@ async function renderAccessBlocked({ status, detail }) {
                 `
                 : `
                   ${
-                    (mismatchHint && mismatchHint.ulid)
+                    (mismatchHint && mismatchHint.ulid && mismatchHint.campaignEntitled === true)
                       ? `
                         <button type="button" class="modal-menu-item" id="dash-open-bound-location">
                           <span class="icon-img">📍</span>
@@ -541,6 +552,13 @@ async function renderAccessBlocked({ status, detail }) {
                 <strong>${examplesTitle}</strong><br><small>${examplesDesc}</small>
               </span>
             </button>
+            
+            <button type="button" class="modal-menu-item" id="dash-clear-session">
+              <span class="icon-img">🧹</span>
+              <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+                <strong>Clear owner session</strong><br><small>Remove the current owner session from this device.</small>
+              </span>
+            </button>            
           </div>
 
           ${
@@ -597,7 +615,15 @@ async function renderAccessBlocked({ status, detail }) {
         }
       }).catch(() => {});
     } catch {}
-  }); 
+  });
+  
+  const clearBtn = document.getElementById('dash-clear-session');
+  clearBtn?.addEventListener('click', () => {
+    try {
+      // Clear op_sess server-side (HttpOnly) and return to the app shell.
+      window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
+    } catch {}
+  });  
 }
 
 async function fetchStats() {
