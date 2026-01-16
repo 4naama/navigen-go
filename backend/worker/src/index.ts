@@ -777,7 +777,8 @@ export default {
       if (normPath === "/api/owner/sessions" && req.method === "GET") {
         const dev = readDeviceId(req);
         if (!dev) {
-          return json({ items: [] }, 200, { "cache-control": "no-store" });
+          // No device id cookie set on this browser. Owner Center is device-bound, so we can’t list sessions yet.
+          return json({ items: [], reason: "no_device_id" }, 200, { "cache-control": "no-store" });
         }
 
         const idxKey = devIndexKey(dev);

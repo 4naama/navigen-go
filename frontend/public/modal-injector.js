@@ -4007,7 +4007,9 @@ export async function createOwnerCenterModal() {
   if (!ulids.length) {
     const p = document.createElement('p');
     p.className = 'muted';
-    p.textContent = (typeof t === 'function' && t('owner.center.empty')) || 'No saved owner sessions on this device yet.';
+    p.textContent =
+      (typeof t === 'function' && t('owner.center.empty')) ||
+      'No saved owner sessions on this device yet. Use Restore access once to add one.';
     list.appendChild(p);
   } else {
     // Resolve each ULID to slug/name via Worker item endpoint

@@ -505,7 +505,21 @@ async function renderAccessBlocked({ status, detail }) {
     <div id="dash-table-scroller">
       <div class="analytics-report" style="max-width:720px;margin:0 auto;">
         <section class="analytics-section">
-          <h3>${title}</h3>
+          <h3 style="display:flex;align-items:center;gap:.4rem;">
+            <span>${title}</span>
+            <button
+              type="button"
+              id="dash-device-access-info"
+              aria-label="About device-based access"
+              style="background:none;border:none;padding:0;cursor:pointer;font-size:.9em;"
+            >ℹ️</button>
+          </h3>
+          <p id="dash-device-access-info-body" style="display:none;opacity:.85;font-size:.9em;margin:.25rem 0 0;">
+            ${
+              (typeof t === 'function' && t('dash.blocked.deviceAccessInfo')) ||
+              'Owner access is stored on this device for security.\nTo open a different business, switch in Owner Center or sign out on this device.'
+            }
+          </p>
           <p>${status === 401 ? msg401 : msg403}</p>
           ${status === 401 ? `<p style="opacity:.8;font-size:.9em;">${hint401}</p>` : ``}
 
@@ -556,7 +570,8 @@ async function renderAccessBlocked({ status, detail }) {
             <button type="button" class="modal-menu-item" id="dash-clear-session">
               <span class="icon-img">🧹</span>
               <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-                <strong>Clear owner session</strong><br><small>Remove the current owner session from this device.</small>
+                <strong>${(typeof t === 'function' && t('dash.blocked.clearSession.title')) || 'Sign out on this device'}</strong><br>
+                <small>${(typeof t === 'function' && t('dash.blocked.clearSession.desc')) || 'Use this if this device is signed in for the wrong business.'}</small>
               </span>
             </button>            
           </div>
@@ -570,6 +585,15 @@ async function renderAccessBlocked({ status, detail }) {
       </div>
     </div>
   `;
+
+  const infoBtn = document.getElementById('dash-device-access-info');
+  const infoBody = document.getElementById('dash-device-access-info-body');
+
+  infoBtn?.addEventListener('click', () => {
+    if (!infoBody) return;
+    const shown = infoBody.style.display !== 'none';
+    infoBody.style.display = shown ? 'none' : 'block';
+  });
 
   // Wire actions using existing modal-injector exports if available globally.
   const exBtn = document.getElementById('dash-example-dashboards');
