@@ -3855,7 +3855,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('root.bo.ownerCenter.desc', 'Switch between locations you manage on this device.'),
       onClick: () => {
         hideModal(id);
-        showOwnerCenterModal();
+        showExampleDashboardsModal();
       }
     });
 
