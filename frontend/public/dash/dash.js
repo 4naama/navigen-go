@@ -600,9 +600,7 @@ async function renderAccessBlocked({ status, detail }) {
   exBtn?.addEventListener('click', () => {
     try {
       // Open Example Dashboards directly from Dash context (no shell redirect).
-      if (typeof showExampleDashboardsModal === 'function') {
-        showExampleDashboardsModal();
-      }
+      window.location.href = 'https://navigen.io/?bo=1&open=examples';
     } catch {}
   });
 
