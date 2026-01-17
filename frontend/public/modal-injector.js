@@ -4037,6 +4037,11 @@ export async function createOwnerCenterModal() {
 
       const label = name || slug || u;
 
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'modal-menu-item';
+      btn.classList.add('syb-card');
+
       btn.innerHTML = `
         <span class="icon-img">📍</span>
         <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
