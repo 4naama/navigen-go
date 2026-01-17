@@ -4037,13 +4037,6 @@ export async function createOwnerCenterModal() {
 
       const label = name || slug || u;
 
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'modal-menu-item';
-      btn.classList.add('syb-card');
-
-      // Render using local variables from this loop (label/slug/u).
-      // Reason: this modal does not have SYB row context (no x/line2 in scope).
       btn.innerHTML = `
         <span class="icon-img">📍</span>
         <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
@@ -4055,7 +4048,55 @@ export async function createOwnerCenterModal() {
 
         <!-- Gift (bottom-right) -->
         <span class="syb-gift" aria-hidden="true">🎁</span>
+
+        <!-- Remove from this device (Owner Center only) -->
+        <button type="button" class="clear-x owner-center-remove"
+                aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">✖</button>
       `;
+
+      // Owner Center: remove this ULID from the device registry (does not affect global ownership).
+      btn.querySelector('.owner-center-remove')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const confirmTxt =
+          (typeof t === 'function' && t('owner.center.remove.confirm')) ||
+          'Remove this location from Owner Center on this device?';
+
+        if (!confirm(confirmTxt)) return;
+
+        try {
+          const r = await fetch('/api/owner/sessions/remove', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'include',
+            cache: 'no-store',
+            body: JSON.stringify({ ulid: u })
+          });
+
+          if (!r.ok) {
+            showToast(
+              (typeof t === 'function' && t('owner.center.remove.toast.fail')) ||
+              'Could not remove this location from this device.',
+              2200
+            );
+            return;
+          }
+
+          btn.remove();
+          showToast(
+            (typeof t === 'function' && t('owner.center.remove.toast.ok')) ||
+            'Removed from this device.',
+            1600
+          );
+        } catch {
+          showToast(
+            (typeof t === 'function' && t('owner.center.remove.toast.fail')) ||
+            'Could not remove this location from this device.',
+            2200
+          );
+        }
+      });
 
       // Decorate status dot + 🎁 gift (SYB parity)
       // - 🎁: active campaign in /data/campaigns.json (loaded once per modal)
@@ -4106,8 +4147,12 @@ export async function createOwnerCenterModal() {
 
       btn.addEventListener('click', () => {
         if (btn.dataset.busy === '1') return;
+
         markBusyLocal(btn, true);
-        // Switch server-side and open Dash for that ULID
+
+        // Safety: clear busy marker if navigation is cancelled.
+        const tClear = setTimeout(() => markBusyLocal(btn, false), 4000);
+
         const next = `/dash/${encodeURIComponent(u)}`;
         window.location.href = `/owner/switch?ulid=${encodeURIComponent(u)}&next=${encodeURIComponent(next)}`;
       });

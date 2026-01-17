@@ -664,5 +664,9 @@
   "campaign.funding.stripeNote": "Der Checkout wird von Stripe abgewickelt. Sie erhalten eine E-Mail zur Zahlungsbestätigung.",
   "root.bo.selectLocation.legend": "🔴 Belegt\\nBereits betrieben.\\n\\n🟢 Frei\\nVerfügbar.\\n\\n🔵 Weiterhin sichtbar\\nKulanz / gehalten.\\n\\n🟠 Geparkt\\nInaktiv.\\n\\n🎁 Beworben\\nAktive Kampagne.",
   "bo.toast.takenAccessOtherDevice": "Dieser Standort ist bereits vergeben.\\n\\nDer Zugriff wurde auf einem anderen Gerät erstellt.\\nKlicken Sie auf die Schaltfläche 📈, um diesen Standort hier zu verwalten.",
-  "bo.toast.noCampaignTemplate": "Dieser Standort hat derzeit keine eingerichtete Kampagne."
+  "bo.toast.noCampaignTemplate": "Dieser Standort hat derzeit keine eingerichtete Kampagne.",
+  "owner.center.remove.title": "Von diesem Gerät entfernen",
+  "owner.center.remove.toast.ok": "Von diesem Gerät entfernt.",
+  "owner.center.remove.toast.fail": "Dieser Standort konnte nicht von diesem Gerät entfernt werden.",
+  "owner.center.remove.confirm": "Diesen Standort über das Owner Center auf diesem Gerät entfernen?"
 }

@@ -664,5 +664,9 @@
   "campaign.funding.stripeNote": "Checkout is processed by Stripe. A payment confirmation email will be sent to you.",
   "root.bo.selectLocation.legend": "🔴 Taken\\nAlready operated.\\n\\n🟢 Free\\nAvailable.\\n\\n🔵 Still visible\\nCourtesy/hold.\\n\\n🟠 Parked\\nInactive.\\n\\n🎁 Promoted\\nActive campaign.",
   "bo.toast.takenAccessOtherDevice": "This location is already taken.\\n\\nAccess was created on a different device.\\nOpen 📈 to manage this location here.",
-  "bo.toast.noCampaignTemplate": "This location currently has no campaign set up."
+  "bo.toast.noCampaignTemplate": "This location currently has no campaign set up.",
+  "owner.center.remove.title": "Remove from this device",
+  "owner.center.remove.toast.ok": "Removed from this device.",
+  "owner.center.remove.toast.fail": "Could not remove this location from this device.",
+  "owner.center.remove.confirm": "Remove this location from Owner Center on this device?"
 }

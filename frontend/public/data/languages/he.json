@@ -664,5 +664,9 @@
   "campaign.funding.stripeNote": "התשלום מעובד על ידי Stripe. יישלח אליך אימייל לאישור התשלום.",
   "root.bo.selectLocation.legend": "🔴 תפוס\\nכבר מופעל.\\n\\n🟢 פנוי\\nזמין.\\n\\n🔵 עדיין גלוי\\nאדיבות / שמירה.\\n\\n🟠 חונה\\nלא פעיל.\\n\\n🎁 מקודם\\nקמפיין פעיל.",
   "bo.toast.takenAccessOtherDevice": "המיקום הזה כבר תפוס.\\n\\nהגישה נוצרה במכשיר אחר.\\nלחץ על כפתור 📈 כדי לנהל את המיקום כאן.",
-  "bo.toast.noCampaignTemplate": "למיקום זה אין כרגע קמפיין מוגדר."
+  "bo.toast.noCampaignTemplate": "למיקום זה אין כרגע קמפיין מוגדר.",
+  "owner.center.remove.title": "הסר ממכשיר זה",
+  "owner.center.remove.toast.ok": "הוסר ממכשיר זה.",
+  "owner.center.remove.toast.fail": "לא ניתן להסיר מיקום זה ממכשיר זה.",
+  "owner.center.remove.confirm": "להסיר מיקום זה מ-Owner Center במכשיר זה?"
 }

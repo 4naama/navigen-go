@@ -664,5 +664,9 @@
   "campaign.funding.stripeNote": "Il pagamento è elaborato da Stripe. Riceverai un’e-mail di conferma del pagamento.",
   "root.bo.selectLocation.legend": "🔴 Occupato\\nGià gestito.\\n\\n🟢 Libero\\nDisponibile.\\n\\n🔵 Ancora visibile\\nCortesia / mantenuto.\\n\\n🟠 Parcheggiato\\nInattivo.\\n\\n🎁 Promosso\\nCampagna attiva.",
   "bo.toast.takenAccessOtherDevice": "Questa posizione è già occupata.\\n\\nL’accesso è stato creato su un altro dispositivo.\\nFai clic sul pulsante 📈 per gestire questa posizione qui.",
-  "bo.toast.noCampaignTemplate": "Questa posizione non ha attualmente alcuna campagna configurata."
+  "bo.toast.noCampaignTemplate": "Questa posizione non ha attualmente alcuna campagna configurata.",
+  "owner.center.remove.title": "Rimuovi da questo dispositivo",
+  "owner.center.remove.toast.ok": "Rimosso da questo dispositivo.",
+  "owner.center.remove.toast.fail": "Impossibile rimuovere questa posizione da questo dispositivo.",
+  "owner.center.remove.confirm": "Rimuovere questa posizione da Owner Center su questo dispositivo?"
 }

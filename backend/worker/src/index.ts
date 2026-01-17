@@ -799,6 +799,40 @@ export default {
         return json({ items: out }, 200, { "cache-control": "no-store" });
       }
 
+      // --- Owner Center: remove a device-bound location from this device registry
+      // POST /api/owner/sessions/remove   body: { ulid: "<ULID>" }
+      // Removes:
+      // - devsess:<ng_dev>:<ULID>
+      // - ULID from devsess:<ng_dev>:index
+      if (normPath === "/api/owner/sessions/remove" && req.method === "POST") {
+        const dev = readDeviceId(req);
+        if (!dev) {
+          return json({ error: { code: "no_device_id", message: "ng_dev missing" } }, 401, { "cache-control": "no-store" });
+        }
+
+        const body = await req.json().catch(() => ({})) as any;
+        const ulid = String(body?.ulid || "").trim();
+        if (!ULID_RE.test(ulid)) {
+          return json({ error: { code: "invalid_request", message: "ulid required" } }, 400, { "cache-control": "no-store" });
+        }
+
+        // 1) delete mapping devsess:<dev>:<ulid>
+        try { await env.KV_STATUS.delete(devSessKey(dev, ulid)); } catch {}
+
+        // 2) remove from devsess:<dev>:index
+        try {
+          const idxKey = devIndexKey(dev);
+          const rawIdx = await env.KV_STATUS.get(idxKey, "text");
+          let arr: string[] = [];
+          try { arr = rawIdx ? JSON.parse(rawIdx) : []; } catch { arr = []; }
+          if (!Array.isArray(arr)) arr = [];
+          arr = arr.filter(x => String(x || "").trim() !== ulid);
+          await env.KV_STATUS.put(idxKey, JSON.stringify(arr), { expirationTtl: 60 * 60 * 24 * 366 });
+        } catch {}
+
+        return json({ ok: true, ulid }, 200, { "cache-control": "no-store" });
+      }
+
       // --- Owner session diag: /api/_diag/opsess (safe; no secrets)
       if (normPath === "/api/_diag/opsess" && req.method === "GET") {
         const cookieHdr = req.headers.get("Cookie") || "";
@@ -1373,10 +1407,8 @@ export default {
           }
         }
 
-        return json({ ok:true, total, wrote, skipped, unresolved, ulids: byUlid.size }, 200, { "cache-control": "no-store" });
-      }
-
-      // (removed) /api/admin/diag-auth — temporary Phase 2 test endpoint
+        return json({ ok: true, total, wrote, skipped, unresolved }, 200);
+        }
 
       // (removed) /api/admin/mint-owner-link — temporary Phase 2 test endpoint
 
@@ -1974,26 +2006,6 @@ export default {
             (req.headers.get("X-NG-QR-Token") || "").trim() ||
             (u.searchParams.get("rt") || "").trim() ||
             (u.searchParams.get("token") || "").trim();
-
-          // DIAG (temporary): confirm token plumbing without exposing token value
-          try {
-            const hasTok = !!token;
-            const tokLen = token ? token.length : 0;
-            const recRaw0 = token ? await env.KV_STATS.get(`redeem:${token}`, "text") : null;
-            const rec0 = recRaw0 ? (() => { try { return JSON.parse(recRaw0) as any; } catch { return null; } })() : null;
-
-            console.log("qr_redeem_diag", JSON.stringify({
-              loc,
-              hasTok,
-              tokLen,
-              hasRec: !!rec0,
-              recStatus: rec0?.status || "",
-              recLoc: rec0?.locationID || "",
-              recCamp: rec0?.campaignKey || ""
-            }));
-          } catch {
-            // ignore diag failures
-          }
           
           // Promo redeem is campaign-paid: campaign entitlement is enforced below via activeCampaignRowForUlid + tokenCampaignKey match.
 
@@ -2048,15 +2060,6 @@ export default {
 
           // Consume token (single use)
           const result = await consumeRedeemToken(env.KV_STATS, token, loc, tokenCampaignKey);
-
-          // DIAG (temporary): log consume result (no token)
-          try {
-            console.log("qr_redeem_consume", JSON.stringify({
-              loc,
-              result,
-              tokenCamp: tokenCampaignKey
-            }));
-          } catch {}
 
           if (result === "ok") {
             await logQrRedeem(env.KV_STATS, env, loc, req, tokenCampaignKey);

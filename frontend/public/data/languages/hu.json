@@ -664,5 +664,9 @@
   "campaign.funding.stripeNote": "A fizetést a Stripe dolgozza fel. Fizetési visszaigazoló e-mailt kap.",
   "root.bo.selectLocation.legend": "🔴 Foglalt\\nMár üzemeltetve.\\n\\n🟢 Szabad\\nElérhető.\\n\\n🔵 Továbbra is látható\\nUdvariasság / tartás.\\n\\n🟠 Parkoltatva\\nInaktív.\\n\\n🎁 Promótált\\nAktív kampány.",
   "bo.toast.takenAccessOtherDevice": "Ez a hely már foglalt.\\n\\nA hozzáférés egy másik eszközön lett létrehozva.\\nKattintson a 📈 gombra a hely kezeléséhez itt.",
-  "bo.toast.noCampaignTemplate": "Ehhez a helyhez jelenleg nincs kampány beállítva."
+  "bo.toast.noCampaignTemplate": "Ehhez a helyhez jelenleg nincs kampány beállítva.",
+  "owner.center.remove.title": "Eltávolítás erről az eszközről",
+  "owner.center.remove.toast.ok": "Eltávolítva erről az eszközről.",
+  "owner.center.remove.toast.fail": "Nem sikerült eltávolítani ezt a helyet erről az eszközről.",
+  "owner.center.remove.confirm": "El szeretné távolítani ezt a helyet az Owner Centerből ezen az eszközön?"
 }
