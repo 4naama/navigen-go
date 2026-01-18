@@ -975,34 +975,14 @@ export async function showLocationProfileModal(data) {
       // 🎁 is campaign-only. If no active campaign, show ONLY the taken line.
       let campaignEndISO = '';
 
+      // 🎁 is campaign-only. If no active campaign, show ONLY the taken line.
+      // Source of truth: /api/status (KV-backed entitlement resolver).
+      let campaignEndISO = '';
       try {
-        const slug = String(data?.locationID || '').trim();
-        if (slug) {
-          const rCamp = await fetch('/data/campaigns.json', { cache: 'no-store' });
-          if (rCamp.ok) {
-            const rows = await rCamp.json().catch(() => null);
-            const arr = Array.isArray(rows) ? rows : [];
-
-            const now = new Date();
-            const active = arr.filter((c) => {
-              if (String(c?.locationID || '').trim() !== slug) return false;
-              if (String(c?.status || '').trim().toLowerCase() !== 'active') return false;
-
-              const start = new Date(String(c?.startDate || '').trim());
-              const end   = new Date(String(c?.endDate || '').trim());
-
-              // If dates are malformed but status=Active, still allow the 🎁 hint.
-              if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return true;
-              return now >= start && now <= end;
-            });
-
-            // pick the soonest endDate if multiple are active
-            const ends = active
-              .map(c => String(c?.endDate || '').trim())
-              .filter(Boolean)
-              .sort(); // YYYY-MM-DD sorts lexicographically correctly
-
-            campaignEndISO = ends[0] || '';
+        if (j?.campaignEntitled === true) {
+          const end = String(j?.campaignEndsAt || '').trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+            campaignEndISO = end;
           }
         }
       } catch {

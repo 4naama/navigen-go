@@ -720,10 +720,14 @@ Operator Session:
 
 --------------------------------------------------------------------
 
-### Owner Center (Device-bound)
+### Owner Center
 
 Owner Center is a Business Owner surface in the main shell that allows an owner
 to switch between locations previously authenticated on the current device.
+
+Owner Center is device-bound, not account-bound.
+Removing a location from Owner Center removes only the device registry entry for that device.
+It does not affect ownership, campaign entitlement, or visibility of the location on other devices.
 
 Key properties:
 • Device-scoped (per browser/device), no accounts
@@ -2217,6 +2221,13 @@ When Dash access is blocked for an unowned LPM:
     - an access-required interstitial, and
     - links to analytics views of designated example locations.
 • Example locations use real data and are not tied to the requested LPM.
+
+--------------------------------------------------------------------
+
+4.20.4.2 — Emphasis
+
+Example Dash access bypasses ownership and campaign entitlement checks.
+However, a location must be explicitly flagged as an example to qualify for this bypass.
 
 --------------------------------------------------------------------
 
@@ -6092,6 +6103,8 @@ Rationale:
 • Stripe emails are already delivered, searchable, and tied to payment authority.
 • NaviGen does not implement identity or payment recovery flows.
 • Avoids spam, probing, and account-like recovery abuse vectors.
+
+Restore Access may create a new device registry entry on the current device, making the restored location appear in Owner Center on that device.
 
 --------------------------------------------------------------------
 H) Session Revocation (Device-Local)
