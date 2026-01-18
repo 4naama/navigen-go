@@ -973,9 +973,6 @@ export async function showLocationProfileModal(data) {
       if (!el) return;
 
       // 🎁 is campaign-only. If no active campaign, show ONLY the taken line.
-      let campaignEndISO = '';
-
-      // 🎁 is campaign-only. If no active campaign, show ONLY the taken line.
       // Source of truth: /api/status (KV-backed entitlement resolver).
       let campaignEndISO = '';
       try {
