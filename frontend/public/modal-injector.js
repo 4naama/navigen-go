@@ -957,11 +957,15 @@ export async function showLocationProfileModal(data) {
   document.body.appendChild(modal);
   ;(async () => {
     try {
-      const slug = String(data?.locationID || '').trim();
-      if (!slug) return;
+      // Prefer slug for readability, but fall back to ULID when slug is missing (e.g. SYB opens).
+      const idOrSlug =
+        String(data?.locationID || '').trim() ||
+        String(data?.id || '').trim();
+
+      if (!idOrSlug) return;
 
       const u = new URL('/api/status', location.origin);
-      u.searchParams.set('locationID', slug);
+      u.searchParams.set('locationID', idOrSlug);
 
       const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
       if (!r.ok) return;
