@@ -4763,9 +4763,10 @@ export function showPromotionsModal() {
 
   const now = new Date();
 
-  fetch("/data/campaigns.json", { cache: "no-store" })
-    .then((res) => (res.ok ? res.json() : []))
-    .then((campaigns) => {
+  fetch(`/api/campaigns/active?context=${encodeURIComponent(pageKey || '')}`, { cache: "no-store" })
+    .then((res) => (res.ok ? res.json() : { items: [] }))
+    .then((payload) => {
+      const campaigns = Array.isArray(payload?.items) ? payload.items : [];
       if (!Array.isArray(campaigns) || campaigns.length === 0) {
         renderEmpty(t("no.promotions.yet") || "No promotions are running right now.");
         showModal("promotions-modal");
@@ -4785,21 +4786,8 @@ export function showPromotionsModal() {
         const statusOk = String(c.status || "").toLowerCase() === "active";
         if (!statusOk) return false;
 
-        const start = c.startDate ? new Date(c.startDate) : null;
-        const end = c.endDate ? new Date(c.endDate) : null;
-        if (start && now < start) return false;
-        if (end && now > end) return false;
-
-        if (!pageKey) return true;
-
-        const ctx = String(c.context || "").toLowerCase();
-        if (!ctx) return true;
-        return ctx
-          .split(";")
-          .map((s) => s.trim())
-          .filter(Boolean)
-          .includes(pageKey);
-      });
+        // campaigns are already filtered server-side (active + in-window + context match)
+        const running = campaigns;
 
       if (!running.length) {
         renderEmpty(t("no.promotions.yet") || "No promotions are running right now.");

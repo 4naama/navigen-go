@@ -1355,9 +1355,25 @@ export default {
 
             const ulid = locResolved;
 
-            const startDate = String(r?.startDate || "").trim();
-            const endDate   = String(r?.endDate   || "").trim();
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) { skipped++; continue; }
+            // Normalize campaign dates to YYYY-MM-DD.
+            // campaigns.json may store Date strings (e.g. "Sun Nov 30 2025 ..."); KV requires YYYY-MM-DD.
+            const normYmd = (v: any): string => {
+              const s = String(v || "").trim();
+              if (!s) return "";
+              if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+              const d = new Date(s);
+              if (Number.isNaN(d.getTime())) return "";
+
+              // Shift forward 12h to avoid off-by-one when local midnight is parsed across timezones.
+              d.setHours(d.getHours() + 12);
+              return d.toISOString().slice(0, 10);
+            };
+
+            const startDate = normYmd(r?.startDate);
+            const endDate   = normYmd(r?.endDate);
+
+            if (!startDate || !endDate) { skipped++; continue; }
 
             const row: CampaignRow = {
               locationID: ulid,
@@ -2188,6 +2204,71 @@ export default {
       // if (pathname === "/api/location/update") { ... }
 
       // use normPath declared earlier; do not redeclare here
+
+      // GET /api/campaigns/active?context=<pageKey?>
+      // KV-authoritative list of active campaigns, used by Promotions modal.
+      if (pathname === "/api/campaigns/active" && req.method === "GET") {
+        const u = new URL(req.url);
+        const ctx = String(u.searchParams.get("context") || "").trim().toLowerCase();
+
+        const todayISO = (() => {
+          const now = new Date();
+          // normalize to YYYY-MM-DD in UTC for window comparisons
+          return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        })();
+
+        const isActiveRow = (r: any) => {
+          const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
+          if (st !== "active") return false;
+          const sd = String(r?.startDate || "").trim();
+          const ed = String(r?.endDate || "").trim();
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(sd) || !/^\d{4}-\d{2}-\d{2}$/.test(ed)) return false;
+          return todayISO >= sd && todayISO <= ed;
+        };
+
+        const matchesContext = (r: any) => {
+          if (!ctx) return true;
+          const raw = String(r?.context || "").trim().toLowerCase();
+          if (!raw) return true; // empty ctx means global
+          const arr = raw.split(";").map(s => s.trim()).filter(Boolean);
+          return arr.includes(ctx);
+        };
+
+        // Walk KV campaigns:byUlid:* (small set; safe for now)
+        const out: any[] = [];
+        let cursor: string | undefined = undefined;
+
+        for (let guard = 0; guard < 25; guard++) { // hard guard against accidental infinite paging
+          const page = await env.KV_STATUS.list({ prefix: "campaigns:byUlid:", cursor });
+          for (const k of (page.keys || [])) {
+            const raw = await env.KV_STATUS.get(k.name, "text");
+            if (!raw) continue;
+            let rows: any[] = [];
+            try { rows = JSON.parse(raw); } catch { rows = []; }
+            if (!Array.isArray(rows)) continue;
+
+            const actives = rows.filter(r => isActiveRow(r) && matchesContext(r));
+            for (const r of actives) {
+              out.push({
+                campaignKey: String(r?.campaignKey || "").trim(),
+                campaignName: r?.campaignName ?? "",
+                locationID: String(r?.locationID || "").trim(),
+                locationName: r?.locationName ?? "",
+                context: String(r?.context || "").trim(),
+                startDate: String(r?.startDate || "").trim(),
+                endDate: String(r?.endDate || "").trim(),
+                status: String(r?.statusOverride || r?.status || "").trim()
+              });
+            }
+          }
+
+          cursor = page.cursor;
+          if (!page.list_complete) break;
+          if (!cursor) break;
+        }
+
+        return json({ items: out }, 200, { "cache-control": "no-store" });
+      }
 
       // GET /api/data/list?context=...&limit=...
       if (normPath === "/api/data/list" && req.method === "GET") {

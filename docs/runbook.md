@@ -313,14 +313,16 @@ git push origin main
 KEDE
 --------------------------------------------------------------------
 
-cd "$env:USERPROFILE\Documents\a_git\kede\kede-site"
-npm run dev
+cd C:\Users\USER\Documents\a_git\kede\kede-site
+git add -A
+git commit -m "Deploy"
+git push origin main
 
 http://localhost:3000/
 
 Search by visible text
-cd "$env:USERPROFILE\Doc2.15/ig<uments\a_git\kede\kede-site"
-Select-String -Path ".\public\en\*.html" -Pattern "YOUR EXACT TEXT"
+cd "$env:USERPROFILE\Documents\a_git\kede\kede-site"
+npm run dev
 
 --------------------------------------------------------------------
 ## 13) Final Invariant (Memorize This)
