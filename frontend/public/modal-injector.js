@@ -4786,8 +4786,8 @@ export function showPromotionsModal() {
         const statusOk = String(c.status || "").toLowerCase() === "active";
         if (!statusOk) return false;
 
-        // campaigns are already filtered server-side (active + in-window + context match)
-        const running = campaigns;
+      // campaigns are already filtered server-side (active + in-window + context match)
+      const running = campaigns;
 
       if (!running.length) {
         renderEmpty(t("no.promotions.yet") || "No promotions are running right now.");

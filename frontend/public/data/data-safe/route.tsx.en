@@ -1,5 +1,0 @@
-﻿export const runtime = 'edge';
-
-export function GET(request: Request) {
-  return Response.redirect(new URL('/en/index.html', request.url), 302);
-}
