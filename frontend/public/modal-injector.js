@@ -4763,7 +4763,15 @@ export function showPromotionsModal() {
 
   const now = new Date();
 
-  fetch(`/api/campaigns/active?context=${encodeURIComponent(pageKey || '')}`, { cache: "no-store" })
+  // derive pageKey from URL, same pattern as before (context-aware promotions)
+  const segs = location.pathname.split("/").filter(Boolean);
+  if (/^[a-z]{2}$/i.test(segs[0] || "")) segs.shift();
+  const pageKey =
+    segs.length >= 2
+      ? `${segs[0].toLowerCase()}/${segs.slice(1).join("/").toLowerCase()}`
+      : "";
+
+  fetch(`/api/campaigns/active?context=${encodeURIComponent(pageKey)}`, { cache: "no-store" })
     .then((res) => (res.ok ? res.json() : { items: [] }))
     .then((payload) => {
       const campaigns = Array.isArray(payload?.items) ? payload.items : [];
@@ -4773,14 +4781,6 @@ export function showPromotionsModal() {
         setupTapOutClose("promotions-modal");
         return;
       }
-
-      // derive pageKey from URL, same pattern as ACTIVE_PAGE in app.js
-      const segs = location.pathname.split("/").filter(Boolean);
-      if (/^[a-z]{2}$/i.test(segs[0] || "")) segs.shift();
-      const pageKey =
-        segs.length >= 2
-          ? `${segs[0].toLowerCase()}/${segs.slice(1).join("/").toLowerCase()}`
-          : "";
 
       // campaigns are already filtered server-side (active + in-window + context match)
       const running = campaigns;

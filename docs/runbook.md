@@ -351,7 +351,7 @@ wrangler deploy
 ***Check JWT_SECRET***
 
 $secret = Get-Content -Raw .\jwt_secret.txt
-$uri = "https://navigen-api.4naama.workers.dev/api/admin/diag-auth"
+$uri = "https://navigen.io/api/_diag/opsess"
 Invoke-RestMethod -Method Get -Uri $uri -Headers @{ Authorization = "Bearer $secret" }
 
 ***End of JWT_SECRET change***
