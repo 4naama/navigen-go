@@ -2729,44 +2729,6 @@ export async function showSelectLocationModal() {
   // Cache ownership probes per tab to avoid repeated /api/status calls during SYB browsing.
   const ownedCache = new Map(); // slug -> { owned:boolean, vis:string, courtesyUntil:string }
 
-  // 🎁 Campaign presence cache for SYB:
-  // Source of truth: /data/campaigns.json rows where status=Active AND today is within [startDate,endDate].
-  let activeCampaignSlugs = new Set();
-
-  const loadActiveCampaignSlugs = async () => {
-    try {
-      const r = await fetch('/data/campaigns.json', { cache: 'no-store' });
-      if (!r.ok) return new Set();
-
-      const rows = await r.json().catch(() => null);
-      const arr = Array.isArray(rows) ? rows : [];
-
-      const now = new Date();
-
-      const isActiveRow = (c) => {
-        const st = String(c?.status || '').trim().toLowerCase();
-        if (st !== 'active') return false;
-
-        const start = new Date(String(c?.startDate || '').trim());
-        const end   = new Date(String(c?.endDate || '').trim());
-        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return true; // fail-open on bad dates for UI hint
-        return now >= start && now <= end;
-      };
-
-      return new Set(
-        arr
-          .filter(isActiveRow)
-          .map(c => String(c?.locationID || '').trim())
-          .filter(Boolean)
-      );
-    } catch {
-      return new Set();
-    }
-  };
-
-  // Load once per SYB open (before first render)
-  activeCampaignSlugs = await loadActiveCampaignSlugs();
-
   const render = (q) => {
     const toks = tokensOf(q);
     list.innerHTML = '';
@@ -2802,11 +2764,6 @@ export async function showSelectLocationModal() {
         <span class="syb-status-dot syb-free" aria-hidden="true"></span>
         <span class="syb-gift" aria-hidden="true">🎁</span>
       `;
-
-      // 🎁 Campaign hint: show only if this location has an active campaign in campaigns.json
-      if (activeCampaignSlugs.has(String(x.slug || '').trim())) {
-        btn.querySelector('.syb-gift')?.classList.add('syb-gift-on');
-      }
 
       // Owned dot is applied in a single post-render pass (prevents async races on rerender).
 
@@ -2889,6 +2846,9 @@ export async function showSelectLocationModal() {
           const owned = (j?.ownedNow === true);
           const vis = String(j?.visibilityState || '').trim();
           const courtesyUntil = String(j?.courtesyUntil || '').trim();
+          
+          const entitled = (j?.campaignEntitled === true);
+          if (gift) gift.classList.toggle('syb-gift-on', entitled);
 
           ownedCache.set(slug, { owned, vis, courtesyUntil });
 
@@ -3626,21 +3586,21 @@ export function showRequestListingModal() {
   showModal(id);
 }
 
-// Campaign selection: resolve a professional campaignKey by lookup in /data/campaigns.json.
-// Reason: Owner Settings needs a deterministic campaignKey without introducing a new selector yet.
+// Campaign selection: resolve active campaignKey via /api/status (KV-authoritative).
+// Reason: Owner Settings needs a deterministic campaignKey without reading /data/campaigns.json.
 export async function resolveCampaignKeyForLocation(locationID) {
   const slug = String(locationID || '').trim();
   if (!slug) return '';
 
   try {
-    const r = await fetch('/data/campaigns.json', { cache: 'no-store' });
-    if (!r.ok) return '';
-    const rows = await r.json().catch(() => null);
-    const arr = Array.isArray(rows) ? rows : [];
+    const u = new URL('/api/status', location.origin);
+    u.searchParams.set('locationID', slug);
 
-    // First matching row is deterministic and stable if your dataset ordering is stable.
-    const hit = arr.find(c => String(c?.locationID || '').trim() === slug);
-    return String(hit?.campaignKey || '').trim();
+    const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+    if (!r.ok) return '';
+
+    const j = await r.json().catch(() => null);
+    return String(j?.activeCampaignKey || '').trim();
   } catch {
     return '';
   }
@@ -3950,44 +3910,6 @@ export async function createOwnerCenterModal() {
     const j = r.ok ? await r.json().catch(() => null) : null;
     ulids = Array.isArray(j?.items) ? j.items : [];
   } catch { ulids = []; }
-
-  // 🎁 Campaign presence cache for Owner Center:
-  // Source of truth: /data/campaigns.json rows where status=Active AND today is within [startDate,endDate].
-  let activeCampaignSlugs = new Set();
-
-  const loadActiveCampaignSlugs = async () => {
-    try {
-      const r = await fetch('/data/campaigns.json', { cache: 'no-store' });
-      if (!r.ok) return new Set();
-
-      const rows = await r.json().catch(() => null);
-      const arr = Array.isArray(rows) ? rows : [];
-
-      const now = new Date();
-
-      const isActiveRow = (c) => {
-        const st = String(c?.status || '').trim().toLowerCase();
-        if (st !== 'active') return false;
-
-        const start = new Date(String(c?.startDate || '').trim());
-        const end   = new Date(String(c?.endDate || '').trim());
-        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return true; // fail-open on bad dates for UI hint
-        return now >= start && now <= end;
-      };
-
-      return new Set(
-        arr
-          .filter(isActiveRow)
-          .map(c => String(c?.locationID || '').trim())
-          .filter(Boolean)
-      );
-    } catch {
-      return new Set();
-    }
-  };
-
-  // Load once per Owner Center open (before rendering rows)
-  activeCampaignSlugs = await loadActiveCampaignSlugs();
 
   if (!ulids.length) {
     const p = document.createElement('p');
