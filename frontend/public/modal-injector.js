@@ -4782,10 +4782,6 @@ export function showPromotionsModal() {
           ? `${segs[0].toLowerCase()}/${segs.slice(1).join("/").toLowerCase()}`
           : "";
 
-      const running = campaigns.filter((c) => {
-        const statusOk = String(c.status || "").toLowerCase() === "active";
-        if (!statusOk) return false;
-
       // campaigns are already filtered server-side (active + in-window + context match)
       const running = campaigns;
 
