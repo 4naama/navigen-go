@@ -3784,7 +3784,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('owner.settings.restore.action.desc', 'Use your most recent Owner access email / Stripe receipt.'),
       onClick: () => {
         hideModal(id);
-        showRestoreAccessModal();
+        showOwnerCenterModal();
       }
     });
 
@@ -4014,10 +4014,9 @@ export async function createOwnerCenterModal() {
           const dotEl = btn.querySelector('.syb-status-dot');
           const giftEl = btn.querySelector('.syb-gift');
 
-          // 🎁 Campaign hint: show only if this location has an active campaign in campaigns.json
-          if (giftEl && slug && activeCampaignSlugs.has(String(slug).trim())) {
-            giftEl.classList.add('syb-gift-on');
-          }
+          // 🎁 Campaign hint: KV-authoritative via /api/status
+          const entitled = (j?.campaignEntitled === true);
+          if (giftEl) giftEl.classList.toggle('syb-gift-on', entitled);
 
           if (!dotEl) return;
 

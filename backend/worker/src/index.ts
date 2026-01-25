@@ -731,6 +731,93 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
   return new Response('OK', { status: 200, headers: { "x-ng-verify": verifyMode || "" } });
 }
 
+async function createCampaignCheckoutSession(env: Env, req: Request, body: any, noStore: Record<string, string>) {
+  // Fail closed if not configured
+  const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+  if (!sk) return json({ error: { code: "misconfigured", message: "STRIPE_SECRET_KEY not set" } }, 500, noStore);
+
+  const locationID = String(body?.locationID || "").trim();           // MUST be slug (no ULID)
+  const campaignKey = String(body?.campaignKey || "").trim();         // required for ownershipSource="campaign"
+  const initiationType = String(body?.initiationType || "").trim();   // "owner"
+  const ownershipSource = String(body?.ownershipSource || "").trim(); // "campaign"
+  const navigenVersion = String(body?.navigenVersion || "").trim() || "phase5";
+
+  if (!locationID || !campaignKey || initiationType !== "owner" || ownershipSource !== "campaign") {
+    return json({ error: { code: "invalid_request", message: "locationID, campaignKey, initiationType='owner', ownershipSource='campaign' required" } }, 400, noStore);
+  }
+
+  // Enforce the spec invariant: clients must never supply ULIDs as locationID
+  if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationID)) {
+    return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore);
+  }
+
+  const MIN_AMOUNT_CENTS = 100; // TESTING: set to 5000 for €50.00 minimum in production
+  const amountCents = Math.floor(Number(body?.amountCents ?? MIN_AMOUNT_CENTS));
+  const currency = "eur";
+
+  if (!Number.isFinite(amountCents) || amountCents < MIN_AMOUNT_CENTS) {
+    return json({ error: { code: "invalid_request", message: `amountCents must be >= ${MIN_AMOUNT_CENTS}` } }, 400, noStore);
+  }
+
+  // Build redirect URLs on the web app origin (not the API Worker origin)
+  const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
+  // IMPORTANT: keep {CHECKOUT_SESSION_ID} unencoded or Stripe will not substitute it.
+  const successUrl =
+    `${siteOrigin}/?flow=campaign` +
+    `&locationID=${encodeURIComponent(locationID)}` +
+    `&sid={CHECKOUT_SESSION_ID}`;
+
+  const cancelUrl = new URL("/", siteOrigin);
+  cancelUrl.searchParams.set("flow", "campaign");
+  cancelUrl.searchParams.set("locationID", locationID);
+  cancelUrl.searchParams.set("canceled", "1");
+
+  const form = new URLSearchParams();
+  form.set("mode", "payment");
+  form.set("customer_creation", "if_required");
+  form.set("billing_address_collection", "auto");
+  form.set("success_url", successUrl);
+  form.set("cancel_url", cancelUrl.toString());
+
+  form.set("line_items[0][quantity]", "1");
+  form.set("line_items[0][price_data][currency]", currency);
+  form.set("line_items[0][price_data][unit_amount]", String(amountCents));
+  form.set("line_items[0][price_data][product_data][name]", "NaviGen Campaign — 30 days");
+
+  // Metadata contract (MUST be copied to PaymentIntent)
+  form.set("metadata[locationID]", locationID);
+  form.set("metadata[campaignKey]", campaignKey);
+  form.set("metadata[initiationType]", initiationType);
+  form.set("metadata[ownershipSource]", ownershipSource);
+  form.set("metadata[navigenVersion]", navigenVersion);
+
+  // Ensure metadata is also on PaymentIntent (spec requirement)
+  form.set("payment_intent_data[metadata][locationID]", locationID);
+  form.set("payment_intent_data[metadata][campaignKey]", campaignKey);
+  form.set("payment_intent_data[metadata][initiationType]", initiationType);
+  form.set("payment_intent_data[metadata][ownershipSource]", ownershipSource);
+  form.set("payment_intent_data[metadata][navigenVersion]", navigenVersion);
+
+  const r = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${sk}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: form.toString()
+  });
+
+  const txt = await r.text();
+  let out: any = null;
+  try { out = JSON.parse(txt); } catch { out = null; }
+
+  if (!r.ok || !out?.id) {
+    return json({ error: { code: "stripe_error", message: String(out?.error?.message || "Stripe create session failed") } }, 502, noStore);
+  }
+
+  return json({ sessionId: out.id, url: String(out.url || "") }, 200, noStore);
+}
+
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
@@ -831,6 +918,228 @@ export default {
         } catch {}
 
         return json({ ok: true, ulid }, 200, { "cache-control": "no-store" });
+      }
+
+      // --- Owner Campaigns: list active/history + current draft for this session-bound ULID
+      // GET /api/owner/campaigns
+      if (normPath === "/api/owner/campaigns" && req.method === "GET") {
+        const sess = await requireOwnerSession(req, env);
+        if (sess instanceof Response) return sess;
+        const ulid = String(sess.ulid || "").trim();
+
+        const draftKey = `campaigns:draft:${ulid}`;
+        const histKey = campaignsByUlidKey(ulid);
+
+        let draft: any = null;
+        let history: any[] = [];
+
+        try {
+          const rawDraft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+          if (rawDraft && typeof rawDraft === "object") draft = rawDraft;
+        } catch {}
+
+        try {
+          const rawHist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
+          history = Array.isArray(rawHist) ? rawHist : [];
+        } catch {
+          history = [];
+        }
+
+        // Provide a shallow "active" view for convenience (no resolver duplication).
+        const nowMs = Date.now();
+        const active = history.filter((r: any) => {
+          const st = effectiveCampaignStatus(r);
+          if (st !== "active") return false;
+          const sMs = parseYmdUtcMs(String(r?.startDate || ""));
+          const eMs = parseYmdUtcMs(String(r?.endDate || ""));
+          if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
+          return nowMs >= sMs && nowMs <= (eMs + 24 * 60 * 60 * 1000 - 1);
+        });
+
+        return json(
+          {
+            ulid,
+            draft,
+            active,
+            history
+          },
+          200,
+          { "cache-control": "no-store" }
+        );
+      }
+
+      // --- Owner Campaigns: upsert draft for this session-bound ULID
+      // POST /api/owner/campaigns/draft  body: CampaignRow-like (slug + dates + rules)
+      // Stores: campaigns:draft:<ULID>
+      if (normPath === "/api/owner/campaigns/draft" && req.method === "POST") {
+        const sess = await requireOwnerSession(req, env);
+        if (sess instanceof Response) return sess;
+        const ulid = String(sess.ulid || "").trim();
+
+        const body = await req.json().catch(() => ({})) as any;
+
+        // Minimal validation: require dates + campaignKey; tolerate rule fields for progressive rollout.
+        const campaignKey = String(body?.campaignKey || "").trim();
+        const startDate = String(body?.startDate || "").trim();
+        const endDate = String(body?.endDate || "").trim();
+
+        if (!campaignKey) {
+          return json({ error: { code: "invalid_request", message: "campaignKey required" } }, 400, { "cache-control": "no-store" });
+        }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+          return json({ error: { code: "invalid_request", message: "startDate/endDate must be YYYY-MM-DD" } }, 400, { "cache-control": "no-store" });
+        }
+
+        // Draft is always scoped to this ULID; never trust client ULID.
+        const draft = {
+          ...body,
+          locationID: ulid,
+          campaignKey,
+          startDate,
+          endDate,
+          status: "Draft",
+          updatedAt: new Date().toISOString()
+        };
+
+        const draftKey = `campaigns:draft:${ulid}`;
+        await env.KV_STATUS.put(draftKey, JSON.stringify(draft));
+
+        return json({ ok: true, ulid, draftKey: `campaigns:draft:<ULID>` }, 200, { "cache-control": "no-store" });
+      }
+
+      // --- Owner Campaigns: create checkout session from the current draft (session-bound)
+      // POST /api/owner/campaigns/checkout  body: { locationID: "<slug>", amountCents?: number }
+      if (normPath === "/api/owner/campaigns/checkout" && req.method === "POST") {
+        const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+
+        const sess = await requireOwnerSession(req, env);
+        if (sess instanceof Response) return sess;
+        const ulid = String(sess.ulid || "").trim();
+
+        const body = await req.json().catch(() => ({})) as any;
+        const locationSlug = String(body?.locationID || "").trim();
+
+        if (!locationSlug) {
+          return json({ error: { code: "invalid_request", message: "locationID (slug) required" } }, 400, noStore);
+        }
+
+        // Zero-trust: verify slug resolves to THIS session ULID.
+        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationSlug)) {
+          return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore);
+        }
+
+        const resolved = await resolveUid(locationSlug, env).catch(() => null);
+        if (!resolved || String(resolved).trim() !== ulid) {
+          return new Response("Denied", { status: 401, headers: noStore });
+        }
+
+        const draftKey = `campaigns:draft:${ulid}`;
+        const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+        const campaignKey = String(draft?.campaignKey || "").trim();
+        if (!campaignKey) {
+          return json({ error: { code: "invalid_request", message: "no draft campaign found for this location" } }, 400, noStore);
+        }
+
+        // Delegate to the same Stripe session creator used by /api/stripe/create-checkout-session
+        const stripeReq = {
+          locationID: locationSlug,
+          campaignKey,
+          initiationType: "owner",
+          ownershipSource: "campaign",
+          navigenVersion: "phase5",
+          amountCents: body?.amountCents
+        };
+
+        return await createCampaignCheckoutSession(env, req, stripeReq, { "cache-control": "no-store" });
+      }
+
+      // --- Owner Campaigns: promote draft → active after Stripe checkout
+      // POST /api/owner/campaigns/promote  body: { sessionId: "cs_..." }
+      // Requires owner session; also verifies Stripe session is paid/complete.
+      if (normPath === "/api/owner/campaigns/promote" && req.method === "POST") {
+        const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+
+        const sess = await requireOwnerSession(req, env);
+        if (sess instanceof Response) return sess;
+        const ulid = String(sess.ulid || "").trim();
+
+        const body = await req.json().catch(() => ({})) as any;
+        const cs = String(body?.sessionId || "").trim();
+        if (!/^cs_(live|test)_/i.test(cs)) {
+          return json({ error: { code: "invalid_request", message: "sessionId (cs_...) required" } }, 400, noStore);
+        }
+
+        // Fetch Stripe checkout session + expand payment_intent metadata
+        const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+        if (!sk) return json({ error: { code: "misconfigured", message: "STRIPE_SECRET_KEY not set" } }, 500, noStore);
+
+        const url = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(cs)}?expand[]=payment_intent`;
+        const r = await fetch(url, { headers: { "Authorization": `Bearer ${sk}` } });
+        const txt = await r.text();
+        let out: any = null;
+        try { out = JSON.parse(txt); } catch { out = null; }
+
+        if (!r.ok || !out) {
+          return json({ error: { code: "stripe_error", message: String(out?.error?.message || "Stripe session fetch failed") } }, 502, noStore);
+        }
+
+        // Require completed + paid
+        const status = String(out?.status || "").toLowerCase();
+        const payStatus = String(out?.payment_status || "").toLowerCase();
+        if (status !== "complete" || payStatus !== "paid") {
+          return json({ error: { code: "not_paid", message: "checkout not complete/paid" } }, 409, noStore);
+        }
+
+        // Resolve target slug from Stripe metadata (authoritative)
+        const pi = out?.payment_intent;
+        const meta = (pi && pi.metadata) ? pi.metadata : (out.metadata || {});
+        const locationSlug = String(meta?.locationID || "").trim();
+        const campaignKey = String(meta?.campaignKey || "").trim();
+
+        if (!locationSlug || !campaignKey) {
+          return json({ error: { code: "invalid_state", message: "missing metadata.locationID/campaignKey" } }, 500, noStore);
+        }
+
+        // Zero-trust: slug must resolve to THIS session ULID
+        const resolved = await resolveUid(locationSlug, env).catch(() => null);
+        if (!resolved || String(resolved).trim() !== ulid) {
+          return new Response("Denied", { status: 401, headers: noStore });
+        }
+
+        // Load draft
+        const draftKey = `campaigns:draft:${ulid}`;
+        const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+        if (!draft) {
+          return json({ error: { code: "not_found", message: "draft not found" } }, 404, noStore);
+        }
+
+        // Enforce same campaignKey (prevents mismatched promote)
+        if (String(draft?.campaignKey || "").trim() !== campaignKey) {
+          return json({ error: { code: "invalid_state", message: "draft campaignKey mismatch" } }, 409, noStore);
+        }
+
+        // Promote draft to Active row in history (append-only)
+        const histKey = campaignsByUlidKey(ulid);
+        const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
+        const arr: any[] = Array.isArray(hist) ? hist : [];
+
+        const row = {
+          ...draft,
+          status: "Active",
+          promotedAt: new Date().toISOString(),
+          stripeSessionId: cs
+        };
+
+        // Replace any existing row with same campaignKey (idempotent promote)
+        const next = arr.filter(x => String(x?.campaignKey || "").trim() !== campaignKey);
+        next.push(row);
+
+        await env.KV_STATUS.put(histKey, JSON.stringify(next));
+
+        // Draft can be cleared after promotion
+        await env.KV_STATUS.delete(draftKey);
+
+        return json({ ok: true, ulid, campaignKey }, 200, { "cache-control": "no-store" });
       }
 
       // --- Owner session diag: /api/_diag/opsess (safe; no secrets)
@@ -2098,103 +2407,8 @@ export default {
       // Server-only: uses STRIPE_SECRET_KEY; client never sees Stripe secret.
       if (normPath === "/api/stripe/create-checkout-session" && req.method === "POST") {
         const noStore = { "cache-control": "no-store" };
-
-        // Fail closed if not configured
-        const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
-        if (!sk) return json({ error: { code: "misconfigured", message: "STRIPE_SECRET_KEY not set" } }, 500, noStore);
-
         const body = await req.json().catch(() => null) as any;
-        const locationID = String(body?.locationID || "").trim();           // MUST be slug (no ULID)
-        const campaignKey = String(body?.campaignKey || "").trim();         // required for ownershipSource="campaign"
-        const initiationType = String(body?.initiationType || "").trim();   // "owner"
-        const ownershipSource = String(body?.ownershipSource || "").trim(); // "campaign"
-        const navigenVersion = String(body?.navigenVersion || "").trim() || "phase5";
-
-        if (!locationID || !campaignKey || initiationType !== "owner" || ownershipSource !== "campaign") {
-          return json({ error: { code: "invalid_request", message: "locationID, campaignKey, initiationType='owner', ownershipSource='campaign' required" } }, 400, noStore);
-        }
-
-        // Enforce the spec invariant: clients must never supply ULIDs as locationID
-        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationID)) {
-          return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore);
-        }
-
-        // Price: Campaign funding is owner-chosen, but must be >= minimum.
-        // Entitlement remains identical regardless of amount (v1.1).
-        const MIN_AMOUNT_CENTS = 100; // TESTING: set to 5000 for €50.00 minimum in production
-        const amountCents = Math.floor(Number(body?.amountCents ?? MIN_AMOUNT_CENTS));
-        const currency = "eur";
-
-        if (!Number.isFinite(amountCents) || amountCents < MIN_AMOUNT_CENTS) {
-          return json({ error: { code: "invalid_request", message: `amountCents must be >= ${MIN_AMOUNT_CENTS}` } }, 400, noStore);
-        }
-
-        // Build redirect URLs on the web app origin (not the API Worker origin)
-        const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
-        // IMPORTANT: keep {CHECKOUT_SESSION_ID} unencoded or Stripe will not substitute it.
-        const successUrl =
-          `${siteOrigin}/?flow=campaign` +
-          `&locationID=${encodeURIComponent(locationID)}` +
-          `&sid={CHECKOUT_SESSION_ID}`;
-
-
-        const cancelUrl = new URL("/", siteOrigin);
-        cancelUrl.searchParams.set("flow", "campaign");
-        cancelUrl.searchParams.set("locationID", locationID);
-        cancelUrl.searchParams.set("canceled", "1");
-
-        // Stripe Checkout Session create (no SDK; direct API call)
-        const form = new URLSearchParams();
-        form.set("mode", "payment");
-        form.set("customer_creation", "if_required");
-        form.set("billing_address_collection", "auto");
-        form.set("success_url", successUrl);
-        form.set("cancel_url", cancelUrl.toString());
-
-        // One line item (fixed amount)
-        form.set("line_items[0][quantity]", "1");
-        form.set("line_items[0][price_data][currency]", currency);
-        // One line item (owner-adjustable, with a server-enforced minimum)
-        form.set("line_items[0][quantity]", "1");
-        form.set("line_items[0][price_data][currency]", currency);
-        // Stripe supports custom unit amounts for Checkout Sessions line items.
-        // This renders an adjustable amount input at checkout while preserving a deterministic server minimum.
-        form.set("line_items[0][price_data][unit_amount]", String(amountCents));
-        form.set("line_items[0][price_data][product_data][name]", "NaviGen Campaign — 30 days");
-
-        // Metadata contract (MUST be copied to PaymentIntent)
-        form.set("metadata[locationID]", locationID);
-        form.set("metadata[campaignKey]", campaignKey);
-        form.set("metadata[initiationType]", initiationType);
-        form.set("metadata[ownershipSource]", ownershipSource);
-        form.set("metadata[navigenVersion]", navigenVersion);
-
-        // Ensure metadata is also on PaymentIntent (spec requirement)
-        form.set("payment_intent_data[metadata][locationID]", locationID);
-        form.set("payment_intent_data[metadata][campaignKey]", campaignKey);
-        form.set("payment_intent_data[metadata][initiationType]", initiationType);
-        form.set("payment_intent_data[metadata][ownershipSource]", ownershipSource);
-        form.set("payment_intent_data[metadata][navigenVersion]", navigenVersion);
-
-        const r = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${sk}`,
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: form.toString()
-        });
-
-        const txt = await r.text();
-        let out: any = null;
-        try { out = JSON.parse(txt); } catch { out = null; }
-
-        if (!r.ok || !out?.id) {
-          // fail closed; do not leak secrets; return Stripe error code/message only
-          return json({ error: { code: "stripe_error", message: String(out?.error?.message || "Stripe create session failed") } }, 502, noStore);
-        }
-
-        return json({ sessionId: out.id }, 200, noStore);
+        return await createCampaignCheckoutSession(env, req, body, noStore);
       }
 
       // (Stubs for later)
