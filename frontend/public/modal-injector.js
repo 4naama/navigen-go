@@ -4134,7 +4134,13 @@ export async function showCampaignManagementModal(locationSlug) {
     setupTapOutClose(id);
   }
 
-  const root = modal.querySelector('.campaign-mgmt');
+  let root = modal.querySelector('.campaign-mgmt');
+  if (!root) {
+    // modal existed from an older build; repair body container
+    const body = modal.querySelector('.modal-body') || modal;
+    body.innerHTML = `<div class="campaign-mgmt"></div>`;
+    root = modal.querySelector('.campaign-mgmt');
+  }
   root.innerHTML = '';
 
   // Auto-promote if we are on Stripe return URL (?sid=cs_...)
