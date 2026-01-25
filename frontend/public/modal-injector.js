@@ -3784,7 +3784,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('owner.settings.restore.action.desc', 'Use your most recent Owner access email / Stripe receipt.'),
       onClick: () => {
         hideModal(id);
-        showOwnerCenterModal();
+        showRestoreAccessModal();
       }
     });
 
@@ -3796,7 +3796,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('root.bo.ownerCenter.desc', 'Switch between locations you manage on this device.'),
       onClick: () => {
         hideModal(id);
-        showExampleDashboardsModal();
+        showOwnerCenterModal();
       }
     });
 
@@ -3813,6 +3813,10 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
   } else {
     addItem({
+      id: 'owner-run-campaign',
+      icon: '🎯',
+      title: _ownerText('owner.settings.claim.runCampaign.title', 'Run campaign'),
+      desc: _ownerText('owner.settings.claim.runCampaign.desc', 'Activate analytics by running a campaign for this location.'),
       onClick: () => {
         hideModal(id);
         showCampaignManagementModal(String(locationIdOrSlug || '').trim());
@@ -3999,8 +4003,6 @@ export async function createOwnerCenterModal() {
           const giftEl = btn.querySelector('.syb-gift');
 
           // 🎁 Campaign hint: KV-authoritative via /api/status
-          const entitled = (j?.campaignEntitled === true);
-          if (giftEl) giftEl.classList.toggle('syb-gift-on', entitled);
 
           if (!dotEl) return;
 
@@ -4015,6 +4017,9 @@ export async function createOwnerCenterModal() {
           if (!r.ok) return;
 
           const j = await r.json().catch(() => null);
+          const entitled = (j?.campaignEntitled === true);
+          if (giftEl) giftEl.classList.toggle('syb-gift-on', entitled);
+
           const owned = (j?.ownedNow === true);
           const vis = String(j?.visibilityState || '').trim();
           const courtesyUntil = String(j?.courtesyUntil || '').trim();
