@@ -2546,6 +2546,46 @@ button:hover {
   box-sizing:border-box;      /* include padding in width */
 }
 
+/* Campaign Management form controls */
+.input{
+  width: 100%;
+  box-sizing: border-box;
+  height: 36px;
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+}
+
+/* Campaign Management modal layout */
+.campaign-mgmt{
+  display: block;
+}
+
+.campaign-mgmt pre{
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  overflow: auto;
+}
+
+/* Primary modal action button */
+.modal-primary{
+  background: #d1e0fe;
+  color: #0f172a;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.modal-primary:hover{
+  background: #c6dafe;
+}
+
 /* WIP/busy dot: same legend shape, lightweight opacity pulse (no layout thrash) */
 .syb-status-dot.syb-busy {
   background: #67e8f9; /* WIP dot color */
