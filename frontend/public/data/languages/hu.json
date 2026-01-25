@@ -668,5 +668,17 @@
   "owner.center.remove.title": "Eltávolítás erről az eszközről",
   "owner.center.remove.toast.ok": "Eltávolítva erről az eszközről.",
   "owner.center.remove.toast.fail": "Nem sikerült eltávolítani ezt a helyet erről az eszközről.",
-  "owner.center.remove.confirm": "El szeretné távolítani ezt a helyet az Owner Centerből ezen az eszközön?"
+  "owner.center.remove.confirm": "El szeretné távolítani ezt a helyet az Owner Centerből ezen az eszközön?",
+  "campaign.ui.title": "Kampánykezelés",
+  "campaign.ui.missingLocation": "Hiányzó hely.",
+  "campaign.ui.boundLocation": "Hely:",
+  "campaign.ui.saveDraft": "Piszkozat mentése",
+  "campaign.ui.checkout": "Checkout",
+  "campaign.ui.missingFields": "A campaignKey/startDate/endDate megadása kötelező.",
+  "campaign.ui.saved": "Piszkozat mentve.",
+  "campaign.ui.saveFailed": "Nem sikerült menteni a piszkozatot.",
+  "campaign.ui.checkoutFailed": "A checkout nem indítható el.",
+  "campaign.ui.promoted": "A kampány aktiválva.",
+  "campaign.ui.promoteFailed": "A kampány még nem aktiválható.",
+  "campaign.ui.denied": "Tulajdonosi hozzáférés szükséges."
 }

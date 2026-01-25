@@ -668,5 +668,17 @@
   "owner.center.remove.title": "Rimuovi da questo dispositivo",
   "owner.center.remove.toast.ok": "Rimosso da questo dispositivo.",
   "owner.center.remove.toast.fail": "Impossibile rimuovere questa posizione da questo dispositivo.",
-  "owner.center.remove.confirm": "Rimuovere questa posizione da Owner Center su questo dispositivo?"
+  "owner.center.remove.confirm": "Rimuovere questa posizione da Owner Center su questo dispositivo?",
+  "campaign.ui.title": "Gestione delle campagne",
+  "campaign.ui.missingLocation": "Posizione mancante.",
+  "campaign.ui.boundLocation": "Posizione:",
+  "campaign.ui.saveDraft": "Salva bozza",
+  "campaign.ui.checkout": "Checkout",
+  "campaign.ui.missingFields": "campaignKey/startDate/endDate richiesti.",
+  "campaign.ui.saved": "Bozza salvata.",
+  "campaign.ui.saveFailed": "Impossibile salvare la bozza.",
+  "campaign.ui.checkoutFailed": "Impossibile avviare il checkout.",
+  "campaign.ui.promoted": "Campagna attivata.",
+  "campaign.ui.promoteFailed": "Impossibile attivare la campagna al momento.",
+  "campaign.ui.denied": "Accesso proprietario richiesto."
 }

@@ -668,5 +668,17 @@
   "owner.center.remove.title": "הסר ממכשיר זה",
   "owner.center.remove.toast.ok": "הוסר ממכשיר זה.",
   "owner.center.remove.toast.fail": "לא ניתן להסיר מיקום זה ממכשיר זה.",
-  "owner.center.remove.confirm": "להסיר מיקום זה מ-Owner Center במכשיר זה?"
+  "owner.center.remove.confirm": "להסיר מיקום זה מ-Owner Center במכשיר זה?",
+  "campaign.ui.title": "ניהול קמפיינים",
+  "campaign.ui.missingLocation": "מיקום חסר.",
+  "campaign.ui.boundLocation": "מיקום:",
+  "campaign.ui.saveDraft": "שמור טיוטה",
+  "campaign.ui.checkout": "לקופה",
+  "campaign.ui.missingFields": "נדרשים campaignKey/startDate/endDate.",
+  "campaign.ui.saved": "הטיוטה נשמרה.",
+  "campaign.ui.saveFailed": "לא ניתן לשמור את הטיוטה.",
+  "campaign.ui.checkoutFailed": "לא ניתן היה להתחיל את התשלום.",
+  "campaign.ui.promoted": "הקמפיין הופעל.",
+  "campaign.ui.promoteFailed": "לא ניתן להפעיל את הקמפיין עדיין.",
+  "campaign.ui.denied": "נדרשת גישת בעלים."
 }

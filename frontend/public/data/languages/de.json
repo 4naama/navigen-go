@@ -668,5 +668,17 @@
   "owner.center.remove.title": "Von diesem Gerät entfernen",
   "owner.center.remove.toast.ok": "Von diesem Gerät entfernt.",
   "owner.center.remove.toast.fail": "Dieser Standort konnte nicht von diesem Gerät entfernt werden.",
-  "owner.center.remove.confirm": "Diesen Standort über das Owner Center auf diesem Gerät entfernen?"
+  "owner.center.remove.confirm": "Diesen Standort über das Owner Center auf diesem Gerät entfernen?",
+  "campaign.ui.title": "Kampagnenverwaltung",
+  "campaign.ui.missingLocation": "Standort fehlt.",
+  "campaign.ui.boundLocation": "Standort:",
+  "campaign.ui.saveDraft": "Entwurf speichern",
+  "campaign.ui.checkout": "Zur Kasse",
+  "campaign.ui.missingFields": "campaignKey/startDate/endDate erforderlich.",
+  "campaign.ui.saved": "Entwurf gespeichert.",
+  "campaign.ui.saveFailed": "Entwurf konnte nicht gespeichert werden.",
+  "campaign.ui.checkoutFailed": "Checkout konnte nicht gestartet werden.",
+  "campaign.ui.promoted": "Kampagne aktiviert.",
+  "campaign.ui.promoteFailed": "Kampagne konnte noch nicht aktiviert werden.",
+  "campaign.ui.denied": "Eigentümerzugriff erforderlich."
 }

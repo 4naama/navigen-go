@@ -3813,25 +3813,9 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
   } else {
     addItem({
-      id: 'owner-run-campaign',
-      icon: '🎯',
-      title: _ownerText('owner.settings.claim.runCampaign.title', 'Run campaign'),
-      desc: _ownerText('owner.settings.claim.runCampaign.desc', 'Activate analytics by running a campaign for this location.'),
       onClick: () => {
-        (async () => {
-          hideModal(id);
-
-          // Prefer the current LPM context when available; otherwise ask the user to pick.
-          const baseSlug = String(locationIdOrSlug || '').trim();
-          const picked = baseSlug ? { locationID: baseSlug } : await showSelectLocationModal();
-          const slug = String(picked?.locationID || '').trim();
-          if (!slug) return;
-
-          let campaignKey = await resolveCampaignKeyForLocation(slug);
-          if (!campaignKey) campaignKey = "campaign-30d";
-
-          showCampaignFundingModal({ locationID: slug, campaignKey });
-        })();
+        hideModal(id);
+        showCampaignManagementModal(String(locationID || '').trim());
       }
     });
 
@@ -4077,7 +4061,280 @@ export async function createOwnerCenterModal() {
   setupTapOutClose(id);
 }
 
-export async function showOwnerCenterModal() {
+export async function showOwnerCenterModal() {  
+  // --- Campaign Management (Owner) ------------------------------------------------
+  // Draft → Checkout → Promote (KV-authoritative; no campaigns.json reads)
+
+  const CAMPAIGN_VOCAB = {
+    campaignType: ['Reservations','Dash access','Discount','Early bird','Happy hour'],
+    targetChannels: ['Default-info','QR','Social','Email'],
+    offerType: ['Info','Discount','Access','Event'],
+    discountKind: ['Percent','Amount','None'],
+    eligibilityType: ['Everyone','First-time-visitor','Repeat-visitor','Staff-only'],
+    utmSource: ['google','facebook','newsletter','partner_site'],
+    utmMedium: ['poster','table-tent','flyer'],
+    utmCampaign: ['winter_sale','product_launch','retargeting_jan','new_year_sale','summer_sale','back_to_school_sale','spring_sale','autumn_sale','black_friday']
+  };
+
+  function ymdToday() {
+    const d = new Date();
+    // local → yyyy-mm-dd
+    const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return z.toISOString().slice(0,10);
+  }
+
+  function elOption(v, selected) {
+    const o = document.createElement('option');
+    o.value = v;
+    o.textContent = v;
+    if (selected) o.selected = true;
+    return o;
+  }
+
+  function buildSelect(values, current) {
+    const sel = document.createElement('select');
+    sel.className = 'input';
+    sel.appendChild(elOption('', !current));
+    values.forEach(v => sel.appendChild(elOption(v, String(current||'') === v)));
+    return sel;
+  }
+
+  function buildInput(type, value) {
+    const inp = document.createElement('input');
+    inp.className = 'input';
+    inp.type = type;
+    inp.value = String(value || '');
+    return inp;
+  }
+
+  async function apiJson(url, init) {
+    const r = await fetch(url, { cache:'no-store', credentials:'include', ...(init||{}) });
+    const txt = await r.text();
+    let j = null;
+    try { j = txt ? JSON.parse(txt) : null; } catch {}
+    return { r, j, txt };
+  }
+
+  export async function showCampaignManagementModal(locationSlug) {
+    const slug = String(locationSlug || '').trim();
+    if (!slug) {
+      showToast((typeof t==='function' && t('campaign.ui.missingLocation')) || 'Missing location.', 2000);
+      return;
+    }
+
+    // Create modal once
+    const id = 'campaign-management-modal';
+    let modal = document.getElementById(id);
+    if (!modal) {
+      modal = injectModal({
+        id,
+        title: (typeof t==='function' && t('campaign.ui.title')) || 'Campaign management',
+        body: `<div class="campaign-mgmt"></div>`,
+        closeButton: true
+      });
+      setupTapOutClose(id);
+    }
+
+    const root = modal.querySelector('.campaign-mgmt');
+    root.innerHTML = '';
+
+    // Auto-promote if we are on Stripe return URL (?sid=cs_...)
+    const qs = new URLSearchParams(location.search);
+    const sid = String(qs.get('sid') || '').trim();
+    const flow = String(qs.get('flow') || '').trim();
+
+    if (flow === 'campaign' && sid) {
+      // Attempt promote; then clean URL so it doesn't re-run.
+      const { r, j } = await apiJson('/api/owner/campaigns/promote', {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify({ sessionId: sid })
+      });
+
+      // Clean params regardless (avoid loops)
+      qs.delete('sid'); qs.delete('flow');
+      history.replaceState({}, document.title, `${location.pathname}${qs.toString()?('?'+qs.toString()):''}`);
+
+      if (r.ok) {
+        showToast((typeof t==='function' && t('campaign.ui.promoted')) || 'Campaign activated.', 2200);
+      } else {
+        // Keep this short; dev can inspect Network for details
+        showToast((typeof t==='function' && t('campaign.ui.promoteFailed')) || 'Could not activate campaign yet.', 2600);
+      }
+    }
+
+    // Load owner campaigns (draft + active/history)
+    const { r: rList, j: listJ } = await apiJson('/api/owner/campaigns');
+    if (!rList.ok) {
+      showToast((typeof t==='function' && t('campaign.ui.denied')) || 'Owner access required.', 2400);
+      return;
+    }
+
+    const draft = listJ?.draft || null;
+    const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
+    const ulid = String(listJ?.ulid || '').trim();
+
+    // Header
+    const h = document.createElement('div');
+    h.className = 'muted';
+    h.style.marginBottom = '10px';
+    h.textContent = (typeof t==='function' && t('campaign.ui.boundLocation')) || `Location: ${slug}`;
+    root.appendChild(h);
+
+    // Form (draft)
+    const form = document.createElement('div');
+    form.style.display = 'grid';
+    form.style.gridTemplateColumns = '1fr 1fr';
+    form.style.gap = '10px';
+
+    const field = (labelTxt, control) => {
+      const w = document.createElement('div');
+      const lab = document.createElement('div');
+      lab.className = 'muted';
+      lab.style.marginBottom = '4px';
+      lab.textContent = labelTxt;
+      w.appendChild(lab);
+      w.appendChild(control);
+      return w;
+    };
+
+    const campaignKey = buildInput('text', draft?.campaignKey || '');
+    const campaignName = buildInput('text', draft?.campaignName || '');
+    const startDate = buildInput('date', draft?.startDate || ymdToday());
+    const endDate = buildInput('date', draft?.endDate || '');
+
+    const campaignType = buildSelect(CAMPAIGN_VOCAB.campaignType, draft?.campaignType || '');
+    const offerType = buildSelect(CAMPAIGN_VOCAB.offerType, draft?.offerType || 'Discount');
+    const discountKind = buildSelect(CAMPAIGN_VOCAB.discountKind, draft?.discountKind || 'Percent');
+    const discountValue = buildInput('number', draft?.campaignDiscountValue ?? draft?.discountValue ?? '');
+
+    const eligibilityType = buildSelect(CAMPAIGN_VOCAB.eligibilityType, draft?.eligibilityType || 'Everyone');
+    const eligibilityNotes = buildInput('text', draft?.eligibilityNotes || '');
+
+    const utmSource = buildSelect(CAMPAIGN_VOCAB.utmSource, draft?.utmSource || '');
+    const utmMedium = buildSelect(CAMPAIGN_VOCAB.utmMedium, draft?.utmMedium || '');
+    const utmCampaign = buildSelect(CAMPAIGN_VOCAB.utmCampaign, draft?.utmCampaign || '');
+
+    // targetChannels: simple single-select for now; can evolve to multi later
+    const targetChannels = buildSelect(CAMPAIGN_VOCAB.targetChannels, (draft?.targetChannels && draft.targetChannels[0]) || 'QR');
+
+    form.appendChild(field('campaignKey', campaignKey));
+    form.appendChild(field('campaignName', campaignName));
+    form.appendChild(field('campaignType', campaignType));
+    form.appendChild(field('targetChannels', targetChannels));
+    form.appendChild(field('offerType', offerType));
+    form.appendChild(field('discountKind', discountKind));
+    form.appendChild(field('campaignDiscountValue', discountValue));
+    form.appendChild(field('eligibilityType', eligibilityType));
+    form.appendChild(field('eligibilityNotes', eligibilityNotes));
+    form.appendChild(field('utmSource', utmSource));
+    form.appendChild(field('utmMedium', utmMedium));
+    form.appendChild(field('utmCampaign', utmCampaign));
+    form.appendChild(field('startDate', startDate));
+    form.appendChild(field('endDate', endDate));
+
+    root.appendChild(form);
+
+    // Actions row
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.gap = '10px';
+    actions.style.marginTop = '12px';
+
+    const btnSave = document.createElement('button');
+    btnSave.className = 'modal-primary';
+    btnSave.textContent = (typeof t==='function' && t('campaign.ui.saveDraft')) || 'Save draft';
+
+    const btnCheckout = document.createElement('button');
+    btnCheckout.className = 'modal-menu-item';
+    btnCheckout.textContent = (typeof t==='function' && t('campaign.ui.checkout')) || 'Checkout';
+
+    actions.appendChild(btnSave);
+    actions.appendChild(btnCheckout);
+    root.appendChild(actions);
+
+    const collectDraft = () => ({
+      campaignKey: String(campaignKey.value || '').trim(),
+      campaignName: String(campaignName.value || '').trim(),
+      campaignType: String(campaignType.value || '').trim(),
+      targetChannels: [ String(targetChannels.value || '').trim() ].filter(Boolean),
+      offerType: String(offerType.value || '').trim(),
+      discountKind: String(discountKind.value || '').trim(),
+      campaignDiscountValue: discountValue.value === '' ? null : Number(discountValue.value),
+      eligibilityType: String(eligibilityType.value || '').trim(),
+      eligibilityNotes: String(eligibilityNotes.value || '').trim(),
+      utmSource: String(utmSource.value || '').trim(),
+      utmMedium: String(utmMedium.value || '').trim(),
+      utmCampaign: String(utmCampaign.value || '').trim(),
+      startDate: String(startDate.value || '').trim(),
+      endDate: String(endDate.value || '').trim()
+    });
+
+    btnSave.addEventListener('click', async () => {
+      const d = collectDraft();
+      if (!d.campaignKey || !d.startDate || !d.endDate) {
+        showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
+        return;
+      }
+
+      const { r } = await apiJson('/api/owner/campaigns/draft', {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify(d)
+      });
+
+      if (r.ok) showToast((typeof t==='function' && t('campaign.ui.saved')) || 'Draft saved.', 1800);
+      else showToast((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.', 2400);
+    });
+
+    btnCheckout.addEventListener('click', async () => {
+      // Ensure draft saved first (server must have campaigns:draft:<ULID>)
+      const d = collectDraft();
+      if (!d.campaignKey || !d.startDate || !d.endDate) {
+        showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
+        return;
+      }
+
+      const { r: rSave } = await apiJson('/api/owner/campaigns/draft', {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify(d)
+      });
+      if (!rSave.ok) {
+        showToast((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.', 2400);
+        return;
+      }
+
+      const { r: rChk, j: chkJ } = await apiJson('/api/owner/campaigns/checkout', {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify({ locationID: slug, amountCents: 100 }) // minimal test amount; adjust later
+      });
+
+      if (!rChk.ok || !chkJ?.url) {
+        showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
+        return;
+      }
+
+      // Redirect to Stripe hosted checkout
+      location.href = String(chkJ.url);
+    });
+
+    // History (compact)
+    const hist = document.createElement('div');
+    hist.style.marginTop = '14px';
+    hist.innerHTML = `<div class="muted" style="margin-bottom:6px;">History</div>`;
+    const pre = document.createElement('pre');
+    pre.style.whiteSpace = 'pre-wrap';
+    pre.style.fontSize = '12px';
+    pre.textContent = JSON.stringify(historyArr.slice(-5), null, 2);
+    hist.appendChild(pre);
+    root.appendChild(hist);
+
+    showModal(id);
+  }
+  // --- End Campaign Management ----------------------------------------------------
+    
   const id = 'owner-center-modal';
   if (!document.getElementById(id)) await createOwnerCenterModal();
   showModal(id);

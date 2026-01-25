@@ -668,5 +668,17 @@
   "owner.center.remove.title": "Remove from this device",
   "owner.center.remove.toast.ok": "Removed from this device.",
   "owner.center.remove.toast.fail": "Could not remove this location from this device.",
-  "owner.center.remove.confirm": "Remove this location from Owner Center on this device?"
+  "owner.center.remove.confirm": "Remove this location from Owner Center on this device?",
+  "campaign.ui.title": "Campaign management",
+  "campaign.ui.missingLocation": "Missing location.",
+  "campaign.ui.boundLocation": "Location:",
+  "campaign.ui.saveDraft": "Save draft",
+  "campaign.ui.checkout": "Checkout",
+  "campaign.ui.missingFields": "campaignKey/startDate/endDate required.",
+  "campaign.ui.saved": "Draft saved.",
+  "campaign.ui.saveFailed": "Could not save draft.",
+  "campaign.ui.checkoutFailed": "Checkout could not start.",
+  "campaign.ui.promoted": "Campaign activated.",
+  "campaign.ui.promoteFailed": "Could not activate campaign yet.",
+  "campaign.ui.denied": "Owner access required."
 }

@@ -668,5 +668,17 @@
   "owner.center.remove.title": "Eliminar de este dispositivo",
   "owner.center.remove.toast.ok": "Eliminado de este dispositivo.",
   "owner.center.remove.toast.fail": "No se pudo eliminar esta ubicación de este dispositivo.",
-  "owner.center.remove.confirm": "¿Eliminar esta ubicación de Owner Center en este dispositivo?"
+  "owner.center.remove.confirm": "¿Eliminar esta ubicación de Owner Center en este dispositivo?",
+  "campaign.ui.title": "Gestión de campañas",
+  "campaign.ui.missingLocation": "Falta la ubicación.",
+  "campaign.ui.boundLocation": "Ubicación:",
+  "campaign.ui.saveDraft": "Guardar borrador",
+  "campaign.ui.checkout": "Finalizar compra",
+  "campaign.ui.missingFields": "Se requieren campaignKey/startDate/endDate.",
+  "campaign.ui.saved": "Borrador guardado.",
+  "campaign.ui.saveFailed": "No se pudo guardar el borrador.",
+  "campaign.ui.checkoutFailed": "No se pudo iniciar el pago.",
+  "campaign.ui.promoted": "Campaña activada.",
+  "campaign.ui.promoteFailed": "Aún no se pudo activar la campaña.",
+  "campaign.ui.denied": "Se requiere acceso del propietario."
 }

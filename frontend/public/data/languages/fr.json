@@ -668,5 +668,17 @@
   "owner.center.remove.title": "Supprimer de cet appareil",
   "owner.center.remove.toast.ok": "Supprimé de cet appareil.",
   "owner.center.remove.toast.fail": "Impossible de supprimer cet emplacement de cet appareil.",
-  "owner.center.remove.confirm": "Supprimer cet emplacement depuis Owner Center sur cet appareil ?"
+  "owner.center.remove.confirm": "Supprimer cet emplacement depuis Owner Center sur cet appareil ?",
+  "campaign.ui.title": "Gestion des campagnes",
+  "campaign.ui.missingLocation": "Emplacement manquant.",
+  "campaign.ui.boundLocation": "Emplacement :",
+  "campaign.ui.saveDraft": "Enregistrer le brouillon",
+  "campaign.ui.checkout": "Passer au paiement",
+  "campaign.ui.missingFields": "campaignKey/startDate/endDate requis.",
+  "campaign.ui.saved": "Brouillon enregistré.",
+  "campaign.ui.saveFailed": "Impossible d’enregistrer le brouillon.",
+  "campaign.ui.checkoutFailed": "Le paiement n’a pas pu démarrer.",
+  "campaign.ui.promoted": "Campagne activée.",
+  "campaign.ui.promoteFailed": "Impossible d’activer la campagne pour le moment.",
+  "campaign.ui.denied": "Accès propriétaire requis."
 }
