@@ -3818,8 +3818,19 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       title: _ownerText('owner.settings.claim.runCampaign.title', 'Run campaign'),
       desc: _ownerText('owner.settings.claim.runCampaign.desc', 'Activate analytics by running a campaign for this location.'),
       onClick: () => {
-        hideModal(id);
-        showCampaignManagementModal(String(locationIdOrSlug || '').trim());
+        (async () => {
+          hideModal(id);
+
+          const slug = String(locationIdOrSlug || '').trim();
+          if (!slug) return;
+
+          // Claim flow (no owner session): use existing funding modal / public checkout path.
+          // This keeps UX correct for unowned locations.
+          let campaignKey = await resolveCampaignKeyForLocation(slug);
+          if (!campaignKey) campaignKey = "campaign-30d";
+
+          showCampaignFundingModal({ locationID: slug, campaignKey });
+        })();
       }
     });
 
@@ -4129,6 +4140,13 @@ export async function showCampaignManagementModal(locationSlug) {
   // Create modal once
   const id = 'campaign-management-modal';
   let modal = document.getElementById(id);
+
+  // If an older build created this modal without a close button, recreate it cleanly.
+  if (modal && !modal.querySelector('.modal-close')) {
+    modal.remove();
+    modal = null;
+  }
+
   if (!modal) {
     modal = injectModal({
       id,
