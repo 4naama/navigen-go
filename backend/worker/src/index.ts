@@ -818,6 +818,32 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   return json({ sessionId: out.id, url: String(out.url || "") }, 200, noStore);
 }
 
+// Internal helper: resolve an item by canonical ULID (same semantics as /api/data/item?id=...).
+// Returns null if not found. Keeps logic centralized for future “locations project”.
+async function getItemById(ulid: string, env: Env): Promise<any | null> {
+  const id = String(ulid || "").trim();
+  if (!id) return null;
+
+  // Reuse the same dataset read path already used by /api/data/item.
+  // NOTE: This assumes profiles rows include an ID field equal to ULID.
+  const rows = await loadProfiles(env); // existing helper in your worker
+  const arr: any[] = Array.isArray(rows) ? rows : (rows?.locations || []);
+  if (!Array.isArray(arr)) return null;
+
+  const hit = arr.find((r: any) => String(r?.ID || r?.id || "").trim() === id);
+  return hit || null;
+}
+
+// Normalize a multilingual name field to a short display string.
+function pickName(name: any): string {
+  if (!name) return "";
+  if (typeof name === "string") return name;
+  if (typeof name === "object") {
+    return String(name.en || name.hu || Object.values(name)[0] || "").trim();
+  }
+  return "";
+}
+
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
@@ -1125,6 +1151,12 @@ export default {
 
         const row = {
           ...draft,
+
+          // Preserve both identifiers for stable UI mapping
+          locationID: ulid,           // keep canonical
+          locationULID: ulid,
+          locationSlug,               // from Stripe metadata.locationID
+
           status: "Active",
           promotedAt: new Date().toISOString(),
           stripeSessionId: cs
@@ -1684,8 +1716,10 @@ export default {
 
             if (!startDate || !endDate) { skipped++; continue; }
 
-            const row: CampaignRow = {
-              locationID: ulid,
+            const row: any = {
+              locationID: ulid, // canonical ULID (existing contract)
+              locationULID: ulid,
+              locationSlug: locIn, // original input (slug) from campaigns.json
               campaignKey: String(r?.campaignKey || "").trim(),
               campaignName: typeof r?.campaignName === "string" ? r.campaignName : undefined,
               sectorKey: typeof r?.sectorKey === "string" ? r.sectorKey : undefined,
@@ -2463,11 +2497,18 @@ export default {
 
             const actives = rows.filter(r => isActiveRow(r) && matchesContext(r));
             for (const r of actives) {
+              const locationULID = String(r?.locationULID || r?.locationID || "").trim();
+              const locationSlug = String(r?.locationSlug || "").trim();
+
+              // Resolve human name by slug (profiles.json is keyed by locationID=slug)
+              const locationName = (await nameForLocation(locationSlug, req.headers.get("Origin") || "https://navigen.io")) || "";
+
               out.push({
                 campaignKey: String(r?.campaignKey || "").trim(),
                 campaignName: r?.campaignName ?? "",
-                locationID: String(r?.locationID || "").trim(),
-                locationName: r?.locationName ?? "",
+                locationULID,
+                locationSlug,
+                locationName,
                 context: String(r?.context || "").trim(),
                 startDate: String(r?.startDate || "").trim(),
                 endDate: String(r?.endDate || "").trim(),

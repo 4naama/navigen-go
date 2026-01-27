@@ -2195,6 +2195,7 @@ async function initLpmImageSlider(modal, data) {
   
     // 📈 Stats (dashboard)
     // Phase 4: intercept before navigation; open Owner settings modal when Dash is blocked.
+    // Authoritative decision is based on /api/stats HTTP semantics (200/401/403).
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', async (e) => {
@@ -2202,61 +2203,53 @@ async function initLpmImageSlider(modal, data) {
         // Guard: avoid double-open when user taps rapidly (async probes race).
         if (statsBtn.dataset.busy === '1') return;
         statsBtn.dataset.busy = '1';
+
         try {
+          const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i; // keep ULID shape check
 
-        const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i; // keep ULID shape check
+          const cachedLocationId  = String(modal.getAttribute('data-locationid') || '').trim(); // cached in DOM
+          const payloadLocationId = String(data?.locationID || '').trim();                      // passed in payload
+          const rawULID           = String(data?.id || '').trim();                              // ULID (if known)
 
-        const cachedLocationId  = String(modal.getAttribute('data-locationid') || '').trim(); // cached in DOM
-        const payloadLocationId = String(data?.locationID || '').trim();                      // passed in payload
-        const rawULID           = String(data?.id || '').trim();                              // ULID (if known)
+          const target = (payloadLocationId || cachedLocationId || rawULID).trim(); // prefer payload; fallback to cached or ULID
+          if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
-        const target = (payloadLocationId || cachedLocationId || rawULID).trim(); // prefer payload; fallback to cached or ULID
-        if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
+          // Sync DOM cache for next time; leave data.* untouched
+          modal.setAttribute('data-locationid', target);
 
-        // Sync DOM cache for next time; leave data.* untouched
-        modal.setAttribute('data-locationid', target);
+          // Resolve canonical ULID (best-effort) — used only for clean /dash/<ULID> navigation.
+          // Not used for gating decisions.
+          const resolveCanonicalULID = async () => {
+            try {
+              const u = new URL('/api/status', location.origin);
+              u.searchParams.set('locationID', (ULID.test(rawULID) ? rawULID : target));
+              const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+              if (!r.ok) return '';
+              const j = await r.json().catch(() => null);
+              const canonical = String(j?.locationID || '').trim();
+              return ULID.test(canonical) ? canonical : '';
+            } catch {
+              return '';
+            }
+          };
 
-        // Read-only ownership hint (no analytics): status/tier from API Worker.
-        // We never infer authority from the client; this is only to choose the correct Owner settings variant.
-        const isOwnedByStatus = async () => {
-          try {
-            const u = new URL('/api/status', location.origin);
-            u.searchParams.set('locationID', (ULID.test(rawULID) ? rawULID : target));
-            const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
-            if (!r.ok) return { owned: false, canonicalULID: '' };
+          // Authoritative gate: /api/stats status decides Dash vs restore vs claim.
+          const ymd = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+          const statsUrl = new URL('/api/stats', location.origin);
+          statsUrl.searchParams.set('locationID', target);
+          statsUrl.searchParams.set('from', ymd);
+          statsUrl.searchParams.set('to', ymd);
 
-            const j = await r.json().catch(() => null);
+          const rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
 
-            // ✅ Authoritative ownership signal + canonical ULID
-            const owned = j?.ownedNow === true;
-            const canonical = String(j?.locationID || '').trim();
-
-            return { owned, canonicalULID: (ULID.test(canonical) ? canonical : '') };
-          } catch {
-            return { owned: false, canonicalULID: '' };
+          if (rStats.status === 200) {
+            const seg = (await resolveCanonicalULID()) || String(rawULID || target).trim();
+            const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
+            window.open(href, '_blank', 'noopener,noreferrer');
+            return;
           }
-        };
 
-        // Determine if we have a valid owner session by probing /api/stats with a minimal 1-day window.
-        // This call is still owner-gated and returns no analytics when blocked.
-        const ownedRes = await isOwnedByStatus();
-        const owned = ownedRes.owned === true;
-
-        // When owned, decide the correct owner path on THIS device:
-        // - session for this location exists -> Open Dash
-        // - session exists but for another location -> show Owner Settings with Owner Center CTA
-        // - no session on device -> show Owner Settings with Restore access CTA
-        if (owned) {
-          // Owned locations: open Dash only when this device already holds a valid owner session.
-          // Otherwise guide to Restore access so we don't land on a Denied dashboard.
-          let hasOwnerSession = false;
-          try {
-            const r = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
-            const j = r.ok ? await r.json().catch(() => null) : null;
-            hasOwnerSession = (j?.hasOpSessCookie === true) && (j?.kvHit === true);
-          } catch { hasOwnerSession = false; }
-
-          if (!hasOwnerSession) {
+          if (rStats.status === 401) {
             showOwnerSettingsModal({
               variant: 'restore',
               locationIdOrSlug: target,
@@ -2265,23 +2258,16 @@ async function initLpmImageSlider(modal, data) {
             return;
           }
 
-          // Always prefer the canonical ULID returned by /api/status to avoid slug/alias drift across devices.
-          const seg = ownedRes.canonicalULID || String(rawULID || target).trim();
-          const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-          window.open(href, '_blank', 'noopener,noreferrer');
-          return;
-        }
-
-        // Unowned → Owner settings (claim)
-        showOwnerSettingsModal({
-          variant: 'claim',
-          locationIdOrSlug: target,
-          locationName: String(data?.displayName ?? data?.name ?? '').trim()
-        });
+          // 403 (campaign required / not entitled) and all other errors → claim guidance
+          showOwnerSettingsModal({
+            variant: 'claim',
+            locationIdOrSlug: target,
+            locationName: String(data?.displayName ?? data?.name ?? '').trim()
+          });
 
         } finally {
           statsBtn.dataset.busy = '0';
-        }        
+        }
       }, { capture: true });
     }
 
