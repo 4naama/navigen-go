@@ -1,6 +1,28 @@
 // analytics: unified endpoint; always use live worker for all environments
 const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
+// ---------------------------------------------------------------------------
+// Campaign entitlement pre-resolver (deterministic; no post-render repaint)
+// ---------------------------------------------------------------------------
+const __statusCache = new Map(); // locationSlug -> Promise<status|null>
+
+async function getStatusOnce(locationSlug) {
+  const slug = String(locationSlug || '').trim();
+  if (!slug) return null;
+
+  if (!__statusCache.has(slug)) {
+    const p = fetch(`/api/status?locationID=${encodeURIComponent(slug)}`, {
+      cache: 'no-store',
+      credentials: 'include'
+    })
+      .then(r => (r.ok ? r.json() : null))
+      .catch(() => null);
+
+    __statusCache.set(slug, p);
+  }
+  return __statusCache.get(slug);
+}
+
 // QR helper: cache remote ESM import for QRCode usage
 let qrLibPromise;
 function getQRCodeLib() {
@@ -2794,6 +2816,7 @@ export async function showSelectLocationModal() {
 
           const dot = el.querySelector('.syb-status-dot');
           const gift = el.querySelector('.syb-gift');
+          if (gift) gift.style.display = 'none';
           if (!dot) return;
 
           if (ownedCache.has(slug)) {
@@ -2834,7 +2857,11 @@ export async function showSelectLocationModal() {
           const courtesyUntil = String(j?.courtesyUntil || '').trim();
           
           const entitled = (j?.campaignEntitled === true);
-          if (gift) gift.classList.toggle('syb-gift-on', entitled);
+          if (gift) {
+            // Deterministic UX: never show an undecided gift.
+            gift.classList.toggle('syb-gift-on', entitled);
+            gift.style.display = entitled ? '' : 'none';
+          }
 
           ownedCache.set(slug, { owned, vis, courtesyUntil });
 
