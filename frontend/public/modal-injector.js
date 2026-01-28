@@ -2216,46 +2216,27 @@ async function initLpmImageSlider(modal, data) {
     }
   
     // 📈 Stats (dashboard)
-    // Phase 4: intercept before navigation; open Owner settings modal when Dash is blocked.
-    // Authoritative decision is based on /api/stats HTTP semantics (200/401/403).
+    // Phase 4: intercept before navigation; choose restore/claim/open-dash by /api/stats status.
     const statsBtn = modal.querySelector('#som-stats');
     if (statsBtn) {
       statsBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        // Guard: avoid double-open when user taps rapidly (async probes race).
         if (statsBtn.dataset.busy === '1') return;
         statsBtn.dataset.busy = '1';
 
         try {
-          const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i; // keep ULID shape check
+          const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
-          const cachedLocationId  = String(modal.getAttribute('data-locationid') || '').trim(); // cached in DOM
-          const payloadLocationId = String(data?.locationID || '').trim();                      // passed in payload
-          const rawULID           = String(data?.id || '').trim();                              // ULID (if known)
+          const cachedLocationId  = String(modal.getAttribute('data-locationid') || '').trim();
+          const payloadLocationId = String(data?.locationID || '').trim();
+          const rawULID           = String(data?.id || '').trim();
 
-          const target = (payloadLocationId || cachedLocationId || rawULID).trim(); // prefer payload; fallback to cached or ULID
+          const target = (payloadLocationId || cachedLocationId || rawULID).trim();
           if (!target) { showToast('Dashboard unavailable for this profile', 1600); return; }
 
-          // Sync DOM cache for next time; leave data.* untouched
           modal.setAttribute('data-locationid', target);
 
-          // Resolve canonical ULID (best-effort) — used only for clean /dash/<ULID> navigation.
-          // Not used for gating decisions.
-          const resolveCanonicalULID = async () => {
-            try {
-              const u = new URL('/api/status', location.origin);
-              u.searchParams.set('locationID', (ULID.test(rawULID) ? rawULID : target));
-              const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
-              if (!r.ok) return '';
-              const j = await r.json().catch(() => null);
-              const canonical = String(j?.locationID || '').trim();
-              return ULID.test(canonical) ? canonical : '';
-            } catch {
-              return '';
-            }
-          };
-
-          // Authoritative gate: /api/stats status decides Dash vs restore vs claim.
+          // Minimal 1-day window (never exposes analytics when blocked)
           const ymd = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
           const statsUrl = new URL('/api/stats', location.origin);
           statsUrl.searchParams.set('locationID', target);
@@ -2265,7 +2246,19 @@ async function initLpmImageSlider(modal, data) {
           const rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
 
           if (rStats.status === 200) {
-            const seg = (await resolveCanonicalULID()) || String(rawULID || target).trim();
+            // Prefer canonical ULID when available (avoid slug drift)
+            let seg = String(rawULID || target).trim();
+            try {
+              const u = new URL('/api/status', location.origin);
+              u.searchParams.set('locationID', ULID.test(rawULID) ? rawULID : target);
+              const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+              if (r.ok) {
+                const j = await r.json().catch(() => null);
+                const canonical = String(j?.locationID || '').trim();
+                if (ULID.test(canonical)) seg = canonical;
+              }
+            } catch {}
+
             const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
             window.open(href, '_blank', 'noopener,noreferrer');
             return;
@@ -2280,13 +2273,12 @@ async function initLpmImageSlider(modal, data) {
             return;
           }
 
-          // 403 (campaign required / not entitled) and all other errors → claim guidance
+          // 403 and any other error → claim
           showOwnerSettingsModal({
             variant: 'claim',
             locationIdOrSlug: target,
             locationName: String(data?.displayName ?? data?.name ?? '').trim()
           });
-
         } finally {
           statsBtn.dataset.busy = '0';
         }
