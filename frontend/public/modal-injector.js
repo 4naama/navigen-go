@@ -3806,6 +3806,17 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     });
 
     addItem({
+      id: 'owner-manage-campaign',
+      icon: '🎯',
+      title: _ownerText('owner.settings.restore.runCampaign.title', 'Manage campaign'),
+      desc: _ownerText('owner.settings.restore.runCampaign.desc', 'Edit draft, checkout, and activate this campaign.'),
+      onClick: () => {
+        hideModal(id);
+        showCampaignManagementModal(String(locationIdOrSlug || '').trim());
+      }
+    });
+
+    addItem({
       id: 'owner-example-dash',
       icon: '📈',
       title: _ownerText('owner.settings.examples.action.title', 'See example dashboards'),
