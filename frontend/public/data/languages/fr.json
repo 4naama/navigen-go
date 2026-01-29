@@ -680,5 +680,6 @@
   "campaign.ui.checkoutFailed": "Le paiement n’a pas pu démarrer.",
   "campaign.ui.promoted": "Campagne activée.",
   "campaign.ui.promoteFailed": "Impossible d’activer la campagne pour le moment.",
-  "campaign.ui.denied": "Accès propriétaire requis."
+  "campaign.ui.denied": "Accès propriétaire requis.",
+  "owner.settings.restore.runCampaign.desc": "Modifiez le brouillon, passez au paiement et activez cette campagne."
 }

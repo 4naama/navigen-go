@@ -680,5 +680,6 @@
   "campaign.ui.checkoutFailed": "Checkout could not start.",
   "campaign.ui.promoted": "Campaign activated.",
   "campaign.ui.promoteFailed": "Could not activate campaign yet.",
-  "campaign.ui.denied": "Owner access required."
+  "campaign.ui.denied": "Owner access required.",
+  "owner.settings.restore.runCampaign.desc": "Edit draft, checkout, and activate this campaign."
 }

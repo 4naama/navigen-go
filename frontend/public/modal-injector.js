@@ -3811,9 +3811,25 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       title: _ownerText('owner.settings.restore.runCampaign.title', 'Manage campaign'),
       desc: _ownerText('owner.settings.restore.runCampaign.desc', 'Edit draft, checkout, and activate this campaign.'),
       onClick: () => {
-        hideModal(id);
-        showCampaignManagementModal(String(locationIdOrSlug || '').trim());
+        (async () => {
+          hideModal(id);
+
+          // ES-module safe check: typeof on an undeclared identifier returns "undefined" (no ReferenceError).
+          if (typeof showCampaignManagementModal !== 'function') {
+            showToast('Campaign management is not available in this build.', 2400);
+            return;
+          }
+
+          try {
+            await showCampaignManagementModal(String(locationIdOrSlug || '').trim());
+          } catch (err) {
+            showToast('Campaign management failed to open.', 2400);
+            // Optional: console for dev only
+            try { console.error(err); } catch {}
+          }
+        })();
       }
+
     });
 
     addItem({

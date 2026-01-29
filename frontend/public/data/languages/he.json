@@ -680,5 +680,6 @@
   "campaign.ui.checkoutFailed": "לא ניתן היה להתחיל את התשלום.",
   "campaign.ui.promoted": "הקמפיין הופעל.",
   "campaign.ui.promoteFailed": "לא ניתן להפעיל את הקמפיין עדיין.",
-  "campaign.ui.denied": "נדרשת גישת בעלים."
+  "campaign.ui.denied": "נדרשת גישת בעלים.",
+  "owner.settings.restore.runCampaign.desc": "ערוך את הטיוטה, עבור לתשלום והפעל קמפיין זה."
 }

@@ -680,5 +680,6 @@
   "campaign.ui.checkoutFailed": "Impossibile avviare il checkout.",
   "campaign.ui.promoted": "Campagna attivata.",
   "campaign.ui.promoteFailed": "Impossibile attivare la campagna al momento.",
-  "campaign.ui.denied": "Accesso proprietario richiesto."
+  "campaign.ui.denied": "Accesso proprietario richiesto.",
+  "owner.settings.restore.runCampaign.desc": "Modifica la bozza, vai al checkout e attiva questa campagna."
 }

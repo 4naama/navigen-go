@@ -680,5 +680,6 @@
   "campaign.ui.checkoutFailed": "No se pudo iniciar el pago.",
   "campaign.ui.promoted": "Campaña activada.",
   "campaign.ui.promoteFailed": "Aún no se pudo activar la campaña.",
-  "campaign.ui.denied": "Se requiere acceso del propietario."
+  "campaign.ui.denied": "Se requiere acceso del propietario.",
+  "owner.settings.restore.runCampaign.desc": "Edita el borrador, ve al pago y activa esta campaña."
 }
