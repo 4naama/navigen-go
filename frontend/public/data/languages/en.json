@@ -681,5 +681,9 @@
   "campaign.ui.promoted": "Campaign activated.",
   "campaign.ui.promoteFailed": "Could not activate campaign yet.",
   "campaign.ui.denied": "Owner access required.",
-  "owner.settings.restore.runCampaign.desc": "Edit draft, checkout, and activate this campaign."
+  "owner.settings.restore.runCampaign.desc": "Edit draft, checkout, and activate this campaign.",
+  "owner.settings.signedin.openDash.title": "Open dashboard",
+  "owner.settings.signedin.openDash.desc": "View analytics and owner controls for this location.",
+  "owner.settings.signedin.runCampaign.title": "Manage campaign",
+  "owner.settings.signedin.runCampaign.desc": "Edit draft, checkout, and activate this campaign."
 }

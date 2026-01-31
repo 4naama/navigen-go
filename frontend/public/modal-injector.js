@@ -4229,7 +4229,7 @@ export async function showCampaignManagementModal(locationSlug) {
     modal = injectModal({
       id,
       title: (typeof t==='function' && t('campaign.ui.title')) || 'Campaign management',
-      bodyHTML: `<div class="campaign-mgmt"></div>`,
+      bodyHTML: `<div class="modal-body-inner"><div class="campaign-mgmt"></div></div>`,
       layout: 'action'
     });
     setupTapOutClose(id);

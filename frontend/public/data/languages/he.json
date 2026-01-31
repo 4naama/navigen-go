@@ -681,5 +681,9 @@
   "campaign.ui.promoted": "הקמפיין הופעל.",
   "campaign.ui.promoteFailed": "לא ניתן להפעיל את הקמפיין עדיין.",
   "campaign.ui.denied": "נדרשת גישת בעלים.",
-  "owner.settings.restore.runCampaign.desc": "ערוך את הטיוטה, עבור לתשלום והפעל קמפיין זה."
+  "owner.settings.restore.runCampaign.desc": "ערוך את הטיוטה, עבור לתשלום והפעל קמפיין זה.",
+  "owner.settings.signedin.openDash.title": "פתח את לוח הבקרה",
+  "owner.settings.signedin.openDash.desc": "הצג ניתוחים ובקרות בעלים עבור מיקום זה.",
+  "owner.settings.signedin.runCampaign.title": "נהל קמפיין",
+  "owner.settings.signedin.runCampaign.desc": "ערוך את הטיוטה, עבור לתשלום והפעל קמפיין זה."
 }

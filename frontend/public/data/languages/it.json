@@ -681,5 +681,9 @@
   "campaign.ui.promoted": "Campagna attivata.",
   "campaign.ui.promoteFailed": "Impossibile attivare la campagna al momento.",
   "campaign.ui.denied": "Accesso proprietario richiesto.",
-  "owner.settings.restore.runCampaign.desc": "Modifica la bozza, vai al checkout e attiva questa campagna."
+  "owner.settings.restore.runCampaign.desc": "Modifica la bozza, vai al checkout e attiva questa campagna.",
+  "owner.settings.signedin.openDash.title": "Apri la dashboard",
+  "owner.settings.signedin.openDash.desc": "Visualizza analisi e controlli del proprietario per questa posizione.",
+  "owner.settings.signedin.runCampaign.title": "Gestisci la campagna",
+  "owner.settings.signedin.runCampaign.desc": "Modifica la bozza, vai al checkout e attiva questa campagna."
 }
