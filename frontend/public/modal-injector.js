@@ -2246,21 +2246,11 @@ async function initLpmImageSlider(modal, data) {
           const rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
 
           if (rStats.status === 200) {
-            // Prefer canonical ULID when available (avoid slug drift)
-            let seg = String(rawULID || target).trim();
-            try {
-              const u = new URL('/api/status', location.origin);
-              u.searchParams.set('locationID', ULID.test(rawULID) ? rawULID : target);
-              const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
-              if (r.ok) {
-                const j = await r.json().catch(() => null);
-                const canonical = String(j?.locationID || '').trim();
-                if (ULID.test(canonical)) seg = canonical;
-              }
-            } catch {}
-
-            const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-            window.open(href, '_blank', 'noopener,noreferrer');
+            showOwnerSettingsModal({
+              variant: 'signedin',
+              locationIdOrSlug: target,
+              locationName: String(data?.displayName ?? data?.name ?? '').trim()
+            });
             return;
           }
 
@@ -3840,6 +3830,62 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       onClick: () => {
         hideModal(id);
         showExampleDashboardsModal();
+      }
+    });
+
+  } else if (variant === 'signedin') {
+    addItem({
+      id: 'owner-open-dash',
+      icon: '📈',
+      title: _ownerText('owner.settings.signedin.openDash.title', 'Open dashboard'),
+      desc: _ownerText('owner.settings.signedin.openDash.desc', 'View analytics and owner controls for this location.'),
+      onClick: () => {
+        hideModal(id);
+        const seg = String(locationIdOrSlug || '').trim();
+        window.open(`https://navigen.io/dash/${encodeURIComponent(seg)}`, '_blank', 'noopener,noreferrer');
+      }
+    });
+
+    addItem({
+      id: 'owner-manage-campaign',
+      icon: '🎯',
+      title: _ownerText('owner.settings.signedin.runCampaign.title', 'Manage campaign'),
+      desc: _ownerText('owner.settings.signedin.runCampaign.desc', 'Edit draft, checkout, and activate this campaign.'),
+      onClick: () => {
+        hideModal(id);
+        showCampaignManagementModal(String(locationIdOrSlug || '').trim());
+      }
+    });
+
+    addItem({
+      id: 'owner-center',
+      icon: '🗂',
+      title: _ownerText('owner.settings.restore.ownerCenter.title', 'Owner Center'),
+      desc: _ownerText('owner.settings.restore.ownerCenter.desc', 'Switch between locations you manage on this device.'),
+      onClick: () => {
+        hideModal(id);
+        showOwnerCenterModal();
+      }
+    });
+
+    addItem({
+      id: 'owner-example-dash',
+      icon: '📈',
+      title: _ownerText('owner.settings.restore.exampleDash.title', 'See example dashboards'),
+      desc: _ownerText('owner.settings.restore.exampleDash.desc', 'View analytics for designated example locations.'),
+      onClick: () => {
+        hideModal(id);
+        showExampleDashboardsModal();
+      }
+    });
+
+    addItem({
+      id: 'owner-clear-session',
+      icon: '🧹',
+      title: _ownerText('dash.blocked.clearSession.title', 'Sign out on this device'),
+      desc: _ownerText('dash.blocked.clearSession.desc', 'Use this if you want to switch to a different business on this device.'),
+      onClick: () => {
+        window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
       }
     });
 
