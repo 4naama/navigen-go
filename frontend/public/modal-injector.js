@@ -4219,6 +4219,12 @@ export async function showCampaignManagementModal(locationSlug) {
   const id = 'campaign-management-modal';
   let modal = document.getElementById(id);
 
+  // Force rebuild to avoid stale modal instances during active development.
+  if (modal) {
+    modal.remove();
+    modal = null;
+  }
+
   // If an older build created this modal without a close button, recreate it cleanly.
   if (modal && !modal.querySelector('.modal-close')) {
     modal.remove();
