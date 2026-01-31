@@ -3189,7 +3189,7 @@ function appendResolvedButton(actions, modalId = "my-stuff-modal") {
 function _ownerText(key, fallback) {
   const hasT = (typeof t === 'function');
   const raw = hasT ? (t(key) || '') : '';
-  return (raw && typeof raw === 'string') ? raw : String(fallback || key);
+  return (raw && typeof raw === 'string' && !/^\[[^\]]+\]$/.test(raw)) ? raw : String(fallback || key);
 }
 
 export function createRestoreAccessModal() {
