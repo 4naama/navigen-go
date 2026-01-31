@@ -69,6 +69,18 @@ This is the **main and mandatory** monetization path.
 Ownership expresses **control** (exclusive operation + privacy). Campaigns express **intent** (marketing action).  
 Payment unlocks the ability to run campaigns; the owner explicitly starts/renews campaigns to avoid “campaigns appear out of the blue.”
 
+Campaign execution is performed via the Campaign Management interface.
+
+“Run campaign” may refer to:
+• Campaign funding (claim / unowned flows), or
+• Campaign Management (owned locations with valid operator session).
+
+Campaign Management allows Owners to:
+• prepare and edit drafts,
+• initiate checkout,
+• activate, pause, or finish campaigns.
+
+Payment is a step within Campaign Management, not a standalone product.
 
 --------------------------------------------------------------------
 
@@ -182,10 +194,113 @@ Both conditions MUST be satisfied to open Dash.
 | Yes       | Yes              | Yes                  | Open Dash               |
 --------------------------------------------------------------------------------|
 
+Campaign Entitlement is computed exclusively from KV-backed campaign records,
+not directly from payment events.
+
 Notes:
-- “Restore access” recovers a missing Operator Session only.
-- Campaign renewal is required when ownership exists but CampaignEntitled is false (campaign inactive/ended/paused).
-- Dash MUST NOT open unless both conditions are true.
+
+• “Restore access” recovers a missing or mismatched Operator Session only.
+  It does NOT create ownership and does NOT activate campaigns.
+
+• Campaign renewal or activation is required when ownership exists
+  but CampaignEntitled is false (campaign inactive, ended, paused, or suspended).
+
+• Dash MUST NOT open unless ALL of the following are true:
+    – OwnedNow
+    – SessionValid (op_sess bound to this ULID)
+    – CampaignEntitled
+
+--------------------------------------------------------------------
+
+### Campaign → Payment → Entitlement (Authoritative Flow)
+
+The Campaign lifecycle is governed by three distinct but connected layers:
+
+1. Campaign Definition (KV-backed)
+2. Payment Events (Stripe)
+3. Campaign Entitlement (Derived)
+
+These layers MUST NOT be conflated.
+
+--------------------------------------------------------------------
+
+#### 1) Campaign Definition (Authoritative)
+
+Campaigns are defined and stored in KV as campaign rows:
+
+campaigns:byUlid:<ULID> → CampaignRow[]
+
+
+A CampaignRow defines:
+• campaign identity (campaignKey, campaignName)
+• active window (startDate, endDate)
+• status (Active, Paused, Finished, Suspended)
+• campaign metadata (discounts, eligibility, etc.)
+
+Campaign definitions are authoritative and immutable
+except for explicit owner-initiated status transitions.
+
+--------------------------------------------------------------------
+
+#### 2) Payment (Enabling Event, Not Authority)
+
+Payments are processed via Stripe and serve as
+**enabling events**, not as entitlement authorities.
+
+Payment effects:
+• unlock the ability to promote or extend a campaign
+• create or update campaign rows in KV
+• never directly grant Dash access
+
+A successful payment:
+• DOES NOT itself imply campaign entitlement
+• DOES NOT override campaign dates or status
+• DOES NOT bypass ownership or session rules
+
+Payment metadata is recorded for audit and billing only.
+
+--------------------------------------------------------------------
+
+#### 3) Campaign Entitlement (Derived, Authoritative)
+
+Campaign Entitlement is computed exclusively by the API Worker
+from KV-backed campaign records.
+
+A location is CampaignEntitled when:
+• at least one CampaignRow is Active
+• statusOverride does not disable it
+• today ∈ [startDate, endDate]
+
+Derived entitlement fields:
+• campaignEntitled
+• activeCampaignKey
+• campaignEndsAt
+
+These fields are exposed via:
+
+GET /api/status
+
+
+Clients MUST treat these fields as authoritative.
+
+--------------------------------------------------------------------
+
+#### End-to-End Control Flow (Summary)
+
+Campaign creation / edit
+        ↓
+Owner initiates payment (Stripe)
+        ↓
+API Worker writes / updates CampaignRow in KV
+        ↓
+API Worker recomputes Campaign Entitlement
+        ↓
+/api/status reflects entitlement
+        ↓
+Dash, Promotions, QR, and UI surfaces respond accordingly
+
+At no point does payment directly grant access.
+All access decisions are derived from KV-backed campaign state.
 
 --------------------------------------------------------------------
 

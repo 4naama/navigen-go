@@ -3120,58 +3120,82 @@ These files are immutable at runtime; updates are applied by redeploying the dat
 
 --------------------------------------------------------------------
 
-8.3 profiles.json (Location Profiles)
+8.3 Location Profiles (Profiles) — Transitional Authority
 
-Each profile corresponds to a single location and includes:
+Location Profiles define the human-readable, discoverable, and presentational
+metadata of a location.
 
-  • locationID (slug)                          – human identifier
-  • locationName (multilingual)
-  • groupKey / subgroupKey                     – high-level grouping
-  • context                                    – primary navigation path (e.g. souvenirs/hungary/budapest)
-  • coordinates                                – lat/lng
-  • contact info                               – phone, email, website, socials
-  • detailSlug                                 – optional extra slug for custom landing
-  • qrUrl (optional override)                  – custom fallback for Info QR landing
-  • media                                      – images, icons, banners
-  • visibility & priority flags
-  • any business-specific extensions
+As of the Campaigns Project completion, Location Profiles are in a
+**transitional phase**:
 
-Profiles do **not** store campaign, QA, or stats information.  
-They are pure metadata.
+• Current authority: static `profiles.json`
+• Future authority: KV-backed, owner-managed Locations Project
+
+Until migration is complete, `profiles.json` remains the canonical,
+UI-facing source of location metadata.
 
 --------------------------------------------------------------------
 
-8.3.1 Canonical Profile Schema & Source Attribution
+8.3.1 Profile Definition & Scope
 
-profiles.json is the canonical, UI-facing representation of a location profile.
-It defines the normalized field names and shapes consumed by:
+Each profile corresponds to exactly one location and includes:
+
+• locationID (slug)                          – canonical human identifier
+• locationName (multilingual)                – UI display name
+• groupKey / subgroupKey                     – high-level grouping
+• context                                    – primary navigation path
+• coordinates                                – latitude / longitude
+• contact info                               – phone, email, website, socials
+• detailSlug                                 – optional extra slug for landing
+• qrUrl (optional override)                  – Info QR landing override
+• media                                      – images, icons, banners
+• visibility & priority flags
+• business-specific extensions
+
+Profiles are **pure metadata**.
+
+Profiles MUST NOT store:
+• ownership
+• campaign entitlement
+• analytics
+• billing state
+• operator permissions
+
+Those concerns are enforced exclusively by the API Worker and KV-backed systems.
+
+--------------------------------------------------------------------
+
+8.3.2 Canonical Schema & Source Attribution
+
+`profiles.json` defines the canonical schema and field shapes consumed by:
 
 • App Shell (LPM)
 • Dashboard (Dash)
-• Pages Worker routing (qrUrl, context)
-• API Worker list/profile endpoints
+• Pages Worker routing (context, qrUrl)
+• API Worker profile and listing endpoints
 
-External datasets (e.g., OpenStreetMap/OSM, commercial directories, manual research)
-are treated as ingestion sources, not parallel schemas.
+External datasets (e.g. OpenStreetMap / OSM, commercial directories,
+manual research) are treated as **ingestion sources**, not parallel schemas.
 
-NaviGen does not expose OSM tag structures to the UI layer.
-OSM tags and geometries are mapped into the normalized profiles.json fields.
+NaviGen does not expose raw OSM tag structures to the UI layer.
+OSM data is normalized into the `profiles.json` schema.
 
 --------------------------------------------------------------------
-Minimal sources structure (non-redundant)
+Minimal Sources Structure (Non-Redundant)
 
-Each profile may include an optional `sources` object containing provenance only.
-This block must not duplicate normalized profile fields.
+Each profile MAY include an optional `sources` object containing provenance only.
+
+This block MUST NOT duplicate normalized profile fields.
 
 Example (conceptual):
 
 sources: {
   osm?: {
-    id: string,                // e.g., "way/11643310" or "node/..."
-    type?: string,             // optional: "node" | "way" | "relation"
-    fetchedAt: ISO-8601,       // when ingested
-    license: string,           // e.g., "ODbL"
-    rawTagsRef?: string        // optional pointer/ref to raw tag archive, not in profiles.json
+    id: string,                // e.g. "way/11643310"
+    type?: string,             // "node" | "way" | "relation"
+    fetchedAt: ISO-8601,
+    license: string,
+    rawTagsRef?: string        // pointer to raw archive (not embedded)
   },
   other?: [
     { name: string, ref?: string, fetchedAt?: ISO-8601 }
@@ -3179,41 +3203,41 @@ sources: {
 }
 
 Rules:
-• sources are metadata only (provenance + audit).
-• Normalized profile fields remain single-source-of-truth for the UI.
-• Raw OSM tags are not embedded in profiles.json; they may be stored separately if needed.
-• Attribution and licensing requirements must be satisfied via sources metadata.
+• `sources` are metadata only (provenance + audit).
+• Normalized profile fields remain single source of truth for UI.
+• Raw OSM tags are never embedded in profiles.json.
+• Licensing and attribution obligations MUST be satisfied via sources metadata.
 
 --------------------------------------------------------------------
 
-8.3.1.1 Example Location Flag (Analytics Showcase)
+8.3.3 Example Location Flag (Analytics Showcase)
 
-NaviGen may designate certain locations as Example Locations
-for the purpose of analytics demonstration.
+NaviGen may designate certain locations as **Example Locations** for analytics
+demonstration and onboarding.
 
 Example Location flag:
-• is a boolean attribute set internally by NaviGen.
-• is not editable by Owners.
-• is not derived from campaign or ownership state.
+
+• boolean, set internally by NaviGen
+• not editable by Owners
+• not derived from campaign or ownership state
 
 Rules:
-• Only locations explicitly flagged as Example Locations
-  may be used for Example Dash routing.
-• Example Locations use real analytics and real campaigns (if any).
-• Example Locations MUST NOT imply endorsement or performance guarantees.
-• Example Locations MUST be visually marked as examples in the UI.
+• Only explicitly flagged locations may be used for Example Dash routing
+• Example Locations use real analytics and real campaigns (if any)
+• Example designation does NOT imply endorsement or performance guarantees
+• Example Locations MUST be visually marked as examples in UI
 
-Example Location designation exists solely for onboarding
-and product demonstration purposes.
+Example designation exists solely for demonstration purposes.
 
 --------------------------------------------------------------------
 
-8.3.2 Profile Override Model (Owner Edits)
+8.3.4 Profile Override Model (Owner Edits)
 
-NaviGen supports owner-provided profile edits via a non-destructive override layer.
+NaviGen supports owner-provided profile edits via a **non-destructive override
+layer**.
 
 Overrides allow Owners to modify a limited subset of profile fields
-without mutating the base profiles.json dataset.
+without mutating the base `profiles.json` dataset.
 
 --------------------------------------------------------------------
 A) Override Storage Model
@@ -3221,21 +3245,21 @@ A) Override Storage Model
 Overrides are stored per location as server-side KV entries.
 
 Keys:
-• override:<ULID>                // current effective override snapshot
-• override_log:<ULID>:<ts>       // append-only audit trail
+• override:<ULID>                 – current effective override snapshot
+• override_log:<ULID>:<timestamp> – append-only audit trail
 
-The base profile (profiles.json) is immutable at runtime.
+The base profile (`profiles.json`) is immutable at runtime.
 
 --------------------------------------------------------------------
 B) Override Schema (Partial, Field-Level)
 
-The override object is a **partial structure** matching the shape of profiles.json,
+Overrides are a **partial structure** matching the shape of `profiles.json`,
 restricted to the editable whitelist defined in Section 92.3.
 
 Rules:
-• Overrides MAY include only whitelisted fields.
-• Overrides MUST NOT include fields outside the editable whitelist.
-• Missing fields in override do NOT imply deletion.
+• Overrides MAY include only whitelisted fields
+• Overrides MUST NOT include non-whitelisted fields
+• Missing fields do NOT imply deletion
 
 Example (conceptual):
 
@@ -3255,57 +3279,60 @@ override:<ULID> = {
 --------------------------------------------------------------------
 C) Merge Rules (Deterministic)
 
-The effective profile is computed server-side using a deterministic merge:
+The effective profile is computed server-side using:
 
 effectiveProfile = deepMerge(baseProfile, override)
 
 Rules:
-• Base profile fields remain the default.
-• Override fields replace corresponding base fields.
-• Nested objects are deep-merged.
-• Arrays in override REPLACE base arrays entirely.
-• Null values are NOT permitted to remove base fields.
+• Base profile fields are defaults
+• Override fields replace base fields
+• Nested objects are deep-merged
+• Arrays in override REPLACE base arrays entirely
+• Null values MUST NOT remove base fields
 
 Deletion semantics:
-• Owners cannot delete base fields.
-• To “remove” optional data, owners must set the field to an empty value
-  allowed by validation (e.g. empty string or empty array).
+• Owners cannot delete base fields
+• Optional data may be cleared only via allowed empty values
 
 --------------------------------------------------------------------
 D) Read Path (Authoritative)
 
 All profile reads MUST return the merged effective profile.
 
-Authoritative read path:
-• App Shell: /api/data/profile?id=<slug>
-• Dash:     /api/data/profile?id=<slug>
+Authoritative read paths:
+• App Shell: GET /api/data/profile?id=<slug>
+• Dash:      GET /api/data/profile?id=<slug>
 
 Rules:
-• API Worker performs the merge before returning profile data.
-• Clients MUST NOT attempt to merge base and override themselves.
-• Clients MUST NOT access override KV entries directly.
+• API Worker performs merge before returning data
+• Clients MUST NOT merge base and override themselves
+• Clients MUST NOT access override KV directly
 
 --------------------------------------------------------------------
 E) Consistency & Caching Rules
 
-• Overrides take effect immediately after successful write.
-• No client-side caching of merged profiles is permitted beyond
-  normal HTTP caching rules for API responses.
-• Service Worker MUST NOT cache profile responses that include overrides.
+• Overrides take effect immediately after successful write
+• Client-side caching beyond normal HTTP semantics is forbidden
+• Service Worker MUST NOT cache profile responses that include overrides
 
 --------------------------------------------------------------------
 F) Audit & Safety
 
-• Every override write MUST produce an override_log entry.
-• Override logs are append-only and timestamped.
-• Logs include:
-    - ULID
-    - edited fields
-    - timestamp
-    - payment_intent.id
-    - initiationType
+Every override write MUST produce an override_log entry.
 
-Override logs are internal-only and never exposed in UI.
+Override logs are:
+• append-only
+• timestamped
+• internal-only
+
+Each log entry includes:
+• ULID
+• edited fields
+• timestamp
+• payment_intent.id
+• initiationType
+
+Override logs are never exposed in UI.
 
 --------------------------------------------------------------------
 G) Non-Goals (Explicit)
@@ -3313,103 +3340,272 @@ G) Non-Goals (Explicit)
 Profile overrides do NOT:
 • create new profile fields
 • allow deletion or mutation of base data
-• permit bulk edits across locations
+• permit bulk edits
 • expose edit history to Owners
-• bypass QA, ingestion, or normalization pipelines
-• affect location existence, public accessibility, or navigation inclusion
-• suppress discoverability or materially disadvantage competing locations
+• bypass QA or ingestion pipelines
+• affect ownership, entitlement, or billing
+• suppress discoverability or disadvantage competitors
 
-Overrides exist solely to allow accountable, reversible presentation-layer edits
-by an economically attributable Owner.
+Overrides exist solely to allow accountable,
+reversible presentation-layer edits by an Owner.
 
 --------------------------------------------------------------------
 
-8.4 campaigns.json (Campaign Definitions)
+8.3.5 Forward Migration: Locations Project (KV-Based)
 
-Structure (per row):
+The **Locations Project** will migrate location profiles from `profiles.json`
+to a KV-backed, owner-managed system.
 
-  • locationID                                  – slug referencing profiles.json
-  • campaignKey                                 – unique ID per location
-  • campaignName                                – quoted in UI (“10% off your purchase”)
-  • brandKey                                    – branding reference
-  • context (optional)                          – override for promo injection
-  • sectorKey                                   – lookup into finance.json
-  • startDate / endDate                         – active window
-  • status                                      – Active | Paused | Finished | Suspended
-  • discountKind, discountValue                 – percent, fixed, BOGO, etc.
-  • eligibilityType / notes                     – optional restrictions
-  • metadata (utmSource, utmCampaign, notes)    – analytics enrichment only
+Planned properties:
 
-Campaign status semantics are enforced server-side and interpreted consistently
-across promo issuance, redeem validation, billing, and dashboard rendering.
+• Location records stored in KV (per ULID)
+• Owner-managed updates via authenticated APIs
+• Server-enforced validation and visibility rules
+• Backward-compatible read paths
+
+Once migration is complete:
+
+• `profiles.json` will be deprecated
+• API Worker will resolve profiles from KV
+• Client contracts will remain unchanged
+
+Campaigns, Promotions, and Dash logic MUST NOT change
+as part of this migration.
+
+--------------------------------------------------------------------
+
+8.4 Campaign Definitions (KV-Authoritative)
+
+Campaigns are no longer sourced from a static campaigns.json file.
+
+As of the Campaigns Project completion, **campaign state is fully KV-backed
+and enforced exclusively by the API Worker**.
+
+Static JSON campaign definitions are deprecated and retained only for
+historical reference or migration tooling.
+
+--------------------------------------------------------------------
+
+8.4.1 Canonical Campaign Storage (Authoritative)
+
+All campaigns are stored and enforced via KV under the API Worker.
+
+Primary KV keys:
+
+• campaigns:byUlid:<ULID>   → array of campaign rows for a location
+• status:<ULID>             → derived entitlement + QA flags (computed)
+
+Each campaign row is immutable once written, except for status transitions
+(Paused / Finished / Suspended) performed by Owner actions.
+
+No client, Pages Worker, or static dataset is authoritative for campaigns.
+
+--------------------------------------------------------------------
+
+8.4.2 Campaign Row Schema (KV)
+
+Each campaign row stored under campaigns:byUlid:<ULID> has the following
+normalized schema:
+
+• locationULID              – canonical ULID (authoritative)
+• locationSlug              – original slug used at creation (informational)
+• campaignKey               – stable identifier (see 8.4.6)
+• campaignName              – human-readable name (“10% off your purchase”)
+• brandKey                  – branding reference (optional)
+• sectorKey                 – lookup into finance.json
+• context                   – semicolon-delimited navigation contexts
+• campaignType              – controlled vocabulary (Discount, Dash access, etc.)
+• targetChannels            – e.g. QR, Social, Email
+• startDate                 – YYYY-MM-DD (inclusive)
+• endDate                   – YYYY-MM-DD (inclusive)
+• status                    – Active | Paused | Finished | Suspended
+• statusOverride            – optional hard override (authoritative)
+• offerType                 – Info | Discount | Access | Event
+• discountKind              – Percent | Amount | None
+• campaignDiscountValue     – numeric value (minor units or percent)
+• eligibilityType           – Everyone | First-time | Repeat | Staff-only
+• eligibilityNotes          – optional human notes
+• utmSource / utmMedium / utmCampaign – analytics enrichment only
+• notes                     – internal / owner notes
+• createdAt                 – ISO-8601 timestamp
+• createdBy                 – initiationType (owner | agent | platform)
+
+All dates are normalized to YYYY-MM-DD at write time.
+No runtime date parsing is permitted in the client.
+
+--------------------------------------------------------------------
+
+8.4.3 Campaign Status Semantics (Authoritative)
+
+Campaign status is enforced server-side by the API Worker and interpreted
+consistently across:
+
+• promo QR issuance
+• redeem validation
+• billing
+• dashboard access
+• UI decoration (🎁, promoted ordering)
+
+Status meanings:
 
 • Active  
-  Campaign is eligible for promo QR issuance and redeem within its time window.
+  Campaign is eligible for promo QR issuance and redeem
+  if today ∈ [startDate, endDate].
 
 • Paused  
-  Owner-initiated temporary stop. Campaign remains defined but is not eligible
-  for promo QR issuance or redeem until resumed by the Owner.
+  Owner-initiated temporary stop.
+  Campaign exists but is NOT eligible for promo QR or redeem.
 
 • Finished  
-  Terminal end state reached after campaign completion. Finished campaigns
-  are never eligible for promo QR issuance or redeem.
+  Terminal state after campaign completion.
+  Finished campaigns are NEVER eligible again.
 
 • Suspended  
-  Owner-initiated freeze, typically triggered by dispute or waiver. Suspended
-  campaigns are hard-blocked until explicitly reactivated by the Owner.
+  Hard block triggered by misuse, dispute, or staff intervention.
+  Requires explicit reactivation by NaviGen.
 
-NaviGen does not automatically suspend campaigns due to payment disputes.
-Campaign status is authoritative only when enforced by the API Worker.
-
-Campaigns.json defines **what** can be promoted; the actual promo/redeem events are logged elsewhere.
+NaviGen does NOT automatically suspend campaigns due to payment disputes.
+Only explicit backend state transitions are authoritative.
 
 --------------------------------------------------------------------
 
-8.4.1 Campaign Entitlement Spine (authoritative)
+8.4.4 Campaign Entitlement Spine (Authoritative)
 
-### Campaign row interpretation (source-of-truth)
+A location is considered **CampaignEntitled** when **any** of its campaign rows
+meets ALL of the following:
 
-A campaign row is considered **entitling** (i.e., contributes to `CampaignEntitled=true`) when:
+• status === "Active"
+• statusOverride does not force-disable the campaign
+• today ∈ [startDate, endDate] (inclusive)
 
-- `status` is `Active`
-- `statusOverride` does not force-disable the campaign (override rules are authoritative)
-- today is within `[startDate, endDate]` (inclusive)
+Derived entitlement fields (computed by API Worker):
 
-If multiple rows exist for a location:
-- the location is CampaignEntitled if **any** row is entitling
-- only **one** row should be presented as the “primary active campaign” in UI (choose the one with the earliest `endDate` or newest `startDate`, but keep the rule deterministic)
+• campaignEntitled: boolean
+• activeCampaignKey: string | ""
+• campaignEndsAt: YYYY-MM-DD | ""
 
-### Ownership vs Campaign vs Session (hard gate)
+If multiple campaigns are entitling:
+• exactly ONE campaign is selected as the primary active campaign
+• selection rule MUST be deterministic:
+    – earliest endDate wins
+    – tie-breaker: newest startDate
 
-- Ownership (`exclusiveUntil`) controls who is allowed to operate the listing.
-- Campaign entitlement controls whether Dash analytics + promotion surfaces are enabled.
-- Operator session controls whether the current device is authorized for owner tools.
+These derived fields are exposed via:
 
-Dash access requires: `OwnedNow AND SessionValid AND CampaignEntitled`.
+GET /api/status?locationID=<slug|ULID>
 
-### Visibility states (backend-computed)
-
-- `promoted` when CampaignEntitled is true
-- `visible` when courtesy window (post-campaign) or hold-visibility window is active
-- `hidden` when neither is active
-
-These are presentation states only; they do not grant owner permissions.
+Clients MUST NOT compute entitlement themselves.
 
 --------------------------------------------------------------------
 
-### campaignKey (naming contract)
+8.4.5 Ownership vs Campaign vs Session (Hard Gate)
 
-`campaignKey` must be stable, deterministic, and namespace-safe. Recommended structure:
+Three independent dimensions exist:
 
-`<brandKey>/<locationID>/<campaignType>/<YYYYMMDD-start>`
+• Ownership            – exclusiveUntil > now
+• Campaign Entitlement – computed as above
+• Operator Session     – valid op_sess + opsess:<id>
+
+Dash access requires ALL of the following:
+
+    OwnedNow AND SessionValid AND CampaignEntitled
+
+Violation handling (authoritative):
+
+• 401 Unauthorized → missing or expired Operator Session
+• 403 Forbidden    → campaign inactive OR ownership expired
+• 200 OK           → access granted
+
+Clients MUST interpret HTTP status codes exactly and MUST NOT infer state.
+
+Operator sessions (`op_sess`) are bound to exactly one location ULID at a time.
+
+If a valid session exists for a different location:
+• access to Dash and owner APIs for other locations MUST return 403
+• the UI MUST offer a clear escape hatch (Sign out / Switch location)
+
+Multi-location owner sessions on a single device are explicitly forbidden.
+
+--------------------------------------------------------------------
+
+8.4.6 Visibility States (Backend-Computed)
+
+API Worker computes presentation-only visibility states:
+
+• promoted  – CampaignEntitled === true
+• visible   – courtesy / hold window active
+• hidden    – neither active nor courtesy
+
+Visibility affects:
+• in-app ordering
+• discoverability
+• UI badges
+
+Visibility does NOT grant ownership, analytics, or control.
+
+--------------------------------------------------------------------
+
+8.4.7 campaignKey Naming Contract
+
+campaignKey MUST be stable, deterministic, and namespace-safe.
+
+Recommended structure:
+
+    <brandKey>/<locationSlug>/<campaignType>/<YYYYMMDD-start>
 
 Rules:
-- `brandKey` is mandatory when a brand exists
-- `locationID` is the canonical slug (not ULID) for human readability; backend resolves to ULID
-- `campaignType` comes from the controlled vocabulary
-- start date ensures uniqueness for repeats without random IDs
+
+• brandKey mandatory when a brand exists
+• locationSlug is human-readable; backend resolves to ULID
+• campaignType from controlled vocabulary
+• start date guarantees uniqueness without randomness
+
+Clients MUST treat campaignKey as opaque.
+Only the API Worker interprets its meaning.
 
 --------------------------------------------------------------------
+
+8.4.8 Deprecation of campaigns.json
+
+The static campaigns.json file is deprecated.
+
+Rules:
+
+• campaigns.json MUST NOT be read by:
+    – App Shell
+    – Pages Worker
+    – Dashboard
+• Any remaining references are legacy and MUST be removed.
+• campaigns.json may exist only for:
+    – migration scripts
+    – historical reference
+    – offline documentation
+
+All live campaign behavior is KV-authoritative.
+
+--------------------------------------------------------------------
+
+8.4.9 Campaign Management (Owner Platform)
+
+Owners manage campaigns exclusively through API endpoints:
+
+• POST /api/owner/campaigns/draft
+• POST /api/owner/campaigns/checkout
+• POST /api/owner/campaigns/promote
+• POST /api/owner/campaigns/pause
+• POST /api/owner/campaigns/finish
+
+Campaign Management UI (CM modal):
+
+• operates only for Owned locations
+• never infers entitlement client-side
+• reflects backend truth only
+• is dismissible (X / ESC / tap-out)
+
+Campaign Management replaces all static configuration workflows.
+
+--------------------------------------------------------------------
+
 
 8.5 finance.json (Sector Pricing)
 
