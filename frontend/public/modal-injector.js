@@ -2263,12 +2263,21 @@ async function initLpmImageSlider(modal, data) {
             return;
           }
 
-          // 403 and any other error → claim
+          // 403 can mean "signed in for another location" (mismatch), not only "claim".
+          // If a valid op_sess exists on this device, show mismatch UI with escape hatches.
+          let hasSess = false;
+          try {
+            const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
+            const jj = rr.ok ? await rr.json().catch(() => null) : null;
+            hasSess = (jj?.hasOpSessCookie === true) && (jj?.kvHit === true);
+          } catch { hasSess = false; }
+
           showOwnerSettingsModal({
-            variant: 'claim',
+            variant: hasSess ? 'mismatch' : 'claim',
             locationIdOrSlug: target,
             locationName: String(data?.displayName ?? data?.name ?? '').trim()
           });
+
         } finally {
           statsBtn.dataset.busy = '0';
         }
@@ -2819,6 +2828,11 @@ export async function showSelectLocationModal() {
             // 🟢 free (unowned + discoverable baseline)
             dot.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
 
+            if (gift) {
+              gift.classList.toggle('syb-gift-on', (s.entitled === true));
+              gift.style.display = (s.entitled === true) ? '' : 'none';
+            }
+
             return;
           }
 
@@ -2827,7 +2841,7 @@ export async function showSelectLocationModal() {
 
           const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
           if (!r.ok) {
-            ownedCache.set(slug, false);
+            ownedCache.set(slug, { owned: false, vis: 'visible', courtesyUntil: '', entitled: false });
             dot.classList.add('syb-free');
             dot.classList.remove('syb-taken');
             return;
@@ -2845,7 +2859,7 @@ export async function showSelectLocationModal() {
             gift.style.display = entitled ? '' : 'none';
           }
 
-          ownedCache.set(slug, { owned, vis, courtesyUntil });
+          ownedCache.set(slug, { owned, vis, courtesyUntil, entitled });
 
           // 🔴 taken (owned)
           dot.classList.toggle('syb-taken', owned);
@@ -3886,6 +3900,39 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('dash.blocked.clearSession.desc', 'Use this if you want to switch to a different business on this device.'),
       onClick: () => {
         window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
+      }
+    });
+
+  } else if (variant === 'mismatch') {
+    addItem({
+      id: 'owner-center',
+      icon: '🗂️',
+      title: _ownerText('owner.center.title', 'Owner Center'),
+      desc: _ownerText('root.bo.ownerCenter.desc', 'Switch between locations you manage on this device.'),
+      onClick: () => {
+        hideModal(id);
+        showOwnerCenterModal();
+      }
+    });
+
+    addItem({
+      id: 'owner-clear-session',
+      icon: '🧹',
+      title: _ownerText('dash.blocked.clearSession.title', 'Sign out on this device'),
+      desc: _ownerText('dash.blocked.clearSession.desc', 'Use this if you want to switch to a different business on this device.'),
+      onClick: () => {
+        window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
+      }
+    });
+
+    addItem({
+      id: 'owner-example-dash',
+      icon: '📈',
+      title: _ownerText('owner.settings.examples.action.title', 'See example dashboards'),
+      desc: _ownerText('owner.settings.examples.action.desc', 'View analytics for designated example locations.'),
+      onClick: () => {
+        hideModal(id);
+        showExampleDashboardsModal();
       }
     });
 
