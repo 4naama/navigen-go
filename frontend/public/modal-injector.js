@@ -3759,7 +3759,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   const expl = document.createElement('p');
   expl.textContent = (variant === 'restore')
     ? _ownerText('owner.settings.restore.explain', 'You already own this location, but your access session has expired.')
-    : _ownerText('owner.settings.claim.explain', 'Analytics and owner controls are available to the active operator.');
+    : _ownerText('owner.settings.mismatch.explain', 'You’re currently signed in for a different business on this device.\n\nTo manage analytics or campaigns for this location, switch businesses or sign out below.');
   expl.style.textAlign = 'left';
   expl.style.fontSize = '0.95em';
   inner.appendChild(expl);
@@ -4706,13 +4706,21 @@ export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [],
   // # No overlay div — CSS-only backdrop on the container
   modal.innerHTML = `
     <div class="modal-content${layout ? ` modal-${layout}` : ''}">
-      ${title ? `<h2 class="modal-title">${title}</h2>` : ''}
+      ${title ? `
+        <div class="modal-top-bar">
+          <h2>${title}</h2>
+          <button class="modal-close" aria-label="Close">&times;</button>
+        </div>
+      ` : ''}
       <div class="modal-body"><div class="modal-body-inner">${bodyHTML}</div></div>
       ${footerHTML}
     </div>
   `;
 
   document.body.appendChild(modal);
+
+  // Standard modal close (X) wiring for injectModal-created modals
+  modal.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
 
   const bind = (btn) => { if (btn.onClick) modal.querySelector(`#${btn.id}`)?.addEventListener('click', btn.onClick); };
   if (Array.isArray(footerButtons)) {
