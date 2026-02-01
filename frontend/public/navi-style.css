@@ -2572,6 +2572,20 @@ button:hover {
   overflow: auto;
 }
 
+/* Campaign Management: sections (no inline styles in JS) */
+.campaign-mgmt-section{
+  margin-top: 14px;
+}
+
+.campaign-mgmt-section-title{
+  margin-bottom: 6px;
+}
+
+.campaign-mgmt-json{
+  white-space: pre-wrap;
+  font-size: 12px;
+}
+
 /* Primary modal action button */
 .modal-primary{
   background: #d1e0fe;

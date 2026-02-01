@@ -681,6 +681,7 @@
   "campaign.ui.promoted": "Campaña activada.",
   "campaign.ui.promoteFailed": "Aún no se pudo activar la campaña.",
   "campaign.ui.denied": "Se requiere acceso del propietario para gestionar campañas.\\nRestaura el acceso o cambia de negocio para continuar.",
+  "campaign.ui.currentCampaign.title": "Campaña actual",
   "owner.settings.restore.runCampaign.desc": "Edita el borrador, ve al pago y activa esta campaña.",
   "owner.settings.signedin.openDash.title": "Abrir el panel",
   "owner.settings.signedin.openDash.desc": "Ver análisis y controles del propietario para esta ubicación.",

@@ -681,6 +681,7 @@
   "campaign.ui.promoted": "Kampagne aktiviert.",
   "campaign.ui.promoteFailed": "Kampagne konnte noch nicht aktiviert werden.",
   "campaign.ui.denied": "Eigentümerzugriff ist erforderlich, um Kampagnen zu verwalten.\\nStellen Sie den Zugriff wieder her oder wechseln Sie das Unternehmen, um fortzufahren.",
+  "campaign.ui.currentCampaign.title": "Aktuelle Kampagne",
   "owner.settings.restore.runCampaign.desc": "Bearbeiten Sie den Entwurf, gehen Sie zum Checkout und aktivieren Sie diese Kampagne.",
   "owner.settings.signedin.openDash.title": "Dashboard öffnen",
   "owner.settings.signedin.openDash.desc": "Analysen und Eigentümersteuerungen für diesen Standort anzeigen.",

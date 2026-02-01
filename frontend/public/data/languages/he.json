@@ -681,6 +681,7 @@
   "campaign.ui.promoted": "הקמפיין הופעל.",
   "campaign.ui.promoteFailed": "לא ניתן להפעיל את הקמפיין עדיין.",
   "campaign.ui.denied": "נדרשת גישת בעלים לניהול קמפיינים.\\nשחזר את הגישה או החלף עסק כדי להמשיך.",
+  "campaign.ui.currentCampaign.title": "קמפיין נוכחי",
   "owner.settings.restore.runCampaign.desc": "ערוך את הטיוטה, עבור לתשלום והפעל קמפיין זה.",
   "owner.settings.signedin.openDash.title": "פתח את לוח הבקרה",
   "owner.settings.signedin.openDash.desc": "הצג ניתוחים ובקרות בעלים עבור מיקום זה.",

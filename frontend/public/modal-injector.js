@@ -3761,7 +3761,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     ? _ownerText('owner.settings.restore.explain', 'You already own this location, but your access session has expired.')
     : _ownerText('owner.settings.mismatch.explain', 'You’re currently signed in for a different business on this device.\n\nTo manage analytics or campaigns for this location, switch businesses or sign out below.');
   expl.style.textAlign = 'left';
-  expl.style.fontSize = '0.95em';
+  expl.style.whiteSpace = 'pre-line';
   inner.appendChild(expl);
 
   const menu = document.createElement('div');
@@ -4473,15 +4473,30 @@ export async function showCampaignManagementModal(locationSlug) {
     location.href = String(chkJ.url);
   });
 
-  // History (compact)
+  // Current campaign (compact)
   const hist = document.createElement('div');
-  hist.style.marginTop = '14px';
-  hist.innerHTML = `<div class="muted" style="margin-bottom:6px;">History</div>`;
+  hist.className = 'campaign-mgmt-section';
+
+  const title = document.createElement('div');
+  title.className = 'campaign-mgmt-section-title muted';
+  title.textContent = (typeof t === 'function' && t('campaign.ui.currentCampaign.title')) || 'Current campaign';
+  hist.appendChild(title);
+
+  // Prefer the active campaign row if present; otherwise show the most recent entry.
+  const pickCurrent = (arr) => {
+    const rows = Array.isArray(arr) ? arr : [];
+    const act = rows.filter(x => String(x?.status || '').toLowerCase() === 'active');
+    if (act.length) return act[0];
+    return rows.length ? rows[rows.length - 1] : null;
+  };
+
+  const current = pickCurrent(historyArr);
+
   const pre = document.createElement('pre');
-  pre.style.whiteSpace = 'pre-wrap';
-  pre.style.fontSize = '12px';
-  pre.textContent = JSON.stringify(historyArr.slice(-5), null, 2);
+  pre.className = 'campaign-mgmt-json';
+  pre.textContent = current ? JSON.stringify(current, null, 2) : '—';
   hist.appendChild(pre);
+
   root.appendChild(hist);
 
   showModal(id);
@@ -6385,15 +6400,24 @@ export function setupTapOutClose(modalId) {
   const modal = document.getElementById(modalId);
   if (!modal) return;
 
+  // Backdrop (tap-out): close only when clicking the overlay itself
   const onBackdropClick = (e) => {
-    if (e.target === modal) modal.classList.add('hidden'); // click exactly on backdrop
+    if (e.target === modal) hideModal(modalId);
   };
 
-  // avoid duplicate handlers on repeated calls
   modal.removeEventListener('click', onBackdropClick);
   modal.addEventListener('click', onBackdropClick, { passive: true });
-  
-  // ESC handled centrally in app.js; backdrop click only here
+
+  // ESC: close (idempotent per modal)
+  if (modal.dataset.escBound !== '1') {
+    modal.dataset.escBound = '1';
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') hideModal(modalId);
+    }, { capture: true });
+  }
+
+  // Ensure the modal can receive key events once shown
+  if (!modal.hasAttribute('tabindex')) modal.setAttribute('tabindex', '-1');
 }
 
 // 🎁 Donation modal
