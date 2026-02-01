@@ -4219,12 +4219,6 @@ export async function showCampaignManagementModal(locationSlug) {
   const id = 'campaign-management-modal';
   let modal = document.getElementById(id);
 
-  // Force rebuild to avoid stale modal instances during active development.
-  if (modal) {
-    modal.remove();
-    modal = null;
-  }
-
   // If an older build created this modal without a close button, recreate it cleanly.
   if (modal && !modal.querySelector('.modal-close')) {
     modal.remove();
@@ -4235,10 +4229,33 @@ export async function showCampaignManagementModal(locationSlug) {
     modal = injectModal({
       id,
       title: (typeof t==='function' && t('campaign.ui.title')) || 'Campaign management',
-      bodyHTML: `<div class="modal-body-inner"><div class="campaign-mgmt"></div></div>`,
+      bodyHTML: `<div class="campaign-mgmt"></div>`,
       layout: 'action'
     });
     setupTapOutClose(id);
+
+    // CM: ensure standard modal close behaviors exist (X / ESC / tap-out)
+    if (!modal.querySelector('.modal-top-bar')) {
+      const topBar = document.createElement('div');
+      topBar.className = 'modal-top-bar';
+      topBar.innerHTML = `
+        <h2 class="modal-title">${(typeof t==='function' && t('campaign.ui.title')) || 'Campaign management'}</h2>
+        <button class="modal-close" aria-label="Close">&times;</button>
+      `;
+      modal.querySelector('.modal-content')?.prepend(topBar);
+
+      topBar.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+      // ESC closes CM
+      modal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hideModal(id);
+      }, { capture: true });
+
+      // Tap-out closes CM (backdrop only)
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) hideModal(id);
+      }, { passive: true });
+    }
   }
 
   let root = modal.querySelector('.campaign-mgmt');

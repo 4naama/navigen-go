@@ -3526,6 +3526,21 @@ If a valid session exists for a different location:
 
 Multi-location owner sessions on a single device are explicitly forbidden.
 
+UI Rule (Signed-in variant):
+
+When `/api/stats` returns 200 (access granted), the UI MAY present an Owner Settings
+“signed-in” menu instead of navigating directly to Dash.
+
+The signed-in menu MUST include:
+• Open dashboard
+• Manage campaign (Campaign Management)
+• Owner Center
+• Example dashboards
+• Sign out on this device
+
+This does not change access semantics; it is a presentation rule to ensure campaign
+management remains reachable in an owned+session context.
+
 --------------------------------------------------------------------
 
 8.4.6 Visibility States (Backend-Computed)
@@ -3603,6 +3618,15 @@ Campaign Management UI (CM modal):
 • is dismissible (X / ESC / tap-out)
 
 Campaign Management replaces all static configuration workflows.
+
+Campaign Management Availability:
+
+Campaign Management is owner-only and requires a valid operator session.
+
+Claim/unowned flows MUST route to Campaign Funding, not Campaign Management.
+
+Campaign Management MUST be reachable from an owned+session context
+(e.g. Owner Settings signed-in variant or Dash owner controls).
 
 --------------------------------------------------------------------
 
