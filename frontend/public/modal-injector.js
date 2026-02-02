@@ -4329,16 +4329,25 @@ export async function showCampaignManagementModal(locationSlug) {
 
   // Header
   const h = document.createElement('div');
-  h.className = 'muted';
-  h.style.marginBottom = '10px';
-  h.textContent = (typeof t==='function' && t('campaign.ui.boundLocation')) || `Location: ${slug}`;
+  h.className = 'campaign-mgmt-location';
+
+  const status = await fetch(`/api/status?locationID=${encodeURIComponent(slug)}`, { cache:'no-store', credentials:'omit' })
+    .then(r => r.ok ? r.json() : null)
+    .catch(() => null);
+
+  const locName = (status && typeof status.locationName === 'object')
+    ? (status.locationName.en || Object.values(status.locationName)[0] || '')
+    : (status?.locationName || '');
+
+  h.innerHTML = `
+    <div class="campaign-mgmt-location-name">${locName || ''}</div>
+    <div class="campaign-mgmt-location-slug">${slug}</div>
+  `;
   root.appendChild(h);
 
   // Form (draft)
   const form = document.createElement('div');
-  form.style.display = 'grid';
-  form.style.gridTemplateColumns = '1fr 1fr';
-  form.style.gap = '10px';
+  form.className = 'campaign-mgmt-form';
 
   const field = (labelTxt, control) => {
     const w = document.createElement('div');
@@ -4395,11 +4404,11 @@ export async function showCampaignManagementModal(locationSlug) {
   actions.style.marginTop = '12px';
 
   const btnSave = document.createElement('button');
-  btnSave.className = 'modal-primary';
+  btnSave.className = 'modal-menu-item';
   btnSave.textContent = (typeof t==='function' && t('campaign.ui.saveDraft')) || 'Save draft';
 
   const btnCheckout = document.createElement('button');
-  btnCheckout.className = 'modal-menu-item';
+  btnCheckout.className = 'modal-primary';
   btnCheckout.textContent = (typeof t==='function' && t('campaign.ui.checkout')) || 'Checkout';
 
   actions.appendChild(btnSave);
@@ -4473,6 +4482,10 @@ export async function showCampaignManagementModal(locationSlug) {
     location.href = String(chkJ.url);
   });
 
+  const divider = document.createElement('div');
+  divider.className = 'campaign-mgmt-divider';
+  root.appendChild(divider);
+
   // Current campaign (compact)
   const hist = document.createElement('div');
   hist.className = 'campaign-mgmt-section';
@@ -4494,7 +4507,19 @@ export async function showCampaignManagementModal(locationSlug) {
 
   const pre = document.createElement('pre');
   pre.className = 'campaign-mgmt-json';
-  pre.textContent = current ? JSON.stringify(current, null, 2) : '—';
+  if (!current) {
+    pre.textContent = '—';
+  } else {
+    pre.textContent =
+      `Campaign: ${current.campaignName || current.campaignKey}\n` +
+      `Window: ${current.startDate || ''} → ${current.endDate || ''}\n` +
+      `Status: ${current.status || ''}\n` +
+      `Type: ${current.campaignType || ''}\n` +
+      `Channel: ${(current.targetChannels && current.targetChannels[0]) || ''}\n` +
+      `Offer: ${current.offerType || ''}\n` +
+      `Discount: ${current.discountKind || ''} ${current.campaignDiscountValue ?? ''}\n` +
+      `Eligibility: ${current.eligibilityType || ''}`;
+  }
   hist.appendChild(pre);
 
   root.appendChild(hist);

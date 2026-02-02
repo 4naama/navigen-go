@@ -2444,6 +2444,15 @@ button:hover {
   padding: 0 1.5em 1.5em;   /* header attached; content spaced */
 }
 
+/* CM / action modals: scroll body, not header */
+.modal-content.modal-action{
+  overflow: hidden;
+}
+
+.modal-content.modal-action .modal-body{
+  overflow: auto;
+}
+
 .modal-menu-list{
   display:flex;
   flex-direction:column;
@@ -2563,6 +2572,29 @@ button:hover {
   display: block;
 }
 
+.campaign-mgmt-location{
+  margin-bottom: 12px;
+}
+.campaign-mgmt-location-name{
+  font-weight: 700;
+}
+.campaign-mgmt-location-slug{
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.campaign-mgmt-form{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 520px){
+  .campaign-mgmt-form{
+    grid-template-columns: 1fr;
+  }
+}
+
 .campaign-mgmt pre{
   background: #f8f8f8;
   border: 1px solid #e0e0e0;
@@ -2572,6 +2604,7 @@ button:hover {
   overflow: auto;
 }
 
+.campaign-mgmt
 /* Campaign Management: sections (no inline styles in JS) */
 .campaign-mgmt-section{
   margin-top: 14px;
