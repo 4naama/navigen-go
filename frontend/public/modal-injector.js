@@ -3757,9 +3757,10 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   }
 
   const expl = document.createElement('p');
-  expl.textContent = (variant === 'restore')
+  const rawExpl = (variant === 'restore')
     ? _ownerText('owner.settings.restore.explain', 'You already own this location, but your access session has expired.')
     : _ownerText('owner.settings.mismatch.explain', 'You’re currently signed in for a different business on this device.\n\nTo manage analytics or campaigns for this location, switch businesses or sign out below.');
+  expl.textContent = String(rawExpl).replace(/\\n/g, '\n');
   expl.style.textAlign = 'left';
   expl.style.whiteSpace = 'pre-line';
   inner.appendChild(expl);
@@ -4300,10 +4301,14 @@ export async function showCampaignManagementModal(locationSlug) {
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
   const ulid = String(listJ?.ulid || '').trim();
 
-  // Header
-  const h = document.createElement('div');
-  h.className = 'campaign-mgmt-location';
+  // ───────────────────────────────────────────────────────────────────────────
+  // CM v2: three-section layout
+  // A) modal-top-bar is owned by injectModal (title + red ×)
+  // B) fixed control tabs
+  // C) content panel swaps without rebuilding the modal shell
+  // ───────────────────────────────────────────────────────────────────────────
 
+  // A0) Location header line (inside body, under top bar)
   const status = await fetch(`/api/status?locationID=${encodeURIComponent(slug)}`, { cache:'no-store', credentials:'omit' })
     .then(r => r.ok ? r.json() : null)
     .catch(() => null);
@@ -4312,190 +4317,349 @@ export async function showCampaignManagementModal(locationSlug) {
     ? (status.locationName.en || Object.values(status.locationName)[0] || '')
     : (status?.locationName || '');
 
-  h.innerHTML = `
-    <div class="campaign-mgmt-location-name">${locName || ''}</div>
-    <div class="campaign-mgmt-location-slug">${slug}</div>
+  // Split campaign rows for tabs (ensure multiple active campaigns are represented)
+  const rowsAll = Array.isArray(historyArr) ? historyArr : [];
+  const rowsActive = rowsAll.filter(x => String(x?.status || '').toLowerCase() === 'active');
+  const rowsFinished = rowsAll.filter(x => String(x?.status || '').toLowerCase() === 'finished');
+
+  // Root shell
+  const shell = document.createElement('div');
+  shell.className = 'cm-shell';
+
+  const locHdr = document.createElement('div');
+  locHdr.className = 'cm-location';
+  locHdr.innerHTML = `
+    <div class="cm-location-name">${String(locName || '').trim()}</div>
+    <div class="cm-location-slug">${slug}</div>
   `;
-  root.appendChild(h);
 
-  // Form (draft)
-  const form = document.createElement('div');
-  form.className = 'campaign-mgmt-form';
+  // Tabs (B)
+  const tabs = document.createElement('div');
+  tabs.className = 'cm-tabs';
 
-  const field = (labelTxt, control) => {
-    const w = document.createElement('div');
-    const lab = document.createElement('div');
-    lab.className = 'muted';
-    lab.style.marginBottom = '4px';
-    lab.textContent = labelTxt;
-    w.appendChild(lab);
-    w.appendChild(control);
-    return w;
+  const tabBtn = (key, label) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'cm-tab';
+    b.dataset.tab = key;
+    b.textContent = label;
+    return b;
   };
 
-  const campaignKey = buildInput('text', draft?.campaignKey || '');
-  const campaignName = buildInput('text', draft?.campaignName || '');
-  const startDate = buildInput('date', draft?.startDate || ymdToday());
-  const endDate = buildInput('date', draft?.endDate || '');
+  const tNew = (typeof t === 'function' && t('campaign.ui.tab.new')) || 'New campaign';
+  const tCur = (typeof t === 'function' && t('campaign.ui.tab.current')) || 'Current campaign';
+  const tHis = (typeof t === 'function' && t('campaign.ui.tab.history')) || 'Campaign history';
 
-  const campaignType = buildSelect(CAMPAIGN_VOCAB.campaignType, draft?.campaignType || '');
-  const offerType = buildSelect(CAMPAIGN_VOCAB.offerType, draft?.offerType || 'Discount');
-  const discountKind = buildSelect(CAMPAIGN_VOCAB.discountKind, draft?.discountKind || 'Percent');
-  const discountValue = buildInput('number', draft?.campaignDiscountValue ?? draft?.discountValue ?? '');
+  const btnNew = tabBtn('new', tNew);
+  const btnCur = tabBtn('current', tCur);
+  const btnHis = tabBtn('history', tHis);
 
-  const eligibilityType = buildSelect(CAMPAIGN_VOCAB.eligibilityType, draft?.eligibilityType || 'Everyone');
-  const eligibilityNotes = buildInput('text', draft?.eligibilityNotes || '');
+  tabs.appendChild(btnNew);
+  tabs.appendChild(btnCur);
+  tabs.appendChild(btnHis);
 
-  const utmSource = buildSelect(CAMPAIGN_VOCAB.utmSource, draft?.utmSource || '');
-  const utmMedium = buildSelect(CAMPAIGN_VOCAB.utmMedium, draft?.utmMedium || '');
-  const utmCampaign = buildSelect(CAMPAIGN_VOCAB.utmCampaign, draft?.utmCampaign || '');
+  // Content (C)
+  const panel = document.createElement('div');
+  panel.className = 'cm-panel';
 
-  // targetChannels: simple single-select for now; can evolve to multi later
-  const targetChannels = buildSelect(CAMPAIGN_VOCAB.targetChannels, (draft?.targetChannels && draft.targetChannels[0]) || 'QR');
+  shell.appendChild(locHdr);
+  shell.appendChild(tabs);
+  shell.appendChild(panel);
+  root.appendChild(shell);
 
-  form.appendChild(field('campaignKey', campaignKey));
-  form.appendChild(field('campaignName', campaignName));
-  form.appendChild(field('campaignType', campaignType));
-  form.appendChild(field('targetChannels', targetChannels));
-  form.appendChild(field('offerType', offerType));
-  form.appendChild(field('discountKind', discountKind));
-  form.appendChild(field('campaignDiscountValue', discountValue));
-  form.appendChild(field('eligibilityType', eligibilityType));
-  form.appendChild(field('eligibilityNotes', eligibilityNotes));
-  form.appendChild(field('utmSource', utmSource));
-  form.appendChild(field('utmMedium', utmMedium));
-  form.appendChild(field('utmCampaign', utmCampaign));
-  form.appendChild(field('startDate', startDate));
-  form.appendChild(field('endDate', endDate));
+  // ───────────────────────────────────────────────────────────────────────────
+  // Campaign information modal (drilldown) — opens from Current/History cards
+  // ───────────────────────────────────────────────────────────────────────────
+  const showCampaignInfoModal = (row) => {
+    const rowSafe = (row && typeof row === 'object') ? row : {};
+    const mid = 'campaign-info-modal';
+    document.getElementById(mid)?.remove();
 
-  root.appendChild(form);
+    // Use injectModal so we inherit the same top-bar contract (title + red ×).
+    const m = injectModal({
+      id: mid,
+      title: (typeof t === 'function' && t('campaign.ui.info.title')) || 'Campaign information',
+      bodyHTML: `<div class="modal-body-inner"><div class="cm-info"></div></div>`,
+      layout: 'action'
+    });
+    setupTapOutClose(mid);
 
-  // Actions row
-  const actions = document.createElement('div');
-  actions.style.display = 'flex';
-  actions.style.gap = '10px';
-  actions.style.marginTop = '12px';
+    const box = m.querySelector('.cm-info');
+    if (!box) { showModal(mid); return; }
 
-  const btnSave = document.createElement('button');
-  btnSave.className = 'modal-menu-item';
-  btnSave.textContent = (typeof t==='function' && t('campaign.ui.saveDraft')) || 'Save draft';
+    // Present as deterministic label/value blocks (no business logic computed client-side).
+    const pairs = [
+      ['campaignKey', rowSafe.campaignKey],
+      ['campaignName', rowSafe.campaignName],
+      ['status', rowSafe.status],
+      ['startDate', rowSafe.startDate],
+      ['endDate', rowSafe.endDate],
+      ['campaignType', rowSafe.campaignType],
+      ['offerType', rowSafe.offerType],
+      ['discountKind', rowSafe.discountKind],
+      ['campaignDiscountValue', rowSafe.campaignDiscountValue],
+      ['eligibilityType', rowSafe.eligibilityType],
+      ['eligibilityNotes', rowSafe.eligibilityNotes],
+      ['targetChannels', Array.isArray(rowSafe.targetChannels) ? rowSafe.targetChannels.join(', ') : rowSafe.targetChannels],
+      ['utmSource', rowSafe.utmSource],
+      ['utmMedium', rowSafe.utmMedium],
+      ['utmCampaign', rowSafe.utmCampaign],
+      ['createdAt', rowSafe.createdAt],
+      ['createdBy', rowSafe.createdBy]
+    ];
 
-  const btnCheckout = document.createElement('button');
-  btnCheckout.className = 'modal-primary';
-  btnCheckout.textContent = (typeof t==='function' && t('campaign.ui.checkout')) || 'Checkout';
+    box.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'cm-info-list';
 
-  actions.appendChild(btnSave);
-  actions.appendChild(btnCheckout);
-  root.appendChild(actions);
-
-  const collectDraft = () => ({
-    campaignKey: String(campaignKey.value || '').trim(),
-    campaignName: String(campaignName.value || '').trim(),
-    campaignType: String(campaignType.value || '').trim(),
-    targetChannels: [ String(targetChannels.value || '').trim() ].filter(Boolean),
-    offerType: String(offerType.value || '').trim(),
-    discountKind: String(discountKind.value || '').trim(),
-    campaignDiscountValue: discountValue.value === '' ? null : Number(discountValue.value),
-    eligibilityType: String(eligibilityType.value || '').trim(),
-    eligibilityNotes: String(eligibilityNotes.value || '').trim(),
-    utmSource: String(utmSource.value || '').trim(),
-    utmMedium: String(utmMedium.value || '').trim(),
-    utmCampaign: String(utmCampaign.value || '').trim(),
-    startDate: String(startDate.value || '').trim(),
-    endDate: String(endDate.value || '').trim()
-  });
-
-  btnSave.addEventListener('click', async () => {
-    const d = collectDraft();
-    if (!d.campaignKey || !d.startDate || !d.endDate) {
-      showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
-      return;
-    }
-
-    const { r } = await apiJson('/api/owner/campaigns/draft', {
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body: JSON.stringify(d)
+    pairs.forEach(([k, v]) => {
+      const val = (v === null || v === undefined) ? '' : String(v);
+      const rowEl = document.createElement('div');
+      rowEl.className = 'cm-info-row';
+      rowEl.innerHTML = `<div class="cm-info-k">${k}</div><div class="cm-info-v">${val}</div>`;
+      wrap.appendChild(rowEl);
     });
 
-    if (r.ok) showToast((typeof t==='function' && t('campaign.ui.saved')) || 'Draft saved.', 1800);
-    else showToast((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.', 2400);
-  });
-
-  btnCheckout.addEventListener('click', async () => {
-    // Ensure draft saved first (server must have campaigns:draft:<ULID>)
-    const d = collectDraft();
-    if (!d.campaignKey || !d.startDate || !d.endDate) {
-      showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
-      return;
-    }
-
-    const { r: rSave } = await apiJson('/api/owner/campaigns/draft', {
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body: JSON.stringify(d)
-    });
-    if (!rSave.ok) {
-      showToast((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.', 2400);
-      return;
-    }
-
-    const { r: rChk, j: chkJ } = await apiJson('/api/owner/campaigns/checkout', {
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body: JSON.stringify({ locationID: slug, amountCents: 100 }) // minimal test amount; adjust later
-    });
-
-    if (!rChk.ok || !chkJ?.url) {
-      showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
-      return;
-    }
-
-    // Redirect to Stripe hosted checkout
-    location.href = String(chkJ.url);
-  });
-
-  const divider = document.createElement('div');
-  divider.className = 'campaign-mgmt-divider';
-  root.appendChild(divider);
-
-  // Current campaign (compact)
-  const hist = document.createElement('div');
-  hist.className = 'campaign-mgmt-section';
-
-  const title = document.createElement('div');
-  title.className = 'campaign-mgmt-section-title muted';
-  title.textContent = (typeof t === 'function' && t('campaign.ui.currentCampaign.title')) || 'Current campaign';
-  hist.appendChild(title);
-
-  // Prefer the active campaign row if present; otherwise show the most recent entry.
-  const pickCurrent = (arr) => {
-    const rows = Array.isArray(arr) ? arr : [];
-    const act = rows.filter(x => String(x?.status || '').toLowerCase() === 'active');
-    if (act.length) return act[0];
-    return rows.length ? rows[rows.length - 1] : null;
+    box.appendChild(wrap);
+    showModal(mid);
   };
 
-  const current = pickCurrent(historyArr);
+  // ───────────────────────────────────────────────────────────────────────────
+  // Panel renderers
+  // ───────────────────────────────────────────────────────────────────────────
+  const clearPanel = () => { panel.innerHTML = ''; };
 
-  const pre = document.createElement('pre');
-  pre.className = 'campaign-mgmt-json';
-  if (!current) {
-    pre.textContent = '—';
-  } else {
-    pre.textContent =
-      `Campaign: ${current.campaignName || current.campaignKey}\n` +
-      `Window: ${current.startDate || ''} → ${current.endDate || ''}\n` +
-      `Status: ${current.status || ''}\n` +
-      `Type: ${current.campaignType || ''}\n` +
-      `Channel: ${(current.targetChannels && current.targetChannels[0]) || ''}\n` +
-      `Offer: ${current.offerType || ''}\n` +
-      `Discount: ${current.discountKind || ''} ${current.campaignDiscountValue ?? ''}\n` +
-      `Eligibility: ${current.eligibilityType || ''}`;
-  }
-  hist.appendChild(pre);
+  const renderEmpty = (text) => {
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.style.textAlign = 'left';
+    p.textContent = text;
+    panel.appendChild(p);
+  };
 
-  root.appendChild(hist);
+  const renderCampaignCards = (rows, kind) => {
+    const list = document.createElement('div');
+    list.className = 'cm-card-list';
+
+    const fmtDate = (s) => {
+      const v = String(s || '').trim();
+      return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '';
+    };
+
+    rows.forEach((r) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'cm-camp-card';
+
+      const name = String(r?.campaignName || r?.campaignKey || '').trim();
+      const start = fmtDate(r?.startDate);
+      const end = fmtDate(r?.endDate);
+      const range = (start && end) ? `${start} \u2192 ${end}` : '';
+
+      // Left column:
+      // - Current campaign cards show 🎁
+      // - History cards do not (per your spec)
+      const left = (kind === 'current') ? '🎁' : '';
+
+      b.innerHTML = `
+        <div class="cm-camp-left">${left}</div>
+        <div class="cm-camp-mid">
+          <div class="cm-camp-loc">${String(locName || '').trim()}</div>
+          <div class="cm-camp-range">${range}</div>
+          <div class="cm-camp-name">${name}</div>
+        </div>
+        <div class="cm-camp-right">
+          <span class="cm-status-dot" aria-hidden="true"></span>
+        </div>
+      `;
+
+      b.addEventListener('click', (e) => {
+        e.preventDefault();
+        showCampaignInfoModal(r);
+      });
+
+      list.appendChild(b);
+    });
+
+    panel.appendChild(list);
+  };
+
+  const renderDraftEditor = () => {
+    // Draft editor: empty on first open; shows draft once editing has started.
+    // This remains KV-authoritative via /api/owner/campaigns/draft and the draft returned in /api/owner/campaigns.
+    const form = document.createElement('div');
+    form.className = 'campaign-mgmt-form';
+
+    const field = (labelTxt, control) => {
+      const w = document.createElement('div');
+      const lab = document.createElement('div');
+      lab.className = 'muted';
+      lab.style.marginBottom = '4px';
+      lab.textContent = labelTxt;
+      w.appendChild(lab);
+      w.appendChild(control);
+      return w;
+    };
+
+    const campaignKey = buildInput('text', draft?.campaignKey || '');
+    const campaignName = buildInput('text', draft?.campaignName || '');
+    const startDate = buildInput('date', draft?.startDate || ymdToday());
+    const endDate = buildInput('date', draft?.endDate || '');
+
+    const campaignType = buildSelect(CAMPAIGN_VOCAB.campaignType, draft?.campaignType || '');
+    const offerType = buildSelect(CAMPAIGN_VOCAB.offerType, draft?.offerType || 'Discount');
+    const discountKind = buildSelect(CAMPAIGN_VOCAB.discountKind, draft?.discountKind || 'Percent');
+    const discountValue = buildInput('number', draft?.campaignDiscountValue ?? draft?.discountValue ?? '');
+
+    const eligibilityType = buildSelect(CAMPAIGN_VOCAB.eligibilityType, draft?.eligibilityType || 'Everyone');
+    const eligibilityNotes = buildInput('text', draft?.eligibilityNotes || '');
+
+    const utmSource = buildSelect(CAMPAIGN_VOCAB.utmSource, draft?.utmSource || '');
+    const utmMedium = buildSelect(CAMPAIGN_VOCAB.utmMedium, draft?.utmMedium || '');
+    const utmCampaign = buildSelect(CAMPAIGN_VOCAB.utmCampaign, draft?.utmCampaign || '');
+
+    // targetChannels: simple single-select for now; can evolve to multi later
+    const targetChannels = buildSelect(CAMPAIGN_VOCAB.targetChannels, (draft?.targetChannels && draft.targetChannels[0]) || 'QR');
+
+    form.appendChild(field('campaignKey', campaignKey));
+    form.appendChild(field('campaignName', campaignName));
+    form.appendChild(field('campaignType', campaignType));
+    form.appendChild(field('targetChannels', targetChannels));
+    form.appendChild(field('offerType', offerType));
+    form.appendChild(field('discountKind', discountKind));
+    form.appendChild(field('campaignDiscountValue', discountValue));
+    form.appendChild(field('eligibilityType', eligibilityType));
+    form.appendChild(field('eligibilityNotes', eligibilityNotes));
+    form.appendChild(field('utmSource', utmSource));
+    form.appendChild(field('utmMedium', utmMedium));
+    form.appendChild(field('utmCampaign', utmCampaign));
+    form.appendChild(field('startDate', startDate));
+    form.appendChild(field('endDate', endDate));
+
+    panel.appendChild(form);
+
+    // Actions row
+    const actions = document.createElement('div');
+    actions.className = 'cm-actions';
+
+    const btnSave = document.createElement('button');
+    btnSave.className = 'cm-action-btn';
+    btnSave.type = 'button';
+    btnSave.textContent = (typeof t==='function' && t('campaign.ui.saveDraft')) || 'Save draft';
+
+    const btnCheckout = document.createElement('button');
+    btnCheckout.className = 'cm-action-primary';
+    btnCheckout.type = 'button';
+    btnCheckout.textContent = (typeof t==='function' && t('campaign.ui.checkout')) || 'Checkout';
+
+    actions.appendChild(btnSave);
+    actions.appendChild(btnCheckout);
+    panel.appendChild(actions);
+
+    const collectDraft = () => ({
+      campaignKey: String(campaignKey.value || '').trim(),
+      campaignName: String(campaignName.value || '').trim(),
+      campaignType: String(campaignType.value || '').trim(),
+      targetChannels: [ String(targetChannels.value || '').trim() ].filter(Boolean),
+      offerType: String(offerType.value || '').trim(),
+      discountKind: String(discountKind.value || '').trim(),
+      campaignDiscountValue: discountValue.value === '' ? null : Number(discountValue.value),
+      eligibilityType: String(eligibilityType.value || '').trim(),
+      eligibilityNotes: String(eligibilityNotes.value || '').trim(),
+      utmSource: String(utmSource.value || '').trim(),
+      utmMedium: String(utmMedium.value || '').trim(),
+      utmCampaign: String(utmCampaign.value || '').trim(),
+      startDate: String(startDate.value || '').trim(),
+      endDate: String(endDate.value || '').trim()
+    });
+
+    btnSave.addEventListener('click', async () => {
+      const d = collectDraft();
+      if (!d.campaignKey || !d.startDate || !d.endDate) {
+        showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
+        return;
+      }
+
+      const { r } = await apiJson('/api/owner/campaigns/draft', {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify(d)
+      });
+
+      if (r.ok) showToast((typeof t==='function' && t('campaign.ui.saved')) || 'Draft saved.', 1800);
+      else showToast((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.', 2400);
+    });
+
+    btnCheckout.addEventListener('click', async () => {
+      // Ensure draft saved first (server must have campaigns:draft:<ULID>)
+      const d = collectDraft();
+      if (!d.campaignKey || !d.startDate || !d.endDate) {
+        showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
+        return;
+      }
+
+      const { r: rSave } = await apiJson('/api/owner/campaigns/draft', {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify(d)
+      });
+      if (!rSave.ok) {
+        showToast((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.', 2400);
+        return;
+      }
+
+      const { r: rChk, j: chkJ } = await apiJson('/api/owner/campaigns/checkout', {
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify({ locationID: slug, amountCents: 100 }) // minimal test amount; adjust later
+      });
+
+      if (!rChk.ok || !chkJ?.url) {
+        showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
+        return;
+      }
+
+      // Redirect to Stripe hosted checkout
+      location.href = String(chkJ.url);
+    });
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Tab controller (deterministic, single source of truth)
+  // ───────────────────────────────────────────────────────────────────────────
+  const setActiveTab = (key) => {
+    [btnNew, btnCur, btnHis].forEach(b => b.classList.toggle('is-active', b.dataset.tab === key));
+
+    clearPanel();
+
+    if (key === 'new') {
+      renderDraftEditor();
+      return;
+    }
+
+    if (key === 'current') {
+      if (!rowsActive.length) {
+        renderEmpty((typeof t === 'function' && t('campaign.ui.empty.current')) || 'No active campaigns.');
+        return;
+      }
+      renderCampaignCards(rowsActive, 'current');
+      return;
+    }
+
+    // history
+    if (!rowsFinished.length) {
+      renderEmpty((typeof t === 'function' && t('campaign.ui.empty.history')) || 'No finished campaigns.');
+      return;
+    }
+    renderCampaignCards(rowsFinished, 'history');
+  };
+
+  btnNew.addEventListener('click', () => setActiveTab('new'));
+  btnCur.addEventListener('click', () => setActiveTab('current'));
+  btnHis.addEventListener('click', () => setActiveTab('history'));
+
+  // Default open: New campaign (your requirement)
+  setActiveTab('new');
 
   showModal(id);
 }

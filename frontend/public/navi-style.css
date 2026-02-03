@@ -1207,14 +1207,16 @@ body.large-text {
 /* Close sits in-row; header can wrap without shifting alignment */
 .modal-top-bar{
   position: sticky; top: 0; z-index: 20; /* sits above in-modal content like slider arrows */
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 16px 16px 12px 16px;  /* in-row × → no right reserve */
   margin: 0 0 8px 0;
   background: #fff;
   border-bottom: 1px solid rgba(0,0,0,.08);
 }
 
-.modal-top-bar h2{
+/* Support both <h2> and <h2 class="modal-title"> */
+.modal-top-bar h2,
+.modal-top-bar .modal-title{
   flex: 1 1 auto;
   font-size: 20px;
   line-height: 1.2;
@@ -2409,7 +2411,7 @@ button:hover {
 /* Let the card be the only scroller; keep body content spaced */
 .modal .modal-body{
   padding:0 16px 16px;
-  overflow:visible;   /* no inner scroll that would make a mid-gutter */
+  overflow:auto;      /* allows sticky header to work */
 }
 
 /* Restore content padding, including the right side moved off the scroller */
@@ -2616,6 +2618,230 @@ button:hover {
 .campaign-mgmt-json{
   white-space: pre-wrap;
   font-size: 12px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Campaign Management (CM v2)
+   Sections:
+   A) modal-top-bar (already global)
+   B) cm-tabs (always visible)
+   C) cm-panel (swapped content)
+   ────────────────────────────────────────────────────────── */
+
+.cm-shell{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.cm-location{
+  margin-top: 4px;
+}
+
+.cm-location-name{
+  font-weight:700;
+}
+
+.cm-location-slug{
+  color:#6b7280;
+  font-size:12px;
+}
+
+/* Tab row (inline buttons) */
+.cm-tabs{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.cm-tab{
+  appearance:none;
+  -webkit-appearance:none;
+  border:1px solid #e0e0e0;
+  background:#f8f8f8;
+  border-radius:10px;
+  padding:10px 12px;
+  cursor:pointer;
+  font:inherit;
+  font-weight:600;
+  transition:background .15s ease, border-color .15s ease, transform .08s ease;
+}
+
+.cm-tab:hover{
+  background:#f1f1f1;
+  border-color:#d7d7d7;
+  transform:translateY(-1px);
+}
+
+.cm-tab.is-active{
+  background:#e8f0fe;
+  border-color:#1a73e8;
+  box-shadow:0 0 0 2px rgba(26,115,232,.15) inset;
+  transform:none;
+}
+
+/* Panel container */
+.cm-panel{
+  display:block;
+}
+
+/* Draft actions row */
+.cm-actions{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+
+.cm-action-btn{
+  border:1px solid #e0e0e0;
+  background:#f8f8f8;
+  border-radius:10px;
+  padding:10px 14px;
+  cursor:pointer;
+  font:inherit;
+  font-weight:600;
+}
+
+.cm-action-btn:hover{
+  background:#f1f1f1;
+  border-color:#d7d7d7;
+}
+
+.cm-action-primary{
+  background:#d1e0fe;
+  color:#0f172a;
+  font-weight:700;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  padding:10px 14px;
+  cursor:pointer;
+}
+
+.cm-action-primary:hover{
+  background:#c6dafe;
+}
+
+/* Campaign cards (Current + History) */
+.cm-card-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.cm-camp-card{
+  width:100%;
+  display:flex;
+  align-items:stretch;
+  gap:12px;
+
+  padding:12px 16px;
+  background:#f8f8f8;
+  border:1px solid #e0e0e0;
+  border-radius:12px;
+
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+  transition:background .15s ease, border-color .15s ease, transform .08s ease;
+  box-sizing:border-box;
+}
+
+.cm-camp-card:hover{
+  background:#f1f1f1;
+  border-color:#d7d7d7;
+  transform:translateY(-1px);
+}
+
+.cm-camp-left{
+  flex:0 0 28px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  font-size:18px;
+  line-height:1;
+}
+
+.cm-camp-mid{
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.cm-camp-loc{
+  font-weight:700;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.cm-camp-range{
+  font-size:12px;
+  color:#6b7280;
+}
+
+.cm-camp-name{
+  font-size:13px;
+  color:#334155;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+/* Right column: reserved space for a status dot */
+.cm-camp-right{
+  flex:0 0 28px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-end;
+}
+
+.cm-status-dot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background:transparent;
+  box-shadow:0 0 0 2px rgba(255,255,255,0.85);
+}
+
+/* Campaign information modal (label/value list) */
+.cm-info-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.cm-info-row{
+  display:flex;
+  gap:12px;
+  padding:10px 12px;
+  border:1px solid #e0e0e0;
+  background:#f8f8f8;
+  border-radius:10px;
+}
+
+.cm-info-k{
+  flex:0 0 160px;
+  font-weight:700;
+  color:#0f172a;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.cm-info-v{
+  flex:1 1 auto;
+  color:#334155;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+@media (max-width: 520px){
+  .cm-info-row{
+    flex-direction:column;
+  }
+  .cm-info-k{
+    flex:0 0 auto;
+  }
 }
 
 /* Primary modal action button */
