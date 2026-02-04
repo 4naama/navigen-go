@@ -3358,6 +3358,14 @@ export function createRestoreAccessModal() {
         } catch { target = ''; }
       }
 
+      // Post-restore hint: KV device registry may lag across POPs; use a short window for Owner Center retries.
+      try {
+        if (target) {
+          sessionStorage.setItem('ng_owner_restore_ulid', target);
+          sessionStorage.setItem('ng_owner_restore_until', String(Date.now() + 15000)); // 15s window
+        }
+      } catch {}
+
       if (!target) {
         showToast((typeof t === 'function' && t('owner.restore.pi.ok')) || 'Restored.', 1600);
         return;
@@ -4088,12 +4096,55 @@ export async function createOwnerCenterModal() {
   inner.appendChild(list);
 
   // Load device-bound ULIDs
+  // Note: right after Restore, KV-backed device registry may lag; retry briefly and fall back to the restored ULID.
   let ulids = [];
+
+  let lastRestored = '';
+  let untilMs = 0;
   try {
-    const r = await fetch('/api/owner/sessions', { cache: 'no-store', credentials: 'include' });
-    const j = r.ok ? await r.json().catch(() => null) : null;
-    ulids = Array.isArray(j?.items) ? j.items : [];
-  } catch { ulids = []; }
+    lastRestored = String(sessionStorage.getItem('ng_owner_restore_ulid') || '').trim();
+    untilMs = Number(sessionStorage.getItem('ng_owner_restore_until') || '0') || 0;
+  } catch { lastRestored = ''; untilMs = 0; }
+
+  const fetchSessionsOnce = async () => {
+    try {
+      const r = await fetch('/api/owner/sessions', { cache: 'no-store', credentials: 'include' });
+      const j = r.ok ? await r.json().catch(() => null) : null;
+      const arr = Array.isArray(j?.items) ? j.items : [];
+      return arr;
+    } catch {
+      return [];
+    }
+  };
+
+  // first attempt
+  ulids = await fetchSessionsOnce();
+
+  // retry only during the post-restore window
+  if ((!ulids || !ulids.length) && untilMs > Date.now()) {
+    const delays = [250, 500, 900, 1400, 2200, 3200, 4500]; // bounded (~11s)
+    for (const d of delays) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(res => setTimeout(res, d));
+      // eslint-disable-next-line no-await-in-loop
+      ulids = await fetchSessionsOnce();
+      if (ulids && ulids.length) break;
+      if (Date.now() > untilMs) break;
+    }
+  }
+
+  // fallback injection (UI only): show the restored ULID if registry is still empty
+  if ((!ulids || !ulids.length) && lastRestored) {
+    ulids = [lastRestored];
+  }
+
+  // Clear post-restore hint once sessions are visible again.
+  if (Array.isArray(ulids) && ulids.length) {
+    try {
+      sessionStorage.removeItem('ng_owner_restore_ulid');
+      sessionStorage.removeItem('ng_owner_restore_until');
+    } catch {}
+  }
 
   if (!ulids.length) {
     const p = document.createElement('p');
