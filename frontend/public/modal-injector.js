@@ -3207,16 +3207,7 @@ async function openOwnerSettingsForTarget({ target, locationName }) {
   statsUrl.searchParams.set('from', ymd);
   statsUrl.searchParams.set('to', ymd);
 
-  // Retry briefly: right after Restore/Switch the session may not be visible on the first request.
-  // Bounded retries avoid requiring a full page refresh.
-  let rStats = null;
-  // Longer settle window: post-restore cookie/session visibility can take seconds in the wild.
-  for (const delayMs of [0, 150, 300, 600, 900, 1400, 2200, 3200, 4500]) {
-    if (delayMs) await new Promise(r => setTimeout(r, delayMs));
-    // eslint-disable-next-line no-await-in-loop
-    rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
-    if (rStats.status === 200) break;
-  }
+  const rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
 
   if (rStats.status === 200) {
     showOwnerSettingsModal({ variant: 'signedin', locationIdOrSlug: tgt, locationName: String(locationName || '').trim() });
@@ -3381,6 +3372,17 @@ export function createRestoreAccessModal() {
         showToast((typeof t === 'function' && t('owner.restore.pi.ok')) || 'Restored.', 1600);
         return;
       }
+
+      // Deterministic barrier: reload shell once; on boot we route to Owner Settings for this business.
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.set('open', 'restore');
+        u.searchParams.set('bo', target);
+        window.location.replace(u.toString());
+      } catch {
+        location.reload();
+      }
+      return;
 
       await new Promise(r => setTimeout(r, 250));
       await openOwnerSettingsForTarget({ target, locationName: '' });
@@ -4134,18 +4136,7 @@ export async function createOwnerCenterModal() {
   // first attempt
   ulids = await fetchSessionsOnce();
 
-  // retry only during the post-restore window
-  if ((!ulids || !ulids.length) && untilMs > Date.now()) {
-    const delays = [250, 500, 900, 1400, 2200, 3200, 4500]; // bounded (~11s)
-    for (const d of delays) {
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise(res => setTimeout(res, d));
-      // eslint-disable-next-line no-await-in-loop
-      ulids = await fetchSessionsOnce();
-      if (ulids && ulids.length) break;
-      if (Date.now() > untilMs) break;
-    }
-  }
+  // No retries: keep Owner Center deterministic (one request max). Fallback injection covers post-restore lag.
 
   // fallback injection (UI only): show the restored ULID if registry is still empty
   if ((!ulids || !ulids.length) && lastRestored) {

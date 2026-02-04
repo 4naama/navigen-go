@@ -1392,9 +1392,19 @@ async function initEmergencyBlock(countryOverride) {
           return;
         }
         if (open === 'restore') {
+          // If bo is present, route to Owner Settings matrix for that business (post-restore reload).
+          if (bo) {
+            // Ensure the device session is set to that business, then open Owner Settings (no Dash redirect).
+            // This uses existing owner switch endpoint semantics.
+            fetch(`/owner/switch?ulid=${encodeURIComponent(bo)}&next=/`, { cache:'no-store', credentials:'include', redirect:'follow' })
+              .then(() => { try { showOwnerSettingsModal({ variant: 'restore', locationIdOrSlug: bo, locationName: '' }); } catch {} })
+              .catch(() => { try { showOwnerSettingsModal({ variant: 'restore', locationIdOrSlug: bo, locationName: '' }); } catch {} });
+            return;
+          }
           showRestoreAccessModal();
           return;
         }
+
         if (open === 'campaign') {
           // Route into the BO flow: Select Location first, then campaign checkout lives there.
           showToast('Select your business to start a campaign.', 2200);
