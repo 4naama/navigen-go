@@ -3801,7 +3801,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     // Offer explicit switching (Owner Center) when the user is signed-in for another location on this device.
     addItem({
       id: 'owner-center',
-      icon: '🗂️',
+      icon: '🧩️',
       title: _ownerText('owner.center.title', 'Owner Center'),
       desc: _ownerText('root.bo.ownerCenter.desc', 'Switch between locations you manage on this device.'),
       onClick: () => {
@@ -3880,7 +3880,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   } else if (variant === 'mismatch') {
     addItem({
       id: 'owner-center',
-      icon: '🗂️',
+      icon: '🧩',
       title: _ownerText('owner.center.title', 'Owner Center'),
       desc: _ownerText('root.bo.ownerCenter.desc', 'Switch between locations you manage on this device.'),
       onClick: () => {
@@ -4057,7 +4057,7 @@ export async function createOwnerCenterModal() {
 
         <!-- Remove from this device (Owner Center only) -->
         <button type="button" class="clear-x owner-center-remove"
-                aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">✖</button>
+                aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">🧹</button>
       `;
 
       // Owner Center: remove this ULID from the device registry (does not affect global ownership).
@@ -4326,13 +4326,6 @@ export async function showCampaignManagementModal(locationSlug) {
   const shell = document.createElement('div');
   shell.className = 'cm-shell';
 
-  // Lead line (top text)
-  const lead = document.createElement('div');
-  lead.className = 'cm-lead';
-  lead.textContent =
-    (typeof t === 'function' && t('campaign.ui.lead.edit')) ||
-    'Edit your campaign.';
-
   const locHdr = document.createElement('div');
   locHdr.className = 'cm-location';
 
@@ -4365,7 +4358,7 @@ export async function showCampaignManagementModal(locationSlug) {
   // Longer expressions (per your requirement)
   const vNew =
     (typeof t === 'function' && t('campaign.ui.view.new')) ||
-    'New campaign (default open)';
+    'New campaign';
   const vCur =
     (typeof t === 'function' && t('campaign.ui.view.current')) ||
     'Current campaigns';
@@ -4383,7 +4376,6 @@ export async function showCampaignManagementModal(locationSlug) {
   const panel = document.createElement('div');
   panel.className = 'cm-panel';
 
-  shell.appendChild(lead);
   shell.appendChild(locHdr);
   shell.appendChild(controls);
   shell.appendChild(panel);
