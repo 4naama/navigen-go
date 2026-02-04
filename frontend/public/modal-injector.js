@@ -4326,44 +4326,66 @@ export async function showCampaignManagementModal(locationSlug) {
   const shell = document.createElement('div');
   shell.className = 'cm-shell';
 
+  // Lead line (top text)
+  const lead = document.createElement('div');
+  lead.className = 'cm-lead';
+  lead.textContent =
+    (typeof t === 'function' && t('campaign.ui.lead.edit')) ||
+    'Edit your campaign.';
+
   const locHdr = document.createElement('div');
   locHdr.className = 'cm-location';
+
+  const locLabel =
+    (typeof t === 'function' && t('campaign.ui.location.label')) ||
+    'Location';
+
   locHdr.innerHTML = `
     <div class="cm-location-name">${String(locName || '').trim()}</div>
-    <div class="cm-location-slug">${slug}</div>
+    <div class="cm-location-row">
+      <span class="cm-location-label">${locLabel}</span>
+      <span class="cm-location-box" title="${slug}">${slug}</span>
+    </div>
   `;
 
-  // Tabs (B)
-  const tabs = document.createElement('div');
-  tabs.className = 'cm-tabs';
+  // Controls (B): single dropdown selector (Dash-like chevron + spacing)
+  const controls = document.createElement('div');
+  controls.className = 'cm-controls';
 
-  const tabBtn = (key, label) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'cm-tab';
-    b.dataset.tab = key;
-    b.textContent = label;
-    return b;
+  const viewSel = document.createElement('select');
+  viewSel.className = 'cm-select';
+
+  const opt = (value, label) => {
+    const o = document.createElement('option');
+    o.value = value;
+    o.textContent = label;
+    return o;
   };
 
-  const tNew = (typeof t === 'function' && t('campaign.ui.tab.new')) || 'New campaign';
-  const tCur = (typeof t === 'function' && t('campaign.ui.tab.current')) || 'Current campaign';
-  const tHis = (typeof t === 'function' && t('campaign.ui.tab.history')) || 'Campaign history';
+  // Longer expressions (per your requirement)
+  const vNew =
+    (typeof t === 'function' && t('campaign.ui.view.new')) ||
+    'New campaign (default open)';
+  const vCur =
+    (typeof t === 'function' && t('campaign.ui.view.current')) ||
+    'Current campaigns';
+  const vHis =
+    (typeof t === 'function' && t('campaign.ui.view.history')) ||
+    'Campaign history';
 
-  const btnNew = tabBtn('new', tNew);
-  const btnCur = tabBtn('current', tCur);
-  const btnHis = tabBtn('history', tHis);
+  viewSel.appendChild(opt('new', vNew));
+  viewSel.appendChild(opt('current', vCur));
+  viewSel.appendChild(opt('history', vHis));
 
-  tabs.appendChild(btnNew);
-  tabs.appendChild(btnCur);
-  tabs.appendChild(btnHis);
+  controls.appendChild(viewSel);
 
   // Content (C)
   const panel = document.createElement('div');
   panel.className = 'cm-panel';
 
+  shell.appendChild(lead);
   shell.appendChild(locHdr);
-  shell.appendChild(tabs);
+  shell.appendChild(controls);
   shell.appendChild(panel);
   root.appendChild(shell);
 
@@ -4628,7 +4650,8 @@ export async function showCampaignManagementModal(locationSlug) {
   // Tab controller (deterministic, single source of truth)
   // ───────────────────────────────────────────────────────────────────────────
   const setActiveTab = (key) => {
-    [btnNew, btnCur, btnHis].forEach(b => b.classList.toggle('is-active', b.dataset.tab === key));
+    // Keep selector as the single source of truth
+    if (viewSel.value !== key) viewSel.value = key;
 
     clearPanel();
 
@@ -4654,11 +4677,12 @@ export async function showCampaignManagementModal(locationSlug) {
     renderCampaignCards(rowsFinished, 'history');
   };
 
-  btnNew.addEventListener('click', () => setActiveTab('new'));
-  btnCur.addEventListener('click', () => setActiveTab('current'));
-  btnHis.addEventListener('click', () => setActiveTab('history'));
+  viewSel.addEventListener('change', () => {
+    const v = String(viewSel.value || 'new');
+    setActiveTab(v);
+  });
 
-  // Default open: New campaign (your requirement)
+  // Default open: New campaign
   setActiveTab('new');
 
   showModal(id);
