@@ -3196,6 +3196,44 @@ function _ownerText(key, fallback) {
   return (raw && typeof raw === 'string' && !/^\[[^\]]+\]$/.test(raw)) ? raw : String(fallback || key);
 }
 
+async function openOwnerSettingsForTarget({ target, locationName }) {
+  const tgt = String(target || '').trim();
+  if (!tgt) { showToast('Missing location', 1600); return; }
+
+  // Minimal 1-day window (never exposes analytics when blocked)
+  const ymd = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  const statsUrl = new URL('/api/stats', location.origin);
+  statsUrl.searchParams.set('locationID', tgt);
+  statsUrl.searchParams.set('from', ymd);
+  statsUrl.searchParams.set('to', ymd);
+
+  const rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
+
+  if (rStats.status === 200) {
+    showOwnerSettingsModal({ variant: 'signedin', locationIdOrSlug: tgt, locationName: String(locationName || '').trim() });
+    return;
+  }
+
+  if (rStats.status === 401) {
+    showOwnerSettingsModal({ variant: 'restore', locationIdOrSlug: tgt, locationName: String(locationName || '').trim() });
+    return;
+  }
+
+  // 403 can mean mismatch vs claim; detect if an op_sess exists on this device.
+  let hasSess = false;
+  try {
+    const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
+    const jj = rr.ok ? await rr.json().catch(() => null) : null;
+    hasSess = (jj?.hasOpSessCookie === true) && (jj?.kvHit === true);
+  } catch { hasSess = false; }
+
+  showOwnerSettingsModal({
+    variant: hasSess ? 'mismatch' : 'claim',
+    locationIdOrSlug: tgt,
+    locationName: String(locationName || '').trim()
+  });
+}
+
 export function createRestoreAccessModal() {
   const id = 'owner-restore-access-modal';
   document.getElementById(id)?.remove();
@@ -3270,17 +3308,54 @@ export function createRestoreAccessModal() {
     'Restore';
   btn.style.marginTop = '0.75rem';
 
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', async () => {
     const pi = String(input.value || '').trim();
     if (!pi) { showToast('Missing Payment ID', 1800); return; }
-    const qp = new URLSearchParams(window.location.search);
-    const loc = String(qp.get('locationID') || '').trim();
-    // If we know which location the user is on, go straight to that dash (slug is OK).
-    // Otherwise omit next so /owner/restore defaults to /dash/<resolved ulid>.
-    const next = loc ? encodeURIComponent(`/dash/${encodeURIComponent(loc)}`) : '';
-    window.location.href = next
-      ? `/owner/restore?pi=${encodeURIComponent(pi)}&next=${next}`
-      : `/owner/restore?pi=${encodeURIComponent(pi)}`;
+
+    if (btn.dataset.busy === '1') return;
+    btn.dataset.busy = '1';
+
+    try {
+      const qp = new URLSearchParams(window.location.search);
+      const loc = String(qp.get('locationID') || '').trim();
+
+      // Do NOT redirect to /dash. Perform owner restore, mint cookie, then show Owner Settings matrix.
+      const url = new URL('/owner/restore', location.origin);
+      url.searchParams.set('pi', pi);
+      url.searchParams.set('next', '/'); // keep user in shell
+
+      const r = await fetch(url.toString(), {
+        cache: 'no-store',
+        credentials: 'include',
+        redirect: 'follow'
+      });
+
+      if (!r.ok) {
+        showToast((typeof t === 'function' && t('owner.restore.pi.fail')) || 'Restore failed.', 2400);
+        return;
+      }
+
+      hideModal(id);
+
+      // Prefer the explicit location context if provided; otherwise fall back to opsess binding.
+      let target = loc;
+      if (!target) {
+        try {
+          const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
+          const jj = rr.ok ? await rr.json().catch(() => null) : null;
+          target = String(jj?.ulid || '').trim();
+        } catch { target = ''; }
+      }
+
+      if (!target) {
+        showToast((typeof t === 'function' && t('owner.restore.pi.ok')) || 'Restored.', 1600);
+        return;
+      }
+
+      await openOwnerSettingsForTarget({ target, locationName: '' });
+    } finally {
+      btn.dataset.busy = '0';
+    }
   });
 
   inner.appendChild(btn);
@@ -3847,7 +3922,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
     addItem({
       id: 'owner-center',
-      icon: '🗂',
+      icon: '🧩',
       title: _ownerText('owner.settings.restore.ownerCenter.title', 'Owner Center'),
       desc: _ownerText('owner.settings.restore.ownerCenter.desc', 'Switch between locations you manage on this device.'),
       onClick: () => {
@@ -4151,16 +4226,28 @@ export async function createOwnerCenterModal() {
         }
       })();
 
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         if (btn.dataset.busy === '1') return;
 
         markBusyLocal(btn, true);
 
-        // Safety: clear busy marker if navigation is cancelled.
-        const tClear = setTimeout(() => markBusyLocal(btn, false), 4000);
+        try {
+          // Switch the op_sess binding server-side, but DO NOT redirect to Dash.
+          const sw = new URL('/owner/switch', location.origin);
+          sw.searchParams.set('ulid', u);
+          sw.searchParams.set('next', '/');
 
-        const next = `/dash/${encodeURIComponent(u)}`;
-        window.location.href = `/owner/switch?ulid=${encodeURIComponent(u)}&next=${encodeURIComponent(next)}`;
+          const r = await fetch(sw.toString(), { cache: 'no-store', credentials: 'include', redirect: 'follow' });
+          if (!r.ok) {
+            showToast((typeof t === 'function' && t('owner.center.switch.fail')) || 'Could not switch.', 2000);
+            return;
+          }
+
+          hideModal(id);
+          await openOwnerSettingsForTarget({ target: u, locationName: name || slug || u });
+        } finally {
+          markBusyLocal(btn, false);
+        }
       });
 
       list.appendChild(btn);
