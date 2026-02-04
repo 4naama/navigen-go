@@ -686,5 +686,10 @@
   "owner.settings.signedin.openDash.title": "Irányítópult megnyitása",
   "owner.settings.signedin.openDash.desc": "Elemzések és tulajdonosi vezérlők megtekintése ehhez a helyhez.",
   "owner.settings.signedin.runCampaign.title": "Kampány kezelése",
-  "owner.settings.signedin.runCampaign.desc": "Szerkessze a piszkozatot, lépjen a checkoutra, és aktiválja ezt a kampányt."
+  "owner.settings.signedin.runCampaign.desc": "Szerkessze a piszkozatot, lépjen a checkoutra, és aktiválja ezt a kampányt.",
+  "campaign.ui.lead.edit": "Szerkessze a kampányát.",
+  "campaign.ui.location.label": "Hely",
+  "campaign.ui.view.new": "Új kampány",
+  "campaign.ui.view.current": "Folyamatban lévő kampányok",
+  "campaign.ui.view.history": "Kampányelőzmények"
 }

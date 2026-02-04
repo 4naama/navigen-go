@@ -686,5 +686,10 @@
   "owner.settings.signedin.openDash.title": "Open dashboard",
   "owner.settings.signedin.openDash.desc": "View analytics and owner controls for this location.",
   "owner.settings.signedin.runCampaign.title": "Manage campaign",
-  "owner.settings.signedin.runCampaign.desc": "Edit draft, checkout, and activate this campaign."
+  "owner.settings.signedin.runCampaign.desc": "Edit draft, checkout, and activate this campaign.",
+  "campaign.ui.lead.edit": "Edit your campaign.",
+  "campaign.ui.location.label": "Location",
+  "campaign.ui.view.new": "New campaign",
+  "campaign.ui.view.current": "Current campaigns",
+  "campaign.ui.view.history": "Campaign history"
 }

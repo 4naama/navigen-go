@@ -686,5 +686,10 @@
   "owner.settings.signedin.openDash.title": "פתח את לוח הבקרה",
   "owner.settings.signedin.openDash.desc": "הצג ניתוחים ובקרות בעלים עבור מיקום זה.",
   "owner.settings.signedin.runCampaign.title": "נהל קמפיין",
-  "owner.settings.signedin.runCampaign.desc": "ערוך את הטיוטה, עבור לתשלום והפעל קמפיין זה."
+  "owner.settings.signedin.runCampaign.desc": "ערוך את הטיוטה, עבור לתשלום והפעל קמפיין זה.",
+  "campaign.ui.lead.edit": "ערוך את הקמפיין שלך.",
+  "campaign.ui.location.label": "מיקום",
+  "campaign.ui.view.new": "קמפיין חדש",
+  "campaign.ui.view.current": "קמפיינים נוכחיים",
+  "campaign.ui.view.history": "היסטוריית קמפיינים"
 }

@@ -686,5 +686,10 @@
   "owner.settings.signedin.openDash.title": "Ouvrir le tableau de bord",
   "owner.settings.signedin.openDash.desc": "Afficher les statistiques et les contrôles du propriétaire pour cet emplacement.",
   "owner.settings.signedin.runCampaign.title": "Gérer la campagne",
-  "owner.settings.signedin.runCampaign.desc": "Modifiez le brouillon, passez au paiement et activez cette campagne."
+  "owner.settings.signedin.runCampaign.desc": "Modifiez le brouillon, passez au paiement et activez cette campagne.",
+  "campaign.ui.lead.edit": "Modifiez votre campagne.",
+  "campaign.ui.location.label": "Emplacement",
+  "campaign.ui.view.new": "Nouvelle campagne",
+  "campaign.ui.view.current": "Campagnes en cours",
+  "campaign.ui.view.history": "Historique des campagnes"
 }
