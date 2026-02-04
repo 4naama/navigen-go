@@ -3316,7 +3316,14 @@ export function createRestoreAccessModal() {
     'Restore';
   btn.style.marginTop = '0.75rem';
 
-  btn.addEventListener('click', async () => {
+  btn.addEventListener('click', async (e) => {
+    // Swallow the interaction so it cannot fall through to underlying UI.
+    try {
+      e.preventDefault();
+      e.stopPropagation();
+      // eslint-disable-next-line no-unused-expressions
+      e.stopImmediatePropagation && e.stopImmediatePropagation();
+    } catch {}
     const pi = String(input.value || '').trim();
     if (!pi) { showToast('Missing Payment ID', 1800); return; }
 
@@ -3346,7 +3353,9 @@ export function createRestoreAccessModal() {
       // Ensure Owner Center is rebuilt after restore (it may have been opened pre-restore as empty).
       document.getElementById('owner-center-modal')?.remove();
 
-      hideModal(id);
+      setTimeout(() => {
+        try { hideModal(id); } catch {}
+      }, 0);
 
       // Prefer the explicit location context if provided; otherwise fall back to opsess binding.
       let target = loc;
@@ -3390,7 +3399,9 @@ export function createRestoreAccessModal() {
 
 export function showRestoreAccessModal() {
   const id = 'owner-restore-access-modal';
-  if (!document.getElementById(id)) createRestoreAccessModal();
+  // Always rebuild so PI input never "sticks" and handlers are fresh.
+  document.getElementById(id)?.remove();
+  createRestoreAccessModal();
   showModal(id);
 }
 
