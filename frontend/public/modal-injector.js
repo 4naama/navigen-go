@@ -3210,7 +3210,8 @@ async function openOwnerSettingsForTarget({ target, locationName }) {
   // Retry briefly: right after Restore/Switch the session may not be visible on the first request.
   // Bounded retries avoid requiring a full page refresh.
   let rStats = null;
-  for (const delayMs of [0, 120, 240, 420, 650]) {
+  // Longer settle window: post-restore cookie/session visibility can take seconds in the wild.
+  for (const delayMs of [0, 150, 300, 600, 900, 1400, 2200, 3200, 4500]) {
     if (delayMs) await new Promise(r => setTimeout(r, delayMs));
     // eslint-disable-next-line no-await-in-loop
     rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
@@ -3324,13 +3325,7 @@ export function createRestoreAccessModal() {
       // eslint-disable-next-line no-unused-expressions
       e.stopImmediatePropagation && e.stopImmediatePropagation();
     } catch {}
-    // Swallow the interaction so it cannot fall through to underlying UI.
-    try {
-      e.preventDefault();
-      e.stopPropagation();
-      // eslint-disable-next-line no-unused-expressions
-      e.stopImmediatePropagation && e.stopImmediatePropagation();
-    } catch {}
+
     const pi = String(input.value || '').trim();
     if (!pi) { showToast('Missing Payment ID', 1800); return; }
 
@@ -3387,6 +3382,7 @@ export function createRestoreAccessModal() {
         return;
       }
 
+      await new Promise(r => setTimeout(r, 250));
       await openOwnerSettingsForTarget({ target, locationName: '' });
     } finally {
       btn.dataset.busy = '0';
