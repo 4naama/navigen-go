@@ -3324,6 +3324,13 @@ export function createRestoreAccessModal() {
       // eslint-disable-next-line no-unused-expressions
       e.stopImmediatePropagation && e.stopImmediatePropagation();
     } catch {}
+    // Swallow the interaction so it cannot fall through to underlying UI.
+    try {
+      e.preventDefault();
+      e.stopPropagation();
+      // eslint-disable-next-line no-unused-expressions
+      e.stopImmediatePropagation && e.stopImmediatePropagation();
+    } catch {}
     const pi = String(input.value || '').trim();
     if (!pi) { showToast('Missing Payment ID', 1800); return; }
 
