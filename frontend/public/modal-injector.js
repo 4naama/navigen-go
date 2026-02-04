@@ -3207,7 +3207,15 @@ async function openOwnerSettingsForTarget({ target, locationName }) {
   statsUrl.searchParams.set('from', ymd);
   statsUrl.searchParams.set('to', ymd);
 
-  const rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
+  // Retry briefly: right after Restore/Switch the session may not be visible on the first request.
+  // Bounded retries avoid requiring a full page refresh.
+  let rStats = null;
+  for (const delayMs of [0, 120, 240, 420, 650]) {
+    if (delayMs) await new Promise(r => setTimeout(r, delayMs));
+    // eslint-disable-next-line no-await-in-loop
+    rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
+    if (rStats.status === 200) break;
+  }
 
   if (rStats.status === 200) {
     showOwnerSettingsModal({ variant: 'signedin', locationIdOrSlug: tgt, locationName: String(locationName || '').trim() });
@@ -3334,6 +3342,9 @@ export function createRestoreAccessModal() {
         showToast((typeof t === 'function' && t('owner.restore.pi.fail')) || 'Restore failed.', 2400);
         return;
       }
+
+      // Ensure Owner Center is rebuilt after restore (it may have been opened pre-restore as empty).
+      document.getElementById('owner-center-modal')?.remove();
 
       hideModal(id);
 
@@ -4770,7 +4781,9 @@ export async function showCampaignManagementModal(locationSlug) {
 
 export async function showOwnerCenterModal() {
   const id = 'owner-center-modal';
-  if (!document.getElementById(id)) await createOwnerCenterModal();
+  // Always rebuild so the list is never stale/empty after Restore/Switch.
+  document.getElementById(id)?.remove();
+  await createOwnerCenterModal();
   showModal(id);
 }
 
