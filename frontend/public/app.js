@@ -20,6 +20,7 @@ import {
   showExampleDashboardsModal,
   showRestoreAccessModal,
   showOwnerCenterModal,
+  openOwnerSettingsForUlid,
   showRequestListingModal,
   showSelectLocationModal,
   showCampaignFundingModal,
@@ -28,8 +29,7 @@ import {
   showFavoritesModal,
   createPromotionsModal,
   showPromotionsModal,
-  showRedeemConfirmationModal,       // cashier-side redeem confirmation UX
-  openOwnerSettingsForUlid
+  showRedeemConfirmationModal       // cashier-side redeem confirmation UX
 } from './modal-injector.js';
 
 // PWA: register SW only in production (keeps install prompt there)

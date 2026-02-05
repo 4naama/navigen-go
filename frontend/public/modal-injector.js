@@ -5505,6 +5505,10 @@ export function showPromotionsModal() {
         const endStr = formatDate(camp.endDate);
         const range = startStr && endStr ? `${startStr} \u2192 ${endStr}` : "";
 
+        // Ensure Promotion Details can always resolve the campaign location
+        const locIdent = String(camp.locationID || camp.locationId || camp.locationSlug || camp.slug || '').trim();
+        if (locIdent) row.setAttribute('data-locationid', locIdent);
+
         // Promotions modal row: right column has chevron (top) + ➡️ (bottom).
         // - Clicking the row opens the Promotion Details modal (existing behavior).
         // - Clicking ➡️ opens the LPM for the campaign location (requested behavior).
@@ -5524,7 +5528,7 @@ export function showPromotionsModal() {
         row.addEventListener("click", () => {
           hideModal("promotions-modal");
           openPromotionQrModal(row, {
-            locationID: camp.locationID,
+            locationID: camp.locationID || camp.locationId || camp.locationSlug || camp.slug,
             locationName: camp.locationName,
             name: camp.locationName,
             displayName: camp.locationName
