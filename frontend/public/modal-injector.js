@@ -3234,6 +3234,10 @@ async function openOwnerSettingsForTarget({ target, locationName }) {
   });
 }
 
+export async function openOwnerSettingsForUlid(ulid) {
+  return openOwnerSettingsForTarget({ target: ulid, locationName: '' });
+}
+
 export function createRestoreAccessModal() {
   const id = 'owner-restore-access-modal';
   document.getElementById(id)?.remove();
