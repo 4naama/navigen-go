@@ -4486,18 +4486,28 @@ export async function showCampaignManagementModal(locationSlug) {
   const shell = document.createElement('div');
   shell.className = 'cm-shell';
 
+  // Lead line (top text)
+  const lead = document.createElement('div');
+  lead.className = 'cm-lead';
+  lead.textContent =
+    (typeof t === 'function' && t('campaign.ui.lead.edit')) ||
+    'Create or edit a campaign for this location. Changes are saved automatically while you work. Your campaign becomes active only after checkout.';
+
   const locHdr = document.createElement('div');
   locHdr.className = 'cm-location';
 
-  const locLabel =
-    (typeof t === 'function' && t('campaign.ui.location.label')) ||
-    'Location';
-
   locHdr.innerHTML = `
-    <div class="cm-location-name">${String(locName || '').trim()}</div>
     <div class="cm-location-row">
-      <span class="cm-location-label">${locLabel}</span>
-      <span class="cm-location-box" title="${slug}">${slug}</span>
+      <span class="cm-location-label">Location name</span>
+      <span class="cm-location-box" title="${String(locName || '').trim()}">
+        ${String(locName || '').trim()}
+      </span>
+    </div>
+    <div class="cm-location-row">
+      <span class="cm-location-label">Location ID</span>
+      <span class="cm-location-box" title="${slug}">
+        ${slug}
+      </span>
     </div>
   `;
 
@@ -4675,7 +4685,16 @@ export async function showCampaignManagementModal(locationSlug) {
       return w;
     };
 
-    const campaignKey = buildInput('text', draft?.campaignKey || '');
+    const deriveBrandSlug = (s) => {
+      const first = String(s || '').trim().split(/\s+/)[0] || '';
+      return first.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    };
+
+    const yy = String(new Date().getFullYear()).slice(-2);
+    const brandSlug = deriveBrandSlug(locName) || 'brand';
+    const suggestedKey = `${brandSlug}-${yy}-01`;
+
+    const campaignKey = buildInput('text', draft?.campaignKey || suggestedKey);
     const campaignName = buildInput('text', draft?.campaignName || '');
     const startDate = buildInput('date', draft?.startDate || ymdToday());
     const endDate = buildInput('date', draft?.endDate || '');
@@ -4695,20 +4714,37 @@ export async function showCampaignManagementModal(locationSlug) {
     // targetChannels: simple single-select for now; can evolve to multi later
     const targetChannels = buildSelect(CAMPAIGN_VOCAB.targetChannels, (draft?.targetChannels && draft.targetChannels[0]) || 'QR');
 
-    form.appendChild(field('campaignKey', campaignKey));
-    form.appendChild(field('campaignName', campaignName));
-    form.appendChild(field('campaignType', campaignType));
-    form.appendChild(field('targetChannels', targetChannels));
-    form.appendChild(field('offerType', offerType));
-    form.appendChild(field('discountKind', discountKind));
-    form.appendChild(field('campaignDiscountValue', discountValue));
-    form.appendChild(field('eligibilityType', eligibilityType));
-    form.appendChild(field('eligibilityNotes', eligibilityNotes));
-    form.appendChild(field('utmSource', utmSource));
-    form.appendChild(field('utmMedium', utmMedium));
-    form.appendChild(field('utmCampaign', utmCampaign));
-    form.appendChild(field('startDate', startDate));
-    form.appendChild(field('endDate', endDate));
+    const labels = {
+      campaignKey: 'Campaign key',
+      campaignName: 'Campaign name',
+      campaignType: 'Campaign type',
+      targetChannels: 'Channels',
+      offerType: 'Offer type',
+      discountKind: 'Discount type',
+      campaignDiscountValue: 'Discount value',
+      eligibilityType: 'Eligibility',
+      eligibilityNotes: 'Eligibility notes',
+      utmSource: 'UTM source',
+      utmMedium: 'UTM medium',
+      utmCampaign: 'UTM campaign',
+      startDate: 'Start date',
+      endDate: 'End date'
+    };
+
+    form.appendChild(field(labels.campaignKey, campaignKey));
+    form.appendChild(field(labels.campaignName, campaignName));
+    form.appendChild(field(labels.campaignType, campaignType));
+    form.appendChild(field(labels.targetChannels, targetChannels));
+    form.appendChild(field(labels.offerType, offerType));
+    form.appendChild(field(labels.discountKind, discountKind));
+    form.appendChild(field(labels.campaignDiscountValue, discountValue));
+    form.appendChild(field(labels.eligibilityType, eligibilityType));
+    form.appendChild(field(labels.eligibilityNotes, eligibilityNotes));
+    form.appendChild(field(labels.utmSource, utmSource));
+    form.appendChild(field(labels.utmMedium, utmMedium));
+    form.appendChild(field(labels.utmCampaign, utmCampaign));
+    form.appendChild(field(labels.startDate, startDate));
+    form.appendChild(field(labels.endDate, endDate));
 
     panel.appendChild(form);
 
@@ -4726,7 +4762,6 @@ export async function showCampaignManagementModal(locationSlug) {
     btnCheckout.type = 'button';
     btnCheckout.textContent = (typeof t==='function' && t('campaign.ui.checkout')) || 'Checkout';
 
-    actions.appendChild(btnSave);
     actions.appendChild(btnCheckout);
     panel.appendChild(actions);
 
