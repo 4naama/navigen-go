@@ -28,7 +28,8 @@ import {
   showFavoritesModal,
   createPromotionsModal,
   showPromotionsModal,
-  showRedeemConfirmationModal       // cashier-side redeem confirmation UX
+  showRedeemConfirmationModal,       // cashier-side redeem confirmation UX
+  openOwnerSettingsForUlid
 } from './modal-injector.js';
 
 // PWA: register SW only in production (keeps install prompt there)
