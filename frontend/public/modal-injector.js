@@ -3930,10 +3930,34 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   })();
 
   const expl = document.createElement('p');
-  const rawExpl = (variant === 'restore')
-    ? _ownerText('owner.settings.restore.explain', 'You already own this location, but your access session has expired.')
-    : _ownerText('owner.settings.mismatch.explain', 'You’re currently signed in for a different business on this device.\n\nTo manage analytics or campaigns for this location, switch businesses or sign out below.');
+
+  // Variant-specific explanation (avoid false mismatch messaging)
+  let rawExpl = '';
+  if (variant === 'restore') {
+    rawExpl = _ownerText(
+      'owner.settings.restore.explain',
+      'You already own this location, but your access session has expired.'
+    );
+  } else if (variant === 'mismatch') {
+    rawExpl = _ownerText(
+      'owner.settings.mismatch.explain',
+      'You’re currently signed in for a different business on this device.\n\nTo manage analytics or campaigns for this location, switch businesses or sign out below.'
+    );
+  } else if (variant === 'claim') {
+    rawExpl = _ownerText(
+      'owner.settings.claim.explain',
+      'This location is not available on this device yet.\n\nTo manage analytics or campaigns for this location, restore access or switch businesses below.'
+    );
+  } else {
+    // signedin (and any future variants): no warning headline
+    rawExpl = _ownerText(
+      'owner.settings.signedin.explain',
+      'Manage analytics or campaigns for this location below.'
+    );
+  }
+
   expl.textContent = String(rawExpl).replace(/\\n/g, '\n');
+
   expl.style.textAlign = 'left';
   expl.style.whiteSpace = 'pre-line';
   inner.appendChild(expl);
@@ -4518,6 +4542,35 @@ export async function showCampaignManagementModal(locationSlug) {
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
   const ulid = String(listJ?.ulid || '').trim();
 
+  // Canonicalize location identifier for CM header/status:
+  // - input "slug" might actually be a ULID depending on caller
+  // - resolve ULID → slug/name via the same item endpoint used elsewhere
+  let displaySlug = String(slug || '').trim();
+  let displayName = '';
+
+  const isUlid = (s) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(s || '').trim());
+
+  if (isUlid(displaySlug)) {
+    try {
+      const rr = await fetch(
+        `https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(displaySlug)}`,
+        { cache: 'no-store' }
+      );
+      const jj = rr.ok ? await rr.json().catch(() => null) : null;
+
+      const resolvedSlug = String(jj?.locationID || '').trim();
+      const resolvedNameRaw = jj?.locationName;
+
+      const resolvedName = (resolvedNameRaw && typeof resolvedNameRaw === 'object')
+        ? String(resolvedNameRaw.en || Object.values(resolvedNameRaw)[0] || '').trim()
+        : String(resolvedNameRaw || '').trim();
+
+      if (resolvedSlug) displaySlug = resolvedSlug;
+      if (resolvedName) displayName = resolvedName;
+    } catch {}
+  }
+
+
   // ───────────────────────────────────────────────────────────────────────────
   // CM v2: three-section layout
   // A) modal-top-bar is owned by injectModal (title + red ×)
@@ -4526,7 +4579,7 @@ export async function showCampaignManagementModal(locationSlug) {
   // ───────────────────────────────────────────────────────────────────────────
 
   // A0) Location header line (inside body, under top bar)
-  const status = await fetch(`/api/status?locationID=${encodeURIComponent(slug)}`, { cache:'no-store', credentials:'omit' })
+  const status = await fetch(`/api/status?locationID=${encodeURIComponent(displaySlug)}`, { cache:'no-store', credentials:'omit' })
     .then(r => r.ok ? r.json() : null)
     .catch(() => null);
 
@@ -4534,7 +4587,10 @@ export async function showCampaignManagementModal(locationSlug) {
     ? (status.locationName.en || Object.values(status.locationName)[0] || '')
     : (status?.locationName || '');
 
-  const locName = String(locNameRaw || '').trim() || slug; // fallback: never show an empty box
+  const locName =
+    String(locNameRaw || '').trim() ||
+    String(displayName || '').trim() ||
+    String(displaySlug || '').trim(); // fallback: never show an empty box, never show ULID as "name"
 
   // Split campaign rows for tabs (ensure multiple active campaigns are represented)
   const rowsAll = Array.isArray(historyArr) ? historyArr : [];
@@ -4564,8 +4620,8 @@ export async function showCampaignManagementModal(locationSlug) {
     </div>
     <div class="cm-location-row">
       <span class="cm-location-label">Location ID</span>
-      <span class="cm-location-box" title="${slug}">
-        ${slug}
+      <span class="cm-location-box" title="${displaySlug}">
+        ${displaySlug}
       </span>
     </div>
   `;
