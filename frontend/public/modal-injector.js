@@ -3375,17 +3375,19 @@ export function createRestoreAccessModal() {
 
       // Deterministic barrier: reload shell once; on boot we route to Owner Settings for this business.
       try {
-        const u = new URL(window.location.href);
+        // Reload into a clean shell URL to avoid any LPM/context auto-open repaint.
+        const u = new URL('/', location.origin);
         u.searchParams.set('open', 'restore');
         u.searchParams.set('bo', target);
         window.location.replace(u.toString());
       } catch {
-        location.reload();
+        window.location.replace(`/?open=restore&bo=${encodeURIComponent(target)}`);
       }
+
       return;
 
-      await new Promise(r => setTimeout(r, 250));
-      await openOwnerSettingsForTarget({ target, locationName: '' });
+      // (post-restore OS open handled via shell reload intent)
+
     } finally {
       btn.dataset.busy = '0';
     }
