@@ -2638,8 +2638,9 @@ select.input{
 
 .cm-location-label{
   color:#0f172a;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 0.9em;   /* match .muted sizing used by form labels */
+  font-weight: 400;   /* labels are not bold in the rest of the UI */
+  opacity: 0.9;
 }
 
 .cm-location-box{
@@ -2660,6 +2661,8 @@ select.input{
 /* CM dropdown selector */
 .cm-controls{
   margin: 4px 0 10px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0,0,0,.08); /* same tone as modal header divider */
 }
 
 .cm-select{

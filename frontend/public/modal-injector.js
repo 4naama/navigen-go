@@ -3863,14 +3863,71 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   const inner = document.createElement('div');
   inner.className = 'modal-body-inner';
 
-  if (locationName) {
-    const pLoc = document.createElement('p');
-    pLoc.textContent = locationName;
-    pLoc.style.textAlign = 'left';
-    pLoc.style.opacity = '0.9';
-    pLoc.style.marginBottom = '0.75rem';
-    inner.appendChild(pLoc);
-  }
+  // Use a mutable location id so ULID → slug resolution can update downstream actions safely.
+  let locId = String(locationIdOrSlug || '').trim();
+
+  // Location header rows (reuse CM box styles for consistent UX)
+  const locRows = document.createElement('div');
+
+  const nameRow = document.createElement('div');
+  nameRow.className = 'cm-location-row';
+  const nameLabel = document.createElement('span');
+  nameLabel.className = 'cm-location-label';
+  nameLabel.textContent = 'Location name';
+  const nameBox = document.createElement('span');
+  nameBox.className = 'cm-location-box';
+  nameBox.textContent = String(locationName || '').trim() || '—';
+  nameBox.title = String(locationName || '').trim();
+  nameRow.appendChild(nameLabel);
+  nameRow.appendChild(nameBox);
+
+  const idRow = document.createElement('div');
+  idRow.className = 'cm-location-row';
+  const idLabel = document.createElement('span');
+  idLabel.className = 'cm-location-label';
+  idLabel.textContent = 'Location ID';
+  const idBox = document.createElement('span');
+  idBox.className = 'cm-location-box';
+  idBox.textContent = locId || '—';
+  idBox.title = locId;
+  idRow.appendChild(idLabel);
+  idRow.appendChild(idBox);
+
+  locRows.appendChild(nameRow);
+  locRows.appendChild(idRow);
+  inner.appendChild(locRows);
+
+  // If we were given a ULID, resolve to slug/name without waiting for refresh.
+  (async () => {
+    const u = String(locId || '').trim();
+    if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(u)) return;
+
+    try {
+      const rr = await fetch(`https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(u)}`, { cache: 'no-store' });
+      const jj = rr.ok ? await rr.json().catch(() => null) : null;
+
+      const resolvedSlug = String(jj?.locationID || jj?.id || '').trim();
+      const resolvedNameRaw = jj?.locationName;
+
+      const resolvedName = (resolvedNameRaw && typeof resolvedNameRaw === 'object')
+        ? String(resolvedNameRaw.en || Object.values(resolvedNameRaw)[0] || '').trim()
+        : String(resolvedNameRaw || '').trim();
+
+      if (resolvedSlug) {
+        locId = resolvedSlug;
+        idBox.textContent = resolvedSlug;
+        idBox.title = resolvedSlug;
+
+        // Keep the modal context in sync (used by follow-up actions).
+        wrap.setAttribute('data-locationid', resolvedSlug);
+      }
+
+      if (resolvedName && (nameBox.textContent === '—' || !String(locationName || '').trim())) {
+        nameBox.textContent = resolvedName;
+        nameBox.title = resolvedName;
+      }
+    } catch {}
+  })();
 
   const expl = document.createElement('p');
   const rawExpl = (variant === 'restore')
@@ -4036,7 +4093,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
         (async () => {
           hideModal(id);
 
-          const slug = String(locationIdOrSlug || '').trim();
+          const slug = String(locId || '').trim();
           if (!slug) return;
 
           // Claim flow (no owner session): use existing funding modal / public checkout path.
@@ -4070,7 +4127,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   document.body.appendChild(wrap);
 
   // Store context on the modal for follow-up actions.
-  wrap.setAttribute('data-locationid', String(locationIdOrSlug || '').trim());
+  wrap.setAttribute('data-locationid', String(locId || '').trim());
   wrap.setAttribute('data-variant', String(variant || '').trim());
 }
 
@@ -4473,9 +4530,11 @@ export async function showCampaignManagementModal(locationSlug) {
     .then(r => r.ok ? r.json() : null)
     .catch(() => null);
 
-  const locName = (status && typeof status.locationName === 'object')
+  const locNameRaw = (status && typeof status.locationName === 'object')
     ? (status.locationName.en || Object.values(status.locationName)[0] || '')
     : (status?.locationName || '');
+
+  const locName = String(locNameRaw || '').trim() || slug; // fallback: never show an empty box
 
   // Split campaign rows for tabs (ensure multiple active campaigns are represented)
   const rowsAll = Array.isArray(historyArr) ? historyArr : [];
@@ -4758,7 +4817,7 @@ export async function showCampaignManagementModal(locationSlug) {
     btnSave.textContent = (typeof t==='function' && t('campaign.ui.saveDraft')) || 'Save draft';
 
     const btnCheckout = document.createElement('button');
-    btnCheckout.className = 'cm-action-primary';
+    btnCheckout.className = 'modal-body-button';
     btnCheckout.type = 'button';
     btnCheckout.textContent = (typeof t==='function' && t('campaign.ui.checkout')) || 'Checkout';
 
