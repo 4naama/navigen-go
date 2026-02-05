@@ -3377,6 +3377,9 @@ export function createRestoreAccessModal() {
         return;
       }
 
+      // Prevent LPM flash: if an LPM is open behind Restore, hide it before we navigate.
+      try { hideModal('location-profile-modal'); } catch {}
+
       // Deterministic barrier: reload shell once; on boot we route to Owner Settings for this business.
       try {
         // Reload into a clean shell URL to avoid any LPM/context auto-open repaint.
@@ -5505,6 +5508,12 @@ export function showPromotionsModal() {
         const endStr = formatDate(camp.endDate);
         const range = startStr && endStr ? `${startStr} \u2192 ${endStr}` : "";
 
+        // Stamp location identifier onto the row so openPromotionQrModal can always resolve it.
+        const locIdent = String(
+          camp.locationID || camp.locationId || camp.locationSlug || camp.slug || camp.location || ''
+        ).trim();
+        if (locIdent) row.setAttribute('data-locationid', locIdent);
+
         // Promotions modal row: right column has chevron (top) + ➡️ (bottom).
         // - Clicking the row opens the Promotion Details modal (existing behavior).
         // - Clicking ➡️ opens the LPM for the campaign location (requested behavior).
@@ -5524,7 +5533,7 @@ export function showPromotionsModal() {
         row.addEventListener("click", () => {
           hideModal("promotions-modal");
           openPromotionQrModal(row, {
-            locationID: camp.locationID,
+            locationID: camp.locationID || camp.locationId || camp.locationSlug || camp.slug || camp.location,
             locationName: camp.locationName,
             name: camp.locationName,
             displayName: camp.locationName
