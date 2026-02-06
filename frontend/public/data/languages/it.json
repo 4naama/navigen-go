@@ -656,7 +656,7 @@
   "root.bo.ownerCenter.desc": "Passa tra le sedi che gestisci su questo dispositivo.",
   "owner.center.title": "Centro proprietario",
   "owner.center.empty": "Nessuna sessione proprietario salvata su questo dispositivo.",
-  "owner.center.note": "L’accesso proprietario è memorizzato su questo dispositivo per motivi di sicurezza. Per aggiungere una sede su un nuovo dispositivo, usa una volta Ripristina accesso.",
+  "owner.center.note": "L’accesso del proprietario è memorizzato su questo dispositivo per motivi di sicurezza. Per avviare una campagna per un’attività, tocca 🚀 sulla sua scheda qui sotto. Per aggiungere un’attività su un nuovo dispositivo, utilizza una sola volta 🔑 Ripristina accesso.",
   "campaign.funding.title": "Finanziamento della campagna",
   "campaign.funding.amountLabel": "Importo (EUR)",
   "campaign.funding.continue": "Procedi al pagamento",
@@ -705,5 +705,6 @@
   "campaign.ui.label.utmMedium": "Medium UTM",
   "campaign.ui.label.utmCampaign": "Campagna UTM",
   "campaign.ui.label.startDate": "Data di inizio",
-  "campaign.ui.label.endDate": "Data di fine"
+  "campaign.ui.label.endDate": "Data di fine",
+  "owner.center.launch.title": ""
 }

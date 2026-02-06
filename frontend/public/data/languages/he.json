@@ -656,7 +656,7 @@
   "root.bo.ownerCenter.desc": "החלף בין המיקומים שאתה מנהל במכשיר זה.",
   "owner.center.title": "מרכז בעלים",
   "owner.center.empty": "אין עדיין סשנים שמורים של בעלים במכשיר זה.",
-  "owner.center.note": "גישת הבעלים נשמרת במכשיר זה מטעמי אבטחה. כדי להוסיף מיקום במכשיר חדש, השתמש פעם אחת ב־שחזור גישה.",
+  "owner.center.note": "גישת הבעלים נשמרת במכשיר זה מטעמי אבטחה. כדי להתחיל קמפיין לעסק, הקש על 🚀 בכרטיס שלו למטה. כדי להוסיף עסק במכשיר חדש, השתמש פעם אחת ב-🔑 שחזור גישה.",
   "campaign.funding.title": "מימון קמפיין",
   "campaign.funding.amountLabel": "סכום (EUR)",
   "campaign.funding.continue": "המשך לתשלום",
@@ -705,5 +705,6 @@
   "campaign.ui.label.utmMedium": "מדיום UTM",
   "campaign.ui.label.utmCampaign": "קמפיין UTM",
   "campaign.ui.label.startDate": "תאריך התחלה",
-  "campaign.ui.label.endDate": "תאריך סיום"
+  "campaign.ui.label.endDate": "תאריך סיום",
+  "owner.center.launch.title": ""
 }

@@ -4188,7 +4188,8 @@ export async function createOwnerCenterModal() {
   const note = document.createElement('p');
   note.textContent =
     (typeof t === 'function' && t('owner.center.note')) ||
-    'Owner access is stored on this device for security. To add a location on a new device, use Restore access once.';
+    'Owner access is stored on this device for security. To start a campaign for a business, tap 🚀 on its card below. To add a business on a new device, use Restore access once.Owner access is stored on this device for security. To start a campaign for a business, tap 🚀 on its card below. To add a business on a new device, use 🔑 Restore access once.';
+
   note.style.textAlign = 'left';
   note.style.fontSize = '0.85em';
   note.style.opacity = '0.8';
@@ -4284,6 +4285,10 @@ export async function createOwnerCenterModal() {
         <!-- Gift (bottom-right) -->
         <span class="syb-gift" aria-hidden="true">🎁</span>
 
+        <!-- Launch campaign (Owner Center) -->
+        <button type="button" class="clear-x owner-center-launch"
+                aria-label="${(typeof t === 'function' && t('owner.center.launch.title')) || 'Start a campaign'}">🚀</button>
+
         <!-- Remove from this device (Owner Center only) -->
         <button type="button" class="clear-x owner-center-remove"
                 aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">🧹</button>
@@ -4330,6 +4335,36 @@ export async function createOwnerCenterModal() {
             'Could not remove this location from this device.',
             2200
           );
+        }
+      });
+
+      // Owner Center: launch campaign for this business (switch session, then open CM)
+      btn.querySelector('.owner-center-launch')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (btn.dataset.busy === '1') return;
+        markBusyLocal(btn, true);
+
+        try {
+          // Switch op_sess binding server-side (no Dash redirect)
+          const sw = new URL('/owner/switch', location.origin);
+          sw.searchParams.set('ulid', u);
+          sw.searchParams.set('next', '/');
+
+          const r = await fetch(sw.toString(), { cache: 'no-store', credentials: 'include', redirect: 'follow' });
+          if (!r.ok) {
+            showToast((typeof t === 'function' && t('owner.center.switch.fail')) || 'Could not switch.', 2000);
+            return;
+          }
+
+          hideModal(id);
+
+          // Prefer slug if we resolved it; fallback to ULID (CM will resolve ULID → slug internally if needed)
+          const locIdent = String(slug || u || '').trim();
+          await showCampaignManagementModal(locIdent);
+        } finally {
+          markBusyLocal(btn, false);
         }
       });
 

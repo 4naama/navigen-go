@@ -656,7 +656,7 @@
   "root.bo.ownerCenter.desc": "Switch between locations you manage on this device.",
   "owner.center.title": "Owner Center",
   "owner.center.empty": "No saved owner sessions on this device yet.",
-  "owner.center.note": "Owner access is stored on this device for security. To add a location on a new device, use Restore access once.",
+  "owner.center.note": "Owner access is stored on this device for security. To start a campaign for a business, tap 🚀 on its card below. To add a business on a new device, use 🔑 Restore access once.",
   "campaign.funding.title": "Campaign funding",
   "campaign.funding.amountLabel": "Amount (EUR)",
   "campaign.funding.continue": "Continue to payment",
@@ -705,5 +705,6 @@
   "campaign.ui.label.utmMedium": "UTM medium",
   "campaign.ui.label.utmCampaign": "UTM campaign",
   "campaign.ui.label.startDate": "Start date",
-  "campaign.ui.label.endDate": "End date"
+  "campaign.ui.label.endDate": "End date",
+  "owner.center.launch.title": "Start a campaign"
 }

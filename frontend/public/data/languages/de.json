@@ -656,7 +656,7 @@
   "root.bo.ownerCenter.desc": "Wechseln Sie zwischen den Standorten, die Sie auf diesem Gerät verwalten.",
   "owner.center.title": "Owner Center",
   "owner.center.empty": "Auf diesem Gerät sind noch keine Owner-Sitzungen gespeichert.",
-  "owner.center.note": "Der Owner-Zugriff wird aus Sicherheitsgründen auf diesem Gerät gespeichert. Um einen Standort auf einem neuen Gerät hinzuzufügen, verwenden Sie einmal „Zugriff wiederherstellen“.",
+  "owner.center.note": "Der Eigentümerzugriff wird aus Sicherheitsgründen auf diesem Gerät gespeichert. Um eine Kampagne für ein Unternehmen zu starten, tippen Sie unten auf der Karte auf 🚀. Um ein Unternehmen auf einem neuen Gerät hinzuzufügen, verwenden Sie einmal 🔑 Zugriff wiederherstellen.",
   "campaign.funding.title": "Kampagnenfinanzierung",
   "campaign.funding.amountLabel": "Betrag (EUR)",
   "campaign.funding.continue": "Zur Zahlung fortfahren",
@@ -705,5 +705,6 @@
   "campaign.ui.label.utmMedium": "UTM-Medium",
   "campaign.ui.label.utmCampaign": "UTM-Kampagne",
   "campaign.ui.label.startDate": "Startdatum",
-  "campaign.ui.label.endDate": "Enddatum"
+  "campaign.ui.label.endDate": "Enddatum",
+  "owner.center.launch.title": ""
 }

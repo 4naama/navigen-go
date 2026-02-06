@@ -656,7 +656,7 @@
   "root.bo.ownerCenter.desc": "Basculez entre les établissements que vous gérez sur cet appareil.",
   "owner.center.title": "Centre propriétaire",
   "owner.center.empty": "Aucune session propriétaire enregistrée sur cet appareil pour le moment.",
-  "owner.center.note": "L’accès propriétaire est stocké sur cet appareil pour des raisons de sécurité. Pour ajouter un établissement sur un nouvel appareil, utilisez une fois Restaurer l’accès.",
+  "owner.center.note": "L’accès propriétaire est stocké sur cet appareil pour des raisons de sécurité. Pour démarrer une campagne pour une entreprise, appuyez sur 🚀 sur sa carte ci-dessous. Pour ajouter une entreprise sur un nouvel appareil, utilisez 🔑 Restaurer l’accès une seule fois.",
   "campaign.funding.title": "Financement de la campagne",
   "campaign.funding.amountLabel": "Montant (EUR)",
   "campaign.funding.continue": "Continuer vers le paiement",
@@ -705,5 +705,6 @@
   "campaign.ui.label.utmMedium": "Support UTM",
   "campaign.ui.label.utmCampaign": "Campagne UTM",
   "campaign.ui.label.startDate": "Date de début",
-  "campaign.ui.label.endDate": "Date de fin"
+  "campaign.ui.label.endDate": "Date de fin",
+  "owner.center.launch.title": ""
 }

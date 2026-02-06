@@ -656,7 +656,7 @@
   "root.bo.ownerCenter.desc": "Váltson az ezen az eszközön kezelt helyszínek között.",
   "owner.center.title": "Tulajdonosi központ",
   "owner.center.empty": "Ezen az eszközön még nincs mentett tulajdonosi munkamenet.",
-  "owner.center.note": "A tulajdonosi hozzáférés biztonsági okokból ezen az eszközön van tárolva. Új eszközön egy helyszín hozzáadásához egyszer használja a Hozzáférés visszaállítása funkciót.",
+  "owner.center.note": "A tulajdonosi hozzáférés biztonsági okokból ezen az eszközön van tárolva. Egy vállalkozás kampányának indításához koppintson az alábbi kártyán a 🚀 ikonra. Új eszközön egy vállalkozás hozzáadásához egyszer használja a 🔑 Hozzáférés visszaállítása lehetőséget.",
   "campaign.funding.title": "Kampány finanszírozása",
   "campaign.funding.amountLabel": "Összeg (EUR)",
   "campaign.funding.continue": "Tovább a fizetéshez",
@@ -705,5 +705,6 @@
   "campaign.ui.label.utmMedium": "UTM médium",
   "campaign.ui.label.utmCampaign": "UTM kampány",
   "campaign.ui.label.startDate": "Kezdő dátum",
-  "campaign.ui.label.endDate": "Befejezés dátuma"
+  "campaign.ui.label.endDate": "Befejezés dátuma",
+  "owner.center.launch.title": ""
 }
