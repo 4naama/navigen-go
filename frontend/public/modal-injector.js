@@ -2752,7 +2752,7 @@ export async function showSelectLocationModal() {
 
       const line2 = x.addrDisplay ? x.addrDisplay : x.slug;
 
-      btn.classList.add('syb-card');
+      btn.classList.add('syb-card', 'oc-card');
 
       btn.innerHTML = `
         <span class="icon-img">📍</span>
@@ -4270,28 +4270,27 @@ export async function createOwnerCenterModal() {
 
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'modal-menu-item';
-      btn.classList.add('syb-card');
+      btn.className = 'modal-menu-item oc-card';
 
       btn.innerHTML = `
-        <span class="icon-img">📍</span>
-        <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-          <strong>${label}</strong><br><small>${slug || u}</small>
-        </span>
+        <div class="oc-row1">
+          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+            <strong>${label}</strong>
+          </span>
 
-        <!-- Status dot (top-right): 🟢 free by default, becomes 🔴 if owned -->
-        <span class="syb-status-dot syb-free" aria-hidden="true"></span>
+          <!-- Status dot (right) -->
+          <span class="syb-status-dot syb-free" aria-hidden="true"></span>
+        </div>
 
-        <!-- Gift (bottom-right) -->
-        <span class="syb-gift" aria-hidden="true">🎁</span>
+        <div class="oc-slug">${slug || u}</div>
 
-        <!-- Launch campaign (Owner Center) -->
-        <button type="button" class="clear-x owner-center-launch"
-                aria-label="${(typeof t === 'function' && t('owner.center.launch.title')) || 'Start a campaign'}">🚀</button>
+        <div class="oc-actions">
+          <button type="button" class="clear-x owner-center-remove"
+                  aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">🧹</button>
 
-        <!-- Remove from this device (Owner Center only) -->
-        <button type="button" class="clear-x owner-center-remove"
-                aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">🧹</button>
+          <button type="button" class="clear-x owner-center-launch"
+                  aria-label="${(typeof t === 'function' && t('owner.center.launch.title')) || 'Start a campaign'}">🚀</button>
+        </div>
       `;
 
       // Owner Center: remove this ULID from the device registry (does not affect global ownership).
@@ -4362,7 +4361,7 @@ export async function createOwnerCenterModal() {
 
           // Prefer slug if we resolved it; fallback to ULID (CM will resolve ULID → slug internally if needed)
           const locIdent = String(slug || u || '').trim();
-          await showCampaignManagementModal(locIdent);
+          await showCampaignManagementModal(locIdent, { openTab: 'new', preferEmptyDraft: true });
         } finally {
           markBusyLocal(btn, false);
         }
@@ -4505,7 +4504,7 @@ async function apiJson(url, init) {
   return { r, j, txt };
 }
 
-export async function showCampaignManagementModal(locationSlug) {
+export async function showCampaignManagementModal(locationSlug, opts = {}) {
   const slug = String(locationSlug || '').trim();
   if (!slug) {
     showToast((typeof t==='function' && t('campaign.ui.missingLocation')) || 'Missing location.', 2000);
@@ -5020,7 +5019,7 @@ export async function showCampaignManagementModal(locationSlug) {
   });
 
   // Default open: New campaign
-  setActiveTab('new');
+  setActiveTab(String(opts.openTab || 'new'));
 
   showModal(id);
 }

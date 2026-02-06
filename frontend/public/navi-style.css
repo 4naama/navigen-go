@@ -2545,6 +2545,105 @@ button:hover {
 /* 🧹 left of 🚀 */
 .modal-menu-item.syb-card .owner-center-remove{ right:44px; }
 
+/* Owner Center card: 3-row layout (name + slug + actions) */
+.modal-menu-item.oc-card{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:8px;
+  padding-right:16px; /* oc-card owns actions row; no corner reserve needed */
+}
+
+/* Row 1: name + status dot */
+.modal-menu-item.oc-card .oc-row1{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+
+.modal-menu-item.oc-card .oc-name{
+  flex:1 1 auto;
+  min-width:0;
+  font-weight:700;
+  line-height:1.2;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+/* Keep the dot in row 1, top-right */
+.modal-menu-item.oc-card .syb-status-dot{
+  position:static;
+  flex:0 0 auto;
+  margin-top:4px;
+}
+
+/* Row 2: slug */
+.modal-menu-item.oc-card .oc-slug{
+  color:#6b7280;
+  font-size:13px;
+  line-height:1.2;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+/* Row 3: actions (real size) */
+.modal-menu-item.oc-card .oc-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.modal-menu-item.oc-card .owner-center-launch,
+.modal-menu-item.oc-card .owner-center-remove{
+  position:static;      /* no absolute positioning in OC */
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  font-size:20px;
+  line-height:1;
+}
+
+/* Owner Center card: 3-row layout (minimal, reuses modal-menu-item + clear-x) */
+.modal-menu-item.oc-card{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:8px;
+}
+
+.modal-menu-item.oc-card .oc-row1{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+
+.modal-menu-item.oc-card .syb-status-dot{
+  position:static;
+  flex:0 0 auto;
+  margin-top:4px;
+}
+
+.modal-menu-item.oc-card .oc-slug{
+  color:#6b7280;
+  font-size:13px;
+  line-height:1.2;
+}
+
+.modal-menu-item.oc-card .oc-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.modal-menu-item.oc-card .owner-center-launch,
+.modal-menu-item.oc-card .owner-center-remove{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  font-size:20px;
+  line-height:1;
+}
+
 .modal-menu-item{
   display:flex;
   align-items:center;
