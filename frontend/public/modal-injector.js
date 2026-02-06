@@ -3879,7 +3879,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   nameRow.className = 'cm-location-row';
   const nameLabel = document.createElement('span');
   nameLabel.className = 'cm-location-label';
-  nameLabel.textContent = 'Location name';
+nameLabel.textContent = 'Selected business';
   const nameBox = document.createElement('span');
   nameBox.className = 'cm-location-box';
   nameBox.textContent = String(locationName || '').trim() || '—';
@@ -3891,7 +3891,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   idRow.className = 'cm-location-row';
   const idLabel = document.createElement('span');
   idLabel.className = 'cm-location-label';
-  idLabel.textContent = 'Location ID';
+  idLabel.textContent = 'Selected ID';
   const idBox = document.createElement('span');
   idBox.className = 'cm-location-box';
   idBox.textContent = locId || '—';
@@ -3902,6 +3902,64 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   locRows.appendChild(nameRow);
   locRows.appendChild(idRow);
   inner.appendChild(locRows);
+
+  // Active-on-device header (session-bound)
+  const activeRows = document.createElement('div');
+
+  const aNameRow = document.createElement('div');
+  aNameRow.className = 'cm-location-row';
+  const aNameLabel = document.createElement('span');
+  aNameLabel.className = 'cm-location-label';
+  aNameLabel.textContent = 'Active on this device';
+  const aNameBox = document.createElement('span');
+  aNameBox.className = 'cm-location-box';
+  aNameBox.textContent = '—';
+  aNameBox.title = '';
+  aNameRow.appendChild(aNameLabel);
+  aNameRow.appendChild(aNameBox);
+
+  const aIdRow = document.createElement('div');
+  aIdRow.className = 'cm-location-row';
+  const aIdLabel = document.createElement('span');
+  aIdLabel.className = 'cm-location-label';
+  aIdLabel.textContent = 'Active ID';
+  const aIdBox = document.createElement('span');
+  aIdBox.className = 'cm-location-box';
+  aIdBox.textContent = '—';
+  aIdBox.title = '';
+  aIdRow.appendChild(aIdLabel);
+  aIdRow.appendChild(aIdBox);
+
+  activeRows.appendChild(aNameRow);
+  activeRows.appendChild(aIdRow);
+  inner.appendChild(activeRows);
+
+  // Resolve current device session (if any) and fill Active rows.
+  (async () => {
+    try {
+      const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
+      const jj = rr.ok ? await rr.json().catch(() => null) : null;
+      const activeUlid = String(jj?.ulid || '').trim();
+      if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(activeUlid)) return;
+
+      aIdBox.textContent = activeUlid;
+      aIdBox.title = activeUlid;
+
+      const ir = await fetch(`https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(activeUlid)}`, { cache: 'no-store' });
+      const ij = ir.ok ? await ir.json().catch(() => null) : null;
+
+      const slug = String(ij?.locationID || '').trim();
+      const ln = ij?.locationName;
+      const nm =
+        (ln && typeof ln === 'object')
+          ? String(ln.en || Object.values(ln)[0] || '').trim()
+          : String(ln || '').trim();
+
+      if (slug) { aIdBox.textContent = slug; aIdBox.title = slug; }
+      if (nm)   { aNameBox.textContent = nm; aNameBox.title = nm; }
+
+    } catch {}
+  })();
 
   // If we were given a ULID, resolve to slug/name without waiting for refresh.
   (async () => {
@@ -3942,7 +4000,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   if (variant === 'restore') {
     rawExpl = _ownerText(
       'owner.settings.restore.explain',
-      'You already own this location, but your access session has expired.'
+      'Owner access on this device is missing.\nRestore access 🔑 to manage campaigns 🎯 and analytics 📈 here.'
     );
   } else if (variant === 'mismatch') {
     rawExpl = _ownerText(
@@ -3990,16 +4048,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   };
 
   if (variant === 'restore') {
-    addItem({
-      id: 'owner-restore-access',
-      icon: '🔑',
-      title: _ownerText('owner.settings.restore.action.title', 'Restore access'),
-      desc: _ownerText('owner.settings.restore.action.desc', 'Use your most recent Owner access email / Stripe receipt.'),
-      onClick: () => {
-        hideModal(id);
-        showRestoreAccessModal();
-      }
-    });
+    // Restore access is triggered by 🎯 Run a campaign (intent-first UX).
 
     addItem({
       id: 'owner-restore-campaign',
@@ -4043,7 +4092,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('owner.settings.signedin.openDash.desc', 'View analytics and owner controls for this location.'),
       onClick: () => {
         hideModal(id);
-        const seg = String(locationIdOrSlug || '').trim();
+        const seg = String(locId || '').trim();
         window.open(`https://navigen.io/dash/${encodeURIComponent(seg)}`, '_blank', 'noopener,noreferrer');
       }
     });
@@ -4055,7 +4104,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('owner.settings.signedin.runCampaign.desc', 'Edit draft, checkout, and activate this campaign.'),
       onClick: () => {
         hideModal(id);
-        showCampaignManagementModal(String(locationIdOrSlug || '').trim());
+        showCampaignManagementModal(String(locId || '').trim());
       }
     });
 
