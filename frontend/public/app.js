@@ -1370,12 +1370,12 @@ async function initEmergencyBlock(countryOverride) {
         }
 
         if (open === 'campaign') {
-          // 🎯 Start campaign: pick business (SYB) then open Campaign Management (no LPM)
+          // 🎯 Start campaign: select business (SYB), then open Campaign Management (no LPM)
           (async () => {
             showToast('Select your business to start a campaign.', 2200);
 
             const picked = await showSelectLocationModal();
-            const locId = String(picked?.locationID || picked?.slug || '').trim();
+            const locId = String(picked?.slug || picked?.locationID || '').trim();
             if (!locId) return;
 
             await showCampaignManagementModal(locId, { openTab: 'new', preferEmptyDraft: true });
