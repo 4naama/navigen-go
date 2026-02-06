@@ -628,7 +628,7 @@
   "bo.campaign.title": "🎯 הפעל קמפיין",
   "bo.campaign.desc": "בחר את העסק שלך ואז הפעל.",
   "root.bo.title": "בעלי עסקים",
-  "root.bo.startCampaign.title": "🎯 הפעל קמפיין",
+  "root.bo.startCampaign.title": "הפעל קמפיין",
   "root.bo.startCampaign.desc": "בחר את העסק שלך ואז הפעל.",
   "root.bo.restore.title": "שחזור גישת בעלים",
   "root.bo.restore.desc": "השתמש באימייל גישת הבעלים האחרון או בקבלת Stripe.",

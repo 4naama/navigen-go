@@ -628,7 +628,7 @@
   "bo.campaign.title": "🎯 Kampagne starten",
   "bo.campaign.desc": "Wählen Sie Ihr Unternehmen aus und starten Sie.",
   "root.bo.title": "Geschäftsinhaber",
-  "root.bo.startCampaign.title": "🎯 Kampagne starten",
+  "root.bo.startCampaign.title": "Kampagne starten",
   "root.bo.startCampaign.desc": "Wählen Sie Ihr Unternehmen aus und starten Sie.",
   "root.bo.restore.title": "Owner-Zugriff wiederherstellen",
   "root.bo.restore.desc": "Verwenden Sie Ihre neueste Owner-Zugriffs-E-Mail oder Stripe-Quittung.",

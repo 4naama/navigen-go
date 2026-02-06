@@ -628,7 +628,7 @@
   "bo.campaign.title": "🎯 Kampány indítása",
   "bo.campaign.desc": "Válassza ki vállalkozását, majd indítsa el.",
   "root.bo.title": "Vállalkozók",
-  "root.bo.startCampaign.title": "🎯 Kampány indítása",
+  "root.bo.startCampaign.title": "Kampány indítása",
   "root.bo.startCampaign.desc": "Válassza ki vállalkozását, majd indítsa el.",
   "root.bo.restore.title": "Tulajdonosi hozzáférés visszaállítása",
   "root.bo.restore.desc": "Használja a legutóbbi tulajdonosi hozzáférési e-mailt vagy Stripe nyugtát.",

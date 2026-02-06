@@ -628,7 +628,7 @@
   "bo.campaign.title": "🎯 Avvia una campagna",
   "bo.campaign.desc": "Scegli la tua attività, poi avvia.",
   "root.bo.title": "Proprietari di attività",
-  "root.bo.startCampaign.title": "🎯 Avvia una campagna",
+  "root.bo.startCampaign.title": "Avvia una campagna",
   "root.bo.startCampaign.desc": "Scegli la tua attività, poi avvia.",
   "root.bo.restore.title": "Ripristina accesso proprietario",
   "root.bo.restore.desc": "Usa l’e-mail di accesso proprietario più recente o la ricevuta Stripe.",

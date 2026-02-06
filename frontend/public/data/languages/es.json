@@ -628,7 +628,7 @@
   "bo.campaign.title": "🎯 Ejecutar una campaña",
   "bo.campaign.desc": "Elige tu negocio y luego inicia.",
   "root.bo.title": "Propietarios de negocios",
-  "root.bo.startCampaign.title": "🎯 Ejecutar una campaña",
+  "root.bo.startCampaign.title": "Ejecutar una campaña",
   "root.bo.startCampaign.desc": "Elige tu negocio y luego inicia.",
   "root.bo.restore.title": "Restaurar acceso del propietario",
   "root.bo.restore.desc": "Usa tu correo de acceso de propietario más reciente o el recibo de Stripe.",
