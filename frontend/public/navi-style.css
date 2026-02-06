@@ -2550,8 +2550,11 @@ button:hover {
 .modal-menu-item.syb-card .owner-center-remove{
   position: absolute;
   bottom: 10px;
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 20px;
+  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;

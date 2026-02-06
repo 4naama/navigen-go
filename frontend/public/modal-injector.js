@@ -2752,7 +2752,7 @@ export async function showSelectLocationModal() {
 
       const line2 = x.addrDisplay ? x.addrDisplay : x.slug;
 
-      btn.classList.add('syb-card', 'oc-card');
+      btn.classList.add('syb-card');
 
       btn.innerHTML = `
         <span class="icon-img">📍</span>
