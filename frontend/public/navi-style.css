@@ -2496,13 +2496,12 @@ button:hover {
   line-height:1;
 }
 
-/* Select your business (SYB) + Owner Center cards: corner affordances (status dot + 🎁 + actions) */
+/* Select your business (SYB) cards: corner affordances (status + gift) */
 .modal-menu-item.syb-card{
   position:relative;
-  padding-right:84px; /* room for top-right dot + bottom-right 🎁 + 🚀 + 🧹 */
+  padding-right:52px; /* room for top-right dot + bottom-right 🎁 */
 }
 
-/* top-right status dot */
 .modal-menu-item.syb-card .syb-status-dot{
   position:absolute;
   top:10px;
@@ -2512,38 +2511,66 @@ button:hover {
   border-radius:999px;
 }
 
-.modal-menu-item.syb-card .syb-status-dot.syb-free  { background:#22c55e; } /* 🟢 free */
-.modal-menu-item.syb-card .syb-status-dot.syb-taken { background:#ef4444; } /* 🔴 taken */
-.modal-menu-item.syb-card .syb-status-dot.syb-parked{ background:#f59e0b; } /* 🟠 parked */
-.modal-menu-item.syb-card .syb-status-dot.syb-held  { background:#3b82f6; } /* 🔵 held */
+.modal-menu-item.syb-card .syb-status-dot.syb-free{
+  background:#22c55e; /* 🟢 free */
+}
 
-/* bottom-right 🎁 (Promoted) */
+.modal-menu-item.syb-card .syb-status-dot.syb-taken{
+  background:#ef4444; /* 🔴 taken */
+}
+
+.modal-menu-item.syb-card .syb-status-dot.syb-parked{
+  background:#f59e0b; /* 🟠 parked / inactive */
+}
+
+.modal-menu-item.syb-card .syb-status-dot.syb-held{
+  background:#3b82f6; /* 🔵 held/visible (courtesy/hold) */
+}
+
 .modal-menu-item.syb-card .syb-gift{
   position:absolute;
+  right:10px;
   bottom:10px;
-  right:76px;         /* leave room for 🧹 and 🚀 */
   font-size:16px;
   line-height:1;
-  display:none;       /* default off */
+  display:none; /* default off */
 }
-.modal-menu-item.syb-card .syb-gift.syb-gift-on{ display:block; }
 
-/* Owner Center actions (only exist in OC cards; safe for SYB cards too) */
+.modal-menu-item.syb-card .syb-gift.syb-gift-on{
+  display:block; /* on only when promoted */
+}
+
+/* Owner Center card actions (🚀 launch + 🧹 remove) — keep separate from 🎁 */
+.modal-menu-item.syb-card{
+  padding-right: 84px; /* room for dot + 🎁 + two action buttons */
+}
+
+/* Place actions at bottom-right */
 .modal-menu-item.syb-card .owner-center-launch,
 .modal-menu-item.syb-card .owner-center-remove{
-  position:absolute;
-  bottom:10px;
-  width:24px;
-  height:24px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
+  position: absolute;
+  bottom: 10px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* 🚀 far right */
-.modal-menu-item.syb-card .owner-center-launch{ right:12px; }
-/* 🧹 left of 🚀 */
-.modal-menu-item.syb-card .owner-center-remove{ right:44px; }
+/* 🚀 at far right */
+.modal-menu-item.syb-card .owner-center-launch{
+  right: 12px;
+}
+
+/* 🧹 just left of 🚀 */
+.modal-menu-item.syb-card .owner-center-remove{
+  right: 44px;
+}
+
+/* Move 🎁 to avoid overlapping the action buttons */
+.modal-menu-item.syb-card .syb-gift{
+  right: 76px;
+}
 
 .modal-menu-item{
   display:flex;
