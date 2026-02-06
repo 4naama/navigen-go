@@ -662,45 +662,11 @@ function renderBusinessOwnersGroup() {
           const picked = await showSelectLocationModal();
           if (!picked) return;
 
-          // Always open the LPM first so the owner can verify the business before any checkout.
-          showLocationProfileModal(picked);
-
-          const slug = String(picked?.locationID || picked?.alias || "").trim();
+          const slug = String(picked?.locationID || '').trim();
           if (!slug) return;
 
-          // If already owned, do NOT start checkout again. Guide to Restore flow instead.
-          try {
-            const u = new URL('/api/status', location.origin);
-            u.searchParams.set('locationID', slug);
-            const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
-            const j = r.ok ? await r.json().catch(() => null) : null;
-
-            if (j?.ownedNow === true) {
-              showToast(
-                (typeof t === 'function' && t('bo.toast.takenAccessOtherDevice')) ||
-                'This location is already taken.\n\nAccess was created on a different device.\nOpen 📈 to manage this location here.',
-                5000
-              );
-              return;
-            }
-          } catch {
-            // If status check fails, fail closed: do not charge.
-            showToast('Unable to verify ownership status. Please try again.', 2200);
-            return;
-          }
-
-          // Route through the Campaign Funding modal (chips + input) instead of sending the user straight to Stripe.
-          // Resolve the campaignKey from /data/campaigns.json so dataset keys can be professional (brandKey__locationID__seq).
-          const campaignKey = await resolveCampaignKeyForLocation(slug);
-          if (!campaignKey) {
-            showToast(
-              (typeof t === 'function' && t('bo.toast.noCampaignTemplate')) ||
-              'No campaign template found for this location.',
-              2200
-            );
-            return;
-          }
-          showCampaignFundingModal({ locationID: slug, campaignKey });
+          // Launch Campaign Management directly (no LPM, no funding modal).
+          await showCampaignManagementModal(slug, { openTab: 'new', preferEmptyDraft: true });
         }
       },
             {
