@@ -643,7 +643,7 @@
   "status.badge.stillVisible": "Továbbra is látható",
   "status.badge.inactive": "Inaktív",
   "owner.settings.title": "Tulajdonosi beállítások",
-  "owner.settings.restore.explain": "Ezen az eszközön hiányzik a tulajdonosi hozzáférés.\\nÁllítsa vissza a hozzáférést 🔑 a kampányok 🎯 és az elemzések 📈 kezeléséhez itt.",
+  "owner.settings.restore.explain": "Ezen az eszközön hiányzik a tulajdonosi hozzáférés.\\nKezelje a kampányokat 🎯, vagy állítsa vissza a hozzáférést 🔑 ezen az eszközön.",
   "owner.settings.restore.action.title": "Hozzáférés visszaállítása",
   "owner.settings.restore.action.desc": "Használja a legutóbbi tulajdonosi hozzáférési e-mailt vagy Stripe nyugtát.",
   "exampleDash.disclaimer.body": "Ezek az elemzések más helyszínekhez tartoznak, és csak bemutatási célokat szolgálnak.",

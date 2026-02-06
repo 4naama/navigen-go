@@ -3217,7 +3217,21 @@ async function openOwnerSettingsForTarget({ target, locationName }) {
   }
 
   if (rStats.status === 401) {
-    showOwnerSettingsModal({ variant: 'restore', locationIdOrSlug: tgt, locationName: String(locationName || '').trim() });
+    // 401 means "no valid owner session". Decide restore vs claim based on ownership state.
+    let ownedNow = false;
+    try {
+      const u = new URL('/api/status', location.origin);
+      u.searchParams.set('locationID', tgt);
+      const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+      const js = rs.ok ? await rs.json().catch(() => null) : null;
+      ownedNow = js?.ownedNow === true;
+    } catch { ownedNow = false; }
+
+    showOwnerSettingsModal({
+      variant: ownedNow ? 'restore' : 'claim',
+      locationIdOrSlug: tgt,
+      locationName: String(locationName || '').trim()
+    });
     return;
   }
 
@@ -4000,7 +4014,7 @@ nameLabel.textContent = 'Selected business';
   if (variant === 'restore') {
     rawExpl = _ownerText(
       'owner.settings.restore.explain',
-      'Owner access on this device is missing.\nRestore access 🔑 to manage campaigns 🎯 and analytics 📈 here.'
+      'Owner access on this device is missing.\nManage campaigns 🎯 or restore access 🔑 on this device.'
     );
   } else if (variant === 'mismatch') {
     rawExpl = _ownerText(
@@ -4223,7 +4237,9 @@ nameLabel.textContent = 'Selected business';
 
 export function showOwnerSettingsModal({ variant, locationIdOrSlug, locationName }) {
   const id = 'owner-settings-modal';
-  if (!document.getElementById(id)) createOwnerSettingsModal({ variant, locationIdOrSlug, locationName });
+  // Always rebuild so Selected/Active headers and actions never stick to a prior location.
+  document.getElementById(id)?.remove();
+  createOwnerSettingsModal({ variant, locationIdOrSlug, locationName });
   showModal(id);
 }
 

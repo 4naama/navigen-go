@@ -643,7 +643,7 @@
   "status.badge.stillVisible": "Ancora visibile",
   "status.badge.inactive": "Inattivo",
   "owner.settings.title": "Impostazioni proprietario",
-  "owner.settings.restore.explain": "L’accesso del proprietario su questo dispositivo è mancante.\\nRipristina l’accesso 🔑 per gestire campagne 🎯 e analisi 📈 qui.",
+  "owner.settings.restore.explain": "Manca l’accesso del proprietario su questo dispositivo.\\nGestisci le campagne 🎯 o ripristina l’accesso 🔑 su questo dispositivo.",
   "owner.settings.restore.action.title": "Ripristina accesso",
   "owner.settings.restore.action.desc": "Usa l’email di accesso proprietario più recente o la ricevuta Stripe.",
   "exampleDash.disclaimer.body": "Queste analisi appartengono ad altre sedi e sono mostrate solo a scopo dimostrativo.",

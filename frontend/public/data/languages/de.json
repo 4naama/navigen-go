@@ -643,7 +643,7 @@
   "status.badge.stillVisible": "Weiterhin sichtbar",
   "status.badge.inactive": "Inaktiv",
   "owner.settings.title": "Inhabereinstellungen",
-  "owner.settings.restore.explain": "Le propriétaire n’est pas connecté sur cet appareil.\\nStellen Sie den Zugriff 🔑 wieder her, um Kampagnen 🎯 und Analysen 📈 hier zu verwalten.",
+  "owner.settings.restore.explain": "Der Eigentümerzugriff auf diesem Gerät fehlt.\\nVerwalten Sie Kampagnen 🎯 oder stellen Sie den Zugriff 🔑 auf diesem Gerät wieder her.",
   "owner.settings.restore.action.title": "Zugriff wiederherstellen",
   "owner.settings.restore.action.desc": "Verwenden Sie Ihre neueste Eigentümer-Zugriffs-E-Mail oder den letzten Stripe-Beleg.",
   "exampleDash.disclaimer.body": "Diese Analysen gehören zu anderen Standorten und dienen nur zu Demonstrationszwecken.",

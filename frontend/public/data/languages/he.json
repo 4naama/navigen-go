@@ -643,7 +643,7 @@
   "status.badge.stillVisible": "עדיין גלוי",
   "status.badge.inactive": "לא פעיל",
   "owner.settings.title": "הגדרות בעלים",
-  "owner.settings.restore.explain": "גישת הבעלים במכשיר זה חסרה.\\nשחזר את הגישה 🔑 כדי לנהל קמפיינים 🎯 וניתוחים 📈 כאן.",
+  "owner.settings.restore.explain": "גישת הבעלים במכשיר זה חסרה.\\nנהל קמפיינים 🎯 או שחזר גישה 🔑 במכשיר זה.",
   "owner.settings.restore.action.title": "שחזור גישה",
   "owner.settings.restore.action.desc": "השתמש באימייל גישת הבעלים האחרון או בקבלת Stripe.",
   "exampleDash.disclaimer.body": "ניתוחים אלה שייכים למיקומים אחרים ומוצגים לצורכי הדגמה בלבד.",

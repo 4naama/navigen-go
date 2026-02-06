@@ -643,7 +643,7 @@
   "status.badge.stillVisible": "Still visible",
   "status.badge.inactive": "Inactive",
   "owner.settings.title": "Owner settings",
-  "owner.settings.restore.explain": "Owner access on this device is missing.\\nRestore access 🔑 to manage campaigns 🎯 and analytics 📈 here.",
+  "owner.settings.restore.explain": "Owner access on this device is missing.\\nManage campaigns 🎯 or restore access 🔑 on this device.",
   "owner.settings.restore.action.title": "Restore access",
   "owner.settings.restore.action.desc": "Use your most recent Owner access email or Stripe receipt.",
   "exampleDash.disclaimer.body": "These analytics belong to other locations and are shown for demonstration only.",
