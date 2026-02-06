@@ -680,7 +680,7 @@
   "campaign.ui.checkoutFailed": "Le paiement n’a pas pu démarrer.",
   "campaign.ui.promoted": "Campagne activée.",
   "campaign.ui.promoteFailed": "Impossible d’activer la campagne pour le moment.",
-  "campaign.ui.denied": "L’accès propriétaire 🔑 est requis pour gérer les campagnes 🎯.\\nRestaurez l’accès 🔑 ou changez d’entreprise 🗂 pour continuer.",
+  "campaign.ui.denied": "L’accès propriétaire 🔑 est requis pour gérer les campagnes 🎯.\\nRestaurez l’accès 🔑 ou changez d’entreprise 🧩 pour continuer.",
   "campaign.ui.currentCampaign.title": "📌 Campagne en cours",
   "owner.settings.restore.runCampaign.desc": "Modifiez le brouillon ✍️, passez au paiement 💳 et activez ✅ cette campagne.",
   "owner.settings.signedin.openDash.title": "Ouvrir le tableau de bord",

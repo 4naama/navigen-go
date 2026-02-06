@@ -21,6 +21,7 @@ import {
   showRestoreAccessModal,
   showOwnerCenterModal,
   openOwnerSettingsForUlid,
+  openOwnerSettingsForLocation,
   showRequestListingModal,
   showSelectLocationModal,
   showCampaignManagementModal,
@@ -665,8 +666,8 @@ function renderBusinessOwnersGroup() {
           const slug = String(picked?.locationID || '').trim();
           if (!slug) return;
 
-          // Launch Campaign Management directly (no LPM, no funding modal).
-          await showCampaignManagementModal(slug, { openTab: 'new', preferEmptyDraft: true });
+          // Correct gateway: Owner Settings matrix decides signedin/restore/mismatch/claim.
+          await openOwnerSettingsForLocation(slug, String(picked?.name || picked?.displayName || '').trim());
         }
       },
             {

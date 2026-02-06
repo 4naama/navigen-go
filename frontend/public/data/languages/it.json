@@ -680,7 +680,7 @@
   "campaign.ui.checkoutFailed": "Impossibile avviare il checkout.",
   "campaign.ui.promoted": "Campagna attivata.",
   "campaign.ui.promoteFailed": "Impossibile attivare la campagna al momento.",
-  "campaign.ui.denied": "È richiesto l’accesso del proprietario 🔑 per gestire le campagne 🎯.\\nRipristina l’accesso 🔑 o cambia attività 🗂 per continuare.",
+  "campaign.ui.denied": "È richiesto l’accesso del proprietario 🔑 per gestire le campagne 🎯.\\nRipristina l’accesso 🔑 o cambia attività 🧩 per continuare.",
   "campaign.ui.currentCampaign.title": "📌 Campagna attuale",
   "owner.settings.restore.runCampaign.desc": "Modifica la bozza ✍️, vai al checkout 💳 e attiva ✅ questa campagna.",
   "owner.settings.signedin.openDash.title": "Apri la dashboard",

@@ -3238,6 +3238,10 @@ export async function openOwnerSettingsForUlid(ulid) {
   return openOwnerSettingsForTarget({ target: ulid, locationName: '' });
 }
 
+export async function openOwnerSettingsForLocation(idOrSlug, locationName = '') {
+  return openOwnerSettingsForTarget({ target: String(idOrSlug || '').trim(), locationName: String(locationName || '').trim() });
+}
+
 export function createRestoreAccessModal() {
   const id = 'owner-restore-access-modal';
   document.getElementById(id)?.remove();
