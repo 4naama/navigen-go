@@ -2791,6 +2791,8 @@ export async function showSelectLocationModal() {
           links: (x.raw && typeof x.raw.links === 'object') ? x.raw.links : {}
         };
 
+        modal.dataset.pick = ''; // clear any stale pick before writing a new one
+
         modal.dataset.pick = JSON.stringify(payload);
       });
 
@@ -3995,6 +3997,17 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('owner.settings.restore.action.desc', 'Use your most recent Owner access email / Stripe receipt.'),
       onClick: () => {
         hideModal(id);
+        showRestoreAccessModal();
+      }
+    });
+
+    addItem({
+      id: 'owner-restore-campaign',
+      icon: '🎯',
+      title: _ownerText('owner.settings.restore.campaign.title', 'Run a campaign'),
+      desc: _ownerText('owner.settings.restore.campaign.desc', 'Restore access to continue.'),
+      onClick: () => {
+        // Do NOT close Owner Settings; open Restore on top so OS stays available (examples, context).
         showRestoreAccessModal();
       }
     });
