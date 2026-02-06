@@ -23,6 +23,7 @@ import {
   openOwnerSettingsForUlid,
   showRequestListingModal,
   showSelectLocationModal,
+  showCampaignManagementModal,
   showCampaignFundingModal,
   resolveCampaignKeyForLocation,
   createFavoritesModal,
@@ -1369,9 +1370,16 @@ async function initEmergencyBlock(countryOverride) {
         }
 
         if (open === 'campaign') {
-          // Route into the BO flow: Select Location first, then campaign checkout lives there.
-          showToast('Select your business to start a campaign.', 2200);
-          showSelectLocationModal();
+          // 🎯 Start campaign: pick business (SYB) then open Campaign Management (no LPM)
+          (async () => {
+            showToast('Select your business to start a campaign.', 2200);
+
+            const picked = await showSelectLocationModal();
+            const locId = String(picked?.locationID || picked?.slug || '').trim();
+            if (!locId) return;
+
+            await showCampaignManagementModal(locId, { openTab: 'new', preferEmptyDraft: true });
+          })();
           return;
         }
       } catch {}
