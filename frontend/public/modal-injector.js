@@ -2243,41 +2243,12 @@ async function initLpmImageSlider(modal, data) {
           statsUrl.searchParams.set('from', ymd);
           statsUrl.searchParams.set('to', ymd);
 
-          const rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
-
-          if (rStats.status === 200) {
-            showOwnerSettingsModal({
-              variant: 'signedin',
-              locationIdOrSlug: target,
-              locationName: String(data?.displayName ?? data?.name ?? '').trim()
-            });
-            return;
-          }
-
-          if (rStats.status === 401) {
-            showOwnerSettingsModal({
-              variant: 'restore',
-              locationIdOrSlug: target,
-              locationName: String(data?.displayName ?? data?.name ?? '').trim()
-            });
-            return;
-          }
-
-          // 403 can mean "signed in for another location" (mismatch), not only "claim".
-          // If a valid op_sess exists on this device, show mismatch UI with escape hatches.
-          let hasSess = false;
-          try {
-            const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
-            const jj = rr.ok ? await rr.json().catch(() => null) : null;
-            hasSess = (jj?.hasOpSessCookie === true) && (jj?.kvHit === true);
-          } catch { hasSess = false; }
-
-          showOwnerSettingsModal({
-            variant: hasSess ? 'mismatch' : 'claim',
-            locationIdOrSlug: target,
-            locationName: String(data?.displayName ?? data?.name ?? '').trim()
-          });
-
+          // Use the single authoritative resolver (same as BO→SYB path)
+          await openOwnerSettingsForLocation(
+            target,
+            String(data?.displayName ?? data?.name ?? '').trim()
+          );
+          return;
         } finally {
           statsBtn.dataset.busy = '0';
         }

@@ -688,8 +688,8 @@ function renderBusinessOwnersGroup() {
         icon: "📈",
         titleKey: "root.bo.examples.title",
         descKey: "root.bo.examples.desc",
-        onClick: () => showOwnerCenterModal()
-      },      
+        onClick: () => showExampleDashboardsModal()
+      },    
       {
         icon: "🔑",
         titleKey: "root.bo.restore.title",
