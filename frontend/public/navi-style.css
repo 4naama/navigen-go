@@ -3262,7 +3262,6 @@ select.input{
 #select-location-modal .modal-menu-item.syb-notlisted{
   background:#eef6ff;          /* slightly bluer than normal cards */
   border-color:#93c5fd;
-  margin-top: 8px;
   margin-bottom: 10px; /* creates a clear separation from the results divider */
 }
 
