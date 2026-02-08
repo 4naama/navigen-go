@@ -1654,6 +1654,55 @@ export default {
         return json({ ok:true, wrote, skipped, total: aliases.length }, 200);
       }
 
+      // --- Admin read (one-off): GET /api/admin/ownership?locationID=.
+      // Returns raw ownership:<ULID> record + computed ownedNow/exclusiveUntil.
+      // Auth: Bearer <JWT_SECRET> (same pattern as other admin endpoints).
+      if (pathname === "/api/admin/ownership" && req.method === "GET") {
+        const auth = req.headers.get("Authorization") || "";
+        if (!auth.startsWith("Bearer ")) {
+          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401, { "cache-control":"no-store" });
+        }
+        const token = auth.slice(7).trim();
+        const expected = String(env.JWT_SECRET || "").trim();
+        if (!expected) {
+          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control":"no-store" });
+        }
+        if (!token || token !== expected) {
+          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control":"no-store" });
+        }
+
+        const u = new URL(req.url);
+        const idRaw = String(u.searchParams.get("locationID") || "").trim();
+        if (!idRaw) {
+          return json({ error:{ code:"invalid_request", message:"locationID required" } }, 400, { "cache-control":"no-store" });
+        }
+
+        const ulid = ULID_RE.test(idRaw) ? idRaw : ((await resolveUid(idRaw, env)) || "");
+        if (!ulid) {
+          return json({ error:{ code:"invalid_request", message:"unknown locationID" } }, 404, { "cache-control":"no-store" });
+        }
+
+        const ownKey = `ownership:${ulid}`;
+        const rec = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+
+        const exclusiveUntilIso = String(rec?.exclusiveUntil || "").trim();
+        const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+        const ownedNow = !!exclusiveUntil && !Number.isNaN(exclusiveUntil.getTime()) && exclusiveUntil.getTime() > Date.now();
+
+        return json({
+          ulid,
+          key: ownKey,
+          ownedNow,
+          exclusiveUntil: exclusiveUntilIso || "",
+          source: String(rec?.source || "").trim(),
+          lastEventId: String(rec?.lastEventId || "").trim(),
+          updatedAt: String(rec?.updatedAt || "").trim(),
+          state: String(rec?.state || "").trim(),
+          uid: String(rec?.uid || "").trim(),
+          raw: rec || null
+        }, 200, { "cache-control":"no-store" });
+      }
+
       // --- Admin seed: POST /api/admin/seed-campaigns
       // Seeds KV_STATUS campaigns:byUlid:<ULID> from a batch of campaign rows (preseed step).
       // Auth: Bearer <JWT_SECRET> (same pattern as other admin endpoints).

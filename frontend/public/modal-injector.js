@@ -2581,6 +2581,26 @@ export function createSelectLocationModal() {
   list.className = 'modal-menu-list';
   inner.appendChild(list);
 
+  // ➕ My business isn’t listed (inline CTA under search)
+  const notListedBtn = document.createElement('button');
+  notListedBtn.type = 'button';
+  notListedBtn.className = 'modal-menu-item';
+  notListedBtn.innerHTML = `
+    <span class="icon-img">➕</span>
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${t('root.bo.notListed.title') || 'My business isn’t listed'}</strong><br>
+      <small>${t('root.bo.notListed.desc') || 'Request a listing — we’ll add it.'}</small>
+    </span>
+  `;
+  notListedBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    hideModal(id);
+    showRequestListingModal();
+  });
+
+  // Place it at the very top of the SYB list (under the search bar)
+  list.appendChild(notListedBtn);
+
   // SYB: add a sticky bottom cover band (same concept as My Stuff footer)
   // Keep it non-interactive so it never blocks taps/scroll.
   if (!modal.querySelector('.modal-footer')) {
@@ -4247,6 +4267,24 @@ export async function createOwnerCenterModal() {
   note.style.fontSize = '0.85em';
   note.style.opacity = '0.8';
   inner.appendChild(note);
+
+  // 🔑 Restore owner access (Owner Center secondary action)
+  const restoreBtn = document.createElement('button');
+  restoreBtn.type = 'button';
+  restoreBtn.className = 'modal-menu-item';
+  restoreBtn.innerHTML = `
+    <span class="icon-img">🔑</span>
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${t('root.bo.restore.title') || 'Restore owner access'}</strong><br>
+      <small>${t('root.bo.restore.desc') || 'Use your most recent Owner access email or Stripe receipt.'}</small>
+    </span>
+  `;
+  restoreBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    showRestoreAccessModal();
+  });
+
+  inner.appendChild(restoreBtn);
 
   const list = document.createElement('div');
   list.className = 'modal-menu-list';
