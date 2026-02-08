@@ -639,7 +639,7 @@
   "root.bo.restore.desc": "Use your most recent Owner access email or Stripe receipt.",
   "root.bo.examples.title": "See example dashboards",
   "root.bo.examples.desc": "View real analytics for designated examples.",
-  "root.bo.notListed.title": "My business isn’t listed",
+  "root.bo.notListed.title": "My business is not listed",
   "root.bo.notListed.desc": "Request a listing — we’ll add it.",
   "modal.requestListing.title": "Request a listing",
   "modal.requestListing.submit": "Send request",
@@ -712,5 +712,11 @@
   "Favorites": "Favorites",
   "My Stuff": "My Stuff",
   "Remove": "Remove",
-  "Unnamed": "Unnamed"
+  "Unnamed": "Unnamed",
+  "root.bo.howItWorks.title": "How it works",
+  "root.bo.howItWorks.desc": "Cue card + pricing details.",
+  "bo.howItWorks.title": "How it works",
+  "bo.pricing.title": "Pricing & policies",
+  "bo.pricing.desc": "Full details, timelines, and edge cases.",
+  "bo.pricing.stub": "Coming next: the full Pricing & policies page (timelines, ownership rules, courtesy, restore, and examples)."
 }

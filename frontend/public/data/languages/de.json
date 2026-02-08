@@ -712,5 +712,11 @@
   "Favorites": "Favoriten",
   "My Stuff": "Meine Inhalte",
   "Remove": "Entfernen",
-  "Unnamed": "Unbenannt"
+  "Unnamed": "Unbenannt",
+  "root.bo.howItWorks.title": "So funktioniert es",
+  "root.bo.howItWorks.desc": "Übersichtskarte + Preisinformationen.",
+  "bo.howItWorks.title": "So funktioniert es",
+  "bo.pricing.title": "Preise und Richtlinien",
+  "bo.pricing.desc": "Alle Details, Zeitpläne und Sonderfälle.",
+  "bo.pricing.stub": "Demnächst verfügbar: die vollständige Seite „Preise und Richtlinien“ (Zeitpläne, Eigentumsregeln, Kulanz, Wiederherstellung und Beispiele)."
 }

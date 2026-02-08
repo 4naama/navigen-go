@@ -712,5 +712,11 @@
   "Favorites": "מועדפים",
   "My Stuff": "הדברים שלי",
   "Remove": "הסר",
-  "Unnamed": "ללא שם"
+  "Unnamed": "ללא שם",
+  "root.bo.howItWorks.title": "איך זה עובד",
+  "root.bo.howItWorks.desc": "כרטיס סקירה + פרטי תמחור.",
+  "bo.howItWorks.title": "איך זה עובד",
+  "bo.pricing.title": "תמחור וכללים",
+  "bo.pricing.desc": "כל הפרטים, לוחות הזמנים ומקרי קצה.",
+  "bo.pricing.stub": "בקרוב: עמוד התמחור והכללים המלא (לוחות זמנים, כללי בעלות, מדיניות אדיבות, שחזור ודוגמאות)."
 }

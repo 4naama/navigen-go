@@ -712,5 +712,11 @@
   "Favorites": "Kedvencek",
   "My Stuff": "Saját elemek",
   "Remove": "Eltávolítás",
-  "Unnamed": "Névtelen"
+  "Unnamed": "Névtelen",
+  "root.bo.howItWorks.title": "Hogyan működik",
+  "root.bo.howItWorks.desc": "Áttekintőkártya + árazási részletek.",
+  "bo.howItWorks.title": "Hogyan működik",
+  "bo.pricing.title": "Árazás és szabályzat",
+  "bo.pricing.desc": "Teljes részletek, ütemezések és speciális esetek.",
+  "bo.pricing.stub": "Hamarosan: a teljes Árazás és szabályzat oldal (ütemezések, tulajdonosi szabályok, méltányosság, visszaállítás és példák)."
 }

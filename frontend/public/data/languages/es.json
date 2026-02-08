@@ -712,5 +712,11 @@
   "Favorites": "Favoritos",
   "My Stuff": "Mis cosas",
   "Remove": "Eliminar",
-  "Unnamed": "Sin nombre"
+  "Unnamed": "Sin nombre",
+  "root.bo.howItWorks.title": "Cómo funciona",
+  "root.bo.howItWorks.desc": "Tarjeta informativa + detalles de precios.",
+  "bo.howItWorks.title": "Cómo funciona",
+  "bo.pricing.title": "Precios y políticas",
+  "bo.pricing.desc": "Todos los detalles, plazos y casos límite.",
+  "bo.pricing.stub": "Próximamente: la página completa de Precios y políticas (plazos, reglas de propiedad, cortesía, restauración y ejemplos)."
 }

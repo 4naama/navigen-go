@@ -712,5 +712,11 @@
   "Favorites": "Favoris",
   "My Stuff": "Mes éléments",
   "Remove": "Supprimer",
-  "Unnamed": "Sans nom"
+  "Unnamed": "Sans nom",
+  "root.bo.howItWorks.title": "Comment ça marche",
+  "root.bo.howItWorks.desc": "Carte d’aperçu + détails de tarification.",
+  "bo.howItWorks.title": "Comment ça marche",
+  "bo.pricing.title": "Tarification et règles",
+  "bo.pricing.desc": "Tous les détails, les délais et les cas particuliers.",
+  "bo.pricing.stub": "Bientôt disponible : la page complète Tarification et règles (délais, règles de propriété, courtoisie, restauration et exemples)."
 }
