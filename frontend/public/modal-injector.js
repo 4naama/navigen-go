@@ -3756,14 +3756,14 @@ function createHowItWorksModal() {
   inner.innerHTML = `
     <div class="howitworks">
 
-      <details class="howitworks-sec" open>
+      <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">💶</span>
           <span class="label">
             <strong>Run a campaign · from €50</strong><br>
             <small>Promotion, analytics, and operational control.</small>
           </span>
-          <span class="chevron">›</span>
+          <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
           <div>🎁 <b>Active promotion</b> — your offer is actively distributed across NaviGen</div>
@@ -3779,7 +3779,7 @@ function createHowItWorksModal() {
             <strong>How spending works</strong><br>
             <small>When budget is used and when it isn’t.</small>
           </span>
-          <span class="chevron">›</span>
+          <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
           <div>• Your campaign budget is <b>fully committed</b> to the campaign period</div>
@@ -3795,7 +3795,7 @@ function createHowItWorksModal() {
             <strong>Campaign and ownership</strong><br>
             <small>How promotion and control relate.</small>
           </span>
-          <span class="chevron">›</span>
+          <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
           <div>🎁 <b>Campaign</b> — promotion and analytics for <b>30 days</b></div>
@@ -3811,7 +3811,7 @@ function createHowItWorksModal() {
             <strong>After your campaign ends</strong><br>
             <small>What remains visible and for how long.</small>
           </span>
-          <span class="chevron">›</span>
+          <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
           <div>• Your location stays visible for a <b>60-day courtesy period</b></div>
@@ -3826,7 +3826,7 @@ function createHowItWorksModal() {
             <strong>Restore access (free)</strong><br>
             <small>Get back on a new device.</small>
           </span>
-          <span class="chevron">›</span>
+          <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
           <div>Restore owner access using your Stripe receipt (pi_…) or owner link.</div>
@@ -3841,7 +3841,7 @@ function createHowItWorksModal() {
             <strong>What NaviGen does not sell</strong><br>
             <small>No hidden products or lock-ins.</small>
           </span>
-          <span class="chevron">›</span>
+          <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
           <div>• Permanent ownership</div>
