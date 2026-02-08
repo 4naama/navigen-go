@@ -3755,14 +3755,12 @@ function createHowItWorksModal() {
   // Cue card (final v1.3, inline, scannable)
   inner.innerHTML = `
     <div style="font-size:14px; line-height:1.35;">
-      <div style="font-weight:700; margin-bottom:6px;">🎯 NaviGen — How it works</div>
-      <div style="opacity:.8; margin-bottom:14px;">Pin. Plan. Go.</div>
 
       <div style="font-weight:700; margin-top:10px;">💶 Run a campaign · from €50</div>
       <div style="margin-top:6px;">
-        <div>• 🎁 <b>Active promotion</b> — your offer is actively distributed across NaviGen</div>
-        <div>• 📈 <b>Analytics</b> — see how people interact with your business across discovery and engagement</div>
-        <div>• 🔴 <b>Operational control</b> — your business is the active operator for this location during the campaign</div>
+        <div>🎁 <b>Active promotion</b> — your offer is actively distributed across NaviGen</div>
+        <div>📈 <b>Analytics</b> — see how people interact with your business across discovery and engagement</div>
+        <div>🔴 <b>Operational control</b> — your business is the active operator for this location during the campaign</div>
       </div>
 
       <div style="font-weight:700; margin-top:14px;">💸 How spending works</div>
@@ -3774,8 +3772,8 @@ function createHowItWorksModal() {
 
       <div style="font-weight:700; margin-top:14px;">🎯 Campaign and ownership</div>
       <div style="margin-top:6px;">
-        <div>• 🎁 <b>Campaign</b> — promotion and analytics for <b>30 days</b></div>
-        <div>• 🔴 <b>Ownership (control)</b> — exclusive operation for a <b>limited time</b> (may extend beyond the campaign)</div>
+        <div>🎁 <b>Campaign</b> — promotion and analytics for <b>30 days</b></div>
+        <div>🔴 <b>Ownership (control)</b> — exclusive operation for a <b>limited time</b> (may extend beyond the campaign)</div>
         <div style="margin-top:6px; opacity:.9;">A campaign starts both. Both end automatically.</div>
       </div>
 
