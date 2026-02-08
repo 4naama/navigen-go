@@ -18,6 +18,7 @@ import {
   showThankYouToast as showThankYouToastUI,
   openViewSettingsModal,
   showExampleDashboardsModal,
+  showHowItWorksModal,
   showRestoreAccessModal,
   showOwnerCenterModal,
   openOwnerSettingsForUlid,
@@ -655,6 +656,14 @@ function renderBusinessOwnersGroup() {
     groupKey: "root.bo.title",
     defaultTitleKey: "root.bo.title",
     cards: [
+      {
+        icon: "ℹ️",
+        titleKey: "root.bo.howItWorks.title",
+        descKey: "root.bo.howItWorks.desc",
+        onClick: async () => {
+          showHowItWorksModal();
+        }
+      },      
       {
         icon: "🎯",
         titleKey: "root.bo.startCampaign.title",

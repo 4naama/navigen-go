@@ -3722,6 +3722,156 @@ export function showRequestListingModal() {
   showModal(id);
 }
 
+export function showHowItWorksModal() {
+  const id = 'bo-howitworks-modal';
+  document.getElementById(id)?.remove();
+  createHowItWorksModal();
+  showModal(id);
+}
+
+function createHowItWorksModal() {
+  const id = 'bo-howitworks-modal';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${t('bo.howItWorks.title') || 'How it works'}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  // Cue card (final v1.3, inline, scannable)
+  inner.innerHTML = `
+    <div style="font-size:14px; line-height:1.35;">
+      <div style="font-weight:700; margin-bottom:6px;">🎯 NaviGen — How it works</div>
+      <div style="opacity:.8; margin-bottom:14px;">Pin. Plan. Go.</div>
+
+      <div style="font-weight:700; margin-top:10px;">💶 Run a campaign · from €50</div>
+      <div style="margin-top:6px;">
+        <div>• 🎁 <b>Active promotion</b> — your offer is actively distributed across NaviGen</div>
+        <div>• 📈 <b>Analytics</b> — see how people interact with your business across discovery and engagement</div>
+        <div>• 🔴 <b>Operational control</b> — your business is the active operator for this location during the campaign</div>
+      </div>
+
+      <div style="font-weight:700; margin-top:14px;">💸 How spending works</div>
+      <div style="margin-top:6px;">
+        <div>• Your campaign budget is <b>fully committed</b> to the campaign period</div>
+        <div>• During the campaign, your budget is only used when NaviGen brings you real customer activity (such as visits or purchases), with a small per-redeem fee applied</div>
+        <div>• There are <b>no rolling balances</b>, cash-outs, or follow-up charges</div>
+      </div>
+
+      <div style="font-weight:700; margin-top:14px;">🎯 Campaign and ownership</div>
+      <div style="margin-top:6px;">
+        <div>• 🎁 <b>Campaign</b> — promotion and analytics for <b>30 days</b></div>
+        <div>• 🔴 <b>Ownership (control)</b> — exclusive operation for a <b>limited time</b> (may extend beyond the campaign)</div>
+        <div style="margin-top:6px; opacity:.9;">A campaign starts both. Both end automatically.</div>
+      </div>
+
+      <div style="font-weight:700; margin-top:14px;">🔵 After your campaign ends</div>
+      <div style="margin-top:6px;">
+        <div>• Your location remains visible for a <b>60-day courtesy period</b></div>
+        <div>• Promotion pauses and analytics access stops</div>
+      </div>
+
+      <div style="font-weight:700; margin-top:14px;">🔑 Restore access (free)</div>
+      <div style="margin-top:6px;">
+        <div>Restore owner access on this device using your Stripe receipt (pi_…) or owner link.</div>
+        <div style="opacity:.9;">Restore does not start a campaign and does not extend ownership.</div>
+      </div>
+
+      <div style="font-weight:700; margin-top:14px;">❌ What NaviGen does not sell</div>
+      <div style="margin-top:6px;">
+        <div>• Permanent ownership</div>
+        <div>• Subscriptions or access fees</div>
+        <div>• Pay-to-exist listings</div>
+      </div>
+    </div>
+  `;
+
+  // Pricing & policies link card (Step 3 will expand this into a full page)
+  const pricingBtn = document.createElement('button');
+  pricingBtn.type = 'button';
+  pricingBtn.className = 'modal-menu-item';
+  pricingBtn.style.marginTop = '14px';
+  pricingBtn.innerHTML = `
+    <span class="icon-img">💳</span>
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${t('bo.pricing.title') || 'Pricing & policies'}</strong><br>
+      <small>${t('bo.pricing.desc') || 'Full details, timelines, and edge cases.'}</small>
+    </span>
+  `;
+  pricingBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    showPricingPoliciesModal();
+  });
+
+  inner.appendChild(pricingBtn);
+
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  setupTapOutClose(id);
+}
+
+export function showPricingPoliciesModal() {
+  const id = 'bo-pricing-modal';
+  document.getElementById(id)?.remove();
+  createPricingPoliciesModal();
+  showModal(id);
+}
+
+function createPricingPoliciesModal() {
+  const id = 'bo-pricing-modal';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${t('bo.pricing.title') || 'Pricing & policies'}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+  inner.innerHTML = `
+    <p style="opacity:.85; margin:0;">
+      ${t('bo.pricing.stub') || 'Coming next: the full Pricing & policies page (timelines, ownership rules, courtesy, restore, and examples).'}
+    </p>
+  `;
+
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  setupTapOutClose(id);
+}
+
 // Campaign selection: resolve active campaignKey via /api/status (KV-authoritative).
 // Reason: Owner Settings needs a deterministic campaignKey without reading /data/campaigns.json.
 export async function resolveCampaignKeyForLocation(locationID) {
