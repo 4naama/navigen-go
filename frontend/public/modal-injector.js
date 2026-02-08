@@ -2574,29 +2574,28 @@ export function createSelectLocationModal() {
     // Insert the search row into the sticky top bar so it never scrolls with the list
     const closeInBar = topBar.querySelector('.modal-close');
     if (closeInBar) topBar.insertBefore(searchRow, closeInBar);
-    else topBar.appendChild(searchRow);
-    // ➕ My business isn’t listed (belongs with the search controls, not the results list)
-    const notListedBtn = document.createElement('button');
-    notListedBtn.type = 'button';
-    notListedBtn.className = 'modal-menu-item syb-notlisted';
-    notListedBtn.innerHTML = `
-      <span class="icon-img">➕</span>
-      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-        <strong>${t('root.bo.notListed.title') || 'My business isn’t listed'}</strong><br>
-        <small>${t('root.bo.notListed.desc') || 'Request a listing — we’ll add it.'}</small>
-      </span>
-    `;
-    notListedBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      hideModal(id);
-      showRequestListingModal();
-    });
-
-    // Place under the search row inside the sticky header area
-    topBar.appendChild(notListedBtn);
-    
+    else topBar.appendChild(searchRow);    
   }
 
+  // ➕ My business isn’t listed (below search row, above results list)
+  const notListedBtn = document.createElement('button');
+  notListedBtn.type = 'button';
+  notListedBtn.className = 'modal-menu-item syb-notlisted';
+  notListedBtn.innerHTML = `
+    <span class="icon-img">➕</span>
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${t('root.bo.notListed.title') || 'My business isn’t listed'}</strong><br>
+      <small>${t('root.bo.notListed.desc') || 'Request a listing — we’ll add it.'}</small>
+    </span>
+  `;
+  notListedBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    hideModal(id);
+    showRequestListingModal();
+  });
+
+  // IMPORTANT: this must be in the body (inner), not the sticky header (topBar)
+  inner.appendChild(notListedBtn);
 
   const list = document.createElement('div');
   list.className = 'modal-menu-list';
