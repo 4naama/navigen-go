@@ -2581,26 +2581,6 @@ export function createSelectLocationModal() {
   list.className = 'modal-menu-list';
   inner.appendChild(list);
 
-  // ➕ My business isn’t listed (inline CTA under search)
-  const notListedBtn = document.createElement('button');
-  notListedBtn.type = 'button';
-  notListedBtn.className = 'modal-menu-item';
-  notListedBtn.innerHTML = `
-    <span class="icon-img">➕</span>
-    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${t('root.bo.notListed.title') || 'My business isn’t listed'}</strong><br>
-      <small>${t('root.bo.notListed.desc') || 'Request a listing — we’ll add it.'}</small>
-    </span>
-  `;
-  notListedBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    hideModal(id);
-    showRequestListingModal();
-  });
-
-  // Place it at the very top of the SYB list (under the search bar)
-  list.appendChild(notListedBtn);
-
   // SYB: add a sticky bottom cover band (same concept as My Stuff footer)
   // Keep it non-interactive so it never blocks taps/scroll.
   if (!modal.querySelector('.modal-footer')) {
@@ -2722,6 +2702,24 @@ export async function showSelectLocationModal() {
   const render = (q) => {
     const toks = tokensOf(q);
     list.innerHTML = '';
+
+    // ➕ My business isn’t listed (always visible under the search bar)
+    const notListedBtn = document.createElement('button');
+    notListedBtn.type = 'button';
+    notListedBtn.className = 'modal-menu-item';
+    notListedBtn.innerHTML = `
+      <span class="icon-img">➕</span>
+      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+        <strong>${t('root.bo.notListed.title') || 'My business isn’t listed'}</strong><br>
+        <small>${t('root.bo.notListed.desc') || 'Request a listing — we’ll add it.'}</small>
+      </span>
+    `;
+    notListedBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      hideModal(id);
+      showRequestListingModal();
+    });
+    list.appendChild(notListedBtn);
 
     const filtered = uniqItems
       .filter((x) => (toks.length ? toks.every((tok) => x.hay.includes(tok)) : true))
