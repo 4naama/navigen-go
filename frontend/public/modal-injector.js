@@ -3752,49 +3752,62 @@ function createHowItWorksModal() {
   const inner = document.createElement('div');
   inner.className = 'modal-body-inner';
 
-  // Cue card (final v1.3, inline, scannable)
+  // Cue card (collapsible sections; styling handled by CSS you already added)
   inner.innerHTML = `
-    <div style="font-size:14px; line-height:1.35;">
+    <div class="howitworks">
 
-      <div style="font-weight:700; margin-top:10px;">💶 Run a campaign · from €50</div>
-      <div style="margin-top:6px;">
-        <div>🎁 <b>Active promotion</b> — your offer is actively distributed across NaviGen</div>
-        <div>📈 <b>Analytics</b> — see how people interact with your business across discovery and engagement</div>
-        <div>🔴 <b>Operational control</b> — your business is the active operator for this location during the campaign</div>
-      </div>
+      <details class="howitworks-sec" open>
+        <summary class="howitworks-sum">💶 Run a campaign · from €50</summary>
+        <div class="howitworks-body">
+          <div>🎁 <b>Active promotion</b> — your offer is actively distributed across NaviGen</div>
+          <div>📈 <b>Analytics</b> — see how people interact with your business across discovery and engagement</div>
+          <div>🔴 <b>Operational control</b> — your business is the active operator for this location during the campaign</div>
+        </div>
+      </details>
 
-      <div style="font-weight:700; margin-top:14px;">💸 How spending works</div>
-      <div style="margin-top:6px;">
-        <div>• Your campaign budget is <b>fully committed</b> to the campaign period</div>
-        <div>• During the campaign, your budget is only used when NaviGen brings you real customer activity (such as visits or purchases), with a small per-redeem fee applied</div>
-        <div>• There are <b>no rolling balances</b>, cash-outs, or follow-up charges</div>
-      </div>
+      <details class="howitworks-sec">
+        <summary class="howitworks-sum">💸 How spending works</summary>
+        <div class="howitworks-body">
+          <div>• Your campaign budget is <b>fully committed</b> to the campaign period</div>
+          <div>• During the campaign, your budget is only used when NaviGen brings you real customer activity (such as visits or purchases), with a small per-redeem fee applied</div>
+          <div>• There are <b>no rolling balances</b>, cash-outs, or follow-up charges</div>
+        </div>
+      </details>
 
-      <div style="font-weight:700; margin-top:14px;">🎯 Campaign and ownership</div>
-      <div style="margin-top:6px;">
-        <div>🎁 <b>Campaign</b> — promotion and analytics for <b>30 days</b></div>
-        <div>🔴 <b>Ownership (control)</b> — exclusive operation for a <b>limited time</b> (may extend beyond the campaign)</div>
-        <div style="margin-top:6px; opacity:.9;">A campaign starts both. Both end automatically.</div>
-      </div>
+      <details class="howitworks-sec">
+        <summary class="howitworks-sum">🎯 Campaign and ownership</summary>
+        <div class="howitworks-body">
+          <div>🎁 <b>Campaign</b> — promotion and analytics for <b>30 days</b></div>
+          <div>🔴 <b>Ownership (control)</b> — exclusive operation for a <b>limited time</b> (may extend beyond the campaign)</div>
+          <div class="howitworks-note">A campaign starts both. Both end automatically.</div>
+        </div>
+      </details>
 
-      <div style="font-weight:700; margin-top:14px;">🔵 After your campaign ends</div>
-      <div style="margin-top:6px;">
-        <div>• Your location remains visible for a <b>60-day courtesy period</b></div>
-        <div>• Promotion pauses and analytics access stops</div>
-      </div>
+      <details class="howitworks-sec">
+        <summary class="howitworks-sum">🔵 After your campaign ends</summary>
+        <div class="howitworks-body">
+          <div>• Your location remains visible for a <b>60-day courtesy period</b></div>
+          <div>• Promotion pauses and analytics access stops</div>
+        </div>
+      </details>
 
-      <div style="font-weight:700; margin-top:14px;">🔑 Restore access (free)</div>
-      <div style="margin-top:6px;">
-        <div>Restore owner access on this device using your Stripe receipt (pi_…) or owner link.</div>
-        <div style="opacity:.9;">Restore does not start a campaign and does not extend ownership.</div>
-      </div>
+      <details class="howitworks-sec">
+        <summary class="howitworks-sum">🔑 Restore access (free)</summary>
+        <div class="howitworks-body">
+          <div>Restore owner access on this device using your Stripe receipt (pi_…) or owner link.</div>
+          <div class="howitworks-note">Restore does not start a campaign and does not extend ownership.</div>
+        </div>
+      </details>
 
-      <div style="font-weight:700; margin-top:14px;">❌ What NaviGen does not sell</div>
-      <div style="margin-top:6px;">
-        <div>• Permanent ownership</div>
-        <div>• Subscriptions or access fees</div>
-        <div>• Pay-to-exist listings</div>
-      </div>
+      <details class="howitworks-sec">
+        <summary class="howitworks-sum">❌ What NaviGen does not sell</summary>
+        <div class="howitworks-body">
+          <div>• Permanent ownership</div>
+          <div>• Subscriptions or access fees</div>
+          <div>• Pay-to-exist listings</div>
+        </div>
+      </details>
+
     </div>
   `;
 
