@@ -3180,6 +3180,21 @@ select.input{
   outline-offset:2px;
 }
 
+/* How it works – card-style dropdowns */
+.howitworks-card{
+  align-items: center;
+}
+
+.howitworks-card .chevron{
+  margin-left: auto;
+  font-size: 18px;
+  opacity: .6;
+}
+
+details[open] > summary .chevron{
+  transform: rotate(90deg);
+}
+
 /* ==========================================================================
    Select Location — hard lock to My Stuff menu geometry
    Reason: avoid cascade conflicts between dual modal systems in this file.
