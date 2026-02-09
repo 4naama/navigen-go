@@ -3223,6 +3223,20 @@ select.input{
   opacity: .85;
 }
 
+/* How it works: sub-text lives inside body; add breathing room */
+.howitworks-sub{
+  opacity: .85;
+  margin-bottom: 12px;   /* 1 empty line after sub-text */
+}
+
+/* Space between each content line inside the opened body */
+.howitworks-body > div{
+  margin-top: 10px;      /* 1 empty line between lines */
+}
+.howitworks-body > div:first-child{
+  margin-top: 0;
+}
+
 /* ==========================================================================
    Select Location — hard lock to My Stuff menu geometry
    Reason: avoid cascade conflicts between dual modal systems in this file.

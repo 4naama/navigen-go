@@ -3752,20 +3752,18 @@ function createHowItWorksModal() {
   const inner = document.createElement('div');
   inner.className = 'modal-body-inner';
 
-  // Cue card — collapsible card-style sections (chevron right)
+  // Cue card — collapsible card-style sections (accordion)
   inner.innerHTML = `
     <div class="howitworks">
 
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">💶</span>
-          <span class="label">
-            <strong>Run a campaign · from €50</strong><br>
-            <small>Promotion, analytics, and operational control.</small>
-          </span>
+          <span class="label"><strong>Run a campaign · from €50</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
+          <div class="howitworks-sub">Promotion, analytics, and operational control.</div>
           <div>🎁 <b>Active promotion</b> — your offer is actively distributed across NaviGen</div>
           <div>📈 <b>Analytics</b> — see how people interact with your business across discovery and engagement</div>
           <div>🔴 <b>Operational control</b> — your business is the active operator for this location during the campaign</div>
@@ -3775,13 +3773,11 @@ function createHowItWorksModal() {
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">💸</span>
-          <span class="label">
-            <strong>How spending works</strong><br>
-            <small>When budget is used and when it isn’t.</small>
-          </span>
+          <span class="label"><strong>How spending works</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
+          <div class="howitworks-sub">When budget is used and when it isn’t.</div>
           <div>• Your campaign budget is <b>fully committed</b> to the campaign period</div>
           <div>• Budget is only used when NaviGen brings real customer activity</div>
           <div>• No rolling balances, cash-outs, or follow-up charges</div>
@@ -3791,13 +3787,11 @@ function createHowItWorksModal() {
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">🎯</span>
-          <span class="label">
-            <strong>Campaign and ownership</strong><br>
-            <small>How promotion and control relate.</small>
-          </span>
+          <span class="label"><strong>Campaign and ownership</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
+          <div class="howitworks-sub">How promotion and control relate.</div>
           <div>🎁 <b>Campaign</b> — promotion and analytics for <b>30 days</b></div>
           <div>🔴 <b>Ownership</b> — exclusive operation for a limited time</div>
           <div class="howitworks-note">A campaign starts both. Both end automatically.</div>
@@ -3807,13 +3801,11 @@ function createHowItWorksModal() {
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">🔵</span>
-          <span class="label">
-            <strong>After your campaign ends</strong><br>
-            <small>What remains visible and for how long.</small>
-          </span>
+          <span class="label"><strong>After your campaign ends</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
+          <div class="howitworks-sub">What remains visible and for how long.</div>
           <div>• Your location stays visible for a <b>60-day courtesy period</b></div>
           <div>• Promotion pauses and analytics access stops</div>
         </div>
@@ -3822,13 +3814,11 @@ function createHowItWorksModal() {
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">🔑</span>
-          <span class="label">
-            <strong>Restore access (free)</strong><br>
-            <small>Get back on a new device.</small>
-          </span>
+          <span class="label"><strong>Restore access (free)</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
+          <div class="howitworks-sub">Get back on a new device.</div>
           <div>Restore owner access using your Stripe receipt (pi_…) or owner link.</div>
           <div class="howitworks-note">Restore does not start a campaign or extend ownership.</div>
         </div>
@@ -3837,13 +3827,11 @@ function createHowItWorksModal() {
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">❌</span>
-          <span class="label">
-            <strong>What NaviGen does not sell</strong><br>
-            <small>No hidden products or lock-ins.</small>
-          </span>
+          <span class="label"><strong>What NaviGen does not sell</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
+          <div class="howitworks-sub">No hidden products or lock-ins.</div>
           <div>• Permanent ownership</div>
           <div>• Subscriptions or access fees</div>
           <div>• Pay-to-exist listings</div>
@@ -3875,6 +3863,18 @@ function createHowItWorksModal() {
   body.appendChild(inner);
   card.appendChild(top);
   card.appendChild(body);
+  
+  // Accordion behavior: keep only one section open at a time
+  const secs = inner.querySelectorAll('details.howitworks-sec');
+  secs.forEach((d) => {
+    d.addEventListener('toggle', () => {
+      if (!d.open) return;
+      secs.forEach((other) => {
+        if (other !== d) other.open = false;
+      });
+    });
+  });
+
   wrap.appendChild(card);
   document.body.appendChild(wrap);
 
