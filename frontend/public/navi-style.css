@@ -1274,6 +1274,30 @@ body.large-text {
   white-space:nowrap;
 }
 
+/* Mobile-safe modal sizing: avoid bottom gesture/nav bar overlap */
+:root{
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+/* Modal content should never exceed the visible viewport */
+.modal .modal-content{
+  max-height: calc(100dvh - 24px); /* dvh tracks real visible height on mobile */
+}
+
+/* The scroll container must respect the safe-area at the bottom */
+.modal .modal-body{
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding-bottom: calc(12px + var(--safe-b));
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure footer (when present) never sits under the gesture bar */
+.modal .modal-footer{
+  padding-bottom: calc(12px + var(--safe-b));
+}
+
 /* ──────────────── Modal Footer Layout ──────────────── */
 /* Shared footer layout for modals: My Stuff, Share, Alert, Confirm, Resolved, etc. */
 .modal-footer {
