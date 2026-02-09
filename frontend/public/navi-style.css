@@ -1298,6 +1298,10 @@ body.large-text {
   padding-bottom: calc(12px + var(--safe-b));
 }
 
+.modal-footer.cta-compact{
+  bottom: var(--safe-b);
+}
+
 /* ──────────────── Modal Footer Layout ──────────────── */
 /* Shared footer layout for modals: My Stuff, Share, Alert, Confirm, Resolved, etc. */
 .modal-footer {
