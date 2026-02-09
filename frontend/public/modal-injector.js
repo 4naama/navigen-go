@@ -3752,89 +3752,89 @@ function createHowItWorksModal() {
   const inner = document.createElement('div');
   inner.className = 'modal-body-inner';
 
-  // Cue card — collapsible card-style sections (accordion)
+  // Cue card — collapsible card-style sections (accordion) — fully translatable
   inner.innerHTML = `
     <div class="howitworks">
 
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">💶</span>
-          <span class="label"><strong>Run a campaign · from €50</strong></span>
+          <span class="label"><strong>${t('bo.hiw.run.title') || 'Run a campaign · from €50'}</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
-          <div class="howitworks-sub">Promotion, analytics, and operational control.</div>
-          <div>🎁 <b>Active promotion</b> — your offer is actively distributed across NaviGen</div>
-          <div>📈 <b>Analytics</b> — see how people interact with your business across discovery and engagement</div>
-          <div>🔴 <b>Operational control</b> — your business is the active operator for this location during the campaign</div>
+          <div class="howitworks-sub">${t('bo.hiw.run.sub') || 'Promotion, analytics, and operational control.'}</div>
+          <div>${t('bo.hiw.run.b1') || '🎁 Active promotion — your offer is actively distributed across NaviGen'}</div>
+          <div>${t('bo.hiw.run.b2') || '📈 Analytics — see how people interact with your business across discovery and engagement'}</div>
+          <div>${t('bo.hiw.run.b3') || '🔴 Operational control — your business is the active operator for this location during the campaign'}</div>
         </div>
       </details>
 
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">💸</span>
-          <span class="label"><strong>How spending works</strong></span>
+          <span class="label"><strong>${t('bo.hiw.spend.title') || 'How spending works'}</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
-          <div class="howitworks-sub">When budget is used and when it isn’t.</div>
-          <div>• Your campaign budget is <b>fully committed</b> to the campaign period</div>
-          <div>• Budget is only used when NaviGen brings real customer activity</div>
-          <div>• No rolling balances, cash-outs, or follow-up charges</div>
+          <div class="howitworks-sub">${t('bo.hiw.spend.sub') || 'When budget is used and when it isn’t.'}</div>
+          <div>${t('bo.hiw.spend.b1') || '• Your campaign budget is fully committed to the campaign period'}</div>
+          <div>${t('bo.hiw.spend.b2') || '• During the campaign, your budget is only used when NaviGen brings real customer activity (such as visits or purchases), with a small per-redeem fee applied'}</div>
+          <div>${t('bo.hiw.spend.b3') || '• There are no rolling balances, cash-outs, or follow-up charges'}</div>
         </div>
       </details>
 
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">🎯</span>
-          <span class="label"><strong>Campaign and ownership</strong></span>
+          <span class="label"><strong>${t('bo.hiw.own.title') || 'Campaign and ownership'}</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
-          <div class="howitworks-sub">How promotion and control relate.</div>
-          <div>🎁 <b>Campaign</b> — promotion and analytics for <b>30 days</b></div>
-          <div>🔴 <b>Ownership</b> — exclusive operation for a limited time</div>
-          <div class="howitworks-note">A campaign starts both. Both end automatically.</div>
+          <div class="howitworks-sub">${t('bo.hiw.own.sub') || 'How promotion and control relate.'}</div>
+          <div>${t('bo.hiw.own.b1') || '🎁 Campaign — promotion and analytics for 30 days'}</div>
+          <div>${t('bo.hiw.own.b2') || '🔴 Ownership — exclusive operation for a limited time'}</div>
+          <div class="howitworks-note">${t('bo.hiw.own.note') || 'A campaign starts both. Both end automatically.'}</div>
         </div>
       </details>
 
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">🔵</span>
-          <span class="label"><strong>After your campaign ends</strong></span>
+          <span class="label"><strong>${t('bo.hiw.after.title') || 'After your campaign ends'}</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
-          <div class="howitworks-sub">What remains visible and for how long.</div>
-          <div>• Your location stays visible for a <b>60-day courtesy period</b></div>
-          <div>• Promotion pauses and analytics access stops</div>
+          <div class="howitworks-sub">${t('bo.hiw.after.sub') || 'What remains visible and for how long.'}</div>
+          <div>${t('bo.hiw.after.b1') || '• Your location stays visible for a 60-day courtesy period'}</div>
+          <div>${t('bo.hiw.after.b2') || '• Promotion pauses and analytics access stops'}</div>
         </div>
       </details>
 
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">🔑</span>
-          <span class="label"><strong>Restore access (free)</strong></span>
+          <span class="label"><strong>${t('bo.hiw.restore.title') || 'Restore access (free)'}</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
-          <div class="howitworks-sub">Get back on a new device.</div>
-          <div>Restore owner access using your Stripe receipt (pi_…) or owner link.</div>
-          <div class="howitworks-note">Restore does not start a campaign or extend ownership.</div>
+          <div class="howitworks-sub">${t('bo.hiw.restore.sub') || 'Get back on a new device.'}</div>
+          <div>${t('bo.hiw.restore.b1') || 'Restore owner access using your Stripe receipt (pi_…) or owner link.'}</div>
+          <div class="howitworks-note">${t('bo.hiw.restore.note') || 'Restore does not start a campaign or extend ownership.'}</div>
         </div>
       </details>
 
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">❌</span>
-          <span class="label"><strong>What NaviGen does not sell</strong></span>
+          <span class="label"><strong>${t('bo.hiw.notsell.title') || 'What NaviGen does not sell'}</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
-          <div class="howitworks-sub">No hidden products or lock-ins.</div>
-          <div>• Permanent ownership</div>
-          <div>• Subscriptions or access fees</div>
-          <div>• Pay-to-exist listings</div>
+          <div class="howitworks-sub">${t('bo.hiw.notsell.sub') || 'No hidden products or lock-ins.'}</div>
+          <div>${t('bo.hiw.notsell.b1') || '• Permanent ownership'}</div>
+          <div>${t('bo.hiw.notsell.b2') || '• Subscriptions or access fees'}</div>
+          <div>${t('bo.hiw.notsell.b3') || '• Pay-to-exist listings'}</div>
         </div>
       </details>
 
