@@ -4106,6 +4106,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       <small>—</small>
     </span>
   `;
+  inner.appendChild(activeCard);
 
   // Resolve current device session (if any) and fill Active card
   (async () => {
