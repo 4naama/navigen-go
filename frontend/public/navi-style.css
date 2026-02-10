@@ -2623,6 +2623,7 @@ button:hover {
 /* Owner Settings: Selected/Active context cards (informational, not clickable) */
 .modal-menu-item.os-context-card{
   cursor: default;
+  margin-bottom: 12px; /* space between Selected and Active */
 }
 .modal-menu-item.os-context-card:hover{
   background:#f8f8f8; /* disable hover lift feeling */
@@ -2633,8 +2634,17 @@ button:hover {
   background:#eef6ff;
   border-color:#93c5fd;
 }
+
+/* Active card should match Selected card tint */
 .modal-menu-item.os-context-card.os-active{
-  background:#f8f8f8;
+  background:#eef6ff;
+  border-color:#93c5fd;
+}
+
+/* Owner Settings: mismatch state (Selected ≠ Active) */
+.modal-menu-item.os-context-card.os-mismatch{
+  border-color:#ef4444;       /* red-500 */
+  background:#fff5f5;         /* subtle red tint */
 }
 
 /* Campaign Management form controls */

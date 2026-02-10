@@ -4132,8 +4132,21 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
           ? String(ln.en || Object.values(ln)[0] || '').trim()
           : String(ln || '').trim();
 
-      if (aNameBox && nm)   aNameBox.textContent = nm;
-      if (aIdBox && slug)   aIdBox.textContent   = slug;
+      if (aNameBox && nm) aNameBox.textContent = nm;
+      if (aIdBox && slug) aIdBox.textContent = slug;
+
+      // Mismatch detection: Selected ≠ Active
+      try {
+        const sel = String(selectedId || '').trim();
+        const act = String(slug || activeUlid || '').trim();
+        if (sel && act && sel !== act) {
+          selectedCard.classList.add('os-mismatch');
+          activeCard.classList.add('os-mismatch');
+        } else {
+          selectedCard.classList.remove('os-mismatch');
+          activeCard.classList.remove('os-mismatch');
+        }
+      } catch {}
     } catch {}
   })();
 
