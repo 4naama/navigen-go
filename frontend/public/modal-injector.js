@@ -4139,13 +4139,22 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       try {
         const sel = String(selectedId || '').trim();
         const act = String(slug || activeUlid || '').trim();
-        if (sel && act && sel !== act) {
+        const isMismatch = !!(sel && act && sel !== act);
+
+        if (isMismatch) {
           selectedCard.classList.add('os-mismatch');
           activeCard.classList.add('os-mismatch');
         } else {
           selectedCard.classList.remove('os-mismatch');
           activeCard.classList.remove('os-mismatch');
         }
+
+        // If the modal was opened as "mismatch" but Selected == Active, suppress the mismatch explanation
+        const mismatchExpl = wrap.querySelector('[data-mismatch-expl="1"]');
+        if (mismatchExpl) {
+          mismatchExpl.style.display = isMismatch ? '' : 'none';
+        }
+
       } catch {}
     } catch {}
   })();
@@ -4221,7 +4230,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   } else if (variant === 'mismatch') {
     rawExpl = _ownerText(
       'owner.settings.mismatch.explain',
-      'You’re currently signed in for a different business on this device.\n\nTo manage analytics or campaigns for this location, switch businesses or sign out below.'
+      'You’re currently signed in for a different business on this device.\n\nTo manage analytics 📈 or campaigns 🎯 for the selected location, switch businesses 🧩 or sign out 🧹 below.'
     );
   } else if (variant === 'claim') {
     rawExpl = _ownerText(
@@ -4240,6 +4249,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
   expl.style.textAlign = 'left';
   expl.style.whiteSpace = 'pre-line';
+  if (variant === 'mismatch') expl.setAttribute('data-mismatch-expl', '1');
   inner.appendChild(expl);
 
   const menu = document.createElement('div');
