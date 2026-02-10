@@ -746,5 +746,7 @@
   "bo.hiw.notsell.sub": "אין מוצרים נסתרים או נעילות.",
   "bo.hiw.notsell.b1": "• בעלות קבועה",
   "bo.hiw.notsell.b2": "• מנויים או דמי גישה",
-  "bo.hiw.notsell.b3": "• רישומים בתשלום כדי להתקיים"
+  "bo.hiw.notsell.b3": "• רישומים בתשלום כדי להתקיים",
+  "owner.settings.header.selected": "📍 עסק נבחר",
+  "owner.settings.header.active": "✅ פעיל במכשיר זה"
 }

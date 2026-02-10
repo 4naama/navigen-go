@@ -746,5 +746,7 @@
   "bo.hiw.notsell.sub": "No hidden products or lock-ins.",
   "bo.hiw.notsell.b1": "• Permanent ownership",
   "bo.hiw.notsell.b2": "• Subscriptions or access fees",
-  "bo.hiw.notsell.b3": "• Pay-to-exist listings"
+  "bo.hiw.notsell.b3": "• Pay-to-exist listings",
+  "owner.settings.header.selected": "📍 Selected business",
+  "owner.settings.header.active": "✅ Active on this device"
 }

@@ -4080,67 +4080,62 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   // Use a mutable location id so ULID → slug resolution can update downstream actions safely.
   let locId = String(locationIdOrSlug || '').trim();
 
-  // Location header rows (reuse CM box styles for consistent UX)
-  const locRows = document.createElement('div');
+  // Selected + Active context cards (informational, non-clickable)
+  const selectedName = String(locationName || '').trim() || '—';
+  const selectedId = String(locId || '').trim() || '—';
 
-  const nameRow = document.createElement('div');
-  nameRow.className = 'cm-location-row';
-  const nameLabel = document.createElement('span');
-  nameLabel.className = 'cm-location-label';
-nameLabel.textContent = 'Selected business';
-  const nameBox = document.createElement('span');
-  nameBox.className = 'cm-location-box';
-  nameBox.textContent = String(locationName || '').trim() || '—';
-  nameBox.title = String(locationName || '').trim();
-  nameRow.appendChild(nameLabel);
-  nameRow.appendChild(nameBox);
+  const selectedCard = document.createElement('div');
+  selectedCard.className = 'modal-menu-item os-context-card os-selected';
+  selectedCard.innerHTML = `
+    <span class="icon-img">📍</span>
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${t('owner.settings.header.selected') || 'Selected business'}</strong><br>
+      <small>${selectedName}</small><br>
+      <small>${selectedId}</small>
+    </span>
+  `;
+  inner.appendChild(selectedCard);
 
-  const idRow = document.createElement('div');
-  idRow.className = 'cm-location-row';
-  const idLabel = document.createElement('span');
-  idLabel.className = 'cm-location-label';
-  idLabel.textContent = 'Selected ID';
-  const idBox = document.createElement('span');
-  idBox.className = 'cm-location-box';
-  idBox.textContent = locId || '—';
-  idBox.title = locId;
-  idRow.appendChild(idLabel);
-  idRow.appendChild(idBox);
+  const activeCard = document.createElement('div');
+  activeCard.className = 'modal-menu-item os-context-card os-active';
+  activeCard.innerHTML = `
+    <span class="icon-img">✅</span>
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${t('owner.settings.header.active') || 'Active on this device'}</strong><br>
+      <small>—</small><br>
+      <small>—</small>
+    </span>
+  `;
+  inner.appendChild(activeCard);
 
-  locRows.appendChild(nameRow);
-  locRows.appendChild(idRow);
-  inner.appendChild(locRows);
+  // Resolve current device session (if any) and fill Active card
+  (async () => {
+    try {
+      const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
+      const jj = rr.ok ? await rr.json().catch(() => null) : null;
+      const activeUlid = String(jj?.ulid || '').trim();
+      if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(activeUlid)) return;
 
-  // Active-on-device header (session-bound)
-  const activeRows = document.createElement('div');
+      // Default to ULID until we resolve slug/name
+      const aNameBox = activeCard.querySelectorAll('small')[0];
+      const aIdBox   = activeCard.querySelectorAll('small')[1];
+      if (aNameBox) aNameBox.textContent = activeUlid;
+      if (aIdBox)   aIdBox.textContent   = activeUlid;
 
-  const aNameRow = document.createElement('div');
-  aNameRow.className = 'cm-location-row';
-  const aNameLabel = document.createElement('span');
-  aNameLabel.className = 'cm-location-label';
-  aNameLabel.textContent = 'Active on this device';
-  const aNameBox = document.createElement('span');
-  aNameBox.className = 'cm-location-box';
-  aNameBox.textContent = '—';
-  aNameBox.title = '';
-  aNameRow.appendChild(aNameLabel);
-  aNameRow.appendChild(aNameBox);
+      const ir = await fetch(`https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(activeUlid)}`, { cache: 'no-store' });
+      const ij = ir.ok ? await ir.json().catch(() => null) : null;
 
-  const aIdRow = document.createElement('div');
-  aIdRow.className = 'cm-location-row';
-  const aIdLabel = document.createElement('span');
-  aIdLabel.className = 'cm-location-label';
-  aIdLabel.textContent = 'Active ID';
-  const aIdBox = document.createElement('span');
-  aIdBox.className = 'cm-location-box';
-  aIdBox.textContent = '—';
-  aIdBox.title = '';
-  aIdRow.appendChild(aIdLabel);
-  aIdRow.appendChild(aIdBox);
+      const slug = String(ij?.locationID || '').trim();
+      const ln = ij?.locationName;
+      const nm =
+        (ln && typeof ln === 'object')
+          ? String(ln.en || Object.values(ln)[0] || '').trim()
+          : String(ln || '').trim();
 
-  activeRows.appendChild(aNameRow);
-  activeRows.appendChild(aIdRow);
-  inner.appendChild(activeRows);
+      if (aNameBox && nm)   aNameBox.textContent = nm;
+      if (aIdBox && slug)   aIdBox.textContent   = slug;
+    } catch {}
+  })();
 
   // Resolve current device session (if any) and fill Active rows.
   (async () => {

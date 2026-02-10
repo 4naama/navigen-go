@@ -2620,6 +2620,23 @@ button:hover {
   box-sizing:border-box;      /* include padding in width */
 }
 
+/* Owner Settings: Selected/Active context cards (informational, not clickable) */
+.modal-menu-item.os-context-card{
+  cursor: default;
+}
+.modal-menu-item.os-context-card:hover{
+  background:#f8f8f8; /* disable hover lift feeling */
+}
+
+/* Slight tint difference to separate Selected vs Active */
+.modal-menu-item.os-context-card.os-selected{
+  background:#eef6ff;
+  border-color:#93c5fd;
+}
+.modal-menu-item.os-context-card.os-active{
+  background:#f8f8f8;
+}
+
 /* Campaign Management form controls */
 .input{
   width: 100%;
