@@ -747,6 +747,6 @@
   "bo.hiw.notsell.b1": "• Dauerhaftes Eigentum",
   "bo.hiw.notsell.b2": "• Abonnements oder Zugangsgebühren",
   "bo.hiw.notsell.b3": "• Bezahlte Präsenz-Einträge",
-  "owner.settings.header.selected": "📍 Ausgewähltes Unternehmen",
-  "owner.settings.header.active": "✅ Aktiv auf diesem Gerät"
+  "owner.settings.header.selected": "Ausgewähltes Unternehmen",
+  "owner.settings.header.active": "Aktiv auf diesem Gerät"
 }

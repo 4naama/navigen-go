@@ -4087,7 +4087,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   const selectedCard = document.createElement('div');
   selectedCard.className = 'modal-menu-item os-context-card os-selected';
   selectedCard.innerHTML = `
-    <span class="icon-img">📍</span>
+    <span class="icon-img" aria-hidden="true">📍</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
       <strong>${t('owner.settings.header.selected') || 'Selected business'}</strong><br>
       <small>${selectedName}</small><br>
@@ -4099,14 +4099,13 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   const activeCard = document.createElement('div');
   activeCard.className = 'modal-menu-item os-context-card os-active';
   activeCard.innerHTML = `
-    <span class="icon-img">✅</span>
+    <span class="icon-img" aria-hidden="true">✅</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
       <strong>${t('owner.settings.header.active') || 'Active on this device'}</strong><br>
       <small>—</small><br>
       <small>—</small>
     </span>
   `;
-  inner.appendChild(activeCard);
 
   // Resolve current device session (if any) and fill Active card
   (async () => {

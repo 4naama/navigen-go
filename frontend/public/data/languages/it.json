@@ -747,6 +747,6 @@
   "bo.hiw.notsell.b1": "• Proprietà permanente",
   "bo.hiw.notsell.b2": "• Abbonamenti o costi di accesso",
   "bo.hiw.notsell.b3": "• Inserzioni a pagamento per esistere",
-  "owner.settings.header.selected": "📍 Attività selezionata",
-  "owner.settings.header.active": "✅ Attivo su questo dispositivo"
+  "owner.settings.header.selected": "Attività selezionata",
+  "owner.settings.header.active": "Attivo su questo dispositivo"
 }

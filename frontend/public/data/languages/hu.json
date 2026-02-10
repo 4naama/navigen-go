@@ -747,6 +747,6 @@
   "bo.hiw.notsell.b1": "• Állandó tulajdon",
   "bo.hiw.notsell.b2": "• Előfizetések vagy hozzáférési díjak",
   "bo.hiw.notsell.b3": "• Fizetős megjelenési listázások",
-  "owner.settings.header.selected": "📍 Kiválasztott vállalkozás",
-  "owner.settings.header.active": "✅ Ezen az eszközön aktív"
+  "owner.settings.header.selected": "Kiválasztott vállalkozás",
+  "owner.settings.header.active": "Ezen az eszközön aktív"
 }

@@ -747,6 +747,6 @@
   "bo.hiw.notsell.b1": "• Propriété permanente",
   "bo.hiw.notsell.b2": "• Abonnements ou frais d’accès",
   "bo.hiw.notsell.b3": "• Annonces payantes pour exister",
-  "owner.settings.header.selected": "📍 Entreprise sélectionnée",
-  "owner.settings.header.active": "✅ Actif sur cet appareil"
+  "owner.settings.header.selected": "Entreprise sélectionnée",
+  "owner.settings.header.active": "Actif sur cet appareil"
 }
