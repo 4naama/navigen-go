@@ -602,7 +602,7 @@
   "owner.restore.hint": "Tipp: keressen a postaládájában a „Stripe” vagy „NaviGen” kifejezésre.",
   "owner.restore.pi.label": "Illessze be a fizetési azonosítót (pi_...), hogy visszaállítsa a hozzáférést ezen az eszközön:",
   "owner.restore.pi.submit": "Hozzáférés visszaállítása",
-  "owner.settings.mismatch.explain": "A kampányok 🎯 kezeléséhez tulajdonosi hozzáférés 🔑 szükséges.\\nÁllítsa vissza a hozzáférést 🔑, vagy váltson vállalkozást 🧩 a folytatáshoz.",
+  "owner.settings.mismatch.explain": "Ezen az eszközön jelenleg egy másik vállalkozás számára van bejelentkezve.\\n\\nAz elemzések 📈 vagy kampányok 🎯 kezeléséhez a kiválasztott helyhez váltson vállalkozást 🧩, vagy jelentkezzen ki 🧹 alább.",
   "owner.settings.claim.runCampaign.title": "Kampány indítása",
   "owner.settings.claim.runCampaign.desc": "Elemzések aktiválása kampány indításával ehhez a helyszínhez.",
   "owner.settings.claim.protect.title": "Helyszín védelme",

@@ -602,7 +602,7 @@
   "owner.restore.hint": "Tip: search your inbox for “Stripe” or “NaviGen”.",
   "owner.restore.pi.label": "Paste your Payment ID (pi_...) to restore access on this device:",
   "owner.restore.pi.submit": "Restore",
-  "owner.settings.mismatch.explain": "You’re currently signed in for a different business on this device.\\n\\nTo manage analytics 📈 or campaigns 🎯 for this location, switch businesses 🧩 or sign out 🧹 below.",
+  "owner.settings.mismatch.explain": "You’re currently signed in for a different business on this device.\\n\\nTo manage analytics 📈 or campaigns 🎯 for the selected location, switch businesses 🧩 or sign out 🧹 below.",
   "owner.settings.claim.runCampaign.title": "Run a campaign",
   "owner.settings.claim.runCampaign.desc": "Activate analytics by running a campaign for this location.",
   "owner.settings.claim.protect.title": "Protect this location",

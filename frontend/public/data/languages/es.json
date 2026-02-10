@@ -602,7 +602,7 @@
   "owner.restore.hint": "Consejo: busca en tu bandeja de entrada “Stripe” o “NaviGen”.",
   "owner.restore.pi.label": "Pega tu ID de pago (pi_...) para restaurar el acceso en este dispositivo:",
   "owner.restore.pi.submit": "Restaurar acceso",
-  "owner.settings.mismatch.explain": "Se requiere acceso del propietario 🔑 para gestionar campañas 🎯.\\nRestaura el acceso 🔑 o cambia de negocio 🧩 para continuar.",
+  "owner.settings.mismatch.explain": "Actualmente has iniciado sesión en este dispositivo para otro negocio.\\n\\nPara gestionar análisis 📈 o campañas 🎯 para la ubicación seleccionada, cambia de negocio 🧩 o cierra sesión 🧹 a continuación.",
   "owner.settings.claim.runCampaign.title": "Ejecutar una campaña",
   "owner.settings.claim.runCampaign.desc": "Activa las analíticas ejecutando una campaña para esta ubicación.",
   "owner.settings.claim.protect.title": "Proteger esta ubicación",
