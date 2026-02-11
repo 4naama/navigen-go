@@ -4222,35 +4222,32 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     } catch {}
   })();
 
-  // If we were given a ULID, resolve to slug/name without waiting for refresh.
+  // If Selected is a ULID (Owner Center entry), resolve to slug/name and update the Selected card display.
   (async () => {
-    const u = String(locId || '').trim();
+    const u = String(selectedKey || '').trim();
     if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(u)) return;
 
     try {
-      const rr = await fetch(`https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(u)}`, { cache: 'no-store' });
+      const rr = await fetch(
+        `https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(u)}`,
+        { cache: 'no-store' }
+      );
       const jj = rr.ok ? await rr.json().catch(() => null) : null;
 
-      const resolvedSlug = String(jj?.locationID || jj?.id || '').trim();
-      const resolvedNameRaw = jj?.locationName;
+      const resolvedSlug = String(jj?.locationID || '').trim();
+      const ln = jj?.locationName;
+      const resolvedName =
+        (ln && typeof ln === 'object')
+          ? String(ln.en || Object.values(ln)[0] || '').trim()
+          : String(ln || '').trim();
 
-      const resolvedName = (resolvedNameRaw && typeof resolvedNameRaw === 'object')
-        ? String(resolvedNameRaw.en || Object.values(resolvedNameRaw)[0] || '').trim()
-        : String(resolvedNameRaw || '').trim();
+      const selSmalls = selectedCard.querySelectorAll('small');
+      const selNameBox = selSmalls[0] || null;
+      const selIdBox = selSmalls[1] || null;
 
-      if (resolvedSlug) {
-        locId = resolvedSlug;
-        idBox.textContent = resolvedSlug;
-        idBox.title = resolvedSlug;
-
-        // Keep the modal context in sync (used by follow-up actions).
-        wrap.setAttribute('data-locationid', resolvedSlug);
-      }
-
-      if (resolvedName && (nameBox.textContent === '—' || !String(locationName || '').trim())) {
-        nameBox.textContent = resolvedName;
-        nameBox.title = resolvedName;
-      }
+      // Display: name + slug (do not change selectedKey; it stays ULID for canonical comparisons)
+      if (selNameBox && resolvedName) selNameBox.textContent = resolvedName;
+      if (selIdBox && resolvedSlug) selIdBox.textContent = resolvedSlug;
     } catch {}
   })();
 
