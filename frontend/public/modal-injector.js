@@ -4151,10 +4151,20 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
       // Mismatch detection: Selected ≠ Active
       try {
-        const sel = String(selectedKey || '').trim();
-        const act = String(slug || activeUlid || '').trim();
-        const hasSelected = !!sel;
-        const hasActive = !!act;
+        const selRaw = String(selectedKey || '').trim();
+        const hasSelected = !!selRaw;
+
+        // Compare using ULID (canonical), not slug, to avoid false mismatch during slug/ULID resolution.
+        let selUlid = '';
+        if (selRaw && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(selRaw)) {
+          selUlid = selRaw;
+        } else if (selRaw) {
+          // Resolve slug → ULID (uses /api/status; already in this module)
+          selUlid = await resolveULIDFor(selRaw);
+        }
+
+        const actUlid = String(activeUlid || '').trim();
+        const hasActive = !!actUlid;
 
         let isMismatch = false;
         let isNeedsAccess = false;
@@ -4163,7 +4173,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
         if (hasSelected) {
           if (!hasActive) {
             isNeedsAccess = true;
-          } else if (sel !== act) {
+          } else if (selUlid && actUlid && selUlid !== actUlid) {
             isMismatch = true;
           }
         }
@@ -4181,7 +4191,6 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
         if (mismatchExpl) {
           mismatchExpl.style.display = isMismatch ? '' : 'none';
         }
-
       } catch {}
     } catch {}
   })();
