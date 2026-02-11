@@ -4139,9 +4139,11 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       try {
         const sel = String(selectedId || '').trim();
         const act = String(slug || activeUlid || '').trim();
+        const hasActive = !!act;
         const isMismatch = !!(sel && act && sel !== act);
+        const isProblem = !hasActive || isMismatch;
 
-        if (isMismatch) {
+        if (isProblem) {
           selectedCard.classList.add('os-mismatch');
           activeCard.classList.add('os-mismatch');
         } else {
