@@ -4234,7 +4234,9 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       );
       const jj = rr.ok ? await rr.json().catch(() => null) : null;
 
-      const resolvedSlug = String(jj?.locationID || '').trim();
+      const resolvedSlug = String(
+        jj?.locationID || jj?.locationSlug || jj?.slug || jj?.alias || ''
+      ).trim();
       const ln = jj?.locationName;
       const resolvedName =
         (ln && typeof ln === 'object')
