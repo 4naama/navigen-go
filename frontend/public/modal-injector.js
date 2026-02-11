@@ -4082,7 +4082,8 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
   // Selected + Active context cards (informational, non-clickable)
   const selectedName = String(locationName || '').trim() || '—';
-  const selectedId = (noSelection === true) ? '—' : (String(locId || '').trim() || '—');
+  const hasSelection = !!String(locationIdOrSlug || '').trim();
+  const selectedId = hasSelection ? String(locId || '').trim() : '—';
 
   const selectedCard = document.createElement('div');
   selectedCard.className = 'modal-menu-item os-context-card os-selected';
@@ -4145,13 +4146,13 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
         let isMismatch = false;
         let isNeedsAccess = false;
 
-        if (hasSelected && !hasActive) {
-          // Selected exists but no owner session
-          isNeedsAccess = true;
-        }
-        else if (hasSelected && hasActive && sel !== act) {
-          // Both exist but different
-          isMismatch = true;
+        // Only evaluate mismatch when a location is explicitly selected
+        if (hasSelected) {
+          if (!hasActive) {
+            isNeedsAccess = true;
+          } else if (sel !== act) {
+            isMismatch = true;
+          }
         }
 
         if (isMismatch || isNeedsAccess) {
