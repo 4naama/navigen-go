@@ -4082,7 +4082,10 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
   // Selected + Active context cards (informational, non-clickable)
   const selectedName = String(locationName || '').trim() || '—';
-  const selectedId = String(locId || '').trim() || '—';
+
+  // If OS was opened as a restore landing (no explicit user selection), do not show ULID in Selected.
+  const isRestoreLanding = (variant === 'restore') && !String(locationName || '').trim();
+  const selectedId = isRestoreLanding ? '—' : (String(locId || '').trim() || '—');
 
   const selectedCard = document.createElement('div');
   selectedCard.className = 'modal-menu-item os-context-card os-selected';
