@@ -4195,33 +4195,6 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     } catch {}
   })();
 
-  // Resolve current device session (if any) and fill Active rows.
-  (async () => {
-    try {
-      const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
-      const jj = rr.ok ? await rr.json().catch(() => null) : null;
-      const activeUlid = String(jj?.ulid || '').trim();
-      if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(activeUlid)) return;
-
-      aIdBox.textContent = activeUlid;
-      aIdBox.title = activeUlid;
-
-      const ir = await fetch(`https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(activeUlid)}`, { cache: 'no-store' });
-      const ij = ir.ok ? await ir.json().catch(() => null) : null;
-
-      const slug = String(ij?.locationID || '').trim();
-      const ln = ij?.locationName;
-      const nm =
-        (ln && typeof ln === 'object')
-          ? String(ln.en || Object.values(ln)[0] || '').trim()
-          : String(ln || '').trim();
-
-      if (slug) { aIdBox.textContent = slug; aIdBox.title = slug; }
-      if (nm)   { aNameBox.textContent = nm; aNameBox.title = nm; }
-
-    } catch {}
-  })();
-
   // If Selected is a ULID (Owner Center entry), resolve to slug/name and update the Selected card display.
   (async () => {
     const u = String(selectedKey || '').trim();
@@ -4652,7 +4625,7 @@ export async function createOwnerCenterModal() {
 
         const confirmTxt =
           (typeof t === 'function' && t('owner.center.remove.confirm')) ||
-          'Remove this location from Owner Center on this device?';
+          'Remove from Owner Center on this device? This does not end ownership.';
 
         if (!confirm(confirmTxt)) return;
 
@@ -4674,12 +4647,31 @@ export async function createOwnerCenterModal() {
             return;
           }
 
+          // If this ULID is currently active, clear the active session as well
+          try {
+            const diag = await fetch('/api/_diag/opsess', {
+              cache: 'no-store',
+              credentials: 'include'
+            });
+            const dj = diag.ok ? await diag.json().catch(() => null) : null;
+            const activeUlid = String(dj?.ulid || '').trim();
+
+            if (activeUlid && activeUlid === u) {
+              // Clear device session and reload to neutral shell
+              window.location.href =
+                `/owner/clear-session?next=${encodeURIComponent('/')}`;
+              return;
+            }
+          } catch {}
+
+          // Non-active removal: just remove card locally
           btn.remove();
           showToast(
             (typeof t === 'function' && t('owner.center.remove.toast.ok')) ||
             'Removed from this device.',
             1600
           );
+
         } catch {
           showToast(
             (typeof t === 'function' && t('owner.center.remove.toast.fail')) ||
