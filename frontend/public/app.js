@@ -1325,8 +1325,8 @@ async function initEmergencyBlock(countryOverride) {
 
         if (open === 'restore') {
           if (bo) {
-            // Route to Owner Settings immediately (matrix resolution lives in modal-injector).
-            openOwnerSettingsForUlid(bo);
+            // Restore landing: open OS without a user-selected location (Selected stays empty).
+            openOwnerSettingsForLocation(bo, '', true);
             return;
           }
           showRestoreAccessModal();

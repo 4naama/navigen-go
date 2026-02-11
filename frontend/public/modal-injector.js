@@ -3189,7 +3189,7 @@ function _ownerText(key, fallback) {
   return (raw && typeof raw === 'string' && !/^\[[^\]]+\]$/.test(raw)) ? raw : String(fallback || key);
 }
 
-async function openOwnerSettingsForTarget({ target, locationName }) {
+async function openOwnerSettingsForTarget({ target, locationName, noSelection }) {
   const tgt = String(target || '').trim();
   if (!tgt) { showToast('Missing location', 1600); return; }
 
@@ -3203,7 +3203,12 @@ async function openOwnerSettingsForTarget({ target, locationName }) {
   const rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
 
   if (rStats.status === 200) {
-    showOwnerSettingsModal({ variant: 'signedin', locationIdOrSlug: tgt, locationName: String(locationName || '').trim() });
+    showOwnerSettingsModal({
+      variant: 'signedin',
+      locationIdOrSlug: tgt,
+      locationName: String(locationName || '').trim(),
+      noSelection: noSelection === true
+    });
     return;
   }
 
@@ -3221,7 +3226,8 @@ async function openOwnerSettingsForTarget({ target, locationName }) {
     showOwnerSettingsModal({
       variant: ownedNow ? 'restore' : 'claim',
       locationIdOrSlug: tgt,
-      locationName: String(locationName || '').trim()
+      locationName: String(locationName || '').trim(),
+      noSelection: noSelection === true
     });
     return;
   }
@@ -3237,7 +3243,8 @@ async function openOwnerSettingsForTarget({ target, locationName }) {
   showOwnerSettingsModal({
     variant: hasSess ? 'mismatch' : 'claim',
     locationIdOrSlug: tgt,
-    locationName: String(locationName || '').trim()
+    locationName: String(locationName || '').trim(),
+    noSelection: noSelection === true
   });
 }
 
@@ -3245,8 +3252,12 @@ export async function openOwnerSettingsForUlid(ulid) {
   return openOwnerSettingsForTarget({ target: ulid, locationName: '' });
 }
 
-export async function openOwnerSettingsForLocation(idOrSlug, locationName = '') {
-  return openOwnerSettingsForTarget({ target: String(idOrSlug || '').trim(), locationName: String(locationName || '').trim() });
+export async function openOwnerSettingsForLocation(idOrSlug, locationName = '', noSelection = false) {
+  return openOwnerSettingsForTarget({
+    target: String(idOrSlug || '').trim(),
+    locationName: String(locationName || '').trim(),
+    noSelection: noSelection === true
+  });
 }
 
 export function createRestoreAccessModal() {
@@ -4081,9 +4092,11 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   let locId = String(locationIdOrSlug || '').trim();
 
   // Selected + Active context cards (informational, non-clickable)
-  const selectedName = String(locationName || '').trim() || '—';
-  const hasSelection = !!String(locationIdOrSlug || '').trim();
-  const selectedId = hasSelection ? String(locId || '').trim() : '—';
+  const hasSelection = (noSelection !== true) && !!String(locationIdOrSlug || '').trim();
+  const selectedKey = hasSelection ? String(locId || '').trim() : '';
+
+  const selectedName = hasSelection ? (String(locationName || '').trim() || '—') : '—';
+  const selectedId = selectedKey || '—';
 
   const selectedCard = document.createElement('div');
   selectedCard.className = 'modal-menu-item os-context-card os-selected';
@@ -4138,7 +4151,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
       // Mismatch detection: Selected ≠ Active
       try {
-        const sel = String(selectedId || '').trim();
+        const sel = String(selectedKey || '').trim();
         const act = String(slug || activeUlid || '').trim();
         const hasSelected = !!sel;
         const hasActive = !!act;
@@ -4461,11 +4474,16 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   wrap.setAttribute('data-variant', String(variant || '').trim());
 }
 
-export function showOwnerSettingsModal({ variant, locationIdOrSlug, locationName }) {
+export function showOwnerSettingsModal({ variant, locationIdOrSlug, locationName, noSelection }) {
   const id = 'owner-settings-modal';
   // Always rebuild so Selected/Active headers and actions never stick to a prior location.
   document.getElementById(id)?.remove();
-  createOwnerSettingsModal({ variant, locationIdOrSlug, locationName });
+  createOwnerSettingsModal({
+    variant,
+    locationIdOrSlug,
+    locationName,
+    noSelection: noSelection === true
+  });
   showModal(id);
 }
 
