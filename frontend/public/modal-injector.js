@@ -4053,7 +4053,7 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
   showModal(id);
 }
 
-export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationName }) {
+export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationName, noSelection }) {
   const id = 'owner-settings-modal';
   document.getElementById(id)?.remove();
 
@@ -4082,10 +4082,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
   // Selected + Active context cards (informational, non-clickable)
   const selectedName = String(locationName || '').trim() || '—';
-
-  // If OS was opened as a restore landing (no explicit user selection), do not show ULID in Selected.
-  const isRestoreLanding = (variant === 'restore') && !String(locationName || '').trim();
-  const selectedId = isRestoreLanding ? '—' : (String(locId || '').trim() || '—');
+  const selectedId = (noSelection === true) ? '—' : (String(locId || '').trim() || '—');
 
   const selectedCard = document.createElement('div');
   selectedCard.className = 'modal-menu-item os-context-card os-selected';
