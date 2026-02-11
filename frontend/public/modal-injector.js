@@ -4139,11 +4139,22 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       try {
         const sel = String(selectedId || '').trim();
         const act = String(slug || activeUlid || '').trim();
+        const hasSelected = !!sel;
         const hasActive = !!act;
-        const isMismatch = !!(sel && act && sel !== act);
-        const isProblem = !hasActive || isMismatch;
 
-        if (isProblem) {
+        let isMismatch = false;
+        let isNeedsAccess = false;
+
+        if (hasSelected && !hasActive) {
+          // Selected exists but no owner session
+          isNeedsAccess = true;
+        }
+        else if (hasSelected && hasActive && sel !== act) {
+          // Both exist but different
+          isMismatch = true;
+        }
+
+        if (isMismatch || isNeedsAccess) {
           selectedCard.classList.add('os-mismatch');
           activeCard.classList.add('os-mismatch');
         } else {
