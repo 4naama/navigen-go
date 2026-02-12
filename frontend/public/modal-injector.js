@@ -4732,10 +4732,6 @@ export async function createOwnerCenterModal() {
         e.preventDefault();
         e.stopPropagation();
 
-        const confirmTxt =
-          (typeof t === 'function' && t('owner.center.remove.confirm')) ||
-          'Remove from Owner Center on this device? This does not end ownership.';
-
         showActionConfirmModal({
           title: (typeof t === 'function' && t('owner.center.remove.confirmTitle')) || 'Remove from this device?',
           bodyLines: [
@@ -4746,57 +4742,52 @@ export async function createOwnerCenterModal() {
           confirmLabel: (typeof t === 'function' && t('owner.center.remove.confirmCta')) || 'Remove',
           danger: true,
           onConfirm: async () => {
+            try {
+              const r = await fetch('/api/owner/sessions/remove', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                credentials: 'include',
+                cache: 'no-store',
+                body: JSON.stringify({ ulid: u })
+              });
 
-        try {
-          const r = await fetch('/api/owner/sessions/remove', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            credentials: 'include',
-            cache: 'no-store',
-            body: JSON.stringify({ ulid: u })
-          });
+              if (!r.ok) {
+                showToast(
+                  (typeof t === 'function' && t('owner.center.remove.toast.fail')) ||
+                  'Could not remove this location from this device.',
+                  2200
+                );
+                return;
+              }
 
-          if (!r.ok) {
-            showToast(
-              (typeof t === 'function' && t('owner.center.remove.toast.fail')) ||
-              'Could not remove this location from this device.',
-              2200
-            );
-            return;
-          }
+              // If this ULID is currently active, clear the active session as well
+              try {
+                const diag = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
+                const dj = diag.ok ? await diag.json().catch(() => null) : null;
+                const activeUlid = String(dj?.ulid || '').trim();
 
-          // If this ULID is currently active, clear the active session as well
-          try {
-            const diag = await fetch('/api/_diag/opsess', {
-              cache: 'no-store',
-              credentials: 'include'
-            });
-            const dj = diag.ok ? await diag.json().catch(() => null) : null;
-            const activeUlid = String(dj?.ulid || '').trim();
+                if (activeUlid && activeUlid === u) {
+                  window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
+                  return;
+                }
+              } catch {}
 
-            if (activeUlid && activeUlid === u) {
-              // Clear device session and reload to neutral shell
-              window.location.href =
-                `/owner/clear-session?next=${encodeURIComponent('/')}`;
-              return;
+              // Non-active removal: just remove card locally
+              btn.remove();
+              showToast(
+                (typeof t === 'function' && t('owner.center.remove.toast.ok')) ||
+                'Removed from this device.',
+                1600
+              );
+            } catch {
+              showToast(
+                (typeof t === 'function' && t('owner.center.remove.toast.fail')) ||
+                'Could not remove this location from this device.',
+                2200
+              );
             }
-          } catch {}
-
-          // Non-active removal: just remove card locally
-          btn.remove();
-          showToast(
-            (typeof t === 'function' && t('owner.center.remove.toast.ok')) ||
-            'Removed from this device.',
-            1600
-          );
-
-        } catch {
-          showToast(
-            (typeof t === 'function' && t('owner.center.remove.toast.fail')) ||
-            'Could not remove this location from this device.',
-            2200
-          );
-        }
+          }
+        });
       });
 
       // Owner Center: launch campaign for this business (switch session, then open CM)
