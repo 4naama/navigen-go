@@ -4421,13 +4421,13 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('dash.blocked.clearSession.desc', 'Use this if you want to switch to a different business on this device.'),
       onClick: () => {
         showActionConfirmModal({
-          title: 'Sign out on this device?',
+          title: (typeof t === 'function' && t('owner.signout.confirmTitle')) || 'Sign out on this device?',
           bodyLines: [
-            'This clears the active owner session on this device.',
-            'Ownership is not affected.',
-            'You can restore access again anytime using your Stripe receipt (pi_…).'
+            (typeof t === 'function' && t('owner.signout.confirmBody1')) || 'This clears the active owner session on this device.',
+            (typeof t === 'function' && t('owner.signout.confirmBody2')) || 'Ownership is not affected.',
+            (typeof t === 'function' && t('owner.signout.confirmBody3')) || 'You can restore access again anytime using your Stripe receipt (pi_…).'
           ],
-          confirmLabel: 'Sign out',
+          confirmLabel: (typeof t === 'function' && t('owner.signout.confirmCta')) || 'Sign out',
           danger: true,
           onConfirm: async () => {
             window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
@@ -4455,13 +4455,13 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('dash.blocked.clearSession.desc', 'Use this if you want to switch to a different business on this device.'),
       onClick: () => {
         showActionConfirmModal({
-          title: 'Sign out on this device?',
+          title: (typeof t === 'function' && t('owner.signout.confirmTitle')) || 'Sign out on this device?',
           bodyLines: [
-            'This clears the active owner session on this device.',
-            'Ownership is not affected.',
-            'You can restore access again anytime using your Stripe receipt (pi_…).'
+            (typeof t === 'function' && t('owner.signout.confirmBody1')) || 'This clears the active owner session on this device.',
+            (typeof t === 'function' && t('owner.signout.confirmBody2')) || 'Ownership is not affected.',
+            (typeof t === 'function' && t('owner.signout.confirmBody3')) || 'You can restore access again anytime using your Stripe receipt (pi_…).'
           ],
-          confirmLabel: 'Sign out',
+          confirmLabel: (typeof t === 'function' && t('owner.signout.confirmCta')) || 'Sign out',
           danger: true,
           onConfirm: async () => {
             window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
