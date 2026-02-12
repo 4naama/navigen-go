@@ -464,15 +464,34 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
   const ulid = await resolveUid(locationID, env);
   if (!ulid) return new Response("Denied", { status: 403, headers: noStoreHeaders });
 
-  // Verify active ownership (defense-in-depth).
+  // Canonical: a paid campaign checkout is itself the state transition trigger.
+  // Do NOT depend on webhook timing for ownership/session/campaign visibility.
   const ownKey = `ownership:${ulid}`;
-  const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
 
-  const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
-  const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
-  if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
-    return new Response("Denied", { status: 403, headers: noStoreHeaders });
-  }
+  // Compute ownership window. Keep current behavior: 30d exclusive + 60d courtesy.
+  // If an ownership record already exists, extend from its exclusiveUntil when later than now.
+  const now = Date.now();
+  const prev = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+
+  const prevExIso = String(prev?.exclusiveUntil || "").trim();
+  const prevEx = prevExIso ? new Date(prevExIso) : null;
+  const baseMs = (prevEx && !Number.isNaN(prevEx.getTime()) && prevEx.getTime() > now) ? prevEx.getTime() : now;
+
+  const EXCLUSIVE_MS = 30 * 24 * 60 * 60 * 1000;
+  const COURTESY_MS  = 60 * 24 * 60 * 60 * 1000;
+
+  const exclusiveUntil = new Date(baseMs + EXCLUSIVE_MS);
+  const courtesyUntil  = new Date(exclusiveUntil.getTime() + COURTESY_MS);
+
+  // Persist ownership now (webhook remains as redundant, idempotent backup).
+  await env.KV_STATUS.put(ownKey, JSON.stringify({
+    ver: 1,
+    ulid,
+    exclusiveUntil: exclusiveUntil.toISOString(),
+    courtesyUntil: courtesyUntil.toISOString(),
+    updatedAt: new Date().toISOString(),
+    // keep: lastEventId is webhook-owned; don't invent it here
+  }));
 
   // Create sessionId (unguessable) and store opsess:<sid> (same as /owner/exchange).
   const sidBytes = new Uint8Array(18);
@@ -1288,6 +1307,43 @@ export default {
             await env.KV_STATUS.put(idxKey, JSON.stringify(arr), { expirationTtl: 60 * 60 * 24 * 366 });
           }
         } catch {}
+
+        // Canonical state transition: paid campaign checkout promotes draft and ensures ownership.
+        // This removes webhook timing dependency and prevents post-checkout race conditions.
+        try {
+          const md = (sess?.metadata && typeof sess.metadata === "object") ? sess.metadata : {};
+          const ownershipSource = String(md?.ownershipSource || "").trim();
+          const campaignKey = String(md?.campaignKey || "").trim();
+
+          if (ownershipSource === "campaign" && campaignKey) {
+            const draftKey = `campaigns:draft:${ulid}`;
+            const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+
+            if (draft && String(draft?.campaignKey || "").trim() === campaignKey) {
+              const histKey = campaignsByUlidKey(ulid);
+              const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
+              const arr: any[] = Array.isArray(hist) ? hist : [];
+
+              const row = {
+                ...draft,
+                locationID: ulid,
+                locationULID: ulid,
+                locationSlug: String(md?.locationID || "").trim(),
+                status: "Active",
+                promotedAt: new Date().toISOString(),
+                stripeSessionId: String(sess?.id || "").trim()
+              };
+
+              const nextHist = arr.filter(x => String(x?.campaignKey || "").trim() !== campaignKey);
+              nextHist.push(row);
+
+              await env.KV_STATUS.put(histKey, JSON.stringify(nextHist));
+              await env.KV_STATUS.delete(draftKey);
+            }
+          }
+        } catch {
+          // Never block owner session minting on promotion failure.
+        }
 
         const cookie = cookieSerialize("op_sess", sessionId, {
           Path: "/",

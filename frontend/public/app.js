@@ -1744,6 +1744,31 @@ async function initEmergencyBlock(countryOverride) {
       const q   = new URLSearchParams(location.search);
       const uid = (q.get('lp') || '').trim();
 
+      // If this was a post-checkout landing, wait briefly for /api/status to reflect campaign entitlement.
+      // Without this, LPM may render "Taken" once and never update until refresh.
+      async function waitForEntitlementOnce(idOrSlug) {
+        const isPost = (() => { try { return sessionStorage.getItem('navigen.postCheckoutLp') === idOrSlug; } catch { return false; } })();
+        if (!isPost) return;
+
+        try { sessionStorage.removeItem('navigen.postCheckoutLp'); } catch {}
+
+        const tries = 6;          // ~3s total
+        const delayMs = 500;
+
+        for (let i = 0; i < tries; i++) {
+          try {
+            const r = await fetch(`${location.origin}/api/status?locationID=${encodeURIComponent(idOrSlug)}`, { cache: 'no-store', credentials: 'omit' });
+            if (r.ok) {
+              const j = await r.json().catch(() => null);
+              if (j?.campaignEntitled === true || j?.ownedNow === true) return;
+            }
+          } catch {}
+          await new Promise(r => setTimeout(r, delayMs));
+        }
+      }
+
+      if (uid) await waitForEntitlementOnce(uid);
+
       if (uid && Array.isArray(geoPoints) && geoPoints.length) {
         const rec = geoPoints.find(x =>
           String(x?.ID || x?.id || '') === uid ||              // ULID match
@@ -3263,10 +3288,13 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
     try {
       const current = new URL(window.location.href);
 
-      // Keep locationID; add lp only for the post-exchange landing so LPM opens once.
+      // Post-checkout: do NOT force LPM open immediately; it races KV entitlement.
+      // Instead mark a pending LPM open and let the ?lp handler wait for /api/status to reflect entitlement.
       const loc = String(current.searchParams.get("locationID") || "").trim();
-      if (loc && !current.searchParams.get("lp")) {
-        current.searchParams.set("lp", loc);
+      if (loc) {
+        try { sessionStorage.setItem('navigen.postCheckoutLp', loc); } catch {}
+        // Keep lp as well so deep links still work, but the opener will gate on status.
+        if (!current.searchParams.get("lp")) current.searchParams.set("lp", loc);
       }
 
       // Suppress QR-scan + LPM-open counting for the post-checkout auto-open.
