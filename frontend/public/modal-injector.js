@@ -3824,14 +3824,64 @@ function createHowItWorksModal() {
 
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
-          <span class="icon-img">🔑</span>
-          <span class="label"><strong>${t('bo.hiw.restore.title') || 'Restore access (free)'}</strong></span>
+          <span class="icon-img">🔐</span>
+          <span class="label">
+            <strong>${t('bo.hiw.deviceControl.title') || 'Managing access on this device'}</strong>
+          </span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
-          <div class="howitworks-sub">${t('bo.hiw.restore.sub') || 'Get back on a new device.'}</div>
-          <div>${t('bo.hiw.restore.b1') || 'Restore owner access using your Stripe receipt (pi_…) or owner link.'}</div>
-          <div class="howitworks-note">${t('bo.hiw.restore.note') || 'Restore does not start a campaign or extend ownership.'}</div>
+
+          <div class="howitworks-sub">
+            ${t('bo.hiw.deviceControl.sub') || 'Understand what each access action does.'}
+          </div>
+
+          <div>
+            <strong>${t('bo.hiw.deviceControl.restore.title') || '🔑 Restore access'}</strong>
+          </div>
+          <div>
+            ${t('bo.hiw.deviceControl.restore.b1') || 'Adds a business to this device'}
+          </div>
+          <div>
+            ${t('bo.hiw.deviceControl.restore.b2') || 'Restores the owner session'}
+          </div>
+          <div>
+            ${t('bo.hiw.deviceControl.restore.b3') || 'Does not create ownership'}
+          </div>
+          <div>
+            ${t('bo.hiw.deviceControl.restore.b4') || 'Does not extend ownership'}
+          </div>
+
+          <div style="height:12px;"></div>
+
+          <div>
+            <strong>${t('bo.hiw.deviceControl.remove.title') || '🗑️ Remove from Owner Center'}</strong>
+          </div>
+          <div>
+            ${t('bo.hiw.deviceControl.remove.b1') || 'Removes this business from this device’s saved list'}
+          </div>
+          <div>
+            ${t('bo.hiw.deviceControl.remove.b2') || 'Does not affect ownership globally'}
+          </div>
+          <div>
+            ${t('bo.hiw.deviceControl.remove.b3') || 'If active, also clears the active session'}
+          </div>
+
+          <div style="height:12px;"></div>
+
+          <div>
+            <strong>${t('bo.hiw.deviceControl.signout.title') || '🧹 Sign out on this device'}</strong>
+          </div>
+          <div>
+            ${t('bo.hiw.deviceControl.signout.b1') || 'Clears the active session only'}
+          </div>
+          <div>
+            ${t('bo.hiw.deviceControl.signout.b2') || 'Keeps the business saved in Owner Center'}
+          </div>
+          <div>
+            ${t('bo.hiw.deviceControl.signout.b3') || 'Equivalent to logging out'}
+          </div>
+
         </div>
       </details>
 
@@ -4370,7 +4420,19 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       title: _ownerText('dash.blocked.clearSession.title', 'Sign out on this device'),
       desc: _ownerText('dash.blocked.clearSession.desc', 'Use this if you want to switch to a different business on this device.'),
       onClick: () => {
-        window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
+        showActionConfirmModal({
+          title: 'Sign out on this device?',
+          bodyLines: [
+            'This clears the active owner session on this device.',
+            'Ownership is not affected.',
+            'You can restore access again anytime using your Stripe receipt (pi_…).'
+          ],
+          confirmLabel: 'Sign out',
+          danger: true,
+          onConfirm: async () => {
+            window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
+          }
+        });
       }
     });
 
@@ -4392,7 +4454,19 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       title: _ownerText('dash.blocked.clearSession.title', 'Sign out on this device'),
       desc: _ownerText('dash.blocked.clearSession.desc', 'Use this if you want to switch to a different business on this device.'),
       onClick: () => {
-        window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
+        showActionConfirmModal({
+          title: 'Sign out on this device?',
+          bodyLines: [
+            'This clears the active owner session on this device.',
+            'Ownership is not affected.',
+            'You can restore access again anytime using your Stripe receipt (pi_…).'
+          ],
+          confirmLabel: 'Sign out',
+          danger: true,
+          onConfirm: async () => {
+            window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
+          }
+        });
       }
     });
 
@@ -4465,6 +4539,41 @@ export function showOwnerSettingsModal({ variant, locationIdOrSlug, locationName
     locationName,
     noSelection: noSelection === true
   });
+  showModal(id);
+}
+
+function showActionConfirmModal({ title, bodyLines, confirmLabel, danger, onConfirm }) {
+  const id = 'action-confirm-modal';
+  document.getElementById(id)?.remove();
+
+  const bodyHTML = `
+    <div class="modal-body-inner">
+      <p style="text-align:left; margin:0; opacity:.9;">${String(bodyLines?.[0] || '')}</p>
+      ${(bodyLines || []).slice(1).map(l =>
+        `<p style="text-align:left; margin:10px 0 0; opacity:.9;">${String(l)}</p>`
+      ).join('')}
+
+      <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end; flex-wrap:wrap;">
+        <button type="button" class="modal-body-button" id="action-confirm-cancel">
+          ${(typeof t === 'function' && t('common.cancel')) || 'Cancel'}
+        </button>
+        <button type="button" class="modal-body-button" id="action-confirm-ok"
+          style="${danger ? 'background:#fee2e2;border-color:#fecaca;' : ''}">
+          ${String(confirmLabel || 'OK')}
+        </button>
+      </div>
+    </div>
+  `;
+
+  injectModal({ id, title, bodyHTML, layout: 'action' });
+  setupTapOutClose(id);
+
+  const m = document.getElementById(id);
+  m?.querySelector('#action-confirm-cancel')?.addEventListener('click', () => hideModal(id));
+  m?.querySelector('#action-confirm-ok')?.addEventListener('click', async () => {
+    try { await onConfirm?.(); } finally { hideModal(id); }
+  });
+
   showModal(id);
 }
 
@@ -4611,7 +4720,7 @@ export async function createOwnerCenterModal() {
 
         <div class="oc-actions">
           <button type="button" class="clear-x owner-center-remove"
-                  aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">🧹</button>
+                  aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">🗑️</button>
 
           <button type="button" class="clear-x owner-center-launch"
                   aria-label="${(typeof t === 'function' && t('owner.center.launch.title')) || 'Start a campaign'}">🚀</button>
@@ -4627,7 +4736,16 @@ export async function createOwnerCenterModal() {
           (typeof t === 'function' && t('owner.center.remove.confirm')) ||
           'Remove from Owner Center on this device? This does not end ownership.';
 
-        if (!confirm(confirmTxt)) return;
+        showActionConfirmModal({
+          title: (typeof t === 'function' && t('owner.center.remove.confirmTitle')) || 'Remove from this device?',
+          bodyLines: [
+            (typeof t === 'function' && t('owner.center.remove.confirmBody1')) || 'This removes the business from Owner Center on this device.',
+            (typeof t === 'function' && t('owner.center.remove.confirmBody2')) || 'Ownership remains active globally. You can restore access again anytime.',
+            (typeof t === 'function' && t('owner.center.remove.confirmBody3')) || 'If this business is currently active, you will also be signed out on this device.'
+          ],
+          confirmLabel: (typeof t === 'function' && t('owner.center.remove.confirmCta')) || 'Remove',
+          danger: true,
+          onConfirm: async () => {
 
         try {
           const r = await fetch('/api/owner/sessions/remove', {
