@@ -609,7 +609,7 @@
   "owner.settings.claim.protect.desc": "Starten Sie einen exklusiven Betriebszeitraum (5 € / 30 Tage).",
   "owner.settings.claim.keepVisible.title": "Sichtbar bleiben",
   "owner.settings.claim.keepVisible.desc": "Halten Sie Ihren Standort weitere 30 Tage auffindbar, während Sie entscheiden, wie es weitergeht.",
-  "owner.settings.claim.explain": "Der Eigentümerzugriff ist auf diesem Gerät noch nicht eingerichtet.\\nUm hier Kampagnen 🎯 und Analysen 📈 zu verwalten, richten Sie den Eigentümerzugriff 🔑 auf diesem Gerät ein.",
+  "owner.settings.claim.explain": "Der Eigentümerzugriff für diesen Standort ist auf diesem Gerät noch nicht eingerichtet.\\nUm hier Kampagnen 🎯 und Analysen 📈 zu verwalten, richten Sie den Eigentümerzugriff 🔑 auf diesem Gerät ein.",
   "owner.settings.title": "Inhabereinstellungen",
   "owner.settings.restore.explain": "Der Eigentümerzugriff auf diesem Gerät fehlt.\\nVerwalten Sie Kampagnen 🎯 oder stellen Sie den Zugriff 🔑 auf diesem Gerät wieder her.",
   "owner.settings.restore.action.title": "Zugriff wiederherstellen",

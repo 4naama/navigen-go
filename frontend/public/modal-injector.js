@@ -989,14 +989,48 @@ export async function showLocationProfileModal(data) {
       const u = new URL('/api/status', location.origin);
       u.searchParams.set('locationID', idOrSlug);
 
+      const el = modal.querySelector('.lpm-owned-badge');
+      if (!el) return;
+
+      // First: apply deterministic redirect hint if present (prevents sticky wrong paint after checkout return).
+      // This is NOT authoritative; it only avoids a one-shot stale /api/status result.
+      try {
+        const q = new URLSearchParams(location.search);
+        const hinted = (String(q.get('ce') || '') === '1');
+        const hintedEnd = String(q.get('ced') || '').trim();
+
+        if (hinted) {
+          const takenLine =
+            (typeof t === 'function' && t('lpm.owned.badge.taken')) ||
+            '🔴 Taken';
+
+          const campaignTpl =
+            (typeof t === 'function' && t('lpm.owned.badge.campaignActive')) ||
+            '🎁️ Campaign active until<br>{{date}}';
+
+          let dateTxt = '';
+          if (/^\d{4}-\d{2}-\d{2}$/.test(hintedEnd)) {
+            const end = new Date(`${hintedEnd}T00:00:00Z`);
+            dateTxt = `${new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(end)} - ${new Intl.DateTimeFormat(
+              'en-US',
+              { month: 'short', day: '2-digit', year: 'numeric' }
+            ).format(end)}`;
+          }
+
+          el.innerHTML = dateTxt
+            ? `${takenLine}<br>${String(campaignTpl).replace('{{date}}', dateTxt)}`
+            : `${takenLine}<br>${String(campaignTpl).replace('{{date}}', '')}`;
+
+          el.style.display = 'block';
+        }
+      } catch {}
+
+      // Second: authoritative fetch from /api/status (may overwrite the hint).
       const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
       if (!r.ok) return;
 
       const j = await r.json().catch(() => null);
       if (j?.ownedNow !== true) return;
-
-      const el = modal.querySelector('.lpm-owned-badge');
-      if (!el) return;
 
       // 🎁 is campaign-only. If no active campaign, show ONLY the taken line.
       // Source of truth: /api/status (KV-backed entitlement resolver).
@@ -4293,7 +4327,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   } else if (variant === 'claim') {
     rawExpl = _ownerText(
       'owner.settings.claim.explain',
-      'This location is not available on this device yet.\n\nTo manage analytics or campaigns for this location, restore access or switch businesses below.'
+      'Owner access to this location isn’t set up on this device yet.\nTo manage campaigns 🎯 and analytics 📈 here, establish owner access 🔑 on this device.'
     );
   } else {
     // signedin (and any future variants): no warning headline
@@ -4340,8 +4374,11 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       title: _ownerText('owner.settings.restore.campaign.title', 'Run a campaign'),
       desc: _ownerText('owner.settings.restore.campaign.desc', 'Restore access to continue.'),
       onClick: () => {
-        // Do NOT close Owner Settings; open Restore on top so OS stays available (examples, context).
-        showRestoreAccessModal();
+        // Canonical: starting a campaign is a single checkout that grants exclusivity.
+        // Do not force restore/ownership purchase first.
+        hideModal(id);
+        const target = String(locId || selectedKey || '').trim();
+        if (target) showCampaignManagementModal(target, { guest: true });
       }
     });
 
@@ -5019,15 +5056,24 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   }
 
   // Load owner campaigns (draft + active/history)
-  const { r: rList, j: listJ } = await apiJson('/api/owner/campaigns');
-  if (!rList.ok) {
-    showToast((typeof t==='function' && t('campaign.ui.denied')) || 'Owner access required.', 2400);
-    return;
+  const guestMode = (opts && opts.guest === true);
+
+  let listJ = null;
+  if (!guestMode) {
+    const rr = await apiJson('/api/owner/campaigns');
+    if (!rr.r.ok) {
+      // Fall back to guest mode when owner session is missing.
+      // Guest mode supports one-shot checkout (server stores draft during checkout creation).
+      // No multi-payment gating.
+      listJ = null;
+    } else {
+      listJ = rr.j;
+    }
   }
 
   const draft = listJ?.draft || null;
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
-  const ulid = String(listJ?.ulid || '').trim();
+  const ulid = String(listJ?.ulid || '').trim(); // empty in guest mode; that's OK
 
   // Canonicalize location identifier for CM header/status:
   // - input "slug" might actually be a ULID depending on caller
@@ -5409,21 +5455,54 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
         return;
       }
 
-      const { r: rSave } = await apiJson('/api/owner/campaigns/draft', {
-        method:'POST',
-        headers:{'content-type':'application/json'},
-        body: JSON.stringify(d)
-      });
-      if (!rSave.ok) {
-        showToast((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.', 2400);
+      const d = collectDraft();
+      if (!d.campaignKey || !d.startDate || !d.endDate) {
+        showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
         return;
       }
 
-      const { r: rChk, j: chkJ } = await apiJson('/api/owner/campaigns/checkout', {
-        method:'POST',
-        headers:{'content-type':'application/json'},
-        body: JSON.stringify({ locationID: slug, amountCents: 100 }) // minimal test amount; adjust later
-      });
+      let chkJ = null;
+      if (listJ) {
+        // Signed-in path (owner session): keep current behavior.
+        const { r: rSave } = await apiJson('/api/owner/campaigns/draft', {
+          method:'POST',
+          headers:{'content-type':'application/json'},
+          body: JSON.stringify(d)
+        });
+        if (!rSave.ok) {
+          showToast((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.', 2400);
+          return;
+        }
+
+        const out = await apiJson('/api/owner/campaigns/checkout', {
+          method:'POST',
+          headers:{'content-type':'application/json'},
+          body: JSON.stringify({ locationID: slug, amountCents: 100 })
+        });
+        if (!out.r.ok) {
+          showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
+          return;
+        }
+        chkJ = out.j;
+      } else {
+        // Guest path (no owner session): single-payment canonical checkout.
+        const out = await apiJson('/api/campaigns/checkout', {
+          method:'POST',
+          headers:{'content-type':'application/json'},
+          body: JSON.stringify({ locationID: slug, draft: d, amountCents: 100 })
+        });
+        if (!out.r.ok) {
+          showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
+          return;
+        }
+        chkJ = out.j;
+      }
+
+      if (!chkJ?.url) {
+        showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
+        return;
+      }
+      location.href = String(chkJ.url);
 
       if (!rChk.ok || !chkJ?.url) {
         showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);

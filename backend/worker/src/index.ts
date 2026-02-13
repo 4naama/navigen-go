@@ -1052,6 +1052,59 @@ export default {
         return json({ ok: true, ulid, draftKey: `campaigns:draft:<ULID>` }, 200, { "cache-control": "no-store" });
       }
 
+      // --- Public Campaigns: create checkout session and persist draft without requiring owner session
+      // POST /api/campaigns/checkout  body: { locationID:"<slug>", draft:{...}, amountCents?:number }
+      if (normPath === "/api/campaigns/checkout" && req.method === "POST") {
+        const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+
+        const body = await req.json().catch(() => ({})) as any;
+        const locationSlug = String(body?.locationID || "").trim();
+        const draftIn = (body?.draft && typeof body.draft === "object") ? body.draft : {};
+
+        if (!locationSlug) return json({ error:{ code:"invalid_request", message:"locationID (slug) required" } }, 400, noStore);
+        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationSlug)) {
+          return json({ error:{ code:"invalid_request", message:"locationID must be a slug, not a ULID" } }, 400, noStore);
+        }
+
+        const resolved = await resolveUid(locationSlug, env).catch(() => null);
+        const ulid = String(resolved || "").trim();
+        if (!ulid) return json({ error:{ code:"not_found", message:"unknown locationID" } }, 404, noStore);
+
+        // Validate draft minimally (server-authoritative; we only accept structurally valid campaigns).
+        const campaignKey = String(draftIn?.campaignKey || "").trim();
+        const startDate = String(draftIn?.startDate || "").trim();
+        const endDate = String(draftIn?.endDate || "").trim();
+
+        if (!campaignKey) return json({ error:{ code:"invalid_request", message:"draft.campaignKey required" } }, 400, noStore);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+          return json({ error:{ code:"invalid_request", message:"draft.startDate/endDate must be YYYY-MM-DD" } }, 400, noStore);
+        }
+
+        // Persist draft server-side, keyed by authoritative ULID.
+        const draft = {
+          ...draftIn,
+          locationID: ulid,
+          campaignKey,
+          startDate,
+          endDate,
+          status: "Draft",
+          updatedAt: new Date().toISOString()
+        };
+
+        await env.KV_STATUS.put(`campaigns:draft:${ulid}`, JSON.stringify(draft));
+
+        const stripeReq = {
+          locationID: locationSlug,
+          campaignKey,
+          initiationType: "public",
+          ownershipSource: "campaign",
+          navigenVersion: "phase5",
+          amountCents: body?.amountCents
+        };
+
+        return await createCampaignCheckoutSession(env, req, stripeReq, noStore);
+      }
+
       // --- Owner Campaigns: create checkout session from the current draft (session-bound)
       // POST /api/owner/campaigns/checkout  body: { locationID: "<slug>", amountCents?: number }
       if (normPath === "/api/owner/campaigns/checkout" && req.method === "POST") {
@@ -1308,8 +1361,9 @@ export default {
           }
         } catch {}
 
-        // Canonical state transition: paid campaign checkout promotes draft and ensures ownership.
-        // This removes webhook timing dependency and prevents post-checkout race conditions.
+        // If this checkout session funded a campaign, promote draft now and enrich redirect with campaign hint.
+        // This avoids "sticky wrong" LPM badge rendering after redirect.
+        let redirectHint = '';
         try {
           const md = (sess?.metadata && typeof sess.metadata === "object") ? sess.metadata : {};
           const ownershipSource = String(md?.ownershipSource || "").trim();
@@ -1339,10 +1393,18 @@ export default {
 
               await env.KV_STATUS.put(histKey, JSON.stringify(nextHist));
               await env.KV_STATUS.delete(draftKey);
+
+              // Build a deterministic hint for the landing UI (not a source of truth; just prevents sticky wrong paint).
+              const end = String(row?.endDate || "").trim();
+              if (/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+                redirectHint = `ce=1&ced=${encodeURIComponent(end)}&cak=${encodeURIComponent(campaignKey)}`;
+              } else {
+                redirectHint = `ce=1&cak=${encodeURIComponent(campaignKey)}`;
+              }
             }
           }
         } catch {
-          // Never block owner session minting on promotion failure.
+          // Do not block exchange on hint/promotion failure.
         }
 
         const cookie = cookieSerialize("op_sess", sessionId, {
@@ -1357,7 +1419,23 @@ export default {
           status: 302,
           headers: {
             "Set-Cookie": cookie,
-            "Location": next || `/dash/${encodeURIComponent(ulid)}`,
+            "Location": (() => {
+              const base = next || `/dash/${encodeURIComponent(ulid)}`;
+              if (!redirectHint) return base;
+
+              // Append hint safely (works whether base already has query or not).
+              const u = new URL(base, "https://navigen.io");
+              // Do not overwrite if already present.
+              if (!u.searchParams.get("ce")) {
+                const parts = redirectHint.split("&");
+                parts.forEach(kv => {
+                  const [k, v] = kv.split("=");
+                  if (k && v && !u.searchParams.get(k)) u.searchParams.set(k, decodeURIComponent(v));
+                  else if (k && !u.searchParams.get(k)) u.searchParams.set(k, "1");
+                });
+              }
+              return u.pathname + u.search + u.hash;
+            })(),
             ...noStoreHeaders
           }
         });

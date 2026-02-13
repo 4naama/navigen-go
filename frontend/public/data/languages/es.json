@@ -609,7 +609,7 @@
   "owner.settings.claim.protect.desc": "Inicia un período de operación exclusivo (5 € / 30 días).",
   "owner.settings.claim.keepVisible.title": "Mantener visible",
   "owner.settings.claim.keepVisible.desc": "Mantén tu lugar visible durante 30 días más mientras decides qué sigue.",
-  "owner.settings.claim.explain": "El acceso del propietario aún no está configurado en este dispositivo.\\nPara gestionar aquí campañas 🎯 y análisis 📈, configura el acceso del propietario 🔑 en este dispositivo.",
+  "owner.settings.claim.explain": "El acceso del propietario para esta ubicación aún no está configurado en este dispositivo.\\nPara gestionar aquí campañas 🎯 y análisis 📈, configura el acceso del propietario 🔑 en este dispositivo.",
   "owner.settings.title": "Configuración del propietario",
   "owner.settings.restore.explain": "Falta el acceso del propietario en este dispositivo.\\nGestiona campañas 🎯 o restaura el acceso 🔑 en este dispositivo.",
   "owner.settings.restore.action.title": "Restaurar acceso",

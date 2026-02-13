@@ -609,7 +609,7 @@
   "owner.settings.claim.protect.desc": "Exkluzív üzemeltetési időszak indítása (5 € / 30 nap).",
   "owner.settings.claim.keepVisible.title": "Látható marad",
   "owner.settings.claim.keepVisible.desc": "Tartsa láthatóvá a helyét további 30 napig, amíg eldönti a következő lépést.",
-  "owner.settings.claim.explain": "Ezen az eszközön még nincs beállítva a tulajdonosi hozzáférés.\\nA kampányok 🎯 és az elemzések 📈 kezeléséhez itt hozza létre a tulajdonosi hozzáférést 🔑 ezen az eszközön.",
+  "owner.settings.claim.explain": "Ezen az eszközön még nincs beállítva a tulajdonosi hozzáférés ehhez a helyhez.\\nA kampányok 🎯 és az elemzések 📈 kezeléséhez itt hozza létre a tulajdonosi hozzáférést 🔑 ezen az eszközön.",
   "owner.settings.title": "Tulajdonosi beállítások",
   "owner.settings.restore.explain": "Ezen az eszközön hiányzik a tulajdonosi hozzáférés.\\nKezelje a kampányokat 🎯, vagy állítsa vissza a hozzáférést 🔑 ezen az eszközön.",
   "owner.settings.restore.action.title": "Hozzáférés visszaállítása",

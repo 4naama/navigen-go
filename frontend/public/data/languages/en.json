@@ -609,7 +609,7 @@
   "owner.settings.claim.protect.desc": "Start an exclusive operation period (€5 / 30 days).",
   "owner.settings.claim.keepVisible.title": "Keep visible",
   "owner.settings.claim.keepVisible.desc": "Keep your place discoverable for 30 more days while you decide what’s next.",
-  "owner.settings.claim.explain": "Owner access isn’t set up on this device yet.\\nTo manage campaigns 🎯 and analytics 📈 here, establish owner access 🔑 on this device.",
+  "owner.settings.claim.explain": "Owner access to this location isn’t set up on this device yet.\\nTo manage campaigns 🎯 and analytics 📈 here, establish owner access 🔑 on this device.'",
   "owner.settings.title": "Owner settings",
   "owner.settings.restore.explain": "Owner access on this device is missing.\\nManage campaigns 🎯 or restore access 🔑 on this device.",
   "owner.settings.restore.action.title": "Restore access",

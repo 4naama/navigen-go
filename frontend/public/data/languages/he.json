@@ -609,7 +609,7 @@
   "owner.settings.claim.protect.desc": "התחל תקופת תפעול בלעדית (€5 / 30 ימים).",
   "owner.settings.claim.keepVisible.title": "שמור על נראות",
   "owner.settings.claim.keepVisible.desc": "השאר את המקום שלך ניתן לגילוי ל-30 ימים נוספים בזמן שאתה מחליט מה הלאה.",
-  "owner.settings.claim.explain": "גישת הבעלים עדיין לא הוגדרה במכשיר זה.\\nכדי לנהל כאן קמפיינים 🎯 וניתוחים 📈, הגדר גישת בעלים 🔑 במכשיר זה.",
+  "owner.settings.claim.explain": "גישת הבעלים למיקום זה עדיין לא הוגדרה במכשיר זה.\\nכדי לנהל כאן קמפיינים 🎯 וניתוחים 📈, הגדר גישת בעלים 🔑 במכשיר זה.",
   "owner.settings.title": "הגדרות בעלים",
   "owner.settings.restore.explain": "גישת הבעלים במכשיר זה חסרה.\\nנהל קמפיינים 🎯 או שחזר גישה 🔑 במכשיר זה.",
   "owner.settings.restore.action.title": "שחזור גישה",
