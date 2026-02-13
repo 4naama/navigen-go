@@ -4536,7 +4536,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
           let campaignKey = await resolveCampaignKeyForLocation(slug);
           if (!campaignKey) campaignKey = "campaign-30d";
 
-          showCampaignFundingModal({ locationID: slug, campaignKey });
+          showCampaignManagementModal(slug, { guest: true });
         })();
       }
     });
