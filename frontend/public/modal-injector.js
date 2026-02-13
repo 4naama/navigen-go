@@ -1165,7 +1165,20 @@ export async function showLocationProfileModal(data) {
 
     // call wiring + reveal
     wireLocationProfileModal(modal, data, data?.originEl);
-    showModal('location-profile-modal');  
+    showModal('location-profile-modal');
+
+  // Stripe return hardening: ensure footer wiring exists (⋮ popover) on redirect-opened LPM.
+  // Normal opens are already stable; this is only to correct the redirect boot path.
+  try {
+    if (new URLSearchParams(location.search).get('flow') === 'campaign') {
+      const m = document.getElementById('location-profile-modal');
+      if (m && m.dataset && m.dataset.lpmRewiredAfterCheckout !== '1') {
+        m.dataset.lpmRewiredAfterCheckout = '1';
+        // Rewire handlers idempotently for this instance.
+        wireLocationProfileModal(m, data, data?.originEl);
+      }
+    }
+  } catch {}    
 }    
 
 // ————————————————————————————
@@ -4366,23 +4379,17 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   };
 
   if (variant === 'restore') {
-    // Restore access is triggered by 🎯 Run a campaign (intent-first UX).
-
     addItem({
-      id: 'owner-restore-campaign',
-      icon: '🎯',
-      title: _ownerText('owner.settings.restore.campaign.title', 'Run a campaign'),
-      desc: _ownerText('owner.settings.restore.campaign.desc', 'Restore access to continue.'),
+      id: 'owner-restore-access',
+      icon: '🔑',
+      title: _ownerText('owner.settings.restore.access.title', 'Restore owner access'),
+      desc: _ownerText('owner.settings.restore.access.desc', 'Restore access to manage dashboards and campaigns on this device.'),
       onClick: () => {
-        // Canonical: starting a campaign is a single checkout that grants exclusivity.
-        // Do not force restore/ownership purchase first.
         hideModal(id);
-        const target = String(locId || selectedKey || '').trim();
-        if (target) showCampaignManagementModal(target, { guest: true });
+        showRestoreAccessModal();
       }
     });
 
-    // Offer explicit switching (Owner Center) when the user is signed-in for another location on this device.
     addItem({
       id: 'owner-center',
       icon: '🧩️',
@@ -4404,7 +4411,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
         showExampleDashboardsModal();
       }
     });
-
+    
   } else if (variant === 'signedin') {
     addItem({
       id: 'owner-open-dash',

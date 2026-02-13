@@ -457,6 +457,8 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
   }
 
   const meta = sess?.metadata || {};
+    let redirectHint = '';
+
   const locationID = String(meta?.locationID || "").trim();
   if (!locationID) return new Response("Denied", { status: 403, headers: noStoreHeaders });
 
@@ -512,18 +514,11 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
   const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - createdAt.getTime()) / 1000));
   try {
     await env.KV_STATUS.put(sessKey, JSON.stringify(sessVal), { expirationTtl: Math.max(60, maxAge) });
-  } catch (e: any) {
-    console.error("owner_stripe_exchange: kv_put_failed", {
-      ulid,
-      sessKeyPrefix: "opsess:",
-      maxAge,
-      err: String(e?.message || e || "")
-    });
-    return new Response("Denied", { status: 500, headers: { ...noStoreHeaders, "x-ng-reason": "kv_put_failed" } });
+  } catch {
+    return new Response("Denied", { status: 500, headers: noStoreHeaders });
   }
 
-  // Register this session to the current device so Owner Center can switch without email receipts.
-  // Device id is a non-HttpOnly cookie set by the app shell (per-device).
+  // Register this session to the current device so Owner Center can switch without email receipts (ng_dev cookie).
   try {
     const dev = readDeviceId(req);
     if (dev) {
@@ -542,6 +537,54 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
     }
   } catch {
     // device registry must never block owner exchange
+  }
+
+  // If this checkout session funded a campaign, promote draft now and enrich redirect with campaign hint.
+  // This avoids "sticky wrong" LPM badge rendering after redirect.
+  redirectHint = '';
+  try {
+    const md = (sess?.metadata && typeof sess.metadata === "object") ? sess.metadata : {};
+    const ownershipSource = String(md?.ownershipSource || "").trim();
+    const campaignKey = String(md?.campaignKey || "").trim();
+
+    if (ownershipSource === "campaign" && campaignKey) {
+
+      const draftKey = `campaigns:draft:${ulid}`;
+      const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+      if (!draft) { promoteDiag = 'no_draft'; }
+
+      if (draft && String(draft?.campaignKey || "").trim() === campaignKey) {
+
+        const histKey = campaignsByUlidKey(ulid);
+        const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
+        const arr: any[] = Array.isArray(hist) ? hist : [];
+
+        const row = {
+          ...draft,
+          locationID: ulid,
+          locationULID: ulid,
+          locationSlug: String(md?.locationID || "").trim(),
+          status: "Active",
+          promotedAt: new Date().toISOString(),
+          stripeSessionId: String(sess?.id || "").trim()
+        };
+
+        const nextHist = arr.filter(x => String(x?.campaignKey || "").trim() !== campaignKey);
+        nextHist.push(row);
+
+        await env.KV_STATUS.put(histKey, JSON.stringify(nextHist));
+
+        await env.KV_STATUS.delete(draftKey);
+
+        const end = String(row?.endDate || "").trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+          redirectHint = `ce=1&ced=${encodeURIComponent(end)}&cak=${encodeURIComponent(campaignKey)}`;
+        } else {
+          redirectHint = `ce=1&cak=${encodeURIComponent(campaignKey)}`;
+        }
+      }
+    }
+  } catch {
   }
 
   const cookie = cookieSerialize("op_sess", sessionId, {
@@ -571,7 +614,7 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
         }
         return u.pathname + u.search + u.hash;
       })(),
-            ...noStoreHeaders
+      ...noStoreHeaders
     }
   });
 }
@@ -1308,54 +1351,6 @@ export default {
         );
       }
 
-      // --- Stripe diag: inspect Stripe Checkout Session metadata (sanitized)
-      // GET /api/_diag/stripe-session?sid=cs_...
-      if (normPath === "/api/_diag/stripe-session" && req.method === "GET") {
-        const u = new URL(req.url);
-        const sid = String(u.searchParams.get("sid") || "").trim();
-        const token = String(req.headers.get("x-ng-debug") || "").trim();
-        const expected = String((env as any).NG_DEBUG_TOKEN || "").trim();
-
-        const noStore = {
-          "cache-control": "no-store",
-          "Referrer-Policy": "no-referrer",
-          "x-ng-worker": "navigen-api"
-        };
-        if (!expected) {
-          return new Response("Denied", { status: 403, headers: { ...noStore, "x-ng-diag": "no_debug_secret" } });
-        }
-        if (token !== expected) {
-          return new Response("Denied", { status: 403, headers: { ...noStore, "x-ng-diag": "debug_token_mismatch" } });
-        }
-        if (!sid || !/^cs_/i.test(sid)) return new Response("Denied", { status: 400, headers: noStore });
-
-        const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
-        if (!sk) return new Response("Misconfigured", { status: 500, headers: noStore });
-
-        const stripeUrl = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sid)}`;
-        const r = await fetch(stripeUrl, { method: "GET", headers: { "Authorization": `Bearer ${sk}` } });
-        const txt = await r.text();
-
-        let sess: any = null;
-        try { sess = JSON.parse(txt); } catch { sess = null; }
-        if (!r.ok || !sess) return new Response("Denied", { status: 403, headers: noStore });
-
-        const meta = sess?.metadata || {};
-        return json({
-          id: String(sess?.id || ""),
-          payment_status: String(sess?.payment_status || ""),
-          status: String(sess?.status || ""),
-          amount_total: sess?.amount_total ?? null,
-          currency: String(sess?.currency || ""),
-          metadata: {
-            locationID: String(meta?.locationID || ""),
-            ownershipSource: String(meta?.ownershipSource || ""),
-            campaignKey: String(meta?.campaignKey || ""),
-            initiationType: String(meta?.initiationType || "")
-          }
-        }, 200, noStore);
-      }
-
       // --- Owner exchange: /owner/exchange (Phase 2: signed link → cookie session)
       if (normPath === "/owner/exchange" && req.method === "GET") {
         return await handleOwnerExchange(req, env);
@@ -1448,7 +1443,7 @@ export default {
 
         // If this checkout session funded a campaign, promote draft now and enrich redirect with campaign hint.
         // This avoids "sticky wrong" LPM badge rendering after redirect.
-        let redirectHint = '';
+        redirectHint = '';
         try {
           const md = (sess?.metadata && typeof sess.metadata === "object") ? sess.metadata : {};
           const ownershipSource = String(md?.ownershipSource || "").trim();
@@ -1488,7 +1483,11 @@ export default {
               }
             }
           }
-        } catch {
+        } catch (e: any) {
+          console.error("owner_stripe_exchange: promote_failed", {
+            ulid,
+            err: String(e?.message || e || "")
+          });
           // Do not block exchange on hint/promotion failure.
         }
 
@@ -1871,69 +1870,6 @@ export default {
         }
 
         return json({ ok:true, wrote, skipped, total: aliases.length }, 200);
-      }
-
-      // --- Admin read (one-off): GET /api/admin/stripe-session?sid=cs_...
-      // Returns sanitized Stripe Checkout Session fields (status + metadata only).
-      // Auth: Bearer <JWT_SECRET> (same pattern as other admin endpoints).
-      if (pathname === "/api/admin/stripe-session" && req.method === "GET") {
-        const auth = req.headers.get("Authorization") || "";
-        if (!auth.startsWith("Bearer ")) {
-          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401, { "cache-control":"no-store" });
-        }
-        const token = auth.slice(7).trim();
-        const expected = String(env.JWT_SECRET || "").trim();
-        if (!expected) {
-          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control":"no-store" });
-        }
-        if (!token || token !== expected) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control":"no-store" });
-        }
-
-        const u = new URL(req.url);
-        const sid = String(u.searchParams.get("sid") || "").trim();
-        if (!sid || !/^cs_/i.test(sid)) {
-          return json({ error:{ code:"invalid_request", message:"sid (cs_...) required" } }, 400, { "cache-control":"no-store" });
-        }
-
-        const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
-        if (!sk) {
-          return json({ error:{ code:"misconfigured", message:"STRIPE_SECRET_KEY not set" } }, 500, { "cache-control":"no-store" });
-        }
-
-        const stripeUrl = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sid)}`;
-        const r = await fetch(stripeUrl, { method: "GET", headers: { "Authorization": `Bearer ${sk}` } });
-        const txt = await r.text();
-
-        let sess: any = null;
-        try { sess = JSON.parse(txt); } catch { sess = null; }
-        if (!r.ok || !sess) {
-          return json({
-            error:{
-              code:"stripe_error",
-              message: String(sess?.error?.message || "Stripe session fetch failed"),
-              http: r.status,
-              stripeType: String(sess?.error?.type || ""),
-              stripeCode: String(sess?.error?.code || "")
-            }
-          }, 502, { "cache-control":"no-store" });
-        }
-
-        const meta = sess?.metadata || {};
-        return json({
-          id: String(sess?.id || ""),
-          payment_status: String(sess?.payment_status || ""),
-          status: String(sess?.status || ""),
-          amount_total: sess?.amount_total ?? null,
-          currency: String(sess?.currency || ""),
-          metadata: {
-            locationID: String(meta?.locationID || ""),
-            ownershipSource: String(meta?.ownershipSource || ""),
-            campaignKey: String(meta?.campaignKey || ""),
-            initiationType: String(meta?.initiationType || ""),
-            navigenVersion: String(meta?.navigenVersion || "")
-          }
-        }, 200, { "cache-control":"no-store" });
       }
 
       // --- Admin read (one-off): GET /api/admin/ownership?locationID=.
