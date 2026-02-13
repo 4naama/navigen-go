@@ -550,8 +550,22 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
     status: 302,
     headers: {
       "Set-Cookie": cookie,
-      "Location": next || `/dash/${encodeURIComponent(ulid)}`,
-      ...noStoreHeaders
+      "Location": (() => {
+        const base = next || `/dash/${encodeURIComponent(ulid)}`;
+        if (!redirectHint) return base;
+
+        const u = new URL(base, "https://navigen.io");
+        if (!u.searchParams.get("ce")) {
+          const parts = redirectHint.split("&");
+          parts.forEach(kv => {
+            const [k, v] = kv.split("=");
+            if (k && v && !u.searchParams.get(k)) u.searchParams.set(k, decodeURIComponent(v));
+            else if (k && !u.searchParams.get(k)) u.searchParams.set(k, "1");
+          });
+        }
+        return u.pathname + u.search + u.hash;
+      })(),
+            ...noStoreHeaders
     }
   });
 }
@@ -761,8 +775,15 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   const ownershipSource = String(body?.ownershipSource || "").trim(); // "campaign"
   const navigenVersion = String(body?.navigenVersion || "").trim() || "phase5";
 
-  if (!locationID || !campaignKey || initiationType !== "owner" || ownershipSource !== "campaign") {
-    return json({ error: { code: "invalid_request", message: "locationID, campaignKey, initiationType='owner', ownershipSource='campaign' required" } }, 400, noStore);
+  // Allow both owner-initiated and public (no-session) initiation types.
+  // Canonical product: campaign payment is the only purchase; session is minted on return.
+  const okInitiation = (initiationType === "owner" || initiationType === "public");
+  if (!locationID || !campaignKey || !okInitiation || ownershipSource !== "campaign") {
+    return json(
+      { error: { code: "invalid_request", message: "locationID, campaignKey, initiationType in {'owner','public'}, ownershipSource='campaign' required" } },
+      400,
+      noStore
+    );
   }
 
   // Enforce the spec invariant: clients must never supply ULIDs as locationID

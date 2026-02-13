@@ -5430,31 +5430,8 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
       endDate: String(endDate.value || '').trim()
     });
 
-    btnSave.addEventListener('click', async () => {
-      const d = collectDraft();
-      if (!d.campaignKey || !d.startDate || !d.endDate) {
-        showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
-        return;
-      }
-
-      const { r } = await apiJson('/api/owner/campaigns/draft', {
-        method:'POST',
-        headers:{'content-type':'application/json'},
-        body: JSON.stringify(d)
-      });
-
-      if (r.ok) showToast((typeof t==='function' && t('campaign.ui.saved')) || 'Draft saved.', 1800);
-      else showToast((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.', 2400);
-    });
-
     btnCheckout.addEventListener('click', async () => {
       // Ensure draft saved first (server must have campaigns:draft:<ULID>)
-      const d = collectDraft();
-      if (!d.campaignKey || !d.startDate || !d.endDate) {
-        showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
-        return;
-      }
-
       const d = collectDraft();
       if (!d.campaignKey || !d.startDate || !d.endDate) {
         showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
@@ -5499,12 +5476,6 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
       }
 
       if (!chkJ?.url) {
-        showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
-        return;
-      }
-      location.href = String(chkJ.url);
-
-      if (!rChk.ok || !chkJ?.url) {
         showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
         return;
       }
