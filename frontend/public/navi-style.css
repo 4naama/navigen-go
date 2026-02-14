@@ -2528,23 +2528,44 @@ button:hover {
 .modal-menu-item.syb-card{
   position:relative;
   padding-right:52px; /* room for top-right dot + bottom-right 🎁 */
-
-/* SYB status dot (neutral by default; colored only by state class) */
-.modal-menu-item.syb-card .syb-status-dot{
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: transparent; /* IMPORTANT: no default green */
 }
 
-/* State colors */
-.modal-menu-item.syb-card .syb-status-dot.syb-free   { background:#22c55e; } /* 🟢 free */
-.modal-menu-item.syb-card .syb-status-dot.syb-taken  { background:#ef4444; } /* 🔴 taken */
-.modal-menu-item.syb-card .syb-status-dot.syb-parked { background:#f59e0b; } /* 🟠 parked */
-.modal-menu-item.syb-card .syb-status-dot.syb-held   { background:#3b82f6; } /* 🔵 held */
+.modal-menu-item.syb-card .syb-status-dot{
+  position:absolute;
+  top:10px;
+  right:12px;
+  width:10px;
+  height:10px;
+  border-radius:999px;
+}
+
+/* Status dot: top-right */
+.modal-menu-item.syb-card .syb-status-dot{
+  position: absolute;
+  right: 12px;
+  top: 12px;
+}
+
+.modal-menu-item.syb-card .syb-status-dot.syb-free{
+  background:#22c55e; /* 🟢 free */
+}
+
+.modal-menu-item.syb-card .syb-status-dot.syb-taken{
+  background:#ef4444; /* 🔴 taken */
+}
+
+.modal-menu-item.syb-card .syb-status-dot.syb-parked{
+  background:#f59e0b; /* 🟠 parked / inactive */
+}
+
+.modal-menu-item.syb-card .syb-status-dot.syb-held{
+  background:#3b82f6; /* 🔵 held/visible (courtesy/hold) */
+}
+
+/* SYB cards: provide a positioning context for dot + 🎁 */
+.modal-menu-item.syb-card{
+  position: relative;
+}
 
 /* 🎁 Gift: bottom-left (only when promoted) */
 .modal-menu-item.syb-card .syb-gift{
