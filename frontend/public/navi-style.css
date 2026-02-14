@@ -2562,11 +2562,6 @@ button:hover {
   background:#3b82f6; /* 🔵 held/visible (courtesy/hold) */
 }
 
-/* SYB cards: provide a positioning context for dot + 🎁 */
-.modal-menu-item.syb-card{
-  position: relative;
-}
-
 /* 🎁 Gift: bottom-left (only when promoted) */
 .modal-menu-item.syb-card .syb-gift{
   position: absolute;
