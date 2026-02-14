@@ -2610,9 +2610,24 @@ button:hover {
 
 /* Ensure SYB gift stays aligned with the status dot column (top-right) */
 .modal-menu-item.syb-card .syb-gift{
-  position:absolute;
+  position:relative;
   right:12px;
   top:28px;
+  bottom:auto;
+}
+
+/* SYB status dot column (top-right) */
+.modal-menu-item.syb-card .syb-status-dot{
+  position:absolute;
+  right:12px;
+  top:12px;
+}
+
+/* SYB gift stacks under the dot */
+.modal-menu-item.syb-card .syb-gift{
+  position:absolute;
+  right:12px;
+  top:32px;
   bottom:auto;
 }
 
@@ -2633,6 +2648,13 @@ button:hover {
   box-sizing:border-box;      /* include padding in width */
 }
 
+/* OC card must be a 2-row stack: title row + actions row */
+.oc-card{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+}
+
 /* Owner Center cards: single title row + action row (no slug row) */
 .oc-card .oc-row1{
   display:flex;
@@ -2643,8 +2665,8 @@ button:hover {
 /* Action row: own line, right aligned, comfortable tap targets */
 .oc-card .oc-actions{
   display:flex;
-  justify-content:flex-end;
-  gap:10px;
+  justify-content:center;   /* centered on 2nd row */
+  gap:12px;
   margin-top:10px;
 }
 

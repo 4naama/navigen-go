@@ -4754,7 +4754,7 @@ export async function createOwnerCenterModal() {
         <div class="oc-row1">
           <span class="icon-img" aria-hidden="true">📍</span>
 
-          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+          <span class="oc-name" style="flex:1 1 auto; min-width:0; text-align:left;">
             <strong>${label}</strong>
           </span>
 
