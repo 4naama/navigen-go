@@ -5122,14 +5122,22 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     .then(r => r.ok ? r.json() : null)
     .catch(() => null);
 
-  const locNameRaw = (status && typeof status.locationName === 'object')
-    ? (status.locationName.en || Object.values(status.locationName)[0] || '')
-    : (status?.locationName || '');
+  // Prefer the data item endpoint for the real business name (authoritative profile payload).
+  let locName = String(displayName || '').trim();
+  try {
+    const rr = await fetch(
+      `https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(displaySlug)}`,
+      { cache: 'no-store' }
+    );
+    const jj = rr.ok ? await rr.json().catch(() => null) : null;
+    const ln = jj?.locationName;
+    const nm = (ln && typeof ln === 'object')
+      ? String(ln.en || Object.values(ln)[0] || '').trim()
+      : String(ln || '').trim();
+    if (nm) locName = nm;
+  } catch {}
 
-  const locName =
-    String(locNameRaw || '').trim() ||
-    String(displayName || '').trim() ||
-    String(displaySlug || '').trim(); // fallback: never show an empty box, never show ULID as "name"
+  if (!locName) locName = String(displaySlug || '').trim(); // last-resort fallback
 
   // Split campaign rows for tabs (ensure multiple active campaigns are represented)
   const rowsAll = Array.isArray(historyArr) ? historyArr : [];
@@ -5319,7 +5327,6 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
         <div class="cm-camp-mid">
           <div class="cm-camp-loc">${String(locName || '').trim()}</div>
           <div class="cm-camp-range">${range}</div>
-          <div class="cm-camp-name">${name}</div>
         </div>
         <div class="cm-camp-right">
           <span class="cm-status-dot" aria-hidden="true"></span>
