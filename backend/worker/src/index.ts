@@ -238,6 +238,23 @@ function readDeviceId(req: Request): string {
   return String(dev || "").trim();
 }
 
+function mintDeviceId(): { dev: string; cookie: string } {
+  // 18 bytes → URL-safe base64; unguessable; stable per device cookie lifetime
+  const bytes = new Uint8Array(18);
+  (crypto as any).getRandomValues(bytes);
+  const dev = bytesToB64url(bytes);
+
+  const cookie = cookieSerialize("ng_dev", dev, {
+    Path: "/",
+    Secure: true,
+    SameSite: "Lax",
+    "Max-Age": 60 * 60 * 24 * 366 // ~12 months
+    // Not HttpOnly: client can read, but Worker is authoritative on binding.
+  });
+
+  return { dev, cookie };
+}
+
 function devSessKey(dev: string, ulid: string): string {
   return `devsess:${dev}:${ulid}`;
 }
@@ -519,8 +536,15 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
   }
 
   // Register this session to the current device so Owner Center can switch without email receipts (ng_dev cookie).
+  let devSetCookie = "";
   try {
-    const dev = readDeviceId(req);
+    let dev = readDeviceId(req);
+    if (!dev) {
+      const minted = mintDeviceId();
+      dev = minted.dev;
+      devSetCookie = minted.cookie;
+    }
+
     if (dev) {
       const mapKey = devSessKey(dev, ulid);
       await env.KV_STATUS.put(mapKey, sessionId, { expirationTtl: Math.max(60, maxAge) });
@@ -595,28 +619,28 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
     "Max-Age": maxAge
   });
 
-  return new Response(null, {
-    status: 302,
-    headers: {
-      "Set-Cookie": cookie,
-      "Location": (() => {
-        const base = next || `/dash/${encodeURIComponent(ulid)}`;
-        if (!redirectHint) return base;
+  const headers = new Headers({ ...noStoreHeaders });
 
-        const u = new URL(base, "https://navigen.io");
-        if (!u.searchParams.get("ce")) {
-          const parts = redirectHint.split("&");
-          parts.forEach(kv => {
-            const [k, v] = kv.split("=");
-            if (k && v && !u.searchParams.get(k)) u.searchParams.set(k, decodeURIComponent(v));
-            else if (k && !u.searchParams.get(k)) u.searchParams.set(k, "1");
-          });
-        }
-        return u.pathname + u.search + u.hash;
-      })(),
-      ...noStoreHeaders
+  headers.append("Set-Cookie", cookie);
+  if (devSetCookie) headers.append("Set-Cookie", devSetCookie);
+
+  headers.set("Location", (() => {
+    const base = next || `/dash/${encodeURIComponent(ulid)}`;
+    if (!redirectHint) return base;
+
+    const u = new URL(base, "https://navigen.io");
+    if (!u.searchParams.get("ce")) {
+      const parts = redirectHint.split("&");
+      parts.forEach(kv => {
+        const [k, v] = kv.split("=");
+        if (k && v && !u.searchParams.get(k)) u.searchParams.set(k, decodeURIComponent(v));
+        else if (k && !u.searchParams.get(k)) u.searchParams.set(k, "1");
+      });
     }
-  });
+    return u.pathname + u.search + u.hash;
+  })());
+
+  return new Response(null, { status: 302, headers });
 }
 
 // --- Ownership writer (Phase 1): KV_STATUS keys ---
@@ -1425,9 +1449,16 @@ export default {
 
         await env.KV_STATUS.put(sessKey, JSON.stringify(sessVal), { expirationTtl: Math.max(60, maxAge) });
 
-        // Register to device (if ng_dev exists) so Owner Center works on this device
+        // Register to device (mint ng_dev if missing) so Owner Center works on this device
+        let devSetCookie = "";
         try {
-          const dev = readDeviceId(req);
+          let dev = readDeviceId(req);
+          if (!dev) {
+            const minted = mintDeviceId();
+            dev = minted.dev;
+            devSetCookie = minted.cookie;
+          }
+
           if (dev) {
             await env.KV_STATUS.put(devSessKey(dev, ulid), sessionId, { expirationTtl: Math.max(60, maxAge) });
             const idxKey = devIndexKey(dev);
@@ -1499,30 +1530,26 @@ export default {
           "Max-Age": maxAge
         });
 
-        return new Response(null, {
-          status: 302,
-          headers: {
-            "Set-Cookie": cookie,
-            "Location": (() => {
-              const base = next || `/dash/${encodeURIComponent(ulid)}`;
-              if (!redirectHint) return base;
+        const headers = new Headers({ ...noStoreHeaders });
+        headers.append("Set-Cookie", cookie);
+        if (devSetCookie) headers.append("Set-Cookie", devSetCookie);
+        headers.set("Location", (() => {
+          const base = next || `/dash/${encodeURIComponent(ulid)}`;
+          if (!redirectHint) return base;
 
-              // Append hint safely (works whether base already has query or not).
-              const u = new URL(base, "https://navigen.io");
-              // Do not overwrite if already present.
-              if (!u.searchParams.get("ce")) {
-                const parts = redirectHint.split("&");
-                parts.forEach(kv => {
-                  const [k, v] = kv.split("=");
-                  if (k && v && !u.searchParams.get(k)) u.searchParams.set(k, decodeURIComponent(v));
-                  else if (k && !u.searchParams.get(k)) u.searchParams.set(k, "1");
-                });
-              }
-              return u.pathname + u.search + u.hash;
-            })(),
-            ...noStoreHeaders
+          const u = new URL(base, "https://navigen.io");
+          if (!u.searchParams.get("ce")) {
+            const parts = redirectHint.split("&");
+            parts.forEach(kv => {
+              const [k, v] = kv.split("=");
+              if (k && v && !u.searchParams.get(k)) u.searchParams.set(k, decodeURIComponent(v));
+              else if (k && !u.searchParams.get(k)) u.searchParams.set(k, "1");
+            });
           }
-        });
+          return u.pathname + u.search + u.hash;
+        })());
+
+        return new Response(null, { status: 302, headers });
       }
 
       // --- Owner session clear: /owner/clear-session

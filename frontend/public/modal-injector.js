@@ -4752,15 +4752,14 @@ export async function createOwnerCenterModal() {
 
       btn.innerHTML = `
         <div class="oc-row1">
+          <span class="icon-img" aria-hidden="true">📍</span>
+
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
             <strong>${label}</strong>
           </span>
 
-          <!-- Status dot (right) -->
           <span class="syb-status-dot syb-free" aria-hidden="true"></span>
         </div>
-
-        <div class="oc-slug">${slug || u}</div>
 
         <div class="oc-actions">
           <button type="button" class="clear-x owner-center-remove"

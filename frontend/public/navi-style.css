@@ -2588,19 +2588,32 @@ button:hover {
   justify-content: center;
 }
 
-/* 🚀 at far right */
-.modal-menu-item.syb-card .owner-center-launch{
-  right: 12px;
+/* Owner Center card actions must never affect SYB cards */
+.oc-card .oc-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:10px;
 }
 
-/* 🧹 just left of 🚀 */
-.modal-menu-item.syb-card .owner-center-remove{
-  right: 44px;
+/* Unified OC action button sizing (matches LPM-ish tap target) */
+.oc-card .oc-actions .owner-center-remove,
+.oc-card .oc-actions .owner-center-launch{
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  font-size:20px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
 }
 
-/* Move 🎁 to avoid overlapping the action buttons */
+/* Ensure SYB gift stays aligned with the status dot column (top-right) */
 .modal-menu-item.syb-card .syb-gift{
-  right: 76px;
+  position:absolute;
+  right:12px;
+  top:28px;
+  bottom:auto;
 }
 
 .modal-menu-item{
@@ -2619,6 +2632,35 @@ button:hover {
   width:100%;                 /* stretch across modal for better card width */
   box-sizing:border-box;      /* include padding in width */
 }
+
+/* Owner Center cards: single title row + action row (no slug row) */
+.oc-card .oc-row1{
+  display:flex;
+  align-items:center;          /* vertical centering (📍 like 🔑 row) */
+  gap:12px;
+}
+
+/* Action row: own line, right aligned, comfortable tap targets */
+.oc-card .oc-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:10px;
+}
+
+/* OC action buttons: match LPM-ish tap size */
+.oc-card .oc-actions .clear-x{
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  font-size:20px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* OC cards no longer render a slug row, but keep safe if any legacy node remains */
+.oc-card .oc-slug{ display:none; }
 
 /* Owner Settings: Selected/Active context cards (informational, not clickable) */
 .modal-menu-item.os-context-card{
