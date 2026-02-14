@@ -2798,7 +2798,7 @@ export async function showSelectLocationModal() {
           <strong>${x.name}</strong><br><small>${line2}</small>
         </span>
 
-        <span class="syb-status-dot syb-free" aria-hidden="true"></span>
+        <span class="syb-status-dot" aria-hidden="true"></span>
         <span class="syb-gift" aria-hidden="true">🎁</span>
       `;
 
@@ -4758,7 +4758,7 @@ export async function createOwnerCenterModal() {
             <strong>${label}</strong>
           </span>
 
-          <span class="syb-status-dot syb-free" aria-hidden="true"></span>
+          <span class="syb-status-dot" aria-hidden="true"></span>
         </div>
 
         <div class="oc-actions">
