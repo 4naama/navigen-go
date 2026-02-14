@@ -5133,8 +5133,23 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
   // Split campaign rows for tabs (ensure multiple active campaigns are represented)
   const rowsAll = Array.isArray(historyArr) ? historyArr : [];
-  const rowsActive = rowsAll.filter(x => String(x?.status || '').toLowerCase() === 'active');
-  const rowsFinished = rowsAll.filter(x => String(x?.status || '').toLowerCase() === 'finished');
+  const ymd = (d) => {
+    const s = String(d || '').trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+  };
+  const today = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+
+  const isEnded = (row) => {
+    const e = ymd(row?.endDate);
+    if (!e) return false;
+    const dt = new Date(`${e}T00:00:00Z`);
+    return Number.isFinite(dt.getTime()) && dt.getTime() < today.getTime();
+  };
+
+  const statusOf = (row) => String(row?.status || '').toLowerCase().trim();
+
+  const rowsActive = rowsAll.filter(x => statusOf(x) === 'active' && !isEnded(x));
+  const rowsFinished = rowsAll.filter(x => statusOf(x) === 'finished' || isEnded(x));
 
   // Root shell
   const shell = document.createElement('div');
@@ -5315,6 +5330,16 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
         e.preventDefault();
         showCampaignInfoModal(r);
       });
+
+      // Status dot: green for current, grey for history (deterministic).
+      try {
+        const dot = b.querySelector('.cm-status-dot');
+        if (dot) {
+          const st = String(r?.status || '').toLowerCase().trim();
+          dot.classList.toggle('cm-dot-active', (kind === 'current') && (st === 'active'));
+          dot.classList.toggle('cm-dot-finished', (kind === 'history') || (st === 'finished'));
+        }
+      } catch {}
 
       list.appendChild(b);
     });

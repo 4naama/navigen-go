@@ -2799,6 +2799,7 @@ select.input{
 
 /* Campaign Management: view selector should size to content */
 .cm-controls .cm-select{
+  display: inline-block;
   width: auto;
   max-width: 100%;
 }
@@ -2954,7 +2955,7 @@ select.input{
    Single flexible row with internal stacked text.
    ============================================================ */
 
-.cm-camp-card{
+.cm-panel.cm-camp-card{
   width:100%;
   display:flex;
   align-items:flex-start;
@@ -2972,14 +2973,14 @@ select.input{
   box-sizing:border-box;
 }
 
-.cm-camp-card:hover{
+.cm-panel.cm-camp-card:hover{
   background:#f1f1f1;
   border-color:#d7d7d7;
   transform:translateY(-1px);
 }
 
 /* Left column: icon (📍) */
-.cm-camp-left{
+.cm-panel.cm-camp-left{
   flex:0 0 28px;
   display:flex;
   align-items:flex-start;
@@ -2990,7 +2991,7 @@ select.input{
 }
 
 /* Middle column: stacked text */
-.cm-camp-mid{
+.cm-panel.cm-camp-mid{
   flex:1 1 auto;
   min-width:0;
   display:flex;
@@ -2999,14 +3000,14 @@ select.input{
 }
 
 /* Location (bold primary line) */
-.cm-camp-loc{
+.cm-panel.cm-camp-loc{
   font-weight:700;
   overflow-wrap:anywhere;
   word-break:break-word;
 }
 
 /* Campaign name */
-.cm-camp-name{
+.cm-panel.cm-camp-name{
   font-size:13px;
   color:#334155;
   overflow-wrap:anywhere;
@@ -3014,13 +3015,13 @@ select.input{
 }
 
 /* Date range */
-.cm-camp-range{
+.cm-panel.cm-camp-range{
   font-size:12px;
   color:#6b7280;
 }
 
 /* Right column: reserved space for status dot */
-.cm-camp-right{
+.cm-panel.cm-camp-right{
   flex:0 0 28px;
   display:flex;
   align-items:flex-start;
@@ -3035,6 +3036,9 @@ select.input{
   background:transparent;
   box-shadow:0 0 0 2px rgba(255,255,255,0.85);
 }
+
+.cm-status-dot.cm-dot-active{ background:#22c55e; }    /* green */
+.cm-status-dot.cm-dot-finished{ background:#94a3b8; }  /* slate */
 
 /* Campaign information modal (label/value list) */
 .cm-info-list{
