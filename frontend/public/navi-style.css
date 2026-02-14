@@ -2570,11 +2570,13 @@ button:hover {
 /* 🎁 Gift: bottom-left (only when promoted) */
 .modal-menu-item.syb-card .syb-gift{
   position: absolute;
-  left: 12px;
+  right: 12px;
   bottom: 12px;
+  left: auto;
+  top: auto;
   font-size: 16px;
   line-height: 1;
-  display: none; /* default off */
+  display: none;
 }
 
 .modal-menu-item.syb-card .syb-gift.syb-gift-on{
@@ -2793,6 +2795,12 @@ select.input{
   margin: 4px 0 10px 0;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(0,0,0,.08); /* same tone as modal header divider */
+}
+
+/* Campaign Management: view selector should size to content */
+.cm-controls .cm-select{
+  width: auto;
+  max-width: 100%;
 }
 
 .cm-select{
