@@ -1060,7 +1060,7 @@ body.large-text {
 
   z-index: 1001;                              /* ✅ Positions above backdrop layer */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); /* ✅ Drop shadow gives depth to modal card */
-  font-size: 18px;                            /* ✅ Base font size inside modal */
+  font-size: 16px;                            /* ✅ Base font size inside modal */
   line-height: 1.5;                           /* ✅ Ensures readable spacing for multi-line text */
   box-sizing: border-box;                     /* ✅ Includes padding within declared width */
 }
