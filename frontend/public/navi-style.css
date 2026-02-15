@@ -2476,13 +2476,11 @@ button:hover {
 
 /* CM / action modals: scroll body, not header */
 .modal-content.modal-action{
-  padding: 20px;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .modal-content.modal-action .modal-body{
-  overflow: visible;
+  overflow: auto;
 }
 
 .modal-menu-list{
