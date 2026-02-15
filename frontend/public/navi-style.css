@@ -2474,10 +2474,11 @@ button:hover {
   padding: 0 1.5em 1.5em;   /* header attached; content spaced */
 }
 
-/* Action modals (including Campaign Management): allow the modal card to scroll like the rest of the app */
+/* CM / action modals: scroll body, not header */
 .modal-content.modal-action{
-  overflow-y: auto;
+  padding: 20px;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .modal-content.modal-action .modal-body{
@@ -2685,19 +2686,16 @@ button:hover {
   background:#fff5f5;         /* subtle red tint */
 }
 
-/* Campaign Management: bold field labels (no background changes) */
-#campaign-management-modal .campaign-mgmt-form .muted{
-  font-weight:700;
-  opacity:0.9;
-}
-
-/* Campaign Management: prevent tall glyph clipping in inputs/selects */
-#campaign-management-modal .campaign-mgmt-form .input{
-  font-size:14px;
-  line-height:1.2;
-  height:38px;        /* 36px was tight with some fonts */
-  padding-top:9px;
-  padding-bottom:9px;
+/* Campaign Management form controls */
+.input{
+  width: 100%;
+  box-sizing: border-box;
+  height: 36px;
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
 }
 
 /* Select chevron spacing (unify CM + Dash): applies to ALL campaign form selects */
