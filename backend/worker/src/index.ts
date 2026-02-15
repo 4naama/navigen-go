@@ -575,7 +575,6 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
 
       const draftKey = `campaigns:draft:${ulid}`;
       const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
-      if (!draft) { promoteDiag = 'no_draft'; }
 
       if (draft && String(draft?.campaignKey || "").trim() === campaignKey) {
 
@@ -1350,6 +1349,53 @@ export default {
         return json({ ok: true, ulid, campaignKey }, 200, { "cache-control": "no-store" });
       }
 
+      // --- Owner Campaigns: suspend/resume a campaign row (KV-authoritative)
+      // POST /api/owner/campaigns/suspend body: { campaignKey: "<key>", action: "suspend"|"resume" }
+      if (normPath === "/api/owner/campaigns/suspend" && req.method === "POST") {
+        const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+
+        const sess = await requireOwnerSession(req, env);
+        if (sess instanceof Response) return sess;
+        const ulid = String(sess.ulid || "").trim();
+
+        const body = await req.json().catch(() => ({})) as any;
+        const campaignKey = String(body?.campaignKey || "").trim();
+        const action = String(body?.action || "suspend").trim().toLowerCase();
+
+        if (!campaignKey) {
+          return json({ error: { code: "invalid_request", message: "campaignKey required" } }, 400, noStore);
+        }
+        if (action !== "suspend" && action !== "resume") {
+          return json({ error: { code: "invalid_request", message: "action must be suspend|resume" } }, 400, noStore);
+        }
+
+        const histKey = campaignsByUlidKey(ulid);
+        const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
+        const arr: any[] = Array.isArray(hist) ? hist : [];
+
+        const idx = arr.findIndex(x => String(x?.campaignKey || "").trim() === campaignKey);
+        if (idx < 0) {
+          return json({ error: { code: "not_found", message: "campaign not found for this location" } }, 404, noStore);
+        }
+
+        const row = arr[idx] || {};
+        const nextRow = { ...row };
+
+        if (action === "suspend") {
+          nextRow.statusOverride = "Suspended";
+          nextRow.suspendedAt = new Date().toISOString();
+        } else {
+          // resume: clear override only if the campaign window is still valid
+          nextRow.statusOverride = "";
+          delete nextRow.suspendedAt;
+        }
+
+        arr[idx] = nextRow;
+        await env.KV_STATUS.put(histKey, JSON.stringify(arr));
+
+        return json({ ok: true, ulid, campaignKey, action }, 200, noStore);
+      }
+
       // --- Owner session diag: /api/_diag/opsess (safe; no secrets)
       if (normPath === "/api/_diag/opsess" && req.method === "GET") {
         const cookieHdr = req.headers.get("Cookie") || "";
@@ -1670,7 +1716,55 @@ export default {
         const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
 
         // Resolve active campaign from KV (authoritative)
-        const activeRow = await activeCampaignRowForUlid(env, locULID);
+        const requestedKey = String(campaignKeyRaw || "").trim();
+
+        // Load all active rows (effective status === active, in-window)
+        const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(locULID), { type: "json" }) as any;
+        const rows: any[] = Array.isArray(rawRows) ? rawRows : [];
+
+        const todayISO = (() => {
+          const now = new Date();
+          return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        })();
+
+        const isActiveRow = (r: any) => {
+          const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
+          if (st !== "active") return false;
+          const sd = String(r?.startDate || "").trim();
+          const ed = String(r?.endDate || "").trim();
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(sd) || !/^\d{4}-\d{2}-\d{2}$/.test(ed)) return false;
+          return todayISO >= sd && todayISO <= ed;
+        };
+
+        const actives = rows.filter(isActiveRow);
+
+        if (!actives.length) {
+          return json({ error: { code: "forbidden", message: "campaign required" } }, 403);
+        }
+
+        // If caller specified campaignKey, use it only if it's active.
+        if (requestedKey) {
+          const hit = actives.find(r => String(r?.campaignKey || "").trim() === requestedKey);
+          if (!hit) {
+            return json({ error: { code: "forbidden", message: "campaign not active" } }, 403);
+          }
+          // continue with activeRow = hit
+          var activeRow = hit;
+        } else {
+          // No campaignKey specified:
+          // - if exactly one active, proceed
+          // - if multiple, force selection
+          if (actives.length !== 1) {
+            const items = actives.map(r => ({
+              campaignKey: String(r?.campaignKey || "").trim(),
+              campaignName: String(r?.campaignName || "").trim(),
+              startDate: String(r?.startDate || "").trim(),
+              endDate: String(r?.endDate || "").trim()
+            }));
+            return json({ error: { code: "multiple_active", message: "multiple active campaigns" }, items }, 409, { "cache-control": "no-store" });
+          }
+          var activeRow = actives[0];
+        }
         if (!activeRow) {
           return json(
             { error: { code: "forbidden", message: "campaign required" } },

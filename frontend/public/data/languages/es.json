@@ -710,6 +710,7 @@
   "campaign.ui.label.startDate": "Fecha de inicio",
   "campaign.ui.label.endDate": "Fecha de finalización",
   "campaign.ui.empty.history": "No hay campañas finalizadas.",
+  "campaign.ui.renew": "Renovar campaña",
   "owner.center.launch.title": "",
   "Favorites": "Favoritos",
   "My Stuff": "Mis cosas",
@@ -776,5 +777,7 @@
   "owner.signout.confirmBody1": "Esto borra la sesión activa del propietario en este dispositivo.",
   "owner.signout.confirmBody2": "La propiedad no se ve afectada.",
   "owner.signout.confirmBody3": "Puedes restaurar el acceso en cualquier momento usando tu recibo de Stripe (pi_…).",
-  "owner.signout.confirmCta": "Cerrar sesión"
+  "owner.signout.confirmCta": "Cerrar sesión",
+  "campaign.activePicker.title": "Campañas activas",
+  "campaign.activePicker.note": "Selecciona una campaña para ver los detalles de la promoción y mostrar el QR de canje."
 }

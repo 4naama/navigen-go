@@ -710,6 +710,7 @@
   "campaign.ui.label.startDate": "Date de début",
   "campaign.ui.label.endDate": "Date de fin",
   "campaign.ui.empty.history": "Aucune campagne terminée.",
+  "campaign.ui.renew": "Renouveler la campagne",
   "owner.center.launch.title": "",
   "Favorites": "Favoris",
   "My Stuff": "Mes éléments",
@@ -776,5 +777,7 @@
   "owner.signout.confirmBody1": "Cela supprime la session propriétaire active sur cet appareil.",
   "owner.signout.confirmBody2": "La propriété n’est pas affectée.",
   "owner.signout.confirmBody3": "Vous pouvez restaurer l’accès à tout moment à l’aide de votre reçu Stripe (pi_…).",
-  "owner.signout.confirmCta": "Se déconnecter"
+  "owner.signout.confirmCta": "Se déconnecter",
+  "campaign.activePicker.title": "Campagnes actives",
+  "campaign.activePicker.note": "Sélectionnez une campagne pour voir les détails de la promotion et afficher le QR de validation."
 }

@@ -710,6 +710,7 @@
   "campaign.ui.label.startDate": "תאריך התחלה",
   "campaign.ui.label.endDate": "תאריך סיום",
   "campaign.ui.empty.history": "אין קמפיינים שהסתיימו.",
+  "campaign.ui.renew": "חדש קמפיין",
   "owner.center.launch.title": "",
   "Favorites": "מועדפים",
   "My Stuff": "הדברים שלי",
@@ -776,5 +777,7 @@
   "owner.signout.confirmBody1": "פעולה זו מנקה את סשן הבעלים הפעיל במכשיר זה.",
   "owner.signout.confirmBody2": "הבעלות אינה מושפעת.",
   "owner.signout.confirmBody3": "ניתן לשחזר גישה בכל עת באמצעות קבלת Stripe ‏(pi_…).",
-  "owner.signout.confirmCta": "התנתק"
+  "owner.signout.confirmCta": "התנתק",
+  "campaign.activePicker.title": "קמפיינים פעילים",
+  "campaign.activePicker.note": "בחר קמפיין כדי לצפות בפרטי הקידום ולהציג את קוד ה-QR למימוש."
 }

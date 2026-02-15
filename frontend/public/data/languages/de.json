@@ -710,6 +710,7 @@
   "campaign.ui.label.startDate": "Startdatum",
   "campaign.ui.label.endDate": "Enddatum",
   "campaign.ui.empty.history": "Keine abgeschlossenen Kampagnen.",
+  "campaign.ui.renew": "Kampagne verlängern",
   "owner.center.launch.title": "",
   "Favorites": "Favoriten",
   "My Stuff": "Meine Inhalte",
@@ -776,5 +777,7 @@
   "owner.signout.confirmBody1": "Dadurch wird die aktive Eigentümersitzung auf diesem Gerät beendet.",
   "owner.signout.confirmBody2": "Das Eigentum wird nicht beeinträchtigt.",
   "owner.signout.confirmBody3": "Sie können den Zugriff jederzeit mit Ihrer Stripe-Quittung (pi_…) wiederherstellen.",
-  "owner.signout.confirmCta": "Abmelden"
+  "owner.signout.confirmCta": "Abmelden",
+  "campaign.activePicker.title": "Aktive Kampagnen",
+  "campaign.activePicker.note": "Wählen Sie eine Kampagne aus, um die Promotionsdetails anzuzeigen und den Einlöse-QR-Code zu öffnen."
 }

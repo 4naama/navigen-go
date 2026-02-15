@@ -710,6 +710,7 @@
   "campaign.ui.label.startDate": "Kezdő dátum",
   "campaign.ui.label.endDate": "Befejezés dátuma",
   "campaign.ui.empty.history": "Nincs befejezett kampány.",
+  "campaign.ui.renew": "Kampány megújítása",
   "owner.center.launch.title": "",
   "Favorites": "Kedvencek",
   "My Stuff": "Saját elemek",
@@ -776,5 +777,7 @@
   "owner.signout.confirmBody1": "Ez törli az aktív tulajdonosi munkamenetet ezen az eszközön.",
   "owner.signout.confirmBody2": "A tulajdonjog nem érintett.",
   "owner.signout.confirmBody3": "A hozzáférést bármikor visszaállíthatja a Stripe-nyugtájával (pi_…).",
-  "owner.signout.confirmCta": "Kijelentkezés"
+  "owner.signout.confirmCta": "Kijelentkezés",
+  "campaign.activePicker.title": "Aktív kampányok",
+  "campaign.activePicker.note": "Válasszon ki egy kampányt a promóció részleteinek megtekintéséhez és a beváltási QR-kód megjelenítéséhez."
 }

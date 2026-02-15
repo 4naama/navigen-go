@@ -371,6 +371,80 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   showModal(id);
 }
 
+function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
+  const id = 'active-campaigns-modal';
+  document.getElementById(id)?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-layout';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${(typeof t === 'function' && t('campaign.activePicker.title')) || 'Active campaigns'}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  const note = document.createElement('p');
+  note.className = 'muted';
+  note.style.textAlign = 'left';
+  note.textContent =
+    (typeof t === 'function' && t('campaign.activePicker.note')) ||
+    'Select a campaign to view promotion details and show the redeem QR.';
+  inner.appendChild(note);
+
+  const list = document.createElement('div');
+  list.className = 'modal-menu-list';
+  inner.appendChild(list);
+
+  const fmt = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(String(s||'').trim()) ? String(s).trim() : '');
+  items.forEach((c) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'modal-menu-item';
+    const nm = String(c?.campaignName || '').trim() || ((typeof t==='function' && t('promotion.unnamed')) || 'Promotion');
+    const sd = fmt(c?.startDate);
+    const ed = fmt(c?.endDate);
+    const range = (sd && ed) ? `${sd} → ${ed}` : '';
+    btn.innerHTML = `
+      <span class="icon-img">🎁</span>
+      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+        <strong>${nm}</strong>
+        ${range ? `<br><small>${range}</small>` : ``}
+      </span>
+    `;
+    btn.addEventListener('click', () => {
+      hideModal(id);
+      openPromotionQrModal(document.getElementById('location-profile-modal'), {
+        locationID: locationIdOrSlug,
+        name: locationName,
+        displayName: locationName,
+        campaignKey: String(c?.campaignKey || '').trim()
+      });
+    });
+    list.appendChild(btn);
+  });
+
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  setupTapOutClose(id);
+  showModal(id);
+}
+
 // Promotion helper: show campaign details + button to open the Redemption QR modal
 async function openPromotionQrModal(modal, data) {
   try {
@@ -408,11 +482,30 @@ async function openPromotionQrModal(modal, data) {
 
     // Call promo-qr on the site worker (authoritative KV campaigns live here)
     const apiUrl = new URL('/api/promo-qr', location.origin);
-
     apiUrl.searchParams.set('locationID', locationIdOrSlug);
 
+    // If caller already knows a campaignKey (e.g., Promotions list), pass it through.
+    const ck = String(data?.campaignKey || '').trim();
+    if (ck) apiUrl.searchParams.set('campaignKey', ck);
+
     const res = await fetch(apiUrl.toString(), { cache: 'no-store' });
+
     if (!res.ok) {
+      if (res.status === 409) {
+        const payload = await res.json().catch(() => null);
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        if (!items.length) {
+          showToast('Promotions unavailable for this location', 2000);
+          return;
+        }
+        showActiveCampaignsModal({
+          locationIdOrSlug,
+          locationName: String(data?.name || data?.displayName || '').trim(),
+          items
+        });
+        return;
+      }
+      
       if (res.status === 403) {
         // Campaign required for promos (owner-gated). Use existing owner copy.
         const msg =
@@ -5077,7 +5170,8 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     }
   }
 
-  const draft = listJ?.draft || null;
+  const prefillFrom = (opts && opts.prefillFrom && typeof opts.prefillFrom === 'object') ? opts.prefillFrom : null;
+  const draft = listJ?.draft || prefillFrom || null;
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
   const ulid = String(listJ?.ulid || '').trim(); // empty in guest mode; that's OK
 
@@ -5282,6 +5376,23 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     });
 
     box.appendChild(wrap);
+    // Actions: Renew + Suspend/Resume (owner only; guest mode won't have listJ anyway)
+    const actions = document.createElement('div');
+    actions.className = 'modal-actions';
+
+    const btnRenew = document.createElement('button');
+    btnRenew.type = 'button';
+    btnRenew.className = 'modal-body-button';
+    btnRenew.textContent = (typeof t === 'function' && t('campaign.ui.renew')) || 'Renew campaign';
+    btnRenew.addEventListener('click', async () => {
+      hideModal(mid);
+      // Prefill draft in the main CM modal using this row as template
+      await showCampaignManagementModal(displaySlug, { openTab: 'new', prefillFrom: rowSafe });
+    });
+
+    actions.appendChild(btnRenew);
+    box.appendChild(actions);
+    
     showModal(mid);
   };
 
