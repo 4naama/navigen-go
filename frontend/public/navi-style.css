@@ -3039,10 +3039,11 @@ select.input{
   box-shadow:0 0 0 2px rgba(255,255,255,0.85);
 }
 
-.cm-panel .cm-status-dot.cm-dot-active{ background:#ef4444; }    /* red */
-.cm-panel .cm-status-dot.cm-dot-finished{ background:#94a3b8; }  /* slate */
+.cm-panel .cm-status-dot.cm-dot-active{ background:#ef4444; }     /* red */
+.cm-panel .cm-status-dot.cm-dot-finished{ background:#94a3b8; }   /* slate */
+.cm-panel .cm-status-dot.cm-dot-suspended{ background:#94a3b8; }  /* suspended = grey */
 
-/* Action buttons row (➖ ➕ ♻️) */
+/* Action buttons row (➖ ➕ ▶ ♻️) */
 .cm-panel .cm-camp-actions{
   display:flex;
   gap:10px;
@@ -3052,34 +3053,44 @@ select.input{
   width:44px;
   height:44px;
   border-radius:12px;
-  font-size:20px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
 
-  background:#f1f5f9;    /* unified light background */
+  background:#f1f5f9;          /* unified light background */
   border:1px solid #e2e8f0;
 }
 
+/* Suspended campaign: grey out 🎁 and non-primary actions */
 .cm-panel .cm-camp-card.cm-camp-suspended .cm-camp-left{
   filter: grayscale(1);
   opacity: 0.6;
 }
 
-/* Campaign card cta button colors */
-.icon-minus{ color:#ef4444; }   /* red */
-.icon-plus{ color:#2563eb; }    /* blue */
-.icon-recycle{ color:#16a34a; } /* green */
-.icon-play{ color:#16a34a; } /* or blue */
-
-.icon-minus,
-.icon-plus,
-.icon-recycle,
-.icon-play{
-  font-size: 22px;
-  line-height: 1;
-  display: inline-block;
+.cm-panel .cm-camp-card.cm-camp-suspended .cm-camp-add,
+.cm-panel .cm-camp-card.cm-camp-suspended .cm-camp-copy{
+  opacity:0.75;
 }
+
+.cm-panel .cm-camp-card.cm-camp-suspended .icon-plus,
+.cm-panel .cm-camp-card.cm-camp-suspended .icon-recycle{
+  color:#94a3b8;
+}
+
+/* Campaign card CTA glyphs: harmonized size + default colors */
+.cm-panel .icon-minus,
+.cm-panel .icon-plus,
+.cm-panel .icon-recycle,
+.cm-panel .icon-play{
+  font-size:22px;   /* harmonized to match ♻️ */
+  line-height:1;
+  display:inline-block;
+}
+
+.cm-panel .icon-minus{ color:#ef4444; }   /* red */
+.cm-panel .icon-plus{ color:#2563eb; }    /* blue */
+.cm-panel .icon-recycle{ color:#16a34a; } /* green */
+.cm-panel .icon-play{ color:#16a34a; }    /* green (resume) */
 
 /* ============================================================
    Campaign Management — Campaign information modal (label/value list)

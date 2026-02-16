@@ -5551,6 +5551,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
         if (dot) {
           const st = String(r?.statusOverride || r?.status || '').toLowerCase().trim();
           dot.classList.toggle('cm-dot-active', (kind === 'current') && (st === 'active'));
+          dot.classList.toggle('cm-dot-suspended', (kind === 'current') && (st === 'suspended'));
           dot.classList.toggle('cm-dot-finished', (kind === 'history') || (st === 'finished'));
         }
       } catch {}
