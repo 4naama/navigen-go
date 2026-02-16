@@ -1722,18 +1722,23 @@ export default {
         const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(locULID), { type: "json" }) as any;
         const rows: any[] = Array.isArray(rawRows) ? rawRows : [];
 
-        const todayISO = (() => {
-          const now = new Date();
-          return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-        })();
+        const nowMs = Date.now();
 
         const isActiveRow = (r: any) => {
+          if (!r) return false;
+          if (String(r?.locationID || "").trim() !== locULID) return false;
+
           const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
           if (st !== "active") return false;
-          const sd = String(r?.startDate || "").trim();
-          const ed = String(r?.endDate || "").trim();
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(sd) || !/^\d{4}-\d{2}-\d{2}$/.test(ed)) return false;
-          return todayISO >= sd && todayISO <= ed;
+
+          const sMs = parseYmdUtcMs(String(r?.startDate || ""));
+          const eMs = parseYmdUtcMs(String(r?.endDate || ""));
+          if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
+
+          if (nowMs < sMs) return false;
+          if (nowMs > (eMs + 24 * 60 * 60 * 1000 - 1)) return false;
+
+          return true;
         };
 
         const actives = rows.filter(isActiveRow);

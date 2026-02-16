@@ -2801,33 +2801,28 @@ select.input{
   border-bottom: 1px solid rgba(0,0,0,.08); /* same tone as modal header divider */
 }
 
-/* Campaign Management: view selector should size to content */
+/* Campaign Management: view selector (blue tint + dash-like chevron) */
 .cm-controls .cm-select{
-  display: inline-block;
-  width: auto;
-  max-width: 100%;
-  background: #eaf4ff;
-  border-color: #b7d7ff;
-}
+  display:inline-block;
+  width:auto;
+  max-width:100%;
 
-.cm-select{
-  font: inherit;
-  padding: 6px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #fff;
-  cursor: pointer;
+  font:inherit;
+  padding:6px 10px;
+  padding-right:2.2ch;
 
-  /* Dash-like chevron spacing */
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 2.2ch; /* room for glyph + gap (matches dash) */
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 1ch center;
-  background-size: 14px 14px;
+  border:1px solid #b7d7ff;
+  border-radius:6px;
+  background:#eaf4ff;
+  cursor:pointer;
 
-  max-width: 100%;
+  appearance:none;
+  -webkit-appearance:none;
+
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat;
+  background-position:right 1ch center;
+  background-size:14px 14px;
 }
 
 /* Campaign Management: sections (no inline styles in JS) */
@@ -3132,6 +3127,9 @@ select.input{
   display:flex;
   gap:10px;
 }
+
+.cm-panel .cm-camp-actions .cm-camp-suspend{ color:#ef4444; } /* ➖ red */
+.cm-panel .cm-camp-actions .cm-camp-add{ color:#2563eb; }     /* ➕ blue */
 
 /* Primary modal action button */
 .modal-primary{
