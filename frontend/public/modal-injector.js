@@ -5248,7 +5248,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     return Number.isFinite(dt.getTime()) && dt.getTime() < today.getTime();
   };
 
-  const statusOf = (row) => String(row?.status || '').toLowerCase().trim();
+  const statusOf = (row) => String(row?.statusOverride || row?.status || '').toLowerCase().trim();
 
   const rowsActive = rowsAll.filter(x => statusOf(x) === 'active' && !isEnded(x));
   const rowsFinished = rowsAll.filter(x => statusOf(x) === 'finished' || isEnded(x));
@@ -5423,6 +5423,9 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
       b.type = 'button';
       b.className = 'cm-camp-card';
 
+      const stEff = String(r?.statusOverride || r?.status || '').trim().toLowerCase();
+      if (stEff === 'suspended') b.classList.add('cm-camp-suspended');
+
       const name = String(r?.campaignName || r?.campaignKey || '').trim();
       const start = fmtDate(r?.startDate);
       const end = fmtDate(r?.endDate);
@@ -5448,22 +5451,30 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
           </div>
         </div>
 
-        ${kind === 'current' ? `
-          <div class="cm-camp-row2">
-            <div class="cm-camp-actions">
-              <button type="button" class="clear-x cm-camp-suspend" aria-label="Suspend">
-                <span class="icon-minus">−</span>
-              </button>
-              <button type="button" class="clear-x cm-camp-add" aria-label="Add">
-                <span class="icon-plus">+</span>
-              </button>
-              <button type="button" class="clear-x cm-camp-resume" aria-label="Reuse">
-                <span class="icon-recycle">♻️</span>
-              </button>
+        ${kind === 'current' ? (() => {
+          const st = String(r?.statusOverride || r?.status || '').trim().toLowerCase();
+          const isSusp = (st === 'suspended');
+
+          return `
+            <div class="cm-camp-row2">
+              <div class="cm-camp-actions">
+                ${isSusp
+                  ? `<button type="button" class="clear-x cm-camp-resume" aria-label="Resume"><span class="icon-play">▶</span></button>`
+                  : `<button type="button" class="clear-x cm-camp-suspend" aria-label="Suspend"><span class="icon-minus">−</span></button>`
+                }
+                <button type="button" class="clear-x cm-camp-add" aria-label="Add"><span class="icon-plus">+</span></button>
+                <button type="button" class="clear-x cm-camp-copy" aria-label="Copy"><span class="icon-recycle">♻️</span></button>
+              </div>
             </div>
-          </div>
-        ` : ``}
+          `;
+        })() : ``}
       `;
+
+      b.querySelector('.cm-camp-copy')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showCampaignManagementModal(displaySlug, { openTab: 'new', prefillFrom: r });
+      });
 
       b.addEventListener('click', (e) => {
         e.preventDefault();
@@ -5534,7 +5545,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
       try {
         const dot = b.querySelector('.cm-status-dot');
         if (dot) {
-          const st = String(r?.status || '').toLowerCase().trim();
+          const st = String(r?.statusOverride || r?.status || '').toLowerCase().trim();
           dot.classList.toggle('cm-dot-active', (kind === 'current') && (st === 'active'));
           dot.classList.toggle('cm-dot-finished', (kind === 'history') || (st === 'finished'));
         }
