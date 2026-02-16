@@ -5250,7 +5250,11 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
   const statusOf = (row) => String(row?.statusOverride || row?.status || '').toLowerCase().trim();
 
-  const rowsActive = rowsAll.filter(x => statusOf(x) === 'active' && !isEnded(x));
+  const rowsActive = rowsAll.filter(x => {
+    const st = statusOf(x);
+    return (st === 'active' || st === 'suspended') && !isEnded(x);
+  });
+
   const rowsFinished = rowsAll.filter(x => statusOf(x) === 'finished' || isEnded(x));
 
   // Root shell
