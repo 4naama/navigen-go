@@ -3061,10 +3061,11 @@ select.input{
   border:1px solid #e2e8f0;
 }
 
-/* Emoji colors */
-.cm-panel .cm-camp-actions .cm-camp-suspend{ color:#ef4444; } /* ➖ red */
-.cm-panel .cm-camp-actions .cm-camp-add{ color:#2563eb; }     /* ➕ blue */
-.cm-panel .cm-camp-actions .cm-camp-resume{ color:#16a34a; }  /* ♻️ green */
+/* Campaign card cta button colors */
+.icon-minus{ color:#ef4444; }   /* red */
+.icon-plus{ color:#2563eb; }    /* blue */
+.icon-recycle{ color:#16a34a; } /* green */
+
 
 /* ============================================================
    Campaign Management — Campaign information modal (label/value list)

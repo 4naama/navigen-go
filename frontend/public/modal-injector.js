@@ -5451,9 +5451,15 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
         ${kind === 'current' ? `
           <div class="cm-camp-row2">
             <div class="cm-camp-actions">
-              <button type="button" class="clear-x cm-camp-suspend" aria-label="Suspend">➖</button>
-              <button type="button" class="clear-x cm-camp-add" aria-label="Add">➕</button>
-              <button type="button" class="clear-x cm-camp-resume" aria-label="Resume">♻️</button>
+              <button type="button" class="clear-x cm-camp-suspend" aria-label="Suspend">
+                <span class="icon-minus">−</span>
+              </button>
+              <button type="button" class="clear-x cm-camp-add" aria-label="Add">
+                <span class="icon-plus">+</span>
+              </button>
+              <button type="button" class="clear-x cm-camp-resume" aria-label="Reuse">
+                <span class="icon-recycle">♻️</span>
+              </button>
             </div>
           </div>
         ` : ``}
@@ -5563,8 +5569,9 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     };
 
     const yy = String(new Date().getFullYear()).slice(-2);
-    const brandSlug = deriveBrandSlug(locName) || 'brand';
-    const suggestedKey = `${brandSlug}-${yy}-01`;
+    // Canonical: campaignKey must be locationSlug-based (stable + unique per business).
+    const baseSlug = String(displaySlug || slug || '').trim() || 'location';
+    const suggestedKey = `${baseSlug}-${yy}-01`;
 
     const campaignKey = buildInput('text', draft?.campaignKey || suggestedKey);
     const campaignName = buildInput('text', draft?.campaignName || '');
