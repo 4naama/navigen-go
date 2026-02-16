@@ -5434,25 +5434,29 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
       const left = (kind === 'current') ? '🎁' : '';
 
       b.innerHTML = `
-        <div class="cm-camp-left">${left}</div>
+        <div class="cm-camp-row1">
+          <div class="cm-camp-left">${left}</div>
 
-        <div class="cm-camp-mid">
-          <div class="cm-camp-loc">${String(locName || '').trim()}</div>
-          <div class="cm-camp-key">${String(r?.campaignKey || '').trim()}</div>
-          <div class="cm-camp-range">${range}</div>
+          <div class="cm-camp-mid">
+            <div class="cm-camp-loc">${String(locName || '').trim()}</div>
+            <div class="cm-camp-key">${String(r?.campaignKey || '').trim()}</div>
+            <div class="cm-camp-range">${range}</div>
+          </div>
+
+          <div class="cm-camp-right">
+            <span class="cm-status-dot" aria-hidden="true"></span>
+          </div>
         </div>
 
-        <div class="cm-camp-right">
-          <span class="cm-status-dot" aria-hidden="true"></span>
-
-          ${kind === 'current' ? `
+        ${kind === 'current' ? `
+          <div class="cm-camp-row2">
             <div class="cm-camp-actions">
               <button type="button" class="clear-x cm-camp-suspend" aria-label="Suspend">➖</button>
               <button type="button" class="clear-x cm-camp-add" aria-label="Add">➕</button>
               <button type="button" class="clear-x cm-camp-resume" aria-label="Resume">♻️</button>
             </div>
-          ` : ``}
-        </div>
+          </div>
+        ` : ``}
       `;
 
       b.addEventListener('click', (e) => {

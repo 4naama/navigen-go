@@ -3110,6 +3110,29 @@ select.input{
   .cm-info-k{ flex:0 0 auto; }
 }
 
+.cm-panel .cm-camp-card{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+}
+
+.cm-panel .cm-camp-row1{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+}
+
+.cm-panel .cm-camp-row2{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:10px;
+}
+
+.cm-panel .cm-camp-actions{
+  display:flex;
+  gap:10px;
+}
+
 /* Primary modal action button */
 .modal-primary{
   background: #d1e0fe;
