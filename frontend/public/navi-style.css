@@ -2806,6 +2806,8 @@ select.input{
   display: inline-block;
   width: auto;
   max-width: 100%;
+  background: #eaf4ff;
+  border-color: #b7d7ff;
 }
 
 .cm-select{
@@ -3031,6 +3033,40 @@ select.input{
   align-items:flex-start;
   justify-content:flex-end;
   margin-top:2px; /* aligns dot with icon visually */
+}
+
+.cm-camp-right{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:10px;
+}
+
+.cm-camp-actions{
+  display:flex;
+  gap:10px;
+}
+
+.cm-camp-actions .clear-x{
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  font-size:20px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* color cues */
+.cm-camp-actions .cm-camp-suspend{ background:#fee2e2; border:1px solid #fecaca; }
+.cm-camp-actions .cm-camp-add{ background:#eaf4ff; border:1px solid #b7d7ff; }
+.cm-camp-actions .cm-camp-resume{ background:#f1f5f9; border:1px solid #e2e8f0; }
+
+.cm-camp-key{
+  font-size:12px;
+  color:#6b7280;
+  overflow-wrap:anywhere;
+  word-break:break-word;
 }
 
 .cm-status-dot{

@@ -5435,18 +5435,89 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
       b.innerHTML = `
         <div class="cm-camp-left">${left}</div>
+
         <div class="cm-camp-mid">
           <div class="cm-camp-loc">${String(locName || '').trim()}</div>
+          <div class="cm-camp-key">${String(r?.campaignKey || '').trim()}</div>
           <div class="cm-camp-range">${range}</div>
         </div>
+
         <div class="cm-camp-right">
           <span class="cm-status-dot" aria-hidden="true"></span>
+
+          ${kind === 'current' ? `
+            <div class="cm-camp-actions">
+              <button type="button" class="clear-x cm-camp-suspend" aria-label="Suspend">➖</button>
+              <button type="button" class="clear-x cm-camp-add" aria-label="Add">➕</button>
+              <button type="button" class="clear-x cm-camp-resume" aria-label="Resume">♻️</button>
+            </div>
+          ` : ``}
         </div>
       `;
 
       b.addEventListener('click', (e) => {
         e.preventDefault();
         showCampaignInfoModal(r);
+      });
+
+      // ➖ Suspend (opens confirm modal)
+      b.querySelector('.cm-camp-suspend')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        showActionConfirmModal({
+          title: (typeof t === 'function' && t('campaign.ui.suspend.confirm.title')) || 'Suspend this campaign?',
+          bodyLines: [
+            (typeof t === 'function' && t('campaign.ui.suspend.confirm.body1')) || 'Promotion will stop immediately.',
+            (typeof t === 'function' && t('campaign.ui.suspend.confirm.body2')) || 'QR redemption will be disabled.',
+            (typeof t === 'function' && t('campaign.ui.suspend.confirm.body3')) || 'No refund is issued.'
+          ],
+          confirmLabel: (typeof t === 'function' && t('campaign.ui.suspend')) || 'Suspend campaign',
+          danger: true,
+          onConfirm: async () => {
+            const out = await apiJson('/api/owner/campaigns/suspend', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ campaignKey: String(r?.campaignKey || '').trim(), action: 'suspend' })
+            });
+            if (!out.r.ok) { showToast('Action failed.', 2400); return; }
+            showToast('Campaign suspended.', 1800);
+            showCampaignManagementModal(displaySlug, { openTab: 'current' });
+          }
+        });
+      });
+
+      // ♻️ Resume (same modal)
+      b.querySelector('.cm-camp-resume')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        showActionConfirmModal({
+          title: (typeof t === 'function' && t('campaign.ui.resume.confirm.title')) || 'Resume this campaign?',
+          bodyLines: [
+            (typeof t === 'function' && t('campaign.ui.resume.confirm.body1')) || 'Promotion will become active again.',
+            (typeof t === 'function' && t('campaign.ui.resume.confirm.body2')) || 'No refund changes apply.'
+          ],
+          confirmLabel: (typeof t === 'function' && t('campaign.ui.resume')) || 'Resume campaign',
+          danger: false,
+          onConfirm: async () => {
+            const out = await apiJson('/api/owner/campaigns/suspend', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ campaignKey: String(r?.campaignKey || '').trim(), action: 'resume' })
+            });
+            if (!out.r.ok) { showToast('Action failed.', 2400); return; }
+            showToast('Campaign resumed.', 1800);
+            showCampaignManagementModal(displaySlug, { openTab: 'current' });
+          }
+        });
+      });
+
+      // ➕ Add campaign: switch to New campaign view and prefill from this row
+      b.querySelector('.cm-camp-add')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showCampaignManagementModal(displaySlug, { openTab: 'new', prefillFrom: r });
       });
 
       // Status dot: green for current, grey for history (deterministic).

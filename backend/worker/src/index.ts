@@ -2791,10 +2791,27 @@ export default {
             });
           }
 
-          // Validate: campaign must still be active for this ULID and must match the token's campaignKey
-          const activeRow = await activeCampaignRowForUlid(env, loc);
-          if (!activeRow || String(activeRow.campaignKey || "").trim() !== tokenCampaignKey) {
-            await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
+          // Validate: the token's campaignKey must still be active for this ULID (no "winner" logic).
+          const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(loc), { type: "json" }) as any;
+          const rows: any[] = Array.isArray(rawRows) ? rawRows : [];
+
+          const nowMs = Date.now();
+          const isActive = (r: any) => {
+            if (!r || String(r.locationID || "").trim() !== loc) return false;
+            const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
+            if (st !== "active") return false;
+            const sMs = parseYmdUtcMs(String(r?.startDate || ""));
+            const eMs = parseYmdUtcMs(String(r?.endDate || ""));
+            if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
+            if (nowMs < sMs) return false;
+            if (nowMs > (eMs + 24 * 60 * 60 * 1000 - 1)) return false;
+            return String(r?.campaignKey || "").trim() === tokenCampaignKey;
+          };
+
+          const tokenCampaignIsActive = rows.some(isActive);
+
+          if (!tokenCampaignIsActive) {
+            await logQrRedeemInvalid(env.KV_STATS, env, loc, req, tokenCampaignKey);
             return new Response(null, {
               status: 204,
               headers: {
