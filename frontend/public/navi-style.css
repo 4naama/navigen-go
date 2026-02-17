@@ -1045,26 +1045,6 @@ body.large-text {
 /* hide legacy arrow if present */
 #help-modal #emg-country::-ms-expand{ display:none; }
 
-/* ──────────────── Main Modal Container ──────────────── */
-/* Defines scrollable vertical layout — structure only; visual layout is handled by layout modifiers (e.g. .modal-action) */
-.modal-content {
-  display: flex;                              /* ✅ Enables vertical stacking of children */
-  flex-direction: column;                     /* ✅ Top-to-bottom content flow */
-  background: white;                          /* ✅ White modal background (used unless overridden) */
-  border-radius: 0.5em;                       /* ✅ Rounded corners for visual clarity */
-  padding: 1.5em;                             /* ✅ Inner spacing for typical modals */
-
-  width: min(95vw, 720px);                    /* ✅ Responsive width: stretches up to a limit */
-  max-height: calc(100vh - 6em);              /* ✅ Prevents modal from touching screen edges vertically */
-  overflow-y: auto;                           /* ✅ Enables scroll inside modal body if content overflows */
-
-  z-index: 1001;                              /* ✅ Positions above backdrop layer */
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); /* ✅ Drop shadow gives depth to modal card */
-  font-size: 18px;                            /* ✅ Base font size inside modal */
-  line-height: 1.5;                           /* ✅ Ensures readable spacing for multi-line text */
-  box-sizing: border-box;                     /* ✅ Includes padding within declared width */
-}
-
 #my-stuff-modal .modal-content{
   padding-top: 0;    /* attach sticky header to the top edge */
   padding-right: 0;  /* scrollbar flush right */
@@ -1272,34 +1252,6 @@ body.large-text {
   margin-left:auto;     /* push to far right */
   align-self:flex-start;
   white-space:nowrap;
-}
-
-/* Mobile-safe modal sizing: avoid bottom gesture/nav bar overlap */
-:root{
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --safe-t: env(safe-area-inset-top, 0px);
-}
-
-/* Modal content should never exceed the visible viewport */
-.modal .modal-content{
-  max-height: calc(100dvh - 24px); /* dvh tracks real visible height on mobile */
-}
-
-/* The scroll container must respect the safe-area at the bottom */
-.modal .modal-body{
-  max-height: calc(100dvh - 24px);
-  overflow: auto;
-  padding-bottom: calc(12px + var(--safe-b));
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Ensure footer (when present) never sits under the gesture bar */
-.modal .modal-footer{
-  padding-bottom: calc(12px + var(--safe-b));
-}
-
-.modal-footer.cta-compact{
-  bottom: var(--safe-b);
 }
 
 /* ──────────────── Modal Footer Layout ──────────────── */
@@ -2410,50 +2362,99 @@ button:hover {
 }
 
 /* ==========================================================================
-   🧩 Modal System — Structure + Variants
-   Overlay scrolls at viewport edges; content never creates inner scrollbars.
+   🧩 Modal System — Unified (single scroller + safe-area + flush scrollbar)
+   Goals:
+   A) Modal card never exceeds visible screen height (mobile-safe).
+   B) Better width utilization (less wasted side gutter).
+   C) Scrollbar flush to the card edge (no inset gutter).
    ========================================================================== */
 
-/* ─────────────── Base overlay (edge scrollbar) ─────────────── */
+:root{
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+  --modal-pad: 16px;                 /* overlay padding */
+  --modal-radius: 16px;
+  --modal-shadow: 0 10px 24px rgba(0,0,0,.18);
+}
+
+/* Overlay */
 .modal{
-  position:fixed; inset:0; display:none; z-index:1000;
-  background:rgba(0, 0, 0, 0.5); backdrop-filter:blur(3px);
-  align-items:flex-start; justify-content:center;
-  padding:16px;
-  overflow-y:hidden;           /* card scrolls; no screen-edge bar */
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 1000;
+
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+
+  align-items: flex-start;
+  justify-content: center;
+
+  padding: var(--modal-pad);
+  padding-bottom: calc(var(--modal-pad) + var(--safe-b));
+
+  overflow: hidden; /* card is the only scroller */
 }
 
-.modal.visible{ display:flex; }
-.modal.hidden{ display:none; }
+.modal.visible{ display: flex; }
+.modal.hidden{ display: none; }
 
-/* White card; no internal scrolling */
+/* Card (single scroller) */
 .modal .modal-content{
-  width:min(92vw, 640px);
-  background:#fff; color:#333;
-  border-radius:16px;
-  box-shadow:0 10px 24px rgba(0,0,0,.18);
-  max-height:calc(100vh - 32px);  /* 2× overlay padding */
-  overflow-y:auto;                 /* ← scrollbar on card edge */
-  overflow-x:hidden;
-  scrollbar-gutter: stable;        /* reserve just enough, no fat gutter */
+  display: flex;
+  flex-direction: column;
+
+  width: min(96vw, 720px); /* B) wider content on mobile, still capped on desktop */
+  background: #fff;
+  color: #333;
+
+  border-radius: var(--modal-radius);
+  box-shadow: var(--modal-shadow);
+
+  /* A) never exceed visible viewport height */
+  max-height: calc(100dvh - (2 * var(--modal-pad)) - var(--safe-b));
+
+  /* C) scrollbar flush to right edge: scroller owns scrollbar */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0;
+  scrollbar-gutter: stable;
+
+  box-sizing: border-box;
+  font-size: 18px;
+  line-height: 1.5;
 }
 
-/* Let the card be the only scroller; keep body content spaced */
+/* Body should NOT be a competing scroller */
 .modal .modal-body{
-  padding:0 16px 16px;
-  overflow:auto;      /* allows sticky header to work */
+  overflow: visible;
+  padding: 0;
 }
 
-/* Restore content padding, including the right side moved off the scroller */
+/* Single source of content padding (also keeps scrollbar at rim) */
 .modal .modal-body-inner{
-  font-size:16px;
-  padding:0 16px 0 16px;
+  font-size: 16px;
+  padding: 0 12px 16px 12px; /* B) tighter side gutter, consistent everywhere */
+  box-sizing: border-box;
 }
 
-/* Buttons/footer area */
+/* Footer safe-area (when present) */
+.modal .modal-footer{
+  padding-bottom: calc(12px + var(--safe-b));
+  box-sizing: border-box;
+}
+
+.modal-footer.cta-compact{
+  bottom: var(--safe-b);
+}
+
+/* Buttons/actions area */
 .modal .modal-actions{
-  display:flex; flex-direction:column; align-items:flex-start;
-  gap:.75em; margin-top:1.5em;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .75em;
+  margin-top: 1.5em;
 }
 
 /* Customer redeem feedback modal must stay above all other modals (LPM, Owner Settings, etc.) */
