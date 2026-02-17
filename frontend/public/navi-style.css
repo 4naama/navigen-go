@@ -2790,8 +2790,8 @@ select.input{
 
 /* Campaign Management: view selector (blue tint + dash-like chevron) */
 .cm-controls .cm-select{
-  display:inline-block;
-  width:auto;
+  display:block;
+  width:100%;
   max-width:100%;
 
   font:inherit;

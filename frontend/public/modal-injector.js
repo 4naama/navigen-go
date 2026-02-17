@@ -1934,7 +1934,7 @@ async function initLpmImageSlider(modal, data) {
       // Suppress one auto-open after Stripe checkout return (owner self-traffic).
       if (sessionStorage.getItem('navigen.suppressLpmOpenOnce') === '1') {
         sessionStorage.removeItem('navigen.suppressLpmOpenOnce');
-        return;
+        // Tracking suppressed only; do not abort LPM wiring.
       }
 
     // Delegated client beacons removed — server counts via /out/* and /hit/*
