@@ -4484,6 +4484,18 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     });
 
     addItem({
+      id: 'owner-run-campaign',
+      icon: '🎯',
+      title: _ownerText('owner.settings.restore.runCampaign.title', 'Run a campaign'),
+      desc: _ownerText('owner.settings.restore.runCampaign.desc', 'Start a campaign for this location.'),
+      onClick: () => {
+        hideModal(id);
+        const target = String(locId || selectedKey || '').trim();
+        if (target) showCampaignManagementModal(target, { guest: true });
+      }
+    });
+
+    addItem({
       id: 'owner-center',
       icon: '🧩️',
       title: _ownerText('owner.center.title', 'Owner Center'),
