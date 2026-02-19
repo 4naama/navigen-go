@@ -710,6 +710,7 @@
   "campaign.ui.label.startDate": "Start date",
   "campaign.ui.label.endDate": "End date",
   "campaign.ui.empty.history": "No finished campaigns.",
+  "campaign.ui.empty.current": "No active campaigns.",
   "campaign.ui.renew": "Renew campaign",
   "campaign.ui.info.title": "Campaign details",
   "campaign.ui.suspend": "Suspend campaign",

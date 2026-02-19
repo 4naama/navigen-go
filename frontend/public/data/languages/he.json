@@ -710,6 +710,7 @@
   "campaign.ui.label.startDate": "תאריך התחלה",
   "campaign.ui.label.endDate": "תאריך סיום",
   "campaign.ui.empty.history": "אין קמפיינים שהסתיימו.",
+  "campaign.ui.empty.current": "אין קמפיינים פעילים.",
   "campaign.ui.renew": "חדש קמפיין",
   "campaign.ui.info.title": "פרטי הקמפיין",
   "campaign.ui.suspend": "השהה קמפיין",

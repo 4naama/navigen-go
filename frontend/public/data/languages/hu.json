@@ -710,6 +710,7 @@
   "campaign.ui.label.startDate": "Kezdő dátum",
   "campaign.ui.label.endDate": "Befejezés dátuma",
   "campaign.ui.empty.history": "Nincs befejezett kampány.",
+  "campaign.ui.empty.current": "Nincs aktív kampány.",
   "campaign.ui.renew": "Kampány megújítása",
   "campaign.ui.info.title": "Kampány részletei",
   "campaign.ui.suspend": "Kampány felfüggesztése",
