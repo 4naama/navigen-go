@@ -4433,7 +4433,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   } else if (variant === 'claim') {
     rawExpl = _ownerText(
       'owner.settings.claim.explain',
-      'Owner access to this location isn’t set up on this device yet.\nTo manage campaigns 🎯 and analytics 📈 here, set up owner access 🔑 on this device.'
+      'Owner access to the selected location isn’t set up on this device yet.\nTo run campaigns 🎯 and unlock analytics 📈, start a campaign for this location. Owner access 🔑 will be stored on this device.'
     );
   } else {
     // signedin (and any future variants): no warning headline
@@ -4635,7 +4635,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       id: 'owner-run-campaign',
       icon: '🎯',
       title: _ownerText('owner.settings.claim.runCampaign.title', 'Run campaign'),
-      desc: _ownerText('owner.settings.claim.runCampaign.desc', 'Start a campaign for this location.'),
+      desc: _ownerText('owner.settings.claim.runCampaign.desc', 'Start a campaign for this location (unlocks dashboard).'),
       onClick: () => {
         (async () => {
           hideModal(id);
