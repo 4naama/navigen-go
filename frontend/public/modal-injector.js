@@ -3930,7 +3930,7 @@ function createHowItWorksModal() {
         <div class="howitworks-body">
           <div class="howitworks-sub">${t('bo.hiw.spend.sub') || 'When budget is used and when it isn’t.'}</div>
           <div>${t('bo.hiw.spend.b1') || '• Your campaign budget is fully committed to the campaign period'}</div>
-          <div>${t('bo.hiw.spend.b2') || '• During the campaign, your budget is only used when NaviGen brings real customer activity (such as visits or purchases), with a small per-redeem fee applied'}</div>
+          <div>${t('bo.hiw.spend.b2') || '• Your campaign runs for the selected period without additional usage fees'}</div>
           <div>${t('bo.hiw.spend.b3') || '• There are no rolling balances, cash-outs, or follow-up charges'}</div>
         </div>
       </details>
@@ -4433,7 +4433,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   } else if (variant === 'claim') {
     rawExpl = _ownerText(
       'owner.settings.claim.explain',
-      'Owner access to the selected location isn’t set up on this device yet.\nTo run campaigns 🎯 and unlock analytics 📈, start a campaign for this location. Owner access 🔑 will be stored on this device.'
+      'Owner access to the selected location isn’t set up on this device yet.\\nRun a campaign 🎯 for this location. Owner access 🔑 will be stored on this device after checkout.'
     );
   } else {
     // signedin (and any future variants): no warning headline
@@ -4534,7 +4534,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       id: 'owner-manage-campaign',
       icon: '🎯',
       title: _ownerText('owner.settings.signedin.runCampaign.title', 'Manage campaign'),
-      desc: _ownerText('owner.settings.signedin.runCampaign.desc', 'Edit draft, checkout, and activate this campaign.'),
+      desc: _ownerText('owner.settings.signedin.runCampaign.desc', 'Edit draft ✍️, checkout 💳, or manage this campaign.'),
       onClick: () => {
         hideModal(id);
         showCampaignManagementModal(String(locId || '').trim());
@@ -4635,7 +4635,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       id: 'owner-run-campaign',
       icon: '🎯',
       title: _ownerText('owner.settings.claim.runCampaign.title', 'Run campaign'),
-      desc: _ownerText('owner.settings.claim.runCampaign.desc', 'Start a campaign for this location (unlocks dashboard).'),
+      desc: _ownerText('owner.settings.claim.runCampaign.desc', 'Run a campaign for this location.'),
       onClick: () => {
         (async () => {
           hideModal(id);
@@ -4753,7 +4753,7 @@ export async function createOwnerCenterModal() {
   const note = document.createElement('p');
   note.textContent =
     (typeof t === 'function' && t('owner.center.note')) ||
-    'Owner access is stored on this device for security. To start a campaign for a business, tap 🚀 on its card below. To add a business on a new device, use Restore access once.Owner access is stored on this device for security. To start a campaign for a business, tap 🚀 on its card below. To add a business on a new device, use 🔑 Restore access once.';
+    'Owner access is stored on this device for security. To manage a business, tap it below. To add a business on a new device, use 🔑 Restore access once.';
 
   note.style.textAlign = 'left';
   note.style.fontSize = '0.85em';
@@ -4871,7 +4871,7 @@ export async function createOwnerCenterModal() {
                   aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">🗑️</button>
 
           <button type="button" class="clear-x owner-center-launch"
-                  aria-label="${(typeof t === 'function' && t('owner.center.launch.title')) || 'Start a campaign'}">🚀</button>
+                  aria-label="${(typeof t === 'function' && t('owner.center.launch.title')) || 'Run a campaign'}">🚀</button>
         </div>
       `;
 

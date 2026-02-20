@@ -940,6 +940,99 @@ Rules:
 
 --------------------------------------------------------------------
 
+--------------------------------------------------------------------
+
+0.T UI-State → Backend-State Matrix (Authoritative)
+
+Core backend signals:
+
+• OwnedNow = exclusiveUntil > now
+• SessionValid = op_sess resolves to ULID on this device
+• CampaignEntitled = ≥1 campaign row effectively Active (Active, in window, not suspended)
+• SelectedULID = Business currently selected in UI
+• ActiveULID = Business bound to op_sess
+
+Canonical Action Labels:
+
+• Not owned → Run a campaign
+• Owned + no entitlement → Renew campaign
+• Owned + session valid + entitlement → Manage campaign
+• Draft editing → New campaign
+
+These labels MUST be used consistently across all UI variants.
+
+--------------------------------------------------------------------
+
+A) Owner Settings Variants
+
+1) Claim state (SessionValid = false, OwnedNow = false)
+Primary:
+• Run a campaign
+Secondary:
+• See example dashboards
+
+2) Restore state (SessionValid = false, OwnedNow = true)
+Primary:
+• Restore owner access
+Secondary:
+• Run a campaign
+• Owner Center
+• See example dashboards
+
+3) Mismatch state (SessionValid = true, ActiveULID ≠ SelectedULID)
+Primary:
+• Owner Center (switch)
+Secondary:
+• Sign out on this device
+• See example dashboards
+
+4) Signed-in + entitlement (SessionValid = true, ActiveULID = SelectedULID, CampaignEntitled = true)
+Primary:
+• Open dashboard
+• Manage campaign
+Secondary:
+• Owner Center
+• See example dashboards
+• Sign out
+
+5) Signed-in + no entitlement (OwnedNow = true, CampaignEntitled = false)
+Primary:
+• Renew campaign
+Secondary:
+• Owner Center
+• See example dashboards
+• Sign out
+
+--------------------------------------------------------------------
+
+B) SYB Cards — Dots & 🎁 Logic
+
+• 🟢 Free dot → OwnedNow = false AND visible
+• 🔴 Taken dot → OwnedNow = true
+• 🔵 Visible (courtesy) → OwnedNow = false AND courtesyUntil present
+• 🟠 Parked → visibilityState = hidden
+• 🎁 → CampaignEntitled = true
+
+Notes:
+• 🎁 indicates active campaign only.
+• Dots reflect discoverability, not Dash access.
+
+--------------------------------------------------------------------
+
+C) Dash Gating (Authoritative)
+
+Dash requires:
+OwnedNow AND SessionValid AND CampaignEntitled
+
+HTTP Semantics:
+
+• 200 → Open Dashboard
+• 401 → Restore access
+• 403 + session exists → Switch business OR Renew campaign
+• 403 + no session → Run campaign OR Restore
+
+--------------------------------------------------------------------
+
 1. CORE SYSTEM OVERVIEW
 
 1.1 Architectural Intent
@@ -1427,6 +1520,11 @@ B) **Cashier**
 
 Promo QR flow enables multi-actor integrity without authentication.
 
+If multiple campaigns are simultaneously active for a location:
+• /api/promo-qr without explicit campaignKey MUST return 409.
+• Client MUST present a campaign selection modal.
+• Selected campaignKey is passed explicitly to /api/promo-qr.
+
 --------------------------------------------------------------------
 2.7 Token Model
 
@@ -1869,6 +1967,10 @@ Tables use simple “label – value” rows; bar-chart visualizer is available.
 4.8 Campaigns View (Merchant-facing)
 
 The Campaigns view is a merchant-facing, operational summary of promotional activity.
+
+When CampaignEntitled = false but OwnedNow = true,
+the primary CTA in Owner surfaces MUST be labeled:
+• "Renew campaign"
 
 It MUST expose only absolute counts and non-interpretive facts, including:
 - Promo QR shown (count)
@@ -2584,7 +2686,12 @@ B) Owned LPM + No Owner Session
 • See example dashboards
     - CTA: opens Example Dashboards modal (3–6 example cards)
 
-No campaign purchase actions are shown in this state.
+Campaign initiation MUST also be available in this state.
+The Owner Settings modal MUST include:
+• Restore owner access
+• Run a campaign
+• Owner Center
+• See example dashboards
 
 --------------------------------------------------------------------
 C) Unowned LPM
@@ -2595,8 +2702,6 @@ C) Unowned LPM
 “Owner settings” modal (unowned) MUST include:
 • Run campaign
     - CTA: opens Campaign Setup modal (contextual to this LPM)
-• (Deferred) Keep visible
-    - CTA: extends courtesy visibility for 30 days (pricing deferred)
 • See example dashboards
     - CTA: opens Example Dashboards modal (3–6 example cards)
 
@@ -3461,8 +3566,15 @@ Status meanings:
   Finished campaigns are NEVER eligible again.
 
 • Suspended  
-  Hard block triggered by misuse, dispute, or staff intervention.
-  Requires explicit reactivation by NaviGen.
+  Owner- or staff-triggered temporary stop.
+  Effects:
+    - CampaignEntitled = false
+    - Promo QR issuance disabled
+    - Redeem disabled
+    - 🎁 decoration removed
+    - Status dot becomes grey
+  Suspended campaigns remain visible in Campaign Management.
+  Resume restores eligibility if within campaign window.
 
 NaviGen does NOT automatically suspend campaigns due to payment disputes.
 Only explicit backend state transitions are authoritative.
@@ -3485,11 +3597,10 @@ Derived entitlement fields (computed by API Worker):
 • campaignEndsAt: YYYY-MM-DD | ""
 
 If multiple campaigns are entitling:
-• exactly ONE campaign is selected as the primary active campaign
-• selection rule MUST be deterministic:
-    – earliest endDate wins
-    – tie-breaker: newest startDate
-
+• All are considered active.
+• No implicit primary campaign is selected.
+• Client surfaces that require a single campaign context (e.g., Promotion details)
+  MUST present a campaign selector.
 These derived fields are exposed via:
 
 GET /api/status?locationID=<slug|ULID>
