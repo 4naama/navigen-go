@@ -258,7 +258,7 @@ locations, and promotional environments.
   • Dash renders large datasets efficiently using client-side incremental computation.
 
 0.P.6 Operational Guarantees
-  • Updates to datasets (profiles.json, campaigns.json, finance.json, contexts.json)
+  • Updates to datasets (profiles.json, finance.json, contexts.json)
     propagate without downtime.
   • QA auto-tagging runs automatically during each stats request, requiring no cron.
   • Internal systems (90.x) remain isolated from merchant-facing UX.
@@ -413,7 +413,7 @@ Every production deployment must meet:
   • Full fallback compatibility:
        previous-version clients work flawlessly with new Workers
   • Migration safety:
-       profiles.json / campaigns.json / finance.json / contexts.json updates
+       profiles.json / finance.json / contexts.json updates
        cannot break QR routing or Dash views
 
 --------------------------------------------------------------------
@@ -1044,7 +1044,7 @@ and producing analytics and operational diagnostics. It is implemented as:
   • A PWA-capable client (App shell + Dash)
   • A Pages Worker (routing, QR redirect, static hosting)
   • An API Worker (stats, token handling, campaign logic, QA tagging)
-  • A small, controlled dataset (profiles.json, campaigns.json, finance.json, contexts.json)
+  • A small, controlled dataset (profiles.json, finance.json, contexts.json)
   • A translation layer (Section 7) driving all text
 
 The architecture separates *merchant-visible UX* from *internal diagnostics*
@@ -1106,7 +1106,9 @@ The system consists of the following cooperating layers:
 1) **Dataset Layer (Read-Only JSON)**  
    Data governing locations, campaigns, contexts, and pricing:
      • profiles.json  
-     • campaigns.json  
+     • campaigns.json deprecated
+       Campaign lifecycle and entitlement are KV-authoritative.
+       No JSON file is used for runtime campaign logic.
      • finance.json  
      • contexts.json  
    All are static files deployed with the site. Workers read them as immutable inputs.
@@ -2403,7 +2405,9 @@ A) **Redeem events**
      • timestamp
      • token ULID
 
-B) **Campaign metadata (campaigns.json)**
+B) **Campaign metadata (campaigns.json)** - deprecated!!!
+     Campaign lifecycle and entitlement are KV-authoritative.
+     No JSON file is used for runtime campaign logic.
    • sectorKey
    • campaignKey
    • startDate / endDate
@@ -2700,7 +2704,7 @@ C) Unowned LPM
 • 📈 MUST open the “Owner settings” modal (not a redirect).
 
 “Owner settings” modal (unowned) MUST include:
-• Run campaign
+• Manage campaign
     - CTA: opens Campaign Setup modal (contextual to this LPM)
 • See example dashboards
     - CTA: opens Example Dashboards modal (3–6 example cards)
@@ -3216,7 +3220,9 @@ internal pipelines) and consumed client-side or server-side as read-only resourc
 The platform loads a small number of structured JSON files:
 
   1) profiles.json      – business metadata (per location)
-  2) campaigns.json     – active/past promotions per location
+  2) campaigns.json     – deprecated
+     Campaign lifecycle and entitlement are KV-authoritative.
+     No JSON file is used for runtime campaign logic.
   3) finance.json       – sector/country pricing metadata
   4) contexts.json      – navigation context hierarchy (URL structure)
   5) i18n bundles       – /data/i18n/<lang>.json (see Section 7)
@@ -3486,6 +3492,9 @@ Campaigns are no longer sourced from a static campaigns.json file.
 As of the Campaigns Project completion, **campaign state is fully KV-backed
 and enforced exclusively by the API Worker**.
 
+Campaign lifecycle and entitlement are KV-authoritative.
+No JSON file is used for runtime campaign logic.
+
 Static JSON campaign definitions are deprecated and retained only for
 historical reference or migration tooling.
 
@@ -3567,43 +3576,56 @@ Status meanings:
 
 • Suspended  
   Owner- or staff-triggered temporary stop.
-  Effects:
-    - CampaignEntitled = false
-    - Promo QR issuance disabled
-    - Redeem disabled
-    - 🎁 decoration removed
-    - Status dot becomes grey
-  Suspended campaigns remain visible in Campaign Management.
-  Resume restores eligibility if within campaign window.
 
-NaviGen does NOT automatically suspend campaigns due to payment disputes.
+  Effects:
+
+  - CampaignEntitled = false  
+  - Promo QR issuance disabled  
+  - Redeem disabled  
+  - 🎁 decoration removed  
+  - Status dot becomes grey  
+  - Campaign remains visible in Campaign Management  
+
+  Resume:
+
+  - Clears statusOverride  
+  - Restores eligibility only if within campaign window  
+
+NaviGen does NOT automatically suspend campaigns due to payment disputes.  
 Only explicit backend state transitions are authoritative.
 
 --------------------------------------------------------------------
 
 8.4.4 Campaign Entitlement Spine (Authoritative)
 
-A location is considered **CampaignEntitled** when **any** of its campaign rows
+A location is considered **CampaignEntitled** when **at least one** of its campaign rows
 meets ALL of the following:
 
-• status === "Active"
-• statusOverride does not force-disable the campaign
+• effectiveStatus === "Active"  
+• statusOverride is empty or not equal to "Suspended"  
 • today ∈ [startDate, endDate] (inclusive)
+
+effectiveStatus is derived as:
+
+    effectiveStatus = statusOverride || status
 
 Derived entitlement fields (computed by API Worker):
 
-• campaignEntitled: boolean
-• activeCampaignKey: string | ""
-• campaignEndsAt: YYYY-MM-DD | ""
+• campaignEntitled: boolean  
+• activeCampaignKeys: string[]  
+• campaignEndsAt: YYYY-MM-DD | "" (only when exactly one active campaign exists)
 
 If multiple campaigns are entitling:
-• All are considered active.
-• No implicit primary campaign is selected.
-• Client surfaces that require a single campaign context (e.g., Promotion details)
+
+• All are considered active.  
+• No implicit primary campaign is selected.  
+• GET /api/promo-qr without explicit campaignKey MUST return HTTP 409.  
+• Client surfaces requiring a single campaign context (e.g., Promotion details, QR view)
   MUST present a campaign selector.
+
 These derived fields are exposed via:
 
-GET /api/status?locationID=<slug|ULID>
+    GET /api/status?locationID=<slug|ULID>
 
 Clients MUST NOT compute entitlement themselves.
 
@@ -3695,19 +3717,8 @@ Only the API Worker interprets its meaning.
 
 The static campaigns.json file is deprecated.
 
-Rules:
-
-• campaigns.json MUST NOT be read by:
-    – App Shell
-    – Pages Worker
-    – Dashboard
-• Any remaining references are legacy and MUST be removed.
-• campaigns.json may exist only for:
-    – migration scripts
-    – historical reference
-    – offline documentation
-
-All live campaign behavior is KV-authoritative.
+Campaign lifecycle and entitlement are KV-authoritative.
+No JSON file is used for runtime campaign logic.
 
 --------------------------------------------------------------------
 
@@ -4044,7 +4055,7 @@ A) **Identity Normalization**
    • All stats and qrlog entries use ULID as key-space.
 
 B) **Dataset Loading**
-   • Reads profiles.json, campaigns.json, finance.json, contexts.json.
+   • Reads profiles.json, finance.json, contexts.json.
    • All campaign resolution happens from these definitions.
 
 C) **Promotion QR Issuance**
@@ -4150,17 +4161,28 @@ J) **Data Integrity Rules Enforced by the API Worker**
 
 K) **Stripe Webhook Processing (Authority Source)**
 
-API Worker receives Stripe webhook events and performs authoritative, idempotent state transitions for:
-• ownership:<ULID>
-• prepaid ledger top-ups
+API Worker consumes ownership and billing state derived from Stripe events.
+
+Stripe webhook processing performs authoritative, idempotent reconciliation for:
+
+• ownership:<ULID>  
+• prepaid ledger top-ups  
 • agent attribution records (if applicable)
 
-Webhook processing is the only source of truth for ownership establishment and renewal.
+Checkout success (Stripe session complete + paid) is the canonical ownership transition trigger.
 
-Note:
-Stripe webhook processing is not performed by Pages Worker.
-Ownership and prepaid balance updates originate only from the Stripe webhook processor,
-which may run outside the Worker stack. API Worker consumes the resulting state for enforcement.
+Webhook processing:
+
+• ensures idempotency  
+• reconciles missed events  
+• protects against duplicate processing  
+
+Stripe webhook processing is NOT executed by Pages Worker.
+
+Ownership and prepaid balance updates originate from the Stripe webhook processor,
+which may run outside the Worker stack.
+
+API Worker consumes the resulting state for enforcement.
 
 --------------------------------------------------------------------
 9.3 Auxiliary API Endpoints
@@ -4481,7 +4503,7 @@ Test Mode never affects production analytics.
 
 Test Mode activates automatically when any of the following is true:
 
-  • Data sources (profiles.json, campaigns.json) include test-only entries.
+  • Data sources (profiles.json) include test-only entries.
   • Query parameters contain flags:
         ?test=1 or ?mode=test
   • Environment variables or build flags enable test routing (internal use).
@@ -5029,14 +5051,9 @@ working Info QR, Promo QR, Dash analytics, and future billing compatibility.
   • contact & media fields  
   • QR URL override (optional; Info QR defaults to <context>?lp=<id>)  
 
-(B) campaign_data → campaigns.json  
-  • locationID  
-  • campaignKey + campaignName  
-  • brandKey, context override (optional)  
-  • startDate, endDate, status  
-  • discountKind, campaignDiscountValue  
-  • eligibilityType  
-  • UTM metadata (optional)  
+(B) campaign_data → campaigns.json deprecated
+  Campaign lifecycle and entitlement are KV-authoritative.
+  No JSON file is used for runtime campaign logic.
 
 (C) finance_data → finance.json  
   • sectorKey + countryCode  
@@ -5055,7 +5072,6 @@ working Info QR, Promo QR, Dash analytics, and future billing compatibility.
 
 A scheduled Apps Script exports the four sheets into:
   • /data/profiles.json  
-  • /data/campaigns.json  
   • /data/finance.json  
   • /data/contexts.json  
 
@@ -5496,13 +5512,18 @@ E) Writer Responsibilities (Webhook Processor)
 
 On successful payment confirmation, the webhook processor MUST:
 
-1) Validate presence and correctness of required metadata.
-2) Resolve ownership record:
-     • extend exclusiveUntil according to ownershipSource rules.
-3) Write/update ownership:<ULID> using payment_intent.id as lastEventId.
-4) Write billing ledger TopUp entry.
-5) If agentId present:
+1) Validate presence and correctness of required metadata.  
+2) Resolve ownership record:  
+     • extend exclusiveUntil according to ownershipSource rules.  
+3) Write/update ownership:<ULID> using payment_intent.id as lastEventId.  
+4) Write billing ledger TopUp entry.  
+5) If agentId present:  
      • write agent attribution record (see Mini-spec #4).
+
+Webhook processing is idempotent and reconciliation-focused.
+
+Checkout success (Stripe session complete + paid) is the state transition trigger.  
+Webhook remains an idempotent reconciliation layer.
 
 No other component may establish ownership.
 
@@ -5919,7 +5940,9 @@ Rules:
 
 • Campaign operations are permitted only if ownership is active.
 • Campaign activity may extend or maintain ownership.
-• Campaign definitions remain constrained by campaigns.json and finance.json.
+• campaigns.json is deprecated
+  Campaign lifecycle and entitlement are KV-authoritative.
+  No JSON file is used for runtime campaign logic.
 • Owners cannot modify campaign identity, pricing rules, or sector mappings.
 
 Campaign Performance Independence
@@ -6755,7 +6778,7 @@ Pages Worker — routing, QR redirect, app hosting
 
 API Worker — all business logic: token issuance, redeem, stats, QA
 
-Dataset Layer — profiles.json, campaigns.json, finance.json, contexts.json
+Dataset Layer — profiles.json, finance.json, contexts.json
 
 KV Stores — stats counters, qrlog entries, redeem tokens, alias mappings, QA flags
 
