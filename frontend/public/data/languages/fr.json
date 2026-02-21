@@ -725,6 +725,7 @@
   "campaign.ui.resume.confirm.body2": "Aucun changement de remboursement ne s’applique.",
   "campaign.ui.actionFailed": "Échec de l’action.",
   "campaign.ui.updated": "Campagne mise à jour.",
+  "campaign.ui.addNew": "Ajouter une nouvelle campagne",
   "Favorites": "Favoris",
   "My Stuff": "Mes éléments",
   "Remove": "Supprimer",
