@@ -2820,11 +2820,6 @@ select.input{
   background-size:14px 14px;
 }
 
-.cm-controls .cm-key-select{
-  background:#eaf4ff;
-  border-color:#b7d7ff;
-}
-
 /* Campaign Management: sections (no inline styles in JS) */
 .campaign-mgmt-section{
   margin-top: 14px;

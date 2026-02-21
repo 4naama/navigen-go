@@ -396,7 +396,7 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
   inner.className = 'modal-body-inner';
 
   const note = document.createElement('p');
-  note.className = 'muted muted-note';
+  note.className = 'muted muted note';
   note.style.textAlign = 'left';
   note.textContent =
     (typeof t === 'function' && t('campaign.activePicker.note')) ||
@@ -4538,7 +4538,6 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       onClick: () => {
         hideModal(id);
         showCampaignManagementModal(String(locId || '').trim());
-        showCampaignManagementModal(String(locId || '').trim(), { openTab: 'current', preferEmptyDraft: true });
       }
     });
 
@@ -5184,8 +5183,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   }
 
   const prefillFrom = (opts && opts.prefillFrom && typeof opts.prefillFrom === 'object') ? opts.prefillFrom : null;
-  const preferEmptyDraft = (opts && opts.preferEmptyDraft === true);
-  const draft = prefillFrom ? prefillFrom : (preferEmptyDraft ? null : (listJ?.draft || null));
+  const draft = listJ?.draft || prefillFrom || null;
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
   const ulid = String(listJ?.ulid || '').trim(); // empty in guest mode; that's OK
 
@@ -5304,41 +5302,6 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   const controls = document.createElement('div');
   controls.className = 'cm-controls';
 
-  // Campaign key selector (B.4): Add new first + list existing keys
-  const keySel = document.createElement('select');
-  keySel.className = 'cm-select cm-key-select';
-
-  const keyOpt = (value, label) => {
-    const o = document.createElement('option');
-    o.value = value;
-    o.textContent = label;
-    return o;
-  };
-
-  // First option: Add new campaign
-  keySel.appendChild(
-    keyOpt('__new__', (typeof t === 'function' && t('campaign.ui.addNew')) || 'Add new campaign')
-  );
-
-  // Then list known campaign keys (sorted newest first by startDate, fallback by key)
-  const rowsForKeyList = Array.isArray(rowsAll) ? rowsAll.slice() : [];
-  rowsForKeyList.sort((a,b) => {
-    const as = String(a?.startDate || '').trim();
-    const bs = String(b?.startDate || '').trim();
-    if (as !== bs) return (bs > as ? 1 : -1);
-    const ak = String(a?.campaignKey || '').trim();
-    const bk = String(b?.campaignKey || '').trim();
-    return ak.localeCompare(bk);
-  });
-
-  const seenKeys = new Set();
-  rowsForKeyList.forEach(r => {
-    const k = String(r?.campaignKey || '').trim();
-    if (!k || seenKeys.has(k)) return;
-    seenKeys.add(k);
-    keySel.appendChild(keyOpt(k, k));
-  });
-
   const viewSel = document.createElement('select');
   viewSel.className = 'cm-select';
 
@@ -5364,9 +5327,8 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   viewSel.appendChild(opt('current', vCur));
   viewSel.appendChild(opt('history', vHis));
 
-  controls.appendChild(keySel);
   controls.appendChild(viewSel);
-  
+
   // Content (C)
   const panel = document.createElement('div');
   panel.className = 'cm-panel';
@@ -5818,36 +5780,9 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     setActiveTab(v);
   });
 
-  // Key dropdown behavior
-  keySel.addEventListener('change', () => {
-    const k = String(keySel.value || '').trim();
-
-    if (k === '__new__') {
-      // Switch to New campaign with empty draft
-      showCampaignManagementModal(displaySlug, { openTab: 'new', preferEmptyDraft: true });
-      return;
-    }
-
-    // Find the row for this campaignKey and open its details
-    const hit = rowsAll.find(x => String(x?.campaignKey || '').trim() === k);
-    if (hit) {
-      showCampaignInfoModal(hit);
-      // Keep Current campaigns view selected (does not force draft)
-      if (viewSel.value !== 'current') viewSel.value = 'current';
-      setActiveTab('current');
-    }
-  });
-
   // Default open: New campaign
-  const initialTab = String(opts.openTab || '').trim();
-  if (initialTab) {
-    setActiveTab(initialTab);
-  } else {
-    // Default open behavior:
-    // - If any campaigns exist, start in Current campaigns.
-    // - Otherwise start in New campaign.
-    setActiveTab(rowsAll.length ? 'current' : 'new');
-  }
+  setActiveTab(String(opts.openTab || 'new'));
+
   showModal(id);
 }
 // --- End Campaign Management ----------------------------------------------------
