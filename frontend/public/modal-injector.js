@@ -3595,25 +3595,17 @@ export async function createExampleDashboardsModal() {
   const id = 'example-dashboards-modal';
   document.getElementById(id)?.remove();
 
-  const wrap = document.createElement('div');
-  wrap.className = 'modal hidden';
-  wrap.id = id;
+  const modal = injectModal({
+    id,
+    title: _ownerText('owner.examples.title', 'Example dashboards'),
+    layout: 'menu',
+    bodyHTML: ''
+  });
 
-  const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
+  const inner = modal.querySelector('.modal-body-inner');
+  if (!inner) return;
 
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  top.innerHTML = `
-    <h2 class="modal-title">${_ownerText('owner.examples.title', 'Example dashboards')}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
-
-  const body = document.createElement('div');
-  body.className = 'modal-body';
-  const inner = document.createElement('div');
-  inner.className = 'modal-body-inner';
+  inner.innerHTML = '';
 
   const note = document.createElement('p');
   note.textContent = _ownerText(
@@ -3630,7 +3622,6 @@ export async function createExampleDashboardsModal() {
   inner.appendChild(list);
 
   // Load example locations from the shipped dataset.
-  // This is informational only; it does not grant access to a blocked location.
   let examples = [];
   try {
     const r = await fetch('/data/profiles.json', { cache: 'no-store' });
@@ -3662,10 +3653,9 @@ export async function createExampleDashboardsModal() {
     empty.textContent = _ownerText('owner.examples.empty', 'No example dashboards are available right now.');
     empty.style.textAlign = 'left';
     empty.style.opacity = '0.8';
-    inner.appendChild(empty);
+    list.appendChild(empty);
   } else {
     examples.forEach((ex) => {
-      const label = ex.name;
       const sector = ex.sector ? ex.sector : _ownerText('owner.examples.sector.unknown', '');
 
       const btn = document.createElement('button');
@@ -3674,33 +3664,33 @@ export async function createExampleDashboardsModal() {
       btn.innerHTML = `
         <span class="icon-img">📊</span>
         <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-          <strong>${label}</strong> <span class="example-badge" style="font-size:.75em; opacity:.8;">${_ownerText('owner.examples.badge', 'Example')}</span>
+          <strong>${ex.name}</strong>
+          <span class="example-badge" style="font-size:.75em; opacity:.8;">${_ownerText('owner.examples.badge', 'Example')}</span>
           ${sector ? `<br><small>${sector}</small>` : ''}
         </span>
       `;
+
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-
-        // Prefer slug for Example Dashboards.
-        // Reason: some datasets may not provide a resolvable ULID for examples, but slug is always stable in profiles.json.
         const seg = ex.slug || ex.id;
         if (!seg) return;
-
-        const href = `https://navigen.io/dash/${encodeURIComponent(seg)}`;
-        window.open(href, '_blank', 'noopener,noreferrer');
+        window.open(`https://navigen.io/dash/${encodeURIComponent(seg)}`, '_blank', 'noopener,noreferrer');
       });
+
       list.appendChild(btn);
     });
   }
 
-  body.appendChild(inner);
+  // Desktop ESC support (scoped + self-cleaning)
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      hideModal(id);
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
 
-  // No footer actions for Example Dashboards: close via the top-right × only.
-
-  card.appendChild(top);
-  card.appendChild(body);
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
+  setupTapOutClose(id);
 }
 
 export async function showExampleDashboardsModal() {
@@ -4951,6 +4941,15 @@ export async function createOwnerCenterModal() {
       list.appendChild(btn);
     }
   }
+
+  // Desktop ESC support (scoped + self-cleaning)
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      hideModal(id);
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
 
   setupTapOutClose(id);
 }
