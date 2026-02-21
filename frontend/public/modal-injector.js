@@ -1086,33 +1086,26 @@ export async function showLocationProfileModal(data) {
 
       // First: apply deterministic redirect hint if present (prevents sticky wrong paint after checkout return).
       // This is NOT authoritative; it only avoids a one-shot stale /api/status result.
+      // Note: LPM does NOT reveal campaign end here; discovery is via the 🎁 CTA.
       try {
         const q = new URLSearchParams(location.search);
         const hinted = (String(q.get('ce') || '') === '1');
-        const hintedEnd = String(q.get('ced') || '').trim();
 
         if (hinted) {
-          const takenLine =
-            (typeof t === 'function' && t('lpm.owned.badge.taken')) ||
-            '🔴 Taken';
+          const statusLine1 =
+            ((typeof t === 'function' && t('lpm.status.taken.title')) || 'Taken')
+              ? `🔴 ${(typeof t === 'function' && t('lpm.status.taken.title')) || 'Taken'}`
+              : '🔴 Taken';
 
-          const campaignTpl =
-            (typeof t === 'function' && t('lpm.owned.badge.campaignActive')) ||
-            '🎁️ Campaign active until<br>{{date}}';
+          const statusLine2 =
+            (typeof t === 'function' && t('lpm.status.taken.desc')) ||
+            'Already operated.';
 
-          let dateTxt = '';
-          if (/^\d{4}-\d{2}-\d{2}$/.test(hintedEnd)) {
-            const end = new Date(`${hintedEnd}T00:00:00Z`);
-            dateTxt = `${new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(end)} - ${new Intl.DateTimeFormat(
-              'en-US',
-              { month: 'short', day: '2-digit', year: 'numeric' }
-            ).format(end)}`;
-          }
+          const giftLine =
+            (typeof t === 'function' && t('lpm.campaign.single')) ||
+            '🎁️ Single campaign';
 
-          el.innerHTML = dateTxt
-            ? `${takenLine}<br>${String(campaignTpl).replace('{{date}}', dateTxt)}`
-            : `${takenLine}<br>${String(campaignTpl).replace('{{date}}', '')}`;
-
+          el.innerHTML = `${statusLine1}<br>${statusLine2}<br>${giftLine}`;
           el.style.display = 'block';
         }
       } catch {}
@@ -4895,7 +4888,7 @@ export async function createOwnerCenterModal() {
         }
       });
 
-      // Status dot decoration (same logic you already have)
+      // Status dot decoration
       (async () => {
         try {
           const dotEl = btn.querySelector('.syb-status-dot');
