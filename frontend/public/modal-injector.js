@@ -910,7 +910,6 @@ export function createLocationProfileModal(data, injected = {}) {
              alt="${payload.name || 'Location'} image"
              style="width:100%;height:auto;border-radius:8px;${heroSrc ? 'display:block;' : 'display:none;'}">
       </figure>
-      <div class="lpm-owned-badge" style="display:none;margin-top:0.5rem;font-size:0.9em;opacity:0.9;"></div>
 
       ${
         (Array.isArray(payload?.tags) && payload.tags.length)
@@ -932,12 +931,18 @@ export function createLocationProfileModal(data, injected = {}) {
   `;
 
   // add compact 1–5 rating row (emoji radios)
-  // rating row under description
   const inner = body.querySelector('.modal-body-inner');
   if (inner) {
     const rate = document.createElement('section');
     rate.className = 'lpm-rating';
     rate.id = 'lpm-rate-section';
+
+    // Owned badge is rendered inside the rating container so it shares the same centered content anchor.
+    // Status painter in showLocationProfileModal() looks up ".lpm-owned-badge" and will populate this node.
+    const owned = document.createElement('div');
+    owned.className = 'lpm-owned-badge';
+    owned.style.display = 'none';
+    rate.appendChild(owned);
 
     rate.innerHTML = `
       <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="Rate">
@@ -1127,27 +1132,39 @@ export async function showLocationProfileModal(data) {
 
       // 🎁 is campaign-only. If no active campaign, show ONLY the taken line.
       // Source of truth: /api/status (KV-backed entitlement resolver).
-      let campaignEndISO = '';
-      try {
-        if (j?.campaignEntitled === true) {
-          const end = String(j?.campaignEndsAt || '').trim();
-          if (/^\d{4}-\d{2}-\d{2}$/.test(end)) {
-            campaignEndISO = end;
-          }
-        }
-      } catch {
-        // never break LPM; fallback is just 🔴 Taken
+      const activeKeys = Array.isArray(j?.activeCampaignKeys) ? j.activeCampaignKeys.filter(Boolean) : [];
+
+      if (j?.campaignEntitled !== true || activeKeys.length === 0) {
+        el.innerHTML = (typeof t === 'function' && t('lpm.owned.badge.taken')) || '🔴 Taken';
+        el.style.display = 'block';
+        return;
       }
 
-      // No active campaign → omit 🎁 and omit date entirely
-      if (!campaignEndISO) {
+      // Multiple active campaigns → do NOT show an "until" date (no implicit primary)
+      if (activeKeys.length > 1) {
+        const takenLine =
+          (typeof t === 'function' && t('lpm.owned.badge.taken')) ||
+          '🔴 Taken';
+
+        const multiLine =
+          (typeof t === 'function' && t('lpm.owned.badge.multiCampaign')) ||
+          '🎁️ Multiple campaigns';
+
+        el.innerHTML = `${takenLine}<br>${multiLine}`;
+        el.style.display = 'block';
+        return;
+      }
+
+      // Exactly one active campaign → render "until" using campaignEndsAt
+      const campaignEndISO = String(j?.campaignEndsAt || '').trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(campaignEndISO)) {
         el.innerHTML = (typeof t === 'function' && t('lpm.owned.badge.taken')) || '🔴 Taken';
         el.style.display = 'block';
         return;
       }
 
       // Active campaign → render 🎁 lines using campaign endDate (NOT exclusiveUntil)
-      const end = new Date(`${campaignEndISO}T00:00:00Z`);
+      const end = new Date(`${campaignEndISO}T00:00:00Z`);      
       const endSafe = Number.isNaN(end.getTime()) ? new Date(campaignEndISO) : end;
       const lang = document.documentElement.lang || 'en';
       const safeLang = /^en/i.test(lang) ? 'en-US' : lang;

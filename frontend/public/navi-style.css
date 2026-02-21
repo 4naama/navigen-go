@@ -1358,12 +1358,23 @@ body.high-contrast .cta-compact .modal-footer-button{
 }
 
 /* LPM: rating row (emoji radios) */
+/* LPM: rating row (emoji radios) */
 .lpm-rating{
   margin:.75em 0 0;
+  padding: 0 1rem;            /* breathing room from modal edges */
   display:flex;
-  flex-direction:column;      /* stack hint UNDER the row */
-  align-items:center;         /* center horizontally */
+  flex-direction:column;      /* stack badge + row + hint */
+  align-items:center;         /* center the emoji row horizontally */
   justify-content:flex-start; /* keep top-aligned */
+}
+
+/* LPM: owned/campaign badge lives inside the rating container */
+.lpm-rating .lpm-owned-badge{
+  align-self:stretch;         /* take full available width inside the padded container */
+  text-align:left;            /* left-align status/campaign text */
+  margin: 0 0 .35rem 0;       /* separate from emoji row */
+  font-size:0.9em;
+  opacity:0.9;
 }
 
 .lpm-rating .rate-row{
@@ -1475,6 +1486,7 @@ body.high-contrast .qr-cta{
   box-sizing:border-box;
   padding-top:8px;   /* keep top breathing room for rounded corners */
 }
+
 .lpm-track{
   position:relative;
   width:100%;
