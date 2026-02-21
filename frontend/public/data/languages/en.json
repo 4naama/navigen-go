@@ -793,5 +793,9 @@
   "owner.signout.confirmBody3": "You can restore access again anytime using your Stripe receipt (pi_…).",
   "owner.signout.confirmCta": "Sign out",
   "campaign.activePicker.title": "Active campaigns",
-  "campaign.activePicker.note": "Select a campaign to view promotion details and show the redeem QR."
+  "campaign.activePicker.note": "Select a campaign to view promotion details and show the redeem QR.",
+  "lpm.status.taken.title": "Taken",
+  "lpm.status.taken.desc": "Already operated.",
+  "lpm.campaign.single": "🎁 Single campaign",
+  "lpm.owned.badge.multiCampaign": "🎁 Multiple campaigns"
 }

@@ -793,5 +793,9 @@
   "owner.signout.confirmBody3": "ניתן לשחזר גישה בכל עת באמצעות קבלת Stripe ‏(pi_…).",
   "owner.signout.confirmCta": "התנתק",
   "campaign.activePicker.title": "קמפיינים פעילים",
-  "campaign.activePicker.note": "בחר קמפיין כדי לצפות בפרטי הקידום ולהציג את קוד ה-QR למימוש."
+  "campaign.activePicker.note": "בחר קמפיין כדי לצפות בפרטי הקידום ולהציג את קוד ה-QR למימוש.",
+  "lpm.status.taken.title": "תפוס",
+  "lpm.status.taken.desc": "כבר מופעל.",
+  "lpm.campaign.single": "🎁 קמפיין יחיד",
+  "lpm.owned.badge.multiCampaign": "🎁 מספר קמפיינים"
 }

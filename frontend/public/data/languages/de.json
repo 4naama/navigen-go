@@ -793,5 +793,9 @@
   "owner.signout.confirmBody3": "Sie können den Zugriff jederzeit mit Ihrer Stripe-Quittung (pi_…) wiederherstellen.",
   "owner.signout.confirmCta": "Abmelden",
   "campaign.activePicker.title": "Aktive Kampagnen",
-  "campaign.activePicker.note": "Wählen Sie eine Kampagne aus, um die Promotionsdetails anzuzeigen und den Einlöse-QR-Code zu öffnen."
+  "campaign.activePicker.note": "Wählen Sie eine Kampagne aus, um die Promotionsdetails anzuzeigen und den Einlöse-QR-Code zu öffnen.",
+  "lpm.status.taken.title": "Belegt",
+  "lpm.status.taken.desc": "Bereits betrieben.",
+  "lpm.campaign.single": "🎁 Einzelne Kampagne",
+  "lpm.owned.badge.multiCampaign": "🎁 Mehrere Kampagnen"
 }

@@ -793,5 +793,9 @@
   "owner.signout.confirmBody3": "Vous pouvez restaurer l’accès à tout moment à l’aide de votre reçu Stripe (pi_…).",
   "owner.signout.confirmCta": "Se déconnecter",
   "campaign.activePicker.title": "Campagnes actives",
-  "campaign.activePicker.note": "Sélectionnez une campagne pour voir les détails de la promotion et afficher le QR de validation."
+  "campaign.activePicker.note": "Sélectionnez une campagne pour voir les détails de la promotion et afficher le QR de validation.",
+  "lpm.status.taken.title": "Pris",
+  "lpm.status.taken.desc": "Déjà exploité.",
+  "lpm.campaign.single": "🎁 Campagne unique",
+  "lpm.owned.badge.multiCampaign": "🎁 Campagnes multiples"
 }

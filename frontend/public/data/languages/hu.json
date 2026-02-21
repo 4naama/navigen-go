@@ -793,5 +793,9 @@
   "owner.signout.confirmBody3": "A hozzáférést bármikor visszaállíthatja a Stripe-nyugtájával (pi_…).",
   "owner.signout.confirmCta": "Kijelentkezés",
   "campaign.activePicker.title": "Aktív kampányok",
-  "campaign.activePicker.note": "Válasszon ki egy kampányt a promóció részleteinek megtekintéséhez és a beváltási QR-kód megjelenítéséhez."
+  "campaign.activePicker.note": "Válasszon ki egy kampányt a promóció részleteinek megtekintéséhez és a beváltási QR-kód megjelenítéséhez.",
+  "lpm.status.taken.title": "Foglalt",
+  "lpm.status.taken.desc": "Már üzemeltetett.",
+  "lpm.campaign.single": "🎁 Egyetlen kampány",
+  "lpm.owned.badge.multiCampaign": "🎁 Több kampány"
 }

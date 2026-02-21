@@ -793,5 +793,9 @@
   "owner.signout.confirmBody3": "Puoi ripristinare l’accesso in qualsiasi momento utilizzando la ricevuta Stripe (pi_…).",
   "owner.signout.confirmCta": "Disconnettiti",
   "campaign.activePicker.title": "Campagne attive",
-  "campaign.activePicker.note": "Seleziona una campagna per visualizzare i dettagli della promozione e mostrare il QR di riscatto."
+  "campaign.activePicker.note": "Seleziona una campagna per visualizzare i dettagli della promozione e mostrare il QR di riscatto.",
+  "lpm.status.taken.title": "Occupato",
+  "lpm.status.taken.desc": "Già gestito.",
+  "lpm.campaign.single": "🎁 Campagna singola",
+  "lpm.owned.badge.multiCampaign": "🎁 Campagne multiple"
 }

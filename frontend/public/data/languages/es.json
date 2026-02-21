@@ -793,5 +793,9 @@
   "owner.signout.confirmBody3": "Puedes restaurar el acceso en cualquier momento usando tu recibo de Stripe (pi_…).",
   "owner.signout.confirmCta": "Cerrar sesión",
   "campaign.activePicker.title": "Campañas activas",
-  "campaign.activePicker.note": "Selecciona una campaña para ver los detalles de la promoción y mostrar el QR de canje."
+  "campaign.activePicker.note": "Selecciona una campaña para ver los detalles de la promoción y mostrar el QR de canje.",
+  "lpm.status.taken.title": "Ocupado",
+  "lpm.status.taken.desc": "Ya operado.",
+  "lpm.campaign.single": "🎁 Campaña única",
+  "lpm.owned.badge.multiCampaign": "🎁 Múltiples campañas"
 }
