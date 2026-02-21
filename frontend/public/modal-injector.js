@@ -1118,65 +1118,41 @@ export async function showLocationProfileModal(data) {
       // Do NOT gate decoration on ownership.
       // Campaign entitlement is independent (see /api/status contract).
       
-      // 🎁 is campaign-only. If no active campaign, show ONLY the taken line.
-      // Source of truth: /api/status (KV-backed entitlement resolver).
+      // 🎁 decoration is entitlement-only and must be stable across backend shape variants.
+      // Reason: /api/status is authoritative, but clients must tolerate both activeCampaignKeys[] and activeCampaignKey during rollout.
+      const statusLine1 =
+        `🔴 ${((typeof t === 'function' && t('lpm.status.taken.title')) || 'Taken')}`;
+
+      const statusLine2 =
+        (typeof t === 'function' && t('lpm.status.taken.desc')) ||
+        'Already operated.';
+
+      // Accept both shapes; fail-closed only when campaignEntitled is false.
       const activeKeys = Array.isArray(j?.activeCampaignKeys) ? j.activeCampaignKeys.filter(Boolean) : [];
+      const singleKey = String(j?.activeCampaignKey || '').trim();
+      if (singleKey && !activeKeys.includes(singleKey)) activeKeys.push(singleKey);
 
-      if (j?.campaignEntitled !== true || activeKeys.length === 0) {
-        el.innerHTML = (typeof t === 'function' && t('lpm.owned.badge.taken')) || '🔴 Taken';
+      const entitled = (j?.campaignEntitled === true);
+
+      // If the backend says "entitled", there is at least one effective active campaign (per contract).
+      // If keys are missing due to shape/lag, treat it as a single campaign for UI decoration only.
+      const effectiveCount = entitled ? Math.max(activeKeys.length, 1) : 0;
+
+      if (!entitled || effectiveCount === 0) {
+        // 2-line status (title + explanation), no 🎁 line
+        el.innerHTML = `${statusLine1}<br>${statusLine2}`;
         el.style.display = 'block';
         return;
       }
 
-      // Multiple active campaigns → do NOT show an "until" date (no implicit primary)
-      if (activeKeys.length > 1) {
-        const takenLine =
-          (typeof t === 'function' && t('lpm.owned.badge.taken')) ||
-          '🔴 Taken';
+      // 3-line status (title + explanation + 🎁 decoration)
+      const giftLine = (effectiveCount > 1)
+        ? ((typeof t === 'function' && t('lpm.owned.badge.multiCampaign')) || '🎁️ Multiple campaigns')
+        : ((typeof t === 'function' && t('lpm.campaign.single')) || '🎁️ Single campaign');
 
-        const multiLine =
-          (typeof t === 'function' && t('lpm.owned.badge.multiCampaign')) ||
-          '🎁️ Multiple campaigns';
-
-        el.innerHTML = `${takenLine}<br>${multiLine}`;
-        el.style.display = 'block';
-        return;
-      }
-
-      // Exactly one active campaign → render "until" using campaignEndsAt
-      const campaignEndISO = String(j?.campaignEndsAt || '').trim();
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(campaignEndISO)) {
-        el.innerHTML = (typeof t === 'function' && t('lpm.owned.badge.taken')) || '🔴 Taken';
-        el.style.display = 'block';
-        return;
-      }
-
-      // Active campaign → render 🎁 lines using campaign endDate (NOT exclusiveUntil)
-      const end = new Date(`${campaignEndISO}T00:00:00Z`);      
-      const endSafe = Number.isNaN(end.getTime()) ? new Date(campaignEndISO) : end;
-      const lang = document.documentElement.lang || 'en';
-      const safeLang = /^en/i.test(lang) ? 'en-US' : lang;
-
-      const dateTxt = Number.isNaN(endSafe.getTime())
-        ? ''
-        : `${new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(endSafe)} - ${new Intl.DateTimeFormat(
-            'en-US',
-            { month: 'short', day: '2-digit', year: 'numeric' }
-          ).format(endSafe)}`;
-
-      const takenLine =
-        (typeof t === 'function' && t('lpm.owned.badge.taken')) ||
-        '🔴 Taken';
-
-      const campaignTpl =
-        (typeof t === 'function' && t('lpm.owned.badge.campaignActive')) ||
-        '🎁️ Campaign active until<br>{{date}}';
-
-      el.innerHTML = `${takenLine}<br>${String(campaignTpl).replace('{{date}}', dateTxt)}`;
-
-      // keep composed output (takenLine + campaignTpl); do not overwrite
+      el.innerHTML = `${statusLine1}<br>${statusLine2}<br>${giftLine}`;
       el.style.display = 'block';
-
+      return;
     } catch {
       // never break LPM
     }
@@ -4089,7 +4065,7 @@ export async function resolveCampaignKeyForLocation(locationID) {
     if (!r.ok) return '';
 
     const j = await r.json().catch(() => null);
-    return String(j?.activeCampaignKey || '').trim();
+    return String((j?.activeCampaignKey || (Array.isArray(j?.activeCampaignKeys) ? j.activeCampaignKeys.find(Boolean) : '')) || '').trim();
   } catch {
     return '';
   }
