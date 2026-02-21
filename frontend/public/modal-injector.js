@@ -3882,31 +3882,20 @@ export function showHowItWorksModal() {
 
 function createHowItWorksModal() {
   const id = 'bo-howitworks-modal';
+  document.getElementById(id)?.remove();
 
-  const wrap = document.createElement('div');
-  wrap.className = 'modal hidden';
-  wrap.id = id;
+  const modal = injectModal({
+    id,
+    title: t('bo.howItWorks.title') || 'How it works',
+    layout: 'menu',
+    bodyHTML: '' // fill inner below
+  });
 
-  const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
+  const inner = modal.querySelector('.modal-body-inner');
+  if (!inner) return;
 
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  top.innerHTML = `
-    <h2 class="modal-title">${t('bo.howItWorks.title') || 'How it works'}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
-
-  const body = document.createElement('div');
-  body.className = 'modal-body';
-  const inner = document.createElement('div');
-  inner.className = 'modal-body-inner';
-
-  // Cue card — collapsible card-style sections (accordion) — fully translatable
   inner.innerHTML = `
     <div class="howitworks">
-
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">💶</span>
@@ -3965,63 +3954,31 @@ function createHowItWorksModal() {
       <details class="howitworks-sec">
         <summary class="modal-menu-item howitworks-card">
           <span class="icon-img">🔐</span>
-          <span class="label">
-            <strong>${t('bo.hiw.deviceControl.title') || 'Managing access on this device'}</strong>
-          </span>
+          <span class="label"><strong>${t('bo.hiw.deviceControl.title') || 'Managing access on this device'}</strong></span>
           <span class="chevron" aria-hidden="true"></span>
         </summary>
         <div class="howitworks-body">
+          <div class="howitworks-sub">${t('bo.hiw.deviceControl.sub') || 'Understand what each access action does.'}</div>
 
-          <div class="howitworks-sub">
-            ${t('bo.hiw.deviceControl.sub') || 'Understand what each access action does.'}
-          </div>
-
-          <div>
-            <strong>${t('bo.hiw.deviceControl.restore.title') || '🔑 Restore access'}</strong>
-          </div>
-          <div>
-            ${t('bo.hiw.deviceControl.restore.b1') || 'Adds a business to this device'}
-          </div>
-          <div>
-            ${t('bo.hiw.deviceControl.restore.b2') || 'Restores the owner session'}
-          </div>
-          <div>
-            ${t('bo.hiw.deviceControl.restore.b3') || 'Does not create ownership'}
-          </div>
-          <div>
-            ${t('bo.hiw.deviceControl.restore.b4') || 'Does not extend ownership'}
-          </div>
+          <div><strong>${t('bo.hiw.deviceControl.restore.title') || '🔑 Restore access'}</strong></div>
+          <div>${t('bo.hiw.deviceControl.restore.b1') || 'Adds a business to this device'}</div>
+          <div>${t('bo.hiw.deviceControl.restore.b2') || 'Restores the owner session'}</div>
+          <div>${t('bo.hiw.deviceControl.restore.b3') || 'Does not create ownership'}</div>
+          <div>${t('bo.hiw.deviceControl.restore.b4') || 'Does not extend ownership'}</div>
 
           <div style="height:12px;"></div>
 
-          <div>
-            <strong>${t('bo.hiw.deviceControl.remove.title') || '🗑️ Remove from Owner Center'}</strong>
-          </div>
-          <div>
-            ${t('bo.hiw.deviceControl.remove.b1') || 'Removes this business from this device’s saved list'}
-          </div>
-          <div>
-            ${t('bo.hiw.deviceControl.remove.b2') || 'Does not affect ownership globally'}
-          </div>
-          <div>
-            ${t('bo.hiw.deviceControl.remove.b3') || 'If active, also clears the active session'}
-          </div>
+          <div><strong>${t('bo.hiw.deviceControl.remove.title') || '🗑️ Remove from Owner Center'}</strong></div>
+          <div>${t('bo.hiw.deviceControl.remove.b1') || 'Removes this business from this device’s saved list'}</div>
+          <div>${t('bo.hiw.deviceControl.remove.b2') || 'Does not affect ownership globally'}</div>
+          <div>${t('bo.hiw.deviceControl.remove.b3') || 'If active, also clears the active session'}</div>
 
           <div style="height:12px;"></div>
 
-          <div>
-            <strong>${t('bo.hiw.deviceControl.signout.title') || '🧹 Sign out on this device'}</strong>
-          </div>
-          <div>
-            ${t('bo.hiw.deviceControl.signout.b1') || 'Clears the active session only'}
-          </div>
-          <div>
-            ${t('bo.hiw.deviceControl.signout.b2') || 'Keeps the business saved in Owner Center'}
-          </div>
-          <div>
-            ${t('bo.hiw.deviceControl.signout.b3') || 'Equivalent to logging out'}
-          </div>
-
+          <div><strong>${t('bo.hiw.deviceControl.signout.title') || '🧹 Sign out on this device'}</strong></div>
+          <div>${t('bo.hiw.deviceControl.signout.b1') || 'Clears the active session only'}</div>
+          <div>${t('bo.hiw.deviceControl.signout.b2') || 'Keeps the business saved in Owner Center'}</div>
+          <div>${t('bo.hiw.deviceControl.signout.b3') || 'Equivalent to logging out'}</div>
         </div>
       </details>
 
@@ -4038,11 +3995,9 @@ function createHowItWorksModal() {
           <div>${t('bo.hiw.notsell.b3') || '• Pay-to-exist listings'}</div>
         </div>
       </details>
-
     </div>
   `;
 
-  // Pricing & policies link card (Step 3 will expand this into a full page)
   const pricingBtn = document.createElement('button');
   pricingBtn.type = 'button';
   pricingBtn.className = 'modal-menu-item';
@@ -4058,26 +4013,16 @@ function createHowItWorksModal() {
     e.preventDefault();
     showPricingPoliciesModal();
   });
-
   inner.appendChild(pricingBtn);
 
-  body.appendChild(inner);
-  card.appendChild(top);
-  card.appendChild(body);
-  
   // Accordion behavior: keep only one section open at a time
   const secs = inner.querySelectorAll('details.howitworks-sec');
   secs.forEach((d) => {
     d.addEventListener('toggle', () => {
       if (!d.open) return;
-      secs.forEach((other) => {
-        if (other !== d) other.open = false;
-      });
+      secs.forEach((other) => { if (other !== d) other.open = false; });
     });
   });
-
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
 
   setupTapOutClose(id);
 }
@@ -4944,6 +4889,8 @@ export async function createOwnerCenterModal() {
       (async () => {
         try {
           const dotEl = btn.querySelector('.syb-status-dot');
+          const giftEl = btn.querySelector('.syb-gift');
+          
           if (!dotEl) return;
 
           const q = String(slug || u || '').trim();
@@ -4956,7 +4903,9 @@ export async function createOwnerCenterModal() {
           if (!r.ok) return;
 
           const j = await r.json().catch(() => null);
-
+          const entitled = (j?.campaignEntitled === true);
+          if (giftEl) giftEl.classList.toggle('syb-gift-on', entitled);
+          
           const owned = (j?.ownedNow === true);
           const vis = String(j?.visibilityState || '').trim();
           const courtesyUntil = String(j?.courtesyUntil || '').trim();
