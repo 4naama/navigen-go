@@ -1358,23 +1358,12 @@ body.high-contrast .cta-compact .modal-footer-button{
 }
 
 /* LPM: rating row (emoji radios) */
-/* LPM: rating row (emoji radios) */
 .lpm-rating{
   margin:.75em 0 0;
-  padding: 0 1rem;            /* breathing room from modal edges */
   display:flex;
-  flex-direction:column;      /* stack badge + row + hint */
-  align-items:center;         /* center the emoji row horizontally */
+  flex-direction:column;      /* stack hint UNDER the row */
+  align-items:center;         /* center horizontally */
   justify-content:flex-start; /* keep top-aligned */
-}
-
-/* LPM: owned/campaign badge lives inside the rating container */
-.lpm-rating .lpm-owned-badge{
-  align-self:stretch;         /* take full available width inside the padded container */
-  text-align:left;            /* left-align status/campaign text */
-  margin: 0 0 .35rem 0;       /* separate from emoji row */
-  font-size:0.9em;
-  opacity:0.9;
 }
 
 .lpm-rating .rate-row{
@@ -1414,6 +1403,31 @@ body.high-contrast .lpm-rating .rate-btn[aria-checked="true"]{
   opacity:.55; cursor:default; pointer-events:none;
 }
 
+/* LPM: Status (owned/campaign) must align to the same centered content column as the rating row.
+   This must NOT depend on media size/aspect ratio. */
+#location-profile-modal .lpm-owned-badge,
+#location-profile-modal .lpm-rating{
+  max-width: 560px;           /* visual column width; independent of hero media */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 12px;         /* breathing room from card edges */
+  padding-right: 12px;
+  box-sizing: border-box;
+}
+
+/* Status text is left-aligned even though the block itself is centered */
+#location-profile-modal .lpm-owned-badge{
+  text-align: left;
+  margin-top: 0.5rem;
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+/* Rating stays centered; only the container shares the column geometry */
+#location-profile-modal .lpm-rating{
+  margin-top: 0.75em;         /* keep your existing rhythm */
+  padding-top: 0;             /* avoid accidental extra vertical offset */
+}
 /* QR modal: emoji-only CTAs */
 .qr-ctas{
   display:flex;

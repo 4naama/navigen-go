@@ -910,6 +910,7 @@ export function createLocationProfileModal(data, injected = {}) {
              alt="${payload.name || 'Location'} image"
              style="width:100%;height:auto;border-radius:8px;${heroSrc ? 'display:block;' : 'display:none;'}">
       </figure>
+      <div class="lpm-owned-badge" style="display:none;"></div>
 
       ${
         (Array.isArray(payload?.tags) && payload.tags.length)
@@ -936,13 +937,6 @@ export function createLocationProfileModal(data, injected = {}) {
     const rate = document.createElement('section');
     rate.className = 'lpm-rating';
     rate.id = 'lpm-rate-section';
-
-    // Owned badge is rendered inside the rating container so it shares the same centered content anchor.
-    // Status painter in showLocationProfileModal() looks up ".lpm-owned-badge" and will populate this node.
-    const owned = document.createElement('div');
-    owned.className = 'lpm-owned-badge';
-    owned.style.display = 'none';
-    rate.appendChild(owned);
 
     rate.innerHTML = `
       <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="Rate">
