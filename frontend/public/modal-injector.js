@@ -5245,6 +5245,67 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
   if (!locName) locName = String(displaySlug || '').trim(); // last-resort fallback
 
+  let requestedUlid = '';
+  try {
+    const st = new URL('/api/status', location.origin);
+    st.searchParams.set('locationID', displaySlug);
+    const r = await fetch(st.toString(), { cache: 'no-store', credentials: 'omit' });
+    const j = r.ok ? await r.json().catch(() => null) : null;
+    requestedUlid = String(j?.locationID || '').trim(); // /api/status returns canonical ULID in locationID
+  } catch {}
+
+  if (listJ && requestedUlid && String(listJ?.ulid || '').trim() && requestedUlid !== String(listJ.ulid).trim()) {
+    // Session is valid, but bound to a different location. Fail closed and offer the only correct fix: switch.
+    const shell = document.createElement('div');
+    shell.className = 'cm-shell';
+
+    const locHdr = document.createElement('div');
+    locHdr.className = 'cm-location';
+    locHdr.innerHTML = `
+      <div class="cm-location-row">
+        <span class="cm-location-label">Location name</span>
+        <span class="cm-location-box">${String(displayName || displaySlug || '').trim()}</span>
+      </div>
+      <div class="cm-location-row">
+        <span class="cm-location-label">Location ID</span>
+        <span class="cm-location-box">${String(displaySlug || '').trim()}</span>
+      </div>
+    `;
+
+    const panel = document.createElement('div');
+    panel.className = 'cm-panel';
+
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.style.textAlign = 'left';
+    p.textContent =
+      (typeof t === 'function' && t('campaign.ui.mismatch')) ||
+      'Owner session is currently bound to a different location. Switch in Owner Center to manage campaigns for this location.';
+    panel.appendChild(p);
+
+    const actions = document.createElement('div');
+    actions.className = 'cm-actions';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cm-action-primary';
+    btn.textContent = (typeof t === 'function' && t('owner.center.open')) || 'Open Owner Center';
+    btn.addEventListener('click', async () => {
+      hideModal('campaign-management-modal');
+      await showOwnerCenterModal();
+    });
+
+    actions.appendChild(btn);
+    panel.appendChild(actions);
+
+    shell.appendChild(locHdr);
+    shell.appendChild(panel);
+    root.appendChild(shell);
+
+    showModal('campaign-management-modal');
+    return;
+  }
+
   // Split campaign rows for tabs (ensure multiple active campaigns are represented)
   const rowsAll = Array.isArray(historyArr) ? historyArr : [];
   const ymd = (d) => {
@@ -5574,6 +5635,27 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     panel.appendChild(list);
   };
 
+function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
+  const base = String(baseSlug || '').trim();
+  const year = String(yy || '').trim();
+  const rows = Array.isArray(rowsAll) ? rowsAll : [];
+
+  const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`^${esc(base)}-${esc(year)}-(\\d{2,})$`);
+
+  let maxN = 0;
+  for (const r of rows) {
+    const k = String(r?.campaignKey || '').trim();
+    const m = k.match(re);
+    if (!m) continue;
+    const n = Number(m[1]);
+    if (Number.isFinite(n) && n > maxN) maxN = n;
+  }
+
+  const next = maxN + 1;
+  const suffix = String(next).padStart(2, '0');
+  return `${base}-${year}-${suffix}`;
+}
   const renderDraftEditor = () => {
     // Draft editor: empty on first open; shows draft once editing has started.
     // This remains KV-authoritative via /api/owner/campaigns/draft and the draft returned in /api/owner/campaigns.
@@ -5599,9 +5681,12 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     const yy = String(new Date().getFullYear()).slice(-2);
     // Canonical: campaignKey must be locationSlug-based (stable + unique per business).
     const baseSlug = String(displaySlug || slug || '').trim() || 'location';
-    const suggestedKey = `${baseSlug}-${yy}-01`;
+    const suggestedKey = nextRollingCampaignKey(baseSlug, yy, rowsAll);
 
     const campaignKey = buildInput('text', draft?.campaignKey || suggestedKey);
+    campaignKey.readOnly = true; // guardrail: generated key is non-editable
+    campaignKey.setAttribute('aria-readonly', 'true'); 
+    
     const campaignName = buildInput('text', draft?.campaignName || '');
     const startDate = buildInput('date', draft?.startDate || ymdToday());
     const endDate = buildInput('date', draft?.endDate || '');
