@@ -4024,6 +4024,15 @@ function createHowItWorksModal() {
     });
   });
 
+  // Desktop ESC support (scoped + self-cleaning)
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      hideModal(id);
+      document.removeEventListener('keydown', escHandler);
+    }
+  };
+  document.addEventListener('keydown', escHandler);
+
   setupTapOutClose(id);
 }
 
