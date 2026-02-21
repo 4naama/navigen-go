@@ -396,7 +396,7 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
   inner.className = 'modal-body-inner';
 
   const note = document.createElement('p');
-  note.className = 'muted';
+  note.className = 'muted muted-note';
   note.style.textAlign = 'left';
   note.textContent =
     (typeof t === 'function' && t('campaign.activePicker.note')) ||
@@ -4537,8 +4537,8 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       desc: _ownerText('owner.settings.signedin.runCampaign.desc', 'Edit draft ✍️, checkout 💳, or manage this campaign.'),
       onClick: () => {
         hideModal(id);
-        // Manage campaign: selection-first; "New campaign" starts empty unless explicitly copying.
-        showCampaignManagementModal(String(locId || '').trim(), { preferEmptyDraft: true });        
+        showCampaignManagementModal(String(locId || '').trim());
+        showCampaignManagementModal(String(locId || '').trim(), { openTab: 'current', preferEmptyDraft: true });
       }
     });
 
@@ -5184,12 +5184,8 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   }
 
   const prefillFrom = (opts && opts.prefillFrom && typeof opts.prefillFrom === 'object') ? opts.prefillFrom : null;
-  const preferEmptyDraft = !!(opts && opts.preferEmptyDraft);
-
-  // Draft prefill policy:
-  // - Only prefill when explicitly copying (prefillFrom).
-  // - Otherwise, Manage campaign must not implicitly reuse an existing draft when preferEmptyDraft is true.
-  const draft = prefillFrom || (preferEmptyDraft ? null : (listJ?.draft || null));
+  const preferEmptyDraft = (opts && opts.preferEmptyDraft === true);
+  const draft = prefillFrom ? prefillFrom : (preferEmptyDraft ? null : (listJ?.draft || null));
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
   const ulid = String(listJ?.ulid || '').trim(); // empty in guest mode; that's OK
 
@@ -5308,6 +5304,41 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   const controls = document.createElement('div');
   controls.className = 'cm-controls';
 
+  // Campaign key selector (B.4): Add new first + list existing keys
+  const keySel = document.createElement('select');
+  keySel.className = 'cm-select cm-key-select';
+
+  const keyOpt = (value, label) => {
+    const o = document.createElement('option');
+    o.value = value;
+    o.textContent = label;
+    return o;
+  };
+
+  // First option: Add new campaign
+  keySel.appendChild(
+    keyOpt('__new__', (typeof t === 'function' && t('campaign.ui.addNew')) || 'Add new campaign')
+  );
+
+  // Then list known campaign keys (sorted newest first by startDate, fallback by key)
+  const rowsForKeyList = Array.isArray(rowsAll) ? rowsAll.slice() : [];
+  rowsForKeyList.sort((a,b) => {
+    const as = String(a?.startDate || '').trim();
+    const bs = String(b?.startDate || '').trim();
+    if (as !== bs) return (bs > as ? 1 : -1);
+    const ak = String(a?.campaignKey || '').trim();
+    const bk = String(b?.campaignKey || '').trim();
+    return ak.localeCompare(bk);
+  });
+
+  const seenKeys = new Set();
+  rowsForKeyList.forEach(r => {
+    const k = String(r?.campaignKey || '').trim();
+    if (!k || seenKeys.has(k)) return;
+    seenKeys.add(k);
+    keySel.appendChild(keyOpt(k, k));
+  });
+
   const viewSel = document.createElement('select');
   viewSel.className = 'cm-select';
 
@@ -5333,8 +5364,9 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   viewSel.appendChild(opt('current', vCur));
   viewSel.appendChild(opt('history', vHis));
 
+  controls.appendChild(keySel);
   controls.appendChild(viewSel);
-
+  
   // Content (C)
   const panel = document.createElement('div');
   panel.className = 'cm-panel';
@@ -5607,8 +5639,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     const baseSlug = String(displaySlug || slug || '').trim() || 'location';
     const suggestedKey = `${baseSlug}-${yy}-01`;
 
-    // In Manage Campaign empty-draft mode, do not prefill campaignKey (prevents accidental duplication).
-    const campaignKey = buildInput('text', (draft?.campaignKey || (preferEmptyDraft ? '' : suggestedKey)));    
+    const campaignKey = buildInput('text', draft?.campaignKey || suggestedKey);
     const campaignName = buildInput('text', draft?.campaignName || '');
     const startDate = buildInput('date', draft?.startDate || ymdToday());
     const endDate = buildInput('date', draft?.endDate || '');
@@ -5660,56 +5691,8 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     form.appendChild(field(labels.startDate, startDate));
     form.appendChild(field(labels.endDate, endDate));
 
-    // Existing campaigns selector (copy flow) + explicit "Add new campaign"
-    const takenCampaignKeys = rowsAll
-      .map(r => String(r?.campaignKey || '').trim())
-      .filter(Boolean);
+    panel.appendChild(form);
 
-    if (takenCampaignKeys.length) {
-      const selectorWrap = document.createElement('div');
-      selectorWrap.className = 'cm-existing-selector';
-
-      const sel = document.createElement('select');
-      sel.className = 'cm-campaignkey-select';
-
-      const opt0 = document.createElement('option');
-      opt0.value = '';
-      opt0.textContent = (typeof t === 'function' && t('campaign.ui.selectExisting')) || 'Select existing campaign';
-      sel.appendChild(opt0);
-
-      const optNew = document.createElement('option');
-      optNew.value = '__new__';
-      optNew.textContent = (typeof t === 'function' && t('campaign.ui.addNew')) || 'Add new campaign';
-      sel.appendChild(optNew);
-
-      rowsAll.forEach(r => {
-        const k = String(r?.campaignKey || '').trim();
-        if (!k) return;
-        const o = document.createElement('option');
-        o.value = k;
-        o.textContent = k;
-        sel.appendChild(o);
-      });
-
-      sel.addEventListener('change', () => {
-        const v = String(sel.value || '').trim();
-        if (!v) return;
-
-        if (v === '__new__') {
-          // Explicit empty draft
-          showCampaignManagementModal(displaySlug, { openTab: 'new', preferEmptyDraft: true });
-          return;
-        }
-
-        // Explicit copy: open New campaign with prefillFrom, but campaignKey remains empty (forced above).
-        const row = rowsAll.find(x => String(x?.campaignKey || '').trim() === v);
-        if (row) showCampaignManagementModal(displaySlug, { openTab: 'new', prefillFrom: row });
-      });
-
-      selectorWrap.appendChild(sel);
-      panel.insertBefore(selectorWrap, form); // place above the form fields
-    }
-    
     // Actions row
     const actions = document.createElement('div');
     actions.className = 'cm-actions';
@@ -5749,16 +5732,6 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
       const d = collectDraft();
       if (!d.campaignKey || !d.startDate || !d.endDate) {
         showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
-        return;
-      }
-
-      // Hard guard: prevent duplicate campaignKey for this location.
-      const takenCampaignKeys = rowsAll
-        .map(r => String(r?.campaignKey || '').trim())
-        .filter(Boolean);
-
-      if (takenCampaignKeys.includes(String(d.campaignKey || '').trim())) {
-        showToast((typeof t==='function' && t('campaign.ui.duplicateKey')) || 'This campaign key already exists. Please choose a new key.', 2800);
         return;
       }
 
@@ -5845,16 +5818,36 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     setActiveTab(v);
   });
 
-  // Default open:
-  // - If any campaign exists, open Current campaigns first.
-  // - Otherwise, open New campaign.
-  const defaultTab =
-    (opts && typeof opts.openTab === 'string' && opts.openTab)
-      ? String(opts.openTab)
-      : (rowsAll.length ? 'current' : 'new');
+  // Key dropdown behavior
+  keySel.addEventListener('change', () => {
+    const k = String(keySel.value || '').trim();
 
-  setActiveTab(defaultTab);
+    if (k === '__new__') {
+      // Switch to New campaign with empty draft
+      showCampaignManagementModal(displaySlug, { openTab: 'new', preferEmptyDraft: true });
+      return;
+    }
 
+    // Find the row for this campaignKey and open its details
+    const hit = rowsAll.find(x => String(x?.campaignKey || '').trim() === k);
+    if (hit) {
+      showCampaignInfoModal(hit);
+      // Keep Current campaigns view selected (does not force draft)
+      if (viewSel.value !== 'current') viewSel.value = 'current';
+      setActiveTab('current');
+    }
+  });
+
+  // Default open: New campaign
+  const initialTab = String(opts.openTab || '').trim();
+  if (initialTab) {
+    setActiveTab(initialTab);
+  } else {
+    // Default open behavior:
+    // - If any campaigns exist, start in Current campaigns.
+    // - Otherwise start in New campaign.
+    setActiveTab(rowsAll.length ? 'current' : 'new');
+  }
   showModal(id);
 }
 // --- End Campaign Management ----------------------------------------------------

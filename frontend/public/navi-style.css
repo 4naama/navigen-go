@@ -1589,6 +1589,10 @@ body.high-contrast .qr-cta{
   opacity: 0.9;
 }
 
+/* Neutral note text (do not inherit bold label styling) */
+.modal-body .muted.muted-note{
+  font-weight:400;
+}
 .modal-body .location-coords {
   font-size: 1.1em;
   margin-bottom: 1em;
@@ -2814,6 +2818,11 @@ select.input{
   background-repeat:no-repeat;
   background-position:right 1ch center;
   background-size:14px 14px;
+}
+
+.cm-controls .cm-key-select{
+  background:#eaf4ff;
+  border-color:#b7d7ff;
 }
 
 /* Campaign Management: sections (no inline styles in JS) */
