@@ -1115,15 +1115,40 @@ export async function showLocationProfileModal(data) {
       if (!r.ok) return;
 
       const j = await r.json().catch(() => null);
-      if (j?.ownedNow !== true) return;
+      // Do NOT gate decoration on ownership.
+      // Campaign entitlement is independent (see /api/status contract).
+      
+      // Status line (LPM) — keep the 2-line explanation format you want.
+      const owned = (j?.ownedNow === true);
 
-      // 🎁 is campaign-only. If no active campaign, show ONLY the taken line.
-      // Source of truth: /api/status (KV-backed entitlement resolver).
+      const statusLine1 =
+        owned
+          ? ((typeof t === 'function' && t('lpm.owned.badge.taken')) || '🔴 Taken')
+          : ((typeof t === 'function' && t('lpm.owned.badge.free'))  || '🟢 Free');
+
+      const statusLine2 =
+        owned
+          ? ((typeof t === 'function' && t('lpm.owned.badge.operated')) || 'Already operated.')
+          : ((typeof t === 'function' && t('lpm.owned.badge.available')) || 'Available.');
+
+      // 🎁 campaign decoration — authoritative via /api/status entitlement resolver.
       const activeKeys = Array.isArray(j?.activeCampaignKeys) ? j.activeCampaignKeys.filter(Boolean) : [];
 
-      if (j?.campaignEntitled !== true || activeKeys.length === 0) {
-        el.innerHTML = (typeof t === 'function' && t('lpm.owned.badge.taken')) || '🔴 Taken';
-        el.style.display = 'block';
+      let giftLine = '';
+      if (j?.campaignEntitled === true && activeKeys.length > 0) {
+        giftLine =
+          (activeKeys.length > 1)
+            ? ((typeof t === 'function' && t('lpm.owned.badge.multiCampaign')) || '🎁️ Multiple campaigns')
+            : ((typeof t === 'function' && t('lpm.owned.badge.singleCampaign')) || '🎁️ Single campaign');
+      }
+
+      // Render: status label + explanation, then optional 🎁 line (no dates here)
+      el.innerHTML = giftLine
+        ? `${statusLine1}<br>${statusLine2}<br>${giftLine}`
+        : `${statusLine1}<br>${statusLine2}`;
+
+      el.style.display = 'block';
+             
         return;
       }
 
