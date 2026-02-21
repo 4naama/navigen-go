@@ -6260,7 +6260,7 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   wrap.className = 'modal hidden';
 
   const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
+  card.className = 'modal-content modal-menu';
 
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
