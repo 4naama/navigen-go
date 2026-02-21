@@ -4730,31 +4730,23 @@ export async function createOwnerCenterModal() {
   const id = 'owner-center-modal';
   document.getElementById(id)?.remove();
 
-  const wrap = document.createElement('div');
-  wrap.className = 'modal hidden';
-  wrap.id = id;
+  // Build with the same contract as Owner Settings (sticky header inside a single modal card scroller)
+  const modal = injectModal({
+    id,
+    title: (typeof t === 'function' && t('owner.center.title')) || 'Owner Center',
+    layout: 'menu',
+    bodyHTML: '' // we will fill .modal-body-inner below
+  });
 
-  const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
+  const inner = modal.querySelector('.modal-body-inner');
+  if (!inner) return;
 
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  top.innerHTML = `
-    <h2 class="modal-title">${(typeof t === 'function' && t('owner.center.title')) || 'Owner Center'}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
-
-  const body = document.createElement('div');
-  body.className = 'modal-body';
-  const inner = document.createElement('div');
-  inner.className = 'modal-body-inner';
+  inner.innerHTML = '';
 
   const note = document.createElement('p');
   note.textContent =
     (typeof t === 'function' && t('owner.center.note')) ||
     'Owner access is stored on this device for security. To manage a business, tap it below. To add a business on a new device, use 🔑 Restore access once.';
-
   note.style.textAlign = 'left';
   note.style.fontSize = '0.85em';
   note.style.opacity = '0.8';
@@ -4775,7 +4767,6 @@ export async function createOwnerCenterModal() {
     e.preventDefault();
     showRestoreAccessModal();
   });
-
   inner.appendChild(restoreBtn);
 
   const list = document.createElement('div');
@@ -4783,36 +4774,27 @@ export async function createOwnerCenterModal() {
   inner.appendChild(list);
 
   // Load device-bound ULIDs
-  // Note: right after Restore, KV-backed device registry may lag; retry briefly and fall back to the restored ULID.
   let ulids = [];
 
   let lastRestored = '';
-  let untilMs = 0;
   try {
     lastRestored = String(sessionStorage.getItem('ng_owner_restore_ulid') || '').trim();
-    untilMs = Number(sessionStorage.getItem('ng_owner_restore_until') || '0') || 0;
-  } catch { lastRestored = ''; untilMs = 0; }
+  } catch { lastRestored = ''; }
 
   const fetchSessionsOnce = async () => {
     try {
       const r = await fetch('/api/owner/sessions', { cache: 'no-store', credentials: 'include' });
       const j = r.ok ? await r.json().catch(() => null) : null;
-      const arr = Array.isArray(j?.items) ? j.items : [];
-      return arr;
+      return Array.isArray(j?.items) ? j.items : [];
     } catch {
       return [];
     }
   };
 
-  // first attempt
   ulids = await fetchSessionsOnce();
 
-  // No retries: keep Owner Center deterministic (one request max). Fallback injection covers post-restore lag.
-
   // fallback injection (UI only): show the restored ULID if registry is still empty
-  if ((!ulids || !ulids.length) && lastRestored) {
-    ulids = [lastRestored];
-  }
+  if ((!ulids || !ulids.length) && lastRestored) ulids = [lastRestored];
 
   // Clear post-restore hint once sessions are visible again.
   if (Array.isArray(ulids) && ulids.length) {
@@ -4830,7 +4812,6 @@ export async function createOwnerCenterModal() {
       'No saved owner sessions on this device yet. Use Restore access once to add one.';
     list.appendChild(p);
   } else {
-    // Resolve each ULID to slug/name via Worker item endpoint
     for (const ulid of ulids) {
       const u = String(ulid || '').trim();
       if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(u)) continue;
@@ -4854,15 +4835,12 @@ export async function createOwnerCenterModal() {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'modal-menu-item oc-card';
-
       btn.innerHTML = `
         <div class="oc-row1">
           <span class="icon-img" aria-hidden="true">📍</span>
-
           <span class="oc-name" style="flex:1 1 auto; min-width:0; text-align:left;">
             <strong>${label}</strong>
           </span>
-
           <span class="syb-status-dot" aria-hidden="true"></span>
         </div>
 
@@ -4875,7 +4853,6 @@ export async function createOwnerCenterModal() {
         </div>
       `;
 
-      // Owner Center: remove this ULID from the device registry (does not affect global ownership).
       btn.querySelector('.owner-center-remove')?.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -4913,14 +4890,12 @@ export async function createOwnerCenterModal() {
                 const diag = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
                 const dj = diag.ok ? await diag.json().catch(() => null) : null;
                 const activeUlid = String(dj?.ulid || '').trim();
-
                 if (activeUlid && activeUlid === u) {
                   window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
                   return;
                 }
               } catch {}
 
-              // Non-active removal: just remove card locally
               btn.remove();
               showToast(
                 (typeof t === 'function' && t('owner.center.remove.toast.ok')) ||
@@ -4938,7 +4913,6 @@ export async function createOwnerCenterModal() {
         });
       });
 
-      // Owner Center: launch campaign for this business (switch session, then open CM)
       btn.querySelector('.owner-center-launch')?.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -4947,7 +4921,6 @@ export async function createOwnerCenterModal() {
         markBusyLocal(btn, true);
 
         try {
-          // Switch op_sess binding server-side (no Dash redirect)
           const sw = new URL('/owner/switch', location.origin);
           sw.searchParams.set('ulid', u);
           sw.searchParams.set('next', '/');
@@ -4960,7 +4933,6 @@ export async function createOwnerCenterModal() {
 
           hideModal(id);
 
-          // Prefer slug if we resolved it; fallback to ULID (CM will resolve ULID → slug internally if needed)
           const locIdent = String(slug || u || '').trim();
           await showCampaignManagementModal(locIdent, { openTab: 'new', preferEmptyDraft: true });
         } finally {
@@ -4968,19 +4940,12 @@ export async function createOwnerCenterModal() {
         }
       });
 
-      // Decorate status dot + 🎁 gift (SYB parity)
-      // - 🎁: active campaign in /data/campaigns.json (loaded once per modal)
-      // - dot: /api/status (authoritative ownership signal; no creds)
-      ;(async () => {
+      // Status dot decoration (same logic you already have)
+      (async () => {
         try {
           const dotEl = btn.querySelector('.syb-status-dot');
-          const giftEl = btn.querySelector('.syb-gift');
-
-          // 🎁 Campaign hint: KV-authoritative via /api/status
-
           if (!dotEl) return;
 
-          // Prefer slug for status calls (status endpoint accepts both; slug keeps it readable)
           const q = String(slug || u || '').trim();
           if (!q) return;
 
@@ -4991,37 +4956,23 @@ export async function createOwnerCenterModal() {
           if (!r.ok) return;
 
           const j = await r.json().catch(() => null);
-          const entitled = (j?.campaignEntitled === true);
-          if (giftEl) giftEl.classList.toggle('syb-gift-on', entitled);
 
           const owned = (j?.ownedNow === true);
           const vis = String(j?.visibilityState || '').trim();
           const courtesyUntil = String(j?.courtesyUntil || '').trim();
 
-          // 🔴 taken (owned)
           dotEl.classList.toggle('syb-taken', owned);
-
-          // 🟠 parked (unowned + hidden)
           dotEl.classList.toggle('syb-parked', !owned && vis === 'hidden');
-
-          // 🔵 held/courtesy (unowned + courtesy window)
           dotEl.classList.toggle('syb-held', !owned && !!courtesyUntil);
-
-          // 🟢 free (unowned + discoverable baseline)
           dotEl.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
-
-        } catch {
-          // never break Owner Center rendering
-        }
+        } catch {}
       })();
 
       btn.addEventListener('click', async () => {
         if (btn.dataset.busy === '1') return;
 
         markBusyLocal(btn, true);
-
         try {
-          // Switch the op_sess binding server-side, but DO NOT redirect to Dash.
           const sw = new URL('/owner/switch', location.origin);
           sw.searchParams.set('ulid', u);
           sw.searchParams.set('next', '/');
@@ -5043,15 +4994,8 @@ export async function createOwnerCenterModal() {
     }
   }
 
-  body.appendChild(inner);
-  card.appendChild(top);
-  card.appendChild(body);
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
-
   setupTapOutClose(id);
 }
-
 // --- Campaign Management (Owner) ------------------------------------------------
 // Draft → Checkout → Promote (KV-authoritative; no campaigns.json reads)
 
