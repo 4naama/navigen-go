@@ -42,6 +42,69 @@ export interface Env {
   OWNER_LINK_HMAC_SECRET: string; // HMAC secret for signed owner access links (Phase 2)
 }
 
+// --- Plan persistence (Phase 8 prerequisite) ---
+// Authoritative source: Stripe Checkout Session line items (price.id) at reconciliation time.
+// Publish MUST NOT call Stripe; publish reads plan:<payment_intent.id> from KV_STATUS.
+
+type PlanTier = "standard" | "multi" | "large" | "network" | "unknown";
+
+type PlanRecord = {
+  priceId: string;
+  tier: PlanTier;
+  maxPublishedLocations: number;
+  purchasedAt: string; // ISO
+  expiresAt: string;   // ISO (must equal ownership.exclusiveUntil for same payment)
+};
+
+// TODO: Fill these price.id values from Stripe dashboard.
+// Fail-closed behavior for publish is enforced by maxPublishedLocations=0 when unknown.
+const PRICE_ID_TO_PLAN: Record<string, { tier: PlanTier; maxPublishedLocations: number }> = {
+  // "price_123": { tier: "standard", maxPublishedLocations: 3 },
+  // "price_456": { tier: "multi",     maxPublishedLocations: 10 },
+  // "price_789": { tier: "large",     maxPublishedLocations: 25 },
+  // "price_abc": { tier: "network",   maxPublishedLocations: 150 },
+};
+
+async function fetchStripeCheckoutLineItemPriceId(sk: string, checkoutSessionId: string): Promise<string> {
+  const url = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(checkoutSessionId)}/line_items?limit=1`;
+  const r = await fetch(url, { method: "GET", headers: { Authorization: `Bearer ${sk}` } });
+  const txt = await r.text();
+  let j: any = null;
+  try { j = JSON.parse(txt); } catch { j = null; }
+
+  if (!r.ok) throw new Error(`stripe_line_items_fetch_failed:${r.status}`);
+  const item = j?.data && Array.isArray(j.data) && j.data.length ? j.data[0] : null;
+
+  // Stripe line item structure: item.price.id OR item.price (string) depending on API version
+  const priceId = String(item?.price?.id || item?.price || "").trim();
+  if (!priceId) throw new Error("stripe_line_items_missing_price_id");
+  return priceId;
+}
+
+async function persistPlanRecord(
+  env: Env,
+  sk: string,
+  checkoutSessionId: string,
+  paymentIntentId: string,
+  expiresAtIso: string
+): Promise<PlanRecord> {
+  const priceId = await fetchStripeCheckoutLineItemPriceId(sk, checkoutSessionId);
+
+  const mapped = PRICE_ID_TO_PLAN[priceId];
+  const tier: PlanTier = mapped?.tier || "unknown";
+  const maxPublishedLocations = mapped?.maxPublishedLocations ?? 0;
+
+  const rec: PlanRecord = {
+    priceId,
+    tier,
+    maxPublishedLocations,
+    purchasedAt: new Date().toISOString(),
+    expiresAt: expiresAtIso
+  };
+
+  await env.KV_STATUS.put(`plan:${paymentIntentId}`, JSON.stringify(rec));
+  return rec;
+}
 // --- Stripe webhook verification (HMAC SHA-256) ---
 // Lead: keep verification server-side only; never expose secrets to clients.
 function parseStripeSigHeader(h: string): { t: string; v1: string[] } | null {
@@ -361,6 +424,32 @@ async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
     return new Response("Denied", { status: 403, headers: noStoreHeaders });
   }
 
+  // Reconcile ownership lastEventId (plan anchor) and persist plan record.
+  try {
+    const paymentIntentId = String(sess?.payment_intent || pi).trim();
+
+    // If ownership record exists but lacks/mismatches lastEventId, patch it (no extension).
+    const curLast = String(ownership?.lastEventId || "").trim();
+    if (!curLast || curLast !== paymentIntentId) {
+      await env.KV_STATUS.put(ownKey, JSON.stringify({
+        uid: ulid,
+        state: "owned",
+        exclusiveUntil: exclusiveUntil.toISOString(),
+        source: String(ownership?.source || sess?.metadata?.ownershipSource || "campaign").trim() || "campaign",
+        lastEventId: paymentIntentId,
+        updatedAt: new Date().toISOString()
+      }));
+    }
+
+    const sk2 = String((env as any).STRIPE_SECRET_KEY || "").trim();
+    if (sk2 && paymentIntentId && String(sess?.id || "").trim()) {
+      await persistPlanRecord(env, sk2, String(sess.id).trim(), paymentIntentId, exclusiveUntil.toISOString());
+    }
+  } catch (e: any) {
+    console.error("owner_restore: plan_or_ownership_reconcile_failed", { ulid, err: String(e?.message || e || "") });
+    // Must NOT block restore if plan persistence fails; publish will fail closed later if plan is missing.
+  }
+
   // Create sessionId (unguessable)
   const sidBytes = new Uint8Array(18);
   (crypto as any).getRandomValues(sidBytes);
@@ -502,15 +591,29 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
   const exclusiveUntil = new Date(baseMs + EXCLUSIVE_MS);
   const courtesyUntil  = new Date(exclusiveUntil.getTime() + COURTESY_MS);
 
-  // Persist ownership now (webhook remains as redundant, idempotent backup).
+  // Persist ownership deterministically (reconciliation path).
+  // Invariant: ownership.lastEventId is the Plan anchor for publish capacity.
   await env.KV_STATUS.put(ownKey, JSON.stringify({
-    ver: 1,
-    ulid,
+    uid: ulid,
+    state: "owned",
     exclusiveUntil: exclusiveUntil.toISOString(),
-    courtesyUntil: courtesyUntil.toISOString(),
-    updatedAt: new Date().toISOString(),
-    // keep: lastEventId is webhook-owned; don't invent it here
+    source: String(meta?.ownershipSource || "campaign").trim() || "campaign",
+    lastEventId: String(sess?.payment_intent || "").trim(),
+    updatedAt: new Date().toISOString()
   }));
+
+  // Persist Plan record for publish capacity (KV-only at publish time).
+  // Requires Checkout Session line items → price.id → internal tier map.
+  try {
+    const paymentIntentId = String(sess?.payment_intent || "").trim();
+    if (paymentIntentId) {
+      // expiresAt must align with ownership exclusiveUntil invariant
+      await persistPlanRecord(env, sk, String(sess?.id || "").trim(), paymentIntentId, exclusiveUntil.toISOString());
+    }
+  } catch (e: any) {
+    console.error("owner_stripe_exchange: plan_persist_failed", { ulid, err: String(e?.message || e || "") });
+    // Must NOT block session minting if plan persistence fails.
+  }
 
   // Create sessionId (unguessable) and store opsess:<sid> (same as /owner/exchange).
   const sidBytes = new Uint8Array(18);
@@ -826,6 +929,19 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
 
   // Write ownership first; only then write idempotency marker
   await env.KV_STATUS.put(ownKey, JSON.stringify(rec));
+  
+  // Persist plan record (priceId from line items) with expiry aligned to ownership window.
+  try {
+    const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+    const checkoutSessionId = String(session?.id || "").trim();
+    if (sk && checkoutSessionId) {
+      await persistPlanRecord(env, sk, checkoutSessionId, paymentIntentId, rec.exclusiveUntil);
+    }
+  } catch (e: any) {
+    console.error("stripe_webhook: plan_persist_failed", { ulid, err: String(e?.message || e || "") });
+    // Must NOT block ownership establishment if plan persistence fails.
+  }
+    
   await env.KV_STATUS.put(idemKey, JSON.stringify({
     paymentIntentId,
     ulid,

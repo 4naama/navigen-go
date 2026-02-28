@@ -3,7 +3,7 @@
 ## Core positioning
 
 **NaviGen is an ad platform where your money is spent at 100% effectiveness.  
-You pay for real customer visits, and while your campaign is active, you are the only operator of your listing.**
+You pay for real customer visits — and during your active period, you are the exclusive operator of your listing.
 
 NaviGen is not “hosting a page”.  
 It is **keeping a business present in people’s awareness**.
@@ -31,13 +31,37 @@ End users (visitors) never pay.
 --------------------------------------------------------------------
 
 ## What can exist without payment
-- A Location Profile (LPM) may exist without payment.
+- A Location Profile (LPM) may be created without payment.
+- Until published under an active Plan, it remains a draft state.
 - Existence does **not** guarantee discoverability.
 - Direct links may still open an LPM, but NaviGen does not amplify unpaid listings.
 
 --------------------------------------------------------------------
 
-## Primary product: Campaign
+## Primary product: Campaign (Plan Purchase)
+
+A campaign purchase is also a Plan purchase.
+
+The selected tier (Standard / Multi / Large / Network) determines:
+
+• Campaign capability  
+• Publish capacity (maximum number of locations that may be published under this Plan)
+
+This does NOT introduce a second pricing dimension.
+
+Campaign behavior remains location-scoped:
+
+• Campaigns are announced via selected locations (LPMs).
+• Scope is explicitly chosen by the business:
+    – Single location  
+    – Selected locations  
+    – All published locations (if desired)  
+• Multiple campaigns per location are allowed.
+• Campaign lifecycle and redeem logic remain unchanged.
+• Redeem validation is token-based and not geographically restricted.
+
+The tier defines how many locations may be covered under the same Plan.
+It does not automatically propagate campaigns across locations.
 
 ### €50 Campaign (core revenue)
 

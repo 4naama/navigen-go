@@ -760,9 +760,12 @@ Therefore, NaviGen MUST support recovery using the Stripe PaymentIntent ID:
 • Owner provides: Payment ID (pi_...)
 • System performs: server-side lookup of the associated Checkout Session
 • System validates: payment_status="paid" AND status="complete"
+  If ownership:<ULID> is missing or lastEventId != pi_...,
+  the API Worker MUST reconcile ownership idempotently and persist lastEventId = pi_... before minting the session.
 • System resolves: metadata.locationID → ULID
 • System mints: op_sess cookie and opsess:<sessionId> record
 • System redirects: /dash/<ULID>
+• During /owner/restore reconciliation, the API Worker MUST also persist plan:<pi_...> from the resolved Checkout Session line items.
 
 This restores access on the current device without requiring accounts.
 
@@ -2309,6 +2312,9 @@ Promo QR (cashier redeem)              | Backend     | Backend                | 
 
 --------------------------------------------------------------------
 
+HTTP semantics for blocked states are defined in Section 0.S.
+This matrix defines surface behavior only.
+
 Notes:
 • “Blocked” means no real analytics data is returned under any circumstance.
 • When Dash is blocked due to ownership state, the App must guide the user via:
@@ -3462,26 +3468,69 @@ reversible presentation-layer edits by an Owner.
 
 --------------------------------------------------------------------
 
-8.3.5 Forward Migration: Locations Project (KV-Based)
+8.3.5 Forward Migration: Locations Project (KV-Based Authority)
 
-The **Locations Project** will migrate location profiles from `profiles.json`
-to a KV-backed, owner-managed system.
+The Locations Project migrates profile authority from static profiles.json
+to KV-backed canonical records while preserving client contract stability.
 
-Planned properties:
+--------------------------------------------------------------------
 
-• Location records stored in KV (per ULID)
-• Owner-managed updates via authenticated APIs
-• Server-enforced validation and visibility rules
-• Backward-compatible read paths
+A) Canonical Base Record (KV Authority)
 
-Once migration is complete:
+Each location SHALL have a KV-backed canonical record:
 
-• `profiles.json` will be deprecated
-• API Worker will resolve profiles from KV
-• Client contracts will remain unchanged
+Key:
+    profile_base:<ULID>
 
-Campaigns, Promotions, and Dash logic MUST NOT change
-as part of this migration.
+The base record MUST conform to the existing profiles.json schema.
+Client-facing contract remains unchanged.
+
+Slug (locationID) is immutable after creation.
+
+profiles.json remains transitional authority until migration completes.
+
+--------------------------------------------------------------------
+
+B) Override Layer (Published State)
+
+Key:
+    override:<ULID>
+
+Properties:
+• Partial structure (whitelist-limited)
+• Merged server-side with profile_base
+• Represents the active public state
+• Never mutates base record
+
+Effective profile = deepMerge(profile_base, override)
+
+Merge invariants:
+• Nested objects deep-merge
+• Arrays replace arrays
+• Null does not delete base fields
+
+--------------------------------------------------------------------
+
+C) Draft Layer
+
+Key:
+    override_draft:<ULID>:<actorKey>
+
+Drafts:
+• Are unlimited
+• Are not indexed
+• Are not publicly visible
+• Do not affect discoverability
+• Do not affect campaign eligibility
+
+Only publish promotes draft → override.
+
+--------------------------------------------------------------------
+
+D) Audit Layer
+
+Override audit semantics are defined in Section 8.3.4.F.
+KV-based authority uses the same audit structure and invariants.
 
 --------------------------------------------------------------------
 
@@ -3529,6 +3578,7 @@ normalized schema:
 • sectorKey                 – lookup into finance.json
 • context                   – semicolon-delimited navigation contexts
 • campaignType              – controlled vocabulary (Discount, Dash access, etc.)
+• campaignScope           – "single" | "selected" | "all"
 • targetChannels            – e.g. QR, Social, Email
 • startDate                 – YYYY-MM-DD (inclusive)
 • endDate                   – YYYY-MM-DD (inclusive)
@@ -3613,6 +3663,7 @@ Derived entitlement fields (computed by API Worker):
 
 • campaignEntitled: boolean  
 • activeCampaignKeys: string[]  
+• activeCampaignKey: string (deprecated; if present it MUST equal activeCampaignKeys[0] or "")
 • campaignEndsAt: YYYY-MM-DD | "" (only when exactly one active campaign exists)
 
 If multiple campaigns are entitling:
@@ -3627,7 +3678,43 @@ These derived fields are exposed via:
 
     GET /api/status?locationID=<slug|ULID>
 
+/api/status MUST return activeCampaignKeys as an array under all circumstances.
+Clients MUST treat activeCampaignKeys as authoritative and MUST NOT rely on activeCampaignKey.
+
 Clients MUST NOT compute entitlement themselves.
+
+--------------------------------------------------------------------
+
+Campaign Scope (Authoritative)
+
+Campaign scope determines which LPMs announce a campaign.
+
+Scope values:
+
+• "single"
+    Campaign applies only to the ULID under which it was created.
+
+• "selected"
+    Campaign applies only to explicitly selected ULIDs.
+    No automatic propagation.
+
+• "all"
+    Campaign applies to all ULIDs currently covered by the active Plan.
+
+Rules:
+
+• Scope MUST be explicitly chosen at campaign creation.
+• Tier (Plan) only defines how many ULIDs may be published.
+• Tier does NOT automatically attach campaigns to additional ULIDs.
+• Redeem validation remains token-based and location-agnostic.
+• Each ULID retains independent billing attribution.
+
+Changing scope after creation:
+• Allowed only while campaign status is Active or Paused.
+• MUST update campaign rows deterministically across affected ULIDs.
+
+Billing attribution is always evaluated per ULID and per campaign row.
+Campaign scope does not create shared billing state across ULIDs.
 
 --------------------------------------------------------------------
 
@@ -3770,10 +3857,10 @@ Finance.json does **not** store any per-redeem data; it is purely parameterizati
 Defines all navigable URL shells, e.g.:
 
   • souvenirs
-  • souvenirs/hungary
-  • souvenirs/hungary/budapest
-  • giftshops/hungary/budapest
-  • restaurants/hungary/budapest
+  • souvenirs/germany
+  • souvenirs/germany/berlin
+  • giftshops/germany/berlin
+  • restaurants/germany/berlin
 
 Each entry includes:
 
@@ -4007,7 +4094,7 @@ A) **Static Asset Hosting**
    • Ensures PWA installation assets are delivered unmodified.
 
 B) **Context-Aware Routing**
-   • URLs like /souvenirs/hungary/budapest resolve into the main app shell,
+   • URLs like /souvenirs/germany/berlin resolve into the main app shell,
      which then loads profiles via /api/data/list.
    • All navigable contexts come from contexts.json (Section 8).
 
@@ -4201,7 +4288,13 @@ C) /api/data/item?id=<slug>&fields=…
 D) /api/data/nearby?lat=<lat>&lng=<lng>  
    Optional, depending on deployment (not part of core spec).
 
-All auxiliary endpoints are read-only and have no side effects.
+E) /api/location/draft  
+   Draft-only profile authoring (non-visible; no indexing)
+
+F) /api/location/publish  
+   Publish promotion to override:<ULID> with Plan capacity enforcement + DO index update
+   
+Auxiliary endpoints are read-only unless explicitly defined as write endpoints in Section 92.3.4.
 
 --------------------------------------------------------------------
 9.4 Hit Logging Endpoints
@@ -4805,10 +4898,10 @@ There are **three categories** of search:
 
 A) **Context-Based Search (Primary)**  
    Activated when the user navigates into a context such as:
-     • souvenirs/hungary/budapest
-     • restaurants/hungary
-     • giftshops/hungary/budapest
-     • pharmacies/hungary/budapest
+     • souvenirs/germany/berlin
+     • restaurants/germany
+     • giftshops/germany/berlin
+     • pharmacies/germany/berlin
 
    The app requests:
        /api/data/list?context=<ctx>
@@ -4952,6 +5045,93 @@ Section 13 does not define:
 
 It defines **how structured search works as a navigational mechanism** in NaviGen.
 
+--------------------------------------------------------------------
+
+13.12 Search Index Architecture (Durable Objects)
+
+NaviGen search and context listing MUST NOT rely on full dataset scans
+once profile authority migrates to KV.
+
+Durable Objects provide indexed lookup and context membership performance.
+
+Durable Objects store index metadata only.
+KV (profile_base:<ULID> + override:<ULID>) remains the sole profile authority.
+
+--------------------------------------------------------------------
+
+A) Indexed Fields (Current)
+
+The following fields are indexed for SYB search:
+
+• locationName.*
+• listedName
+• locationID (slug)
+• address
+• listedAddress
+• postalCode
+• city
+• adminArea
+• tags
+
+Draft overrides are never indexed.
+Only effective published overrides are eligible for indexing.
+
+--------------------------------------------------------------------
+
+B) Context Membership
+
+Context index membership is derived exclusively from the `context` field.
+
+Changes to context MUST trigger index update.
+
+--------------------------------------------------------------------
+
+C) Partitioning Model
+
+Search index is partitioned by:
+
+• countryCode
+• first normalized letter of slug
+
+Context lists are partitioned per contextKey.
+
+Durable Objects store:
+
+• tokenized name → ULID mappings
+• slug → ULID mapping
+• context → ordered ULID list
+
+--------------------------------------------------------------------
+
+D) Write Protocol
+
+On any base or published override change affecting indexed fields:
+
+1) KV write occurs
+2) Worker sends upsert message to correct DO shard
+3) DO updates index entries deterministically
+
+Draft writes do NOT trigger index updates.
+
+DO failure semantics:
+• DO updates are best-effort and MUST NOT block authoritative KV commits.
+• A publish is considered successful once KV writes (override + audit + alias/slug stamping where applicable) succeed.
+• If DO update fails, the system MAY retry later, but MUST NOT revert KV state.
+
+--------------------------------------------------------------------
+
+E) Future Extension
+
+Future indexed dimensions may include:
+
+• geo buckets (for “around me” queries)
+• eligibility tags (items, buyer qualifiers)
+• campaign-active filters
+
+Such extensions must not alter existing client contracts.
+
+--------------------------------------------------------------------
+
 90. EXTENSION ARCHITECTURE (INTERNAL ONLY)
 
 The NaviGen specification uses sections 1–13 as a stable architectural spine.
@@ -5046,7 +5226,7 @@ working Info QR, Promo QR, Dash analytics, and future billing compatibility.
   • locationID (slug, stable, unique)  
   • locationName (multilingual)  
   • groupKey / subgroupKey  
-  • context (primary landing path, e.g. souvenirs/hungary/budapest)  
+  • context (primary landing path, e.g. souvenirs/germany/berlin)  
   • coordinates  
   • contact & media fields  
   • QR URL override (optional; Info QR defaults to <context>?lp=<id>)  
@@ -5063,9 +5243,9 @@ working Info QR, Promo QR, Dash analytics, and future billing compatibility.
 (D) contexts_data → contexts.json  
   Defines all valid navigational URL shells:
     /souvenirs
-    /souvenirs/hungary  
-    /souvenirs/hungary/budapest  
-    /giftshops/hungary/budapest  
+    /souvenirs/germany  
+    /souvenirs/germany/berlin  
+    /giftshops/germany/berlin  
   Each context row includes visibility flag, title, languages, ordering.
 
 90.5.2 JSON Export Pipeline
@@ -5159,7 +5339,10 @@ operational authority is established.
 An LPM may be created through three entry paths.
 All paths share the same invariant:
 
-• No LPM is created without a paid campaign.
+• No LPM may be published without an active Plan purchase.
+• Draft creation may occur without payment, but publication requires a Plan.
+  Creation without payment produces a non-published draft state only.
+  Publication requires Plan payment.
 • Payment establishes ownership.
 • Creation method does not affect authority.
 
@@ -5180,7 +5363,7 @@ All initiators use the same platform tools and data requirements.
 
 Required inputs (standardized):
 • business name
-• address
+• address (optional) OR coordinates (required)
 • contact details (phone, email)
 • website or reference links
 • social links (optional)
@@ -5197,6 +5380,7 @@ Notes:
 • There is exactly one LPM creation mechanism.
 • Creation method does not affect ownership rules.
 • Authority is established only through payment.
+• Campaign checkout is the Plan purchase; the tier defines publish capacity.
 
 --------------------------------------------------------------------
 
@@ -5222,7 +5406,8 @@ Notes:
 --------------------------------------------------------------------
 Convergence Rules (Non-Negotiable)
 
-• Campaign payment is required for all LPM creation.
+• Campaign or Plan payment is required for all LPM publication.
+• Draft creation may occur without payment but has no visibility or authority effect.
 • Ownership always belongs to the store operator.
 • Creation path (self, assisted, agent) does not alter authority.
 • There is no free, reserved, or pending LPM state.
@@ -5292,6 +5477,8 @@ Operational authority over an LPM is established automatically when all of the
 following conditions are met:
 
 • A Stripe Checkout payment succeeds
+  Authority refers to ownership and publish capability only.
+  Draft existence does not imply authority.
 • Billing profile data is available from Stripe
 • ownership record (ownership:<ULID>) is created or updated
 • internal ownership mapping assigns the payor as Owner/Operator
@@ -5303,6 +5490,9 @@ Authority is established only by verified backend payment events.
 B) Authority Rules (Invariants)
 
 • Payment establishes operational authority.
+Authority established by payment grants:
+• ownership (exclusiveUntil window), AND
+• publish capacity (if defined by Plan tier).
 • Authority is time-limited and revocable.
 • Authority is capability-based, not identity-based.
 • Authority is enforced exclusively by backend logic.
@@ -5411,6 +5601,7 @@ Fields (JSON):
 • exclusiveUntil: ISO-8601 timestamp  // ownership is active iff now < exclusiveUntil
 • source: "campaign" | "exclusive"    // what established/extended ownership
 • lastEventId: string                 // idempotency anchor (Stripe payment_intent.id)
+  Plan anchor invariant: lastEventId MUST equal the PaymentIntent ID of the currently active Plan purchase for this ownership window.
 • updatedAt: ISO-8601 timestamp       // last write time
 
 Ownership vs Campaign Separation (Authoritative)
@@ -5846,9 +6037,10 @@ B) New LPM Creation (Owner-Initiated)
 • An actor creates a new location via the Owner Platform.
 • Minimal required inputs:
     - business name
-    - address
+    - address (optional) OR coordinates (required)
     - reference link or website
-    - one image (free tier)
+    - initial data sufficient to create a draft
+    (publish requires full validation per Section 92.3.3)    
 • Ownership is not granted until payment completes.
 • After payment:
     - LPM is created
@@ -5896,6 +6088,12 @@ while ownership is active (exclusiveUntil > now).
 
 Capabilities are payment-derived, time-limited, and enforced server-side.
 No capability exists outside an active ownership window.
+
+Publish authority is controlled by Plan & Publish Capacity (Section 92.3.2).
+
+Ownership alone does not guarantee the ability to publish
+if publish capacity is exhausted or Plan is inactive.
+Publish capacity alone does not establish ownership without an active ownership window.
 
 --------------------------------------------------------------------
 A) Capability Categories
@@ -6203,12 +6401,321 @@ H) Non-Goals (Explicit)
 
 The Profile Edit API does NOT:
 • allow partial ownership or delegation
-• support draft or pending edits
+• support draft or pending edits via /api/profile/update (drafts are handled separately by /api/location/draft)
 • permit bulk or cross-location edits
 • expose edit history to merchants
 • bypass ingestion or QA pipelines
 
 Profile editing is a controlled, owner-only capability.
+
+--------------------------------------------------------------------
+
+92.3.2 Plan & Publish Capacity (Location Scope Control)
+
+Definitions:
+• Plan: A prepaid Stripe purchase (campaign or multi-location tier)
+  that grants campaign capability and publish capacity.
+• Publish Capacity: The maximum number of locations that may be published under one Plan.
+• Published Location: A location with an active override layer promoted to public state.
+• KV allocation key: plan_alloc:<payment_intent.id> → { ulids: [<ULID>, ...] }  // published locations counted toward this Plan
+• KV plan record: plan:<payment_intent.id> → { priceId, tier, maxPublishedLocations, purchasedAt, expiresAt }
+
+Plan purchase grants:
+
+• Campaign capability (per-location, per-campaign as defined in Section 8.4)
+• Publish Capacity (maximum number of locations that may be activated)
+
+Plans DO NOT:
+• Grant legal ownership
+• Grant exclusivity over physical addresses
+• Restrict draft creation
+• Create multi-account authority
+
+Until production Stripe Price IDs are finalized, the mapping may contain placeholder IDs.
+Unknown price.id MUST resolve to maxPublishedLocations = 0 (fail closed).
+
+--------------------------------------------------------------------
+
+Publish Capacity Rules (Authoritative)
+
+1) Each Plan defines:
+   • maxPublishedLocations (integer)
+   • tier identifier (Standard / Multi / Large / Network)
+
+Authoritative tier source:
+• maxPublishedLocations MUST be derived server-side from Stripe line item Price ID (price.id).
+• The API Worker MUST maintain an internal mapping: price.id → { tier, maxPublishedLocations }.
+• The client MUST NOT supply tier or maxPublishedLocations via request parameters or Stripe metadata.
+
+Authoritative priceId source:
+• price.id MUST be extracted server-side from Stripe Checkout Session line items at payment reconciliation time.
+• The API Worker MUST persist plan:<payment_intent.id> during webhook processing and during /owner/stripe-exchange and /owner/restore reconciliation.
+• /api/location/publish MUST NOT call Stripe.
+• If plan:<payment_intent.id> is missing, publish MUST be rejected (fail closed).
+
+If price.id is not recognized by the mapping, publish MUST be rejected (fail closed).
+
+2) A location consumes publish capacity when:
+   • Its override is promoted to active published state.
+
+3) Re-publishing the same ULID under the same Plan does NOT consume additional capacity.
+
+4) Publish attempts exceeding maxPublishedLocations MUST be rejected.
+Concurrency invariant:
+• Publish capacity enforcement MUST be serialized.
+• plan_alloc:<payment_intent.id> in KV is not sufficient for atomic enforcement.
+• A Durable Object (PlanAllocDO) keyed by payment_intent.id MUST be used to reserve allocation atomically.
+• KV plan_alloc remains a best-effort mirror and MUST NOT be treated as authoritative for enforcement.
+
+5) Publish authority exists only while the Plan is active.
+
+--------------------------------------------------------------------
+
+Expiry Interaction
+
+Plan expiry invariant: plan:<payment_intent.id>.expiresAt MUST equal ownership:<ULID>.exclusiveUntil for the same payment event (lastEventId).
+
+When Plan expires:
+
+• Active campaigns self-expire (Section 8.4.3)
+• Discoverability transitions follow Section 92.4.3 (Courtesy Visibility Model)
+• Publish rights are frozen until a new Plan is purchased
+• Profile data remains stored
+
+--------------------------------------------------------------------
+
+92.3.3 Publish Validation Rules
+
+A location MUST satisfy minimum completeness before publish.
+
+--------------------------------------------------------------------
+
+A) Minimum Publish Requirements
+
+All of the following MUST be satisfied:
+
+• Minimum 3 images  
+• Description length ≥ 200 characters  
+• At least one valid website OR social link  
+
+Drafts may exist without meeting publish requirements.
+
+--------------------------------------------------------------------
+
+B) Field Binding (Authoritative; profiles.json Compatibility)
+
+Validation binds to the following JSON paths:
+
+Images:
+• Count = (media.coverImage present ? 1 : 0) + length(media.images[])
+• Requirement: Count ≥ 3
+
+Description:
+• Field: description (top-level string)
+• Requirement: length(description) ≥ 200
+
+Website / Social Presence:
+• Website qualifies if contact.website is present (https://...)
+• Social qualifies if any links.social.* field is present AND matches the recognized social domain allowlist
+• Requirement: website OR social
+
+--------------------------------------------------------------------
+
+C) Recognized Social Domains (Authoritative Allowlist)
+
+Social fields accept only recognized domains.
+
+Allowed domains (case-insensitive; subdomains allowed):
+
+• facebook.com, fb.com, fb.me, m.me  
+• instagram.com  
+• tiktok.com  
+• youtube.com, youtu.be  
+• spotify.com, open.spotify.com  
+• pinterest.com  
+• linkedin.com  
+• x.com, twitter.com  
+
+Rules:
+• Subdomains are allowed (e.g., m.facebook.com).
+• URL shorteners other than the listed ones are NOT allowed in social fields.
+• Non-social URLs MUST be rejected in social fields but may be placed in the primary website field.
+• General website URLs are accepted only in contact.website.
+
+--------------------------------------------------------------------
+
+D) Structural Invariants
+
+• Slug is immutable after publish.
+• Geo changes do NOT regenerate slug.
+• Publish validation is structural only (no ownership verification of URLs).
+• Draft state is never subject to publish validation.
+
+--------------------------------------------------------------------
+
+E) Non-Requirements
+
+The following are NOT required for publish:
+
+• Phone  
+• Email  
+• Postal verification  
+
+--------------------------------------------------------------------
+
+92.3.4 Location Draft & Publish APIs (Owner Platform)
+
+This section defines the two endpoints required for Locations Project authoring:
+
+• Draft save (non-authoritative, non-visible)  
+• Publish (promotes draft to authoritative public override)  
+
+These APIs do not change campaign logic.  
+Campaign lifecycle remains KV-authoritative and per-location (Section 8.4).
+
+--------------------------------------------------------------------
+
+A) Draft Save API (Create / Update Draft)
+
+Purpose:
+• Persist a server-side draft for a location without publishing.  
+• Drafts are not indexed and have no discoverability effect.  
+
+Method: POST  
+Path: /api/location/draft  
+Auth requirement: none (draft existence does not imply authority)
+
+Draft Identity (actorKey Contract)
+
+• actorKey MUST be a server-issued `draftSessionId` (opaque, random, unguessable).  
+• On first draft creation, API Worker returns `draftSessionId`.  
+• Client MUST store `draftSessionId` locally and include it in subsequent draft saves.  
+• Draft storage key: `override_draft:<draftULID>:<draftSessionId>`  
+• `draftSessionId` is not an account identifier and grants no authority.  
+
+Input (conceptual)
+
+• `locationID?` (slug) — optional  
+• `draft` — partial profile object compatible with profiles.json schema  
+
+Behavior (authoritative)
+
+1) If `locationID` is provided:
+   • Resolve slug → ULID via `alias:<slug>`  
+   • Write `override_draft:<ULID>:<draftSessionId>`  
+
+2) If `locationID` is absent:
+   • Mint new `draftULID`  
+   • Mint new `draftSessionId`  
+   • Write `override_draft:<draftULID>:<draftSessionId>`  
+   • Slug + alias are NOT minted during draft  
+   • Public identity (slug) is minted only at publish (Appendix H)  
+
+Draft Invariants
+
+• Draft records are unlimited  
+• Draft writes MUST NOT trigger DO index updates  
+• Draft writes MUST NOT create ownership or publish authority  
+
+Response
+
+• `{ ok: true, draftULID: <ULID>, draftSessionId: <string>, locationID?: <slug> }`  
+• 404 if `locationID` cannot be resolved  
+• 400 on invalid payload  
+
+--------------------------------------------------------------------
+
+B) Publish API (Promote Draft → Published Override)
+
+Purpose:
+• Promote draft into authoritative published override (`override:<ULID>`)  
+• Enforce publish capacity via `PlanAllocDO`  
+• Trigger DO index updates  
+
+Method: POST  
+Path: /api/location/publish  
+
+Auth requirements:
+
+• Valid Operator Session (`op_sess → opsess:<id>`) bound to this ULID  
+• Active ownership window (`ownership:<ULID>.exclusiveUntil > now`)  
+• Active Plan aligned with ownership  
+
+Input (conceptual)
+
+• `locationID` (slug) — required  
+• `sourceDraftActorKey?` — optional (defaults to caller’s draftSessionId)  
+
+Publish Steps (authoritative order)
+
+1) Resolve slug → ULID via `alias:<slug>`  
+2) Validate Operator Session  
+3) Validate ownership window  
+4) Validate Plan (KV-based only)  
+   • `payment_intent.id = ownership.lastEventId`  
+   • Read `plan:<payment_intent.id>`  
+   • Require plan exists  
+   • Require `now < plan.expiresAt`  
+   • Require `plan.expiresAt == ownership.exclusiveUntil`  
+   • Extract `maxPublishedLocations`  
+   • Publish MUST NOT call Stripe  
+
+5) Capacity enforcement (serialized)  
+   • Reserve via `PlanAllocDO(payment_intent.id)`  
+   • If rejected → 403 (no writes)  
+   • If accepted → proceed  
+   • `plan_alloc:<pi>` is mirror only  
+
+6) Load draft payload  
+   • From `override_draft:<ULID>:<draftSessionId>`  
+
+7) Validate publish rules (Section 92.3.3)  
+
+8) Commit (authoritative)  
+   • Write `override:<ULID>`  
+   • Write `override_log:<ULID>:<timestamp>`  
+
+9) Index update (best-effort)  
+   • Send DO IndexUpsert to SearchShardDO + ContextShardDO  
+   • DO failure MUST NOT rollback KV commit  
+
+Response
+
+• `200 { ok: true, locationID: <slug> }`  
+• `401 { ok:false, reason:"session_required" }`  
+• `403 { ok:false, reason:"ownership_inactive" | "plan_inactive" | "plan_missing" | "capacity_exceeded" | "validation_failed" }`  
+• `404 { ok:false, reason:"not_found" }`  
+
+--------------------------------------------------------------------
+
+C) Relationship to /api/profile/update
+
+• `/api/profile/update` remains the owner-only edit API (Section 92.3.1).  
+• `/api/location/publish` is the only endpoint that promotes draft to public state under Plan capacity rules.  
+• Draft save is fully decoupled from ownership and public state.  
+
+--------------------------------------------------------------------
+
+Error Response Schema (Authoritative)
+
+All write endpoints MUST return:
+
+• `{ ok: true, ... }` on success  
+• `{ ok: false, reason: <string>, fields?: [<string>], details?: object }` on failure  
+
+Standard reasons:
+
+• `session_required` (401)  
+• `ownership_inactive` (403)  
+• `plan_inactive` (403)  
+• `plan_missing` (403)  
+• `capacity_exceeded` (403)  
+• `validation_failed` (403)  
+• `not_found` (404)  
+• `bad_request` (400)  
+
+For `validation_failed`:
+• `fields` MUST list failing areas (e.g., ["media","description","links"]).  
 
 --------------------------------------------------------------------
 
@@ -6329,6 +6836,9 @@ Primary (real-time, same device)
 • Immediately after successful Stripe Checkout, the app redirects through /owner/stripe-exchange.
 • The server verifies the completed Checkout Session and sets an owner session (op_sess).
 • The browser is redirected back into the app and the dashboard opens without waiting for email.
+• If ownership:<ULID> is missing or lastEventId does not match the Checkout Session’s payment_intent.id,
+  the API Worker MUST reconcile ownership idempotently and persist lastEventId = payment_intent.id before minting the session.
+• During /owner/stripe-exchange reconciliation, the API Worker MUST also persist plan:<payment_intent.id> from Stripe Checkout Session line items.  
 
 Secondary (email-based recovery)
 
@@ -6758,6 +7268,427 @@ H. Utility Modals
        • Used for unexpected recoverable errors  
        • Rarely seen by end users
 
+--------------------------------------------------------------------
+
+APPENDIX — Locations Project State Transitions (Audit)
+
+Source sections (audit list; update if numbering changes):
+• 8.3.5 (Forward Migration: Locations Project — KV-Based Authority)
+• 92.3.2 (Plan & Publish Capacity)
+• 92.3.3 (Publish Validation Rules)
+• 92.4 (Ownership Duration, Expiry, and Reversion)
+• 92.4.3 (Discoverability After Campaign Ends — Courtesy Visibility)
+• 13.12 (Search Index Architecture — Durable Objects)
+
+| State | Publicly visible | Indexed in DO | Preconditions | Allowed actions | Storage keys affected | Exit condition(s) |
+|---|---:|---:|---|---|---|---|
+| Draft | No | No | None (draft may exist without payment) | Write draft; discard draft | override_draft:<ULID>:<actorKey> | Publish succeeds |
+| Published | Yes (effective profile) | Yes | (a) Plan active, (b) plan_alloc capacity not exceeded, (c) publish validation passes (≥3 images, ≥200 chars, website/social) | Update via profile edit API (if ownership active); publish updated override | override:<ULID>, override_log:<ULID>:<ts>, DO upsert | Plan expires → Frozen; or owner updates and republishes |
+| Expired (campaign window ended) | Yes (courtesy) | Yes (while discoverable) | Campaign ends; courtesy window begins | No campaign actions unless renewed; visibility decays per timeline | campaigns:byUlid:<ULID> unchanged; status:<ULID> updates derived; ordering changes | Courtesy ends or Hold purchased |
+| Frozen (Plan inactive) | Stored; discoverability follows 92.4.3 | If still in courtesy/hold then yes; otherwise no | Plan expired | Cannot publish new locations under that Plan; publish rights frozen; existing published override remains | No new plan_alloc entries; no publish writes; existing override remains | New Plan purchase restores publish ability |
+| Not discoverable | Direct link may open; not shown in lists | No | After extended inactivity per 92.4.3 | Start campaign to become visible again | visibilityState derived; list endpoints exclude | Campaign starts |
+
+Notes:
+• “Expired” is campaign-lifecycle. “Frozen” is Plan-lifecycle. These are orthogonal.
+• Draft state has no visibility, no indexing, and no authority effect.
+
+--------------------------------------------------------------------
+
+APPENDIX — KV Namespace Inventory & Collision Audit
+
+KV binding layout (KV_STATUS/KV_ALIASES/KV_OVERRIDES/KV_STATS) is repo-defined (wrangler.toml authoritative). This appendix defines key families only.
+
+This table lists key families referenced by the spec. It is a collision audit and a namespace inventory.
+
+| Namespace / Prefix | Purpose | Authority | Notes |
+|---|---|---|---|
+| alias:<slug> | slug → ULID mapping | API Worker | Canonical identity spine |
+| ownership:<ULID> | ownership window (exclusiveUntil) | API Worker (webhook) | Establishes owner capabilities |
+| opsess:<sessionId> | operator session record | API Worker | Cookie op_sess points here |
+| ownerlink_used:<jti> | signed-link single-use enforcement | API Worker | Prevents link replay |
+| profile_base:<ULID> | KV canonical profile (profiles.json schema) | API Worker | Locations Project authority |
+| override:<ULID> | published override snapshot | API Worker | Non-destructive edits |
+| override_log:<ULID>:<ts> | append-only edit audit trail | API Worker | Internal-only |
+| override_draft:<ULID>:<actorKey> | draft overrides | API Worker | Unlimited; never indexed |
+| campaigns:byUlid:<ULID> | campaign rows array | API Worker | Campaign authority |
+| status:<ULID> | derived entitlement + QA flags | API Worker | Includes campaignEntitled, activeCampaignKeys, qaFlags |
+| redeem:<token> | promo token state | API Worker | Single-use token economy |
+| stats:<ULID>:<YYYY-MM-DD>:<metric> | daily counters | API Worker | Append-only integer counters |
+| qrlog:<ULID>:<YYYY-MM-DD>:<scanId> | per-event QR log | API Worker | Append-only event objects |
+| billing:<token> | billing record per redeem token | API Worker | Internal-only |
+| agent_attribution:<agentId>:<ULID> | agent attribution & cap tracking | API Worker | Internal-only |
+| plan_alloc:<payment_intent.id> | published locations counted toward a Plan | API Worker | { ulids: [<ULID>, ...] }; used to enforce maxPublishedLocations |
+| plan:<payment_intent.id> | Plan record (priceId, tier, maxPublishedLocations, expiry) | API Worker | Authoritative source for publish capacity |
+
+Collision assessment:
+• No prefix collisions detected among the listed families.
+• plan_alloc:* is a new namespace; no existing family uses plan_* prefixes.
+
+--------------------------------------------------------------------
+
+APPENDIX — Stripe → Ownership → Publish Lifecycle (Sequence)
+
+Source sections (audit list; update if numbering changes):
+• 91.4 (Operational Authority Model)
+• 91.4.1 (Ownership Record)
+• 91.4.2 (Stripe Metadata Contract)
+• 92.3.2 (Plan & Publish Capacity)
+• 92.4.2 (Signed Link → Cookie Session)
+• 8.3.5 (Locations Project — KV Authority)
+• 13.12 (Search Index Architecture — DO)
+
+User (BO) ── selects plan tier ──> Stripe Checkout
+   │                                 │
+   │                                 └─ checkout.session.completed
+   │                                         │
+   │                                         v
+   │                               API Worker / webhook processor
+   │                               - verify Stripe signature
+   │                               - resolve slug → ULID via alias:<slug>
+   │                               - write/extend ownership:<ULID>
+   │                               - (if applicable) activate campaign row(s)
+   │                               - plan tier recognized for publish capacity
+   │                                         │
+   │                                         v
+   │                               Owner Exchange (/owner/stripe-exchange)
+   │                               - mint op_sess cookie + opsess:<id>
+   │                                         │
+   v                                         v
+Owner UI (wizard) ── publish request ──> API Worker (publish endpoint)
+                                   - verify Plan active
+                                   - enforce maxPublishedLocations via plan_alloc:<pi_...>
+                                   - validate publish rules (images/desc/link)
+                                   - write override:<ULID> + override_log:<ULID>:<ts>
+                                   - DO upsert for search/index
+                                   - return merged effective profile
+                                   
+--------------------------------------------------------------------
+
+APPENDIX — Durable Objects Search/Index Sharding (Naming, Partition Keys, Message Format)
+
+Source sections (audit list; update if numbering changes):
+• 13.12 (Search Index Architecture — Durable Objects)
+• 8.3.5 (Locations Project — KV Authority)
+• 8.3.4 (Profile Override Model — Merge/Audit)
+• 92.3.2 (Plan & Publish Capacity)
+• 92.3.3 (Publish Validation Rules)
+
+Durable Objects store index metadata only.
+KV (profile_base:<ULID> + override:<ULID>) remains the sole profile authority.
+
+--------------------------------------------------------------------
+
+A) Durable Object Classes
+
+1) SearchShardDO
+Purpose:
+• SYB search token lookup
+• slug → ULID lookup fast path (non-authoritative convenience)
+
+2) ContextShardDO
+Purpose:
+• contextKey → ordered ULID list for browse surfaces
+
+--------------------------------------------------------------------
+
+B) Shard Naming & Partition Keys
+
+SearchShardDO instance id (deterministic):
+    search:<countryCode>:<bucket>
+
+Where:
+• countryCode = effectiveProfile.contact.countryCode (or "XX" if unknown)
+• bucket = first character of normalized slug (locationID) in [a-z0-9], else "_"
+Bucket function is NOT a hash: bucket = first character of normalized slug in [a-z0-9], else "_".
+
+Examples:
+• search:DE:h
+• search:DE:0
+• search:XX:_
+
+ContextShardDO instance id (deterministic):
+    ctx:<contextKey>
+
+Examples:
+• ctx:souvenirs/germany/berlin
+• ctx:restaurants/germany
+
+Partition invariants:
+• A location belongs to exactly one SearchShardDO (derived from slug bucket + countryCode).
+• A location may belong to multiple ContextShardDO instances only if its context field contains multiple semicolon-delimited entries.
+• Draft overrides are never indexed and must not generate DO updates.
+
+--------------------------------------------------------------------
+
+C) Indexed Field Normalization Rules (Deterministic)
+
+Normalization must be deterministic and locale-neutral:
+
+• Lowercase
+• Trim whitespace
+• Replace repeated whitespace with single space
+• Remove diacritics (accent-insensitive)
+• Strip punctuation except internal hyphens for slug tokens
+
+Token sources (current):
+• locationName.* and listedName
+• address, listedAddress
+• postalCode
+• city, adminArea
+• tags
+• slug (locationID)
+
+Additional invariants:
+• No stopword removal is performed (language-neutral).
+• Tokens max length: 32 characters; longer tokens are truncated.
+• Max tokens per upsert: 64 (excess tokens discarded deterministically after sorting).
+• Token list MUST be sorted lexicographically before hashing indexedFieldsHash.
+
+Notes:
+• Tokenization is for index matching only; it must not change display rendering.
+• Tokenization does not implement ranking, personalization, or fuzzy matching beyond normalization.
+
+--------------------------------------------------------------------
+
+D) DO Storage Model (Conceptual, Non-Authoritative)
+
+SearchShardDO storage keys (conceptual):
+• slug:<slug> → <ULID>                       // convenience lookup
+• tok:<token> → [<ULID>, ...]                // postings (implementation may compress)
+• meta:<ULID> → { city, postalCode, name }   // minimal card hints (optional)
+
+ContextShardDO storage keys (conceptual):
+• ulids → [<ULID>, ...]                      // ordered list
+
+Ordering in context list:
+• promoted first
+• then visible
+• hidden excluded
+(Visibility ordering remains enforced at API list boundary; DO may store raw ULIDs and let API apply ordering.)
+
+--------------------------------------------------------------------
+
+E) Index Update Message Format (Authoritative Contract)
+
+All index updates are sent from API Worker to DO instances as a single upsert envelope.
+
+Message: IndexUpsert v1
+
+{
+  "ver": 1,
+  "op": "upsert",
+  "ulid": "01H...",                 // canonical ULID
+  "slug": "example-slug-1234",      // locationID
+  "countryCode": "DE",              // or "XX"
+  "contexts": ["souvenirs/germany/berlin"],  // derived from context field (split by ';', trimmed)
+  "tokens": ["aby", "miles", "berlin", "21051"], // normalized tokens
+  "indexedFieldsHash": "sha256:...", // optional idempotency hint for DO (recommended)
+  "ts": "2026-02-23T12:00:00Z"
+}         
+   
+Message rules:
+• Sent only after KV write succeeds.
+• Sent for:
+  - base record writes (profile_base)
+  - published override writes (override) if and only if indexed fields changed.
+• NOT sent for draft writes.
+• contexts[] MUST be derived exclusively from the context field.
+• tokens[] MUST be derived from indexed fields only (current list in Section C).
+• indexedFieldsHash SHOULD be computed from the normalized indexed field bundle to allow DO to no-op identical updates.
+
+Delete/Unindex message (optional, v1):
+Used when a location becomes not discoverable and should be removed from browse/search.   
+
+{
+  "ver": 1,
+  "op": "delete",
+  "ulid": "01H...",
+  "slug": "example-slug-1234",
+  "countryCode": "DE",
+  "contexts": ["souvenirs/germany/berlin"],
+  "ts": "2026-02-23T12:00:00Z"
+}
+
+Delete rules:
+• Used only for discoverability transitions to “not discoverable” (Phase 4).
+• Not required for Plan expiry (Frozen) if courtesy visibility still applies.
+
+--------------------------------------------------------------------
+
+F) Consistency Model
+
+• KV remains authoritative for profile reads.
+• DO is an eventually-consistent index.
+• List and search endpoints may tolerate brief lag between KV write and index visibility.
+• Draft state is never visible via DO.
+
+--------------------------------------------------------------------
+
+G) Failure Handling
+
+If DO update fails:
+• KV write MUST remain committed (authority preserved).
+• System SHOULD retry asynchronously using an implementation-defined queue;
+  retries MUST be deduped by indexedFieldsHash (or ulid+ts) and MUST NOT block publish.
+• Search/list may temporarily miss the updated entry until DO catches up.
+
+--------------------------------------------------------------------
+
+APPENDIX H — Geo & Slug Stamping Contract (Creation-Time Identity)
+
+Purpose:
+Define how coordinates (lat/lng at 6 decimals) are obtained, validated,
+and “stamped” into a location identity (slug) during creation.
+
+This appendix complements:
+• Appendix G (Slug Generation Contract)
+and makes geo handling enforceable and deterministic.
+
+--------------------------------------------------------------------
+
+H.1 Core Invariants
+
+1) Address is optional.
+   Coordinates are required.
+
+2) Slug is minted only when coordinates are finalized at publish time.
+
+3) Coordinates are editable before publish.
+   Coordinates are immutable after publish.
+
+4) Slug is immutable after publish.
+
+Rationale:
+• Avoids requiring external geocoding services.
+• Allows BOs to correct “wrong entrance” during onboarding.
+• Preserves QR/link stability after publish.
+
+--------------------------------------------------------------------
+
+H.2 Input Model (Owner Platform)
+
+The creation wizard MUST accept:
+
+A) Address (optional)
+• Free-form address string(s)
+• May be incomplete or absent (e.g., farms, festivals, wilderness locations)
+
+B) Coordinates (required)
+• Latitude and Longitude
+• Must be provided in enforced format:
+    - decimal degrees
+    - exactly 6 decimal places (normalized server-side)
+    - valid ranges: lat ∈ [-90, 90], lng ∈ [-180, 180]
+
+C) Name (required)
+• Used for normalized-name segment in slug
+
+--------------------------------------------------------------------
+
+H.3 Coordinate Format Enforcement
+
+API Worker MUST enforce coordinate normalization:
+
+Given input lat/lng:
+1) Parse as float
+2) Validate ranges:
+   • -90 ≤ lat ≤ 90
+   • -180 ≤ lng ≤ 180
+3) Normalize to exactly 6 decimal places:
+   • latNorm = round(lat, 6)
+   • lngNorm = round(lng, 6)
+4) Persist only normalized values
+
+Invalid coordinates MUST be rejected (400).
+
+--------------------------------------------------------------------
+
+H.4 Draft Phase Behavior (Pre-publish)
+
+During draft phase:
+• Coordinates MAY be updated unlimited times.
+• Draft saves MUST NOT mint the final slug.
+• Draft saves MUST NOT trigger DO indexing.
+
+Draft storage:
+• override_draft:<ULID>:<actorKey> MAY include coordinates.
+
+Note:
+Draft ULID is internal and not exposed as public identity.
+Public identity (slug) is not stamped until publish.
+
+This Appendix supersedes any earlier draft flow text that implies slug or alias minting during draft creation.
+
+--------------------------------------------------------------------
+
+H.5 Publish-Time “Stamping” (Slug Mint)
+
+Publish performs the canonical stamping step:
+
+Inputs required:
+• business name
+• normalized coordinates (6 decimals)
+
+Steps:
+1) Compute slug using Appendix G.
+2) Enforce collision resolution (Appendix G.6).
+3) Create alias mapping:
+       alias:<slug> → { locationID: <ULID> }
+4) Set profile_base:<ULID>.locationID = <slug>
+5) Promote override as override:<ULID> (published state)
+6) Trigger DO index update.
+
+Once this completes:
+• slug is immutable
+• coordinates are immutable
+
+--------------------------------------------------------------------
+
+H.6 “Wrong entrance” / Geo correction policy
+
+Correction is permitted only before publish:
+
+• If BO selects incorrect coordinates during draft:
+   → BO edits coordinates
+   → publish stamps final slug based on corrected coordinates
+
+After publish:
+• Coordinate edits are forbidden in owner edit API (/api/profile/update whitelist).
+• The system does not support “move slug to new geo”.
+
+If a post-publish geo correction is required:
+• A new location must be created and published separately.
+• Old location may be set not discoverable by normal timeline rules.
+
+This preserves identity stability and prevents link/QR breakage.
+
+--------------------------------------------------------------------
+
+H.7 UI Messaging Requirement (Geo explanation)
+
+Owner Platform UI MUST explain why coordinates are required:
+
+• NaviGen is a geo-based platform.
+• Large sites / parks may require multiple internal locations for navigation.
+• Coordinates determine stable identity (slug) and reliable customer routing.
+
+UI must present coordinates input in a user-friendly manner
+(e.g., “Paste from Google Maps” guidance), but the authoritative contract
+remains server-side.
+
+--------------------------------------------------------------------
+
+H.8 Non-Goals
+
+This appendix does NOT require:
+• external geocoding services
+• address verification
+• postal validation
+• map-provider dependency
+
+It defines deterministic enforcement and identity stamping only.
+
+--------------------------------------------------------------------
 
 END OF SPEC
 
@@ -7334,9 +8265,12 @@ Rules:
     2. Resolve canonical ULID from locationID via the alias system
     3. Resolve ownership record for the canonical ULID
     4. Extend ownership window based on ownershipSource
-    5. Write billing ledger TopUp entry
-    6. Activate campaign if applicable
-    7. Write agent attribution record if agentId present
+       When persisting plan:<payment_intent.id>, set expiresAt = ownership:<ULID>.exclusiveUntil (post-extension value).
+    5. Persist Plan record:
+        write plan:<payment_intent.id> = { priceId, tier, maxPublishedLocations, purchasedAt, expiresAt }
+    6. Write billing ledger TopUp entry
+    7. Activate campaign if applicable
+    8. Write agent attribution record if agentId present
 
 B4. VAT & Tax Handling
   • Country derived from billing_details.address.country
@@ -7593,3 +8527,328 @@ The authoritative rules remain in Sections 1–13, 91.x, and 92.x.
 | Signed link → cookie exchange                    | —                         | not present in these code files                                                                                   | HttpOnly cookie                                                | API Worker             | ❌ not implemented yet (spec-only)                                                      |
 | Profile edit API `/api/profile/update`           | —                         | not present in these code files                                                                                   | `override:*`, `override_log:*`                                 | API Worker             | ❌ not implemented yet (spec-only)                                                      |
 | Agent attribution KV + cap tracking              | —                         | not present in these code files                                                                                   | `agent_attribution:*`                                          | API Worker             | ❌ not implemented yet (spec-only)                                                      |
+
+--------------------------------------------------------------------
+
+APPENDIX G — Slug Generation Contract (Canonical Identity Rules)
+
+Purpose:
+This appendix defines the deterministic rules for generating, validating,
+and preserving location slugs (locationID).
+
+Slug stability is critical because:
+
+• Public URLs use slug
+• KV_ALIASES maps slug → ULID
+• QR codes embed slug
+• Dash routing accepts slug
+• Historical analytics depend on ULID resolved from slug
+
+Slug generation MUST be deterministic, reproducible, and collision-safe.
+
+--------------------------------------------------------------------
+
+G.1 Definitions
+
+• Slug (locationID):
+    Human-readable, URL-safe identifier of a location.
+
+• ULID:
+    Canonical internal identifier. All analytics, tokens, billing,
+    and ownership records are keyed by ULID.
+
+• Alias:
+    KV entry mapping slug → ULID.
+
+Key:
+    alias:<slug> → { locationID: <ULID> }
+
+Slug is public identity.
+ULID is authoritative identity.
+
+--------------------------------------------------------------------
+
+G.2 Slug Immutability Rule
+
+Once a slug is created and mapped to a ULID:
+
+• The slug MUST NEVER change.
+• The ULID MUST NEVER change.
+• Historical analytics must remain bound to ULID.
+
+If a business name or geo changes:
+• Slug remains unchanged.
+• profile_base or override updates handle display changes.
+
+No slug regeneration is permitted after creation.
+
+--------------------------------------------------------------------
+
+G.3 Slug Structure (Canonical Format)
+
+Slug format:
+
+    <normalized-name>-<geo-suffix>
+
+Example:
+    hd-hachaturyan-9457
+
+Where:
+
+1) normalized-name:
+   • lowercase
+   • diacritics removed
+   • whitespace → single hyphen
+   • punctuation removed except hyphen
+   • trimmed
+   • max length recommended ≤ 48 chars
+
+2) geo-suffix:
+   • derived from coordinates
+   • based on latitude/longitude to 6 decimals
+   • last 4 digits of normalized coordinate composite
+   • numeric only
+   • fixed width (recommended 4 digits)
+
+This structure ensures:
+
+• human readability
+• relative uniqueness
+• stability across imports
+
+--------------------------------------------------------------------
+
+G.4 Normalization Rules (Deterministic)
+
+Given input business name:
+
+Step 1: Unicode normalization (NFKD)
+Step 2: Remove diacritics
+Step 3: Lowercase
+Step 4: Replace all whitespace sequences with "-"
+Step 5: Remove all characters not in [a-z0-9-]
+Step 6: Collapse consecutive hyphens
+Step 7: Trim leading/trailing hyphens
+
+Example:
+
+"Aby Miles – Hachaturyan"
+→ "aby-miles-hachaturyan"
+
+--------------------------------------------------------------------
+
+G.5 Geo Suffix Generation
+
+Given latitude and longitude:
+
+1) Round both to 6 decimal places.
+2) Concatenate as:
+       abs(lat * 1e6) + abs(lng * 1e6)
+3) Convert to integer string.
+4) Take last 4 digits.
+
+Example:
+    lat = 57.560123
+    lng = 29.029457
+    composite = "5756012329029457"
+    suffix = "9457"
+
+Slug:
+    aby-miles-hachaturyan-9457
+
+This approach:
+
+• avoids external geo-hash dependency
+• remains deterministic
+• provides local uniqueness within dense urban zones
+
+--------------------------------------------------------------------
+
+G.6 Collision Handling
+
+If a generated slug already exists:
+
+1) Check KV:
+       alias:<slug>
+
+2) If no entry:
+       assign slug.
+
+3) If entry exists and maps to same ULID:
+       accept (idempotent).
+
+4) If entry exists and maps to different ULID:
+       append incrementing counter:
+
+       <slug>-2
+       <slug>-3
+       etc.
+
+Counter is numeric, appended after geo-suffix.
+
+Example:
+    aby-miles-9457
+    aby-miles-9457-2
+
+Collision resolution must be deterministic and logged.
+
+--------------------------------------------------------------------
+
+G.7 Seeded vs Owner-Created Slugs
+
+Slug generation rules apply equally to:
+
+• Seeded (Ch0) locations
+• Owner-created locations
+• Agent-created locations
+
+No privileged slug formats exist.
+
+Slug format MUST NOT encode:
+
+• ownership
+• plan tier
+• campaign state
+• agent identity
+• timestamps
+
+Slug is purely identity.
+
+--------------------------------------------------------------------
+
+G.8 Slug Validation (Server-Side)
+
+API Worker MUST validate slug:
+
+• matches regex:
+      ^[a-z0-9]+(-[a-z0-9]+)*$
+
+• length ≤ 64 characters
+
+Invalid slugs MUST be rejected at creation time.
+
+--------------------------------------------------------------------
+
+G.9 Migration Invariant
+
+For existing profiles.json entries:
+
+• Their current slug is authoritative.
+• New KV-based profile_base entries MUST reuse existing slug.
+• alias:<slug> must always resolve to the same ULID as historical records.
+
+No re-slugging is permitted during migration.
+
+--------------------------------------------------------------------
+
+G.10 Non-Goals
+
+Slug generation does NOT:
+
+• Guarantee global uniqueness across the planet
+• Represent legal identity
+• Replace business registration numbers
+• Encode ranking or context
+
+Slug exists solely for:
+
+• stable routing
+• QR encoding
+• human readability
+• KV alias mapping
+
+--------------------------------------------------------------------
+
+APPENDIX — PlanAllocDO (Serialized Publish Capacity Enforcement)
+
+Purpose:
+Provide atomic, serialized enforcement of publish capacity under concurrency.
+KV plan_alloc is not sufficient for race-free enforcement.
+
+--------------------------------------------------------------------
+
+A) Durable Object Class
+
+Class:
+• PlanAllocDO
+
+Instance id (deterministic):
+• planalloc:<payment_intent.id>
+
+This DO is authoritative for capacity reservation.
+KV plan_alloc:<payment_intent.id> is a best-effort mirror only.
+
+--------------------------------------------------------------------
+
+B) Authoritative State
+
+PlanAllocDO stores:
+• ulids: set of <ULID> allocated under this plan purchase
+
+Invariants:
+• Allocation is idempotent per ULID.
+• Allocation never exceeds maxPublishedLocations.
+• Concurrency is serialized by DO single-threaded execution per instance.
+
+--------------------------------------------------------------------
+
+C) Message Contract
+
+Reserve request (v1):
+
+{
+  "ver": 1,
+  "op": "reserve",
+  "pi": "pi_...",
+  "ulid": "01H...",
+  "max": 3,
+  "ts": "ISO-8601"
+}
+
+Reserve response (v1):
+
+{
+  "ok": true,
+  "alreadyAllocated": false,
+  "allocatedCount": 3,
+  "max": 3
+}
+
+Rejection response (v1):
+
+{
+  "ok": false,
+  "reason": "capacity_exceeded",
+  "allocatedCount": 3,
+  "max": 3
+}
+
+Rules:
+• If ulid is already allocated → ok:true, alreadyAllocated:true.
+• If capacity would be exceeded → ok:false, reason:"capacity_exceeded".
+• The API Worker MUST treat ok:false as a publish rejection (403) with no side effects.
+
+Optional snapshot request (v1, non-authoritative UI/debug only):
+
+{
+  "ver": 1,
+  "op": "snapshot",
+  "pi": "pi_..."
+}
+
+Snapshot response returns ulids[] and counts.
+Snapshot MUST NOT be required for publish.
+
+--------------------------------------------------------------------
+
+D) Integration Rules
+
+Publish flow:
+• MUST call PlanAllocDO reserve BEFORE writing alias/profile_base/override.
+• MUST NOT call Stripe in publish.
+
+Mirroring:
+• After a successful reserve, API Worker MAY update KV plan_alloc:<pi> as a best-effort mirror.
+• Mirror failures MUST NOT rollback publish.
+
+--------------------------------------------------------------------

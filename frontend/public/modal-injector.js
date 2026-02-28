@@ -2705,8 +2705,8 @@ export function createSelectLocationModal() {
   notListedBtn.innerHTML = `
     <span class="icon-img">➕</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${t('root.bo.notListed.title') || 'My business isn’t listed'}</strong><br>
-      <small>${t('root.bo.notListed.desc') || 'Request a listing — we’ll add it.'}</small>
+      <strong>${t('root.bo.notListed.title') || 'Create a location'}</strong><br>
+      <small>${t('root.bo.notListed.desc') || 'Add your business.'}</small>
     </span>
   `;
   notListedBtn.addEventListener('click', (e) => {

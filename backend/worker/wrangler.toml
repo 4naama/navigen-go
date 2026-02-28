@@ -37,3 +37,20 @@ id      = "773992a1ee824aac8352cf313231ff51"
 [[kv_namespaces]]
 binding = "KV_STATS"
 id      = "306bdf6786d34a008902cafb4f264ecd"
+
+# --- Durable Objects (Phase 8) ---
+[[durable_objects.bindings]]
+name = "DO_PLAN_ALLOC"
+class_name = "PlanAllocDO"
+
+[[durable_objects.bindings]]
+name = "DO_SEARCH_SHARD"
+class_name = "SearchShardDO"
+
+[[durable_objects.bindings]]
+name = "DO_CTX_SHARD"
+class_name = "ContextShardDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["PlanAllocDO", "SearchShardDO", "ContextShardDO"]
