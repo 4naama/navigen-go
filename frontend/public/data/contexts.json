@@ -20,6 +20,180 @@
     "viewOptions": ""
   },
   {
+    "theme": "giftshops",
+    "namespace": "giftshops",
+    "key": "giftshops",
+    "pageKey": "giftshops/giftshops",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Gift Shops"
+    },
+    "metaDescs": {},
+    "lastmod": "",
+    "subgroupMode": "structure",
+    "defaultView": "structure",
+    "viewOptions": ""
+  },
+  {
+    "theme": "giftshops",
+    "namespace": "giftshops",
+    "key": "giftshops/hungary",
+    "pageKey": "giftshops/giftshops/hungary",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Gift Shops in Hungary"
+    },
+    "metaDescs": {},
+    "lastmod": "",
+    "subgroupMode": "structure",
+    "defaultView": "structure",
+    "viewOptions": ""
+  },
+  {
+    "theme": "giftshops",
+    "namespace": "giftshops",
+    "key": "giftshops/hungary/budapest  No",
+    "pageKey": "giftshops/giftshops/hungary/budapest  No",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Gift Shops in Budapest, Hungary"
+    },
+    "metaDescs": {},
+    "lastmod": "",
+    "subgroupMode": "structure",
+    "defaultView": "structure",
+    "viewOptions": ""
+  },
+  {
+    "theme": "laboratory.diagnostics",
+    "namespace": "laboratory-diagnostics",
+    "key": "corden",
+    "pageKey": "laboratory-diagnostics/corden",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Corden laboratory diagnostics network",
+      "hu": "Corden laboratóriumi diagnosztikai hálózat",
+      "he": "רשת האבחון המעבדתי של קורדן",
+      "es": "Red de diagnóstico de laboratorio de Corden"
+    },
+    "metaDescs": {
+      "en": "Browse Corden’s laboratory diagnostics network: locations, addresses, and practical information."
+    },
+    "lastmod": "Fri Feb 27 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "laboratory.diagnostics",
+    "namespace": "laboratory-diagnostics",
+    "key": "corden/hungary",
+    "pageKey": "laboratory-diagnostics/corden/hungary",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Corden laboratory diagnostics in Hungary",
+      "hu": "Corden laboratóriumi diagnosztika Magyarországon",
+      "he": "קורדן אבחון מעבדתי בהונגריה",
+      "es": "Diagnóstico de laboratorio Corden en Hungría"
+    },
+    "metaDescs": {
+      "en": "Find Corden laboratory diagnostics locations in Hungary: addresses, maps, and key details."
+    },
+    "lastmod": "Fri Feb 27 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "laboratory.diagnostics",
+    "namespace": "laboratory-diagnostics",
+    "key": "corden/hungary/budapest",
+    "pageKey": "laboratory-diagnostics/corden/hungary/budapest",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Corden laboratory diagnostics in Budapest, Hungary",
+      "hu": "Corden laboratóriumi diagnosztika Budapesten, Magyarországon",
+      "he": "קורדן אבחון מעבדתי בבודפשט, הונגריה",
+      "es": "Diagnóstico de laboratorio Corden en Budapest, Hungría"
+    },
+    "metaDescs": {
+      "en": "Find Corden laboratory diagnostics locations in Budapest: addresses, maps, and contact details."
+    },
+    "lastmod": "Fri Feb 27 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "laboratory.diagnostics",
+    "namespace": "laboratory-diagnostics",
+    "key": "laboratory-diagnostics",
+    "pageKey": "laboratory-diagnostics/laboratory-diagnostics",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Laboratory diagnostics",
+      "hu": "Laboratóriumi diagnosztika",
+      "he": "אבחון מעבדתי",
+      "es": "Diagnóstico de laboratorio"
+    },
+    "metaDescs": {
+      "en": "Explore laboratory diagnostics providers by country and city; browse locations, contacts, and services."
+    },
+    "lastmod": "Fri Feb 27 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
     "theme": "language.schools",
     "namespace": "language-schools",
     "key": "helen-doron",
@@ -130,55 +304,15 @@
   {
     "theme": "pharmacies",
     "namespace": "pharmacies",
-    "key": "helen-doron",
-    "pageKey": "pharmacies/helen-doron",
-    "indexable": false,
-    "minItems": null,
-    "languages": [
-      "en",
-      "hu"
-    ],
-    "titles": {
-      "en": "Pharmacies in Budapest, Hungary",
-      "hu": "Patikák Budapesten, Magyarországon"
-    },
-    "metaDescs": {},
-    "lastmod": "Mon Nov 03 2025 00:00:00 GMT+0100 (Central European Standard Time)",
-    "subgroupMode": "adminarea",
-    "defaultView": "adminarea",
-    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
-  },
-  {
-    "theme": "pharmacies",
-    "namespace": "pharmacies",
-    "key": "helen-doron/hungary",
-    "pageKey": "pharmacies/helen-doron/hungary",
-    "indexable": false,
-    "minItems": null,
-    "languages": [
-      "en",
-      "hu"
-    ],
-    "titles": {
-      "en": "Pharmacies in Budapest, Hungary",
-      "hu": "Patikák Budapesten, Magyarországon"
-    },
-    "metaDescs": {},
-    "lastmod": "Mon Nov 03 2025 00:00:00 GMT+0100 (Central European Standard Time)",
-    "subgroupMode": "adminarea",
-    "defaultView": "adminarea",
-    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
-  },
-  {
-    "theme": "pharmacies",
-    "namespace": "pharmacies",
     "key": "pharmacies",
     "pageKey": "pharmacies/pharmacies",
     "indexable": false,
-    "minItems": null,
+    "minItems": 20,
     "languages": [
       "en",
-      "hu"
+      "hu",
+      "he",
+      "es"
     ],
     "titles": {
       "en": "Pharmacies",
@@ -196,10 +330,12 @@
     "key": "pharmacies/hungary",
     "pageKey": "pharmacies/pharmacies/hungary",
     "indexable": false,
-    "minItems": null,
+    "minItems": 20,
     "languages": [
       "en",
-      "hu"
+      "hu",
+      "he",
+      "es"
     ],
     "titles": {
       "en": "Pharmacies in Hungary",
@@ -217,10 +353,12 @@
     "key": "pharmacies/hungary/budapest",
     "pageKey": "pharmacies/pharmacies/hungary/budapest",
     "indexable": false,
-    "minItems": null,
+    "minItems": 20,
     "languages": [
       "en",
-      "hu"
+      "hu",
+      "he",
+      "es"
     ],
     "titles": {
       "en": "Pharmacies in Budapest, Hungary",
@@ -228,6 +366,144 @@
     },
     "metaDescs": {},
     "lastmod": "Thu Oct 16 2025 00:00:00 GMT+0200 (Central European Summer Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "restaurants",
+    "namespace": "restaurants",
+    "key": "restaurants",
+    "pageKey": "restaurants/restaurants",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Restaurants",
+      "hu": "Éttermek"
+    },
+    "metaDescs": {},
+    "lastmod": "Mon Nov 24 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "restaurants",
+    "namespace": "restaurants",
+    "key": "restaurants/hungary",
+    "pageKey": "restaurants/restaurants/hungary",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Restaurants in Hungary",
+      "hu": "Éttermek Magyarországon"
+    },
+    "metaDescs": {},
+    "lastmod": "Mon Nov 24 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "restaurants",
+    "namespace": "restaurants",
+    "key": "restaurants/hungary/budapest",
+    "pageKey": "restaurants/restaurants/hungary/budapest",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Restaurants in Budapest, Hungary",
+      "hu": "Éttermek Budapesten, Magyarországon"
+    },
+    "metaDescs": {},
+    "lastmod": "Mon Nov 24 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "souvenirs",
+    "namespace": "souvenirs",
+    "key": "souvenirs",
+    "pageKey": "souvenirs/souvenirs",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Souvenir & Gift Shops",
+      "hu": "Ajándékboltok"
+    },
+    "metaDescs": {},
+    "lastmod": "Tue Dec 02 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "souvenirs",
+    "namespace": "souvenirs",
+    "key": "souvenirs/hungary",
+    "pageKey": "souvenirs/souvenirs/hungary",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Souvenir & Gift Shops in Hungary",
+      "hu": "Ajándékboltok Magyarországon"
+    },
+    "metaDescs": {},
+    "lastmod": "Tue Dec 02 2025 00:00:00 GMT+0100 (Central European Standard Time)",
+    "subgroupMode": "adminarea",
+    "defaultView": "adminarea",
+    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
+  },
+  {
+    "theme": "souvenirs",
+    "namespace": "souvenirs",
+    "key": "souvenirs/hungary/budapest",
+    "pageKey": "souvenirs/souvenirs/hungary/budapest",
+    "indexable": false,
+    "minItems": 20,
+    "languages": [
+      "en",
+      "hu",
+      "he",
+      "es"
+    ],
+    "titles": {
+      "en": "Souvenir & Gift Shops in Budapest, Hungary",
+      "hu": "Ajándékboltok Budapesten, Magyarországon"
+    },
+    "metaDescs": {},
+    "lastmod": "Tue Dec 02 2025 00:00:00 GMT+0100 (Central European Standard Time)",
     "subgroupMode": "adminarea",
     "defaultView": "adminarea",
     "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
