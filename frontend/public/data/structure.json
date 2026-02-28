@@ -1,5 +1,89 @@
 [
   {
+    "groupKey": "group.healthcare-services",
+    "groupName": "⚕️ Medical services",
+    "subgroups": [
+      {
+        "key": "sub.home-healthcare",
+        "name": "🏠 Home Healthcare",
+        "keywords": []
+      },
+      {
+        "key": "sub.medical-centers",
+        "name": "🏥 Medical Centers",
+        "keywords": []
+      },
+      {
+        "key": "sub.child-health",
+        "name": "👶 Child Health",
+        "keywords": []
+      },
+      {
+        "key": "sub.vaccination-services",
+        "name": "💉 Vaccination Services",
+        "keywords": []
+      },
+      {
+        "key": "sub.medical-imaging",
+        "name": "🔬 Medical Imaging",
+        "keywords": []
+      },
+      {
+        "key": "sub.womens-health",
+        "name": "🤰 Women’s Health",
+        "keywords": []
+      },
+      {
+        "key": "sub.physiotherapy",
+        "name": "🦴 Physiotherapy",
+        "keywords": []
+      },
+      {
+        "key": "sub.dentistry",
+        "name": "🦷 Dentistry",
+        "keywords": []
+      },
+      {
+        "key": "sub.mental-health",
+        "name": "🧠 Mental Health",
+        "keywords": []
+      },
+      {
+        "key": "sub.laboratory-diagnostics",
+        "name": "🧪 Laboratory Diagnostics",
+        "keywords": [
+          "laboratory",
+          "lab",
+          "diagnostics",
+          "blood-test",
+          "urine-test",
+          "analysis",
+          "pathology",
+          "microbiology",
+          "pcr",
+          "screening",
+          "lab-report",
+          "home-blood-draw",
+          "home-phlebotomy",
+          "mobile-blood-draw",
+          "home-testing"
+        ]
+      },
+      {
+        "key": "sub.outpatient-clinics",
+        "name": "🩺 Outpatient Clinics",
+        "keywords": []
+      },
+      {
+        "key": "sub.specialist-care",
+        "name": "🩺 Specialist Care",
+        "keywords": []
+      }
+    ],
+    "groupKeywords": [],
+    "fallbackSubgroupKey": ""
+  },
+  {
     "groupKey": "group.spots",
     "groupName": "✨ Main Spots",
     "subgroups": [
@@ -39,7 +123,6 @@
         "keywords": []
       }
     ],
-    "domain": "📍 POI",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -100,7 +183,6 @@
         ]
       }
     ],
-    "domain": "📍 POI",
     "groupKeywords": [
       "park",
       "parque",
@@ -278,7 +360,6 @@
         "keywords": []
       }
     ],
-    "domain": "🛒 Marketplace",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -347,7 +428,6 @@
         "keywords": []
       }
     ],
-    "domain": "🎉 Festival",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -376,7 +456,6 @@
         "keywords": []
       }
     ],
-    "domain": "🎉 Festival",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -405,7 +484,6 @@
         "keywords": []
       }
     ],
-    "domain": "🛒 Marketplace",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -611,7 +689,6 @@
         ]
       }
     ],
-    "domain": "📍 POI",
     "groupKeywords": [
       "landmark",
       "monument",
@@ -674,7 +751,6 @@
         "keywords": []
       }
     ],
-    "domain": "🎉 Festival",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -695,6 +771,21 @@
           "defense",
           "defence",
           "air force"
+        ]
+      },
+      {
+        "key": "sub.pharmacy-museum",
+        "name": "⚕️ Pharmacy & Medicine",
+        "keywords": [
+          "pharmacy",
+          "apothecary",
+          "medication",
+          "drug",
+          "remedy",
+          "herbal",
+          "medicine",
+          "medical",
+          "pharmacology"
         ]
       },
       {
@@ -894,21 +985,6 @@
         ]
       },
       {
-        "key": "sub.pharmacy",
-        "name": "💊 Pharmacy",
-        "keywords": [
-          "pharmacy",
-          "apothecary",
-          "medication",
-          "drug",
-          "remedy",
-          "herbal",
-          "medicine",
-          "medical",
-          "pharmacology"
-        ]
-      },
-      {
         "key": "sub.literature",
         "name": "📚 Literature & Books",
         "keywords": [
@@ -1040,7 +1116,6 @@
         ]
       }
     ],
-    "domain": "📍 POI",
     "groupKeywords": [
       "museum",
       "museo",
@@ -1084,7 +1159,6 @@
         "keywords": []
       }
     ],
-    "domain": "🎉 Festival",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -1143,7 +1217,6 @@
         "keywords": []
       }
     ],
-    "domain": "🎉 Festival",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -1292,7 +1365,6 @@
         "keywords": []
       }
     ],
-    "domain": "🎉 Festival",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -1316,7 +1388,6 @@
         "keywords": []
       }
     ],
-    "domain": "🎉 Festival",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -1355,7 +1426,6 @@
         "keywords": []
       }
     ],
-    "domain": "🎉 Festival",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -1384,7 +1454,6 @@
         "keywords": []
       }
     ],
-    "domain": "📍 POI",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -1433,7 +1502,6 @@
         "keywords": []
       }
     ],
-    "domain": "🛒 Marketplace",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -1464,7 +1532,17 @@
       {
         "key": "sub.pharmacy",
         "name": "💊 Pharmacy",
-        "keywords": []
+        "keywords": [
+          "pharmacy",
+          "apothecary",
+          "medication",
+          "drug",
+          "remedy",
+          "herbal",
+          "medicine",
+          "medical",
+          "pharmacology"
+        ]
       },
       {
         "key": "sub.tobacco-shop",
@@ -1492,7 +1570,6 @@
         "keywords": []
       }
     ],
-    "domain": "🛒 Marketplace",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   },
@@ -1536,7 +1613,6 @@
         "keywords": []
       }
     ],
-    "domain": "🛒 Marketplace",
     "groupKeywords": [],
     "fallbackSubgroupKey": ""
   }
