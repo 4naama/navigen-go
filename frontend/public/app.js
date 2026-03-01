@@ -826,26 +826,27 @@ const PALETTE = [
 // Adjust the keys to your actual set; keep uniqueness.
 // ---------------------------------------------------------------------
 const GROUP_COLOR_INDEX = {
-  'group.popular':        11,  // pink-violet
-  'group.stages':         1,   // ochre
-  'group.activities':     2,   // soft yellow
-  'group.event-food':     3,   // yellow-green
-  'group.facilities':     4,   // light green
-  'group.gates':          5,   // mint green
-  'group.transport':      6,   // aqua
-  'group.guests':         7,   // sky blue
-  'group.social-points':  8,   // periwinkle
-  'group.landmarks':      9,   // violet
-  'group.museums':        10,  // lavender
-  'group.spots':          0,   // brownish sand
-  'group.parks-nature':   12,  // rosy pink
-  'group.spas':           13,  // soft rose
-  'group.food-drink':     14,  // salmon
-  'group.shops':          15,  // warm coral
-  'group.services':       16,  // peach
-  'group.experiences':    17,  // pale tan
-  // leave 18 + 19 free for future categories if needed
-  'group.emergency':      21   // strong red
+  'group.popular':              11,  // pink-violet
+  'group.stages':                1,   // ochre
+  'group.activities':            2,   // soft yellow
+  'group.event-food':            3,   // yellow-green
+  'group.facilities':            4,   // light green
+  'group.gates':                 5,   // mint green
+  'group.transport':             6,   // aqua
+  'group.guests':                7,   // sky blue
+  'group.social-points':         8,   // periwinkle
+  'group.landmarks':             9,   // violet
+  'group.museums':              10,  // lavender
+  'group.spots':                 0,   // brownish sand
+  'group.parks-nature':         12,  // rosy pink
+  'group.spas':                 13,  // soft rose
+  'group.food-drink':           14,  // salmon
+  'group.shops':                15,  // warm coral
+  'group.services':             16,  // peach
+  'group.experiences':          17,  // pale tan
+  'group.medical-services':     18,  // 18 sandy yellow
+  // leave 19 free for future categories if needed
+  'group.emergency':            21   // strong red
 };
 
 // ---------------------------------------------------------------------
