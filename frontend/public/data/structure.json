@@ -1,7 +1,7 @@
 [
   {
     "groupKey": "group.medical-services",
-    "groupName": "⚕️ Medical services",
+    "groupName": "⚕️ Medical Services",
     "subgroups": [
       {
         "key": "sub.cardiology",
