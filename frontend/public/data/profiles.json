@@ -6836,9 +6836,9 @@
       },
       "Visible": "Yes",
       "Priority": "Yes",
-      "groupKey": "group.medical-services",
+      "groupKey": "⚕️ Medical Services",
       "subgroupKey": "sub.laboratory-services",
-      "context": "corden/hungary;corden/hungary/budapest;language-schools/helen-doron/hungary",
+      "context": "laboratory-services/corden;laboratory-services/corden/hungary;laboratory-services/corden/hungary/budapest;language-schools/helen-doron/hungary",
       "qrUrl": "https://navigen.io/laboratory-diagnostics;corden;corden/hungary;corden/hungary/budapest;language-schools/helen-doron/hungary?lp=corden-budapest11-kozponti-laboratorium-3186",
       "coord": {
         "lat": 47.464145,

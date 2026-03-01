@@ -14,7 +14,7 @@
     ],
     "titles": {},
     "metaDescs": {},
-    "lastmod": "Thu Sep 04 2025 00:00:00 GMT+0200 (Central European Summer Time)",
+    "lastmod": "",
     "subgroupMode": "structure",
     "defaultView": "structure",
     "viewOptions": ""
@@ -86,10 +86,10 @@
     "viewOptions": ""
   },
   {
-    "theme": "laboratory.diagnostics",
-    "namespace": "laboratory-diagnostics",
+    "theme": "laboratory.services",
+    "namespace": "laboratory-services",
     "key": "corden",
-    "pageKey": "laboratory-diagnostics/corden",
+    "pageKey": "laboratory-services/corden",
     "indexable": false,
     "minItems": 20,
     "languages": [
@@ -99,7 +99,7 @@
       "es"
     ],
     "titles": {
-      "en": "Corden laboratory diagnostics network",
+      "en": "Corden laboratory diagnostics",
       "hu": "Corden laboratóriumi diagnosztikai hálózat",
       "he": "רשת האבחון המעבדתי של קורדן",
       "es": "Red de diagnóstico de laboratorio de Corden"
@@ -107,16 +107,16 @@
     "metaDescs": {
       "en": "Browse Corden’s laboratory diagnostics network: locations, addresses, and practical information."
     },
-    "lastmod": "Fri Feb 27 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "lastmod": "Sun Mar 01 2026 00:00:00 GMT+0100 (Central European Standard Time)",
     "subgroupMode": "adminarea",
     "defaultView": "adminarea",
     "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
   },
   {
-    "theme": "laboratory.diagnostics",
-    "namespace": "laboratory-diagnostics",
+    "theme": "laboratory.services",
+    "namespace": "laboratory-services",
     "key": "corden/hungary",
-    "pageKey": "laboratory-diagnostics/corden/hungary",
+    "pageKey": "laboratory-services/corden/hungary",
     "indexable": false,
     "minItems": 20,
     "languages": [
@@ -134,16 +134,16 @@
     "metaDescs": {
       "en": "Find Corden laboratory diagnostics locations in Hungary: addresses, maps, and key details."
     },
-    "lastmod": "Fri Feb 27 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "lastmod": "Sun Mar 01 2026 00:00:00 GMT+0100 (Central European Standard Time)",
     "subgroupMode": "adminarea",
     "defaultView": "adminarea",
     "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
   },
   {
-    "theme": "laboratory.diagnostics",
-    "namespace": "laboratory-diagnostics",
+    "theme": "laboratory.services",
+    "namespace": "laboratory-services",
     "key": "corden/hungary/budapest",
-    "pageKey": "laboratory-diagnostics/corden/hungary/budapest",
+    "pageKey": "laboratory-services/corden/hungary/budapest",
     "indexable": false,
     "minItems": 20,
     "languages": [
@@ -161,34 +161,7 @@
     "metaDescs": {
       "en": "Find Corden laboratory diagnostics locations in Budapest: addresses, maps, and contact details."
     },
-    "lastmod": "Fri Feb 27 2026 00:00:00 GMT+0100 (Central European Standard Time)",
-    "subgroupMode": "adminarea",
-    "defaultView": "adminarea",
-    "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
-  },
-  {
-    "theme": "laboratory.diagnostics",
-    "namespace": "laboratory-diagnostics",
-    "key": "laboratory-diagnostics",
-    "pageKey": "laboratory-diagnostics/laboratory-diagnostics",
-    "indexable": false,
-    "minItems": 20,
-    "languages": [
-      "en",
-      "hu",
-      "he",
-      "es"
-    ],
-    "titles": {
-      "en": "Laboratory diagnostics",
-      "hu": "Laboratóriumi diagnosztika",
-      "he": "אבחון מעבדתי",
-      "es": "Diagnóstico de laboratorio"
-    },
-    "metaDescs": {
-      "en": "Explore laboratory diagnostics providers by country and city; browse locations, contacts, and services."
-    },
-    "lastmod": "Fri Feb 27 2026 00:00:00 GMT+0100 (Central European Standard Time)",
+    "lastmod": "Sun Mar 01 2026 00:00:00 GMT+0100 (Central European Standard Time)",
     "subgroupMode": "adminarea",
     "defaultView": "adminarea",
     "viewOptions": "structure|adminArea|city|postalCode|alpha|priority|distance"
