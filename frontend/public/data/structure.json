@@ -1,7 +1,7 @@
 [
   {
     "groupKey": "group.medical-services",
-    "groupName": "⚕️ Medical Services",
+    "groupName": "⚕️ Medical services",
     "subgroups": [
       {
         "key": "sub.cardiology",
@@ -82,7 +82,7 @@
       },
       {
         "key": "sub.specialist-consultant-care",
-        "name": "👨‍⚕️ Specialist & Consultant Care",
+        "name": "👨️ Specialist & Consultant Care",
         "keywords": [
           "specialist",
           "consultant",
