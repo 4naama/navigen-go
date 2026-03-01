@@ -4,53 +4,232 @@
     "groupName": "⚕️ Medical services",
     "subgroups": [
       {
-        "key": "sub.home-healthcare",
-        "name": "🏠 Home Healthcare",
-        "keywords": []
+        "key": "sub.cardiology",
+        "name": "❤️ Cardiology",
+        "keywords": [
+          "cardiology",
+          "cardiologist",
+          "heart-doctor",
+          "heart-clinic",
+          "ecg",
+          "echocardiogram",
+          "stress-test",
+          "hypertension",
+          "arrhythmia",
+          "cardiac-care"
+        ]
       },
       {
-        "key": "sub.medical-centers",
-        "name": "🏥 Medical Centers",
-        "keywords": []
+        "key": "sub.home-health-inhome-care",
+        "name": "🏠 Home & In-Home Care",
+        "keywords": [
+          "home-healthcare",
+          "in-home-care",
+          "home-nursing",
+          "visiting-nurse",
+          "elderly-care",
+          "senior-care",
+          "home-medical-care",
+          "domiciliary-care"
+        ]
       },
       {
-        "key": "sub.child-health",
-        "name": "👶 Child Health",
-        "keywords": []
+        "key": "sub.outpatient-clinics",
+        "name": "🏢 Outpatient Clinics",
+        "keywords": [
+          "outpatient-clinic",
+          "ambulatory-care",
+          "walk-in-clinic",
+          "day-clinic",
+          "medical-office",
+          "polyclinic",
+          "consultation-clinic",
+          "same-day-care"
+        ]
       },
       {
-        "key": "sub.vaccination-services",
-        "name": "💉 Vaccination Services",
-        "keywords": []
+        "key": "sub.hospitals-medical-centers",
+        "name": "🏥 Hospitals & Medical Centers",
+        "keywords": [
+          "hospital",
+          "medical-center",
+          "clinic-hospital",
+          "inpatient",
+          "surgery",
+          "icu",
+          "emergency-room",
+          "er",
+          "admission",
+          "multispecialty-hospital",
+          "private-hospital",
+          "general-hospital"
+        ]
       },
       {
-        "key": "sub.medical-imaging",
-        "name": "🔬 Medical Imaging",
-        "keywords": []
+        "key": "sub.eye-care",
+        "name": "👁️ Eye Care",
+        "keywords": [
+          "eye-care",
+          "ophthalmology",
+          "optometry",
+          "eye-doctor",
+          "vision-test",
+          "glasses",
+          "contact-lenses",
+          "laser-eye-surgery",
+          "retina-clinic"
+        ]
       },
       {
-        "key": "sub.womens-health",
-        "name": "🤰 Women’s Health",
-        "keywords": []
+        "key": "sub.specialist-consultant-care",
+        "name": "👨‍⚕️ Specialist & Consultant Care",
+        "keywords": [
+          "specialist",
+          "consultant",
+          "medical-specialist",
+          "specialty-care",
+          "consultation",
+          "referral",
+          "expert-doctor"
+        ]
       },
       {
-        "key": "sub.physiotherapy",
-        "name": "🦴 Physiotherapy",
-        "keywords": []
+        "key": "sub.pediatric-child-care",
+        "name": "👶 Pediatric & Child Care",
+        "keywords": [
+          "pediatrics",
+          "pediatrician",
+          "child-doctor",
+          "child-health",
+          "newborn-care",
+          "vaccination-child",
+          "adolescent-health",
+          "kids-clinic"
+        ]
       },
       {
-        "key": "sub.dentistry",
-        "name": "🦷 Dentistry",
-        "keywords": []
+        "key": "sub.aesthetic-medicine",
+        "name": "💄 Aesthetic Medicine",
+        "keywords": [
+          "aesthetic-medicine",
+          "cosmetic-clinic",
+          "botox",
+          "fillers",
+          "laser-treatment",
+          "anti-aging",
+          "skin-rejuvenation",
+          "cosmetic-procedure",
+          "medical-aesthetics"
+        ]
       },
       {
-        "key": "sub.mental-health",
-        "name": "🧠 Mental Health",
-        "keywords": []
+        "key": "sub.home-blood-sample-collection",
+        "name": "💉 Home Blood & Sample Collection",
+        "keywords": [
+          "home-blood-draw",
+          "sample-collection",
+          "phlebotomy",
+          "mobile-phlebotomy",
+          "home-testing",
+          "specimen-collection",
+          "at-home-lab",
+          "blood-collection-service"
+        ]
+      },
+      {
+        "key": "sub.pharmacies",
+        "name": "💊 Pharmacies",
+        "keywords": [
+          "pharmacy",
+          "drugstore",
+          "chemist",
+          "medication",
+          "prescription",
+          "otc-medicine",
+          "24h-pharmacy",
+          "online-pharmacy"
+        ]
+      },
+      {
+        "key": "sub.radiology-imaging",
+        "name": "🔬 Radiology & Imaging",
+        "keywords": [
+          "radiology",
+          "imaging",
+          "x-ray",
+          "mri",
+          "ct-scan",
+          "ultrasound",
+          "sonography",
+          "mammography",
+          "diagnostic-imaging",
+          "scan-center"
+        ]
+      },
+      {
+        "key": "sub.womens-maternity-care",
+        "name": "🤰 Women’s & Maternity Care",
+        "keywords": [
+          "womens-health",
+          "maternity",
+          "gynecology",
+          "obstetrics",
+          "obgyn",
+          "prenatal-care",
+          "postnatal-care",
+          "fertility-clinic",
+          "pregnancy-care"
+        ]
+      },
+      {
+        "key": "sub.physical-therapy-rehabilitation",
+        "name": "🦴 Physical Therapy & Rehabilitation",
+        "keywords": [
+          "physiotherapy",
+          "physical-therapy",
+          "rehabilitation",
+          "rehab-center",
+          "sports-injury",
+          "manual-therapy",
+          "post-surgery-rehab",
+          "chiropractic",
+          "mobility-therapy"
+        ]
+      },
+      {
+        "key": "sub.dental-care",
+        "name": "🦷 Dental Care",
+        "keywords": [
+          "dentist",
+          "dental-clinic",
+          "orthodontist",
+          "oral-surgeon",
+          "teeth-cleaning",
+          "dental-implant",
+          "braces",
+          "root-canal",
+          "tooth-extraction"
+        ]
+      },
+      {
+        "key": "sub.mental-behavioral-health",
+        "name": "🧠 Mental & Behavioral Health",
+        "keywords": [
+          "mental-health",
+          "behavioral-health",
+          "psychologist",
+          "psychiatrist",
+          "therapy",
+          "counseling",
+          "psychotherapy",
+          "depression",
+          "anxiety",
+          "mental-clinic"
+        ]
       },
       {
         "key": "sub.laboratory-diagnostics",
-        "name": "🧪 Laboratory Diagnostics",
+        "name": "🧪 Laboratory Services",
         "keywords": [
           "laboratory",
           "lab",
@@ -70,14 +249,32 @@
         ]
       },
       {
-        "key": "sub.outpatient-clinics",
-        "name": "🩺 Outpatient Clinics",
-        "keywords": []
+        "key": "sub.dermatology",
+        "name": "🧴 Dermatology",
+        "keywords": [
+          "dermatology",
+          "dermatologist",
+          "skin-clinic",
+          "acne-treatment",
+          "eczema",
+          "psoriasis",
+          "skin-check",
+          "mole-removal",
+          "skin-cancer-screening"
+        ]
       },
       {
-        "key": "sub.specialist-care",
-        "name": "🩺 Specialist Care",
-        "keywords": []
+        "key": "sub.general-practitioners",
+        "name": "🩺 General Practitioners",
+        "keywords": [
+          "general-practitioner",
+          "gp",
+          "family-doctor",
+          "primary-care-doctor",
+          "family-physician",
+          "primary-care",
+          "general-doctor"
+        ]
       }
     ],
     "groupKeywords": [],
