@@ -66,8 +66,8 @@
   {
     "theme": "giftshops",
     "namespace": "giftshops",
-    "key": "giftshops/hungary/budapest  No",
-    "pageKey": "giftshops/giftshops/hungary/budapest  No",
+    "key": "giftshops/hungary/budapest",
+    "pageKey": "giftshops/giftshops/hungary/budapest",
     "indexable": false,
     "minItems": 20,
     "languages": [
