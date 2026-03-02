@@ -1585,7 +1585,7 @@ async function initEmergencyBlock(countryOverride) {
     // Active context row for this page (used for default group/sub)
     const ctxRow = Array.isArray(contexts) ? contexts.find(c => c.pageKey === ACTIVE_PAGE) : null;
 
-    const API_LIMIT = 99; // ask for up to 99 items per page
+    const API_LIMIT = 500; // ask for up to 99 items per page
 
     // canonical API; keep single source of truth
     const API_BASE = 'https://navigen-api.4naama.workers.dev';
