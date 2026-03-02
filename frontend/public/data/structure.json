@@ -81,6 +81,19 @@
         ]
       },
       {
+        "key": "sub.specialist-consultant-care",
+        "name": "👨‍⚕️ Specialist & Consultant Care",
+        "keywords": [
+          "specialist",
+          "consultant",
+          "medical-specialist",
+          "specialty-care",
+          "consultation",
+          "referral",
+          "expert-doctor"
+        ]
+      },
+      {
         "key": "sub.pediatric-child-care",
         "name": "👶 Pediatric & Child Care",
         "keywords": [
