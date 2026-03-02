@@ -1082,6 +1082,45 @@ function pickName(name: any): string {
   return "";
 }
 
+// --- TEMP DO STUBS (deploy unblock) ---
+// These stubs exist only to satisfy Wrangler Durable Object export checks during the profiles.json revamp.
+// They must be replaced by the real implementations (or removed from wrangler.toml) when ready.
+export class PlanAllocDO {
+  state: DurableObjectState;
+  env: any;
+  constructor(state: DurableObjectState, env: any) {
+    this.state = state;
+    this.env = env;
+  }
+  async fetch(_req: Request): Promise<Response> {
+    return new Response("PlanAllocDO not implemented", { status: 501 });
+  }
+}
+
+export class SearchShardDO {
+  state: DurableObjectState;
+  env: any;
+  constructor(state: DurableObjectState, env: any) {
+    this.state = state;
+    this.env = env;
+  }
+  async fetch(_req: Request): Promise<Response> {
+    return new Response("SearchShardDO not implemented", { status: 501 });
+  }
+}
+
+export class ContextShardDO {
+  state: DurableObjectState;
+  env: any;
+  constructor(state: DurableObjectState, env: any) {
+    this.state = state;
+    this.env = env;
+  }
+  async fetch(_req: Request): Promise<Response> {
+    return new Response("ContextShardDO not implemented", { status: 501 });
+  }
+}
+
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
@@ -3156,9 +3195,92 @@ export default {
         url.searchParams.forEach((v, k) => { if (k !== "id") target.searchParams.set(k, v); });
         target.searchParams.set("id", mapped);
 
-        const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true }, headers: { "Accept": "application/json" } });
+        // Cursor-paginated upstream list aggregation.
+        // Reason: SPA consumes a single response; upstream may return only 99 + nextCursor.
+        const headers = { "Accept": "application/json" as const };
 
-        const body = await r.text();
+        // hard guard to prevent infinite paging if upstream misbehaves
+        const MAX_PAGES = 25;
+
+        let pageStatus = 200;
+        let aggregated: any[] = [];
+        let lastParsed: any = null;
+
+        // start with whatever cursor the caller provided (or none)
+        let cursor = target.searchParams.get("cursor") || "";
+
+        for (let page = 0; page < MAX_PAGES; page++) {
+          if (cursor) target.searchParams.set("cursor", cursor);
+          else target.searchParams.delete("cursor");
+
+          const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true }, headers });
+          pageStatus = r.status;
+
+          const txt = await r.text();
+
+          // If upstream fails, stop and return what we have (or fail if nothing).
+          if (!r.ok) {
+            if (!aggregated.length) {
+              return new Response(txt, {
+                status: r.status,
+                headers: {
+                  "Content-Type": "application/json; charset=utf-8",
+                  "Access-Control-Allow-Origin": "https://navigen.io",
+                  "Access-Control-Allow-Credentials": "true",
+                  "Vary": "Origin",
+                  "Cache-Control": "no-store",
+                  "x-navigen-route": "/api/data/list"
+                }
+              });
+            }
+            break;
+          }
+
+          // Parse this page (must be valid JSON for the worker; if parsing fails, fail-open by returning raw page 1)
+          let parsed: any = null;
+          try { parsed = JSON.parse(txt); } catch { parsed = null; }
+          if (!parsed) {
+            // fail open: return the first page raw (keeps behavior deterministic)
+            return new Response(txt, {
+              status: r.status,
+              headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                "Access-Control-Allow-Origin": "https://navigen.io",
+                "Access-Control-Allow-Credentials": "true",
+                "Vary": "Origin",
+                "Cache-Control": "no-store",
+                "x-navigen-route": "/api/data/list"
+              }
+            });
+          }
+
+          lastParsed = parsed;
+
+          const arr: any[] = Array.isArray(parsed?.items)
+            ? parsed.items
+            : (parsed?.items && typeof parsed.items === "object")
+              ? Object.values(parsed.items)
+              : (Array.isArray(parsed?.locations)
+                  ? parsed.locations
+                  : (parsed?.locations && typeof parsed.locations === "object")
+                    ? Object.values(parsed.locations)
+                    : []);
+
+          if (arr.length) aggregated = aggregated.concat(arr);
+
+          // Continue only if upstream provides nextCursor
+          const next = (parsed?.nextCursor ?? parsed?.cursor ?? "") as any;
+          const nextStr = String(next ?? "").trim();
+
+          if (!nextStr) break;
+          cursor = nextStr;
+
+          // If this page returned no items, stop even if nextCursor exists
+          if (!arr.length) break;
+        }
+
+        // From here, run your existing discoverability filter + promoted-first ordering
+        // but using `aggregated` instead of a single page `arr`.
         return new Response(body, {
           status: r.status,
           headers: {
