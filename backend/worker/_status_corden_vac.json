@@ -1,0 +1,24 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"locationID":"06A1YABW010A1DZ2DVG54SMJJ4","status":"free","tier":"free","ownedNow":false,"visibili
+                    tyState":"visible","exclusiveUntil":"","courtesyUntil":"","campaignEntitled":false,"campaignEndsAt"
+                    :"...
+RawContent        : HTTP/1.1 200 OK
+                    Connection: keep-alive
+                    Access-Control-Allow-Origin: https://navigen.io
+                    Vary: Origin
+                    Access-Control-Allow-Credentials: true
+                    Access-Control-Allow-Headers: content-type, authorizatio...
+Forms             : {}
+Headers           : {[Connection, keep-alive], [Access-Control-Allow-Origin, https://navigen.io], [Vary, Origin], 
+                    [Access-Control-Allow-Credentials, true]...}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 225
+
+
+
