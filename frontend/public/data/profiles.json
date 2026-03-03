@@ -6546,6 +6546,7 @@
       },
       "Visible": "Yes",
       "Priority": "Yes",
+      "isExample": true,
       "groupKey": "🛒 Shops",
       "subgroupKey": "sub.souvenirs",
       "context": "souvenirs/hungary;souvenirs/hungary/budapest;language-schools/helen-doron/hungary",
