@@ -3655,7 +3655,7 @@ export async function createExampleDashboardsModal() {
         e.preventDefault();
         const seg = ex.slug || ex.id;
         if (!seg) return;
-        window.open(`https://navigen.io/dash/${encodeURIComponent(seg)}`, '_blank', 'noopener,noreferrer');
+        window.open(`https://navigen.io/dash?locationID=${encodeURIComponent(seg)}`, '_blank', 'noopener,noreferrer');
       });
 
       list.appendChild(btn);
@@ -4451,7 +4451,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       onClick: () => {
         hideModal(id);
         const seg = String(locId || '').trim();
-        window.open(`https://navigen.io/dash/${encodeURIComponent(seg)}`, '_blank', 'noopener,noreferrer');
+        window.open(`https://navigen.io/dash?locationID=${encodeURIComponent(seg)}`, '_blank', 'noopener,noreferrer');
       }
     });
 
