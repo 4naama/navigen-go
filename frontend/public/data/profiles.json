@@ -6657,6 +6657,7 @@
         "en": "World of Souvenir Király"
       },
       "Visible": "Yes",
+      "exampleLocation": true,
       "Priority": "No",
       "groupKey": "🛒 Shops",
       "subgroupKey": "sub.souvenirs",
