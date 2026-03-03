@@ -2335,7 +2335,7 @@ export default {
         let isExample = false;
         try {
           // Load profiles.json once and check the example flag for this location.
-          const base = req.headers.get("Origin") || "https://navigen.io";
+          const base = new URL(req.url).origin;
           const src = new URL("/data/profiles.json", base).toString();
           const resp = await fetch(src, { cf: { cacheTtl: 60, cacheEverything: true }, headers: { "Accept": "application/json" } });
           if (resp.ok) {
@@ -2346,7 +2346,7 @@ export default {
                 ? Object.values(data.locations)
                 : [];
 
-            const rec = locs.find(r => String(r?.locationID || "").trim() === locRaw || String(r?.ID || r?.id || "").trim() === locRaw || String(r?.ID || r?.id || "").trim() === loc);
+            const rec = locs.find(r => String(r?.locationID || "").trim() === locRaw);            
             const v = rec?.exampleLocation ?? rec?.isExample ?? rec?.example ?? rec?.exampleDash ?? rec?.flags?.example;
             isExample = (v === true || v === 1 || String(v || "").toLowerCase() === "true" || String(v || "").toLowerCase() === "yes");
           }
