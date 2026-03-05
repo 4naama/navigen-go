@@ -6167,9 +6167,9 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   const inner = document.createElement('div');
   // Campaign context card for cashier: show which campaign QR was redeemed (no network calls; no side effects).
   if (campaignKey && String(campaignKey).trim()) {
-    const hasT = (typeof t === 'function');
+    const hasT2 = (typeof t === 'function');
     const campLabel =
-      (hasT ? (t('redeem.confirm.campaign') || '') : '') ||
+      (hasT2 ? (t('redeem.confirm.campaign') || '') : '') ||
       'Campaign';
 
     const campCard = document.createElement('div');
@@ -6183,7 +6183,6 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
     `;
     inner.appendChild(campCard);
   }
-  
   const questionTxt =
     (hasT ? (t('redeem.confirm.question') || '') : '') ||
     'How smooth did the redeem event go?';
