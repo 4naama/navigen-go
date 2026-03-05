@@ -6157,7 +6157,10 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
     <h2 class="modal-title">${titleTxt}</h2>
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
+  const closeBtn = top.querySelector('.modal-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => hideModal(modalId));
+  }
 
   const body = document.createElement('div');
   body.className = 'modal-body';
