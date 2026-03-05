@@ -6164,32 +6164,25 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
 
   const body = document.createElement('div');
   body.className = 'modal-body';
-
   const inner = document.createElement('div');
   inner.className = 'modal-body-inner';
-
-  // Campaign context card for cashier: show which campaign QR was redeemed (no network calls; no side effects).
-  if (campaignKey && String(campaignKey).trim()) {
-    const campLabel =
-      (hasT ? (t('redeem.confirm.campaign') || '') : '') ||
-      'Campaign';
-
-    const campCard = document.createElement('div');
-    campCard.className = 'modal-menu-item promo-summary-card';
-    campCard.style.marginBottom = '0.75rem';
-    campCard.innerHTML = `
-      <div class="label" style="flex:1 1 auto; min-width:0;">
-        <strong>${campLabel}</strong><br>
-        <small>${String(campaignKey).trim()}</small>
-      </div>
-    `;
-    inner.appendChild(campCard);
-  }
 
   const questionTxt =
     (hasT ? (t('redeem.confirm.question') || '') : '') ||
     'How smooth did the redeem event go?';
 
+  // Render the real Promotion Details promo card inside the cashier modal
+  if (campaignKey && typeof renderPromotionDetailsCard === 'function') {
+    try {
+      const promoHost = document.createElement('div');
+      promoHost.className = 'modal-menu-item';
+      renderPromotionDetailsCard(promoHost, campaignKey);
+      inner.appendChild(promoHost);
+    } catch (_e) {
+      // promo card must never block redeem UI
+    }
+  }
+    
   const pQ = document.createElement('p');
   pQ.textContent = questionTxt;
   pQ.style.textAlign = 'center';
