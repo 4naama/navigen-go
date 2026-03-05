@@ -527,6 +527,61 @@ async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
   });
 }
 
+async function promoteCampaignDraftAndBuildRedirectHint(
+  sess: any,
+  ulid: string,
+  env: Env,
+  logTag: string
+): Promise<string> {
+  // Build a deterministic hint for the landing UI (not a source of truth; just prevents sticky wrong paint).
+  // If this checkout session funded a campaign, promote draft now and enrich redirect with campaign hint.
+  try {
+    const md = (sess?.metadata && typeof sess.metadata === "object") ? sess.metadata : {};
+    const ownershipSource = String(md?.ownershipSource || "").trim();
+    const campaignKey = String(md?.campaignKey || "").trim();
+
+    if (ownershipSource !== "campaign" || !campaignKey) return "";
+
+    const draftKey = `campaigns:draft:${ulid}`;
+    const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+
+    if (!draft || String(draft?.campaignKey || "").trim() !== campaignKey) return "";
+
+    const histKey = campaignsByUlidKey(ulid);
+    const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
+    const arr: any[] = Array.isArray(hist) ? hist : [];
+
+    const row = {
+      ...draft,
+      locationID: ulid,
+      locationULID: ulid,
+      locationSlug: String(md?.locationID || "").trim(),
+      status: "Active",
+      promotedAt: new Date().toISOString(),
+      stripeSessionId: String(sess?.id || "").trim()
+    };
+
+    const nextHist = arr.filter(x => String(x?.campaignKey || "").trim() !== campaignKey);
+    nextHist.push(row);
+
+    await env.KV_STATUS.put(histKey, JSON.stringify(nextHist));
+    await env.KV_STATUS.delete(draftKey);
+
+    const end = String(row?.endDate || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+      return `ce=1&ced=${encodeURIComponent(end)}&cak=${encodeURIComponent(campaignKey)}`;
+    }
+    return `ce=1&cak=${encodeURIComponent(campaignKey)}`;
+  } catch (e: any) {
+    console.error(`${logTag}: promote_failed`, {
+      ulid,
+      err: String(e?.message || e || "")
+    });
+    // Do not block exchange/restore on hint/promotion failure.
+    return "";
+  }
+}
+
 async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Response> {
   const u = new URL(req.url);
   const sid = String(u.searchParams.get("sid") || "").trim();
@@ -539,7 +594,8 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
   // Prevent open redirects: allow only same-origin relative paths.
   const isSafeNext = (p: string) =>
     p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
-  const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "";
+const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "";
+let redirectHint = ""; // ensure local scope for redirect logic used later in /owner/restore
 
   const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
   if (!sk) return new Response("Misconfigured", { status: 500, headers: noStoreHeaders });
@@ -563,7 +619,7 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
   }
 
   const meta = sess?.metadata || {};
-    let redirectHint = '';
+    redirectHint = '';
 
   const locationID = String(meta?.locationID || "").trim();
   if (!locationID) return new Response("Denied", { status: 403, headers: noStoreHeaders });
@@ -668,51 +724,8 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
 
   // If this checkout session funded a campaign, promote draft now and enrich redirect with campaign hint.
   // This avoids "sticky wrong" LPM badge rendering after redirect.
-  redirectHint = '';
-  try {
-    const md = (sess?.metadata && typeof sess.metadata === "object") ? sess.metadata : {};
-    const ownershipSource = String(md?.ownershipSource || "").trim();
-    const campaignKey = String(md?.campaignKey || "").trim();
-
-    if (ownershipSource === "campaign" && campaignKey) {
-
-      const draftKey = `campaigns:draft:${ulid}`;
-      const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
-
-      if (draft && String(draft?.campaignKey || "").trim() === campaignKey) {
-
-        const histKey = campaignsByUlidKey(ulid);
-        const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
-        const arr: any[] = Array.isArray(hist) ? hist : [];
-
-        const row = {
-          ...draft,
-          locationID: ulid,
-          locationULID: ulid,
-          locationSlug: String(md?.locationID || "").trim(),
-          status: "Active",
-          promotedAt: new Date().toISOString(),
-          stripeSessionId: String(sess?.id || "").trim()
-        };
-
-        const nextHist = arr.filter(x => String(x?.campaignKey || "").trim() !== campaignKey);
-        nextHist.push(row);
-
-        await env.KV_STATUS.put(histKey, JSON.stringify(nextHist));
-
-        await env.KV_STATUS.delete(draftKey);
-
-        const end = String(row?.endDate || "").trim();
-        if (/^\d{4}-\d{2}-\d{2}$/.test(end)) {
-          redirectHint = `ce=1&ced=${encodeURIComponent(end)}&cak=${encodeURIComponent(campaignKey)}`;
-        } else {
-          redirectHint = `ce=1&cak=${encodeURIComponent(campaignKey)}`;
-        }
-      }
-    }
-  } catch {
-  }
-
+  redirectHint = await promoteCampaignDraftAndBuildRedirectHint(sess, ulid, env, "owner_stripe_exchange");
+  
   const cookie = cookieSerialize("op_sess", sessionId, {
     Path: "/",
     HttpOnly: true,
@@ -742,6 +755,7 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
     return u.pathname + u.search + u.hash;
   })());
 
+  console.info("owner_exchange_success", { ulid, stripeSessionId: sess?.id, sessionId });
   return new Response(null, { status: 302, headers });
 }
 
@@ -1675,54 +1689,8 @@ export default {
 
         // If this checkout session funded a campaign, promote draft now and enrich redirect with campaign hint.
         // This avoids "sticky wrong" LPM badge rendering after redirect.
-        redirectHint = '';
-        try {
-          const md = (sess?.metadata && typeof sess.metadata === "object") ? sess.metadata : {};
-          const ownershipSource = String(md?.ownershipSource || "").trim();
-          const campaignKey = String(md?.campaignKey || "").trim();
-
-          if (ownershipSource === "campaign" && campaignKey) {
-            const draftKey = `campaigns:draft:${ulid}`;
-            const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
-
-            if (draft && String(draft?.campaignKey || "").trim() === campaignKey) {
-              const histKey = campaignsByUlidKey(ulid);
-              const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
-              const arr: any[] = Array.isArray(hist) ? hist : [];
-
-              const row = {
-                ...draft,
-                locationID: ulid,
-                locationULID: ulid,
-                locationSlug: String(md?.locationID || "").trim(),
-                status: "Active",
-                promotedAt: new Date().toISOString(),
-                stripeSessionId: String(sess?.id || "").trim()
-              };
-
-              const nextHist = arr.filter(x => String(x?.campaignKey || "").trim() !== campaignKey);
-              nextHist.push(row);
-
-              await env.KV_STATUS.put(histKey, JSON.stringify(nextHist));
-              await env.KV_STATUS.delete(draftKey);
-
-              // Build a deterministic hint for the landing UI (not a source of truth; just prevents sticky wrong paint).
-              const end = String(row?.endDate || "").trim();
-              if (/^\d{4}-\d{2}-\d{2}$/.test(end)) {
-                redirectHint = `ce=1&ced=${encodeURIComponent(end)}&cak=${encodeURIComponent(campaignKey)}`;
-              } else {
-                redirectHint = `ce=1&cak=${encodeURIComponent(campaignKey)}`;
-              }
-            }
-          }
-        } catch (e: any) {
-          console.error("owner_stripe_exchange: promote_failed", {
-            ulid,
-            err: String(e?.message || e || "")
-          });
-          // Do not block exchange on hint/promotion failure.
-        }
-
+        redirectHint = await promoteCampaignDraftAndBuildRedirectHint(sess, ulid, env, "owner_restore");
+        
         const cookie = cookieSerialize("op_sess", sessionId, {
           Path: "/",
           HttpOnly: true,
@@ -1750,6 +1718,7 @@ export default {
           return u.pathname + u.search + u.hash;
         })());
 
+        console.info("owner_restore_success", { ulid, pi, sessionId });
         return new Response(null, { status: 302, headers });
       }
 
