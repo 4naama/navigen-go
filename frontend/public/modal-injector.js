@@ -6164,12 +6164,15 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
 
   const body = document.createElement('div');
   body.className = 'modal-body';
+
   const inner = document.createElement('div');
   inner.className = 'modal-body-inner';
 
+  // Translation helper flag: keep a single source of truth in this modal body scope.
+  const hasT = (typeof t === 'function');
+
   // Campaign context card for cashier: show which campaign QR was redeemed (no network calls; no side effects).
   if (campaignKey && String(campaignKey).trim()) {
-    const hasT = (typeof t === 'function');
     const campLabel =
       (hasT ? (t('redeem.confirm.campaign') || '') : '') ||
       'Campaign';
@@ -6189,7 +6192,7 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   const questionTxt =
     (hasT ? (t('redeem.confirm.question') || '') : '') ||
     'How smooth did the redeem event go?';
-
+    
   const pQ = document.createElement('p');
   pQ.textContent = questionTxt;
   pQ.style.textAlign = 'center';
