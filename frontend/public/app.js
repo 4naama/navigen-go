@@ -1885,9 +1885,31 @@ async function initEmergencyBlock(countryOverride) {
         // Use the same uid that triggered the LPM; this can be a slug or a ULID.
         if (redeemed === '1' && uid && typeof showRedeemConfirmationModal === 'function') {
           try {
+            let campaignContext = null;
+
+            if (camp) {
+              try {
+                const summaryUrl = new URL('/api/campaign-summary', API_BASE);
+                summaryUrl.searchParams.set('locationID', uid);
+                summaryUrl.searchParams.set('campaignKey', camp);
+
+                const summaryRes = await fetch(summaryUrl.toString(), {
+                  cache: 'no-store',
+                  credentials: 'omit'
+                });
+
+                if (summaryRes.ok) {
+                  campaignContext = await summaryRes.json().catch(() => null);
+                }
+              } catch (summaryErr) {
+                console.warn('⚠ Campaign summary fetch failed:', summaryErr);
+              }
+            }
+
             showRedeemConfirmationModal({
               locationIdOrSlug: uid,
-              campaignKey: camp || ''
+              campaignKey: camp || '',
+              campaignContext
             });
           } catch (err) {
             console.warn('⚠ Cashier redeem confirmation modal failed:', err);

@@ -6227,8 +6227,7 @@ async function hydrateCashierRedeemCampaignContext({ inner, locationIdOrSlug, ca
 // Cashier-side Redeem Confirmation modal.
 // Shown only on the device that followed the /out/qr-redeem redirect,
 // separate from the LPM rating widget. Logs redeem-confirmation-cashier via /hit.
-export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = '' }) {
-  const modalId = 'cashier-redeem-confirmation-modal';
+export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = '', campaignContext = null }) {  const modalId = 'cashier-redeem-confirmation-modal';
   const existing = document.getElementById(modalId);
   if (existing) existing.remove();
 
@@ -6267,31 +6266,33 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
     (hasT ? (t('redeem.confirm.question') || '') : '') ||
     'How smooth did the redeem event go?';
 
+  // If campaign context was provided by the caller, render the promotion summary immediately.
+  if (campaignContext) {
+    const campaignName = String(campaignContext?.campaignName || '').trim();
+    const locationName = String(campaignContext?.locationName || '').trim();
+    const discountKind = String(campaignContext?.discountKind || '').trim().toLowerCase();
+    const discountValue = typeof campaignContext?.discountValue === 'number' ? campaignContext.discountValue : null;
+
+    const discountText =
+      (discountKind === 'percent' && typeof discountValue === 'number')
+        ? `${discountValue.toFixed(0)}% off your purchase`
+        : (campaignName || 'Promotion');
+
+    const summary = buildPromotionSummaryCard({
+      discountText,
+      locationName: locationName || campaignName,
+      startDate: campaignContext?.startDate,
+      endDate: campaignContext?.endDate
+    });
+
+    inner.appendChild(summary);
+  }
+
   const pQ = document.createElement('p');
   pQ.textContent = questionTxt;
   pQ.style.textAlign = 'center';
   pQ.style.marginBottom = '0.75rem';
   inner.appendChild(pQ);
-
-  // Visible sentinel: if this does not render in live, the updated cashier modal constructor
-  // is not the one being executed by the shipped front-end bundle.
-  const sentinel = document.createElement('div');
-  sentinel.className = 'modal-menu-item promo-summary-card';
-  sentinel.innerHTML = `
-    <div class="label" style="flex:1 1 auto; min-width:0;">
-      <strong>cashier modal sentinel</strong><br>
-      <small>${String(campaignKey || '').trim()}</small>
-    </div>
-  `;
-  inner.insertBefore(sentinel, inner.firstChild);
-
-  // Non-blocking UI enhancement: fetch and render campaign context after the modal shell exists.
-  // This must never affect the redeem confirmation workflow itself.
-  hydrateCashierRedeemCampaignContext({
-    inner,
-    locationIdOrSlug,
-    campaignKey
-  });
   
   const row = document.createElement('div');
   row.style.display = 'flex';
