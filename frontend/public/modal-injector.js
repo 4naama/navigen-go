@@ -6143,7 +6143,8 @@ async function hydrateCashierRedeemCampaignContext({ inner, locationIdOrSlug, ca
   if (!inner || !locationIdOrSlug || !campaignKey) return;
 
   try {
-    const url = new URL('/api/campaign-summary', location.origin);
+    const base = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';
+    const url = new URL('/api/campaign-summary', base);
     url.searchParams.set('locationID', String(locationIdOrSlug).trim());
     url.searchParams.set('campaignKey', String(campaignKey).trim());
 
@@ -6156,7 +6157,7 @@ async function hydrateCashierRedeemCampaignContext({ inner, locationIdOrSlug, ca
     const campaignName = String(payload?.campaignName || '').trim();
     const locationName = String(payload?.locationName || '').trim();
 
-    const discountKind = String(payload?.discountKind || '').trim();
+    const discountKind = String(payload?.discountKind || '').trim().toLowerCase();
     const discountValue = typeof payload?.discountValue === 'number' ? payload.discountValue : null;
 
     const discountText =

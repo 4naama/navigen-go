@@ -1895,8 +1895,8 @@ export default {
         );
       }
 
-      // --- Promotion QR URL: GET /api/promo-qr?locationID=... [&campaignKey=...]      if (pathname === "/api/promo-qr" && req.method === "GET") {
-        const u = new URL(req.url);
+      // --- Promotion QR URL: GET /api/promo-qr?locationID=... [&campaignKey=...]
+      if (pathname === "/api/promo-qr" && req.method === "GET") {        const u = new URL(req.url);
         const locationRaw = (u.searchParams.get("locationID") || "").trim();
         const campaignKeyRaw = (u.searchParams.get("campaignKey") || "").trim(); // optional
 
