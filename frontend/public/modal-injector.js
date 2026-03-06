@@ -6140,19 +6140,52 @@ function buildPromotionSummaryCard({ discountText, locationName, startDate, endD
 }
 
 async function hydrateCashierRedeemCampaignContext({ inner, locationIdOrSlug, campaignKey }) {
-  if (!inner || !locationIdOrSlug || !campaignKey) return;
+  if (!inner || !locationIdOrSlug || !campaignKey) {
+    console.warn('[redeem-campaign] skipped: missing args', { locationIdOrSlug, campaignKey, hasInner: !!inner });
+    return;
+  }
+
+  let marker = null;
 
   try {
+    inner.dataset.redeemCampaignHydrator = 'started';
+
+    // Visible probe: if this never appears in real, the live page is not running this bundle/path.
+    marker = document.createElement('div');
+    marker.className = 'modal-menu-item promo-summary-card';
+    marker.setAttribute('data-redeem-campaign-probe', '1');
+    marker.innerHTML = `
+      <div class="label" style="flex:1 1 auto; min-width:0;">
+        <strong>Loading campaign…</strong><br>
+        <small>${String(campaignKey || '').trim()}</small>
+      </div>
+    `;
+    inner.insertBefore(marker, inner.firstChild);
+
     const base = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';
     const url = new URL('/api/campaign-summary', base);
     url.searchParams.set('locationID', String(locationIdOrSlug).trim());
     url.searchParams.set('campaignKey', String(campaignKey).trim());
 
-    const res = await fetch(url.toString(), { cache: 'no-store' });
-    if (!res.ok) return;
+    console.info('[redeem-campaign] fetch', url.toString());
 
-    const payload = await res.json().catch(() => null);
-    if (!payload) return;
+    const res = await fetch(url.toString(), { cache: 'no-store' });
+    if (!res.ok) {
+      console.error('[redeem-campaign] non-ok response', { status: res.status, statusText: res.statusText });
+      inner.dataset.redeemCampaignHydrator = `http-${res.status}`;
+      return;
+    }
+
+    const payload = await res.json().catch((err) => {
+      console.error('[redeem-campaign] json parse failed', err);
+      return null;
+    });
+    if (!payload) {
+      inner.dataset.redeemCampaignHydrator = 'no-payload';
+      return;
+    }
+
+    console.info('[redeem-campaign] payload', payload);
 
     const campaignName = String(payload?.campaignName || '').trim();
     const locationName = String(payload?.locationName || '').trim();
@@ -6179,9 +6212,14 @@ async function hydrateCashierRedeemCampaignContext({ inner, locationIdOrSlug, ca
       endDate: payload?.endDate
     });
 
+    marker?.remove();
     inner.insertBefore(summary, inner.firstChild);
     inner.insertBefore(header, summary);
-  } catch (_e) {
+
+    inner.dataset.redeemCampaignHydrator = 'done';
+  } catch (err) {
+    console.error('[redeem-campaign] failed', err);
+    inner.dataset.redeemCampaignHydrator = 'failed';
     // campaign context is UI-only; never break redeem confirmation
   }
 }
