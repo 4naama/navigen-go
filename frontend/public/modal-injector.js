@@ -6167,28 +6167,26 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   const inner = document.createElement('div');
   inner.className = 'modal-body-inner';
 
+  // Show the redeemed campaign key directly above the cashier feedback question.
+  if (campaignKey && String(campaignKey).trim()) {
+    const pCamp = document.createElement('p');
+    pCamp.textContent = String(campaignKey).trim();
+    pCamp.style.textAlign = 'center';
+    pCamp.style.marginBottom = '0.5rem';
+    pCamp.style.fontWeight = '600';
+    inner.appendChild(pCamp);
+  }
+
   const questionTxt =
     (hasT ? (t('redeem.confirm.question') || '') : '') ||
     'How smooth did the redeem event go?';
 
-  // Render the real Promotion Details promo card inside the cashier modal
-  if (campaignKey && typeof renderPromotionDetailsCard === 'function') {
-    try {
-      const promoHost = document.createElement('div');
-      promoHost.className = 'modal-menu-item';
-      renderPromotionDetailsCard(promoHost, campaignKey);
-      inner.appendChild(promoHost);
-    } catch (_e) {
-      // promo card must never block redeem UI
-    }
-  }
-    
   const pQ = document.createElement('p');
   pQ.textContent = questionTxt;
   pQ.style.textAlign = 'center';
   pQ.style.marginBottom = '0.75rem';
   inner.appendChild(pQ);
-
+  
   const row = document.createElement('div');
   row.style.display = 'flex';
   row.style.justifyContent = 'center';
