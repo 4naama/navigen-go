@@ -1815,8 +1815,87 @@ export default {
         return await handleQr(req, env);
       }
 
-      // --- Promotion QR URL: GET /api/promo-qr?locationID=... [&campaignKey=...]
-      if (pathname === "/api/promo-qr" && req.method === "GET") {
+      // --- Campaign summary (read-only): GET /api/campaign-summary?locationID=...&campaignKey=...
+      if (pathname === "/api/campaign-summary" && req.method === "GET") {
+        const u = new URL(req.url);
+        const locationRaw = (u.searchParams.get("locationID") || "").trim();
+        const campaignKeyRaw = (u.searchParams.get("campaignKey") || "").trim();
+
+        if (!locationRaw || !campaignKeyRaw) {
+          return json(
+            { error: { code: "invalid_request", message: "locationID and campaignKey required" } },
+            400,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const locULID = (await resolveUid(locationRaw, env)) || locationRaw;
+        if (!locULID || !ULID_RE.test(locULID)) {
+          return json(
+            { error: { code: "invalid_request", message: "unknown location" } },
+            400,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(locULID), { type: "json" }) as any;
+        const rows: any[] = Array.isArray(rawRows) ? rawRows : [];
+
+        const nowMs = Date.now();
+        const row = rows.find((r) => {
+          if (!r) return false;
+          if (String(r?.locationID || "").trim() !== locULID) return false;
+          if (String(r?.campaignKey || "").trim() !== campaignKeyRaw) return false;
+
+          const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
+          if (st !== "active") return false;
+
+          const sMs = parseYmdUtcMs(String(r?.startDate || ""));
+          const eMs = parseYmdUtcMs(String(r?.endDate || ""));
+          if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
+
+          if (nowMs < sMs) return false;
+          if (nowMs > (eMs + 24 * 60 * 60 * 1000 - 1)) return false;
+
+          return true;
+        });
+
+        if (!row) {
+          return json(
+            { error: { code: "forbidden", message: "campaign not active" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const item = await getItemById(locULID, env).catch(() => null);
+        const locationName = pickName(item?.locationName) || "";
+
+        const dvRaw = (row?.campaignDiscountValue != null) ? row.campaignDiscountValue : null;
+        const discountValue =
+          (typeof dvRaw === "number") ? dvRaw :
+          (typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw))) ? Number(dvRaw) :
+          null;
+
+        return json(
+          {
+            locationID: locationRaw,
+            locationULID: locULID,
+            locationName,
+            campaignKey: String(row?.campaignKey || "").trim(),
+            campaignName: String(row?.campaignName || "").trim(),
+            startDate: String(row?.startDate || "").trim(),
+            endDate: String(row?.endDate || "").trim(),
+            eligibilityType: String(row?.eligibilityType || "").trim(),
+            discountKind: String(row?.discountKind || "").trim(),
+            discountValue
+          },
+          200,
+          { "cache-control": "no-store" }
+        );
+      }
+
+      // --- Promotion QR URL: GET /api/promo-qr?locationID=... [&campaignKey=...]      if (pathname === "/api/promo-qr" && req.method === "GET") {
         const u = new URL(req.url);
         const locationRaw = (u.searchParams.get("locationID") || "").trim();
         const campaignKeyRaw = (u.searchParams.get("campaignKey") || "").trim(); // optional

@@ -588,27 +588,15 @@ async function openPromotionQrModal(modal, data) {
 
     // 1–2) Promotion summary card (non-clickable; no chevron/arrow)
     {
-      const safeDate = (v) => {
-        const s = String(v || '').trim();
-        return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
-      };
-
-      const startStr = safeDate(startDate);
-      const endStr = safeDate(endDate);
-      const range = (startStr && endStr) ? `${startStr} \u2192 ${endStr}` : '';
-
-      const summary = document.createElement('div');
-      summary.className = 'modal-menu-item promo-summary-card';
-      summary.innerHTML = `
-        <div class="label" style="flex:1 1 auto; min-width:0;">
-          <strong>${discountText}</strong><br>
-          <small>${locName}</small><br>
-          ${range ? `<small>${range}</small>` : ``}
-        </div>
-      `;
+      const summary = buildPromotionSummaryCard({
+        discountText,
+        locationName: locName,
+        startDate,
+        endDate
+      });
       inner.appendChild(summary);
     }
-
+    
     // Expires line (under the grey card)
     if (daysLeftText) {
       const pExpires = document.createElement('p');
@@ -6128,6 +6116,75 @@ export function showThankYouToast() {
   return showToast("💖 Thank you for your support!", 4000);
 }
 
+function buildPromotionSummaryCard({ discountText, locationName, startDate, endDate }) {
+  const safeDate = (v) => {
+    const s = String(v || '').trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+  };
+
+  const startStr = safeDate(startDate);
+  const endStr = safeDate(endDate);
+  const range = (startStr && endStr) ? `${startStr} \u2192 ${endStr}` : '';
+
+  const summary = document.createElement('div');
+  summary.className = 'modal-menu-item promo-summary-card';
+  summary.innerHTML = `
+    <div class="label" style="flex:1 1 auto; min-width:0;">
+      <strong>${String(discountText || '').trim() || 'Promotion'}</strong><br>
+      <small>${String(locationName || '').trim() || ''}</small><br>
+      ${range ? `<small>${range}</small>` : ``}
+    </div>
+  `;
+
+  return summary;
+}
+
+async function hydrateCashierRedeemCampaignContext({ inner, locationIdOrSlug, campaignKey }) {
+  if (!inner || !locationIdOrSlug || !campaignKey) return;
+
+  try {
+    const url = new URL('/api/campaign-summary', location.origin);
+    url.searchParams.set('locationID', String(locationIdOrSlug).trim());
+    url.searchParams.set('campaignKey', String(campaignKey).trim());
+
+    const res = await fetch(url.toString(), { cache: 'no-store' });
+    if (!res.ok) return;
+
+    const payload = await res.json().catch(() => null);
+    if (!payload) return;
+
+    const campaignName = String(payload?.campaignName || '').trim();
+    const locationName = String(payload?.locationName || '').trim();
+
+    const discountKind = String(payload?.discountKind || '').trim();
+    const discountValue = typeof payload?.discountValue === 'number' ? payload.discountValue : null;
+
+    const discountText =
+      (discountKind === 'percent' && typeof discountValue === 'number')
+        ? `${discountValue.toFixed(0)}% off your purchase`
+        : (campaignName || 'Promotion');
+
+    const header = document.createElement('p');
+    header.textContent = campaignName || campaignKey;
+    header.style.textAlign = 'left';
+    header.style.fontSize = '0.85em';
+    header.style.opacity = '0.8';
+    header.style.marginBottom = '0.5rem';
+
+    const summary = buildPromotionSummaryCard({
+      discountText,
+      locationName,
+      startDate: payload?.startDate,
+      endDate: payload?.endDate
+    });
+
+    inner.insertBefore(summary, inner.firstChild);
+    inner.insertBefore(header, summary);
+  } catch (_e) {
+    // campaign context is UI-only; never break redeem confirmation
+  }
+}
+
 // Cashier-side Redeem Confirmation modal.
 // Shown only on the device that followed the /out/qr-redeem redirect,
 // separate from the LPM rating widget. Logs redeem-confirmation-cashier via /hit.
@@ -6167,16 +6224,6 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   const inner = document.createElement('div');
   inner.className = 'modal-body-inner';
 
-  // Show the redeemed campaign key directly above the cashier feedback question.
-  if (campaignKey && String(campaignKey).trim()) {
-    const pCamp = document.createElement('p');
-    pCamp.textContent = String(campaignKey).trim();
-    pCamp.style.textAlign = 'center';
-    pCamp.style.marginBottom = '0.5rem';
-    pCamp.style.fontWeight = '600';
-    inner.appendChild(pCamp);
-  }
-
   const questionTxt =
     (hasT ? (t('redeem.confirm.question') || '') : '') ||
     'How smooth did the redeem event go?';
@@ -6186,6 +6233,14 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   pQ.style.textAlign = 'center';
   pQ.style.marginBottom = '0.75rem';
   inner.appendChild(pQ);
+
+  // Non-blocking UI enhancement: fetch and render campaign context after the modal shell exists.
+  // This must never affect the redeem confirmation workflow itself.
+  hydrateCashierRedeemCampaignContext({
+    inner,
+    locationIdOrSlug,
+    campaignKey
+  });
   
   const row = document.createElement('div');
   row.style.display = 'flex';
