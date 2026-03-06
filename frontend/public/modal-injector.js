@@ -6273,6 +6273,18 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   pQ.style.marginBottom = '0.75rem';
   inner.appendChild(pQ);
 
+  // Visible sentinel: if this does not render in live, the updated cashier modal constructor
+  // is not the one being executed by the shipped front-end bundle.
+  const sentinel = document.createElement('div');
+  sentinel.className = 'modal-menu-item promo-summary-card';
+  sentinel.innerHTML = `
+    <div class="label" style="flex:1 1 auto; min-width:0;">
+      <strong>cashier modal sentinel</strong><br>
+      <small>${String(campaignKey || '').trim()}</small>
+    </div>
+  `;
+  inner.insertBefore(sentinel, inner.firstChild);
+
   // Non-blocking UI enhancement: fetch and render campaign context after the modal shell exists.
   // This must never affect the redeem confirmation workflow itself.
   hydrateCashierRedeemCampaignContext({
