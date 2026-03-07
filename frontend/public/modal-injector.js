@@ -6224,6 +6224,29 @@ async function hydrateCashierRedeemCampaignContext({ inner, locationIdOrSlug, ca
   }
 }
 
+function appendRedeemCampaignSummary(inner, campaignContext) {
+  if (!inner || !campaignContext) return;
+
+  const campaignName = String(campaignContext?.campaignName || '').trim();
+  const locationName = String(campaignContext?.locationName || '').trim();
+  const discountKind = String(campaignContext?.discountKind || '').trim().toLowerCase();
+  const discountValue = typeof campaignContext?.discountValue === 'number' ? campaignContext.discountValue : null;
+
+  const discountText =
+    (discountKind === 'percent' && typeof discountValue === 'number')
+      ? `${discountValue.toFixed(0)}% off your purchase`
+      : (campaignName || 'Promotion');
+
+  const summary = buildPromotionSummaryCard({
+    discountText,
+    locationName: locationName || campaignName,
+    startDate: campaignContext?.startDate,
+    endDate: campaignContext?.endDate
+  });
+
+  inner.appendChild(summary);
+}
+
 // Cashier-side Redeem Confirmation modal.
 // Shown only on the device that followed the /out/qr-redeem redirect,
 // separate from the LPM rating widget. Logs redeem-confirmation-cashier via /hit.
@@ -6267,27 +6290,19 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
     'How smooth did the redeem event go?';
 
   // If campaign context was provided by the caller, render the promotion summary immediately.
+  // Otherwise, hydrate it on-demand from the worker so the cashier still sees the promo card.
   if (campaignContext) {
-    const campaignName = String(campaignContext?.campaignName || '').trim();
-    const locationName = String(campaignContext?.locationName || '').trim();
-    const discountKind = String(campaignContext?.discountKind || '').trim().toLowerCase();
-    const discountValue = typeof campaignContext?.discountValue === 'number' ? campaignContext.discountValue : null;
-
-    const discountText =
-      (discountKind === 'percent' && typeof discountValue === 'number')
-        ? `${discountValue.toFixed(0)}% off your purchase`
-        : (campaignName || 'Promotion');
-
-    const summary = buildPromotionSummaryCard({
-      discountText,
-      locationName: locationName || campaignName,
-      startDate: campaignContext?.startDate,
-      endDate: campaignContext?.endDate
+    appendRedeemCampaignSummary(inner, campaignContext);
+  } else if (campaignKey) {
+    hydrateCashierRedeemCampaignContext({
+      inner,
+      locationIdOrSlug,
+      campaignKey
+    }).catch(() => {
+      // campaign context is UI-only; never break redeem confirmation
     });
-
-    inner.appendChild(summary);
   }
-
+  
   const pQ = document.createElement('p');
   pQ.textContent = questionTxt;
   pQ.style.textAlign = 'center';
@@ -6339,6 +6354,96 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   });
 
   inner.appendChild(row);
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  showModal(modalId);
+}
+
+export function showRedeemInvalidModal({
+  locationIdOrSlug,
+  campaignKey = '',
+  campaignContext = null,
+  outcome = 'invalid'
+}) {
+  const modalId = 'cashier-redeem-invalid-modal';
+  const existing = document.getElementById(modalId);
+  if (existing) existing.remove();
+
+  if (!locationIdOrSlug) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = modalId;
+  wrap.className = 'modal hidden';
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-menu';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+
+  const hasT = (typeof t === 'function');
+
+  const titleTxt =
+    outcome === 'used'
+      ? ((hasT ? (t('redeem.invalid.used.title') || '') : '') || 'Promo code already used')
+      : outcome === 'inactive'
+        ? ((hasT ? (t('redeem.invalid.inactive.title') || '') : '') || 'Campaign inactive')
+        : ((hasT ? (t('redeem.invalid.title') || '') : '') || 'Promo code not valid');
+
+  top.innerHTML = `
+    <h2 class="modal-title">${titleTxt}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  if (campaignContext) {
+    appendRedeemCampaignSummary(inner, campaignContext);
+  } else if (campaignKey) {
+    hydrateCashierRedeemCampaignContext({
+      inner,
+      locationIdOrSlug,
+      campaignKey
+    }).catch(() => {
+      // campaign context is UI-only; never break invalid redeem feedback
+    });
+  }
+
+  const messageTxt =
+    outcome === 'used'
+      ? ((hasT ? (t('redeem.invalid.used.body') || '') : '') || 'This promo code was already redeemed. Do not apply the promotion again.')
+      : outcome === 'inactive'
+        ? ((hasT ? (t('redeem.invalid.inactive.body') || '') : '') || 'This promo code belongs to a campaign that is not active. Do not apply the promotion.')
+        : ((hasT ? (t('redeem.invalid.body') || '') : '') || 'This promo code cannot be redeemed. Do not apply the promotion.');
+
+  const p = document.createElement('p');
+  p.textContent = messageTxt;
+  p.style.textAlign = 'center';
+  p.style.marginBottom = '0.75rem';
+  inner.appendChild(p);
+
+  const actions = document.createElement('div');
+  actions.className = 'modal-actions';
+
+  const okBtn = document.createElement('button');
+  okBtn.type = 'button';
+  okBtn.className = 'modal-body-button';
+  okBtn.textContent = (hasT ? (t('redeem.invalid.close') || '') : '') || 'OK';
+  okBtn.addEventListener('click', () => hideModal(modalId));
+
+  actions.appendChild(okBtn);
+  inner.appendChild(actions);
+
   body.appendChild(inner);
   card.appendChild(top);
   card.appendChild(body);

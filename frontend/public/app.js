@@ -32,7 +32,8 @@ import {
   showFavoritesModal,
   createPromotionsModal,
   showPromotionsModal,
-  showRedeemConfirmationModal       // cashier-side redeem confirmation UX
+  showRedeemConfirmationModal,      // cashier-side redeem confirmation UX
+  showRedeemInvalidModal            // cashier-side invalid/used promo UX
 } from './modal-injector.js';
 
 // PWA: register SW only in production (keeps install prompt there)
@@ -302,57 +303,7 @@ async function maybeShowLpmInactiveNotice(idOrSlug) {
   }
 }
 
-function showRedeemInvalidModal({ outcome = 'invalid', campaignContext = null } = {}) {
-  const modalId = 'redeem-invalid-modal';
-  let modal = document.getElementById(modalId);
-
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = modalId;
-    modal.className = 'modal hidden';
-    modal.innerHTML = `
-      <div class="modal-content modal-layout">
-        <div class="modal-top-bar">
-          <h2 data-role="title"></h2>
-          <button class="modal-close" aria-label="Close">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="modal-body-inner">
-            <p data-role="message"></p>
-            <div class="modal-actions">
-              <button type="button" class="modal-body-button" data-role="close">OK</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    modal.querySelector('.modal-close')?.addEventListener('click', () => modal.classList.add('hidden'));
-    modal.querySelector('[data-role="close"]')?.addEventListener('click', () => modal.classList.add('hidden'));
-    setupTapOutClose(modalId);
-  }
-
-  const campaignName = String(campaignContext?.campaignName || '').trim();
-  const title =
-    outcome === 'used' ? 'Promo code already used' :
-    outcome === 'inactive' ? 'Campaign inactive' :
-    'Promo code invalid';
-
-  const message =
-    outcome === 'used'
-      ? `This promo QR has already been redeemed${campaignName ? ` for ${campaignName}` : ''}. Do not grant the discount again.`
-      : outcome === 'inactive'
-        ? `This promo QR belongs to a campaign that is not currently active${campaignName ? ` (${campaignName})` : ''}. Do not grant the discount.`
-        : 'This promo QR is not valid for redemption. Do not grant the discount.';
-
-  const titleEl = modal.querySelector('[data-role="title"]');
-  const messageEl = modal.querySelector('[data-role="message"]');
-  if (titleEl) titleEl.textContent = title;
-  if (messageEl) messageEl.textContent = message;
-
-  showModal(modalId);
-}
+// showRedeemInvalidModal is imported from modal-injector.js.
 
 // ✅ Stripe public key (inject securely in production)
 const STRIPE_PUBLIC_KEY = "pk_live_51P45KEFf2RZOYEdOgWX6B7Juab9v0lbDw7xOhxCv1yLDa2ck06CXYUt3g5dLGoHrv2oZZrC43P3olq739oFuWaTq00mw8gxqXF";
@@ -1828,7 +1779,7 @@ async function initEmergencyBlock(countryOverride) {
 
       // Redeem landings must bypass the normal ?lp LPM boot path.
       // Otherwise promo QR traffic is treated like a regular LPM/QR-scan entry.
-      if (redeem === 'pending' && uid && rt) {
+      if (redeem === 'pending' && uid) {
         try {
           let campaignContext = null;
 
@@ -1851,34 +1802,51 @@ async function initEmergencyBlock(countryOverride) {
             }
           }
 
-          const hitUrl = new URL(`/hit/qr-redeem/${encodeURIComponent(uid)}`, location.origin);
-          hitUrl.searchParams.set('rt', rt);
-          hitUrl.searchParams.set('json', '1');
+          const redeemTarget = String(campaignContext?.locationULID || uid).trim() || uid;
 
-          const hitRes = await fetch(hitUrl.toString(), {
-            method: 'POST',
-            cache: 'no-store',
-            credentials: 'omit'
-          });
-
-          const hitData = hitRes.ok ? await hitRes.json().catch(() => null) : null;
-          const outcome = String(hitData?.outcome || '').trim().toLowerCase();
-
-          if (outcome === 'ok' && typeof showRedeemConfirmationModal === 'function') {
-            showRedeemConfirmationModal({
-              locationIdOrSlug: uid,
-              campaignKey: String(hitData?.campaignKey || camp || ''),
-              campaignContext
+          if (!rt) {
+            showRedeemInvalidModal({
+              locationIdOrSlug: redeemTarget,
+              campaignKey: camp || '',
+              campaignContext,
+              outcome: 'invalid'
             });
           } else {
-            showRedeemInvalidModal({
-              outcome: outcome || 'invalid',
-              campaignContext
+            const hitUrl = new URL(`/hit/qr-redeem/${encodeURIComponent(redeemTarget)}`, API_BASE);
+            hitUrl.searchParams.set('rt', rt);
+            hitUrl.searchParams.set('json', '1');
+
+            const hitRes = await fetch(hitUrl.toString(), {
+              method: 'POST',
+              cache: 'no-store',
+              credentials: 'omit'
             });
+
+            const hitData = hitRes.ok ? await hitRes.json().catch(() => null) : null;
+            const outcome = String(hitData?.outcome || '').trim().toLowerCase();
+
+            if (outcome === 'ok' && typeof showRedeemConfirmationModal === 'function') {
+              showRedeemConfirmationModal({
+                locationIdOrSlug: redeemTarget,
+                campaignKey: String(hitData?.campaignKey || camp || ''),
+                campaignContext
+              });
+            } else {
+              showRedeemInvalidModal({
+                locationIdOrSlug: redeemTarget,
+                campaignKey: String(hitData?.campaignKey || camp || ''),
+                campaignContext,
+                outcome: outcome || 'invalid'
+              });
+            }
           }
         } catch (err) {
           console.warn('⚠ Cashier redeem verification failed:', err);
-          showRedeemInvalidModal({ outcome: 'invalid' });
+          showRedeemInvalidModal({
+            locationIdOrSlug: uid,
+            campaignKey: camp || '',
+            outcome: 'invalid'
+          });
         }
       } else if (uid && Array.isArray(geoPoints) && geoPoints.length) {
         const rec = geoPoints.find(x =>
