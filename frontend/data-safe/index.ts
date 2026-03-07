@@ -3472,12 +3472,71 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   if (hit && hit.qrUrl) {
     targetUrl = String(hit.qrUrl).trim();
   } else {
-    // Fallback: not expected in practice, but keep a sane default
+    // Fallback: not expected in practice, but keep a sane default.
+    // For qr-redeem, still attach a truthful outcome hint so cashier UI
+    // does not assume success purely from landing.
     const dest = new URL("/", "https://navigen.io");
-    dest.searchParams.set("lp", raw);
+
+    if (ev === "qr-redeem") {
+      const token =
+        (u.searchParams.get("rt") || "").trim() ||
+        (u.searchParams.get("token") || "").trim();
+
+      let redeemOutcome: "ok" | "invalid" = "invalid";
+      let tokenCampaignKey = "";
+
+      const locULID = (await resolveUid(raw, env)) || raw;
+
+      if (token && locULID && ULID_RE.test(locULID)) {
+        const recRaw = await env.KV_STATS.get(`redeem:${token}`, "text");
+        try {
+          const rec = recRaw ? (JSON.parse(recRaw) as RedeemTokenRecord) : null;
+          tokenCampaignKey = String(rec?.campaignKey || "").trim();
+
+          const tokenLooksFresh =
+            String(rec?.locationID || "").trim() === locULID &&
+            String(rec?.status || "").trim() === "fresh" &&
+            !!tokenCampaignKey;
+
+          if (tokenLooksFresh) {
+            const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(locULID), { type: "json" }) as any;
+            const rows: any[] = Array.isArray(rawRows) ? rawRows : [];
+
+            const nowMs = Date.now();
+            const tokenCampaignIsActive = rows.some((r: any) => {
+              if (!r || String(r.locationID || "").trim() !== locULID) return false;
+
+              const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
+              if (st !== "active") return false;
+
+              const sMs = parseYmdUtcMs(String(r?.startDate || ""));
+              const eMs = parseYmdUtcMs(String(r?.endDate || ""));
+              if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
+              if (nowMs < sMs) return false;
+              if (nowMs > (eMs + 24 * 60 * 60 * 1000 - 1)) return false;
+
+              return String(r?.campaignKey || "").trim() === tokenCampaignKey;
+            });
+
+            redeemOutcome = tokenCampaignIsActive ? "ok" : "invalid";
+          }
+        } catch {
+          redeemOutcome = "invalid";
+          tokenCampaignKey = "";
+        }
+      }
+
+      dest.searchParams.set("rid", raw);
+      dest.searchParams.set("redeem", redeemOutcome);
+      dest.searchParams.set("redeemed", redeemOutcome === "ok" ? "1" : "0");
+      if (tokenCampaignKey) dest.searchParams.set("camp", tokenCampaignKey);
+    } else {
+      dest.searchParams.set("lp", raw);
+    }
+
     targetUrl = dest.toString();
   }
-
+  
   // Build tracked scan URL on navigen.io that will increment qr-scan, then redirect to targetUrl
   const scanUrl = new URL(`/out/qr-scan/${encodeURIComponent(raw)}`, "https://navigen.io");
   scanUrl.searchParams.set("to", targetUrl);

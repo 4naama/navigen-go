@@ -1742,9 +1742,13 @@ async function initEmergencyBlock(countryOverride) {
 
     // Open LPM on ?lp=<id> (post-mapping, single source of truth)
     {
-      const q   = new URLSearchParams(location.search);
-      const uid = (q.get('lp') || '').trim();
-
+      const q         = new URLSearchParams(location.search);
+      const uid       = (q.get('lp') || '').trim();
+      const redeemUid = (q.get('rid') || '').trim();
+      const redeem    = (q.get('redeem') || '').trim().toLowerCase();
+      const redeemed  = (q.get('redeemed') || '').trim();
+      const camp      = (q.get('camp') || '').trim();
+      
       // If this was a post-checkout landing, wait briefly for /api/status to reflect campaign entitlement.
       // Without this, LPM may render "Taken" once and never update until refresh.
       async function waitForEntitlementOnce(idOrSlug) {
@@ -1768,46 +1772,53 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
 
-      if (uid) await waitForEntitlementOnce(uid);
-
-      const redeemed = (q.get('redeemed') || '').trim();
-      const camp     = (q.get('camp') || '').trim();
-
+      // Redeem landings must stop exposing ?lp as early as possible.
+      // This prevents any later boot logic from momentarily treating them like normal LPM entries.
+      if ((redeem === 'ok' || redeem === 'invalid' || redeemed === '1') && redeemUid) {
+        q.delete('lp');
+        const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
+        history.replaceState({}, document.title, next);
+      } else if (uid) {
+        await waitForEntitlementOnce(uid);
+      }
+      
       // Redeem landings must bypass the normal ?lp LPM boot path.
       // Otherwise promo QR traffic is treated like a regular LPM/QR-scan entry.
-      if (redeemed === '1' && uid) {
-        if (typeof showRedeemConfirmationModal === 'function') {
-          try {
-            let campaignContext = null;
+      if ((redeem === 'ok' || redeem === 'invalid' || redeemed === '1') && redeemUid) {
+        try {
+          let campaignContext = null;
 
-            if (camp) {
-              try {
-                const summaryUrl = new URL('/api/campaign-summary', API_BASE);
-                summaryUrl.searchParams.set('locationID', uid);
-                summaryUrl.searchParams.set('campaignKey', camp);
+          if (camp) {
+            try {
+              const summaryUrl = new URL('/api/campaign-summary', API_BASE);
+              summaryUrl.searchParams.set('locationID', redeemUid);
+              summaryUrl.searchParams.set('campaignKey', camp);
 
-                const summaryRes = await fetch(summaryUrl.toString(), {
-                  cache: 'no-store',
-                  credentials: 'omit'
-                });
+              const summaryRes = await fetch(summaryUrl.toString(), {
+                cache: 'no-store',
+                credentials: 'omit'
+              });
 
-                if (summaryRes.ok) {
-                  campaignContext = await summaryRes.json().catch(() => null);
-                }
-              } catch (summaryErr) {
-                console.warn('⚠ Campaign summary fetch failed:', summaryErr);
+              if (summaryRes.ok) {
+                campaignContext = await summaryRes.json().catch(() => null);
               }
+            } catch (summaryErr) {
+              console.warn('⚠ Campaign summary fetch failed:', summaryErr);
             }
+          }
 
+          if ((redeem === 'ok' || (redeem === '' && redeemed === '1')) && typeof showRedeemConfirmationModal === 'function') {
             showRedeemConfirmationModal({
-              locationIdOrSlug: uid,
+              locationIdOrSlug: redeemUid,
               campaignKey: camp || '',
               campaignContext
             });
-          } catch (err) {
-            console.warn('⚠ Cashier redeem confirmation modal failed:', err);
-            // Do not break the app; continue without LPM.
+          } else if (redeem === 'invalid') {
+            showToast('Promo QR already used or invalid.', { title: 'Redeem invalid', manualCloseOnly: true, duration: 0 });
           }
+        } catch (err) {
+          console.warn('⚠ Cashier redeem flow failed:', err);
+          // Do not break the app; continue without LPM.
         }
       } else if (uid && Array.isArray(geoPoints) && geoPoints.length) {
         const rec = geoPoints.find(x =>
@@ -1919,10 +1930,16 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
       
-      // drop only ?lp; keep others (e.g. redeemed, camp)
-      q.delete('lp');
-      const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
-      history.replaceState({}, document.title, next);
+      // drop only the routing param used by this landing; keep other state (e.g. redeem, redeemed, camp).
+      if ((redeem === 'ok' || redeem === 'invalid' || redeemed === '1') && redeemUid) {
+        q.delete('rid');
+        const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
+        history.replaceState({}, document.title, next);
+      } else {
+        q.delete('lp');
+        const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
+        history.replaceState({}, document.title, next);
+      }
     }
    
     const geoCtx = ACTIVE_PAGE
