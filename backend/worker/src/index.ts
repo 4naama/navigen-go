@@ -3474,7 +3474,7 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   } else {
     // Fallback: not expected in practice, but keep a sane default
     const dest = new URL("/", "https://navigen.io");
-    dest.searchParams.set("lp", raw);
+    dest.searchParams.set(ev === "qr-redeem" ? "rid" : "lp", raw);
     targetUrl = dest.toString();
   }
 

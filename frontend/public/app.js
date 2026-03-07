@@ -1742,11 +1742,12 @@ async function initEmergencyBlock(countryOverride) {
 
     // Open LPM on ?lp=<id> (post-mapping, single source of truth)
     {
-      const q        = new URLSearchParams(location.search);
-      const uid      = (q.get('lp') || '').trim();
-      const redeemed = (q.get('redeemed') || '').trim();
-      const camp     = (q.get('camp') || '').trim();
-
+      const q         = new URLSearchParams(location.search);
+      const uid       = (q.get('lp') || '').trim();
+      const redeemUid = (q.get('rid') || '').trim();
+      const redeemed  = (q.get('redeemed') || '').trim();
+      const camp      = (q.get('camp') || '').trim();
+      
       // If this was a post-checkout landing, wait briefly for /api/status to reflect campaign entitlement.
       // Without this, LPM may render "Taken" once and never update until refresh.
       async function waitForEntitlementOnce(idOrSlug) {
@@ -1772,7 +1773,7 @@ async function initEmergencyBlock(countryOverride) {
 
       // Redeem landings must stop exposing ?lp as early as possible.
       // This prevents any later boot logic from momentarily treating them like normal LPM entries.
-      if (redeemed === '1' && uid) {
+      if (redeemed === '1' && redeemUid) {
         q.delete('lp');
         const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
         history.replaceState({}, document.title, next);
@@ -1790,7 +1791,7 @@ async function initEmergencyBlock(countryOverride) {
             if (camp) {
               try {
                 const summaryUrl = new URL('/api/campaign-summary', API_BASE);
-                summaryUrl.searchParams.set('locationID', uid);
+                summaryUrl.searchParams.set('locationID', redeemUid);
                 summaryUrl.searchParams.set('campaignKey', camp);
 
                 const summaryRes = await fetch(summaryUrl.toString(), {
@@ -1807,7 +1808,7 @@ async function initEmergencyBlock(countryOverride) {
             }
 
             showRedeemConfirmationModal({
-              locationIdOrSlug: uid,
+              locationIdOrSlug: redeemUid,
               campaignKey: camp || '',
               campaignContext
             });
@@ -1926,8 +1927,12 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
       
-      // drop only ?lp for normal LPM landings; redeem landings already removed it earlier.
-      if (redeemed !== '1') {
+      // drop only the routing param used by this landing; keep other state (e.g. redeemed, camp).
+      if (redeemed === '1') {
+        q.delete('rid');
+        const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
+        history.replaceState({}, document.title, next);
+      } else {
         q.delete('lp');
         const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
         history.replaceState({}, document.title, next);
