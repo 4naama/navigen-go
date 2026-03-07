@@ -6228,6 +6228,7 @@ async function hydrateCashierRedeemCampaignContext({ inner, locationIdOrSlug, ca
 // Shown only on the device that followed the /out/qr-redeem redirect,
 // separate from the LPM rating widget. Logs redeem-confirmation-cashier via /hit.
 export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = '', campaignContext = null }) {  const modalId = 'cashier-redeem-confirmation-modal';
+  alert(`showRedeemConfirmationModal reached: ${String(campaignKey || '').trim()}`);
   const existing = document.getElementById(modalId);
   if (existing) existing.remove();
 
@@ -6287,6 +6288,17 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
 
     inner.appendChild(summary);
   }
+
+  const hardProbe = document.createElement('div');
+  hardProbe.className = 'modal-menu-item promo-summary-card';
+  hardProbe.innerHTML = `
+    <div class="label" style="flex:1 1 auto; min-width:0;">
+      <strong>HARDCODED CONFIRM PROBE</strong><br>
+      <small>${String(campaignKey || '').trim()}</small><br>
+      <small>showRedeemConfirmationModal reached</small>
+    </div>
+  `;
+  inner.appendChild(hardProbe);
 
   const pQ = document.createElement('p');
   pQ.textContent = questionTxt;
