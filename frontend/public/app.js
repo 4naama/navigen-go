@@ -1770,7 +1770,46 @@ async function initEmergencyBlock(countryOverride) {
 
       if (uid) await waitForEntitlementOnce(uid);
 
-      if (uid && Array.isArray(geoPoints) && geoPoints.length) {
+      const redeemed = (q.get('redeemed') || '').trim();
+      const camp     = (q.get('camp') || '').trim();
+
+      // Redeem landings must bypass the normal ?lp LPM boot path.
+      // Otherwise promo QR traffic is treated like a regular LPM/QR-scan entry.
+      if (redeemed === '1' && uid) {
+        if (typeof showRedeemConfirmationModal === 'function') {
+          try {
+            let campaignContext = null;
+
+            if (camp) {
+              try {
+                const summaryUrl = new URL('/api/campaign-summary', API_BASE);
+                summaryUrl.searchParams.set('locationID', uid);
+                summaryUrl.searchParams.set('campaignKey', camp);
+
+                const summaryRes = await fetch(summaryUrl.toString(), {
+                  cache: 'no-store',
+                  credentials: 'omit'
+                });
+
+                if (summaryRes.ok) {
+                  campaignContext = await summaryRes.json().catch(() => null);
+                }
+              } catch (summaryErr) {
+                console.warn('⚠ Campaign summary fetch failed:', summaryErr);
+              }
+            }
+
+            showRedeemConfirmationModal({
+              locationIdOrSlug: uid,
+              campaignKey: camp || '',
+              campaignContext
+            });
+          } catch (err) {
+            console.warn('⚠ Cashier redeem confirmation modal failed:', err);
+            // Do not break the app; continue without LPM.
+          }
+        }
+      } else if (uid && Array.isArray(geoPoints) && geoPoints.length) {
         const rec = geoPoints.find(x =>
           String(x?.ID || x?.id || '') === uid ||              // ULID match
           String(x?.locationID || '') === uid                  // slug / alias match
@@ -1814,6 +1853,8 @@ async function initEmergencyBlock(countryOverride) {
               // origin
               originEl: null
             });
+
+            await maybeShowLpmInactiveNotice(uid);
           }
         }
       } else if (uid) {
@@ -1869,6 +1910,8 @@ async function initEmergencyBlock(countryOverride) {
                 // origin
                 originEl: null
               });
+
+              await maybeShowLpmInactiveNotice(uid);
             }
           }
         } catch (e) {
@@ -1876,48 +1919,6 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
       
-      await maybeShowLpmInactiveNotice(uid);
-
-      // After LPM has been opened, show cashier Redeem Confirmation (if this load came from a redeem redirect).
-      {
-        const redeemed = (q.get('redeemed') || '').trim();
-        const camp     = (q.get('camp') || '').trim();
-        // Use the same uid that triggered the LPM; this can be a slug or a ULID.
-        if (redeemed === '1' && uid && typeof showRedeemConfirmationModal === 'function') {
-          try {
-            let campaignContext = null;
-
-            if (camp) {
-              try {
-                const summaryUrl = new URL('/api/campaign-summary', API_BASE);
-                summaryUrl.searchParams.set('locationID', uid);
-                summaryUrl.searchParams.set('campaignKey', camp);
-
-                const summaryRes = await fetch(summaryUrl.toString(), {
-                  cache: 'no-store',
-                  credentials: 'omit'
-                });
-
-                if (summaryRes.ok) {
-                  campaignContext = await summaryRes.json().catch(() => null);
-                }
-              } catch (summaryErr) {
-                console.warn('⚠ Campaign summary fetch failed:', summaryErr);
-              }
-            }
-
-            showRedeemConfirmationModal({
-              locationIdOrSlug: uid,
-              campaignKey: camp || '',
-              campaignContext
-            });
-          } catch (err) {
-            console.warn('⚠ Cashier redeem confirmation modal failed:', err);
-            // Do not break the app; continue with normal LPM view.
-          }
-        }
-      }
-
       // drop only ?lp; keep others (e.g. redeemed, camp)
       q.delete('lp');
       const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
