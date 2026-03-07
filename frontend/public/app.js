@@ -1742,8 +1742,10 @@ async function initEmergencyBlock(countryOverride) {
 
     // Open LPM on ?lp=<id> (post-mapping, single source of truth)
     {
-      const q   = new URLSearchParams(location.search);
-      const uid = (q.get('lp') || '').trim();
+      const q        = new URLSearchParams(location.search);
+      const uid      = (q.get('lp') || '').trim();
+      const redeemed = (q.get('redeemed') || '').trim();
+      const camp     = (q.get('camp') || '').trim();
 
       // If this was a post-checkout landing, wait briefly for /api/status to reflect campaign entitlement.
       // Without this, LPM may render "Taken" once and never update until refresh.
@@ -1768,10 +1770,15 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
 
-      if (uid) await waitForEntitlementOnce(uid);
-
-      const redeemed = (q.get('redeemed') || '').trim();
-      const camp     = (q.get('camp') || '').trim();
+      // Redeem landings must stop exposing ?lp as early as possible.
+      // This prevents any later boot logic from momentarily treating them like normal LPM entries.
+      if (redeemed === '1' && uid) {
+        q.delete('lp');
+        const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
+        history.replaceState({}, document.title, next);
+      } else if (uid) {
+        await waitForEntitlementOnce(uid);
+      }
 
       // Redeem landings must bypass the normal ?lp LPM boot path.
       // Otherwise promo QR traffic is treated like a regular LPM/QR-scan entry.
@@ -1919,10 +1926,12 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
       
-      // drop only ?lp; keep others (e.g. redeemed, camp)
-      q.delete('lp');
-      const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
-      history.replaceState({}, document.title, next);
+      // drop only ?lp for normal LPM landings; redeem landings already removed it earlier.
+      if (redeemed !== '1') {
+        q.delete('lp');
+        const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
+        history.replaceState({}, document.title, next);
+      }
     }
    
     const geoCtx = ACTIVE_PAGE
