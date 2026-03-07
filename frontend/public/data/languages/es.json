@@ -828,5 +828,13 @@
   "lpm.status.taken.title": "Ocupado",
   "lpm.status.taken.desc": "Ya operado.",
   "lpm.campaign.single": "🎁 Campaña única",
-  "lpm.owned.badge.multiCampaign": "🎁 Múltiples campañas"
+  "lpm.owned.badge.multiCampaign": "🎁 Múltiples campañas",
+  "redeem.invalid.title": "Código promocional no válido.",
+  "redeem.invalid.used.title": "Código promocional ya utilizado.",
+  "redeem.invalid.inactive.title": "Campaña inactiva.",
+  "redeem.invalid.body": "Este código promocional no se puede canjear. No apliques la promoción.",
+  "redeem.invalid.used.body": "Este código promocional ya fue canjeado. No apliques la promoción nuevamente.",
+  "redeem.invalid.inactive.body": "Este código promocional pertenece a una campaña que no está activa. No apliques la promoción.",
+  "redeem.invalid.close": "OK",
+  "redeem.campaign.loading": "Cargando campaña…"
 }

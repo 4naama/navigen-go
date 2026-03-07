@@ -828,5 +828,13 @@
   "lpm.status.taken.title": "Occupato",
   "lpm.status.taken.desc": "Già gestito.",
   "lpm.campaign.single": "🎁 Campagna singola",
-  "lpm.owned.badge.multiCampaign": "🎁 Campagne multiple"
+  "lpm.owned.badge.multiCampaign": "🎁 Campagne multiple",
+  "redeem.invalid.title": "Codice promozionale non valido.",
+  "redeem.invalid.used.title": "Codice promozionale già utilizzato.",
+  "redeem.invalid.inactive.title": "Campagna inattiva.",
+  "redeem.invalid.body": "Questo codice promozionale non può essere riscattato. Non applicare la promozione.",
+  "redeem.invalid.used.body": "Questo codice promozionale è già stato riscattato. Non applicare di nuovo la promozione.",
+  "redeem.invalid.inactive.body": "Questo codice promozionale appartiene a una campagna non attiva. Non applicare la promozione.",
+  "redeem.invalid.close": "OK",
+  "redeem.campaign.loading": "Caricamento campagna…"
 }

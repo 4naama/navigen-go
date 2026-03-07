@@ -828,5 +828,13 @@
   "lpm.status.taken.title": "תפוס",
   "lpm.status.taken.desc": "כבר מופעל.",
   "lpm.campaign.single": "🎁 קמפיין יחיד",
-  "lpm.owned.badge.multiCampaign": "🎁 מספר קמפיינים"
+  "lpm.owned.badge.multiCampaign": "🎁 מספר קמפיינים",
+  "redeem.invalid.title": "קוד קופון לא תקף.",
+  "redeem.invalid.used.title": "קוד קופון כבר שומש.",
+  "redeem.invalid.inactive.title": "קמפיין לא פעיל.",
+  "redeem.invalid.body": "לא ניתן לממש קוד קופון זה. אל תחיל את ההטבה.",
+  "redeem.invalid.used.body": "קוד קופון זה כבר מומש. אל תחיל את ההטבה שוב.",
+  "redeem.invalid.inactive.body": "קוד קופון זה שייך לקמפיין שאינו פעיל. אל תחיל את ההטבה.",
+  "redeem.invalid.close": "אישור",
+  "redeem.campaign.loading": "טוען קמפיין…"
 }

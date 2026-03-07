@@ -828,5 +828,13 @@
   "lpm.status.taken.title": "Foglalt",
   "lpm.status.taken.desc": "Már üzemeltetett.",
   "lpm.campaign.single": "🎁 Egyetlen kampány",
-  "lpm.owned.badge.multiCampaign": "🎁 Több kampány"
+  "lpm.owned.badge.multiCampaign": "🎁 Több kampány",
+  "redeem.invalid.title": "A promóciós kód érvénytelen.",
+  "redeem.invalid.used.title": "A promóciós kód már fel lett használva.",
+  "redeem.invalid.inactive.title": "A kampány inaktív.",
+  "redeem.invalid.body": "Ez a promóciós kód nem váltható be. Ne alkalmazza a promóciót.",
+  "redeem.invalid.used.body": "Ezt a promóciós kódot már beváltották. Ne alkalmazza újra a promóciót.",
+  "redeem.invalid.inactive.body": "Ez a promóciós kód egy nem aktív kampányhoz tartozik. Ne alkalmazza a promóciót.",
+  "redeem.invalid.close": "OK",
+  "redeem.campaign.loading": "Kampány betöltése…"
 }

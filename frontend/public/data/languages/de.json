@@ -828,5 +828,13 @@
   "lpm.status.taken.title": "Belegt",
   "lpm.status.taken.desc": "Bereits betrieben.",
   "lpm.campaign.single": "🎁 Einzelne Kampagne",
-  "lpm.owned.badge.multiCampaign": "🎁 Mehrere Kampagnen"
+  "lpm.owned.badge.multiCampaign": "🎁 Mehrere Kampagnen",
+  "redeem.invalid.title": "Promo-Code ungültig.",
+  "redeem.invalid.used.title": "Promo-Code bereits verwendet.",
+  "redeem.invalid.inactive.title": "Kampagne inaktiv.",
+  "redeem.invalid.body": "Dieser Promo-Code kann nicht eingelöst werden. Wenden Sie die Promotion nicht an.",
+  "redeem.invalid.used.body": "Dieser Promo-Code wurde bereits eingelöst. Wenden Sie die Promotion nicht erneut an.",
+  "redeem.invalid.inactive.body": "Dieser Promo-Code gehört zu einer Kampagne, die nicht aktiv ist. Wenden Sie die Promotion nicht an.",
+  "redeem.invalid.close": "OK",
+  "redeem.campaign.loading": "Kampagne wird geladen…"
 }

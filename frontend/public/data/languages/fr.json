@@ -828,5 +828,13 @@
   "lpm.status.taken.title": "Pris",
   "lpm.status.taken.desc": "Déjà exploité.",
   "lpm.campaign.single": "🎁 Campagne unique",
-  "lpm.owned.badge.multiCampaign": "🎁 Campagnes multiples"
+  "lpm.owned.badge.multiCampaign": "🎁 Campagnes multiples",
+  "redeem.invalid.title": "Code promo non valide.",
+  "redeem.invalid.used.title": "Code promo déjà utilisé.",
+  "redeem.invalid.inactive.title": "Campagne inactive.",
+  "redeem.invalid.body": "Ce code promo ne peut pas être utilisé. N’appliquez pas la promotion.",
+  "redeem.invalid.used.body": "Ce code promo a déjà été utilisé. N’appliquez pas la promotion à nouveau.",
+  "redeem.invalid.inactive.body": "Ce code promo appartient à une campagne qui n’est pas active. N’appliquez pas la promotion.",
+  "redeem.invalid.close": "OK",
+  "redeem.campaign.loading": "Chargement de la campagne…"
 }

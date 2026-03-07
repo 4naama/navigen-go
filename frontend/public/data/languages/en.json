@@ -828,5 +828,13 @@
   "lpm.status.taken.title": "Taken",
   "lpm.status.taken.desc": "Already operated.",
   "lpm.campaign.single": "🎁 Single campaign",
-  "lpm.owned.badge.multiCampaign": "🎁 Multiple campaigns"
+  "lpm.owned.badge.multiCampaign": "🎁 Multiple campaigns",
+  "redeem.invalid.title": "Promo code not valid",
+  "redeem.invalid.used.title": "Promo code already used",
+  "redeem.invalid.inactive.title": "Campaign inactive",
+  "redeem.invalid.body": "This promo code cannot be redeemed. Do not apply the promotion.",
+  "redeem.invalid.used.body": "This promo code was already redeemed. Do not apply the promotion again.",
+  "redeem.invalid.inactive.body": "This promo code belongs to a campaign that is not active. Do not apply the promotion.",
+  "redeem.invalid.close": "OK",
+  "redeem.campaign.loading": "Loading campaign…"
 }
