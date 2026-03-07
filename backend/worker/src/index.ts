@@ -2856,6 +2856,41 @@ export default {
         return json({ token, status }, 200);
       }
 
+      // --- Promo redeem landing: /out/qr-redeem/<slug>?camp=...&rt=...
+      // Redirect only with pending state; the landing page must ask the backend for the real redeem outcome.
+      if (pathname.startsWith("/out/qr-redeem/") && req.method === "GET") {
+        const parts = pathname.split("/").filter(Boolean); // ['out','qr-redeem','id']
+        const idRaw = parts[2] || "";
+        const loc = await resolveUid(idRaw, env);
+        if (!loc) {
+          return json({ error:{ code:"invalid_request", message:"bad id" } }, 400);
+        }
+
+        const u = new URL(req.url);
+        const token =
+          (u.searchParams.get("rt") || "").trim() ||
+          (u.searchParams.get("token") || "").trim();
+        const camp = (u.searchParams.get("camp") || "").trim();
+
+        const landing = new URL("/", req.url);
+        landing.searchParams.set("lp", idRaw);
+        landing.searchParams.set("redeem", "pending");
+        if (camp) landing.searchParams.set("camp", camp);
+        if (token) landing.searchParams.set("rt", token);
+
+        return new Response(null, {
+          status: 302,
+          headers: {
+            "Location": landing.pathname + landing.search + landing.hash,
+            "Cache-Control": "no-store",
+            "Referrer-Policy": "no-referrer",
+            "Access-Control-Allow-Origin": "https://navigen.io",
+            "Access-Control-Allow-Credentials": "true",
+            "Vary": "Origin"
+          }
+        });
+      }
+      
       // --- Outbound tracked redirect: /out/{event}/{id}?to=<url>
       if (pathname.startsWith("/out/") && req.method === "GET") {
         const parts = pathname.split("/").filter(Boolean); // ['out','event','id']
@@ -2952,7 +2987,7 @@ export default {
           await logQrScan(env.KV_STATS, env, loc, req);
         }
 
-        // For QR redeem events, validate token and log "redeem" vs "invalid".
+        // For QR redeem events, validate token and return a truthful outcome for the landing page.
         if (ev === "qr-redeem") {
           // Accept token from header OR query string.
           // Reason: real QR scans open a URL and cannot send custom headers.
@@ -2961,12 +2996,26 @@ export default {
             (req.headers.get("X-NG-QR-Token") || "").trim() ||
             (u.searchParams.get("rt") || "").trim() ||
             (u.searchParams.get("token") || "").trim();
-          
-          // Promo redeem is campaign-paid: campaign entitlement is enforced below via activeCampaignRowForUlid + tokenCampaignKey match.
+          const wantsJson = (u.searchParams.get("json") || "").trim() === "1";
 
-          // Token is required (single-use redeem)
-          if (!token) {
-            await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
+          const finish = async (
+            outcome: "ok" | "used" | "inactive" | "invalid",
+            campaignKey = ""
+          ) => {
+            if (outcome === "ok") {
+              await logQrRedeem(env.KV_STATS, env, loc, req, campaignKey);
+            } else {
+              await logQrRedeemInvalid(env.KV_STATS, env, loc, req, campaignKey);
+            }
+
+            if (wantsJson) {
+              return json(
+                { ok: outcome === "ok", outcome, campaignKey },
+                200,
+                { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+              );
+            }
+
             return new Response(null, {
               status: 204,
               headers: {
@@ -2975,28 +3024,31 @@ export default {
                 "Vary": "Origin"
               }
             });
+          };
+
+          // Promo redeem is campaign-paid: campaign entitlement is enforced below via tokenCampaignKey.
+          if (!token) {
+            return await finish("invalid");
           }
 
-          // Read token record to obtain the campaignKey that was issued when the Promo QR was generated
           const recRaw = await env.KV_STATS.get(`redeem:${token}`, "text");
           let tokenCampaignKey = "";
+          let tokenLocationID = "";
+          let tokenStatus = "";
+
           try {
             const rec = recRaw ? (JSON.parse(recRaw) as RedeemTokenRecord) : null;
             tokenCampaignKey = String(rec?.campaignKey || "").trim();
+            tokenLocationID = String(rec?.locationID || "").trim();
+            tokenStatus = String(rec?.status || "").trim();
           } catch {
             tokenCampaignKey = "";
+            tokenLocationID = "";
+            tokenStatus = "";
           }
 
-          if (!tokenCampaignKey) {
-            await logQrRedeemInvalid(env.KV_STATS, env, loc, req);
-            return new Response(null, {
-              status: 204,
-              headers: {
-                "Access-Control-Allow-Origin": "https://navigen.io",
-                "Access-Control-Allow-Credentials": "true",
-                "Vary": "Origin"
-              }
-            });
+          if (!tokenCampaignKey || !tokenLocationID || tokenLocationID !== loc) {
+            return await finish("invalid", tokenCampaignKey);
           }
 
           // Validate: the token's campaignKey must still be active for this ULID (no "winner" logic).
@@ -3004,7 +3056,7 @@ export default {
           const rows: any[] = Array.isArray(rawRows) ? rawRows : [];
 
           const nowMs = Date.now();
-          const isActive = (r: any) => {
+          const tokenCampaignIsActive = rows.some((r: any) => {
             if (!r || String(r.locationID || "").trim() !== loc) return false;
             const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
             if (st !== "active") return false;
@@ -3014,32 +3066,27 @@ export default {
             if (nowMs < sMs) return false;
             if (nowMs > (eMs + 24 * 60 * 60 * 1000 - 1)) return false;
             return String(r?.campaignKey || "").trim() === tokenCampaignKey;
-          };
-
-          const tokenCampaignIsActive = rows.some(isActive);
+          });
 
           if (!tokenCampaignIsActive) {
-            await logQrRedeemInvalid(env.KV_STATS, env, loc, req, tokenCampaignKey);
-            return new Response(null, {
-              status: 204,
-              headers: {
-                "Access-Control-Allow-Origin": "https://navigen.io",
-                "Access-Control-Allow-Credentials": "true",
-                "Vary": "Origin"
-              }
-            });
+            return await finish("inactive", tokenCampaignKey);
           }
 
-          // Consume token (single use)
+          if (tokenStatus === "redeemed") {
+            return await finish("used", tokenCampaignKey);
+          }
+
           const result = await consumeRedeemToken(env.KV_STATS, token, loc, tokenCampaignKey);
 
           if (result === "ok") {
-            await logQrRedeem(env.KV_STATS, env, loc, req, tokenCampaignKey);
-          } else {
-            await logQrRedeemInvalid(env.KV_STATS, env, loc, req, tokenCampaignKey);
+            return await finish("ok", tokenCampaignKey);
           }
+          if (result === "used") {
+            return await finish("used", tokenCampaignKey);
+          }
+          return await finish("invalid", tokenCampaignKey);
         }
-
+        
         return new Response(null, {
           status: 204,
           headers: {
@@ -4372,7 +4419,7 @@ async function consumeRedeemToken(
   token: string,
   locationID: string,
   campaignKey: string
-): Promise<"ok" | "invalid"> {
+): Promise<"ok" | "used" | "invalid"> {
   if (!token) return "invalid";
   const key = `redeem:${token}`;
   const raw = await kv.get(key, "text");
@@ -4385,11 +4432,15 @@ async function consumeRedeemToken(
     return "invalid";
   }
 
-  if (
-    rec.status !== "fresh" ||
-    rec.locationID !== locationID ||
-    rec.campaignKey !== campaignKey
-  ) {
+  if (rec.locationID !== locationID || rec.campaignKey !== campaignKey) {
+    return "invalid";
+  }
+
+  if (rec.status === "redeemed") {
+    return "used";
+  }
+
+  if (rec.status !== "fresh") {
     return "invalid";
   }
 

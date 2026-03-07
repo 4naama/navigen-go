@@ -63,7 +63,7 @@ if ('serviceWorker' in navigator) {
 })();
 
 // Force phones to forget old cache on new deploy; one-time per BUILD_ID. (Disabled: no redirect, no purge)
-const BUILD_ID = '2025-08-30-03'; // disabled cache-buster
+const BUILD_ID = '2026-03-07-qr-redeem-contract-v2'; // disabled cache-buster
 try { localStorage.setItem('BUILD_ID', BUILD_ID); } catch {}
 // (No redirect; leave URL untouched)
 
@@ -300,6 +300,58 @@ async function maybeShowLpmInactiveNotice(idOrSlug) {
   } catch {
     // fail closed: no notice
   }
+}
+
+function showRedeemInvalidModal({ outcome = 'invalid', campaignContext = null } = {}) {
+  const modalId = 'redeem-invalid-modal';
+  let modal = document.getElementById(modalId);
+
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'modal hidden';
+    modal.innerHTML = `
+      <div class="modal-content modal-layout">
+        <div class="modal-top-bar">
+          <h2 data-role="title"></h2>
+          <button class="modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-body-inner">
+            <p data-role="message"></p>
+            <div class="modal-actions">
+              <button type="button" class="modal-body-button" data-role="close">OK</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector('.modal-close')?.addEventListener('click', () => modal.classList.add('hidden'));
+    modal.querySelector('[data-role="close"]')?.addEventListener('click', () => modal.classList.add('hidden'));
+    setupTapOutClose(modalId);
+  }
+
+  const campaignName = String(campaignContext?.campaignName || '').trim();
+  const title =
+    outcome === 'used' ? 'Promo code already used' :
+    outcome === 'inactive' ? 'Campaign inactive' :
+    'Promo code invalid';
+
+  const message =
+    outcome === 'used'
+      ? `This promo QR has already been redeemed${campaignName ? ` for ${campaignName}` : ''}. Do not grant the discount again.`
+      : outcome === 'inactive'
+        ? `This promo QR belongs to a campaign that is not currently active${campaignName ? ` (${campaignName})` : ''}. Do not grant the discount.`
+        : 'This promo QR is not valid for redemption. Do not grant the discount.';
+
+  const titleEl = modal.querySelector('[data-role="title"]');
+  const messageEl = modal.querySelector('[data-role="message"]');
+  if (titleEl) titleEl.textContent = title;
+  if (messageEl) messageEl.textContent = message;
+
+  showModal(modalId);
 }
 
 // ✅ Stripe public key (inject securely in production)
@@ -1770,44 +1822,63 @@ async function initEmergencyBlock(countryOverride) {
 
       if (uid) await waitForEntitlementOnce(uid);
 
-      const redeemed = (q.get('redeemed') || '').trim();
-      const camp     = (q.get('camp') || '').trim();
+      const redeem = (q.get('redeem') || '').trim().toLowerCase();
+      const rt     = (q.get('rt') || '').trim();
+      const camp   = (q.get('camp') || '').trim();
 
       // Redeem landings must bypass the normal ?lp LPM boot path.
       // Otherwise promo QR traffic is treated like a regular LPM/QR-scan entry.
-      if (redeemed === '1' && uid) {
-        if (typeof showRedeemConfirmationModal === 'function') {
-          try {
-            let campaignContext = null;
+      if (redeem === 'pending' && uid && rt) {
+        try {
+          let campaignContext = null;
 
-            if (camp) {
-              try {
-                const summaryUrl = new URL('/api/campaign-summary', API_BASE);
-                summaryUrl.searchParams.set('locationID', uid);
-                summaryUrl.searchParams.set('campaignKey', camp);
+          if (camp) {
+            try {
+              const summaryUrl = new URL('/api/campaign-summary', API_BASE);
+              summaryUrl.searchParams.set('locationID', uid);
+              summaryUrl.searchParams.set('campaignKey', camp);
 
-                const summaryRes = await fetch(summaryUrl.toString(), {
-                  cache: 'no-store',
-                  credentials: 'omit'
-                });
+              const summaryRes = await fetch(summaryUrl.toString(), {
+                cache: 'no-store',
+                credentials: 'omit'
+              });
 
-                if (summaryRes.ok) {
-                  campaignContext = await summaryRes.json().catch(() => null);
-                }
-              } catch (summaryErr) {
-                console.warn('⚠ Campaign summary fetch failed:', summaryErr);
+              if (summaryRes.ok) {
+                campaignContext = await summaryRes.json().catch(() => null);
               }
+            } catch (summaryErr) {
+              console.warn('⚠ Campaign summary fetch failed:', summaryErr);
             }
+          }
 
+          const hitUrl = new URL(`/hit/qr-redeem/${encodeURIComponent(uid)}`, location.origin);
+          hitUrl.searchParams.set('rt', rt);
+          hitUrl.searchParams.set('json', '1');
+
+          const hitRes = await fetch(hitUrl.toString(), {
+            method: 'POST',
+            cache: 'no-store',
+            credentials: 'omit'
+          });
+
+          const hitData = hitRes.ok ? await hitRes.json().catch(() => null) : null;
+          const outcome = String(hitData?.outcome || '').trim().toLowerCase();
+
+          if (outcome === 'ok' && typeof showRedeemConfirmationModal === 'function') {
             showRedeemConfirmationModal({
               locationIdOrSlug: uid,
-              campaignKey: camp || '',
+              campaignKey: String(hitData?.campaignKey || camp || ''),
               campaignContext
             });
-          } catch (err) {
-            console.warn('⚠ Cashier redeem confirmation modal failed:', err);
-            // Do not break the app; continue without LPM.
+          } else {
+            showRedeemInvalidModal({
+              outcome: outcome || 'invalid',
+              campaignContext
+            });
           }
+        } catch (err) {
+          console.warn('⚠ Cashier redeem verification failed:', err);
+          showRedeemInvalidModal({ outcome: 'invalid' });
         }
       } else if (uid && Array.isArray(geoPoints) && geoPoints.length) {
         const rec = geoPoints.find(x =>
@@ -1919,8 +1990,12 @@ async function initEmergencyBlock(countryOverride) {
         }
       }
       
-      // drop only ?lp; keep others (e.g. redeemed, camp)
+      // Drop redeem bootstrap params so refresh never replays the attempt or leaks the token in the URL.
       q.delete('lp');
+      q.delete('rt');
+      q.delete('redeem');
+      q.delete('redeemed');
+      q.delete('camp');
       const next = location.pathname + (q.toString() ? `?${q}` : '') + location.hash;
       history.replaceState({}, document.title, next);
     }
