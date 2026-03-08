@@ -288,7 +288,7 @@ export default {
       }
     }
 
-    // /out/qr-redeem/:id — record a promotion redemption and return to LPM shell
+    // /out/qr-redeem/:id — hand off promotion redemption to the landing app and return to LPM shell
     {
       const p = url.pathname;
       if (p.startsWith('/out/qr-redeem/')) {
@@ -297,48 +297,35 @@ export default {
           return new Response('Not Found', { status: 404 });
         }
 
-        // Forward redeem to API Worker using the original slug/id segment.
-        // Reason: Pages must not depend on KV_ALIASES parity; API Worker is authoritative for alias→ULID.
+        // Do not redeem in the Pages worker.
+        // The landing app verifies against the API Worker so the cashier UI can branch on the truthful outcome.
         const redeemToken = (url.searchParams.get('rt') || '').trim();
-        const clientUA    = req.headers.get('User-Agent') || '';
-        const clientLang  = req.headers.get('Accept-Language') || '';
-
-        const apiBase = 'https://navigen-api.4naama.workers.dev';
-        const hitUrl  = new URL(`/hit/qr-redeem/${encodeURIComponent(idOrSlug)}`, apiBase).toString();
-
-        try {
-          const headers = {
-            'X-NG-QR-Source': 'pages-worker'
-          };
-          if (redeemToken) headers['X-NG-QR-Token'] = redeemToken;
-          if (clientUA)    headers['X-NG-UA']       = clientUA;
-          if (clientLang)  headers['X-NG-Lang']     = clientLang;
-
-          const options = { method: 'POST', keepalive: true, headers };
-
-          if (ctx && typeof ctx.waitUntil === 'function') {
-            ctx.waitUntil(fetch(hitUrl, options).catch(() => {}));
-          } else {
-            fetch(hitUrl, options).catch(() => {});
-          }
-        } catch (_) {
-          // ignore tracking errors; never block app response
-        }
-
-        // Always redirect user back to the LPM shell
-        // Include redeem context so the app can show a confirmation flow on the cashier device
         const camp = (url.searchParams.get('camp') || '').trim();
+
+        // Always redirect user back to the LPM shell.
+        // Include neutral redeem context so the app can call the authoritative API Worker.
         const lpmUrl = new URL('/', url.origin);
         lpmUrl.searchParams.set('lp', idOrSlug);
-        lpmUrl.searchParams.set('redeemed', '1'); // signals that a redeem event just occurred
+        lpmUrl.searchParams.set('redeem', 'pending');
         if (camp) {
-          lpmUrl.searchParams.set('camp', camp); // optional campaign key for UI context
+          lpmUrl.searchParams.set('camp', camp);
         }
+        if (redeemToken) {
+          lpmUrl.searchParams.set('rt', redeemToken);
+        }
+
         const dest = lpmUrl.toString();
-        return Response.redirect(dest, 302);
+        return new Response(null, {
+          status: 302,
+          headers: {
+            'Location': dest,
+            'Cache-Control': 'no-store',
+            'Referrer-Policy': 'no-referrer'
+          }
+        });
       }
     }
-
+    
     // /api/track: deprecated — previously no redirect; handled missing/invalid target gracefully
     if (url.pathname === '/api/track') {
       const target = url.searchParams.get('target') || '';
