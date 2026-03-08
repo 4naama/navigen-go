@@ -319,8 +319,12 @@ export default {
           status: 302,
           headers: {
             'Location': dest,
-            'Cache-Control': 'no-store',
-            'Referrer-Policy': 'no-referrer'
+            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+            'CDN-Cache-Control': 'no-store',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Referrer-Policy': 'no-referrer',
+            'X-NG-Redeem-Contract': 'pending-v2'
           }
         });
       }
