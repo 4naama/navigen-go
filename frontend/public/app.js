@@ -1774,12 +1774,16 @@ async function initEmergencyBlock(countryOverride) {
       if (uid) await waitForEntitlementOnce(uid);
 
       const redeem = (q.get('redeem') || '').trim().toLowerCase();
+      const redeemed = (q.get('redeemed') || '').trim();
       const rt     = (q.get('rt') || '').trim();
       const camp   = (q.get('camp') || '').trim();
+      const isLegacyRedeemSuccess = redeemed === '1';
+      const isRedeemLanding = !!uid && (redeem === 'pending' || isLegacyRedeemSuccess);
 
       // Redeem landings must bypass the normal ?lp LPM boot path.
       // Otherwise promo QR traffic is treated like a regular LPM/QR-scan entry.
-      if (redeem === 'pending' && uid) {
+      // Accept legacy redeemed=1 links as an already-consumed success so the cashier UI still lands in the same modal path.
+      if (isRedeemLanding) {
         try {
           let campaignContext = null;
 
@@ -1803,11 +1807,29 @@ async function initEmergencyBlock(countryOverride) {
           }
 
           const redeemTarget = String(campaignContext?.locationULID || uid).trim() || uid;
+          const resolvedCampaignKey = String(campaignContext?.campaignKey || camp || '').trim();
 
-          if (!rt) {
+          // Legacy redeemed=1 landings mean the token was already consumed upstream.
+          // Do not POST /hit/qr-redeem again or a truthful success will be re-read as "used".
+          if (isLegacyRedeemSuccess) {
+            if (resolvedCampaignKey && typeof showRedeemConfirmationModal === 'function') {
+              showRedeemConfirmationModal({
+                locationIdOrSlug: redeemTarget,
+                campaignKey: resolvedCampaignKey,
+                campaignContext
+              });
+            } else {
+              showRedeemInvalidModal({
+                locationIdOrSlug: redeemTarget,
+                campaignKey: resolvedCampaignKey,
+                campaignContext,
+                outcome: 'invalid'
+              });
+            }
+          } else if (!rt) {
             showRedeemInvalidModal({
               locationIdOrSlug: redeemTarget,
-              campaignKey: camp || '',
+              campaignKey: resolvedCampaignKey,
               campaignContext,
               outcome: 'invalid'
             });
@@ -1824,17 +1846,18 @@ async function initEmergencyBlock(countryOverride) {
 
             const hitData = hitRes.ok ? await hitRes.json().catch(() => null) : null;
             const outcome = String(hitData?.outcome || '').trim().toLowerCase();
+            const resolvedOutcomeCampaignKey = String(hitData?.campaignKey || resolvedCampaignKey).trim();
 
-            if (outcome === 'ok' && typeof showRedeemConfirmationModal === 'function') {
+            if (outcome === 'ok' && typeof showRedeemConfirmationModal === 'function' && resolvedOutcomeCampaignKey) {
               showRedeemConfirmationModal({
                 locationIdOrSlug: redeemTarget,
-                campaignKey: String(hitData?.campaignKey || camp || ''),
+                campaignKey: resolvedOutcomeCampaignKey,
                 campaignContext
               });
             } else {
               showRedeemInvalidModal({
                 locationIdOrSlug: redeemTarget,
-                campaignKey: String(hitData?.campaignKey || camp || ''),
+                campaignKey: resolvedOutcomeCampaignKey,
                 campaignContext,
                 outcome: outcome || 'invalid'
               });

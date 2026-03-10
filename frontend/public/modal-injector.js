@@ -6250,12 +6250,22 @@ function appendRedeemCampaignSummary(inner, campaignContext) {
 // Cashier-side Redeem Confirmation modal.
 // Shown only on the device that followed the /out/qr-redeem redirect,
 // separate from the LPM rating widget. Logs redeem-confirmation-cashier via /hit.
-export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = '', campaignContext = null }) {  const modalId = 'cashier-redeem-confirmation-modal';
+export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = '', campaignContext = null }) {
+  const modalId = 'cashier-redeem-confirmation-modal';
   const existing = document.getElementById(modalId);
   if (existing) existing.remove();
 
-  if (!locationIdOrSlug) return;
+  const resolvedCampaignKey = String(campaignContext?.campaignKey || campaignKey || '').trim();
 
+  if (!locationIdOrSlug || (!campaignContext && !resolvedCampaignKey)) {
+    console.warn('[cashier-redeem-confirmation] skipped: missing campaign card context', {
+      locationIdOrSlug: String(locationIdOrSlug || '').trim(),
+      campaignKey: resolvedCampaignKey,
+      hasCampaignContext: !!campaignContext
+    });
+    return;
+  }
+  
   const wrap = document.createElement('div');
   wrap.id = modalId;
   wrap.className = 'modal hidden';
@@ -6290,14 +6300,14 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
     'How smooth did the redeem event go?';
 
   // If campaign context was provided by the caller, render the promotion summary immediately.
-  // Otherwise, hydrate it on-demand from the worker so the cashier still sees the promo card.
+  // Otherwise, hydrate it on-demand from the worker so the cashier always sees the promo card before rating.
   if (campaignContext) {
     appendRedeemCampaignSummary(inner, campaignContext);
-  } else if (campaignKey) {
+  } else {
     hydrateCashierRedeemCampaignContext({
       inner,
       locationIdOrSlug,
-      campaignKey
+      campaignKey: resolvedCampaignKey
     }).catch(() => {
       // campaign context is UI-only; never break redeem confirmation
     });
@@ -6327,8 +6337,8 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
       const base = TRACK_BASE || 'https://navigen-api.4naama.workers.dev';
       const url = new URL(`/hit/redeem-confirmation-cashier/${encodeURIComponent(locationIdOrSlug)}`, base);
       url.searchParams.set('score', String(score));
-      if (campaignKey) url.searchParams.set('campaignKey', campaignKey);
-
+      if (resolvedCampaignKey) url.searchParams.set('campaignKey', resolvedCampaignKey);
+      
       fetch(url.toString(), {
         method: 'POST',
         keepalive: true
