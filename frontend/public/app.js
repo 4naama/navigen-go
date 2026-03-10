@@ -1774,12 +1774,13 @@ async function initEmergencyBlock(countryOverride) {
       if (uid) await waitForEntitlementOnce(uid);
 
       const redeem = (q.get('redeem') || '').trim().toLowerCase();
+      const redeemed = (q.get('redeemed') || '').trim();
       const rt     = (q.get('rt') || '').trim();
       const camp   = (q.get('camp') || '').trim();
 
       // Redeem landings must bypass the normal ?lp LPM boot path.
       // Otherwise promo QR traffic is treated like a regular LPM/QR-scan entry.
-      if (redeem === 'pending' && uid) {
+      if ((redeem === 'pending' || redeemed === '1') && uid) {
         try {
           let campaignContext = null;
 
@@ -1804,7 +1805,20 @@ async function initEmergencyBlock(countryOverride) {
 
           const redeemTarget = String(campaignContext?.locationULID || uid).trim() || uid;
 
-          if (!rt) {
+          if (redeemed === '1' && redeem !== 'pending') {
+            console.warn('⚠ Legacy redeem redirect detected on cashier device:', {
+              uid,
+              camp,
+              hasRt: !!rt
+            });
+
+            showRedeemInvalidModal({
+              locationIdOrSlug: redeemTarget,
+              campaignKey: camp || '',
+              campaignContext,
+              outcome: 'legacy'
+            });
+          } else if (!rt) {
             showRedeemInvalidModal({
               locationIdOrSlug: redeemTarget,
               campaignKey: camp || '',
@@ -1845,7 +1859,7 @@ async function initEmergencyBlock(countryOverride) {
           showRedeemInvalidModal({
             locationIdOrSlug: uid,
             campaignKey: camp || '',
-            outcome: 'invalid'
+            outcome: (redeemed === '1' && redeem !== 'pending') ? 'legacy' : 'invalid'
           });
         }
       } else if (uid && Array.isArray(geoPoints) && geoPoints.length) {

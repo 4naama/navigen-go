@@ -244,7 +244,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
       const hasT = (typeof t === 'function');
       const titleTxt =
         (hasT ? (t('redeem.customer.title') || '') : '') ||
-        'Thank you!';
+        'HELLO — customer feedback';
       top2.innerHTML = `
         <h2 class="modal-title">${titleTxt}</h2>
         <button class="modal-close" aria-label="Close">&times;</button>
@@ -259,6 +259,14 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
       const qTxt =
         (hasT ? (t('redeem.customer.question') || '') : '') ||
         'How was your redeem experience?';
+
+      const pPath2 = document.createElement('p');
+      pPath2.textContent = 'HELLO — this modal is coming from the customer QR screen, not from the cashier verification path.';
+      pPath2.style.textAlign = 'center';
+      pPath2.style.fontSize = '0.85em';
+      pPath2.style.opacity = '0.75';
+      pPath2.style.marginBottom = '0.5rem';
+      inner2.appendChild(pPath2);
 
       const pQ2 = document.createElement('p');
       pQ2.textContent = qTxt;
@@ -6303,6 +6311,14 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
     });
   }
   
+  const pPath = document.createElement('p');
+  pPath.textContent = 'HELLO — cashier redeem success path is active on this device.';
+  pPath.style.textAlign = 'center';
+  pPath.style.fontSize = '0.85em';
+  pPath.style.opacity = '0.75';
+  pPath.style.marginBottom = '0.5rem';
+  inner.appendChild(pPath);
+
   const pQ = document.createElement('p');
   pQ.textContent = questionTxt;
   pQ.style.textAlign = 'center';
@@ -6388,12 +6404,14 @@ export function showRedeemInvalidModal({
   const hasT = (typeof t === 'function');
 
   const titleTxt =
-    outcome === 'used'
-      ? ((hasT ? (t('redeem.invalid.used.title') || '') : '') || 'Promo code already used')
-      : outcome === 'inactive'
-        ? ((hasT ? (t('redeem.invalid.inactive.title') || '') : '') || 'Campaign inactive')
-        : ((hasT ? (t('redeem.invalid.title') || '') : '') || 'Promo code not valid');
-
+    outcome === 'legacy'
+      ? ((hasT ? (t('redeem.invalid.legacy.title') || '') : '') || 'HELLO — legacy redeem redirect detected')
+      : outcome === 'used'
+        ? ((hasT ? (t('redeem.invalid.used.title') || '') : '') || 'Promo code already used')
+        : outcome === 'inactive'
+          ? ((hasT ? (t('redeem.invalid.inactive.title') || '') : '') || 'Campaign inactive')
+          : ((hasT ? (t('redeem.invalid.title') || '') : '') || 'Promo code not valid');
+          
   top.innerHTML = `
     <h2 class="modal-title">${titleTxt}</h2>
     <button class="modal-close" aria-label="Close">&times;</button>
@@ -6420,18 +6438,30 @@ export function showRedeemInvalidModal({
   }
 
   const messageTxt =
-    outcome === 'used'
-      ? ((hasT ? (t('redeem.invalid.used.body') || '') : '') || 'This promo code was already redeemed. Do not apply the promotion again.')
-      : outcome === 'inactive'
-        ? ((hasT ? (t('redeem.invalid.inactive.body') || '') : '') || 'This promo code belongs to a campaign that is not active. Do not apply the promotion.')
-        : ((hasT ? (t('redeem.invalid.body') || '') : '') || 'This promo code cannot be redeemed. Do not apply the promotion.');
+    outcome === 'legacy'
+      ? ((hasT ? (t('redeem.invalid.legacy.body') || '') : '') || 'This landing came from redeemed=1 without a redeem token, so the cashier app cannot verify success or used state from this URL. Do not treat this as a confirmed redeem.')
+      : outcome === 'used'
+        ? ((hasT ? (t('redeem.invalid.used.body') || '') : '') || 'This promo code was already redeemed. Do not apply the promotion again.')
+        : outcome === 'inactive'
+          ? ((hasT ? (t('redeem.invalid.inactive.body') || '') : '') || 'This promo code belongs to a campaign that is not active. Do not apply the promotion.')
+          : ((hasT ? (t('redeem.invalid.body') || '') : '') || 'This promo code cannot be redeemed. Do not apply the promotion.');
+          
+  if (outcome === 'legacy') {
+    const pPath = document.createElement('p');
+    pPath.textContent = 'HELLO — cashier app reached the legacy edge contract path.';
+    pPath.style.textAlign = 'center';
+    pPath.style.fontSize = '0.85em';
+    pPath.style.opacity = '0.75';
+    pPath.style.marginBottom = '0.5rem';
+    inner.appendChild(pPath);
+  }
 
   const p = document.createElement('p');
   p.textContent = messageTxt;
   p.style.textAlign = 'center';
   p.style.marginBottom = '0.75rem';
   inner.appendChild(p);
-
+  
   const actions = document.createElement('div');
   actions.className = 'modal-actions';
 
