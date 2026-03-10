@@ -1774,36 +1774,18 @@ async function initEmergencyBlock(countryOverride) {
       if (uid) await waitForEntitlementOnce(uid);
 
       const redeem = (q.get('redeem') || '').trim().toLowerCase();
-      const redeemed = (q.get('redeemed') || '').trim().toLowerCase();
       const rt     = (q.get('rt') || '').trim();
       const camp   = (q.get('camp') || '').trim();
-      const legacyRedeemSuccess = /^(?:1|true|yes|ok|success)$/i.test(redeemed);
-      const redeemState = (() => {
-        if (redeem === 'pending' || redeem === 'ok' || redeem === 'used' || redeem === 'inactive' || redeem === 'invalid') {
-          return redeem;
-        }
-        if (legacyRedeemSuccess) {
-          return 'ok';
-        }
-        return '';
-      })();
-      const isRedeemLanding = Boolean(
-        uid && (
-          !!redeemState ||
-          !!rt
-        )
-      );
 
       // Redeem landings must bypass the normal ?lp LPM boot path.
-      // Support both the current outcome-based handoff and the older pending verification contract.
       // Otherwise promo QR traffic is treated like a regular LPM/QR-scan entry.
-      if (isRedeemLanding) {
+      if (redeem === 'pending' && uid) {
         try {
           let campaignContext = null;
 
           if (camp) {
             try {
-              const summaryUrl = new URL('/api/campaign-summary', location.origin);
+              const summaryUrl = new URL('/api/campaign-summary', API_BASE);
               summaryUrl.searchParams.set('locationID', uid);
               summaryUrl.searchParams.set('campaignKey', camp);
 
@@ -1821,57 +1803,40 @@ async function initEmergencyBlock(countryOverride) {
           }
 
           const redeemTarget = String(campaignContext?.locationULID || uid).trim() || uid;
-          const campaignKey = String(campaignContext?.campaignKey || camp || '').trim();
 
-          if (redeemState === 'ok' && typeof showRedeemConfirmationModal === 'function') {
-            showRedeemConfirmationModal({
-              locationIdOrSlug: redeemTarget,
-              campaignKey,
-              campaignContext
-            });
-          } else if (redeemState === 'used' || redeemState === 'inactive' || redeemState === 'invalid') {
+          if (!rt) {
             showRedeemInvalidModal({
               locationIdOrSlug: redeemTarget,
-              campaignKey,
+              campaignKey: camp || '',
               campaignContext,
-              outcome: redeemState
+              outcome: 'invalid'
             });
           } else {
-            const canVerifyRedeem = !!rt;
+            const hitUrl = new URL(`/hit/qr-redeem/${encodeURIComponent(redeemTarget)}`, API_BASE);
+            hitUrl.searchParams.set('rt', rt);
+            hitUrl.searchParams.set('json', '1');
 
-            if (canVerifyRedeem) {
-              const verifyUrl = new URL(`/api/redeem-verify/${encodeURIComponent(redeemTarget)}`, location.origin);
-              verifyUrl.searchParams.set('rt', rt);
+            const hitRes = await fetch(hitUrl.toString(), {
+              method: 'POST',
+              cache: 'no-store',
+              credentials: 'omit'
+            });
 
-              const verifyRes = await fetch(verifyUrl.toString(), {
-                method: 'POST',
-                cache: 'no-store',
-                credentials: 'omit'
+            const hitData = hitRes.ok ? await hitRes.json().catch(() => null) : null;
+            const outcome = String(hitData?.outcome || '').trim().toLowerCase();
+
+            if (outcome === 'ok' && typeof showRedeemConfirmationModal === 'function') {
+              showRedeemConfirmationModal({
+                locationIdOrSlug: redeemTarget,
+                campaignKey: String(hitData?.campaignKey || camp || ''),
+                campaignContext
               });
-
-              const verifyData = verifyRes.ok ? await verifyRes.json().catch(() => null) : null;
-              const outcome = String(verifyData?.outcome || '').trim().toLowerCase();
-
-              if (outcome === 'ok' && typeof showRedeemConfirmationModal === 'function') {
-                showRedeemConfirmationModal({
-                  locationIdOrSlug: redeemTarget,
-                  campaignKey: String(verifyData?.campaignKey || campaignKey || ''),
-                  campaignContext
-                });
-              } else {
-                showRedeemInvalidModal({
-                  locationIdOrSlug: redeemTarget,
-                  campaignKey: String(verifyData?.campaignKey || campaignKey || ''),
-                  campaignContext,
-                  outcome: outcome || 'invalid'
-                });
-              }
             } else {
               showRedeemInvalidModal({
                 locationIdOrSlug: redeemTarget,
-                campaignKey,
+                campaignKey: String(hitData?.campaignKey || camp || ''),
                 campaignContext,
-                outcome: 'invalid'
+                outcome: outcome || 'invalid'
               });
             }
           }
