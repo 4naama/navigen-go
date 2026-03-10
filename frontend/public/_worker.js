@@ -463,6 +463,90 @@ export default {
         }
       });
     }
+    
+    // /api/promo-qr — proxy to API Worker (authoritative promo QR contract)
+    if (url.pathname === '/api/promo-qr') {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('Origin', url.origin);
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: 'GET',
+        headers: h
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+
+    // /api/campaign-summary — proxy to API Worker (authoritative campaign context)
+    if (url.pathname === '/api/campaign-summary') {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('Origin', url.origin);
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: 'GET',
+        headers: h
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+
+    // /api/redeem-verify/:id — proxy to API Worker (authoritative cashier redeem outcome)
+    if (url.pathname.startsWith('/api/redeem-verify/')) {
+      const [, , , idOrSlug] = url.pathname.split('/');
+      if (!idOrSlug) {
+        return new Response('Bad Request', { status: 400 });
+      }
+
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(`/hit/qr-redeem/${encodeURIComponent(idOrSlug)}`, apiBase);
+      target.search = url.search;
+      target.searchParams.set('json', '1');
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: 'POST',
+        headers: h
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
 
     // 401 gate disabled; RL/Bot Fight protect /api/data/*
     if (url.pathname.startsWith('/api/data/')) {
