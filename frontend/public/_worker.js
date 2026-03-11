@@ -299,7 +299,7 @@ export default {
 
         // Do not redeem in the Pages worker.
         // The landing app verifies against the API Worker so the cashier UI can branch on the truthful outcome.
-        const redeemToken = (url.searchParams.get('rt') || '').trim();
+        const redeemToken = (url.searchParams.get('rt') || url.searchParams.get('token') || '').trim();
         const camp = (url.searchParams.get('camp') || '').trim();
 
         // Always redirect user back to the LPM shell.
@@ -324,7 +324,8 @@ export default {
             'Pragma': 'no-cache',
             'Expires': '0',
             'Referrer-Policy': 'no-referrer',
-            'X-NG-Redeem-Contract': 'pending-v2'
+            'X-NG-Redeem-Contract': 'pending-v2',
+            'X-NG-Redeem-Build': '2026-03-10-pages-pending-v3'
           }
         });
       }

@@ -6265,7 +6265,7 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
     });
     return;
   }
-  
+
   const wrap = document.createElement('div');
   wrap.id = modalId;
   wrap.className = 'modal hidden';
@@ -6312,13 +6312,13 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
       // campaign context is UI-only; never break redeem confirmation
     });
   }
-  
+
   const pQ = document.createElement('p');
   pQ.textContent = questionTxt;
   pQ.style.textAlign = 'center';
   pQ.style.marginBottom = '0.75rem';
   inner.appendChild(pQ);
-  
+
   const row = document.createElement('div');
   row.style.display = 'flex';
   row.style.justifyContent = 'center';
@@ -6338,7 +6338,7 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
       const url = new URL(`/hit/redeem-confirmation-cashier/${encodeURIComponent(locationIdOrSlug)}`, base);
       url.searchParams.set('score', String(score));
       if (resolvedCampaignKey) url.searchParams.set('campaignKey', resolvedCampaignKey);
-      
+
       fetch(url.toString(), {
         method: 'POST',
         keepalive: true

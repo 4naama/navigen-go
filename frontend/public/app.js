@@ -64,7 +64,7 @@ if ('serviceWorker' in navigator) {
 })();
 
 // Force phones to forget old cache on new deploy; one-time per BUILD_ID. (Disabled: no redirect, no purge)
-const BUILD_ID = '2026-03-07-qr-redeem-contract-v2'; // disabled cache-buster
+const BUILD_ID = '2026-03-10-redeem-compat-promo-card-v3'; // disabled cache-buster
 try { localStorage.setItem('BUILD_ID', BUILD_ID); } catch {}
 // (No redirect; leave URL untouched)
 
@@ -1782,7 +1782,7 @@ async function initEmergencyBlock(countryOverride) {
 
       // Redeem landings must bypass the normal ?lp LPM boot path.
       // Otherwise promo QR traffic is treated like a regular LPM/QR-scan entry.
-      // Accept legacy redeemed=1 links as an already-consumed success so the cashier UI still lands in the same modal path.
+      // Accept legacy redeemed=1 landings as an already-consumed success so the cashier UI still reaches the promo-card confirmation path.
       if (isRedeemLanding) {
         try {
           let campaignContext = null;
@@ -1809,8 +1809,6 @@ async function initEmergencyBlock(countryOverride) {
           const redeemTarget = String(campaignContext?.locationULID || uid).trim() || uid;
           const resolvedCampaignKey = String(campaignContext?.campaignKey || camp || '').trim();
 
-          // Legacy redeemed=1 landings mean the token was already consumed upstream.
-          // Do not POST /hit/qr-redeem again or a truthful success will be re-read as "used".
           if (isLegacyRedeemSuccess) {
             if (resolvedCampaignKey && typeof showRedeemConfirmationModal === 'function') {
               showRedeemConfirmationModal({
