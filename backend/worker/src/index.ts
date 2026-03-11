@@ -1614,6 +1614,7 @@ export default {
           p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
 
         const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "";
+        const jsonMode = u.searchParams.get("json") === "1" || /\bapplication\/json\b/i.test(String(req.headers.get("Accept") || ""));
 
         const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
         if (!sk) return new Response("Misconfigured", { status: 500, headers: noStoreHeaders });
@@ -1699,10 +1700,7 @@ export default {
           "Max-Age": maxAge
         });
 
-        const headers = new Headers({ ...noStoreHeaders });
-        headers.append("Set-Cookie", cookie);
-        if (devSetCookie) headers.append("Set-Cookie", devSetCookie);
-        headers.set("Location", (() => {
+        const redirectTarget = (() => {
           const base = next || `/dash/${encodeURIComponent(ulid)}`;
           if (!redirectHint) return base;
 
@@ -1716,9 +1714,25 @@ export default {
             });
           }
           return u.pathname + u.search + u.hash;
-        })());
+        })();
 
-        console.info("owner_restore_success", { ulid, pi, sessionId });
+        const headers = new Headers({ ...noStoreHeaders });
+        headers.append("Set-Cookie", cookie);
+        if (devSetCookie) headers.append("Set-Cookie", devSetCookie);
+
+        console.info("owner_restore_success", { ulid, locationID, pi, sessionId });
+
+        if (jsonMode) {
+          headers.set("Content-Type", "application/json; charset=utf-8");
+          return new Response(JSON.stringify({
+            ok: true,
+            ulid,
+            locationID,
+            redirectTo: redirectTarget
+          }), { status: 200, headers });
+        }
+
+        headers.set("Location", redirectTarget);
         return new Response(null, { status: 302, headers });
       }
 

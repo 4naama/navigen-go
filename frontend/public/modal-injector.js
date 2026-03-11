@@ -3466,14 +3466,18 @@ export function createRestoreAccessModal() {
       const url = new URL('/owner/restore', location.origin);
       url.searchParams.set('pi', pi);
       url.searchParams.set('next', '/'); // keep user in shell
+      url.searchParams.set('json', '1'); // return authoritative restore target for deterministic client navigation
 
       const r = await fetch(url.toString(), {
         cache: 'no-store',
         credentials: 'include',
-        redirect: 'follow'
+        headers: {
+          'Accept': 'application/json'
+        }
       });
 
-      if (!r.ok) {
+      const restoreJ = r.ok ? await r.json().catch(() => null) : null;
+      if (!r.ok || restoreJ?.ok !== true) {
         showToast((typeof t === 'function' && t('owner.restore.pi.fail')) || 'Restore failed.', 2400);
         return;
       }
@@ -3485,21 +3489,20 @@ export function createRestoreAccessModal() {
         try { hideModal(id); } catch {}
       }, 0);
 
-      // Prefer the explicit location context if provided; otherwise fall back to opsess binding.
-      let target = loc;
-      if (!target) {
-        try {
-          const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
-          const jj = rr.ok ? await rr.json().catch(() => null) : null;
-          target = String(jj?.ulid || '').trim();
-        } catch { target = ''; }
-      }
+      const restoredUlid = String(restoreJ?.ulid || '').trim();
+      const restoredSlug = String(restoreJ?.locationID || '').trim();
 
-      // Post-restore hint: KV device registry may lag across POPs; use a short window for Owner Center retries.
+      // Prefer the explicit location context if provided; otherwise use the authoritative restore payload.
+      const target = String(loc || restoredSlug || restoredUlid).trim();
+
+      // Post-restore hint: keep both ULID and slug locally so Owner Center and Dash can render immediately.
       try {
-        if (target) {
-          sessionStorage.setItem('ng_owner_restore_ulid', target);
+        if (restoredUlid) {
+          sessionStorage.setItem('ng_owner_restore_ulid', restoredUlid);
           sessionStorage.setItem('ng_owner_restore_until', String(Date.now() + 15000)); // 15s window
+        }
+        if (restoredUlid && restoredSlug) {
+          localStorage.setItem(`navigen.slug:${restoredUlid}`, restoredSlug);
         }
       } catch {}
 
