@@ -6312,13 +6312,13 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
       // campaign context is UI-only; never break redeem confirmation
     });
   }
-
+  
   const pQ = document.createElement('p');
   pQ.textContent = questionTxt;
   pQ.style.textAlign = 'center';
   pQ.style.marginBottom = '0.75rem';
   inner.appendChild(pQ);
-
+  
   const row = document.createElement('div');
   row.style.display = 'flex';
   row.style.justifyContent = 'center';
@@ -6347,31 +6347,6 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
       // logging must never break UI
     }
   };
-
-  faces.forEach((f) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = f.emoji;
-    btn.style.fontSize = '1.6rem';
-    btn.style.border = 'none';
-    btn.style.background = 'transparent';
-    btn.style.cursor = 'pointer';
-    btn.addEventListener('click', () => {
-      sendConfirmation(f.score);
-      hideModal(modalId);
-    });
-    row.appendChild(btn);
-  });
-
-  inner.appendChild(row);
-  body.appendChild(inner);
-  card.appendChild(top);
-  card.appendChild(body);
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
-
-  showModal(modalId);
-}
 
 export function showRedeemInvalidModal({
   locationIdOrSlug,

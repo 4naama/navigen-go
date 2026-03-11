@@ -2888,7 +2888,7 @@ export default {
             "Expires": "0",
             "Referrer-Policy": "no-referrer",
             "X-NG-Redeem-Contract": "pending-v2",
-            "X-NG-Redeem-Build": "2026-03-10-api-pending-v3",
+            "X-NG-Redeem-Build": "2026-03-11-api-pending-v4",
             "Access-Control-Allow-Origin": "https://navigen.io",
             "Access-Control-Allow-Credentials": "true",
             "Vary": "Origin"

@@ -64,7 +64,7 @@ if ('serviceWorker' in navigator) {
 })();
 
 // Force phones to forget old cache on new deploy; one-time per BUILD_ID. (Disabled: no redirect, no purge)
-const BUILD_ID = '2026-03-10-redeem-compat-promo-card-v3'; // disabled cache-buster
+const BUILD_ID = '2026-03-11-redeem-compat-promo-card-v4'; // disabled cache-buster
 try { localStorage.setItem('BUILD_ID', BUILD_ID); } catch {}
 // (No redirect; leave URL untouched)
 

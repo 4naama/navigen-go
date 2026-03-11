@@ -325,7 +325,7 @@ export default {
             'Expires': '0',
             'Referrer-Policy': 'no-referrer',
             'X-NG-Redeem-Contract': 'pending-v2',
-            'X-NG-Redeem-Build': '2026-03-10-pages-pending-v3'
+            'X-NG-Redeem-Build': '2026-03-11-pages-pending-v4'
           }
         });
       }
