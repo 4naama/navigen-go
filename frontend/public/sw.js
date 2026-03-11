@@ -2,7 +2,7 @@
 // dev = localhost only (SW not registered on pages.dev anymore)
 const IS_DEV = /\blocalhost$|\b127\.0\.0\.1$/.test(self.location.hostname);
 
-const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v79"; // bump to evict stale cache
+const CACHE_NAME = IS_DEV ? "navigen-go-dev" : "navigen-go-v80"; // bump to evict stale cache after redirect/storage fixes
 
 // Precache core shell for offline; keep list lean
 self.addEventListener("install", event => {
@@ -64,11 +64,12 @@ self.addEventListener("fetch", event => {
   const isHTML = req.mode === "navigate" || accept.includes("text/html");
 
   // OP-sensitive routes: never cache; always hit network (fail closed).
-  // Includes API, Dash, and Owner session/exchange routes.
+  // Includes API, Dash, Owner session/exchange routes, and redeem redirects.
   if (
     u.pathname.startsWith('/api/') ||
     u.pathname === '/dash' || u.pathname.startsWith('/dash/') ||
-    u.pathname.startsWith('/owner/')
+    u.pathname.startsWith('/owner/') ||
+    u.pathname.startsWith('/out/qr-redeem/')
   ) {
     event.respondWith(fetch(req, { cache: 'no-store' }));
     return;
@@ -93,13 +94,16 @@ self.addEventListener("fetch", event => {
   // prevents caching HTML under image keys from locale-prefixed fallbacks
   event.respondWith((async () => {
     if (isHTML) {
+      const shouldCacheHtml = !u.search; // avoid one cache entry per token/query variant
       try {
         const net = await fetch(req, { cache: 'no-store' });
-        const c = await caches.open(CACHE_NAME);
-        c.put(req, net.clone());
+        if (shouldCacheHtml) {
+          const c = await caches.open(CACHE_NAME);
+          c.put(req, net.clone());
+        }
         return net;
       } catch {
-        return (await caches.match(req)) || Response.error();
+        return shouldCacheHtml ? ((await caches.match(req)) || Response.error()) : Response.error();
       }
     }
 

@@ -1615,6 +1615,7 @@ export default {
 
         const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "";
         const jsonMode = u.searchParams.get("json") === "1" || /\bapplication\/json\b/i.test(String(req.headers.get("Accept") || ""));
+        let redirectHint = "";
 
         const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
         if (!sk) return new Response("Misconfigured", { status: 500, headers: noStoreHeaders });
