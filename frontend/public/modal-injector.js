@@ -6387,6 +6387,43 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
 
   setupTapOutClose(modalId);
   showModal(modalId);
+
+  faces.forEach(({ emoji, score }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'modal-body-button';
+    btn.textContent = emoji;
+    btn.setAttribute('aria-label', `Redeem confirmation score ${score}`);
+    btn.addEventListener('click', () => {
+      sendConfirmation(score);
+      hideModal(modalId);
+    });
+    row.appendChild(btn);
+  });
+
+  inner.appendChild(row);
+
+  const hintTxt =
+    (hasT ? (t('redeem.confirm.hint') || '') : '') ||
+    'Tap one face to confirm the redeem event.';
+
+  const hint = document.createElement('p');
+  hint.textContent = hintTxt;
+  hint.style.textAlign = 'center';
+  hint.style.fontSize = '0.85em';
+  hint.style.opacity = '0.8';
+  hint.style.marginTop = '0.75rem';
+  hint.style.marginBottom = '0';
+  inner.appendChild(hint);
+
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  setupTapOutClose(modalId);
+  showModal(modalId);
 }
 
 export function showRedeemInvalidModal({
