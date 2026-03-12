@@ -480,8 +480,8 @@ async function openPromotionQrModal(modal, data) {
       return;
     }
 
-    // Call promo-qr on the site worker (authoritative KV campaigns live here)
-    const apiUrl = new URL('/api/promo-qr', location.origin);
+    // Call promo-qr on the authoritative API Worker so QR minting, ARMED logging, and redeem routing all use the same backend path.
+    const apiUrl = new URL('/api/promo-qr', TRACK_BASE || 'https://navigen-api.4naama.workers.dev');
     apiUrl.searchParams.set('locationID', locationIdOrSlug);
 
     // If caller already knows a campaignKey (e.g., Promotions list), pass it through.
