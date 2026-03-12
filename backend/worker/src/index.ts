@@ -2010,7 +2010,7 @@ export default {
         await logQrArmed(env.KV_STATS, env, locULID, req, chosenKey);
 
         // Build Promotion QR URL using the original locationRaw (slug), not ULID
-        const qrBase = siteOrigin || "https://navigen.io";
+        const qrBase = "https://navigen-api.4naama.workers.dev"; // temporary hotfix: bypass the site redeem entry until /out/qr-redeem serves pending-v2 live
         const qrUrlObj = new URL(`/out/qr-redeem/${encodeURIComponent(locationRaw)}`, qrBase);
         qrUrlObj.searchParams.set("camp", chosenKey);
         qrUrlObj.searchParams.set("rt", token);
@@ -2887,7 +2887,7 @@ export default {
           (u.searchParams.get("token") || "").trim();
         const camp = (u.searchParams.get("camp") || "").trim();
 
-        const landing = new URL("/", req.url);
+        const landing = new URL("/", "https://navigen.io"); // redeem landing must always return to the site shell, even when QR entry uses the API worker
         landing.searchParams.set("lp", idRaw);
         landing.searchParams.set("redeem", "pending");
         if (camp) landing.searchParams.set("camp", camp);
@@ -2896,7 +2896,7 @@ export default {
         return new Response(null, {
           status: 302,
           headers: {
-            "Location": landing.pathname + landing.search + landing.hash,
+            "Location": landing.toString(),
             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
             "CDN-Cache-Control": "no-store",
             "Pragma": "no-cache",

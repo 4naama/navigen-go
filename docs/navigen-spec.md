@@ -1441,14 +1441,15 @@ B) **Promo QR Redirect**
    /out/qr-redeem/<slug>?camp=<key>&rt=<token>
 
    Behavior:
-     • Emits /hit/qr-redeem/<ULID> (Pages → API Worker)
-     • Forwards redeem token via header
+     • Performs redirect only at the Pages layer
+     • Does NOT emit /hit/qr-redeem from Pages Worker
+     • Does NOT consume or pre-confirm the token
      • Redirects cashier device to:
-          /?lp=<slug>&redeemed=1&camp=<key>
-     • Does NOT determine success or validity; backend decides
+          /?lp=<slug>&redeem=pending&camp=<key>&rt=<token>
+     • The landing app then calls the API Worker for the truthful redeem outcome
 
 Redirects are instantaneous and idempotent.  
-QR system never assumes state solely from URL parameters.
+QR system never assumes success solely from URL parameters.
 
 --------------------------------------------------------------------
 2.4 QR Event Semantics (Canonical Signals)
@@ -1520,7 +1521,7 @@ B) **Cashier**
    3. API Worker consumes token:
         - fresh → status:"ok" → REDEEM  
         - used/expired → status:"invalid" → INVALID  
-   4. Cashier device redirected with redeemed=1  
+   4. Cashier device redirected with redeem=pending&rt=<token>  
    5. Cashier confirmation modal shown → CONFIRM_CASH
 
 Promo QR flow enables multi-actor integrity without authentication.
@@ -1554,7 +1555,7 @@ Token is validated **only** by API Worker, never by client.
 Two confirmation channels ensure in-store compliance:
 
 A) **Cashier Confirmation**  
-   Triggered after redeem redirect (/redeemed=1).  
+   Triggered after landing on redeem=pending and receiving backend outcome ok.  
    Logs:
        redeem-confirmation-cashier
 
@@ -1709,18 +1710,20 @@ No redemption occurs until the cashier scans this code.
 When the cashier scans the promo QR:
 
   1. Pages Worker receives GET /out/qr-redeem/<slug>?camp=…&rt=…
-  2. Worker emits /hit/qr-redeem/<UID> with token header
-  3. Backend consumes the token:
-       • status = "ok" → REDEEM event
-       • status = "invalid" → INVALID event (reused/expired token)
-  4. Pages Worker redirects the cashier device to:
-       /?lp=<slug>&redeemed=1&camp=<campaignKey>
+  2. Pages Worker redirects the cashier device to:
+       /?lp=<slug>&redeem=pending&camp=<campaignKey>&rt=<token>
+  3. App shell requests the truthful outcome from:
+       POST /hit/qr-redeem/<UID>?rt=<token>&json=1
+  4. Backend consumes the token:
+       • outcome = "ok" → REDEEM event
+       • outcome = "used" | "invalid" | "inactive" → INVALID-style cashier branch
+  5. App shell opens the cashier success or invalid modal based on backend outcome
 
-This URL signals the app shell to open both the LPM and the cashier confirmation modal.
+The redirect URL does not imply redeem success on its own.
 
 3.6 Cashier Redeem Confirmation Modal
 
-Upon arriving with `redeemed=1`, the cashier device shows a mandatory modal:
+Upon arriving with `redeem=pending` and receiving backend outcome `ok`, the cashier device shows a mandatory modal:
 
   • Title: Redeem Confirmation  
   • Body: “How smooth did the redeem event go?”  
@@ -4112,13 +4115,12 @@ D) **Promo QR Handling**
        /out/qr-redeem/<slug>?camp=<key>&rt=<token>
 
    Behavior:
-     1. Emits /hit/qr-redeem/<ULID> to the API Worker.
-     2. Includes redeem-token header for backend verification.
-     3. Redirects cashier device to:
-           /?lp=<slug>&redeemed=1&camp=<key>
-        which triggers the cashier confirmation modal.
+     1. Redirects cashier device to:
+           /?lp=<slug>&redeem=pending&camp=<key>&rt=<token>
+     2. Preserves token and campaign context for the landing app.
+     3. Does not consume, pre-confirm, or validate the token.
 
-   Pages Worker **never** evaluates redeem validity; it simply forwards signals.
+   Pages Worker **never** evaluates redeem validity; the landing app asks the API Worker for the authoritative outcome.
 
 E) **Support for App → Dash Navigation**
    Serves dash.html and assets without applying app-level routing rules.
