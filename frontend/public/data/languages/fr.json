@@ -538,6 +538,7 @@
   "redeem.confirm.question": "Comment s’est déroulé le remboursement ?",
   "redeem.customer.title": "Merci !",
   "redeem.customer.question": "Comment s’est passée votre expérience de remboursement ?",
+  "redeem.confirm.hint": "Appuyez sur un visage pour confirmer l’utilisation.",
   "dash.analytics.qa.heading": "Analyse d’assurance qualité",
   "dash.analytics.qa.no-promo-activity": "Aucune activité de QR promotionnel n’a été enregistrée durant cette période, la discipline de scan et les utilisations invalides ne peuvent donc pas être évaluées.",
   "dash.analytics.qa.scan-normal": "QA : Le scan promotionnel est dans une plage normale pour cette période. Environ {percent}% des QR promo affichés ont mené à un remboursement.",

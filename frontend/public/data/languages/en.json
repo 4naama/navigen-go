@@ -538,6 +538,7 @@
   "redeem.confirm.question": "How smooth did the redeem event go?",
   "redeem.customer.title": "Thank you!",
   "redeem.customer.question": "How was your redeem experience?",
+  "redeem.confirm.hint": "Tap one face to confirm the redeem event.",
   "dash.analytics.qa.heading": "Quality Assurance Analysis",
   "dash.analytics.qa.no-promo-activity": "No promotional QR activity was recorded in this period, so scan discipline and invalid use cannot be evaluated.",
   "dash.analytics.qa.scan-normal": "QA: Promo scanning appears within a normal range for this period. Roughly {percent}% of \"promo QR shown\" events led to a recorded redemption.",

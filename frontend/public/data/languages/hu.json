@@ -538,6 +538,7 @@
   "redeem.confirm.question": "Milyen gördülékenyen zajlott a beváltási folyamat?",
   "redeem.customer.title": "Köszönjük!",
   "redeem.customer.question": "Milyen volt a beváltási élménye?",
+  "redeem.confirm.hint": "Koppintson egy arcra a beváltás megerősítéséhez.",
   "dash.analytics.qa.heading": "Minőségbiztosítási elemzés",
   "dash.analytics.qa.no-promo-activity": "Ebben az időszakban nem történt promóciós QR-aktivitás, ezért a szkennelési fegyelem és az érvénytelen használat nem értékelhető.",
   "dash.analytics.qa.scan-normal": "QA: A promóciós szkennelés a normál tartományban van. A promóciós QR-ek kb. {percent}%-a vezetett beváltáshoz.",

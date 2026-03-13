@@ -538,6 +538,7 @@
   "redeem.confirm.question": "Wie reibungslos verlief der Einlösevorgang?",
   "redeem.customer.title": "Danke!",
   "redeem.customer.question": "Wie war Ihre Einlöseerfahrung?",
+  "redeem.confirm.hint": "Tippen Sie auf ein Gesicht, um die Einlösung zu bestätigen.",
   "dash.analytics.qa.heading": "Qualitätssicherungsanalyse",
   "dash.analytics.qa.no-promo-activity": "In diesem Zeitraum wurde keine Promotion-QR-Aktivität erfasst, daher können Scandisziplin und ungültige Nutzung nicht bewertet werden.",
   "dash.analytics.qa.scan-normal": "QA: Promo-Scans liegen im normalen Bereich. Rund {percent}% der gezeigten Promo-QR führten zu einer Einlösung.",

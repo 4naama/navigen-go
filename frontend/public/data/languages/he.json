@@ -538,6 +538,7 @@
   "redeem.confirm.question": "עד כמה חלק עבר תהליך המימוש?",
   "redeem.customer.title": "תודה!",
   "redeem.customer.question": "איך הייתה חוויית המימוש שלך?",
+  "redeem.confirm.hint": "הקש על פרצוף אחד כדי לאשר את המימוש.",
   "dash.analytics.qa.heading": "ניתוח בקרת איכות",
   "dash.analytics.qa.no-promo-activity": "לא נרשמה פעילות QR פרסומית בתקופה זו, ולכן לא ניתן להעריך משמעת סריקה ושימוש לא תקין.",
   "dash.analytics.qa.scan-normal": "QA: סריקות הפרומו בטווח התקין. כ־{percent}% מה-QR הפרסומיים הובילו למימוש.",

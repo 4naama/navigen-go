@@ -212,6 +212,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   card.appendChild(body);
   wrap.appendChild(card);
   document.body.appendChild(wrap);
+  disableTapOutClose(id);
 
   // Customer-side redeem status polling (token-aware, short-lived).
   // When the token is redeemed on the cashier device, we can ask the customer for quick feedback.
@@ -663,6 +664,7 @@ async function openPromotionQrModal(modal, data) {
     card.appendChild(body);
     wrap.appendChild(card);
     document.body.appendChild(wrap);
+    disableTapOutClose(modalId);
 
     showModal(modalId);
   } catch (err) {
@@ -6466,6 +6468,7 @@ export function showRedeemInvalidModal({
   const wrap = document.createElement('div');
   wrap.id = modalId;
   wrap.className = 'modal hidden';
+  if (outcome === 'used') wrap.classList.add('redeem-used-state');
 
   const card = document.createElement('div');
   card.className = 'modal-content modal-menu';
@@ -7985,6 +7988,35 @@ export function setupTapOutClose(modalId) {
   }
 
   // Ensure the modal can receive key events once shown
+  if (!modal.hasAttribute('tabindex')) modal.setAttribute('tabindex', '-1');
+}
+
+function disableTapOutClose(modalId) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+
+  // Red X only: swallow overlay taps and ESC for this modal.
+  const onBackdropClickBlocked = (e) => {
+    if (e.target === modal) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  };
+
+  modal.addEventListener('click', onBackdropClickBlocked, { capture: true });
+
+  // ESC must not close these modals either.
+  if (modal.dataset.escBlocked !== '1') {
+    modal.dataset.escBlocked = '1';
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }, { capture: true });
+  }
+
+  // Ensure the modal can still receive key events once shown.
   if (!modal.hasAttribute('tabindex')) modal.setAttribute('tabindex', '-1');
 }
 

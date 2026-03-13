@@ -538,6 +538,7 @@
   "redeem.confirm.question": "¿Qué tan fluido fue el proceso de canje?",
   "redeem.customer.title": "¡Gracias!",
   "redeem.customer.question": "¿Cómo fue tu experiencia de canje?",
+  "redeem.confirm.hint": "Toca una cara para confirmar el canje.",
   "dash.analytics.qa.heading": "Análisis de aseguramiento de calidad",
   "dash.analytics.qa.no-promo-activity": "No se registró actividad de QR promocional en este período, por lo que no pueden evaluarse la disciplina de escaneo ni los usos inválidos.",
   "dash.analytics.qa.scan-normal": "QA: El escaneo promocional está dentro del rango normal; {percent}% terminó en un canje.",

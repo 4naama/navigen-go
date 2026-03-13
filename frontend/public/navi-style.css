@@ -3362,6 +3362,16 @@ select.input{
   background:#f8f8f8;      /* keep same grey; no hover affordance */
 }
 
+/* Used-code invalid modal: promo card should match the owner-settings mismatch tint */
+.redeem-used-state .promo-summary-card{
+  border-color:#ef4444;
+  background:#fff5f5;
+}
+.redeem-used-state .promo-summary-card:hover{
+  border-color:#ef4444;
+  background:#fff5f5;
+}
+
 /* Promotion Details: highlight remaining time (soft red, not aggressive) */
 .promo-expires-days{
   color:#b42318;
