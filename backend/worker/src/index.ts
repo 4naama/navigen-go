@@ -1899,9 +1899,12 @@ export default {
             locationName,
             campaignKey: String(row?.campaignKey || "").trim(),
             campaignName: String(row?.campaignName || "").trim(),
+            offerType: String(row?.offerType || "").trim(),
+            productName: String(row?.productName || "").trim(),
             startDate: String(row?.startDate || "").trim(),
             endDate: String(row?.endDate || "").trim(),
             eligibilityType: String(row?.eligibilityType || "").trim(),
+            eligibilityNotes: String(row?.eligibilityNotes || "").trim(),
             discountKind: String(row?.discountKind || "").trim(),
             discountValue
           },
@@ -2024,9 +2027,12 @@ export default {
         return json({
           qrUrl: qrUrlObj.toString(),
           campaignName: String(activeRow.campaignName || "").trim(),
+          offerType: String(activeRow.offerType || "").trim(),
+          productName: String(activeRow.productName || "").trim(),
           startDate: String(activeRow.startDate || "").trim(),
           endDate: String(activeRow.endDate || "").trim(),
           eligibilityType: String(activeRow.eligibilityType || "").trim(),
+          eligibilityNotes: String(activeRow.eligibilityNotes || "").trim(),
           discountKind: String(activeRow.discountKind || "").trim(),
           discountValue
         }, 200);
@@ -2345,6 +2351,7 @@ export default {
               campaignType: (r?.campaignType != null) ? String(r.campaignType).trim() : undefined,
               targetChannels: r?.targetChannels,
               offerType: (r?.offerType != null) ? String(r.offerType).trim() : undefined,
+              productName: (r?.productName != null) ? String(r.productName).trim() : undefined,
               discountKind: (r?.discountKind != null) ? String(r.discountKind).trim() : undefined,
               campaignDiscountValue: (r?.campaignDiscountValue != null) ? r.campaignDiscountValue : undefined,
               eligibilityType: (r?.eligibilityType != null) ? String(r.eligibilityType).trim() : undefined,
@@ -3808,6 +3815,7 @@ interface CampaignRow {
   campaignType?: string;
   targetChannels?: string[] | string;
   offerType?: string;
+  productName?: string;
   discountKind?: string;           // Percent | Amount | None
   campaignDiscountValue?: number | string;
   eligibilityType?: string;

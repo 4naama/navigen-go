@@ -1,6 +1,12 @@
 // analytics: unified endpoint; always use live worker for all environments
 const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
+function translatedOrFallback(key, fallback = '') {
+  if (typeof t !== 'function') return fallback;
+  const raw = String(t(key) || '').trim();
+  return raw && raw !== key ? raw : fallback;
+}
+
 // ---------------------------------------------------------------------------
 // Campaign entitlement pre-resolver (deterministic; no post-render repaint)
 // ---------------------------------------------------------------------------
@@ -117,10 +123,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   const top = document.createElement('div');
   top.className = 'modal-top-bar';
 
-  const hasT = (typeof t === 'function');
-  const titleText =
-    (hasT ? (t('qr.role.campaign-redeem-label') || '') : '') ||
-    'Campaign Redemption QR';
+  const titleText = translatedOrFallback('qr.role.campaign-redeem-label', 'Campaign Redemption QR');
 
   top.innerHTML = `
     <h2 class="modal-title">${titleText}</h2>
@@ -148,17 +151,20 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   qrContainer.appendChild(img);
 
   // Show QR instructions and terms above the QR image
-  const descText =
-    (hasT ? (t('qr.role.campaign-redeem-desc') || '') : '') ||
-    'Show this QR code to the cashier when paying to redeem your campaign offer.';
+  const descText = translatedOrFallback(
+    'qr.role.campaign-redeem-desc',
+    'Show this QR code to the staff member or designated verifier handling the redemption.'
+  );
 
-  const warningText =
-    (hasT ? (t('qr.role.campaign-redeem-warning') || '') : '') ||
-    'After scanning, wait for confirmation (10–20 seconds).';
+  const warningText = translatedOrFallback(
+    'qr.role.campaign-redeem-warning',
+    'After scanning, wait for confirmation. This usually takes 10–20 seconds, depending on network speed.'
+  );
 
-  const termsText =
-    (hasT ? (t('campaign.redeem-terms') || '') : '') ||
-    'By redeeming, I agree to the offer terms.';
+  const termsText = translatedOrFallback(
+    'campaign.redeem-terms',
+    'By redeeming, I agree to the offer terms.'
+  );
 
   // 1) main instruction
   const pInstr = document.createElement('p');
@@ -191,9 +197,7 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   inner.appendChild(qrContainer);
 
   // 4) post-QR thanks line (t(key); shown under QR)
-  const thanksText =
-    (hasT ? (t('qr.role.campaign-redeem-thanks') || '') : '') ||
-    'Thank you!';
+  const thanksText = translatedOrFallback('qr.role.campaign-redeem-thanks', 'Thank you!');
 
   // post-QR thanks line (t(key); shown under QR)
   const pThanks = document.createElement('p');
@@ -451,10 +455,7 @@ async function openPromotionQrModal(modal, data) {
     const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
     const hasT = (typeof t === 'function');
 
-    const tmpl = (key, fallback) => {
-      const raw = hasT ? (t(key) || '') : '';
-      return raw && typeof raw === 'string' ? raw : fallback;
-    };
+    const tmpl = (key, fallback) => translatedOrFallback(key, fallback);
 
     const applyTemplate = (str, vars) =>
       String(str || '').replace(/{{(\w+)}}/g, (m, k) => (vars && k in vars ? String(vars[k]) : m));
@@ -524,12 +525,14 @@ async function openPromotionQrModal(modal, data) {
 
     const payload = await res.json().catch(() => null);
     const qrUrl = String(payload?.qrUrl || '').trim();
-    const campaignName   = String(payload?.campaignName || '').trim();
-    const startDate      = String(payload?.startDate || '').trim();
-    const endDate        = String(payload?.endDate || '').trim();
-    const eligibilityType= String(payload?.eligibilityType || '').trim();
-    const discountKind   = String(payload?.discountKind || '').trim();
-    const discountValue  = typeof payload?.discountValue === 'number' ? payload.discountValue : null;
+    const campaignName = String(payload?.campaignName || '').trim();
+    const productName = String(payload?.productName || '').trim();
+    const startDate = String(payload?.startDate || '').trim();
+    const endDate = String(payload?.endDate || '').trim();
+    const eligibilityType = String(payload?.eligibilityType || '').trim();
+    const eligibilityNotes = String(payload?.eligibilityNotes || '').trim();
+    const discountKind = String(payload?.discountKind || '').trim();
+    const discountValue = typeof payload?.discountValue === 'number' ? payload.discountValue : null;
 
     if (!qrUrl) {
       console.warn('openPromotionQrModal: missing qrUrl in API response');
@@ -538,6 +541,7 @@ async function openPromotionQrModal(modal, data) {
     }
 
     const locName = String(data?.name || data?.displayName || 'this location').trim() || 'this location';
+    const eligibilityText = eligibilityNotes || eligibilityType || '';
 
     // Build discount line, e.g. "10% off your purchase at Stage X"
     const discountText = (discountKind === 'percent' && typeof discountValue === 'number')
@@ -590,7 +594,10 @@ async function openPromotionQrModal(modal, data) {
     {
       const summary = buildPromotionSummaryCard({
         discountText,
+        campaignName,
         locationName: locName,
+        productName,
+        eligibilityText,
         startDate,
         endDate
       });
@@ -615,7 +622,7 @@ async function openPromotionQrModal(modal, data) {
     {
       const warnText = tmpl(
         'promo.qr.wait',
-        'The offer is valid for in-store redemption and only when scanned by the cashier.'
+        'This offer is valid only when it is checked at the point of redemption by staff or the designated verifier.'
       );
       const pWarn = document.createElement('p');
       pWarn.textContent = warnText;
@@ -632,7 +639,7 @@ async function openPromotionQrModal(modal, data) {
     const qrBtn = document.createElement('button');
     qrBtn.type = 'button';
     qrBtn.className = 'modal-body-button';
-    qrBtn.textContent = tmpl('campaign.redeem-button', "I'm at the cashier — 🔳 show my code");
+    qrBtn.textContent = tmpl('campaign.redeem-button', "I'm at the redeem point — 🔳 show my code");
     qrBtn.addEventListener('click', () => {
       hideModal(modalId);
       // Open the Promotion QR modal and pass location ID/slug for customer confirmation tracking
@@ -640,7 +647,7 @@ async function openPromotionQrModal(modal, data) {
     });
 
     // 10) Only tap this when you're ready to pay. (small)
-    const hintText = tmpl('promotion.redeem-hint', "Only tap this when you're ready to pay.");
+    const hintText = tmpl('promotion.redeem-hint', "Only tap this when you're ready for the redemption check.");
     const hint = document.createElement('p');
     hint.textContent = hintText;
     hint.style.textAlign = 'left';
@@ -5297,6 +5304,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     const pairs = [
       ['campaignKey', rowSafe.campaignKey],
       ['campaignName', rowSafe.campaignName],
+      ['productName', rowSafe.productName],
       ['status', rowSafe.status],
       ['startDate', rowSafe.startDate],
       ['endDate', rowSafe.endDate],
@@ -5562,6 +5570,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     campaignKey.setAttribute('aria-readonly', 'true'); 
     
     const campaignName = buildInput('text', draft?.campaignName || '');
+    const productName = buildInput('text', draft?.productName || '');
     const startDate = buildInput('date', draft?.startDate || ymdToday());
     const endDate = buildInput('date', draft?.endDate || '');
 
@@ -5583,6 +5592,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const labels = {
       campaignKey: 'Campaign key',
       campaignName: 'Campaign name',
+      productName: 'Product / service',
       campaignType: 'Campaign type',
       targetChannels: 'Channels',
       offerType: 'Offer type',
@@ -5599,6 +5609,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
     form.appendChild(field(labels.campaignKey, campaignKey));
     form.appendChild(field(labels.campaignName, campaignName));
+    form.appendChild(field(labels.productName, productName));
     form.appendChild(field(labels.campaignType, campaignType));
     form.appendChild(field(labels.targetChannels, targetChannels));
     form.appendChild(field(labels.offerType, offerType));
@@ -5634,6 +5645,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const collectDraft = () => ({
       campaignKey: String(campaignKey.value || '').trim(),
       campaignName: String(campaignName.value || '').trim(),
+      productName: String(productName.value || '').trim(),
       campaignType: String(campaignType.value || '').trim(),
       targetChannels: [ String(targetChannels.value || '').trim() ].filter(Boolean),
       offerType: String(offerType.value || '').trim(),
@@ -6119,7 +6131,15 @@ export function showThankYouToast() {
   return showToast("💖 Thank you for your support!", 4000);
 }
 
-function buildPromotionSummaryCard({ discountText, locationName, startDate, endDate }) {
+function buildPromotionSummaryCard({
+  discountText,
+  campaignName = '',
+  locationName = '',
+  productName = '',
+  eligibilityText = '',
+  startDate,
+  endDate
+}) {
   const safeDate = (v) => {
     const s = String(v || '').trim();
     return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
@@ -6131,14 +6151,34 @@ function buildPromotionSummaryCard({ discountText, locationName, startDate, endD
 
   const summary = document.createElement('div');
   summary.className = 'modal-menu-item promo-summary-card';
-  summary.innerHTML = `
-    <div class="label" style="flex:1 1 auto; min-width:0;">
-      <strong>${String(discountText || '').trim() || 'Promotion'}</strong><br>
-      <small>${String(locationName || '').trim() || ''}</small><br>
-      ${range ? `<small>${range}</small>` : ``}
-    </div>
-  `;
 
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.style.flex = '1 1 auto';
+  label.style.minWidth = '0';
+
+  const title = document.createElement('strong');
+  title.textContent = String(discountText || '').trim() || 'Promotion';
+  label.appendChild(title);
+
+  const seen = new Set();
+  const appendSmall = (value) => {
+    const text = String(value || '').trim();
+    if (!text || seen.has(text)) return;
+    seen.add(text);
+    label.appendChild(document.createElement('br'));
+    const small = document.createElement('small');
+    small.textContent = text;
+    label.appendChild(small);
+  };
+
+  appendSmall(campaignName);
+  appendSmall(locationName);
+  appendSmall(productName);
+  appendSmall(eligibilityText ? `Eligibility: ${eligibilityText}` : '');
+  appendSmall(range);
+
+  summary.appendChild(label);
   return summary;
 }
 
@@ -6192,6 +6232,8 @@ async function hydrateCashierRedeemCampaignContext({ inner, locationIdOrSlug, ca
 
     const campaignName = String(payload?.campaignName || '').trim();
     const locationName = String(payload?.locationName || '').trim();
+    const productName = String(payload?.productName || '').trim();
+    const eligibilityText = String(payload?.eligibilityNotes || payload?.eligibilityType || '').trim();
 
     const discountKind = String(payload?.discountKind || '').trim().toLowerCase();
     const discountValue = typeof payload?.discountValue === 'number' ? payload.discountValue : null;
@@ -6210,7 +6252,10 @@ async function hydrateCashierRedeemCampaignContext({ inner, locationIdOrSlug, ca
 
     const summary = buildPromotionSummaryCard({
       discountText,
+      campaignName,
       locationName,
+      productName,
+      eligibilityText,
       startDate: payload?.startDate,
       endDate: payload?.endDate
     });
@@ -6232,6 +6277,8 @@ function appendRedeemCampaignSummary(inner, campaignContext) {
 
   const campaignName = String(campaignContext?.campaignName || '').trim();
   const locationName = String(campaignContext?.locationName || '').trim();
+  const productName = String(campaignContext?.productName || '').trim();
+  const eligibilityText = String(campaignContext?.eligibilityNotes || campaignContext?.eligibilityType || '').trim();
   const discountKind = String(campaignContext?.discountKind || '').trim().toLowerCase();
   const discountValue = typeof campaignContext?.discountValue === 'number' ? campaignContext.discountValue : null;
 
@@ -6242,7 +6289,10 @@ function appendRedeemCampaignSummary(inner, campaignContext) {
 
   const summary = buildPromotionSummaryCard({
     discountText,
+    campaignName,
     locationName: locationName || campaignName,
+    productName,
+    eligibilityText,
     startDate: campaignContext?.startDate,
     endDate: campaignContext?.endDate
   });
@@ -6298,9 +6348,15 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   const inner = document.createElement('div');
   inner.className = 'modal-body-inner';
 
-  const questionTxt =
-    (hasT ? (t('redeem.confirm.question') || '') : '') ||
-    'How smooth did the redeem event go?';
+  const tSafe = (key, fallback) => {
+    const raw = hasT ? String(t(key) || '').trim() : '';
+    return raw && raw !== key ? raw : fallback;
+  };
+
+  const questionTxt = tSafe(
+    'redeem.confirm.question',
+    'How smooth did the redemption go?'
+  );
 
   // If campaign context was provided by the caller, render the promotion summary immediately.
   // Otherwise, hydrate it on-demand from the worker so the cashier always sees the promo card before rating.
@@ -6315,17 +6371,18 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
       // campaign context is UI-only; never break redeem confirmation
     });
   }
-  
+
   const pQ = document.createElement('p');
   pQ.textContent = questionTxt;
   pQ.style.textAlign = 'center';
   pQ.style.marginBottom = '0.75rem';
   inner.appendChild(pQ);
-  
+
   const row = document.createElement('div');
   row.style.display = 'flex';
   row.style.justifyContent = 'center';
   row.style.gap = '0.5rem';
+  row.style.flexWrap = 'wrap';
 
   const faces = [
     { emoji: '😕', score: 1 },
@@ -6354,9 +6411,14 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   faces.forEach(({ emoji, score }) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'modal-body-button';
     btn.textContent = emoji;
     btn.setAttribute('aria-label', `Redeem confirmation score ${score}`);
+    btn.style.fontSize = '1.5rem';
+    btn.style.lineHeight = '1';
+    btn.style.border = 'none';
+    btn.style.background = 'transparent';
+    btn.style.cursor = 'pointer';
+    btn.style.padding = '0.25rem';
     btn.addEventListener('click', () => {
       sendConfirmation(score);
       hideModal(modalId);
@@ -6366,9 +6428,10 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
 
   inner.appendChild(row);
 
-  const hintTxt =
-    (hasT ? (t('redeem.confirm.hint') || '') : '') ||
-    'Tap one face to confirm the redeem event.';
+  const hintTxt = tSafe(
+    'redeem.confirm.hint',
+    'Tap one face to confirm the redeem event.'
+  );
 
   const hint = document.createElement('p');
   hint.textContent = hintTxt;
@@ -6385,7 +6448,6 @@ export function showRedeemConfirmationModal({ locationIdOrSlug, campaignKey = ''
   wrap.appendChild(card);
   document.body.appendChild(wrap);
 
-  setupTapOutClose(modalId);
   showModal(modalId);
 }
 
