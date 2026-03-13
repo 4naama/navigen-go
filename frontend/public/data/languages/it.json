@@ -500,7 +500,7 @@
   "promotion.instore-only": "Per il riscatto in negozio.",
   "promo.qr.wait": "L’offerta è valida per il riscatto in negozio e solo se viene scansionata dal cassiere.",
   "promotion.redeem-hint": "Tocca qui solo quando sei pronto a pagare.",
-  "campaign.redeem-button": "Sono alla cassa — 🔳 mostra il mio codice",
+  "campaign.redeem-button": "Sono al punto di riscatto — 🔳 mostra il mio codice",
   "qr.role.campaign-redeem-label": "QR di riscatto della campagna",
   "qr.role.campaign-redeem-desc": "Mostra questo codice QR al cassiere al momento del pagamento per riscattare l’offerta della campagna.",
   "campaign.redeem-terms": "Riscattando accetto i termini dell’offerta.",

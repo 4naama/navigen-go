@@ -500,7 +500,7 @@
   "promotion.instore-only": "Bolti beváltáshoz.",
   "promo.qr.wait": "Az ajánlat kizárólag bolti beváltásra érvényes, és csak akkor, ha a pénztáros beolvassa.",
   "promotion.redeem-hint": "Csak akkor érintse meg, ha készen áll a fizetésre.",
-  "campaign.redeem-button": "A pénztárnál vagyok — 🔳 mutasd a kódomat",
+  "campaign.redeem-button": "A beváltási pontnál vagyok — 🔳 kód megjelenítése",
   "qr.role.campaign-redeem-label": "Kampány-beváltási QR",
   "qr.role.campaign-redeem-desc": "Fizetéskor mutassa meg ezt a QR-kódot a pénztárosnak, hogy beváltsa a kampányajánlatát.",
   "campaign.redeem-terms": "A kupon beváltásával elfogadom az ajánlat feltételeit.",
