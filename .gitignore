@@ -36,16 +36,13 @@ Thumbs.db
 .idea/
 *.swp
 
-# Prevent runbooks anywhere (defense-in-depth)
-**/runbook.md
-**/runbook*.md
-**/RUNBOOK.md
-**/RUNBOOK*.md
-
 # Internal / operational docs (must never ship)
+docs/implementation-plan.md
+docs/navigen-payment-plan.md
+docs/navigen-pricing.md
+docs/navigen-spec.md
+docs/navigen-v1.1-user-test.md
 docs/runbook.md
-docs/runbook*.md
-docs/internal/
 
 # Do not commit private data
 public/data/data-safe/
@@ -54,7 +51,6 @@ public/data/data-safe/
 # backend worker artifacts
 backend/worker/node_modules/
 backend/worker/package-lock.json
-
 
 # secrets
 backend/worker/ownerlink_secret.txt
