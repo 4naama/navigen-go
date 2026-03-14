@@ -3203,13 +3203,26 @@ export default {
               // Resolve human name by slug (profiles.json is keyed by locationID=slug)
               const locationName = (await nameForLocation(locationSlug, req.headers.get("Origin") || "https://navigen.io")) || "";
 
+              const dvRaw = (r?.campaignDiscountValue != null) ? r.campaignDiscountValue : null;
+              const discountValue =
+                (typeof dvRaw === "number") ? dvRaw :
+                (typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw))) ? Number(dvRaw) :
+                null;
+
               out.push({
                 campaignKey: String(r?.campaignKey || "").trim(),
-                campaignName: r?.campaignName ?? "",
+                campaignName: String(r?.campaignName || "").trim(),
+                locationID: locationSlug || locationULID,
                 locationULID,
                 locationSlug,
                 locationName,
                 context: String(r?.context || "").trim(),
+                offerType: String(r?.offerType || "").trim(),
+                productName: String(r?.productName || r?.offerType || "").trim(),
+                eligibilityType: String(r?.eligibilityType || "").trim(),
+                eligibilityNotes: String(r?.eligibilityNotes || "").trim(),
+                discountKind: String(r?.discountKind || "").trim(),
+                discountValue,
                 startDate: String(r?.startDate || "").trim(),
                 endDate: String(r?.endDate || "").trim(),
                 status: String(r?.statusOverride || r?.status || "").trim()

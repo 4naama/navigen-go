@@ -837,5 +837,10 @@
   "redeem.invalid.used.body": "This promo code was already redeemed. Do not apply the promotion again.",
   "redeem.invalid.inactive.body": "This promo code belongs to a campaign that is not active. Do not apply the promotion.",
   "redeem.invalid.close": "OK",
-  "redeem.campaign.loading": "Loading campaign…"
+  "redeem.campaign.loading": "Loading campaign…",
+  "promotion.eligibility.label": "Eligibility",
+  "promotions.search.placeholder": "Search here…",
+  "promotions.search.infoAria": "Filter help",
+  "promotions.search.info": "Filter campaigns by location, campaign name, product or service, eligibility, discount, or dates like \"2026-03\", \"26-03\", \"03\".",
+  "promotions.search.emptyFiltered": "No campaigns match this filter."
 }

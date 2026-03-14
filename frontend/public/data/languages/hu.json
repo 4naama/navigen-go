@@ -837,5 +837,10 @@
   "redeem.invalid.used.body": "Ezt a promóciós kódot már beváltották. Ne alkalmazza újra a promóciót.",
   "redeem.invalid.inactive.body": "Ez a promóciós kód egy nem aktív kampányhoz tartozik. Ne alkalmazza a promóciót.",
   "redeem.invalid.close": "OK",
-  "redeem.campaign.loading": "Kampány betöltése…"
+  "redeem.campaign.loading": "Kampány betöltése…",
+  "promotion.eligibility.label": "Jogosultság",
+  "promotions.search.placeholder": "Keresés itt…",
+  "promotions.search.infoAria": "Szűrő súgó",
+  "promotions.search.info": "Szűrje a kampányokat hely, kampánynév, termék vagy szolgáltatás, jogosultság, kedvezmény vagy dátum szerint, például „2026-03”, „26-03”, „03”.",
+  "promotions.search.emptyFiltered": "Egyetlen kampány sem felel meg ennek a szűrőnek."
 }

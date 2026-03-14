@@ -3345,6 +3345,60 @@ select.input{
   padding-inline: 0;              /* inner container adds no extra gutter */
 }
 
+/* Promotions modal: same searchable top bar pattern as SYB */
+#promotions-modal .modal-top-bar{
+  flex-wrap: wrap;
+}
+
+#promotions-modal .modal-top-bar h2{
+  order: 1;
+}
+
+#promotions-modal .modal-top-bar .modal-close{
+  order: 1;
+}
+
+#promotions-modal .modal-top-bar .select-location-search-row{
+  order: 2;
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+#promotions-modal .select-location-search-left{
+  flex: 1 1 auto;
+  width: 72%;
+  position: relative;
+}
+
+#promotions-modal #promotions-search{
+  width: 100%;
+}
+
+#promotions-modal .select-location-search-left #promotions-clear-search{
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  display: none;
+  z-index: 11;
+}
+
+#promotions-modal .select-location-info-btn{
+  position: static;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: #fff;
+  cursor: pointer;
+  line-height: 1;
+}
+
 /* Promotions modal: lift the whole modal off the bottom gesture/safe-area region on small screens (match My Stuff) */
 @media (max-width: 640px){
   #promotions-modal{

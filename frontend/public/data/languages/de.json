@@ -837,5 +837,10 @@
   "redeem.invalid.used.body": "Dieser Promo-Code wurde bereits eingelöst. Wenden Sie die Promotion nicht erneut an.",
   "redeem.invalid.inactive.body": "Dieser Promo-Code gehört zu einer Kampagne, die nicht aktiv ist. Wenden Sie die Promotion nicht an.",
   "redeem.invalid.close": "OK",
-  "redeem.campaign.loading": "Kampagne wird geladen…"
+  "redeem.campaign.loading": "Kampagne wird geladen…",
+  "promotion.eligibility.label": "Berechtigung",
+  "promotions.search.placeholder": "Hier suchen…",
+  "promotions.search.infoAria": "Filterhilfe",
+  "promotions.search.info": "Filtern Sie Kampagnen nach Standort, Kampagnenname, Produkt oder Dienstleistung, Berechtigung, Rabatt oder Daten wie „2026-03“, „26-03“, „03“.",
+  "promotions.search.emptyFiltered": "Keine Kampagnen entsprechen diesem Filter."
 }

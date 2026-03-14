@@ -837,5 +837,10 @@
   "redeem.invalid.used.body": "Ce code promo a déjà été utilisé. N’appliquez pas la promotion à nouveau.",
   "redeem.invalid.inactive.body": "Ce code promo appartient à une campagne qui n’est pas active. N’appliquez pas la promotion.",
   "redeem.invalid.close": "OK",
-  "redeem.campaign.loading": "Chargement de la campagne…"
+  "redeem.campaign.loading": "Chargement de la campagne…",
+  "promotion.eligibility.label": "Éligibilité",
+  "promotions.search.placeholder": "Rechercher ici…",
+  "promotions.search.infoAria": "Aide au filtre",
+  "promotions.search.info": "Filtrez les campagnes par emplacement, nom de campagne, produit ou service, éligibilité, remise ou dates comme « 2026-03 », « 26-03 », « 03 ».",
+  "promotions.search.emptyFiltered": "Aucune campagne ne correspond à ce filtre."
 }

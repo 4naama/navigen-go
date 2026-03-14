@@ -837,5 +837,10 @@
   "redeem.invalid.used.body": "קוד קופון זה כבר מומש. אל תחיל את ההטבה שוב.",
   "redeem.invalid.inactive.body": "קוד קופון זה שייך לקמפיין שאינו פעיל. אל תחיל את ההטבה.",
   "redeem.invalid.close": "אישור",
-  "redeem.campaign.loading": "טוען קמפיין…"
+  "redeem.campaign.loading": "טוען קמפיין…",
+  "promotion.eligibility.label": "זכאות",
+  "promotions.search.placeholder": "חפש כאן…",
+  "promotions.search.infoAria": "עזרה במסנן",
+  "promotions.search.info": "סנן קמפיינים לפי מיקום, שם קמפיין, מוצר או שירות, זכאות, הנחה או תאריכים כמו \"2026-03\", \"26-03\", \"03\".",
+  "promotions.search.emptyFiltered": "אין קמפיינים התואמים למסנן זה."
 }

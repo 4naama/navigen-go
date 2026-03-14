@@ -837,5 +837,10 @@
   "redeem.invalid.used.body": "Este código promocional ya fue canjeado. No apliques la promoción nuevamente.",
   "redeem.invalid.inactive.body": "Este código promocional pertenece a una campaña que no está activa. No apliques la promoción.",
   "redeem.invalid.close": "OK",
-  "redeem.campaign.loading": "Cargando campaña…"
+  "redeem.campaign.loading": "Cargando campaña…",
+  "promotion.eligibility.label": "Elegibilidad",
+  "promotions.search.placeholder": "Buscar aquí…",
+  "promotions.search.infoAria": "Ayuda de filtro",
+  "promotions.search.info": "Filtra campañas por ubicación, nombre de campaña, producto o servicio, elegibilidad, descuento o fechas como “2026-03”, “26-03”, “03”.",
+  "promotions.search.emptyFiltered": "Ninguna campaña coincide con este filtro."
 }

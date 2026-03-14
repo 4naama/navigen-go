@@ -6179,6 +6179,13 @@ function buildPromotionSummaryCard({
   title.textContent = String(discountText || '').trim() || 'Promotion';
   label.appendChild(title);
 
+  const eligibilityLabelRaw =
+    (typeof t === 'function') ? String(t('promotion.eligibility.label') || '').trim() : '';
+  const eligibilityLabel =
+    (eligibilityLabelRaw && eligibilityLabelRaw !== 'promotion.eligibility.label')
+      ? eligibilityLabelRaw
+      : 'Eligibility';
+
   const seen = new Set();
   const appendSmall = (value) => {
     const text = String(value || '').trim();
@@ -6193,7 +6200,7 @@ function buildPromotionSummaryCard({
   appendSmall(campaignName);
   appendSmall(locationName);
   appendSmall(productName);
-  appendSmall(eligibilityText ? `Eligibility: ${eligibilityText}` : '');
+  appendSmall(eligibilityText ? `${eligibilityLabel}: ${eligibilityText}` : '');
   appendSmall(range);
 
   summary.appendChild(label);
@@ -6683,25 +6690,248 @@ export function showPromotionsModal() {
   const modal = document.getElementById("promotions-modal");
   const body = modal?.querySelector("#promotions-body");
   const title = modal?.querySelector(".modal-header");
-  if (!modal || !body || !title) return;
+  const topBar = modal?.querySelector(".modal-top-bar");
+  if (!modal || !body || !title || !topBar) return;
 
-  title.textContent = t("promotions");
+  const tSafe = (key, fallback) => {
+    const raw = (typeof t === 'function') ? String(t(key) || '').trim() : '';
+    return raw && raw !== key ? raw : fallback;
+  };
+
+  title.textContent = tSafe("promotions", "Promotions");
   body.innerHTML = "";
+  topBar.querySelector('.select-location-search-row')?.remove();
 
   const list = document.createElement("div");
   list.className = "modal-menu-list";
   body.appendChild(list);
 
   const renderEmpty = (msg) => {
+    list.innerHTML = "";
     const empty = document.createElement("p");
-    empty.className = "muted";
+    empty.className = "muted muted-note";
     empty.textContent = msg;
     list.appendChild(empty);
   };
 
-  const now = new Date();
+  const formatDate = (value) => {
+    const s = String(value || "").trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
+  };
 
-  // derive pageKey from URL, same pattern as before (context-aware promotions)
+  const toDiscountValue = (value) => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) {
+      return Number(value);
+    }
+    return null;
+  };
+
+  const buildSearchText = (camp) => {
+    const campaignKey = String(camp?.campaignKey || '').trim();
+    const campaignName =
+      String(camp?.campaignName || '').trim() ||
+      tSafe("promotion.unnamed", "Promotion");
+    const locationName = String(camp?.locationName || '').trim();
+    const productName = String(camp?.productName || camp?.offerType || '').trim();
+    const eligibilityText = String(camp?.eligibilityNotes || camp?.eligibilityType || '').trim();
+    const discountKind = String(camp?.discountKind || '').trim().toLowerCase();
+    const discountValue = toDiscountValue(camp?.discountValue);
+    const startDate = formatDate(camp?.startDate);
+    const endDate = formatDate(camp?.endDate);
+
+    const discountText =
+      (discountKind === 'percent' && typeof discountValue === 'number')
+        ? `${discountValue.toFixed(0)}% off your purchase`
+        : campaignName;
+
+    return [
+      campaignKey,
+      campaignName,
+      locationName,
+      productName,
+      eligibilityText,
+      String(camp?.context || '').trim(),
+      discountKind,
+      (discountValue != null ? String(discountValue) : ''),
+      discountText,
+      startDate,
+      endDate
+    ].join(' ').toLowerCase();
+  };
+
+  const renderList = (items, hasFilter = false) => {
+    list.innerHTML = "";
+
+    if (!Array.isArray(items) || items.length === 0) {
+      renderEmpty(
+        hasFilter
+          ? tSafe("promotions.search.emptyFiltered", "No campaigns match this filter.")
+          : tSafe("no.promotions.yet", "No promotions are running right now.")
+      );
+      return;
+    }
+
+    items.forEach((camp) => {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "modal-menu-item promotion-item";
+
+      const campaignName =
+        String(camp?.campaignName || "").trim() ||
+        tSafe("promotion.unnamed", "Promotion");
+      const locationName = String(camp?.locationName || "").trim();
+      const productName = String(camp?.productName || camp?.offerType || "").trim();
+      const eligibilityText = String(camp?.eligibilityNotes || camp?.eligibilityType || '').trim();
+
+      const discountKind = String(camp?.discountKind || "").trim().toLowerCase();
+      const discountValue = toDiscountValue(camp?.discountValue);
+      const discountText =
+        (discountKind === "percent" && typeof discountValue === "number")
+          ? `${discountValue.toFixed(0)}% off your purchase`
+          : campaignName;
+
+      const summary = buildPromotionSummaryCard({
+        discountText,
+        campaignName,
+        locationName,
+        productName,
+        eligibilityText,
+        startDate: formatDate(camp?.startDate),
+        endDate: formatDate(camp?.endDate)
+      });
+
+      const label = summary.querySelector(".label");
+      if (label) {
+        row.appendChild(label.cloneNode(true));
+      }
+
+      const actionsCol = document.createElement("div");
+      actionsCol.className = "promotion-actions-col";
+      actionsCol.innerHTML = `
+        <span class="promotion-chevron" aria-hidden="true">▾</span>
+        <button type="button" class="promotion-lpm-link" aria-label="Open location">➡️</button>
+      `;
+      row.appendChild(actionsCol);
+
+      const locIdent = String(
+        camp?.locationID ||
+        camp?.locationId ||
+        camp?.locationSlug ||
+        camp?.slug ||
+        camp?.locationULID ||
+        ''
+      ).trim();
+
+      if (locIdent) row.setAttribute('data-locationid', locIdent);
+
+      row.addEventListener("click", () => {
+        hideModal("promotions-modal");
+        openPromotionQrModal(row, {
+          locationID: locIdent,
+          locationName,
+          name: locationName,
+          displayName: locationName,
+          campaignKey: String(camp?.campaignKey || '').trim()
+        });
+      });
+
+      actionsCol.querySelector('.promotion-lpm-link')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        hideModal("promotions-modal");
+
+        if (!locIdent) return;
+
+        sessionStorage.setItem('navigen.internalLpNav', '1');
+        window.location.href = `${location.origin}/?lp=${encodeURIComponent(locIdent)}`;
+      });
+
+      list.appendChild(row);
+    });
+  };
+
+  const rootSearch =
+    document.getElementById('search') ||
+    document.querySelector('input#search') ||
+    document.querySelector('input[type="search"]');
+
+  const cloned = rootSearch ? rootSearch.cloneNode(true) : document.createElement('input');
+  const input = (cloned instanceof HTMLInputElement) ? cloned : document.createElement('input');
+
+  input.type = 'search';
+  input.id = 'promotions-search';
+  input.spellcheck = false;
+  input.autocapitalize = 'off';
+  input.autocomplete = 'off';
+  input.value = '';
+
+  const placeholder = tSafe('promotions.search.placeholder', 'Search here…').trim();
+  input.placeholder = placeholder.startsWith('🔍') ? placeholder : `🔍 ${placeholder}`;
+
+  const searchRow = document.createElement('div');
+  searchRow.className = 'select-location-search-row';
+
+  const searchLeft = document.createElement('div');
+  searchLeft.className = 'select-location-search-left';
+
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'clear-x';
+  clearBtn.id = 'promotions-clear-search';
+  clearBtn.textContent = 'x';
+  clearBtn.style.display = 'none';
+  clearBtn.setAttribute('aria-label', 'Clear search');
+
+  searchLeft.appendChild(input);
+  searchLeft.appendChild(clearBtn);
+  searchRow.appendChild(searchLeft);
+
+  const infoBtn = document.createElement('button');
+  infoBtn.type = 'button';
+  infoBtn.className = 'select-location-info-btn';
+  infoBtn.textContent = 'ℹ️';
+  infoBtn.setAttribute('aria-label', tSafe('promotions.search.infoAria', 'Filter help'));
+  infoBtn.addEventListener('click', () => {
+    showToast(
+      tSafe(
+        'promotions.search.info',
+        'Filter campaigns by location, campaign name, product or service, eligibility, discount, or dates like "2026-03", "26-03", "03".'
+      ),
+      5000
+    );
+  });
+  searchRow.appendChild(infoBtn);
+
+  const closeInBar = topBar.querySelector('.modal-close');
+  if (closeInBar) topBar.insertBefore(searchRow, closeInBar);
+  else topBar.appendChild(searchRow);
+
+  let running = [];
+
+  const syncClear = () => {
+    const hasValue = !!String(input.value || '').trim();
+    clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
+  };
+
+  const applyFilter = () => {
+    const q = String(input.value || '').trim().toLowerCase();
+    syncClear();
+    const filtered = q ? running.filter((camp) => buildSearchText(camp).includes(q)) : running;
+    renderList(filtered, !!q);
+  };
+
+  input.addEventListener('input', applyFilter);
+
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+    syncClear();
+  });
+
+  syncClear();
+
   const segs = location.pathname.split("/").filter(Boolean);
   if (/^[a-z]{2}$/i.test(segs[0] || "")) segs.shift();
   const pageKey =
@@ -6712,93 +6942,13 @@ export function showPromotionsModal() {
   fetch(`/api/campaigns/active?context=${encodeURIComponent(pageKey)}`, { cache: "no-store" })
     .then((res) => (res.ok ? res.json() : { items: [] }))
     .then((payload) => {
-      const campaigns = Array.isArray(payload?.items) ? payload.items : [];
-      if (!Array.isArray(campaigns) || campaigns.length === 0) {
-        renderEmpty(t("no.promotions.yet") || "No promotions are running right now.");
-        showModal("promotions-modal");
-        setupTapOutClose("promotions-modal");
-        return;
-      }
-
-      // campaigns are already filtered server-side (active + in-window + context match)
-      const running = campaigns;
-
-      if (!running.length) {
-        renderEmpty(t("no.promotions.yet") || "No promotions are running right now.");
-        showModal("promotions-modal");
-        setupTapOutClose("promotions-modal");
-        return;
-      }
-
-      const formatDate = (value) => {
-        if (!value) return "";
-        // Sheet dates are already YYYY-MM-DD; render as-is to avoid timezone shifts.
-        const s = String(value).trim();
-        return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
-      };
-
-      running.forEach((camp) => {
-        const row = document.createElement("button");
-        row.type = "button";
-        row.className = "modal-menu-item promotion-item";
-
-        const campaignName = String(camp.campaignName || "").trim();
-        const locationName = String(camp.locationName || "").trim();
-        const startStr = formatDate(camp.startDate);
-        const endStr = formatDate(camp.endDate);
-        const range = startStr && endStr ? `${startStr} \u2192 ${endStr}` : "";
-
-        // Ensure Promotion Details can always resolve the campaign location
-        const locIdent = String(camp.locationID || camp.locationId || camp.locationSlug || camp.slug || '').trim();
-        if (locIdent) row.setAttribute('data-locationid', locIdent);
-
-        // Promotions modal row: right column has chevron (top) + ➡️ (bottom).
-        // - Clicking the row opens the Promotion Details modal (existing behavior).
-        // - Clicking ➡️ opens the LPM for the campaign location (requested behavior).
-        row.innerHTML = `
-          <div class="label" style="flex:1 1 auto; min-width:0;">
-            <strong>${campaignName || (t("promotion.unnamed") || "Promotion")}</strong><br>
-            ${locationName ? `<small>${locationName}</small><br>` : ""}
-            ${range ? `<small>${range}</small>` : ""}
-          </div>
-
-          <div class="promotion-actions-col" aria-hidden="false">
-            <span class="promotion-chevron" aria-hidden="true">▾</span>
-            <button type="button" class="promotion-lpm-link" aria-label="Open location">➡️</button>
-          </div>
-        `;
-
-        row.addEventListener("click", () => {
-          hideModal("promotions-modal");
-          openPromotionQrModal(row, {
-            locationID: camp.locationID || camp.locationId || camp.locationSlug || camp.slug,
-            locationName: camp.locationName,
-            name: camp.locationName,
-            displayName: camp.locationName
-          });
-        });
-
-        // ➡️ opens the LPM hosting the campaign (same-tab navigation; app boot opens ?lp=...).
-        row.querySelector('.promotion-lpm-link')?.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          hideModal("promotions-modal");
-
-          const lp = String(camp.locationID || '').trim();
-          if (!lp) return;
-
-          sessionStorage.setItem('navigen.internalLpNav', '1');
-          window.location.href = `${location.origin}/?lp=${encodeURIComponent(lp)}`;
-        });
-
-        list.appendChild(row);
-      });
-
+      running = Array.isArray(payload?.items) ? payload.items : [];
+      applyFilter();
       showModal("promotions-modal");
       setupTapOutClose("promotions-modal");
     })
     .catch(() => {
-      renderEmpty(t("promotions.error") || "Promotions are unavailable right now.");
+      renderEmpty(tSafe("promotions.error", "Promotions are unavailable right now."));
       showModal("promotions-modal");
       setupTapOutClose("promotions-modal");
     });
