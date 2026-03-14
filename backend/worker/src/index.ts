@@ -1981,12 +1981,25 @@ export default {
           // - if exactly one active, proceed
           // - if multiple, force selection
           if (actives.length !== 1) {
-            const items = actives.map(r => ({
-              campaignKey: String(r?.campaignKey || "").trim(),
-              campaignName: String(r?.campaignName || "").trim(),
-              startDate: String(r?.startDate || "").trim(),
-              endDate: String(r?.endDate || "").trim()
-            }));
+            const items = actives.map(r => {
+              const dvRaw = (r?.campaignDiscountValue != null) ? r.campaignDiscountValue : null;
+              const discountValue =
+                (typeof dvRaw === "number") ? dvRaw :
+                (typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw))) ? Number(dvRaw) :
+                null;
+
+              return {
+                campaignKey: String(r?.campaignKey || "").trim(),
+                campaignName: String(r?.campaignName || "").trim(),
+                productName: String(r?.productName || "").trim(),
+                startDate: String(r?.startDate || "").trim(),
+                endDate: String(r?.endDate || "").trim(),
+                eligibilityType: String(r?.eligibilityType || "").trim(),
+                eligibilityNotes: String(r?.eligibilityNotes || "").trim(),
+                discountKind: String(r?.discountKind || "").trim(),
+                discountValue
+              };
+            });
             return json({ error: { code: "multiple_active", message: "multiple active campaigns" }, items }, 409, { "cache-control": "no-store" });
           }
           var activeRow = actives[0];
@@ -3696,6 +3709,31 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
   // campaign entitlement (authoritative, KV-backed)
   const camp = await campaignEntitlementForUlid(env, locID);
 
+  // Expose the full active set so the LPM can distinguish single vs multiple campaigns.
+  const rawCampaignRows = await env.KV_STATUS.get(campaignsByUlidKey(locID), { type: "json" }) as any;
+  const campaignRows: any[] = Array.isArray(rawCampaignRows) ? rawCampaignRows : [];
+  const nowMs = Date.now();
+
+  const activeCampaignKeys = campaignRows
+    .filter((row: any) => {
+      if (!row || String(row?.locationID || "").trim() !== locID) return false;
+
+      const st = String(row?.statusOverride || row?.status || "").trim().toLowerCase();
+      if (st !== "active") return false;
+
+      const startMs = parseYmdUtcMs(String(row?.startDate || ""));
+      const endMs = parseYmdUtcMs(String(row?.endDate || ""));
+      if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return false;
+
+      if (nowMs < startMs) return false;
+      if (nowMs > (endMs + 24 * 60 * 60 * 1000 - 1)) return false;
+
+      return true;
+    })
+    .map((row: any) => String(row?.campaignKey || "").trim())
+    .filter(Boolean)
+    .filter((value: string, index: number, arr: string[]) => arr.indexOf(value) === index);
+
   return json(
     {
       locationID: locID,
@@ -3709,7 +3747,8 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
       // Campaign entitlement spine (authoritative)
       campaignEntitled: camp.entitled,
       campaignEndsAt: camp.endDate,
-      activeCampaignKey: camp.campaignKey
+      activeCampaignKey: camp.campaignKey,
+      activeCampaignKeys
     },
     200,
     { "cache-control": "no-store" }

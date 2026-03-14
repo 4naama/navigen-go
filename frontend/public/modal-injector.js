@@ -401,7 +401,7 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
   inner.className = 'modal-body-inner';
 
   const note = document.createElement('p');
-  note.className = 'muted muted note';
+  note.className = 'muted muted-note';
   note.style.textAlign = 'left';
   note.textContent =
     (typeof t === 'function' && t('campaign.activePicker.note')) ||
@@ -412,22 +412,41 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
   list.className = 'modal-menu-list';
   inner.appendChild(list);
 
-  const fmt = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(String(s||'').trim()) ? String(s).trim() : '');
+  const fmt = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(String(s || '').trim()) ? String(s).trim() : '');
+  const locName = String(locationName || '').trim();
+
   items.forEach((c) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'modal-menu-item';
-    const nm = String(c?.campaignName || '').trim() || ((typeof t==='function' && t('promotion.unnamed')) || 'Promotion');
-    const sd = fmt(c?.startDate);
-    const ed = fmt(c?.endDate);
-    const range = (sd && ed) ? `${sd} → ${ed}` : '';
-    btn.innerHTML = `
-      <span class="icon-img">🎁</span>
-      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-        <strong>${nm}</strong>
-        ${range ? `<br><small>${range}</small>` : ``}
-      </span>
-    `;
+
+    const campaignName =
+      String(c?.campaignName || '').trim() ||
+      ((typeof t === 'function' && t('promotion.unnamed')) || 'Promotion');
+
+    const productName = String(c?.productName || '').trim();
+    const eligibilityText = String(c?.eligibilityNotes || c?.eligibilityType || '').trim();
+
+    const discountKind = String(c?.discountKind || '').trim().toLowerCase();
+    const discountValue = typeof c?.discountValue === 'number' ? c.discountValue : null;
+
+    const discountText =
+      (discountKind === 'percent' && typeof discountValue === 'number')
+        ? `${discountValue.toFixed(0)}% off your purchase`
+        : campaignName;
+
+    const summary = buildPromotionSummaryCard({
+      discountText,
+      campaignName,
+      locationName: locName,
+      productName,
+      eligibilityText,
+      startDate: fmt(c?.startDate),
+      endDate: fmt(c?.endDate)
+    });
+
+    btn.innerHTML = summary.innerHTML;
+
     btn.addEventListener('click', () => {
       hideModal(id);
       openPromotionQrModal(document.getElementById('location-profile-modal'), {
@@ -437,6 +456,7 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
         campaignKey: String(c?.campaignKey || '').trim()
       });
     });
+
     list.appendChild(btn);
   });
 
@@ -1098,11 +1118,7 @@ export async function showLocationProfileModal(data) {
             (typeof t === 'function' && t('lpm.status.taken.desc')) ||
             'Already operated.';
 
-          const giftLine =
-            (typeof t === 'function' && t('lpm.campaign.single')) ||
-            '🎁️ Single campaign';
-
-          el.innerHTML = `${statusLine1}<br>${statusLine2}<br>${giftLine}`;
+          el.innerHTML = `${statusLine1}<br>${statusLine2}`;
           el.style.display = 'block';
         }
       } catch {}
