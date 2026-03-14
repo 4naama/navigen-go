@@ -842,5 +842,14 @@
   "promotions.search.placeholder": "Search here…",
   "promotions.search.infoAria": "Filter help",
   "promotions.search.info": "Filter campaigns by location, campaign name, product or service, eligibility, discount, or dates like \"2026-03\", \"26-03\", \"03\".",
-  "promotions.search.emptyFiltered": "No campaigns match this filter."
+  "promotions.search.emptyFiltered": "No campaigns match this filter.",
+  "promotions.pinnedFilter.off": "Show pinned campaigns only",
+  "promotions.pinnedFilter.on": "Showing pinned campaigns only",
+  "promotion.pin": "Pin campaign",
+  "promotion.unpin": "Unpin campaign",
+  "promotion.pin.toast": "Campaign pinned",
+  "promotion.unpin.toast": "Campaign unpinned",
+  "promotion.share": "Share campaign",
+  "promotion.share.copied": "Promotion link copied",
+  "promotion.openLocation": "Open location"
 }

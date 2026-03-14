@@ -3345,8 +3345,9 @@ select.input{
   padding-inline: 0;              /* inner container adds no extra gutter */
 }
 
-/* Promotions modal: same searchable top bar pattern as SYB */
+/* Promotions modal: hard-match the SYB search header geometry */
 #promotions-modal .modal-top-bar{
+  padding: 16px 1.5em 12px 1.5em;
   flex-wrap: wrap;
 }
 
@@ -3370,12 +3371,55 @@ select.input{
 
 #promotions-modal .select-location-search-left{
   flex: 1 1 auto;
+  padding-right: 0;
+  max-width: none;
   width: 72%;
   position: relative;
 }
 
+#promotions-modal .select-location-search-left input{
+  width: 100%;
+}
+
 #promotions-modal #promotions-search{
   width: 100%;
+  box-sizing: border-box;
+
+  height: 36px;
+  margin: 0;
+  padding: 8px 10px;
+  background: #fff;
+
+  border: 1px solid var(--search-border, #d7dde4);
+  border-radius: 6px;
+
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  outline: none;
+}
+
+#promotions-modal #promotions-search:not(:placeholder-shown){
+  padding-right: 2.25rem;
+}
+
+#promotions-modal #promotions-search:not(:placeholder-shown) + #promotions-clear-search{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#promotions-modal #promotions-search::placeholder{
+  font-weight: 400;
+  color: #666;
+  opacity: 1;
+}
+
+#promotions-modal #promotions-search:focus,
+#promotions-modal #promotions-search:focus-visible{
+  border-color: var(--search-focus, #7aa2ff);
+  box-shadow: 0 0 0 3px var(--search-shadow, rgba(122,162,255,.2));
 }
 
 #promotions-modal .select-location-search-left #promotions-clear-search{
@@ -3387,7 +3431,8 @@ select.input{
   z-index: 11;
 }
 
-#promotions-modal .select-location-info-btn{
+#promotions-modal .select-location-info-btn,
+#promotions-modal .promotions-pin-filter-btn{
   position: static;
   flex: 0 0 36px;
   width: 36px;
@@ -3397,6 +3442,44 @@ select.input{
   background: #fff;
   cursor: pointer;
   line-height: 1;
+}
+
+#promotions-modal .promotions-pin-filter-btn.is-active{
+  background: #e8f0fe;
+  border-color: #93c5fd;
+}
+
+/* Promotion Details secondary CTA row: emoji-only buttons, matching the compact CTA style */
+.promotion-detail-secondary-ctas{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  margin: 0.75em 0 0.25em;
+}
+
+.promotion-detail-secondary-ctas .modal-footer-button{
+  width:44px;
+  height:44px;
+  padding:0;
+  border-radius:12px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:#e2e8f0;
+  border:1px solid var(--search-border, #d6dbe1);
+  font-size:20px;
+  line-height:1;
+}
+
+.promotion-detail-secondary-ctas .modal-footer-button:hover{
+  background:#dbe3ef;
+  transform:translateY(-1px);
+}
+
+.promotion-detail-secondary-ctas .modal-footer-button.is-active{
+  background:#1667cc;
+  border-color:#1667cc;
+  color:#fff;
 }
 
 /* Promotions modal: lift the whole modal off the bottom gesture/safe-area region on small screens (match My Stuff) */

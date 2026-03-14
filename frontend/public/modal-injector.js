@@ -7,6 +7,78 @@ function translatedOrFallback(key, fallback = '') {
   return raw && raw !== key ? raw : fallback;
 }
 
+const PINNED_PROMOTIONS_KEY = 'navigen.pinnedPromotions';
+
+function getPromotionPinKey({
+  campaignKey = '',
+  locationID = '',
+  campaignName = '',
+  startDate = '',
+  endDate = '',
+  qrUrl = ''
+} = {}) {
+  const explicit = String(campaignKey || '').trim();
+  if (explicit) return explicit;
+
+  try {
+    const fromQr = String(new URL(String(qrUrl || ''), location.origin).searchParams.get('camp') || '').trim();
+    if (fromQr) return fromQr;
+  } catch {
+    // ignore malformed URLs; fall through to the deterministic composite key
+  }
+
+  return [
+    String(locationID || '').trim(),
+    String(campaignName || '').trim(),
+    String(startDate || '').trim(),
+    String(endDate || '').trim()
+  ].filter(Boolean).join('::');
+}
+
+function readPinnedPromotions() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PINNED_PROMOTIONS_KEY) || '[]');
+    return Array.isArray(raw)
+      ? Array.from(new Set(raw.map(v => String(v || '').trim()).filter(Boolean)))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePinnedPromotions(keys) {
+  try {
+    const next = Array.from(new Set((Array.isArray(keys) ? keys : []).map(v => String(v || '').trim()).filter(Boolean)));
+    localStorage.setItem(PINNED_PROMOTIONS_KEY, JSON.stringify(next));
+  } catch {
+    // storage failures must never break UI
+  }
+}
+
+function isPinnedPromotion(entry) {
+  const key = getPromotionPinKey(entry);
+  return !!key && readPinnedPromotions().includes(key);
+}
+
+function setPinnedPromotion(entry, pinned) {
+  const key = getPromotionPinKey(entry);
+  if (!key) return false;
+
+  const current = readPinnedPromotions();
+  const next = pinned
+    ? [key, ...current.filter(v => v !== key)]
+    : current.filter(v => v !== key);
+
+  writePinnedPromotions(next);
+  return pinned;
+}
+
+function togglePinnedPromotion(entry) {
+  const nextPinned = !isPinnedPromotion(entry);
+  setPinnedPromotion(entry, nextPinned);
+  return nextPinned;
+}
+
 // ---------------------------------------------------------------------------
 // Campaign entitlement pre-resolver (deterministic; no post-render repaint)
 // ---------------------------------------------------------------------------
@@ -652,6 +724,103 @@ async function openPromotionQrModal(modal, data) {
       pWarn.style.opacity = '0.8';
       inner.appendChild(pWarn);
     }
+
+    const resolvedCampaignKey = (() => {
+      const explicit = String(data?.campaignKey || payload?.campaignKey || '').trim();
+      if (explicit) return explicit;
+      try {
+        return String(new URL(qrUrl, location.origin).searchParams.get('camp') || '').trim();
+      } catch {
+        return '';
+      }
+    })();
+
+    const pinnedEntry = {
+      campaignKey: resolvedCampaignKey,
+      locationID: locationIdOrSlug,
+      campaignName,
+      startDate,
+      endDate,
+      qrUrl
+    };
+
+    const secondaryCtas = document.createElement('div');
+    secondaryCtas.className = 'promotion-detail-secondary-ctas';
+
+    const pinBtn = document.createElement('button');
+    pinBtn.type = 'button';
+    pinBtn.className = 'modal-footer-button';
+    pinBtn.textContent = '⭐';
+
+    const syncPinBtn = () => {
+      const pinned = isPinnedPromotion(pinnedEntry);
+      pinBtn.classList.toggle('is-active', pinned);
+      pinBtn.setAttribute('aria-pressed', pinned ? 'true' : 'false');
+
+      const label = pinned
+        ? tmpl('promotion.unpin', 'Unpin campaign')
+        : tmpl('promotion.pin', 'Pin campaign');
+
+      pinBtn.setAttribute('aria-label', label);
+      pinBtn.title = label;
+    };
+
+    pinBtn.addEventListener('click', () => {
+      const pinnedNow = togglePinnedPromotion(pinnedEntry);
+      syncPinBtn();
+      showToast(
+        pinnedNow
+          ? tmpl('promotion.pin.toast', 'Campaign pinned')
+          : tmpl('promotion.unpin.toast', 'Campaign unpinned'),
+        1600
+      );
+    });
+
+    syncPinBtn();
+
+    const shareBtn = document.createElement('button');
+    shareBtn.type = 'button';
+    shareBtn.className = 'modal-footer-button';
+    shareBtn.textContent = '📤';
+    shareBtn.setAttribute('aria-label', tmpl('promotion.share', 'Share campaign'));
+    shareBtn.title = tmpl('promotion.share', 'Share campaign');
+    shareBtn.addEventListener('click', async () => {
+      const shareUrl = `${location.origin}/?lp=${encodeURIComponent(locationIdOrSlug)}`;
+      const shareTitle = campaignName || discountText || 'Promotion';
+      const shareText = [shareTitle, locName].filter(Boolean).join(' — ');
+
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: shareTitle,
+            text: shareText,
+            url: shareUrl
+          });
+        } else if (navigator.clipboard) {
+          await navigator.clipboard.writeText([shareText, shareUrl].filter(Boolean).join('\n'));
+          showToast(tmpl('promotion.share.copied', 'Promotion link copied'), 1600);
+        }
+      } catch (_e) {
+        // sharing must never break Promotion Details
+      }
+    });
+
+    const openLocationBtn = document.createElement('button');
+    openLocationBtn.type = 'button';
+    openLocationBtn.className = 'modal-footer-button';
+    openLocationBtn.textContent = '➡️';
+    openLocationBtn.setAttribute('aria-label', tmpl('promotion.openLocation', 'Open location'));
+    openLocationBtn.title = tmpl('promotion.openLocation', 'Open location');
+    openLocationBtn.addEventListener('click', () => {
+      hideModal(modalId);
+      sessionStorage.setItem('navigen.internalLpNav', '1');
+      window.location.href = `${location.origin}/?lp=${encodeURIComponent(locationIdOrSlug)}`;
+    });
+
+    secondaryCtas.appendChild(pinBtn);
+    secondaryCtas.appendChild(shareBtn);
+    secondaryCtas.appendChild(openLocationBtn);
+    inner.appendChild(secondaryCtas);
 
     // 9) Button: “I’m at the cashier — 🔳 show my code”
     const btnWrap = document.createElement('div');
@@ -6887,6 +7056,18 @@ export function showPromotionsModal() {
   searchLeft.appendChild(clearBtn);
   searchRow.appendChild(searchLeft);
 
+  const pinFilterBtn = document.createElement('button');
+  pinFilterBtn.type = 'button';
+  pinFilterBtn.className = 'select-location-info-btn promotions-pin-filter-btn';
+  pinFilterBtn.textContent = '⭐';
+  pinFilterBtn.setAttribute('aria-pressed', 'false');
+  pinFilterBtn.setAttribute(
+    'aria-label',
+    tSafe('promotions.pinnedFilter.off', 'Show pinned campaigns only')
+  );
+  pinFilterBtn.title = tSafe('promotions.pinnedFilter.off', 'Show pinned campaigns only');
+  searchRow.appendChild(pinFilterBtn);
+
   const infoBtn = document.createElement('button');
   infoBtn.type = 'button';
   infoBtn.className = 'select-location-info-btn';
@@ -6908,17 +7089,65 @@ export function showPromotionsModal() {
   else topBar.appendChild(searchRow);
 
   let running = [];
+  let pinnedOnly = false;
+
+  const pinEntryFor = (camp) => ({
+    campaignKey: String(camp?.campaignKey || '').trim(),
+    locationID: String(
+      camp?.locationID ||
+      camp?.locationId ||
+      camp?.locationSlug ||
+      camp?.slug ||
+      camp?.locationULID ||
+      ''
+    ).trim(),
+    campaignName: String(camp?.campaignName || '').trim(),
+    startDate: formatDate(camp?.startDate),
+    endDate: formatDate(camp?.endDate)
+  });
+
+  const orderPinnedFirst = (items) => (
+    Array.isArray(items) ? items : []
+  )
+    .map((camp, index) => ({
+      camp,
+      index,
+      pinned: isPinnedPromotion(pinEntryFor(camp))
+    }))
+    .sort((a, b) => (Number(b.pinned) - Number(a.pinned)) || (a.index - b.index))
+    .map(({ camp }) => camp);
 
   const syncClear = () => {
     const hasValue = !!String(input.value || '').trim();
     clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
   };
 
+  const syncPinnedFilterBtn = () => {
+    pinFilterBtn.classList.toggle('is-active', pinnedOnly);
+    pinFilterBtn.setAttribute('aria-pressed', pinnedOnly ? 'true' : 'false');
+
+    const label = pinnedOnly
+      ? tSafe('promotions.pinnedFilter.on', 'Showing pinned campaigns only')
+      : tSafe('promotions.pinnedFilter.off', 'Show pinned campaigns only');
+
+    pinFilterBtn.setAttribute('aria-label', label);
+    pinFilterBtn.title = label;
+  };
+
   const applyFilter = () => {
     const q = String(input.value || '').trim().toLowerCase();
     syncClear();
-    const filtered = q ? running.filter((camp) => buildSearchText(camp).includes(q)) : running;
-    renderList(filtered, !!q);
+    syncPinnedFilterBtn();
+
+    let filtered = pinnedOnly
+      ? running.filter((camp) => isPinnedPromotion(pinEntryFor(camp)))
+      : running.slice();
+
+    if (q) {
+      filtered = filtered.filter((camp) => buildSearchText(camp).includes(q));
+    }
+
+    renderList(orderPinnedFirst(filtered), !!q || pinnedOnly);
   };
 
   input.addEventListener('input', applyFilter);
@@ -6930,7 +7159,13 @@ export function showPromotionsModal() {
     syncClear();
   });
 
+  pinFilterBtn.addEventListener('click', () => {
+    pinnedOnly = !pinnedOnly;
+    applyFilter();
+  });
+
   syncClear();
+  syncPinnedFilterBtn();
 
   const segs = location.pathname.split("/").filter(Boolean);
   if (/^[a-z]{2}$/i.test(segs[0] || "")) segs.shift();

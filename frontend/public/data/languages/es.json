@@ -842,5 +842,14 @@
   "promotions.search.placeholder": "Buscar aquí…",
   "promotions.search.infoAria": "Ayuda de filtro",
   "promotions.search.info": "Filtra campañas por ubicación, nombre de campaña, producto o servicio, elegibilidad, descuento o fechas como “2026-03”, “26-03”, “03”.",
-  "promotions.search.emptyFiltered": "Ninguna campaña coincide con este filtro."
+  "promotions.search.emptyFiltered": "Ninguna campaña coincide con este filtro.",
+  "promotions.pinnedFilter.off": "",
+  "promotions.pinnedFilter.on": "",
+  "promotion.pin": "",
+  "promotion.unpin": "",
+  "promotion.pin.toast": "",
+  "promotion.unpin.toast": "",
+  "promotion.share": "",
+  "promotion.share.copied": "",
+  "promotion.openLocation": ""
 }
