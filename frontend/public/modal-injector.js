@@ -4865,7 +4865,7 @@ export async function createOwnerCenterModal() {
   // 🔑 Restore owner access (Owner Center secondary action)
   const restoreBtn = document.createElement('button');
   restoreBtn.type = 'button';
-  restoreBtn.className = 'modal-menu-item';
+  restoreBtn.className = 'modal-menu-item owner-center-restore-card';
   restoreBtn.innerHTML = `
     <span class="icon-img">🔑</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
@@ -4902,6 +4902,13 @@ export async function createOwnerCenterModal() {
   };
 
   ulids = await fetchSessionsOnce();
+
+  let activeUlid = '';
+  try {
+    const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
+    const jj = rr.ok ? await rr.json().catch(() => null) : null;
+    activeUlid = String(jj?.ulid || '').trim();
+  } catch { activeUlid = ''; }
 
   // fallback injection (UI only): show the restored ULID if registry is still empty
   if ((!ulids || !ulids.length) && lastRestored) ulids = [lastRestored];
@@ -4942,12 +4949,19 @@ export async function createOwnerCenterModal() {
 
       const label = name || slug || u;
 
+      const isLive = !!activeUlid && activeUlid === u;
+
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'modal-menu-item oc-card';
+      if (isLive) btn.classList.add('oc-card-live');
+
       btn.innerHTML = `
         <div class="oc-row1">
-          <span class="icon-img" aria-hidden="true">📍</span>
+          <span class="oc-rail" aria-hidden="true">
+            <span class="icon-img">📍</span>
+            <span class="oc-live-flag" title="Active on this device">⚡</span>
+          </span>
           <span class="oc-name" style="flex:1 1 auto; min-width:0; text-align:left;">
             <strong>${label}</strong>
           </span>
@@ -6834,10 +6848,11 @@ export function createPromotionsModal() {
   const modal = injectModal({
     id: "promotions-modal",
     layout: "menu", // ensures .modal-content.modal-menu → header sits flush (matches My Stuff pattern)
-    bodyHTML: `<div id="promotions-body" class="modal-body"></div>`
+    bodyHTML: `<div id="promotions-body"></div>`
   });
 
   modal.classList.add("hidden");
+  modal.classList.add("syb-modal");
 
   const topBar = document.createElement("div");
   topBar.className = "modal-top-bar";
