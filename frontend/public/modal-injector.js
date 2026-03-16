@@ -3535,16 +3535,33 @@ async function openOwnerSettingsForTarget({ target, locationName, noSelection })
     return;
   }
 
-  // 403 can mean mismatch vs claim; detect if an op_sess exists on this device.
+  // 403 can mean either:
+  // - this device is active for a different listing, or
+  // - this listing simply has no active entitlement yet.
+  // Decide mismatch only when the selected target and the device-bound session resolve to different ULIDs.
+  let activeUlid = '';
   let hasSess = false;
   try {
     const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
     const jj = rr.ok ? await rr.json().catch(() => null) : null;
     hasSess = (jj?.hasOpSessCookie === true) && (jj?.kvHit === true);
-  } catch { hasSess = false; }
+    activeUlid = String(jj?.ulid || '').trim();
+  } catch {
+    hasSess = false;
+    activeUlid = '';
+  }
+
+  let targetUlid = '';
+  try {
+    targetUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(tgt) ? tgt : await resolveULIDFor(tgt);
+  } catch {
+    targetUlid = '';
+  }
+
+  const isMismatch = !!hasSess && !!activeUlid && !!targetUlid && activeUlid !== targetUlid;
 
   showOwnerSettingsModal({
-    variant: hasSess ? 'mismatch' : 'claim',
+    variant: isMismatch ? 'mismatch' : 'claim',
     locationIdOrSlug: tgt,
     locationName: String(locationName || '').trim(),
     noSelection: noSelection === true
@@ -4533,12 +4550,12 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   if (variant === 'restore') {
     rawExpl = _ownerText(
       'owner.settings.restore.explain',
-      'Owner access on this device is missing.\nManage campaigns 🎯 or restore access 🔑 on this device.'
+      'Owner access for this listing is not active on this device yet.\nUse 🔑 Restore owner access to add it here, or run a campaign 🎯 if access has not been set up yet.'      
     );
   } else if (variant === 'mismatch') {
     rawExpl = _ownerText(
       'owner.settings.mismatch.explain',
-      'You’re currently signed in for a different business on this device.\n\nTo manage analytics 📈 or campaigns 🎯 for the selected location, switch businesses 🧩 or sign out 🧹 below.'
+      'This device is currently active for a different listing.\n\nTo manage the selected listing here, open Owner Center and switch this device to that listing.'      
     );
   } else if (variant === 'claim') {
     rawExpl = _ownerText(
@@ -4609,7 +4626,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       id: 'owner-center',
       icon: '🧩️',
       title: _ownerText('owner.center.title', 'Owner Center'),
-      desc: _ownerText('root.bo.ownerCenter.desc', 'Switch between locations you manage on this device.'),
+      desc: _ownerText('root.bo.ownerCenter.desc', 'Choose which listing is active on this device.'),      
       onClick: () => {
         hideModal(id);
         showOwnerCenterModal();
@@ -4655,7 +4672,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       id: 'owner-center',
       icon: '🧩',
       title: _ownerText('owner.settings.restore.ownerCenter.title', 'Owner Center'),
-      desc: _ownerText('owner.settings.restore.ownerCenter.desc', 'Switch between locations you manage on this device.'),
+      desc: _ownerText('owner.settings.restore.ownerCenter.desc', 'Choose which listing is active on this device.'),      
       onClick: () => {
         hideModal(id);
         showOwnerCenterModal();
@@ -4677,7 +4694,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       id: 'owner-clear-session',
       icon: '🧹',
       title: _ownerText('dash.blocked.clearSession.title', 'Sign out on this device'),
-      desc: _ownerText('dash.blocked.clearSession.desc', 'Use this if you want to switch to a different business on this device.'),
+      desc: _ownerText('dash.blocked.clearSession.desc', 'Clear the active owner session from this device.'),
       onClick: () => {
         showActionConfirmModal({
           title: (typeof t === 'function' && t('owner.signout.confirmTitle')) || 'Sign out on this device?',
@@ -4700,7 +4717,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       id: 'owner-center',
       icon: '🧩',
       title: _ownerText('owner.center.title', 'Owner Center'),
-      desc: _ownerText('root.bo.ownerCenter.desc', 'Switch between locations you manage on this device.'),
+      desc: _ownerText('root.bo.ownerCenter.desc', 'Choose which listing is active on this device.'),      
       onClick: () => {
         hideModal(id);
         showOwnerCenterModal();
@@ -4711,7 +4728,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       id: 'owner-clear-session',
       icon: '🧹',
       title: _ownerText('dash.blocked.clearSession.title', 'Sign out on this device'),
-      desc: _ownerText('dash.blocked.clearSession.desc', 'Use this if you want to switch to a different business on this device.'),
+      desc: _ownerText('dash.blocked.clearSession.desc', 'Clear the active owner session from this device.'),
       onClick: () => {
         showActionConfirmModal({
           title: (typeof t === 'function' && t('owner.signout.confirmTitle')) || 'Sign out on this device?',
@@ -4856,7 +4873,7 @@ export async function createOwnerCenterModal() {
   const note = document.createElement('p');
   note.textContent =
     (typeof t === 'function' && t('owner.center.note')) ||
-    'Owner access is stored on this device for security. To manage a business, tap it below. To add a business on a new device, use 🔑 Restore access once.';
+    'Owner access for the listings you can manage is stored on this device.\nTo manage one of them, tap the listing you want below.\nTo add another listing to this device, use 🔑 Restore owner access and follow the restore instructions.';
   note.style.textAlign = 'left';
   note.style.fontSize = '0.85em';
   note.style.opacity = '0.8';
@@ -4870,7 +4887,7 @@ export async function createOwnerCenterModal() {
     <span class="icon-img">🔑</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
       <strong>${t('root.bo.restore.title') || 'Restore owner access'}</strong><br>
-      <small>${t('root.bo.restore.desc') || 'Use your most recent Owner access email or Stripe receipt.'}</small>
+      <small>${t('root.bo.restore.desc') || 'Add another listing to this device using your owner email link or Stripe payment ID (pi_...).'}</small>
     </span>
   `;
   restoreBtn.addEventListener('click', (e) => {
@@ -4910,6 +4927,58 @@ export async function createOwnerCenterModal() {
     activeUlid = String(jj?.ulid || '').trim();
   } catch { activeUlid = ''; }
 
+  const switchFromOwnerCenter = async ({ targetUlid, locationLabel, afterSwitch }) => {
+    const performSwitch = async () => {
+      if (activeUlid && activeUlid === targetUlid) {
+        hideModal(id);
+        await afterSwitch?.();
+        return;
+      }
+
+      const sw = new URL('/owner/switch', location.origin);
+      sw.searchParams.set('ulid', targetUlid);
+      sw.searchParams.set('next', '/');
+
+      const r = await fetch(sw.toString(), {
+        cache: 'no-store',
+        credentials: 'include',
+        redirect: 'follow'
+      });
+
+      if (!r.ok) {
+        showToast((typeof t === 'function' && t('owner.center.switch.fail')) || 'Could not switch.', 2000);
+        return;
+      }
+
+      hideModal(id);
+      await afterSwitch?.();
+    };
+
+    if (activeUlid && activeUlid !== targetUlid) {
+      showActionConfirmModal({
+        title:
+          (typeof t === 'function' && t('owner.center.switch.confirmTitle')) ||
+          'Switch the active listing on this device?',
+        bodyLines: [
+          (typeof t === 'function' && t('owner.center.switch.confirmBody1')) ||
+            `The selected listing${locationLabel ? ` (“${locationLabel}”)` : ''} will become active on this device.`,
+          (typeof t === 'function' && t('owner.center.switch.confirmBody2')) ||
+            'Owner access is not changed globally.',
+          (typeof t === 'function' && t('owner.center.switch.confirmBody3')) ||
+            'You can switch again anytime in Owner Center.'
+        ],
+        confirmLabel:
+          (typeof t === 'function' && t('owner.center.switch.confirmCta')) ||
+          'Switch now',
+        danger: false,
+        onConfirm: performSwitch
+      });
+      return;
+    }
+
+    await performSwitch();
+  };
+  
   // fallback injection (UI only): show the restored ULID if registry is still empty
   if ((!ulids || !ulids.length) && lastRestored) ulids = [lastRestored];
 
@@ -4935,7 +5004,7 @@ export async function createOwnerCenterModal() {
     p.className = 'muted';
     p.textContent =
       (typeof t === 'function' && t('owner.center.empty')) ||
-      'No saved owner sessions on this device yet. Use Restore access once to add one.';
+      'No owner access is saved on this device yet. Use Restore owner access to add a listing to this device.';      
     list.appendChild(p);
   } else {
     for (const ulid of ulids) {
@@ -5056,20 +5125,16 @@ export async function createOwnerCenterModal() {
         markBusyLocal(btn, true);
 
         try {
-          const sw = new URL('/owner/switch', location.origin);
-          sw.searchParams.set('ulid', u);
-          sw.searchParams.set('next', '/');
-
-          const r = await fetch(sw.toString(), { cache: 'no-store', credentials: 'include', redirect: 'follow' });
-          if (!r.ok) {
-            showToast((typeof t === 'function' && t('owner.center.switch.fail')) || 'Could not switch.', 2000);
-            return;
-          }
-
-          hideModal(id);
-
           const locIdent = String(slug || u || '').trim();
-          await showCampaignManagementModal(locIdent, { openTab: 'new', preferEmptyDraft: true });
+          await switchFromOwnerCenter({
+            targetUlid: u,
+            locationLabel: label,
+            afterSwitch: async () => {
+              if (locIdent) {
+                await showCampaignManagementModal(locIdent, { openTab: 'new', preferEmptyDraft: true });
+              }
+            }
+          });
         } finally {
           markBusyLocal(btn, false);
         }
@@ -5112,18 +5177,13 @@ export async function createOwnerCenterModal() {
 
         markBusyLocal(btn, true);
         try {
-          const sw = new URL('/owner/switch', location.origin);
-          sw.searchParams.set('ulid', u);
-          sw.searchParams.set('next', '/');
-
-          const r = await fetch(sw.toString(), { cache: 'no-store', credentials: 'include', redirect: 'follow' });
-          if (!r.ok) {
-            showToast((typeof t === 'function' && t('owner.center.switch.fail')) || 'Could not switch.', 2000);
-            return;
-          }
-
-          hideModal(id);
-          await openOwnerSettingsForTarget({ target: u, locationName: name || slug || u });
+          await switchFromOwnerCenter({
+            targetUlid: u,
+            locationLabel: label,
+            afterSwitch: async () => {
+              await openOwnerSettingsForTarget({ target: u, locationName: name || slug || u });
+            }
+          });
         } finally {
           markBusyLocal(btn, false);
         }

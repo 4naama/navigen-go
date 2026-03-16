@@ -481,11 +481,11 @@ async function renderAccessBlocked({ status, detail }) {
 
   const restoreTitle =
     (typeof t === 'function' && t('owner.settings.restore.action.title')) ||
-    'Restore access';
+    'Restore owner access';
 
   const restoreDesc =
     (typeof t === 'function' && t('owner.settings.restore.action.desc')) ||
-    'Use your most recent Owner access email or Stripe receipt.';
+    'Add another listing to this device using your owner email link or Stripe payment ID (pi_...).';    
 
   // 403 can be either:
   // A) campaign required (entitlement inactive), or
@@ -497,7 +497,7 @@ async function renderAccessBlocked({ status, detail }) {
   }
 
   const msg403 = mismatchHint
-    ? `You are signed in for a different location: ${mismatchHint.name || mismatchHint.slug || mismatchHint.ulid}`
+    ? `This device is signed in for a different listing: ${mismatchHint.name || mismatchHint.slug || mismatchHint.ulid}`    
     : msg403Default;
 
   // Clear existing table area and render an interstitial card.
@@ -517,7 +517,7 @@ async function renderAccessBlocked({ status, detail }) {
           <p id="dash-device-access-info-body" style="display:none;opacity:.85;font-size:.9em;margin:.25rem 0 0;">
             ${
               (typeof t === 'function' && t('dash.blocked.deviceAccessInfo')) ||
-              'Owner access is stored on this device for security.\nTo open a different business, switch in Owner Center or sign out on this device.'
+              'Owner access for the listings you can manage is stored on this device.\nIf you need a different listing here, switch to it in Owner Center on this device.'              
             }
           </p>
           <p>${status === 401 ? msg401 : msg403}</p>
@@ -571,8 +571,7 @@ async function renderAccessBlocked({ status, detail }) {
               <span class="icon-img">🧹</span>
               <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
                 <strong>${(typeof t === 'function' && t('dash.blocked.clearSession.title')) || 'Sign out on this device'}</strong><br>
-                <small>${(typeof t === 'function' && t('dash.blocked.clearSession.desc')) || 'Use this if this device is signed in for the wrong business.'}</small>
-              </span>
+                <small>${(typeof t === 'function' && t('dash.blocked.clearSession.desc')) || 'Clear the active owner session from this device.'}</small>              </span>
             </button>            
           </div>
 
