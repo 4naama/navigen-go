@@ -4913,6 +4913,15 @@ export async function createOwnerCenterModal() {
   // fallback injection (UI only): show the restored ULID if registry is still empty
   if ((!ulids || !ulids.length) && lastRestored) ulids = [lastRestored];
 
+  // Keep the currently active business first in Owner Center.
+  if (Array.isArray(ulids) && ulids.length && activeUlid) {
+    const deduped = Array.from(new Set(ulids.map(v => String(v || '').trim()).filter(Boolean)));
+    ulids = [
+      ...deduped.filter(v => v === activeUlid),
+      ...deduped.filter(v => v !== activeUlid)
+    ];
+  }
+
   // Clear post-restore hint once sessions are visible again.
   if (Array.isArray(ulids) && ulids.length) {
     try {
@@ -4948,7 +4957,6 @@ export async function createOwnerCenterModal() {
       } catch {}
 
       const label = name || slug || u;
-
       const isLive = !!activeUlid && activeUlid === u;
 
       const btn = document.createElement('button');
@@ -4958,10 +4966,7 @@ export async function createOwnerCenterModal() {
 
       btn.innerHTML = `
         <div class="oc-row1">
-          <span class="oc-rail" aria-hidden="true">
-            <span class="icon-img">📍</span>
-            <span class="oc-live-flag" title="Active on this device">⚡</span>
-          </span>
+          <span class="oc-leading-slot icon-img" aria-hidden="true">📍</span>
           <span class="oc-name" style="flex:1 1 auto; min-width:0; text-align:left;">
             <strong>${label}</strong>
           </span>
@@ -4969,11 +4974,17 @@ export async function createOwnerCenterModal() {
         </div>
 
         <div class="oc-actions">
-          <button type="button" class="clear-x owner-center-remove"
-                  aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">🗑️</button>
+          <span class="oc-leading-slot oc-actions-left" aria-hidden="true">
+            <span class="oc-live-flag" title="Active on this device">⚡</span>
+          </span>
 
-          <button type="button" class="clear-x owner-center-launch"
-                  aria-label="${(typeof t === 'function' && t('owner.center.launch.title')) || 'Run a campaign'}">🚀</button>
+          <span class="oc-actions-right">
+            <button type="button" class="clear-x owner-center-remove"
+                    aria-label="${(typeof t === 'function' && t('owner.center.remove.title')) || 'Remove from this device'}">🗑️</button>
+
+            <button type="button" class="clear-x owner-center-launch"
+                    aria-label="${(typeof t === 'function' && t('owner.center.launch.title')) || 'Run a campaign'}">🚀</button>
+          </span>
         </div>
       `;
 

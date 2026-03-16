@@ -2644,14 +2644,14 @@ button:hover {
   box-sizing:border-box;      /* include padding in width */
 }
 
-/* OC card must be a 2-row stack: title row + actions row */
+/* OC card stays a clean 2-row stack: title row above, actions row below */
 .oc-card{
   display:flex;
   flex-direction:column;
   align-items:stretch;
 }
 
-/* Owner Center cards: single title row + action row (no slug row) */
+/* Owner Center cards: title row only, with a fixed left slot for 📍 */
 .oc-card .oc-row1{
   display:flex;
   align-items:flex-start;
@@ -2659,18 +2659,44 @@ button:hover {
   min-height:44px;
 }
 
-#owner-center-modal .oc-card .oc-rail{
+/* Shared left-slot width keeps 📍 on row 1 and ⚡ on row 2 vertically aligned */
+.oc-card .oc-leading-slot{
   flex:0 0 20px;
   width:20px;
-  min-height:44px;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
+  display:inline-flex;
   align-items:center;
-  align-self:stretch;
+  justify-content:center;
   line-height:1;
 }
 
+/* Action row: ⚡ on the left, CTA buttons on the right */
+.oc-card .oc-actions{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:10px;
+}
+
+/* Reserve the same left slot on the actions row for the live marker */
+.oc-card .oc-actions-left{
+  flex:0 0 20px;
+  width:20px;
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}
+
+/* Right-side CTA button group */
+.oc-card .oc-actions-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+/* Live marker stays hidden unless this card is the active one on the device */
 #owner-center-modal .oc-card .oc-live-flag{
   visibility:hidden;
   font-size:16px;
@@ -2679,14 +2705,6 @@ button:hover {
 
 #owner-center-modal .oc-card.oc-card-live .oc-live-flag{
   visibility:visible;
-}
-
-/* Action row: own line, right aligned, comfortable tap targets */
-.oc-card .oc-actions{
-  display:flex;
-  justify-content:center;   /* centered on 2nd row */
-  gap:12px;
-  margin-top:10px;
 }
 
 /* OC action buttons: match LPM-ish tap size */
@@ -2700,7 +2718,8 @@ button:hover {
   justify-content:center;
 }
 
-/* OC cards no longer render a slug row, but keep safe if any legacy node remains */
+/* Legacy safety: old rail/slug nodes should not affect the new layout */
+.oc-card .oc-rail{ display:none; }
 .oc-card .oc-slug{ display:none; }
 
 /* Owner Settings: Selected/Active context cards (informational, not clickable) */
