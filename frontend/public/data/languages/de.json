@@ -698,6 +698,8 @@
   "owner.center.remove.toast.ok": "Von diesem Gerät entfernt.",
   "owner.center.remove.toast.fail": "Dieser Standort konnte nicht von diesem Gerät entfernt werden.",
   "owner.center.remove.title": "Von diesem Gerät entfernen",
+  "owner.center.loading.title": "Eigentümerzentrum wird geladen…",
+  "owner.center.loading.desc": "Gespeicherte Einträge auf diesem Gerät werden geladen.",
   "campaign.funding.title": "Kampagnenfinanzierung",
   "campaign.funding.amountLabel": "Betrag (EUR)",
   "campaign.funding.continue": "Zur Zahlung fortfahren",

@@ -698,6 +698,8 @@
   "owner.center.remove.toast.ok": "Rimosso da questo dispositivo.",
   "owner.center.remove.toast.fail": "Impossibile rimuovere questa posizione da questo dispositivo.",
   "owner.center.remove.title": "Rimuovi da questo dispositivo",
+  "owner.center.loading.title": "Caricamento del Centro Proprietario…",
+  "owner.center.loading.desc": "Recupero delle attività salvate su questo dispositivo.",
   "campaign.funding.title": "Finanziamento della campagna",
   "campaign.funding.amountLabel": "Importo (EUR)",
   "campaign.funding.continue": "Procedi al pagamento",

@@ -4903,11 +4903,10 @@ export async function createOwnerCenterModal() {
   inner.appendChild(list);
 
   const loadingRow = document.createElement('div');
-  loadingRow.className = 'modal-menu-item';
+  loadingRow.className = 'modal-menu-item owner-center-loading';
   loadingRow.style.pointerEvents = 'none';
   loadingRow.innerHTML = `
-    <span aria-hidden="true"
-          style="width:12px;height:12px;border-radius:9999px;background:#67e8f9;display:inline-block;flex:0 0 12px;animation:navigenBusyPulse 1.6s ease-in-out infinite;"></span>
+    <span class="syb-status-dot syb-busy" aria-hidden="true"></span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
       <strong>${(typeof t === 'function' && t('owner.center.loading.title')) || 'Loading Owner Center…'}</strong><br>
       <small>${(typeof t === 'function' && t('owner.center.loading.desc')) || 'Getting listings saved on this device.'}</small>

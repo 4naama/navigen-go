@@ -698,6 +698,8 @@
   "owner.center.remove.toast.ok": "Eliminado de este dispositivo.",
   "owner.center.remove.toast.fail": "No se pudo eliminar esta ubicación de este dispositivo.",
   "owner.center.remove.title": "Eliminar de este dispositivo",
+  "owner.center.loading.title": "Cargando el Centro del Propietario…",
+  "owner.center.loading.desc": "Obteniendo ubicaciones guardadas en este dispositivo.",
   "campaign.funding.title": "Financiación de la campaña",
   "campaign.funding.amountLabel": "Cantidad (EUR)",
   "campaign.funding.continue": "Continuar al pago",

@@ -698,6 +698,8 @@
   "owner.center.remove.toast.ok": "הוסר ממכשיר זה.",
   "owner.center.remove.toast.fail": "לא ניתן להסיר מיקום זה ממכשיר זה.",
   "owner.center.remove.title": "הסר ממכשיר זה",
+  "owner.center.loading.title": "טוען את מרכז הבעלים…",
+  "owner.center.loading.desc": "טוען מיקומים שנשמרו במכשיר זה.",
   "campaign.funding.title": "מימון קמפיין",
   "campaign.funding.amountLabel": "סכום (EUR)",
   "campaign.funding.continue": "המשך לתשלום",

@@ -3241,6 +3241,22 @@ select.input{
   animation: navigenBusyPulse 1.6s ease-in-out infinite;
 }
 
+/* Owner Center loading card: use the same light-blue busy dot in the top-right corner */
+.owner-center-loading{
+  position:relative;
+}
+
+.owner-center-loading .syb-status-dot{
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:12px;
+  height:12px;
+  border-radius:9999px;
+  box-shadow:0 0 0 2px rgba(255,255,255,0.85);
+  pointer-events:none;
+}
+
 @keyframes navigenBusyPulse {
   0%   { opacity: 0.35; }
   50%  { opacity: 0.95; }

@@ -698,6 +698,8 @@
   "owner.center.remove.toast.ok": "Eltávolítva erről az eszközről.",
   "owner.center.remove.toast.fail": "Nem sikerült eltávolítani ezt a helyet erről az eszközről.",
   "owner.center.remove.title": "Eltávolítás erről az eszközről",
+  "owner.center.loading.title": "Tulajdonosi Központ betöltése…",
+  "owner.center.loading.desc": "Az eszközön mentett helyek betöltése.",
   "campaign.funding.title": "Kampány finanszírozása",
   "campaign.funding.amountLabel": "Összeg (EUR)",
   "campaign.funding.continue": "Tovább a fizetéshez",

@@ -698,6 +698,8 @@
   "owner.center.remove.toast.ok": "Supprimé de cet appareil.",
   "owner.center.remove.toast.fail": "Impossible de supprimer cet emplacement de cet appareil.",
   "owner.center.remove.title": "Supprimer de cet appareil",
+  "owner.center.loading.title": "Chargement du Centre Propriétaire…",
+  "owner.center.loading.desc": "Récupération des établissements enregistrés sur cet appareil.",
   "campaign.funding.title": "Financement de la campagne",
   "campaign.funding.amountLabel": "Montant (EUR)",
   "campaign.funding.continue": "Continuer vers le paiement",

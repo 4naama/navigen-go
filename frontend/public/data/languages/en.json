@@ -698,6 +698,8 @@
   "owner.center.remove.toast.ok": "Removed from this device.",
   "owner.center.remove.toast.fail": "Could not remove this location from this device.",
   "owner.center.remove.title": "Remove from this device",
+  "owner.center.loading.title": "Loading Owner Center…",
+  "owner.center.loading.desc": "Getting listings saved on this device.",
   "campaign.funding.title": "Campaign funding",
   "campaign.funding.amountLabel": "Amount (EUR)",
   "campaign.funding.continue": "Continue to payment",
