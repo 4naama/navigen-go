@@ -4906,7 +4906,6 @@ export async function createOwnerCenterModal() {
   loadingRow.className = 'modal-menu-item owner-center-loading';
   loadingRow.style.pointerEvents = 'none';
   loadingRow.innerHTML = `
-    <span class="syb-status-dot syb-busy" aria-hidden="true"></span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
       <strong>${(typeof t === 'function' && t('owner.center.loading.title')) || 'Loading Owner Center…'}</strong><br>
       <small>${(typeof t === 'function' && t('owner.center.loading.desc')) || 'Getting listings saved on this device.'}</small>
