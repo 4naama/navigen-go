@@ -4902,6 +4902,19 @@ export async function createOwnerCenterModal() {
   list.className = 'modal-menu-list';
   inner.appendChild(list);
 
+  const loadingRow = document.createElement('div');
+  loadingRow.className = 'modal-menu-item';
+  loadingRow.style.pointerEvents = 'none';
+  loadingRow.innerHTML = `
+    <span aria-hidden="true"
+          style="width:12px;height:12px;border-radius:9999px;background:#67e8f9;display:inline-block;flex:0 0 12px;animation:navigenBusyPulse 1.6s ease-in-out infinite;"></span>
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${(typeof t === 'function' && t('owner.center.loading.title')) || 'Loading Owner Center…'}</strong><br>
+      <small>${(typeof t === 'function' && t('owner.center.loading.desc')) || 'Getting listings saved on this device.'}</small>
+    </span>
+  `;
+  list.appendChild(loadingRow);
+
   // Load device-bound ULIDs
   let ulids = [];
 
@@ -5002,6 +5015,8 @@ export async function createOwnerCenterModal() {
   }
 
   if (!ulids.length) {
+    loadingRow.remove();
+
     const p = document.createElement('p');
     p.className = 'muted';
     p.textContent =
@@ -5193,6 +5208,8 @@ export async function createOwnerCenterModal() {
 
       list.appendChild(btn);
     }
+
+    loadingRow.remove();
   }
 
   // Desktop ESC support (scoped + self-cleaning)
@@ -6036,8 +6053,10 @@ export async function showOwnerCenterModal() {
   const id = 'owner-center-modal';
   // Always rebuild so the list is never stale/empty after Restore/Switch.
   document.getElementById(id)?.remove();
-  await createOwnerCenterModal();
+
+  const buildPromise = createOwnerCenterModal();
   showModal(id);
+  await buildPromise;
 }
 
 // ✅ Helper: View-by settings modal (button-less; uses standard .modal shell)

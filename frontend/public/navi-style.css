@@ -3248,7 +3248,6 @@ select.input{
 }
 
 /* Base status dot (universal) — makes the dot visible even outside SYB cards */
-.bo-menu-item .syb-status-dot,
 .modal-menu-item.syb-card .syb-status-dot,
 .oc-card .syb-status-dot{
   position:absolute;
