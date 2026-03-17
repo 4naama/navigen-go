@@ -687,7 +687,7 @@ function renderBusinessOwnersGroup() {
         titleKey: "root.bo.ownerCenter.title",
         descKey: "root.bo.ownerCenter.desc",
         onClick: async () => {
-          showOwnerCenterModal();
+          await showOwnerCenterModal();
         }
       },
       {
