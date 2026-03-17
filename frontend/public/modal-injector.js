@@ -3607,7 +3607,7 @@ export function createRestoreAccessModal() {
   const p1 = document.createElement('p');
   p1.textContent = _ownerText(
     'owner.restore.body',
-    'To open the Owner Dash, use your most recent Owner access email or Stripe receipt. The Owner Dash link is included in that message.'
+    'To add owner access on this device, use the Stripe payment ID (pi_...) for that listing.'    
   );
   p1.style.textAlign = 'left';
   p1.style.fontSize = '0.95em';
@@ -3616,7 +3616,7 @@ export function createRestoreAccessModal() {
   const hint = document.createElement('p');
   hint.textContent = _ownerText(
     'owner.restore.hint',
-    'Tip: search your inbox for “Stripe” or “NaviGen”.'
+    'You can restore more than one listing on this device, one Stripe payment ID (pi_...) at a time.'    
   );
   hint.style.textAlign = 'left';
   hint.style.fontSize = '0.85em';
@@ -4871,10 +4871,12 @@ export async function createOwnerCenterModal() {
   inner.innerHTML = '';
 
   const note = document.createElement('p');
-  note.textContent =
+  note.textContent = String(
     (typeof t === 'function' && t('owner.center.note')) ||
-    'Owner access for the listings you can manage is stored on this device.\nTo manage one of them, tap the listing you want below.\nTo add another listing to this device, use 🔑 Restore owner access and follow the restore instructions.';
+    'Owner access for the listings you can manage is stored on this device. To manage one of them, tap the listing you want below. To add another listing to this device, use 🔑 Restore owner access.'
+  ).replace(/\\n/g, '\n');
   note.style.textAlign = 'left';
+  note.style.whiteSpace = 'pre-line';
   note.style.fontSize = '0.85em';
   note.style.opacity = '0.8';
   inner.appendChild(note);
@@ -4887,7 +4889,7 @@ export async function createOwnerCenterModal() {
     <span class="icon-img">🔑</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
       <strong>${t('root.bo.restore.title') || 'Restore owner access'}</strong><br>
-      <small>${t('root.bo.restore.desc') || 'Add another listing to this device using your owner email link or Stripe payment ID (pi_...).'}</small>
+      <small>${t('root.bo.restore.desc') || 'Add another listing to this device using its Stripe payment ID (pi_...).'}</small>      
     </span>
   `;
   restoreBtn.addEventListener('click', (e) => {

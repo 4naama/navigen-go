@@ -461,11 +461,11 @@ async function renderAccessBlocked({ status, detail }) {
   // Keep messaging aligned with the i18n keys you already have in en.json.
   const msg401 =
     (typeof t === 'function' && t('owner.restore.body')) ||
-    'To open the Owner Dash, use your most recent Owner access email or Stripe receipt. The Owner Dash link is included in that message.';
-
+    'To add owner access on this device, use the Stripe payment ID (pi_...) for that listing.';
+    
   const hint401 =
     (typeof t === 'function' && t('owner.restore.hint')) ||
-    'Tip: search your inbox for “Stripe” or “NaviGen”.';
+    'You can restore more than one listing on this device, one Stripe payment ID (pi_...) at a time.';    
 
   const msg403Default =
     (typeof t === 'function' && t('owner.settings.claim.runCampaign.desc')) ||
@@ -485,7 +485,7 @@ async function renderAccessBlocked({ status, detail }) {
 
   const restoreDesc =
     (typeof t === 'function' && t('owner.settings.restore.action.desc')) ||
-    'Add another listing to this device using your owner email link or Stripe payment ID (pi_...).';    
+    'Add another listing to this device using its Stripe payment ID (pi_...).';    
 
   // 403 can be either:
   // A) campaign required (entitlement inactive), or
@@ -514,12 +514,14 @@ async function renderAccessBlocked({ status, detail }) {
               style="background:none;border:none;padding:0;cursor:pointer;font-size:.9em;"
             >ℹ️</button>
           </h3>
-          <p id="dash-device-access-info-body" style="display:none;opacity:.85;font-size:.9em;margin:.25rem 0 0;">
+          <p id="dash-device-access-info-body" style="display:none;opacity:.85;font-size:.9em;margin:.25rem 0 0;white-space:pre-line;">
             ${
-              (typeof t === 'function' && t('dash.blocked.deviceAccessInfo')) ||
-              'Owner access for the listings you can manage is stored on this device.\nIf you need a different listing here, switch to it in Owner Center on this device.'              
+              String(
+                (typeof t === 'function' && t('dash.blocked.deviceAccessInfo')) ||
+                'Owner access for the listings you can manage is stored on this device. If you need a different listing here, switch to it in 🧩 Owner Center on this device.'
+              ).replace(/\\n/g, '\n')
             }
-          </p>
+          </p>          
           <p>${status === 401 ? msg401 : msg403}</p>
           ${status === 401 ? `<p style="opacity:.8;font-size:.9em;">${hint401}</p>` : ``}
 
