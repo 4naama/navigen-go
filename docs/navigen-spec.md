@@ -934,7 +934,7 @@ Notes:
 | Situation | Primary message | Secondary clarification |
 |---------|-----------------|-------------------------|
 | Owned + no Operator Session | “Owner access required” | “Use your most recent Owner access email or Stripe receipt.” |
-| Owned + session + no Campaign Entitlement | “Campaign required for analytics” | “Analytics are collected, but dashboard access requires an active campaign.” |
+| Owned + session + no Campaign Entitlement | “Activate analytics by running a campaign for this location.” | “Dashboard access remains blocked until the listing runs an active campaign.” |
 | Unowned | “Analytics access required” | “Activate ownership by running a campaign.” |
 
 Rules:
@@ -958,7 +958,7 @@ Core backend signals:
 Canonical Action Labels:
 
 • Not owned → Run a campaign
-• Owned + no entitlement → Renew campaign
+• Owned + no entitlement → Run a campaign
 • Owned + session valid + entitlement → Manage campaign
 • Draft editing → New campaign
 
@@ -1000,7 +1000,7 @@ Secondary:
 
 5) Signed-in + no entitlement (OwnedNow = true, CampaignEntitled = false)
 Primary:
-• Renew campaign
+• Run a campaign
 Secondary:
 • Owner Center
 • See example dashboards
@@ -1031,7 +1031,7 @@ HTTP Semantics:
 
 • 200 → Open Dashboard
 • 401 → Restore access
-• 403 + session exists → Switch business OR Renew campaign
+• 403 + session exists → Switch business OR Run campaign
 • 403 + no session → Run campaign OR Restore
 
 --------------------------------------------------------------------
@@ -1517,12 +1517,14 @@ A) **Customer**
 
 B) **Cashier**
    1. Scans the promo QR  
-   2. Pages Worker emits qr-redeem hit to API Worker  
-   3. API Worker consumes token:
-        - fresh → status:"ok" → REDEEM  
-        - used/expired → status:"invalid" → INVALID  
-   4. Cashier device redirected with redeem=pending&rt=<token>  
-   5. Cashier confirmation modal shown → CONFIRM_CASH
+   2. Pages Worker performs redirect only and sends the cashier device to:
+        /?lp=<slug>&redeem=pending&camp=<campaignKey>&rt=<token>
+   3. The landing app requests the truthful redeem outcome from:
+        POST /hit/qr-redeem/<UID>?rt=<token>&json=1
+   4. API Worker consumes the token:
+        - fresh → outcome:"ok" → REDEEM
+        - used/expired/inactive → non-ok outcome → INVALID
+   5. Cashier confirmation modal is shown only when backend outcome is ok → CONFIRM_CASH
 
 Promo QR flow enables multi-actor integrity without authentication.
 
@@ -2713,8 +2715,8 @@ C) Unowned LPM
 • 📈 MUST open the “Owner settings” modal (not a redirect).
 
 “Owner settings” modal (unowned) MUST include:
-• Manage campaign
-    - CTA: opens Campaign Setup modal (contextual to this LPM)
+• Run campaign
+    - CTA: opens Campaign Setup / Campaign Management in guest mode for this LPM    
 • See example dashboards
     - CTA: opens Example Dashboards modal (3–6 example cards)
 
@@ -3020,7 +3022,7 @@ Rules:
 Business Owners actions (minimum set):
 • Run campaign → opens Campaign Setup modal
 • Protect this location → opens Exclusive Operation Period modal (€5/30)
-• Restore access → opens Restore Access modal (email guidance)
+• Restore access → opens Restore Access modal (owner access email or Stripe-receipt guidance)
 • See example dashboards → opens Example Dashboards modal
 • (Optional) Find my location → location selector / search helper
 
@@ -4308,7 +4310,7 @@ Uniform structure:
 Used for:
   • click metrics (e.g. save, share, map)
   • qr-scan events when triggered from app
-  • qr-redeem events from Pages Worker (via token header forwarding)
+  • truthful promo-redeem validation calls from the landing app after the /out/qr-redeem redirect
   • confirmation metrics
 
 Hits increment:
@@ -4347,8 +4349,8 @@ The system works as a pipeline:
   1. Customer receives Info QR or Promo QR  
   2. Pages Worker logs scan & redirects  
   3. App shell presents LPM or Promo QR  
-  4. Cashier device hits /out/qr-redeem → Pages Worker → /hit/qr-redeem  
-  5. API Worker consumes token and updates stats/qrlog  
+  4. Cashier device hits /out/qr-redeem → Pages Worker redirects to /?lp=<slug>&redeem=pending&camp=<key>&rt=<token>  
+  5. Landing app calls /hit/qr-redeem; API Worker consumes token and updates stats/qrlog    
   6. Dash later requests aggregated data from /api/stats  
   7. API Worker enriches stats with QA flags  
   8. Dash renders narratives and diagnostic insights  
@@ -4457,8 +4459,8 @@ At runtime, NaviGen recognizes **visitor roles by context**, not by identity:
        arrives via Info QR, LPM, or browsing; may reveal Promo QR.
 
   • **Cashier visitor**  
-       arrives via promo QR redirect (/out/qr-redeem → /?lp=...&redeemed=1).  
-       Immediately presented with cashier confirmation modal.
+       arrives via promo QR redirect (/out/qr-redeem → /?lp=...&redeem=pending&camp=...&rt=...).  
+       The landing app then requests the truthful redeem outcome and presents the cashier success or invalid UI.
 
   • **Redeemer visitor**  
        the device participating in Promo QR → token redeem handshake (customer or cashier side depending on flow).
@@ -4520,9 +4522,9 @@ A) Customer Path
 
 B) Cashier Path
    1. Cashier scans promo QR  
-   2. Worker validates token  
-   3. Cashier device receives redirected LPM with `redeemed=1`  
-   4. Cashier submits confirmation  
+   2. Pages Worker redirects the cashier device with `redeem=pending&camp=<key>&rt=<token>`  
+   3. The landing app requests the truthful redeem outcome from the API Worker  
+   4. If outcome is ok, cashier submits confirmation  
 
 Visitors do not need to be the same person or device.
 NaviGen uses only token state to synchronize both sides.
@@ -8393,18 +8395,21 @@ When ownership is active (exclusiveUntil > now) but the requester lacks:
 the system MUST present a dedicated access-required interstitial.
 
 Primary message:
-• “Owner access required.”
+• “Owner settings”
 
 Secondary message:
-• “This location is currently under exclusive operation.”
-• “To open the Owner Dash, use your most recent Owner access email.”
+• “To open the Owner Dash, use your most recent Owner access email or Stripe receipt.”
+• “The Owner Dash link is included in that message.”
 
 Primary action:
-• “Find your Owner access email”
+• “Restore access”
+
+Secondary actions:
+• “See example dashboards”
+• “Sign out on this device”
 
 Secondary guidance text:
-• “Search your inbox for your Stripe receipt or NaviGen payment email.”
-• “The Owner Dash link is included in that message.”
+• “Tip: search your inbox for ‘Stripe’ or ‘NaviGen’.”
 
 Rules:
 • The interstitial must not reveal owner-only data.
