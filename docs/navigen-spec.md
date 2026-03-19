@@ -740,6 +740,28 @@ Security posture:
 
 --------------------------------------------------------------------
 
+### Derived Portfolio (Internal, Device-Scoped)
+
+For multi-location campaign control, NaviGen derives a portfolio from locations
+already proven on the current device.
+
+Properties:
+- not a separate user product or account
+- auto-created from the current seed location when the operator first chooses
+  a multi-location campaign scope inside Campaign Management
+- contains only existing locations already proven on the same device
+- a location may join this portfolio when it is:
+  • restored on the same device using Restore Access, or
+  • established on the same device through a fresh qualifying purchase
+- powers “Selected locations” and “All my locations” campaign-scope flows only
+
+A derived portfolio does not replace:
+- location ownership
+- Operator Session
+- per-location campaign execution
+
+--------------------------------------------------------------------
+
 ### Restore Access
 
 Restore Access is the recovery of a missing or expired Operator Session.
@@ -3561,6 +3583,7 @@ All campaigns are stored and enforced via KV under the API Worker.
 Primary KV keys:
 
 • campaigns:byUlid:<ULID>   → array of campaign rows for a location
+• campaign_group:<campaignGroupKey> → shared parent record for a multi-location campaign
 • status:<ULID>             → derived entitlement + QA flags (computed)
 
 Each campaign row is immutable once written, except for status transitions
@@ -3577,7 +3600,8 @@ normalized schema:
 
 • locationULID              – canonical ULID (authoritative)
 • locationSlug              – original slug used at creation (informational)
-• campaignKey               – stable identifier (see 8.4.6)
+• campaignKey               – stable identifier of the location-level campaign row
+• campaignGroupKey          – optional shared identifier linking child rows to one multi-location parent campaign
 • campaignName              – human-readable name (“10% off your purchase”)
 • brandKey                  – branding reference (optional)
 • sectorKey                 – lookup into finance.json
@@ -3604,6 +3628,28 @@ No runtime date parsing is permitted in the client.
 
 --------------------------------------------------------------------
 
+8.4.2.1 Network Campaign Parent Record (Multi-Location Only)
+
+When campaignScope != "single", the API Worker MUST persist a shared parent record:
+
+• campaign_group:<campaignGroupKey>
+
+The parent record holds:
+• shared budget / plan anchor
+• common offer definition
+• common campaign dates
+• scope mode
+• seed location ULID
+• createdAt / createdBy
+
+Rules:
+• child location rows remain authoritative for execution, redeem, analytics, and local state
+• every included location materializes its own child campaign row under campaigns:byUlid:<ULID>
+• all child rows belonging to the same multi-location campaign MUST share the same campaignGroupKey
+• removing a location from scope must never delete historical rows or historical analytics
+
+--------------------------------------------------------------------
+
 8.4.3 Campaign Status Semantics (Authoritative)
 
 Campaign status is enforced server-side by the API Worker and interpreted
@@ -3618,35 +3664,50 @@ consistently across:
 Status meanings:
 
 • Active  
-  Campaign is eligible for promo QR issuance and redeem
+  Campaign row is eligible for promo QR issuance and redeem
   if today ∈ [startDate, endDate].
 
 • Paused  
   Owner-initiated temporary stop.
-  Campaign exists but is NOT eligible for promo QR or redeem.
+  Campaign row exists but is NOT eligible for promo QR or redeem.
 
 • Finished  
   Terminal state after campaign completion.
   Finished campaigns are NEVER eligible again.
 
 • Suspended  
-  Owner- or staff-triggered temporary stop.
+  Temporary stop.
+  May be applied:
+  - to an entire single-location campaign,
+  - to a whole multi-location campaign (propagated across included child rows), or
+  - to one child location row only as a local override.
 
   Effects:
 
-  - CampaignEntitled = false  
-  - Promo QR issuance disabled  
-  - Redeem disabled  
-  - 🎁 decoration removed  
-  - Status dot becomes grey  
-  - Campaign remains visible in Campaign Management  
+  - CampaignEntitled = false for the affected row(s)
+  - Promo QR issuance disabled
+  - Redeem disabled
+  - 🎁 decoration removed
+  - Status dot becomes grey
+  - Campaign remains visible in Campaign Management
 
   Resume:
 
-  - Clears statusOverride  
-  - Restores eligibility only if within campaign window  
+  - Clears statusOverride
+  - Restores eligibility only if within campaign window
 
-NaviGen does NOT automatically suspend campaigns due to payment disputes.  
+• Excluded  
+  Child row was previously part of a multi-location campaign but is no longer
+  included in the active location set.
+
+  Effects:
+
+  - CampaignEntitled = false for that child row
+  - Promo QR issuance disabled
+  - Redeem disabled
+  - historical analytics and audit remain preserved
+
+NaviGen does NOT automatically suspend campaigns due to payment disputes.
 Only explicit backend state transitions are authoritative.
 
 --------------------------------------------------------------------
@@ -3692,34 +3753,57 @@ Clients MUST NOT compute entitlement themselves.
 
 Campaign Scope (Authoritative)
 
-Campaign scope determines which LPMs announce a campaign.
+Campaign scope determines which existing locations announce and execute a campaign.
+
+User-facing labels:
+
+• "This location only"   → internal value "single"
+• "Selected locations"   → internal value "selected"
+• "All my locations"     → internal value "all"
+
+Eligibility source:
+
+• Only existing locations already proven on the current device are eligible.
+• A qualifying plan with multi-location capacity is required for "selected" and "all".
+• Choosing "selected" or "all" auto-creates the derived portfolio from the current seed location if it does not yet exist.
+• Campaign scope does not create locations; it operates only on already-existing locations.
 
 Scope values:
 
 • "single"
-    Campaign applies only to the ULID under which it was created.
+    Campaign applies only to the current location row.
 
 • "selected"
-    Campaign applies only to explicitly selected ULIDs.
-    No automatic propagation.
+    Campaign applies only to explicitly checked eligible locations in the derived portfolio.
+    The current seed location starts preselected but MAY be unchecked.
+    No future locations are added automatically.
 
 • "all"
-    Campaign applies to all ULIDs currently covered by the active Plan.
+    Campaign applies to all currently eligible locations in the derived portfolio.
+    Future eligible locations later added on the same device inherit the campaign automatically.
 
 Rules:
 
 • Scope MUST be explicitly chosen at campaign creation.
-• Tier (Plan) only defines how many ULIDs may be published.
-• Tier does NOT automatically attach campaigns to additional ULIDs.
+• Standard plans expose only "single".
+• Multi-location-capable plans expose "selected" and "all".
 • Redeem validation remains token-based and location-agnostic.
-• Each ULID retains independent billing attribution.
+• Billing / redeem accounting remains per ULID and per child campaign row.
+• Shared budget / plan state is held at the parent campaign-group level.
 
 Changing scope after creation:
-• Allowed only while campaign status is Active or Paused.
+• Allowed only while parent campaign status is Active or Paused.
 • MUST update campaign rows deterministically across affected ULIDs.
+• Deterministic update means:
+  - newly included locations receive child rows,
+  - removed locations transition to Excluded (or equivalent non-executing state) without deleting history,
+  - unchanged locations preserve existing rows and analytics.
 
-Billing attribution is always evaluated per ULID and per campaign row.
-Campaign scope does not create shared billing state across ULIDs.
+Inherited additions under "all":
+• When a newly eligible location is added later on the same device, it MUST join the running campaign immediately.
+• The UI MUST show:
+  - an immediate notice at add / restore time, and
+  - an inline notice in Campaign Management on next open.
 
 --------------------------------------------------------------------
 
@@ -3841,6 +3925,60 @@ Claim/unowned flows MUST route to Campaign Funding, not Campaign Management.
 
 Campaign Management MUST be reachable from an owned+session context
 (e.g. Owner Settings signed-in variant or Dash owner controls).
+
+Scope-gated UI:
+
+• For Standard plans, Campaign Management behaves as single-location only.
+• For multi-location-capable plans, Campaign Management adds:
+  - Campaign scope
+  - Locations
+  - Active location roster / controls
+
+Campaign scope step:
+
+• "This location only"
+• "Selected locations"
+• "All my locations"
+
+Derived-portfolio behavior:
+
+• The current seed location auto-creates the derived portfolio the first time the operator chooses "selected" or "all".
+• This is an internal system state change, not a separate user product.
+• The UI MAY show a short explanatory information line, but MUST NOT require a confirmation step.
+
+Locations step:
+
+• Shown only when scope is "selected" or "all".
+• Uses one flat, filterable roster (not grouped sections).
+• The current seed location starts included by default, but MAY be unchecked in "selected".
+• If no additional eligible locations exist yet, CM MUST offer an inline “Add another location” path using existing same-device proven-control flows.
+
+How locations become eligible:
+
+• A location becomes eligible for the derived portfolio when it is:
+  - restored on the same device using Restore Access, or
+  - established on the same device through a fresh qualifying purchase.
+
+Roster after activation:
+
+• Campaign Management MUST display one flat roster with filters always available.
+• Supported filters MAY include Active / Suspended / Excluded / Newly added.
+• Grouped state sections are not required.
+
+Network / subset controls:
+
+• Campaign Management MUST support:
+  - suspend all included locations
+  - suspend selected locations
+  - resume all included locations
+  - resume selected locations
+
+• A single included location MAY be suspended locally without stopping the network campaign elsewhere.
+
+Scope note:
+
+• Multi-location campaigns operate only on already-existing locations.
+• Location creation flows are outside this section.
 
 --------------------------------------------------------------------
 
@@ -6429,6 +6567,13 @@ Plan purchase grants:
 • Campaign capability (per-location, per-campaign as defined in Section 8.4)
 • Publish Capacity (maximum number of locations that may be activated)
 
+UI gating rule:
+• If maxPublishedLocations = 1, Campaign Management MUST expose only “This location only”.
+• If maxPublishedLocations > 1, Campaign Management MAY expose:
+  - “This location only”
+  - “Selected locations”
+  - “All my locations”
+  
 Plans DO NOT:
 • Grant legal ownership
 • Grant exclusivity over physical addresses

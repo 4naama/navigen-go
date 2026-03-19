@@ -1368,30 +1368,13 @@ async function initEmergencyBlock(countryOverride) {
     localStorage.setItem("lang", lang);  // keep: remember last prefix
     await loadTranslations(lang);        // ✅ Load selected language
     injectStaticTranslations();          // ✅ Apply static translations
-
-    // One-shot inherited-addition notice after Restore Access.
-    try {
-      const until = Number(sessionStorage.getItem('ng_inherited_notice_until') || '0');
-      const addedRows = Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0');
-
-      if (until && Date.now() <= until && addedRows > 0) {
-        const msg =
-          addedRows === 1
-            ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
-            : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${addedRows} locations were added to this campaign automatically.`);
-
-        showToast(msg, 2600);
-      }
-
-      sessionStorage.removeItem('ng_inherited_notice_added_rows');
-      sessionStorage.removeItem('ng_inherited_notice_until');
-    } catch {}
     
     // listen for language switch requests from the root lock
     document.addEventListener('app:lang-changed', () => {
       injectStaticTranslations(); // translations already loaded by the sender
     });
         
+
     createMyStuffModal();                // 🎛️ Inject the "My Stuff" modal
     
     createHelpModal();                   // 🆘 Inject the Help / Emergency modal

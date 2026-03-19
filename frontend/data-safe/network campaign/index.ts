@@ -1072,32 +1072,18 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
 
 // Internal helper: resolve an item by canonical ULID (same semantics as /api/data/item?id=...).
 // Returns null if not found. Keeps logic centralized for future “locations project”.
-async function getItemById(ulid: string, _env: Env): Promise<any | null> {
+async function getItemById(ulid: string, env: Env): Promise<any | null> {
   const id = String(ulid || "").trim();
   if (!id) return null;
 
-  try {
-    const src = new URL("/data/profiles.json", "https://navigen.io").toString();
-    const resp = await fetch(src, {
-      cf: { cacheTtl: 60, cacheEverything: true },
-      headers: { "Accept": "application/json" }
-    });
-    if (!resp.ok) return null;
+  // Reuse the same dataset read path already used by /api/data/item.
+  // NOTE: This assumes profiles rows include an ID field equal to ULID.
+  const rows = await loadProfiles(env); // existing helper in your worker
+  const arr: any[] = Array.isArray(rows) ? rows : (rows?.locations || []);
+  if (!Array.isArray(arr)) return null;
 
-    const data: any = await resp.json().catch(() => ({ locations: [] }));
-    const arr: any[] = Array.isArray(data?.locations)
-      ? data.locations
-      : (data?.locations && typeof data.locations === "object")
-        ? Object.values(data.locations)
-        : [];
-
-    if (!Array.isArray(arr)) return null;
-
-    const hit = arr.find((r: any) => String(r?.ID || r?.id || "").trim() === id);
-    return hit || null;
-  } catch {
-    return null;
-  }
+  const hit = arr.find((r: any) => String(r?.ID || r?.id || "").trim() === id);
+  return hit || null;
 }
 
 // Normalize a multilingual name field to a short display string.
@@ -1276,18 +1262,6 @@ export default {
           history = [];
         }
 
-        const inherited = await materializeInheritedAllScopeForCurrentUlid(req, env, ulid).catch(() => ({ addedRows: 0, addedGroups: 0 }));
-        if (inherited.addedRows > 0) {
-          try {
-            const refreshed = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
-            history = Array.isArray(refreshed) ? refreshed : history;
-          } catch {}
-        }
-
-        const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
-
-        const multiLocationEnabled = await multiLocationEnabledForUlid(env, ulid);
-
         // Provide a shallow "active" view for convenience (no resolver duplication).
         const nowMs = Date.now();
         const active = history.filter((r: any) => {
@@ -1304,74 +1278,13 @@ export default {
             ulid,
             draft,
             active,
-            history,
-            plan: {
-              multiLocationEnabled
-            },
-            eligibleLocations,
-            inheritedNotice: inherited.addedRows > 0 ? {
-              addedRows: inherited.addedRows,
-              addedGroups: inherited.addedGroups
-            } : null
+            history
           },
           200,
           { "cache-control": "no-store" }
         );
       }
 
-      // --- Owner Campaign Group: flat roster for one campaignGroupKey on this device
-      // GET /api/owner/campaigns/group?campaignGroupKey=<key>
-      if (normPath === "/api/owner/campaigns/group" && req.method === "GET") {
-        const sess = await requireOwnerSession(req, env);
-        if (sess instanceof Response) return sess;
-
-        const ulid = String(sess.ulid || "").trim();
-        const campaignGroupKey = String(url.searchParams.get("campaignGroupKey") || "").trim();
-        if (!campaignGroupKey) {
-          return json({ error: { code: "invalid_request", message: "campaignGroupKey required" } }, 400, { "cache-control": "no-store" });
-        }
-
-        const eligible = await eligibleLocationsForRequest(req, env, ulid);
-        const items = [];
-
-        for (const loc of eligible) {
-          const histRaw = await env.KV_STATUS.get(campaignsByUlidKey(loc.ulid), { type: "json" }) as any;
-          const rows: any[] = Array.isArray(histRaw) ? histRaw : [];
-
-          const row = [...rows].reverse().find((r: any) =>
-            String(r?.campaignGroupKey || "").trim() === campaignGroupKey
-          );
-
-          if (row) {
-            items.push({
-              ulid: loc.ulid,
-              slug: loc.slug,
-              locationName: loc.locationName,
-              included: true,
-              status: String(row?.statusOverride || row?.status || "").trim().toLowerCase() || "active",
-              campaignKey: String(row?.campaignKey || "").trim(),
-              inheritedAt: String(row?.inheritedAt || "").trim() || ""
-            });
-          } else {
-            items.push({
-              ulid: loc.ulid,
-              slug: loc.slug,
-              locationName: loc.locationName,
-              included: false,
-              status: "excluded",
-              campaignKey: "",
-              inheritedAt: ""
-            });
-          }
-        }
-
-        return json(
-          { campaignGroupKey, items },
-          200,
-          { "cache-control": "no-store" }
-        );
-      }
-      
       // --- Owner Campaigns: upsert draft for this session-bound ULID
       // POST /api/owner/campaigns/draft  body: CampaignRow-like (slug + dates + rules)
       // Stores: campaigns:draft:<ULID>
@@ -1382,10 +1295,10 @@ export default {
 
         const body = await req.json().catch(() => ({})) as any;
 
+        // Minimal validation: require dates + campaignKey; tolerate rule fields for progressive rollout.
         const campaignKey = String(body?.campaignKey || "").trim();
         const startDate = String(body?.startDate || "").trim();
         const endDate = String(body?.endDate || "").trim();
-        const scope = normCampaignScope(body?.campaignScope);
 
         if (!campaignKey) {
           return json({ error: { code: "invalid_request", message: "campaignKey required" } }, 400, { "cache-control": "no-store" });
@@ -1394,36 +1307,11 @@ export default {
           return json({ error: { code: "invalid_request", message: "startDate/endDate must be YYYY-MM-DD" } }, 400, { "cache-control": "no-store" });
         }
 
-        const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
-        const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
-        const multiLocationEnabled = await multiLocationEnabledForUlid(env, ulid);
-
-        if (scope !== "single" && !multiLocationEnabled) {
-          return json({ error: { code: "forbidden", message: "multi-location scope not enabled for this plan" } }, 403, { "cache-control": "no-store" });
-        }
-
-        const selectedLocationULIDs = Array.isArray(body?.selectedLocationULIDs)
-          ? Array.from(new Set(body.selectedLocationULIDs.map((x: any) => String(x || "").trim()).filter(Boolean)))
-          : [];
-
-        if (scope === "selected") {
-          if (!selectedLocationULIDs.length) {
-            return json({ error: { code: "invalid_request", message: "selected scope requires at least one location" } }, 400, { "cache-control": "no-store" });
-          }
-          for (const id of selectedLocationULIDs) {
-            if (!eligibleByUlid.has(id)) {
-              return json({ error: { code: "denied", message: "selected location is not eligible on this device" } }, 403, { "cache-control": "no-store" });
-            }
-          }
-        }
-
+        // Draft is always scoped to this ULID; never trust client ULID.
         const draft = {
           ...body,
           locationID: ulid,
           campaignKey,
-          campaignGroupKey: scope === "single" ? "" : String(body?.campaignGroupKey || deriveCampaignGroupKey(String(body?.locationSlug || ulid), campaignKey)).trim(),
-          campaignScope: scope,
-          selectedLocationULIDs,
           startDate,
           endDate,
           status: "Draft",
@@ -1551,11 +1439,12 @@ export default {
           return json({ error: { code: "invalid_request", message: "sessionId (cs_...) required" } }, 400, noStore);
         }
 
+        // Fetch Stripe checkout session + expand payment_intent metadata
         const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
         if (!sk) return json({ error: { code: "misconfigured", message: "STRIPE_SECRET_KEY not set" } }, 500, noStore);
 
-        const stripeUrl = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(cs)}?expand[]=payment_intent`;
-        const r = await fetch(stripeUrl, { headers: { "Authorization": `Bearer ${sk}` } });
+        const url = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(cs)}?expand[]=payment_intent`;
+        const r = await fetch(url, { headers: { "Authorization": `Bearer ${sk}` } });
         const txt = await r.text();
         let out: any = null;
         try { out = JSON.parse(txt); } catch { out = null; }
@@ -1564,12 +1453,14 @@ export default {
           return json({ error: { code: "stripe_error", message: String(out?.error?.message || "Stripe session fetch failed") } }, 502, noStore);
         }
 
+        // Require completed + paid
         const status = String(out?.status || "").toLowerCase();
         const payStatus = String(out?.payment_status || "").toLowerCase();
         if (status !== "complete" || payStatus !== "paid") {
           return json({ error: { code: "not_paid", message: "checkout not complete/paid" } }, 409, noStore);
         }
 
+        // Resolve target slug from Stripe metadata (authoritative)
         const pi = out?.payment_intent;
         const meta = (pi && pi.metadata) ? pi.metadata : (out.metadata || {});
         const locationSlug = String(meta?.locationID || "").trim();
@@ -1579,81 +1470,56 @@ export default {
           return json({ error: { code: "invalid_state", message: "missing metadata.locationID/campaignKey" } }, 500, noStore);
         }
 
+        // Zero-trust: slug must resolve to THIS session ULID
         const resolved = await resolveUid(locationSlug, env).catch(() => null);
         if (!resolved || String(resolved).trim() !== ulid) {
           return new Response("Denied", { status: 401, headers: noStore });
         }
 
+        // Load draft
         const draftKey = `campaigns:draft:${ulid}`;
         const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
         if (!draft) {
           return json({ error: { code: "not_found", message: "draft not found" } }, 404, noStore);
         }
 
+        // Enforce same campaignKey (prevents mismatched promote)
         if (String(draft?.campaignKey || "").trim() !== campaignKey) {
           return json({ error: { code: "invalid_state", message: "draft campaignKey mismatch" } }, 409, noStore);
         }
 
-        const scope = normCampaignScope(draft?.campaignScope);
-        const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
-        const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
-        const eligibleUlids = eligibleLocations.map((x) => x.ulid);
-        const multiLocationEnabled = await multiLocationEnabledForUlid(env, ulid);
+        // Promote draft to Active row in history (append-only)
+        const histKey = campaignsByUlidKey(ulid);
+        const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
+        const arr: any[] = Array.isArray(hist) ? hist : [];
 
-        if (scope !== "single" && !multiLocationEnabled) {
-          return json({ error: { code: "forbidden", message: "multi-location scope not enabled for this plan" } }, 403, noStore);
-        }
+        const row = {
+          ...draft,
 
-        let includedUlids: string[] = [ulid];
-        if (scope === "selected") {
-          includedUlids = Array.from(new Set((Array.isArray(draft?.selectedLocationULIDs) ? draft.selectedLocationULIDs : []).map((x: any) => String(x || "").trim()).filter(Boolean)));
-          includedUlids = includedUlids.filter((id) => eligibleByUlid.has(id));
-          if (!includedUlids.length) {
-            return json({ error: { code: "invalid_state", message: "selected scope has no eligible locations" } }, 409, noStore);
-          }
-        } else if (scope === "all") {
-          includedUlids = eligibleUlids.length ? eligibleUlids : [ulid];
-        }
+          // Preserve both identifiers for stable UI mapping
+          locationID: ulid,           // keep canonical
+          locationULID: ulid,
+          locationSlug,               // from Stripe metadata.locationID
 
-        const campaignGroupKey = scope === "single"
-          ? ""
-          : String((draft as any)?.campaignGroupKey || deriveCampaignGroupKey(locationSlug, campaignKey)).trim();
+          status: "Active",
+          promotedAt: new Date().toISOString(),
+          stripeSessionId: cs
+        };
 
-        if (campaignGroupKey) {
-          const parent: CampaignGroupRow = {
-            campaignGroupKey,
-            campaignKey,
-            campaignScope: scope,
-            seedLocationULID: ulid,
-            seedLocationSlug: locationSlug,
-            startDate: String(draft?.startDate || "").trim(),
-            endDate: String(draft?.endDate || "").trim(),
-            createdAt: new Date().toISOString(),
-            stripeSessionId: cs
-          };
-          await env.KV_STATUS.put(campaignGroupKeyKey(campaignGroupKey), JSON.stringify(parent));
-        }
+        // Replace any existing row with same campaignKey (idempotent promote)
+        const next = arr.filter(x => String(x?.campaignKey || "").trim() !== campaignKey);
+        next.push(row);
 
-        for (const targetUlid of includedUlids) {
-          const loc = eligibleByUlid.get(targetUlid) || { ulid: targetUlid, slug: targetUlid, locationName: targetUlid };
-          await writeCampaignChildRow({
-            env,
-            targetUlid,
-            targetSlug: loc.slug,
-            draft,
-            campaignGroupKey,
-            stripeSessionId: cs,
-            inherited: false
-          });
-        }
+        await env.KV_STATUS.put(histKey, JSON.stringify(next));
 
+        // Draft can be cleared after promotion
         await env.KV_STATUS.delete(draftKey);
 
-        return json({ ok: true, ulid, campaignKey, campaignGroupKey, includedCount: includedUlids.length }, 200, { "cache-control": "no-store" });
+        return json({ ok: true, ulid, campaignKey }, 200, { "cache-control": "no-store" });
       }
 
-      // --- Owner Campaigns: suspend/resume a campaign row or campaign group (KV-authoritative)
-      // POST /api/owner/campaigns/suspend body: { campaignKey?: "<key>", campaignGroupKey?: "<group>", action: "suspend"|"resume" }
+      // --- Owner Campaigns: suspend/resume a campaign row (KV-authoritative)
+      // POST /api/owner/campaigns/suspend body: { campaignKey: "<key>", action: "suspend"|"resume" }
       if (normPath === "/api/owner/campaigns/suspend" && req.method === "POST") {
         const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
 
@@ -1663,130 +1529,42 @@ export default {
 
         const body = await req.json().catch(() => ({})) as any;
         const campaignKey = String(body?.campaignKey || "").trim();
-        const campaignGroupKey = String(body?.campaignGroupKey || "").trim();
         const action = String(body?.action || "suspend").trim().toLowerCase();
 
-        if (!campaignKey && !campaignGroupKey) {
-          return json({ error: { code: "invalid_request", message: "campaignKey or campaignGroupKey required" } }, 400, noStore);
+        if (!campaignKey) {
+          return json({ error: { code: "invalid_request", message: "campaignKey required" } }, 400, noStore);
         }
         if (action !== "suspend" && action !== "resume") {
           return json({ error: { code: "invalid_request", message: "action must be suspend|resume" } }, 400, noStore);
         }
 
-        const applyToRows = async (targetUlid: string): Promise<boolean> => {
-          const histKey = campaignsByUlidKey(targetUlid);
-          const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
-          const arr: any[] = Array.isArray(hist) ? hist : [];
-          let changed = false;
+        const histKey = campaignsByUlidKey(ulid);
+        const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
+        const arr: any[] = Array.isArray(hist) ? hist : [];
 
-          const next = arr.map((row: any) => {
-            const sameKey = campaignKey && String(row?.campaignKey || "").trim() === campaignKey;
-            const sameGroup = campaignGroupKey && String(row?.campaignGroupKey || "").trim() === campaignGroupKey;
-            if (!sameKey && !sameGroup) return row;
-
-            changed = true;
-            const out = { ...row };
-            if (action === "suspend") {
-              out.statusOverride = "Suspended";
-              out.suspendedAt = new Date().toISOString();
-            } else {
-              out.statusOverride = "";
-              delete out.suspendedAt;
-            }
-            return out;
-          });
-
-          if (changed) {
-            await env.KV_STATUS.put(histKey, JSON.stringify(next));
-          }
-          return changed;
-        };
-
-        if (campaignGroupKey) {
-          const eligible = await eligibleLocationsForRequest(req, env, ulid);
-          let affected = 0;
-          for (const loc of eligible) {
-            if (await applyToRows(loc.ulid)) affected += 1;
-          }
-          return json({ ok: true, ulid, campaignGroupKey, action, affected }, 200, noStore);
-        }
-
-        const changed = await applyToRows(ulid);
-        if (!changed) {
+        const idx = arr.findIndex(x => String(x?.campaignKey || "").trim() === campaignKey);
+        if (idx < 0) {
           return json({ error: { code: "not_found", message: "campaign not found for this location" } }, 404, noStore);
         }
+
+        const row = arr[idx] || {};
+        const nextRow = { ...row };
+
+        if (action === "suspend") {
+          nextRow.statusOverride = "Suspended";
+          nextRow.suspendedAt = new Date().toISOString();
+        } else {
+          // resume: clear override only if the campaign window is still valid
+          nextRow.statusOverride = "";
+          delete nextRow.suspendedAt;
+        }
+
+        arr[idx] = nextRow;
+        await env.KV_STATUS.put(histKey, JSON.stringify(arr));
 
         return json({ ok: true, ulid, campaignKey, action }, 200, noStore);
       }
 
-      // --- Owner Campaign Group: suspend/resume selected included locations only
-      // POST /api/owner/campaigns/suspend-selected
-      // body: { campaignGroupKey: "<group>", action: "suspend"|"resume", ulids: ["<ULID>", ...] }
-      if (normPath === "/api/owner/campaigns/suspend-selected" && req.method === "POST") {
-        const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
-
-        const sess = await requireOwnerSession(req, env);
-        if (sess instanceof Response) return sess;
-
-        const currentUlid = String(sess.ulid || "").trim();
-        const body = await req.json().catch(() => ({})) as any;
-
-        const campaignGroupKey = String(body?.campaignGroupKey || "").trim();
-        const action = String(body?.action || "").trim().toLowerCase();
-        const rawUlids = Array.isArray(body?.ulids) ? body.ulids : [];
-
-        if (!campaignGroupKey) {
-          return json({ error: { code: "invalid_request", message: "campaignGroupKey required" } }, 400, noStore);
-        }
-        if (action !== "suspend" && action !== "resume") {
-          return json({ error: { code: "invalid_request", message: "action must be suspend|resume" } }, 400, noStore);
-        }
-
-        const eligible = await eligibleLocationsForRequest(req, env, currentUlid);
-        const eligibleSet = new Set(eligible.map((x) => String(x.ulid || "").trim()));
-        const targetUlids = Array.from(new Set(rawUlids.map((x: any) => String(x || "").trim()).filter(Boolean)))
-          .filter((id) => eligibleSet.has(id));
-
-        if (!targetUlids.length) {
-          return json({ error: { code: "invalid_request", message: "no eligible selected locations" } }, 400, noStore);
-        }
-
-        let affected = 0;
-
-        for (const targetUlid of targetUlids) {
-          const histKey = campaignsByUlidKey(targetUlid);
-          const histRaw = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
-          const arr: any[] = Array.isArray(histRaw) ? histRaw : [];
-
-          let changed = false;
-          const next = arr.map((row: any) => {
-            if (String(row?.campaignGroupKey || "").trim() !== campaignGroupKey) return row;
-
-            changed = true;
-            const out = { ...row };
-            if (action === "suspend") {
-              out.statusOverride = "Suspended";
-              out.suspendedAt = new Date().toISOString();
-            } else {
-              out.statusOverride = "";
-              delete out.suspendedAt;
-            }
-            return out;
-          });
-
-          if (changed) {
-            await env.KV_STATUS.put(histKey, JSON.stringify(next));
-            affected += 1;
-          }
-        }
-
-        return json(
-          { ok: true, campaignGroupKey, action, affected, ulids: targetUlids },
-          200,
-          noStore
-        );
-      }
-      
       // --- Owner session diag: /api/_diag/opsess (safe; no secrets)
       if (normPath === "/api/_diag/opsess" && req.method === "GET") {
         const cookieHdr = req.headers.get("Cookie") || "";
@@ -4063,204 +3841,6 @@ function campaignsByUlidKey(ulid: string): string {
   return `campaigns:byUlid:${ulid}`;
 }
 
-function campaignGroupKeyKey(campaignGroupKey: string): string {
-  return `campaign_group:${campaignGroupKey}`;
-}
-
-function normCampaignScope(v: unknown): "single" | "selected" | "all" {
-  const s = String(v || "").trim().toLowerCase();
-  if (s === "selected") return "selected";
-  if (s === "all") return "all";
-  return "single";
-}
-
-function deriveCampaignGroupKey(seedSlug: string, campaignKey: string): string {
-  const seed = String(seedSlug || "").trim() || "location";
-  const key = String(campaignKey || "").trim() || "campaign";
-  return `${seed}::${key}`;
-}
-
-interface EligibleLocation {
-  ulid: string;
-  slug: string;
-  locationName: string;
-}
-
-async function eligibleLocationsForRequest(req: Request, env: Env, activeUlid = ""): Promise<EligibleLocation[]> {
-  const dev = readDeviceId(req);
-  if (!dev) return [];
-
-  const idxKey = devIndexKey(dev);
-  const rawIdx = await env.KV_STATUS.get(idxKey, "text");
-  let arr: string[] = [];
-  try { arr = rawIdx ? JSON.parse(rawIdx) : []; } catch { arr = []; }
-  if (!Array.isArray(arr)) arr = [];
-
-  const out: EligibleLocation[] = [];
-  const seen = new Set<string>();
-
-  const ordered = [
-    ...arr.map(v => String(v || "").trim()).filter(Boolean),
-    String(activeUlid || "").trim()
-  ].filter(Boolean);
-
-  for (const ulid of ordered) {
-    if (!ulid || seen.has(ulid)) continue;
-    seen.add(ulid);
-
-    const sid = await env.KV_STATUS.get(devSessKey(dev, ulid), "text");
-    if (!sid) continue;
-
-    const sess = await env.KV_STATUS.get(`opsess:${sid}`, { type: "json" }) as any;
-    if (!sess || String(sess?.ulid || "").trim() !== ulid) continue;
-
-    let slug = ulid;
-    let locationName = ulid;
-    try {
-      const item = await getItemById(ulid, env).catch(() => null);
-      slug = String(item?.locationID || ulid).trim() || ulid;
-
-      const ln = item?.locationName;
-      const nm = (ln && typeof ln === "object")
-        ? String(ln.en || Object.values(ln)[0] || "").trim()
-        : String(ln || "").trim();
-
-      if (nm) locationName = nm;
-      else if (slug) locationName = slug;
-    } catch {}
-
-    out.push({ ulid, slug, locationName });
-  }
-
-  return out;
-}
-
-async function multiLocationEnabledForUlid(env: Env, ulid: string): Promise<boolean> {
-  try {
-    const own = await env.KV_STATUS.get(`ownership:${ulid}`, { type: "json" }) as any;
-    const paymentIntentId = String(own?.lastEventId || "").trim();
-    if (!paymentIntentId) return false;
-
-    const plan = await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" }) as any;
-    return Number(plan?.maxPublishedLocations || 0) > 1;
-  } catch {
-    return false;
-  }
-}
-
-interface CampaignGroupRow {
-  campaignGroupKey: string;
-  campaignKey: string;
-  campaignScope: "single" | "selected" | "all";
-  seedLocationULID: string;
-  seedLocationSlug: string;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-  stripeSessionId?: string;
-}
-
-async function writeCampaignChildRow(params: {
-  env: Env;
-  targetUlid: string;
-  targetSlug: string;
-  draft: any;
-  campaignGroupKey: string;
-  stripeSessionId: string;
-  inherited: boolean;
-}): Promise<void> {
-  const { env, targetUlid, targetSlug, draft, campaignGroupKey, stripeSessionId, inherited } = params;
-
-  const histKey = campaignsByUlidKey(targetUlid);
-  const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
-  const arr: any[] = Array.isArray(hist) ? hist : [];
-
-  const row = {
-    ...draft,
-    locationID: targetUlid,
-    locationULID: targetUlid,
-    locationSlug: targetSlug,
-    campaignGroupKey,
-    campaignScope: normCampaignScope(draft?.campaignScope),
-    status: "Active",
-    promotedAt: new Date().toISOString(),
-    stripeSessionId
-  } as any;
-
-  if (inherited) row.inheritedAt = new Date().toISOString();
-
-  const next = arr.filter((x) => {
-    const sameKey = String(x?.campaignKey || "").trim() === String(row?.campaignKey || "").trim();
-    const sameGroup = String(x?.campaignGroupKey || "").trim() === String(row?.campaignGroupKey || "").trim();
-    return !(sameKey && sameGroup);
-  });
-
-  next.push(row);
-  await env.KV_STATUS.put(histKey, JSON.stringify(next));
-}
-
-async function materializeInheritedAllScopeForCurrentUlid(
-  req: Request,
-  env: Env,
-  currentUlid: string
-): Promise<{ addedRows: number; addedGroups: number }> {
-  const eligible = await eligibleLocationsForRequest(req, env, currentUlid);
-  const eligibleByUlid = new Map(eligible.map((x) => [x.ulid, x]));
-  const currentLoc = eligibleByUlid.get(currentUlid);
-  if (!currentLoc) return { addedRows: 0, addedGroups: 0 };
-
-  const currentHistKey = campaignsByUlidKey(currentUlid);
-  const currentHistRaw = await env.KV_STATUS.get(currentHistKey, { type: "json" }) as any;
-  const currentRows: any[] = Array.isArray(currentHistRaw) ? currentHistRaw : [];
-
-  const existing = new Set(
-    currentRows
-      .map((r: any) => `${String(r?.campaignGroupKey || "").trim()}::${String(r?.campaignKey || "").trim()}`)
-      .filter(Boolean)
-  );
-
-  let addedRows = 0;
-  const touchedGroups = new Set<string>();
-  const nowMs = Date.now();
-
-  for (const loc of eligible) {
-    const histRaw = await env.KV_STATUS.get(campaignsByUlidKey(loc.ulid), { type: "json" }) as any;
-    const rows: any[] = Array.isArray(histRaw) ? histRaw : [];
-
-    for (const row of rows) {
-      const groupKey = String(row?.campaignGroupKey || "").trim();
-      const campaignKey = String(row?.campaignKey || "").trim();
-      if (!groupKey || !campaignKey) continue;
-      if (normCampaignScope(row?.campaignScope) !== "all") continue;
-
-      const st = effectiveCampaignStatus(row);
-      if (st !== "active" && st !== "suspended") continue;
-
-      const endMs = parseYmdUtcMs(String(row?.endDate || ""));
-      if (Number.isFinite(endMs) && nowMs > (endMs + 24 * 60 * 60 * 1000 - 1)) continue;
-
-      const sig = `${groupKey}::${campaignKey}`;
-      if (existing.has(sig)) continue;
-
-      await writeCampaignChildRow({
-        env,
-        targetUlid: currentUlid,
-        targetSlug: currentLoc.slug,
-        draft: row,
-        campaignGroupKey: groupKey,
-        stripeSessionId: String(row?.stripeSessionId || "").trim(),
-        inherited: true
-      });
-
-      existing.add(sig);
-      addedRows += 1;
-      touchedGroups.add(groupKey);
-    }
-  }
-
-  return { addedRows, addedGroups: touchedGroups.size };
-}
-
 type CampaignStatus =
   | "Active"
   | "Paused"
@@ -4272,8 +3852,6 @@ interface CampaignRow {
   // Identity
   locationID: string;              // canonical ULID (required in KV representation)
   campaignKey: string;
-  campaignGroupKey?: string;
-  campaignScope?: string;          // single | selected | all
   campaignName?: string;
   sectorKey?: string;
   brandKey?: string;
@@ -4289,11 +3867,11 @@ interface CampaignRow {
   campaignType?: string;
   targetChannels?: string[] | string;
   offerType?: string;
+  productName?: string;
   discountKind?: string;           // Percent | Amount | None
   campaignDiscountValue?: number | string;
   eligibilityType?: string;
   eligibilityNotes?: string;
-  selectedLocationULIDs?: string[];
 
   // Attribution
   utmSource?: string;
@@ -4301,9 +3879,6 @@ interface CampaignRow {
   utmCampaign?: string;
 
   // Misc
-  inheritedAt?: string;
-  promotedAt?: string;
-  stripeSessionId?: string;
   notes?: string;
 }
 

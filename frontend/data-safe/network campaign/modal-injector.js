@@ -3706,8 +3706,7 @@ export function createRestoreAccessModal() {
       // Prefer the explicit location context if provided; otherwise use the authoritative restore payload.
       const target = String(loc || restoredSlug || restoredUlid).trim();
 
-      // Post-restore hints: keep ULID/slug locally so Owner Center and Dash can render immediately.
-      // Also carry a one-shot inherited-addition notice through the shell reload.
+      // Post-restore hint: keep both ULID and slug locally so Owner Center and Dash can render immediately.
       try {
         if (restoredUlid) {
           sessionStorage.setItem('ng_owner_restore_ulid', restoredUlid);
@@ -3715,21 +3714,6 @@ export function createRestoreAccessModal() {
         }
         if (restoredUlid && restoredSlug) {
           localStorage.setItem(`navigen.slug:${restoredUlid}`, restoredSlug);
-        }showCampaignInfoModal 
-
-        const rr2 = await fetch('/api/owner/campaigns', {
-          cache: 'no-store',
-          credentials: 'include'
-        });
-        const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
-        const addedRows = Number(jj2?.inheritedNotice?.addedRows || 0);
-
-        if (addedRows > 0) {
-          sessionStorage.setItem('ng_inherited_notice_added_rows', String(addedRows));
-          sessionStorage.setItem('ng_inherited_notice_until', String(Date.now() + 15000));
-        } else {
-          sessionStorage.removeItem('ng_inherited_notice_added_rows');
-          sessionStorage.removeItem('ng_inherited_notice_until');
         }
       } catch {}
 
@@ -5372,8 +5356,6 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   const draft = listJ?.draft || prefillFrom || null;
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
   const ulid = String(listJ?.ulid || '').trim(); // empty in guest mode; that's OK
-  const eligibleLocations = Array.isArray(listJ?.eligibleLocations) ? listJ.eligibleLocations : [];
-  const inheritedNotice = listJ?.inheritedNotice || null;
 
   // Canonicalize location identifier for CM header/status:
   // - input "slug" might actually be a ULID depending on caller
@@ -5529,17 +5511,6 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     (typeof t === 'function' && t('campaign.ui.lead.edit')) ||
     'Create or edit a campaign for this location. Changes are saved automatically while you work. Your campaign becomes active only after checkout.';
 
-  let inheritedNote = null;
-  if (inheritedNotice && Number(inheritedNotice.addedRows || 0) > 0) {
-    const addedRows = Number(inheritedNotice.addedRows || 0);
-    inheritedNote = document.createElement('div');
-    inheritedNote.className = 'campaign-inline-note';
-    inheritedNote.textContent =
-      addedRows === 1
-        ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
-        : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${addedRows} locations were added to this campaign automatically.`);
-  }
-
   const locHdr = document.createElement('div');
   locHdr.className = 'cm-location';
 
@@ -5593,8 +5564,6 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   const panel = document.createElement('div');
   panel.className = 'cm-panel';
 
-  shell.appendChild(lead);
-  if (inheritedNote) shell.appendChild(inheritedNote);
   shell.appendChild(locHdr);
   shell.appendChild(controls);
   shell.appendChild(panel);
@@ -5603,19 +5572,15 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   // ───────────────────────────────────────────────────────────────────────────
   // Campaign information modal (drilldown) — opens from Current/History cards
   // ───────────────────────────────────────────────────────────────────────────
-const showCampaignInfoModal = (row) => {
+  const showCampaignInfoModal = (row) => {
     const rowSafe = (row && typeof row === 'object') ? row : {};
     const mid = 'campaign-info-modal';
     document.getElementById(mid)?.remove();
 
-    const tSafe = (key, fallback) => {
-      const raw = (typeof t === 'function') ? String(t(key) || '').trim() : '';
-      return raw && raw !== key ? raw : fallback;
-    };
-
+    // Use injectModal so we inherit the same top-bar contract (title + red ×).
     const m = injectModal({
       id: mid,
-      title: tSafe('campaign.ui.info.title', 'Campaign information'),
+      title: (typeof t === 'function' && t('campaign.ui.info.title')) || 'Campaign information',
       bodyHTML: `<div class="modal-body-inner"><div class="cm-info"></div></div>`,
       layout: 'action'
     });
@@ -5624,12 +5589,12 @@ const showCampaignInfoModal = (row) => {
     const box = m.querySelector('.cm-info');
     if (!box) { showModal(mid); return; }
 
+    // Present as deterministic label/value blocks (no business logic computed client-side).
     const pairs = [
       ['campaignKey', rowSafe.campaignKey],
-      ['campaignGroupKey', rowSafe.campaignGroupKey],
-      ['campaignScope', rowSafe.campaignScope],
       ['campaignName', rowSafe.campaignName],
-      ['status', rowSafe.statusOverride || rowSafe.status],
+      ['productName', rowSafe.productName],
+      ['status', rowSafe.status],
       ['startDate', rowSafe.startDate],
       ['endDate', rowSafe.endDate],
       ['campaignType', rowSafe.campaignType],
@@ -5647,7 +5612,6 @@ const showCampaignInfoModal = (row) => {
     ];
 
     box.innerHTML = '';
-
     const wrap = document.createElement('div');
     wrap.className = 'cm-info-list';
 
@@ -5660,284 +5624,23 @@ const showCampaignInfoModal = (row) => {
     });
 
     box.appendChild(wrap);
-
+    // Actions: Renew + Suspend/Resume (owner only; guest mode won't have listJ anyway)
     const actions = document.createElement('div');
     actions.className = 'modal-actions';
 
     const btnRenew = document.createElement('button');
     btnRenew.type = 'button';
     btnRenew.className = 'modal-body-button';
-    btnRenew.textContent = tSafe('campaign.ui.renew', 'Renew campaign');
+    btnRenew.textContent = (typeof t === 'function' && t('campaign.ui.renew')) || 'Renew campaign';
     btnRenew.addEventListener('click', async () => {
       hideModal(mid);
+      // Prefill draft in the main CM modal using this row as template
       await showCampaignManagementModal(displaySlug, { openTab: 'new', prefillFrom: rowSafe });
     });
 
     actions.appendChild(btnRenew);
-
-    const groupKey = String(rowSafe?.campaignGroupKey || '').trim();
-    if (groupKey) {
-      const btnSuspendAll = document.createElement('button');
-      btnSuspendAll.type = 'button';
-      btnSuspendAll.className = 'cm-action-btn';
-      btnSuspendAll.textContent = tSafe('campaign.ui.suspend.all', 'Suspend all');
-      btnSuspendAll.addEventListener('click', async () => {
-        const out = await apiJson('/api/owner/campaigns/suspend', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ campaignGroupKey: groupKey, action: 'suspend' })
-        });
-        if (!out.r.ok) { showToast(tSafe('common.actionFailed', 'Action failed.'), 2400); return; }
-        showToast(tSafe('campaign.ui.networkRoster.allSuspended', 'All included locations suspended.'), 1800);
-        hideModal(mid);
-        showCampaignManagementModal(displaySlug, { openTab: 'current' });
-      });
-
-      const btnResumeAll = document.createElement('button');
-      btnResumeAll.type = 'button';
-      btnResumeAll.className = 'cm-action-btn';
-      btnResumeAll.textContent = tSafe('campaign.ui.resume.all', 'Resume all');
-      btnResumeAll.addEventListener('click', async () => {
-        const out = await apiJson('/api/owner/campaigns/suspend', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ campaignGroupKey: groupKey, action: 'resume' })
-        });
-        if (!out.r.ok) { showToast(tSafe('common.actionFailed', 'Action failed.'), 2400); return; }
-        showToast(tSafe('campaign.ui.networkRoster.allResumed', 'All included locations resumed.'), 1800);
-        hideModal(mid);
-        showCampaignManagementModal(displaySlug, { openTab: 'current' });
-      });
-
-      actions.appendChild(btnSuspendAll);
-      actions.appendChild(btnResumeAll);
-    }
-
     box.appendChild(actions);
-
-    if (groupKey) {
-      const rosterWrap = document.createElement('div');
-      rosterWrap.style.marginTop = '1rem';
-
-      const rosterTitle = document.createElement('p');
-      rosterTitle.textContent = tSafe('campaign.ui.networkRoster.title', 'Active network roster');
-      rosterTitle.style.margin = '0 0 0.75rem';
-      rosterTitle.style.fontWeight = '600';
-      rosterWrap.appendChild(rosterTitle);
-
-      const tools = document.createElement('div');
-      tools.style.display = 'flex';
-      tools.style.flexWrap = 'wrap';
-      tools.style.gap = '8px';
-      tools.style.marginBottom = '0.75rem';
-
-      const search = buildInput('search', '');
-      search.classList.add('input');
-      search.placeholder = tSafe('campaign.ui.networkRoster.search', 'Search locations…');
-      search.style.flex = '1 1 220px';
-
-      const filterSel = document.createElement('select');
-      filterSel.className = 'input';
-      [
-        ['all', tSafe('campaign.ui.networkRoster.filter.all', 'All')],
-        ['active', tSafe('campaign.ui.networkRoster.filter.active', 'Active')],
-        ['suspended', tSafe('campaign.ui.networkRoster.filter.suspended', 'Suspended')],
-        ['excluded', tSafe('campaign.ui.networkRoster.filter.excluded', 'Excluded')]
-      ].forEach(([value, label]) => {
-        const o = document.createElement('option');
-        o.value = value;
-        o.textContent = label;
-        filterSel.appendChild(o);
-      });
-
-      const btnSuspendSelected = document.createElement('button');
-      btnSuspendSelected.type = 'button';
-      btnSuspendSelected.className = 'cm-action-btn';
-      btnSuspendSelected.textContent = tSafe('campaign.ui.networkRoster.suspendSelected', 'Suspend selected');
-      btnSuspendSelected.disabled = true;
-
-      const btnResumeSelected = document.createElement('button');
-      btnResumeSelected.type = 'button';
-      btnResumeSelected.className = 'cm-action-btn';
-      btnResumeSelected.textContent = tSafe('campaign.ui.networkRoster.resumeSelected', 'Resume selected');
-      btnResumeSelected.disabled = true;
-
-      tools.appendChild(search);
-      tools.appendChild(filterSel);
-      tools.appendChild(btnSuspendSelected);
-      tools.appendChild(btnResumeSelected);
-      rosterWrap.appendChild(tools);
-
-      const rosterList = document.createElement('div');
-      rosterList.style.display = 'flex';
-      rosterList.style.flexDirection = 'column';
-      rosterList.style.gap = '8px';
-      rosterWrap.appendChild(rosterList);
-
-      const rosterState = {
-        items: [],
-        selected: new Set()
-      };
-
-      const syncSubsetButtons = () => {
-        const selectedIncluded = Array.from(rosterState.selected).filter((id) =>
-          rosterState.items.some((it) => String(it?.ulid || '').trim() === id && it?.included === true)
-        );
-        btnSuspendSelected.disabled = selectedIncluded.length === 0;
-        btnResumeSelected.disabled = selectedIncluded.length === 0;
-      };
-
-      const renderRoster = () => {
-        rosterList.innerHTML = '';
-
-        const q = String(search.value || '').trim().toLowerCase();
-        const filter = String(filterSel.value || 'all').trim();
-
-        let items = Array.isArray(rosterState.items) ? rosterState.items.slice() : [];
-        if (q) {
-          items = items.filter((it) => {
-            const hay = [
-              String(it?.locationName || ''),
-              String(it?.slug || ''),
-              String(it?.ulid || '')
-            ].join(' ').toLowerCase();
-            return hay.includes(q);
-          });
-        }
-
-        if (filter !== 'all') {
-          items = items.filter((it) => String(it?.status || '').trim().toLowerCase() === filter);
-        }
-
-        if (!items.length) {
-          const empty = document.createElement('div');
-          empty.className = 'cm-inline-note';
-          empty.textContent = tSafe('campaign.ui.networkRoster.empty', 'No locations match this filter.');
-          rosterList.appendChild(empty);
-          syncSubsetButtons();
-          return;
-        }
-
-        items.forEach((it) => {
-          const locUlid = String(it?.ulid || '').trim();
-          const included = !!it?.included;
-          const status = String(it?.status || '').trim().toLowerCase() || 'excluded';
-
-          const rowEl = document.createElement('label');
-          rowEl.style.display = 'flex';
-          rowEl.style.alignItems = 'center';
-          rowEl.style.gap = '10px';
-          rowEl.style.padding = '10px 12px';
-          rowEl.style.border = '1px solid #e5e7eb';
-          rowEl.style.borderRadius = '10px';
-          rowEl.style.background = '#f8fafc';
-
-          const check = document.createElement('input');
-          check.type = 'checkbox';
-          check.checked = rosterState.selected.has(locUlid);
-          check.disabled = !included;
-          check.addEventListener('change', () => {
-            if (check.checked) rosterState.selected.add(locUlid);
-            else rosterState.selected.delete(locUlid);
-            syncSubsetButtons();
-          });
-
-          const main = document.createElement('div');
-          main.style.flex = '1 1 auto';
-          main.style.minWidth = '0';
-          main.innerHTML = `
-            <strong>${String(it?.locationName || it?.slug || locUlid).trim()}</strong><br>
-            <small>${String(it?.slug || locUlid).trim()}</small>
-          `;
-
-          const chip = document.createElement('span');
-          chip.className = 'cm-roster-chip';
-          chip.textContent =
-            status === 'active'
-              ? tSafe('campaign.ui.networkRoster.status.active', 'Active')
-              : status === 'suspended'
-                ? tSafe('campaign.ui.networkRoster.status.suspended', 'Suspended')
-                : tSafe('campaign.ui.networkRoster.status.excluded', 'Excluded');
-
-          rowEl.appendChild(check);
-          rowEl.appendChild(main);
-          rowEl.appendChild(chip);
-          rosterList.appendChild(rowEl);
-        });
-
-        syncSubsetButtons();
-      };
-
-      const loadRoster = async () => {
-        rosterList.innerHTML = '';
-        const loading = document.createElement('div');
-        loading.className = 'cm-inline-note';
-        loading.textContent = tSafe('campaign.ui.networkRoster.loading', 'Loading network roster…');
-        rosterList.appendChild(loading);
-
-        const out = await apiJson(`/api/owner/campaigns/group?campaignGroupKey=${encodeURIComponent(groupKey)}`, {
-          method: 'GET'
-        });
-
-        if (!out.r.ok) {
-          rosterList.innerHTML = '';
-          const fail = document.createElement('div');
-          fail.className = 'cm-inline-note';
-          fail.textContent = tSafe('campaign.ui.networkRoster.loadFail', 'Could not load the network roster.');
-          rosterList.appendChild(fail);
-          return;
-        }
-
-        rosterState.items = Array.isArray(out.j?.items) ? out.j.items : [];
-        rosterState.selected = new Set(
-          Array.from(rosterState.selected).filter((id) =>
-            rosterState.items.some((it) => String(it?.ulid || '').trim() === id && it?.included === true)
-          )
-        );
-        renderRoster();
-      };
-
-      search.addEventListener('input', renderRoster);
-      filterSel.addEventListener('change', renderRoster);
-
-      btnSuspendSelected.addEventListener('click', async () => {
-        const ulids = Array.from(rosterState.selected).filter((id) =>
-          rosterState.items.some((it) => String(it?.ulid || '').trim() === id && it?.included === true)
-        );
-        if (!ulids.length) return;
-
-        const out = await apiJson('/api/owner/campaigns/suspend-selected', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ campaignGroupKey: groupKey, action: 'suspend', ulids })
-        });
-        if (!out.r.ok) { showToast(tSafe('common.actionFailed', 'Action failed.'), 2400); return; }
-
-        showToast(tSafe('campaign.ui.networkRoster.subsetSuspended', 'Selected locations suspended.'), 1800);
-        await loadRoster();
-      });
-
-      btnResumeSelected.addEventListener('click', async () => {
-        const ulids = Array.from(rosterState.selected).filter((id) =>
-          rosterState.items.some((it) => String(it?.ulid || '').trim() === id && it?.included === true)
-        );
-        if (!ulids.length) return;
-
-        const out = await apiJson('/api/owner/campaigns/suspend-selected', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ campaignGroupKey: groupKey, action: 'resume', ulids })
-        });
-        if (!out.r.ok) { showToast(tSafe('common.actionFailed', 'Action failed.'), 2400); return; }
-
-        showToast(tSafe('campaign.ui.networkRoster.subsetResumed', 'Selected locations resumed.'), 1800);
-        await loadRoster();
-      });
-
-      box.appendChild(rosterWrap);
-      loadRoster();
-    }
-
+    
     showModal(mid);
   };
 
@@ -5958,75 +5661,75 @@ const showCampaignInfoModal = (row) => {
     const list = document.createElement('div');
     list.className = 'cm-card-list';
 
-    rows.forEach((r) => {
-      const loc = String(locName || displayName || displaySlug || '').trim();
-      const key = String(r?.campaignKey || '').trim();
-      const groupKey = String(r?.campaignGroupKey || '').trim();
-      const start = ymd(r?.startDate);
-      const end = ymd(r?.endDate);
-      const range = (start && end) ? `${start} → ${end}` : '';
-      const st = String(r?.statusOverride || r?.status || '').toLowerCase().trim();
+    const fmtDate = (s) => {
+      const v = String(s || '').trim();
+      return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '';
+    };
 
+    rows.forEach((r) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = `cm-camp-card ${st === 'suspended' ? 'cm-camp-suspended' : ''}`;
+      b.className = 'cm-camp-card';
+
+      const stEff = String(r?.statusOverride || r?.status || '').trim().toLowerCase();
+      if (stEff === 'suspended') b.classList.add('cm-camp-suspended');
+
+      const name = String(r?.campaignName || r?.campaignKey || '').trim();
+      const start = fmtDate(r?.startDate);
+      const end = fmtDate(r?.endDate);
+      const range = (start && end) ? `${start} \u2192 ${end}` : '';
+
+      // Left column:
+      // - Current campaign cards show 🎁
+      // - History cards do not (per your spec)
+      const left = (kind === 'current') ? '🎁' : '';
+
       b.innerHTML = `
         <div class="cm-camp-row1">
-          <div class="cm-camp-left">🎁</div>
+          <div class="cm-camp-left">${left}</div>
+
           <div class="cm-camp-mid">
-            <div class="cm-camp-loc">${loc}</div>
-            <div class="cm-camp-key">${key}</div>
-            ${range ? `<div class="cm-camp-range">${range}</div>` : ``}
+            <div class="cm-camp-loc">${String(locName || '').trim()}</div>
+            <div class="cm-camp-key">${String(r?.campaignKey || '').trim()}</div>
+            <div class="cm-camp-range">${range}</div>
           </div>
+
           <div class="cm-camp-right">
             <span class="cm-status-dot" aria-hidden="true"></span>
           </div>
         </div>
 
-        ${groupKey && kind === 'current' ? `
-          <div class="campaign-group-actions">
-            <button type="button" class="cm-action-btn cm-group-suspend">${(typeof t === 'function' && t('campaign.ui.suspend.all')) || 'Suspend all'}</button>
-            <button type="button" class="cm-action-btn cm-group-resume">${(typeof t === 'function' && t('campaign.ui.resume.all')) || 'Resume all'}</button>
-          </div>
-        ` : ``}
+        ${kind === 'current' ? (() => {
+          const st = String(r?.statusOverride || r?.status || '').trim().toLowerCase();
+          const isSusp = (st === 'suspended');
 
-        <div class="cm-camp-row2">
-          <div class="cm-camp-actions">
-            ${kind === 'current' && st !== 'suspended' ? `<button type="button" class="clear-x cm-camp-suspend" aria-label="Suspend">➖</button>` : ``}
-            ${kind === 'current' && st === 'suspended' ? `<button type="button" class="clear-x cm-camp-resume" aria-label="Resume">▶</button>` : ``}
-            <button type="button" class="clear-x cm-camp-add" aria-label="Add">➕</button>
-          </div>
-        </div>
+          return `
+            <div class="cm-camp-row2">
+              <div class="cm-camp-actions">
+                ${isSusp
+                  ? `<button type="button" class="clear-x cm-camp-resume" aria-label="Resume"><span class="icon-play">▶</span></button>`
+                  : `<button type="button" class="clear-x cm-camp-suspend" aria-label="Suspend"><span class="icon-minus">−</span></button>`
+                }
+                <button type="button" class="clear-x cm-camp-add" aria-label="Add"><span class="icon-plus">+</span></button>
+                <button type="button" class="clear-x cm-camp-copy" aria-label="Copy"><span class="icon-recycle">♻️</span></button>
+              </div>
+            </div>
+          `;
+        })() : ``}
       `;
 
-      b.addEventListener('click', () => showCampaignInfoModal(r));
-
-      b.querySelector('.cm-group-suspend')?.addEventListener('click', async (e) => {
+      b.querySelector('.cm-camp-copy')?.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const out = await apiJson('/api/owner/campaigns/suspend', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ campaignGroupKey: groupKey, action: 'suspend' })
-        });
-        if (!out.r.ok) { showToast('Action failed.', 2400); return; }
-        showToast('Campaign suspended.', 1800);
-        showCampaignManagementModal(displaySlug, { openTab: 'current' });
+        showCampaignManagementModal(displaySlug, { openTab: 'new', prefillFrom: r });
       });
 
-      b.querySelector('.cm-group-resume')?.addEventListener('click', async (e) => {
+      b.addEventListener('click', (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        const out = await apiJson('/api/owner/campaigns/suspend', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ campaignGroupKey: groupKey, action: 'resume' })
-        });
-        if (!out.r.ok) { showToast('Action failed.', 2400); return; }
-        showToast('Campaign resumed.', 1800);
-        showCampaignManagementModal(displaySlug, { openTab: 'current' });
+        showCampaignInfoModal(r);
       });
 
+      // ➖ Suspend (opens confirm modal)
       b.querySelector('.cm-camp-suspend')?.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -6053,6 +5756,7 @@ const showCampaignInfoModal = (row) => {
         });
       });
 
+      // ♻️ Resume (same modal)
       b.querySelector('.cm-camp-resume')?.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -6078,12 +5782,14 @@ const showCampaignInfoModal = (row) => {
         });
       });
 
+      // ➕ Add campaign: switch to New campaign view and prefill from this row
       b.querySelector('.cm-camp-add')?.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         showCampaignManagementModal(displaySlug, { openTab: 'new', prefillFrom: r });
       });
 
+      // Status dot: green for current, grey for history (deterministic).
       try {
         const dot = b.querySelector('.cm-status-dot');
         if (dot) {
@@ -6121,10 +5827,9 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
   const suffix = String(next).padStart(2, '0');
   return `${base}-${year}-${suffix}`;
 }
-
   const renderDraftEditor = () => {
-    const multiScopeEnabled = !!listJ?.plan?.multiLocationEnabled;
-
+    // Draft editor: empty on first open; shows draft once editing has started.
+    // This remains KV-authoritative via /api/owner/campaigns/draft and the draft returned in /api/owner/campaigns.
     const form = document.createElement('div');
     form.className = 'campaign-mgmt-form';
 
@@ -6139,14 +5844,20 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       return w;
     };
 
+    const deriveBrandSlug = (s) => {
+      const first = String(s || '').trim().split(/\s+/)[0] || '';
+      return first.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    };
+
     const yy = String(new Date().getFullYear()).slice(-2);
+    // Canonical: campaignKey must be locationSlug-based (stable + unique per business).
     const baseSlug = String(displaySlug || slug || '').trim() || 'location';
     const suggestedKey = nextRollingCampaignKey(baseSlug, yy, rowsAll);
 
     const campaignKey = buildInput('text', draft?.campaignKey || suggestedKey);
-    campaignKey.readOnly = true;
-    campaignKey.setAttribute('aria-readonly', 'true');
-
+    campaignKey.readOnly = true; // guardrail: generated key is non-editable
+    campaignKey.setAttribute('aria-readonly', 'true'); 
+    
     const campaignName = buildInput('text', draft?.campaignName || '');
     const productName = buildInput('text', draft?.productName || '');
     const startDate = buildInput('date', draft?.startDate || ymdToday());
@@ -6163,26 +5874,9 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const utmSource = buildSelect(CAMPAIGN_VOCAB.utmSource, draft?.utmSource || '');
     const utmMedium = buildSelect(CAMPAIGN_VOCAB.utmMedium, draft?.utmMedium || '');
     const utmCampaign = buildSelect(CAMPAIGN_VOCAB.utmCampaign, draft?.utmCampaign || '');
+
+    // targetChannels: simple single-select for now; can evolve to multi later
     const targetChannels = buildSelect(CAMPAIGN_VOCAB.targetChannels, (draft?.targetChannels && draft.targetChannels[0]) || 'QR');
-
-    const scopeSelect = document.createElement('select');
-    scopeSelect.className = 'input';
-
-    [
-      ['single', scopeSingleLabel],
-      ['selected', scopeSelectedLabel],
-      ['all', scopeAllLabel]
-    ].forEach(([value, label]) => {
-      const o = document.createElement('option');
-      o.value = value;
-      o.textContent = label;
-      if (String(multiScopeEnabled ? (draft?.campaignScope || 'single') : 'single').trim() === value) {
-        o.selected = true;
-      }
-      scopeSelect.appendChild(o);
-    });
-
-    if (!multiScopeEnabled) scopeSelect.disabled = true;
 
     const labels = {
       campaignKey: 'Campaign key',
@@ -6199,8 +5893,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       utmMedium: 'UTM medium',
       utmCampaign: 'UTM campaign',
       startDate: 'Start date',
-      endDate: 'End date',
-      campaignScope: 'Campaign scope'
+      endDate: 'End date'
     };
 
     form.appendChild(field(labels.campaignKey, campaignKey));
@@ -6219,106 +5912,16 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     form.appendChild(field(labels.startDate, startDate));
     form.appendChild(field(labels.endDate, endDate));
 
-    if (multiScopeEnabled) {
-      form.appendChild(field(labels.campaignScope, scopeSelect));
-    }
-
     panel.appendChild(form);
 
-    const locationPanel = document.createElement('div');
-    locationPanel.className = 'campaign-locations-panel';
-    locationPanel.style.display = 'none';
-
-    const locationInfo = document.createElement('div');
-    locationInfo.className = 'campaign-inline-note';
-    locationInfo.textContent = 'Use locations already proven on this device. Add more locations anytime with 🔑 Restore owner access.';
-    locationPanel.appendChild(locationInfo);
-
-    const search = buildInput('search', '');
-    search.placeholder = locationSearchPlaceholder;    
-    search.classList.add('campaign-location-search');
-    locationPanel.appendChild(search);
-
-    const roster = document.createElement('div');
-    roster.className = 'campaign-location-roster';
-    locationPanel.appendChild(roster);
-
-    const addAnother = document.createElement('button');
-    addAnother.type = 'button';
-    addAnother.className = 'cm-action-btn';
-    addAnother.textContent = addAnotherLocationLabel;    
-    addAnother.addEventListener('click', async () => {
-      hideModal('campaign-management-modal');
-      await showOwnerCenterModal();
-    });
-    locationPanel.appendChild(addAnother);
-
-    panel.appendChild(locationPanel);
-
-    const eligibleByUlid = new Map(eligibleLocations.map((loc) => [String(loc?.ulid || '').trim(), loc]));
-    const selectedSet = new Set(
-      Array.isArray(draft?.selectedLocationULIDs)
-        ? draft.selectedLocationULIDs.map((x) => String(x || '').trim()).filter(Boolean)
-        : [String(ulid || '').trim()].filter(Boolean)
-    );
-
-    const syncLocationRoster = () => {
-      const scope = multiScopeEnabled ? String(scopeSelect.value || 'single').trim() : 'single';
-      locationPanel.style.display = (scope === 'selected' || scope === 'all') ? '' : 'none';
-      roster.innerHTML = '';
-
-      const q = String(search.value || '').trim().toLowerCase();
-      const items = Array.isArray(eligibleLocations) ? eligibleLocations.slice() : [];
-
-      const filtered = q
-        ? items.filter((loc) => {
-            const hay = [
-              String(loc?.locationName || ''),
-              String(loc?.slug || ''),
-              String(loc?.ulid || '')
-            ].join(' ').toLowerCase();
-            return hay.includes(q);
-          })
-        : items;
-
-      if (!filtered.length) {
-        const empty = document.createElement('p');
-        empty.className = 'muted';
-        empty.textContent = noEligibleLocationsLabel;        
-        roster.appendChild(empty);
-        return;
-      }
-
-      filtered.forEach((loc) => {
-        const id = String(loc?.ulid || '').trim();
-        const row = document.createElement('label');
-        row.className = 'campaign-location-row';
-
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.checked = scope === 'all' ? true : selectedSet.has(id);
-        cb.disabled = scope === 'all';
-        cb.addEventListener('change', () => {
-          if (cb.checked) selectedSet.add(id);
-          else selectedSet.delete(id);
-        });
-
-        const text = document.createElement('span');
-        text.className = 'label';
-        text.innerHTML = `<strong>${String(loc?.locationName || loc?.slug || id).trim()}</strong><br><small>${String(loc?.slug || id).trim()}</small>`;
-
-        row.appendChild(cb);
-        row.appendChild(text);
-        roster.appendChild(row);
-      });
-    };
-
-    search.addEventListener('input', syncLocationRoster);
-    scopeSelect.addEventListener('change', syncLocationRoster);
-    syncLocationRoster();
-
+    // Actions row
     const actions = document.createElement('div');
     actions.className = 'cm-actions';
+
+    const btnSave = document.createElement('button');
+    btnSave.className = 'cm-action-btn';
+    btnSave.type = 'button';
+    btnSave.textContent = (typeof t==='function' && t('campaign.ui.saveDraft')) || 'Save draft';
 
     const btnCheckout = document.createElement('button');
     btnCheckout.className = 'modal-body-button';
@@ -6328,46 +5931,35 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     actions.appendChild(btnCheckout);
     panel.appendChild(actions);
 
-    const buildDraft = () => {
-      const campaignScope = multiScopeEnabled ? String(scopeSelect.value || 'single').trim() : 'single';
-      const selectedLocationULIDs = (campaignScope === 'selected')
-        ? Array.from(selectedSet).filter((id) => eligibleByUlid.has(id))
-        : [];
-
-      return {
-        campaignKey: String(campaignKey.value || '').trim(),
-        campaignName: String(campaignName.value || '').trim(),
-        productName: String(productName.value || '').trim(),
-        campaignType: String(campaignType.value || '').trim(),
-        targetChannels: [ String(targetChannels.value || '').trim() ].filter(Boolean),
-        offerType: String(offerType.value || '').trim(),
-        discountKind: String(discountKind.value || '').trim(),
-        campaignDiscountValue: discountValue.value === '' ? null : Number(discountValue.value),
-        eligibilityType: String(eligibilityType.value || '').trim(),
-        eligibilityNotes: String(eligibilityNotes.value || '').trim(),
-        utmSource: String(utmSource.value || '').trim(),
-        utmMedium: String(utmMedium.value || '').trim(),
-        utmCampaign: String(utmCampaign.value || '').trim(),
-        startDate: String(startDate.value || '').trim(),
-        endDate: String(endDate.value || '').trim(),
-        campaignScope,
-        selectedLocationULIDs
-      };
-    };
+    const collectDraft = () => ({
+      campaignKey: String(campaignKey.value || '').trim(),
+      campaignName: String(campaignName.value || '').trim(),
+      productName: String(productName.value || '').trim(),
+      campaignType: String(campaignType.value || '').trim(),
+      targetChannels: [ String(targetChannels.value || '').trim() ].filter(Boolean),
+      offerType: String(offerType.value || '').trim(),
+      discountKind: String(discountKind.value || '').trim(),
+      campaignDiscountValue: discountValue.value === '' ? null : Number(discountValue.value),
+      eligibilityType: String(eligibilityType.value || '').trim(),
+      eligibilityNotes: String(eligibilityNotes.value || '').trim(),
+      utmSource: String(utmSource.value || '').trim(),
+      utmMedium: String(utmMedium.value || '').trim(),
+      utmCampaign: String(utmCampaign.value || '').trim(),
+      startDate: String(startDate.value || '').trim(),
+      endDate: String(endDate.value || '').trim()
+    });
 
     btnCheckout.addEventListener('click', async () => {
-      const d = buildDraft();
+      // Ensure draft saved first (server must have campaigns:draft:<ULID>)
+      const d = collectDraft();
       if (!d.campaignKey || !d.startDate || !d.endDate) {
         showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
-        return;
-      }
-      if (d.campaignScope === 'selected' && !d.selectedLocationULIDs.length) {
-        showToast(selectAtLeastOneLocationLabel, 2400);        
         return;
       }
 
       let chkJ = null;
       if (listJ) {
+        // Signed-in path (owner session): keep current behavior.
         const { r: rSave } = await apiJson('/api/owner/campaigns/draft', {
           method:'POST',
           headers:{'content-type':'application/json'},
@@ -6389,6 +5981,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         }
         chkJ = out.j;
       } else {
+        // Guest path (no owner session): single-payment canonical checkout.
         const out = await apiJson('/api/campaigns/checkout', {
           method:'POST',
           headers:{'content-type':'application/json'},
@@ -6406,23 +5999,11 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         return;
       }
 
+      // Redirect to Stripe hosted checkout
       location.href = String(chkJ.url);
     });
   };
 
-  const tSafe = (key, fallback) => {
-    const raw = (typeof t === 'function') ? String(t(key) || '').trim() : '';
-    return raw && raw !== key ? raw : fallback;
-  };
-
-  const scopeSingleLabel = tSafe('campaign.ui.scope.single', 'This location only');
-  const scopeSelectedLabel = tSafe('campaign.ui.scope.selected', 'Selected locations');
-  const scopeAllLabel = tSafe('campaign.ui.scope.all', 'All my locations');
-  const locationSearchPlaceholder = tSafe('campaign.ui.locations.search', 'Search locations…');
-  const addAnotherLocationLabel = tSafe('campaign.ui.locations.add', 'Add another location');
-  const noEligibleLocationsLabel = tSafe('campaign.ui.locations.empty', 'No eligible locations on this device yet.');
-  const selectAtLeastOneLocationLabel = tSafe('campaign.ui.locations.validation.one', 'Select at least one location.');
-    
   // ───────────────────────────────────────────────────────────────────────────
   // Tab controller (deterministic, single source of truth)
   // ───────────────────────────────────────────────────────────────────────────

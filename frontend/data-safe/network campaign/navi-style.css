@@ -3004,53 +3004,6 @@ select.input{
   background:#c6dafe;
 }
 
-/* Campaign Management — multi-location scope, roster, inherited-addition notice, and group actions */
-.campaign-inline-note{
-  padding:10px 12px;
-  border:1px solid #cbd5e1;
-  background:#eef6ff;
-  border-radius:10px;
-  color:#0f172a;
-}
-
-.campaign-group-actions{
-  display:flex;
-  gap:10px;
-  margin-top:10px;
-  justify-content:flex-start;
-}
-
-.campaign-locations-panel{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  margin-top:14px;
-}
-
-.campaign-location-search{
-  width:100%;
-}
-
-.campaign-location-roster{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.campaign-location-row{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-  padding:10px 12px;
-  border:1px solid #e0e0e0;
-  border-radius:10px;
-  background:#f8f8f8;
-}
-
-.campaign-location-row input[type="checkbox"]{
-  margin-top:2px;
-}
-
 /* Campaign cards (Current + History) */
 .cm-card-list{
   display:flex;

@@ -7,6 +7,28 @@ This document is NON-NORMATIVE.
 The normative requirements live in `navigen-spec.md`.
 
 --------------------------------------------------------------------
+CURRENT PROJECT CONSTRAINT (Authoritative for planning order)
+--------------------------------------------------------------------
+
+For the current project, multi-location campaign management operates only on
+already-existing locations.
+
+This means:
+
+• Locations may already exist from profiles.json / alias-seeded records.
+• Future owner-created locations are explicitly out of scope for the
+  multi-location campaign phase below.
+• Multi-location campaign management must not depend on the Locations Project
+  wizard or publish flow.
+• A location may become eligible for multi-location control on a device when it is:
+    - already present and owner-proven on that device, or
+    - freshly established on that same device through a qualifying purchase.
+
+This document therefore treats:
+• multi-location campaign management as a current-project implementation phase, and
+• location creation / publishing as a separate later track.
+
+--------------------------------------------------------------------
 PHASE 1 — STRIPE WEBHOOK PROCESSOR → OWNERSHIP RECORD
 --------------------------------------------------------------------
 
@@ -1434,6 +1456,293 @@ Only after Phase 7 passes may the Owner Platform
 be considered production-ready.
 
 --------------------------------------------------------------------
+PHASE 7A — MULTI-LOCATION CAMPAIGNS (CURRENT PROJECT, EXISTING LOCATIONS ONLY)
+--------------------------------------------------------------------
+
+Goal (plain language):
+Allow a Business Owner with a qualifying multi-location plan to run one campaign
+across one, selected, or all locations already proven on the same device,
+without turning portfolio/entity management into a separate user product.
+
+This phase implements the derived portfolio model defined in the spec:
+• internal only
+• auto-created from the current seed location
+• same-device proven control only
+• shared parent campaign budget / plan
+• child campaign rows per included location
+
+Scope (Phase 7A only):
+• Campaign Management scope step for qualifying plans only
+• Scope values:
+    - This location only
+    - Selected locations
+    - All my locations
+• Auto-creation of the derived portfolio from the current seed location
+• Eligibility source = locations already proven on the same device
+• Parent campaign_group record + child campaigns:byUlid rows
+• Flat location roster with filters (not grouped sections)
+• Include / exclude controls for selected locations
+• Auto-inheritance for scope="all" when a newly eligible location is later added
+• Immediate notice + inline Campaign Management notice for inherited additions
+• Suspend / resume:
+    - all included locations
+    - selected included locations
+    - one included location as a local override
+
+Explicit non-goals:
+• No new location-creation wizard
+• No remote-join / cross-device portfolio claims
+• No entity_data / entity_outlet_map runtime integration in v1
+• No account system
+• No replacement of per-location campaign execution
+• No grouped roster UI
+• No separate “Portfolio product” surface
+
+Dependencies:
+• Phase 1 ownership writer
+• Phase 2 owner session + Restore Access flows
+• Phase 3 Dash gating
+• Phase 4 / 5 owner-entry surfaces already present
+• Existing location inventory (profiles.json / aliases / already-known locations)
+• Current campaign KV spine (campaigns:byUlid:<ULID>)
+
+--------------------------------------------------------------------
+7A.1 Core implementation model
+--------------------------------------------------------------------
+
+Authoritative model:
+• location remains the execution unit
+• one parent network campaign controls shared budget / shared offer definition
+• each included location materializes its own child campaign row
+• all child rows share one campaignGroupKey
+
+Implications:
+• analytics remain attributable per location child row
+• billing / redeem accounting remain per location child row
+• parent controls network-level state only
+• child rows retain local state (including local suspension)
+
+--------------------------------------------------------------------
+7A.2 Campaign Management UI contract
+--------------------------------------------------------------------
+
+Rules:
+• Standard plan:
+    - Campaign Management exposes only “This location only”
+• Qualifying multi-location plan:
+    - Campaign Management exposes:
+         • This location only
+         • Selected locations
+         • All my locations
+
+First-time multi-location behavior:
+• If the operator first chooses “Selected locations” or “All my locations”:
+    - the derived portfolio is auto-created from the current seed location
+    - no confirmation modal is shown
+    - the UI may show a short informational note only
+
+Locations step:
+• shown only for scope = selected or all
+• uses one flat roster with filters always available
+• seed location starts included by default
+• seed location MAY be unchecked in “selected”
+• selected scope MUST require at least one included location before activation
+
+Eligibility:
+• a location is eligible only if already proven on the same device
+• a fresh qualifying purchase on the same device may also add a location
+• if no additional eligible locations exist yet:
+    - Campaign Management MUST provide an inline “Add another location” path
+
+User-facing behavior:
+• “portfolio” is internal language only
+• the user experience is an organic expansion from one location to many
+• no separate portfolio-setup product is introduced
+
+--------------------------------------------------------------------
+7A.3 Deterministic row updates
+--------------------------------------------------------------------
+
+When scope changes after creation, affected child rows MUST be updated
+deterministically.
+
+Required behavior:
+• newly included location:
+    - create / activate child row
+• removed location:
+    - transition child row to Excluded (or equivalent non-executing state)
+    - preserve history and analytics
+• unchanged location:
+    - keep row intact
+• scope = all:
+    - future eligible additions auto-join by rule
+
+Historical rows and historical analytics MUST never be deleted.
+
+--------------------------------------------------------------------
+7A.4 Inherited additions under “All my locations”
+--------------------------------------------------------------------
+
+If scope = all and a new eligible location is later added on the same device:
+
+• it MUST inherit the running network campaign immediately
+• the UI MUST show:
+    - an immediate notice at add / restore time
+    - an inline notice in Campaign Management on next open
+
+This applies only to:
+• locations proven on the same device
+• locations eligible under the current plan / portfolio rule set
+
+--------------------------------------------------------------------
+7A.5 Suspend / resume model
+--------------------------------------------------------------------
+
+Required controls:
+• suspend all included locations
+• resume all included locations
+• suspend selected included locations
+• resume selected included locations
+• suspend one included location locally
+• resume one included location locally
+
+Invariant:
+• a local child-row suspension MUST NOT stop the network campaign elsewhere
+
+--------------------------------------------------------------------
+7A.6 Storage & authority expectations
+--------------------------------------------------------------------
+
+KV / state expectations:
+• campaign_group:<campaignGroupKey> stores shared parent state
+• campaigns:byUlid:<ULID> stores child rows
+• no new public identity layer is introduced
+• no entity runtime authority table is required in v1
+
+Authority:
+• API Worker remains the sole writer for campaign authority state
+• client UI never computes inclusion truth on its own
+• same-device proven-control requirement is enforced server-side
+
+--------------------------------------------------------------------
+7A.7 Happy-path tests
+--------------------------------------------------------------------
+
+H1 — Plan gating
+1) Open Campaign Management on Standard plan
+Expected:
+• only “This location only” visible
+
+H2 — First multi-location selection
+1) Open Campaign Management on qualifying plan
+2) Choose “Selected locations”
+Expected:
+• derived portfolio auto-created from seed location
+• no confirmation modal
+• flat roster appears
+
+H3 — Seed location uncheckable
+1) In selected scope, uncheck the seed location
+Expected:
+• allowed
+• activation still requires at least one included location
+
+H4 — Selected subset activation
+1) Check a subset of eligible locations
+2) Activate campaign
+Expected:
+• parent campaign group created
+• child rows created only for checked locations
+
+H5 — All-locations activation
+1) Choose “All my locations”
+2) Activate campaign
+Expected:
+• parent created
+• child rows created for all currently eligible locations
+
+H6 — Inherited addition
+1) Running campaign exists with scope = all
+2) Add a new eligible location on the same device (restore or fresh qualifying purchase)
+Expected:
+• location joins immediately
+• immediate notice shown
+• inline CM notice shown later
+
+H7 — Subset suspension
+1) Active multi-location campaign exists
+2) Suspend selected included locations
+Expected:
+• only selected child rows become non-executing
+• others remain active
+
+H8 — Local override
+1) Suspend one included location only
+Expected:
+• that child row stops issuing / redeeming
+• network campaign remains active elsewhere
+
+--------------------------------------------------------------------
+7A.8 Failure & safeguard tests
+--------------------------------------------------------------------
+
+F1 — Standard plan submits selected/all
+Expected:
+• rejected server-side
+• no parent or child writes
+
+F2 — No eligible extra locations
+Expected:
+• Locations step still opens cleanly
+• inline “Add another location” guidance shown
+• no crash / dead-end
+
+F3 — Attempt to include a location not proven on this device
+Expected:
+• server rejects inclusion
+• no child row created
+
+F4 — Selected scope with zero checked locations
+Expected:
+• activation blocked
+• validation shown
+• no writes
+
+F5 — Duplicate inherited addition
+Expected:
+• child row not double-created
+• notice may be deduped or shown once
+• analytics / billing not duplicated
+
+F6 — Scope edit while campaign not Active/Paused
+Expected:
+• rejected
+• no deterministic row update runs
+
+Safeguards:
+S1 — Single-location campaign behavior unchanged
+S2 — Promo QR / redeem behavior unchanged
+S3 — Dash gating unchanged
+S4 — Historical analytics preserved when locations are excluded
+S5 — No grouped-roster UI introduced
+S6 — No dependency on the future Locations Project publish flow
+
+--------------------------------------------------------------------
+7A.9 Ship gate (Phase 7A complete)
+--------------------------------------------------------------------
+
+Phase 7A is complete when:
+• Multi-location scope appears only for qualifying plans
+• “Selected locations” and “All my locations” work only on same-device proven locations
+• Seed location can be unchecked in selected scope
+• Parent + child campaign model is written deterministically
+• scope = all auto-inherits newly eligible same-device additions
+• both notices (immediate + inline) are present
+• suspend/resume works for all, selected, and local override
+• single-location flows remain unchanged
+• no location-creation dependency exists
+
+--------------------------------------------------------------------
 PHASE 8 — LOCATIONS PROJECT (DRAFT + PUBLISH + DO INDEX)
 --------------------------------------------------------------------
 
@@ -1876,7 +2185,29 @@ END OF IMPLEMENTATION PLAN CHECKLIST
 --------------------------------------------------------------------
 
 --------------------------------------------------------------------
-END-TO-END WALKTHROUGH — PAYMENT → ACCESS → DASH → EXPIRY
+EPIC 7A — Multi-Location Campaigns (Current Project)
+--------------------------------------------------------------------
+- [ ] Plan-gated scope step implemented
+- [ ] Derived portfolio auto-created from seed location
+- [ ] Same-device proven-control eligibility enforced
+- [ ] Parent campaign_group storage implemented
+- [ ] Child row materialization implemented
+- [ ] Flat roster with filters implemented
+- [ ] Selected include / exclude implemented
+- [ ] “All my locations” inheritance implemented
+- [ ] Immediate inherited-addition notice implemented
+- [ ] Inline Campaign Management inherited-addition notice implemented
+- [ ] Suspend all / selected / local override implemented
+- [ ] Deterministic scope-change row updates verified
+
+Done when:
+• Multi-location campaigns work against already-existing locations only
+• No dependency on location creation exists
+• Single-location campaign flows remain unchanged
+• Ship gate 7A passes
+
+--------------------------------------------------------------------
+END OF IMPLEMENTATION PLAN CHECKLIST
 --------------------------------------------------------------------
 
 Purpose:
