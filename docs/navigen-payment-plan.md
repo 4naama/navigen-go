@@ -2,22 +2,21 @@
 
 ## Core positioning
 
-**NaviGen is an ad platform where your money is spent at 100% effectiveness.  
-You pay for real customer visits — and during your active period, you are the exclusive operator of your listing.
+**NaviGen is an ad platform for time-limited active presence inside NaviGen.  
+During your active Plan window, you are the exclusive operator of your listing.
 
 NaviGen is not “hosting a page”.  
-It is **keeping a business present in people’s awareness**.
+It is **keeping a business present in people’s awareness**, with optional promotion mechanics when the owner chooses to run them.
 
 --------------------------------------------------------------------
 
 ## How visibility feels (human mental model)
 
-| Phase    | What NaviGen is doing    | What the owner feels            |
-| -------- | ------------------------ | --------------------------------|
-| Promote  | Actively bringing people | “I’m running ads”               |
-| Remember | Keeping me present       | “People can still find me”      |
-| Fade     | Letting me slip back     | “I’m becoming less visible”     |
-| Park     | Holding my place         | “I’m paused, not gone”          |
+| Phase    | What NaviGen is doing    | What the owner feels                 |
+| -------- | ------------------------ | ------------------------------------ |
+| Promote  | Actively prioritizing me | “I’m actively present”               |
+| Remember | Keeping me present       | “People can still find me”           |
+| Inactive | Stopping discovery       | “I need a new Plan to return”        |
 
 These phases describe **attention**, not ownership.
 
@@ -63,32 +62,48 @@ Campaign behavior remains location-scoped:
 The tier defines how many locations may be covered under the same Plan.
 It does not automatically propagate campaigns across locations.
 
-### €50 Campaign (core revenue)
+### Paid Plans (launch schedule, gross amounts)
+
+| Tier     | Gross price | Included locations |
+|----------|-------------|--------------------|
+| Standard | €79         | 1 location         |
+| Multi    | €179        | up to 3 locations  |
+| Large    | €349        | up to 10 locations |
+| Network  | €749        | 10+ locations      |
+
+Network is presented to owners as **10+ locations**.
+Backend enforcement remains a fixed numeric capacity mapped from the Plan record.
+
+One paid Plan purchase buys:
+- 30 days of active campaign entitlement
+- followed automatically by 60 days of courtesy visibility
 
 | Aspect          | Details                                                               |
 |-----------------|-----------------------------------------------------------------------|
-| Duration        | 30 days                                                               |
+| Active duration | 30 days                                                               |
 | Payment timing  | Upfront                                                               |
 | Discoverability | High (search, lists, browse) — preferential visibility inside NaviGen |
-| Promotion       | Enabled (preferential visibility inside NaviGen surfaces only)        |
-| Analytics       | Enabled                                                               |
-| Dash access     | Enabled                                                               |
-| Operation       | **Exclusive** (no other operator allowed)                             |
+| Analytics       | Enabled during the active 30-day window                               |
+| Dash access     | Enabled during the active 30-day window                               |
+| Operation       | **Exclusive** during the active 30-day window                         |
 | UI status       | “Active campaign”                                                     |
 
 **Owner mental model**
-> “I pay €50 and for 30 days NaviGen keeps my business at the top inside NaviGen.”
+> “I buy a Plan and get 30 days of active presence, then 60 more days of courtesy visibility.”
 
-Optional add-on within an active campaign:
-- The owner may run a **campaign offer** (Promo QR) to make the listing more appealing.
-- Example offer types (non-exhaustive):
-  - Discount (percent / fixed)
-  - Early bird (first N redeemers)
-  - Happy hour (time window)
-  - Reservations / booking CTA
-  - Dash access as an internal operator tool (not a consumer offer)
+Campaign execution preset (owner choice, no pricing difference):
+
+- **Visibility only**
+- **Promotion**
+
+Preset rules:
+- Both presets use the same tier, same price, same ownership rights, and the same 30-day active + 60-day courtesy timeline.
+- **Visibility only** disables Promo QR / cashier / redeem setup in Campaign Management.
+- **Promotion** enables the full Promo QR / redeem path.
+- The campaign offer is optional within an active campaign.
 
 This is the **main and mandatory** monetization path.
+
 **Why campaigns are not automatic**
 Ownership expresses **control** (exclusive operation + privacy). Campaigns express **intent** (marketing action).  
 Payment unlocks the ability to run campaigns; the owner explicitly starts/renews campaigns to avoid “campaigns appear out of the blue.”
@@ -102,13 +117,14 @@ Campaign execution is performed via the Campaign Management interface.
 Campaign Management allows Owners to:
 • prepare and edit drafts,
 • initiate checkout,
-• activate, pause, or finish campaigns.
+• activate, pause, or finish campaigns,
+• choose **Visibility only** or **Promotion** for the active Plan window.
 
 Payment is a step within Campaign Management, not a standalone product.
 
 --------------------------------------------------------------------
 
-## After campaign ends (no payment yet)
+## After the active Plan window ends (no payment yet)
 
 ### Courtesy visibility (free)
 
@@ -124,7 +140,7 @@ Payment is a step within Campaign Management, not a standalone product.
 | UI status       | “Still visible”                                                          |
 
 **Owner mental model**
-> “My campaign ended, but NaviGen is not dropping me immediately.”
+> “My active Plan ended, but NaviGen is not dropping me immediately.”
 
 Purpose:
 - Avoid sudden disappearance
@@ -133,29 +149,13 @@ Purpose:
 
 --------------------------------------------------------------------
 
-## Optional extension: Hold visibility
+## No paid hold phase
 
-### €5 Hold Visibility (optional, secondary revenue)
+NaviGen does not sell a separate Hold Visibility or €5 visibility-extension product.
 
-| Aspect          | Details                                                        |
-|-----------------|----------------------------------------------------------------|
-| Duration        | 30 days per purchase                                           |
-| Cost            | €5                                                             |
-| Discoverability | Yes (restores visibility back to the non-fading baseline)      |
-| Promotion       | Preferential visibility: Disabled (no paid ordering advantage) |
-| Analytics       | Collected (internal) / Disabled (owner-facing)                 |
-| Dash access     | Disabled (campaign required for owner analytics)               |
-| UI framing      | “Keep your place visible”                                      |
+If the owner wants to continue after the active 30-day Plan window and the automatic 60-day courtesy window, the next step is to buy a new Plan.
 
-**Important**
-- This is not protection.
-- This is not access.
-- This is time to decide.
-
-**Owner mental model**
-> “I’m not ready to run another campaign, but I don’t want to fade out yet.”
-
-This option may be introduced later.
+There is no cheaper intermediate paid state between Courtesy visibility and Inactive.
 
 --------------------------------------------------------------------
 
@@ -165,7 +165,7 @@ This option may be introduced later.
 
 | Aspect                     | Details                                                                 |
 |----------------------------|-------------------------------------------------------------------------|
-| When                       | After courtesy + any holds expire                                       |
+| When                       | After the 30-day active window and 60-day courtesy visibility end       |
 | Discoverability            | No                                                                      |
 | Appears in search/lists    | No (NaviGen public discovery surfaces; not promoted for search engines) |
 | Appears in owner selection | Yes (Select your business / claim flows)                                |
@@ -188,13 +188,13 @@ No deletion is required.
 
 ## Restore access (not a product)
 
-| Aspect        | Details                                                                                     |
-|---------------|---------------------------------------------------------------------------------------------|
-| Cost          | Free                                                                                        |
-| Purpose       | Session recovery                                                                            |
-| When          | Ownership exists but session is missing                                                     |
-| How           | Via Payment ID (pi_...) from Stripe email, or owner access link                             |
-| What it gives | Restores owner access on this device (Dash + owner tools during the active campaign window) |
+| Aspect        | Details                                                                                      |
+|---------------|----------------------------------------------------------------------------------------------|
+| Cost          | Free                                                                                         |
+| Purpose       | Session recovery                                                                             |
+| When          | Ownership exists but session is missing                                                      |
+| How           | Via Payment ID (pi_...) from Stripe receipt, invoice, or payment confirmation email          |
+| What it gives | Restores owner access on this device (Dash + owner tools during the active campaign window)  |
 
 Restore is a **support / recovery path**, never a paid product (state-of-the-art convenience for no-sign-in operation).
 
@@ -348,23 +348,22 @@ This section defines the **backend state machine** that governs:
 
 - **Dash access** requires: `OwnedNow AND SessionValid AND CampaignEntitled`.
 - **Promotion (“Active campaign” in the UI)** is true when `CampaignEntitled` is true.
-- **Courtesy visibility (“Still visible”)** applies after campaign ends for a limited window, without Dash access.
-- **Hold visibility (€5)** extends discoverability only; it does not grant ownership, campaigns, or Dash.
+- **Courtesy visibility (“Still visible”)** applies after the active campaign window ends for a limited window, without Dash access.
+- **Visibility only** is an owner-selected campaign preset that keeps full paid rights while disabling Promo QR / redeem flows in Campaign Management.
 
 ### Phases (operational meaning)
 
-| Phase    | Condition summary       | Discoverability | Promotion | Dash                  | Notes                          |
-|----------|-------------------------|-----------------|-----------|-----------------------|--------------------------------|
-| Promote  | CampaignEntitled = true | High            | Yes       | Yes (if SessionValid) | Primary paid state (€50)       |
-| Remember | Courtesy window active  | Yes             | No        | No                    | Free goodwill period           |
-| Park     | Hold visibility active  | Yes             | No        | No                    | €5 “time to decide”            |
-| Inactive | No courtesy/hold        | No              | No        | No                    | Hidden from discovery surfaces |
+| Phase    | Condition summary       | Discoverability | Promotion | Dash                  | Notes                                      |
+|----------|-------------------------|-----------------|-----------|-----------------------|--------------------------------------------|
+| Promote  | CampaignEntitled = true | High            | Optional  | Yes (if SessionValid) | Primary paid state (active 30-day window)  |
+| Remember | Courtesy window active  | Yes             | No        | No                    | Free goodwill period (60 days)             |
+| Inactive | No courtesy             | No              | No        | No                    | Hidden from discovery surfaces             |
 
 ### Transitions (what causes state changes)
 
-- **€50 Campaign payment** → sets/extends ownership and creates or activates campaign entitlement for the purchased window.
-- **Campaign window ends** → CampaignEntitled becomes false; Courtesy window begins.
-- **€5 Hold payment (optional)** → extends discoverability baseline without campaign entitlement.
+- **Paid Plan purchase** → sets ownership and creates or activates campaign entitlement for the purchased active window.
+- **Campaign window ends** → CampaignEntitled becomes false; Courtesy window begins automatically.
+- **Courtesy window ends** → location becomes Inactive for public discovery surfaces.
 - **Restore access (pi_...)** → restores SessionValid on the current device only (no entitlement changes).
 
 --------------------------------------------------------------------
@@ -384,14 +383,13 @@ Example locations are **admin-controlled**.
 
 ## Summary (one glance)
 
-| Phase           | Owner pays | Amount | What they get                                                     |
-|-----------------|------------|--------|-------------------------------------------------------------------|
-| Campaign        | Yes        | €50    | Preferential visibility (NaviGen), analytics, exclusive operation |
-| Courtesy        | No         | €0     | Reduced visibility                                                |
-| Hold visibility | Optional   | €5     | Stay visible without paid ordering advantage (avoid fading out) |
-| Inactive        | No         | €0     | Exists but hidden                                                 |
-| Restore access  | No         | €0     | Session recovery                                                  |
-| Examples        | No         | €0     | Demo only                                                         |
+| Phase           | Owner pays | Amount                   | What they get                                                            |
+|-----------------|------------|--------------------------|--------------------------------------------------------------------------|
+| Active Plan     | Yes        | €79 / €179 / €349 / €749 | Preferential visibility (NaviGen), analytics, Dash, exclusive operation  |
+| Courtesy        | No         | €0                       | Reduced visibility for 60 days                                           |
+| Inactive        | No         | €0                       | Exists but hidden                                                        |
+| Restore access  | No         | €0                       | Session recovery                                                         |
+| Examples        | No         | €0                       | Demo only                                                                |
 
 --------------------------------------------------------------------
 

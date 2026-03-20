@@ -166,7 +166,7 @@ NaviGen storage (KV, datasets, logs):
 
 Owner Platform clarification:
   • Stripe is the system of record for billing identity (email, billing details, tax/VAT data).
-  • NaviGen may transiently process Stripe-provided email solely to deliver Owner access emails.
+  • NaviGen may transiently process Stripe-provided email solely to deliver owner reminder or recovery emails that reference Payment ID (pi_...).
   • NaviGen MUST NOT persist Stripe email or billing identity fields into KV/logs/datasets.
 
 Privacy emerges from architectural minimalism, not patchwork compliance.
@@ -691,8 +691,9 @@ predictability that define NaviGen as a high-quality, production-grade platform.
 
 ### Owner Exchange
 
-Owner Exchange is the server-side step that follows a successful payment
-or signed owner access link.
+Owner Exchange is the server-side step that follows either:
+- a successful payment on the current device, or
+- a Restore Access flow using Payment ID (pi_...) on the current device.
 
 During Owner Exchange:
 - ownership is verified server-side
@@ -774,8 +775,8 @@ Restore Access:
 
 Restore Access — Cross-device recovery (Payment ID)
 
-When restoring access on a different device, the owner may not have a usable
-Checkout Session link (cs_...) in their email.
+When restoring access on a different device, the owner may have only a Stripe
+receipt, invoice, or payment confirmation email that contains the PaymentIntent ID (pi_...).
 
 Therefore, NaviGen MUST support recovery using the Stripe PaymentIntent ID:
 
@@ -953,17 +954,16 @@ Notes:
 
 ### Dash Access Blocking Messages (Owner-facing)
 
-| Situation | Primary message | Secondary clarification |
-|---------|-----------------|-------------------------|
-| Owned + no Operator Session | “Owner access required” | “Use your most recent Owner access email or Stripe receipt.” |
-| Owned + session + no Campaign Entitlement | “Activate analytics by running a campaign for this location.” | “Dashboard access remains blocked until the listing runs an active campaign.” |
-| Unowned | “Analytics access required” | “Activate ownership by running a campaign.” |
+| Situation                                 | Primary message                                               | Secondary clarification                                                                      |
+|-------------------------------------------|---------------------------------------------------------------|----------------------------------------------------------------------------------------------|
+| Owned + no Operator Session               | “Owner access required”                                       | “Use Restore Access with the Payment ID (pi_...) from your Stripe receipt or payment email.” |
+| Owned + session + no Campaign Entitlement | “Activate analytics by running a campaign for this location.” | “Dashboard access remains blocked until the listing runs an active campaign.”                |
+| Unowned                                   | “Analytics access required”                                   | “Activate ownership by running a campaign.”                                                  |
 
 Rules:
 • Messages must be factual, non-salesy, and non-alarming.  
 • UI MUST NOT suggest data loss when analytics are merely gated.
 
---------------------------------------------------------------------
 
 --------------------------------------------------------------------
 
@@ -1105,7 +1105,7 @@ When an LPM is owned, analytics become exclusive to the Owner.
 No partial or metric-level visibility tiers exist.
 
 D) Access mechanisms do not define authority
-Signed links and cookies provide access continuity only.
+Stripe exchange, Payment ID (pi_...) restore, and cookies provide access continuity only.
 Authority is defined exclusively by backend ownership state.
 
 E) Agents initiate; owners operate
@@ -2379,7 +2379,7 @@ Phase 1 (Immediate)
     6. Prepare gating UX (masking + unlock button)
 
 Phase 2 (Owner Platform Foundations)
-    1. Build Owner Platform (Section 92) with signed link access + Stripe checkout  
+    1. Build Owner Platform (Section 92) with Payment ID (pi_...) restore + Stripe checkout  
     2. Gated indicators appear with unlock button  
     3. Campaign balance & basic financials  
     4. Profile edit tools
@@ -2718,7 +2718,7 @@ B) Owned LPM + No Owner Session
 
 “Owner settings” modal (owned/no-session) MUST include:
 • Restore access
-    - instruction: use most recent Owner access email / Stripe receipt
+    - instruction: use the Payment ID (pi_...) from your Stripe receipt or payment email
     - CTA: opens Restore Access modal
 • See example dashboards
     - CTA: opens Example Dashboards modal (3–6 example cards)
@@ -2914,19 +2914,19 @@ The service worker MUST apply different caching strategies
 based on the sensitivity of the requested resource.
 
 --------------------------------------------------------------------
-Resource Class                     | Cache Policy
+Resource Class                                                  | Cache Policy
 --------------------------------------------------------------------
-App shell (index.html)              | Network-first
-JS bundles (app.js, dash.js, etc.)  | Network-first with versioning
-CSS / images / fonts                | Cache-first (hashed assets only)
-Translation bundles (/data/i18n)    | Cache-first with version bump
+App shell (index.html)                                          | Network-first
+JS bundles (app.js, dash.js, etc.)                              | Network-first with versioning
+CSS / images / fonts                                            | Cache-first (hashed assets only)
+Translation bundles (/data/i18n)                                | Cache-first with version bump
 --------------------------------------------------------------------
-/api/* endpoints                    | Network-only (no cache)
-/dash/* routes                      | Network-only (no cache)
-/owner/* endpoints                  | Network-only (no cache)
+/api/* endpoints                                                | Network-only (no cache)
+/dash/* routes                                                  | Network-only (no cache)
+/owner/* endpoints                                              | Network-only (no cache)
 --------------------------------------------------------------------
-Owner interstitial responses        | Network-only
-Signed-link exchange (/owner/exchange) | Network-only
+Owner interstitial responses                                    | Network-only
+Owner session exchange (/owner/stripe-exchange, /owner/restore) | Network-only
 --------------------------------------------------------------------
 
 Rules:
@@ -3761,6 +3761,30 @@ User-facing labels:
 • "Selected locations"   → internal value "selected"
 • "All my locations"     → internal value "all"
 
+Plan-to-Scope Mapping (Authoritative UX Rule)
+
+Campaign scope is a consequence of Plan tier, not hidden backend gating.
+
+• Standard
+  - show only: "This location only"
+
+• Multi
+  - show: "This location only" / "Selected locations" / "All my locations"
+
+• Large
+  - show: "This location only" / "Selected locations" / "All my locations"
+  - larger allowed location capacity
+
+• Network
+  - show: "This location only" / "Selected locations" / "All my locations"
+  - contract-defined or open-ended capacity
+
+Rules:
+• The owner MUST encounter the Plan step before multi-location scope is offered,
+  unless Campaign Management already has an active qualifying Plan in context.
+• Standard MUST NOT display multi-location options as disabled surprises.
+• Multi / Large / Network MUST expose scope choice explicitly.
+
 Eligibility source:
 
 • Only existing locations already proven on the current device are eligible.
@@ -3784,9 +3808,10 @@ Scope values:
 
 Rules:
 
+• Plan choice MUST precede scope choice in owner-facing campaign flows.
 • Scope MUST be explicitly chosen at campaign creation.
 • Standard plans expose only "single".
-• Multi-location-capable plans expose "selected" and "all".
+• Multi, Large, and Network plans expose "single", "selected", and "all".
 • Redeem validation remains token-based and location-agnostic.
 • Billing / redeem accounting remains per ULID and per child campaign row.
 • Shared budget / plan state is held at the parent campaign-group level.
@@ -3800,10 +3825,12 @@ Changing scope after creation:
   - unchanged locations preserve existing rows and analytics.
 
 Inherited additions under "all":
-• When a newly eligible location is added later on the same device, it MUST join the running campaign immediately.
+• When a newly eligible location is added later on the same device, it MUST join the running campaign immediately only if the current Plan still has remaining capacity for that campaign group.
+• If the newly eligible location would exceed current Plan capacity, the location becomes eligible on the device but MUST remain unincluded until upgrade or scope change.
 • The UI MUST show:
-  - an immediate notice at add / restore time, and
-  - an inline notice in Campaign Management on next open.
+  - an immediate notice at add / restore time,
+  - an inline notice in Campaign Management on next open, and
+  - an inline upgrade action when capacity is exhausted.
 
 --------------------------------------------------------------------
 
@@ -3857,7 +3884,7 @@ management remains reachable in an owned+session context.
 API Worker computes presentation-only visibility states:
 
 • promoted  – CampaignEntitled === true
-• visible   – courtesy / hold window active
+• visible   – courtesy window active
 • hidden    – neither active nor courtesy
 
 Visibility affects:
@@ -3926,13 +3953,57 @@ Claim/unowned flows MUST route to Campaign Funding, not Campaign Management.
 Campaign Management MUST be reachable from an owned+session context
 (e.g. Owner Settings signed-in variant or Dash owner controls).
 
+Owner-facing funding flow (authoritative)
+
+Campaign Management and Campaign Funding MUST present a deterministic BO flow:
+
+1) Choose plan
+2) Choose campaign scope
+3) Choose locations
+4) Checkout / activate
+
+Plan chooser (mandatory content)
+
+The first step MUST present the available Plans in plain language:
+
+• Standard — 1 location
+• Multi — up to 3 locations
+• Large — up to 10 locations
+• Network — 10+ locations
+
+The Plan step MUST explain:
+• how many locations can join this campaign,
+• whether future proven same-device locations can auto-join under “All my locations”,
+• that only locations already proven on this device are eligible.
+
+The Plan step MUST NOT expose internal terms such as:
+• maxPublishedLocations
+• campaign_group
+• derived portfolio
+
 Scope-gated UI:
 
-• For Standard plans, Campaign Management behaves as single-location only.
-• For multi-location-capable plans, Campaign Management adds:
+• If a valid current Plan already exists and no upgrade is required, Campaign Management MAY treat the Plan step as already satisfied, but MUST show the current Plan state prominently.
+• Standard proceeds in single-location campaign flow only.
+• Scope step appears only for Multi / Large / Network.
+• Locations step appears only when scope = "selected" or scope = "all".
+• For Multi, Large, and Network plans, Campaign Management adds:
   - Campaign scope
   - Locations
   - Active location roster / controls
+
+Current Plan visibility (mandatory)
+
+Campaign Management MUST show the current tier and capacity whenever known.
+
+Minimum owner-facing examples:
+• Standard · 1 location
+• Multi · up to 3 locations
+• Large · up to 10 locations
+• Network · 10+ locations
+
+Campaign Management SHOULD also show included-count context when meaningful
+(e.g. “2 of 3 locations included”).
 
 Campaign scope step:
 
@@ -3959,6 +4030,13 @@ How locations become eligible:
   - restored on the same device using Restore Access, or
   - established on the same device through a fresh qualifying purchase.
 
+Add another location / capacity interaction
+
+• If no additional eligible locations exist, Campaign Management MUST show inline “Add another location”.
+• The inline explanation MUST state that only same-device proven locations can be added to the current campaign context.
+• If the current Plan still has remaining capacity, the UI SHOULD explain that an added proven location can extend the current campaign reach under the current Plan.
+• If Plan capacity is already exhausted, the UI MUST explain that the location may be restored or proven on this device but cannot join the campaign until the owner upgrades the Plan or removes another location from scope.
+
 Roster after activation:
 
 • Campaign Management MUST display one flat roster with filters always available.
@@ -3974,6 +4052,32 @@ Network / subset controls:
   - resume selected locations
 
 • A single included location MAY be suspended locally without stopping the network campaign elsewhere.
+
+Upgrade behavior (owner-facing, mandatory)
+
+Campaign Management MUST provide an inline upgrade path instead of generic rejection whenever:
+• a Standard owner attempts multi-location scope,
+• a Multi owner attempts to include a 4th location,
+• a Large owner attempts to include an 11th location,
+• an “all” campaign would inherit a newly eligible location beyond current capacity.
+
+Upgrade rules:
+• The UI MUST explain the current tier limit in plain language.
+• The upgrade action MUST reopen the Plan chooser with the current tier visible and the next qualifying tier suggested.
+• Backend rejections for disallowed scope or capacity overflow MUST map to this upgrade experience, not to an opaque error state.
+
+Post-checkout return behavior
+
+After a successful Plan purchase or upgrade, Owner Exchange MUST restore the in-progress flow on the first incomplete step:
+
+• Standard → reopen Campaign Management in single-location mode with scope fixed to “This location only”
+• Multi / Large / Network with no scope chosen yet → reopen on Campaign scope
+• Multi / Large / Network with scope already chosen as “selected” or “all” and roster incomplete → reopen on Locations
+• Completed flows MAY reopen on Campaign Management summary / review
+
+If the purchase or restore action proves a new location on the same device,
+that location MUST become eligible immediately for the current campaign context,
+subject to current Plan capacity.
 
 Scope note:
 
@@ -5639,11 +5743,13 @@ Authority established by payment grants:
 • Authority is capability-based, not identity-based.
 • Authority is enforced exclusively by backend logic.
 
-Operational authority may be established through:
-• an active campaign, or
-• a paid Exclusive Operation Period
+Operational authority is established only through a paid Plan purchase.
 
-Both mechanisms are time-limited and equivalent in authority.
+A paid Plan may be operated in one of two owner-selected presets:
+• Visibility only
+• Promotion
+
+Both presets are time-limited and equivalent in authority during the active Plan window.
 
 --------------------------------------------------------------------
 
@@ -5706,22 +5812,25 @@ Suspension revokes operational authority until resolved.
 
 G) Ownership Acquisition Paths (Clarified)
 
-Ownership may be established through either of the following prepaid paths:
+Ownership may be established only through a paid Plan purchase.
 
-1) Campaign-Based Ownership
-• Starting a paid campaign establishes ownership automatically.
-• Minimum campaign buy-in is defined by finance and product policy (e.g. €50).
-• Campaign budget size does NOT determine ownership duration beyond the planned campaign calendar.
+Paid Plan presets:
 
-2) Exclusive Operation Period (Non-Campaign)
-• Ownership may be acquired without running a campaign.
-• Price: €5 per 30-day period.
-• Grants operational authority, analytics privacy, and profile editing.
-• Does NOT include promotional exposure or redeem eligibility.
+1) Visibility only
+• Establishes ownership automatically.
+• Grants the same ownership capabilities as Promotion during the active Plan window.
+• Disables Promo QR / cashier / redeem flows in Campaign Management.
+• Does NOT require a consumer-facing offer.
 
-Rationale:
-This admits cautious operators who wish to observe and prepare before
-committing to promotional spend, without weakening authority guarantees.
+2) Promotion
+• Establishes ownership automatically.
+• Grants the same ownership capabilities as Visibility only during the active Plan window.
+• Enables the full Promo QR / cashier / redeem path.
+
+Rules:
+• There is no standalone Exclusive Operation Period.
+• There is no €5 ownership-extension product.
+• Plan pricing and capacity are defined by the Plan ladder, not by separate exclusivity products.
 
 --------------------------------------------------------------------
 
@@ -5741,7 +5850,7 @@ Fields (JSON):
 • uid: <ULID>                         // canonical location identity
 • state: "unowned" | "owned"          // derived from exclusiveUntil but stored for clarity
 • exclusiveUntil: ISO-8601 timestamp  // ownership is active iff now < exclusiveUntil
-• source: "campaign" | "exclusive"    // what established/extended ownership
+• source: "plan"                      // paid Plan purchase established/extended ownership
 • lastEventId: string                 // idempotency anchor (Stripe payment_intent.id)
   Plan anchor invariant: lastEventId MUST equal the PaymentIntent ID of the currently active Plan purchase for this ownership window.
 • updatedAt: ISO-8601 timestamp       // last write time
@@ -5772,7 +5881,7 @@ Readers (enforcement):
 
 Invariants:
 • Ownership never becomes active based on client input.
-• Cookies and signed links provide access continuity, not authority.
+• Cookies and Payment ID–based Restore Access provide access continuity, not authority.
 • Any owner-only capability requires now < exclusiveUntil at request time.
 • Webhook deliveries MUST be processed idempotently using payment_intent.id.
 
@@ -5808,7 +5917,7 @@ and MUST be copied onto the PaymentIntent.
 
 • locationID (slug)     // external identifier; resolved server-side to a canonical ULID
 • initiationType        // "owner" | "agent" | "platform"
-• ownershipSource       // "campaign" | "exclusive"
+• campaignPreset        // "visibility" | "promotion"
 • navigenVersion        // spec/app version for audit/debug
 
 Rules:
@@ -6192,34 +6301,60 @@ B) New LPM Creation (Owner-Initiated)
 There is no concept of “reserved” or “pending” ownership without payment.
 
 --------------------------------------------------------------------
-Exclusive Operation Period (Non-Campaign)
 
-An Exclusive Operation Period is a paid, time-limited state that grants an
-actor exclusive operational authority over a Location Profile Modal (LPM)
-without requiring an active promotion campaign.
+92.2.1 Campaign Funding / Plan Selection UX (Owner-Facing Bridge)
 
-It exists to:
-• prevent unauthorized edits or interference
-• establish accountable control without running ads
-• discourage malicious or speculative claims
+For campaign-led ownership flows, the owner-facing bridge into multi-location
+behavior MUST begin with visible Plan selection.
 
-An Exclusive Operation Period:
-• does not imply legal ownership
-• does not create an account
-• does not grant permanence
-• is equivalent in authority to an active campaign
+This applies to:
+• Run campaign
+• Renew campaign
+• Manage campaign when a new Plan is required
+• inline upgrade flows triggered by scope or capacity limits
 
-Operational authority during this period is enforced identically to campaign-based ownership.
+Owner-facing sequence:
 
-Duration & Expiry
+• Choose plan
+• Choose campaign scope
+• Choose locations
+• Checkout / activate
 
-Each Exclusive Operation Period has a fixed duration of **30 days**.
+Step visibility rules:
+• Plan choice MUST precede any multi-location decision.
+• Scope step appears only when the chosen or current Plan qualifies for multi-location control.
+• Locations step appears only when scope = "selected" or scope = "all".
+• Standard proceeds in single-location flow only.
 
-• Duration is fixed and non-configurable
-• Periods are measured in full calendar days
-• Expiry is enforced server-side
+The UI MUST explain the chosen Plan in plain language:
+• how many locations can join the campaign
+• whether future proven same-device locations may auto-join under “All my locations”
+• that only locations already proven on this device are eligible
 
-Exclusive Operation Periods are never permanent.
+The UI MUST NOT expose internal terms such as campaignGroupKey,
+maxPublishedLocations, or derived portfolio to BOs.
+
+This bridge is the required owner-facing layer between payment, scope availability,
+and location selection.
+
+--------------------------------------------------------------------
+
+Campaign Preset Within a Paid Plan
+
+A paid Plan may be operated in one of two presets:
+
+• Visibility only
+• Promotion
+
+The preset affects only whether promo / redeem flows are shown in Campaign Management.
+
+Both presets:
+• establish ownership through payment
+• grant the same analytics privacy and profile control during the active Plan window
+• are time-limited
+• do not create an account or permanent rights
+
+There is no standalone non-campaign exclusive product.
 
 --------------------------------------------------------------------
 
@@ -6337,7 +6472,7 @@ Rules:
 
 • Client UI may display capabilities but must never infer them.
 • API Worker checks ownership state (exclusiveUntil > now) for every operation.
-• Cookies or signed links provide access continuity, not authority.
+• Cookies or Payment ID–based Restore Access provide access continuity, not authority.
 • Authority is never inferred from navigation context or UI state.
 
 --------------------------------------------------------------------
@@ -6454,7 +6589,7 @@ If the check fails:
 • Request is rejected (403 Forbidden).
 • No partial writes occur.
 
-Cookies, signed links, or UI state must never bypass this check.
+Cookies, Restore Access, or UI state must never bypass this check.
 
 --------------------------------------------------------------------
 
@@ -6562,6 +6697,19 @@ Definitions:
 • KV allocation key: plan_alloc:<payment_intent.id> → { ulids: [<ULID>, ...] }  // published locations counted toward this Plan
 • KV plan record: plan:<payment_intent.id> → { priceId, tier, maxPublishedLocations, purchasedAt, expiresAt }
 
+Owner-facing tier contract (authoritative)
+
+Owner-facing Plan labels and capacities are:
+
+• Standard → 1 location
+• Multi → up to 3 locations
+• Large → up to 10 locations
+• Network → “10+ locations” in UI; backend capacity is >10 or contract-defined
+
+The API Worker derives these tiers exclusively from Stripe price.id mapping.
+The UI MUST treat the resolved tier as authoritative and MUST NOT invent
+additional owner-facing capacity labels for campaign Plans.
+
 Plan purchase grants:
 
 • Campaign capability (per-location, per-campaign as defined in Section 8.4)
@@ -6569,7 +6717,7 @@ Plan purchase grants:
 
 UI gating rule:
 • If maxPublishedLocations = 1, Campaign Management MUST expose only “This location only”.
-• If maxPublishedLocations > 1, Campaign Management MAY expose:
+• If maxPublishedLocations > 1, Campaign Management MUST expose:
   - “This location only”
   - “Selected locations”
   - “All my locations”
@@ -6872,34 +7020,29 @@ For `validation_failed`:
 
 Ownership is always prepaid and time-limited.
 
-Ownership duration is determined by:
-• the planned campaign calendar at creation time, or
-• the sum of purchased Exclusive Operation Periods.
+Ownership duration is determined exclusively by the active paid Plan window.
 
-Ownership duration is measured in fixed 30-day periods.
+Rules:
+• The active ownership / campaign-control window is 30 days per paid Plan purchase.
+• After the active window ends, courtesy visibility lasts 60 days.
+• Courtesy visibility does NOT extend ownership, Dash access, analytics access, or exclusive control.
+• There is no standalone €5 extension product.
 
 --------------------------------------------------------------------
-Hybrid Rule: Ownership Expiry During Active Campaign
+Expiry Rule
 
-If ownership expires while a campaign is still active:
+When the active ownership / campaign window ends:
 
-• The campaign MAY continue serving customers.
-• Promo issuance, redeem, and billing remain unaffected.
+• CampaignEntitled becomes false.
 • Ownership-based capabilities are revoked immediately.
-
-Effects of ownership expiry:
 • Dash access becomes blocked for that LPM (no analytics shown).
 • Profile editing is disabled.
 • Campaign control (pause/resume/finish) is disabled.
-
-Owner choice:
-• The Owner may explicitly extend ownership (€5 per 30 days)
-  at any time to restore privacy and control.
-• No extension is automatic or implicit.
+• Courtesy visibility begins automatically.
 
 Rationale:
-Campaign delivery must not be interrupted by authority expiry.
-Privacy and control remain prepaid privileges.
+Campaign authority is prepaid and time-limited.
+Courtesy visibility is goodwill, not an ownership extension.
 
 --------------------------------------------------------------------
 Discoverability After Campaign Ends (Courtesy Visibility)
@@ -6934,16 +7077,18 @@ No external ranking/ads/SEO are implied or claimed.
 This is strictly in-product ordering inside NaviGen lists (Popular / Accordion / context lists).
 
 --------------------------------------------------------------------
+
 92.4.1 Expiry Reminders & Renewal UX
 
 A) One-time email reminder (D-5)
 • A single reminder email is sent 5 days before exclusiveUntil.
-• The email contains one Stripe Checkout link that renews +30 days.
+• The email contains the active-until date, the location reference, and the Payment ID (pi_...) of the current Plan purchase for restore/reference.
+• The email does not assume an action link.
 • No recurring reminders are sent (no D-1, no sequences).
 
 B) Always-visible UI countdown (only while Owned)
 • Dash displays:
-    “Exclusive operation active until <date>” + “Extend in #x”.
+    “Active Plan until <date>” + “Renew in #x”.
 • LPM displays an emoji-style badge showing “#x” days remaining.
   The badge may be publicly visible.
 • Countdown is always visible while the LPM is owned.
@@ -6952,27 +7097,28 @@ All effects of ownership expiry MUST be communicated clearly in advance,
 including the transition of analytics from private to public visibility.
 
 C) Campaign control area
-• Displays the same expiry line and “Extend in #x” action.
+• Displays the same expiry line and “Renew in #x” action.
 
-All renewal actions route directly to Stripe Checkout.
+All renewal actions are initiated from NaviGen and route to Plan selection / Stripe Checkout.
 No accounts or login flows are required.
 
 --------------------------------------------------------------------
 
-92.4.2 Dash Access Without Accounts (Signed Link → Cookie Session)
+92.4.2 Dash Access Without Accounts (Stripe Exchange / Payment ID Restore → Cookie Session)
 
 Purpose:
 Enable owner-only Dash access without user accounts, using payment-derived authority.
 
 Core principle:
 • Ownership state (exclusiveUntil > now) is authoritative.
-• Signed links and cookies are access mechanisms only; they do not define ownership.
+• Stripe exchange, Payment ID (pi_...) restore, and cookies are access mechanisms only; they do not define ownership.
 
 --------------------------------------------------------------------
 A) Policy Overview
 
-• Access is initiated via a time-limited signed link.
-• Signed link is exchanged server-side for an HttpOnly cookie scoped to owner-only surfaces.
+• Same-device owner access begins immediately after successful Stripe Checkout via /owner/stripe-exchange.
+• Cross-device or later recovery begins when the owner provides a Stripe PaymentIntent ID (pi_...) in Restore Access.
+• No signed links or email action links are used.
 • Dash URLs remain clean (no long-lived tokens in query strings).
 • Cookie may persist while ownership is active but becomes invalid when ownership expires.
 • Owner-only access is never inferred from public navigation.
@@ -6984,58 +7130,44 @@ Primary (real-time, same device)
 
 • Immediately after successful Stripe Checkout, the app redirects through /owner/stripe-exchange.
 • The server verifies the completed Checkout Session and sets an owner session (op_sess).
-• The browser is redirected back into the app and the dashboard opens without waiting for email.
+• The browser is redirected back into the app.
+• If Checkout originated from Campaign Funding or Campaign Management,
+  the return target MUST be the first incomplete owner step for that flow (Section 8.4.9), not a blind redirect to Dash.
+• If no pending owner flow exists, the default return MAY open Dash for the bound location.
 • If ownership:<ULID> is missing or lastEventId does not match the Checkout Session’s payment_intent.id,
   the API Worker MUST reconcile ownership idempotently and persist lastEventId = payment_intent.id before minting the session.
-• During /owner/stripe-exchange reconciliation, the API Worker MUST also persist plan:<payment_intent.id> from Stripe Checkout Session line items.  
+• During /owner/stripe-exchange reconciliation, the API Worker MUST also persist plan:<payment_intent.id> from Stripe Checkout Session line items.
 
-Secondary (email-based recovery)
+Secondary (Payment ID recovery)
 
-Owners receive “Owner access” via email:
-• Immediately after successful payment confirmation.
-• Once at D-5 before expiry (per reminder policy).
-
-Each message contains:
-• “Open Owner Dash” (signed link)
-• “Extend exclusive operation” (Stripe link, when applicable)
-
-Fallback reference:
-• Stripe receipt/invoice email for the same payment (audit trail + location reference).
+• Restore Access accepts the Stripe PaymentIntent ID (pi_...) from the Stripe receipt, invoice, or payment confirmation email.
+• The API Worker performs a server-side lookup of the associated Checkout Session.
+• The API Worker validates payment_status="paid" AND status="complete".
+• If ownership:<ULID> is missing or lastEventId != pi_...,
+  the API Worker MUST reconcile ownership idempotently and persist lastEventId = pi_... before minting the session.
+• The API Worker resolves metadata.locationID → ULID, persists plan:<pi_...> from Checkout Session line items, mints op_sess, and redirects into the app.
+• No Owner access email or action link is required.
 
 --------------------------------------------------------------------
-C) Signed Link Token Contract (Exact)
+C) Restore Access Contract (Payment ID, Exact)
 
-Signed link format (conceptual):
-• https://navigen.io/owner/exchange?tok=<TOKEN>&sig=<SIGNATURE>
+Input:
+• Payment ID (pi_...)
 
-Signature:
-• HMAC-SHA256 over the token payload using a secret stored only in the API Worker.
-• Signature is URL-safe base64 (or hex) encoded.
+Server-side steps:
+• lookup PaymentIntent / Checkout Session association
+• require payment_status="paid" AND status="complete"
+• resolve metadata.locationID → ULID
+• reconcile ownership:<ULID> and plan:<pi_...> idempotently if needed
+• mint op_sess cookie and opsess:<sessionId>
+• redirect with a clean URL to either:
+    - the first incomplete Campaign Funding / Campaign Management step, or
+    - /dash/<location> when no pending owner flow exists
 
-Token payload fields (logical contents; serialization is implementation-defined):
-• ver: number                 // token schema version (start at 1)
-• ulid: <ULID>                // canonical location identity
-• iat: unixSeconds            // issued-at timestamp (server time)
-• exp: unixSeconds            // expiry timestamp; exp = iat + 15 minutes
-• jti: string                 // unique token id (random or ULID), required for single-use
-• purpose: "owner-dash"       // fixed value; prevents token reuse for other purposes
-
-Validity rules:
-• Token is valid only if:
-    - signature verifies, AND
-    - now <= exp, AND
-    - purpose == "owner-dash", AND
-    - token has not been consumed (single-use), AND
-    - ownership:<ULID>.exclusiveUntil > now
-
-Timing rule:
-• “15 minutes” is measured from iat (issue time), not from email open.
-
-Single-use enforcement (KV key):
-• ownerlink_used:<jti> = { ulid, usedAt }
 Rules:
-• On successful exchange, API Worker MUST write ownerlink_used:<jti>.
-• If ownerlink_used:<jti> already exists, exchange MUST be denied.
+• Clients MUST NOT supply ULIDs directly.
+• Payment ID lookup is server-side only.
+• Restore Access is session recovery only; it does not create a new purchase or extend a Plan.
 
 --------------------------------------------------------------------
 D) Cookie Contract (Owner Session Cookie)
@@ -7070,7 +7202,7 @@ Session record value (JSON):
 • lastSeenAt?: ISO-8601       // optional (for audit/ops only)
 
 Session creation rules:
-• On successful signed-link exchange, API Worker creates opsess:<sessionId>.
+• On successful /owner/stripe-exchange or /owner/restore, API Worker creates opsess:<sessionId>.
 • expiresAt MUST be computed as:
     expiresAt = min(ownership:<ULID>.exclusiveUntil, createdAt + sessionMaxAge)
   Where sessionMaxAge may be set equal to ownership window (default) unless overridden.
@@ -7087,30 +7219,29 @@ If ownership expires, the session MUST be treated as invalid even if cookie/sess
 --------------------------------------------------------------------
 F) Normal Flow (Happy Path)
 
-1) Owner clicks “Open Owner Dash” from the email.
-2) Link opens the exchange endpoint (/owner/exchange).
-3) API Worker validates signature + expiry + single-use + ownership active.
-4) API Worker creates opsess:<sessionId> and sets cookie op_sess=<sessionId>.
-5) API Worker redirects to /dash/<location> with a clean URL (no token visible).
-6) Owner uses Dash normally while ownership is active.
+1) Owner completes Stripe Checkout.
+2) App redirects through /owner/stripe-exchange.
+3) API Worker verifies the completed Checkout Session, reconciles ownership / plan, and sets op_sess.
+4) API Worker redirects with a clean URL to either:
+   • the first incomplete Campaign Funding / Campaign Management step, or
+   • /dash/<location> when no pending owner flow exists.
+5) Owner uses Dash normally while ownership is active.
 
 --------------------------------------------------------------------
 G) Owner Access Recovery (Guided, No Resend)
 
-NaviGen does not provide a “resend owner access link” endpoint.
+NaviGen does not provide Owner-access links or a resend endpoint.
 
-Instead, recovery is handled through guided instructions using existing,
-authoritative Stripe emails.
+Recovery is performed with the Stripe PaymentIntent ID (pi_...) from the Stripe receipt, invoice, or payment confirmation email.
 
 Supported recovery cases:
-• Signed link expired before use.
-• Signed link already consumed on another device.
-• Owner wants to open Dash on a different device later.
+• session missing on another device
+• original checkout tab is gone
+• owner wants to open Dash on a different device later
 
 Recovery guidance shown to the user:
-• “Use the most recent Owner access email sent after payment.”
-• “You can also find your Stripe receipt or invoice email and open the
-   ‘Open Owner Dash’ link from there.”
+• “Use Restore Access with the Payment ID (pi_...) from your Stripe receipt or payment email.”
+• “Tip: search your inbox for ‘Stripe’ if you need to find the payment.”
 
 Rationale:
 • Stripe emails are already delivered, searchable, and tied to payment authority.
@@ -7180,8 +7311,8 @@ Phases are named by **what the system does**, not how it feels to the user.
 
 --------------------------------------------------------------------
 
-### Phase 1 — Active campaign  
-*(€50 / 30 days)*
+### Phase 1 — Active Plan  
+*(30 days)*
 
 **System behavior**
 - LPM discoverable: **true**
@@ -7191,65 +7322,38 @@ Phases are named by **what the system does**, not how it feels to the user.
 - Exclusive operation: **enforced**
 
 **Owner message**
-> “Your business is actively promoted.”
+> “Your business is actively present on NaviGen.”
 
 **Public**
 - Sees the business everywhere it should appear
 
+Notes:
+- The owner may choose **Visibility only** or **Promotion**.
+- Visibility only keeps the same paid rights while disabling Promo QR / redeem flows.
+
 --------------------------------------------------------------------
 
 ### Phase 2 — Courtesy visibility  
-*(free, Y × 30 days; Y = 2)*
+*(free, 60 days)*
 
 **System behavior**
 - LPM discoverable: **true**
 - Ranking: **reduced (natural fall)**
 - Campaigns: **disabled**
 - Analytics: **disabled**
-- Exclusive operation: **off** (no one else promoted yet)
+- Exclusive operation: **off**
 
 **Owner message**
-> “Your campaign ended, but we’re keeping your business visible so customers can still find you.”
+> “Your active Plan ended, but we’re keeping your business visible so customers can still find you.”
 
 **Public**
 - Still finds the business
 - It is less prominent
 
-This is the “nice guy” phase.
-
 --------------------------------------------------------------------
 
-### Phase 3 — Held visibility  
-*(€5 / 30 days, optional)*
-
-This is **not protection**.  
-This is **holding a place**.
-
-**System behavior**
-- LPM discoverable: **true**
-- Ranking: **stabilized** (no further decay)
-- Campaigns: **disabled**
-- Analytics: **disabled**
-
-**Owner message**
-> “If you’d like to keep your place visible while you decide what’s next, you can hold it for a little longer.”
-
-**Public**
-- Business still appears
-- Not promoted
-- Not highlighted
-
-**Important**
-- If the owner does nothing, the system proceeds to Phase 4 automatically.
-
---------------------------------------------------------------------
-
-### Phase 4 — Not discoverable  
-*(after long inactivity, e.g. 6–12 months)*
-
-This is the decisive state.
-
-> “We simply set the LPM to not discoverable.”
+### Phase 3 — Not discoverable  
+*(after courtesy ends)*
 
 **System behavior**
 - LPM discoverable: **false**
@@ -7264,7 +7368,7 @@ This is the decisive state.
 
 **Owner message**
 > “Your business is currently inactive on NaviGen.  
-> Start a campaign anytime to become visible again.”
+> Start a new Plan anytime to become visible again.”
 
 **Public**
 - Will not encounter the business organically
@@ -7433,8 +7537,8 @@ Source sections (audit list; update if numbering changes):
 |---|---:|---:|---|---|---|---|
 | Draft | No | No | None (draft may exist without payment) | Write draft; discard draft | override_draft:<ULID>:<actorKey> | Publish succeeds |
 | Published | Yes (effective profile) | Yes | (a) Plan active, (b) plan_alloc capacity not exceeded, (c) publish validation passes (≥3 images, ≥200 chars, website/social) | Update via profile edit API (if ownership active); publish updated override | override:<ULID>, override_log:<ULID>:<ts>, DO upsert | Plan expires → Frozen; or owner updates and republishes |
-| Expired (campaign window ended) | Yes (courtesy) | Yes (while discoverable) | Campaign ends; courtesy window begins | No campaign actions unless renewed; visibility decays per timeline | campaigns:byUlid:<ULID> unchanged; status:<ULID> updates derived; ordering changes | Courtesy ends or Hold purchased |
-| Frozen (Plan inactive) | Stored; discoverability follows 92.4.3 | If still in courtesy/hold then yes; otherwise no | Plan expired | Cannot publish new locations under that Plan; publish rights frozen; existing published override remains | No new plan_alloc entries; no publish writes; existing override remains | New Plan purchase restores publish ability |
+| Expired (campaign window ended) | Yes (courtesy) | Yes (while discoverable) | Campaign ends; courtesy window begins | No campaign actions unless renewed; visibility decays per timeline | campaigns:byUlid:<ULID> unchanged; status:<ULID> updates derived; ordering changes | Courtesy ends |
+| Frozen (Plan inactive) | Stored; discoverability follows 92.4.3 | If still in courtesy then yes; otherwise no | Plan expired | Cannot publish new locations under that Plan; publish rights frozen; existing published override remains | No new plan_alloc entries; no publish writes; existing override remains | New Plan purchase restores publish ability |
 | Not discoverable | Direct link may open; not shown in lists | No | After extended inactivity per 92.4.3 | Start campaign to become visible again | visibilityState derived; list endpoints exclude | Campaign starts |
 
 Notes:
@@ -7454,7 +7558,6 @@ This table lists key families referenced by the spec. It is a collision audit an
 | alias:<slug> | slug → ULID mapping | API Worker | Canonical identity spine |
 | ownership:<ULID> | ownership window (exclusiveUntil) | API Worker (webhook) | Establishes owner capabilities |
 | opsess:<sessionId> | operator session record | API Worker | Cookie op_sess points here |
-| ownerlink_used:<jti> | signed-link single-use enforcement | API Worker | Prevents link replay |
 | profile_base:<ULID> | KV canonical profile (profiles.json schema) | API Worker | Locations Project authority |
 | override:<ULID> | published override snapshot | API Worker | Non-destructive edits |
 | override_log:<ULID>:<ts> | append-only edit audit trail | API Worker | Internal-only |
@@ -7482,34 +7585,35 @@ Source sections (audit list; update if numbering changes):
 • 91.4.1 (Ownership Record)
 • 91.4.2 (Stripe Metadata Contract)
 • 92.3.2 (Plan & Publish Capacity)
-• 92.4.2 (Signed Link → Cookie Session)
+• 92.4.2 (Stripe Exchange / Payment ID Restore → Cookie Session)
 • 8.3.5 (Locations Project — KV Authority)
 • 13.12 (Search Index Architecture — DO)
 
-User (BO) ── selects plan tier ──> Stripe Checkout
-   │                                 │
-   │                                 └─ checkout.session.completed
-   │                                         │
-   │                                         v
-   │                               API Worker / webhook processor
-   │                               - verify Stripe signature
-   │                               - resolve slug → ULID via alias:<slug>
-   │                               - write/extend ownership:<ULID>
-   │                               - (if applicable) activate campaign row(s)
-   │                               - plan tier recognized for publish capacity
-   │                                         │
-   │                                         v
-   │                               Owner Exchange (/owner/stripe-exchange)
-   │                               - mint op_sess cookie + opsess:<id>
-   │                                         │
-   v                                         v
-Owner UI (wizard) ── publish request ──> API Worker (publish endpoint)
-                                   - verify Plan active
-                                   - enforce maxPublishedLocations via plan_alloc:<pi_...>
-                                   - validate publish rules (images/desc/link)
-                                   - write override:<ULID> + override_log:<ULID>:<ts>
-                                   - DO upsert for search/index
-                                   - return merged effective profile
+User (BO) ── choose plan ──> choose campaign scope ──> choose locations ──> Stripe Checkout
+   │                                                                          │
+   │                                                                          └─ checkout.session.completed
+   │                                                                                  │
+   │                                                                                  v
+   │                                                                        API Worker / webhook processor
+   │                                                                        - verify Stripe signature
+   │                                                                        - resolve slug → ULID via alias:<slug>
+   │                                                                        - write/extend ownership:<ULID>
+   │                                                                        - (if applicable) activate campaign row(s)
+   │                                                                        - persist plan tier for publish capacity
+   │                                                                                  │
+   │                                                                                  v
+   │                                                                        Owner Exchange (/owner/stripe-exchange)
+   │                                                                        - mint op_sess cookie + opsess:<id>
+   │                                                                        - restore first incomplete owner step when flow state exists
+   │                                                                                  │
+   v                                                                                  v
+Owner UI (wizard / CM) ── publish request ──> API Worker (publish endpoint)
+                                          - verify Plan active
+                                          - enforce maxPublishedLocations via plan_alloc:<pi_...>
+                                          - validate publish rules (images/desc/link)
+                                          - write override:<ULID> + override_log:<ULID>:<ts>
+                                          - DO upsert for search/index
+                                          - return merged effective profile
                                    
 --------------------------------------------------------------------
 
@@ -8381,7 +8485,7 @@ B2. Required Checkout Configuration
       locationID (slug)
       campaignKey
       initiationType: "owner" | "agent" | "platform"
-      ownershipSource: "campaign" | "exclusive"
+      campaignPreset: "visibility" | "promotion"
       navigenVersion
 
   locationID (slug) is resolved server-side to a canonical ULID via the alias system.
@@ -8407,13 +8511,13 @@ Rules:
     • tax_ids (if any)
     • amount_total, currency
     • payment_intent
-• Stripe-provided email may be used to send Owner access emails but MUST NOT be stored in NaviGen KV/logs/datasets.
+• Stripe-provided email may be used to send owner reminder or recovery emails that reference Payment ID (pi_...), but MUST NOT be stored in NaviGen KV/logs/datasets.
 
   Steps:
-    1. Validate required metadata (locationID, initiationType, ownershipSource)
+    1. Validate required metadata (locationID, initiationType, campaignPreset)
     2. Resolve canonical ULID from locationID via the alias system
     3. Resolve ownership record for the canonical ULID
-    4. Extend ownership window based on ownershipSource
+    4. Extend ownership window for the purchased Plan and persist the selected campaignPreset
        When persisting plan:<payment_intent.id>, set expiresAt = ownership:<ULID>.exclusiveUntil (post-extension value).
     5. Persist Plan record:
         write plan:<payment_intent.id> = { priceId, tier, maxPublishedLocations, purchasedAt, expiresAt }
@@ -8533,18 +8637,14 @@ Appendix E — Owner Access UX Contracts
 
 Access-Required Interstitial (Owner Recovery)
 
-When ownership is active (exclusiveUntil > now) but the requester lacks:
-• a valid owner cookie, and
-• a valid signed-link exchange,
-
-the system MUST present a dedicated access-required interstitial.
+When ownership is active (exclusiveUntil > now) but the requester lacks
+a valid owner cookie, the system MUST present a dedicated access-required interstitial.
 
 Primary message:
 • “Owner settings”
 
 Secondary message:
-• “To open the Owner Dash, use your most recent Owner access email or Stripe receipt.”
-• “The Owner Dash link is included in that message.”
+• “To open the Owner Dash, use Restore Access with the Payment ID (pi_...) from your Stripe receipt or payment email.”
 
 Primary action:
 • “Restore access”
@@ -8554,12 +8654,12 @@ Secondary actions:
 • “Sign out on this device”
 
 Secondary guidance text:
-• “Tip: search your inbox for ‘Stripe’ or ‘NaviGen’.”
+• “Tip: search your inbox for ‘Stripe’ if you need to find the payment.”
 
 Rules:
 • The interstitial must not reveal owner-only data.
 • The interstitial must not infer or grant ownership.
-• No resend mechanism exists; recovery is guided via the most recent Owner access email / Stripe receipt.
+• No resend mechanism exists; recovery uses the Payment ID (pi_...) from the Stripe receipt, invoice, or payment confirmation email.
 • No login, account creation, or identity prompt is permitted.
 
 --------------------------------------------------------------------
@@ -8572,7 +8672,6 @@ the system MUST NOT render analytics or an analytics interstitial.
 Instead, the App MUST open the “Owner settings” modal (Section 6.2.8),
 providing contextual actions:
 • Run campaign
-• (Deferred) Keep visible
 • See example dashboards (Example Locations only)
 
 --------------------------------------------------------------------
@@ -8585,8 +8684,7 @@ Analytics access required
 Body:
 Analytics for this location are available to its active operator.
 
-To view real analytics, activate ownership by running a campaign
-or starting an exclusive operation period.
+To view real analytics, activate ownership by purchasing a paid Plan.
 
 --------------------------------------------------------------------
 
@@ -8595,7 +8693,7 @@ Activate analytics for this location
 
 Behavior:
 • Routes to Owner Platform onboarding for the requested LPM.
-• Initiates either campaign setup or Exclusive Operation Period purchase.
+• Initiates Plan selection and checkout.
 
 --------------------------------------------------------------------
 
@@ -8676,7 +8774,7 @@ The authoritative rules remain in Sections 1–13, 91.x, and 92.x.
 | Donation purchases (MSM “myPurchases”)           | App Shell                 | `app.js` handles Stripe return `?sid=...`; `modal-injector.js` renders history                                    | `localStorage.myPurchases`                                     | App Shell              | ✅ implemented (donations only; not billing)                                            |
 | Billing ledger (per redeem / prepaid)            | API Worker                | `index.ts` contains `writeBillingRecord()` stub                                                                   | `billing:*` (KV)                                               | API Worker             | ❌ not implemented end-to-end                                                           |
 | Owner Platform ownership KV (`ownership:<ULID>`) | —                         | not present in these code files                                                                                   | `ownership:<ULID>`                                             | API Worker             | ❌ not implemented yet (spec-only)                                                      |
-| Signed link → cookie exchange                    | —                         | not present in these code files                                                                                   | HttpOnly cookie                                                | API Worker             | ❌ not implemented yet (spec-only)                                                      |
+| Stripe exchange / Payment ID restore → cookie session | —                    | not present in these code files                                                                                   | HttpOnly cookie                                                | API Worker             | ❌ not implemented yet (spec-only)                                                      |
 | Profile edit API `/api/profile/update`           | —                         | not present in these code files                                                                                   | `override:*`, `override_log:*`                                 | API Worker             | ❌ not implemented yet (spec-only)                                                      |
 | Agent attribution KV + cap tracking              | —                         | not present in these code files                                                                                   | `agent_attribution:*`                                          | API Worker             | ❌ not implemented yet (spec-only)                                                      |
 

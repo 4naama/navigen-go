@@ -59,10 +59,10 @@ type PlanRecord = {
 // TODO: Fill these price.id values from Stripe dashboard.
 // Fail-closed behavior for publish is enforced by maxPublishedLocations=0 when unknown.
 const PRICE_ID_TO_PLAN: Record<string, { tier: PlanTier; maxPublishedLocations: number }> = {
-  // "price_123": { tier: "standard", maxPublishedLocations: 3 },
-  // "price_456": { tier: "multi",     maxPublishedLocations: 10 },
-  // "price_789": { tier: "large",     maxPublishedLocations: 25 },
-  // "price_abc": { tier: "network",   maxPublishedLocations: 150 },
+  "price_STANDARD_79":   { tier: "standard", maxPublishedLocations: 1 },
+  "price_MULTI_TEST_2":  { tier: "multi",    maxPublishedLocations: 3 },   // TESTING: replace with live €159 price id later
+  "price_LARGE_349":     { tier: "large",    maxPublishedLocations: 10 },
+  "price_NETWORK_749":   { tier: "network",  maxPublishedLocations: 10000 },
 };
 
 async function fetchStripeCheckoutLineItemPriceId(sk: string, checkoutSessionId: string): Promise<string> {
@@ -976,40 +976,25 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   const initiationType = String(body?.initiationType || "").trim();   // "owner"
   const ownershipSource = String(body?.ownershipSource || "").trim(); // "campaign"
   const navigenVersion = String(body?.navigenVersion || "").trim() || "phase5";
+  const planCode = String(body?.planCode || "").trim().toLowerCase();
 
-  // Allow both owner-initiated and public (no-session) initiation types.
-  // Canonical product: campaign payment is the only purchase; session is minted on return.
+  const PLAN_PRICE_IDS: Record<string, string> = {
+    standard: "price_STANDARD_79",
+    multi: "price_MULTI_TEST_2",   // TESTING: replace with live €159 price id later
+    large: "price_LARGE_349",
+    network: "price_NETWORK_749"
+  };
+
   const okInitiation = (initiationType === "owner" || initiationType === "public");
-  if (!locationID || !campaignKey || !okInitiation || ownershipSource !== "campaign") {
+  if (!locationID || !campaignKey || !okInitiation || ownershipSource !== "campaign" || !PLAN_PRICE_IDS[planCode]) {
     return json(
-      { error: { code: "invalid_request", message: "locationID, campaignKey, initiationType in {'owner','public'}, ownershipSource='campaign' required" } },
+      { error: { code: "invalid_request", message: "locationID, campaignKey, initiationType in {'owner','public'}, ownershipSource='campaign', and valid planCode required" } },
       400,
       noStore
     );
   }
 
-  // Reject generic billing keys; campaignKey must bind to the specific saved draft.
-  // Prevents "paid but no campaign row" when promotion expects a draft-bound campaignKey.
-  if (campaignKey === "campaign-30d") {
-    return json(
-      { error: { code: "invalid_request", message: "campaignKey must be the draft campaignKey (not 'campaign-30d')" } },
-      400,
-      noStore
-    );
-  }
-
-  // Enforce the spec invariant: clients must never supply ULIDs as locationID
-  if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationID)) {
-    return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore);
-  }
-
-  const MIN_AMOUNT_CENTS = 100; // TESTING: set to 5000 for €50.00 minimum in production
-  const amountCents = Math.floor(Number(body?.amountCents ?? MIN_AMOUNT_CENTS));
-  const currency = "eur";
-
-  if (!Number.isFinite(amountCents) || amountCents < MIN_AMOUNT_CENTS) {
-    return json({ error: { code: "invalid_request", message: `amountCents must be >= ${MIN_AMOUNT_CENTS}` } }, 400, noStore);
-  }
+  const priceId = PLAN_PRICE_IDS[planCode];
 
   // Build redirect URLs on the web app origin (not the API Worker origin)
   const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
@@ -1032,9 +1017,7 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   form.set("cancel_url", cancelUrl.toString());
 
   form.set("line_items[0][quantity]", "1");
-  form.set("line_items[0][price_data][currency]", currency);
-  form.set("line_items[0][price_data][unit_amount]", String(amountCents));
-  form.set("line_items[0][price_data][product_data][name]", "NaviGen Campaign — 30 days");
+  form.set("line_items[0][price]", priceId);
 
   // Metadata contract (MUST be copied to PaymentIntent)
   form.set("metadata[locationID]", locationID);

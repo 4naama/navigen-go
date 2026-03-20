@@ -4315,24 +4315,22 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
   inner.className = 'modal-body-inner';
 
   inner.innerHTML = `
-    <div class="campaign-funding-warning">${(typeof t === 'function' && t('campaign.funding.minNotice')) || 'Minimum campaign funding is €50.'}</div>
+    <div class="campaign-funding-warning">${(typeof t === 'function' && t('campaign.funding.minNotice')) || 'Minimum campaign funding is €69.'}</div>
     <div class="campaign-funding-warning">${(typeof t === 'function' && t('campaign.funding.stripeNote')) || 'Checkout is processed by Stripe. A payment confirmation email will be sent to you.'}</div>
     <div class="campaign-funding-spacer"></div>
     <div class="campaign-funding-chips">
-      <button type="button" class="campaign-funding-chip" data-eur="1">€1</button>
-      <button type="button" class="campaign-funding-chip is-selected" data-eur="50">€50</button>
-      <button type="button" class="campaign-funding-chip" data-eur="75">€75</button>
-      <button type="button" class="campaign-funding-chip" data-eur="100">€100</button>
-      <button type="button" class="campaign-funding-chip" data-eur="150">€150</button>
-      <button type="button" class="campaign-funding-chip" data-eur="200">€200</button>
-      <button type="button" class="campaign-funding-chip" data-eur="300">€300</button>
+      <button type="button" class="campaign-funding-chip is-selected" data-eur="69">€69</button>
+      <button type="button" class="campaign-funding-chip" data-eur="79">€79</button>
+      <button type="button" class="campaign-funding-chip" data-eur="179">€179</button>
+      <button type="button" class="campaign-funding-chip" data-eur="349">€349</button>
+      <button type="button" class="campaign-funding-chip" data-eur="749">€749</button>
     </div>
 
     <div class="campaign-funding-input-row">
       <label class="campaign-funding-label" for="campaign-funding-eur">
         ${(typeof t === 'function' && t('campaign.funding.amountLabel')) || 'Amount (EUR)'}
       </label>
-      <input id="campaign-funding-eur" class="campaign-funding-input" inputmode="numeric" pattern="[0-9]*" value="50" />
+      <input id="campaign-funding-eur" class="campaign-funding-input" inputmode="numeric" pattern="[0-9]*" value="69" />
     </div>
 
     <div class="modal-actions">
@@ -4344,7 +4342,7 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
 
   const eurInput = inner.querySelector('#campaign-funding-eur');
   const continueBtn = inner.querySelector('#campaign-funding-continue');
-  const MIN_EUR = 1; // TESTING (live): temporarily lowered; restore to 50 for production
+  const MIN_EUR = 69; // PRODUCTION: €69 minimum
 
   function applyFundingValidity() {
     const eur = Math.floor(Number(String(eurInput.value || '').trim()));
@@ -4374,7 +4372,7 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
   });
 
   inner.querySelector('#campaign-funding-continue')?.addEventListener('click', async () => {
-    if (!applyFundingValidity()) { showToast('Minimum is €1.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
+    if (!applyFundingValidity()) { showToast('Minimum is €69.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
     if (!Number.isFinite(eur) || eur <= 0) { showToast('Enter a valid EUR amount.', 1800); return; }
 
     const amountCents = eur * 100;
@@ -6139,6 +6137,34 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       return w;
     };
 
+    const planField = document.createElement('div');
+    planField.style.gridColumn = '1 / -1';
+
+    const planLabel = document.createElement('div');
+    planLabel.className = 'muted';
+    planLabel.style.marginBottom = '4px';
+    planLabel.textContent = tSafe('campaign.plan.choose.title', 'Choose plan');
+
+    const planChips = document.createElement('div');
+    planChips.className = 'campaign-funding-chips';
+
+    PLAN_OPTIONS.forEach((plan) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `campaign-funding-chip${plan.code === selectedPlanCode ? ' is-selected' : ''}`;
+      btn.textContent = `${plan.title} · €${plan.priceEur} · ${plan.capacityText}`;
+      btn.addEventListener('click', () => {
+        selectedPlanCode = plan.code;
+        planChips.querySelectorAll('.campaign-funding-chip').forEach((node) => node.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+      });
+      planChips.appendChild(btn);
+    });
+
+    planField.appendChild(planLabel);
+    planField.appendChild(planChips);
+    form.appendChild(planField);
+
     const yy = String(new Date().getFullYear()).slice(-2);
     const baseSlug = String(displaySlug || slug || '').trim() || 'location';
     const suggestedKey = nextRollingCampaignKey(baseSlug, yy, rowsAll);
@@ -6381,7 +6407,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         const out = await apiJson('/api/owner/campaigns/checkout', {
           method:'POST',
           headers:{'content-type':'application/json'},
-          body: JSON.stringify({ locationID: slug, amountCents: 100 })
+          body: JSON.stringify({ locationID: slug, planCode: selectedPlanCode })
         });
         if (!out.r.ok) {
           showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
@@ -6392,7 +6418,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         const out = await apiJson('/api/campaigns/checkout', {
           method:'POST',
           headers:{'content-type':'application/json'},
-          body: JSON.stringify({ locationID: slug, draft: d, amountCents: 100 })
+          body: JSON.stringify({ locationID: slug, draft: d, planCode: selectedPlanCode })
         });
         if (!out.r.ok) {
           showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
@@ -6415,6 +6441,15 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     return raw && raw !== key ? raw : fallback;
   };
 
+  const PLAN_OPTIONS = [
+    { code: 'standard', title: tSafe('campaign.plan.standard.title', 'Standard'), priceEur: 1, capacityText: tSafe('campaign.plan.standard.capacity', '1 location') }, // TESTING: keep €1 until production restore
+    { code: 'multi', title: tSafe('campaign.plan.multi.title', 'Multi'), priceEur: 2, capacityText: tSafe('campaign.plan.multi.capacity', 'up to 3 locations') }, // TESTING: restore to live price later
+    { code: 'large', title: tSafe('campaign.plan.large.title', 'Large'), priceEur: 349, capacityText: tSafe('campaign.plan.large.capacity', 'up to 10 locations') },
+    { code: 'network', title: tSafe('campaign.plan.network.title', 'Network'), priceEur: 749, capacityText: tSafe('campaign.plan.network.capacity', '10+ locations') }
+  ];
+
+  let selectedPlanCode = 'standard'; // TESTING: default to Standard unless BO chooses another tier
+  
   const scopeSingleLabel = tSafe('campaign.ui.scope.single', 'This location only');
   const scopeSelectedLabel = tSafe('campaign.ui.scope.selected', 'Selected locations');
   const scopeAllLabel = tSafe('campaign.ui.scope.all', 'All my locations');

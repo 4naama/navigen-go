@@ -282,15 +282,23 @@ cd C:\Users\USER\Documents\a_git\navigen-go\backend\worker
 wrangler deploy
 
 bxz7mbe.jac4PMA!rmj
+
+új :
+index.ts: 
+const MIN_AMOUNT_CENTS = 6900; // PRODUCTION: €69.00 minimum
+modal-injector.js
+const MIN_EUR = 69; // PRODUCTION: €69 minimum
+if (!applyFundingValidity()) { showToast('Minimum is €69.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
+
+régi :
 index.ts: 
 const MIN_AMOUNT_CENTS = 100; // TESTING: set to 5000 for €50.00 minimum in production
-
 modal-injector.js
 const MIN_EUR = 1; // TESTING (live): temporarily lowered; restore to 50 for production
 test:
 if (!applyFundingValidity()) { showToast('Minimum is €1.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
 
-for production back to: 
+BACK TO PRODUCTION : 
 if (!applyFundingValidity()) { showToast('Minimum is €50.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
 
 If nothing changed (force rebuild):
