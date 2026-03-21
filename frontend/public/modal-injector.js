@@ -6560,13 +6560,6 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     { code: 'promotion', title: tSafe('campaign.plan.preset.promotion', 'Promotion') }
   ];
 
-  const PLAN_OPTIONS = [
-    { code: 'standard', title: tSafe('campaign.plan.standard.title', 'Standard'), priceEur: 1, capacityText: tSafe('campaign.plan.standard.capacity', '1 location') }, // TESTING: keep €1 until production restore
-    { code: 'multi', title: tSafe('campaign.plan.multi.title', 'Multi'), priceEur: 2, capacityText: tSafe('campaign.plan.multi.capacity', 'up to 3 locations') }, // TESTING: restore to live price later
-    { code: 'large', title: tSafe('campaign.plan.large.title', 'Large'), priceEur: 349, capacityText: tSafe('campaign.plan.large.capacity', 'up to 10 locations') },
-    { code: 'network', title: tSafe('campaign.plan.network.title', 'Network'), priceEur: 749, capacityText: tSafe('campaign.plan.network.capacity', '10+ locations') }
-  ];
-
   let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(listJ?.plan?.tier || '').trim().toLowerCase()) ? String(listJ.plan.tier).trim().toLowerCase() : 'standard'; // Default to the current active tier when known; otherwise Standard
   
   const scopeSingleLabel = tSafe('campaign.ui.scope.single', 'This location only');
