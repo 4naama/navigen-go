@@ -84,9 +84,10 @@ export async function handleDonation(amount, meta = {}) {
  * @param {Object} args
  * @param {string} args.locationID - slug (never ULID)
  * @param {string} args.campaignKey - required for ownershipSource="campaign"
+ * @param {string} args.planCode - plan tier code ("standard" | "multi" | "large" | "network")
  * @param {string} args.navigenVersion - optional audit tag
  */
-export async function handleCampaignCheckout({ locationID, campaignKey, amountCents, navigenVersion = "v1.1" }) {
+export async function handleCampaignCheckout({ locationID, campaignKey, planCode, navigenVersion = "v1.1" }) {
   if (!stripe) {
     console.error("❌ Stripe not initialized");
     return;
@@ -95,8 +96,8 @@ export async function handleCampaignCheckout({ locationID, campaignKey, amountCe
 const payload = {
   locationID,
   campaignKey,
-  // Optional: allows owner-chosen funding presets; API Worker enforces a minimum.
-  amountCents,
+  // Canonical campaign purchase path: choose a Plan tier, not a free amount.
+  planCode,
   initiationType: "owner",
   ownershipSource: "campaign",
   navigenVersion

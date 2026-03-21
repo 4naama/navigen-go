@@ -1269,7 +1269,8 @@ export default {
 
         const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
 
-        const multiLocationEnabled = await multiLocationEnabledForUlid(env, ulid);
+        const currentPlan = await currentPlanForUlid(env, ulid);
+        const multiLocationEnabled = Number(currentPlan?.maxPublishedLocations || 0) > 1;
 
         // Provide a shallow "active" view for convenience (no resolver duplication).
         const nowMs = Date.now();
@@ -1289,6 +1290,8 @@ export default {
             active,
             history,
             plan: {
+              tier: String(currentPlan?.tier || "").trim() || "unknown",
+              maxPublishedLocations: Number(currentPlan?.maxPublishedLocations || 0),
               multiLocationEnabled
             },
             eligibleLocations,
@@ -1420,7 +1423,7 @@ export default {
       }
 
       // --- Public Campaigns: create checkout session and persist draft without requiring owner session
-      // POST /api/campaigns/checkout  body: { locationID:"<slug>", draft:{...}, amountCents?:number }
+      // POST /api/campaigns/checkout  body: { locationID:"<slug>", draft:{...}, planCode?:string }
       if (normPath === "/api/campaigns/checkout" && req.method === "POST") {
         const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
 
@@ -1466,14 +1469,14 @@ export default {
           initiationType: "public",
           ownershipSource: "campaign",
           navigenVersion: "phase5",
-          amountCents: body?.amountCents
+          planCode: body?.planCode          
         };
 
         return await createCampaignCheckoutSession(env, req, stripeReq, noStore);
       }
 
       // --- Owner Campaigns: create checkout session from the current draft (session-bound)
-      // POST /api/owner/campaigns/checkout  body: { locationID: "<slug>", amountCents?: number }
+      // POST /api/owner/campaigns/checkout  body: { locationID: "<slug>", planCode?: string }      
       if (normPath === "/api/owner/campaigns/checkout" && req.method === "POST") {
         const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
 
@@ -1512,7 +1515,7 @@ export default {
           initiationType: "owner",
           ownershipSource: "campaign",
           navigenVersion: "phase5",
-          amountCents: body?.amountCents
+          planCode: body?.planCode          
         };
 
         return await createCampaignCheckoutSession(env, req, stripeReq, { "cache-control": "no-store" });
@@ -4118,13 +4121,32 @@ async function eligibleLocationsForRequest(req: Request, env: Env, activeUlid = 
   return out;
 }
 
-async function multiLocationEnabledForUlid(env: Env, ulid: string): Promise<boolean> {
+async function currentPlanForUlid(env: Env, ulid: string): Promise<PlanRecord | null> {
   try {
     const own = await env.KV_STATUS.get(`ownership:${ulid}`, { type: "json" }) as any;
     const paymentIntentId = String(own?.lastEventId || "").trim();
-    if (!paymentIntentId) return false;
+    if (!paymentIntentId) return null;
 
     const plan = await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" }) as any;
+    if (!plan || typeof plan !== "object") return null;
+
+    return {
+      priceId: String(plan?.priceId || "").trim(),
+      tier: (["standard", "multi", "large", "network"].includes(String(plan?.tier || "").trim().toLowerCase())
+        ? String(plan.tier).trim().toLowerCase()
+        : "unknown") as PlanTier,
+      maxPublishedLocations: Math.max(0, Number(plan?.maxPublishedLocations || 0) || 0),
+      purchasedAt: String(plan?.purchasedAt || "").trim(),
+      expiresAt: String(plan?.expiresAt || "").trim()
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function multiLocationEnabledForUlid(env: Env, ulid: string): Promise<boolean> {
+  try {
+    const plan = await currentPlanForUlid(env, ulid);
     return Number(plan?.maxPublishedLocations || 0) > 1;
   } catch {
     return false;

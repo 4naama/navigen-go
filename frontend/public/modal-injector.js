@@ -4289,7 +4289,7 @@ export async function resolveCampaignKeyForLocation(locationID) {
   }
 }
 
-// Campaign funding modal (chips + input); sends fixed amountCents to Stripe via handleCampaignCheckout().
+// Campaign funding modal (legacy path); maps preset EUR values to planCode for handleCampaignCheckout().
 export function showCampaignFundingModal({ locationID, campaignKey }) {
   const id = 'campaign-funding-modal';
   document.getElementById(id)?.remove();
@@ -4375,12 +4375,12 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
     if (!applyFundingValidity()) { showToast('Minimum is €69.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
     if (!Number.isFinite(eur) || eur <= 0) { showToast('Enter a valid EUR amount.', 1800); return; }
 
-    const amountCents = eur * 100;
+    const planCode = eur >= 749 ? 'network' : eur >= 349 ? 'large' : eur >= 179 ? 'multi' : 'standard';
 
     await handleCampaignCheckout({
       locationID: String(locationID || '').trim(),
       campaignKey: String(campaignKey || '').trim(),
-      amountCents,
+      planCode,
       navigenVersion: "v1.1"
     });
   });
@@ -6121,7 +6121,8 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 }
 
   const renderDraftEditor = () => {
-    const multiScopeEnabled = !!listJ?.plan?.multiLocationEnabled;
+    const planAllowsMultiScope = (planCode) => ['multi', 'large', 'network'].includes(String(planCode || '').trim().toLowerCase());
+    const multiScopeEnabled = () => !!listJ?.plan?.multiLocationEnabled || planAllowsMultiScope(selectedPlanCode);
 
     const form = document.createElement('div');
     form.className = 'campaign-mgmt-form';
@@ -6145,6 +6146,27 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     planLabel.style.marginBottom = '4px';
     planLabel.textContent = tSafe('campaign.plan.choose.title', 'Choose plan');
 
+    const planStateNote = document.createElement('div');
+    planStateNote.className = 'campaign-inline-note';
+    planStateNote.style.marginBottom = '10px';
+
+    const currentPlanTier = String(listJ?.plan?.tier || '').trim().toLowerCase();
+    const currentPlanCap = Math.max(0, Number(listJ?.plan?.maxPublishedLocations || 0) || 0);
+    const currentPlanTitle = currentPlanTier ? `${currentPlanTier.charAt(0).toUpperCase()}${currentPlanTier.slice(1)}` : '';
+    const currentPlanCapacityText = currentPlanTier === 'standard'
+      ? tSafe('campaign.plan.standard.capacity', '1 location')
+      : currentPlanTier === 'multi'
+        ? tSafe('campaign.plan.multi.capacity', 'up to 3 locations')
+        : currentPlanTier === 'large'
+          ? tSafe('campaign.plan.large.capacity', 'up to 10 locations')
+          : currentPlanTier === 'network'
+            ? tSafe('campaign.plan.network.capacity', '10+ locations')
+            : (currentPlanCap > 1 ? `up to ${currentPlanCap} locations` : '1 location');
+
+    planStateNote.textContent = currentPlanTitle
+      ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
+      : tSafe('campaign.plan.choose.note', 'Choose a plan before campaign scope and locations.');
+
     const planChips = document.createElement('div');
     planChips.className = 'campaign-funding-chips';
 
@@ -6157,11 +6179,16 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         selectedPlanCode = plan.code;
         planChips.querySelectorAll('.campaign-funding-chip').forEach((node) => node.classList.remove('is-selected'));
         btn.classList.add('is-selected');
+        if (!multiScopeEnabled()) scopeSelect.value = 'single';
+        scopeField.style.display = multiScopeEnabled() ? '' : 'none';
+        scopeSelect.disabled = !multiScopeEnabled();
+        syncLocationRoster();
       });
       planChips.appendChild(btn);
     });
 
     planField.appendChild(planLabel);
+    planField.appendChild(planStateNote);
     planField.appendChild(planChips);
     form.appendChild(planField);
 
@@ -6202,13 +6229,13 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       const o = document.createElement('option');
       o.value = value;
       o.textContent = label;
-      if (String(multiScopeEnabled ? (draft?.campaignScope || 'single') : 'single').trim() === value) {
+      if (String(multiScopeEnabled() ? (draft?.campaignScope || 'single') : 'single').trim() === value) {
         o.selected = true;
       }
       scopeSelect.appendChild(o);
     });
 
-    if (!multiScopeEnabled) scopeSelect.disabled = true;
+    if (!multiScopeEnabled()) scopeSelect.disabled = true;
 
     const labels = {
       campaignKey: 'Campaign key',
@@ -6245,9 +6272,9 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     form.appendChild(field(labels.startDate, startDate));
     form.appendChild(field(labels.endDate, endDate));
 
-    if (multiScopeEnabled) {
-      form.appendChild(field(labels.campaignScope, scopeSelect));
-    }
+    const scopeField = field(labels.campaignScope, scopeSelect);
+    scopeField.style.display = multiScopeEnabled() ? '' : 'none';
+    form.appendChild(scopeField);
 
     panel.appendChild(form);
 
@@ -6289,7 +6316,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     );
 
     const syncLocationRoster = () => {
-      const scope = multiScopeEnabled ? String(scopeSelect.value || 'single').trim() : 'single';
+      const scope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';      
       locationPanel.style.display = (scope === 'selected' || scope === 'all') ? '' : 'none';
       roster.innerHTML = '';
 
@@ -6355,7 +6382,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     panel.appendChild(actions);
 
     const buildDraft = () => {
-      const campaignScope = multiScopeEnabled ? String(scopeSelect.value || 'single').trim() : 'single';
+      const campaignScope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';      
       const selectedLocationULIDs = (campaignScope === 'selected')
         ? Array.from(selectedSet).filter((id) => eligibleByUlid.has(id))
         : [];
@@ -6448,7 +6475,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     { code: 'network', title: tSafe('campaign.plan.network.title', 'Network'), priceEur: 749, capacityText: tSafe('campaign.plan.network.capacity', '10+ locations') }
   ];
 
-  let selectedPlanCode = 'standard'; // TESTING: default to Standard unless BO chooses another tier
+  let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(listJ?.plan?.tier || '').trim().toLowerCase()) ? String(listJ.plan.tier).trim().toLowerCase() : 'standard'; // Default to the current active tier when known; otherwise Standard
   
   const scopeSingleLabel = tSafe('campaign.ui.scope.single', 'This location only');
   const scopeSelectedLabel = tSafe('campaign.ui.scope.selected', 'Selected locations');
