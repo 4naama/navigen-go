@@ -601,10 +601,12 @@ async function openPromotionQrModal(modal, data) {
       }
       
       if (res.status === 403) {
-        // Campaign required for promos (owner-gated). Use existing owner copy.
-        const msg =
-          (typeof t === 'function' && t('promo.gated.campaignRequired')) ||
-          'Promotions are available only while this business is running an active NaviGen campaign.';
+        const payload = await res.json().catch(() => null);
+        const code = String(payload?.error?.code || '').trim();
+        const msg = code === 'campaign_preset_visibility'
+          ? (String(payload?.error?.message || '').trim() || ((typeof t === 'function' && t('campaign.plan.preset.visibility.note')) || 'Promotion is turned off for this campaign.'))
+          : ((typeof t === 'function' && t('promo.gated.campaignRequired')) ||
+            'Promotions are available only while this business is running an active NaviGen campaign.');
 
         showToast(msg, 3500);
       } else if (res.status === 404) {
@@ -4372,10 +4374,10 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
   });
 
   inner.querySelector('#campaign-funding-continue')?.addEventListener('click', async () => {
-    if (!applyFundingValidity()) { showToast('Minimum is €69.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
+    if (!applyFundingValidity()) { showToast('Minimum is €1.', 1800); return; } const eur = Math.floor(Number(String(eurInput.value || '').trim()));
     if (!Number.isFinite(eur) || eur <= 0) { showToast('Enter a valid EUR amount.', 1800); return; }
 
-    const planCode = eur >= 749 ? 'network' : eur >= 349 ? 'large' : eur >= 179 ? 'multi' : 'standard';
+    const planCode = eur >= 749 ? 'network' : eur >= 349 ? 'large' : eur === 2 ? 'multi' : 'standard';
 
     await handleCampaignCheckout({
       locationID: String(locationID || '').trim(),
@@ -5601,7 +5603,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   // ───────────────────────────────────────────────────────────────────────────
   // Campaign information modal (drilldown) — opens from Current/History cards
   // ───────────────────────────────────────────────────────────────────────────
-const showCampaignInfoModal = (row) => {
+  const showCampaignInfoModal = (row) => {
     const rowSafe = (row && typeof row === 'object') ? row : {};
     const mid = 'campaign-info-modal';
     document.getElementById(mid)?.remove();
@@ -6121,8 +6123,15 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 }
 
   const renderDraftEditor = () => {
+    let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(draft?.planCode || listJ?.plan?.tier || '').trim().toLowerCase())
+      ? String(draft?.planCode || listJ?.plan?.tier || '').trim().toLowerCase()
+      : 'standard'; // TESTING: default to Standard unless the BO or current Plan says otherwise
+    let selectedCampaignPreset = String(draft?.campaignPreset || 'promotion').trim().toLowerCase() === 'visibility'
+      ? 'visibility'
+      : 'promotion';
+
     const planAllowsMultiScope = (planCode) => ['multi', 'large', 'network'].includes(String(planCode || '').trim().toLowerCase());
-    const multiScopeEnabled = () => !!listJ?.plan?.multiLocationEnabled || planAllowsMultiScope(selectedPlanCode);
+    const multiScopeEnabled = () => planAllowsMultiScope(selectedPlanCode) || !!listJ?.plan?.multiLocationEnabled;
 
     const form = document.createElement('div');
     form.className = 'campaign-mgmt-form';
@@ -6137,60 +6146,6 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       w.appendChild(control);
       return w;
     };
-
-    const planField = document.createElement('div');
-    planField.style.gridColumn = '1 / -1';
-
-    const planLabel = document.createElement('div');
-    planLabel.className = 'muted';
-    planLabel.style.marginBottom = '4px';
-    planLabel.textContent = tSafe('campaign.plan.choose.title', 'Choose plan');
-
-    const planStateNote = document.createElement('div');
-    planStateNote.className = 'campaign-inline-note';
-    planStateNote.style.marginBottom = '10px';
-
-    const currentPlanTier = String(listJ?.plan?.tier || '').trim().toLowerCase();
-    const currentPlanCap = Math.max(0, Number(listJ?.plan?.maxPublishedLocations || 0) || 0);
-    const currentPlanTitle = currentPlanTier ? `${currentPlanTier.charAt(0).toUpperCase()}${currentPlanTier.slice(1)}` : '';
-    const currentPlanCapacityText = currentPlanTier === 'standard'
-      ? tSafe('campaign.plan.standard.capacity', '1 location')
-      : currentPlanTier === 'multi'
-        ? tSafe('campaign.plan.multi.capacity', 'up to 3 locations')
-        : currentPlanTier === 'large'
-          ? tSafe('campaign.plan.large.capacity', 'up to 10 locations')
-          : currentPlanTier === 'network'
-            ? tSafe('campaign.plan.network.capacity', '10+ locations')
-            : (currentPlanCap > 1 ? `up to ${currentPlanCap} locations` : '1 location');
-
-    planStateNote.textContent = currentPlanTitle
-      ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
-      : tSafe('campaign.plan.choose.note', 'Choose a plan before campaign scope and locations.');
-
-    const planChips = document.createElement('div');
-    planChips.className = 'campaign-funding-chips';
-
-    PLAN_OPTIONS.forEach((plan) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = `campaign-funding-chip${plan.code === selectedPlanCode ? ' is-selected' : ''}`;
-      btn.textContent = `${plan.title} · €${plan.priceEur} · ${plan.capacityText}`;
-      btn.addEventListener('click', () => {
-        selectedPlanCode = plan.code;
-        planChips.querySelectorAll('.campaign-funding-chip').forEach((node) => node.classList.remove('is-selected'));
-        btn.classList.add('is-selected');
-        if (!multiScopeEnabled()) scopeSelect.value = 'single';
-        scopeField.style.display = multiScopeEnabled() ? '' : 'none';
-        scopeSelect.disabled = !multiScopeEnabled();
-        syncLocationRoster();
-      });
-      planChips.appendChild(btn);
-    });
-
-    planField.appendChild(planLabel);
-    planField.appendChild(planStateNote);
-    planField.appendChild(planChips);
-    form.appendChild(planField);
 
     const yy = String(new Date().getFullYear()).slice(-2);
     const baseSlug = String(displaySlug || slug || '').trim() || 'location';
@@ -6238,6 +6193,8 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     if (!multiScopeEnabled()) scopeSelect.disabled = true;
 
     const labels = {
+      plan: tSafe('campaign.plan.choose.title', 'Choose plan'),
+      campaignPreset: tSafe('campaign.plan.preset.label', 'Campaign mode'),
       campaignKey: 'Campaign key',
       campaignName: 'Campaign name',
       productName: 'Product / service',
@@ -6256,14 +6213,105 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       campaignScope: 'Campaign scope'
     };
 
+    const planField = document.createElement('div');
+    planField.style.gridColumn = '1 / -1';
+
+    const planLabel = document.createElement('div');
+    planLabel.className = 'muted';
+    planLabel.style.marginBottom = '4px';
+    planLabel.textContent = labels.plan;
+
+    const planStateNote = document.createElement('div');
+    planStateNote.className = 'campaign-inline-note';
+    planStateNote.style.marginBottom = '10px';
+
+    const upgradeNote = document.createElement('div');
+    upgradeNote.className = 'campaign-inline-note';
+    upgradeNote.style.marginBottom = '10px';
+    upgradeNote.style.display = 'none';
+
+    const currentPlanTier = String(listJ?.plan?.tier || '').trim().toLowerCase();
+    const currentPlanCap = Math.max(0, Number(listJ?.plan?.maxPublishedLocations || 0) || 0);
+    const currentPlanTitle = currentPlanTier ? `${currentPlanTier.charAt(0).toUpperCase()}${currentPlanTier.slice(1)}` : '';
+    const currentPlanCapacityText = currentPlanTier === 'standard'
+      ? tSafe('campaign.plan.standard.capacity', '1 location')
+      : currentPlanTier === 'multi'
+        ? tSafe('campaign.plan.multi.capacity', 'up to 3 locations')
+        : currentPlanTier === 'large'
+          ? tSafe('campaign.plan.large.capacity', 'up to 10 locations')
+          : currentPlanTier === 'network'
+            ? tSafe('campaign.plan.network.capacity', '10+ locations')
+            : (currentPlanCap > 1 ? `up to ${currentPlanCap} locations` : '1 location');
+
+    planStateNote.textContent = currentPlanTitle
+      ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
+      : tSafe('campaign.plan.choose.note', 'Choose a plan before campaign scope and locations.');
+
+    if (Number(listJ?.inheritedNotice?.blockedRows || 0) > 0) {
+      upgradeNote.textContent = tSafe('campaign.plan.upgrade.body', 'Your current Plan is full. Upgrade to include more locations.');
+      upgradeNote.style.display = '';
+    }
+
+    const planChips = document.createElement('div');
+    planChips.className = 'campaign-funding-chips';
+
+    PLAN_OPTIONS.forEach((plan) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `campaign-funding-chip${plan.code === selectedPlanCode ? ' is-selected' : ''}`;
+      btn.textContent = `${plan.title} · €${plan.priceEur} · ${plan.capacityText}`;
+      btn.addEventListener('click', () => {
+        selectedPlanCode = plan.code;
+        upgradeNote.style.display = 'none';
+        planChips.querySelectorAll('.campaign-funding-chip').forEach((node) => node.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+        if (!multiScopeEnabled()) scopeSelect.value = 'single';
+        scopeField.style.display = multiScopeEnabled() ? '' : 'none';
+        scopeSelect.disabled = !multiScopeEnabled();
+        syncPresetUi();
+        syncLocationRoster();
+      });
+      planChips.appendChild(btn);
+    });
+
+    planField.appendChild(planLabel);
+    planField.appendChild(planStateNote);
+    planField.appendChild(upgradeNote);
+    planField.appendChild(planChips);
+    form.appendChild(planField);
+
+    const presetSelect = document.createElement('select');
+    presetSelect.className = 'input';
+    PRESET_OPTIONS.forEach((preset) => {
+      const o = document.createElement('option');
+      o.value = preset.code;
+      o.textContent = preset.title;
+      if (preset.code === selectedCampaignPreset) o.selected = true;
+      presetSelect.appendChild(o);
+    });
+    presetSelect.addEventListener('change', () => {
+      selectedCampaignPreset = String(presetSelect.value || 'promotion').trim().toLowerCase() === 'visibility'
+        ? 'visibility'
+        : 'promotion';
+      syncPresetUi();
+    });
+
+    const promoFieldsWrap = document.createElement('div');
+    promoFieldsWrap.style.gridColumn = '1 / -1';
+
+    const promoGrid = document.createElement('div');
+    promoGrid.className = 'campaign-mgmt-form';
+
+    const scopeField = field(labels.campaignScope, scopeSelect);
+    scopeField.style.display = multiScopeEnabled() ? '' : 'none';
+
+    form.appendChild(field(labels.campaignPreset, presetSelect));
     form.appendChild(field(labels.campaignKey, campaignKey));
     form.appendChild(field(labels.campaignName, campaignName));
     form.appendChild(field(labels.productName, productName));
     form.appendChild(field(labels.campaignType, campaignType));
     form.appendChild(field(labels.targetChannels, targetChannels));
-    form.appendChild(field(labels.offerType, offerType));
-    form.appendChild(field(labels.discountKind, discountKind));
-    form.appendChild(field(labels.campaignDiscountValue, discountValue));
+    form.appendChild(scopeField);
     form.appendChild(field(labels.eligibilityType, eligibilityType));
     form.appendChild(field(labels.eligibilityNotes, eligibilityNotes));
     form.appendChild(field(labels.utmSource, utmSource));
@@ -6272,9 +6320,21 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     form.appendChild(field(labels.startDate, startDate));
     form.appendChild(field(labels.endDate, endDate));
 
-    const scopeField = field(labels.campaignScope, scopeSelect);
-    scopeField.style.display = multiScopeEnabled() ? '' : 'none';
-    form.appendChild(scopeField);
+    promoGrid.appendChild(field(labels.offerType, offerType));
+    promoGrid.appendChild(field(labels.discountKind, discountKind));
+    promoGrid.appendChild(field(labels.campaignDiscountValue, discountValue));
+    promoFieldsWrap.appendChild(promoGrid);
+    form.appendChild(promoFieldsWrap);
+
+    const syncPresetUi = () => {
+      const isVisibility = selectedCampaignPreset === 'visibility';
+      promoFieldsWrap.style.display = isVisibility ? 'none' : '';
+      offerType.disabled = isVisibility;
+      discountKind.disabled = isVisibility;
+      discountValue.disabled = isVisibility;
+    };
+
+    syncPresetUi();
 
     panel.appendChild(form);
 
@@ -6288,7 +6348,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     locationPanel.appendChild(locationInfo);
 
     const search = buildInput('search', '');
-    search.placeholder = locationSearchPlaceholder;    
+    search.placeholder = locationSearchPlaceholder;
     search.classList.add('campaign-location-search');
     locationPanel.appendChild(search);
 
@@ -6299,7 +6359,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const addAnother = document.createElement('button');
     addAnother.type = 'button';
     addAnother.className = 'cm-action-btn';
-    addAnother.textContent = addAnotherLocationLabel;    
+    addAnother.textContent = addAnotherLocationLabel;
     addAnother.addEventListener('click', async () => {
       hideModal('campaign-management-modal');
       await showOwnerCenterModal();
@@ -6316,7 +6376,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     );
 
     const syncLocationRoster = () => {
-      const scope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';      
+      const scope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';
       locationPanel.style.display = (scope === 'selected' || scope === 'all') ? '' : 'none';
       roster.innerHTML = '';
 
@@ -6337,7 +6397,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       if (!filtered.length) {
         const empty = document.createElement('p');
         empty.className = 'muted';
-        empty.textContent = noEligibleLocationsLabel;        
+        empty.textContent = noEligibleLocationsLabel;
         roster.appendChild(empty);
         return;
       }
@@ -6382,7 +6442,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     panel.appendChild(actions);
 
     const buildDraft = () => {
-      const campaignScope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';      
+      const campaignScope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';
       const selectedLocationULIDs = (campaignScope === 'selected')
         ? Array.from(selectedSet).filter((id) => eligibleByUlid.has(id))
         : [];
@@ -6404,6 +6464,8 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         startDate: String(startDate.value || '').trim(),
         endDate: String(endDate.value || '').trim(),
         campaignScope,
+        campaignPreset: selectedCampaignPreset,
+        planCode: selectedPlanCode,
         selectedLocationULIDs
       };
     };
@@ -6415,29 +6477,41 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         return;
       }
       if (d.campaignScope === 'selected' && !d.selectedLocationULIDs.length) {
-        showToast(selectAtLeastOneLocationLabel, 2400);        
+        showToast(selectAtLeastOneLocationLabel, 2400);
         return;
       }
 
       let chkJ = null;
       if (listJ) {
-        const { r: rSave } = await apiJson('/api/owner/campaigns/draft', {
+        const { r: rSave, j: rSaveJ } = await apiJson('/api/owner/campaigns/draft', {
           method:'POST',
           headers:{'content-type':'application/json'},
-          body: JSON.stringify(d)
+          body: JSON.stringify({ ...d, planCode: selectedPlanCode })
         });
         if (!rSave.ok) {
-          showToast((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.', 2400);
+          const code = String((rSaveJ?.error?.code || '')).trim();
+          const msg = String((rSaveJ?.error?.message || '')).trim();
+          if (code === 'plan_upgrade_required' && msg) {
+            upgradeNote.textContent = msg;
+            upgradeNote.style.display = '';
+          }
+          showToast(msg || ((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.'), 2400);
           return;
         }
 
         const out = await apiJson('/api/owner/campaigns/checkout', {
           method:'POST',
           headers:{'content-type':'application/json'},
-          body: JSON.stringify({ locationID: slug, planCode: selectedPlanCode })
+          body: JSON.stringify({ locationID: slug, planCode: selectedPlanCode, campaignPreset: selectedCampaignPreset })
         });
         if (!out.r.ok) {
-          showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
+          const code = String((out.j?.error?.code || '')).trim();
+          const msg = String((out.j?.error?.message || '')).trim();
+          if (code === 'plan_upgrade_required' && msg) {
+            upgradeNote.textContent = msg;
+            upgradeNote.style.display = '';
+          }
+          showToast(msg || ((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.'), 2600);
           return;
         }
         chkJ = out.j;
@@ -6445,10 +6519,16 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         const out = await apiJson('/api/campaigns/checkout', {
           method:'POST',
           headers:{'content-type':'application/json'},
-          body: JSON.stringify({ locationID: slug, draft: d, planCode: selectedPlanCode })
+          body: JSON.stringify({ locationID: slug, draft: d, planCode: selectedPlanCode, campaignPreset: selectedCampaignPreset })
         });
         if (!out.r.ok) {
-          showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
+          const code = String((out.j?.error?.code || '')).trim();
+          const msg = String((out.j?.error?.message || '')).trim();
+          if (code === 'plan_upgrade_required' && msg) {
+            upgradeNote.textContent = msg;
+            upgradeNote.style.display = '';
+          }
+          showToast(msg || ((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.'), 2600);
           return;
         }
         chkJ = out.j;
@@ -6467,6 +6547,18 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const raw = (typeof t === 'function') ? String(t(key) || '').trim() : '';
     return raw && raw !== key ? raw : fallback;
   };
+
+  const PLAN_OPTIONS = [
+    { code: 'standard', title: tSafe('campaign.plan.standard.title', 'Standard'), priceEur: 1, capacityText: tSafe('campaign.plan.standard.capacity', '1 location') }, // TESTING: keep €1 until production restore
+    { code: 'multi', title: tSafe('campaign.plan.multi.title', 'Multi'), priceEur: 2, capacityText: tSafe('campaign.plan.multi.capacity', 'up to 3 locations') }, // TESTING: keep €2 until production restore
+    { code: 'large', title: tSafe('campaign.plan.large.title', 'Large'), priceEur: 349, capacityText: tSafe('campaign.plan.large.capacity', 'up to 10 locations') },
+    { code: 'network', title: tSafe('campaign.plan.network.title', 'Network'), priceEur: 749, capacityText: tSafe('campaign.plan.network.capacity', '10+ locations') }
+  ];
+
+  const PRESET_OPTIONS = [
+    { code: 'visibility', title: tSafe('campaign.plan.preset.visibility', 'Visibility only') },
+    { code: 'promotion', title: tSafe('campaign.plan.preset.promotion', 'Promotion') }
+  ];
 
   const PLAN_OPTIONS = [
     { code: 'standard', title: tSafe('campaign.plan.standard.title', 'Standard'), priceEur: 1, capacityText: tSafe('campaign.plan.standard.capacity', '1 location') }, // TESTING: keep €1 until production restore

@@ -39,7 +39,6 @@ export interface Env {
   JWT_SECRET: string; // set via wrangler secret
   STRIPE_SECRET_KEY: string; // Stripe secret key for creating Checkout Sessions (server-only)
   STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
-  OWNER_LINK_HMAC_SECRET: string; // HMAC secret for signed owner access links (Phase 2)
 }
 
 // --- Plan persistence (Phase 8 prerequisite) ---
@@ -64,6 +63,37 @@ const PRICE_ID_TO_PLAN: Record<string, { tier: PlanTier; maxPublishedLocations: 
   "price_LARGE_349":     { tier: "large",    maxPublishedLocations: 10 },
   "price_NETWORK_749":   { tier: "network",  maxPublishedLocations: 10000 },
 };
+
+// Plan chooser codes are BO-facing; price ids are Worker-authoritative.
+// Keep this mapping centralized so checkout, restore, and enforcement resolve the same tier contract.
+const PLAN_CODE_TO_PRICE_ID: Record<string, string> = {
+  standard: "price_STANDARD_79",
+  multi: "price_MULTI_TEST_2",   // TESTING: replace with live €159 price id later
+  large: "price_LARGE_349",
+  network: "price_NETWORK_749"
+};
+
+function normalizePlanTier(v: unknown): PlanTier {
+  const s = String(v || "").trim().toLowerCase();
+  if (s === "standard" || s === "multi" || s === "large" || s === "network") return s;
+  return "unknown";
+}
+
+function planDefinitionForCode(planCode: unknown): { code: string; priceId: string; tier: PlanTier; maxPublishedLocations: number } | null {
+  const code = String(planCode || "").trim().toLowerCase();
+  const priceId = String(PLAN_CODE_TO_PRICE_ID[code] || "").trim();
+  if (!priceId) return null;
+
+  const mapped = PRICE_ID_TO_PLAN[priceId];
+  if (!mapped) return null;
+
+  return {
+    code,
+    priceId,
+    tier: normalizePlanTier(mapped.tier),
+    maxPublishedLocations: Math.max(0, Number(mapped.maxPublishedLocations || 0) || 0)
+  };
+}
 
 async function fetchStripeCheckoutLineItemPriceId(sk: string, checkoutSessionId: string): Promise<string> {
   const url = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(checkoutSessionId)}/line_items?limit=1`;
@@ -197,82 +227,16 @@ function hexPrefix(buf: ArrayBuffer, nBytes = 4): string {
 }
 
 // --- Owner access session (Phase 2) ---
-// Signed link token exchange: /owner/exchange?tok=...&sig=...
-// - Verifies HMAC signature (server-only secret)
-// - Enforces exp + purpose
-// - Enforces single-use via ownerlink_used:<jti> (KV_STATUS)
-// - Verifies active ownership via ownership:<ULID>.exclusiveUntil
-// - Creates opsess:<sessionId> and sets HttpOnly cookie op_sess=<sessionId>
+// Real-time owner access uses /owner/stripe-exchange.
+// Cross-device or later recovery uses /owner/restore with PaymentIntent id (pi_*).
+// Both flows mint the same HttpOnly op_sess cookie and bind one ULID per device session.
 
 const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-
-function b64urlToBytes(s: string): Uint8Array {
-  const pad = s.length % 4 === 0 ? "" : "=".repeat(4 - (s.length % 4));
-  const b64 = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
 
 function bytesToB64url(bytes: Uint8Array): string {
   let bin = "";
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
-
-async function hmacSha256B64url(secret: string, msgBytes: Uint8Array): Promise<string> {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, msgBytes);
-  return bytesToB64url(new Uint8Array(sig));
-}
-
-// Constant-time-ish compare to reduce timing signal. (Edge runtime; keep simple and deterministic.)
-function safeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let out = 0;
-  for (let i = 0; i < a.length; i++) out |= (a.charCodeAt(i) ^ b.charCodeAt(i));
-  return out === 0;
-}
-
-type OwnerLinkPayload = {
-  ver: number;
-  ulid: string;
-  iat: number;
-  exp: number;
-  jti: string;
-  purpose: string;
-};
-
-function parseOwnerLinkPayload(payloadBytes: Uint8Array): OwnerLinkPayload | null {
-  try {
-    const txt = new TextDecoder().decode(payloadBytes);
-    const j = JSON.parse(txt) as any;
-
-    const ver = Number(j?.ver);
-    const ulid = String(j?.ulid || "").trim();
-    const iat = Number(j?.iat);
-    const exp = Number(j?.exp);
-    const jti = String(j?.jti || "").trim();
-    const purpose = String(j?.purpose || "").trim();
-
-    if (!Number.isFinite(ver) || ver < 1) return null;
-    if (!ULID_RE.test(ulid)) return null;
-    if (!Number.isFinite(iat) || !Number.isFinite(exp)) return null;
-    if (!jti) return null;
-    if (purpose !== "owner-dash") return null;
-
-    return { ver, ulid, iat, exp, jti, purpose };
-  } catch {
-    return null;
-  }
 }
 
 function cookieSerialize(name: string, value: string, attrs: Record<string, string | boolean | number | undefined>): string {
@@ -363,168 +327,6 @@ async function requireOwnerSession(req: Request, env: Env): Promise<{ ulid: stri
   // Authentication only: session validity + ULID binding.
   // Campaign entitlement is enforced by the endpoint itself, not here.
   return { ulid: String(sess.ulid).trim() };
-}
-
-async function handleOwnerExchange(req: Request, env: Env): Promise<Response> {
-  const u = new URL(req.url);
-  const tok = (u.searchParams.get("tok") || "").trim();
-  const sig = (u.searchParams.get("sig") || "").trim();
-
-  const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
-
-  if (!tok || !sig) {
-    return new Response("Denied", { status: 400, headers: noStoreHeaders });
-  }
-
-  const secret = String(env.OWNER_LINK_HMAC_SECRET || "").trim();
-  if (secret.length < 32) {
-    // Misconfiguration: fail closed (do not create sessions).
-    console.error("owner_exchange: secret_invalid", { secretLen: secret.length });
-    return new Response("Owner exchange misconfigured", { status: 500, headers: noStoreHeaders });
-  }
-
-  // Verify signature over the *exact* tok bytes (base64url string → bytes).
-  // This avoids JSON re-serialization mismatches. Issuer must sign the same tok bytes.
-  let tokBytes: Uint8Array;
-  try {
-    tokBytes = b64urlToBytes(tok);
-  } catch {
-    return new Response("Denied", { status: 400, headers: noStoreHeaders });
-  }
-
-  const expected = await hmacSha256B64url(secret, tokBytes);
-  if (!safeEqual(expected, sig)) {
-    return new Response("Denied", { status: 403, headers: noStoreHeaders });
-  }
-
-  const payload = parseOwnerLinkPayload(tokBytes);
-  if (!payload) {
-    return new Response("Denied", { status: 403, headers: noStoreHeaders });
-  }
-
-  const nowSec = Math.floor(Date.now() / 1000);
-  if (nowSec > payload.exp) {
-    return new Response("Denied", { status: 403, headers: noStoreHeaders });
-  }
-
-  // Enforce single-use
-  const usedKey = `ownerlink_used:${payload.jti}`;
-  const used = await env.KV_STATUS.get(usedKey);
-  if (used) {
-    return new Response("Denied", { status: 403, headers: noStoreHeaders });
-  }
-
-  // Verify active ownership
-  const ownKey = `ownership:${payload.ulid}`;
-  const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
-
-  const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
-  const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
-  if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
-    return new Response("Denied", { status: 403, headers: noStoreHeaders });
-  }
-
-  // Reconcile ownership lastEventId (plan anchor) and persist plan record.
-  try {
-    const paymentIntentId = String(sess?.payment_intent || pi).trim();
-
-    // If ownership record exists but lacks/mismatches lastEventId, patch it (no extension).
-    const curLast = String(ownership?.lastEventId || "").trim();
-    if (!curLast || curLast !== paymentIntentId) {
-      await env.KV_STATUS.put(ownKey, JSON.stringify({
-        uid: ulid,
-        state: "owned",
-        exclusiveUntil: exclusiveUntil.toISOString(),
-        source: String(ownership?.source || sess?.metadata?.ownershipSource || "campaign").trim() || "campaign",
-        lastEventId: paymentIntentId,
-        updatedAt: new Date().toISOString()
-      }));
-    }
-
-    const sk2 = String((env as any).STRIPE_SECRET_KEY || "").trim();
-    if (sk2 && paymentIntentId && String(sess?.id || "").trim()) {
-      await persistPlanRecord(env, sk2, String(sess.id).trim(), paymentIntentId, exclusiveUntil.toISOString());
-    }
-  } catch (e: any) {
-    console.error("owner_restore: plan_or_ownership_reconcile_failed", { ulid, err: String(e?.message || e || "") });
-    // Must NOT block restore if plan persistence fails; publish will fail closed later if plan is missing.
-  }
-
-  // Create sessionId (unguessable)
-  const sidBytes = new Uint8Array(18);
-  (crypto as any).getRandomValues(sidBytes);
-  const sessionId = bytesToB64url(sidBytes);
-
-  const createdAt = new Date();
-  // Phase 2: session expiry MUST NOT exceed ownership.exclusiveUntil.
-  const expiresAt = exclusiveUntil;
-
-  const sessKey = `opsess:${sessionId}`;
-  const sessVal = {
-    ver: 1,
-    ulid: payload.ulid,
-    createdAt: createdAt.toISOString(),
-    expiresAt: expiresAt.toISOString()
-  };
-
-  // Compute Max-Age (seconds), bounded and non-negative
-  const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - createdAt.getTime()) / 1000));
-
-  // Two-step write; ensure ownerlink_used is not written unless session is created.
-  try {
-    await env.KV_STATUS.put(sessKey, JSON.stringify(sessVal), { expirationTtl: Math.max(60, maxAge) });
-
-    try {
-      await env.KV_STATUS.put(
-        usedKey,
-        JSON.stringify({ ulid: payload.ulid, usedAt: createdAt.toISOString() }),
-        { expirationTtl: 60 * 60 * 24 * 7 } // keep single-use markers for a week
-      );
-    } catch (e) {
-      // Fail closed: do not leave an orphan session if single-use marker failed.
-      try { await env.KV_STATUS.delete(sessKey); } catch {}
-      throw e;
-    }
-  } catch {
-    return new Response("Denied", { status: 500, headers: noStoreHeaders });
-  }
-
-  // Register this session to the current device so Owner Center can switch without email receipts.
-  try {
-    const dev = readDeviceId(req);
-    if (dev) {
-      const mapKey = devSessKey(dev, payload.ulid);
-      await env.KV_STATUS.put(mapKey, sessionId, { expirationTtl: Math.max(60, maxAge) });
-
-      const idxKey = devIndexKey(dev);
-      const rawIdx = await env.KV_STATUS.get(idxKey, "text");
-      let arr: string[] = [];
-      try { arr = rawIdx ? (JSON.parse(rawIdx) as any) : []; } catch { arr = []; }
-      if (!Array.isArray(arr)) arr = [];
-      if (!arr.includes(payload.ulid)) arr.unshift(payload.ulid);
-      arr = arr.slice(0, 24);
-      await env.KV_STATUS.put(idxKey, JSON.stringify(arr), { expirationTtl: 60 * 60 * 24 * 366 });
-    }
-  } catch {
-    // device registry must never block owner exchange
-  }
-
-  const cookie = cookieSerialize("op_sess", sessionId, {
-    Path: "/",
-    HttpOnly: true,
-    Secure: true,
-    SameSite: "Lax",
-    "Max-Age": maxAge
-  });
-
-  return new Response(null, {
-    status: 302,
-    headers: {
-      "Set-Cookie": cookie,
-      "Location": `/dash/${encodeURIComponent(payload.ulid)}`,
-      ...noStoreHeaders
-    }
-  });
 }
 
 async function promoteCampaignDraftAndBuildRedirectHint(
@@ -973,28 +775,76 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
 
   const locationID = String(body?.locationID || "").trim();           // MUST be slug (no ULID)
   const campaignKey = String(body?.campaignKey || "").trim();         // required for ownershipSource="campaign"
-  const initiationType = String(body?.initiationType || "").trim();   // "owner"
+  const initiationType = String(body?.initiationType || "").trim();   // "owner" | "public"
   const ownershipSource = String(body?.ownershipSource || "").trim(); // "campaign"
   const navigenVersion = String(body?.navigenVersion || "").trim() || "phase5";
   const planCode = String(body?.planCode || "").trim().toLowerCase();
 
-  const PLAN_PRICE_IDS: Record<string, string> = {
-    standard: "price_STANDARD_79",
-    multi: "price_MULTI_TEST_2",   // TESTING: replace with live €159 price id later
-    large: "price_LARGE_349",
-    network: "price_NETWORK_749"
-  };
-
+  // Allow both owner-initiated and public (no-session) initiation types.
+  // Canonical product: campaign payment is the only purchase; session is minted on return.
   const okInitiation = (initiationType === "owner" || initiationType === "public");
-  if (!locationID || !campaignKey || !okInitiation || ownershipSource !== "campaign" || !PLAN_PRICE_IDS[planCode]) {
+  const requestedPlan = planDefinitionForCode(planCode);
+  if (!locationID || !campaignKey || !okInitiation || ownershipSource !== "campaign" || !requestedPlan) {
     return json(
-      { error: { code: "invalid_request", message: "locationID, campaignKey, initiationType in {'owner','public'}, ownershipSource='campaign', and valid planCode required" } },
+      { error: { code: "invalid_request", message: "locationID, campaignKey, valid planCode, initiationType in {'owner','public'}, ownershipSource='campaign' required" } },
       400,
       noStore
     );
   }
 
-  const priceId = PLAN_PRICE_IDS[planCode];
+  // Reject generic billing keys; campaignKey must bind to the specific saved draft.
+  // Prevents "paid but no campaign row" when promotion expects a draft-bound campaignKey.
+  if (campaignKey === "campaign-30d") {
+    return json(
+      { error: { code: "invalid_request", message: "campaignKey must be the draft campaignKey (not 'campaign-30d')" } },
+      400,
+      noStore
+    );
+  }
+
+  // Enforce the spec invariant: clients must never supply ULIDs as locationID
+  if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationID)) {
+    return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore);
+  }
+
+  const ulid = await resolveUid(locationID, env).catch(() => null);
+  if (!ulid) {
+    return json({ error: { code: "not_found", message: "unknown locationID" } }, 404, noStore);
+  }
+
+  // Validate the authoritative saved draft against the requested Plan tier before payment.
+  // This keeps Stripe checkout aligned with scope/capacity rules and produces upgrade-safe failures.
+  const draftKey = `campaigns:draft:${ulid}`;
+  const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+  if (!draft || String(draft?.campaignKey || "").trim() !== campaignKey) {
+    return json({ error: { code: "invalid_state", message: "draft not found for the requested campaignKey" } }, 409, noStore);
+  }
+
+  const scope = normCampaignScope(draft?.campaignScope);
+  const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
+  const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
+  const eligibleUlids = eligibleLocations.map((x) => x.ulid);
+
+  if (scope !== "single" && requestedPlan.maxPublishedLocations <= 1) {
+    return json(buildPlanUpgradeErrorBody(requestedPlan, scope, 2), 409, noStore);
+  }
+
+  let includedUlids: string[] = [ulid];
+  if (scope === "selected") {
+    includedUlids = Array.from(new Set((Array.isArray(draft?.selectedLocationULIDs) ? draft.selectedLocationULIDs : []).map((x: any) => String(x || "").trim()).filter(Boolean)));
+    includedUlids = includedUlids.filter((id) => eligibleByUlid.has(id));
+    if (!includedUlids.length) {
+      return json({ error: { code: "invalid_state", message: "selected scope has no eligible locations" } }, 409, noStore);
+    }
+  } else if (scope === "all") {
+    includedUlids = eligibleUlids.length ? eligibleUlids : [ulid];
+  }
+
+  if (requestedPlan.maxPublishedLocations > 0 && includedUlids.length > requestedPlan.maxPublishedLocations) {
+    return json(buildPlanUpgradeErrorBody(requestedPlan, scope, includedUlids.length), 409, noStore);
+  }
+
+  const campaignPreset = normCampaignPreset(body?.campaignPreset || draft?.campaignPreset || "promotion");
 
   // Build redirect URLs on the web app origin (not the API Worker origin)
   const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
@@ -1017,13 +867,14 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   form.set("cancel_url", cancelUrl.toString());
 
   form.set("line_items[0][quantity]", "1");
-  form.set("line_items[0][price]", priceId);
+  form.set("line_items[0][price]", requestedPlan.priceId);
 
   // Metadata contract (MUST be copied to PaymentIntent)
   form.set("metadata[locationID]", locationID);
   form.set("metadata[campaignKey]", campaignKey);
   form.set("metadata[initiationType]", initiationType);
   form.set("metadata[ownershipSource]", ownershipSource);
+  form.set("metadata[campaignPreset]", campaignPreset);
   form.set("metadata[navigenVersion]", navigenVersion);
 
   // Ensure metadata is also on PaymentIntent (spec requirement)
@@ -1031,6 +882,7 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   form.set("payment_intent_data[metadata][campaignKey]", campaignKey);
   form.set("payment_intent_data[metadata][initiationType]", initiationType);
   form.set("payment_intent_data[metadata][ownershipSource]", ownershipSource);
+  form.set("payment_intent_data[metadata][campaignPreset]", campaignPreset);
   form.set("payment_intent_data[metadata][navigenVersion]", navigenVersion);
 
   const r = await fetch("https://api.stripe.com/v1/checkout/sessions", {
@@ -1259,7 +1111,7 @@ export default {
           history = [];
         }
 
-        const inherited = await materializeInheritedAllScopeForCurrentUlid(req, env, ulid).catch(() => ({ addedRows: 0, addedGroups: 0 }));
+        const inherited = await materializeInheritedAllScopeForCurrentUlid(req, env, ulid).catch(() => ({ addedRows: 0, addedGroups: 0, blockedRows: 0, blockedGroups: 0 }));
         if (inherited.addedRows > 0) {
           try {
             const refreshed = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
@@ -1295,9 +1147,11 @@ export default {
               multiLocationEnabled
             },
             eligibleLocations,
-            inheritedNotice: inherited.addedRows > 0 ? {
+            inheritedNotice: (inherited.addedRows > 0 || inherited.blockedRows > 0) ? {
               addedRows: inherited.addedRows,
-              addedGroups: inherited.addedGroups
+              addedGroups: inherited.addedGroups,
+              blockedRows: inherited.blockedRows,
+              blockedGroups: inherited.blockedGroups
             } : null
           },
           200,
@@ -1372,6 +1226,8 @@ export default {
         const startDate = String(body?.startDate || "").trim();
         const endDate = String(body?.endDate || "").trim();
         const scope = normCampaignScope(body?.campaignScope);
+        const campaignPreset = normCampaignPreset(body?.campaignPreset);
+        const requestedPlan = planDefinitionForCode(body?.planCode) || await currentPlanForUlid(env, ulid);
 
         if (!campaignKey) {
           return json({ error: { code: "invalid_request", message: "campaignKey required" } }, 400, { "cache-control": "no-store" });
@@ -1382,14 +1238,14 @@ export default {
 
         const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
         const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
-        const multiLocationEnabled = await multiLocationEnabledForUlid(env, ulid);
+        const eligibleUlids = eligibleLocations.map((x) => x.ulid);
 
-        if (scope !== "single" && !multiLocationEnabled) {
-          return json({ error: { code: "forbidden", message: "multi-location scope not enabled for this plan" } }, 403, { "cache-control": "no-store" });
+        if (scope !== "single" && Number(requestedPlan?.maxPublishedLocations || 0) <= 1) {
+          return json(buildPlanUpgradeErrorBody(requestedPlan, scope, 2), 409, { "cache-control": "no-store" });
         }
 
-        const selectedLocationULIDs = Array.isArray(body?.selectedLocationULIDs)
-          ? Array.from(new Set(body.selectedLocationULIDs.map((x: any) => String(x || "").trim()).filter(Boolean)))
+        const selectedLocationULIDs: string[] = Array.isArray(body?.selectedLocationULIDs)
+          ? Array.from(new Set(body.selectedLocationULIDs.map((x: any) => String(x || "").trim()).filter(Boolean))) as string[]
           : [];
 
         if (scope === "selected") {
@@ -1403,12 +1259,24 @@ export default {
           }
         }
 
+        const requestedLocations = scope === "selected"
+          ? selectedLocationULIDs.length
+          : scope === "all"
+            ? (eligibleUlids.length || 1)
+            : 1;
+
+        if (Number(requestedPlan?.maxPublishedLocations || 0) > 0 && requestedLocations > Number(requestedPlan?.maxPublishedLocations || 0)) {
+          return json(buildPlanUpgradeErrorBody(requestedPlan, scope, requestedLocations), 409, { "cache-control": "no-store" });
+        }
+
         const draft = {
           ...body,
           locationID: ulid,
           campaignKey,
           campaignGroupKey: scope === "single" ? "" : String(body?.campaignGroupKey || deriveCampaignGroupKey(String(body?.locationSlug || ulid), campaignKey)).trim(),
           campaignScope: scope,
+          campaignPreset,
+          planCode: String(body?.planCode || "").trim().toLowerCase(),
           selectedLocationULIDs,
           startDate,
           endDate,
@@ -1469,7 +1337,7 @@ export default {
           initiationType: "public",
           ownershipSource: "campaign",
           navigenVersion: "phase5",
-          planCode: body?.planCode          
+          planCode: body?.planCode
         };
 
         return await createCampaignCheckoutSession(env, req, stripeReq, noStore);
@@ -1515,7 +1383,7 @@ export default {
           initiationType: "owner",
           ownershipSource: "campaign",
           navigenVersion: "phase5",
-          planCode: body?.planCode          
+          planCode: body?.planCode
         };
 
         return await createCampaignCheckoutSession(env, req, stripeReq, { "cache-control": "no-store" });
@@ -1580,14 +1448,20 @@ export default {
           return json({ error: { code: "invalid_state", message: "draft campaignKey mismatch" } }, 409, noStore);
         }
 
+        const paidPriceId = await fetchStripeCheckoutLineItemPriceId(sk, cs).catch(() => "");
+        const paidPlan = paidPriceId ? PRICE_ID_TO_PLAN[paidPriceId] : null;
+        if (!paidPlan) {
+          return json({ error: { code: "invalid_state", message: "paid checkout session has no recognized Plan tier" } }, 409, noStore);
+        }
+
         const scope = normCampaignScope(draft?.campaignScope);
+        const campaignPreset = normCampaignPreset(draft?.campaignPreset);
         const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
         const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
         const eligibleUlids = eligibleLocations.map((x) => x.ulid);
-        const multiLocationEnabled = await multiLocationEnabledForUlid(env, ulid);
 
-        if (scope !== "single" && !multiLocationEnabled) {
-          return json({ error: { code: "forbidden", message: "multi-location scope not enabled for this plan" } }, 403, noStore);
+        if (scope !== "single" && Number(paidPlan.maxPublishedLocations || 0) <= 1) {
+          return json(buildPlanUpgradeErrorBody(paidPlan, scope, 2), 409, noStore);
         }
 
         let includedUlids: string[] = [ulid];
@@ -1601,6 +1475,10 @@ export default {
           includedUlids = eligibleUlids.length ? eligibleUlids : [ulid];
         }
 
+        if (Number(paidPlan.maxPublishedLocations || 0) > 0 && includedUlids.length > Number(paidPlan.maxPublishedLocations || 0)) {
+          return json(buildPlanUpgradeErrorBody(paidPlan, scope, includedUlids.length), 409, noStore);
+        }
+
         const campaignGroupKey = scope === "single"
           ? ""
           : String((draft as any)?.campaignGroupKey || deriveCampaignGroupKey(locationSlug, campaignKey)).trim();
@@ -1610,12 +1488,15 @@ export default {
             campaignGroupKey,
             campaignKey,
             campaignScope: scope,
+            campaignPreset,
             seedLocationULID: ulid,
             seedLocationSlug: locationSlug,
             startDate: String(draft?.startDate || "").trim(),
             endDate: String(draft?.endDate || "").trim(),
             createdAt: new Date().toISOString(),
-            stripeSessionId: cs
+            stripeSessionId: cs,
+            planTier: normalizePlanTier(paidPlan.tier),
+            maxPublishedLocations: Math.max(0, Number(paidPlan.maxPublishedLocations || 0) || 0)
           };
           await env.KV_STATUS.put(campaignGroupKeyKey(campaignGroupKey), JSON.stringify(parent));
         }
@@ -1626,7 +1507,7 @@ export default {
             env,
             targetUlid,
             targetSlug: loc.slug,
-            draft,
+            draft: { ...draft, campaignPreset },
             campaignGroupKey,
             stripeSessionId: cs,
             inherited: false
@@ -1796,11 +1677,6 @@ export default {
           200,
           { "cache-control": "no-store", "x-ng-worker": "navigen-api" }
         );
-      }
-
-      // --- Owner exchange: /owner/exchange (Phase 2: signed link → cookie session)
-      if (normPath === "/owner/exchange" && req.method === "GET") {
-        return await handleOwnerExchange(req, env);
       }
 
       // --- Owner exchange from Stripe Checkout (Phase 5: sid → cookie session)
@@ -2216,6 +2092,14 @@ export default {
           return json(
             { error: { code: "forbidden", message: "campaign required" } },
             403
+          );
+        }
+
+        if (normCampaignPreset(activeRow?.campaignPreset) === "visibility") {
+          return json(
+            { error: { code: "campaign_preset_visibility", message: "Promotion is turned off for this campaign." } },
+            403,
+            { "cache-control": "no-store" }
           );
         }
 
@@ -4060,6 +3944,11 @@ function normCampaignScope(v: unknown): "single" | "selected" | "all" {
   return "single";
 }
 
+function normCampaignPreset(v: unknown): "visibility" | "promotion" {
+  const s = String(v || "").trim().toLowerCase();
+  return s === "visibility" ? "visibility" : "promotion";
+}
+
 function deriveCampaignGroupKey(seedSlug: string, campaignKey: string): string {
   const seed = String(seedSlug || "").trim() || "location";
   const key = String(campaignKey || "").trim() || "campaign";
@@ -4132,9 +4021,7 @@ async function currentPlanForUlid(env: Env, ulid: string): Promise<PlanRecord | 
 
     return {
       priceId: String(plan?.priceId || "").trim(),
-      tier: (["standard", "multi", "large", "network"].includes(String(plan?.tier || "").trim().toLowerCase())
-        ? String(plan.tier).trim().toLowerCase()
-        : "unknown") as PlanTier,
+      tier: normalizePlanTier(plan?.tier),
       maxPublishedLocations: Math.max(0, Number(plan?.maxPublishedLocations || 0) || 0),
       purchasedAt: String(plan?.purchasedAt || "").trim(),
       expiresAt: String(plan?.expiresAt || "").trim()
@@ -4153,16 +4040,40 @@ async function multiLocationEnabledForUlid(env: Env, ulid: string): Promise<bool
   }
 }
 
+function buildPlanUpgradeErrorBody(plan: { tier?: PlanTier; maxPublishedLocations?: number } | null, scope: "single" | "selected" | "all", requestedLocations: number) {
+  const currentTier = normalizePlanTier(plan?.tier);
+  const currentCapacity = Math.max(0, Number(plan?.maxPublishedLocations || 0) || 0);
+  const message = currentCapacity > 0
+    ? `This selection needs ${requestedLocations} locations, but the current Plan allows ${currentCapacity}.`
+    : "This selection is not available for the current Plan.";
+
+  return {
+    error: {
+      code: "plan_upgrade_required",
+      message
+    },
+    upgrade: {
+      currentTier,
+      currentCapacity,
+      requestedLocations,
+      scope
+    }
+  };
+}
+
 interface CampaignGroupRow {
   campaignGroupKey: string;
   campaignKey: string;
   campaignScope: "single" | "selected" | "all";
+  campaignPreset?: "visibility" | "promotion";
   seedLocationULID: string;
   seedLocationSlug: string;
   startDate: string;
   endDate: string;
   createdAt: string;
   stripeSessionId?: string;
+  planTier?: PlanTier;
+  maxPublishedLocations?: number;
 }
 
 async function writeCampaignChildRow(params: {
@@ -4208,11 +4119,11 @@ async function materializeInheritedAllScopeForCurrentUlid(
   req: Request,
   env: Env,
   currentUlid: string
-): Promise<{ addedRows: number; addedGroups: number }> {
+): Promise<{ addedRows: number; addedGroups: number; blockedRows: number; blockedGroups: number }> {
   const eligible = await eligibleLocationsForRequest(req, env, currentUlid);
   const eligibleByUlid = new Map(eligible.map((x) => [x.ulid, x]));
   const currentLoc = eligibleByUlid.get(currentUlid);
-  if (!currentLoc) return { addedRows: 0, addedGroups: 0 };
+  if (!currentLoc) return { addedRows: 0, addedGroups: 0, blockedRows: 0, blockedGroups: 0 };
 
   const currentHistKey = campaignsByUlidKey(currentUlid);
   const currentHistRaw = await env.KV_STATUS.get(currentHistKey, { type: "json" }) as any;
@@ -4224,8 +4135,25 @@ async function materializeInheritedAllScopeForCurrentUlid(
       .filter(Boolean)
   );
 
+  const countIncludedForGroup = async (groupKey: string, campaignKey: string): Promise<number> => {
+    let count = 0;
+    for (const checkLoc of eligible) {
+      const histRaw = await env.KV_STATUS.get(campaignsByUlidKey(checkLoc.ulid), { type: "json" }) as any;
+      const rows: any[] = Array.isArray(histRaw) ? histRaw : [];
+      const hit = rows.some((r: any) =>
+        String(r?.campaignGroupKey || "").trim() === groupKey &&
+        String(r?.campaignKey || "").trim() === campaignKey &&
+        effectiveCampaignStatus(r) !== "finished"
+      );
+      if (hit) count += 1;
+    }
+    return count;
+  };
+
   let addedRows = 0;
+  let blockedRows = 0;
   const touchedGroups = new Set<string>();
+  const blockedGroups = new Set<string>();
   const nowMs = Date.now();
 
   for (const loc of eligible) {
@@ -4247,6 +4175,21 @@ async function materializeInheritedAllScopeForCurrentUlid(
       const sig = `${groupKey}::${campaignKey}`;
       if (existing.has(sig)) continue;
 
+      const parent = await env.KV_STATUS.get(campaignGroupKeyKey(groupKey), { type: "json" }) as any;
+      const maxAllowed = Math.max(
+        0,
+        Number(parent?.maxPublishedLocations || row?.maxPublishedLocations || 0) || 0
+      );
+
+      if (maxAllowed > 0) {
+        const includedCount = await countIncludedForGroup(groupKey, campaignKey);
+        if (includedCount >= maxAllowed) {
+          blockedRows += 1;
+          blockedGroups.add(groupKey);
+          continue;
+        }
+      }
+
       await writeCampaignChildRow({
         env,
         targetUlid: currentUlid,
@@ -4263,7 +4206,7 @@ async function materializeInheritedAllScopeForCurrentUlid(
     }
   }
 
-  return { addedRows, addedGroups: touchedGroups.size };
+  return { addedRows, addedGroups: touchedGroups.size, blockedRows, blockedGroups: blockedGroups.size };
 }
 
 type CampaignStatus =
