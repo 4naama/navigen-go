@@ -712,7 +712,7 @@
   "campaign.ui.missingLocation": "Falta la ubicación.",
   "campaign.ui.boundLocation": "Ubicación:",
   "campaign.ui.saveDraft": "Guardar borrador",
-  "campaign.ui.checkout": "Finalizar compra",
+  "campaign.ui.checkout": "Pago / activar",
   "campaign.ui.missingFields": "Se requieren campaignKey/startDate/endDate.",
   "campaign.ui.saved": "Borrador guardado.",
   "campaign.ui.saveFailed": "No se pudo guardar el borrador.",

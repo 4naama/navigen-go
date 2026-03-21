@@ -712,7 +712,7 @@
   "campaign.ui.missingLocation": "Missing location.",
   "campaign.ui.boundLocation": "Location:",
   "campaign.ui.saveDraft": "Save draft",
-  "campaign.ui.checkout": "Checkout",
+  "campaign.ui.checkout": "Checkout / activate",
   "campaign.ui.missingFields": "campaignKey/startDate/endDate required.",
   "campaign.ui.saved": "Draft saved.",
   "campaign.ui.saveFailed": "Could not save draft.",

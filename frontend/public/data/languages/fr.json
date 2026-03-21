@@ -712,7 +712,7 @@
   "campaign.ui.missingLocation": "Emplacement manquant.",
   "campaign.ui.boundLocation": "Emplacement :",
   "campaign.ui.saveDraft": "Enregistrer le brouillon",
-  "campaign.ui.checkout": "Passer au paiement",
+  "campaign.ui.checkout": "Paiement / activer",
   "campaign.ui.missingFields": "campaignKey/startDate/endDate requis.",
   "campaign.ui.saved": "Brouillon enregistré.",
   "campaign.ui.saveFailed": "Impossible d’enregistrer le brouillon.",

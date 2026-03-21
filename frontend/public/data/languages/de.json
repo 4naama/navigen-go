@@ -712,7 +712,7 @@
   "campaign.ui.missingLocation": "Standort fehlt.",
   "campaign.ui.boundLocation": "Standort:",
   "campaign.ui.saveDraft": "Entwurf speichern",
-  "campaign.ui.checkout": "Zur Kasse",
+  "campaign.ui.checkout": "Checkout / aktivieren",
   "campaign.ui.missingFields": "campaignKey/startDate/endDate erforderlich.",
   "campaign.ui.saved": "Entwurf gespeichert.",
   "campaign.ui.saveFailed": "Entwurf konnte nicht gespeichert werden.",

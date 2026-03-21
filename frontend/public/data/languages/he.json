@@ -712,7 +712,7 @@
   "campaign.ui.missingLocation": "מיקום חסר.",
   "campaign.ui.boundLocation": "מיקום:",
   "campaign.ui.saveDraft": "שמור טיוטה",
-  "campaign.ui.checkout": "לקופה",
+  "campaign.ui.checkout": "תשלום / הפעלה",
   "campaign.ui.missingFields": "נדרשים campaignKey/startDate/endDate.",
   "campaign.ui.saved": "הטיוטה נשמרה.",
   "campaign.ui.saveFailed": "לא ניתן לשמור את הטיוטה.",
