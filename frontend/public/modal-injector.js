@@ -6273,6 +6273,10 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         planChips.querySelectorAll('.campaign-funding-chip').forEach((node) => node.classList.remove('is-selected'));
         btn.classList.add('is-selected');
         refreshScopeUi();
+        if (multiScopeEnabled()) {
+          try { scopeSelect.focus(); } catch {}
+          try { scopeField.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch {}
+        }
         syncPresetUi();
         syncLocationRoster();
         updateActivateState();
@@ -6320,12 +6324,12 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     refreshScopeUi();
 
     form.appendChild(field(labels.campaignPreset, presetSelect));
+    form.appendChild(scopeField);
     form.appendChild(field(labels.campaignKey, campaignKey));
     form.appendChild(field(labels.campaignName, campaignName));
     form.appendChild(field(labels.productName, productName));
     form.appendChild(field(labels.campaignType, campaignType));
     form.appendChild(field(labels.targetChannels, targetChannels));
-    form.appendChild(scopeField);
     form.appendChild(field(labels.eligibilityType, eligibilityType));
     form.appendChild(field(labels.eligibilityNotes, eligibilityNotes));
     form.appendChild(field(labels.utmSource, utmSource));
