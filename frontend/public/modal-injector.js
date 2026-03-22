@@ -5376,7 +5376,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   }
 
   const prefillFrom = (opts && opts.prefillFrom && typeof opts.prefillFrom === 'object') ? opts.prefillFrom : null;
-  const draft = listJ?.draft || prefillFrom || null;
+  const draft = (opts && opts.preferEmptyDraft === true) ? (prefillFrom || null) : (listJ?.draft || prefillFrom || null);  
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
   const ulid = String(listJ?.ulid || '').trim(); // empty in guest mode; that's OK
   const eligibleLocations = Array.isArray(listJ?.eligibleLocations) ? listJ.eligibleLocations : [];
@@ -6130,9 +6130,9 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 }
 
   const renderDraftEditor = () => {
-    let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(draft?.planCode || listJ?.plan?.tier || '').trim().toLowerCase())
-      ? String(draft?.planCode || listJ?.plan?.tier || '').trim().toLowerCase()
-      : 'standard'; // TESTING: default to Standard unless the BO or current Plan says otherwise
+    let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(listJ?.plan?.tier || '').trim().toLowerCase())
+      ? String(listJ.plan.tier).trim().toLowerCase()
+      : 'standard'; // TESTING: default to the current active tier when known; otherwise Standard
     let selectedCampaignPreset = String(draft?.campaignPreset || 'promotion').trim().toLowerCase() === 'visibility'
       ? 'visibility'
       : 'promotion';
@@ -6436,16 +6436,6 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       });
     };
 
-    search.addEventListener('input', syncLocationRoster);
-    scopeSelect.addEventListener('change', () => {
-      syncLocationRoster();
-      updateActivateState();
-    });
-    startDate.addEventListener('input', updateActivateState);
-    endDate.addEventListener('input', updateActivateState);
-    syncLocationRoster();
-    updateActivateState();
-
     const actions = document.createElement('div');
     actions.className = 'cm-actions';
 
@@ -6458,7 +6448,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     actions.appendChild(btnCheckout);
     panel.appendChild(actions);
 
-    const updateActivateState = () => {
+    function updateActivateState() {
       const campaignScope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';
       const selectedCount = Array.from(selectedSet).filter((id) => eligibleByUlid.has(id)).length;
       const ok =
@@ -6468,7 +6458,17 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         (campaignScope !== 'selected' || selectedCount > 0);
 
       btnCheckout.disabled = !ok || btnCheckout.classList.contains('is-busy');
-    };
+    }
+
+    search.addEventListener('input', syncLocationRoster);
+    scopeSelect.addEventListener('change', () => {
+      syncLocationRoster();
+      updateActivateState();
+    });
+    startDate.addEventListener('input', updateActivateState);
+    endDate.addEventListener('input', updateActivateState);
+    syncLocationRoster();
+    updateActivateState();
 
     const buildDraft = () => {      
       const campaignScope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';
