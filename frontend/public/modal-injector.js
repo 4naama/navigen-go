@@ -6396,7 +6396,8 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
     const syncLocationRoster = () => {
       const scope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';
-      locationPanel.style.display = (scope === 'selected' || scope === 'all') ? '' : 'none';
+      const revealRoster = (scope === 'selected' || scope === 'all');
+      locationPanel.style.display = revealRoster ? '' : 'none';
       roster.innerHTML = '';
 
       const q = String(search.value || '').trim().toLowerCase();
@@ -6418,6 +6419,11 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         empty.className = 'muted';
         empty.textContent = noEligibleLocationsLabel;
         roster.appendChild(empty);
+
+        if (revealRoster) {
+          try { locationPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch {}
+          try { search.focus(); } catch {}
+        }
         return;
       }
 
@@ -6444,6 +6450,11 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         row.appendChild(text);
         roster.appendChild(row);
       });
+
+      if (revealRoster) {
+        try { locationPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch {}
+        try { search.focus(); } catch {}
+      }
     };
 
     const actions = document.createElement('div');
