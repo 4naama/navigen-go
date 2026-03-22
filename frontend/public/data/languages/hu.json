@@ -913,5 +913,6 @@
   "campaign.plan.upgrade.body": "Ez a választás meghaladja a jelenlegi csomag kapacitását.",
   "campaign.plan.upgrade.cta": "Csomag frissítése",
   "campaign.plan.testing.badge": "TESTING",
-  "campaign.ui.activate": "Aktiválás"
+  "campaign.ui.activate": "Aktivál",
+  "campaign.ui.activating": "Aktiválás"
 }

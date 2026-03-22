@@ -6272,12 +6272,10 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         upgradeNote.style.display = 'none';
         planChips.querySelectorAll('.campaign-funding-chip').forEach((node) => node.classList.remove('is-selected'));
         btn.classList.add('is-selected');
-        if (!multiScopeEnabled()) scopeSelect.value = 'single';
-        scopeField.style.display = multiScopeEnabled() ? '' : 'none';
-        scopeSelect.disabled = !multiScopeEnabled();
+        refreshScopeUi();
         syncPresetUi();
         syncLocationRoster();
-        updateActivateState();        
+        updateActivateState();
       });
       planChips.appendChild(btn);
     });
@@ -6311,7 +6309,15 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     promoGrid.className = 'campaign-mgmt-form';
 
     const scopeField = field(labels.campaignScope, scopeSelect);
-    scopeField.style.display = multiScopeEnabled() ? '' : 'none';
+
+    function refreshScopeUi() {
+      const enabled = multiScopeEnabled();
+      if (!enabled) scopeSelect.value = 'single';
+      scopeField.style.display = enabled ? '' : 'none';
+      scopeSelect.disabled = !enabled;
+    }
+
+    refreshScopeUi();
 
     form.appendChild(field(labels.campaignPreset, presetSelect));
     form.appendChild(field(labels.campaignKey, campaignKey));

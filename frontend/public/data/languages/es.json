@@ -913,5 +913,6 @@
   "campaign.plan.upgrade.body": "Esta selección supera la capacidad de tu plan actual.",
   "campaign.plan.upgrade.cta": "Actualizar plan",
   "campaign.plan.testing.badge": "TESTING",
-  "campaign.ui.activate": "Activar"
+  "campaign.ui.activate": "Activar",
+  "campaign.ui.activating": "Activación"
 }

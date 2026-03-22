@@ -913,5 +913,6 @@
   "campaign.plan.upgrade.body": "בחירה זו חורגת מקיבולת התוכנית הנוכחית שלך.",
   "campaign.plan.upgrade.cta": "שדרג תוכנית",
   "campaign.plan.testing.badge": "TESTING",
-  "campaign.ui.activate": "הפעל"
+  "campaign.ui.activate": "הפעל",
+  "campaign.ui.activating": "הפעלה"
 }
