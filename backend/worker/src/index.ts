@@ -55,22 +55,22 @@ type PlanRecord = {
   expiresAt: string;   // ISO (must equal ownership.exclusiveUntil for same payment)
 };
 
-// TODO: Fill these price.id values from Stripe dashboard.
+// Stripe price.id values from the Dashboard.
 // Fail-closed behavior for publish is enforced by maxPublishedLocations=0 when unknown.
 const PRICE_ID_TO_PLAN: Record<string, { tier: PlanTier; maxPublishedLocations: number }> = {
-  "price_STANDARD_79":   { tier: "standard", maxPublishedLocations: 1 },
-  "price_MULTI_TEST_2":  { tier: "multi",    maxPublishedLocations: 3 },   // TESTING: replace with live €159 price id later
-  "price_LARGE_349":     { tier: "large",    maxPublishedLocations: 10 },
-  "price_NETWORK_749":   { tier: "network",  maxPublishedLocations: 10000 },
+  "price_1TDfBIFf2RZOYEdOobudnFRW": { tier: "standard", maxPublishedLocations: 1 },     // TESTING: real Stripe price id for €1
+  "price_1TDfBtFf2RZOYEdOGIfPn6uu": { tier: "multi",    maxPublishedLocations: 3 },     // TESTING: real Stripe price id for €2
+  "price_1TDfDfFf2RZOYEdOFicVRcQ8": { tier: "large",    maxPublishedLocations: 10 },    // TESTING: real Stripe price id for €319
+  "price_1TDfFaFf2RZOYEdOXzIMBxbO": { tier: "network",  maxPublishedLocations: 10000 }, // TESTING: real Stripe price id for €749
 };
 
 // Plan chooser codes are BO-facing; price ids are Worker-authoritative.
 // Keep this mapping centralized so checkout, restore, and enforcement resolve the same tier contract.
 const PLAN_CODE_TO_PRICE_ID: Record<string, string> = {
-  standard: "price_STANDARD_79",
-  multi: "price_MULTI_TEST_2",   // TESTING: replace with live €159 price id later
-  large: "price_LARGE_349",
-  network: "price_NETWORK_749"
+  standard: "price_1TDfBIFf2RZOYEdOobudnFRW", // TESTING: real Stripe price id for €1
+  multi: "price_1TDfBtFf2RZOYEdOGIfPn6uu",   // TESTING: real Stripe price id for €2
+  large: "price_1TDfDfFf2RZOYEdOFicVRcQ8",   // TESTING: real Stripe price id for €319
+  network: "price_1TDfFaFf2RZOYEdOXzIMBxbO"  // TESTING: real Stripe price id for €749
 };
 
 function normalizePlanTier(v: unknown): PlanTier {
@@ -907,7 +907,7 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
 
 // Internal helper: resolve an item by canonical ULID (same semantics as /api/data/item?id=...).
 // Returns null if not found. Keeps logic centralized for future “locations project”.
-async function getItemById(ulid: string, _env: Env): Promise<any | null> {
+async function getItemById(ulid: string, env: Env): Promise<any | null> {
   const id = String(ulid || "").trim();
   if (!id) return null;
 
@@ -928,8 +928,48 @@ async function getItemById(ulid: string, _env: Env): Promise<any | null> {
 
     if (!Array.isArray(arr)) return null;
 
-    const hit = arr.find((r: any) => String(r?.ID || r?.id || "").trim() === id);
-    return hit || null;
+    // 1) direct ULID match from profiles.json when present
+    let hit = arr.find((r: any) => String(r?.ID || r?.id || "").trim() === id);
+    if (hit) return hit;
+
+    // 2) fallback: reverse alias lookup ULID -> slug via KV_ALIASES, then slug -> profiles.json
+    if (env.KV_ALIASES) {
+      let aliasSlug = "";
+      let cursor: string | undefined = undefined;
+
+      do {
+        const page = await env.KV_ALIASES.list({ prefix: "alias:", cursor });
+        for (const k of page.keys) {
+          const name = k.name; // "alias:<slug>"
+          const raw = await env.KV_ALIASES.get(name, "text");
+          if (!raw) continue;
+
+          let val = raw.trim();
+          if (val.startsWith("{")) {
+            try {
+              const j = JSON.parse(val) as any;
+              val = String(j?.locationID || "").trim();
+            } catch {
+              val = "";
+            }
+          }
+
+          if (val && val === id) {
+            aliasSlug = name.replace(/^alias:/, "");
+            break;
+          }
+        }
+        if (aliasSlug) break;
+        cursor = page.cursor || undefined;
+      } while (cursor);
+
+      if (aliasSlug) {
+        hit = arr.find((r: any) => String(r?.locationID || "").trim() === aliasSlug);
+        if (hit) return hit;
+      }
+    }
+
+    return null;
   } catch {
     return null;
   }

@@ -5325,8 +5325,15 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     body.innerHTML = `<div class="campaign-mgmt"></div>`;
     root = modal.querySelector('.campaign-mgmt');
   }
-  root.innerHTML = '';
+  root.innerHTML = `
+    <div class="modal-menu-list">
+      <button type="button" class="modal-menu-item owner-center-loading" aria-disabled="true">
+        Campaign Management · Loading…
+      </button>
+    </div>
+  `;
 
+  showModal(id);
   // Auto-promote if we are on Stripe return URL (?sid=cs_...)
   const qs = new URLSearchParams(location.search);
   const sid = String(qs.get('sid') || '').trim();
@@ -6151,7 +6158,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const baseSlug = String(displaySlug || slug || '').trim() || 'location';
     const suggestedKey = nextRollingCampaignKey(baseSlug, yy, rowsAll);
 
-    const campaignKey = buildInput('text', draft?.campaignKey || suggestedKey);
+    const campaignKey = buildInput('text', /^ps-/i.test(String(draft?.campaignKey || '').trim()) ? suggestedKey : (draft?.campaignKey || suggestedKey));    
     campaignKey.readOnly = true;
     campaignKey.setAttribute('aria-readonly', 'true');
 
@@ -6270,6 +6277,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         scopeSelect.disabled = !multiScopeEnabled();
         syncPresetUi();
         syncLocationRoster();
+        updateActivateState();        
       });
       planChips.appendChild(btn);
     });
@@ -6328,7 +6336,8 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
     const syncPresetUi = () => {
       const isVisibility = selectedCampaignPreset === 'visibility';
-      promoFieldsWrap.style.display = isVisibility ? 'none' : '';
+      promoFieldsWrap.style.display = '';
+      promoFieldsWrap.style.opacity = isVisibility ? '0.72' : '1';
       offerType.disabled = isVisibility;
       discountKind.disabled = isVisibility;
       discountValue.disabled = isVisibility;
@@ -6414,6 +6423,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         cb.addEventListener('change', () => {
           if (cb.checked) selectedSet.add(id);
           else selectedSet.delete(id);
+          updateActivateState();
         });
 
         const text = document.createElement('span');
@@ -6427,8 +6437,14 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     };
 
     search.addEventListener('input', syncLocationRoster);
-    scopeSelect.addEventListener('change', syncLocationRoster);
+    scopeSelect.addEventListener('change', () => {
+      syncLocationRoster();
+      updateActivateState();
+    });
+    startDate.addEventListener('input', updateActivateState);
+    endDate.addEventListener('input', updateActivateState);
     syncLocationRoster();
+    updateActivateState();
 
     const actions = document.createElement('div');
     actions.className = 'cm-actions';
@@ -6436,12 +6452,25 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const btnCheckout = document.createElement('button');
     btnCheckout.className = 'modal-body-button';
     btnCheckout.type = 'button';
-    btnCheckout.textContent = (typeof t==='function' && t('campaign.ui.checkout')) || 'Checkout';
+    btnCheckout.textContent = (typeof t==='function' && t('campaign.ui.activate')) || 'Activate';
+    btnCheckout.disabled = true;
 
     actions.appendChild(btnCheckout);
     panel.appendChild(actions);
 
-    const buildDraft = () => {
+    const updateActivateState = () => {
+      const campaignScope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';
+      const selectedCount = Array.from(selectedSet).filter((id) => eligibleByUlid.has(id)).length;
+      const ok =
+        !!String(campaignKey.value || '').trim() &&
+        !!String(startDate.value || '').trim() &&
+        !!String(endDate.value || '').trim() &&
+        (campaignScope !== 'selected' || selectedCount > 0);
+
+      btnCheckout.disabled = !ok || btnCheckout.classList.contains('is-busy');
+    };
+
+    const buildDraft = () => {      
       const campaignScope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';
       const selectedLocationULIDs = (campaignScope === 'selected')
         ? Array.from(selectedSet).filter((id) => eligibleByUlid.has(id))
@@ -6471,75 +6500,90 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     };
 
     btnCheckout.addEventListener('click', async () => {
-      const d = buildDraft();
-      if (!d.campaignKey || !d.startDate || !d.endDate) {
-        showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
-        return;
-      }
-      if (d.campaignScope === 'selected' && !d.selectedLocationULIDs.length) {
-        showToast(selectAtLeastOneLocationLabel, 2400);
-        return;
-      }
+      if (btnCheckout.disabled || btnCheckout.classList.contains('is-busy')) return;
 
-      let chkJ = null;
-      if (listJ) {
-        const { r: rSave, j: rSaveJ } = await apiJson('/api/owner/campaigns/draft', {
-          method:'POST',
-          headers:{'content-type':'application/json'},
-          body: JSON.stringify({ ...d, planCode: selectedPlanCode })
-        });
-        if (!rSave.ok) {
-          const code = String((rSaveJ?.error?.code || '')).trim();
-          const msg = String((rSaveJ?.error?.message || '')).trim();
-          if (code === 'plan_upgrade_required' && msg) {
-            upgradeNote.textContent = msg;
-            upgradeNote.style.display = '';
-          }
-          showToast(msg || ((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.'), 2400);
+      const activateLabel = (typeof t === 'function' && t('campaign.ui.activate')) || 'Activate';
+      const activatingLabel = (typeof t === 'function' && t('campaign.ui.activating')) || 'Activating…';
+
+      btnCheckout.classList.add('is-busy');
+      btnCheckout.disabled = true;
+      btnCheckout.textContent = activatingLabel;
+
+      try {
+        const d = buildDraft();
+        if (!d.campaignKey || !d.startDate || !d.endDate) {
+          showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
+          return;
+        }
+        if (d.campaignScope === 'selected' && !d.selectedLocationULIDs.length) {
+          showToast(selectAtLeastOneLocationLabel, 2400);
           return;
         }
 
-        const out = await apiJson('/api/owner/campaigns/checkout', {
-          method:'POST',
-          headers:{'content-type':'application/json'},
-          body: JSON.stringify({ locationID: slug, planCode: selectedPlanCode, campaignPreset: selectedCampaignPreset })
-        });
-        if (!out.r.ok) {
-          const code = String((out.j?.error?.code || '')).trim();
-          const msg = String((out.j?.error?.message || '')).trim();
-          if (code === 'plan_upgrade_required' && msg) {
-            upgradeNote.textContent = msg;
-            upgradeNote.style.display = '';
+        let chkJ = null;
+        if (listJ) {
+          const { r: rSave, j: rSaveJ } = await apiJson('/api/owner/campaigns/draft', {
+            method:'POST',
+            headers:{'content-type':'application/json'},
+            body: JSON.stringify({ ...d, planCode: selectedPlanCode })
+          });
+          if (!rSave.ok) {
+            const code = String((rSaveJ?.error?.code || '')).trim();
+            const msg = String((rSaveJ?.error?.message || '')).trim();
+            if (code === 'plan_upgrade_required' && msg) {
+              upgradeNote.textContent = msg;
+              upgradeNote.style.display = '';
+            }
+            showToast(msg || ((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.'), 2400);
+            return;
           }
-          showToast(msg || ((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.'), 2600);
+
+          const out = await apiJson('/api/owner/campaigns/checkout', {
+            method:'POST',
+            headers:{'content-type':'application/json'},
+            body: JSON.stringify({ locationID: slug, planCode: selectedPlanCode, campaignPreset: selectedCampaignPreset })
+          });
+          if (!out.r.ok) {
+            const code = String((out.j?.error?.code || '')).trim();
+            const msg = String((out.j?.error?.message || '')).trim();
+            if (code === 'plan_upgrade_required' && msg) {
+              upgradeNote.textContent = msg;
+              upgradeNote.style.display = '';
+            }
+            showToast(msg || ((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.'), 2600);
+            return;
+          }
+          chkJ = out.j;
+        } else {
+          const out = await apiJson('/api/campaigns/checkout', {
+            method:'POST',
+            headers:{'content-type':'application/json'},
+            body: JSON.stringify({ locationID: slug, draft: d, planCode: selectedPlanCode, campaignPreset: selectedCampaignPreset })
+          });
+          if (!out.r.ok) {
+            const code = String((out.j?.error?.code || '')).trim();
+            const msg = String((out.j?.error?.message || '')).trim();
+            if (code === 'plan_upgrade_required' && msg) {
+              upgradeNote.textContent = msg;
+              upgradeNote.style.display = '';
+            }
+            showToast(msg || ((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.'), 2600);
+            return;
+          }
+          chkJ = out.j;
+        }
+
+        if (!chkJ?.url) {
+          showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
           return;
         }
-        chkJ = out.j;
-      } else {
-        const out = await apiJson('/api/campaigns/checkout', {
-          method:'POST',
-          headers:{'content-type':'application/json'},
-          body: JSON.stringify({ locationID: slug, draft: d, planCode: selectedPlanCode, campaignPreset: selectedCampaignPreset })
-        });
-        if (!out.r.ok) {
-          const code = String((out.j?.error?.code || '')).trim();
-          const msg = String((out.j?.error?.message || '')).trim();
-          if (code === 'plan_upgrade_required' && msg) {
-            upgradeNote.textContent = msg;
-            upgradeNote.style.display = '';
-          }
-          showToast(msg || ((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.'), 2600);
-          return;
-        }
-        chkJ = out.j;
-      }
 
-      if (!chkJ?.url) {
-        showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
-        return;
+        location.href = String(chkJ.url);
+      } finally {
+        btnCheckout.classList.remove('is-busy');
+        btnCheckout.textContent = activateLabel;
+        updateActivateState();
       }
-
-      location.href = String(chkJ.url);
     });
   };
 

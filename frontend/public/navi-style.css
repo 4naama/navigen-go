@@ -1606,6 +1606,21 @@ body.high-contrast .qr-cta{
   transform: translateY(-1px);
 }
 
+.modal-body-button:disabled{
+  background:#e2e8f0;
+  color:#64748b;
+  border:1px solid #cbd5e1;
+  cursor:not-allowed;
+  box-shadow:none;
+  transform:none;
+}
+
+.modal-body-button.is-busy{
+  background:#fff7ed;
+  color:#9a3412;
+  border:1px solid #fdba74;
+}
+
 /* ──────────────── Modal Body Text Styles ──────────────── */
 .modal-body .muted {
   font-size: 0.9em;
