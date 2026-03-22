@@ -712,7 +712,7 @@
   "campaign.ui.missingLocation": "Missing location.",
   "campaign.ui.boundLocation": "Location:",
   "campaign.ui.saveDraft": "Save draft",
-  "campaign.ui.checkout": "Checkout / activate",
+  "campaign.ui.checkout": "Checkout",
   "campaign.ui.missingFields": "campaignKey/startDate/endDate required.",
   "campaign.ui.saved": "Draft saved.",
   "campaign.ui.saveFailed": "Could not save draft.",
@@ -912,5 +912,6 @@
   "campaign.plan.upgrade.title": "Upgrade plan",
   "campaign.plan.upgrade.body": "This selection exceeds your current plan capacity.",
   "campaign.plan.upgrade.cta": "Upgrade plan",
-  "campaign.plan.testing.badge": "TESTING"
+  "campaign.plan.testing.badge": "TESTING",
+  "campaign.ui.activate": "Activate"
 }

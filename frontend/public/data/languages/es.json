@@ -712,7 +712,7 @@
   "campaign.ui.missingLocation": "Falta la ubicación.",
   "campaign.ui.boundLocation": "Ubicación:",
   "campaign.ui.saveDraft": "Guardar borrador",
-  "campaign.ui.checkout": "Pago / activar",
+  "campaign.ui.checkout": "Finalizar compra",
   "campaign.ui.missingFields": "Se requieren campaignKey/startDate/endDate.",
   "campaign.ui.saved": "Borrador guardado.",
   "campaign.ui.saveFailed": "No se pudo guardar el borrador.",
@@ -912,5 +912,6 @@
   "campaign.plan.upgrade.title": "Actualizar plan",
   "campaign.plan.upgrade.body": "Esta selección supera la capacidad de tu plan actual.",
   "campaign.plan.upgrade.cta": "Actualizar plan",
-  "campaign.plan.testing.badge": "TESTING"
+  "campaign.plan.testing.badge": "TESTING",
+  "campaign.ui.activate": "Activar"
 }

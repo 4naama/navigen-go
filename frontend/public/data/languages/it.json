@@ -712,7 +712,7 @@
   "campaign.ui.missingLocation": "Posizione mancante.",
   "campaign.ui.boundLocation": "Posizione:",
   "campaign.ui.saveDraft": "Salva bozza",
-  "campaign.ui.checkout": "Checkout / attiva",
+  "campaign.ui.checkout": "Checkout",
   "campaign.ui.missingFields": "campaignKey/startDate/endDate richiesti.",
   "campaign.ui.saved": "Bozza salvata.",
   "campaign.ui.saveFailed": "Impossibile salvare la bozza.",
@@ -912,5 +912,6 @@
   "campaign.plan.upgrade.title": "Aggiorna piano",
   "campaign.plan.upgrade.body": "Questa selezione supera la capacità del tuo piano attuale.",
   "campaign.plan.upgrade.cta": "Aggiorna piano",
-  "campaign.plan.testing.badge": "TESTING"
+  "campaign.plan.testing.badge": "TESTING",
+  "campaign.ui.activate": "Attiva"
 }

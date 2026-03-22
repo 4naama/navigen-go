@@ -712,7 +712,7 @@
   "campaign.ui.missingLocation": "Emplacement manquant.",
   "campaign.ui.boundLocation": "Emplacement :",
   "campaign.ui.saveDraft": "Enregistrer le brouillon",
-  "campaign.ui.checkout": "Paiement / activer",
+  "campaign.ui.checkout": "Passer au paiement",
   "campaign.ui.missingFields": "campaignKey/startDate/endDate requis.",
   "campaign.ui.saved": "Brouillon enregistré.",
   "campaign.ui.saveFailed": "Impossible d’enregistrer le brouillon.",
@@ -912,5 +912,6 @@
   "campaign.plan.upgrade.title": "Mettre à niveau le plan",
   "campaign.plan.upgrade.body": "Cette sélection dépasse la capacité de votre plan actuel.",
   "campaign.plan.upgrade.cta": "Mettre à niveau le plan",
-  "campaign.plan.testing.badge": "TESTING"
+  "campaign.plan.testing.badge": "TESTING",
+  "campaign.ui.activate": "Activer"
 }

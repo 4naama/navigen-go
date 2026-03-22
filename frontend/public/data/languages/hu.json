@@ -712,7 +712,7 @@
   "campaign.ui.missingLocation": "Hiányzó hely.",
   "campaign.ui.boundLocation": "Hely:",
   "campaign.ui.saveDraft": "Piszkozat mentése",
-  "campaign.ui.checkout": "Fizetés / aktiválás",
+  "campaign.ui.checkout": "Checkout",
   "campaign.ui.missingFields": "A campaignKey/startDate/endDate megadása kötelező.",
   "campaign.ui.saved": "Piszkozat mentve.",
   "campaign.ui.saveFailed": "Nem sikerült menteni a piszkozatot.",
@@ -912,5 +912,6 @@
   "campaign.plan.upgrade.title": "Csomag frissítése",
   "campaign.plan.upgrade.body": "Ez a választás meghaladja a jelenlegi csomag kapacitását.",
   "campaign.plan.upgrade.cta": "Csomag frissítése",
-  "campaign.plan.testing.badge": "TESTING"
+  "campaign.plan.testing.badge": "TESTING",
+  "campaign.ui.activate": "Aktiválás"
 }
