@@ -5602,18 +5602,6 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
   // Lead line (top text)
   const lead = document.createElement('div');
-    let restoredAddedRows = 0;
-  try {
-    const until = Number(sessionStorage.getItem('ng_inherited_notice_until') || '0');
-    if (until > Date.now()) {
-      restoredAddedRows = Math.max(0, Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0') || 0);
-    } else {
-      sessionStorage.removeItem('ng_inherited_notice_added_rows');
-      sessionStorage.removeItem('ng_inherited_notice_until');
-    }
-  } catch {}
-
-  const effectiveAddedRows = Math.max(Number(inheritedNotice?.addedRows || 0) || 0, restoredAddedRows);
   lead.className = 'cm-lead';
   lead.textContent =
     (typeof t === 'function' && t('campaign.ui.lead.edit')) ||
@@ -5623,7 +5611,10 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   try {
     const until = Number(sessionStorage.getItem('ng_inherited_notice_until') || '0');
     if (until > Date.now()) {
-      restoredAddedRows = Math.max(0, Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0') || 0);
+      restoredAddedRows = Math.max(
+        0,
+        Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0') || 0
+      );
     } else {
       sessionStorage.removeItem('ng_inherited_notice_added_rows');
       sessionStorage.removeItem('ng_inherited_notice_until');
@@ -5704,7 +5695,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   shell.appendChild(locHdr);
   shell.appendChild(controls);
   shell.appendChild(panel);
-  root.appendChild(shell);
+  root.replaceChildren(shell);
 
   // ───────────────────────────────────────────────────────────────────────────
   // Campaign information modal (drilldown) — opens from Current/History cards
