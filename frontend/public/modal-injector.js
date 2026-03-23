@@ -4609,10 +4609,11 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     rawExpl = _ownerText(
       'owner.settings.renew.explain',
       'Owner access is active on this device, but this location is not running an active campaign right now. Run a campaign to restore analytics and campaign controls.'
-    );    
+    );
+  } else if (variant === 'claim') {
     rawExpl = _ownerText(
       'owner.settings.claim.explain',
-      'Owner access to the selected location isn’t set up on this device yet.\\nRun a campaign 🎯 for this location. Owner access 🔑 will be stored on this device after checkout.'
+      'Owner access to the selected location isn’t set up on this device yet.\nRun a campaign 🎯 for this location. Owner access 🔑 will be stored on this device after checkout.'
     );
   } else {
     // signedin (and any future variants): no warning headline
