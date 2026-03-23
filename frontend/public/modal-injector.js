@@ -5619,6 +5619,22 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     (typeof t === 'function' && t('campaign.ui.lead.edit')) ||
     'Create or edit a campaign for this location. Changes are saved automatically while you work. Your campaign becomes active only after checkout.';
 
+  let restoredAddedRows = 0;
+  try {
+    const until = Number(sessionStorage.getItem('ng_inherited_notice_until') || '0');
+    if (until > Date.now()) {
+      restoredAddedRows = Math.max(0, Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0') || 0);
+    } else {
+      sessionStorage.removeItem('ng_inherited_notice_added_rows');
+      sessionStorage.removeItem('ng_inherited_notice_until');
+    }
+  } catch {}
+
+  const effectiveAddedRows = Math.max(
+    Number(inheritedNotice?.addedRows || 0) || 0,
+    restoredAddedRows
+  );
+
   let inheritedNote = null;
   if (effectiveAddedRows > 0) {
     const addedRows = effectiveAddedRows;
@@ -6320,9 +6336,24 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     upgradeNote.style.marginBottom = '10px';
     upgradeNote.style.display = 'none';
 
-    const currentPlanTier = String(listJ?.plan?.tier || '').trim().toLowerCase();
-    const currentPlanCap = Math.max(0, Number(listJ?.plan?.maxPublishedLocations || 0) || 0);
-    const currentPlanTitle = currentPlanTier ? `${currentPlanTier.charAt(0).toUpperCase()}${currentPlanTier.slice(1)}` : '';
+    const blockedPlanTier = String(listJ?.inheritedNotice?.blockedPlanTier || '').trim().toLowerCase();
+    const blockedPlanCap = Math.max(0, Number(listJ?.inheritedNotice?.blockedMaxPublishedLocations || 0) || 0);
+
+    const currentPlanTierRaw = String(listJ?.plan?.tier || '').trim().toLowerCase();
+    const currentPlanCapRaw = Math.max(0, Number(listJ?.plan?.maxPublishedLocations || 0) || 0);
+
+    const currentPlanTier = (currentPlanTierRaw && currentPlanTierRaw !== 'unknown')
+      ? currentPlanTierRaw
+      : blockedPlanTier;
+
+    const currentPlanCap = currentPlanCapRaw > 0
+      ? currentPlanCapRaw
+      : blockedPlanCap;
+
+    const currentPlanTitle = currentPlanTier
+      ? `${currentPlanTier.charAt(0).toUpperCase()}${currentPlanTier.slice(1)}`
+      : '';
+
     const currentPlanCapacityText = currentPlanTier === 'standard'
       ? tSafe('campaign.plan.standard.capacity', '1 location')
       : currentPlanTier === 'multi'
@@ -6331,7 +6362,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
           ? tSafe('campaign.plan.large.capacity', 'up to 10 locations')
           : currentPlanTier === 'network'
             ? tSafe('campaign.plan.network.capacity', '10+ locations')
-            : (currentPlanCap > 1 ? `up to ${currentPlanCap} locations` : '1 location');
+            : (currentPlanCap > 1 ? `up to ${currentPlanCap} locations` : (currentPlanCap === 1 ? '1 location' : ''));
 
     const hasBlockedInheritance = Number(listJ?.inheritedNotice?.blockedRows || 0) > 0;
     

@@ -1149,7 +1149,14 @@ export default {
           history = [];
         }
 
-        const inherited = await materializeInheritedAllScopeForCurrentUlid(req, env, ulid).catch(() => ({ addedRows: 0, addedGroups: 0, blockedRows: 0, blockedGroups: 0 }));
+        const inherited = await materializeInheritedAllScopeForCurrentUlid(req, env, ulid).catch(() => ({
+          addedRows: 0,
+          addedGroups: 0,
+          blockedRows: 0,
+          blockedGroups: 0,
+          blockedPlanTier: "",
+          blockedMaxPublishedLocations: 0
+        }));        
         if (inherited.addedRows > 0) {
           try {
             const refreshed = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
@@ -1189,7 +1196,9 @@ export default {
               addedRows: inherited.addedRows,
               addedGroups: inherited.addedGroups,
               blockedRows: inherited.blockedRows,
-              blockedGroups: inherited.blockedGroups
+              blockedGroups: inherited.blockedGroups,
+              blockedPlanTier: inherited.blockedPlanTier,
+              blockedMaxPublishedLocations: inherited.blockedMaxPublishedLocations
             } : null
           },
           200,
@@ -4290,11 +4299,18 @@ async function materializeInheritedAllScopeForCurrentUlid(
   req: Request,
   env: Env,
   currentUlid: string
-): Promise<{ addedRows: number; addedGroups: number; blockedRows: number; blockedGroups: number }> {
+): Promise<{
+  addedRows: number;
+  addedGroups: number;
+  blockedRows: number;
+  blockedGroups: number;
+  blockedPlanTier: PlanTier | "";
+  blockedMaxPublishedLocations: number;
+}> {  
   const eligible = await eligibleLocationsForRequest(req, env, currentUlid);
   const eligibleByUlid = new Map(eligible.map((x) => [x.ulid, x]));
   const currentLoc = eligibleByUlid.get(currentUlid);
-  if (!currentLoc) return { addedRows: 0, addedGroups: 0, blockedRows: 0, blockedGroups: 0 };
+  if (!currentLoc) return { addedRows: 0, addedGroups: 0, blockedRows: 0, blockedGroups: 0, blockedPlanTier: "", blockedMaxPublishedLocations: 0 };  
 
   const currentHistKey = campaignsByUlidKey(currentUlid);
   const currentHistRaw = await env.KV_STATUS.get(currentHistKey, { type: "json" }) as any;
@@ -4324,7 +4340,8 @@ async function materializeInheritedAllScopeForCurrentUlid(
   let addedRows = 0;
   let blockedRows = 0;
   const touchedGroups = new Set<string>();
-  const blockedGroups = new Set<string>();
+  let blockedPlanTier: PlanTier | "" = "";
+  let blockedMaxPublishedLocations = 0;  
   const nowMs = Date.now();
 
   for (const loc of eligible) {
@@ -4357,6 +4374,8 @@ async function materializeInheritedAllScopeForCurrentUlid(
         if (includedCount >= maxAllowed) {
           blockedRows += 1;
           blockedGroups.add(groupKey);
+          if (!blockedPlanTier) blockedPlanTier = normalizePlanTier(parent?.planTier || row?.planTier);
+          if (!blockedMaxPublishedLocations) blockedMaxPublishedLocations = maxAllowed;
           continue;
         }
       }
@@ -4377,7 +4396,7 @@ async function materializeInheritedAllScopeForCurrentUlid(
     }
   }
 
-  return { addedRows, addedGroups: touchedGroups.size, blockedRows, blockedGroups: blockedGroups.size };
+  return { addedRows, addedGroups: touchedGroups.size, blockedRows, blockedGroups: blockedGroups.size, blockedPlanTier, blockedMaxPublishedLocations };  
 }
 
 type CampaignStatus =
