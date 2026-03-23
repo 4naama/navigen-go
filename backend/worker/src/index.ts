@@ -330,6 +330,7 @@ async function requireOwnerSession(req: Request, env: Env): Promise<{ ulid: stri
 }
 
 async function promoteCampaignDraftAndBuildRedirectHint(
+  req: Request,
   sess: any,
   ulid: string,
   env: Env,
@@ -349,27 +350,24 @@ async function promoteCampaignDraftAndBuildRedirectHint(
 
     if (!draft || String(draft?.campaignKey || "").trim() !== campaignKey) return "";
 
-    const histKey = campaignsByUlidKey(ulid);
-    const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
-    const arr: any[] = Array.isArray(hist) ? hist : [];
-
-    const row = {
-      ...draft,
-      locationID: ulid,
-      locationULID: ulid,
+    const currentPlan = await currentPlanForUlid(env, ulid);
+    const promoted = await promoteCampaignDraftToActiveRows({
+      req,
+      env,
+      ownerUlid: ulid,
+      draft,
       locationSlug: String(md?.locationID || "").trim(),
-      status: "Active",
-      promotedAt: new Date().toISOString(),
-      stripeSessionId: String(sess?.id || "").trim()
-    };
+      campaignKey,
+      stripeSessionId: String(sess?.id || "").trim(),
+      paidPlan: currentPlan,
+      logTag
+    });
 
-    const nextHist = arr.filter(x => String(x?.campaignKey || "").trim() !== campaignKey);
-    nextHist.push(row);
+    if (!promoted.ok) return "";
 
-    await env.KV_STATUS.put(histKey, JSON.stringify(nextHist));
     await env.KV_STATUS.delete(draftKey);
 
-    const end = String(row?.endDate || "").trim();
+    const end = String(promoted.endDate || "").trim();
     if (/^\d{4}-\d{2}-\d{2}$/.test(end)) {
       return `ce=1&ced=${encodeURIComponent(end)}&cak=${encodeURIComponent(campaignKey)}`;
     }
@@ -526,7 +524,7 @@ let redirectHint = ""; // ensure local scope for redirect logic used later in /o
 
   // If this checkout session funded a campaign, promote draft now and enrich redirect with campaign hint.
   // This avoids "sticky wrong" LPM badge rendering after redirect.
-  redirectHint = await promoteCampaignDraftAndBuildRedirectHint(sess, ulid, env, "owner_stripe_exchange");
+  redirectHint = await promoteCampaignDraftAndBuildRedirectHint(req, sess, ulid, env, "owner_stripe_exchange");
   
   const cookie = cookieSerialize("op_sess", sessionId, {
     Path: "/",
@@ -1494,69 +1492,31 @@ export default {
           return json({ error: { code: "invalid_state", message: "paid checkout session has no recognized Plan tier" } }, 409, noStore);
         }
 
-        const scope = normCampaignScope(draft?.campaignScope);
-        const campaignPreset = normCampaignPreset(draft?.campaignPreset);
-        const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
-        const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
-        const eligibleUlids = eligibleLocations.map((x) => x.ulid);
+        const promoted = await promoteCampaignDraftToActiveRows({
+          req,
+          env,
+          ownerUlid: ulid,
+          draft,
+          locationSlug,
+          campaignKey,
+          stripeSessionId: cs,
+          paidPlan,
+          logTag: "owner_campaigns_promote"
+        });
 
-        if (scope !== "single" && Number(paidPlan.maxPublishedLocations || 0) <= 1) {
-          return json(buildPlanUpgradeErrorBody(paidPlan, scope, 2), 409, noStore);
-        }
-
-        let includedUlids: string[] = [ulid];
-        if (scope === "selected") {
-          includedUlids = Array.from(new Set((Array.isArray(draft?.selectedLocationULIDs) ? draft.selectedLocationULIDs : []).map((x: any) => String(x || "").trim()).filter(Boolean)));
-          includedUlids = includedUlids.filter((id) => eligibleByUlid.has(id));
-          if (!includedUlids.length) {
-            return json({ error: { code: "invalid_state", message: "selected scope has no eligible locations" } }, 409, noStore);
-          }
-        } else if (scope === "all") {
-          includedUlids = eligibleUlids.length ? eligibleUlids : [ulid];
-        }
-
-        if (Number(paidPlan.maxPublishedLocations || 0) > 0 && includedUlids.length > Number(paidPlan.maxPublishedLocations || 0)) {
-          return json(buildPlanUpgradeErrorBody(paidPlan, scope, includedUlids.length), 409, noStore);
-        }
-
-        const campaignGroupKey = scope === "single"
-          ? ""
-          : String((draft as any)?.campaignGroupKey || deriveCampaignGroupKey(locationSlug, campaignKey)).trim();
-
-        if (campaignGroupKey) {
-          const parent: CampaignGroupRow = {
-            campaignGroupKey,
-            campaignKey,
-            campaignScope: scope,
-            campaignPreset,
-            seedLocationULID: ulid,
-            seedLocationSlug: locationSlug,
-            startDate: String(draft?.startDate || "").trim(),
-            endDate: String(draft?.endDate || "").trim(),
-            createdAt: new Date().toISOString(),
-            stripeSessionId: cs,
-            planTier: normalizePlanTier(paidPlan.tier),
-            maxPublishedLocations: Math.max(0, Number(paidPlan.maxPublishedLocations || 0) || 0)
-          };
-          await env.KV_STATUS.put(campaignGroupKeyKey(campaignGroupKey), JSON.stringify(parent));
-        }
-
-        for (const targetUlid of includedUlids) {
-          const loc = eligibleByUlid.get(targetUlid) || { ulid: targetUlid, slug: targetUlid, locationName: targetUlid };
-          await writeCampaignChildRow({
-            env,
-            targetUlid,
-            targetSlug: loc.slug,
-            draft: { ...draft, campaignPreset },
-            campaignGroupKey,
-            stripeSessionId: cs,
-            inherited: false
-          });
+        if ("body" in promoted) {
+          return json(promoted.body, promoted.status, noStore);
         }
 
         await env.KV_STATUS.delete(draftKey);
 
-        return json({ ok: true, ulid, campaignKey, campaignGroupKey, includedCount: includedUlids.length }, 200, { "cache-control": "no-store" });
+        return json({
+          ok: true,
+          ulid,
+          campaignKey,
+          campaignGroupKey: promoted.campaignGroupKey,
+          includedCount: promoted.includedTargets.length
+        }, 200, { "cache-control": "no-store" });
       }
 
       // --- Owner Campaigns: suspend/resume a campaign row or campaign group (KV-authoritative)
@@ -1775,6 +1735,12 @@ export default {
         if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
           return new Response("Denied", { status: 403, headers: noStoreHeaders });
         }
+        
+        try {
+          await persistPlanRecord(env, sk, String(sess?.id || "").trim(), pi, exclusiveUntil.toISOString());
+        } catch (e: any) {
+          console.error("owner_restore: plan_persist_failed", { ulid, err: String(e?.message || e || "") });
+        }        
 
         // Mint op_sess exactly like handleOwnerStripeExchange
         const sidBytes = new Uint8Array(18);
@@ -1815,7 +1781,7 @@ export default {
 
         // If this checkout session funded a campaign, promote draft now and enrich redirect with campaign hint.
         // This avoids "sticky wrong" LPM badge rendering after redirect.
-        redirectHint = await promoteCampaignDraftAndBuildRedirectHint(sess, ulid, env, "owner_restore");
+        redirectHint = await promoteCampaignDraftAndBuildRedirectHint(req, sess, ulid, env, "owner_restore");        
         
         const cookie = cookieSerialize("op_sess", sessionId, {
           Path: "/",
@@ -4114,6 +4080,171 @@ interface CampaignGroupRow {
   stripeSessionId?: string;
   planTier?: PlanTier;
   maxPublishedLocations?: number;
+}
+
+type PromoteCampaignDraftResult =
+  | {
+      ok: true;
+      campaignGroupKey: string;
+      includedTargets: EligibleLocation[];
+      endDate: string;
+    }
+  | {
+      ok: false;
+      status: number;
+      body: any;
+    };
+
+async function describeLocationForMaterialization(env: Env, ulid: string, fallbackSlug = ""): Promise<EligibleLocation> {
+  let slug = String(fallbackSlug || ulid).trim() || ulid;
+  let locationName = slug || ulid;
+
+  try {
+    const item = await getItemById(ulid, env).catch(() => null);
+    const resolvedSlug = String(item?.locationID || "").trim();
+    const resolvedName = pickName(item?.locationName);
+
+    if (resolvedSlug) slug = resolvedSlug;
+    if (resolvedName) locationName = resolvedName;
+    else if (slug) locationName = slug;
+  } catch {}
+
+  return { ulid, slug, locationName };
+}
+
+async function promoteCampaignDraftToActiveRows(params: {
+  req: Request;
+  env: Env;
+  ownerUlid: string;
+  draft: any;
+  locationSlug: string;
+  campaignKey: string;
+  stripeSessionId: string;
+  paidPlan: { tier?: PlanTier; maxPublishedLocations?: number } | null;
+  logTag: string;
+}): Promise<PromoteCampaignDraftResult> {
+  const { req, env, ownerUlid, draft, locationSlug, campaignKey, stripeSessionId, paidPlan, logTag } = params;
+
+  const scope = normCampaignScope(draft?.campaignScope);
+  const campaignPreset = normCampaignPreset(draft?.campaignPreset);
+  const eligibleLocations = await eligibleLocationsForRequest(req, env, ownerUlid);
+  const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
+
+  if (scope !== "single" && Number(paidPlan?.maxPublishedLocations || 0) <= 1) {
+    return { ok: false, status: 409, body: buildPlanUpgradeErrorBody(paidPlan, scope, 2) };
+  }
+
+  let includedTargets: EligibleLocation[] = [];
+
+  if (scope === "selected") {
+    const storedSelectedUlids: string[] = Array.from(
+      new Set(
+        (Array.isArray(draft?.selectedLocationULIDs) ? draft.selectedLocationULIDs : [])
+          .map((x: any) => String(x || "").trim())
+          .filter(Boolean)
+      )
+    );
+
+    if (!storedSelectedUlids.length) {
+      return {
+        ok: false,
+        status: 409,
+        body: { error: { code: "invalid_state", message: "selected scope has no stored locations" } }
+      };
+    }
+
+    for (const targetUlid of storedSelectedUlids) {
+      const eligibleLoc = eligibleByUlid.get(targetUlid);
+      if (eligibleLoc) {
+        includedTargets.push({ ...eligibleLoc });
+        continue;
+      }
+
+      if (!ULID_RE.test(targetUlid)) {
+        return {
+          ok: false,
+          status: 409,
+          body: { error: { code: "invalid_state", message: "selected scope contains an invalid location id" } }
+        };
+      }
+
+      console.warn(`${logTag}: selected_target_rehydrated_from_draft`, {
+        ownerUlid,
+        targetUlid,
+        campaignKey
+      });
+      includedTargets.push(await describeLocationForMaterialization(env, targetUlid));
+    }
+  } else if (scope === "all") {
+    if (eligibleLocations.length) includedTargets = eligibleLocations.map((loc) => ({ ...loc }));
+    else includedTargets = [await describeLocationForMaterialization(env, ownerUlid, locationSlug)];
+  } else {
+    const currentLoc = eligibleByUlid.get(ownerUlid)
+      ? { ...eligibleByUlid.get(ownerUlid)! }
+      : await describeLocationForMaterialization(env, ownerUlid, locationSlug);
+    includedTargets = [currentLoc];
+  }
+
+  const seenTargets = new Set<string>();
+  includedTargets = includedTargets.filter((loc) => {
+    const id = String(loc?.ulid || "").trim();
+    if (!id || seenTargets.has(id)) return false;
+    seenTargets.add(id);
+    return true;
+  });
+
+  if (!includedTargets.length) {
+    return {
+      ok: false,
+      status: 409,
+      body: { error: { code: "invalid_state", message: "campaign materialization resolved zero locations" } }
+    };
+  }
+
+  if (Number(paidPlan?.maxPublishedLocations || 0) > 0 && includedTargets.length > Number(paidPlan?.maxPublishedLocations || 0)) {
+    return { ok: false, status: 409, body: buildPlanUpgradeErrorBody(paidPlan, scope, includedTargets.length) };
+  }
+
+  const campaignGroupKey = scope === "single"
+    ? ""
+    : String((draft as any)?.campaignGroupKey || deriveCampaignGroupKey(locationSlug, campaignKey)).trim();
+
+  if (campaignGroupKey) {
+    const parent: CampaignGroupRow = {
+      campaignGroupKey,
+      campaignKey,
+      campaignScope: scope,
+      campaignPreset,
+      seedLocationULID: ownerUlid,
+      seedLocationSlug: locationSlug,
+      startDate: String(draft?.startDate || "").trim(),
+      endDate: String(draft?.endDate || "").trim(),
+      createdAt: new Date().toISOString(),
+      stripeSessionId,
+      planTier: normalizePlanTier(paidPlan?.tier),
+      maxPublishedLocations: Math.max(0, Number(paidPlan?.maxPublishedLocations || 0) || 0)
+    };
+    await env.KV_STATUS.put(campaignGroupKeyKey(campaignGroupKey), JSON.stringify(parent));
+  }
+
+  for (const target of includedTargets) {
+    await writeCampaignChildRow({
+      env,
+      targetUlid: target.ulid,
+      targetSlug: target.slug,
+      draft: { ...draft, campaignPreset },
+      campaignGroupKey,
+      stripeSessionId,
+      inherited: false
+    });
+  }
+
+  return {
+    ok: true,
+    campaignGroupKey,
+    includedTargets,
+    endDate: String(draft?.endDate || "").trim()
+  };
 }
 
 async function writeCampaignChildRow(params: {

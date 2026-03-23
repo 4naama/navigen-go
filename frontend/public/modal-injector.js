@@ -3560,10 +3560,21 @@ async function openOwnerSettingsForTarget({ target, locationName, noSelection })
     targetUlid = '';
   }
 
+  let ownedNow = false;
+  try {
+    const u = new URL('/api/status', location.origin);
+    u.searchParams.set('locationID', tgt);
+    const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+    const js = rs.ok ? await rs.json().catch(() => null) : null;
+    ownedNow = js?.ownedNow === true;
+  } catch {
+    ownedNow = false;
+  }
+  
   const isMismatch = !!hasSess && !!activeUlid && !!targetUlid && activeUlid !== targetUlid;
 
   showOwnerSettingsModal({
-    variant: isMismatch ? 'mismatch' : 'claim',
+    variant: isMismatch ? 'mismatch' : (hasSess && ownedNow ? 'renew' : 'claim'),    
     locationIdOrSlug: tgt,
     locationName: String(locationName || '').trim(),
     noSelection: noSelection === true
@@ -4573,7 +4584,11 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       'owner.settings.mismatch.explain',
       'This device is currently active for a different listing.\n\nTo manage the selected listing here, open Owner Center and switch this device to that listing.'      
     );
-  } else if (variant === 'claim') {
+  } else if (variant === 'renew') {
+    rawExpl = _ownerText(
+      'owner.settings.renew.explain',
+      'Owner access is active on this device, but this location is not running an active campaign right now. Run a campaign to restore analytics and campaign controls.'
+    );    
     rawExpl = _ownerText(
       'owner.settings.claim.explain',
       'Owner access to the selected location isn’t set up on this device yet.\\nRun a campaign 🎯 for this location. Owner access 🔑 will be stored on this device after checkout.'
@@ -4728,6 +4743,62 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       }
     });
 
+  } else if (variant === 'renew') {
+    addItem({
+      id: 'owner-run-campaign',
+      icon: '🎯',
+      title: _ownerText('owner.settings.renew.runCampaign.title', 'Run a campaign'),
+      desc: _ownerText('owner.settings.renew.runCampaign.desc', 'Start or renew a campaign for this location.'),
+      onClick: () => {
+        hideModal(id);
+        const target = String(locId || selectedKey || '').trim();
+        if (target) showCampaignManagementModal(target);
+      }
+    });
+
+    addItem({
+      id: 'owner-center',
+      icon: '🧩',
+      title: _ownerText('owner.center.title', 'Owner Center'),
+      desc: _ownerText('root.bo.ownerCenter.desc', 'Choose which listing is active on this device.'),
+      onClick: () => {
+        hideModal(id);
+        showOwnerCenterModal();
+      }
+    });
+
+    addItem({
+      id: 'owner-example-dash',
+      icon: '📈',
+      title: _ownerText('owner.settings.examples.action.title', 'See example dashboards'),
+      desc: _ownerText('owner.settings.examples.action.desc', 'View analytics for designated example locations.'),
+      onClick: () => {
+        hideModal(id);
+        showExampleDashboardsModal();
+      }
+    });
+
+    addItem({
+      id: 'owner-clear-session',
+      icon: '🧹',
+      title: _ownerText('dash.blocked.clearSession.title', 'Sign out on this device'),
+      desc: _ownerText('dash.blocked.clearSession.desc', 'Clear the active owner session from this device.'),
+      onClick: () => {
+        showActionConfirmModal({
+          title: (typeof t === 'function' && t('owner.signout.confirmTitle')) || 'Sign out on this device?',
+          bodyLines: [
+            (typeof t === 'function' && t('owner.signout.confirmBody1')) || 'This clears the active owner session on this device.',
+            (typeof t === 'function' && t('owner.signout.confirmBody2')) || 'Ownership is not affected.',
+            (typeof t === 'function' && t('owner.signout.confirmBody3')) || 'You can restore access again anytime using your Stripe receipt (pi_…).'
+          ],
+          confirmLabel: (typeof t === 'function' && t('owner.signout.confirmCta')) || 'Sign out',
+          danger: true,
+          onConfirm: async () => {
+            window.location.href = `/owner/clear-session?next=${encodeURIComponent('/')}`;
+          }
+        });
+      }
+    });
   } else if (variant === 'mismatch') {
     addItem({
       id: 'owner-center',
@@ -5495,7 +5566,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
     shell.appendChild(locHdr);
     shell.appendChild(panel);
-    root.appendChild(shell);
+    root.replaceChildren(shell);    
 
     showModal('campaign-management-modal');
     return;
@@ -5531,14 +5602,26 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
   // Lead line (top text)
   const lead = document.createElement('div');
+    let restoredAddedRows = 0;
+  try {
+    const until = Number(sessionStorage.getItem('ng_inherited_notice_until') || '0');
+    if (until > Date.now()) {
+      restoredAddedRows = Math.max(0, Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0') || 0);
+    } else {
+      sessionStorage.removeItem('ng_inherited_notice_added_rows');
+      sessionStorage.removeItem('ng_inherited_notice_until');
+    }
+  } catch {}
+
+  const effectiveAddedRows = Math.max(Number(inheritedNotice?.addedRows || 0) || 0, restoredAddedRows);
   lead.className = 'cm-lead';
   lead.textContent =
     (typeof t === 'function' && t('campaign.ui.lead.edit')) ||
     'Create or edit a campaign for this location. Changes are saved automatically while you work. Your campaign becomes active only after checkout.';
 
   let inheritedNote = null;
-  if (inheritedNotice && Number(inheritedNotice.addedRows || 0) > 0) {
-    const addedRows = Number(inheritedNotice.addedRows || 0);
+  if (effectiveAddedRows > 0) {
+    const addedRows = effectiveAddedRows;
     inheritedNote = document.createElement('div');
     inheritedNote.className = 'campaign-inline-note';
     inheritedNote.textContent =
@@ -6250,11 +6333,15 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
             ? tSafe('campaign.plan.network.capacity', '10+ locations')
             : (currentPlanCap > 1 ? `up to ${currentPlanCap} locations` : '1 location');
 
+    const hasBlockedInheritance = Number(listJ?.inheritedNotice?.blockedRows || 0) > 0;
+    
     planStateNote.textContent = currentPlanTitle
       ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
-      : tSafe('campaign.plan.choose.note', 'Choose a plan before campaign scope and locations.');
+      : hasBlockedInheritance
+        ? tSafe('campaign.plan.blocked.note', 'This location is eligible on this device, but the running all-locations campaign is already at capacity. Upgrade the plan or remove another location from scope.')
+        : tSafe('campaign.plan.choose.note', 'Choose a plan before campaign scope and locations.');
 
-    if (Number(listJ?.inheritedNotice?.blockedRows || 0) > 0) {
+    if (hasBlockedInheritance) {      
       upgradeNote.textContent = tSafe('campaign.plan.upgrade.body', 'Your current Plan is full. Upgrade to include more locations.');
       upgradeNote.style.display = '';
     }
@@ -6284,8 +6371,8 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       planChips.appendChild(btn);
     });
 
-    planField.appendChild(planLabel);
     planField.appendChild(planStateNote);
+    planField.appendChild(planLabel);
     planField.appendChild(upgradeNote);
     planField.appendChild(planChips);
     form.appendChild(planField);

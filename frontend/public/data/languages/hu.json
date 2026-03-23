@@ -914,5 +914,10 @@
   "campaign.plan.upgrade.cta": "Csomag frissítése",
   "campaign.plan.testing.badge": "TESTING",
   "campaign.ui.activate": "Aktivál",
-  "campaign.ui.activating": "Aktiválás"
+  "campaign.ui.activating": "Aktiválás",
+  "owner.settings.renew.explain": "A tulajdonosi hozzáférés aktív ezen az eszközön, de ehhez a helyhez jelenleg nem fut aktív kampány. Indítson kampányt az elemzések és a kampányvezérlés visszaállításához.",
+  "owner.settings.renew.runCampaign.title": "Kampány indítása",
+  "owner.settings.renew.runCampaign.desc": "Indítson vagy újítson meg kampányt ehhez a helyhez.",
+  "campaign.plan.blocked.note": "Ez a hely jogosult ezen az eszközön, de a futó összes-hely kampány már elérte a kapacitását. Frissítse a csomagot vagy távolítson el egy másik helyet a hatókörből.",
+  "campaign.ui.info.toast": "Hozzon létre vagy szerkesszen kampányt ehhez a helyhez. A módosítások munka közben automatikusan mentésre kerülnek, és piszkozatként maradnak a kampány aktiválásáig. A kampány csak a fizetés után válik aktívvá."
 }
