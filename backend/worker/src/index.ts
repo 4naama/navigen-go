@@ -4340,6 +4340,7 @@ async function materializeInheritedAllScopeForCurrentUlid(
   let addedRows = 0;
   let blockedRows = 0;
   const touchedGroups = new Set<string>();
+  const blockedGroups = new Set<string>();
   let blockedPlanTier: PlanTier | "" = "";
   let blockedMaxPublishedLocations = 0;  
   const nowMs = Date.now();

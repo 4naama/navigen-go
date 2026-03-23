@@ -3498,6 +3498,24 @@ async function openOwnerSettingsForTarget({ target, locationName, noSelection })
   const tgt = String(target || '').trim();
   if (!tgt) { showToast('Missing location', 1600); return; }
 
+  try {
+    const inheritedNoticeUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(tgt) ? tgt : await resolveULIDFor(tgt);
+    const inheritedImmediateKey = inheritedNoticeUlid ? `ng_inherited_notice_immediate:${inheritedNoticeUlid}` : '';
+    const inheritedImmediateRows = inheritedImmediateKey
+      ? Math.max(0, Number(sessionStorage.getItem(inheritedImmediateKey) || '0') || 0)
+      : 0;
+
+    if (inheritedImmediateRows > 0) {
+      sessionStorage.removeItem(inheritedImmediateKey);
+      showToast(
+        inheritedImmediateRows === 1
+          ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
+          : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${inheritedImmediateRows} locations were added to this campaign automatically.`),
+        2200
+      );
+    }
+  } catch {}
+  
   // Minimal 1-day window (never exposes analytics when blocked)
   const ymd = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   const statsUrl = new URL('/api/stats', location.origin);
@@ -3728,7 +3746,7 @@ export function createRestoreAccessModal() {
         }
         if (restoredUlid && restoredSlug) {
           localStorage.setItem(`navigen.slug:${restoredUlid}`, restoredSlug);
-        }showCampaignInfoModal 
+        }
 
         const rr2 = await fetch('/api/owner/campaigns', {
           cache: 'no-store',
@@ -3737,12 +3755,15 @@ export function createRestoreAccessModal() {
         const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
         const addedRows = Number(jj2?.inheritedNotice?.addedRows || 0);
 
-        if (addedRows > 0) {
-          sessionStorage.setItem('ng_inherited_notice_added_rows', String(addedRows));
-          sessionStorage.setItem('ng_inherited_notice_until', String(Date.now() + 15000));
-        } else {
-          sessionStorage.removeItem('ng_inherited_notice_added_rows');
-          sessionStorage.removeItem('ng_inherited_notice_until');
+        sessionStorage.removeItem('ng_inherited_notice_added_rows');
+        sessionStorage.removeItem('ng_inherited_notice_until');
+
+        if (restoredUlid && addedRows > 0) {
+          sessionStorage.setItem(`ng_inherited_notice_inline:${restoredUlid}`, String(addedRows));
+          sessionStorage.setItem(`ng_inherited_notice_immediate:${restoredUlid}`, String(addedRows));
+        } else if (restoredUlid) {
+          sessionStorage.removeItem(`ng_inherited_notice_inline:${restoredUlid}`);
+          sessionStorage.removeItem(`ng_inherited_notice_immediate:${restoredUlid}`);
         }
       } catch {}
 
@@ -5609,15 +5630,16 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
   let restoredAddedRows = 0;
   try {
-    const until = Number(sessionStorage.getItem('ng_inherited_notice_until') || '0');
-    if (until > Date.now()) {
+    sessionStorage.removeItem('ng_inherited_notice_added_rows');
+    sessionStorage.removeItem('ng_inherited_notice_until');
+
+    const inheritedInlineKey = requestedUlid ? `ng_inherited_notice_inline:${requestedUlid}` : '';
+    if (inheritedInlineKey) {
       restoredAddedRows = Math.max(
         0,
-        Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0') || 0
+        Number(sessionStorage.getItem(inheritedInlineKey) || '0') || 0
       );
-    } else {
-      sessionStorage.removeItem('ng_inherited_notice_added_rows');
-      sessionStorage.removeItem('ng_inherited_notice_until');
+      if (restoredAddedRows > 0) sessionStorage.removeItem(inheritedInlineKey);
     }
   } catch {}
 
@@ -6222,7 +6244,9 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
   const renderDraftEditor = () => {
     let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(listJ?.plan?.tier || '').trim().toLowerCase())
       ? String(listJ.plan.tier).trim().toLowerCase()
-      : 'standard'; // TESTING: default to the current active tier when known; otherwise Standard
+      : (['standard', 'multi', 'large', 'network'].includes(String(listJ?.inheritedNotice?.blockedPlanTier || '').trim().toLowerCase())
+          ? String(listJ.inheritedNotice.blockedPlanTier).trim().toLowerCase()
+          : 'standard'); // TESTING: default to the current active tier when known; otherwise Standard
     let selectedCampaignPreset = String(draft?.campaignPreset || 'promotion').trim().toLowerCase() === 'visibility'
       ? 'visibility'
       : 'promotion';
@@ -6363,8 +6387,18 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         ? tSafe('campaign.plan.blocked.note', 'This location is eligible on this device, but the running all-locations campaign is already at capacity. Upgrade the plan or remove another location from scope.')
         : tSafe('campaign.plan.choose.note', 'Choose a plan before campaign scope and locations.');
 
-    if (hasBlockedInheritance) {      
-      upgradeNote.textContent = tSafe('campaign.plan.upgrade.body', 'Your current Plan is full. Upgrade to include more locations.');
+    const suggestedUpgradeTitle = currentPlanTier === 'standard'
+      ? tSafe('campaign.plan.multi.title', 'Multi')
+      : currentPlanTier === 'multi'
+        ? tSafe('campaign.plan.large.title', 'Large')
+        : currentPlanTier === 'large'
+          ? tSafe('campaign.plan.network.title', 'Network')
+          : '';
+
+    if (hasBlockedInheritance) {
+      upgradeNote.textContent = suggestedUpgradeTitle
+        ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}. Choose ${suggestedUpgradeTitle} to include more locations.`
+        : tSafe('campaign.plan.upgrade.body', 'Your current Plan is full. Upgrade to include more locations.');
       upgradeNote.style.display = '';
     }
 
