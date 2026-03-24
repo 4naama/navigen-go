@@ -1167,7 +1167,14 @@ export default {
         const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
 
         const currentPlan = await currentPlanForUlid(env, ulid);
-        const multiLocationEnabled = Number(currentPlan?.maxPublishedLocations || 0) > 1;
+        const currentGroupPlan = await currentGroupPlanForUlid(env, ulid);
+
+        const effectivePlanTier = normalizePlanTier(currentPlan?.tier || currentGroupPlan?.tier);
+        const effectivePlanCapacity = Math.max(
+          0,
+          Number(currentPlan?.maxPublishedLocations || currentGroupPlan?.maxPublishedLocations || 0) || 0
+        );
+        const multiLocationEnabled = effectivePlanCapacity > 1;
 
         // Provide a shallow "active" view for convenience (no resolver duplication).
         const nowMs = Date.now();
@@ -1187,8 +1194,8 @@ export default {
             active,
             history,
             plan: {
-              tier: String(currentPlan?.tier || "").trim() || "unknown",
-              maxPublishedLocations: Number(currentPlan?.maxPublishedLocations || 0),
+              tier: String(effectivePlanTier || "").trim() || "unknown",
+              maxPublishedLocations: effectivePlanCapacity,
               multiLocationEnabled
             },
             eligibleLocations,
@@ -4044,6 +4051,38 @@ async function currentPlanForUlid(env: Env, ulid: string): Promise<PlanRecord | 
   } catch {
     return null;
   }
+}
+
+async function currentGroupPlanForUlid(env: Env, ulid: string): Promise<{ tier: PlanTier; maxPublishedLocations: number } | null> {
+  try {
+    const hist = await env.KV_STATUS.get(campaignsByUlidKey(ulid), { type: "json" }) as any;
+    const rows: any[] = Array.isArray(hist) ? hist : [];
+    const nowMs = Date.now();
+
+    for (const row of [...rows].reverse()) {
+      const groupKey = String(row?.campaignGroupKey || "").trim();
+      if (!groupKey) continue;
+
+      const st = effectiveCampaignStatus(row as any);
+      if (st !== "active" && st !== "suspended") continue;
+
+      const endMs = parseYmdUtcMs(String(row?.endDate || ""));
+      if (Number.isFinite(endMs) && nowMs > (endMs + 24 * 60 * 60 * 1000 - 1)) continue;
+
+      const parent = await env.KV_STATUS.get(campaignGroupKeyKey(groupKey), { type: "json" }) as any;
+      const tier = normalizePlanTier(parent?.planTier || row?.planTier);
+      const maxPublishedLocations = Math.max(
+        0,
+        Number(parent?.maxPublishedLocations || row?.maxPublishedLocations || 0) || 0
+      );
+
+      if (tier !== "unknown" || maxPublishedLocations > 0) {
+        return { tier, maxPublishedLocations };
+      }
+    }
+  } catch {}
+
+  return null;
 }
 
 async function multiLocationEnabledForUlid(env: Env, ulid: string): Promise<boolean> {

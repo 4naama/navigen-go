@@ -3497,24 +3497,6 @@ function _ownerText(key, fallback) {
 async function openOwnerSettingsForTarget({ target, locationName, noSelection }) {
   const tgt = String(target || '').trim();
   if (!tgt) { showToast('Missing location', 1600); return; }
-
-  try {
-    const inheritedNoticeUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(tgt) ? tgt : await resolveULIDFor(tgt);
-    const inheritedImmediateKey = inheritedNoticeUlid ? `ng_inherited_notice_immediate:${inheritedNoticeUlid}` : '';
-    const inheritedImmediateRows = inheritedImmediateKey
-      ? Math.max(0, Number(sessionStorage.getItem(inheritedImmediateKey) || '0') || 0)
-      : 0;
-
-    if (inheritedImmediateRows > 0) {
-      sessionStorage.removeItem(inheritedImmediateKey);
-      showToast(
-        inheritedImmediateRows === 1
-          ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
-          : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${inheritedImmediateRows} locations were added to this campaign automatically.`),
-        2200
-      );
-    }
-  } catch {}
   
   // Minimal 1-day window (never exposes analytics when blocked)
   const ymd = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
