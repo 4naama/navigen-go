@@ -4495,6 +4495,26 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       const activeUlid = String(jj?.ulid || '').trim();
       if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(activeUlid)) return;
 
+      try {
+        const inheritedImmediateKey = `ng_inherited_notice_immediate:${activeUlid}`;
+        const inheritedImmediateRows = Math.max(
+          0,
+          Number(sessionStorage.getItem(inheritedImmediateKey) || '0') || 0
+        );
+
+        if (inheritedImmediateRows > 0) {
+          sessionStorage.removeItem(inheritedImmediateKey);
+          setTimeout(() => {
+            showToast(
+              inheritedImmediateRows === 1
+                ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
+                : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${inheritedImmediateRows} locations were added to this campaign automatically.`),
+              2200
+            );
+          }, 0);
+        }
+      } catch {}
+
       // Default to ULID until we resolve slug/name
       const aNameBox = activeCard.querySelectorAll('small')[0];
       const aIdBox   = activeCard.querySelectorAll('small')[1];
@@ -4513,6 +4533,16 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
       if (aNameBox && nm) aNameBox.textContent = nm;
       if (aIdBox && slug) aIdBox.textContent = slug;
+
+      if (!selectedKey) {
+        const selSmalls = selectedCard.querySelectorAll('small');
+        const selNameBox = selSmalls[0] || null;
+        const selIdBox = selSmalls[1] || null;
+
+        if (selNameBox && nm) selNameBox.textContent = nm;
+        if (selIdBox && (slug || activeUlid)) selIdBox.textContent = slug || activeUlid;
+        if (!locId) locId = slug || activeUlid;
+      }
 
       // Mismatch detection: Selected ≠ Active
       try {
