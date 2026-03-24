@@ -4479,10 +4479,35 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
       try {
         const inheritedImmediateKey = `ng_inherited_notice_immediate:${activeUlid}`;
-        const inheritedImmediateRows = Math.max(
+        const inheritedInlineKey = `ng_inherited_notice_inline:${activeUlid}`;
+        const restoreHintUlid = String(sessionStorage.getItem('ng_owner_restore_ulid') || '').trim();
+        const restoreHintUntil = Number(sessionStorage.getItem('ng_owner_restore_until') || '0');
+
+        let inheritedImmediateRows = Math.max(
           0,
           Number(sessionStorage.getItem(inheritedImmediateKey) || '0') || 0
         );
+
+        if (!inheritedImmediateRows && restoreHintUlid === activeUlid && restoreHintUntil > Date.now()) {
+          const rr2 = await fetch('/api/owner/campaigns', {
+            cache: 'no-store',
+            credentials: 'include'
+          });
+          const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
+
+          inheritedImmediateRows = Math.max(
+            0,
+            Number(jj2?.inheritedNotice?.addedRows || 0) || 0
+          );
+
+          if (inheritedImmediateRows > 0) {
+            sessionStorage.setItem(inheritedImmediateKey, String(inheritedImmediateRows));
+            sessionStorage.setItem(inheritedInlineKey, String(inheritedImmediateRows));
+          }
+
+          sessionStorage.removeItem('ng_owner_restore_ulid');
+          sessionStorage.removeItem('ng_owner_restore_until');
+        }
 
         if (inheritedImmediateRows > 0) {
           sessionStorage.removeItem(inheritedImmediateKey);
