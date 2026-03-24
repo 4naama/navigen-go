@@ -4478,63 +4478,75 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   // Resolve current device session (if any) and fill Active card
   (async () => {
     try {
+      const restoreHintUlid = String(sessionStorage.getItem('ng_owner_restore_ulid') || '').trim();
+      const restoreHintUntil = Number(sessionStorage.getItem('ng_owner_restore_until') || '0');
+
       const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
       const jj = rr.ok ? await rr.json().catch(() => null) : null;
       const activeUlid = String(jj?.ulid || '').trim();
-      if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(activeUlid)) return;
 
       try {
-        const inheritedImmediateKey = `ng_inherited_notice_immediate:${activeUlid}`;
-        const inheritedInlineKey = `ng_inherited_notice_inline:${activeUlid}`;
-        const legacyInheritedUntil = Number(sessionStorage.getItem('ng_inherited_notice_until') || '0');
-        const legacyInheritedRows = legacyInheritedUntil > Date.now()
-          ? Math.max(0, Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0') || 0)
-          : 0;
-        const restoreHintUlid = String(sessionStorage.getItem('ng_owner_restore_ulid') || '').trim();
-        const restoreHintUntil = Number(sessionStorage.getItem('ng_owner_restore_until') || '0');
+        const fallbackUlid =
+          restoreHintUntil > Date.now() && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(restoreHintUlid)
+            ? restoreHintUlid
+            : '';
+        const noticeUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(activeUlid) ? activeUlid : fallbackUlid;
 
-        let inheritedImmediateRows = Math.max(
-          0,
-          Number(sessionStorage.getItem(inheritedImmediateKey) || '0') || 0,
-          Number(sessionStorage.getItem(inheritedInlineKey) || '0') || 0,
-          legacyInheritedRows
-        );
+        if (noticeUlid) {
+          const inheritedImmediateKey = `ng_inherited_notice_immediate:${noticeUlid}`;
+          const inheritedInlineKey = `ng_inherited_notice_inline:${noticeUlid}`;
+          const legacyInheritedUntil = Number(sessionStorage.getItem('ng_inherited_notice_until') || '0');
+          const legacyInheritedRows = legacyInheritedUntil > Date.now()
+            ? Math.max(0, Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0') || 0)
+            : 0;
 
-        if (!inheritedImmediateRows && restoreHintUlid === activeUlid && restoreHintUntil > Date.now()) {
-          const rr2 = await fetch('/api/owner/campaigns', {
-            cache: 'no-store',
-            credentials: 'include'
-          });
-          const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
-
-          inheritedImmediateRows = Math.max(
+          let inheritedImmediateRows = Math.max(
             0,
-            Number(jj2?.inheritedNotice?.addedRows || 0) || 0
+            Number(sessionStorage.getItem(inheritedImmediateKey) || '0') || 0,
+            Number(sessionStorage.getItem(inheritedInlineKey) || '0') || 0,
+            legacyInheritedRows
           );
 
-          if (inheritedImmediateRows > 0) {
-            sessionStorage.setItem(inheritedImmediateKey, String(inheritedImmediateRows));
-            sessionStorage.setItem(inheritedInlineKey, String(inheritedImmediateRows));
+          if (!inheritedImmediateRows && fallbackUlid === noticeUlid) {
+            const rr2 = await fetch('/api/owner/campaigns', {
+              cache: 'no-store',
+              credentials: 'include'
+            });
+            const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
+
+            inheritedImmediateRows = Math.max(
+              0,
+              Number(jj2?.inheritedNotice?.addedRows || 0) || 0
+            );
+
+            if (inheritedImmediateRows > 0) {
+              sessionStorage.setItem(inheritedImmediateKey, String(inheritedImmediateRows));
+              sessionStorage.setItem(inheritedInlineKey, String(inheritedImmediateRows));
+              sessionStorage.removeItem('ng_owner_restore_ulid');
+              sessionStorage.removeItem('ng_owner_restore_until');
+            }
           }
 
-          sessionStorage.removeItem('ng_owner_restore_ulid');
-          sessionStorage.removeItem('ng_owner_restore_until');
+          if (inheritedImmediateRows > 0) {
+            sessionStorage.removeItem(inheritedImmediateKey);
+            sessionStorage.removeItem('ng_inherited_notice_added_rows');
+            sessionStorage.removeItem('ng_inherited_notice_until');
+
+            const immediateMsg =
+              inheritedImmediateRows === 1
+                ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
+                : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${inheritedImmediateRows} locations were added to this campaign automatically.`);
+
+            ownerImmediateNote.textContent = immediateMsg;
+            ownerImmediateNote.style.display = '';
+          } else if (restoreHintUntil <= Date.now()) {
+            sessionStorage.removeItem('ng_owner_restore_ulid');
+            sessionStorage.removeItem('ng_owner_restore_until');
+          }
         }
-
-        if (inheritedImmediateRows > 0) {
-          sessionStorage.removeItem(inheritedImmediateKey);
-          sessionStorage.removeItem('ng_inherited_notice_added_rows');
-          sessionStorage.removeItem('ng_inherited_notice_until');
-
-          const immediateMsg =
-            inheritedImmediateRows === 1
-              ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
-              : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${inheritedImmediateRows} locations were added to this campaign automatically.`);
-
-          ownerImmediateNote.textContent = immediateMsg;
-          ownerImmediateNote.style.display = '';
-        }        
       } catch {}
+
+      if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(activeUlid)) return;
 
       // Default to ULID until we resolve slug/name
       const aNameBox = activeCard.querySelectorAll('small')[0];
