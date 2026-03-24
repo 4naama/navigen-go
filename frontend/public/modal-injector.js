@@ -4511,14 +4511,25 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
         if (inheritedImmediateRows > 0) {
           sessionStorage.removeItem(inheritedImmediateKey);
-          setTimeout(() => {
-            showToast(
-              inheritedImmediateRows === 1
-                ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
-                : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${inheritedImmediateRows} locations were added to this campaign automatically.`),
-              2200
-            );
-          }, 0);
+
+          const immediateMsg =
+            inheritedImmediateRows === 1
+              ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
+              : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${inheritedImmediateRows} locations were added to this campaign automatically.`);
+
+          let immediateNote = inner.querySelector('.owner-immediate-note');
+          if (!immediateNote) {
+            immediateNote = document.createElement('div');
+            immediateNote.className = 'campaign-inline-note owner-immediate-note';
+            immediateNote.style.marginBottom = '10px';
+
+            const anchor = inner.querySelector('p');
+            if (anchor) inner.insertBefore(immediateNote, anchor);
+            else inner.appendChild(immediateNote);
+          }
+
+          immediateNote.textContent = immediateMsg;
+          immediateNote.style.display = '';
         }
       } catch {}
 
