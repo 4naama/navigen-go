@@ -915,7 +915,7 @@
   "campaign.plan.testing.badge": "TESTING",
   "campaign.ui.activate": "הפעל",
   "campaign.ui.activating": "הפעלה",
-  "owner.settings.renew.explain": "גישת הבעלים פעילה במכשיר זה, אך למיקום זה אין כעת קמפיין פעיל. הפעל קמפיין כדי לשחזר ניתוחים ובקרות קמפיין.",
+  "owner.settings.renew.explain": "גישת הבעלים פעילה במכשיר זה, אך למיקום זה אין כעת קמפיין פעיל. הפעל קמפיין כדי להפעיל ניתוחים ובקרות קמפיין.",
   "owner.settings.renew.runCampaign.title": "הפעל קמפיין",
   "owner.settings.renew.runCampaign.desc": "התחל או חדש קמפיין עבור מיקום זה.",
   "campaign.plan.blocked.note": "מיקום זה זכאי במכשיר זה, אך קמפיין כל-המיקומים כבר מלא. שדרג את התוכנית או הסר מיקום אחר מההיקף.",

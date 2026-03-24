@@ -915,7 +915,7 @@
   "campaign.plan.testing.badge": "TESTING",
   "campaign.ui.activate": "Activate",
   "campaign.ui.activating": "Activating",
-  "owner.settings.renew.explain": "Owner access is active on this device, but this location is not running an active campaign right now. Run a campaign to restore analytics and campaign controls.",
+  "owner.settings.renew.explain": "Owner access is active on this device, but this location is not running an active campaign right now. Run a campaign to activate analytics and campaign controls.",
   "owner.settings.renew.runCampaign.title": "Run a campaign",
   "owner.settings.renew.runCampaign.desc": "Start or renew a campaign for this location.",
   "campaign.plan.blocked.note": "This location is eligible on this device, but the running all-locations campaign is already at capacity. Upgrade the plan or remove another location from scope.",

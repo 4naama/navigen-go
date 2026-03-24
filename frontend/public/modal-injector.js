@@ -3730,12 +3730,28 @@ export function createRestoreAccessModal() {
           localStorage.setItem(`navigen.slug:${restoredUlid}`, restoredSlug);
         }
 
-        const rr2 = await fetch('/api/owner/campaigns', {
-          cache: 'no-store',
-          credentials: 'include'
-        });
-        const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
-        const addedRows = Number(jj2?.inheritedNotice?.addedRows || 0);
+        let addedRows = 0;
+        let blockedRows = 0;
+
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+          const rr2 = await fetch('/api/owner/campaigns', {
+            cache: 'no-store',
+            credentials: 'include'
+          });
+          const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
+
+          addedRows = Math.max(
+            0,
+            Number(jj2?.inheritedNotice?.addedRows || 0) || 0
+          );
+          blockedRows = Math.max(
+            0,
+            Number(jj2?.inheritedNotice?.blockedRows || 0) || 0
+          );
+
+          if (addedRows > 0 || blockedRows > 0 || attempt === 5) break;
+          await new Promise((resolve) => setTimeout(resolve, 250));
+        }
 
         sessionStorage.removeItem('ng_inherited_notice_added_rows');
         sessionStorage.removeItem('ng_inherited_notice_until');
@@ -3743,7 +3759,7 @@ export function createRestoreAccessModal() {
         if (restoredUlid && addedRows > 0) {
           sessionStorage.setItem(`ng_inherited_notice_inline:${restoredUlid}`, String(addedRows));
           sessionStorage.setItem(`ng_inherited_notice_immediate:${restoredUlid}`, String(addedRows));
-        } else if (restoredUlid) {
+        } else if (restoredUlid && blockedRows > 0) {
           sessionStorage.removeItem(`ng_inherited_notice_inline:${restoredUlid}`);
           sessionStorage.removeItem(`ng_inherited_notice_immediate:${restoredUlid}`);
         }
@@ -4508,20 +4524,34 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
           );
 
           if (!inheritedImmediateRows && fallbackUlid === noticeUlid) {
-            const rr2 = await fetch('/api/owner/campaigns', {
-              cache: 'no-store',
-              credentials: 'include'
-            });
-            const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
+            let blockedRows = 0;
 
-            inheritedImmediateRows = Math.max(
-              0,
-              Number(jj2?.inheritedNotice?.addedRows || 0) || 0
-            );
+            for (let attempt = 0; attempt < 6; attempt += 1) {
+              const rr2 = await fetch('/api/owner/campaigns', {
+                cache: 'no-store',
+                credentials: 'include'
+              });
+              const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
+
+              inheritedImmediateRows = Math.max(
+                0,
+                Number(jj2?.inheritedNotice?.addedRows || 0) || 0
+              );
+              blockedRows = Math.max(
+                0,
+                Number(jj2?.inheritedNotice?.blockedRows || 0) || 0
+              );
+
+              if (inheritedImmediateRows > 0 || blockedRows > 0 || attempt === 5) break;
+              await new Promise((resolve) => setTimeout(resolve, 250));
+            }
 
             if (inheritedImmediateRows > 0) {
               sessionStorage.setItem(inheritedImmediateKey, String(inheritedImmediateRows));
               sessionStorage.setItem(inheritedInlineKey, String(inheritedImmediateRows));
+              sessionStorage.removeItem('ng_owner_restore_ulid');
+              sessionStorage.removeItem('ng_owner_restore_until');
+            } else if (blockedRows > 0) {
               sessionStorage.removeItem('ng_owner_restore_ulid');
               sessionStorage.removeItem('ng_owner_restore_until');
             }
@@ -4671,7 +4701,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   } else if (variant === 'renew') {
     rawExpl = _ownerText(
       'owner.settings.renew.explain',
-      'Owner access is active on this device, but this location is not running an active campaign right now. Run a campaign to restore analytics and campaign controls.'
+      'Owner access is active on this device, but this location is not running an active campaign right now. Run a campaign to activate analytics and campaign controls.'
     );
   } else if (variant === 'claim') {
     rawExpl = _ownerText(

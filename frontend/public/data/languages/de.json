@@ -915,7 +915,7 @@
   "campaign.plan.testing.badge": "TESTING",
   "campaign.ui.activate": "Aktivieren",
   "campaign.ui.activating": "Aktivierung",
-  "owner.settings.renew.explain": "Der Eigentümerzugriff ist auf diesem Gerät aktiv, aber für diesen Standort läuft derzeit keine aktive Kampagne. Starten Sie eine Kampagne, um Analysen und Kampagnensteuerungen wiederherzustellen.",
+  "owner.settings.renew.explain": "Der Eigentümerzugriff ist auf diesem Gerät aktiv, aber für diesen Standort läuft derzeit keine aktive Kampagne. Starten Sie eine Kampagne, um Analysen und Kampagnensteuerungen zu aktivieren.",
   "owner.settings.renew.runCampaign.title": "Kampagne starten",
   "owner.settings.renew.runCampaign.desc": "Eine Kampagne für diesen Standort starten oder verlängern.",
   "campaign.plan.blocked.note": "Dieser Standort ist auf diesem Gerät geeignet, aber die laufende Kampagne für alle Standorte ist bereits ausgelastet. Aktualisieren Sie den Plan oder entfernen Sie einen anderen Standort aus dem Umfang.",

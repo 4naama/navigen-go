@@ -915,7 +915,7 @@
   "campaign.plan.testing.badge": "TESTING",
   "campaign.ui.activate": "Activer",
   "campaign.ui.activating": "Activation",
-  "owner.settings.renew.explain": "L’accès propriétaire est actif sur cet appareil, mais cet établissement ne lance actuellement aucune campagne active. Lancez une campagne pour restaurer les analyses et les contrôles de campagne.",
+  "owner.settings.renew.explain": "L’accès propriétaire est actif sur cet appareil, mais cet établissement ne lance actuellement aucune campagne active. Lancez une campagne pour activer les analyses et les contrôles de campagne.",
   "owner.settings.renew.runCampaign.title": "Lancer une campagne",
   "owner.settings.renew.runCampaign.desc": "Démarrer ou renouveler une campagne pour cet établissement.",
   "campaign.plan.blocked.note": "Cet établissement est éligible sur cet appareil, mais la campagne en cours pour tous les emplacements est déjà à capacité. Mettez à niveau le plan ou retirez un autre emplacement du périmètre.",

@@ -915,7 +915,7 @@
   "campaign.plan.testing.badge": "TESTING",
   "campaign.ui.activate": "Activar",
   "campaign.ui.activating": "Activación",
-  "owner.settings.renew.explain": "El acceso del propietario está activo en este dispositivo, pero esta ubicación no tiene actualmente ninguna campaña activa. Inicia una campaña para restaurar los análisis y los controles de campaña.",
+  "owner.settings.renew.explain": "El acceso del propietario está activo en este dispositivo, pero esta ubicación no tiene actualmente ninguna campaña activa. Inicia una campaña para activar los análisis y los controles de campaña.",
   "owner.settings.renew.runCampaign.title": "Iniciar una campaña",
   "owner.settings.renew.runCampaign.desc": "Inicia o renueva una campaña para esta ubicación.",
   "campaign.plan.blocked.note": "Esta ubicación es elegible en este dispositivo, pero la campaña activa para todas las ubicaciones ya está al límite de capacidad. Actualiza el plan o elimina otra ubicación del alcance.",
