@@ -4469,6 +4469,12 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   `;
   inner.appendChild(activeCard);
 
+  const ownerImmediateNote = document.createElement('div');
+  ownerImmediateNote.className = 'campaign-inline-note owner-immediate-note';
+  ownerImmediateNote.style.marginBottom = '10px';
+  ownerImmediateNote.style.display = 'none';
+  inner.appendChild(ownerImmediateNote);
+  
   // Resolve current device session (if any) and fill Active card
   (async () => {
     try {
@@ -4480,12 +4486,18 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       try {
         const inheritedImmediateKey = `ng_inherited_notice_immediate:${activeUlid}`;
         const inheritedInlineKey = `ng_inherited_notice_inline:${activeUlid}`;
+        const legacyInheritedUntil = Number(sessionStorage.getItem('ng_inherited_notice_until') || '0');
+        const legacyInheritedRows = legacyInheritedUntil > Date.now()
+          ? Math.max(0, Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0') || 0)
+          : 0;
         const restoreHintUlid = String(sessionStorage.getItem('ng_owner_restore_ulid') || '').trim();
         const restoreHintUntil = Number(sessionStorage.getItem('ng_owner_restore_until') || '0');
 
         let inheritedImmediateRows = Math.max(
           0,
-          Number(sessionStorage.getItem(inheritedImmediateKey) || '0') || 0
+          Number(sessionStorage.getItem(inheritedImmediateKey) || '0') || 0,
+          Number(sessionStorage.getItem(inheritedInlineKey) || '0') || 0,
+          legacyInheritedRows
         );
 
         if (!inheritedImmediateRows && restoreHintUlid === activeUlid && restoreHintUntil > Date.now()) {
@@ -4511,26 +4523,17 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
         if (inheritedImmediateRows > 0) {
           sessionStorage.removeItem(inheritedImmediateKey);
+          sessionStorage.removeItem('ng_inherited_notice_added_rows');
+          sessionStorage.removeItem('ng_inherited_notice_until');
 
           const immediateMsg =
             inheritedImmediateRows === 1
               ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
               : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${inheritedImmediateRows} locations were added to this campaign automatically.`);
 
-          let immediateNote = inner.querySelector('.owner-immediate-note');
-          if (!immediateNote) {
-            immediateNote = document.createElement('div');
-            immediateNote.className = 'campaign-inline-note owner-immediate-note';
-            immediateNote.style.marginBottom = '10px';
-
-            const anchor = inner.querySelector('p');
-            if (anchor) inner.insertBefore(immediateNote, anchor);
-            else inner.appendChild(immediateNote);
-          }
-
-          immediateNote.textContent = immediateMsg;
-          immediateNote.style.display = '';
-        }
+          ownerImmediateNote.textContent = immediateMsg;
+          ownerImmediateNote.style.display = '';
+        }        
       } catch {}
 
       // Default to ULID until we resolve slug/name

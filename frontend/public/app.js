@@ -1370,22 +1370,7 @@ async function initEmergencyBlock(countryOverride) {
     injectStaticTranslations();          // ✅ Apply static translations
 
     // One-shot inherited-addition notice after Restore Access.
-    try {
-      const until = Number(sessionStorage.getItem('ng_inherited_notice_until') || '0');
-      const addedRows = Number(sessionStorage.getItem('ng_inherited_notice_added_rows') || '0');
-
-      if (until && Date.now() <= until && addedRows > 0) {
-        const msg =
-          addedRows === 1
-            ? ((typeof t === 'function' && t('campaign.ui.inherited.one')) || '1 location was added to this campaign automatically.')
-            : ((typeof t === 'function' && t('campaign.ui.inherited.many')) || `${addedRows} locations were added to this campaign automatically.`);
-
-        showToast(msg, 2600);
-      }
-
-      sessionStorage.removeItem('ng_inherited_notice_added_rows');
-      sessionStorage.removeItem('ng_inherited_notice_until');
-    } catch {}
+    // H8 notice lifecycle is owned by Owner Settings + Campaign Management.
     
     // listen for language switch requests from the root lock
     document.addEventListener('app:lang-changed', () => {
