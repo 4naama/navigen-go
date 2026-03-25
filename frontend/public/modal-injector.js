@@ -3679,8 +3679,27 @@ export function createRestoreAccessModal() {
     const pi = String(input.value || '').trim();
     if (!pi) { showToast('Missing Payment ID', 1800); return; }
 
-    if (btn.dataset.busy === '1') return;
+    if (btn.dataset.busy === '1' || document.body?.dataset?.ownerRestoreBusy === '1') return;
     btn.dataset.busy = '1';
+    document.body.dataset.ownerRestoreBusy = '1';
+
+    btn.disabled = true;
+    input.disabled = true;
+    card.setAttribute('aria-busy', 'true');
+
+    const closeBtn = top.querySelector('.modal-close');
+    if (closeBtn) closeBtn.disabled = true;
+
+    const unlockRestoreUi = () => {
+      btn.dataset.busy = '0';
+      btn.disabled = false;
+      input.disabled = false;
+      card.removeAttribute('aria-busy');
+      if (closeBtn) closeBtn.disabled = false;
+      try { delete document.body.dataset.ownerRestoreBusy; } catch {}
+    };
+
+    let keepLocked = false;
 
     try {
       const qp = new URLSearchParams(window.location.search);
@@ -3766,6 +3785,7 @@ export function createRestoreAccessModal() {
       } catch {}
 
       if (!target) {
+        unlockRestoreUi();
         showToast((typeof t === 'function' && t('owner.restore.pi.ok')) || 'Restored.', 1600);
         return;
       }
@@ -3777,8 +3797,10 @@ export function createRestoreAccessModal() {
         u.searchParams.set('open', 'restore');
         u.searchParams.set('bo', target);
         window.location.replace(u.toString());
+        keepLocked = true;
       } catch {
         window.location.replace(`/?open=restore&bo=${encodeURIComponent(target)}`);
+        keepLocked = true;
       }
 
       return;
@@ -3786,7 +3808,7 @@ export function createRestoreAccessModal() {
       // (post-restore OS open handled via shell reload intent)
 
     } finally {
-      btn.dataset.busy = '0';
+      if (!keepLocked) unlockRestoreUi();
     }
   });
 
@@ -3803,6 +3825,8 @@ export function createRestoreAccessModal() {
 
 export function showRestoreAccessModal() {
   const id = 'owner-restore-access-modal';
+  if (document.body?.dataset?.ownerRestoreBusy === '1') return;
+
   // Always rebuild so PI input never "sticks" and handlers are fresh.
   document.getElementById(id)?.remove();
   createRestoreAccessModal();
@@ -4101,6 +4125,95 @@ export function showHowItWorksModal() {
   showModal(id);
 }
 
+function getModalHeaderText(target) {
+  const modal = typeof target === 'string'
+    ? document.getElementById(target)
+    : (target?.classList?.contains('modal') ? target : target?.closest?.('.modal'));
+  if (!modal) return '';
+
+  const titleNode = modal.querySelector('.modal-top-bar .modal-title, .modal-top-bar h1, .modal-top-bar h2');
+  return String(titleNode?.textContent || '').trim();
+}
+
+function getModalHeaderHelpSpec(target) {
+  const modalId = String(
+    typeof target === 'string'
+      ? target
+      : target?.id || target?.closest?.('.modal')?.id || ''
+  ).trim();
+
+  if (!modalId || modalId === 'bo-howitworks-modal' || modalId === 'modal-header-help-modal') {
+    return null;
+  }
+
+  if (modalId === 'owner-center-modal') {
+    const ownerCenterBody = _ownerText(
+      'owner.center.help.body',
+      'Owner access for the listings you can manage is stored on this device.\nThe currently active listing is marked ⚡.\nTo manage one of them, tap the listing you want below.\nTo add another listing to this device, use 🔑 Restore owner access.'
+    );
+
+    return {
+      title: _ownerText('owner.center.help.title', 'How it works'),
+      bodyLines: ownerCenterBody.split(/\n+/).map(s => String(s || '').trim()).filter(Boolean)
+    };
+  }
+
+  return {
+    title: _ownerText('modal.help.title', 'How it works'),
+    bodyLines: []
+  };
+}
+
+function showModalHeaderHelpModal(target) {
+  const modal = typeof target === 'string'
+    ? document.getElementById(target)
+    : (target?.classList?.contains('modal') ? target : target?.closest?.('.modal'));
+  if (!modal) return;
+
+  const spec = getModalHeaderHelpSpec(modal);
+  if (!spec) return;
+
+  const id = 'modal-header-help-modal';
+  document.getElementById(id)?.remove();
+
+  const sourceTitle = getModalHeaderText(modal);
+  const helpTitle = String(spec.title || _ownerText('modal.help.title', 'How it works')).trim() || 'How it works';
+  const title = sourceTitle ? `${sourceTitle} · ${helpTitle}` : helpTitle;
+
+  const helpModal = injectModal({
+    id,
+    title,
+    layout: 'menu',
+    bodyHTML: ''
+  });
+
+  setupTapOutClose(id);
+
+  const inner = helpModal.querySelector('.modal-body-inner');
+  if (!inner) {
+    showModal(id);
+    return;
+  }
+
+  inner.innerHTML = '';
+
+  const bodyLines = Array.isArray(spec.bodyLines) ? spec.bodyLines.filter(Boolean) : [];
+  const lines = bodyLines.length
+    ? bodyLines
+    : [_ownerText('modal.help.empty', 'Guidance for this step is coming soon.')];
+
+  lines.forEach((line, idx) => {
+    const p = document.createElement('p');
+    p.textContent = line;
+    p.style.textAlign = 'left';
+    p.style.margin = idx === 0 ? '0' : '10px 0 0';
+    p.style.opacity = '0.92';
+    inner.appendChild(p);
+  });
+
+  showModal(id);
+}
+
 function ensureModalTopActions(target) {
   const topBar = target?.classList?.contains('modal-top-bar')
     ? target
@@ -4120,39 +4233,40 @@ function ensureModalTopActions(target) {
   return actions;
 }
 
-function attachModalHeaderHelp(target, opts = {}) {
-  const topBar = target?.classList?.contains('modal-top-bar')
-    ? target
-    : target?.querySelector?.('.modal-top-bar');
-  if (!topBar) return null;
+function syncModalHeaderHelp(target) {
+  const modal = typeof target === 'string'
+    ? document.getElementById(target)
+    : (target?.classList?.contains('modal') ? target : target?.closest?.('.modal'));
+  if (!modal) return null;
 
-  const actions = ensureModalTopActions(topBar);
-  if (!actions || actions.querySelector('.modal-header-help')) return null;
+  const actions = ensureModalTopActions(modal);
+  if (!actions) return null;
 
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'modal-header-help';
+  let btn = actions.querySelector('.modal-header-help');
+  const spec = getModalHeaderHelpSpec(modal);
 
-  const helpLabel = String(
-    opts.label ||
-    ((typeof t === 'function' && t('bo.howItWorks.title')) || 'How it works')
-  ).trim() || 'How it works';
+  if (!spec) {
+    btn?.remove();
+    return actions;
+  }
 
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'modal-header-help';
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      showModalHeaderHelpModal(modal);
+    });
+    actions.insertBefore(btn, actions.firstChild || null);
+  }
+
+  const helpLabel = String(spec.title || _ownerText('modal.help.title', 'How it works')).trim() || 'How it works';
   btn.setAttribute('aria-label', helpLabel);
   btn.title = helpLabel;
   btn.textContent = 'ℹ️';
 
-  const onClick = (typeof opts.onClick === 'function')
-    ? opts.onClick
-    : (() => showHowItWorksModal());
-
-  btn.addEventListener('click', (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-    onClick();
-  });
-
-  actions.insertBefore(btn, actions.firstChild || null);
   return btn;
 }
 
@@ -5142,16 +5256,7 @@ export async function createOwnerCenterModal() {
 
   inner.innerHTML = '';
 
-  const note = document.createElement('p');
-  note.textContent = String(
-    (typeof t === 'function' && t('owner.center.note')) ||
-    'Owner access for the listings you can manage is stored on this device. To manage one of them, tap the listing you want below. To add another listing to this device, use 🔑 Restore owner access.'
-  ).replace(/\\n/g, '\n');
-  note.style.textAlign = 'left';
-  note.style.whiteSpace = 'pre-line';
-  note.style.fontSize = '0.85em';
-  note.style.opacity = '0.8';
-  inner.appendChild(note);
+  syncModalHeaderHelp(modal);
 
   // 🔑 Restore owner access (Owner Center secondary action)
   const restoreBtn = document.createElement('button');
@@ -7211,7 +7316,7 @@ export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [],
     <div class="modal-content${layout ? ` modal-${layout}` : ''}">
       ${title ? `
         <div class="modal-top-bar">
-          <h2>${title}</h2>
+          <h2 class="modal-title">${title}</h2>
           <button class="modal-close" aria-label="Close">&times;</button>
         </div>
       ` : ''}
@@ -7254,6 +7359,7 @@ export function showModal(id) {
   // Ensure the modal is topmost among other .modal siblings (DOM order defines stacking for equal z-index).
   // Reason: previously created modals (e.g., Owner Center) can end up behind newly appended LPMs.
   document.body.appendChild(modal);
+  syncModalHeaderHelp(modal);
 
   modal.classList.remove("hidden");              // For any manual .hidden (avoid first-tap miss)
   modal.style.display = "flex";                  // ✅ Force visible immediately

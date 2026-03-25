@@ -1191,7 +1191,7 @@ body.large-text {
   z-index: 20; /* sits above in-modal content like slider arrows */
 
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 
@@ -1207,12 +1207,30 @@ body.large-text {
   transform: translateZ(0);
 }
 
+.modal .modal-top-bar h1,
+.modal .modal-top-bar h2,
+.modal .modal-top-bar .modal-title{
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  text-align: left;
+  line-height: 1.2;
+}
+
+.modal .modal-top-bar .modal-top-actions{
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
 /* Winner: in-row + sticky header; this is the authoritative modal × rule */
 /* Adjust font-size here to control the modal × across the app */
 .modal .modal-top-bar .modal-close{
   appearance: none; -webkit-appearance: none;
   position: static;               /* in-row; participates in flex */
-  margin-left: auto;              /* push to right edge */
+  margin-left: 0;
   align-self: flex-start;         /* align with first line */
   background: transparent; border: 0; cursor: pointer;
   color: #d11;
@@ -1221,32 +1239,23 @@ body.large-text {
   border-radius: 8px;
   padding: 2px 6px;               /* keep tap target */
 }
-.modal .modal-top-bar .modal-top-actions{
-  display:flex;
-  align-items:flex-start;
-  gap:8px;
-  margin-left:auto;
-  flex:0 0 auto;
-}
-.modal .modal-top-bar .modal-top-actions .modal-close{
-  margin-left:0;
-}
+
 .modal .modal-top-bar .modal-header-help{
-  appearance:none;
-  -webkit-appearance:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:36px;
-  height:36px;
-  padding:0;
-  border:1px solid rgba(0,0,0,.08);
-  border-radius:10px;
-  background:#fff;
-  color:#0f172a;
-  cursor:pointer;
-  line-height:1;
-  font-size:18px;
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
+  line-height: 1;
+  font-size: 18px;
 }
 .modal .modal-top-bar .modal-header-help:hover{ background:#f8fafc; }
 .modal .modal-top-bar .modal-header-help:focus-visible{ outline:2px solid #0f172a; outline-offset:2px; }
