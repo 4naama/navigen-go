@@ -3733,7 +3733,7 @@ export function createRestoreAccessModal() {
         let addedRows = 0;
         let blockedRows = 0;
 
-        for (let attempt = 0; attempt < 6; attempt += 1) {
+        for (let attempt = 0; attempt < 2; attempt += 1) {
           const rr2 = await fetch('/api/owner/campaigns', {
             cache: 'no-store',
             credentials: 'include'
@@ -3749,7 +3749,7 @@ export function createRestoreAccessModal() {
             Number(jj2?.inheritedNotice?.blockedRows || 0) || 0
           );
 
-          if (addedRows > 0 || blockedRows > 0 || attempt === 5) break;
+          if (addedRows > 0 || blockedRows > 0 || attempt === 1) break;
           await new Promise((resolve) => setTimeout(resolve, 250));
         }
 
@@ -4526,7 +4526,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
           if (!inheritedImmediateRows && fallbackUlid === noticeUlid) {
             let blockedRows = 0;
 
-            for (let attempt = 0; attempt < 6; attempt += 1) {
+            for (let attempt = 0; attempt < 2; attempt += 1) {
               const rr2 = await fetch('/api/owner/campaigns', {
                 cache: 'no-store',
                 credentials: 'include'
@@ -4542,7 +4542,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
                 Number(jj2?.inheritedNotice?.blockedRows || 0) || 0
               );
 
-              if (inheritedImmediateRows > 0 || blockedRows > 0 || attempt === 5) break;
+              if (inheritedImmediateRows > 0 || blockedRows > 0 || attempt === 1) break;
               await new Promise((resolve) => setTimeout(resolve, 250));
             }
 
