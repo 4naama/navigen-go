@@ -1702,6 +1702,7 @@ Expected:
 • location joins immediately
 • immediate notice shown
 • inline CM notice shown later
+Note: H8 proof must use a clean newly eligible candidate for that campaign key, because duplicate inherited additions are an F5 case and may be deduped or shown once.
 
 H9 — Inherited addition over capacity
 1) Running campaign exists with scope = all and no remaining capacity

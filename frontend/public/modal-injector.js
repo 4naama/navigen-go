@@ -4101,6 +4101,61 @@ export function showHowItWorksModal() {
   showModal(id);
 }
 
+function ensureModalTopActions(target) {
+  const topBar = target?.classList?.contains('modal-top-bar')
+    ? target
+    : target?.querySelector?.('.modal-top-bar');
+  if (!topBar) return null;
+
+  let actions = topBar.querySelector('.modal-top-actions');
+  if (actions) return actions;
+
+  const closeBtn = topBar.querySelector('.modal-close');
+  if (!closeBtn) return null;
+
+  actions = document.createElement('div');
+  actions.className = 'modal-top-actions';
+  topBar.insertBefore(actions, closeBtn);
+  actions.appendChild(closeBtn);
+  return actions;
+}
+
+function attachModalHeaderHelp(target, opts = {}) {
+  const topBar = target?.classList?.contains('modal-top-bar')
+    ? target
+    : target?.querySelector?.('.modal-top-bar');
+  if (!topBar) return null;
+
+  const actions = ensureModalTopActions(topBar);
+  if (!actions || actions.querySelector('.modal-header-help')) return null;
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'modal-header-help';
+
+  const helpLabel = String(
+    opts.label ||
+    ((typeof t === 'function' && t('bo.howItWorks.title')) || 'How it works')
+  ).trim() || 'How it works';
+
+  btn.setAttribute('aria-label', helpLabel);
+  btn.title = helpLabel;
+  btn.textContent = 'ℹ️';
+
+  const onClick = (typeof opts.onClick === 'function')
+    ? opts.onClick
+    : (() => showHowItWorksModal());
+
+  btn.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    onClick();
+  });
+
+  actions.insertBefore(btn, actions.firstChild || null);
+  return btn;
+}
+
 function createHowItWorksModal() {
   const id = 'bo-howitworks-modal';
   document.getElementById(id)?.remove();
@@ -4281,6 +4336,7 @@ function createPricingPoliciesModal() {
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+  attachModalHeaderHelp(top);
 
   const body = document.createElement('div');
   body.className = 'modal-body';
@@ -4636,12 +4692,24 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
           }
         }
 
+        const isMatch = hasSelected && hasActive && !!selUlid && selUlid === actUlid;
+
         if (isMismatch || isNeedsAccess) {
           selectedCard.classList.add('os-mismatch');
           activeCard.classList.add('os-mismatch');
+          selectedCard.classList.remove('os-match');
+          activeCard.classList.remove('os-match');
         } else {
           selectedCard.classList.remove('os-mismatch');
           activeCard.classList.remove('os-mismatch');
+
+          if (isMatch) {
+            selectedCard.classList.add('os-match');
+            activeCard.classList.add('os-match');
+          } else {
+            selectedCard.classList.remove('os-match');
+            activeCard.classList.remove('os-match');
+          }
         }
 
         // If the modal was opened as "mismatch" but Selected == Active, suppress the mismatch explanation
@@ -5066,6 +5134,8 @@ export async function createOwnerCenterModal() {
     layout: 'menu',
     bodyHTML: '' // we will fill .modal-body-inner below
   });
+
+  attachModalHeaderHelp(modal);
 
   const inner = modal.querySelector('.modal-body-inner');
   if (!inner) return;
@@ -5503,6 +5573,8 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     });
     setupTapOutClose(id);
   }
+
+  attachModalHeaderHelp(modal);
 
   let root = modal.querySelector('.campaign-mgmt');
   if (!root) {
