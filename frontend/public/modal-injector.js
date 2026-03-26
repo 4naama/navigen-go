@@ -3723,7 +3723,7 @@ export function createRestoreAccessModal() {
         return;
       }
 
-      // Ensure Owner Center is rebuilt after restore (it may have been opened pre-restore as empty).
+      // Ensure Owner center is rebuilt after restore (it may have been opened pre-restore as empty).
       document.getElementById('owner-center-modal')?.remove();
 
       setTimeout(() => {
@@ -3736,7 +3736,7 @@ export function createRestoreAccessModal() {
       // Prefer the explicit location context if provided; otherwise use the authoritative restore payload.
       const target = String(loc || restoredSlug || restoredUlid).trim();
 
-      // Post-restore hints: keep ULID/slug locally so Owner Center and Dash can render immediately.
+      // Post-restore hints: keep ULID/slug locally so Owner center and Dash can render immediately.
       // Also carry a one-shot inherited-addition notice through the shell reload.
       try {
         if (restoredUlid) {
@@ -4384,7 +4384,7 @@ function createHowItWorksModal() {
 
           <div style="height:12px;"></div>
 
-          <div><strong>${t('bo.hiw.deviceControl.remove.title') || '🗑️ Remove from Owner Center'}</strong></div>
+          <div><strong>${t('bo.hiw.deviceControl.remove.title') || '🗑️ Remove from Owner center'}</strong></div>
           <div>${t('bo.hiw.deviceControl.remove.b1') || 'Removes this business from this device’s saved list'}</div>
           <div>${t('bo.hiw.deviceControl.remove.b2') || 'Does not affect ownership globally'}</div>
           <div>${t('bo.hiw.deviceControl.remove.b3') || 'If active, also clears the active session'}</div>
@@ -4393,7 +4393,7 @@ function createHowItWorksModal() {
 
           <div><strong>${t('bo.hiw.deviceControl.signout.title') || '🧹 Sign out on this device'}</strong></div>
           <div>${t('bo.hiw.deviceControl.signout.b1') || 'Clears the active session only'}</div>
-          <div>${t('bo.hiw.deviceControl.signout.b2') || 'Keeps the business saved in Owner Center'}</div>
+          <div>${t('bo.hiw.deviceControl.signout.b2') || 'Keeps the business saved in Owner center'}</div>
           <div>${t('bo.hiw.deviceControl.signout.b3') || 'Equivalent to logging out'}</div>
         </div>
       </details>
@@ -4804,7 +4804,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
       // Mismatch detection: Selected ≠ Active
       try {
-        const selRaw = String(selectedKey || '').trim();
+        const selRaw = String(selectedKey || locId || '').trim();        
         const hasSelected = !!selRaw;
 
         // Compare using ULID (canonical), not slug, to avoid false mismatch during slug/ULID resolution.
@@ -4867,7 +4867,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     } catch {}
   })();
 
-  // If Selected is a ULID (Owner Center entry), resolve to slug/name and update the Selected card display.
+  // If Selected is a ULID (Owner center entry), resolve to slug/name and update the Selected card display.
   (async () => {
     const u = String(selectedKey || '').trim();
     if (!/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(u)) return;
@@ -4910,7 +4910,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   } else if (variant === 'mismatch') {
     rawExpl = _ownerText(
       'owner.settings.mismatch.explain',
-      'This device is currently active for a different listing.\n\nTo manage the selected listing here, open Owner Center and switch this device to that listing.'      
+      'This device is currently active for a different listing.\n\nTo manage the selected listing here, open Owner center and switch this device to that listing.'      
     );
   } else if (variant === 'renew') {
     rawExpl = _ownerText(
@@ -4985,7 +4985,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     addItem({
       id: 'owner-center',
       icon: '🧩️',
-      title: _ownerText('owner.center.title', 'Owner Center'),
+      title: _ownerText('owner.center.title', 'Owner center'),
       desc: _ownerText('root.bo.ownerCenter.desc', 'Choose which listing is active on this device.'),      
       onClick: () => {
         hideModal(id);
@@ -5031,7 +5031,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     addItem({
       id: 'owner-center',
       icon: '🧩',
-      title: _ownerText('owner.settings.restore.ownerCenter.title', 'Owner Center'),
+      title: _ownerText('owner.settings.restore.ownerCenter.title', 'Owner center'),
       desc: _ownerText('owner.settings.restore.ownerCenter.desc', 'Choose which listing is active on this device.'),      
       onClick: () => {
         hideModal(id);
@@ -5088,7 +5088,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     addItem({
       id: 'owner-center',
       icon: '🧩',
-      title: _ownerText('owner.center.title', 'Owner Center'),
+      title: _ownerText('owner.center.title', 'Owner center'),
       desc: _ownerText('root.bo.ownerCenter.desc', 'Choose which listing is active on this device.'),
       onClick: () => {
         hideModal(id);
@@ -5132,7 +5132,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     addItem({
       id: 'owner-center',
       icon: '🧩',
-      title: _ownerText('owner.center.title', 'Owner Center'),
+      title: _ownerText('owner.center.title', 'Owner center'),
       desc: _ownerText('root.bo.ownerCenter.desc', 'Choose which listing is active on this device.'),      
       onClick: () => {
         hideModal(id);
@@ -5276,7 +5276,7 @@ export async function createOwnerCenterModal() {
   // Build with the same contract as Owner Settings (sticky header inside a single modal card scroller)
   const modal = injectModal({
     id,
-    title: (typeof t === 'function' && t('owner.center.title')) || 'Owner Center',
+    title: (typeof t === 'function' && t('owner.center.title')) || 'Owner center',
     layout: 'menu',
     bodyHTML: '' // we will fill .modal-body-inner below
   });
@@ -5288,7 +5288,7 @@ export async function createOwnerCenterModal() {
 
   inner.innerHTML = '';
 
-  // 🔑 Restore owner access (Owner Center secondary action)
+  // 🔑 Restore owner access (Owner center secondary action)
   const restoreBtn = document.createElement('button');
   restoreBtn.type = 'button';
   restoreBtn.className = 'modal-menu-item owner-center-restore-card';
@@ -5314,7 +5314,7 @@ export async function createOwnerCenterModal() {
   loadingRow.style.pointerEvents = 'none';
   loadingRow.innerHTML = `
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${(typeof t === 'function' && t('owner.center.loading.title')) || 'Loading Owner Center…'}</strong><br>
+      <strong>${(typeof t === 'function' && t('owner.center.loading.title')) || 'Loading Owner center…'}</strong><br>
       <small>${(typeof t === 'function' && t('owner.center.loading.desc')) || 'Getting listings saved on this device. Please, wait.'}</small>
     </span>
   `;
@@ -5385,7 +5385,7 @@ export async function createOwnerCenterModal() {
           (typeof t === 'function' && t('owner.center.switch.confirmBody2')) ||
             'Owner access is not changed globally.',
           (typeof t === 'function' && t('owner.center.switch.confirmBody3')) ||
-            'You can switch again anytime in Owner Center.'
+            'You can switch again anytime in Owner center.'
         ],
         confirmLabel:
           (typeof t === 'function' && t('owner.center.switch.confirmCta')) ||
@@ -5402,7 +5402,7 @@ export async function createOwnerCenterModal() {
   // fallback injection (UI only): show the restored ULID if registry is still empty
   if ((!ulids || !ulids.length) && lastRestored) ulids = [lastRestored];
 
-  // Keep the currently active business first in Owner Center.
+  // Keep the currently active business first in Owner center.
   if (Array.isArray(ulids) && ulids.length && activeUlid) {
     const deduped = Array.from(new Set(ulids.map(v => String(v || '').trim()).filter(Boolean)));
     ulids = [
@@ -5486,7 +5486,7 @@ export async function createOwnerCenterModal() {
         showActionConfirmModal({
           title: (typeof t === 'function' && t('owner.center.remove.confirmTitle')) || 'Remove from this device?',
           bodyLines: [
-            (typeof t === 'function' && t('owner.center.remove.confirmBody1')) || 'This removes the business from Owner Center on this device.',
+            (typeof t === 'function' && t('owner.center.remove.confirmBody1')) || 'This removes the business from Owner center on this device.',
             (typeof t === 'function' && t('owner.center.remove.confirmBody2')) || 'Ownership remains active globally. You can restore access again anytime.',
             (typeof t === 'function' && t('owner.center.remove.confirmBody3')) || 'If this business is currently active, you will also be signed out on this device.'
           ],
@@ -5868,7 +5868,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     p.style.textAlign = 'left';
     p.textContent =
       (typeof t === 'function' && t('campaign.ui.mismatch')) ||
-      'Owner session is currently bound to a different location. Switch in Owner Center to manage campaigns for this location.';
+      'Owner session is currently bound to a different location. Switch in Owner center to manage campaigns for this location.';
     panel.appendChild(p);
 
     const actions = document.createElement('div');
@@ -5877,7 +5877,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'cm-action-primary';
-    btn.textContent = (typeof t === 'function' && t('owner.center.open')) || 'Open Owner Center';
+    btn.textContent = (typeof t === 'function' && t('owner.center.open')) || 'Open Owner center';
     btn.addEventListener('click', async () => {
       hideModal('campaign-management-modal');
       await showOwnerCenterModal();
@@ -7384,7 +7384,7 @@ export function showModal(id) {
   if (!modal) return;
 
   // Ensure the modal is topmost among other .modal siblings (DOM order defines stacking for equal z-index).
-  // Reason: previously created modals (e.g., Owner Center) can end up behind newly appended LPMs.
+  // Reason: previously created modals (e.g., Owner center) can end up behind newly appended LPMs.
   document.body.appendChild(modal);
   syncModalHeaderHelp(modal);
 
