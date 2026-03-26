@@ -1231,8 +1231,8 @@ body.large-text {
 .modal .modal-top-bar .modal-close{
   appearance: none; -webkit-appearance: none;
   position: static;               /* in-row; participates in flex */
-  margin: 0;
-  margin-right: -4px;             /* push × to the same outer edge everywhere */
+  margin-left: 0;
+  margin-right: -8px;             /* push × outward, beyond the useful header content width */
   align-self: flex-start;         /* align with first line */
   background: transparent; border: 0; cursor: pointer;
   color: #d11;

@@ -4152,7 +4152,7 @@ function getModalHeaderHelpSpec(target) {
   if (modalId === 'owner-center-modal') {
     const ownerCenterBody = _ownerText(
       'owner.center.help.body',
-      'Owner access for the listings you can manage is stored on this device.\nThe currently active listing is marked ⚡.\nTo manage one of them, tap the listing you want below.\nTo add another listing to this device, use 🔑 Restore owner access.'
+      'Owner access for the listings you can manage is stored on this device.\nThe currently active listing is marked ⚡.\nTo manage one of them, tap the listing you want below.\nTo add another listing to this device, use 🔑 Restore owner access.\nLook for the Stripe payment confirmation email or receipt for that listing.\nOpen it, copy the Payment ID (pi_...), then paste it into Restore access.'
     );
 
     return {
@@ -5295,8 +5295,8 @@ export async function createOwnerCenterModal() {
   restoreBtn.innerHTML = `
     <span class="icon-img">🔑</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${t('root.bo.restore.title') || 'Restore owner access'}</strong><br>
-      <small>${t('root.bo.restore.desc') || 'Add another listing to this device using its Stripe payment ID (pi_...).'}</small>      
+      <strong>${_ownerText('root.bo.restore.title', 'Restore or add owner access')}</strong><br>
+      <small>${_ownerText('root.bo.restore.desc', 'Use your most recent payment receipt email.')}</small>
     </span>
   `;
   restoreBtn.addEventListener('click', (e) => {
@@ -5423,10 +5423,10 @@ export async function createOwnerCenterModal() {
     loadingRow.remove();
 
     const p = document.createElement('p');
-    p.className = 'muted';
+    p.className = 'muted muted-note';
+    p.style.textAlign = 'left';
     p.textContent =
-      (typeof t === 'function' && t('owner.center.empty')) ||
-      'No owner access is saved on this device yet. Use Restore owner access to add a listing to this device.';      
+      _ownerText('owner.center.empty', 'No owner access is saved on this device yet. Use 🔑 Restore owner access to add a listing to this device.');
     list.appendChild(p);
   } else {
     for (const ulid of ulids) {
