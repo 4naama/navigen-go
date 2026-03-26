@@ -4142,7 +4142,12 @@ function getModalHeaderHelpSpec(target) {
       : target?.id || target?.closest?.('.modal')?.id || ''
   ).trim();
 
-  if (!modalId || modalId === 'bo-howitworks-modal' || modalId === 'modal-header-help-modal') {
+  if (
+    !modalId ||
+    modalId === 'bo-howitworks-modal' ||
+    modalId === 'modal-header-help-modal' ||
+    modalId === 'select-location-modal'
+  ) {
     return null;
   }
 
@@ -4178,7 +4183,7 @@ function showModalHeaderHelpModal(target) {
 
   const sourceTitle = getModalHeaderText(modal);
   const helpTitle = String(spec.title || _ownerText('modal.help.title', 'How it works')).trim() || 'How it works';
-  const title = sourceTitle ? `${sourceTitle} · ${helpTitle}` : helpTitle;
+  const title = sourceTitle || helpTitle;
 
   const helpModal = injectModal({
     id,
@@ -4239,17 +4244,28 @@ function syncModalHeaderHelp(target) {
     : (target?.classList?.contains('modal') ? target : target?.closest?.('.modal'));
   if (!modal) return null;
 
-  const actions = ensureModalTopActions(modal);
+  const topBar = modal.querySelector('.modal-top-bar');
+  if (!topBar) return null;
+
+  const spec = getModalHeaderHelpSpec(modal);
+  let actions = topBar.querySelector('.modal-top-actions');
+  const closeBtn = actions?.querySelector('.modal-close') || topBar.querySelector('.modal-close');
+
+  if (!spec) {
+    actions?.querySelector('.modal-header-help')?.remove();
+
+    if (actions && closeBtn) {
+      topBar.appendChild(closeBtn);
+      actions.remove();
+    }
+
+    return closeBtn || null;
+  }
+
+  actions = ensureModalTopActions(topBar);
   if (!actions) return null;
 
   let btn = actions.querySelector('.modal-header-help');
-  const spec = getModalHeaderHelpSpec(modal);
-
-  if (!spec) {
-    btn?.remove();
-    return actions;
-  }
-
   if (!btn) {
     btn = document.createElement('button');
     btn.type = 'button';
@@ -5249,14 +5265,12 @@ export async function createOwnerCenterModal() {
     bodyHTML: '' // we will fill .modal-body-inner below
   });
 
-  attachModalHeaderHelp(modal);
+  syncModalHeaderHelp(modal);
 
   const inner = modal.querySelector('.modal-body-inner');
   if (!inner) return;
 
   inner.innerHTML = '';
-
-  syncModalHeaderHelp(modal);
 
   // 🔑 Restore owner access (Owner Center secondary action)
   const restoreBtn = document.createElement('button');
@@ -5679,7 +5693,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     setupTapOutClose(id);
   }
 
-  attachModalHeaderHelp(modal);
+  syncModalHeaderHelp(modal);
 
   let root = modal.querySelector('.campaign-mgmt');
   if (!root) {
