@@ -2877,9 +2877,7 @@ export function createSelectLocationModal() {
     syncClear();
     
     // Insert the search row into the sticky top bar so it never scrolls with the list
-    const closeInBar = topBar.querySelector('.modal-close');
-    if (closeInBar) topBar.insertBefore(searchRow, closeInBar);
-    else topBar.appendChild(searchRow);    
+    topBar.appendChild(searchRow);   
   }
 
   // ➕ My business isn’t listed (below search row, above results list)
@@ -4163,6 +4161,18 @@ function getModalHeaderHelpSpec(target) {
     };
   }
 
+  if (modalId === 'campaign-management-modal') {
+    const campaignMgmtBody = _ownerText(
+      'campaign.ui.help.body',
+      'Create or edit a campaign for this location.\nChanges are saved automatically while you work.\nYour campaign becomes active only after checkout.'
+    );
+
+    return {
+      title: _ownerText('campaign.ui.help.title', 'How it works'),
+      bodyLines: campaignMgmtBody.split(/\n+/).map(s => String(s || '').trim()).filter(Boolean)
+    };
+  }
+
   return {
     title: _ownerText('modal.help.title', 'How it works'),
     bodyLines: []
@@ -4466,7 +4476,6 @@ function createPricingPoliciesModal() {
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
-  attachModalHeaderHelp(top);
 
   const body = document.createElement('div');
   body.className = 'modal-body';
@@ -4652,7 +4661,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   selectedCard.innerHTML = `
     <span class="icon-img" aria-hidden="true">📍</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${t('owner.settings.header.selected') || 'Selected business'}</strong><br>
+      <strong>${_ownerText('owner.settings.header.selected', 'Selected business')}</strong><br>      
       <small>${selectedName}</small><br>
       <small>${selectedId}</small>
     </span>
@@ -4664,7 +4673,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   activeCard.innerHTML = `
     <span class="icon-img" aria-hidden="true">✅</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${t('owner.settings.header.active') || 'Active on this device'}</strong><br>
+      <strong>${_ownerText('owner.settings.header.active', 'Active on this device')}</strong><br>      
       <small>—</small><br>
       <small>—</small>
     </span>
@@ -4813,16 +4822,23 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
         let isMismatch = false;
         let isNeedsAccess = false;
 
+        let activeSlug = String(slug || '').trim();
+        if (!activeSlug && actUlid) {
+          try { activeSlug = String(localStorage.getItem(`navigen.slug:${actUlid}`) || '').trim(); } catch {}
+        }
+
+        const sameByUlid = !!selUlid && !!actUlid && selUlid === actUlid;
+        const sameBySlug = !!selRaw && !!activeSlug && selRaw === activeSlug;
+        const isMatch = hasSelected && hasActive && (sameByUlid || sameBySlug);
+
         // Only evaluate mismatch when a location is explicitly selected
         if (hasSelected) {
           if (!hasActive) {
             isNeedsAccess = true;
-          } else if (selUlid && actUlid && selUlid !== actUlid) {
+          } else if (!isMatch && selUlid && actUlid && selUlid !== actUlid) {
             isMismatch = true;
           }
         }
-
-        const isMatch = hasSelected && hasActive && !!selUlid && selUlid === actUlid;
 
         if (isMismatch || isNeedsAccess) {
           selectedCard.classList.add('os-mismatch');
@@ -5687,8 +5703,8 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     modal = injectModal({
       id,
       title: (typeof t==='function' && t('campaign.ui.title')) || 'Campaign management',
-      bodyHTML: `<div class="modal-body-inner"><div class="campaign-mgmt"></div></div>`,
-      layout: 'action'
+      bodyHTML: `<div class="campaign-mgmt"></div>`,
+      layout: 'menu'
     });
     setupTapOutClose(id);
   }
@@ -5906,12 +5922,9 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   const shell = document.createElement('div');
   shell.className = 'cm-shell';
 
-  // Lead line (top text)
   const lead = document.createElement('div');
   lead.className = 'cm-lead';
-  lead.textContent =
-    (typeof t === 'function' && t('campaign.ui.lead.edit')) ||
-    'Create or edit a campaign for this location. Changes are saved automatically while you work. Your campaign becomes active only after checkout.';
+  lead.style.display = 'none';
 
   let restoredAddedRows = 0;
   try {
