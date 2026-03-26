@@ -1210,6 +1210,17 @@ body.large-text {
 .modal .modal-top-bar h1,
 .modal .modal-top-bar h2,
 .modal .modal-top-bar .modal-title{
+  flex:1 1 auto;
+  min-width:0;
+  margin:0;
+  text-align:left;
+  line-height:1.2;
+  padding-top:2px; /* optical alignment with the help button and close × */
+}
+
+.modal .modal-top-bar h1,
+.modal .modal-top-bar h2,
+.modal .modal-top-bar .modal-title{
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
@@ -1264,36 +1275,27 @@ body.large-text {
 .modal .modal-top-bar .modal-close:hover{ color:#a00; }
 .modal .modal-top-bar .modal-close:focus-visible{ outline:2px solid currentColor; outline-offset:2px; }
 
-/* My Stuff + Select Location: LEFT-align title; keep × on the same top line (right) */
-#my-stuff-modal .modal-top-bar,
+/* Select Location keeps its own header geometry because the search row lives in the top bar */
 #select-location-modal .modal-top-bar{
   display:flex;
   align-items:flex-start;
   justify-content:space-between;
   gap:12px;
-  /* padding/background/border inherit from base block above */
-}
-
-/* Select Location: match body-inner side gutter (1.5em) so the search aligns with cards */
-#select-location-modal .modal-top-bar{
   padding: 16px 1.5em 12px 1.5em; /* same top/bottom as base; side matches .modal-body-inner */
 }
 
-#my-stuff-modal .modal-top-bar h1,
-#my-stuff-modal .modal-top-bar h2,
 #select-location-modal .modal-top-bar h1,
 #select-location-modal .modal-top-bar h2{
-  flex:1 1 auto;     /* take available space */
-  text-align:left;   /* LEFT aligned header */
+  flex:1 1 auto;
+  text-align:left;
   margin:0;
   line-height:1.2;
-  min-width:0;       /* allow wrapping without overflow */
+  min-width:0;
 }
 
-#my-stuff-modal .modal-top-bar .modal-close,
 #select-location-modal .modal-top-bar .modal-close{
   position:static;
-  margin-left:auto;     /* push to far right */
+  margin-left:auto;
   align-self:flex-start;
   white-space:nowrap;
 }
