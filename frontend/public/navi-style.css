@@ -961,15 +961,13 @@ body.large-text {
   --modal-blur: 3px;                    /* same soft blur as LPM to reinforce focus on the modal card */
 }
 
-#my-stuff-modal,
 #help-modal,
 #language-modal,
 #social-modal,
 #alert-modal,
 #pinned-modal,
 #share-location-modal,
-#donation-modal,
-#select-location-modal {
+#donation-modal {
   position: fixed;
   inset: 0;
   display: none;
@@ -983,29 +981,13 @@ body.large-text {
   backdrop-filter: blur(var(--modal-blur));
 }
 
-/* My Stuff: align top gap with LPM while keeping side/bottom padding */
-#my-stuff-modal{
-  padding-top: 16px; /* match base .modal top padding so card opens at the same vertical position as LPM */
-}
-
-/* My Stuff: lift card above bottom gesture area on small screens only */
-@media (max-width: 640px){
-  #my-stuff-modal{
-    padding-bottom: calc(
-      var(--modal-pad) + env(safe-area-inset-bottom, 24px)
-    ); /* base pad + extra bottom room for footer */
-  }
-}
-
-#my-stuff-modal:not(.hidden),
 #help-modal:not(.hidden),
 #language-modal:not(.hidden),
 #social-modal:not(.hidden),
 #alert-modal:not(.hidden),
 #pinned-modal:not(.hidden),
 #share-location-modal:not(.hidden),
-#donation-modal:not(.hidden),
-#select-location-modal:not(.hidden) {
+#donation-modal:not(.hidden) {
   display: flex;
 }
 
@@ -1270,11 +1252,6 @@ body.large-text {
 .modal .modal-top-bar .modal-close:hover{ color:#a00; }
 .modal .modal-top-bar .modal-close:focus-visible{ outline:2px solid currentColor; outline-offset:2px; }
 
-/* Wide-card menu modals share one header gutter inside the common modal platform */
-.modal.modal-wide-menu .modal-top-bar{
-  padding: 16px 16px 12px 1.5em; /* wide-card left gutter, shared close × position */
-}
-
 /* ──────────────── Modal Footer Layout ──────────────── */
 /* Shared footer layout for modals: My Stuff, Share, Alert, Confirm, Resolved, etc. */
 .modal-footer {
@@ -1289,11 +1266,6 @@ body.large-text {
   background: #fff;
   backdrop-filter: none;
   gap: 1em; flex-wrap: wrap;
-}
-
-/* Wide-card menu modals share one footer rhythm inside the common modal platform */
-.modal.modal-wide-menu .modal-footer{
-  padding: 1em 1em 0.75em;
 }
 
 /* ──────────────── Modal Footer Buttons ──────────────── */
@@ -1325,12 +1297,6 @@ body.large-text {
 .modal-footer .modal-footer-button {
   width: auto;
   align-self: center; /* tidy alignment */
-}
-
-/* Select your business keeps the footer as a non-interactive cover band */
-.modal.syb-modal .modal-footer{
-  min-height: 0;
-  pointer-events: none;    /* cover band only; never blocks taps/scroll */
 }
 
 /* compact CTA bar: emoji-only buttons; labels stay for SR */
@@ -1659,73 +1625,6 @@ body.high-contrast .qr-cta{
 .modal-body .location-coords {
   font-size: 1.1em;
   margin-bottom: 1em;
-}
-
-/* ──────────────── My Stuff Menu Cards ──────────────── */
-/* Styled like grouped quick-buttons, but tailored for modal menu use */
-/* Scalable base: can later be driven by dynamic JSON like group-buttons */
-
-.my-stuff-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  margin: 0.5em 0;
-  width: 100%;
-  background: #f8f8f8;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 1rem;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.my-stuff-item:hover {
-  background: #f1f1f1;
-}
-
-.my-stuff-item .icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-}
-
-/* label: allow wrapping within flex so text never spills */
-.my-stuff-item .label {
-  display: flex;
-  flex-direction: column;
-  font-weight: 600;
-  line-height: 1.2;
-  flex: 1 1 auto;          /* use remaining row space */
-  min-width: 0;            /* prevent flex overflow */
-  overflow-wrap: anywhere; /* wrap mid-length words */
-  word-break: break-word;  /* safety for long tokens */
-}
-
-.my-stuff-item .label small {
-  font-weight: 400;
-  opacity: 0.7;
-  font-size: 0.85rem;
-}
-
-/* Wide-card menu modals share one body shell */
-.modal.modal-wide-menu .modal-body{
-  padding: 0;
-  margin-top: 8px;
-  position: relative;
-  padding-inline: 0;
-}
-
-.modal.modal-wide-menu .modal-body-inner{
-  padding: 0 1.5em 0 1.5em;
-}
-
-.modal.modal-wide-menu .modal-body-inner::after{
-  content:"";
-  display:block;
-  height: 3.25em;
-  pointer-events:none;
 }
 
 /* label wrapping (prevents text spill on narrow screens) */
@@ -2503,6 +2402,48 @@ button:hover {
   margin-top: 1.5em;
 }
 
+.modal-form-stack{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.modal-field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.modal-field > label{
+  font-weight:600;
+  text-align:left;
+}
+
+.modal-form-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:12px;
+}
+
+.modal-checkbox-row{
+  display:flex;
+  align-items:center;
+  gap:0.5rem;
+  font-weight:400;
+}
+
+.modal-help-text{
+  font-size:0.85rem;
+  opacity:0.75;
+  text-align:left;
+}
+
+@media (max-width: 520px){
+  .modal-form-grid{
+    grid-template-columns:1fr;
+  }
+}
+
 /* Customer redeem feedback modal must stay above all other modals (LPM, Owner Settings, etc.) */
 #customer-redeem-feedback.modal {
   z-index: 20000;
@@ -2524,39 +2465,6 @@ button:hover {
   gap:.75em;
   width:100%;
   align-items:stretch;
-} /* helper */
-
-/* SYB modal only: search row shorter + ℹ️ pinned right */
-.syb-modal .select-location-search-row{
-  display:flex;              /* ℹ️ becomes a real sibling, not an overlay */
-  align-items:center;
-  gap:10px;                  /* same rhythm as main search row */
-}
-
-.syb-modal .select-location-search-left{
-  flex:1 1 auto;
-  padding-right:0;           /* keep input and × sharing the same box */
-  max-width:none;            /* keep the row full width */
-
-  /* Keep SYB’s shorter input-group width (distinct from main page) */
-  width:72%;
-  position:relative;         /* anchor for the clear × */
-}
-
-.syb-modal .select-location-search-left input{
-  width:100%;
-}
-
-.syb-modal .select-location-info-btn{
-  position:static;           /* sits next to the input-group */
-  flex:0 0 36px;
-  width:36px;
-  height:36px;
-  border-radius:10px;
-  border:1px solid rgba(0,0,0,.08);
-  background:#fff;
-  cursor:pointer;
-  line-height:1;
 }
 
 /* Select your business (SYB) cards: corner affordances (status + gift) */
@@ -2637,6 +2545,44 @@ button:hover {
   display:inline-flex;
   align-items:center;
   justify-content:center;
+}
+
+.modal-menu-item .label{
+  flex:1 1 auto;
+  min-width:0;
+  text-align:left;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.modal-menu-item .label small{
+  font-weight:400;
+  opacity:0.7;
+  font-size:0.85rem;
+}
+
+.modal-menu-item.modal-callout-card{
+  background:#eef6ff;
+  border-color:#93c5fd;
+}
+
+.modal-menu-item.modal-callout-card:hover{
+  background:#e2f0ff;
+  border-color:#60a5fa;
+}
+
+.modal-static-card{
+  cursor:default;
+  align-items:flex-start;
+}
+
+.modal-static-card:hover{
+  background:#f8f8f8;
+}
+
+.modal-footer.modal-footer-cover{
+  min-height:0;
+  pointer-events:none;
 }
 
 .modal-menu-item{
@@ -3760,52 +3706,59 @@ select.input{
 }
 
 /* ==========================================================================
-   Select Location — common wide-menu shell + SYB-specific search-row behavior
+   Select Location — common wide-menu shell + shared header search behavior
    ========================================================================== */
 
-/* Keep the Select Location search row pinned WITHOUT duplicating the input rule.
-   The card (.modal-content) is the scroller, and the header (.modal-top-bar) is sticky at top:0. */
-#select-location-modal .modal-body-inner:has(#select-location-search){
-  position: relative;
-}
-
-/* Select Location: allow the top bar to wrap so the search row can live under the title */
+/* Keep the Select Location search row inside the shared modal header so title, close button,
+   and search all use the same Owner Center shell. */
 #select-location-modal .modal-top-bar{
-  flex-wrap: wrap; /* title + header actions on first line, search on its own line */
+  flex-wrap: wrap;
 }
 
-/* Keep title + header actions on the first row, and force search onto the next full-width row */
 #select-location-modal .modal-top-bar h2{
   order: 1;
 }
+
 #select-location-modal .modal-top-bar .modal-top-actions,
 #select-location-modal .modal-top-bar .modal-close{
   order: 1;
 }
 
-/* Search row lives inside the sticky top bar (full width, below title/actions) */
 #select-location-modal .modal-top-bar .select-location-search-row{
   order: 2;
   flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-top: 8px;
   margin-bottom: 0;
 }
 
-/* Anchor for the absolute clear × inside the input */
 #select-location-modal .select-location-search-left{
   position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  max-width: none;
 }
 
-/* SYB clear × — align to the actual input width (not the wrapper) */
-.syb-modal .select-location-search-left{
-  position: relative;
+#select-location-modal .select-location-search-left input{
+  width: 100%;
 }
 
-.syb-modal #select-location-search{
-  position: relative;
+#select-location-modal .select-location-info-btn{
+  position: static;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: #fff;
+  cursor: pointer;
+  line-height: 1;
 }
 
-.syb-modal .select-location-search-left #select-location-clear-search{
+#select-location-modal .select-location-search-left #select-location-clear-search{
   position: absolute;
   top: 50%;
   right: 10px;
@@ -3814,28 +3767,9 @@ select.input{
   z-index: 11;
 }
 
-/* SYB: action card under search (distinct from location cards) */
-#select-location-modal .modal-menu-item.syb-notlisted{
-  background:#eef6ff;
-  border-color:#93c5fd;
+/* Shared callout card modifier keeps the “not listed” row in the same visual family as Owner Center. */
+#select-location-modal .modal-menu-item.modal-callout-card{
   margin-bottom: 10px;
-}
-
-#select-location-modal .modal-menu-item.syb-notlisted:hover{
-  background:#e2f0ff;
-  border-color:#60a5fa;
-}
-
-/* Owner Center: restore card should look like SYB's first light-blue action card */
-#owner-center-modal .modal-menu-item.owner-center-restore-card{
-  background:#eef6ff;
-  border-color:#93c5fd;
-  margin-bottom:10px;
-}
-
-#owner-center-modal .modal-menu-item.owner-center-restore-card:hover{
-  background:#e2f0ff;
-  border-color:#60a5fa;
 }
 
 body.high-contrast .modal-menu-item.is-active {
@@ -3943,48 +3877,6 @@ body.high-contrast .modal-menu-item.is-active {
   font-weight: 600;
   margin-bottom: 1em;
 }
-
-/* ──────────────── Purchase History Cards ──────────────── */
-/* Used for: Rendering receipt cards inside My Stuff modal */
-/* Mirrors donation-option styling for visual consistency */
-
-.purchase-card {
-  background: #f9f9fc;                  /* 🧊 Soft, clean background */
-  border: 1px solid #e5e7eb;            /* 🪟 Subtle border */
-  border-radius: 12px;                  /* 💫 Rounded edges */
-  padding: 1rem 1.2rem;                 /* 📦 Space inside */
-  margin-bottom: 1rem;                  /* 📏 Space between cards */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04); /* ✨ Soft lift */
-}
-
-.purchase-card:hover {
-  border-color: #1a73e8;
-  box-shadow: 0 2px 6px rgba(26, 115, 232, 0.12);
-}
-
-.purchase-card .subtext {
-  font-size: 0.85rem;
-  font-weight: 400;
-  color: #666;
-}
-
-.purchase-card .timestamp {
-  font-size: 0.8rem;
-  color: #999;
-}
-
-/* ──────────────── Purchase History Container ──────────────── */
-/* Hosts all rendered purchases inside the modal */
-/* Prevents height collapse and ensures cards are displayed */
-
-#purchase-history {
-  display: grid;                    /* ✅ Ensures spacing between purchase cards */
-  grid-template-columns: 1fr;      /* ✅ Single-column layout */
-  gap: 1em;                         /* ✅ Vertical spacing between cards */
-  padding: 1.5em;                   /* ✅ Modal-safe inner spacing */
-  min-height: 100px;               /* ✅ Prevents collapse when cards exist */
-}
-
 
 /* ✅ Make the checkmark blue */
 .form-control input[type="checkbox"]:checked {

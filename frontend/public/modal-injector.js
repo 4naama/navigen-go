@@ -2744,30 +2744,15 @@ export function createSelectLocationModal() {
     id,
     title: (t('root.bo.selectLocation.title') || 'Select your business'),
     layout: 'menu',
-    bodyHTML: ``,
-    modalClassName: 'modal-wide-menu syb-modal'
+    bodyHTML: ``
   });
 
-  // Ensure it's hidden after injection (same pattern used elsewhere)
-  modal.classList.add('hidden');
-
   const topBar = modal.querySelector('.modal-top-bar');
-  if (!topBar) return;
-
-  // Keep CSS sticky offsets in sync with the real rendered header height (no hardcoded px guessing)
-  const ac = new AbortController();
-  const setTopbarHeightVar = () => {
-    modal.style.setProperty('--select-location-topbar-h', `${topBar.offsetHeight}px`);
-  };
-  requestAnimationFrame(setTopbarHeightVar);
-  window.addEventListener('resize', setTopbarHeightVar, { signal: ac.signal });
-
-  topBar.querySelector('.modal-close')?.addEventListener('click', () => {
-    ac.abort(); // cleanup listeners when the modal closes
-  }, { once: true });
-
   const inner = modal.querySelector('.modal-body-inner');
-  if (!inner) return;
+
+  // injectModal already returns the modal hidden by default.
+  // Select your business now uses the shared modal header, so no bespoke sticky-offset sync is needed.
+  if (!topBar || !inner) return;
 
   // Clone the existing root search input for identical styling (fallback to a plain input).
   const rootSearch =
@@ -2779,108 +2764,99 @@ export function createSelectLocationModal() {
     ? rootSearch.cloneNode(true)
     : document.createElement('input');
 
-  input.type = 'search';
-  input.id = 'select-location-search';
-  input.spellcheck = false;
-  input.autocapitalize = 'off';
-  input.autocomplete = 'off';
-  input.value = '';
+  // Ensure it's an input element.
+  const searchInput = input instanceof HTMLInputElement ? input : document.createElement('input');
+  searchInput.type = 'search';
+  searchInput.id = 'select-location-search';
+  searchInput.spellcheck = false;
+  searchInput.autocapitalize = 'off';
+  searchInput.autocomplete = 'off';
+  searchInput.value = '';
+
   // ensure 🔍 prefix (even when i18n provides a string)
   const _ph = (t('root.bo.selectLocation.placeholder') || 'Search here…').trim();
-  input.placeholder = _ph.startsWith('🔍') ? _ph : `🔍 ${_ph}`;
+  searchInput.placeholder = _ph.startsWith('🔍') ? _ph : `🔍 ${_ph}`;
 
-  // Ensure it's an input element
-  if (!(input instanceof HTMLInputElement)) {
-    // fallback
-    const tmp = document.createElement('input');
-    tmp.id = 'select-location-search';
-    tmp.placeholder = t('root.bo.selectLocation.placeholder') || 'Search here…';
-    tmp.autocomplete = 'off';
-    inner.appendChild(tmp);
-  } else {
-    // Search row wrapper so we can:
-    // 1) keep it sticky (search stays put while results scroll)
-    // 2) add the same bordered red clear X affordance as the main shell
-    const searchRow = document.createElement('div');
-    searchRow.className = 'select-location-search-row';
+  // Search row wrapper stays inside the shared modal top bar.
+  const searchRow = document.createElement('div');
+  searchRow.className = 'select-location-search-row';
 
-    // Mirror the main shell structure: a relative wrapper around input + clear button
-    const searchLeft = document.createElement('div');
-    searchLeft.className = 'select-location-search-left';
+  // Mirror the main shell structure: a relative wrapper around input + clear button.
+  const searchLeft = document.createElement('div');
+  searchLeft.className = 'select-location-search-left';
 
-    // clear button (visual + behavior like main shell)
-    const clearBtn = document.createElement('button');
-    clearBtn.type = 'button';
-    clearBtn.className = 'clear-x';
-    clearBtn.id = 'select-location-clear-search';
-    clearBtn.textContent = 'x';
-    clearBtn.style.display = 'none'; // only show when there is content
-    clearBtn.setAttribute('aria-label', 'Clear search');
+  // clear button (visual + behavior like main shell)
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'clear-x';
+  clearBtn.id = 'select-location-clear-search';
+  clearBtn.textContent = 'x';
+  clearBtn.style.display = 'none';
+  clearBtn.setAttribute('aria-label', 'Clear search');
 
-    // Build row: [ input + clear ]
-    searchLeft.appendChild(input);
-    searchLeft.appendChild(clearBtn);
-    searchRow.appendChild(searchLeft);
+  // Build row: [ input + clear ]
+  searchLeft.appendChild(searchInput);
+  searchLeft.appendChild(clearBtn);
+  searchRow.appendChild(searchLeft);
 
-    // ℹ️ legend (dot meanings + 🎁)
-    const infoBtn = document.createElement('button');
-    infoBtn.type = 'button';
-    infoBtn.className = 'select-location-info-btn';
-    infoBtn.textContent = 'ℹ️';
-    infoBtn.setAttribute('aria-label', 'Info');
+  // ℹ️ legend (dot meanings + 🎁)
+  const infoBtn = document.createElement('button');
+  infoBtn.type = 'button';
+  infoBtn.className = 'select-location-info-btn';
+  infoBtn.textContent = 'ℹ️';
+  infoBtn.setAttribute('aria-label', 'Info');
 
-    infoBtn.addEventListener('click', () => {
-      const msg = [
-        '🔴 Taken',
-        'Already operated.',
-        '',
-        '🟢 Free',
-        'Available.',
-        '',
-        '🔵 Still visible',
-        'Courtesy/hold.',
-        '',
-        '🟠 Parked',
-        'Inactive.',
-        '',
-        '🎁 Promoted',
-        'Active campaign.'
-      ].join('\n');
+  infoBtn.addEventListener('click', () => {
+    const msg = [
+      '🔴 Taken',
+      'Already operated.',
+      '',
+      '🟢 Free',
+      'Available.',
+      '',
+      '🔵 Still visible',
+      'Courtesy/hold.',
+      '',
+      '🟠 Parked',
+      'Inactive.',
+      '',
+      '🎁 Promoted',
+      'Active campaign.'
+    ].join('\n');
 
-      showToast(String(msg).replace(/\\n/g, '\n'), 5000);
-    });
+    showToast(String(msg).replace(/\\n/g, '\n'), 5000);
+  });
 
-    searchRow.appendChild(infoBtn);
+  searchRow.appendChild(infoBtn);
 
-    // Behavior: show/hide X and clear value
+  // Behavior: show/hide X and clear value
+  const syncClear = () => {
+    const hasValue = !!String(searchInput.value || '').trim();
+    clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
+  };
 
-    const syncClear = () => {
-      const hasValue = !!String(input.value || '').trim();
-      clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
-    };
-    input.addEventListener('input', syncClear);
+  searchInput.addEventListener('input', syncClear);
 
-    clearBtn.addEventListener('click', () => {
-      input.value = '';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.focus();
-      syncClear();
-    });
-
-    // initial state
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    searchInput.focus();
     syncClear();
-    
-    // Insert the search row into the sticky top bar so it never scrolls with the list
-    topBar.appendChild(searchRow);   
-  }
+  });
+
+  // initial state
+  syncClear();
+
+  // Insert the search row into the shared top bar so it aligns with Owner Center.
+  topBar.appendChild(searchRow);
 
   // ➕ My business isn’t listed (below search row, above results list)
   const notListedBtn = document.createElement('button');
   notListedBtn.type = 'button';
-  notListedBtn.className = 'modal-menu-item syb-notlisted';
+  notListedBtn.className = 'modal-menu-item modal-callout-card';
   notListedBtn.innerHTML = `
     <span class="icon-img">➕</span>
-    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+    <span class="label">
       <strong>${t('root.bo.notListed.title') || 'Create a location'}</strong><br>
       <small>${t('root.bo.notListed.desc') || 'Add your business.'}</small>
     </span>
@@ -2898,11 +2874,10 @@ export function createSelectLocationModal() {
   list.className = 'modal-menu-list';
   inner.appendChild(list);
 
-  // SYB: add a sticky bottom cover band (same concept as My Stuff footer)
-  // Keep it non-interactive so it never blocks taps/scroll.
+  // Select Location keeps a shared footer cover band so long result lists finish cleanly.
   if (!modal.querySelector('.modal-footer')) {
     const footer = document.createElement('div');
-    footer.className = 'modal-footer';
+    footer.className = 'modal-footer modal-footer-cover';
     footer.setAttribute('aria-hidden', 'true');
     modal.querySelector('.modal-content')?.appendChild(footer);
   }
@@ -3169,7 +3144,7 @@ export async function showSelectLocationModal() {
   };
 
   render('');
-  if (input) input.addEventListener('input', () => render(input.value));
+  if (input) input.oninput = () => render(input.value);
 
   return await new Promise((resolve) => {
     const tick = setInterval(() => {
@@ -3952,161 +3927,146 @@ export function createRequestListingModal() {
   const id = 'request-listing-modal';
   document.getElementById(id)?.remove();
 
-  const wrap = document.createElement('div');
-  wrap.className = 'modal hidden';
-  wrap.id = id;
+  // Shared modal shell + shared footer buttons; no bespoke wrapper/header/footer.
+  const modal = injectModal({
+    id,
+    title: t('modal.requestListing.title') || 'Request a listing',
+    layout: 'menu',
+    bodyHTML: `
+      <div class="modal-form-stack">
+        <p class="muted muted-note">Use this when your business does not appear in Select your business.</p>
 
-  const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
+        <div class="modal-field">
+          <label for="rl-name">Business name *</label>
+          <input id="rl-name" class="input" type="text" maxlength="80" />
+        </div>
 
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  top.innerHTML = `
-    <h2 class="modal-title">${t('modal.requestListing.title') || 'Request a listing'}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+        <div class="modal-field">
+          <label for="rl-address">Street address *</label>
+          <input id="rl-address" class="input" type="text" maxlength="120" />
+        </div>
 
-  const body = document.createElement('div');
-  body.className = 'modal-body';
-  const inner = document.createElement('div');
-  inner.className = 'modal-body-inner';
+        <div class="modal-form-grid">
+          <div class="modal-field">
+            <label for="rl-city">City *</label>
+            <input id="rl-city" class="input" type="text" maxlength="60" />
+          </div>
+          <div class="modal-field">
+            <label for="rl-country">Country code *</label>
+            <input id="rl-country" class="input" type="text" maxlength="2" placeholder="HU" />
+          </div>
+        </div>
 
-  inner.innerHTML = `
-    <label style="display:block;margin:0.5rem 0 0.25rem;">Business name *</label>
-    <input id="rl-name" type="text" maxlength="80"
-      style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+        <div class="modal-field">
+          <label for="rl-link">Optional: Website or Google Maps link</label>
+          <input id="rl-link" class="input" type="text" maxlength="200" />
+        </div>
 
-    <label style="display:block;margin:0.75rem 0 0.25rem;">Street address *</label>
-    <input id="rl-address" type="text" maxlength="120"
-      style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+        <div class="modal-field">
+          <label class="modal-checkbox-row" for="rl-has-coord">
+            <input id="rl-has-coord" type="checkbox" />
+            <span>Optional: I have coordinates</span>
+          </label>
 
-    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-      <div style="flex:1 1 12rem;min-width:12rem;">
-        <label style="display:block;margin:0.75rem 0 0.25rem;">City *</label>
-        <input id="rl-city" type="text" maxlength="60"
-          style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+          <div id="rl-coord-wrap" class="modal-field hidden">
+            <label for="rl-coord">Coordinates (lat,lng) — 6 decimals</label>
+            <input id="rl-coord" class="input" type="text" placeholder="47.497900,19.040200" />
+            <small class="modal-help-text">Tip: you can copy this from Google Maps.</small>
+          </div>
+        </div>
       </div>
-      <div style="flex:1 1 10rem;min-width:10rem;">
-        <label style="display:block;margin:0.75rem 0 0.25rem;">Country code *</label>
-        <input id="rl-country" type="text" maxlength="2" placeholder="HU"
-          style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);text-transform:uppercase;" />
-      </div>
-    </div>
+    `,
+    footerButtons: [
+      {
+        id: 'request-listing-cancel',
+        label: t('common.cancel') || 'Cancel',
+        className: 'modal-footer-button',
+        onClick: () => hideModal(id)
+      },
+      {
+        id: 'request-listing-submit',
+        label: t('modal.requestListing.submit') || 'Send request',
+        className: 'modal-footer-button',
+        onClick: async () => {
+          const name = String(modal.querySelector('#rl-name')?.value || '').trim();
+          const address = String(modal.querySelector('#rl-address')?.value || '').trim();
+          const city = String(modal.querySelector('#rl-city')?.value || '').trim();
+          const country = String(modal.querySelector('#rl-country')?.value || '').trim().toUpperCase();
+          const link = String(modal.querySelector('#rl-link')?.value || '').trim();
+          const coord = String(modal.querySelector('#rl-coord')?.value || '').trim();
 
-    <label style="display:block;margin:0.75rem 0 0.25rem;">Optional: Website or Google Maps link</label>
-    <input id="rl-link" type="text" maxlength="200"
-      style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
+          if (!name || !address || !city || !country || country.length !== 2) {
+            showToast('Please provide name, street address, city, and 2-letter country code.', 2200);
+            return;
+          }
 
-    <div style="margin-top:0.75rem;">
-      <label style="display:flex;align-items:center;gap:0.5rem;">
-        <input id="rl-has-coord" type="checkbox" />
-        <span>Optional: I have coordinates</span>
-      </label>
-      <div id="rl-coord-wrap" style="display:none;margin-top:0.5rem;">
-        <label style="display:block;margin:0 0 0.25rem;">Coordinates (lat,lng) — 6 decimals</label>
-        <input id="rl-coord" type="text" placeholder="47.497900,19.040200"
-          style="width:100%;padding:0.6rem;border-radius:8px;border:1px solid rgba(0,0,0,0.15);" />
-        <small style="opacity:0.75;display:block;margin-top:0.25rem;">Tip: you can copy this from Google Maps.</small>
-      </div>
-    </div>
-  `;
+          // Normalize name for admin handling (no slug creation here)
+          const nameNorm = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s\-\&\.']/gi, '')      // keep common business punctuation (ASCII-safe after NFD)
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 80);
 
-  inner.querySelector('#rl-has-coord')?.addEventListener('change', (e) => {
-    const on = !!e.target?.checked;
-    const w = inner.querySelector('#rl-coord-wrap');
-    if (w) w.style.display = on ? 'block' : 'none';
+          // Optional coords validation (if provided)
+          let coordNorm = '';
+          if (coord) {
+            const m = coord.match(/^\s*(-?\d+(?:\.\d{1,6})?)\s*,\s*(-?\d+(?:\.\d{1,6})?)\s*$/);
+            if (!m) {
+              showToast('Coordinates must be "lat,lng" with up to 6 decimals.', 2200);
+              return;
+            }
+            const lat = Number(m[1]);
+            const lng = Number(m[2]);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+              showToast('Coordinates are out of range.', 2200);
+              return;
+            }
+            coordNorm = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+          }
+
+          // Manual pipeline: store locally for now; admin can copy out later.
+          try {
+            const key = 'navigen.requestListing';
+            const arr = JSON.parse(localStorage.getItem(key) || '[]');
+            const next = Array.isArray(arr) ? arr : [];
+            next.unshift({
+              name,
+              nameNorm,
+              address,
+              city,
+              country,
+              link,
+              coord: coordNorm,
+              ts: Date.now()
+            });
+            localStorage.setItem(key, JSON.stringify(next));
+          } catch {}
+
+          showToast(t('modal.requestListing.success') || 'Thanks! We’ll add your listing soon.', 2500);
+          hideModal(id);
+        }
+      }
+    ]
   });
 
-  body.appendChild(inner);
-
-  const actions = document.createElement('div');
-  actions.className = 'modal-footer';
-
-  const send = document.createElement('button');
-  send.className = 'modal-footer-button';
-  send.type = 'button';
-  send.textContent = t('modal.requestListing.submit') || 'Send request';
-
-  send.addEventListener('click', async () => {
-    const name = String(document.getElementById('rl-name')?.value || '').trim();
-    const address = String(document.getElementById('rl-address')?.value || '').trim();
-    const city = String(document.getElementById('rl-city')?.value || '').trim();
-    const country = String(document.getElementById('rl-country')?.value || '').trim().toUpperCase();
-    const link = String(document.getElementById('rl-link')?.value || '').trim();
-    const coord = String(document.getElementById('rl-coord')?.value || '').trim();
-
-    if (!name || !address || !city || !country || country.length !== 2) {
-      showToast('Please provide name, street address, city, and 2-letter country code.', 2200);
-      return;
-    }
-
-    // Normalize name for admin handling (no slug creation here)
-    const nameNorm = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-z0-9\s\-\&\.\']/gi, '')      // keep common business punctuation (ASCII-safe after NFD)
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 80);
-
-    // Optional coords validation (if provided)
-    let coordNorm = '';
-    if (coord) {
-      const m = coord.match(/^\s*(-?\d+(?:\.\d{1,6})?)\s*,\s*(-?\d+(?:\.\d{1,6})?)\s*$/);
-      if (!m) {
-        showToast('Coordinates must be "lat,lng" with up to 6 decimals.', 2200);
-        return;
-      }
-      const lat = Number(m[1]), lng = Number(m[2]);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-        showToast('Coordinates are out of range.', 2200);
-        return;
-      }
-      coordNorm = `${lat.toFixed(6)},${lng.toFixed(6)}`;
-    }
-
-    // Manual pipeline: store locally for now; admin can copy out later.
-    try {
-      const key = 'navigen.requestListing';
-      const arr = JSON.parse(localStorage.getItem(key) || '[]');
-      const next = Array.isArray(arr) ? arr : [];
-      next.unshift({
-        name,
-        nameNorm,
-        address,
-        city,
-        country,
-        link,
-        coord: coordNorm,
-        ts: Date.now()
-      });
-      localStorage.setItem(key, JSON.stringify(next));
-    } catch {}
-
-    showToast(t('modal.requestListing.success') || 'Thanks! We’ll add your listing soon.', 2500);
-    hideModal(id);
+  const countryInput = modal.querySelector('#rl-country');
+  countryInput?.addEventListener('input', (e) => {
+    e.target.value = String(e.target.value || '').toUpperCase();
   });
 
-  const cancel = document.createElement('button');
-  cancel.className = 'modal-footer-button';
-  cancel.type = 'button';
-  cancel.textContent = t('common.cancel') || 'Cancel';
-  cancel.addEventListener('click', () => hideModal(id));
-
-  actions.appendChild(cancel);
-  actions.appendChild(send);
-
-  card.appendChild(top);
-  card.appendChild(body);
-  card.appendChild(actions);
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
+  const coordToggle = modal.querySelector('#rl-has-coord');
+  const coordWrap = modal.querySelector('#rl-coord-wrap');
+  coordToggle?.addEventListener('change', (e) => {
+    coordWrap?.classList.toggle('hidden', !e.target?.checked);
+  });
 
   setupTapOutClose(id);
 }
 
 export function showRequestListingModal() {
   const id = 'request-listing-modal';
-  if (!document.getElementById(id)) createRequestListingModal();
+  document.getElementById(id)?.remove();
+  createRequestListingModal();
   showModal(id);
 }
 
@@ -5285,7 +5245,7 @@ export async function createOwnerCenterModal() {
   // 🔑 Restore owner access (Owner center secondary action)
   const restoreBtn = document.createElement('button');
   restoreBtn.type = 'button';
-  restoreBtn.className = 'modal-menu-item owner-center-restore-card';
+  restoreBtn.className = 'modal-menu-item modal-callout-card';
   restoreBtn.innerHTML = `
     <span class="icon-img">🔑</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
@@ -7919,53 +7879,24 @@ export function showRedeemInvalidModal({
  *   createMyStuffModal();
  */
 export function createMyStuffModal() {
-  injectModal({
+  document.getElementById('my-stuff-modal')?.remove();
+
+  const modal = injectModal({
     id: 'my-stuff-modal',
-    title: t("My Stuff") || 'My Stuff',
+    title: t('My Stuff') || 'My Stuff',
     layout: 'menu',
-    bodyHTML: `<div id="my-stuff-body"></div>`,
-    modalClassName: 'modal-wide-menu'
+    bodyHTML: `<div id="my-stuff-body"></div>`
   });
 
-  const modal = document.getElementById('my-stuff-modal');
-
-  // ✅ Ensure it's hidden after injection
-  modal.classList.add('hidden');
-  
-  // Ensure My Stuff always has a footer container (even with no buttons)
-  let actions = modal.querySelector('.modal-footer');  // keep same class for CSS
+  // Ensure My Stuff always has a footer container, even when a given state renders no buttons.
+  let actions = modal.querySelector('.modal-footer');
   if (!actions) {
     actions = document.createElement('div');
     actions.className = 'modal-footer';
     modal.querySelector('.modal-content')?.appendChild(actions);
-  }    
-
-  // ✅ Store all ".my-stuff-item" elements for later use
-  myStuffItems = Array.from(modal.querySelectorAll('.my-stuff-item'));
-
-  // ✅ Inject static Purchase History list (Phase 1)
-  const historyContainer = document.createElement("div");
-  historyContainer.id = "purchase-history"; // ✅ restore canonical ID
-  historyContainer.style = "margin-top: 1rem; padding: 0 1rem; font-size: 15px;";
-  modal.querySelector("#my-stuff-body")?.appendChild(historyContainer);
-
-  const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
-
-  if (purchases.length === 0) {
-    historyContainer.innerHTML = "<p style='opacity:0.6;'>No purchases yet.</p>";
-  } else {
-    purchases.sort((a, b) => b.timestamp - a.timestamp); // newest first
-    purchases.forEach(p => {
-      const div = document.createElement("div");
-      div.style = "background:#fff;padding:1rem;margin-bottom:12px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06);";
-      div.innerHTML = `
-        <div style="font-size:20px;">${p.icon}</div>
-        <div style="font-weight:600;margin-top:4px;">${p.label}</div>
-        <div style="font-size:14px;opacity:0.8;">${p.subtext}</div>
-      `;
-      historyContainer.appendChild(div);
-    });
   }
+
+  actions.innerHTML = '';
 }
 
 /* Favorites Modal (FM): list saved locations with open/unsave */
@@ -8000,7 +7931,7 @@ export function createPromotionsModal() {
   });
 
   modal.classList.add("hidden");
-  modal.classList.add("syb-modal");
+  // removed: promotions stays on the shared modal platform only
 
   const topBar = document.createElement("div");
   topBar.className = "modal-top-bar";
@@ -8451,343 +8382,330 @@ export function showFavoritesModal() {
  * Supports multiple states like "menu", "purchases", "language", etc.
  * Injects the right content per state.
 */
-  export async function showMyStuffModal(state) {
-      if (!state) return;
+export async function showMyStuffModal(state) {
+  if (!state) return;
 
-      if (!document.getElementById("my-stuff-modal")) {
-        createMyStuffModal();
+  if (!document.getElementById('my-stuff-modal')) {
+    createMyStuffModal();
+  }
+
+  const modal = document.getElementById('my-stuff-modal');
+  const title = modal?.querySelector('.modal-top-bar .modal-title');
+  const body = modal?.querySelector('#my-stuff-body');
+
+  // Footer exists from injection; grab it or recreate defensively.
+  let actions = modal?.querySelector('.modal-footer');
+  if (modal && !actions) {
+    actions = document.createElement('div');
+    actions.className = 'modal-footer';
+    modal.querySelector('.modal-content')?.appendChild(actions);
+  }
+
+  if (!modal || !title || !body || !actions) {
+    console.warn('❌ Missing myStuffModal structure.');
+    return;
+  }
+
+  const setFooterButtons = (buttons = []) => {
+    actions.innerHTML = buttons.map((btn) => `
+      <button class="${btn.className || 'modal-footer-button'}" id="${btn.id}">${btn.label}</button>
+    `).join('');
+
+    buttons.forEach((btn) => {
+      actions.querySelector(`#${btn.id}`)?.addEventListener('click', btn.onClick);
+    });
+  };
+
+  const setResolvedFooter = (label = (t('modal.done.resolved') || 'Resolved')) => {
+    setFooterButtons([
+      {
+        id: 'my-stuff-resolved-button',
+        label,
+        className: 'modal-footer-button',
+        onClick: () => hideModal('my-stuff-modal')
       }
+    ]);
+  };
 
-      const modal = document.getElementById("my-stuff-modal");
+  if (state === 'menu') {
+    title.textContent = t('My Stuff') || 'My Stuff';
+    body.innerHTML = ''; // clear body before injecting
 
-      
-      const title = modal.querySelector(".modal-top-bar .modal-title");      
-      const body = modal.querySelector("#my-stuff-body");
+    const list = document.createElement('div');
+    list.className = 'modal-menu-list';
 
-      if (state === "purchases") {
-        title.textContent = "My Purchase History"; // or t("purchaseHistory.title")
+    myStuffItems.forEach((item) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'modal-menu-item';
 
-        // ✅ Clear previous content
-        body.innerHTML = "";
+      btn.innerHTML = `
+        <span class="icon-img" aria-hidden="true">${item.icon}</span>
+        <span class="label">
+          <strong>${item.title}</strong><br>
+          <small>${item.desc}</small>
+        </span>
+      `;
 
-        // ✅ Create and insert the container expected by renderPurchaseHistory
-        const purchaseContainer = document.createElement("div");
-        purchaseContainer.id = "purchase-history";
-        body.appendChild(purchaseContainer);
-
-        renderPurchaseHistory(); // ✅ Fill with receipts from localStorage
-        return;
-      }
-      
-      // Footer exists from injection; just grab it
-      const actions = modal.querySelector('.modal-footer');
-
-      if (!modal || !title || !body || !actions) {
-        console.warn("❌ Missing myStuffModal structure.");
-        return;
-      }
-
-      if (state === "menu") {
-        title.textContent = "My Stuff";
-        body.innerHTML = ""; // clear body before injecting
-
-        myStuffItems.forEach(item => {
-          const btn = document.createElement("button");
-          btn.className = "my-stuff-item modal-menu-item";
-
-          btn.innerHTML = `
-            <span class="icon">${item.icon}</span>
-            <div class="label">${item.title}<br><small>${item.desc}</small></div>
-          `;
-
-          btn.addEventListener("click", () => {
-            showMyStuffModal(item.view);
-          });
-
-          body.appendChild(btn);
-        });
-
-        actions.innerHTML = '';
-        
-      } else {
-        const item = myStuffItems.find(i => i.view === state);
-        if (!item) return;
-
-        title.innerHTML = `${item.title}`;
-        
-        modal.classList.remove("modal-menu", "modal-social", "modal-action", "modal-alert");
-        modal.classList.add("modal-language");
-        
-        if (item.view === "interests") {
-          modal.classList.remove("modal-menu", "modal-language", "modal-action", "modal-alert");
-          modal.classList.add("modal-social");
-
-          body.innerHTML = `
-            <div class="modal-social-body">
-              <p class="muted">Select topics you care about:</p>
-              <div class="community-grid">
-                <button class="community-button">🏆 Vote</button>
-                <button class="community-button">💫 Wish</button>
-                <button class="community-button">🧳 Lost</button>
-                <button class="community-button">📍 Track</button>
-                <button class="community-button">❓ Quizzy</button>
-              </div>
-              <p>*All features coming soon</p>
-            </div>
-          `;
-
-          // ✅ Just call footer button appender like others
-          appendResolvedButton(actions, "my-stuff-modal");
-        }
-                  
-        if (item.view === "language") {
-          body.innerHTML = `<div class="modal-language-body flag-list"></div>`;
-          const flagList = body.querySelector(".flag-list");
-
-          const allFlags = [
-            "GB", "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE",
-            "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS",
-            "NO", "CH", "TR", "IL", "RU", "UA", "CN", "SA", "IN", "KR", "JP"
-          ];
-
-          // You can expand this list as translations become available
-          const currentLang = localStorage.getItem("lang") || "en";
-          
-          let availableLangs = new Set(["en", "de", "fr", "hu"]); // fallback
-          availableLangs = await fetchTranslatedLangs();
-
-          allFlags.forEach(code => {
-            const img = document.createElement("img");
-            img.src = `/assets/flags/${code}.svg`;
-            img.alt = code;
-            img.title = code;
-            img.className = "flag";
-            img.style.width = "40px";
-            img.style.height = "40px";
-            img.style.margin = "4px";
-            img.style.borderRadius = "4px";
-            img.style.transition = "transform 0.2s ease, box-shadow 0.2s ease";
-
-            // Lookup language from country code
-            const langCode = getLangFromCountry(code);
-            const isAvailable = availableLangs.has(langCode);
-
-            if (isAvailable) {
-              img.style.cursor = "pointer";
-
-              // Persist choice and navigate to the path-locale; drop ?lang, keep other params/hash.
-              img.addEventListener("click", (e) => {
-                e.stopPropagation();
-                localStorage.setItem("lang", langCode); // save for future visits
-
-                const parts = location.pathname.split("/").filter(Boolean);
-                const hasPrefix = /^[a-z]{2}$/.test(parts[0]);
-                const rest = "/" + (hasPrefix ? parts.slice(1).join("/") : parts.join("/")); // "/" or "/path"
-
-                const target =
-                  langCode === "en"
-                    ? (rest === "/" ? "/" : rest)                 // EN lives at root
-                    : `/${langCode}${rest === "/" ? "" : rest}`;  // others are prefixed
-
-                const qs = new URLSearchParams(location.search);
-                qs.delete("lang");                                 // avoid duplicates
-                const query = qs.toString() ? `?${qs}` : "";
-
-                location.href = `${target}${query}${location.hash || ""}`;
-              });
-
-            } else {
-              img.style.opacity = "0.4";
-              img.style.pointerEvents = "none";
-              img.style.cursor = "default";
-            }            
-
-            flagList.appendChild(img);
-          });    
-
-          flagStyler();
-          
-        }
-
-      else if (item.view === "purchases") {
-        modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
-        modal.classList.add("modal-action");
-
-        body.innerHTML = `
-          <div id="purchase-history"></div>
-        `;
-
-        actions.innerHTML = `
-          <button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>
-        `;
-
-        document.getElementById("my-stuff-resolved-button")?.addEventListener("click", () => {
-          hideModal("my-stuff-modal");
-        });
-
-        renderPurchaseHistory(); // ✅ Called AFTER container is ready
-      }
-
-      else if (item.view === "location-history") {
-        modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
-        modal.classList.add("modal-action");
-
-        // 🧱 Modal body container
-        body.innerHTML = `
-          <div id="location-history"></div>
-        `;
-
-        // ✅ Footer with correct style (no body buttons!)
-        actions.innerHTML = `
-          <div class="modal-footer">
-            <button class="modal-footer-button" id="my-stuff-location-close">
-              ${t("modal.mystuff.resolved")}
-            </button>
-          </div>
-        `;
-
-        // Add resolved button into #my-stuff-modal only if not already added
-        appendResolvedButton(actions, "my-stuff-modal");
-
-
-        // 🧹 Close modal on button click
-        const closeBtn = document.getElementById("my-stuff-location-close");
-        if (closeBtn) {
-          closeBtn.addEventListener("click", () => {
-            hideModal("my-stuff-modal");
-          });
-        }
-
-        renderLocationHistory(); // 📍 Inject saved locations or empty state
-      }
-
-      else if (item.view === "reset") {
-        modal.classList.remove("modal-menu", "modal-language", "modal-action", "modal-alert");
-        modal.classList.add("modal-action");
-
-        body.innerHTML = `
-          <p>This will clear your settings and restart the app.</p>
-          <p>This action cannot be undone.</p>
-          <div class="modal-actions">
-            <button class="modal-body-button" id="reset-confirm">✅ Reset</button>
-            <button class="modal-body-button" id="reset-cancel">❌ Cancel</button>
-          </div>
-        `;
-
-        document.getElementById("reset-confirm")?.addEventListener("click", () => {
-          localStorage.clear();
-          // Route using current <html lang>; drop ?lang, keep others.
-          const currentLang = (document.documentElement.lang || "en").toLowerCase();
-          const parts = location.pathname.split("/").filter(Boolean);
-          const hasPrefix = /^[a-z]{2}$/.test(parts[0]);
-          const rest = "/" + (hasPrefix ? parts.slice(1).join("/") : parts.join("/"));
-
-          const target = currentLang === "en"
-            ? (rest === "/" ? "/" : rest)
-            : `/${currentLang}${rest === "/" ? "" : rest}`;
-
-          const qs = new URLSearchParams(location.search);
-          qs.delete("lang");
-          const query = qs.toString() ? `?${qs}` : "";
-          location.href = `${target}${query}${location.hash || ""}`;
-        });
-
-        document.getElementById("reset-cancel")?.addEventListener("click", () => {
-          hideModal("my-stuff-modal");
-        });
-      }
-
-      else if (item.view === "data") {
-        modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
-        modal.classList.add("modal-action");
-
-        body.innerHTML = `
-          <p>${t("myStuff.data.bodyIntro")}</p>
-          <p>${t("myStuff.data.includes")}</p>
-          <ul>
-            <li>${t("myStuff.data.item.purchase")}</li>
-            <li>${t("myStuff.data.item.language")}</li>
-            <li>${t("myStuff.data.item.location")}</li>
-          </ul>
-          <p class="modal-warning">⚠️ ${t("myStuff.data.warning")}</p>
-          <p>${t("myStuff.data.resetPrompt")}</p>
-          <div class="modal-actions">
-            <a href="/assets/docs/navigen-privacy-policy.pdf" target="_blank" class="modal-body-button">
-              📄 ${t("myStuff.data.viewPolicy")}
-            </a>
-          </div>
-        `;
-
-        appendResolvedButton(actions, "my-stuff-modal");
-      }
-
-
-      else if (item.view === "terms") {
-        modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
-        modal.classList.add("modal-action");
-
-        body.innerHTML = `
-          <p>${t("myStuff.terms.body")}</p>
-          <div class="modal-actions">
-            <a href="/assets/docs/navigen-terms.pdf" target="_blank" class="modal-body-button">
-              📄 ${t("myStuff.terms.viewFull")}
-            </a>
-          </div>
-        `;
-
-        // Add resolved button into #my-stuff-modal only if not already added
-        appendResolvedButton(actions, "my-stuff-modal");
-      }
-
-      else if (item.view === "no-miss") {
-        modal.classList.remove("modal-menu", "modal-language", "modal-alert", "modal-social");
-        modal.classList.add("modal-action");
-
-        body.innerHTML = `
-          <div class="no-miss-section">
-            <div class="no-miss-block">
-              <div class="no-miss-title">📌 ${t("noMiss.install.title")}</div>
-              <div class="no-miss-body">${t("noMiss.install.body")}</div>
-            </div>
-
-            <div class="no-miss-block">
-              <div class="no-miss-title">💡 ${t("noMiss.refresh.title")}</div>
-              <div class="no-miss-body">
-                ${t("noMiss.refresh.bodyStart")}
-                <span class="inline-icon logo-icon"></span>
-                ${t("noMiss.refresh.bodyEnd")}
-                <br>🌀 ${t("noMiss.refresh.relax")}
-              </div>
-            </div>
-
-            <div class="no-miss-block">
-              <div class="no-miss-title">👋 ${t("noMiss.support.title")}</div>
-              <div class="no-miss-body">${t("noMiss.support.body")}</div>
-            </div>
-
-            <div class="no-miss-thanks">
-              🎉 ${t("noMiss.thanks")}
-            </div>
-          </div>
-        `;
-
-        appendResolvedButton(actions, "my-stuff-modal");
-      }
-
-        const viewsWithResolved = ["interests", "purchases", "location-history", "language", "social", "reset", "data", "terms", "no-miss"];
-        actions.innerHTML = viewsWithResolved.includes(state)
-          ? `<button class="modal-footer-button" id="my-stuff-resolved-button">${t("modal.done.resolved")}</button>`
-          : '';
-      }
-
-      // Add close behavior
-      const resolvedBtn = document.getElementById("my-stuff-resolved-button");
-      actions.querySelector('#my-stuff-resolved-button')?.addEventListener('click', () => {
-        hideModal("my-stuff-modal");
+      btn.addEventListener('click', () => {
+        showMyStuffModal(item.view);
       });
 
-      showModal("my-stuff-modal");
-    };
+      list.appendChild(btn);
+    });
+
+    body.appendChild(list);
+    actions.innerHTML = '';
+    showModal('my-stuff-modal');
+    return;
+  }
+
+  const item = myStuffItems.find((i) => i.view === state);
+  if (!item) return;
+
+  title.textContent = item.title;
+  body.innerHTML = '';
+  actions.innerHTML = '';
+
+  if (state === 'interests') {
+    body.innerHTML = `
+      <div class="modal-form-stack">
+        <p class="muted muted-note">Select topics you care about:</p>
+        <div class="community-grid">
+          <button class="community-button">🏆 Vote</button>
+          <button class="community-button">💫 Wish</button>
+          <button class="community-button">🧳 Lost</button>
+          <button class="community-button">📍 Track</button>
+          <button class="community-button">❓ Quizzy</button>
+        </div>
+        <p class="muted muted-note">*All features coming soon</p>
+      </div>
+    `;
+
+    setResolvedFooter();
+    showModal('my-stuff-modal');
+    return;
+  }
+
+  if (state === 'language') {
+    body.innerHTML = `<div class="flag-list"></div>`;
+    const flagList = body.querySelector('.flag-list');
+
+    const allFlags = [
+      'GB', 'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE',
+      'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS',
+      'NO', 'CH', 'TR', 'IL', 'RU', 'UA', 'CN', 'SA', 'IN', 'KR', 'JP'
+    ];
+
+    // You can expand this list as translations become available.
+    let availableLangs = new Set(['en', 'de', 'fr', 'hu']); // fallback
+    availableLangs = await fetchTranslatedLangs();
+
+    allFlags.forEach((code) => {
+      const img = document.createElement('img');
+      img.src = `/assets/flags/${code}.svg`;
+      img.alt = code;
+      img.title = code;
+      img.className = 'flag';
+      img.style.width = '40px';
+      img.style.height = '40px';
+      img.style.margin = '4px';
+      img.style.borderRadius = '4px';
+      img.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+
+      // Lookup language from country code
+      const langCode = getLangFromCountry(code);
+      const isAvailable = availableLangs.has(langCode);
+
+      if (isAvailable) {
+        img.style.cursor = 'pointer';
+
+        // Persist choice and navigate to the path-locale; drop ?lang, keep other params/hash.
+        img.addEventListener('click', (e) => {
+          e.stopPropagation();
+          localStorage.setItem('lang', langCode); // save for future visits
+
+          const parts = location.pathname.split('/').filter(Boolean);
+          const hasPrefix = /^[a-z]{2}$/.test(parts[0]);
+          const rest = '/' + (hasPrefix ? parts.slice(1).join('/') : parts.join('/'));
+
+          const target =
+            langCode === 'en'
+              ? (rest === '/' ? '/' : rest)
+              : `/${langCode}${rest === '/' ? '' : rest}`;
+
+          const qs = new URLSearchParams(location.search);
+          qs.delete('lang');
+          const query = qs.toString() ? `?${qs}` : '';
+
+          location.href = `${target}${query}${location.hash || ''}`;
+        });
+      } else {
+        img.style.opacity = '0.4';
+        img.style.pointerEvents = 'none';
+        img.style.cursor = 'default';
+      }
+
+      flagList?.appendChild(img);
+    });
+
+    flagStyler();
+    setResolvedFooter();
+    showModal('my-stuff-modal');
+    return;
+  }
+
+  if (state === 'social') {
+    body.innerHTML = `
+      <div class="modal-form-stack">
+        <p>${item.desc}</p>
+      </div>
+    `;
+
+    setResolvedFooter();
+    showModal('my-stuff-modal');
+    return;
+  }
+
+  if (state === 'purchases') {
+    body.innerHTML = `<div id="purchase-history" class="modal-menu-list"></div>`;
+    renderPurchaseHistory(); // Fill with receipts from localStorage
+    setResolvedFooter();
+    showModal('my-stuff-modal');
+    return;
+  }
+
+  if (state === 'location-history') {
+    body.innerHTML = `<div id="location-history" class="modal-menu-list"></div>`;
+    renderLocationHistory(); // Inject saved locations or empty state
+    setResolvedFooter(t('modal.mystuff.resolved') || t('modal.done.resolved') || 'Resolved');
+    showModal('my-stuff-modal');
+    return;
+  }
+
+  if (state === 'reset') {
+    body.innerHTML = `
+      <div class="modal-form-stack">
+        <p>This will clear your settings and restart the app.</p>
+        <p>This action cannot be undone.</p>
+      </div>
+    `;
+
+    setFooterButtons([
+      {
+        id: 'reset-cancel',
+        label: 'Cancel',
+        className: 'modal-footer-button',
+        onClick: () => hideModal('my-stuff-modal')
+      },
+      {
+        id: 'reset-confirm',
+        label: 'Reset',
+        className: 'modal-footer-button',
+        onClick: () => {
+          localStorage.clear();
+
+          // Route using current <html lang>; drop ?lang, keep others.
+          const currentLang = (document.documentElement.lang || 'en').toLowerCase();
+          const parts = location.pathname.split('/').filter(Boolean);
+          const hasPrefix = /^[a-z]{2}$/.test(parts[0]);
+          const rest = '/' + (hasPrefix ? parts.slice(1).join('/') : parts.join('/'));
+
+          const target = currentLang === 'en'
+            ? (rest === '/' ? '/' : rest)
+            : `/${currentLang}${rest === '/' ? '' : rest}`;
+
+          const qs = new URLSearchParams(location.search);
+          qs.delete('lang');
+          const query = qs.toString() ? `?${qs}` : '';
+
+          location.href = `${target}${query}${location.hash || ''}`;
+        }
+      }
+    ]);
+
+    showModal('my-stuff-modal');
+    return;
+  }
+
+  if (state === 'data') {
+    body.innerHTML = `
+      <div class="modal-form-stack">
+        <p>${t('myStuff.data.bodyIntro')}</p>
+        <p>${t('myStuff.data.includes')}</p>
+        <ul>
+          <li>${t('myStuff.data.item.purchase')}</li>
+          <li>${t('myStuff.data.item.language')}</li>
+          <li>${t('myStuff.data.item.location')}</li>
+        </ul>
+        <p class="modal-warning">⚠️ ${t('myStuff.data.warning')}</p>
+        <p>${t('myStuff.data.resetPrompt')}</p>
+        <div class="modal-actions">
+          <a href="/assets/docs/navigen-privacy-policy.pdf" target="_blank" class="modal-body-button">
+            📄 ${t('myStuff.data.viewPolicy')}
+          </a>
+        </div>
+      </div>
+    `;
+
+    setResolvedFooter();
+    showModal('my-stuff-modal');
+    return;
+  }
+
+  if (state === 'terms') {
+    body.innerHTML = `
+      <div class="modal-form-stack">
+        <p>${t('myStuff.terms.body')}</p>
+        <div class="modal-actions">
+          <a href="/assets/docs/navigen-terms.pdf" target="_blank" class="modal-body-button">
+            📄 ${t('myStuff.terms.viewFull')}
+          </a>
+        </div>
+      </div>
+    `;
+
+    setResolvedFooter();
+    showModal('my-stuff-modal');
+    return;
+  }
+
+  if (state === 'no-miss') {
+    body.innerHTML = `
+      <div class="no-miss-section">
+        <div class="no-miss-block">
+          <div class="no-miss-title">📌 ${t('noMiss.install.title')}</div>
+          <div class="no-miss-body">${t('noMiss.install.body')}</div>
+        </div>
+
+        <div class="no-miss-block">
+          <div class="no-miss-title">💡 ${t('noMiss.refresh.title')}</div>
+          <div class="no-miss-body">
+            ${t('noMiss.refresh.bodyStart')}
+            <span class="inline-icon logo-icon"></span>
+            ${t('noMiss.refresh.bodyEnd')}
+            <br>🌀 ${t('noMiss.refresh.relax')}
+          </div>
+        </div>
+
+        <div class="no-miss-block">
+          <div class="no-miss-title">👋 ${t('noMiss.support.title')}</div>
+          <div class="no-miss-body">${t('noMiss.support.body')}</div>
+        </div>
+
+        <div class="no-miss-thanks">
+          🎉 ${t('noMiss.thanks')}
+        </div>
+      </div>
+    `;
+
+    setResolvedFooter();
+    showModal('my-stuff-modal');
+    return;
+  }
+
+  showModal('my-stuff-modal');
+};
 
 /**
  * Runtime entry point to render My Stuff modal content
@@ -9694,103 +9612,105 @@ export function saveToLocationHistory(coords) {
 
 // Renders entries stored in localStorage.myPurchases (full strings, not keys)
 function renderPurchaseHistory() {
-  const purchases = JSON.parse(localStorage.getItem("myPurchases") || "[]");
-  const container = document.getElementById("purchase-history");
-  container.innerHTML = "";
+  const purchases = JSON.parse(localStorage.getItem('myPurchases') || '[]');
+  const container = document.getElementById('purchase-history');
+  if (!container) return;
+
+  container.innerHTML = '';
+  container.classList.add('modal-menu-list');
 
   if (purchases.length === 0) {
-    const emptyMsg = document.createElement("div");
-    emptyMsg.className = "empty-state";
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = 'empty-state';
     emptyMsg.innerHTML = `
-      <p>${t("purchaseHistory.emptyMessage")}</p>
-      <p style="opacity: 0.75;">${t("purchaseHistory.empty.body")}</p>
+      <p>${t('purchaseHistory.emptyMessage')}</p>
+      <p style="opacity: 0.75;">${t('purchaseHistory.empty.body')}</p>
     `;
     container.appendChild(emptyMsg);
     return;
   }
 
-  purchases.forEach(purchase => {
-    const card = document.createElement("div");
-    card.className = "purchase-card";
+  purchases.forEach((purchase) => {
+    const card = document.createElement('div');
+    card.className = 'modal-menu-item modal-static-card';
 
-    const label = document.createElement("div");
-    label.className = "label";
+    const icon = document.createElement('span');
+    icon.className = 'icon-img';
+    icon.textContent = purchase.icon || '💳';
+
+    const label = document.createElement('span');
+    label.className = 'label';
 
     // 📝 Use translated label if available, fallback to raw key
-    label.innerHTML = `<strong>${t(purchase.label) || purchase.label}</strong>`;
+    const title = document.createElement('strong');
+    title.textContent = t(purchase.label) || purchase.label;
 
-    const timestamp = document.createElement("div");
-    timestamp.className = "timestamp";
+    const timestamp = document.createElement('small');
     timestamp.textContent = `📅 ${new Date(purchase.timestamp).toLocaleString()}`;
 
-    const subtext = document.createElement("div");
-    subtext.className = "subtext";
+    const subtext = document.createElement('small');
 
     // 🔁 Resolve translated subtext (fallback to raw key if not found)
     let rawSubtext = t(purchase.subtext) || purchase.subtext;
 
     // 💖 If it mentions "free", inject heart emoji for flair
-    const cleaned = rawSubtext.replace("💖", "").trim();
-    subtext.textContent = cleaned.includes("free")
-      ? cleaned.replace(/free\b/i, "free 💖")
+    const cleaned = rawSubtext.replace('💖', '').trim();
+    subtext.textContent = cleaned.includes('free')
+      ? cleaned.replace(/free\b/i, 'free 💖')
       : cleaned;
 
+    label.appendChild(title);
+    label.appendChild(document.createElement('br'));
+    label.appendChild(timestamp);
+    label.appendChild(document.createElement('br'));
+    label.appendChild(subtext);
+
+    card.appendChild(icon);
     card.appendChild(label);
-    card.appendChild(timestamp);
-    card.appendChild(subtext);
     container.appendChild(card);
-
-    // ↕️ Add vertical spacing between cards
-    const spacer = document.createElement("div");
-    spacer.style.height = "1em";
-    container.appendChild(spacer);
   });
-
 }
 
 // Renders entries stored in localStorage.location-history (coords + timestamp)
 export function renderLocationHistory() {
-  const container = document.getElementById("location-history");
-  container.innerHTML = "";
+  const container = document.getElementById('location-history');
+  if (!container) return;
 
-  const history = JSON.parse(localStorage.getItem("location-history") || "[]");
+  container.innerHTML = '';
+  container.classList.add('modal-menu-list');
+
+  const history = JSON.parse(localStorage.getItem('location-history') || '[]');
 
   if (history.length === 0) {
-    const emptyMsg = document.createElement("div");
-    emptyMsg.className = "empty-state";
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = 'empty-state';
     emptyMsg.innerHTML = `
-      <p>${t("locationHistory.emptyMessage")}</p>
-      <p style="opacity: 0.75;">${t("locationHistory.empty.body")}</p>
+      <p>${t('locationHistory.emptyMessage')}</p>
+      <p style="opacity: 0.75;">${t('locationHistory.empty.body')}</p>
     `;
     container.appendChild(emptyMsg);
     return;
   }
 
-  history.forEach(entry => {
-    const card = document.createElement("div");
-    card.className = "purchase-card"; // 📦 Reuse existing card style
+  history.forEach((entry) => {
+    const card = document.createElement('div');
+    card.className = 'modal-menu-item modal-static-card';
 
-    const label = document.createElement("div");
-    label.className = "label";
-    label.innerHTML = `<strong>📍 ${entry.coords}</strong>`;
+    const icon = document.createElement('span');
+    icon.className = 'icon-img';
+    icon.textContent = '📍';
 
-    const timestamp = document.createElement("div");
-    timestamp.className = "timestamp";
-    timestamp.textContent = `📅 ${new Date(entry.timestamp).toLocaleString()}`;
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.innerHTML = `
+      <strong>${entry.coords}</strong><br>
+      <small>📅 ${new Date(entry.timestamp).toLocaleString()}</small><br>
+      <small><a href="https://maps.google.com?q=${entry.coords}" target="_blank">${t('locationHistory.openInMaps')}</a></small>
+    `;
 
-    const link = document.createElement("div");
-    link.className = "subtext";
-    link.innerHTML = `<a href="https://maps.google.com?q=${entry.coords}" target="_blank">${t("locationHistory.openInMaps")}</a>`;
-
+    card.appendChild(icon);
     card.appendChild(label);
-    card.appendChild(timestamp);
-    card.appendChild(link);
     container.appendChild(card);
-
-    // ↕️ Add vertical spacing between cards
-    const spacer = document.createElement("div");
-    spacer.style.height = "1em";
-    container.appendChild(spacer);
   });
 }
 
