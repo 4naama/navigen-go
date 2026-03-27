@@ -1184,7 +1184,7 @@ body.large-text {
 }
 
 /* ──────────────── Modal Headers & Top Bar ──────────────── */
-/* Close sits in-row; header can wrap without shifting alignment */
+/* Header stays inline; red × is pinned to the shared modal edge whether help exists or not */
 .modal-top-bar{
   position: sticky;
   top: 0;
@@ -1210,23 +1210,12 @@ body.large-text {
 .modal .modal-top-bar h1,
 .modal .modal-top-bar h2,
 .modal .modal-top-bar .modal-title{
-  flex:1 1 auto;
-  min-width:0;
-  margin:0;
-  text-align:left;
-  line-height:1.2;
-  padding-top:2px; /* optical alignment with the help button and close × */
-}
-
-.modal .modal-top-bar h1,
-.modal .modal-top-bar h2,
-.modal .modal-top-bar .modal-title{
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
   text-align: left;
   line-height: 1.2;
-  padding-top: 2px;               /* optical alignment with ℹ️ and × */
+  padding-top: 2px; /* optical alignment with ℹ️ and × */
 }
 
 .modal .modal-top-bar .modal-top-actions{
@@ -1234,6 +1223,7 @@ body.large-text {
   align-items: flex-start;
   gap: 10px;
   margin-left: auto;
+  margin-right: -8px; /* pin red × to the shared modal edge when help exists */
   flex: 0 0 auto;
 }
 
@@ -1243,14 +1233,19 @@ body.large-text {
   appearance: none; -webkit-appearance: none;
   position: static;               /* in-row; participates in flex */
   margin-left: 0;
-  margin-right: -8px;             /* push × outward, beyond the useful header content width */
-  align-self: flex-start;         /* align with first line */
+  margin-right: 0;
+  align-self: flex-start;         /* keep the calm inline vertical alignment */
   background: transparent; border: 0; cursor: pointer;
   color: #d11;
   font-size: 30px;                /* your chosen × size */
   line-height: 1;
   border-radius: 8px;
   padding: 2px 6px;               /* keep tap target */
+}
+
+.modal .modal-top-bar > .modal-close{
+  margin-left: auto;
+  margin-right: -8px;             /* same red × edge position when no help button exists */
 }
 
 .modal .modal-top-bar .modal-header-help{
