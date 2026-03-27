@@ -2740,25 +2740,20 @@ export function createSelectLocationModal() {
   const id = 'select-location-modal';
   document.getElementById(id)?.remove();
 
-  // Build using the same modal universe + layout variant as My Stuff/Promotions
   const modal = injectModal({
     id,
-    title: '',                 // header rendered via .modal-top-bar (avoid double title)
-    layout: 'menu',            // menu modal layout parity
-    bodyHTML: ``
+    title: (t('root.bo.selectLocation.title') || 'Select your business'),
+    layout: 'menu',
+    bodyHTML: ``,
+    modalClassName: 'modal-wide-menu syb-modal'
   });
 
   // Ensure it's hidden after injection (same pattern used elsewhere)
   modal.classList.add('hidden');
-  modal.classList.add('syb-modal'); // SYB scope: Select your business modal only
 
-  const topBar = document.createElement('div');
-  topBar.className = 'modal-top-bar';
-  topBar.innerHTML = `
-    <h2 class="modal-title">${(t('root.bo.selectLocation.title') || 'Select your business')}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  modal.querySelector('.modal-content')?.prepend(topBar);
+  const topBar = modal.querySelector('.modal-top-bar');
+  if (!topBar) return;
+
   // Keep CSS sticky offsets in sync with the real rendered header height (no hardcoded px guessing)
   const ac = new AbortController();
   const setTopbarHeightVar = () => {
@@ -2769,8 +2764,7 @@ export function createSelectLocationModal() {
 
   topBar.querySelector('.modal-close')?.addEventListener('click', () => {
     ac.abort(); // cleanup listeners when the modal closes
-    hideModal(id);
-  });
+  }, { once: true });
 
   const inner = modal.querySelector('.modal-body-inner');
   if (!inner) return;
@@ -7314,7 +7308,7 @@ export async function fetchTranslatedLangs() {
  * Supports custom title, body, and footer buttons.
  */
 // Lead comments: hidden by default; CSS provides backdrop.
-export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [], layout = '' }) {
+export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [], layout = '', modalClassName = '' }) {  
   let existing = document.getElementById(id);
   if (existing) return existing;
 
@@ -7322,6 +7316,7 @@ export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [],
   const modal = document.createElement('div');
   modal.classList.add('modal', 'hidden');
   modal.id = id;
+  String(modalClassName || '').split(/\s+/).filter(Boolean).forEach((cls) => modal.classList.add(cls));
 
   const isAction = layout === 'action';
 
@@ -7926,26 +7921,16 @@ export function showRedeemInvalidModal({
 export function createMyStuffModal() {
   injectModal({
     id: 'my-stuff-modal',
-    className: 'modal modal-menu',
-    bodyHTML: `<div id="my-stuff-body" class="modal-body"></div>`
-  });  
+    title: t("My Stuff") || 'My Stuff',
+    layout: 'menu',
+    bodyHTML: `<div id="my-stuff-body"></div>`,
+    modalClassName: 'modal-wide-menu'
+  });
 
   const modal = document.getElementById('my-stuff-modal');
 
   // ✅ Ensure it's hidden after injection
   modal.classList.add('hidden');
-
-  const topBar = document.createElement('div');
-  topBar.className = 'modal-top-bar';
-  topBar.innerHTML = `
-    <h2 id="my-stuff-title" class="modal-header">${t("My Stuff")}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  modal.querySelector('.modal-content')?.prepend(topBar);
-
-  topBar.querySelector('.modal-close')?.addEventListener('click', () => {
-    hideModal("my-stuff-modal");
-  });
   
   // Ensure My Stuff always has a footer container (even with no buttons)
   let actions = modal.querySelector('.modal-footer');  // keep same class for CSS
@@ -8476,7 +8461,7 @@ export function showFavoritesModal() {
       const modal = document.getElementById("my-stuff-modal");
 
       
-      const title = modal.querySelector("#my-stuff-title");
+      const title = modal.querySelector(".modal-top-bar .modal-title");      
       const body = modal.querySelector("#my-stuff-body");
 
       if (state === "purchases") {

@@ -1275,29 +1275,9 @@ body.large-text {
 .modal .modal-top-bar .modal-close:hover{ color:#a00; }
 .modal .modal-top-bar .modal-close:focus-visible{ outline:2px solid currentColor; outline-offset:2px; }
 
-/* Select Location keeps its own header geometry because the search row lives in the top bar */
-#select-location-modal .modal-top-bar{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  padding: 16px 1.5em 12px 1.5em; /* same top/bottom as base; side matches .modal-body-inner */
-}
-
-#select-location-modal .modal-top-bar h1,
-#select-location-modal .modal-top-bar h2{
-  flex:1 1 auto;
-  text-align:left;
-  margin:0;
-  line-height:1.2;
-  min-width:0;
-}
-
-#select-location-modal .modal-top-bar .modal-close{
-  position:static;
-  margin-left:auto;
-  align-self:flex-start;
-  white-space:nowrap;
+/* Wide-card menu modals share one header gutter inside the common modal platform */
+.modal.modal-wide-menu .modal-top-bar{
+  padding: 16px 16px 12px 1.5em; /* wide-card left gutter, shared close × position */
 }
 
 /* ──────────────── Modal Footer Layout ──────────────── */
@@ -1316,10 +1296,9 @@ body.large-text {
   gap: 1em; flex-wrap: wrap;
 }
 
-/* My Stuff footer: slightly taller than the shared default (≈+4px total height) */
-#my-stuff-modal .modal-footer{
-  /* add ~2px top + ~2px bottom on top of the shared rule */
-  padding: 1em 1em 0.75em; /* 0.875em→1em (top), 0.625em→0.75em (bottom) */
+/* Wide-card menu modals share one footer rhythm inside the common modal platform */
+.modal.modal-wide-menu .modal-footer{
+  padding: 1em 1em 0.75em;
 }
 
 /* ──────────────── Modal Footer Buttons ──────────────── */
@@ -1353,10 +1332,9 @@ body.large-text {
   align-self: center; /* tidy alignment */
 }
 
-/* Select Location: bottom cover band — match My Stuff footer height */
-#select-location-modal .modal-footer{
-  padding: 1em 1em 0.75em; /* same as #my-stuff-modal .modal-footer */
-  min-height: 0;           /* height is governed by padding like My Stuff */
+/* Select your business keeps the footer as a non-interactive cover band */
+.modal.syb-modal .modal-footer{
+  min-height: 0;
   pointer-events: none;    /* cover band only; never blocks taps/scroll */
 }
 
@@ -1736,41 +1714,23 @@ body.high-contrast .qr-cta{
   font-size: 0.85rem;
 }
 
-/* My Stuff modal: header flush to top, scrollbar on card edge */
-/* Also remove bottom padding so sticky footer sits on the card edge (no white band). */
-#my-stuff-modal .modal-content{
-  padding-top: 0;    /* attach sticky header to the top edge */
-  padding-right: 0;  /* scrollbar flush right */
-  padding-left:  0;  /* keep column centered; no side padding on scroller */
-  padding-bottom: 0; /* scroller ends at card edge → footer sticks to bottom */
-}
-
-/* On small screens, keep the My Stuff card slightly above the bottom edge
-   so the sticky footer is not cut off by the screen/gesture bar. */
-/* Select Location: lift card above bottom gesture area on small screens (match My Stuff) */
-@media (max-width: 640px){
-  #select-location-modal{
-    padding-bottom: calc(
-      var(--modal-pad) + env(safe-area-inset-bottom, 24px)
-    ); /* base pad + extra bottom room */
-  }
-
-  /* SYB card height on mobile: svh tracks the *visible* viewport.
-     Subtract an extra 12px so the card can never touch the physical bottom edge. */
-  #select-location-modal .modal-content{
-    max-height: calc(100svh - 32px - env(safe-area-inset-bottom, 0px) - 12px);
-  }
-}
-
-/* no mid-gutter on the scroll container */
-#my-stuff-modal .modal-body{
+/* Wide-card menu modals share one body shell */
+.modal.modal-wide-menu .modal-body{
   padding: 0;
-  margin-top: 8px;  /* slightly tighter buffer under the header (4px closer) so the first menu item sits nearer to the title */
+  margin-top: 8px;
+  position: relative;
+  padding-inline: 0;
 }
 
-/* restore inner spacing for content (keeps column visually centered) */
-#my-stuff-modal .modal-body-inner{
-  padding: 0 1.5em 3.25em 1.5em; /* bottom padding reduced by ~4px so the last item sits a bit closer to the footer, but still scrolls fully above the sticky band */
+.modal.modal-wide-menu .modal-body-inner{
+  padding: 0 1.5em 0 1.5em;
+}
+
+.modal.modal-wide-menu .modal-body-inner::after{
+  content:"";
+  display:block;
+  height: 3.25em;
+  pointer-events:none;
 }
 
 /* label wrapping (prevents text spill on narrow screens) */
@@ -3805,27 +3765,8 @@ select.input{
 }
 
 /* ==========================================================================
-   Select Location — hard lock to My Stuff menu geometry
-   Reason: avoid cascade conflicts between dual modal systems in this file.
+   Select Location — common wide-menu shell + SYB-specific search-row behavior
    ========================================================================== */
-
-/* Card geometry: match My Stuff (header flush, no inner side padding) */
-#select-location-modal .modal-content{
-  padding-top: 0;    /* attach sticky header to top edge */
-  padding-right: 0;  /* scrollbar flush right */
-  padding-left:  0;  /* no mid-gutter */
-  padding-bottom: 0; /* floor handled by modal-body-inner */
-}
-
-#select-location-modal .modal-body{
-  padding: 0;        /* no inset scroll gutter */
-  margin-top: 8px;   /* same rhythm under header as My Stuff */
-  position: relative;/* establishes sticky containment reliably */
-
-  /* Ensure Select Location does not inherit the generic modal-body side padding.
-     Gutter must be owned ONLY by .modal-body-inner (like My Stuff). */
-  padding-inline: 0;
-}
 
 /* Keep the Select Location search row pinned WITHOUT duplicating the input rule.
    The card (.modal-content) is the scroller, and the header (.modal-top-bar) is sticky at top:0. */
@@ -3835,23 +3776,24 @@ select.input{
 
 /* Select Location: allow the top bar to wrap so the search row can live under the title */
 #select-location-modal .modal-top-bar{
-  flex-wrap: wrap; /* title + close on first line, search on its own line */
+  flex-wrap: wrap; /* title + header actions on first line, search on its own line */
 }
 
-/* Keep title + close on the first row, and force search onto the next full-width row */
+/* Keep title + header actions on the first row, and force search onto the next full-width row */
 #select-location-modal .modal-top-bar h2{
-  order: 1;            /* first row */
+  order: 1;
 }
+#select-location-modal .modal-top-bar .modal-top-actions,
 #select-location-modal .modal-top-bar .modal-close{
-  order: 1;            /* first row (right side) */
+  order: 1;
 }
 
-/* Search row lives inside the sticky top bar (full width, below title/close) */
+/* Search row lives inside the sticky top bar (full width, below title/actions) */
 #select-location-modal .modal-top-bar .select-location-search-row{
-  order: 2;            /* always below title + close */
+  order: 2;
   flex: 1 0 100%;
-  margin-top: 8px;     /* spacing under the title row */
-  margin-bottom: 0;    /* list spacing is handled in the body */
+  margin-top: 8px;
+  margin-bottom: 0;
 }
 
 /* Anchor for the absolute clear × inside the input */
@@ -3859,24 +3801,19 @@ select.input{
   position: relative;
 }
 
-/* Select Location: if a clear button exists, place it inside the input like the main shell */
-#select-location-modal .modal-body-inner:has(#select-location-clear-search){
-  position: relative; /* safe; does not affect layout */
-}
-
 /* SYB clear × — align to the actual input width (not the wrapper) */
 .syb-modal .select-location-search-left{
-  position: relative; /* anchor for input + × */
+  position: relative;
 }
 
 .syb-modal #select-location-search{
-  position: relative; /* make input the visual reference */
+  position: relative;
 }
 
 .syb-modal .select-location-search-left #select-location-clear-search{
   position: absolute;
   top: 50%;
-  right: 10px;              /* same as main search */
+  right: 10px;
   transform: translateY(-50%);
   display: none;
   z-index: 11;
@@ -3884,9 +3821,9 @@ select.input{
 
 /* SYB: action card under search (distinct from location cards) */
 #select-location-modal .modal-menu-item.syb-notlisted{
-  background:#eef6ff;          /* slightly bluer than normal cards */
+  background:#eef6ff;
   border-color:#93c5fd;
-  margin-bottom: 10px; /* creates a clear separation from the results divider */
+  margin-bottom: 10px;
 }
 
 #select-location-modal .modal-menu-item.syb-notlisted:hover{
@@ -3904,18 +3841,6 @@ select.input{
 #owner-center-modal .modal-menu-item.owner-center-restore-card:hover{
   background:#e2f0ff;
   border-color:#60a5fa;
-}
-
-/* Bottom “floor” so the last row never rests on the rounded edge (no pseudo footer needed) */
-#select-location-modal .modal-body-inner{
-  padding: 0 1.5em 0 1.5em; /* side gutters match My Stuff; bottom floor provided by ::after */
-}
-
-#select-location-modal .modal-body-inner::after{
-  content:"";
-  display:block;
-  height: 3.25em;     /* matches My Stuff/Promotions comfort depth */
-  pointer-events:none;/* structural only */
 }
 
 body.high-contrast .modal-menu-item.is-active {
