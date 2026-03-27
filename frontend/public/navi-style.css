@@ -1029,8 +1029,6 @@ body.large-text {
 
 #my-stuff-modal .modal-content{
   padding-top: 0;    /* attach sticky header to the top edge */
-  padding-right: 0;  /* scrollbar flush right */
-  padding-left:  0;  /* keep column centered; no side padding on scroller */
   padding-bottom: 0; /* scroller ends at card edge → footer sticks to bottom */
 }
 
@@ -3701,8 +3699,11 @@ select.input{
 .howitworks-body > div{
   margin-top: 10px;      /* 1 empty line between lines */
 }
-.howitworks-body > div:first-child{
-  margin-top: 0;
+
+#bo-howitworks-modal .modal-top-bar,
+#modal-header-help-modal .modal-top-bar{
+  background:#eef6ff;
+  border-bottom-color:#bfdbfe;
 }
 
 /* ==========================================================================
@@ -3767,9 +3768,9 @@ select.input{
   z-index: 11;
 }
 
-/* Shared callout card modifier keeps the “not listed” row in the same visual family as Owner Center. */
-#select-location-modal .modal-menu-item.modal-callout-card{
-  margin-bottom: 10px;
+/* Shared callout card spacing: keep a small room before the following modal list. */
+.modal-menu-item.modal-callout-card + .modal-menu-list{
+  margin-top: 10px;
 }
 
 body.high-contrast .modal-menu-item.is-active {
