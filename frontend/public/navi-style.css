@@ -1195,7 +1195,7 @@ body.large-text {
   justify-content: space-between;
   gap: 10px;
 
-  padding: 16px 16px 12px 16px;  /* in-row × → no right reserve */
+  padding: 16px 16px 12px 16px;
   margin: 0 0 8px 0;
 
   background: #fff;
