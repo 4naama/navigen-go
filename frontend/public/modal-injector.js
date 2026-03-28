@@ -533,7 +533,6 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
 async function openPromotionQrModal(modal, data) {
   try {
     const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-    const hasT = (typeof t === 'function');
 
     const tmpl = (key, fallback) => translatedOrFallback(key, fallback);
 
@@ -701,14 +700,14 @@ async function openPromotionQrModal(modal, data) {
     document.getElementById(modalId)?.remove();
 
     const promoTitle = tmpl('promotion.title', 'Promotion details');
-    const modal = injectModal({
+    const detailsModal = injectModal({
       id: modalId,
       title: promoTitle,
       layout: 'menu',
       bodyHTML: ''
     });
 
-    const inner = modal.querySelector('.modal-body-inner');
+    const inner = detailsModal.querySelector('.modal-body-inner');
     if (!(inner instanceof HTMLElement)) {
       showToast('Promotions unavailable for this location', 2000);
       return;
@@ -727,7 +726,7 @@ async function openPromotionQrModal(modal, data) {
       });
       inner.appendChild(summary);
     }
-    
+
     // Expires line (under the grey card)
     if (daysLeftText) {
       const pExpires = document.createElement('p');
@@ -768,7 +767,7 @@ async function openPromotionQrModal(modal, data) {
 
     const pinnedEntry = {
       campaignKey: resolvedCampaignKey,
-      locationID: locationIdOrSlug,
+      locationID: resolvedLocationIdOrSlug,
       campaignName,
       startDate,
       endDate,
@@ -816,7 +815,9 @@ async function openPromotionQrModal(modal, data) {
     shareBtn.setAttribute('aria-label', tmpl('promotion.share', 'Share campaign'));
     shareBtn.title = tmpl('promotion.share', 'Share campaign');
     shareBtn.addEventListener('click', async () => {
-      const shareUrl = `${location.origin}/?lp=${encodeURIComponent(locationIdOrSlug)}`;
+      const shareUrl = resolvedLocationIdOrSlug
+        ? `${location.origin}/?lp=${encodeURIComponent(resolvedLocationIdOrSlug)}`
+        : location.origin;
       const shareTitle = campaignName || discountText || 'Promotion';
       const shareText = [shareTitle, locName].filter(Boolean).join(' — ');
 
@@ -842,11 +843,19 @@ async function openPromotionQrModal(modal, data) {
     openLocationBtn.textContent = '➡️';
     openLocationBtn.setAttribute('aria-label', tmpl('promotion.openLocation', 'Open location'));
     openLocationBtn.title = tmpl('promotion.openLocation', 'Open location');
-    openLocationBtn.addEventListener('click', () => {
-      hideModal(modalId);
-      sessionStorage.setItem('navigen.internalLpNav', '1');
-      window.location.href = `${location.origin}/?lp=${encodeURIComponent(locationIdOrSlug)}`;
-    });
+
+    if (!resolvedLocationIdOrSlug) {
+      openLocationBtn.disabled = true;
+      openLocationBtn.setAttribute('aria-disabled', 'true');
+      openLocationBtn.style.opacity = '0.5';
+      openLocationBtn.style.cursor = 'default';
+    } else {
+      openLocationBtn.addEventListener('click', () => {
+        hideModal(modalId);
+        sessionStorage.setItem('navigen.internalLpNav', '1');
+        window.location.href = `${location.origin}/?lp=${encodeURIComponent(resolvedLocationIdOrSlug)}`;
+      });
+    }
 
     secondaryCtas.appendChild(pinBtn);
     secondaryCtas.appendChild(shareBtn);
@@ -864,7 +873,7 @@ async function openPromotionQrModal(modal, data) {
     qrBtn.addEventListener('click', () => {
       hideModal(modalId);
       // Open the Promotion QR modal and pass location ID/slug for customer confirmation tracking
-      showPromotionQrModal(qrUrl, locationIdOrSlug);
+      showPromotionQrModal(qrUrl, resolvedLocationIdOrSlug);
     });
 
     // 10) Only tap this when you're ready to pay. (small)
@@ -881,6 +890,7 @@ async function openPromotionQrModal(modal, data) {
 
     disableTapOutClose(modalId);
 
+    hideSourcePicker();
     showModal(modalId);
   } catch (err) {
     console.warn('openPromotionQrModal failed', err);
@@ -1903,7 +1913,7 @@ async function initLpmImageSlider(modal, data) {
           const id = 'bizcard-modal'; document.getElementById(id)?.remove();
 
           const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
-          const card = document.createElement('div'); card.className = 'modal-content modal-layout';
+          const card = document.createElement('div'); card.className = 'modal-content';          
           const top  = document.createElement('div'); top.className = 'modal-top-bar';
           top.innerHTML = `<h2 class="modal-title">Business Card</h2><button class="modal-close" aria-label="Close">&times;</button>`;
           top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
@@ -1941,7 +1951,7 @@ async function initLpmImageSlider(modal, data) {
 
             const id = 'qr-modal'; document.getElementById(id)?.remove();
             const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
-            const card = document.createElement('div'); card.className = 'modal-content modal-layout';
+            const card = document.createElement('div'); card.className = 'modal-content';            
             const top = document.createElement('div'); top.className = 'modal-top-bar';
             top.innerHTML = `<h2 class="modal-title">QR Code</h2><button class="modal-close" aria-label="Close">&times;</button>`;
             top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
