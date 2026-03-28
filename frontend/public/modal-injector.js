@@ -985,7 +985,7 @@ export function createLocationProfileModal(data, injected = {}) {
 
   // ▸ Content wrapper
   const content = document.createElement('div');
-  content.className = 'modal-content';
+  content.className = 'modal-content modal-menu';
 
   // Top bar: title first, then Close → places the X on the right (matches other modals)
   const top = document.createElement('div');
@@ -1904,7 +1904,7 @@ async function initLpmImageSlider(modal, data) {
       }
     }
 
-    // ℹ️ → Business Card modal (shared modal shell; data-only body)
+    // ℹ️ → Business card modal (shared modal shell; data-only body)
     {
       const btn = modal.querySelector('#som-info');
       if (btn) {
@@ -2109,6 +2109,7 @@ async function initLpmImageSlider(modal, data) {
 
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
+
             const rawId = String(
               data?.locationID ||
               data?.id ||
@@ -2122,6 +2123,7 @@ async function initLpmImageSlider(modal, data) {
             const qrUrl = (typeof data?.qrUrl === 'string') ? data.qrUrl.trim() : '';
             const qrPayload = qrUrl || `${location.origin}/?lp=${encodeURIComponent(rawId)}`;
 
+            hideModal(infoId);
             openQrCardModal(qrPayload, rawId);
           });
 
@@ -2152,7 +2154,9 @@ async function initLpmImageSlider(modal, data) {
           showModal(infoId);
         }, { passive: false });
       }
-    }  
+    }
+
+    // count LPM open — allow slug or ULID; resolve slug → ULID before sending (avoids 400) 
     
     // count LPM open — allow slug or ULID; resolve slug → ULID before sending (avoids 400)
     ;(async () => {
@@ -2874,36 +2878,6 @@ export function createSelectLocationModal() {
   searchLeft.appendChild(searchInput);
   searchLeft.appendChild(clearBtn);
   searchRow.appendChild(searchLeft);
-
-  // ℹ️ legend (dot meanings + 🎁)
-  const infoBtn = document.createElement('button');
-  infoBtn.type = 'button';
-  infoBtn.className = 'select-location-info-btn';
-  infoBtn.textContent = 'ℹ️';
-  infoBtn.setAttribute('aria-label', 'Info');
-
-  infoBtn.addEventListener('click', () => {
-    const msg = [
-      '🔴 Taken',
-      'Already operated.',
-      '',
-      '🟢 Free',
-      'Available.',
-      '',
-      '🔵 Still visible',
-      'Courtesy/hold.',
-      '',
-      '🟠 Parked',
-      'Inactive.',
-      '',
-      '🎁 Promoted',
-      'Active campaign.'
-    ].join('\n');
-
-    showToast(String(msg).replace(/\\n/g, '\n'), 5000);
-  });
-
-  searchRow.appendChild(infoBtn);
 
   // Behavior: show/hide X and clear value
   const syncClear = () => {
@@ -4144,14 +4118,24 @@ function getModalHeaderHelpSpec(target) {
     !modalId ||
     modalId === 'bo-howitworks-modal' ||
     modalId === 'modal-header-help-modal' ||
-    modalId === 'select-location-modal' ||
+    modalId === 'action-confirm-modal' ||
     modalId === 'location-profile-modal' ||
     modalId === 'bizcard-modal' ||
-    modalId === 'qr-modal' ||
-    modalId === 'customer-redeem-feedback' ||
-    modalId === 'action-confirm-modal'
+    modalId === 'qr-modal'
   ) {
     return null;
+  }
+
+  if (modalId === 'select-location-modal') {
+    const selectLocationBody = _ownerText(
+      'root.bo.selectLocation.help.body',
+      'Use search to find your business.\n🔴 Taken — already operated.\n🟢 Free — available.\n🔵 Still visible — courtesy or hold.\n🟠 Parked — inactive.\n🎁 Promoted — active campaign.'
+    );
+
+    return {
+      title: _ownerText('root.bo.selectLocation.help.title', 'How it works'),
+      bodyLines: selectLocationBody.split(/\n+/).map(s => String(s || '').trim()).filter(Boolean)
+    };
   }
 
   if (modalId === 'owner-center-modal') {
@@ -5245,37 +5229,45 @@ function showActionConfirmModal({ title, bodyLines, confirmLabel, danger, onConf
   document.getElementById(id)?.remove();
 
   const lines = Array.isArray(bodyLines) ? bodyLines : [];
+  const bodyHTML = lines.map((line, idx) => `
+    <p style="text-align:left; margin:${idx === 0 ? '0' : '10px 0 0'};">
+      ${String(line || '')}
+    </p>
+  `).join('');
 
-  const bodyHTML = `
-    <p style="text-align:left; margin:0; opacity:.9;">${String(lines[0] || '')}</p>
-    ${lines.slice(1).map(l =>
-      `<p style="text-align:left; margin:10px 0 0; opacity:.9;">${String(l)}</p>`
-    ).join('')}
-
-    <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end; flex-wrap:wrap;">
-      <button type="button" class="modal-body-button" id="action-confirm-cancel">
-        ${(typeof t === 'function' && t('common.cancel')) || 'Cancel'}
-      </button>
-      <button
-        type="button"
-        class="modal-body-button"
-        id="action-confirm-ok"
-        style="${danger ? 'background:#fee2e2; border:1px solid #fecaca; color:#991b1b;' : ''}"
-      >
-        ${String(confirmLabel || 'OK')}
-      </button>
-    </div>
-  `;
-
-  injectModal({ id, title, bodyHTML, layout: 'layout' });
-  setupTapOutClose(id);
-
-  const m = document.getElementById(id);
-  m?.querySelector('#action-confirm-cancel')?.addEventListener('click', () => hideModal(id));
-  m?.querySelector('#action-confirm-ok')?.addEventListener('click', async () => {
-    try { await onConfirm?.(); } finally { hideModal(id); }
+  const modal = injectModal({
+    id,
+    title,
+    bodyHTML,
+    layout: 'menu',
+    footerButtons: [
+      {
+        id: 'action-confirm-cancel',
+        label: (typeof t === 'function' && t('common.cancel')) || 'Cancel',
+        className: 'modal-footer-button',
+        onClick: () => hideModal(id)
+      },
+      {
+        id: 'action-confirm-ok',
+        label: String(confirmLabel || 'OK'),
+        className: 'modal-footer-button',
+        onClick: async () => {
+          try { await onConfirm?.(); } finally { hideModal(id); }
+        }
+      }
+    ]
   });
 
+  if (danger) {
+    const okBtn = modal.querySelector('#action-confirm-ok');
+    if (okBtn instanceof HTMLButtonElement) {
+      okBtn.style.background = '#fee2e2';
+      okBtn.style.border = '1px solid #fecaca';
+      okBtn.style.color = '#991b1b';
+    }
+  }
+
+  setupTapOutClose(id);
   showModal(id);
 }
 
@@ -5324,7 +5316,7 @@ export async function createOwnerCenterModal() {
   loadingRow.style.pointerEvents = 'none';
   loadingRow.innerHTML = `
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${(typeof t === 'function' && t('owner.center.loading.title')) || 'Loading Owner center…'}</strong><br>
+      ${(typeof t === 'function' && t('owner.center.loading.title')) || 'Loading owner center...'}</strong><br>
       <small>${(typeof t === 'function' && t('owner.center.loading.desc')) || 'Getting listings saved on this device.'}</small>
     </span>
   `;
@@ -5731,7 +5723,10 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   root.innerHTML = `
     <div class="modal-menu-list">
       <button type="button" class="modal-menu-item owner-center-loading" aria-disabled="true">
-        Campaign Management · Loading…
+        <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+          ${(typeof t === 'function' && t('campaign.ui.loading.title')) || 'Campaign management loading...'}</strong><br>
+          <small>${(typeof t === 'function' && t('campaign.ui.loading.desc')) || 'Preparing campaign data for this location.'}</small>
+        </span>
       </button>
     </div>
   `;

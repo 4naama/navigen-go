@@ -1548,6 +1548,7 @@ body.high-contrast .qr-cta{
   padding-top:0;                 /* header touches the top edge */
   padding-bottom:0;              /* let sticky footer sit on the card edge so it doesn't float above */
 }
+
 #location-profile-modal .modal-top-bar{
   position:sticky; 
   top:0; 
@@ -1558,8 +1559,9 @@ body.high-contrast .qr-cta{
   isolation: isolate;
   background:#fff;               /* solid cover while sticky */
 }
+
 #location-profile-modal .modal-body{
-  margin-top:12px;               /* small buffer under header (like other modals) */
+  margin-top:0;
 }
 
 /* On small screens, shorten LPM card a bit so its bottom edge
@@ -1635,10 +1637,15 @@ body.high-contrast .qr-cta{
   font-weight:400;
 }
 
-.modal-body .location-coords {
-  font-size: 1.1em;
-  margin-bottom: 1em;
-  font-family: monospace;
+#action-confirm-modal .modal-body p{
+  font-size: 1rem;
+  line-height: 1.5;
+  text-align: left;
+  margin: 0;
+}
+
+#action-confirm-modal .modal-body p + p{
+  margin-top: 10px;
 }
 
 /* Coordinates display formatting */
@@ -3714,21 +3721,26 @@ select.input{
 }
 
 /* ==========================================================================
-   Select Location — common wide-menu shell + shared header search behavior
+   Select Location — shared header help + shared search-row behavior
    ========================================================================== */
 
-/* Keep the Select Location search row inside the shared modal header so title, close button,
-   and search all use the same Owner Center shell. */
+/* Keep Select Location on the shared modal header geometry.
+   The header stays identical to the main modal header; only the search row wraps below it. */
+#select-location-modal.modal-wide-menu .modal-top-bar{
+  padding: 16px 16px 12px 16px;
+}
+
 #select-location-modal .modal-top-bar{
   flex-wrap: wrap;
 }
 
-#select-location-modal .modal-top-bar h2{
+#select-location-modal .modal-top-bar h2,
+#select-location-modal .modal-top-bar .modal-title{
   order: 1;
 }
 
 #select-location-modal .modal-top-bar .modal-top-actions,
-#select-location-modal .modal-top-bar .modal-close{
+#select-location-modal .modal-top-bar > .modal-close{
   order: 1;
 }
 
@@ -3754,18 +3766,6 @@ select.input{
   width: 100%;
 }
 
-#select-location-modal .select-location-info-btn{
-  position: static;
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid rgba(0,0,0,.08);
-  background: #fff;
-  cursor: pointer;
-  line-height: 1;
-}
-
 #select-location-modal .select-location-search-left #select-location-clear-search{
   position: absolute;
   top: 50%;
@@ -3773,6 +3773,18 @@ select.input{
   transform: translateY(-50%);
   display: none;
   z-index: 11;
+}
+
+/* Select Location action card under search */
+#select-location-modal .modal-menu-item.syb-notlisted{
+  background:#eef6ff;
+  border-color:#93c5fd;
+  margin-bottom: 10px;
+}
+
+#select-location-modal .modal-menu-item.syb-notlisted:hover{
+  background:#e2f0ff;
+  border-color:#60a5fa;
 }
 
 /* Shared callout card spacing: keep a small room before the following modal list. */
