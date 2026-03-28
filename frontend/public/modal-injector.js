@@ -4666,9 +4666,6 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       <small>${selectedId}</small>
     </span>
   `;
-  if (!hasSelection) {
-    selectedCard.style.display = 'none';
-  }
   
   const activeCard = document.createElement('div');
   activeCard.className = 'modal-menu-item os-context-card os-active';
@@ -4794,11 +4791,20 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       if (aNameBox && nm) aNameBox.textContent = nm;
       if (aIdBox && slug) aIdBox.textContent = slug;
 
-      // No-selection restore landings must not backfill Selected from Active.
+      // If there is no explicit Selected business yet, mirror Active into Selected for clearer UX.
+      if (!selectedKey) {
+        const selSmalls = selectedCard.querySelectorAll('small');
+        const selNameBox = selSmalls[0] || null;
+        const selIdBox = selSmalls[1] || null;
+
+        if (selNameBox && nm) selNameBox.textContent = nm;
+        if (selIdBox && (slug || activeUlid)) selIdBox.textContent = slug || activeUlid;
+        if (!locId) locId = slug || activeUlid;
+      }
 
       // Mismatch detection: Selected ≠ Active
       try {
-        const selRaw = hasSelection ? String(selectedKey || locId || '').trim() : '';        
+        const selRaw = String(selectedKey || locId || '').trim();                
         const hasSelected = !!selRaw;
 
         // Compare using ULID (canonical), not slug, to avoid false mismatch during slug/ULID resolution.
@@ -5309,7 +5315,7 @@ export async function createOwnerCenterModal() {
   loadingRow.innerHTML = `
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
       <strong>${(typeof t === 'function' && t('owner.center.loading.title')) || 'Loading Owner center…'}</strong><br>
-      <small>${(typeof t === 'function' && t('owner.center.loading.desc')) || 'Getting listings saved on this device. Please, wait.'}</small>
+      <small>${(typeof t === 'function' && t('owner.center.loading.desc')) || 'Getting listings saved on this device.'}</small>
     </span>
   `;
   list.appendChild(loadingRow);

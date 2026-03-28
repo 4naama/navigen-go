@@ -307,6 +307,25 @@ git push origin main
 
 ### 12.3 Frontend — Cloudflare Pages (navigen.io)
 
+Sign out on this device? text Sign out on this device? Text should be updated
+
+
+
+Restore Budakeszi
+ pi_3TAmdmFf2RZOYEdO0Q5HfjxB
+Restore Debrecen
+ pi_3TAwKlFf2RZOYEdO0pzf32p3
+Restore Budapest1 Dezső
+hd-budapest1-dezso-3648
+06A1YABW00MPDDMV2JZ190R7S8 
+pi_3SooErFf2RZOYEdO1KiJWvCf 
+Open Campaign Management for Budakeszi and confirm the running all-campaign is there:
+ ps-all-260323-074134
+Restore Budapest4 Káposztásmegyer
+ pi_3T0PeEFf2RZOYEdO1vWaRLsT
+Restore Nagykovácsi
+ pi_3T2ur4Ff2RZOYEdO1sVBmFYH
+
 cd C:\Users\USER\Documents\a_git\navigen-go\frontend
 git add -A
 git commit -m "Frontend deploy"
