@@ -4144,7 +4144,12 @@ function getModalHeaderHelpSpec(target) {
     !modalId ||
     modalId === 'bo-howitworks-modal' ||
     modalId === 'modal-header-help-modal' ||
-    modalId === 'select-location-modal'
+    modalId === 'select-location-modal' ||
+    modalId === 'location-profile-modal' ||
+    modalId === 'bizcard-modal' ||
+    modalId === 'qr-modal' ||
+    modalId === 'customer-redeem-feedback' ||
+    modalId === 'action-confirm-modal'
   ) {
     return null;
   }
@@ -4666,6 +4671,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       <small>${selectedId}</small>
     </span>
   `;
+  inner.appendChild(selectedCard);
   
   const activeCard = document.createElement('div');
   activeCard.className = 'modal-menu-item os-context-card os-active';
@@ -5238,26 +5244,30 @@ function showActionConfirmModal({ title, bodyLines, confirmLabel, danger, onConf
   const id = 'action-confirm-modal';
   document.getElementById(id)?.remove();
 
-  const bodyHTML = `
-    <div class="modal-body-inner">
-      <p style="text-align:left; margin:0; opacity:.9;">${String(bodyLines?.[0] || '')}</p>
-      ${(bodyLines || []).slice(1).map(l =>
-        `<p style="text-align:left; margin:10px 0 0; opacity:.9;">${String(l)}</p>`
-      ).join('')}
+  const lines = Array.isArray(bodyLines) ? bodyLines : [];
 
-      <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end; flex-wrap:wrap;">
-        <button type="button" class="modal-body-button" id="action-confirm-cancel">
-          ${(typeof t === 'function' && t('common.cancel')) || 'Cancel'}
-        </button>
-        <button type="button" class="modal-body-button" id="action-confirm-ok"
-          style="${danger ? 'background:#fee2e2;border-color:#fecaca;' : ''}">
-          ${String(confirmLabel || 'OK')}
-        </button>
-      </div>
+  const bodyHTML = `
+    <p style="text-align:left; margin:0; opacity:.9;">${String(lines[0] || '')}</p>
+    ${lines.slice(1).map(l =>
+      `<p style="text-align:left; margin:10px 0 0; opacity:.9;">${String(l)}</p>`
+    ).join('')}
+
+    <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end; flex-wrap:wrap;">
+      <button type="button" class="modal-body-button" id="action-confirm-cancel">
+        ${(typeof t === 'function' && t('common.cancel')) || 'Cancel'}
+      </button>
+      <button
+        type="button"
+        class="modal-body-button"
+        id="action-confirm-ok"
+        style="${danger ? 'background:#fee2e2; border:1px solid #fecaca; color:#991b1b;' : ''}"
+      >
+        ${String(confirmLabel || 'OK')}
+      </button>
     </div>
   `;
 
-  injectModal({ id, title, bodyHTML, layout: 'action' });
+  injectModal({ id, title, bodyHTML, layout: 'layout' });
   setupTapOutClose(id);
 
   const m = document.getElementById(id);
