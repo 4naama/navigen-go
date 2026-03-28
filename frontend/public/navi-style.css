@@ -1038,7 +1038,7 @@ body.large-text {
 #help-modal label[for="emg-country"],
 #help-modal #emg-buttons > *,
 #help-modal .modal-continue{
-  font-weight:600;
+  font-weight:400;
 }
 
 #my-stuff-modal .modal-content{
@@ -1618,7 +1618,7 @@ body.high-contrast .qr-cta{
 .modal-body .muted {
   font-size: 0.9em;
   color:#0f172a;      /* unify label color */
-  font-weight:700;    /* bold label */
+  font-weight:400;    /* regular body copy */
   margin-bottom: 0.5em;
   opacity: 0.9;
 }
@@ -1627,6 +1627,14 @@ body.high-contrast .qr-cta{
 .modal-body .muted.muted-note{
   font-weight:400;
 }
+
+.modal .modal-body strong,
+.modal .modal-body b,
+.modal .modal-menu-item strong,
+.modal .modal-menu-item b{
+  font-weight:400;
+}
+
 .modal-body .location-coords {
   font-size: 1.1em;
   margin-bottom: 1em;

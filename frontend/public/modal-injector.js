@@ -1904,186 +1904,228 @@ async function initLpmImageSlider(modal, data) {
       }
     }
 
-    // ℹ️ → Business Card modal (same layout as QR; data-only body)
+    // ℹ️ → Business Card modal (shared modal shell; data-only body)
     {
       const btn = modal.querySelector('#som-info');
       if (btn) {
+        const openQrCardModal = (qrPayload, rawId) => {
+          const qrId = 'qr-modal';
+          document.getElementById(qrId)?.remove();
+
+          const qrModal = injectModal({
+            id: qrId,
+            title: 'QR code',
+            layout: 'menu',
+            bodyHTML: '',
+            footerButtons: [
+              {
+                id: 'qr-share',
+                label: '📤 <span class="cta-label">Share</span>',
+                className: 'modal-footer-button'
+              },
+              {
+                id: 'qr-print',
+                label: '🖨️ <span class="cta-label">Print</span>',
+                className: 'modal-footer-button'
+              }
+            ]
+          });
+
+          const qrInner = qrModal.querySelector('.modal-body-inner');
+          const qrFooter = qrModal.querySelector('.modal-footer');
+          if (!(qrInner instanceof HTMLElement)) return;
+          qrFooter?.classList.add('cta-compact');
+
+          const img = document.createElement('img');
+          img.alt = 'QR code';
+          img.style.maxWidth = '100%';
+          img.style.height = 'auto';
+          qrInner.appendChild(img);
+
+          getQRCodeLib()
+            .then((QRCode) => QRCode.toDataURL(qrPayload, { width: 512, margin: 1 }))
+            .then((dataUrl) => {
+              img.src = dataUrl;
+            })
+            .catch((err) => {
+              console.warn('QR generation failed', err); // generator-only error; no external fallback
+              img.alt = 'QR unavailable';
+            });
+
+          qrModal.querySelector('#qr-share')?.addEventListener('click', async () => {
+            const target = qrPayload || (rawId ? `${location.origin}/?lp=${encodeURIComponent(rawId)}` : '');
+
+            // count Share for this location (slug or ULID; Worker resolves via canonicalId)
+            if (rawId) {
+              try {
+                await fetch(
+                  `${TRACK_BASE}/hit/share/${encodeURIComponent(rawId)}`,
+                  { method: 'POST', keepalive: true }
+                ).catch(() => {});
+              } catch {
+                // tracking must not block sharing
+              }
+            }
+
+            try {
+              if (navigator.share && target) {
+                await navigator.share({ title: 'NaviGen QR', url: target });
+              } else if (target && navigator.clipboard) {
+                await navigator.clipboard.writeText(target);
+                showToast('Link copied to clipboard', 1600);
+              }
+            } catch (err) {
+              console.warn('QR share failed', err);
+            }
+          });
+
+          qrModal.querySelector('#qr-print')?.addEventListener('click', () => {
+            // count QR → Print; mirror qr-view/share (resolve slug → ULID before sending)
+            (async () => {
+              try {
+                if (rawId) {
+                  const __uid = await resolveULIDFor(rawId);
+                  if (__uid) {
+                    await fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(__uid)}`, { method: 'POST', keepalive: true });
+                  }
+                }
+              } catch {}
+            })();
+
+            const src = img.src;
+            const layer = document.createElement('div');
+            layer.id = 'qr-print-layer';
+            Object.assign(layer.style, {
+              position: 'fixed',
+              inset: '0',
+              background: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: '999999'
+            });
+
+            const style = document.createElement('style');
+            style.id = 'qr-print-style';
+            style.textContent = `
+              @media print{
+                body > *:not(#qr-print-layer){ display:none !important; }
+                #qr-print-layer{ position:static !important; inset:auto !important; }
+              }`;
+
+            const pimg = document.createElement('img');
+            pimg.alt = 'QR business card';
+            pimg.src = src;
+            pimg.style.maxWidth = '90vw';
+            pimg.style.maxHeight = '90vh';
+
+            layer.appendChild(pimg);
+
+            const cleanup = () => {
+              document.getElementById('qr-print-style')?.remove();
+              document.getElementById('qr-print-layer')?.remove();
+            };
+            const go = () => {
+              try {
+                window.print();
+              } finally {
+                setTimeout(cleanup, 300);
+              }
+            };
+
+            document.head.appendChild(style);
+            document.body.appendChild(layer);
+
+            if (pimg.complete) go();
+            else {
+              pimg.addEventListener('load', go, { once: true });
+              pimg.addEventListener('error', cleanup, { once: true });
+            }
+          });
+
+          setupTapOutClose(qrId);
+          showModal(qrId);
+
+          (async () => {
+            try {
+              const __uid = await resolveULIDFor(rawId);
+              if (__uid) {
+                await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(__uid)}`, { method: 'POST', keepalive: true });
+              }
+            } catch {}
+          })();
+        };
+
         btn.addEventListener('click', (e) => {
           e.preventDefault();
-          const id = 'bizcard-modal'; document.getElementById(id)?.remove();
 
-          const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
-          const card = document.createElement('div'); card.className = 'modal-content';          
-          const top  = document.createElement('div'); top.className = 'modal-top-bar';
-          top.innerHTML = `<h2 class="modal-title">Business Card</h2><button class="modal-close" aria-label="Close">&times;</button>`;
-          top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
+          const infoId = 'bizcard-modal';
+          document.getElementById(infoId)?.remove();
 
-          const body  = document.createElement('div'); body.className = 'modal-body';
-          const inner = document.createElement('div'); inner.className = 'modal-body-inner';
+          const infoModal = injectModal({
+            id: infoId,
+            title: 'Business card',
+            layout: 'menu',
+            bodyHTML: '',
+            footerButtons: [
+              {
+                id: 'bizcard-share',
+                label: '📤 <span class="cta-label">Share</span>',
+                className: 'modal-footer-button'
+              }
+            ]
+          });
 
-          // prefer contactInformation only
+          const infoInner = infoModal.querySelector('.modal-body-inner');
+          const infoFooter = infoModal.querySelector('.modal-footer');
+          if (!(infoInner instanceof HTMLElement)) return;
+          infoFooter?.classList.add('cta-compact');
+
+          const displayName = String(data?.displayName ?? data?.name ?? '').trim();
           const contactPerson = String(data?.contactInformation?.contactPerson || '').trim(); // contact person only
           const phone = String(data?.contactInformation?.phone || '').trim();
           const email = String(data?.contactInformation?.email || '').trim();
 
-          if (contactPerson)  { const p = document.createElement('p'); p.textContent = contactPerson;  inner.appendChild(p); }
-          if (phone) { const p = document.createElement('p'); p.textContent = phone; inner.appendChild(p); }
-          if (email) { const p = document.createElement('p'); p.textContent = email; inner.appendChild(p); }
-          if (!inner.children.length) { const p = document.createElement('p'); p.textContent = ''; inner.appendChild(p); } // no labels
+          const values = [contactPerson, phone, email].filter(Boolean);
+          values.forEach((value) => {
+            const p = document.createElement('p');
+            p.textContent = value;
+            infoInner.appendChild(p);
+          });
+          if (!values.length) {
+            const p = document.createElement('p');
+            p.textContent = '';
+            infoInner.appendChild(p); // no labels
+          }
 
-          // 🔳 append QR row under Info, then existing inner
           const qrRow = document.createElement('div');
           qrRow.className = 'modal-menu-list';
           qrRow.innerHTML = `
             <button type="button" class="modal-menu-item" id="som-info-qr">
-              <span class="icon-img">🔳</span><span>QR code</span>
+              <span class="icon-img">🔳</span><span class="label">QR code</span>
             </button>
           `;
-          inner.appendChild(qrRow);
-          body.appendChild(inner);
+          infoInner.appendChild(qrRow);
 
-          // open the same QR modal as before (moved here)
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
-            const uidRaw = String(data?.locationID || data?.id || '').trim();
-            const uid = uidRaw || String(document.getElementById('location-profile-modal')?.getAttribute('data-locationid') || '').trim();
-            if (!uid) { showToast('Missing id', 1600); return; }
+            const rawId = String(
+              data?.locationID ||
+              data?.id ||
+              document.getElementById('location-profile-modal')?.getAttribute('data-locationid') ||
+              ''
+            ).trim();
 
-            const id = 'qr-modal'; document.getElementById(id)?.remove();
-            const wrap = document.createElement('div'); wrap.className = 'modal visible'; wrap.id = id;
-            const card = document.createElement('div'); card.className = 'modal-content';            
-            const top = document.createElement('div'); top.className = 'modal-top-bar';
-            top.innerHTML = `<h2 class="modal-title">QR Code</h2><button class="modal-close" aria-label="Close">&times;</button>`;
-            top.querySelector('.modal-close')?.addEventListener('click', () => wrap.remove());
-
-            const body = document.createElement('div'); body.className = 'modal-body';
-            const inner = document.createElement('div'); inner.className = 'modal-body-inner';
-
-            const img = document.createElement('img');
-            img.alt = 'QR Code';
-            img.style.maxWidth = '100%';
-            img.style.height = 'auto';
+            if (!rawId) { showToast('Missing id', 1600); return; }
 
             // use profiles.json qrUrl when present; otherwise fall back to ?lp=<id>
-            const slugOrId = String(data?.locationID || data?.id || uid || '').trim();
             const qrUrl = (typeof data?.qrUrl === 'string') ? data.qrUrl.trim() : '';
-            const qrPayload = qrUrl || `${location.origin}/?lp=${encodeURIComponent(slugOrId)}`;
+            const qrPayload = qrUrl || `${location.origin}/?lp=${encodeURIComponent(rawId)}`;
 
-            getQRCodeLib()
-              .then((QRCode) => QRCode.toDataURL(qrPayload, { width: 512, margin: 1 }))
-              .then((dataUrl) => {
-                img.src = dataUrl;
-              })
-              .catch((err) => {
-                console.warn('QR generation failed', err); // generator-only error; no external fallback
-                img.alt = 'QR unavailable';
-              });
-
-            const actions = document.createElement('div');
-            actions.className = 'modal-footer cta-compact';
-
-            const shareBtn = document.createElement('button');
-            shareBtn.className = 'modal-footer-button';
-            shareBtn.type = 'button';
-            shareBtn.setAttribute('aria-label', 'Share');
-            shareBtn.title = 'Share';
-            shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
-            shareBtn.onclick = async () => {
-              const raw = String(data?.id || data?.locationID || '').trim();
-              const target = qrPayload || (raw ? `${location.origin}/?lp=${encodeURIComponent(raw)}` : '');
-
-              // count Share for this location (slug or ULID; Worker resolves via canonicalId)
-              if (raw) {
-                try {
-                  await fetch(
-                    `${TRACK_BASE}/hit/share/${encodeURIComponent(raw)}`,
-                    { method: 'POST', keepalive: true }
-                  ).catch(() => {});
-                } catch {
-                  // tracking must not block sharing
-                }
-              }
-
-              try {
-                if (navigator.share && target) {
-                  await navigator.share({ title: 'NaviGen QR', url: target });
-                } else if (target && navigator.clipboard) {
-                  await navigator.clipboard.writeText(target);
-                  showToast('Link copied to clipboard', 1600);
-                }
-              } catch (err) {
-                console.warn('QR share failed', err);
-              }
-            };
-
-            const printBtn = document.createElement('button');
-            printBtn.className = 'modal-footer-button';
-            printBtn.type = 'button';
-            printBtn.setAttribute('aria-label', 'Print');
-            printBtn.title = 'Print';
-            printBtn.innerHTML = '🖨️ <span class="cta-label">Print</span>';
-            printBtn.onclick = () => {
-              // count QR → Print; mirror qr-view/share (resolve slug → ULID before sending)
-              (async () => {
-                try {
-                  const raw = String(data?.id || data?.locationID || '').trim(); // prefer slug; dash expects/uses ULID after resolve
-                  if (raw) {
-                    const __uid = await resolveULIDFor(raw);
-                    if (__uid) {
-                      await fetch(`${TRACK_BASE}/hit/qr-print/${encodeURIComponent(__uid)}`, { method: 'POST', keepalive: true });
-                    }
-                  }
-                } catch {} // never block printing
-              })();
-              const src = img.src;
-              const layer = document.createElement('div');
-              layer.id = 'qr-print-layer';
-              Object.assign(layer.style, { position:'fixed', inset:'0', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', zIndex:'999999' });
-              const style = document.createElement('style');
-              style.id = 'qr-print-style';
-              style.textContent = `
-                @media print{
-                  body > *:not(#qr-print-layer){ display:none !important; }
-                  #qr-print-layer{ position:static !important; inset:auto !important; }
-                }`;
-              const pimg = document.createElement('img');
-              pimg.alt = 'QR Business Card'; pimg.src = src;
-              pimg.style.maxWidth = '90vw'; pimg.style.maxHeight = '90vh';
-              layer.appendChild(pimg);
-              const cleanup = () => { document.getElementById('qr-print-style')?.remove(); document.getElementById('qr-print-layer')?.remove(); };
-              const go = () => { try { window.print(); } finally { setTimeout(cleanup, 300); } };
-              document.head.appendChild(style); document.body.appendChild(layer);
-              if (pimg.complete) go();
-              else { pimg.addEventListener('load', go, { once:true }); pimg.addEventListener('error', cleanup, { once:true }); }
-            };
-
-            actions.appendChild(shareBtn);
-            actions.appendChild(printBtn);
-
-            inner.appendChild(img);
-            body.appendChild(inner);
-            body.appendChild(actions);
-            card.appendChild(top); card.appendChild(body); wrap.appendChild(card);
-            document.body.appendChild(wrap);
-            showModal('qr-modal');
-            (async()=>{ 
-              try { 
-                const __uid = await resolveULIDFor(uid);
-                if (__uid) await fetch(`${TRACK_BASE}/hit/qr-view/${encodeURIComponent(__uid)}`, { method:'POST', keepalive:true });
-              } catch {} 
-            })();
+            openQrCardModal(qrPayload, rawId);
           });
 
-          const actions = document.createElement('div');
-          actions.className = 'modal-footer cta-compact';
-
-          const shareBtn = document.createElement('button');
-          shareBtn.className = 'modal-footer-button';
-          shareBtn.type = 'button';
-          shareBtn.setAttribute('aria-label', 'Share');
-          shareBtn.title = 'Share';
-          shareBtn.innerHTML = '📤 <span class="cta-label">Share</span>';
-          shareBtn.onclick = async () => {
+          infoModal.querySelector('#bizcard-share')?.addEventListener('click', async () => {
             // send with canonical ULID to avoid 400 on slug (keep comment, clarify)
             const raw = String(data?.id || data?.locationID || '').trim();
             if (raw) {
@@ -2096,21 +2138,21 @@ async function initLpmImageSlider(modal, data) {
             }
 
             try {
-              const text = [name, phone, email].filter(Boolean).join('\n');
-              if (navigator.share && text) { await navigator.share({ title: 'Business Card', text }); }
-              else if (text) { await navigator.clipboard.writeText(text); showToast('Copied to clipboard', 1600); }
+              const text = [displayName, contactPerson, phone, email].filter(Boolean).join('\n');
+              if (navigator.share && text) {
+                await navigator.share({ title: 'Business card', text });
+              } else if (text && navigator.clipboard) {
+                await navigator.clipboard.writeText(text);
+                showToast('Copied to clipboard', 1600);
+              }
             } catch {}
-          };
+          });
 
-          actions.appendChild(shareBtn);
-          card.appendChild(top);
-          card.appendChild(body);
-          card.appendChild(actions);
-          wrap.appendChild(card);
-          document.body.appendChild(wrap);
+          setupTapOutClose(infoId);
+          showModal(infoId);
         }, { passive: false });
       }
-    }    
+    }  
     
     // count LPM open — allow slug or ULID; resolve slug → ULID before sending (avoids 400)
     ;(async () => {
@@ -3690,9 +3732,6 @@ export function createRestoreAccessModal() {
     let keepLocked = false;
 
     try {
-      const qp = new URLSearchParams(window.location.search);
-      const loc = String(qp.get('locationID') || '').trim();
-
       // Do NOT redirect to /dash. Perform owner restore, mint cookie, then show Owner Settings matrix.
       const url = new URL('/owner/restore', location.origin);
       url.searchParams.set('pi', pi);
@@ -3723,11 +3762,10 @@ export function createRestoreAccessModal() {
       const restoredUlid = String(restoreJ?.ulid || '').trim();
       const restoredSlug = String(restoreJ?.locationID || '').trim();
 
-      // Prefer the explicit location context if provided; otherwise use the authoritative restore payload.
-      const target = String(loc || restoredSlug || restoredUlid).trim();
+      // Use the authoritative restore payload only; do not reuse any stale location context from the URL.
+      const target = String(restoredUlid || restoredSlug).trim();
 
-      // Post-restore hints: keep ULID/slug locally so Owner center and Dash can render immediately.
-      // Also carry a one-shot inherited-addition notice through the shell reload.
+      // Post-restore hints: keep authoritative ULID/slug locally so Owner center and Owner settings can render immediately.
       try {
         if (restoredUlid) {
           sessionStorage.setItem('ng_owner_restore_ulid', restoredUlid);
@@ -3740,25 +3778,20 @@ export function createRestoreAccessModal() {
         let addedRows = 0;
         let blockedRows = 0;
 
-        for (let attempt = 0; attempt < 2; attempt += 1) {
-          const rr2 = await fetch('/api/owner/campaigns', {
-            cache: 'no-store',
-            credentials: 'include'
-          });
-          const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
+        const rr2 = await fetch('/api/owner/campaigns', {
+          cache: 'no-store',
+          credentials: 'include'
+        });
+        const jj2 = rr2.ok ? await rr2.json().catch(() => null) : null;
 
-          addedRows = Math.max(
-            0,
-            Number(jj2?.inheritedNotice?.addedRows || 0) || 0
-          );
-          blockedRows = Math.max(
-            0,
-            Number(jj2?.inheritedNotice?.blockedRows || 0) || 0
-          );
-
-          if (addedRows > 0 || blockedRows > 0 || attempt === 1) break;
-          await new Promise((resolve) => setTimeout(resolve, 250));
-        }
+        addedRows = Math.max(
+          0,
+          Number(jj2?.inheritedNotice?.addedRows || 0) || 0
+        );
+        blockedRows = Math.max(
+          0,
+          Number(jj2?.inheritedNotice?.blockedRows || 0) || 0
+        );
 
         sessionStorage.removeItem('ng_inherited_notice_added_rows');
         sessionStorage.removeItem('ng_inherited_notice_until');
@@ -4633,8 +4666,10 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       <small>${selectedId}</small>
     </span>
   `;
-  inner.appendChild(selectedCard);
-
+  if (!hasSelection) {
+    selectedCard.style.display = 'none';
+  }
+  
   const activeCard = document.createElement('div');
   activeCard.className = 'modal-menu-item os-context-card os-active';
   activeCard.innerHTML = `
@@ -4759,19 +4794,11 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       if (aNameBox && nm) aNameBox.textContent = nm;
       if (aIdBox && slug) aIdBox.textContent = slug;
 
-      if (!selectedKey) {
-        const selSmalls = selectedCard.querySelectorAll('small');
-        const selNameBox = selSmalls[0] || null;
-        const selIdBox = selSmalls[1] || null;
-
-        if (selNameBox && nm) selNameBox.textContent = nm;
-        if (selIdBox && (slug || activeUlid)) selIdBox.textContent = slug || activeUlid;
-        if (!locId) locId = slug || activeUlid;
-      }
+      // No-selection restore landings must not backfill Selected from Active.
 
       // Mismatch detection: Selected ≠ Active
       try {
-        const selRaw = String(selectedKey || locId || '').trim();        
+        const selRaw = hasSelection ? String(selectedKey || locId || '').trim() : '';        
         const hasSelected = !!selRaw;
 
         // Compare using ULID (canonical), not slug, to avoid false mismatch during slug/ULID resolution.
@@ -8291,7 +8318,7 @@ export function showFavoritesModal() {
 
   if (!Array.isArray(saved) || saved.length === 0) {
     const empty = document.createElement("p");
-    empty.className = "muted";
+    empty.className = "muted muted-note";    
     empty.textContent = t("no.favorites.yet");
     wrap.appendChild(empty);
     showModal("favorites-modal");
@@ -8310,7 +8337,7 @@ export function showFavoritesModal() {
     row.innerHTML = `
       <div class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
         <button class="open-fav" type="button" style="all:unset; cursor:pointer; display:block; width:100%;">
-          <strong>${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim() || t("Unnamed")}</strong>
+          ${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim() || t("Unnamed")}
         </button>
       </div>
       <button class="unsave-fav clear-x" type="button" aria-label="${t("Remove")}">✖</button>
