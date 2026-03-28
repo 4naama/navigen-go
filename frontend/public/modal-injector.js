@@ -540,34 +540,64 @@ async function openPromotionQrModal(modal, data) {
     const applyTemplate = (str, vars) =>
       String(str || '').replace(/{{(\w+)}}/g, (m, k) => (vars && k in vars ? String(vars[k]) : m));
 
-    // Collect possible identifiers
-    const domId     = String(modal?.getAttribute('data-locationid') || '').trim();
-    const payloadId = String(data?.locationID || '').trim();
-    const alias     = String(data?.alias || '').trim();
-    const rawId     = String(data?.id || '').trim();
+    const sourceModal = modal?.classList?.contains('modal')
+      ? modal
+      : modal?.closest?.('.modal');
 
-    const candidates = [domId, payloadId, alias, rawId]
+    const sourceModalId = String(sourceModal?.id || '').trim();
+
+    const hideSourcePicker = () => {
+      if (sourceModalId === 'promotions-modal' || sourceModalId === 'active-campaigns-modal') {
+        hideModal(sourceModalId);
+      }
+    };
+
+    // Collect possible identifiers.
+    const domId = String(
+      modal?.getAttribute?.('data-locationid') ||
+      sourceModal?.getAttribute?.('data-locationid') ||
+      ''
+    ).trim();
+
+    const payloadCampaignKey = String(data?.campaignKey || '').trim();
+
+    const candidates = [
+      domId,
+      data?.locationID,
+      data?.locationId,
+      data?.locationSlug,
+      data?.locationAlias,
+      data?.alias,
+      data?.slug,
+      data?.locationULID,
+      data?.locationKey,
+      data?.id,
+      data?.rawId
+    ]
       .map(v => String(v || '').trim())
       .filter(Boolean);
 
     let locationIdOrSlug = '';
     for (const c of candidates) {
-      if (!ULID.test(c)) { locationIdOrSlug = c; break; }
+      if (!ULID.test(c)) {
+        locationIdOrSlug = c;
+        break;
+      }
     }
-    if (!locationIdOrSlug && candidates.length) locationIdOrSlug = candidates[0];
-
     if (!locationIdOrSlug) {
+      locationIdOrSlug = candidates.find((c) => ULID.test(c)) || '';
+    }
+
+    if (!locationIdOrSlug && !payloadCampaignKey) {
       showToast('Promotions unavailable for this location', 1600);
       return;
     }
 
     // Call promo-qr on the authoritative API Worker so QR minting, ARMED logging, and redeem routing all use the same backend path.
     const apiUrl = new URL('/api/promo-qr', TRACK_BASE || 'https://navigen-api.4naama.workers.dev');
-    apiUrl.searchParams.set('locationID', locationIdOrSlug);
 
-    // If caller already knows a campaignKey (e.g., Promotions list), pass it through.
-    const ck = String(data?.campaignKey || '').trim();
-    if (ck) apiUrl.searchParams.set('campaignKey', ck);
+    if (locationIdOrSlug) apiUrl.searchParams.set('locationID', locationIdOrSlug);
+    if (payloadCampaignKey) apiUrl.searchParams.set('campaignKey', payloadCampaignKey);
 
     const res = await fetch(apiUrl.toString(), { cache: 'no-store' });
 
@@ -579,14 +609,16 @@ async function openPromotionQrModal(modal, data) {
           showToast('Promotions unavailable for this location', 2000);
           return;
         }
+
+        hideSourcePicker();
         showActiveCampaignsModal({
           locationIdOrSlug,
-          locationName: String(data?.name || data?.displayName || '').trim(),
+          locationName: String(data?.name || data?.displayName || payload?.locationName || '').trim(),
           items
         });
         return;
       }
-      
+
       if (res.status === 403) {
         const payload = await res.json().catch(() => null);
         const code = String(payload?.error?.code || '').trim();
@@ -606,6 +638,17 @@ async function openPromotionQrModal(modal, data) {
     }
 
     const payload = await res.json().catch(() => null);
+    const resolvedLocationIdOrSlug = String(
+      locationIdOrSlug ||
+      payload?.locationID ||
+      payload?.locationId ||
+      payload?.locationSlug ||
+      payload?.locationAlias ||
+      payload?.alias ||
+      payload?.slug ||
+      ''
+    ).trim();
+
     const qrUrl = String(payload?.qrUrl || '').trim();
     const campaignName = String(payload?.campaignName || '').trim();
     const productName = String(payload?.productName || '').trim();
@@ -622,7 +665,13 @@ async function openPromotionQrModal(modal, data) {
       return;
     }
 
-    const locName = String(data?.name || data?.displayName || 'this location').trim() || 'this location';
+    const locName = String(
+      data?.name ||
+      data?.displayName ||
+      payload?.locationName ||
+      'this location'
+    ).trim() || 'this location';
+
     const eligibilityText = eligibilityNotes || eligibilityType || '';
 
     // Build discount line, e.g. "10% off your purchase at Stage X"
@@ -8019,22 +8068,31 @@ export function showPromotionsModal() {
         camp?.locationID ||
         camp?.locationId ||
         camp?.locationSlug ||
+        camp?.locationAlias ||
+        camp?.alias ||
         camp?.slug ||
         camp?.locationULID ||
+        camp?.locationKey ||
+        camp?.id ||
         ''
       ).trim();
+
+      const promotionTarget = {
+        locationID: locIdent,
+        locationSlug: String(camp?.locationSlug || camp?.slug || '').trim(),
+        locationULID: String(camp?.locationULID || camp?.locationID || '').trim(),
+        alias: String(camp?.locationAlias || camp?.alias || '').trim(),
+        id: String(camp?.id || '').trim(),
+        locationName,
+        name: locationName,
+        displayName: locationName,
+        campaignKey: String(camp?.campaignKey || '').trim()
+      };
 
       if (locIdent) row.setAttribute('data-locationid', locIdent);
 
       row.addEventListener("click", () => {
-        hideModal("promotions-modal");
-        openPromotionQrModal(row, {
-          locationID: locIdent,
-          locationName,
-          name: locationName,
-          displayName: locationName,
-          campaignKey: String(camp?.campaignKey || '').trim()
-        });
+        openPromotionQrModal(row, promotionTarget);
       });
 
       actionsCol.querySelector('.promotion-lpm-link')?.addEventListener('click', (e) => {
