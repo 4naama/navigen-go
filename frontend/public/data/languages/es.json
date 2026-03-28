@@ -501,7 +501,7 @@
   "promo.qr.wait": "La oferta es válida para canje en tienda y solo cuando la escanea el cajero.",
   "promotion.redeem-hint": "Toque aquí solo cuando esté listo para pagar.",
   "campaign.redeem-button": "Estoy en el punto de canje — 🔳 mostrar mi código",
-  "qr.role.campaign-redeem-label": "QR de canje de campaña",
+  "qr.role.campaign-redeem-label": "Código QR de canje de la campaña",
   "qr.role.campaign-redeem-desc": "Muestre este código QR al cajero al pagar para canjear su oferta de campaña.",
   "campaign.redeem-terms": "Al canjear, acepto los términos de la oferta.",
   "qr.role.campaign-redeem-warning": "Después de escanear, espere la confirmación (10–20 segundos).",

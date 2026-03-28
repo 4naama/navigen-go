@@ -185,29 +185,18 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   const id = 'promo-qr-modal';
   document.getElementById(id)?.remove();
 
-  const wrap = document.createElement('div');
-  wrap.className = 'modal hidden';
-  wrap.id = id;
+  const titleText = translatedOrFallback('qr.role.campaign-redeem-label', 'Campaign redemption QR');
 
-  const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
+  const modal = injectModal({
+    id,
+    title: titleText,
+    layout: 'menu',
+    bodyHTML: ''
+  });
 
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-
-  const titleText = translatedOrFallback('qr.role.campaign-redeem-label', 'Campaign Redemption QR');
-
-  top.innerHTML = `
-    <h2 class="modal-title">${titleText}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
-
-  const body = document.createElement('div');
-  body.className = 'modal-body'; // scroll owner (My Stuff parity)
-
-  const inner = document.createElement('div');
-  inner.className = 'modal-body-inner'; // padding + floor owner
+  const top = modal.querySelector('.modal-top-bar');
+  const inner = modal.querySelector('.modal-body-inner');
+  if (!(top instanceof HTMLElement) || !(inner instanceof HTMLElement)) return;
 
   const qrContainer = document.createElement('div');
   qrContainer.className = 'qr-wrapper';
@@ -278,12 +267,6 @@ function showPromotionQrModal(qrUrl, locationIdOrSlug) {
   pThanks.style.textAlign = 'center';
   inner.appendChild(pThanks);
 
-  body.appendChild(inner);
-
-  card.appendChild(top);
-  card.appendChild(body);
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
   disableTapOutClose(id);
 
   // Customer-side redeem status polling (token-aware, short-lived).
@@ -660,30 +643,23 @@ async function openPromotionQrModal(modal, data) {
       daysLeftText = applyTemplate(expiresTemplate, { days: diffDays });
     }
 
-    // Remove any previous Promotion modal
+    // Remove any previous Promotion modal.
     const modalId = 'promotion-modal';
     document.getElementById(modalId)?.remove();
 
-    const wrap = document.createElement('div');
-    wrap.className = 'modal hidden';
-    wrap.id = modalId;
+    const promoTitle = tmpl('promotion.title', 'Promotion details');
+    const modal = injectModal({
+      id: modalId,
+      title: promoTitle,
+      layout: 'menu',
+      bodyHTML: ''
+    });
 
-    const card = document.createElement('div');
-    card.className = 'modal-content modal-layout';
-
-    const top = document.createElement('div');
-    const promoTitle = tmpl('promotion.title', 'Promotion Details');
-    top.className = 'modal-top-bar';
-    top.innerHTML = `
-      <h2 class="modal-title">${promoTitle}</h2>
-      <button class="modal-close" aria-label="Close">&times;</button>
-    `;
-    top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(modalId));
-
-    const body = document.createElement('div');
-    body.className = 'modal-body';
-    const inner = document.createElement('div');
-    inner.className = 'modal-body-inner';
+    const inner = modal.querySelector('.modal-body-inner');
+    if (!(inner instanceof HTMLElement)) {
+      showToast('Promotions unavailable for this location', 2000);
+      return;
+    }
 
     // 1–2) Promotion summary card (non-clickable; no chevron/arrow)
     {
@@ -803,7 +779,7 @@ async function openPromotionQrModal(modal, data) {
           showToast(tmpl('promotion.share.copied', 'Promotion link copied'), 1600);
         }
       } catch (_e) {
-        // sharing must never break Promotion Details
+        // sharing must never break Promotion details
       }
     });
 
@@ -850,11 +826,6 @@ async function openPromotionQrModal(modal, data) {
     btnWrap.appendChild(qrBtn);
     inner.appendChild(btnWrap);
 
-    body.appendChild(inner);
-    card.appendChild(top);
-    card.appendChild(body);
-    wrap.appendChild(card);
-    document.body.appendChild(wrap);
     disableTapOutClose(modalId);
 
     showModal(modalId);
@@ -3564,76 +3535,63 @@ export function createRestoreAccessModal() {
   const id = 'owner-restore-access-modal';
   document.getElementById(id)?.remove();
 
-  const wrap = document.createElement('div');
-  wrap.className = 'modal hidden';
-  wrap.id = id;
+  const modal = injectModal({
+    id,
+    title: _ownerText('owner.restore.title', 'Restore access'),
+    layout: 'menu',
+    bodyHTML: `
+      <p style="text-align:left;margin:0 0 12px;">
+        ${_ownerText(
+          'owner.restore.body',
+          'To add owner access on this device, use the Stripe payment ID (pi_...) for that listing.'
+        )}
+      </p>
+      <p class="muted muted-note" style="text-align:left;margin:0 0 12px;">
+        ${_ownerText(
+          'owner.restore.hint',
+          'You can restore more than one listing on this device, one Stripe payment ID (pi_...) at a time.'
+        )}
+      </p>
+      <p style="text-align:left;margin:0 0 12px;">
+        <strong>${
+          (typeof t === 'function' && t('owner.restore.pi.label')) ||
+          'Paste your Payment ID (pi_...) to restore access on this device:'
+        }</strong>
+      </p>
+      <input
+        type="text"
+        id="owner-restore-pi"
+        class="input"
+        placeholder="pi_..."
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div class="modal-actions">
+        <button type="button" class="modal-body-button" id="owner-restore-pi-submit">
+          ${
+            (typeof t === 'function' && t('owner.restore.pi.submit')) ||
+            'Restore'
+          }
+        </button>
+      </div>
+    `
+  });
 
-  const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
+  const card = modal.querySelector('.modal-content');
+  const top = modal.querySelector('.modal-top-bar');
+  const input = modal.querySelector('#owner-restore-pi');
+  const btn = modal.querySelector('#owner-restore-pi-submit');
 
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  top.innerHTML = `
-    <h2 class="modal-title">${_ownerText('owner.restore.title', 'Restore access')}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
-
-  const body = document.createElement('div');
-  body.className = 'modal-body';
-  const inner = document.createElement('div');
-  inner.className = 'modal-body-inner';
-
-  const p1 = document.createElement('p');
-  p1.textContent = _ownerText(
-    'owner.restore.body',
-    'To add owner access on this device, use the Stripe payment ID (pi_...) for that listing.'    
-  );
-  p1.style.textAlign = 'left';
-  p1.style.fontSize = '0.95em';
-  inner.appendChild(p1);
-
-  const hint = document.createElement('p');
-  hint.textContent = _ownerText(
-    'owner.restore.hint',
-    'You can restore more than one listing on this device, one Stripe payment ID (pi_...) at a time.'    
-  );
-  hint.style.textAlign = 'left';
-  hint.style.fontSize = '0.85em';
-  hint.style.opacity = '0.8';
-  inner.appendChild(hint);
+  if (
+    !(card instanceof HTMLElement) ||
+    !(top instanceof HTMLElement) ||
+    !(input instanceof HTMLInputElement) ||
+    !(btn instanceof HTMLButtonElement)
+  ) {
+    return;
+  }
 
   // PaymentIntent restore (pi_...) — cross-device recovery without emails/links
-  const label = document.createElement('p');
-  label.textContent =
-    (typeof t === 'function' && t('owner.restore.pi.label')) ||
-    'Paste your Payment ID (pi_...) to restore access on this device:';
-  label.style.textAlign = 'left';
-  label.style.fontSize = '0.9em';
-  label.style.marginTop = '1rem';
-  inner.appendChild(label);
-
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.id = 'owner-restore-pi';
-  input.placeholder = 'pi_...';
-  input.autocomplete = 'off';
-  input.spellcheck = false;
-  input.style.width = '100%';
-  input.style.padding = '0.6rem';
-  input.style.borderRadius = '8px';
-  input.style.border = '1px solid rgba(0,0,0,0.15)';
-  inner.appendChild(input);
-
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'modal-body-button';
-  btn.id = 'owner-restore-pi-submit';
-  btn.textContent =
-    (typeof t === 'function' && t('owner.restore.pi.submit')) ||
-    'Restore';
-  btn.style.marginTop = '0.75rem';
-
   btn.addEventListener('click', async (e) => {
     // Swallow the interaction so it cannot fall through to underlying UI.
     try {
@@ -3655,14 +3613,14 @@ export function createRestoreAccessModal() {
     card.setAttribute('aria-busy', 'true');
 
     const closeBtn = top.querySelector('.modal-close');
-    if (closeBtn) closeBtn.disabled = true;
+    if (closeBtn instanceof HTMLButtonElement) closeBtn.disabled = true;
 
     const unlockRestoreUi = () => {
       btn.dataset.busy = '0';
       btn.disabled = false;
       input.disabled = false;
       card.removeAttribute('aria-busy');
-      if (closeBtn) closeBtn.disabled = false;
+      if (closeBtn instanceof HTMLButtonElement) closeBtn.disabled = false;
       try { delete document.body.dataset.ownerRestoreBusy; } catch {}
     };
 
@@ -3779,15 +3737,7 @@ export function createRestoreAccessModal() {
     }
   });
 
-  inner.appendChild(btn);
-
-  body.appendChild(inner);
-
-  card.appendChild(top);
-  card.appendChild(body);
-
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
+  setupTapOutClose(id);
 }
 
 export function showRestoreAccessModal() {
@@ -7903,46 +7853,24 @@ export function createMyStuffModal() {
 export function createFavoritesModal() {
   if (document.getElementById("favorites-modal")) return;
 
-  const modal = injectModal({
+  injectModal({
     id: "favorites-modal",
-    className: "modal modal-menu",
-    bodyHTML: `<div id="favorites-body" class="modal-body"></div>`
+    title: t("favorites") || "Favorites",
+    layout: "menu",
+    bodyHTML: `<div id="favorites-body"></div>`
   });
-
-  modal.classList.add("hidden");
-
-  const topBar = document.createElement("div");
-  topBar.className = "modal-top-bar";
-  topBar.innerHTML = `
-    <h2 class="modal-header">${t("Favorites")}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  modal.querySelector(".modal-content")?.prepend(topBar);
-  topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("favorites-modal"));
 }
 
 export function createPromotionsModal() {
   if (document.getElementById("promotions-modal")) return;
 
-  const modal = injectModal({
+  injectModal({
     id: "promotions-modal",
-    layout: "menu", // ensures .modal-content.modal-menu → header sits flush (matches My Stuff pattern)
-    bodyHTML: `<div id="promotions-body"></div>`
+    title: t("promotions") || "Promotions",
+    layout: "menu", // keep Promotions on the same shared menu shell as Select your business
+    bodyHTML: `<div id="promotions-body"></div>`,
+    modalClassName: "modal-wide-menu"
   });
-
-  modal.classList.add("hidden");
-  // removed: promotions stays on the shared modal platform only
-
-  const topBar = document.createElement("div");
-  topBar.className = "modal-top-bar";
-  topBar.innerHTML = `
-    <h2 class="modal-header">${t("promotions")}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  modal.querySelector(".modal-content")?.prepend(topBar);
-  topBar
-    .querySelector(".modal-close")
-    ?.addEventListener("click", () => hideModal("promotions-modal"));
 }
 
 export function showPromotionsModal() {
@@ -7952,7 +7880,7 @@ export function showPromotionsModal() {
 
   const modal = document.getElementById("promotions-modal");
   const body = modal?.querySelector("#promotions-body");
-  const title = modal?.querySelector(".modal-header");
+  const title = modal?.querySelector(".modal-top-bar .modal-title");  
   const topBar = modal?.querySelector(".modal-top-bar");
   if (!modal || !body || !title || !topBar) return;
 
@@ -8178,9 +8106,7 @@ export function showPromotionsModal() {
   });
   searchRow.appendChild(infoBtn);
 
-  const closeInBar = topBar.querySelector('.modal-close');
-  if (closeInBar) topBar.insertBefore(searchRow, closeInBar);
-  else topBar.appendChild(searchRow);
+  topBar.appendChild(searchRow);
 
   let running = [];
   let pinnedOnly = false;
@@ -8288,7 +8214,7 @@ export function showFavoritesModal() {
 
   const modal = document.getElementById("favorites-modal");
   const body = modal.querySelector("#favorites-body");
-  const title = modal.querySelector(".modal-header");
+  const title = modal.querySelector(".modal-top-bar .modal-title");  
   if (!modal || !body || !title) return;
 
   title.textContent = t("favorites");
@@ -8320,9 +8246,9 @@ export function showFavoritesModal() {
 
     // label button opens/scrolls to item; star button unsaves (no conflict)
     row.innerHTML = `
-      <div class="label" style="flex:1 1 auto; min-width:0;">
-        <button class="open-fav" type="button" style="all:unset; cursor:pointer;">
-          ${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim() || t("Unnamed")}
+      <div class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+        <button class="open-fav" type="button" style="all:unset; cursor:pointer; display:block; width:100%;">
+          <strong>${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim() || t("Unnamed")}</strong>
         </button>
       </div>
       <button class="unsave-fav clear-x" type="button" aria-label="${t("Remove")}">✖</button>
@@ -8820,22 +8746,21 @@ export function createHelpModal() {
 
   const modal = injectModal({
     id: "help-modal", // canonical id used by hideModal/setupTapOutClose
-    title: '',
-    layout: 'action',
+    title: t("help.title") || "🆘 Emergency numbers",
+    layout: "menu",
     bodyHTML: `
-      <div class="modal-menu-list" id="social-modal-list"></div>
       <p class="muted" data-i18n="help.intro">
         Hello! We’re here to assist you. Tap an emergency number to call from your phone.
       </p>
 
-      <p style="text-align:center;margin:0.75em 0;">
+      <p style="margin:0.75em 0;">
         <span class="detected-label" data-i18n="help.detectedRegion">Detected region</span>:
         <strong id="emg-region-label">—</strong>
       </p>
 
       <div id="emg-buttons" class="community-actions"></div>
 
-      <div style="text-align:center;margin-top:0.75em;">
+      <div style="margin-top:0.75em;">
         <label for="emg-country" class="muted" style="display:block;margin-bottom:0.25em;" data-i18n="help.chooseCountry">
           Choose country
         </label>
@@ -8857,18 +8782,6 @@ export function createHelpModal() {
       </div>
     `
   });
-
-  // Top bar (match My Stuff)
-  const topBar = document.createElement("div");
-  topBar.className = "modal-top-bar";
-  topBar.innerHTML = `
-    <h2 id="help-title" style="margin:0;">${t("help.title") || "🆘 Emergency Numbers"}</h2>
-    <button type="button" class="modal-close" aria-label="Close">&times;</button>
-  `;
-  modal.querySelector(".modal-content")?.prepend(topBar);
-
-  // Close via red X
-  topBar.querySelector(".modal-close")?.addEventListener("click", () => hideModal("help-modal"));
 
   // i18n pass
   (function localizeHelpModal() {

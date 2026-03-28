@@ -1027,6 +1027,20 @@ body.large-text {
 /* hide legacy arrow if present */
 #help-modal #emg-country::-ms-expand{ display:none; }
 
+#help-modal .modal-body-inner p{
+  text-align:left;
+  margin-left:0;
+  margin-right:0;
+}
+
+#help-modal .detected-label,
+#help-modal #emg-region-label,
+#help-modal label[for="emg-country"],
+#help-modal #emg-buttons > *,
+#help-modal .modal-continue{
+  font-weight:600;
+}
+
 #my-stuff-modal .modal-content{
   padding-top: 0;    /* attach sticky header to the top edge */
   padding-bottom: 0; /* scroller ends at card edge → footer sticks to bottom */
@@ -2600,6 +2614,21 @@ button:hover {
   box-sizing:border-box;      /* include padding in width */
 }
 
+.modal-menu-item .label{
+  flex:1 1 auto;
+  min-width:0;
+  text-align:left;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.modal-menu-item .label small{
+  display:block;
+  font-weight:400;
+  opacity:0.7;
+  font-size:0.85rem;
+}
+
 /* OC card stays a clean 2-row stack: title row above, actions row below */
 .oc-card{
   display:flex;
@@ -3395,47 +3424,17 @@ select.input{
   font-size:1.1em;
 }
 
-/* Promotions modal: use the same shell geometry as SYB */
-#promotions-modal .modal-content{
-  padding-top: 0;
-  padding-right: 0;
-  padding-left: 0;
-  padding-bottom: 0;
-}
-
-#promotions-modal .modal-body{
-  padding: 0;
-  margin-top: 8px;
-  position: relative;
-  padding-inline: 0;
-}
-
-#promotions-modal .modal-body-inner{
-  padding: 0 1.5em 0 1.5em;
-}
-
-#promotions-modal .modal-body-inner::after{
-  content:"";
-  display:block;
-  height: 3.25em;
-  pointer-events:none;
-}
-
-#promotions-modal #promotions-body{
-  padding: 0;
-  margin: 0;
-}
-
-/* Promotions modal header: same rhythm as SYB */
+/* Promotions uses the same search-row modal pattern as Select your business. */
 #promotions-modal .modal-top-bar{
-  padding: 16px 1.5em 12px 1.5em;
   flex-wrap: wrap;
 }
 
+#promotions-modal .modal-top-bar .modal-title,
 #promotions-modal .modal-top-bar h2{
   order: 1;
 }
 
+#promotions-modal .modal-top-bar .modal-top-actions,
 #promotions-modal .modal-top-bar .modal-close{
   order: 1;
 }
@@ -3451,11 +3450,11 @@ select.input{
 }
 
 #promotions-modal .select-location-search-left{
-  flex: 1 1 auto;
-  padding-right: 0;
-  max-width: none;
-  width: auto;
   position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  max-width: none;
 }
 
 #promotions-modal .select-location-search-left input{

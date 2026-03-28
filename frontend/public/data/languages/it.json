@@ -501,7 +501,7 @@
   "promo.qr.wait": "L’offerta è valida per il riscatto in negozio e solo se viene scansionata dal cassiere.",
   "promotion.redeem-hint": "Tocca qui solo quando sei pronto a pagare.",
   "campaign.redeem-button": "Sono al punto di riscatto — 🔳 mostra il mio codice",
-  "qr.role.campaign-redeem-label": "QR di riscatto della campagna",
+  "qr.role.campaign-redeem-label": "Codice QR di riscatto della campagna",
   "qr.role.campaign-redeem-desc": "Mostra questo codice QR al cassiere al momento del pagamento per riscattare l’offerta della campagna.",
   "campaign.redeem-terms": "Riscattando accetto i termini dell’offerta.",
   "qr.role.campaign-redeem-warning": "Dopo la scansione, attendere la conferma (10–20 secondi).",

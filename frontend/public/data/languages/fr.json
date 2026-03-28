@@ -501,7 +501,7 @@
   "promo.qr.wait": "L’offre est valable pour un remboursement en magasin et uniquement lorsqu’elle est scannée par le caissier.",
   "promotion.redeem-hint": "Touchez ceci uniquement lorsque vous êtes prêt à payer.",
   "campaign.redeem-button": "Je suis au point d’utilisation — 🔳 afficher mon code",
-  "qr.role.campaign-redeem-label": "QR de remboursement de campagne",
+  "qr.role.campaign-redeem-label": "QR de validation de la campagne",
   "qr.role.campaign-redeem-desc": "Présentez ce code QR au caissier lors du paiement pour utiliser votre offre de campagne.",
   "campaign.redeem-terms": "By redeeming, I agree to the offer terms.",
   "qr.role.campaign-redeem-warning": "Après le scan, attendez la confirmation (10–20 secondes).",
