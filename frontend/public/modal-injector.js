@@ -435,25 +435,15 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
   const id = 'active-campaigns-modal';
   document.getElementById(id)?.remove();
 
-  const wrap = document.createElement('div');
-  wrap.className = 'modal hidden';
-  wrap.id = id;
+  const modal = injectModal({
+    id,
+    title: (typeof t === 'function' && t('campaign.activePicker.title')) || 'Active campaigns',
+    layout: 'menu',
+    bodyHTML: ''
+  });
 
-  const card = document.createElement('div');
-  card.className = 'modal-content modal-layout';
-
-  const top = document.createElement('div');
-  top.className = 'modal-top-bar';
-  top.innerHTML = `
-    <h2 class="modal-title">${(typeof t === 'function' && t('campaign.activePicker.title')) || 'Active campaigns'}</h2>
-    <button class="modal-close" aria-label="Close">&times;</button>
-  `;
-  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
-
-  const body = document.createElement('div');
-  body.className = 'modal-body';
-  const inner = document.createElement('div');
-  inner.className = 'modal-body-inner';
+  const inner = modal.querySelector('.modal-body-inner');
+  if (!(inner instanceof HTMLElement)) return;
 
   const note = document.createElement('p');
   note.className = 'muted muted-note';
@@ -468,9 +458,9 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
   inner.appendChild(list);
 
   const fmt = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(String(s || '').trim()) ? String(s).trim() : '');
-  const locName = String(locationName || '').trim();
+  const sharedLocationName = String(locationName || '').trim();
 
-  items.forEach((c) => {
+  (Array.isArray(items) ? items : []).forEach((c) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'modal-menu-item';
@@ -479,6 +469,7 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
       String(c?.campaignName || '').trim() ||
       ((typeof t === 'function' && t('promotion.unnamed')) || 'Promotion');
 
+    const itemLocationName = String(c?.locationName || sharedLocationName || '').trim();
     const productName = String(c?.productName || '').trim();
     const eligibilityText = String(c?.eligibilityNotes || c?.eligibilityType || '').trim();
 
@@ -493,7 +484,7 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
     const summary = buildPromotionSummaryCard({
       discountText,
       campaignName,
-      locationName: locName,
+      locationName: itemLocationName,
       productName,
       eligibilityText,
       startDate: fmt(c?.startDate),
@@ -502,24 +493,37 @@ function showActiveCampaignsModal({ locationIdOrSlug, locationName, items }) {
 
     btn.innerHTML = summary.innerHTML;
 
+    const locIdent = String(
+      locationIdOrSlug ||
+      c?.locationID ||
+      c?.locationId ||
+      c?.locationSlug ||
+      c?.locationAlias ||
+      c?.alias ||
+      c?.slug ||
+      c?.locationULID ||
+      c?.locationKey ||
+      c?.id ||
+      ''
+    ).trim();
+
+    if (locIdent) btn.setAttribute('data-locationid', locIdent);
+
     btn.addEventListener('click', () => {
-      hideModal(id);
-      openPromotionQrModal(document.getElementById('location-profile-modal'), {
-        locationID: locationIdOrSlug,
-        name: locationName,
-        displayName: locationName,
+      openPromotionQrModal(btn, {
+        locationID: locIdent,
+        locationSlug: String(c?.locationSlug || c?.slug || '').trim(),
+        locationULID: String(c?.locationULID || c?.locationID || '').trim(),
+        alias: String(c?.locationAlias || c?.alias || '').trim(),
+        id: String(c?.id || '').trim(),
+        name: itemLocationName,
+        displayName: itemLocationName,
         campaignKey: String(c?.campaignKey || '').trim()
       });
     });
 
     list.appendChild(btn);
   });
-
-  body.appendChild(inner);
-  card.appendChild(top);
-  card.appendChild(body);
-  wrap.appendChild(card);
-  document.body.appendChild(wrap);
 
   setupTapOutClose(id);
   showModal(id);
@@ -929,7 +933,7 @@ export function createLocationProfileModal(data, injected = {}) {
   top.className = 'modal-top-bar';
   const displayName = String(data?.displayName ?? data?.name ?? 'Location'); // location title only
   top.innerHTML = `
-      <h2 class="modal-header" aria-live="polite">📍 ${displayName}</h2>
+      <h2 class="modal-title" aria-live="polite">📍 ${displayName}</h2>      
       <button class="modal-close" aria-label="Close">&times;</button>
     `;
   
@@ -7425,9 +7429,11 @@ function buildPromotionSummaryCard({
   label.className = 'label';
   label.style.flex = '1 1 auto';
   label.style.minWidth = '0';
+  label.style.textAlign = 'left';
 
+  const titleText = String(discountText || '').trim() || 'Promotion';
   const title = document.createElement('strong');
-  title.textContent = String(discountText || '').trim() || 'Promotion';
+  title.textContent = titleText;
   label.appendChild(title);
 
   const eligibilityLabelRaw =
@@ -7437,14 +7443,18 @@ function buildPromotionSummaryCard({
       ? eligibilityLabelRaw
       : 'Eligibility';
 
-  const seen = new Set();
+  const seen = new Set([titleText.toLowerCase()]);
+
   const appendSmall = (value) => {
     const text = String(value || '').trim();
-    if (!text || seen.has(text)) return;
-    seen.add(text);
-    label.appendChild(document.createElement('br'));
+    const key = text.toLowerCase();
+    if (!text || seen.has(key)) return;
+    seen.add(key);
+
     const small = document.createElement('small');
     small.textContent = text;
+    small.style.display = 'block';
+    small.style.marginTop = '4px';
     label.appendChild(small);
   };
 
@@ -8090,22 +8100,6 @@ export function showPromotionsModal() {
   pinFilterBtn.title = tSafe('promotions.pinnedFilter.off', 'Show pinned campaigns only');
   searchRow.appendChild(pinFilterBtn);
 
-  const infoBtn = document.createElement('button');
-  infoBtn.type = 'button';
-  infoBtn.className = 'select-location-info-btn';
-  infoBtn.textContent = 'ℹ️';
-  infoBtn.setAttribute('aria-label', tSafe('promotions.search.infoAria', 'Filter help'));
-  infoBtn.addEventListener('click', () => {
-    showToast(
-      tSafe(
-        'promotions.search.info',
-        'Filter campaigns by location, campaign name, product or service, eligibility, discount, or dates like "2026-03", "26-03", "03".'
-      ),
-      5000
-    );
-  });
-  searchRow.appendChild(infoBtn);
-
   topBar.appendChild(searchRow);
 
   let running = [];
@@ -8723,7 +8717,7 @@ export function createAlertModal() {
   const topBar = document.createElement("div");
   topBar.className = "modal-top-bar";
   topBar.innerHTML = `
-    <h2 id="alert-title" class="modal-header">${t("alert.title") || "🚨 Current Alerts"}</h2>
+    <h2 id="alert-title" class="modal-title">${t("alert.title") || "🚨 Current alerts"}</h2>    
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   modal.querySelector(".modal-content")?.prepend(topBar);
@@ -9259,7 +9253,7 @@ export function createShareModal() {
   const topBar = document.createElement("div");
   topBar.className = "modal-top-bar";
   topBar.innerHTML = `
-    <h2 id="share-title" class="modal-header">${t("share.button")}</h2>
+    <h2 id="share-title" class="modal-title">${t("share.button")}</h2>    
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   modal.querySelector(".modal-content")?.prepend(topBar);
@@ -9469,7 +9463,7 @@ export function createDonationModal(isRepeat = false) {
   const topBar = document.createElement("div");
   topBar.className = "modal-top-bar";
   topBar.innerHTML = `
-    <h2 class="modal-header">${title}</h2>
+    <h2 class="modal-title">${title}</h2>    
     <button class="modal-close" aria-label="Close">&times;</button>
   `;
   modal.querySelector(".modal-content")?.prepend(topBar);

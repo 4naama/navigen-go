@@ -15,7 +15,7 @@
   "modal.mystuff.resolved": "✅ Resolved",
   "pinned.title": "📌 You’re all set!",
   "pinned.body": "The app NaviGen is already pinned on your phone.",
-  "alert.title": "🚨 Current Alerts",
+  "alert.title": "🚨 Current alerts",
   "alert.loading": "Loading...",
   "alert.none": "No current alerts.",
   "alert.error": "Error loading alerts.",
