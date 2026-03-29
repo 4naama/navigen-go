@@ -933,5 +933,7 @@
   "root.bo.selectLocation.help.parked.title": "🟠 Parkolt — inaktív.",
   "root.bo.selectLocation.help.parked.desc": "Ez a vállalkozás inaktív és jelenleg nem látható.",
   "root.bo.selectLocation.help.promoted.title": "🎁 Promóció — aktív kampány.",
-  "root.bo.selectLocation.help.promoted.desc": "Ez a vállalkozás jelenleg aktív kampányt futtat."
+  "root.bo.selectLocation.help.promoted.desc": "Ez a vállalkozás jelenleg aktív kampányt futtat.",
+  "lpm.status.label": "Vállalkozás állapota",
+  "lpm.introduction.label": "Bemutatkozás"
 }

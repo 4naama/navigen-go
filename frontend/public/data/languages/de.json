@@ -933,5 +933,7 @@
   "root.bo.selectLocation.help.parked.title": "🟠 Geparkt — inaktiv.",
   "root.bo.selectLocation.help.parked.desc": "Dieses Unternehmen ist inaktiv und derzeit nicht sichtbar.",
   "root.bo.selectLocation.help.promoted.title": "🎁 Beworben — aktive Kampagne.",
-  "root.bo.selectLocation.help.promoted.desc": "Dieses Unternehmen führt derzeit eine aktive Kampagne durch."
+  "root.bo.selectLocation.help.promoted.desc": "Dieses Unternehmen führt derzeit eine aktive Kampagne durch.",
+  "lpm.status.label": "Status des Unternehmens",
+  "lpm.introduction.label": "Einführung"
 }

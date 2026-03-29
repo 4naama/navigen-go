@@ -933,5 +933,7 @@
   "root.bo.selectLocation.help.parked.title": "🟠 מושהה — לא פעיל.",
   "root.bo.selectLocation.help.parked.desc": "עסק זה אינו פעיל ואינו גלוי כעת.",
   "root.bo.selectLocation.help.promoted.title": "🎁 מקודם — קמפיין פעיל.",
-  "root.bo.selectLocation.help.promoted.desc": "עסק זה מפעיל כעת קמפיין פעיל."
+  "root.bo.selectLocation.help.promoted.desc": "עסק זה מפעיל כעת קמפיין פעיל.",
+  "lpm.status.label": "סטטוס העסק",
+  "lpm.introduction.label": "מבוא"
 }
