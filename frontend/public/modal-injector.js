@@ -3654,22 +3654,6 @@ export function buildAccordion(groupedStructure, geoPoints) {
   });
 }
 
-// Helper: Appends a "Resolved" button to a modal's footer
-function appendResolvedButton(actions, modalId = "my-stuff-modal") {
-  if (!actions.querySelector("#my-stuff-resolved-button")) {
-    const resolvedBtn = document.createElement("button");
-    resolvedBtn.className = "modal-footer-button";
-    resolvedBtn.id = "my-stuff-resolved-button";
-    resolvedBtn.textContent = t("modal.done.resolved");
-
-    resolvedBtn.addEventListener("click", () => {
-      hideModal(modalId);
-    });
-
-    actions.appendChild(resolvedBtn);
-  }
-}
-
 // ————————————————————————————
 // Phase 4 — Owner Settings modals (LPM 📈 gating UX)
 // - No analytics are fetched or displayed inside these modals.
@@ -8158,22 +8142,12 @@ export function showRedeemInvalidModal({
 export function createMyStuffModal() {
   document.getElementById('my-stuff-modal')?.remove();
 
-  const modal = injectModal({
+  injectModal({
     id: 'my-stuff-modal',
-    title: t('My Stuff') || 'My Stuff',
+    title: translatedOrFallback('My stuff', translatedOrFallback('My Stuff', 'My stuff')),
     layout: 'menu',
     bodyHTML: `<div id="my-stuff-body"></div>`
   });
-
-  // Ensure My Stuff always has a footer container, even when a given state renders no buttons.
-  let actions = modal.querySelector('.modal-footer');
-  if (!actions) {
-    actions = document.createElement('div');
-    actions.className = 'modal-footer';
-    modal.querySelector('.modal-content')?.appendChild(actions);
-  }
-
-  actions.innerHTML = '';
 }
 
 /* Favorites Modal (FM): list saved locations with open/unsave */
@@ -8639,42 +8613,39 @@ export async function showMyStuffModal(state) {
   const title = modal?.querySelector('.modal-top-bar .modal-title');
   const body = modal?.querySelector('#my-stuff-body');
 
-  // Footer exists from injection; grab it or recreate defensively.
-  let actions = modal?.querySelector('.modal-footer');
-  if (modal && !actions) {
-    actions = document.createElement('div');
-    actions.className = 'modal-footer';
-    modal.querySelector('.modal-content')?.appendChild(actions);
-  }
+  modal?.querySelector('.modal-footer')?.remove();
 
-  if (!modal || !title || !body || !actions) {
+  if (!modal || !title || !body) {
     console.warn('❌ Missing myStuffModal structure.');
     return;
   }
 
-  const setFooterButtons = (buttons = []) => {
+  const setBodyActions = (buttons = []) => {
+    body.querySelector('.modal-actions.my-stuff-actions')?.remove();
+    if (!buttons.length) return;
+
+    const host =
+      body.querySelector('.modal-form-stack') ||
+      body.querySelector('.no-miss-section') ||
+      body;
+
+    if (!(host instanceof HTMLElement)) return;
+
+    const actions = document.createElement('div');
+    actions.className = 'modal-actions my-stuff-actions';
     actions.innerHTML = buttons.map((btn) => `
-      <button class="${btn.className || 'modal-footer-button'}" id="${btn.id}">${btn.label}</button>
+      <button type="button" class="${btn.className || 'modal-body-button'}" id="${btn.id}">${btn.label}</button>
     `).join('');
 
     buttons.forEach((btn) => {
       actions.querySelector(`#${btn.id}`)?.addEventListener('click', btn.onClick);
     });
-  };
 
-  const setResolvedFooter = (label = (t('modal.done.resolved') || 'Resolved')) => {
-    setFooterButtons([
-      {
-        id: 'my-stuff-resolved-button',
-        label,
-        className: 'modal-footer-button',
-        onClick: () => hideModal('my-stuff-modal')
-      }
-    ]);
+    host.appendChild(actions);
   };
 
   if (state === 'menu') {
-    title.textContent = t('My Stuff') || 'My Stuff';
+    title.textContent = translatedOrFallback('My stuff', translatedOrFallback('My Stuff', 'My stuff'));    
     body.innerHTML = ''; // clear body before injecting
 
     const list = document.createElement('div');
@@ -8701,7 +8672,6 @@ export async function showMyStuffModal(state) {
     });
 
     body.appendChild(list);
-    actions.innerHTML = '';
     showModal('my-stuff-modal');
     return;
   }
@@ -8711,7 +8681,6 @@ export async function showMyStuffModal(state) {
 
   title.textContent = item.title;
   body.innerHTML = '';
-  actions.innerHTML = '';
 
   if (state === 'interests') {
     body.innerHTML = `
@@ -8728,7 +8697,6 @@ export async function showMyStuffModal(state) {
       </div>
     `;
 
-    setResolvedFooter();
     showModal('my-stuff-modal');
     return;
   }
@@ -8796,7 +8764,6 @@ export async function showMyStuffModal(state) {
     });
 
     flagStyler();
-    setResolvedFooter();
     showModal('my-stuff-modal');
     return;
   }
@@ -8808,7 +8775,6 @@ export async function showMyStuffModal(state) {
       </div>
     `;
 
-    setResolvedFooter();
     showModal('my-stuff-modal');
     return;
   }
@@ -8816,7 +8782,6 @@ export async function showMyStuffModal(state) {
   if (state === 'purchases') {
     body.innerHTML = `<div id="purchase-history" class="modal-menu-list"></div>`;
     renderPurchaseHistory(); // Fill with receipts from localStorage
-    setResolvedFooter();
     showModal('my-stuff-modal');
     return;
   }
@@ -8824,7 +8789,6 @@ export async function showMyStuffModal(state) {
   if (state === 'location-history') {
     body.innerHTML = `<div id="location-history" class="modal-menu-list"></div>`;
     renderLocationHistory(); // Inject saved locations or empty state
-    setResolvedFooter(t('modal.mystuff.resolved') || t('modal.done.resolved') || 'Resolved');
     showModal('my-stuff-modal');
     return;
   }
@@ -8837,21 +8801,18 @@ export async function showMyStuffModal(state) {
       </div>
     `;
 
-    setFooterButtons([
+    setBodyActions([
       {
         id: 'reset-cancel',
-        label: 'Cancel',
-        className: 'modal-footer-button',
+        label: (typeof t === 'function' && t('common.cancel')) || 'Cancel',
         onClick: () => hideModal('my-stuff-modal')
       },
       {
         id: 'reset-confirm',
         label: 'Reset',
-        className: 'modal-footer-button',
         onClick: () => {
           localStorage.clear();
 
-          // Route using current <html lang>; drop ?lang, keep others.
           const currentLang = (document.documentElement.lang || 'en').toLowerCase();
           const parts = location.pathname.split('/').filter(Boolean);
           const hasPrefix = /^[a-z]{2}$/.test(parts[0]);
@@ -8894,7 +8855,6 @@ export async function showMyStuffModal(state) {
       </div>
     `;
 
-    setResolvedFooter();
     showModal('my-stuff-modal');
     return;
   }
@@ -8911,7 +8871,6 @@ export async function showMyStuffModal(state) {
       </div>
     `;
 
-    setResolvedFooter();
     showModal('my-stuff-modal');
     return;
   }
@@ -8945,7 +8904,6 @@ export async function showMyStuffModal(state) {
       </div>
     `;
 
-    setResolvedFooter();
     showModal('my-stuff-modal');
     return;
   }
