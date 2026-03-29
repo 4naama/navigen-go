@@ -1509,7 +1509,10 @@ export async function showLocationProfileModal(data) {
 
       const j = await r.json().catch(() => null);
       renderLpmStatusChip(modal, j || null);
-      return;
+    } catch {
+      // never break LPM
+    }
+  })();
   
   // Keep data.* intact; only cache the dataset slug for click handlers (no alias/short selection).
   {
