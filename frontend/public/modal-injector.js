@@ -4299,8 +4299,6 @@ function getModalHeaderHelpSpec(target) {
 
   if (modalId === 'select-location-modal') {
     return {
-      title: _ownerText('root.bo.selectLocation.help.title', 'How it works'),
-      intro: _ownerText('root.bo.selectLocation.help.intro', 'Use search to find your business.'),
       items: [
         {
           title: _ownerText('root.bo.selectLocation.help.taken.title', '🔴 Taken — already operated.'),
