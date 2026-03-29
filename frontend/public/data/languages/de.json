@@ -921,5 +921,17 @@
   "owner.settings.renew.runCampaign.title": "Kampagne starten",
   "owner.settings.renew.runCampaign.desc": "Eine Kampagne für diesen Standort starten oder verlängern.",
   "campaign.plan.blocked.note": "Dieser Standort ist auf diesem Gerät geeignet, aber die laufende Kampagne für alle Standorte ist bereits ausgelastet. Aktualisieren Sie den Plan oder entfernen Sie einen anderen Standort aus dem Umfang.",
-  "campaign.ui.info.toast": "Erstellen oder bearbeiten Sie eine Kampagne für diesen Standort. Änderungen werden während der Arbeit automatisch gespeichert und als Entwurf beibehalten, bis Sie die Kampagne aktivieren. Ihre Kampagne wird erst nach dem Checkout aktiv."
+  "campaign.ui.info.toast": "Erstellen oder bearbeiten Sie eine Kampagne für diesen Standort. Änderungen werden während der Arbeit automatisch gespeichert und als Entwurf beibehalten, bis Sie die Kampagne aktivieren. Ihre Kampagne wird erst nach dem Checkout aktiv.",
+  "root.bo.selectLocation.help.title": "So funktioniert es",
+  "root.bo.selectLocation.help.intro": "Verwenden Sie die Suche, um Ihr Unternehmen zu finden.",
+  "root.bo.selectLocation.help.taken.title": "🔴 Belegt — bereits betrieben.",
+  "root.bo.selectLocation.help.taken.desc": "Dieses Unternehmen wird bereits betrieben und kann hier nicht beansprucht werden.",
+  "root.bo.selectLocation.help.free.title": "🟢 Frei — verfügbar.",
+  "root.bo.selectLocation.help.free.desc": "Dieses Unternehmen kann im Eigentümerzentrum eingerichtet werden.",
+  "root.bo.selectLocation.help.stillVisible.title": "🔵 Noch sichtbar — Kulanz- oder Haltezeit.",
+  "root.bo.selectLocation.help.stillVisible.desc": "Dieses Unternehmen bleibt für eine kurze Kulanzfrist sichtbar.",
+  "root.bo.selectLocation.help.parked.title": "🟠 Geparkt — inaktiv.",
+  "root.bo.selectLocation.help.parked.desc": "Dieses Unternehmen ist inaktiv und derzeit nicht sichtbar.",
+  "root.bo.selectLocation.help.promoted.title": "🎁 Beworben — aktive Kampagne.",
+  "root.bo.selectLocation.help.promoted.desc": "Dieses Unternehmen führt derzeit eine aktive Kampagne durch."
 }

@@ -921,5 +921,17 @@
   "owner.settings.renew.runCampaign.title": "Lancer une campagne",
   "owner.settings.renew.runCampaign.desc": "Démarrer ou renouveler une campagne pour cet établissement.",
   "campaign.plan.blocked.note": "Cet établissement est éligible sur cet appareil, mais la campagne en cours pour tous les emplacements est déjà à capacité. Mettez à niveau le plan ou retirez un autre emplacement du périmètre.",
-  "campaign.ui.info.toast": "Créez ou modifiez une campagne pour cet établissement. Les modifications sont enregistrées automatiquement pendant que vous travaillez et conservées en brouillon jusqu’à l’activation de la campagne. Votre campagne devient active uniquement après le paiement."
+  "campaign.ui.info.toast": "Créez ou modifiez une campagne pour cet établissement. Les modifications sont enregistrées automatiquement pendant que vous travaillez et conservées en brouillon jusqu’à l’activation de la campagne. Votre campagne devient active uniquement après le paiement.",
+  "root.bo.selectLocation.help.title": "Comment ça marche",
+  "root.bo.selectLocation.help.intro": "Utilisez la recherche pour trouver votre entreprise.",
+  "root.bo.selectLocation.help.taken.title": "🔴 Occupé — déjà exploité.",
+  "root.bo.selectLocation.help.taken.desc": "Cette entreprise est déjà exploitée et ne peut pas être revendiquée ici.",
+  "root.bo.selectLocation.help.free.title": "🟢 Gratuit — disponible.",
+  "root.bo.selectLocation.help.free.desc": "Cette entreprise est disponible pour être configurée dans le centre propriétaire.",
+  "root.bo.selectLocation.help.stillVisible.title": "🔵 Toujours visible — période de courtoisie ou maintien.",
+  "root.bo.selectLocation.help.stillVisible.desc": "Cette entreprise reste visible pendant une courte période de courtoisie.",
+  "root.bo.selectLocation.help.parked.title": "🟠 En pause — inactif.",
+  "root.bo.selectLocation.help.parked.desc": "Cette entreprise est inactive et actuellement non visible.",
+  "root.bo.selectLocation.help.promoted.title": "🎁 Promu — campagne active.",
+  "root.bo.selectLocation.help.promoted.desc": "Cette entreprise lance actuellement une campagne active."
 }

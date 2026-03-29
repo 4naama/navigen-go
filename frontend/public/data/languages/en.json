@@ -921,5 +921,17 @@
   "owner.settings.renew.runCampaign.title": "Run a campaign",
   "owner.settings.renew.runCampaign.desc": "Start or renew a campaign for this location.",
   "campaign.plan.blocked.note": "This location is eligible on this device, but the running all-locations campaign is already at capacity. Upgrade the plan or remove another location from scope.",
-  "campaign.ui.info.toast": "Create or edit a campaign for this location. Changes are saved automatically while you work and kept as a draft until you activate the campaign. Your campaign becomes active only after checkout."
+  "campaign.ui.info.toast": "Create or edit a campaign for this location. Changes are saved automatically while you work and kept as a draft until you activate the campaign. Your campaign becomes active only after checkout.",
+  "root.bo.selectLocation.help.title": "How it works",
+  "root.bo.selectLocation.help.intro": "Use search to find your business.",
+  "root.bo.selectLocation.help.taken.title": "🔴 Taken — already operated.",
+  "root.bo.selectLocation.help.taken.desc": "This business is already operated and cannot be claimed here.",
+  "root.bo.selectLocation.help.free.title": "🟢 Free — available.",
+  "root.bo.selectLocation.help.free.desc": "This business is available to set up in owner center.",
+  "root.bo.selectLocation.help.stillVisible.title": "🔵 Still visible — courtesy or hold.",
+  "root.bo.selectLocation.help.stillVisible.desc": "This business remains visible for a short courtesy period.",
+  "root.bo.selectLocation.help.parked.title": "🟠 Parked — inactive.",
+  "root.bo.selectLocation.help.parked.desc": "This business is inactive and currently not discoverable.",
+  "root.bo.selectLocation.help.promoted.title": "🎁 Promoted — active campaign.",
+  "root.bo.selectLocation.help.promoted.desc": "This business is running an active campaign right now."
 }

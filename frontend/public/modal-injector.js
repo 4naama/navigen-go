@@ -962,6 +962,220 @@ function _track(locId, event, action) { // resolve → ULID; map legacy 'route' 
   })();
 }
 
+function formatDescriptionHtml(s) {
+  const esc = (x) => String(x || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const norm = String(s || '').replace(/\r\n?/g, '\n').trim();
+  if (!norm) return '';
+
+  const paras = norm
+    .split(/\n{2,}/)
+    .map((p) => esc(p).replace(/\n/g, '<br>'));
+
+  return '<p>' + paras.join('</p><p>') + '</p>';
+}
+
+function normalizeDescriptionMap(d) {
+  const out = {};
+  if (d && typeof d === 'object') {
+    Object.keys(d).forEach((k) => {
+      const kk = String(k || '').toLowerCase().trim();
+      const vv = String(d[k] ?? '').trim();
+      if (kk && vv) out[kk] = vv;
+    });
+  }
+  return out;
+}
+
+function normalizeLocationLookupKey(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function addLocationLookupKey(set, value) {
+  const key = normalizeLocationLookupKey(value);
+  if (key) set.add(key);
+}
+
+function addLocalizedNameKeys(set, value) {
+  if (!value) return;
+
+  if (typeof value === 'string') {
+    addLocationLookupKey(set, value);
+    return;
+  }
+
+  if (typeof value === 'object') {
+    Object.values(value).forEach((entry) => addLocationLookupKey(set, entry));
+  }
+}
+
+function getLocationLookupKeys(record = {}) {
+  const keys = new Set();
+
+  addLocationLookupKey(keys, record?.ID);
+  addLocationLookupKey(keys, record?.id);
+  addLocationLookupKey(keys, record?.locationID);
+  addLocationLookupKey(keys, record?.locationId);
+  addLocationLookupKey(keys, record?.slug);
+  addLocationLookupKey(keys, record?.alias);
+  addLocationLookupKey(keys, record?.locationAlias);
+  addLocationLookupKey(keys, record?.displayName);
+  addLocationLookupKey(keys, record?.name);
+  addLocationLookupKey(keys, record?.title);
+  addLocalizedNameKeys(keys, record?.locationName);
+
+  return Array.from(keys);
+}
+
+function resolveDescriptionMapForLocation(payload = {}, collections = []) {
+  const direct = normalizeDescriptionMap(payload?.descriptions || payload?.raw?.descriptions);
+  if (Object.keys(direct).length) return direct;
+
+  const wanted = new Set([
+    ...getLocationLookupKeys(payload),
+    ...getLocationLookupKeys(payload?.raw || {})
+  ]);
+
+  if (!wanted.size) return {};
+
+  const pools = collections
+    .flatMap((source) => {
+      if (Array.isArray(source)) return source;
+      if (source && Array.isArray(source.locations)) return source.locations;
+      return [];
+    })
+    .filter(Boolean);
+
+  for (const record of pools) {
+    const descs = normalizeDescriptionMap(record?.descriptions);
+    if (!Object.keys(descs).length) continue;
+
+    const recordKeys = getLocationLookupKeys(record);
+    if (recordKeys.some((key) => wanted.has(key))) return descs;
+  }
+
+  return {};
+}
+
+function getSharedBusinessStatusMeta(kind) {
+  const lookup = {
+    taken: {
+      icon: '🔴',
+      title: translatedOrFallback('root.bo.selectLocation.help.taken.title', '🔴 Taken — already operated.'),
+      desc: translatedOrFallback('root.bo.selectLocation.help.taken.desc', 'This business is already operated and cannot be claimed here.')
+    },
+    free: {
+      icon: '🟢',
+      title: translatedOrFallback('root.bo.selectLocation.help.free.title', '🟢 Free — available.'),
+      desc: translatedOrFallback('root.bo.selectLocation.help.free.desc', 'This business is available to set up in owner center.')
+    },
+    stillVisible: {
+      icon: '🔵',
+      title: translatedOrFallback('root.bo.selectLocation.help.stillVisible.title', '🔵 Still visible — courtesy or hold.'),
+      desc: translatedOrFallback('root.bo.selectLocation.help.stillVisible.desc', 'This business remains visible for a short courtesy period.')
+    },
+    parked: {
+      icon: '🟠',
+      title: translatedOrFallback('root.bo.selectLocation.help.parked.title', '🟠 Parked — inactive.'),
+      desc: translatedOrFallback('root.bo.selectLocation.help.parked.desc', 'This business is inactive and currently not discoverable.')
+    },
+    promoted: {
+      icon: '🎁',
+      title: translatedOrFallback('root.bo.selectLocation.help.promoted.title', '🎁 Promoted — active campaign.'),
+      desc: translatedOrFallback('root.bo.selectLocation.help.promoted.desc', 'This business is running an active campaign right now.')
+    }
+  };
+
+  return lookup[kind] || null;
+}
+
+function buildLpmStatusItems(status = {}) {
+  const owned = status?.ownedNow === true;
+  const visibilityState = String(status?.visibilityState || '').trim();
+  const courtesyUntil = String(status?.courtesyUntil || '').trim();
+  const campaignEntitled = status?.campaignEntitled === true;
+
+  const items = [];
+
+  if (owned) items.push(getSharedBusinessStatusMeta('taken'));
+  else if (visibilityState === 'hidden') items.push(getSharedBusinessStatusMeta('parked'));
+  else if (courtesyUntil) items.push(getSharedBusinessStatusMeta('stillVisible'));
+  else items.push(getSharedBusinessStatusMeta('free'));
+
+  if (campaignEntitled) items.push(getSharedBusinessStatusMeta('promoted'));
+
+  return items.filter(Boolean);
+}
+
+function renderLpmStatusChip(modal, status = null) {
+  const iconsEl = modal?.querySelector('#lpm-status-face-icons');
+  const bodyEl = modal?.querySelector('#lpm-status-body');
+  if (!(iconsEl instanceof HTMLElement) || !(bodyEl instanceof HTMLElement)) return;
+
+  const items = status ? buildLpmStatusItems(status) : [];
+  iconsEl.textContent = items.length ? items.map((item) => item.icon).join(' ') : '⏳';
+
+  bodyEl.innerHTML = '';
+
+  if (!items.length) {
+    const loading = document.createElement('div');
+    loading.className = 'lpm-status-item';
+
+    const title = document.createElement('div');
+    title.className = 'lpm-status-item-title';
+    title.textContent = translatedOrFallback('lpm.status.loading', '⏳ Loading status…');
+
+    loading.appendChild(title);
+    bodyEl.appendChild(loading);
+    return;
+  }
+
+  items.forEach((item) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'lpm-status-item';
+
+    const title = document.createElement('div');
+    title.className = 'lpm-status-item-title';
+    title.textContent = item.title;
+
+    const desc = document.createElement('div');
+    desc.className = 'lpm-status-item-desc';
+    desc.textContent = item.desc;
+
+    wrap.appendChild(title);
+    wrap.appendChild(desc);
+    bodyEl.appendChild(wrap);
+  });
+}
+
+let lpmProfilesLocationsPromise;
+function getProfilesLocationRecords() {
+  if (!lpmProfilesLocationsPromise) {
+    lpmProfilesLocationsPromise = fetch('/data/profiles.json', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json().catch(() => null) : null))
+      .then((payload) => {
+        if (Array.isArray(payload)) return payload;
+        if (Array.isArray(payload?.locations)) return payload.locations;
+        if (payload?.locations && typeof payload.locations === 'object') return Object.values(payload.locations);
+        if (payload && typeof payload === 'object') return Object.values(payload);
+        return [];
+      })
+      .catch(() => []);
+  }
+
+  return lpmProfilesLocationsPromise;
+}
+
 /**
  * Factory: build the Location Profile Modal (LPM) element.
  * No event wiring here; just structure. Caller injects & wires.
@@ -996,62 +1210,14 @@ export function createLocationProfileModal(data, injected = {}) {
       <button class="modal-close" aria-label="Close">&times;</button>
     `;
   
-  /** format description: handle multi-line + empty lines safely */
-  function formatDescHTML(s) {
-    const esc = (x) => x
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-    const norm = String(s || '').replace(/\r\n?/g, '\n').trim();
-    if (!norm) return '';
-    const paras = norm
-      .split(/\n{2,}/)                 // empty line(s) → paragraph break
-      .map(p => esc(p).replace(/\n/g, '<br>')); // single \n → <br>
-    return '<p>' + paras.join('</p><p>') + '</p>';
-  }
-
-  /** normalize a descriptions map to { langLower: nonEmptyText } */
-  function normalizeDescMap(d) {
-    const out = {};
-    if (d && typeof d === 'object') {
-      Object.keys(d).forEach(k => {
-        const kk = String(k || '').toLowerCase().trim();
-        const vv = String(d[k] ?? '').trim();
-        if (kk && vv) out[kk] = vv;
-      });
-    }
-    return out;
-  }
-
-  /** alias payload locally; fill descriptions from payload OR global geoPoints by id */
-  const payload = (typeof data === 'object' && data) ? data : {};
-  let descs = normalizeDescMap(payload.descriptions);
-
-  // If descriptions are missing, use injected sources in order.
-  // Keep legacy ID comparison; do not mutate incoming objects.
-  if (!Object.keys(descs).length && payload.id) {
-    const wantId = String(payload.id);
-
-    // 1) geoPoints (may be legacy or unified) — injected
-    if (Array.isArray(geoPoints)) {
-      const found = geoPoints.find(x => String(x?.ID || x?.locationID || x?.id) === wantId); // new id too
-      if (found) descs = normalizeDescMap(found.descriptions);
-    }
-
-    // 2) profiles.locations (final merged dataset) — injected
-    if (!Object.keys(descs).length && profiles && Array.isArray(profiles.locations)) {
-      const found = profiles.locations.find(x => String(x?.locationID || x?.id) === wantId); // accept new key
-      if (found) descs = normalizeDescMap(found.descriptions);
-    }
-
-    // 3) structureData (if accordion feeds from here) — injected
-    if (!Object.keys(descs).length && Array.isArray(structureData)) {
-      const found = structureData.find(x => String(x?.locationID || x?.id) === wantId); // accept new key
-      if (found) descs = normalizeDescMap(found.descriptions);
-    }
-  }
+/** alias payload locally; resolve descriptions from payload, raw record, and injected sources */
+const payload = (typeof data === 'object' && data) ? data : {};
+const descs = resolveDescriptionMapForLocation(payload, [
+  payload?.raw ? [payload.raw] : [],
+  geoPoints,
+  profiles,
+  structureData
+]);
 
   /** map iso code → English name; fallback to code upper */
   function langName(code) {
@@ -1093,13 +1259,13 @@ export function createLocationProfileModal(data, injected = {}) {
     const base = (typeof t === 'function' ? (t(descKey) || fallbackPlaceholder) : fallbackPlaceholder);
     if (allLangs.length) {
       const names = allLangs.map(langName);
-      descHTML = formatDescHTML(`${base}\n\nℹ️ Available languages: ${names.join(', ')}`);
+      descHTML = formatDescriptionHtml(`${base}\n\nℹ️ Available languages: ${names.join(', ')}`);      
     } else {
-      descHTML = formatDescHTML(base);
+      descHTML = formatDescriptionHtml(base);
     }
   } else {
     // lead: show description text only; remove the "Showing …" note
-    descHTML = formatDescHTML(chosenText);
+    descHTML = formatDescriptionHtml(chosenText);
   }
 
   // Rootize hero src; prefer media.cover → imageSrc → first media/images entry. (Green icon is a valid cover.)
@@ -1132,7 +1298,19 @@ export function createLocationProfileModal(data, injected = {}) {
              alt="${payload.name || 'Location'} image"
              style="width:100%;height:auto;border-radius:8px;${heroSrc ? 'display:block;' : 'display:none;'}">
       </figure>
-      <div class="lpm-owned-badge" style="display:none;"></div>
+
+      <details class="lpm-chip lpm-status-chip">
+        <summary class="modal-menu-item lpm-chip-face">
+          <span class="lpm-chip-face-label">${translatedOrFallback('lpm.status.label', 'Business status')}</span>
+          <span class="lpm-chip-face-icons" id="lpm-status-face-icons" aria-hidden="true">⏳</span>
+          <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="lpm-chip-body" id="lpm-status-body">
+          <div class="lpm-status-item">
+            <div class="lpm-status-item-title">${translatedOrFallback('lpm.status.loading', '⏳ Loading status…')}</div>
+          </div>
+        </div>
+      </details>
 
       ${
         (Array.isArray(payload?.tags) && payload.tags.length)
@@ -1145,11 +1323,18 @@ export function createLocationProfileModal(data, injected = {}) {
           : ''
       }
 
-      <section class="location-description">
-        <div class="description" data-lines="5" data-i18n-key="${usePlaceholder ? descKey : ''}">
-          ${descHTML}
+      <details class="lpm-chip lpm-introduction-chip">
+        <summary class="modal-menu-item lpm-chip-face">
+          <span class="lpm-chip-face-label">${translatedOrFallback('lpm.introduction.label', 'Introduction')}</span>
+          <span class="lpm-chip-face-icons" aria-hidden="true"></span>
+          <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="lpm-chip-body">
+          <div class="description" id="lpm-introduction-text" data-lines="5" data-i18n-key="${usePlaceholder ? descKey : ''}">
+            ${descHTML}
+          </div>
         </div>
-      </section>
+      </details>
     </div>
   `;
 
@@ -1303,8 +1488,8 @@ export async function showLocationProfileModal(data) {
       const u = new URL('/api/status', location.origin);
       u.searchParams.set('locationID', idOrSlug);
 
-      const el = modal.querySelector('.lpm-owned-badge');
-      if (!el) return;
+      // Status chip now renders the shared status vocabulary used in Select your business.
+      renderLpmStatusChip(modal, null);
 
       // First: apply deterministic redirect hint if present (prevents sticky wrong paint after checkout return).
       // This is NOT authoritative; it only avoids a one-shot stale /api/status result.
@@ -1314,17 +1499,7 @@ export async function showLocationProfileModal(data) {
         const hinted = (String(q.get('ce') || '') === '1');
 
         if (hinted) {
-          const statusLine1 =
-            ((typeof t === 'function' && t('lpm.status.taken.title')) || 'Taken')
-              ? `🔴 ${(typeof t === 'function' && t('lpm.status.taken.title')) || 'Taken'}`
-              : '🔴 Taken';
-
-          const statusLine2 =
-            (typeof t === 'function' && t('lpm.status.taken.desc')) ||
-            'Already operated.';
-
-          el.innerHTML = `${statusLine1}<br>${statusLine2}`;
-          el.style.display = 'block';
+          renderLpmStatusChip(modal, { ownedNow: true });
         }
       } catch {}
 
@@ -1333,48 +1508,8 @@ export async function showLocationProfileModal(data) {
       if (!r.ok) return;
 
       const j = await r.json().catch(() => null);
-      // Do NOT gate decoration on ownership.
-      // Campaign entitlement is independent (see /api/status contract).
-      
-      // 🎁 decoration is entitlement-only and must be stable across backend shape variants.
-      // Reason: /api/status is authoritative, but clients must tolerate both activeCampaignKeys[] and activeCampaignKey during rollout.
-      const statusLine1 =
-        `🔴 ${((typeof t === 'function' && t('lpm.status.taken.title')) || 'Taken')}`;
-
-      const statusLine2 =
-        (typeof t === 'function' && t('lpm.status.taken.desc')) ||
-        'Already operated.';
-
-      // Accept both shapes; fail-closed only when campaignEntitled is false.
-      const activeKeys = Array.isArray(j?.activeCampaignKeys) ? j.activeCampaignKeys.filter(Boolean) : [];
-      const singleKey = String(j?.activeCampaignKey || '').trim();
-      if (singleKey && !activeKeys.includes(singleKey)) activeKeys.push(singleKey);
-
-      const entitled = (j?.campaignEntitled === true);
-
-      // If the backend says "entitled", there is at least one effective active campaign (per contract).
-      // If keys are missing due to shape/lag, treat it as a single campaign for UI decoration only.
-      const effectiveCount = entitled ? Math.max(activeKeys.length, 1) : 0;
-
-      if (!entitled || effectiveCount === 0) {
-        // 2-line status (title + explanation), no 🎁 line
-        el.innerHTML = `${statusLine1}<br>${statusLine2}`;
-        el.style.display = 'block';
-        return;
-      }
-
-      // 3-line status (title + explanation + 🎁 decoration)
-      const giftLine = (effectiveCount > 1)
-        ? ((typeof t === 'function' && t('lpm.owned.badge.multiCampaign')) || '🎁️ Multiple campaigns')
-        : ((typeof t === 'function' && t('lpm.campaign.single')) || '🎁️ Single campaign');
-
-      el.innerHTML = `${statusLine1}<br>${statusLine2}<br>${giftLine}`;
-      el.style.display = 'block';
+      renderLpmStatusChip(modal, j || null);
       return;
-    } catch {
-      // never break LPM
-    }
-  })();
   
   // Keep data.* intact; only cache the dataset slug for click handlers (no alias/short selection).
   {
@@ -2759,16 +2894,31 @@ async function initLpmImageSlider(modal, data) {
         // accept locationID too; skip when missing
         const id = String(data?.locationID || data?.id || '').trim(); // prefer slug; ULID may not exist in profile index
         if (!id) return;
+
+        const hasLocalDescriptions = Object.keys(resolveDescriptionMapForLocation(data, [data?.raw ? [data.raw] : []])).length > 0;
         const needEnrich =
-          !data?.descriptions ||
+          !hasLocalDescriptions ||
           !data?.media?.cover ||
-          (Array.isArray(data?.media?.images) && data.media.images.length < 2);
+          !Array.isArray(data?.media?.images) ||
+          data.media.images.length < 2;
         if (!needEnrich) return; // skip network when local data is complete
 
-        const res = await fetch(API(`/api/data/item?id=${encodeURIComponent(id)}`), { cache: 'no-store', credentials: 'include' });
-        if (!res.ok) return;
-        const payload = await res.json();
-        
+        const lookupIds = Array.from(new Set([
+          String(data?.locationID || '').trim(),
+          String(data?.alias || '').trim(),
+          String(data?.slug || '').trim(),
+          String(modal.getAttribute('data-locationid') || '').trim(),
+          String(data?.id || '').trim()
+        ].filter(Boolean)));
+
+        let payload = null;
+        for (const lookupId of lookupIds) {
+          const res = await fetch(API(`/api/data/item?id=${encodeURIComponent(lookupId)}`), { cache: 'no-store', credentials: 'include' });
+          if (!res.ok) continue;
+          payload = await res.json().catch(() => null);
+          if (payload) break;
+        }
+
         // keep API-provided locationID as-is (alias or short); do not force short or overwrite brand alias
         if (payload && payload.locationID) {
           const apiId = String(payload.locationID).trim();
@@ -2785,11 +2935,27 @@ async function initLpmImageSlider(modal, data) {
         }
 
         // Fill description if placeholder
-        if (payload.descriptions && !data.descriptions) {
-          const box = modal.querySelector('.location-description .description');
-          const txt = payload.descriptions.en || Object.values(payload.descriptions)[0] || '';
-          if (box && /Description coming soon/i.test(box.textContent || box.innerHTML)) {
-            box.innerHTML = String(txt).replace(/\n/g,'<br>');
+        if (!hasLocalDescriptions) {
+          const profilesLocations = await getProfilesLocationRecords();
+          const resolvedDescriptions = resolveDescriptionMapForLocation(
+            {
+              ...data,
+              ...(payload && typeof payload === 'object' ? payload : {}),
+              raw: payload || data?.raw || null
+            },
+            [
+              data?.raw ? [data.raw] : [],
+              payload ? [payload] : [],
+              profilesLocations
+            ]
+          );
+
+          const appLang = String(document.documentElement?.lang || navigator.language || 'en').toLowerCase().split('-')[0];
+          const text = String(resolvedDescriptions[appLang] || Object.values(resolvedDescriptions)[0] || '').trim();
+          const box = modal.querySelector('#lpm-introduction-text');
+          if (box && text && /Description coming soon/i.test(box.textContent || box.innerHTML)) {
+            box.innerHTML = formatDescriptionHtml(text);
+            box.dataset.i18nKey = '';
           }
         }
         // Upgrade cover if better
@@ -3101,7 +3267,8 @@ export async function showSelectLocationModal() {
           tags: Array.isArray((x.raw && x.raw.tags)) ? x.raw.tags : [],
           descriptions: (x.raw && typeof x.raw.descriptions === 'object') ? x.raw.descriptions : {},
           contactInformation: (x.raw && typeof x.raw.contactInformation === 'object') ? x.raw.contactInformation : {},
-          links: (x.raw && typeof x.raw.links === 'object') ? x.raw.links : {}
+          links: (x.raw && typeof x.raw.links === 'object') ? x.raw.links : {},
+          raw: x.raw || null          
         };
 
         modal.dataset.pick = ''; // clear any stale pick before writing a new one
@@ -3315,6 +3482,7 @@ function makeLocationButton(loc) {
         contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
                               : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
         links: (loc && typeof loc.links === 'object') ? loc.links : {},
+        raw: loc,
         originEl: btn
       });
     }
@@ -4127,10 +4295,33 @@ function getModalHeaderHelpSpec(target) {
   }
 
   if (modalId === 'select-location-modal') {
-    const selectLocationBody = _ownerText(
-      'root.bo.selectLocation.help.body',
-      'Use search to find your business.\n🔴 Taken — already operated.\n🟢 Free — available.\n🔵 Still visible — courtesy or hold.\n🟠 Parked — inactive.\n🎁 Promoted — active campaign.'
-    );
+    return {
+      title: _ownerText('root.bo.selectLocation.help.title', 'How it works'),
+      intro: _ownerText('root.bo.selectLocation.help.intro', 'Use search to find your business.'),
+      items: [
+        {
+          title: _ownerText('root.bo.selectLocation.help.taken.title', '🔴 Taken — already operated.'),
+          desc: _ownerText('root.bo.selectLocation.help.taken.desc', 'This business is already operated and cannot be claimed here.')
+        },
+        {
+          title: _ownerText('root.bo.selectLocation.help.free.title', '🟢 Free — available.'),
+          desc: _ownerText('root.bo.selectLocation.help.free.desc', 'This business is available to set up in owner center.')
+        },
+        {
+          title: _ownerText('root.bo.selectLocation.help.stillVisible.title', '🔵 Still visible — courtesy or hold.'),
+          desc: _ownerText('root.bo.selectLocation.help.stillVisible.desc', 'This business remains visible for a short courtesy period.')
+        },
+        {
+          title: _ownerText('root.bo.selectLocation.help.parked.title', '🟠 Parked — inactive.'),
+          desc: _ownerText('root.bo.selectLocation.help.parked.desc', 'This business is inactive and currently not discoverable.')
+        },
+        {
+          title: _ownerText('root.bo.selectLocation.help.promoted.title', '🎁 Promoted — active campaign.'),
+          desc: _ownerText('root.bo.selectLocation.help.promoted.desc', 'This business is running an active campaign right now.')
+        }
+      ]
+    };
+  }
 
     return {
       title: _ownerText('root.bo.selectLocation.help.title', 'How it works'),
@@ -4201,7 +4392,41 @@ function showModalHeaderHelpModal(target) {
 
   inner.innerHTML = '';
 
+  const intro = String(spec.intro || '').trim();
+  const items = Array.isArray(spec.items) ? spec.items.filter(Boolean) : [];
   const bodyLines = Array.isArray(spec.bodyLines) ? spec.bodyLines.filter(Boolean) : [];
+
+  if (intro) {
+    const p = document.createElement('p');
+    p.textContent = intro;
+    p.style.textAlign = 'left';
+    p.style.margin = '0';
+    p.style.opacity = '0.92';
+    inner.appendChild(p);
+  }
+
+  if (items.length) {
+    const list = document.createElement('div');
+    list.className = 'modal-menu-list';
+    list.style.marginTop = intro ? '12px' : '0';
+
+    items.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'modal-menu-item modal-static-card';
+      row.innerHTML = `
+        <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+          <span style="font-weight:600;">${String(item?.title || '').trim()}</span><br>
+          <small>${String(item?.desc || '').trim()}</small>
+        </span>
+      `;
+      list.appendChild(row);
+    });
+
+    inner.appendChild(list);
+    showModal(id);
+    return;
+  }
+
   const lines = bodyLines.length
     ? bodyLines
     : [_ownerText('modal.help.empty', 'Guidance for this step is coming soon.')];
@@ -4210,7 +4435,7 @@ function showModalHeaderHelpModal(target) {
     const p = document.createElement('p');
     p.textContent = line;
     p.style.textAlign = 'left';
-    p.style.margin = idx === 0 ? '0' : '10px 0 0';
+    p.style.margin = idx === 0 && !intro ? '0' : '10px 0 0';
     p.style.opacity = '0.92';
     inner.appendChild(p);
   });

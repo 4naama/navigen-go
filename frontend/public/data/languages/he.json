@@ -921,5 +921,17 @@
   "owner.settings.renew.runCampaign.title": "הפעל קמפיין",
   "owner.settings.renew.runCampaign.desc": "התחל או חדש קמפיין עבור מיקום זה.",
   "campaign.plan.blocked.note": "מיקום זה זכאי במכשיר זה, אך קמפיין כל-המיקומים כבר מלא. שדרג את התוכנית או הסר מיקום אחר מההיקף.",
-  "campaign.ui.info.toast": "צור או ערוך קמפיין עבור מיקום זה. השינויים נשמרים אוטומטית בזמן העבודה ונשמרים כטיוטה עד להפעלת הקמפיין. הקמפיין הופך לפעיל רק לאחר התשלום."
+  "campaign.ui.info.toast": "צור או ערוך קמפיין עבור מיקום זה. השינויים נשמרים אוטומטית בזמן העבודה ונשמרים כטיוטה עד להפעלת הקמפיין. הקמפיין הופך לפעיל רק לאחר התשלום.",
+  "root.bo.selectLocation.help.title": "איך זה עובד",
+  "root.bo.selectLocation.help.intro": "השתמש בחיפוש כדי למצוא את העסק שלך.",
+  "root.bo.selectLocation.help.taken.title": "🔴 תפוס — כבר מופעל.",
+  "root.bo.selectLocation.help.taken.desc": "עסק זה כבר מופעל ולא ניתן לתבוע אותו כאן.",
+  "root.bo.selectLocation.help.free.title": "🟢 זמין — פנוי.",
+  "root.bo.selectLocation.help.free.desc": "עסק זה זמין להגדרה במרכז הבעלים.",
+  "root.bo.selectLocation.help.stillVisible.title": "🔵 עדיין גלוי — תקופת חסד או המתנה.",
+  "root.bo.selectLocation.help.stillVisible.desc": "עסק זה נשאר גלוי לפרק זמן קצר.",
+  "root.bo.selectLocation.help.parked.title": "🟠 מושהה — לא פעיל.",
+  "root.bo.selectLocation.help.parked.desc": "עסק זה אינו פעיל ואינו גלוי כעת.",
+  "root.bo.selectLocation.help.promoted.title": "🎁 מקודם — קמפיין פעיל.",
+  "root.bo.selectLocation.help.promoted.desc": "עסק זה מפעיל כעת קמפיין פעיל."
 }

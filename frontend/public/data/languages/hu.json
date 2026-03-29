@@ -921,5 +921,17 @@
   "owner.settings.renew.runCampaign.title": "Kampány indítása",
   "owner.settings.renew.runCampaign.desc": "Indítson vagy újítson meg kampányt ehhez a helyhez.",
   "campaign.plan.blocked.note": "Ez a hely jogosult ezen az eszközön, de a futó összes-hely kampány már elérte a kapacitását. Frissítse a csomagot vagy távolítson el egy másik helyet a hatókörből.",
-  "campaign.ui.info.toast": "Hozzon létre vagy szerkesszen kampányt ehhez a helyhez. A módosítások munka közben automatikusan mentésre kerülnek, és piszkozatként maradnak a kampány aktiválásáig. A kampány csak a fizetés után válik aktívvá."
+  "campaign.ui.info.toast": "Hozzon létre vagy szerkesszen kampányt ehhez a helyhez. A módosítások munka közben automatikusan mentésre kerülnek, és piszkozatként maradnak a kampány aktiválásáig. A kampány csak a fizetés után válik aktívvá.",
+  "root.bo.selectLocation.help.title": "Hogyan működik",
+  "root.bo.selectLocation.help.intro": "Kereséssel találja meg a vállalkozását.",
+  "root.bo.selectLocation.help.taken.title": "🔴 Foglalt — már üzemeltetett.",
+  "root.bo.selectLocation.help.taken.desc": "Ez a vállalkozás már működik, és itt nem igényelhető.",
+  "root.bo.selectLocation.help.free.title": "🟢 Szabad — elérhető.",
+  "root.bo.selectLocation.help.free.desc": "Ez a vállalkozás beállítható a tulajdonosi központban.",
+  "root.bo.selectLocation.help.stillVisible.title": "🔵 Még látható — türelmi vagy fenntartási időszak.",
+  "root.bo.selectLocation.help.stillVisible.desc": "Ez a vállalkozás rövid ideig még látható marad.",
+  "root.bo.selectLocation.help.parked.title": "🟠 Parkolt — inaktív.",
+  "root.bo.selectLocation.help.parked.desc": "Ez a vállalkozás inaktív és jelenleg nem látható.",
+  "root.bo.selectLocation.help.promoted.title": "🎁 Promóció — aktív kampány.",
+  "root.bo.selectLocation.help.promoted.desc": "Ez a vállalkozás jelenleg aktív kampányt futtat."
 }

@@ -921,5 +921,17 @@
   "owner.settings.renew.runCampaign.title": "Avvia una campagna",
   "owner.settings.renew.runCampaign.desc": "Avvia o rinnova una campagna per questa posizione.",
   "campaign.plan.blocked.note": "Questa posizione è idonea su questo dispositivo, ma la campagna attiva per tutte le posizioni è già al limite. Aggiorna il piano o rimuovi un’altra posizione dall’ambito.",
-  "campaign.ui.info.toast": "Crea o modifica una campagna per questa posizione. Le modifiche vengono salvate automaticamente mentre lavori e restano come bozza finché non attivi la campagna. La campagna diventa attiva solo dopo il checkout."
+  "campaign.ui.info.toast": "Crea o modifica una campagna per questa posizione. Le modifiche vengono salvate automaticamente mentre lavori e restano come bozza finché non attivi la campagna. La campagna diventa attiva solo dopo il checkout.",
+  "root.bo.selectLocation.help.title": "Come funziona",
+  "root.bo.selectLocation.help.intro": "Usa la ricerca per trovare la tua attività.",
+  "root.bo.selectLocation.help.taken.title": "🔴 Occupato — già gestito.",
+  "root.bo.selectLocation.help.taken.desc": "Questa attività è già gestita e non può essere rivendicata qui.",
+  "root.bo.selectLocation.help.free.title": "🟢 Disponibile — disponibile.",
+  "root.bo.selectLocation.help.free.desc": "Questa attività è disponibile per essere configurata nel centro proprietario.",
+  "root.bo.selectLocation.help.stillVisible.title": "🔵 Ancora visibile — periodo di cortesia o mantenimento.",
+  "root.bo.selectLocation.help.stillVisible.desc": "Questa attività rimane visibile per un breve periodo di cortesia.",
+  "root.bo.selectLocation.help.parked.title": "🟠 In pausa — inattivo.",
+  "root.bo.selectLocation.help.parked.desc": "Questa attività è inattiva e attualmente non visibile.",
+  "root.bo.selectLocation.help.promoted.title": "🎁 Promossa — campagna attiva.",
+  "root.bo.selectLocation.help.promoted.desc": "Questa attività sta attualmente eseguendo una campagna attiva."
 }

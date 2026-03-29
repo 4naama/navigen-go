@@ -1396,9 +1396,9 @@ body.high-contrast .lpm-rating .rate-btn[aria-checked="true"]{
   opacity:.55; cursor:default; pointer-events:none;
 }
 
-/* LPM: Status (owned/campaign) must align to the same centered content column as the rating row.
-   This must NOT depend on media size/aspect ratio. */
-#location-profile-modal .lpm-owned-badge,
+/* LPM: the status and introduction chips must align to the same centered content column as the rating row.
+   New chip classes are needed because the old badge/description blocks were always-visible text, not dropdown controls. */
+#location-profile-modal .lpm-chip,
 #location-profile-modal .lpm-rating{
   max-width: 560px;           /* visual column width; independent of hero media */
   margin-left: auto;
@@ -1408,12 +1408,98 @@ body.high-contrast .lpm-rating .rate-btn[aria-checked="true"]{
   box-sizing: border-box;
 }
 
-/* Status text is left-aligned even though the block itself is centered */
-#location-profile-modal .lpm-owned-badge{
+#location-profile-modal .lpm-chip{
+  margin-top: 0.75rem;
+}
+
+#location-profile-modal .lpm-chip > summary{
+  list-style: none;
+}
+
+#location-profile-modal .lpm-chip > summary::-webkit-details-marker{
+  display: none;
+}
+
+#location-profile-modal .lpm-chip .lpm-chip-face{
+  align-items: center;
+  cursor: pointer;
+}
+
+#location-profile-modal .lpm-chip .lpm-chip-face-label{
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.25;
   text-align: left;
-  margin-top: 0.5rem;
-  font-size: 0.9em;
-  opacity: 0.9;
+}
+
+#location-profile-modal .lpm-chip .lpm-chip-face-icons{
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  margin-left: 12px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+#location-profile-modal .lpm-chip .lpm-chip-face-chevron{
+  flex: 0 0 auto;
+  margin-left: 12px;
+  opacity: 0.65;
+  line-height: 1;
+}
+
+/* Requested behaviour: closed = down, opened = right */
+#location-profile-modal .lpm-chip .lpm-chip-face-chevron::before{
+  content: "▾";
+}
+
+#location-profile-modal .lpm-chip[open] .lpm-chip-face-chevron::before{
+  content: "▸";
+}
+
+#location-profile-modal .lpm-chip .lpm-chip-body{
+  margin: 10px 12px 0;
+  padding: 12px;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 10px;
+  background: #fff;
+}
+
+#location-profile-modal .lpm-chip .lpm-status-item + .lpm-status-item{
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+
+#location-profile-modal .lpm-chip .lpm-status-item-title{
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: left;
+}
+
+#location-profile-modal .lpm-chip .lpm-status-item-desc{
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.45;
+  opacity: 0.85;
+  text-align: left;
+}
+
+#location-profile-modal .lpm-introduction-chip .description,
+#location-profile-modal .lpm-introduction-chip .description p{
+  text-align: left;
+}
+
+#location-profile-modal .lpm-introduction-chip .description p{
+  margin: 0;
+}
+
+#location-profile-modal .lpm-introduction-chip .description p + p{
+  margin-top: 10px;
 }
 
 /* Rating stays centered; only the container shares the column geometry */
@@ -1421,6 +1507,7 @@ body.high-contrast .lpm-rating .rate-btn[aria-checked="true"]{
   margin-top: 0.75em;         /* keep your existing rhythm */
   padding-top: 0;             /* avoid accidental extra vertical offset */
 }
+
 /* QR modal: emoji-only CTAs */
 .qr-ctas{
   display:flex;
