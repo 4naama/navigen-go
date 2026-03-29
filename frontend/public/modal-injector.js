@@ -4324,12 +4324,6 @@ function getModalHeaderHelpSpec(target) {
     };
   }
 
-    return {
-      title: _ownerText('root.bo.selectLocation.help.title', 'How it works'),
-      bodyLines: selectLocationBody.split(/\n+/).map(s => String(s || '').trim()).filter(Boolean)
-    };
-  }
-
   if (modalId === 'owner-center-modal') {
     const ownerCenterBody = _ownerText(
       'owner.center.help.body',
