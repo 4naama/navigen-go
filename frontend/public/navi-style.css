@@ -1353,55 +1353,69 @@ body.high-contrast .cta-compact .modal-footer-button{
 }
 
 /* LPM: rating row (emoji radios) */
-.lpm-rating{
-  margin:.75em 0 0;
-  display:flex;
-  flex-direction:column;      /* stack hint UNDER the row */
-  align-items:center;         /* center horizontally */
-  justify-content:flex-start; /* keep top-aligned */
+#location-profile-modal .lpm-rating-chip{
+  max-width: 560px;
+  margin: 0.75em auto 0;
+  padding-left: 12px;
+  padding-right: 12px;
+  box-sizing: border-box;
 }
 
-.lpm-rating .rate-row{
-  display:flex;               /* center the 5 emojis */
+#location-profile-modal .lpm-rating-chip .rate-row{
+  display:flex;
   gap:8px;
   align-items:center;
   justify-content:center;
-  margin:0;                   /* no extra offset */
+  margin:0;
+  flex-wrap:wrap;
 }
 
-.lpm-rating .rate-btn{
-  width:36px; height:36px;
-  display:inline-flex; align-items:center; justify-content:center;
-  border:1px solid #e0e0e0; border-radius:10px;
-  background:#f8f8f8; font-size:20px; line-height:1;
+#location-profile-modal .lpm-rating-chip .rate-btn{
+  width:36px;
+  height:36px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #e0e0e0;
+  border-radius:10px;
+  background:#f8f8f8;
+  font-size:20px;
+  line-height:1;
   cursor:pointer;
   transition:background .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
 
-.lpm-rating .rate-btn:hover{ background:#f1f1f1; }
-.lpm-rating .rate-btn[aria-checked="true"]{
-  background:#e8f0fe; border-color:#1a73e8;
+#location-profile-modal .lpm-rating-chip .rate-btn:hover{ background:#f1f1f1; }
+
+#location-profile-modal .lpm-rating-chip .rate-btn[aria-checked="true"]{
+  background:#e8f0fe;
+  border-color:#1a73e8;
   box-shadow:0 0 0 2px rgba(26,115,232,.15) inset;
 }
 
-.lpm-rating .rate-hint{
-  margin-top:6px;             /* show under the row */
-  font-size:.9rem; opacity:.75;
+#location-profile-modal .lpm-rating-chip .rate-hint{
+  margin-top:6px;
+  font-size:.9rem;
+  opacity:.75;
+  text-align:center;
 }
 
-body.high-contrast .lpm-rating .rate-btn[aria-checked="true"]{
-  background:#333; border-color:#fff;
+body.high-contrast #location-profile-modal .lpm-rating-chip .rate-btn[aria-checked="true"]{
+  background:#333;
+  border-color:#fff;
   box-shadow:0 0 0 2px rgba(255,255,255,.3) inset;
 }
 
-.lpm-rating .rate-btn[disabled]{
-  opacity:.55; cursor:default; pointer-events:none;
+#location-profile-modal .lpm-rating-chip .rate-btn[disabled]{
+  opacity:.55;
+  cursor:default;
+  pointer-events:none;
 }
 
 /* LPM: the status and introduction chips must align to the same centered content column as the rating row.
    New chip classes are needed because the old badge/description blocks were always-visible text, not dropdown controls. */
 #location-profile-modal .lpm-chip,
-#location-profile-modal .lpm-rating{
+#location-profile-modal .lpm-rating-chip{
   max-width: 560px;           /* visual column width; independent of hero media */
   margin-left: auto;
   margin-right: auto;
@@ -1504,10 +1518,13 @@ body.high-contrast .lpm-rating .rate-btn[aria-checked="true"]{
   margin-top: 10px;
 }
 
-/* Rating stays centered; only the container shares the column geometry */
-#location-profile-modal .lpm-rating{
-  margin-top: 0.75em;         /* keep your existing rhythm */
-  padding-top: 0;             /* avoid accidental extra vertical offset */
+#location-profile-modal .lpm-rating-chip{
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 12px;
+  padding-right: 12px;
+  box-sizing: border-box;
 }
 
 /* QR modal: emoji-only CTAs */

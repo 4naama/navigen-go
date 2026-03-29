@@ -1338,23 +1338,30 @@ const descs = resolveDescriptionMapForLocation(payload, [
     </div>
   `;
 
-  // add compact 1–5 rating row (emoji radios)
   const inner = body.querySelector('.modal-body-inner');
   if (inner) {
-    const rate = document.createElement('section');
-    rate.className = 'lpm-rating';
+    const rate = document.createElement('details');
+    rate.className = 'lpm-chip lpm-rating-chip';
     rate.id = 'lpm-rate-section';
 
     rate.innerHTML = `
-      <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="Rate">
-        <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
-        <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
-        <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
-        <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
-        <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
+      <summary class="modal-menu-item lpm-chip-face">
+        <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.label', 'Rating')}</span>
+        <span class="lpm-chip-face-icons" id="lpm-rating-face-icons" aria-hidden="true">—</span>
+        <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
+      </summary>
+      <div class="lpm-chip-body">
+        <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="Rate">
+          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
+          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
+          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
+          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
+          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
+        </div>
+        <div class="rate-hint" aria-live="polite"></div>
       </div>
-      <div class="rate-hint" aria-live="polite"></div>
     `;
+
     inner.appendChild(rate);
   }
 
@@ -2819,10 +2826,13 @@ async function initLpmImageSlider(modal, data) {
 
       const btns = Array.from(group.querySelectorAll('.rate-btn'));
       const hint = modal.querySelector('.rate-hint');
+      const face = modal.querySelector('#lpm-rating-face-icons');
+      const faces = ['😕', '😐', '🙂', '😄', '🤩'];
 
       const setUI = (n) => {
         btns.forEach((b,i)=> b.setAttribute('aria-checked', String(i+1===n)));
         if (hint) hint.textContent = n ? `Rated ${n}/5` : '';
+        if (face) face.textContent = n ? faces[n - 1] : '—';
       };
 
       let val      = Number(localStorage.getItem(key))     || 0; // 0 = no rating yet
@@ -8142,12 +8152,29 @@ export function showRedeemInvalidModal({
 export function createMyStuffModal() {
   document.getElementById('my-stuff-modal')?.remove();
 
-  injectModal({
+  const modal = injectModal({
     id: 'my-stuff-modal',
-    title: translatedOrFallback('My stuff', translatedOrFallback('My Stuff', 'My stuff')),
+    title: 'My Stuff',    
     layout: 'menu',
     bodyHTML: `<div id="my-stuff-body"></div>`
   });
+
+  const closeBtn = modal?.querySelector('.modal-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const currentState = String(modal.dataset.myStuffState || 'menu').trim();
+
+      if (currentState === 'menu') {
+        hideModal('my-stuff-modal');
+        return;
+      }
+
+      showMyStuffModal('menu');
+    });
+  }
 }
 
 /* Favorites Modal (FM): list saved locations with open/unsave */
@@ -8610,6 +8637,7 @@ export async function showMyStuffModal(state) {
   }
 
   const modal = document.getElementById('my-stuff-modal');
+  modal.dataset.myStuffState = state;  
   const title = modal?.querySelector('.modal-top-bar .modal-title');
   const body = modal?.querySelector('#my-stuff-body');
 
@@ -8645,7 +8673,7 @@ export async function showMyStuffModal(state) {
   };
 
   if (state === 'menu') {
-    title.textContent = translatedOrFallback('My stuff', translatedOrFallback('My Stuff', 'My stuff'));    
+    title.textContent = 'My Stuff';    
     body.innerHTML = ''; // clear body before injecting
 
     const list = document.createElement('div');
@@ -8693,7 +8721,6 @@ export async function showMyStuffModal(state) {
           <button class="community-button">📍 Track</button>
           <button class="community-button">❓ Quizzy</button>
         </div>
-        <p class="muted muted-note">*All features coming soon</p>
       </div>
     `;
 
@@ -8805,7 +8832,7 @@ export async function showMyStuffModal(state) {
       {
         id: 'reset-cancel',
         label: (typeof t === 'function' && t('common.cancel')) || 'Cancel',
-        onClick: () => hideModal('my-stuff-modal')
+        onClick: () => showMyStuffModal('menu')        
       },
       {
         id: 'reset-confirm',
