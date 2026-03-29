@@ -3725,40 +3725,62 @@ select.input{
    ========================================================================== */
 
 /* Keep Select Location on the shared modal header geometry.
-   The header stays identical to the main modal header; only the search row wraps below it. */
-#select-location-modal.modal-wide-menu .modal-top-bar{
-  padding: 16px 16px 12px 16px;
-}
-
+   The header uses a true two-row layout: title on the left, actions pinned on the right, search full-width below. */
 #select-location-modal .modal-top-bar{
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title actions"
+    "search search";
+  align-items: start;
+  column-gap: 10px;
+  row-gap: 8px;
+  padding: 16px 16px 12px 16px;
 }
 
 #select-location-modal .modal-top-bar h2,
 #select-location-modal .modal-top-bar .modal-title{
-  order: 1;
+  grid-area: title;
+  min-width: 0;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 #select-location-modal .modal-top-bar .modal-top-actions,
 #select-location-modal .modal-top-bar > .modal-close{
-  order: 1;
+  grid-area: actions;
+  align-self: start;
+  justify-self: end;
+  margin-left: 0;
+}
+
+#select-location-modal .modal-top-bar .modal-top-actions{
+  margin-right: -8px;
+}
+
+#select-location-modal .modal-top-bar > .modal-close{
+  margin-right: -8px;
 }
 
 #select-location-modal .modal-top-bar .select-location-search-row{
-  order: 2;
-  flex: 1 0 100%;
+  grid-area: search;
+  min-width: 0;
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 8px;
-  margin-bottom: 0;
+  margin: 0;
 }
 
 #select-location-modal .select-location-search-left{
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
-  width: auto;
+  width: 100%;
   max-width: none;
 }
 
