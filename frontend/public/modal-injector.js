@@ -4118,7 +4118,7 @@ export function createRequestListingModal() {
   const id = 'request-listing-modal';
   document.getElementById(id)?.remove();
 
-  // Shared modal shell + shared footer buttons; no bespoke wrapper/header/footer.
+  // Shared modal shell; CTAs live inside the scrollable body (no legacy footer).
   const modal = injectModal({
     id,
     title: t('modal.requestListing.title') || 'Request a listing',
@@ -4165,79 +4165,79 @@ export function createRequestListingModal() {
             <small class="modal-help-text">Tip: you can copy this from Google Maps.</small>
           </div>
         </div>
+
+        <div class="modal-actions">
+          <button id="request-listing-submit" type="button" class="modal-body-button">
+            ${t('modal.requestListing.submit') || 'Send request'}
+          </button>
+
+          <button id="request-listing-cancel" type="button" class="modal-body-button">
+            ${t('common.cancel') || 'Cancel'}
+          </button>
+        </div>
       </div>
-    `,
-    footerButtons: [
-      {
-        id: 'request-listing-cancel',
-        label: t('common.cancel') || 'Cancel',
-        className: 'modal-footer-button',
-        onClick: () => hideModal(id)
-      },
-      {
-        id: 'request-listing-submit',
-        label: t('modal.requestListing.submit') || 'Send request',
-        className: 'modal-footer-button',
-        onClick: async () => {
-          const name = String(modal.querySelector('#rl-name')?.value || '').trim();
-          const address = String(modal.querySelector('#rl-address')?.value || '').trim();
-          const city = String(modal.querySelector('#rl-city')?.value || '').trim();
-          const country = String(modal.querySelector('#rl-country')?.value || '').trim().toUpperCase();
-          const link = String(modal.querySelector('#rl-link')?.value || '').trim();
-          const coord = String(modal.querySelector('#rl-coord')?.value || '').trim();
+    `
+  });
+  
+  modal.querySelector('#request-listing-cancel')?.addEventListener('click', () => hideModal(id));
 
-          if (!name || !address || !city || !country || country.length !== 2) {
-            showToast('Please provide name, street address, city, and 2-letter country code.', 2200);
-            return;
-          }
+  modal.querySelector('#request-listing-submit')?.addEventListener('click', async () => {
+    const name = String(modal.querySelector('#rl-name')?.value || '').trim();
+    const address = String(modal.querySelector('#rl-address')?.value || '').trim();
+    const city = String(modal.querySelector('#rl-city')?.value || '').trim();
+    const country = String(modal.querySelector('#rl-country')?.value || '').trim().toUpperCase();
+    const link = String(modal.querySelector('#rl-link')?.value || '').trim();
+    const coord = String(modal.querySelector('#rl-coord')?.value || '').trim();
 
-          // Normalize name for admin handling (no slug creation here)
-          const nameNorm = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9\s\-\&\.']/gi, '')      // keep common business punctuation (ASCII-safe after NFD)
-            .replace(/\s+/g, ' ')
-            .trim()
-            .slice(0, 80);
+    if (!name || !address || !city || !country || country.length !== 2) {
+      showToast('Please provide name, street address, city, and 2-letter country code.', 2200);
+      return;
+    }
 
-          // Optional coords validation (if provided)
-          let coordNorm = '';
-          if (coord) {
-            const m = coord.match(/^\s*(-?\d+(?:\.\d{1,6})?)\s*,\s*(-?\d+(?:\.\d{1,6})?)\s*$/);
-            if (!m) {
-              showToast('Coordinates must be "lat,lng" with up to 6 decimals.', 2200);
-              return;
-            }
-            const lat = Number(m[1]);
-            const lng = Number(m[2]);
-            if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-              showToast('Coordinates are out of range.', 2200);
-              return;
-            }
-            coordNorm = `${lat.toFixed(6)},${lng.toFixed(6)}`;
-          }
+    // Normalize name for admin handling (no slug creation here)
+    const nameNorm = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s\-\&\.']/gi, '')      // keep common business punctuation (ASCII-safe after NFD)
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80);
 
-          // Manual pipeline: store locally for now; admin can copy out later.
-          try {
-            const key = 'navigen.requestListing';
-            const arr = JSON.parse(localStorage.getItem(key) || '[]');
-            const next = Array.isArray(arr) ? arr : [];
-            next.unshift({
-              name,
-              nameNorm,
-              address,
-              city,
-              country,
-              link,
-              coord: coordNorm,
-              ts: Date.now()
-            });
-            localStorage.setItem(key, JSON.stringify(next));
-          } catch {}
-
-          showToast(t('modal.requestListing.success') || 'Thanks! We’ll add your listing soon.', 2500);
-          hideModal(id);
-        }
+    // Optional coords validation (if provided)
+    let coordNorm = '';
+    if (coord) {
+      const m = coord.match(/^\s*(-?\d+(?:\.\d{1,6})?)\s*,\s*(-?\d+(?:\.\d{1,6})?)\s*$/);
+      if (!m) {
+        showToast('Coordinates must be "lat,lng" with up to 6 decimals.', 2200);
+        return;
       }
-    ]
+      const lat = Number(m[1]);
+      const lng = Number(m[2]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        showToast('Coordinates are out of range.', 2200);
+        return;
+      }
+      coordNorm = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+    }
+
+    // Manual pipeline: store locally for now; admin can copy out later.
+    try {
+      const key = 'navigen.requestListing';
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      const next = Array.isArray(arr) ? arr : [];
+      next.unshift({
+        name,
+        nameNorm,
+        address,
+        city,
+        country,
+        link,
+        coord: coordNorm,
+        ts: Date.now()
+      });
+      localStorage.setItem(key, JSON.stringify(next));
+    } catch {}
+
+    showToast(t('modal.requestListing.success') || 'Thanks! We’ll add your listing soon.', 2500);
+    hideModal(id);
   });
 
   const countryInput = modal.querySelector('#rl-country');
