@@ -2333,7 +2333,7 @@ async function initLpmImageSlider(modal, data) {
     // helper placed before first use: avoids ReferenceError in some engines
     function initSaveButtons(primaryBtn, secondaryBtn){
       const id = String(data?.id || data?.locationID || '');
-      const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('Unnamed');
+      const name = String(data?.displayName ?? data?.name ?? data?.locationName?.en ?? data?.locationName ?? '').trim() || t('common.unnamed');      
       const lat = Number(data?.lat), lng = Number(data?.lng);
       const entry = { id, locationName: { en: name }, name, lat: Number.isFinite(lat)?lat:undefined, lng: Number.isFinite(lng)?lng:undefined };
 
@@ -3412,7 +3412,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Utility: create a location button and wire it to the Location Profile Modal (LPM)
 function makeLocationButton(loc) {
   const btn = document.createElement('button');
-  const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? "Unnamed")).trim(); // location display label
+  const locLabel = String((loc?.locationName?.en ?? loc?.locationName ?? ((typeof t === 'function' && t('common.unnamed')) || 'Unnamed'))).trim(); // location display label  
   btn.textContent = locLabel;
 
   // dataset-only identifiers: use profiles.json slug as the single source of truth (no derivation)
@@ -8161,7 +8161,7 @@ export function createMyStuffModal() {
 
   injectModal({
     id: 'my-stuff-modal',
-    title: 'My Stuff',
+    title: (typeof t === 'function' && t('myStuff.title')) || 'My stuff',
     layout: 'menu',
     bodyHTML: `<div id="my-stuff-body"></div>`,
     onClose: (e, modal) => {
@@ -8572,10 +8572,10 @@ export function showFavoritesModal() {
     row.innerHTML = `
       <div class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
         <button class="open-fav" type="button" style="all:unset; cursor:pointer; display:block; width:100%;">
-          ${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim() || t("Unnamed")}
+          ${String((item?.locationName?.en ?? item?.locationName ?? item?.name ?? '')).trim() || t("common.unnamed")}          
         </button>
       </div>
-      <button class="unsave-fav clear-x" type="button" aria-label="${t("Remove")}">✖</button>
+      <button class="unsave-fav clear-x" type="button" aria-label="${t("common.remove")}">✖</button>      
     `;
 
     // open behavior: dispatch event + attempt local scroll
@@ -8676,7 +8676,7 @@ export async function showMyStuffModal(state) {
   };
 
   if (state === 'menu') {
-    title.textContent = 'My Stuff';    
+    title.textContent = (typeof t === 'function' && t('myStuff.title')) || 'My stuff';    
     body.innerHTML = ''; // clear body before injecting
 
     const list = document.createElement('div');
