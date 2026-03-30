@@ -6180,18 +6180,28 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   locHdr.className = 'cm-location';
 
   locHdr.innerHTML = `
-    <div class="cm-location-row">
-      <span class="cm-location-label">Location name</span>
-      <span class="cm-location-box" title="${String(locName || '').trim()}">
-        ${String(locName || '').trim()}
-      </span>
-    </div>
-    <div class="cm-location-row">
-      <span class="cm-location-label">Location ID</span>
-      <span class="cm-location-box" title="${displaySlug}">
-        ${displaySlug}
-      </span>
-    </div>
+    <details class="cm-chip cm-location-chip">
+      <summary class="modal-menu-item cm-chip-face">
+        <span class="cm-chip-face-label">${String(locName || '').trim() || displaySlug}</span>
+        <span class="cm-chip-face-chevron" aria-hidden="true"></span>
+      </summary>
+      <div class="cm-chip-body">
+        <div class="cm-chip-stack">
+          <div class="cm-chip-row">
+            <span class="cm-chip-k">${tSafe('campaign.ui.locationName', 'Location name')}</span>
+            <span class="cm-chip-v" title="${String(locName || '').trim()}">
+              ${String(locName || '').trim()}
+            </span>
+          </div>
+          <div class="cm-chip-row">
+            <span class="cm-chip-k">${tSafe('campaign.ui.locationId', 'Location ID')}</span>
+            <span class="cm-chip-v" title="${displaySlug}">
+              ${displaySlug}
+            </span>
+          </div>
+        </div>
+      </div>
+    </details>
   `;
 
   // Controls (B): single dropdown selector (Dash-like chevron + spacing)
@@ -6851,8 +6861,25 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       campaignScope: 'Campaign scope'
     };
 
-    const planField = document.createElement('div');
-    planField.style.gridColumn = '1 / -1';
+    const planField = document.createElement('details');
+    planField.className = 'cm-chip cm-plan-chip';
+    planField.open = true;
+
+    const planSummary = document.createElement('summary');
+    planSummary.className = 'modal-menu-item cm-chip-face';
+
+    const planSummaryLabel = document.createElement('span');
+    planSummaryLabel.className = 'cm-chip-face-label';
+
+    const planSummaryChevron = document.createElement('span');
+    planSummaryChevron.className = 'cm-chip-face-chevron';
+    planSummaryChevron.setAttribute('aria-hidden', 'true');
+
+    planSummary.appendChild(planSummaryLabel);
+    planSummary.appendChild(planSummaryChevron);
+
+    const planBody = document.createElement('div');
+    planBody.className = 'cm-chip-body';
 
     const planLabel = document.createElement('div');
     planLabel.className = 'muted';
@@ -6897,12 +6924,16 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
             : (currentPlanCap > 1 ? `up to ${currentPlanCap} locations` : (currentPlanCap === 1 ? '1 location' : ''));
 
     const hasBlockedInheritance = Number(listJ?.inheritedNotice?.blockedRows || 0) > 0;
-    
+
     planStateNote.textContent = currentPlanTitle
       ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
       : hasBlockedInheritance
         ? tSafe('campaign.plan.blocked.note', 'This location is eligible on this device, but the running all-locations campaign is already at capacity. Upgrade the plan or remove another location from scope.')
         : tSafe('campaign.plan.choose.note', 'Choose a plan before campaign scope and locations.');
+
+    planSummaryLabel.textContent = currentPlanTitle
+      ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
+      : tSafe('campaign.plan.choose.title', 'Choose plan');
 
     const suggestedUpgradeTitle = currentPlanTier === 'standard'
       ? tSafe('campaign.plan.multi.title', 'Multi')
@@ -6944,11 +6975,13 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       planChips.appendChild(btn);
     });
 
-    planField.appendChild(planStateNote);
-    planField.appendChild(planLabel);
-    planField.appendChild(upgradeNote);
-    planField.appendChild(planChips);
-    form.appendChild(planField);
+    planBody.appendChild(planStateNote);
+    planBody.appendChild(planLabel);
+    planBody.appendChild(upgradeNote);
+    planBody.appendChild(planChips);
+    planField.appendChild(planSummary);
+    planField.appendChild(planBody);
+    panel.appendChild(planField);
 
     const presetSelect = document.createElement('select');
     presetSelect.className = 'input';
@@ -7015,8 +7048,32 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
     syncPresetUi();
 
-    panel.appendChild(form);
+    const setupChip = document.createElement('details');
+    setupChip.className = 'cm-chip cm-setup-chip';
+    setupChip.open = true;
 
+    const setupSummary = document.createElement('summary');
+    setupSummary.className = 'modal-menu-item cm-chip-face';
+
+    const setupSummaryLabel = document.createElement('span');
+    setupSummaryLabel.className = 'cm-chip-face-label';
+    setupSummaryLabel.textContent = tSafe('campaign.ui.setupChip.title', 'Campaign set up');
+
+    const setupSummaryChevron = document.createElement('span');
+    setupSummaryChevron.className = 'cm-chip-face-chevron';
+    setupSummaryChevron.setAttribute('aria-hidden', 'true');
+
+    setupSummary.appendChild(setupSummaryLabel);
+    setupSummary.appendChild(setupSummaryChevron);
+
+    const setupBody = document.createElement('div');
+    setupBody.className = 'cm-chip-body';
+
+    setupChip.appendChild(setupSummary);
+    setupChip.appendChild(setupBody);
+    setupBody.appendChild(form);
+    panel.appendChild(setupChip);
+    
     const locationPanel = document.createElement('div');
     locationPanel.className = 'campaign-locations-panel';
     locationPanel.style.display = 'none';
@@ -7045,8 +7102,8 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     });
     locationPanel.appendChild(addAnother);
 
-    panel.appendChild(locationPanel);
-
+    setupBody.appendChild(locationPanel);
+    
     const eligibleByUlid = new Map(eligibleLocations.map((loc) => [String(loc?.ulid || '').trim(), loc]));
     const selectedSet = new Set(
       Array.isArray(draft?.selectedLocationULIDs)

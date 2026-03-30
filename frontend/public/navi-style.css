@@ -3076,6 +3076,90 @@ select.input{
   display:block;
 }
 
+/* Campaign Management — chip sections */
+.cm-chip{
+  margin-top:12px;
+}
+
+.cm-chip > summary{
+  list-style:none;
+}
+
+.cm-chip > summary::-webkit-details-marker{
+  display:none;
+}
+
+.cm-chip .cm-chip-face{
+  align-items:center;
+  cursor:pointer;
+}
+
+.cm-chip .cm-chip-face-label{
+  flex:1 1 auto;
+  min-width:0;
+  text-align:left;
+  font-weight:600;
+}
+
+.cm-chip .cm-chip-face-chevron{
+  flex:0 0 auto;
+  margin-left:12px;
+  opacity:.65;
+  line-height:1;
+}
+
+.cm-chip .cm-chip-face-chevron::before{
+  content:"▾";
+}
+
+.cm-chip[open] .cm-chip-face-chevron::before{
+  content:"▸";
+}
+
+.cm-chip .cm-chip-body{
+  margin:10px 12px 0;
+  padding:12px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:10px;
+  background:#fff;
+}
+
+.cm-chip .cm-chip-stack{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.cm-chip .cm-chip-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.cm-chip .cm-chip-k{
+  color:#0f172a;
+  font-size:0.9em;
+  font-weight:700;
+  opacity:0.9;
+}
+
+.cm-chip .cm-chip-v{
+  display:inline-block;
+  max-width:100%;
+  padding:6px 10px;
+  border:1px solid #e5e7eb;
+  border-radius:6px;
+  background:#fff;
+  white-space:nowrap;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  box-sizing:border-box;
+  font-size:16px;
+  line-height:1.2;
+}
+
 /* Draft actions row */
 .cm-actions{
   display:flex;
