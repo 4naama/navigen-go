@@ -668,7 +668,7 @@
   "lpm.visibility.inactive": "This business is currently inactive on NaviGen. Start a campaign to become discoverable again.",
   "bo.campaign.title": "🎯 Run a campaign",
   "bo.campaign.desc": "Choose your business, then launch.",
-  "root.bo.title": "Business Owners",
+  "root.bo.title": "Business owners",
   "root.bo.startCampaign.title": "Run a campaign",
   "root.bo.startCampaign.desc": "Choose your business, then launch.",
   "root.bo.restore.title": "Restore or add owner access",
