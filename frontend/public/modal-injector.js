@@ -3011,19 +3011,6 @@ async function initLpmImageSlider(modal, data) {
     // Rating chip now scaffolds external aggregator sources and the NG aggregate face value.
     renderLpmAggregatedRatingChip(modal, data);
 
-      // keyboard support (no hard lock; still uses commit() which respects send cooldown)
-      group.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-          e.preventDefault();
-          commit(Math.min(5, (val || 0) + 1));
-        }
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-          e.preventDefault();
-          commit(Math.max(1, (val || 1) - 1));
-        }
-      });
-    })();
-
     // analytics beacon
     // removed trackCta; all beacons use _track(uid,event) // single path → Worker
 
