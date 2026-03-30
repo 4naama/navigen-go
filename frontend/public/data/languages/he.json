@@ -935,5 +935,6 @@
   "root.bo.selectLocation.help.promoted.title": "🎁 מקודם — קמפיין פעיל.",
   "root.bo.selectLocation.help.promoted.desc": "עסק זה מפעיל כעת קמפיין פעיל.",
   "lpm.status.label": "סטטוס העסק",
-  "lpm.introduction.label": "מבוא"
+  "lpm.introduction.label": "מבוא",
+  "lpm.rating.label": ""
 }

@@ -935,5 +935,6 @@
   "root.bo.selectLocation.help.promoted.title": "🎁 Beworben — aktive Kampagne.",
   "root.bo.selectLocation.help.promoted.desc": "Dieses Unternehmen führt derzeit eine aktive Kampagne durch.",
   "lpm.status.label": "Status des Unternehmens",
-  "lpm.introduction.label": "Einführung"
+  "lpm.introduction.label": "Einführung",
+  "lpm.rating.label": ""
 }

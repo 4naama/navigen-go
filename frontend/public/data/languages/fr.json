@@ -935,5 +935,6 @@
   "root.bo.selectLocation.help.promoted.title": "🎁 Promu — campagne active.",
   "root.bo.selectLocation.help.promoted.desc": "Cette entreprise lance actuellement une campagne active.",
   "lpm.status.label": "Statut de l’établissement",
-  "lpm.introduction.label": "Introduction"
+  "lpm.introduction.label": "Introduction",
+  "lpm.rating.label": ""
 }

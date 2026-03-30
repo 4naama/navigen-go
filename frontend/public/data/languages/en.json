@@ -622,7 +622,7 @@
   "ind.card.howItWorks.desc": "Learn what NaviGen is and what the icons mean.",
   "ind.card.installSupport.title": "Install / Support",
   "ind.card.installSupport.desc": "Install NaviGen (📌) or support (👋) in PWA mode.",
-  "ind.card.myStuff.title": "My Stuff",
+  "ind.card.myStuff.title": "My stuff",
   "ind.card.myStuff.desc": "Favorites, purchases, language, and tools.",
   "ind.card.promotions.title": "Promotions",
   "ind.card.promotions.desc": "See promotions running in this area.",
@@ -759,7 +759,7 @@
   "campaign.ui.updated": "Campaign updated.",
   "campaign.ui.addNew": "Add new campaign",
   "Favorites": "Favorites",
-  "My Stuff": "My Stuff",
+  "My Stuff": "My stuff",
   "Remove": "Remove",
   "Unnamed": "Unnamed",
   "root.bo.howItWorks.title": "How it works",
@@ -935,5 +935,6 @@
   "root.bo.selectLocation.help.promoted.title": "🎁 Promoted — active campaign.",
   "root.bo.selectLocation.help.promoted.desc": "This business is running an active campaign right now.",
   "lpm.status.label": "Business status",
-  "lpm.introduction.label": "Introduction"
+  "lpm.introduction.label": "Introduction",
+  "lpm.rating.label": "Rating"
 }

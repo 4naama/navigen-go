@@ -95,7 +95,7 @@
   "favorites": "Kedvencek",
   "no.favorites.yet": "Még nincsenek kedvencek.",
   "button.here": "📍 Itt",
-  "tooltip.myStuff": "Cuccaim",
+  "tooltip.myStuff": "Saját dolgok",
   "tooltip.alerts": "Riasztások",
   "tooltip.service": "Szolgáltatáscsengő",
   "tooltip.accessibility": "Akadálymentesítés",
@@ -759,7 +759,7 @@
   "campaign.ui.updated": "A kampány frissítve.",
   "campaign.ui.addNew": "Új kampány hozzáadása",
   "Favorites": "Kedvencek",
-  "My Stuff": "Saját elemek",
+  "My Stuff": "Saját dolgok",
   "Remove": "Eltávolítás",
   "Unnamed": "Névtelen",
   "root.bo.howItWorks.title": "Hogyan működik",
@@ -935,5 +935,6 @@
   "root.bo.selectLocation.help.promoted.title": "🎁 Promóció — aktív kampány.",
   "root.bo.selectLocation.help.promoted.desc": "Ez a vállalkozás jelenleg aktív kampányt futtat.",
   "lpm.status.label": "Vállalkozás állapota",
-  "lpm.introduction.label": "Bemutatkozás"
+  "lpm.introduction.label": "Bemutatkozás",
+  "lpm.rating.label": ""
 }
