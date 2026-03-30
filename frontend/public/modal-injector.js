@@ -6188,13 +6188,13 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
       <div class="cm-chip-body">
         <div class="cm-chip-stack">
           <div class="cm-chip-row">
-            <span class="cm-chip-k">${tSafe('campaign.ui.locationName', 'Location name')}</span>
+            <span class="cm-chip-k">${translatedOrFallback('campaign.ui.locationName', 'Location name')}</span>            
             <span class="cm-chip-v" title="${String(locName || '').trim()}">
               ${String(locName || '').trim()}
             </span>
           </div>
           <div class="cm-chip-row">
-            <span class="cm-chip-k">${tSafe('campaign.ui.locationId', 'Location ID')}</span>
+            <span class="cm-chip-k">${translatedOrFallback('campaign.ui.locationId', 'Location ID')}</span>            
             <span class="cm-chip-v" title="${displaySlug}">
               ${displaySlug}
             </span>
