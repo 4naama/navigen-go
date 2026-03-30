@@ -1185,7 +1185,183 @@ function renderLpmStatusChip(modal, status = null) {
   });
 }
 
+function getLpmRatingFaceEmoji(value) {
+  const score = Number(value);
+  if (!Number.isFinite(score) || score <= 0) return '—';
+  if (score >= 4.5) return '🤩';
+  if (score >= 4.0) return '😄';
+  if (score >= 3.0) return '🙂';
+  if (score >= 2.0) return '😐';
+  return '😕';
+}
+
+function formatLpmRatingCount(count) {
+  const n = Number(count || 0);
+  if (!Number.isFinite(n) || n <= 0) return '';
+  return n.toLocaleString(document.documentElement?.lang || undefined);
+}
+
+function buildLpmAggregatedRatingCatalog(payload = {}) {
+  const rawSources = (payload?.origRatings && typeof payload.origRatings === 'object') ? payload.origRatings : {};
+  const seededSources = (payload?.ratings && typeof payload.ratings === 'object') ? payload.ratings : {};
+  const combined = (seededSources?.combined && typeof seededSources.combined === 'object') ? seededSources.combined : {};
+
+  const readSource = (key, scale = 5) => {
+    const source =
+      (rawSources[key] && typeof rawSources[key] === 'object' ? rawSources[key] : null) ||
+      (seededSources[key] && typeof seededSources[key] === 'object' ? seededSources[key] : null) ||
+      null;
+
+    const rawValue = Number(source?.rating ?? source?.score ?? source?.value);
+    const rawScale = Number(source?.scale || scale);
+    const count = Number(source?.count ?? source?.ratingsCount ?? 0);
+
+    const value = Number.isFinite(rawValue)
+      ? (rawScale && rawScale !== 5 ? (rawValue / rawScale) * 5 : rawValue)
+      : null;
+
+    return {
+      value: Number.isFinite(value) ? value : null,
+      rawValue: Number.isFinite(rawValue) ? rawValue : null,
+      rawScale: rawScale || scale,
+      count: Number.isFinite(count) ? count : 0
+    };
+  };
+
+  const groups = [
+    {
+      title: 'Universal review layers',
+      items: [
+        { key: 'google', label: 'Google', display: 'stars', scale: 5 },
+        { key: 'tripadvisor', label: 'TripAdvisor', display: 'dots', scale: 5 },
+        { key: 'yelp', label: 'Yelp', display: 'stars', scale: 5 }
+      ]
+    },
+    {
+      title: 'Booking & stays',
+      items: [
+        { key: 'booking', label: 'Booking.com', display: 'score', scale: 10 },
+        { key: 'expedia', label: 'Expedia', display: 'score', scale: 10 },
+        { key: 'hotels', label: 'Hotels.com', display: 'score', scale: 10 },
+        { key: 'agoda', label: 'Agoda', display: 'score', scale: 10 },
+        { key: 'airbnb', label: 'Airbnb', display: 'stars', scale: 5 }
+      ]
+    },
+    {
+      title: 'Restaurants',
+      items: [
+        { key: 'opentable', label: 'OpenTable', display: 'stars', scale: 5 },
+        { key: 'thefork', label: 'TheFork', display: 'stars', scale: 5 },
+        { key: 'zomato', label: 'Zomato', display: 'stars', scale: 5 }
+      ]
+    },
+    {
+      title: 'Activities & experiences',
+      items: [
+        { key: 'getyourguide', label: 'GetYourGuide', display: 'stars', scale: 5 },
+        { key: 'viator', label: 'Viator', display: 'stars', scale: 5 }
+      ]
+    },
+    {
+      title: 'Meta / comparison',
+      items: [
+        { key: 'kayak', label: 'Kayak', display: 'comparison', scale: 5 },
+        { key: 'trivago', label: 'Trivago', display: 'comparison', scale: 5 }
+      ]
+    }
+  ].map((group) => ({
+    ...group,
+    items: group.items.map((item) => ({
+      ...item,
+      ...readSource(item.key, item.scale)
+    }))
+  }));
+
+  const scored = groups
+    .flatMap((group) => group.items)
+    .filter((item) => Number.isFinite(item.value) && item.value > 0);
+
+  const fallbackAverage = Number(combined?.value);
+  const fallbackCount = Number(combined?.count || 0);
+
+  const average = scored.length
+    ? scored.reduce((sum, item) => sum + item.value, 0) / scored.length
+    : (Number.isFinite(fallbackAverage) && fallbackAverage > 0 ? fallbackAverage : null);
+
+  const count = scored.length
+    ? scored.reduce((sum, item) => sum + (item.count || 0), 0)
+    : (Number.isFinite(fallbackCount) ? fallbackCount : 0);
+
+  return {
+    groups,
+    average,
+    count,
+    sourceCount: scored.length || (Number.isFinite(average) ? 1 : 0)
+  };
+}
+
+function renderLpmAggregatedRatingChip(root, payload = {}) {
+  const scope = root instanceof HTMLElement ? root : null;
+  if (!scope) return;
+
+  const face = scope.querySelector('#lpm-rating-face-icons');
+  const summary = scope.querySelector('#lpm-rating-summary');
+  const groupsHost = scope.querySelector('#lpm-rating-groups');
+
+  if (!(face instanceof HTMLElement) || !(summary instanceof HTMLElement) || !(groupsHost instanceof HTMLElement)) return;
+
+  const model = buildLpmAggregatedRatingCatalog(payload);
+  const emoji = getLpmRatingFaceEmoji(model.average);
+
+  face.textContent = Number.isFinite(model.average)
+    ? `${emoji} ${model.average.toFixed(1)}${model.count > 0 ? ` (${formatLpmRatingCount(model.count)})` : ''}`
+    : 'Waiting for source scores';
+
+  summary.textContent = Number.isFinite(model.average)
+    ? `NaviGen aggregate · average of ${model.sourceCount} source averages${model.count > 0 ? ` · ${formatLpmRatingCount(model.count)} total ratings` : ''}`
+    : 'Waiting for source scores from external sites.';
+
+  groupsHost.innerHTML = '';
+
+  model.groups.forEach((group) => {
+    const section = document.createElement('div');
+    section.className = 'lpm-rating-group';
+
+    const title = document.createElement('div');
+    title.className = 'lpm-rating-group-title';
+    title.textContent = group.title;
+    section.appendChild(title);
+
+    group.items.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'lpm-rating-source';
+
+      const left = document.createElement('div');
+      left.className = 'lpm-rating-source-main';
+      left.textContent = item.label;
+
+      const meta = document.createElement('div');
+      meta.className = 'lpm-rating-source-meta';
+      meta.textContent = item.display;
+
+      const right = document.createElement('div');
+      right.className = 'lpm-rating-source-value';
+      right.textContent = Number.isFinite(item.rawValue)
+        ? `${item.rawValue.toFixed(1)}/${item.rawScale}${item.count > 0 ? ` · ${formatLpmRatingCount(item.count)}` : ''}`
+        : 'Waiting for source score from site';
+
+      row.appendChild(left);
+      row.appendChild(meta);
+      row.appendChild(right);
+      section.appendChild(row);
+    });
+
+    groupsHost.appendChild(section);
+  });
+}
+
 let lpmProfilesLocationsPromise;
+
 function getProfilesLocationRecords() {
   if (!lpmProfilesLocationsPromise) {
     lpmProfilesLocationsPromise = fetch('/data/profiles.json', { cache: 'no-store' })
@@ -1374,18 +1550,12 @@ const descs = resolveDescriptionMapForLocation(payload, [
     rate.innerHTML = `
       <summary class="modal-menu-item lpm-chip-face">
         <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.label', 'Rating')}</span>
-        <span class="lpm-chip-face-icons" id="lpm-rating-face-icons" aria-hidden="true">—</span>
+        <span class="lpm-chip-face-icons" id="lpm-rating-face-icons">Waiting for source scores</span>
         <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
       </summary>
       <div class="lpm-chip-body">
-        <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="Rate">
-          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
-          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
-          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
-          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
-          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
-        </div>
-        <div class="rate-hint" aria-live="polite"></div>
+        <div class="lpm-rating-summary" id="lpm-rating-summary" aria-live="polite"></div>
+        <div class="lpm-rating-groups" id="lpm-rating-groups"></div>
       </div>
     `;
 
@@ -2838,80 +3008,8 @@ async function initLpmImageSlider(modal, data) {
      modal.querySelector('#lpm-save')  ||
      btnClose)?.focus?.();
      
-    // 1–5 rating (localStorage + /hit/rating); emoji radios; 1h cooldown window for sending
-    (function initRating(){
-      const group = modal.querySelector('#lpm-rate-group');
-      if (!group) return;
-
-      // accept either ULID or slug for this profile (keeps behavior aligned with other CTAs)
-      const rawId = String(data?.id || data?.locationID || '').trim();
-      if (!rawId) return;
-
-      const key      = `rating:${rawId}`;          // stored value 0..5 (last selected)
-      const tsKey    = `rating_ts:${rawId}`;       // last UI interaction timestamp
-      const sentKey  = `rating_sent_ts:${rawId}`;  // last time a hit was sent to dash
-      const COOLDOWN_MS = 60*60*1000;              // 1h per device for sending hits
-
-      const btns = Array.from(group.querySelectorAll('.rate-btn'));
-      const hint = modal.querySelector('.rate-hint');
-      const face = modal.querySelector('#lpm-rating-face-icons');
-      const faces = ['😕', '😐', '🙂', '😄', '🤩'];
-
-      const setUI = (n) => {
-        btns.forEach((b,i)=> b.setAttribute('aria-checked', String(i+1===n)));
-        if (hint) hint.textContent = n ? `Rated ${n}/5` : '';
-        if (face) face.textContent = n ? faces[n - 1] : '—';
-      };
-
-      let val      = Number(localStorage.getItem(key))     || 0; // 0 = no rating yet
-      let last     = Number(localStorage.getItem(tsKey))   || 0;
-      let lastSent = Number(localStorage.getItem(sentKey)) || 0;
-
-      const canSend = () => !lastSent || (Date.now() - lastSent >= COOLDOWN_MS);
-
-      // initial visual state (no lock; user can always change the face)
-      setUI(val);
-
-      const commit = (n) => {
-        const nowTs = Date.now();
-        val = n;
-        last = nowTs;
-
-        localStorage.setItem(key,   String(n));
-        localStorage.setItem(tsKey, String(last));
-        setUI(n);
-        /* send lightweight thanks toast; rating also sent to Worker when send window allows */
-        showToast(`Thanks! Rated ${n}/5`, 1600);
-
-        // fire /hit/rating only when outside the cooldown window; UI always updates
-        if (!canSend()) return;
-
-        lastSent = nowTs;
-        localStorage.setItem(sentKey, String(lastSent));
-
-        (async () => {
-          try {
-            const idOrSlug = String(data?.id || data?.locationID || '').trim();
-            if (!idOrSlug) return;
-
-            // resolve slug → ULID when possible; fall back to slug so Worker can still canonicalize
-            const uid = await resolveULIDFor(idOrSlug);
-            const target = uid || idOrSlug;
-            const url = `${TRACK_BASE}/hit/rating/${encodeURIComponent(target)}?score=${encodeURIComponent(n)}`;
-
-            await fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
-          } catch {
-            // tracking must not block rating UI
-          }
-        })();
-      };
-
-      // click handlers — always allow face selection; sending is throttled by canSend()
-      btns.forEach((b,i) => {
-        b.addEventListener('click', () => {
-          commit(i+1);  // 1..5
-        });
-      });
+    // Rating chip now scaffolds external aggregator sources and the NG aggregate face value.
+    renderLpmAggregatedRatingChip(modal, data);
 
       // keyboard support (no hard lock; still uses commit() which respects send cooldown)
       group.addEventListener('keydown', (e) => {
