@@ -7533,7 +7533,7 @@ export async function fetchTranslatedLangs() {
  * Supports custom title, body, and footer buttons.
  */
 // Lead comments: hidden by default; CSS provides backdrop.
-export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [], layout = '', modalClassName = '' }) {  
+export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [], layout = '', modalClassName = '', onClose = null }) {  
   let existing = document.getElementById(id);
   if (existing) return existing;
 
@@ -7575,7 +7575,14 @@ export function injectModal({ id, title = '', bodyHTML = '', footerButtons = [],
   document.body.appendChild(modal);
 
   // Standard modal close (X) wiring for injectModal-created modals
-  modal.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+  modal.querySelector('.modal-close')?.addEventListener('click', (e) => {
+    if (typeof onClose === 'function') {
+      onClose(e, modal);
+      return;
+    }
+
+    hideModal(id);
+  });
 
   const bind = (btn) => { if (btn.onClick) modal.querySelector(`#${btn.id}`)?.addEventListener('click', btn.onClick); };
   if (Array.isArray(footerButtons)) {
@@ -8152,20 +8159,16 @@ export function showRedeemInvalidModal({
 export function createMyStuffModal() {
   document.getElementById('my-stuff-modal')?.remove();
 
-  const modal = injectModal({
+  injectModal({
     id: 'my-stuff-modal',
-    title: 'My Stuff',    
+    title: 'My Stuff',
     layout: 'menu',
-    bodyHTML: `<div id="my-stuff-body"></div>`
-  });
+    bodyHTML: `<div id="my-stuff-body"></div>`,
+    onClose: (e, modal) => {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
 
-  const closeBtn = modal?.querySelector('.modal-close');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const currentState = String(modal.dataset.myStuffState || 'menu').trim();
+      const currentState = String(modal?.dataset?.myStuffState || 'menu').trim();
 
       if (currentState === 'menu') {
         hideModal('my-stuff-modal');
@@ -8173,8 +8176,8 @@ export function createMyStuffModal() {
       }
 
       showMyStuffModal('menu');
-    });
-  }
+    }
+  });
 }
 
 /* Favorites Modal (FM): list saved locations with open/unsave */
