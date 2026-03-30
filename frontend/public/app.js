@@ -745,8 +745,13 @@ function renderIndividualUsersGroup() {
         icon: "☎️",
         titleKey: "ind.card.help.title",
         descKey: "ind.card.help.desc",
-        onClick: () => {
+        onClick: async () => {
           showModal("help-modal");
+          try {
+            await initEmergencyBlock();
+          } catch (e) {
+            console.error("Emergency init failed:", e);
+          }
         }
       }
     ]
