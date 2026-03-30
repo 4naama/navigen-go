@@ -7,6 +7,33 @@ function translatedOrFallback(key, fallback = '') {
   return raw && raw !== key ? raw : fallback;
 }
 
+function wireExclusiveDetails(root, selector) {
+  const scope = root instanceof HTMLElement ? root : null;
+  if (!scope) return;
+
+  const flagAttr = `data-exclusive-details-${String(selector || '').replace(/[^a-z0-9]+/gi, '-')}`;
+  if (scope.getAttribute(flagAttr) === '1') return;
+  scope.setAttribute(flagAttr, '1');
+
+  scope.addEventListener('click', (e) => {
+    const target = e.target instanceof Element ? e.target : null;
+    const summary = target?.closest?.('summary');
+    if (!summary) return;
+
+    const current = summary.closest(selector);
+    if (!(current instanceof HTMLDetailsElement)) return;
+
+    // Clicking an already-open chip should just let it close itself.
+    if (current.open) return;
+
+    scope.querySelectorAll(selector).forEach((node) => {
+      if (node instanceof HTMLDetailsElement && node !== current) {
+        node.open = false;
+      }
+    });
+  });
+}
+
 const PINNED_PROMOTIONS_KEY = 'navigen.pinnedPromotions';
 
 function getPromotionPinKey({
@@ -1433,6 +1460,7 @@ const descs = resolveDescriptionMapForLocation(payload, [
   content.appendChild(body);
   content.appendChild(footerEl);
   modal.appendChild(content);
+  wireExclusiveDetails(modal, '.lpm-chip');
 
   return modal;
 }
@@ -5934,7 +5962,10 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     body.innerHTML = `<div class="campaign-mgmt"></div>`;
     root = modal.querySelector('.campaign-mgmt');
   }
-  root.innerHTML = `
+  
+  wireExclusiveDetails(root, '.cm-chip');
+
+  root.innerHTML = `  
     <div class="modal-menu-list">
       <button type="button" class="modal-menu-item owner-center-loading" aria-disabled="true">
         <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
