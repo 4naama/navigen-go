@@ -7,6 +7,7 @@ import {
   setupMyStuffModalLogic,
   createShareModal,
   showModal,
+  hideModal,  
   showShareModal,
   createIncomingLocationModal,
   saveToLocationHistory,
@@ -3148,9 +3149,7 @@ if (alertButton) {
 
   if (helpContinueButton) {
     helpContinueButton.addEventListener("click", () => {
-      const message = encodeURIComponent("🎧 Thank you for contacting SzigetSupport. Tap send to start conversation.");
-      const waUrl = `https://wa.me/443030031300?text=${message}`;
-      window.open(waUrl, "_blank");
+      hideModal("help-modal");
     });
   }
 

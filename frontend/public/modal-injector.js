@@ -6863,7 +6863,6 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
     const planField = document.createElement('details');
     planField.className = 'cm-chip cm-plan-chip';
-    planField.open = true;
 
     const planSummary = document.createElement('summary');
     planSummary.className = 'modal-menu-item cm-chip-face';
@@ -7050,7 +7049,6 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
     const setupChip = document.createElement('details');
     setupChip.className = 'cm-chip cm-setup-chip';
-    setupChip.open = true;
 
     const setupSummary = document.createElement('summary');
     setupSummary.className = 'modal-menu-item cm-chip-face';

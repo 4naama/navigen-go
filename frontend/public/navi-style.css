@@ -4028,6 +4028,12 @@ body.high-contrast .modal-menu-item.is-active {
   margin-bottom:12px;
 }
 
+#campaign-management-modal .campaign-funding-chips{
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+}
+
 .campaign-funding-chip{
   border:1px solid #e0e0e0;
   background:#f8f8f8;
@@ -4035,6 +4041,14 @@ body.high-contrast .modal-menu-item.is-active {
   padding:10px 12px;
   cursor:pointer;
   transition:background .15s ease, border-color .15s ease, transform .08s ease;
+}
+
+#campaign-management-modal .campaign-funding-chip{
+  display:block;
+  width:100%;
+  max-width:none;
+  box-sizing:border-box;
+  text-align:center;
 }
 
 .campaign-funding-chip:hover{
