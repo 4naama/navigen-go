@@ -1201,115 +1201,6 @@ function formatLpmRatingCount(count) {
   return n.toLocaleString(document.documentElement?.lang || undefined);
 }
 
-function buildLpmAggregatedRatingCatalog(payload = {}) {
-  const rawSources = (payload?.origRatings && typeof payload.origRatings === 'object') ? payload.origRatings : {};
-  const seededSources = (payload?.ratings && typeof payload.ratings === 'object') ? payload.ratings : {};
-
-  const readSource = (key, scale = 5) => {
-    const source =
-      (rawSources[key] && typeof rawSources[key] === 'object' ? rawSources[key] : null) ||
-      (seededSources[key] && typeof seededSources[key] === 'object' ? seededSources[key] : null) ||
-      null;
-
-    const rawValue = Number(source?.rating ?? source?.score ?? source?.value);
-    const rawScale = Number(source?.scale || scale);
-    const count = Number(source?.count ?? source?.ratingsCount ?? 0);
-
-    return {
-      rawValue: Number.isFinite(rawValue) ? rawValue : null,
-      rawScale: rawScale || scale,
-      count: Number.isFinite(count) ? count : 0
-    };
-  };
-
-  return {
-    groups: [
-      {
-        title: translatedOrFallback('lpm.rating.group.universal', 'Universal review layers'),
-        items: [
-          {
-            key: 'navigen',
-            label: translatedOrFallback('lpm.rating.source.navigen', 'NaviGen'),
-            display: translatedOrFallback('lpm.rating.scale.stars', 'stars'),
-            scalePreview: '😕 😐 🙂 😄 🤩',
-            rawValue: null,
-            rawScale: 5,
-            count: 0
-          },
-          {
-            key: 'google',
-            label: translatedOrFallback('lpm.rating.source.google', 'Google'),
-            display: translatedOrFallback('lpm.rating.scale.stars', 'stars'),
-            scale: 5,
-            ...readSource('google', 5)
-          },
-          {
-            key: 'tripadvisor',
-            label: translatedOrFallback('lpm.rating.source.tripadvisor', 'TripAdvisor'),
-            display: translatedOrFallback('lpm.rating.scale.dots', 'dots'),
-            scale: 5,
-            ...readSource('tripadvisor', 5)
-          },
-          {
-            key: 'yelp',
-            label: translatedOrFallback('lpm.rating.source.yelp', 'Yelp'),
-            display: translatedOrFallback('lpm.rating.scale.stars', 'stars'),
-            scale: 5,
-            ...readSource('yelp', 5)
-          }
-        ]
-      }
-    ]
-  };
-}
-
-function renderLpmAggregatedRatingChip(root, payload = {}) {
-  const scope = root instanceof HTMLElement ? root : null;
-  if (!scope) return;
-
-  const groupsHost = scope.querySelector('#lpm-rating-groups');
-  if (!(groupsHost instanceof HTMLElement)) return;
-
-  const model = buildLpmAggregatedRatingCatalog(payload);
-  groupsHost.innerHTML = '';
-
-  model.groups.forEach((group) => {
-    const section = document.createElement('div');
-    section.className = 'lpm-rating-group';
-
-    const title = document.createElement('div');
-    title.className = 'lpm-rating-group-title';
-    title.textContent = group.title;
-    section.appendChild(title);
-
-    group.items.forEach((item) => {
-      const row = document.createElement('div');
-      row.className = 'lpm-rating-source';
-
-      const left = document.createElement('div');
-      left.className = 'lpm-rating-source-main';
-      left.textContent = item.label;
-
-      const meta = document.createElement('div');
-      meta.className = item.scalePreview ? 'lpm-rating-source-scale' : 'lpm-rating-source-meta';
-      meta.textContent = item.scalePreview || item.display;
-
-      const right = document.createElement('div');
-      right.className = 'lpm-rating-source-value';
-      right.textContent = Number.isFinite(item.rawValue)
-        ? `${item.rawValue.toFixed(1)}/${item.rawScale}${item.count > 0 ? ` · ${formatLpmRatingCount(item.count)}` : ''}`
-        : '—';
-
-      row.appendChild(left);
-      row.appendChild(meta);
-      row.appendChild(right);
-      section.appendChild(row);
-    });
-
-    groupsHost.appendChild(section);
-  });
-}
-
 let lpmProfilesLocationsPromise;
 
 function getProfilesLocationRecords() {
@@ -1500,24 +1391,17 @@ const descs = resolveDescriptionMapForLocation(payload, [
     rate.innerHTML = `
       <summary class="modal-menu-item lpm-chip-face">
         <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.label', 'Rating')}</span>
-        <span class="lpm-chip-face-icons" id="lpm-rating-face-icons" aria-hidden="true">—</span>
+        <span class="lpm-chip-face-icons" id="lpm-rating-face-icons" aria-hidden="true">🙂 3.5 (1)</span>
         <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
       </summary>
       <div class="lpm-chip-body">
-        <div class="lpm-rating-pane lpm-rating-pane-input">
-          <div class="lpm-rating-pane-title">${translatedOrFallback('lpm.rating.rateThisProfile', 'Rate this profile')}</div>
-          <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate')}">
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
-          </div>
-          <div class="rate-hint" aria-live="polite"></div>
-        </div>
-
-        <div class="lpm-rating-pane lpm-rating-pane-sources">
-          <div class="lpm-rating-groups" id="lpm-rating-groups"></div>
+        <div class="lpm-rating-pane-title">${translatedOrFallback('lpm.rating.rateThisProfile', 'Rate this profile')}</div>
+        <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate')}">
+          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
+          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
+          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
+          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
+          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
         </div>
       </div>
     `;
@@ -2983,32 +2867,24 @@ async function initLpmImageSlider(modal, data) {
       const COOLDOWN_MS = 60*60*1000;
 
       const btns = Array.from(group.querySelectorAll('.rate-btn'));
-      const hint = modal.querySelector('.rate-hint');
       const face = modal.querySelector('#lpm-rating-face-icons');
 
-      const faceSeedValue = Number(data?.ratings?.combined?.value);
-      const faceSeedCount = Number(data?.ratings?.combined?.count || 0);
+      const combinedValue = Number(data?.ratings?.combined?.value);
+      const combinedCount = Number(data?.ratings?.combined?.count || 0);
+      const faceSeedValue = (Number.isFinite(combinedValue) && combinedValue > 0) ? combinedValue : 3.5;
+      const faceSeedCount = (Number.isFinite(combinedCount) && combinedCount > 0) ? combinedCount : 1;
 
       const refreshFace = (overrideValue = null) => {
         const picked = Number(overrideValue);
-        const score =
-          (Number.isFinite(picked) && picked > 0)
-            ? picked
-            : ((Number.isFinite(faceSeedValue) && faceSeedValue > 0) ? faceSeedValue : 0);
+        const score = (Number.isFinite(picked) && picked > 0) ? picked : faceSeedValue;
 
         if (!face) return;
 
-        if (!score) {
-          face.textContent = '—';
-          return;
-        }
-
-        face.textContent = `${getLpmRatingFaceEmoji(score)} ${score.toFixed(1)}${faceSeedCount > 0 ? ` (${formatLpmRatingCount(faceSeedCount)})` : ''}`;
+        face.textContent = `${getLpmRatingFaceEmoji(score)} ${score.toFixed(1)} (${formatLpmRatingCount(faceSeedCount)})`;
       };
 
       const setUI = (n) => {
         btns.forEach((b,i)=> b.setAttribute('aria-checked', String(i+1===n)));
-        if (hint) hint.textContent = n ? `Rated ${n}/5` : '';
         refreshFace(n || null);
       };
 
@@ -3070,8 +2946,6 @@ async function initLpmImageSlider(modal, data) {
 
       setUI(val);
     })();
-
-    renderLpmAggregatedRatingChip(modal, data);
 
     // analytics beacon
     // removed trackCta; all beacons use _track(uid,event) // single path → Worker

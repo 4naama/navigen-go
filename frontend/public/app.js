@@ -1738,8 +1738,6 @@ async function initEmergencyBlock(countryOverride) {
 
         // pass-through: socials/official/booking/newsletter
         links: it?.links || {},
-        // optional: keep original ratings separately (computed stays in .ratings)
-        origRatings: it?.ratings || {},
         pricing: it?.pricing || {},
         lang: it?.lang || ''
       };
