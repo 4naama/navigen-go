@@ -1274,6 +1274,79 @@ function buildLpmAggregatedRatingCatalog(payload = {}) {
   };
 }
 
+function buildLpmAggregatedRatingCatalog(payload = {}) {
+  const rawSources = (payload?.origRatings && typeof payload.origRatings === 'object') ? payload.origRatings : {};
+  const seededSources = (payload?.ratings && typeof payload.ratings === 'object') ? payload.ratings : {};
+
+  const readSource = (key, scale = 5) => {
+    const source =
+      (rawSources[key] && typeof rawSources[key] === 'object' ? rawSources[key] : null) ||
+      (seededSources[key] && typeof seededSources[key] === 'object' ? seededSources[key] : null) ||
+      null;
+
+    const rawValue = Number(source?.rating ?? source?.score ?? source?.value);
+    const rawScale = Number(source?.scale || scale);
+    const count = Number(source?.count ?? source?.ratingsCount ?? 0);
+
+    return {
+      rawValue: Number.isFinite(rawValue) ? rawValue : null,
+      rawScale: rawScale || scale,
+      count: Number.isFinite(count) ? count : 0
+    };
+  };
+
+  return {
+    groups: [
+      {
+        title: 'Universal review layers',
+        items: [
+          { key: 'google', label: 'Google', display: 'stars', scale: 5 },
+          { key: 'tripadvisor', label: 'TripAdvisor', display: 'dots', scale: 5 },
+          { key: 'yelp', label: 'Yelp', display: 'stars', scale: 5 }
+        ]
+      },
+      {
+        title: 'Booking & stays',
+        items: [
+          { key: 'booking', label: 'Booking.com', display: 'score', scale: 10 },
+          { key: 'expedia', label: 'Expedia', display: 'score', scale: 10 },
+          { key: 'hotels', label: 'Hotels.com', display: 'score', scale: 10 },
+          { key: 'agoda', label: 'Agoda', display: 'score', scale: 10 },
+          { key: 'airbnb', label: 'Airbnb', display: 'stars', scale: 5 }
+        ]
+      },
+      {
+        title: 'Restaurants',
+        items: [
+          { key: 'opentable', label: 'OpenTable', display: 'stars', scale: 5 },
+          { key: 'thefork', label: 'TheFork', display: 'stars', scale: 5 },
+          { key: 'zomato', label: 'Zomato', display: 'stars', scale: 5 }
+        ]
+      },
+      {
+        title: 'Activities & experiences',
+        items: [
+          { key: 'getyourguide', label: 'GetYourGuide', display: 'stars', scale: 5 },
+          { key: 'viator', label: 'Viator', display: 'stars', scale: 5 }
+        ]
+      },
+      {
+        title: 'Meta / comparison',
+        items: [
+          { key: 'kayak', label: 'Kayak', display: 'comparison', scale: 5 },
+          { key: 'trivago', label: 'Trivago', display: 'comparison', scale: 5 }
+        ]
+      }
+    ].map((group) => ({
+      ...group,
+      items: group.items.map((item) => ({
+        ...item,
+        ...readSource(item.key, item.scale)
+      }))
+    }))
+  };
+}
+
 function renderLpmAggregatedRatingChip(root, payload = {}) {
   const scope = root instanceof HTMLElement ? root : null;
   if (!scope) return;
@@ -1315,66 +1388,6 @@ function renderLpmAggregatedRatingChip(root, payload = {}) {
       right.textContent = Number.isFinite(item.rawValue)
         ? `${item.rawValue.toFixed(1)}/${item.rawScale}${item.count > 0 ? ` · ${formatLpmRatingCount(item.count)}` : ''}`
         : '—';
-
-      row.appendChild(left);
-      row.appendChild(meta);
-      row.appendChild(right);
-      section.appendChild(row);
-    });
-
-    groupsHost.appendChild(section);
-  });
-}
-
-function renderLpmAggregatedRatingChip(root, payload = {}) {
-  const scope = root instanceof HTMLElement ? root : null;
-  if (!scope) return;
-
-  const face = scope.querySelector('#lpm-rating-face-icons');
-  const summary = scope.querySelector('#lpm-rating-summary');
-  const groupsHost = scope.querySelector('#lpm-rating-groups');
-
-  if (!(face instanceof HTMLElement) || !(summary instanceof HTMLElement) || !(groupsHost instanceof HTMLElement)) return;
-
-  const model = buildLpmAggregatedRatingCatalog(payload);
-  const emoji = getLpmRatingFaceEmoji(model.average);
-
-  face.textContent = Number.isFinite(model.average)
-    ? `${emoji} ${model.average.toFixed(1)}${model.count > 0 ? ` (${formatLpmRatingCount(model.count)})` : ''}`
-    : 'Waiting for source scores';
-
-  summary.textContent = Number.isFinite(model.average)
-    ? `NaviGen aggregate · average of ${model.sourceCount} source averages${model.count > 0 ? ` · ${formatLpmRatingCount(model.count)} total ratings` : ''}`
-    : 'Waiting for source scores from external sites.';
-
-  groupsHost.innerHTML = '';
-
-  model.groups.forEach((group) => {
-    const section = document.createElement('div');
-    section.className = 'lpm-rating-group';
-
-    const title = document.createElement('div');
-    title.className = 'lpm-rating-group-title';
-    title.textContent = group.title;
-    section.appendChild(title);
-
-    group.items.forEach((item) => {
-      const row = document.createElement('div');
-      row.className = 'lpm-rating-source';
-
-      const left = document.createElement('div');
-      left.className = 'lpm-rating-source-main';
-      left.textContent = item.label;
-
-      const meta = document.createElement('div');
-      meta.className = 'lpm-rating-source-meta';
-      meta.textContent = item.display;
-
-      const right = document.createElement('div');
-      right.className = 'lpm-rating-source-value';
-      right.textContent = Number.isFinite(item.rawValue)
-        ? `${item.rawValue.toFixed(1)}/${item.rawScale}${item.count > 0 ? ` · ${formatLpmRatingCount(item.count)}` : ''}`
-        : 'Waiting for source score from site';
 
       row.appendChild(left);
       row.appendChild(meta);
