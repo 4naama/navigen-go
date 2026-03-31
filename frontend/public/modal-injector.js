@@ -1189,9 +1189,9 @@ function getLpmRatingFaceEmoji(value) {
   const score = Number(value);
   if (!Number.isFinite(score) || score <= 0) return '—';
   if (score >= 4.5) return '🤩';
-  if (score >= 4.0) return '😄';
-  if (score >= 3.0) return '🙂';
-  if (score >= 2.0) return '😐';
+  if (score >= 3.5) return '😄';
+  if (score >= 2.5) return '🙂';
+  if (score >= 1.5) return '😐';
   return '😕';
 }
 

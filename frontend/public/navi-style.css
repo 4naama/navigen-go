@@ -1352,56 +1352,75 @@ body.high-contrast .cta-compact .modal-footer-button{
   border:1px solid #888 !important;
 }
 
-/* LPM: rating = active NaviGen smiley scale first, external source rows later */
+/* LPM: rating = clean NaviGen smiley scale first, aggregator rows below */
 #location-profile-modal .lpm-rating-chip .lpm-chip-face-icons{
   white-space: nowrap;
 }
 
 #location-profile-modal .lpm-rating-chip .rate-row{
   display:flex;
-  gap:8px;
-  align-items:center;
-  justify-content:center;
-  margin:0;
   flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-start;
+  gap:10px 12px;
+  margin:0;
+}
+
+#location-profile-modal .lpm-rating-chip .rate-row::before{
+  content:"Rate this profile";
+  flex:0 0 100%;
+  font-size:14px;
+  font-weight:600;
+  line-height:1.35;
+  text-align:left;
+  color:#334155;
 }
 
 #location-profile-modal .lpm-rating-chip .rate-btn{
-  width:36px;
-  height:36px;
+  width:auto;
+  height:auto;
+  padding:0;
+  margin:0;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  border:1px solid #e0e0e0;
-  border-radius:10px;
-  background:#f8f8f8;
-  font-size:20px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  font-size:24px;
   line-height:1;
   cursor:pointer;
-  transition:background .15s ease, box-shadow .15s ease, border-color .15s ease;
+  opacity:.6;
+  transition:transform .12s ease, opacity .12s ease, filter .12s ease;
 }
 
 #location-profile-modal .lpm-rating-chip .rate-btn:hover{
-  background:#f1f1f1;
+  background:transparent;
+  opacity:.85;
+  transform:scale(1.05);
 }
 
 #location-profile-modal .lpm-rating-chip .rate-btn[aria-checked="true"]{
-  background:#e8f0fe;
-  border-color:#1a73e8;
-  box-shadow:0 0 0 2px rgba(26,115,232,.15) inset;
+  background:transparent;
+  border-color:transparent;
+  box-shadow:none;
+  opacity:1;
+  transform:scale(1.08);
 }
 
 #location-profile-modal .lpm-rating-chip .rate-hint{
-  margin-top:6px;
-  font-size:.9rem;
-  opacity:.75;
-  text-align:center;
+  margin-top:8px;
+  font-size:13px;
+  line-height:1.35;
+  opacity:.72;
+  text-align:left;
 }
 
 body.high-contrast #location-profile-modal .lpm-rating-chip .rate-btn[aria-checked="true"]{
-  background:#333;
-  border-color:#fff;
-  box-shadow:0 0 0 2px rgba(255,255,255,.3) inset;
+  background:transparent;
+  border-color:transparent;
+  box-shadow:none;
 }
 
 #location-profile-modal .lpm-rating-chip .rate-btn[disabled]{
@@ -1431,11 +1450,11 @@ body.high-contrast #location-profile-modal .lpm-rating-chip .rate-btn[aria-check
 }
 
 #location-profile-modal .lpm-rating-chip .lpm-rating-group-title{
-  font-size:0.85rem;
+  font-size:14px;
   font-weight:600;
   line-height:1.35;
   text-align:left;
-  opacity:0.8;
+  opacity:.85;
   margin-bottom:8px;
 }
 
@@ -1460,7 +1479,7 @@ body.high-contrast #location-profile-modal .lpm-rating-chip .rate-btn[aria-check
 #location-profile-modal .lpm-rating-chip .lpm-rating-source-meta{
   font-size:12px;
   line-height:1.3;
-  opacity:0.7;
+  opacity:.7;
   text-align:left;
 }
 
@@ -1472,7 +1491,21 @@ body.high-contrast #location-profile-modal .lpm-rating-chip .rate-btn[aria-check
   line-height:1.35;
   white-space:nowrap;
   text-align:right;
-  opacity:0.85;
+  opacity:.85;
+}
+
+#location-profile-modal .lpm-rating-chip .lpm-rating-source-scale{
+  grid-column:2;
+  grid-row:1 / span 2;
+  align-self:center;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-size:14px;
+  line-height:1;
+  white-space:nowrap;
+  text-align:right;
+  opacity:.85;
 }
 
 @media (max-width:520px){
@@ -1480,7 +1513,8 @@ body.high-contrast #location-profile-modal .lpm-rating-chip .rate-btn[aria-check
     grid-template-columns:1fr;
   }
 
-  #location-profile-modal .lpm-rating-chip .lpm-rating-source-value{
+  #location-profile-modal .lpm-rating-chip .lpm-rating-source-value,
+  #location-profile-modal .lpm-rating-chip .lpm-rating-source-scale{
     grid-column:1;
     grid-row:auto;
     text-align:left;
