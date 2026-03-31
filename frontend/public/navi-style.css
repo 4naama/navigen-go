@@ -1359,7 +1359,7 @@ body.high-contrast .cta-compact .modal-footer-button{
 
 #location-profile-modal .lpm-rating-chip .rate-row{
   display:flex;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
   align-items:center;
   justify-content:center;
   gap:10px 12px;

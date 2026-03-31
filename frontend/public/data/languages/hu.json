@@ -938,5 +938,6 @@
   "root.bo.selectLocation.help.promoted.desc": "Ez a vállalkozás jelenleg aktív kampányt futtat.",
   "lpm.status.label": "Vállalkozás állapota",
   "lpm.introduction.label": "Bemutatkozás",
-  "lpm.rating.label": ""
+  "lpm.rating.label": "Értékelés",
+  "lpm.rating.rateThisProfile": "Profil értékelése"
 }

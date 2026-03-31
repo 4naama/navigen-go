@@ -938,5 +938,6 @@
   "root.bo.selectLocation.help.promoted.desc": "This business is running an active campaign right now.",
   "lpm.status.label": "Business status",
   "lpm.introduction.label": "Introduction",
-  "lpm.rating.label": "Rating"
+  "lpm.rating.label": "Rating",
+  "lpm.rating.rateThisProfile": "Rate this profile"
 }

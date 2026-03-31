@@ -938,5 +938,6 @@
   "root.bo.selectLocation.help.promoted.desc": "עסק זה מפעיל כעת קמפיין פעיל.",
   "lpm.status.label": "סטטוס העסק",
   "lpm.introduction.label": "מבוא",
-  "lpm.rating.label": ""
+  "lpm.rating.label": "דירוג",
+  "lpm.rating.rateThisProfile": "דרג את הפרופיל הזה"
 }

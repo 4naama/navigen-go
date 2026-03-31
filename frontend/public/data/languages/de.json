@@ -938,5 +938,6 @@
   "root.bo.selectLocation.help.promoted.desc": "Dieses Unternehmen führt derzeit eine aktive Kampagne durch.",
   "lpm.status.label": "Status des Unternehmens",
   "lpm.introduction.label": "Einführung",
-  "lpm.rating.label": ""
+  "lpm.rating.label": "Bewertung",
+  "lpm.rating.rateThisProfile": "Dieses Profil bewerten"
 }

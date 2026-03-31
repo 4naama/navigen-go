@@ -938,5 +938,6 @@
   "root.bo.selectLocation.help.promoted.desc": "Questa attività sta attualmente eseguendo una campagna attiva.",
   "lpm.status.label": "Stato dell’attività",
   "lpm.introduction.label": "Introduzione",
-  "lpm.rating.label": ""
+  "lpm.rating.label": "Valutazione",
+  "lpm.rating.rateThisProfile": "Valuta questo profilo"
 }

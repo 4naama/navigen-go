@@ -3,8 +3,14 @@ const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
 
 function translatedOrFallback(key, fallback = '') {
   if (typeof t !== 'function') return fallback;
+
   const raw = String(t(key) || '').trim();
-  return raw && raw !== key ? raw : fallback;
+  if (!raw) return fallback;
+
+  const escapedKey = String(key || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const unresolvedBracketed = new RegExp(`^\\[\\s*${escapedKey}\\s*\\]$`).test(raw);
+
+  return raw !== key && !unresolvedBracketed ? raw : fallback;
 }
 
 function wireExclusiveDetails(root, selector) {
@@ -1316,8 +1322,13 @@ const descs = resolveDescriptionMapForLocation(payload, [
   const body = document.createElement('div');
   body.className = 'modal-body';
 
-  const heroSrc = (() => {
-    const pickFirstSrc = (arr) => {
+  const combinedRatingValue = Number(payload?.ratings?.combined?.value);
+  const combinedRatingCount = Number(payload?.ratings?.combined?.count || 0);
+  const ratingSeedValue = (Number.isFinite(combinedRatingValue) && combinedRatingValue > 0) ? combinedRatingValue : 3.5;
+  const ratingSeedCount = (Number.isFinite(combinedRatingCount) && combinedRatingCount > 0) ? combinedRatingCount : 1;
+  const ratingSeedSummary = `${getLpmRatingFaceEmoji(ratingSeedValue)} ${ratingSeedValue.toFixed(1)} (${formatLpmRatingCount(ratingSeedCount)})`;
+
+  const heroSrc = (() => {    const pickFirstSrc = (arr) => {
       const a = Array.isArray(arr) ? arr : [];
       const v = a[0];
       return String((v && typeof v === 'object') ? (v.src || '') : (v || '')).trim();
@@ -1390,12 +1401,11 @@ const descs = resolveDescriptionMapForLocation(payload, [
 
     rate.innerHTML = `
       <summary class="modal-menu-item lpm-chip-face">
-        <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.label', 'Rating')}</span>
-        <span class="lpm-chip-face-icons" id="lpm-rating-face-icons" aria-hidden="true">🙂 3.5 (1)</span>
+        <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.rateThisProfile', 'Rate this profile')}</span>
+        <span class="lpm-chip-face-icons" id="lpm-rating-face-icons" aria-hidden="true">${ratingSeedSummary}</span>
         <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
       </summary>
       <div class="lpm-chip-body">
-        <div class="lpm-rating-pane-title">${translatedOrFallback('lpm.rating.rateThisProfile', 'Rate this profile')}</div>
         <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate')}">
           <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
           <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
@@ -2874,13 +2884,24 @@ async function initLpmImageSlider(modal, data) {
       const faceSeedValue = (Number.isFinite(combinedValue) && combinedValue > 0) ? combinedValue : 3.5;
       const faceSeedCount = (Number.isFinite(combinedCount) && combinedCount > 0) ? combinedCount : 1;
 
-      const refreshFace = (overrideValue = null) => {
-        const picked = Number(overrideValue);
-        const score = (Number.isFinite(picked) && picked > 0) ? picked : faceSeedValue;
+      const getSummaryState = (pickedScore = null) => {
+        const picked = Number(pickedScore);
 
+        if (Number.isFinite(picked) && picked > 0) {
+          const nextCount = faceSeedCount + 1;
+          const nextValue = ((faceSeedValue * faceSeedCount) + picked) / nextCount;
+
+          return { value: nextValue, count: nextCount };
+        }
+
+        return { value: faceSeedValue, count: faceSeedCount };
+      };
+
+      const refreshFace = (pickedScore = null) => {
         if (!face) return;
 
-        face.textContent = `${getLpmRatingFaceEmoji(score)} ${score.toFixed(1)} (${formatLpmRatingCount(faceSeedCount)})`;
+        const summary = getSummaryState(pickedScore);
+        face.textContent = `${getLpmRatingFaceEmoji(summary.value)} ${summary.value.toFixed(1)} (${formatLpmRatingCount(summary.count)})`;
       };
 
       const setUI = (n) => {
@@ -6309,6 +6330,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     const tSafe = (key, fallback) => {
       const raw = (typeof t === 'function') ? String(t(key) || '').trim() : '';
       return raw && raw !== key ? raw : fallback;
+      
     };
 
     const m = injectModal({
