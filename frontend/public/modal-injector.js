@@ -1225,52 +1225,41 @@ function buildLpmAggregatedRatingCatalog(payload = {}) {
   return {
     groups: [
       {
-        title: 'Universal review layers',
+        title: translatedOrFallback('lpm.rating.group.universal', 'Universal review layers'),
         items: [
-          { key: 'google', label: 'Google', display: 'stars', scale: 5 },
-          { key: 'tripadvisor', label: 'TripAdvisor', display: 'dots', scale: 5 },
-          { key: 'yelp', label: 'Yelp', display: 'stars', scale: 5 }
-        ]
-      },
-      {
-        title: 'Booking & stays',
-        items: [
-          { key: 'booking', label: 'Booking.com', display: 'score', scale: 10 },
-          { key: 'expedia', label: 'Expedia', display: 'score', scale: 10 },
-          { key: 'hotels', label: 'Hotels.com', display: 'score', scale: 10 },
-          { key: 'agoda', label: 'Agoda', display: 'score', scale: 10 },
-          { key: 'airbnb', label: 'Airbnb', display: 'stars', scale: 5 }
-        ]
-      },
-      {
-        title: 'Restaurants',
-        items: [
-          { key: 'opentable', label: 'OpenTable', display: 'stars', scale: 5 },
-          { key: 'thefork', label: 'TheFork', display: 'stars', scale: 5 },
-          { key: 'zomato', label: 'Zomato', display: 'stars', scale: 5 }
-        ]
-      },
-      {
-        title: 'Activities & experiences',
-        items: [
-          { key: 'getyourguide', label: 'GetYourGuide', display: 'stars', scale: 5 },
-          { key: 'viator', label: 'Viator', display: 'stars', scale: 5 }
-        ]
-      },
-      {
-        title: 'Meta / comparison',
-        items: [
-          { key: 'kayak', label: 'Kayak', display: 'comparison', scale: 5 },
-          { key: 'trivago', label: 'Trivago', display: 'comparison', scale: 5 }
+          {
+            key: 'navigen',
+            label: translatedOrFallback('lpm.rating.source.navigen', 'NaviGen'),
+            display: translatedOrFallback('lpm.rating.scale.stars', 'stars'),
+            scalePreview: '😕 😐 🙂 😄 🤩',
+            rawValue: null,
+            rawScale: 5,
+            count: 0
+          },
+          {
+            key: 'google',
+            label: translatedOrFallback('lpm.rating.source.google', 'Google'),
+            display: translatedOrFallback('lpm.rating.scale.stars', 'stars'),
+            scale: 5,
+            ...readSource('google', 5)
+          },
+          {
+            key: 'tripadvisor',
+            label: translatedOrFallback('lpm.rating.source.tripadvisor', 'TripAdvisor'),
+            display: translatedOrFallback('lpm.rating.scale.dots', 'dots'),
+            scale: 5,
+            ...readSource('tripadvisor', 5)
+          },
+          {
+            key: 'yelp',
+            label: translatedOrFallback('lpm.rating.source.yelp', 'Yelp'),
+            display: translatedOrFallback('lpm.rating.scale.stars', 'stars'),
+            scale: 5,
+            ...readSource('yelp', 5)
+          }
         ]
       }
-    ].map((group) => ({
-      ...group,
-      items: group.items.map((item) => ({
-        ...item,
-        ...readSource(item.key, item.scale)
-      }))
-    }))
+    ]
   };
 }
 
@@ -1278,13 +1267,8 @@ function renderLpmAggregatedRatingChip(root, payload = {}) {
   const scope = root instanceof HTMLElement ? root : null;
   if (!scope) return;
 
-  const summary = scope.querySelector('#lpm-rating-summary');
   const groupsHost = scope.querySelector('#lpm-rating-groups');
-
-  if (!(summary instanceof HTMLElement) || !(groupsHost instanceof HTMLElement)) return;
-
-  summary.textContent = '';
-  summary.hidden = true;
+  if (!(groupsHost instanceof HTMLElement)) return;
 
   const model = buildLpmAggregatedRatingCatalog(payload);
   groupsHost.innerHTML = '';
@@ -1307,8 +1291,8 @@ function renderLpmAggregatedRatingChip(root, payload = {}) {
       left.textContent = item.label;
 
       const meta = document.createElement('div');
-      meta.className = 'lpm-rating-source-meta';
-      meta.textContent = item.display;
+      meta.className = item.scalePreview ? 'lpm-rating-source-scale' : 'lpm-rating-source-meta';
+      meta.textContent = item.scalePreview || item.display;
 
       const right = document.createElement('div');
       right.className = 'lpm-rating-source-value';
@@ -1520,9 +1504,9 @@ const descs = resolveDescriptionMapForLocation(payload, [
         <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
       </summary>
       <div class="lpm-chip-body">
-        <div class="lpm-rating-group lpm-rating-group-ng">
-          <div class="lpm-rating-group-title">NaviGen</div>
-          <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="Rate">
+        <div class="lpm-rating-pane lpm-rating-pane-input">
+          <div class="lpm-rating-pane-title">${translatedOrFallback('lpm.rating.rateThisProfile', 'Rate this profile')}</div>
+          <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate')}">
             <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
             <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
             <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
@@ -1531,8 +1515,10 @@ const descs = resolveDescriptionMapForLocation(payload, [
           </div>
           <div class="rate-hint" aria-live="polite"></div>
         </div>
-        <div class="lpm-rating-summary" id="lpm-rating-summary" aria-live="polite"></div>
-        <div class="lpm-rating-groups" id="lpm-rating-groups"></div>
+
+        <div class="lpm-rating-pane lpm-rating-pane-sources">
+          <div class="lpm-rating-groups" id="lpm-rating-groups"></div>
+        </div>
       </div>
     `;
 
