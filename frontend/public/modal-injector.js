@@ -2879,10 +2879,38 @@ async function initLpmImageSlider(modal, data) {
       const btns = Array.from(group.querySelectorAll('.rate-btn'));
       const face = modal.querySelector('#lpm-rating-face-icons');
 
-      const combinedValue = Number(data?.ratings?.combined?.value);
-      const combinedCount = Number(data?.ratings?.combined?.count || 0);
-      const faceSeedValue = (Number.isFinite(combinedValue) && combinedValue > 0) ? combinedValue : 3.5;
-      const faceSeedCount = (Number.isFinite(combinedCount) && combinedCount > 0) ? combinedCount : 1;
+      const readSeedRating = () => {
+        const sources = [
+          data?.ratings,
+          data?.raw?.ratings
+        ].filter((v) => v && typeof v === 'object');
+
+        for (const src of sources) {
+          const combinedValue = Number(src?.combined?.value);
+          const combinedCount = Number(src?.combined?.count ?? 0);
+
+          if (Number.isFinite(combinedValue) && combinedValue > 0 && Number.isFinite(combinedCount) && combinedCount >= 0) {
+            return { value: combinedValue, count: combinedCount };
+          }
+        }
+
+        const src = sources[0] || {};
+        const gR = Number(src?.google?.rating ?? data?.raw?.google_rating);
+        const gC = Number(src?.google?.count  ?? data?.raw?.google_count ?? 0);
+        const tR = Number(src?.tripadvisor?.rating ?? data?.raw?.tripadvisor_rating);
+        const tC = Number(src?.tripadvisor?.count  ?? data?.raw?.tripadvisor_count ?? 0);
+        const n  = (Number.isFinite(gR) ? gC : 0) + (Number.isFinite(tR) ? tC : 0);
+        const R  = n ? (((Number.isFinite(gR) ? gR * gC : 0) + (Number.isFinite(tR) ? tR * tC : 0)) / n) : 0;
+
+        return {
+          value: (Number.isFinite(R) && R > 0) ? R : 3.5,
+          count: (Number.isFinite(n) && n > 0) ? n : 1
+        };
+      };
+
+      const seed = readSeedRating();
+      const faceSeedValue = seed.value;
+      const faceSeedCount = seed.count;
 
       const getSummaryState = (pickedScore = null) => {
         const picked = Number(pickedScore);

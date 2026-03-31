@@ -1667,6 +1667,41 @@ async function initEmergencyBlock(countryOverride) {
       return (Number.isFinite(lat) && Number.isFinite(lng)) ? `${lat},${lng}` : '';
     };
 
+    const normalizeRatings = (it) => {
+      const base = (it && typeof it.ratings === 'object') ? it.ratings : {};
+
+      const combinedValue = Number(base?.combined?.value);
+      const combinedCount = Number(base?.combined?.count ?? 0);
+      const combinedScore = Number(base?.combined?.score);
+
+      if (Number.isFinite(combinedValue) && combinedValue > 0 && Number.isFinite(combinedCount) && combinedCount >= 0) {
+        return {
+          ...base,
+          combined: {
+            value: combinedValue,
+            count: combinedCount,
+            score: Number.isFinite(combinedScore) ? combinedScore : combinedValue
+          }
+        };
+      }
+
+      const gR = Number(base?.google?.rating ?? it?.google_rating);
+      const gC = Number(base?.google?.count  ?? it?.google_count ?? 0);
+      const tR = Number(base?.tripadvisor?.rating ?? it?.tripadvisor_rating);
+      const tC = Number(base?.tripadvisor?.count  ?? it?.tripadvisor_count ?? 0);
+      const n  = (Number.isFinite(gR) ? gC : 0) + (Number.isFinite(tR) ? tC : 0);
+      const R  = n ? (((Number.isFinite(gR) ? gR * gC : 0) + (Number.isFinite(tR) ? tR * tC : 0)) / n) : 0;
+      const C = 4.2, m = 25;                      // small prior; tune later
+      const score = n ? ((C * m) + (R * n)) / (m + n) : 0;
+
+      return {
+        ...base,
+        google: { rating: Number.isFinite(gR) ? gR : null, count: gC || 0 },
+        tripadvisor: { rating: Number.isFinite(tR) ? tR : null, count: tC || 0 },
+        combined: { value: R, count: n, score }   // value=avg 0–5, score=smoothed
+      };
+    };
+
     // Build one legacy record
     const toGeoPoint = (it) => {
       // ULID stays canonical in ID; locationID must be the short dataset slug for Dash/QR
@@ -1720,21 +1755,7 @@ async function initEmergencyBlock(countryOverride) {
         contactInformation: it?.contactInformation || {},
 
         // rating: minimal fields for sorting (easy to mine from exporters)
-        ratings: (() => {
-          const gR = Number(it?.ratings?.google?.rating ?? it?.google_rating);
-          const gC = Number(it?.ratings?.google?.count  ?? it?.google_count  ?? 0);
-          const tR = Number(it?.ratings?.tripadvisor?.rating ?? it?.tripadvisor_rating);
-          const tC = Number(it?.ratings?.tripadvisor?.count  ?? it?.tripadvisor_count  ?? 0);
-          const n  = (Number.isFinite(gR) ? gC : 0) + (Number.isFinite(tR) ? tC : 0);
-          const R  = n ? (((Number.isFinite(gR)? gR*gC : 0) + (Number.isFinite(tR)? tR*tC : 0)) / n) : 0;
-          const C = 4.2, m = 25;                      // small prior; tune later
-          const score = n ? ((C*m) + (R*n)) / (m + n) : 0;
-          return {
-            google: { rating: Number.isFinite(gR) ? gR : null, count: gC || 0 },
-            tripadvisor: { rating: Number.isFinite(tR) ? tR : null, count: tC || 0 },
-            combined: { value: R, count: n, score }   // value=avg 0–5, score=smoothed
-          };
-        })(),
+        ratings: normalizeRatings(it),
 
         // pass-through: socials/official/booking/newsletter
         links: it?.links || {},
@@ -1970,7 +1991,7 @@ async function initEmergencyBlock(countryOverride) {
                 tags: Array.isArray(it?.tags) ? it.tags : [],
                 contactInformation: it?.contactInformation || {},
                 links: it?.links || {},
-                ratings: it?.ratings || {},
+                ratings: normalizeRatings(it),
                 pricing: it?.pricing || {},
 
                 // origin
