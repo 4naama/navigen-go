@@ -3593,6 +3593,7 @@ function makeLocationButton(loc) {
         contactInformation: (loc && typeof loc.contactInformation === 'object') ? loc.contactInformation
                               : ((loc && typeof loc.contact === 'object') ? loc.contact : {}),
         links: (loc && typeof loc.links === 'object') ? loc.links : {},
+        ratings: (loc && typeof loc.ratings === 'object') ? loc.ratings : {},        
         raw: loc,
         originEl: btn
       });
