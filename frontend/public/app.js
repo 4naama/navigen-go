@@ -2667,15 +2667,15 @@ async function initEmergencyBlock(countryOverride) {
     "language-modal",
     "help-modal",
     "social-modal",
-    "pinned-modal",
     "share-location-modal",
     "donation-modal"
   ].forEach(setupTapOutClose);
 
   // Ensure the pinned/install modal exists; create lazily if missing.
   const ensurePinnedModal = () => {
-    let modal = document.getElementById('pinned-modal');
-    if (modal) return modal;
+    // Custom install instructions are disabled; keep the legacy builder inert and rely on the native browser/OS install surface only.
+    let modal = null;
+    return modal;
 
     modal = document.createElement('div');
     modal.id = 'pinned-modal';
@@ -2764,63 +2764,105 @@ async function initEmergencyBlock(countryOverride) {
     };
   };
 
-  // Helper: wire 📌 install fallback (pinned-modal instructions)
+  // Helper: keep 📌 visible when the browser does not expose a native install prompt; no custom modal fallback.
   const attachInstallFallback = (pinEl) => {
     if (!pinEl) return;
     pinEl.style.display = 'block';
     pinEl.textContent = '📌';
     pinEl.onclick = () => {
-      const modal = ensurePinnedModal();
-      if (modal) {
-        showModal('pinned-modal');
-      }
+      // No custom fallback UI here; unsupported browsers stay native-only by design.
     };
   };
 
   // Module-scoped BIP event holder (used only if available)
   let promptEvent = null;
+  let promptBusy = false;
 
-  // One authoritative click handler; decides at click-time
-  if (headerPin) {
-    headerPin.style.display = 'block';
-    headerPin.textContent = isStandalone() ? '👋' : '📌';
+  const isInstalledLike = () => {
+    try {
+      return isStandalone() || localStorage.getItem('pwaInstalled') === 'true';
+    } catch {
+      return isStandalone();
+    }
+  };
 
-    headerPin.onclick = () => {
+  // One authoritative click handler; decides at click-time and stays native-first.
+  const syncHeaderPin = (pinEl) => {
+    if (!pinEl) return;
+
+    if (isInstalledLike()) {
+      attachSupportHandler(pinEl);
+      return;
+    }
+
+    if (!promptEvent) {
+      attachInstallFallback(pinEl);
+      return;
+    }
+
+    pinEl.style.display = 'block';
+    pinEl.textContent = '📌';
+    pinEl.onclick = async () => {
       // Already running as standalone PWA → show 👋 support
-      if (isStandalone()) {
-        attachSupportHandler(headerPin);
-        headerPin.onclick(); // delegate to support handler
+      if (isInstalledLike()) {
+        attachSupportHandler(pinEl);
+        pinEl.onclick?.();
         return;
       }
 
       // Native install prompt available → trigger it
-      if (promptEvent) {
-        promptEvent.prompt();
-        promptEvent.userChoice.then((choice) => {
-          if (choice.outcome === 'accepted') {
-            try { localStorage.setItem('pwaInstalled', 'true'); } catch {}
-            attachSupportHandler(headerPin);
-          } else {
-            attachInstallFallback(headerPin);
-          }
-          promptEvent = null;
-        });
-        return;
-      }
+      if (!promptEvent || promptBusy) return;
 
-      // No BIP → show instruction modal (existing text unchanged)
-      attachInstallFallback(headerPin);
-      headerPin.onclick();
+      const evt = promptEvent;
+      promptBusy = true;
+      promptEvent = null;
+
+      try {
+        await evt.prompt();
+        const choice = await evt.userChoice;
+
+        if (choice?.outcome === 'accepted') {
+          try { localStorage.setItem('pwaInstalled', 'true'); } catch {}
+        }
+      } catch {
+        // Native prompt availability is browser-owned; fail closed without a custom modal.
+      } finally {
+        promptBusy = false;
+        syncHeaderPin(pinEl);
+      }
     };
+  };
+
+  // One authoritative click handler; decides at click-time
+  if (headerPin) {
+    syncHeaderPin(headerPin);
   }
 
   // Listen for the OS-level PWA install prompt (Chrome/Edge, etc.)
-  // Store only; do not rewire click handlers here.
+  // Store only; resync the native-first click handler here.
   addEventListener('beforeinstallprompt', (e) => {
     if (isStandalone()) return; // no need to handle in PWA
     e.preventDefault();
+    try { localStorage.removeItem('pwaInstalled'); } catch {}
     promptEvent = e;
+    syncHeaderPin(headerPin);
   });
+
+  // Listen for successful installs and reflect 👋 as soon as the browser confirms it.
+  addEventListener('appinstalled', () => {
+    try { localStorage.setItem('pwaInstalled', 'true'); } catch {}
+    promptEvent = null;
+    syncHeaderPin(headerPin);
+  });
+
+  // Resync after browser/app context changes (manual install, reopen, return from settings, etc.).
+  addEventListener('pageshow', () => {
+    syncHeaderPin(headerPin);
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) syncHeaderPin(headerPin);
+  }, { passive: true });
 
     // ---------- Bottom band: ♿ 🤖 🏠 ⋮ ----------
     function initBottomBand() {
@@ -3297,7 +3339,6 @@ if (alertButton) {
         "language-modal",
         "help-modal",
         "social-modal",
-        "pinned-modal",
         "share-location-modal",
         "donation-modal"
       ].forEach(id => {
