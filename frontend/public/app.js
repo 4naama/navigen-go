@@ -1938,7 +1938,8 @@ async function initEmergencyBlock(countryOverride) {
               pricing: (rec && rec.pricing) || {},
 
               // origin
-              originEl: null
+              openSource: 'redirect',
+              originEl: null              
             });
 
             await maybeShowLpmInactiveNotice(uid);
@@ -1995,7 +1996,8 @@ async function initEmergencyBlock(countryOverride) {
                 pricing: it?.pricing || {},
 
                 // origin
-                originEl: null
+                openSource: 'redirect',
+                originEl: null                
               });
 
               await maybeShowLpmInactiveNotice(uid);

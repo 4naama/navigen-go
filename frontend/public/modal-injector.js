@@ -1322,10 +1322,8 @@ const descs = resolveDescriptionMapForLocation(payload, [
   const body = document.createElement('div');
   body.className = 'modal-body';
 
-  const combinedRatingValue = Number(payload?.ratings?.combined?.value);
-  const combinedRatingCount = Number(payload?.ratings?.combined?.count || 0);
-  const ratingSeedValue = (Number.isFinite(combinedRatingValue) && combinedRatingValue > 0) ? combinedRatingValue : 3.5;
-  const ratingSeedCount = (Number.isFinite(combinedRatingCount) && combinedRatingCount > 0) ? combinedRatingCount : 1;
+  const ratingSeedValue = 3.0;
+  const ratingSeedCount = 1;
   const ratingSeedSummary = `${getLpmRatingFaceEmoji(ratingSeedValue)} ${ratingSeedValue.toFixed(1)} (${formatLpmRatingCount(ratingSeedCount)})`;
 
   const heroSrc = (() => {    const pickFirstSrc = (arr) => {
@@ -1416,7 +1414,14 @@ const descs = resolveDescriptionMapForLocation(payload, [
       </div>
     `;
 
-    inner.appendChild(rate);
+    const statusChip = inner.querySelector('.lpm-status-chip');
+    const introChip = inner.querySelector('.lpm-introduction-chip');
+    const tagsSection = inner.querySelector('.location-tags');
+
+    if (statusChip) inner.insertBefore(rate, statusChip);
+    else inner.appendChild(rate);
+
+    if (tagsSection && introChip) inner.insertBefore(tagsSection, introChip.nextSibling);    
   }
 
   // ▸ Footer (pinned): primary (🎁️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // define footer first
@@ -2363,9 +2368,12 @@ async function initLpmImageSlider(modal, data) {
       const idOrSlug = String(data?.id || data?.locationID || '').trim();
       if (!idOrSlug) return;
 
-      const src =
-        originEl && originEl.classList && originEl.classList.contains('popular-button')
-          ? 'popular' : 'accordion';
+      const src = String(
+        data?.openSource ||
+        (originEl && originEl.classList && originEl.classList.contains('popular-button')
+          ? 'popular'
+          : (originEl ? 'accordion' : 'redirect'))
+      ).trim() || 'unknown';
 
       const uid = await resolveULIDFor(idOrSlug);
       console.debug('lpm-open', { id: idOrSlug, src, beacon: uid ? 'sent' : 'skipped' });
@@ -2865,104 +2873,91 @@ async function initLpmImageSlider(modal, data) {
      modal.querySelector('#lpm-save')  ||
      btnClose)?.focus?.();
      
-    // NaviGen rating stays first in the dropdown; the chip face seeds from the current average/count.
+    // NaviGen rating stays first in the dropdown; the chip face seeds from the neutral average/count.
     (function initRating(){
       const group = modal.querySelector('#lpm-rate-group');
       if (!group) return;
 
-      const rawId = String(data?.id || data?.locationID || '').trim();
-      const key      = rawId ? `rating:${rawId}` : '';
-      const tsKey    = rawId ? `rating_ts:${rawId}` : '';
-      const sentKey  = rawId ? `rating_sent_ts:${rawId}` : '';
+      const ratingIdentity = String(data?.locationID || data?.id || '').trim();
+      const stateKey = ratingIdentity ? `rating_state:${ratingIdentity}` : '';
+      const tsKey    = ratingIdentity ? `rating_ts:${ratingIdentity}` : '';
+      const sentKey  = ratingIdentity ? `rating_sent_ts:${ratingIdentity}` : '';
       const COOLDOWN_MS = 60*60*1000;
 
       const btns = Array.from(group.querySelectorAll('.rate-btn'));
       const face = modal.querySelector('#lpm-rating-face-icons');
+      const SEED = { sum: 3, count: 1, lastScore: 0 };
 
-      const readSeedRating = () => {
-        const sources = [
-          data?.ratings,
-          data?.raw?.ratings
-        ].filter((v) => v && typeof v === 'object');
+      const readState = () => {
+        if (!stateKey) return { ...SEED };
 
-        for (const src of sources) {
-          const combinedValue = Number(src?.combined?.value);
-          const combinedCount = Number(src?.combined?.count ?? 0);
+        try {
+          const raw = JSON.parse(localStorage.getItem(stateKey) || 'null');
+          const sum = Number(raw?.sum);
+          const count = Number(raw?.count);
+          const lastScore = Number(raw?.lastScore || 0);
 
-          if (Number.isFinite(combinedValue) && combinedValue > 0 && Number.isFinite(combinedCount) && combinedCount >= 0) {
-            return { value: combinedValue, count: combinedCount };
+          if (Number.isFinite(sum) && Number.isFinite(count) && count > 0) {
+            return {
+              sum,
+              count,
+              lastScore: (Number.isFinite(lastScore) && lastScore >= 1 && lastScore <= 5) ? lastScore : 0
+            };
           }
-        }
+        } catch {}
 
-        const src = sources[0] || {};
-        const gR = Number(src?.google?.rating ?? data?.raw?.google_rating);
-        const gC = Number(src?.google?.count  ?? data?.raw?.google_count ?? 0);
-        const tR = Number(src?.tripadvisor?.rating ?? data?.raw?.tripadvisor_rating);
-        const tC = Number(src?.tripadvisor?.count  ?? data?.raw?.tripadvisor_count ?? 0);
-        const n  = (Number.isFinite(gR) ? gC : 0) + (Number.isFinite(tR) ? tC : 0);
-        const R  = n ? (((Number.isFinite(gR) ? gR * gC : 0) + (Number.isFinite(tR) ? tR * tC : 0)) / n) : 0;
-
-        return {
-          value: (Number.isFinite(R) && R > 0) ? R : 3.5,
-          count: (Number.isFinite(n) && n > 0) ? n : 1
-        };
+        return { ...SEED };
       };
 
-      const seed = readSeedRating();
-      const faceSeedValue = seed.value;
-      const faceSeedCount = seed.count;
-
-      const getSummaryState = (pickedScore = null) => {
-        const picked = Number(pickedScore);
-
-        if (Number.isFinite(picked) && picked > 0) {
-          const nextCount = faceSeedCount + 1;
-          const nextValue = ((faceSeedValue * faceSeedCount) + picked) / nextCount;
-
-          return { value: nextValue, count: nextCount };
-        }
-
-        return { value: faceSeedValue, count: faceSeedCount };
+      const writeState = (nextState) => {
+        if (!stateKey) return;
+        try {
+          localStorage.setItem(stateKey, JSON.stringify(nextState));
+        } catch {}
       };
 
-      const refreshFace = (pickedScore = null) => {
-        if (!face) return;
-
-        const summary = getSummaryState(pickedScore);
-        face.textContent = `${getLpmRatingFaceEmoji(summary.value)} ${summary.value.toFixed(1)} (${formatLpmRatingCount(summary.count)})`;
-      };
-
-      const setUI = (n) => {
-        btns.forEach((b,i)=> b.setAttribute('aria-checked', String(i+1===n)));
-        refreshFace(n || null);
-      };
-
-      let val      = key ? (Number(localStorage.getItem(key)) || 0) : 0;
+      let state = readState();
       let lastSent = sentKey ? (Number(localStorage.getItem(sentKey)) || 0) : 0;
 
       const canSend = () => !lastSent || (Date.now() - lastSent >= COOLDOWN_MS);
 
-      const commit = (n) => {
-        val = n;
+      const render = () => {
+        const avg = state.count > 0 ? (state.sum / state.count) : 3;
 
-        if (key) {
-          localStorage.setItem(key, String(n));
+        btns.forEach((b, i) => {
+          b.setAttribute('aria-checked', String(i + 1 === state.lastScore));
+        });
+
+        if (face) {
+          face.textContent = `${getLpmRatingFaceEmoji(avg)} ${avg.toFixed(1)} (${formatLpmRatingCount(state.count)})`;
         }
+      };
+
+      const commit = (n) => {
+        if (!Number.isFinite(n) || n < 1 || n > 5) return;
+
+        state = {
+          sum: state.sum + n,
+          count: state.count + 1,
+          lastScore: n
+        };
+
+        writeState(state);
         if (tsKey) {
           localStorage.setItem(tsKey, String(Date.now()));
         }
 
-        setUI(n);
+        render();
         showToast(`Thanks! Rated ${n}/5`, 1600);
 
-        if (!rawId || !canSend()) return;
+        if (!ratingIdentity || !canSend()) return;
 
         lastSent = Date.now();
         localStorage.setItem(sentKey, String(lastSent));
 
         (async () => {
           try {
-            const idOrSlug = String(data?.id || data?.locationID || '').trim();
+            const idOrSlug = String(data?.locationID || data?.id || '').trim();
             if (!idOrSlug) return;
 
             const uid = await resolveULIDFor(idOrSlug);
@@ -2976,24 +2971,26 @@ async function initLpmImageSlider(modal, data) {
         })();
       };
 
-      btns.forEach((b,i) => {
+      btns.forEach((b, i) => {
         b.addEventListener('click', () => {
-          commit(i+1);
+          commit(i + 1);
         });
       });
 
       group.addEventListener('keydown', (e) => {
+        const base = state.lastScore || 3;
+
         if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
           e.preventDefault();
-          commit(Math.min(5, (val || 0) + 1));
+          commit(Math.min(5, base + 1));
         }
         if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
           e.preventDefault();
-          commit(Math.max(1, (val || 1) - 1));
+          commit(Math.max(1, base - 1));
         }
       });
 
-      setUI(val);
+      render();
     })();
 
     // analytics beacon
@@ -3595,7 +3592,9 @@ function makeLocationButton(loc) {
         links: (loc && typeof loc.links === 'object') ? loc.links : {},
         ratings: (loc && typeof loc.ratings === 'object') ? loc.ratings : {},        
         raw: loc,
-        originEl: btn
+        openSource: 'popular',
+        openSource: 'accordion',
+        originEl: btn        
       });
     }
     clearTimeout(__t);
