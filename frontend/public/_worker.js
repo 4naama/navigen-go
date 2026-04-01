@@ -201,6 +201,7 @@ export default {
         'whatsapp',
         'telegram',
         'messenger',
+        'rating',
         'rating-sum',
         'rating-avg',
         'redeem-confirmation-cashier',
@@ -222,16 +223,43 @@ export default {
       try {
         // Preserve method semantics: GET stays GET; POST stays POST; OPTIONS stays OPTIONS.
         const method = req.method === 'OPTIONS' ? 'OPTIONS' : req.method;
+        const cookie = req.headers.get('cookie') || '';
+        const deviceMatch = cookie.match(/(?:^|;\s*)ng_dev=([^;]+)/);
+
+        const forwardHeaders = {
+          'X-NG-Source': 'pages-worker',
+          'X-NG-QR-Source': 'pages-worker'
+        };
+
+        if (deviceMatch?.[1]) {
+          forwardHeaders['X-NG-Device'] = decodeURIComponent(deviceMatch[1]);
+        }
+
+        // Rating is interactive UI state, so the page needs the authoritative Worker response immediately.
+        if (metric === 'rating') {
+          const r = await fetch(target.toString(), {
+            method,
+            keepalive: true,
+            headers: forwardHeaders
+          });
+
+          const h = new Headers(r.headers);
+          h.set('Cache-Control', 'no-store');
+          h.set('Access-Control-Allow-Origin', '*');
+          h.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+
+          return new Response(r.body, {
+            status: r.status,
+            headers: h
+          });
+        }
 
         // Best-effort forwarding: never block the user flow on telemetry.
         // Use waitUntil when available so the request can outlive the response.
         const forward = fetch(target.toString(), {
           method,
           keepalive: true,
-          headers: {
-            'X-NG-Source': 'pages-worker',
-            'X-NG-QR-Source': 'pages-worker'
-          }
+          headers: forwardHeaders
         }).catch(() => {});
 
         if (ctx && typeof ctx.waitUntil === 'function') {
@@ -241,6 +269,17 @@ export default {
           void forward;
         }
       } catch (_) {
+        if (metric === 'rating') {
+          return new Response('Bad Gateway', {
+            status: 502,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+              'Cache-Control': 'no-store'
+            }
+          });
+        }
+
         // keep behavior: ignore forwarding failures; never affect response
       }
 

@@ -290,6 +290,97 @@ function devIndexKey(dev: string): string {
   return `devsess:${dev}:index`;
 }
 
+const RATING_WINDOW_MS = 30 * 60 * 1000;
+
+function ratingSummaryKey(locationID: string): string {
+  return `rating_summary:${locationID}`;
+}
+
+function ratingVoteKey(locationID: string, deviceKey: string): string {
+  return `rating_vote:${locationID}:${deviceKey}`;
+}
+
+function readRatingDeviceKey(req: Request): string {
+  const explicit = String(req.headers.get("X-NG-Device") || "").trim();
+  if (explicit) return explicit;
+
+  const cookieDev = readDeviceId(req);
+  if (cookieDev) return cookieDev;
+
+  const ip = String(req.headers.get("CF-Connecting-IP") || "").trim();
+  const ua = String(req.headers.get("User-Agent") || "").trim().slice(0, 120);
+  return encodeURIComponent(`${ip}|${ua}`.trim());
+}
+
+async function kvAdd(kv: KVNamespace, key: string, delta: number, ttlSec = 60 * 60 * 24 * 366): Promise<number> {
+  const cur = parseInt((await kv.get(key)) || "0", 10) || 0;
+  const next = Math.max(0, cur + (Number.isFinite(delta) ? delta : 0));
+
+  if (next <= 0) {
+    try { await kv.delete(key); } catch {}
+    return 0;
+  }
+
+  await kv.put(key, String(next), { expirationTtl: ttlSec });
+  return next;
+}
+
+type RatingSummary = {
+  count: number;
+  sum: number;
+  avg: number;
+};
+
+async function readRatingSummary(env: Env, locationID: string): Promise<RatingSummary> {
+  const cached = await env.KV_STATUS.get(ratingSummaryKey(locationID), { type: "json" }) as any;
+  const cachedCount = Number(cached?.count);
+  const cachedSum = Number(cached?.sum);
+
+  if (Number.isFinite(cachedCount) && cachedCount >= 0 && Number.isFinite(cachedSum) && cachedSum >= 0) {
+    return {
+      count: cachedCount,
+      sum: cachedSum,
+      avg: cachedCount > 0 ? (cachedSum / cachedCount) : 0
+    };
+  }
+
+  let count = 0;
+  let sum = 0;
+  let cursor: string | undefined = undefined;
+
+  do {
+    const page = await env.KV_STATS.list({ prefix: `stats:${locationID}:`, cursor });
+    for (const key of page.keys) {
+      const name = String(key.name || "");
+      const parts = name.split(":");
+      if (parts.length !== 4) continue;
+
+      const bucket = String(parts[3] || "").trim();
+      if (bucket !== "rating" && bucket !== "rating-score") continue;
+
+      const value = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
+      if (bucket === "rating") count += value;
+      else sum += value;
+    }
+    cursor = page.cursor || undefined;
+  } while (cursor);
+
+  try {
+    await env.KV_STATUS.put(
+      ratingSummaryKey(locationID),
+      JSON.stringify({ count, sum, updatedAt: new Date().toISOString() })
+    );
+  } catch {
+    // summary cache must never block reads
+  }
+
+  return {
+    count,
+    sum,
+    avg: count > 0 ? (sum / count) : 0
+  };
+}
+
 type OwnerSession = {
   ver: number;
   ulid: string;
@@ -3119,22 +3210,113 @@ export default {
         const country = (req as any).cf?.country || "";
         const day = dayKeyFor(now, undefined, country);
 
-        // always increment the base event counter (e.g., 'rating' → how many people clicked a face)
-        await kvIncr(env.KV_STATS, `stats:${loc}:${day}:${ev}`);
-
-        // For rating hits, also accumulate the score so we can compute an average later.
         if (ev === "rating") {
           const url = new URL(req.url);
           const scoreRaw = (url.searchParams.get("score") || "").trim();
           const score = parseInt(scoreRaw, 10);
-          if (Number.isFinite(score) && score >= 1 && score <= 5) {
-            const scoreKey = `stats:${loc}:${day}:rating-score`;
-            const cur = parseInt((await env.KV_STATS.get(scoreKey)) || "0", 10) || 0;
-            await env.KV_STATS.put(scoreKey, String(cur + score), {
-              expirationTtl: 60*60*24*366
-            });
+
+          if (!Number.isFinite(score) || score < 1 || score > 5) {
+            return json(
+              { error: { code: "invalid_request", message: "score must be 1-5" } },
+              400,
+              { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+            );
           }
+
+          const deviceKey = readRatingDeviceKey(req);
+          if (!deviceKey) {
+            return json(
+              { error: { code: "invalid_request", message: "rating device missing" } },
+              400,
+              { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+            );
+          }
+
+          const voteKey = ratingVoteKey(loc, deviceKey);
+          const prev = await env.KV_STATUS.get(voteKey, { type: "json" }) as any;
+
+          const prevScore = Number(prev?.score);
+          const prevDay = String(prev?.day || "").trim();
+          const prevVotedAtMs = Date.parse(String(prev?.votedAt || ""));
+
+          const isLocked =
+            Number.isFinite(prevScore) &&
+            prevScore >= 1 &&
+            prevScore <= 5 &&
+            Number.isFinite(prevVotedAtMs) &&
+            (now.getTime() - prevVotedAtMs) < RATING_WINDOW_MS;
+
+          const summary = await readRatingSummary(env, loc);
+
+          let nextCount = summary.count;
+          let nextSum = summary.sum;
+          let applied: "new" | "updated" | "noop" = "new";
+
+          if (isLocked) {
+            const delta = score - prevScore;
+
+            if (delta !== 0) {
+              if (prevDay && prevDay !== day) {
+                await kvAdd(env.KV_STATS, `stats:${loc}:${prevDay}:rating`, -1);
+                await kvAdd(env.KV_STATS, `stats:${loc}:${prevDay}:rating-score`, -prevScore);
+                await kvAdd(env.KV_STATS, `stats:${loc}:${day}:rating`, 1);
+                await kvAdd(env.KV_STATS, `stats:${loc}:${day}:rating-score`, score);
+              } else {
+                await kvAdd(env.KV_STATS, `stats:${loc}:${day}:rating-score`, delta);
+              }
+
+              nextSum = Math.max(0, nextSum + delta);
+              applied = "updated";
+            } else {
+              applied = "noop";
+            }
+          } else {
+            await kvIncr(env.KV_STATS, `stats:${loc}:${day}:${ev}`);
+            await kvAdd(env.KV_STATS, `stats:${loc}:${day}:rating-score`, score);
+            nextCount += 1;
+            nextSum += score;
+            applied = "new";
+          }
+
+          await env.KV_STATUS.put(
+            ratingSummaryKey(loc),
+            JSON.stringify({
+              count: nextCount,
+              sum: nextSum,
+              updatedAt: now.toISOString()
+            })
+          );
+
+          const lockedUntil = new Date(now.getTime() + RATING_WINDOW_MS).toISOString();
+
+          await env.KV_STATUS.put(
+            voteKey,
+            JSON.stringify({
+              score,
+              day,
+              votedAt: now.toISOString()
+            }),
+            { expirationTtl: 60 * 60 * 24 * 31 }
+          );
+
+          return json(
+            {
+              ok: true,
+              locationID: loc,
+              applied,
+              ratingAvg: nextCount > 0 ? (nextSum / nextCount) : 0,
+              ratedSum: nextCount,
+              userScore: score,
+              ratingLockedUntil: lockedUntil,
+              ratingCooldownMinutes: 30
+            },
+            200,
+            { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+          );
         }
+
+        // always increment the base event counter (e.g., 'share' → how many times the action was used)
+        await kvIncr(env.KV_STATS, `stats:${loc}:${day}:${ev}`);
 
         // For QR scan events, also log a per-scan record (powers QR Info / Campaigns in the dash).
         if (ev === "qr-scan") {
@@ -3861,6 +4043,21 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
     .filter(Boolean)
     .filter((value: string, index: number, arr: string[]) => arr.indexOf(value) === index);
 
+  const ratingSummary = await readRatingSummary(env, locID);
+  const ratingDeviceKey = readRatingDeviceKey(req);
+  const rawRatingVote = ratingDeviceKey
+    ? await env.KV_STATUS.get(ratingVoteKey(locID, ratingDeviceKey), { type: "json" }) as any
+    : null;
+
+  const userScoreRaw = Number(rawRatingVote?.score);
+  const ratingLockedUntil = (() => {
+    const votedAtMs = Date.parse(String(rawRatingVote?.votedAt || ""));
+    if (!Number.isFinite(votedAtMs)) return "";
+
+    const untilMs = votedAtMs + RATING_WINDOW_MS;
+    return untilMs > Date.now() ? new Date(untilMs).toISOString() : "";
+  })();    
+
   return json(
     {
       locationID: locID,
@@ -3875,7 +4072,14 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
       campaignEntitled: camp.entitled,
       campaignEndsAt: camp.endDate,
       activeCampaignKey: camp.campaignKey,
-      activeCampaignKeys
+      activeCampaignKeys,
+
+      // Rating spine (authoritative, cross-device read model for the LPM)
+      ratingAvg: ratingSummary.avg,
+      ratedSum: ratingSummary.count,
+      userScore: (Number.isFinite(userScoreRaw) && userScoreRaw >= 1 && userScoreRaw <= 5) ? userScoreRaw : 0,
+      ratingLockedUntil,
+      ratingCooldownMinutes: 30
     },
     200,
     { "cache-control": "no-store" }
@@ -3894,7 +4098,7 @@ function json(body: unknown, status = 200, headers: Record<string, string> = {})
       "Access-Control-Allow-Origin": allowOrigin,
       "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-      "Access-Control-Allow-Headers": "content-type, authorization",
+      "Access-Control-Allow-Headers": "content-type, authorization, x-ng-device",      
       "Vary": "Origin",
       ...headers
     }

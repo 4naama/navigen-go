@@ -2873,102 +2873,118 @@ async function initLpmImageSlider(modal, data) {
      modal.querySelector('#lpm-save')  ||
      btnClose)?.focus?.();
      
-    // NaviGen rating stays first in the dropdown; the chip face seeds from the neutral average/count.
+    // NaviGen rating is server-authoritative so the average/count stay consistent across browsers and devices.
     (function initRating(){
       const group = modal.querySelector('#lpm-rate-group');
       if (!group) return;
 
-      const ratingIdentity = String(data?.locationID || data?.id || '').trim();
-      const stateKey = ratingIdentity ? `rating_state:${ratingIdentity}` : '';
-      const tsKey    = ratingIdentity ? `rating_ts:${ratingIdentity}` : '';
-      const sentKey  = ratingIdentity ? `rating_sent_ts:${ratingIdentity}` : '';
-      const COOLDOWN_MS = 60*60*1000;
-
       const btns = Array.from(group.querySelectorAll('.rate-btn'));
       const face = modal.querySelector('#lpm-rating-face-icons');
-      const SEED = { sum: 3, count: 1, lastScore: 0 };
+      const target = String(data?.locationID || data?.id || '').trim();
 
-      const readState = () => {
-        if (!stateKey) return { ...SEED };
-
-        try {
-          const raw = JSON.parse(localStorage.getItem(stateKey) || 'null');
-          const sum = Number(raw?.sum);
-          const count = Number(raw?.count);
-          const lastScore = Number(raw?.lastScore || 0);
-
-          if (Number.isFinite(sum) && Number.isFinite(count) && count > 0) {
-            return {
-              sum,
-              count,
-              lastScore: (Number.isFinite(lastScore) && lastScore >= 1 && lastScore <= 5) ? lastScore : 0
-            };
-          }
-        } catch {}
-
-        return { ...SEED };
+      const state = {
+        avg: 3,
+        count: 0,
+        userScore: 0,
+        lockedUntil: ''
       };
 
-      const writeState = (nextState) => {
-        if (!stateKey) return;
-        try {
-          localStorage.setItem(stateKey, JSON.stringify(nextState));
-        } catch {}
+      const applyPayload = (payload = {}) => {
+        const avgRaw = Number(payload?.ratingAvg ?? payload?.rating_avg ?? 0);
+        const countRaw = Number(payload?.ratedSum ?? payload?.rated_sum ?? 0);
+        const userScoreRaw = Number(payload?.userScore ?? payload?.user_score ?? 0);
+
+        state.avg = (Number.isFinite(avgRaw) && avgRaw > 0) ? avgRaw : 3;
+        state.count = (Number.isFinite(countRaw) && countRaw > 0) ? countRaw : 0;
+        state.userScore = (Number.isFinite(userScoreRaw) && userScoreRaw >= 1 && userScoreRaw <= 5) ? userScoreRaw : 0;
+        state.lockedUntil = String(payload?.ratingLockedUntil ?? payload?.rating_locked_until ?? '').trim();
       };
-
-      let state = readState();
-      let lastSent = sentKey ? (Number(localStorage.getItem(sentKey)) || 0) : 0;
-
-      const canSend = () => !lastSent || (Date.now() - lastSent >= COOLDOWN_MS);
 
       const render = () => {
-        const avg = state.count > 0 ? (state.sum / state.count) : 3;
+        const displayCount = state.count > 0 ? state.count : 1;
+        const displayAvg = state.count > 0 ? state.avg : 3;
 
         btns.forEach((b, i) => {
-          b.setAttribute('aria-checked', String(i + 1 === state.lastScore));
+          b.setAttribute('aria-checked', String(i + 1 === state.userScore));
         });
 
         if (face) {
-          face.textContent = `${getLpmRatingFaceEmoji(avg)} ${avg.toFixed(1)} (${formatLpmRatingCount(state.count)})`;
+          face.textContent = `${getLpmRatingFaceEmoji(displayAvg)} ${displayAvg.toFixed(1)} (${formatLpmRatingCount(displayCount)})`;
         }
       };
 
-      const commit = (n) => {
-        if (!Number.isFinite(n) || n < 1 || n > 5) return;
+      const hydrate = async () => {
+        if (!target) {
+          render();
+          return;
+        }
 
-        state = {
-          sum: state.sum + n,
-          count: state.count + 1,
-          lastScore: n
-        };
+        try {
+          const url = new URL('/api/status', location.origin);
+          url.searchParams.set('locationID', target);
 
-        writeState(state);
-        if (tsKey) {
-          localStorage.setItem(tsKey, String(Date.now()));
+          const res = await fetch(url.toString(), {
+            cache: 'no-store',
+            credentials: 'include'
+          });
+
+          if (!res.ok) {
+            render();
+            return;
+          }
+
+          const payload = await res.json().catch(() => null);
+          if (payload && typeof payload === 'object') {
+            applyPayload(payload);
+          }
+        } catch {
+          // rating hydration must not block the LPM
         }
 
         render();
-        showToast(`Thanks! Rated ${n}/5`, 1600);
+      };
 
-        if (!ratingIdentity || !canSend()) return;
+      const commit = async (n) => {
+        if (!target || !Number.isFinite(n) || n < 1 || n > 5) return;
 
-        lastSent = Date.now();
-        localStorage.setItem(sentKey, String(lastSent));
+        try {
+          const url = new URL(`/hit/rating/${encodeURIComponent(target)}`, location.origin);
+          url.searchParams.set('score', String(n));
 
-        (async () => {
-          try {
-            const idOrSlug = String(data?.locationID || data?.id || '').trim();
-            if (!idOrSlug) return;
+          const res = await fetch(url.toString(), {
+            method: 'POST',
+            keepalive: true,
+            cache: 'no-store',
+            credentials: 'include'
+          });
 
-            const uid = await resolveULIDFor(idOrSlug);
-            const target = uid || idOrSlug;
-            const url = `${TRACK_BASE}/hit/rating/${encodeURIComponent(target)}?score=${encodeURIComponent(n)}`;
+          const payload = await res.json().catch(() => null);
 
-            await fetch(url, { method: 'POST', keepalive: true }).catch(() => {});
-          } catch {
-            // tracking must not block rating UI
+          if (!res.ok) {
+            showToast('Rating unavailable right now', 1600);
+            return;
           }
-        })();
+
+          if (payload && typeof payload === 'object') {
+            applyPayload(payload);
+            render();
+
+            const applied = String(payload?.applied || '').trim();
+            if (applied === 'updated') {
+              showToast(`Rating updated to ${n}/5`, 1600);
+            } else if (applied === 'noop') {
+              showToast(`Rating kept at ${n}/5`, 1600);
+            } else {
+              showToast(`Thanks! Rated ${n}/5`, 1600);
+            }
+            return;
+          }
+
+          showToast(`Thanks! Rated ${n}/5`, 1600);
+          await hydrate();
+        } catch {
+          showToast('Rating unavailable right now', 1600);
+        }
       };
 
       btns.forEach((b, i) => {
@@ -2978,7 +2994,7 @@ async function initLpmImageSlider(modal, data) {
       });
 
       group.addEventListener('keydown', (e) => {
-        const base = state.lastScore || 3;
+        const base = state.userScore || 3;
 
         if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
           e.preventDefault();
@@ -2991,6 +3007,7 @@ async function initLpmImageSlider(modal, data) {
       });
 
       render();
+      hydrate();
     })();
 
     // analytics beacon
