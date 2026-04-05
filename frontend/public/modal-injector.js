@@ -8395,7 +8395,9 @@ export function showPromotionsModal() {
 
   const tSafe = (key, fallback) => {
     const raw = (typeof t === 'function') ? String(t(key) || '').trim() : '';
-    return raw && raw !== key ? raw : fallback;
+    const escapedKey = String(key || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const unresolvedBracketed = new RegExp(`^\\[\\s*${escapedKey}\\s*\\]$`).test(raw);
+    return raw && raw !== key && !unresolvedBracketed ? raw : fallback;
   };
 
   title.textContent = tSafe("promotions", "Promotions");

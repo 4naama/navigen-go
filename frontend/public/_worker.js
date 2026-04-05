@@ -558,6 +558,31 @@ export default {
         }
       });
     }
+
+    // /api/campaigns/active — proxy to API Worker (authoritative active-campaign list for Promotions modal)
+    if (url.pathname === '/api/campaigns/active') {
+      const apiBase = API_BASE;
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: 'GET',
+        headers: h
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
     
     // 401 gate disabled; RL/Bot Fight protect /api/data/*
     if (url.pathname.startsWith('/api/data/')) {
