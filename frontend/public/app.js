@@ -37,13 +37,19 @@ import {
   showRedeemInvalidModal            // cashier-side invalid/used promo UX
 } from './modal-injector.js';
 
+// Preview/dev routing guard (used by SW, backend base, and worker base)
+// Keep the host list explicit so only known preview/dev hosts escape production endpoints.
+const PREVIEW_HOSTS = new Set(['localhost', '127.0.0.1', 'navigen-go.dev']);
+const IS_PREVIEW = location.hostname.endsWith('pages.dev') || PREVIEW_HOSTS.has(location.hostname);
+
+const WORKER_BASE = IS_PREVIEW
+  ? 'https://navigen-api-dev.4naama.workers.dev'
+  : 'https://navigen-api.4naama.workers.dev';
+
 // PWA: register SW only in production (keeps install prompt there)
-/* In preview/dev (pages.dev, localhost), skip SW to force fresh CSS/JS on reload */
+/* In preview/dev, skip SW to force fresh CSS/JS on reload */
 if ('serviceWorker' in navigator) {
-  const PREVIEW = location.hostname.endsWith('pages.dev') ||
-                  location.hostname === 'localhost' ||
-                  location.hostname === '127.0.0.1';
-  if (!PREVIEW) {
+  if (!IS_PREVIEW) {
     navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW reg failed', err));
   }
 }
@@ -212,7 +218,7 @@ function getUserLang() {
   return urlLang || navigator.language.split("-")[0] || "en"; // e.g. "fr"
 }
 
-const BACKEND_URL = "https://navigen-go.onrender.com";
+const BACKEND_URL = IS_PREVIEW ? "https://navigen-go-dev.onrender.com" : "https://navigen-go.onrender.com";
 
 // ULID checker: keep client ULID-only (2 lines)
 const isUlid = (v) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(v || '').trim());
@@ -1599,7 +1605,7 @@ async function initEmergencyBlock(countryOverride) {
     const API_LIMIT = 99; // ask for up to 99 items per page
 
     // canonical API; keep single source of truth
-    const API_BASE = 'https://navigen-api.4naama.workers.dev';
+    const API_BASE = WORKER_BASE;
 
     // First API call must not block boot; force fresh list to avoid stale cache
     let listRes;
@@ -3475,7 +3481,7 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
 
   try {
     // 1. Call your backend to get Stripe session details
-    const res = await fetch(`https://navigen-go.onrender.com/stripe/session?sid=${sessionId}`);
+    const res = await fetch(`${BACKEND_URL}/stripe/session?sid=${sessionId}`);
     if (!res.ok) throw new Error("Failed to fetch session");
     const data = await res.json();
 

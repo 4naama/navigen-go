@@ -41,13 +41,17 @@ function rateHit(req){
 
 export default {
   async fetch(req, env, ctx) { // include ctx so waitUntil works
-    const url = new URL(req.url);
+    const PREVIEW_HOSTS = new Set(['localhost', '127.0.0.1', 'navigen-go.dev']);
+    const API_BASE =
+      url.hostname.endsWith('pages.dev') || PREVIEW_HOSTS.has(url.hostname)
+        ? 'https://navigen-api-dev.4naama.workers.dev'
+        : 'https://navigen-api.4naama.workers.dev';
 
     // QR scan tracker: when a page has ?lp=<slug>, forward qr-scan to navigen-api.4naama.workers.dev, then continue normal handling
     {
       const lpSlug = (url.searchParams.get('lp') || '').trim();
       if (lpSlug) {
-        const hitUrl = `https://navigen-api.4naama.workers.dev/hit/lpm-open/${encodeURIComponent(lpSlug)}`;
+        const hitUrl = `${API_BASE}/hit/lpm-open/${encodeURIComponent(lpSlug)}`;
         const options = {
           method: 'POST',
           keepalive: true,
@@ -214,7 +218,7 @@ export default {
 
       // Forward to API Worker as the single source of truth.
       // IMPORTANT: do not write m:* here; the API Worker owns canonical stats/qrlog and confirmation signals.
-      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const apiBase = API_BASE;      
       const target = new URL(`/hit/${encodeURIComponent(metric)}/${encodeURIComponent(idOrSlug)}`, apiBase);
 
       // Preserve query string (e.g., rating score, etc.)
@@ -310,7 +314,7 @@ export default {
 
         // Canonical QR scan logging: forward to API Worker (authoritative)
         try {
-          const apiBase = 'https://navigen-api.4naama.workers.dev';
+          const apiBase = API_BASE;
           const hitUrl  = new URL(`/hit/qr-scan/${encodeURIComponent(ulid)}`, apiBase).toString();
           const options = { method: 'POST', keepalive: true, headers: { 'X-NG-QR-Source': 'pages-worker' } };
           if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(fetch(hitUrl, options).catch(() => {}));
@@ -395,7 +399,7 @@ export default {
 
     // /owner/* — proxy to API Worker (Owner Platform sensitive routes must be network-only)
     if (url.pathname.startsWith('/owner/')) {
-      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const apiBase = API_BASE;
       const target = new URL(url.pathname + url.search, apiBase);
 
       const r = await fetch(target.toString(), {
@@ -414,7 +418,7 @@ export default {
 
     // /api/_diag/* — proxy to API Worker (safe diagnostics only; keep Pages non-authoritative)
     if (url.pathname.startsWith('/api/_diag/')) {
-      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const apiBase = API_BASE;
       const target = new URL(url.pathname + url.search, apiBase);
 
       const r = await fetch(target.toString(), {
@@ -430,7 +434,7 @@ export default {
 
     // /api/stats — proxy to API Worker (single canonical source of truth)
     if (url.pathname === '/api/stats') {
-      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const apiBase = API_BASE;
       const target = new URL(url.pathname + url.search, apiBase);
 
       const h = new Headers(req.headers);         // forward Cookie + all client headers
@@ -456,7 +460,7 @@ export default {
 
     // /api/status — proxy to API Worker (authoritative ownership/visibility)
     if (url.pathname === '/api/status') {
-      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const apiBase = API_BASE;
       const target = new URL(url.pathname + url.search, apiBase);
 
       const h = new Headers(req.headers);
@@ -481,7 +485,7 @@ export default {
 
     // /api/redeem-status — proxy to API Worker (authoritative redeem token status)
     if (url.pathname === '/api/redeem-status') {
-      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const apiBase = API_BASE;
       const target = new URL(url.pathname + url.search, apiBase);
 
       const h = new Headers(req.headers);
@@ -506,7 +510,7 @@ export default {
 
     // /api/promo-qr — proxy to API Worker (authoritative campaign QR minting + ARMED logging)
     if (url.pathname === '/api/promo-qr') {
-      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const apiBase = API_BASE;
       const target = new URL(url.pathname + url.search, apiBase);
 
       const h = new Headers(req.headers);
@@ -531,7 +535,7 @@ export default {
 
     // /api/campaign-summary — proxy to API Worker (authoritative campaign hydrate data)
     if (url.pathname === '/api/campaign-summary') {
-      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const apiBase = API_BASE;
       const target = new URL(url.pathname + url.search, apiBase);
 
       const h = new Headers(req.headers);

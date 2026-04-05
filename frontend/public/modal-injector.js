@@ -1,5 +1,9 @@
-// analytics: unified endpoint; always use live worker for all environments
-const TRACK_BASE = 'https://navigen-api.4naama.workers.dev';
+// analytics / API base: use dev worker on preview/dev hosts, prod worker otherwise
+const PREVIEW_HOSTS = new Set(['localhost', '127.0.0.1', 'navigen-go.dev']);
+const IS_PREVIEW = location.hostname.endsWith('pages.dev') || PREVIEW_HOSTS.has(location.hostname);
+const TRACK_BASE = IS_PREVIEW
+  ? 'https://navigen-api-dev.4naama.workers.dev'
+  : 'https://navigen-api.4naama.workers.dev';
 
 function translatedOrFallback(key, fallback = '') {
   if (typeof t !== 'function') return fallback;
@@ -3509,7 +3513,7 @@ export async function showSelectLocationModal() {
 }
 
 // canonical API; ULID-only responses (no same-origin)
-const API = (path) => new URL(path, 'https://navigen-api.4naama.workers.dev').toString();
+const API = (path) => new URL(path, TRACK_BASE).toString();
 
 // ✅ Store Popular’s original position on page load
 let popularBaseOffset = 0;
@@ -5097,7 +5101,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       if (aNameBox) aNameBox.textContent = activeUlid;
       if (aIdBox)   aIdBox.textContent   = activeUlid;
 
-      const ir = await fetch(`https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(activeUlid)}`, { cache: 'no-store' });
+      const ir = await fetch(`${TRACK_BASE}/api/data/item?id=${encodeURIComponent(activeUlid)}`, { cache: 'no-store' });
       const ij = ir.ok ? await ir.json().catch(() => null) : null;
 
       const slug = String(ij?.locationID || '').trim();
@@ -5193,7 +5197,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
     try {
       const rr = await fetch(
-        `https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(u)}`,
+        `${TRACK_BASE}/api/data/item?id=${encodeURIComponent(u)}`,
         { cache: 'no-store' }
       );
       const jj = rr.ok ? await rr.json().catch(() => null) : null;
@@ -5768,7 +5772,7 @@ export async function createOwnerCenterModal() {
       let name = '';
 
       try {
-        const rr = await fetch(`https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(u)}`, { cache: 'no-store' });
+        const rr = await fetch(`${TRACK_BASE}/api/data/item?id=${encodeURIComponent(u)}`, { cache: 'no-store' });        
         const jj = rr.ok ? await rr.json().catch(() => null) : null;
         slug = String(jj?.locationID || '').trim();
         const ln = jj?.locationName;
@@ -6123,7 +6127,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   if (isUlid(displaySlug)) {
     try {
       const rr = await fetch(
-        `https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(displaySlug)}`,
+        `${TRACK_BASE}/api/data/item?id=${encodeURIComponent(displaySlug)}`,
         { cache: 'no-store' }
       );
       const jj = rr.ok ? await rr.json().catch(() => null) : null;
@@ -6157,7 +6161,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   let locName = String(displayName || '').trim();
   try {
     const rr = await fetch(
-      `https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(displaySlug)}`,
+      `${TRACK_BASE}/api/data/item?id=${encodeURIComponent(displaySlug)}`,
       { cache: 'no-store' }
     );
     const jj = rr.ok ? await rr.json().catch(() => null) : null;

@@ -14,6 +14,42 @@ routes = [
   { pattern = "navigen.io/owner/*", zone_name = "navigen.io" }
 ]
 
+
+[env.dev]
+workers_dev = true
+routes = []
+
+[env.dev.vars]
+# no non-secret text vars yet
+
+[[env.dev.kv_namespaces]]
+binding = "KV_STATUS"
+id      = "1e372d146ac2492691d8d40203e82946"
+
+[[env.dev.kv_namespaces]]
+binding = "KV_ALIASES"
+id      = "51efcadb53c94d2a85ba6566f7073d12"
+
+[[env.dev.kv_namespaces]]
+binding = "KV_OVERRIDES"
+id      = "2d46b5f7fea54d47a9d1605f260f6946"
+
+[[env.dev.kv_namespaces]]
+binding = "KV_STATS"
+id      = "e1a8bd552ed1472584e2422fc5770354"
+
+[[env.dev.durable_objects.bindings]]
+name = "DO_PLAN_ALLOC"
+class_name = "PlanAllocDO"
+
+[[env.dev.durable_objects.bindings]]
+name = "DO_SEARCH_SHARD"
+class_name = "SearchShardDO"
+
+[[env.dev.durable_objects.bindings]]
+name = "DO_CTX_SHARD"
+class_name = "ContextShardDO"
+
 [vars]
 # secrets are set via `wrangler secret put ...`
 # JWT_SECRET = ""
