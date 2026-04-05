@@ -41,6 +41,7 @@ function rateHit(req){
 
 export default {
   async fetch(req, env, ctx) { // include ctx so waitUntil works
+    const url = new URL(req.url);
     const PREVIEW_HOSTS = new Set(['localhost', '127.0.0.1', 'navigen-go.dev']);
     const API_BASE =
       url.hostname.endsWith('pages.dev') || PREVIEW_HOSTS.has(url.hostname)
