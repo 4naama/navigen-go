@@ -3548,9 +3548,9 @@ export default {
 
         const body = await r.text();
 
-        // Discoverability policy for context discovery:
-        // Keep the full upstream row set so context pages can mirror source visibility and priority.
-        // Direct-link LPM behavior remains unchanged; only list ordering is adjusted here.
+        // Discoverability policy (Business-first):
+        // Filter out locations whose visibilityState is "hidden" so inactive businesses do not appear in discovery lists.
+        // This does not affect direct-link LPM access; it only controls in-app discovery surfaces.
         let outBody = body;
 
         try {
@@ -3571,7 +3571,7 @@ export default {
             // Build discovery list with preferential visibility:
             // - "promoted" (paid active) first
             // - then "visible" (courtesy/hold)
-            // - then remaining rows, without excluding them from the context list
+            // - "hidden" excluded
             //
             // NOTE: this is a deterministic, lightweight ordering (no ML, no ads).
             const ranked: Array<{ rec: any; rank: number }> = [];
@@ -3589,8 +3589,8 @@ export default {
               const vis = await computeVisibilityState(env, ulid);
 
               // Exclude hidden from discovery lists
-              // Keep hidden-state rows in the context list; only rank them after promoted and visible rows.
-              
+              if (vis.visibilityState === "hidden") continue;
+
               // Preferential visibility weight (highest first)
               const rank =
                 vis.visibilityState === "promoted" ? 2 :
