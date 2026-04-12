@@ -1596,54 +1596,134 @@ async function initEmergencyBlock(countryOverride) {
     // Active context row for this page (used for default group/sub)
     const ctxRow = Array.isArray(contexts) ? contexts.find(c => c.pageKey === ACTIVE_PAGE) : null;
 
-    const API_LIMIT = 99; // ask for up to 99 items per page
-
+    const API_LIMIT = 99; // request the largest supported page size; keep paging until exhausted
+    const API_MAX_PAGES = 100; // defensive loop guard only; not a product discovery cap
+    const IS_PREVIEW_HOST = location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost');
+    
     // canonical API; keep single source of truth
     const API_BASE = 'https://navigen-api.4naama.workers.dev';
 
-    // First API call must not block boot; force fresh list to avoid stale cache
-    let listRes;
+    const getListPageItems = (payload) => {
+      if (Array.isArray(payload?.items)) return payload.items;
+      if (Array.isArray(payload?.locations)) return payload.locations;
+      return [];
+    };
+
+    const getNextListCursor = (payload) => {
+      const candidates = [
+        payload?.nextCursor,
+        payload?.next_cursor,
+        payload?.cursor,
+        payload?.next,
+        payload?.pageInfo?.nextCursor,
+        payload?.pageInfo?.next_cursor
+      ];
+      for (const value of candidates) {
+        if (value == null) continue;
+        if (typeof value === 'string' && value.trim() === '') continue;
+        return value;
+      }
+      return null;
+    };
+
+    const fetchListPage = async (url) => {
+      let res = await fetch(url, {
+        credentials: 'omit',              // no cookies → no credentialed CORS needed
+        cache: 'no-store',
+        headers: {} // rely on fetch's cache: 'no-store'
+      });
+
+      // retry once on 404: some deployed Worker bundles only match the slash-suffixed path
+      // keep query params; do not loop (one attempt only)
+      if (res && res.status === 404) {
+        const alt = new URL(url.toString());
+        if (!alt.pathname.endsWith('/')) alt.pathname += '/';
+        const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store', headers: {} }); // same headers/policy
+        if (r2.ok) res = r2;
+      }
+
+      return res;
+    };
+
+    const fetchFullListForContext = async (__ctx) => {
+      if (!__ctx) return { items: [] };
+
+      const allItems = [];
+      const seenItems = new Set();
+      const seenCursors = new Set();
+      let cursor = null;
+      let pageCount = 0;
+      let lastPayload = { items: [] };
+
+      while (pageCount < API_MAX_PAGES) {
+        const url = new URL('/api/data/list', API_BASE);
+        url.searchParams.set('context', __ctx);
+        url.searchParams.set('limit', String(API_LIMIT));
+        if (cursor != null && String(cursor).trim() !== '') url.searchParams.set('cursor', String(cursor));
+        if (IS_PREVIEW_HOST) url.searchParams.set('cb', `${Date.now()}-${pageCount}`);
+
+        const res = await fetchListPage(url);
+        if (!res?.ok) {
+          if (pageCount === 0) throw new Error(`list API ${res?.status || 'failed'}`);
+          console.warn('list API pagination stopped on non-ok page', { context: __ctx, cursor, status: res?.status });
+          break;
+        }
+
+        let payload;
+        try {
+          payload = await res.json();
+        } catch (err) {
+          if (pageCount === 0) throw err;
+          console.warn('list API pagination stopped on invalid JSON page', { context: __ctx, cursor, err });
+          break;
+        }
+
+        lastPayload = payload && typeof payload === 'object' ? payload : { items: [] };
+
+        const pageItems = getListPageItems(lastPayload);
+        for (const item of pageItems) {
+          const itemKey = String(item?.ID || item?.id || item?.locationID || item?.alias || '').trim();
+          if (itemKey) {
+            if (seenItems.has(itemKey)) continue;
+            seenItems.add(itemKey);
+          }
+          allItems.push(item);
+        }
+
+        const nextCursor = getNextListCursor(lastPayload);
+        if (nextCursor == null) {
+          return { ...lastPayload, items: allItems };
+        }
+
+        const cursorKey = String(nextCursor);
+        if (seenCursors.has(cursorKey)) {
+          console.warn('list API returned a repeated cursor; stopping pagination', { context: __ctx, cursor: cursorKey });
+          break;
+        }
+
+        seenCursors.add(cursorKey);
+        cursor = nextCursor;
+        pageCount += 1;
+      }
+
+      return { ...lastPayload, items: allItems };
+    };
+    
+    // Force fresh list pages to avoid stale cache while still consuming the full paginated result set.
+    let listJson = { items: [] };
     try {
       // derive context from URL path (strip optional /{lang}/ and trailing slash)
       const parts = location.pathname.split('/').filter(Boolean);
       const noLang = (/^[a-z]{2}$/i.test(parts[0] || '')) ? parts.slice(1) : parts;
       const __ctx = noLang.join('/').replace(/\/$/,'').toLowerCase();
 
-      if (__ctx) {
-        const url = new URL(
-          `/api/data/list?context=${encodeURIComponent(__ctx)}&limit=${API_LIMIT}`,
-          API_BASE
-        );
-
-        if (location.hostname.endsWith('pages.dev') || location.hostname.includes('localhost')) {
-          url.searchParams.set('cb', String(Date.now()));
-        }
-
-        listRes = await fetch(url, {
-          credentials: 'omit',              // no cookies → no credentialed CORS needed
-          cache: 'no-store',
-          headers: {} // rely on fetch's cache: 'no-store'
-        });
-
-        // retry once on 404: some deployed Worker bundles only match the slash-suffixed path
-        // keep query params; do not loop (one attempt only)
-        if (listRes && listRes.status === 404) {
-          const alt = new URL(url.toString());
-          if (!alt.pathname.endsWith('/')) alt.pathname += '/';
-          const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store' }); // same headers/policy
-          if (r2.ok) listRes = r2;
-        }
-      } else {
-        // root (no context path): use empty list
-        listRes = { ok: true, json: async () => ({ items: [] }) };
-      }
+      listJson = await fetchFullListForContext(__ctx);
     } catch (err) {
       console.warn('list API failed', err);
       showToast('Data API unavailable. Showing cached items.');
-      listRes = { ok: false, json: async () => ({ items: [] }) };
+      listJson = { items: [] };
     }
 
-    const listJson = listRes.ok ? await listRes.json() : { items: [] };
     const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
         
     // Map API items → legacy geoPoints for UI (accordion/Popular)
