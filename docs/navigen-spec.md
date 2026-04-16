@@ -785,7 +785,11 @@ Therefore, NaviGen MUST support recovery using the Stripe PaymentIntent ID:
 • System validates: payment_status="paid" AND status="complete"
   If ownership:<ULID> is missing or lastEventId != pi_...,
   the API Worker MUST reconcile ownership idempotently and persist lastEventId = pi_... before minting the session.
-• System resolves: metadata.locationID → ULID
+• System requires one valid target identity route:
+  - existing-location: metadata.locationID
+  - brand-new private shell: metadata.draftULID + metadata.draftSessionId
+• Existing-location route resolves: metadata.locationID → ULID
+• Brand-new private-shell route treats draftULID as the authoritative pre-slug target ULID and validates draftSessionId
 • System mints: op_sess cookie and opsess:<sessionId> record
 • System redirects: /dash/<ULID>
 • During /owner/restore reconciliation, the API Worker MUST also persist plan:<pi_...> from the resolved Checkout Session line items.
@@ -816,7 +820,7 @@ Forbidden phrasing:
 
 Campaign Entitlement is the time-bounded authorization that permits Dash access.
 
-It is derived from the active campaign window.
+An entitlement-bearing active row MAY originate from either paid preset: `Visibility only` or `Promotion`.
 
 Campaign Entitlement:
 - is independent of Operator Session
@@ -1000,8 +1004,6 @@ Secondary:
 Primary:
 • Restore owner access
 Secondary:
-• Run a campaign
-• Owner Center
 • See example dashboards
 
 3) Mismatch state (SessionValid = true, ActiveULID ≠ SelectedULID)
@@ -1069,7 +1071,7 @@ and producing analytics and operational diagnostics. It is implemented as:
   • A PWA-capable client (App shell + Dash)
   • A Pages Worker (routing, QR redirect, static hosting)
   • An API Worker (stats, token handling, campaign logic, QA tagging)
-  • A small, controlled dataset (profiles.json, finance.json, contexts.json)
+  • KV-backed runtime profile authority plus controlled static datasets (finance.json, contexts.json, i18n bundles)
   • A translation layer (Section 7) driving all text
 
 The architecture separates *merchant-visible UX* from *internal diagnostics*
@@ -1128,15 +1130,18 @@ These guardrails exist to prevent feature drift and preserve platform integrity.
 
 The system consists of the following cooperating layers:
 
-1) **Dataset Layer (Read-Only JSON)**  
+1) **Data Layer**  
    Data governing locations, campaigns, contexts, and pricing:
-     • profiles.json  
+     • `profile_base:<ULID>` + `override:<ULID>` in KV (runtime location authority)
      • campaigns.json deprecated
        Campaign lifecycle and entitlement are KV-authoritative.
        No JSON file is used for runtime campaign logic.
-     • finance.json  
-     • contexts.json  
-   All are static files deployed with the site. Workers read them as immutable inputs.
+     • finance.json
+     • contexts.json
+     • profiles.json legacy export / migration artifact only
+
+   Static data files are deployed with the site where applicable.
+   Runtime location reads are KV-authoritative once Phase 8 is enabled.
 
 2) **Pages Worker**  
    Responsibilities:
@@ -3042,11 +3047,10 @@ Rules:
 • In root/no-context mode, Popular should not be shown if it would be empty.
 
 Business Owners actions (minimum set):
-• Run campaign → opens Campaign Setup modal
-• Protect this location → opens Exclusive Operation Period modal (€5/30)
-• Restore access → opens Restore Access modal (owner access email or Stripe-receipt guidance)
+• How it works? → opens an explanatory modal
+• Run campaign → opens location selector, then Owner Settings / Campaign Funding flow
+• Owner Center → opens Owner Center modal
 • See example dashboards → opens Example Dashboards modal
-• (Optional) Find my location → location selector / search helper
 
 Individual Users actions (minimum set):
 • How it works? → opens an explanatory modal
@@ -3243,40 +3247,54 @@ objects consumed by:
   • Dashboard (Click Info, QR Info, Campaigns, Analytics)
   • Promotion Token System (redeem, invalid, confirmations)
 
-All files described here are generated from controlled datasets (GSheets or
-internal pipelines) and consumed client-side or server-side as read-only resources.
+The data surfaces described here may originate from controlled exports
+(GSheets/internal pipelines) or KV-backed runtime authority.
+
+Once Phase 8 is enabled, runtime profile authority is KV-backed and is not a
+read-only JSON resource.
 
 --------------------------------------------------------------------
 
 8.2 File Overview
 
-The platform loads a small number of structured JSON files:
+The platform uses a small number of structured data surfaces:
 
-  1) profiles.json      – business metadata (per location)
+  1) `profile_base:<ULID>` + `override:<ULID>` in KV – runtime profile authority
   2) campaigns.json     – deprecated
      Campaign lifecycle and entitlement are KV-authoritative.
      No JSON file is used for runtime campaign logic.
   3) finance.json       – sector/country pricing metadata
   4) contexts.json      – navigation context hierarchy (URL structure)
   5) i18n bundles       – /data/i18n/<lang>.json (see Section 7)
+  6) profiles.json      – legacy export / migration artifact only; not runtime authority
 
-These files are immutable at runtime; updates are applied by redeploying the dataset.
+Runtime location authority is KV-backed.
+Static JSON may persist for export, migration, archival, or audit purposes,
+but runtime reads MUST NOT fall back from KV authority to profiles.json once
+Phase 8 is enabled.
 
 --------------------------------------------------------------------
 
-8.3 Location Profiles (Profiles) — Transitional Authority
+8.3 Location Profiles (Profiles) — Phase 8 Runtime Authority
 
 Location Profiles define the human-readable, discoverable, and presentational
 metadata of a location.
 
-As of the Campaigns Project completion, Location Profiles are in a
-**transitional phase**:
+From Phase 8 rollout start, runtime profile authority is KV-backed:
 
-• Current authority: static `profiles.json`
-• Future authority: KV-backed, owner-managed Locations Project
+• `profile_base:<ULID>`             – canonical published base record
+• `override:<ULID>`                 – current published override
+• `override_draft:<ULID>:<actorKey>` – non-authoritative draft state
 
-Until migration is complete, `profiles.json` remains the canonical,
-UI-facing source of location metadata.
+Existing public locations MUST be preseeded into KV before the Phase 8 runtime
+switch is enabled.
+
+At cutover, all preseeded legacy public locations MUST enter runtime discoverability
+as `visible` by default unless they already resolve to `promoted` through an active
+entitlement state.
+
+profiles.json may remain as a legacy export / migration artifact only.
+It is not authoritative for runtime reads, publish, list, or search.
 
 --------------------------------------------------------------------
 
@@ -3286,10 +3304,12 @@ Each profile corresponds to exactly one location and includes:
 
 • locationID (slug)                          – canonical human identifier
 • locationName (multilingual)                – UI display name
-• groupKey / subgroupKey                     – high-level grouping
-• context                                    – primary navigation path
+• groupKey / subgroupKey                     – high-level classification (exactly one each)
+• context                                    – one or more navigation paths (semicolon-delimited memberships)
+• tags                                       – customer-intent match terms used for search matching
 • coordinates                                – latitude / longitude
 • contact info                               – phone, email, website, socials
+• address / listedAddress / postalCode / city / adminArea / contact.countryCode – canonical published address fields used by indexing, validation, and SearchShard partitioning
 • detailSlug                                 – optional extra slug for landing
 • qrUrl (optional override)                  – Info QR landing override
 • media                                      – images, icons, banners
@@ -3311,18 +3331,25 @@ Those concerns are enforced exclusively by the API Worker and KV-backed systems.
 
 8.3.2 Canonical Schema & Source Attribution
 
-`profiles.json` defines the canonical schema and field shapes consumed by:
+The canonical field schema consumed by:
 
 • App Shell (LPM)
 • Dashboard (Dash)
 • Pages Worker routing (context, qrUrl)
 • API Worker profile and listing endpoints
 
+is preserved in the published profile shape, but runtime authority is carried by:
+
+• `profile_base:<ULID>`
+• `override:<ULID>`
+
+contexts.json remains the authoritative catalog of valid navigation shells.
+
 External datasets (e.g. OpenStreetMap / OSM, commercial directories,
-manual research) are treated as **ingestion sources**, not parallel schemas.
+manual research) are treated as **ingestion sources**, not parallel runtime authorities.
 
 NaviGen does not expose raw OSM tag structures to the UI layer.
-OSM data is normalized into the `profiles.json` schema.
+Imported/provider data is normalized into the published profile schema.
 
 --------------------------------------------------------------------
 Minimal Sources Structure (Non-Redundant)
@@ -3354,6 +3381,33 @@ Rules:
 
 --------------------------------------------------------------------
 
+8.3.2a Load-Bearing Field Binding (Phase 8 Implementation Contract)
+
+For Phase 8 implementation, the following field bindings are authoritative:
+
+• Slug generation source:
+  - publish-time slug generation uses the current canonical business name field from the draft / effective published profile
+  - if multilingual `locationName` exists, API Worker MUST use one deterministic locale source consistently for slug generation
+  - the chosen source locale MUST remain stable for that location’s first publish
+
+• Coordinates source:
+  - publish-time geo normalization uses the canonical coordinates fields only
+  - coordinates are the values stamped into identity at publish
+
+• Search shard country source:
+  - `countryCode` for `SearchShardDO` partitioning is derived from the effective published contact country field
+  - if absent, fallback is `"XX"`
+
+• Indexed address fields:
+  - indexed address terms are derived only from the canonical published address fields:
+    `address`, `listedAddress`, `postalCode`, `city`, `adminArea`
+
+• Published read response:
+  - `/api/data/profile` and `/api/data/item` return the merged effective published profile only
+  - draft-only fields or provider-only transient fields MUST NOT leak into public responses
+  
+--------------------------------------------------------------------
+
 8.3.3 Example Location Flag (Analytics Showcase)
 
 NaviGen may designate certain locations as **Example Locations** for analytics
@@ -3381,7 +3435,7 @@ NaviGen supports owner-provided profile edits via a **non-destructive override
 layer**.
 
 Overrides allow Owners to modify a limited subset of profile fields
-without mutating the base `profiles.json` dataset.
+without mutating the canonical base record `profile_base:<ULID>`.
 
 --------------------------------------------------------------------
 A) Override Storage Model
@@ -3389,15 +3443,15 @@ A) Override Storage Model
 Overrides are stored per location as server-side KV entries.
 
 Keys:
-• override:<ULID>                 – current effective override snapshot
+• override:<ULID>                 – active published delta relative to `profile_base:<ULID>`
 • override_log:<ULID>:<timestamp> – append-only audit trail
 
-The base profile (`profiles.json`) is immutable at runtime.
+The canonical base record (`profile_base:<ULID>`) is immutable via normal owner edit flows.
 
 --------------------------------------------------------------------
 B) Override Schema (Partial, Field-Level)
 
-Overrides are a **partial structure** matching the shape of `profiles.json`,
+Overrides are a **partial structure** matching the published profile schema,
 restricted to the editable whitelist defined in Section 92.3.
 
 Rules:
@@ -3495,10 +3549,10 @@ reversible presentation-layer edits by an Owner.
 
 --------------------------------------------------------------------
 
-8.3.5 Forward Migration: Locations Project (KV-Based Authority)
+8.3.5 Locations Project (KV-Based Runtime Authority)
 
-The Locations Project migrates profile authority from static profiles.json
-to KV-backed canonical records while preserving client contract stability.
+The Locations Project establishes KV-backed profile authority while preserving
+client contract stability.
 
 --------------------------------------------------------------------
 
@@ -3509,12 +3563,13 @@ Each location SHALL have a KV-backed canonical record:
 Key:
     profile_base:<ULID>
 
-The base record MUST conform to the existing profiles.json schema.
+The base record MUST conform to the existing published profile schema.
 Client-facing contract remains unchanged.
 
 Slug (locationID) is immutable after creation.
 
-profiles.json remains transitional authority until migration completes.
+From Phase 8 rollout start, public runtime reads MUST use KV authority only.
+profiles.json is not a runtime fallback.
 
 --------------------------------------------------------------------
 
@@ -4387,9 +4442,13 @@ A) **Identity Normalization**
          alias:<slug> → { locationID: <ULID> }
    • All stats and qrlog entries use ULID as key-space.
 
-B) **Dataset Loading**
-   • Reads profiles.json, finance.json, contexts.json.
-   • All campaign resolution happens from these definitions.
+B) **Runtime Data Loading**
+   • Reads finance.json and contexts.json plus KV-backed profile authority
+     (`profile_base:<ULID>` + `override:<ULID>`).
+   • `profiles.json` remains a legacy export / migration artifact only once
+     Phase 8 is enabled.
+   • Campaign lifecycle and entitlement are KV-authoritative and are not read
+     from static JSON at runtime.
 
 C) **Promotion QR Issuance**
    Endpoint:
@@ -5165,26 +5224,28 @@ B) **Name-Based Search (Local Filter)**
    The app does **not** request new data while typing.
 
 C) **Category / Tag Search (Context-Aware)**  
-   Categories are surfaced by contexts.json and profiles.json attributes.
+   Categories are surfaced by contexts.json and published profile attributes.
    User may filter within a context by:
-     • sectorKey
+     • groupKey / subgroupKey
      • tags
      • business type
 
 --------------------------------------------------------------------
 13.3 Search Data Sources
 
-Search uses only two data surfaces:
+Search uses two runtime authorities:
 
-  • profiles.json (location metadata)  
+  • published KV-backed location profiles (`profile_base:<ULID>` + `override:<ULID>`)
   • contexts.json (hierarchical structure + labels)
 
-Workers never perform dynamic text search; they only return structured subsets.
+Workers do not perform open-ended full-text search; they return structured subsets
+and use indexed tokens plus context membership.
 
 Search uses:
   • translated display names  
   • t(key) for categories  
   • locationName in the active language  
+  • tags as customer-intent match terms
 
 No ranking, boosting, or behavioral personalization is applied.
 
@@ -5196,7 +5257,7 @@ Search adopts these rules:
   • Case-insensitive  
   • Accent-insensitive  
   • Matches prefixes and contained fragments  
-  • Multilingual names included (if provided in profiles.json)  
+  • Multilingual names included (if provided in the published profile schema) 
   • Fallback to English if translation missing  
   • Input does not alter URL unless context changes  
 
@@ -5241,7 +5302,7 @@ All search labels use t(key):
   • location names (localized fields)  
 
 Search never infers grammar or modifies text.
-Everything originates either from profiles.json or translation bundles.
+Everything originates either from published KV-backed profile authority, contexts.json, or translation bundles.
 
 --------------------------------------------------------------------
 13.8 Search & QR Flows
@@ -5317,7 +5378,7 @@ The following fields are indexed for SYB search:
 • postalCode
 • city
 • adminArea
-• tags
+• tags   — normalized customer-intent match terms
 
 Draft overrides are never indexed.
 Only effective published overrides are eligible for indexing.
@@ -5327,6 +5388,13 @@ Only effective published overrides are eligible for indexing.
 B) Context Membership
 
 Context index membership is derived exclusively from the `context` field.
+
+A published location MAY belong to multiple context memberships when `context`
+contains multiple semicolon-delimited values.
+
+This does NOT create multiple domains or multiple public identities.
+One ULID / one slug / one LPM MAY appear through multiple valid NaviGen
+context entry paths.
 
 Changes to context MUST trigger index update.
 
@@ -5501,7 +5569,7 @@ A scheduled Apps Script exports the four sheets into:
   • /data/finance.json  
   • /data/contexts.json  
 
-Workers always operate on these files.
+These exports remain useful for migration, audit, and legacy tooling, but runtime profile reads and campaign logic do not use `profiles.json` or `campaigns.json` once Phase 8 and KV-authoritative campaigns are enabled.
 
 90.5.3 Alias / ULID Seeding
 
@@ -5915,15 +5983,26 @@ B) Required Metadata (Mandatory)
 The following metadata keys MUST be present on the Checkout Session
 and MUST be copied onto the PaymentIntent.
 
-• locationID (slug)     // external identifier; resolved server-side to a canonical ULID
+Common keys:
 • initiationType        // "owner" | "agent" | "platform"
 • campaignPreset        // "visibility" | "promotion"
 • navigenVersion        // spec/app version for audit/debug
 
+Target identity keys (exactly one route MUST be used):
+
+Existing-location route:
+• locationID (slug)     // external identifier; resolved server-side to a canonical ULID
+
+Brand-new private-shell route:
+• draftULID             // server-issued draft identity from /api/location/draft
+• draftSessionId        // server-issued private-shell actor key from /api/location/draft
+
 Rules:
-• locationID (slug) is the only external identifier and MUST be resolved
-  server-side to a canonical ULID via the alias system.
-• Clients and Stripe metadata must never supply ULIDs directly.
+• Existing-location checkout MUST use `locationID` only.
+• Brand-new private-shell checkout MUST use `draftULID` + `draftSessionId`.
+• Arbitrary ULIDs must never be supplied by clients or Stripe metadata.
+• `draftULID` is allowed only when it was server-issued by `/api/location/draft`.
+• Slug is not required for brand-new checkout and is stamped only at publish.
 • initiationType controls attribution logic only; it does not affect authority.
 • ownershipSource determines which ownership window is extended.
 
@@ -6278,7 +6357,7 @@ A) Existing LPM (Claim by Operation)
 
 • An LPM exists publicly (scraped, commissioned, or system-generated).
 • Any actor may view it in the unowned (public) state.
-• Selecting “Run Campaign” or “Protect This Location” initiates ownership.
+• Selecting “Run Campaign” initiates ownership.
 • Successful payment establishes ownership immediately.
 
 This model treats *operation* as proof of authority.
@@ -6346,13 +6425,19 @@ A paid Plan may be operated in one of two presets:
 • Visibility only
 • Promotion
 
-The preset affects only whether promo / redeem flows are shown in Campaign Management.
+The preset affects whether promo / redeem flows are shown in Campaign Management,
+not whether the paid Plan produces Campaign Entitlement.
 
 Both presets:
 • establish ownership through payment
+• create an entitlement-bearing active row during the active Plan window
 • grant the same analytics privacy and profile control during the active Plan window
 • are time-limited
 • do not create an account or permanent rights
+
+Preset distinction:
+• `Visibility only` suppresses promo / redeem flows in Campaign Management but still counts as CampaignEntitled for Dash access and promoted ordering during the active Plan window.
+• `Promotion` does the same and additionally enables promo / redeem flows.
 
 There is no standalone non-campaign exclusive product.
 
@@ -6453,7 +6538,9 @@ Non-editable fields (hard restrictions):
 • locationID / slug
 • ULID / alias mappings
 • coordinates
-• sectorKey
+• sectorKey / groupKey / subgroupKey
+• context
+• tags
 • finance mappings
 • internal classification
 • QA flags or diagnostics
@@ -6503,10 +6590,11 @@ but never the ability to cause irreversible harm.
 
 Invariants:
 
-• No owner action can remove an LPM from public access.
+• No owner action can directly erase or mutate a published LPM identity.
 • No owner action can suppress a competitor’s discoverability.
 • No owner action can erase historical analytics, QR logs, or stats.
-• No owner action can alter navigation contexts or ranking logic.
+• Normal owner edit flows cannot alter navigation contexts or ranking logic.
+• Post-publish geo / taxonomy correction is permitted only through retire + recreate (Appendix H.6).
 
 Accountability rules:
 
@@ -6561,7 +6649,7 @@ economic attribution, and clear contractual framing rather than technical preven
 Definitions:
 • Profile Edit API: backend endpoint handling owner-initiated profile updates.
 • Editable whitelist: the fixed set of fields owners may modify.
-• Override record: owner-provided values stored separately from base profiles.json.
+• Override record: owner-provided values stored separately from canonical base record `profile_base:<ULID>`.
 • Audit log: append-only record of all edit operations.
 • Ownership gate: enforcement of exclusiveUntil > now.
 
@@ -6621,6 +6709,8 @@ The following fields MUST NEVER be editable via this API:
 • ULID / alias mappings
 • coordinates (lat, lng)
 • sectorKey / groupKey / subgroupKey
+• context
+• tags
 • finance mappings
 • campaign definitions or metadata
 • QA flags or internal diagnostics
@@ -6647,7 +6737,7 @@ Validation failures return a structured error response.
 
 F) Storage Model (Non-Destructive)
 
-Profile edits MUST NOT mutate profiles.json.
+Profile edits MUST NOT mutate `profile_base:<ULID>`.
 
 Instead, the API Worker writes:
 
@@ -6655,8 +6745,8 @@ Instead, the API Worker writes:
 • override_log:<ULID>:<ts>  // append-only audit entry
 
 Rules:
-• overrides shadow base profile fields at read time.
-• base profiles.json remains immutable.
+• overrides shadow canonical base profile fields at read time.
+• `profile_base:<ULID>` remains immutable in normal owner edit flows.
 • override deletion or rollback is possible internally.
 
 --------------------------------------------------------------------
@@ -6668,7 +6758,7 @@ Each audit entry MUST include:
 • edited fields
 • timestamp
 • payment_intent.id (from ownership record)
-• initiationType ("owner" | "agent" | "platform")
+• initiationType for audit attribution MUST be sourced from the persisted `plan:<payment_intent.id>` record; publish MUST NOT call Stripe to recover it.
 
 Audit logs are internal-only and never exposed in UI.
 
@@ -6695,7 +6785,7 @@ Definitions:
 • Publish Capacity: The maximum number of locations that may be published under one Plan.
 • Published Location: A location with an active override layer promoted to public state.
 • KV allocation key: plan_alloc:<payment_intent.id> → { ulids: [<ULID>, ...] }  // published locations counted toward this Plan
-• KV plan record: plan:<payment_intent.id> → { priceId, tier, maxPublishedLocations, purchasedAt, expiresAt }
+• KV plan record: plan:<payment_intent.id> → { priceId, tier, maxPublishedLocations, purchasedAt, expiresAt, initiationType, campaignPreset }
 
 Owner-facing tier contract (authoritative)
 
@@ -6714,6 +6804,14 @@ Plan purchase grants:
 
 • Campaign capability (per-location, per-campaign as defined in Section 8.4)
 • Publish Capacity (maximum number of locations that may be activated)
+
+Cross-phase quota rule:
+• The same resolved Plan tier / `maxPublishedLocations` parameter governs both:
+  - 7A multi-location campaign scope eligibility
+  - Phase 8 publish capacity
+• These are NOT one shared mutable counter.
+• 7A uses the resolved parameter as campaign-scope eligibility / capacity logic.
+• Phase 8 uses `plan_alloc:<payment_intent.id>` + `PlanAllocDO` as the only authoritative published-location counter.
 
 UI gating rule:
 • If maxPublishedLocations = 1, Campaign Management MUST expose only “This location only”.
@@ -6799,7 +6897,7 @@ Drafts may exist without meeting publish requirements.
 
 --------------------------------------------------------------------
 
-B) Field Binding (Authoritative; profiles.json Compatibility)
+B) Field Binding (Authoritative; Published Profile Schema Compatibility)
 
 Validation binds to the following JSON paths:
 
@@ -6846,17 +6944,30 @@ D) Structural Invariants
 • Slug is immutable after publish.
 • Geo changes do NOT regenerate slug.
 • Publish validation is structural only (no ownership verification of URLs).
-• Draft state is never subject to publish validation.
+• Publish validation MUST evaluate the prospective effective published profile, not the raw draft payload.
+• Existing-location route validates current effective published state merged with draft changes.
+• Brand-new route validates the first-publish materialized profile derived from draft and optional provider hydration.
+• Draft state alone is never publicly authoritative.
 
 --------------------------------------------------------------------
 
-E) Non-Requirements
+F) Classification & Context Contract (Owner Platform)
 
-The following are NOT required for publish:
+During draft / publish authoring:
 
-• Phone  
-• Email  
-• Postal verification  
+• BO chooses `groupKey` directly from the controlled platform group list.
+• `subgroupKey` MUST be chosen from the selected group’s subgroup list only.
+• A location has exactly one `groupKey` and exactly one `subgroupKey`.
+• `context` MUST be chosen only from existing `contexts.json` shells.
+• Multi-select `context` membership is allowed.
+• BOs MUST NOT create new contexts, free-type contexts, or submit out-of-catalog values.
+• `context` membership drives `ContextShardDO` indexing exclusively.
+• `tags` MAY be captured as search-match terms, but only in validated normalized form.
+
+After publish:
+
+• `groupKey`, `subgroupKey`, `context`, and `tags` are immutable in normal owner edit flows.
+• Correction requires retire + recreate under Appendix H.6. 
 
 --------------------------------------------------------------------
 
@@ -6872,11 +6983,15 @@ Campaign lifecycle remains KV-authoritative and per-location (Section 8.4).
 
 --------------------------------------------------------------------
 
-A) Draft Save API (Create / Update Draft)
+A) Draft Save API (Create / Update Draft / Private Shell)
 
 Purpose:
-• Persist a server-side draft for a location without publishing.  
-• Drafts are not indexed and have no discoverability effect.  
+• Persist a server-side private shell for a location without publishing.
+• Support three authoring routes:
+  – existing location draft by `locationID`
+  – new manual shell
+  – new Google-reference shell
+• Drafts are not indexed and have no discoverability effect.
 
 Method: POST  
 Path: /api/location/draft  
@@ -6884,103 +6999,157 @@ Auth requirement: none (draft existence does not imply authority)
 
 Draft Identity (actorKey Contract)
 
-• actorKey MUST be a server-issued `draftSessionId` (opaque, random, unguessable).  
-• On first draft creation, API Worker returns `draftSessionId`.  
-• Client MUST store `draftSessionId` locally and include it in subsequent draft saves.  
-• Draft storage key: `override_draft:<draftULID>:<draftSessionId>`  
-• `draftSessionId` is not an account identifier and grants no authority.  
+• actorKey MUST be a server-issued `draftSessionId` (opaque, random, unguessable).
+• On first draft creation, API Worker returns `draftSessionId`.
+• Client MUST store `draftSessionId` locally and include it in subsequent draft saves.
+• Draft storage key: `override_draft:<ULID>:<draftSessionId>`
+• `draftSessionId` is not an account identifier and grants no authority.
 
 Input (conceptual)
 
-• `locationID?` (slug) — optional  
-• `draft` — partial profile object compatible with profiles.json schema  
+• `locationID?` (slug) — existing-location route
+• `draftULID?` — brand-new draft reference
+• `googlePlaceId?` — optional Google `place_id` / `googlePlaceId` for Google-reference shell
+• `draft` — partial profile object compatible with the published profile schema
 
 Behavior (authoritative)
 
 1) If `locationID` is provided:
-   • Resolve slug → ULID via `alias:<slug>`  
-   • Write `override_draft:<ULID>:<draftSessionId>`  
+   • Resolve slug → ULID via `alias:<slug>`
+   • Write `override_draft:<ULID>:<draftSessionId>`
 
-2) If `locationID` is absent:
-   • Mint new `draftULID`  
-   • Mint new `draftSessionId`  
-   • Write `override_draft:<draftULID>:<draftSessionId>`  
-   • Slug + alias are NOT minted during draft  
-   • Public identity (slug) is minted only at publish (Appendix H)  
+2) If `draftULID` is provided:
+   • Require `draftSessionId`
+   • Write `override_draft:<draftULID>:<draftSessionId>`
+   • MUST NOT mint a new `draftULID`
+   • Slug + alias are NOT minted during draft
+
+3) If `locationID` is absent and `draftULID` is absent and `googlePlaceId` is absent:
+   • Mint new `draftULID`
+   • Mint new `draftSessionId`
+   • Write `override_draft:<draftULID>:<draftSessionId>`
+   • Slug + alias are NOT minted during draft
+
+4) If `locationID` is absent and `draftULID` is absent and `googlePlaceId` is provided:
+   • Mint new `draftULID`
+   • Mint new `draftSessionId`
+   • Write `override_draft:<draftULID>:<draftSessionId>` including provider reference only
+   • Provider hydration is deferred until publish / post-payment flow
+   • Slug + alias are NOT minted during draft
 
 Draft Invariants
 
-• Draft records are unlimited  
-• Draft writes MUST NOT trigger DO index updates  
-• Draft writes MUST NOT create ownership or publish authority  
+• Draft records are unlimited
+• Draft writes MUST NOT trigger DO index updates
+• Draft writes MUST NOT create ownership or publish authority
+• Draft UI MAY show a generated slug preview derived from current `locationName` + current draft coordinates
+• The preview is advisory only; final slug is stamped only at publish
 
 Response
 
-• `{ ok: true, draftULID: <ULID>, draftSessionId: <string>, locationID?: <slug> }`  
-• 404 if `locationID` cannot be resolved  
-• 400 on invalid payload  
+• Existing-location route:
+  `{ ok: true, locationID: <slug>, draftSessionId: <string> }`
+• New-shell routes:
+  `{ ok: true, draftULID: <ULID>, draftSessionId: <string> }`
+• 404 if `locationID` cannot be resolved
+• 400 on invalid payload
 
 --------------------------------------------------------------------
 
-B) Publish API (Promote Draft → Published Override)
+B) Publish API (Promote Private Shell → Published Override)
 
 Purpose:
-• Promote draft into authoritative published override (`override:<ULID>`)  
-• Enforce publish capacity via `PlanAllocDO`  
-• Trigger DO index updates  
+• Promote draft into authoritative published state (`profile_base:<ULID>` + `override:<ULID>`)
+• Enforce publish capacity via `PlanAllocDO`
+• Stamp final slug only at publish
+• Trigger DO index updates
 
 Method: POST  
 Path: /api/location/publish  
 
 Auth requirements:
 
-• Valid Operator Session (`op_sess → opsess:<id>`) bound to this ULID  
-• Active ownership window (`ownership:<ULID>.exclusiveUntil > now`)  
-• Active Plan aligned with ownership  
+• Valid Operator Session (`op_sess → opsess:<id>`) bound to the target ULID
+• Active ownership window (`ownership:<ULID>.exclusiveUntil > now`)
+• Active Plan aligned with ownership
+
+Brand-new private-shell rule:
+• Before slug exists, the target ULID is the `draftULID`.
+• Operator Session and ownership MAY bind to `draftULID` before publish.
+• Slug stamping does not change ULID; it only creates the public alias / identity.
 
 Input (conceptual)
 
-• `locationID` (slug) — required  
-• `sourceDraftActorKey?` — optional (defaults to caller’s draftSessionId)  
+• Existing-location route:
+  – `locationID` (slug)
+• Brand-new route:
+  – `draftULID`
+  – `draftSessionId`
+• `sourceDraftActorKey?` — optional (defaults to caller’s `draftSessionId`)
 
 Publish Steps (authoritative order)
 
-1) Resolve slug → ULID via `alias:<slug>`  
-2) Validate Operator Session  
-3) Validate ownership window  
-4) Validate Plan (KV-based only)  
-   • `payment_intent.id = ownership.lastEventId`  
-   • Read `plan:<payment_intent.id>`  
-   • Require plan exists  
-   • Require `now < plan.expiresAt`  
-   • Require `plan.expiresAt == ownership.exclusiveUntil`  
-   • Extract `maxPublishedLocations`  
-   • Publish MUST NOT call Stripe  
+1) Resolve target ULID
+   • Existing-location route: resolve `locationID` → ULID via `alias:<slug>`
+   • Brand-new route: require valid `draftULID` + `draftSessionId`
 
-5) Capacity enforcement (serialized)  
-   • Reserve via `PlanAllocDO(payment_intent.id)`  
-   • If rejected → 403 (no writes)  
-   • If accepted → proceed  
-   • `plan_alloc:<pi>` is mirror only  
+2) Validate Operator Session
 
-6) Load draft payload  
-   • From `override_draft:<ULID>:<draftSessionId>`  
+3) Validate ownership window
 
-7) Validate publish rules (Section 92.3.3)  
+4) Validate Plan (KV-based only)
+   • `payment_intent.id = ownership.lastEventId`
+   • Read `plan:<payment_intent.id>`
+   • Require plan exists
+   • Require `now < plan.expiresAt`
+   • Require `plan.expiresAt == ownership.exclusiveUntil`
+   • Extract `maxPublishedLocations`
+   • Publish MUST NOT call Stripe
 
-8) Commit (authoritative)  
-   • Write `override:<ULID>`  
-   • Write `override_log:<ULID>:<timestamp>`  
+5) Load draft payload
+   • From `override_draft:<ULID>:<draftSessionId>`
 
-9) Index update (best-effort)  
-   • Send DO IndexUpsert to SearchShardDO + ContextShardDO  
-   • DO failure MUST NOT rollback KV commit  
+6) Optional post-payment hydration
+   • If draft contains `googlePlaceId`, API Worker MAY hydrate provider-backed fields at publish time
+   • BO draft values win
+   • Imported/provider values fill only missing gaps
+
+7) Validate publish rules (Section 92.3.3)
+
+8) Capacity enforcement (serialized)
+   • Reserve via `PlanAllocDO(payment_intent.id)`
+   • If rejected → 403 (no writes)
+   • If accepted → proceed with provisional hold only
+   • `plan_alloc:<pi>` is mirror only
+
+9) Slug handling
+   • Existing-location route:
+     – preserve the current canonical slug
+     – MUST NOT mint a new slug or rewrite alias identity
+   • Brand-new route:
+     – Normalize coordinates to 6 decimals
+     – Compute slug from current `locationName` + geo suffix using Appendix G / Appendix H
+     – Enforce collision handling
+     – Write `alias:<slug> → { locationID: <ULID> }`
+     – Set `profile_base:<ULID>.locationID = <slug>`
+
+10) Commit (authoritative)
+   • On first publish, materialize `profile_base:<ULID>` as the canonical published base record.
+   • `override:<ULID>` represents only the active published delta relative to `profile_base:<ULID>` and MAY be empty on first publish.
+   • On re-publish, `profile_base:<ULID>` remains the canonical base and published changes are expressed through `override:<ULID>`.
+   • Write `override_log:<ULID>:<timestamp>`.
+   • After KV commit succeeds, finalize the PlanAllocDO hold
+   • If any step fails before KV commit succeeds, release the provisional hold
+
+11) Index update (best-effort)
+   • Send DO IndexUpsert to SearchShardDO + ContextShardDO
+   • DO failure MUST NOT rollback KV commit
 
 Response
 
-• `200 { ok: true, locationID: <slug> }`  
-• `401 { ok:false, reason:"session_required" }`  
-• `403 { ok:false, reason:"ownership_inactive" | "plan_inactive" | "plan_missing" | "capacity_exceeded" | "validation_failed" }`  
+• `200 { ok: true, locationID: <slug> }`
+• `401 { ok:false, reason:"session_required" }`
+• `403 { ok:false, reason:"ownership_inactive" | "plan_inactive" | "plan_missing" | "capacity_exceeded" | "validation_failed" }`
 • `404 { ok:false, reason:"not_found" }`  
 
 --------------------------------------------------------------------
@@ -7559,7 +7728,7 @@ This table lists key families referenced by the spec. It is a collision audit an
 | ownership:<ULID> | ownership window (exclusiveUntil) | API Worker (webhook) | Establishes owner capabilities |
 | opsess:<sessionId> | operator session record | API Worker | Cookie op_sess points here |
 | profile_base:<ULID> | KV canonical profile (profiles.json schema) | API Worker | Locations Project authority |
-| override:<ULID> | published override snapshot | API Worker | Non-destructive edits |
+| override:<ULID> | published override delta relative to `profile_base:<ULID>` | API Worker | Non-destructive edits |
 | override_log:<ULID>:<ts> | append-only edit audit trail | API Worker | Internal-only |
 | override_draft:<ULID>:<actorKey> | draft overrides | API Worker | Unlimited; never indexed |
 | campaigns:byUlid:<ULID> | campaign rows array | API Worker | Campaign authority |
@@ -7570,7 +7739,7 @@ This table lists key families referenced by the spec. It is a collision audit an
 | billing:<token> | billing record per redeem token | API Worker | Internal-only |
 | agent_attribution:<agentId>:<ULID> | agent attribution & cap tracking | API Worker | Internal-only |
 | plan_alloc:<payment_intent.id> | published locations counted toward a Plan | API Worker | { ulids: [<ULID>, ...] }; used to enforce maxPublishedLocations |
-| plan:<payment_intent.id> | Plan record (priceId, tier, maxPublishedLocations, expiry) | API Worker | Authoritative source for publish capacity |
+| plan:<payment_intent.id> | Plan record (priceId, tier, maxPublishedLocations, purchasedAt, expiresAt, initiationType, campaignPreset) | API Worker | Authoritative source for publish capacity and publish/audit provenance |
 
 Collision assessment:
 • No prefix collisions detected among the listed families.
@@ -7596,7 +7765,9 @@ User (BO) ── choose plan ──> choose campaign scope ──> choose locati
    │                                                                                  v
    │                                                                        API Worker / webhook processor
    │                                                                        - verify Stripe signature
-   │                                                                        - resolve slug → ULID via alias:<slug>
+   │                                                                        - resolve target identity route:
+   │                                                                          • existing-location → locationID via alias:<slug> → ULID
+   │                                                                          • brand-new private shell → draftULID + draftSessionId → ULID   
    │                                                                        - write/extend ownership:<ULID>
    │                                                                        - (if applicable) activate campaign row(s)
    │                                                                        - persist plan tier for publish capacity
@@ -7860,11 +8031,19 @@ H.4 Draft Phase Behavior (Pre-publish)
 
 During draft phase:
 • Coordinates MAY be updated unlimited times.
+• `locationName` MAY be updated unlimited times.
 • Draft saves MUST NOT mint the final slug.
 • Draft saves MUST NOT trigger DO indexing.
 
 Draft storage:
-• override_draft:<ULID>:<actorKey> MAY include coordinates.
+• `override_draft:<ULID>:<actorKey>` MAY include coordinates, `locationName`,
+  `groupKey`, `subgroupKey`, `context`, `tags`, and provider references such as `googlePlaceId`.
+
+UI behavior:
+• Owner Platform MAY show a generated slug preview during draft.
+• The preview MUST be derived from the current draft `locationName` + current draft coordinates.
+• The preview is advisory only and MUST NOT create alias mappings or public identity.
+• BO does not type the authoritative slug directly.
 
 Note:
 Draft ULID is internal and not exposed as public identity.
@@ -7876,14 +8055,16 @@ This Appendix supersedes any earlier draft flow text that implies slug or alias 
 
 H.5 Publish-Time “Stamping” (Slug Mint)
 
-Publish performs the canonical stamping step:
+First publish of a brand-new location performs the canonical stamping step.
 
-Inputs required:
-• business name
+Existing published locations preserve their current slug on re-publish and MUST NOT re-stamp public identity.
+
+Inputs required for first publish:
+• current draft `locationName`
 • normalized coordinates (6 decimals)
 
 Steps:
-1) Compute slug using Appendix G.
+1) Compute slug using Appendix G from current `locationName` + geo suffix.
 2) Enforce collision resolution (Appendix G.6).
 3) Create alias mapping:
        alias:<slug> → { locationID: <ULID> }
@@ -7897,7 +8078,7 @@ Once this completes:
 
 --------------------------------------------------------------------
 
-H.6 “Wrong entrance” / Geo correction policy
+H.6 Retire + Recreate Policy (Post-publish Geo / Taxonomy Correction)
 
 Correction is permitted only before publish:
 
@@ -7907,11 +8088,23 @@ Correction is permitted only before publish:
 
 After publish:
 • Coordinate edits are forbidden in owner edit API (/api/profile/update whitelist).
+• `groupKey`, `subgroupKey`, and `context` edits are forbidden in normal owner edit flows.
 • The system does not support “move slug to new geo”.
 
-If a post-publish geo correction is required:
+If a post-publish geo or taxonomy correction is required:
+• The BO MUST use retire + recreate.
 • A new location must be created and published separately.
-• Old location may be set not discoverable by normal timeline rules.
+• The retiring location may be set not discoverable by normal timeline rules.
+• A replacement private shell MAY be prefilled from the retiring location’s content only.
+• Content carry-over MAY include name, description, media, contacts, links, tags,
+  `groupKey`, `subgroupKey`, `context`, and draft coordinates.
+• Identity and history MUST NOT carry over:
+  – ULID
+  – slug
+  – alias mappings
+  – ownership history
+  – campaigns
+  – stats / qrlog / billing history
 
 This preserves identity stability and prevents link/QR breakage.
 
@@ -7924,10 +8117,11 @@ Owner Platform UI MUST explain why coordinates are required:
 • NaviGen is a geo-based platform.
 • Large sites / parks may require multiple internal locations for navigation.
 • Coordinates determine stable identity (slug) and reliable customer routing.
+• The UI SHOULD make the link between `locationName` + coordinates and the generated slug preview visible before publish.
 
 UI must present coordinates input in a user-friendly manner
-(e.g., “Paste from Google Maps” guidance), but the authoritative contract
-remains server-side.
+(e.g., “Paste from Google Maps” guidance or Google `place_id` lookup guidance),
+but the authoritative contract remains server-side.
 
 --------------------------------------------------------------------
 
@@ -7962,7 +8156,7 @@ Pages Worker — routing, QR redirect, app hosting
 
 API Worker — all business logic: token issuance, redeem, stats, QA
 
-Dataset Layer — profiles.json, finance.json, contexts.json
+Dataset Layer — KV-backed runtime profile authority plus finance.json, contexts.json, and i18n bundles
 
 KV Stores — stats counters, qrlog entries, redeem tokens, alias mappings, QA flags
 
@@ -8395,7 +8589,7 @@ While you are the Owner of a location:
 Ownership is time-based and tied to real activity.
 There are no permanent accounts and no hidden commitments.
 
-When ownership ends, the location simply becomes public again.
+When ownership ends, analytics access is lost and the location returns to normal public discoverability rules.
 
 --------------------------------------------------------------------
 
@@ -8482,14 +8676,22 @@ B2. Required Checkout Configuration
   tax_id_collection:
       enabled: true   // optional but recommended
   metadata:
-      locationID (slug)
       campaignKey
       initiationType: "owner" | "agent" | "platform"
       campaignPreset: "visibility" | "promotion"
       navigenVersion
 
-  locationID (slug) is resolved server-side to a canonical ULID via the alias system.
-  ULIDs must never be supplied by clients or Stripe metadata.
+      // exactly one target identity route:
+      // Existing-location route:
+      locationID (slug)
+
+      // Brand-new private-shell route:
+      draftULID
+      draftSessionId
+
+  Existing-location checkout resolves `locationID` server-side to a canonical ULID via the alias system.
+  Brand-new checkout resolves `draftULID` + `draftSessionId` as the authoritative pre-slug target identity.
+  Arbitrary ULIDs must never be supplied by clients or Stripe metadata.
 
 B3. Webhook Processing (checkout.session.completed → API Worker)
 
@@ -8514,13 +8716,17 @@ Rules:
 • Stripe-provided email may be used to send owner reminder or recovery emails that reference Payment ID (pi_...), but MUST NOT be stored in NaviGen KV/logs/datasets.
 
   Steps:
-    1. Validate required metadata (locationID, initiationType, campaignPreset)
-    2. Resolve canonical ULID from locationID via the alias system
+    1. Validate one valid target identity route in metadata:
+         • existing-location: locationID
+         • brand-new private shell: draftULID + draftSessionId
+    2. Resolve canonical ULID:
+         • existing-location route → from locationID via the alias system
+         • brand-new private-shell route → from server-issued draftULID after validating draftSessionId
     3. Resolve ownership record for the canonical ULID
     4. Extend ownership window for the purchased Plan and persist the selected campaignPreset
        When persisting plan:<payment_intent.id>, set expiresAt = ownership:<ULID>.exclusiveUntil (post-extension value).
     5. Persist Plan record:
-        write plan:<payment_intent.id> = { priceId, tier, maxPublishedLocations, purchasedAt, expiresAt }
+        write plan:<payment_intent.id> = { priceId, tier, maxPublishedLocations, purchasedAt, expiresAt, initiationType, campaignPreset }
     6. Write billing ledger TopUp entry
     7. Activate campaign if applicable
     8. Write agent attribution record if agentId present
@@ -9061,7 +9267,8 @@ Reserve response (v1):
   "ok": true,
   "alreadyAllocated": false,
   "allocatedCount": 3,
-  "max": 3
+  "max": 3,
+  "reservationState": "held"
 }
 
 Rejection response (v1):
@@ -9073,9 +9280,32 @@ Rejection response (v1):
   "max": 3
 }
 
+Commit request (v1):
+
+{
+  "ver": 1,
+  "op": "commit",
+  "pi": "pi_...",
+  "ulid": "01H...",
+  "ts": "ISO-8601"
+}
+
+Release request (v1):
+
+{
+  "ver": 1,
+  "op": "release",
+  "pi": "pi_...",
+  "ulid": "01H...",
+  "ts": "ISO-8601"
+}
+
 Rules:
-• If ulid is already allocated → ok:true, alreadyAllocated:true.
-• If capacity would be exceeded → ok:false, reason:"capacity_exceeded".
+• If ulid is already fully allocated → reserve MAY return ok:true, alreadyAllocated:true.
+• If capacity would be exceeded → reserve returns ok:false, reason:"capacity_exceeded".
+• `reserve` creates a provisional hold only.
+• `commit` finalizes the held allocation after authoritative KV publish commit succeeds.
+• `release` removes a provisional hold when validation fails or a later publish write aborts before commit.
 • The API Worker MUST treat ok:false as a publish rejection (403) with no side effects.
 
 Optional snapshot request (v1, non-authoritative UI/debug only):
@@ -9094,11 +9324,14 @@ Snapshot MUST NOT be required for publish.
 D) Integration Rules
 
 Publish flow:
-• MUST call PlanAllocDO reserve BEFORE writing alias/profile_base/override.
+• MUST complete structural validation before finalizing capacity consumption.
+• API Worker MAY call PlanAllocDO reserve before final KV writes only if it also supports commit / release.
+• If reserve succeeds and a later publish step fails before authoritative KV commit, API Worker MUST call release.
+• After authoritative KV commit succeeds, API Worker MUST call commit for the held allocation.
 • MUST NOT call Stripe in publish.
 
 Mirroring:
-• After a successful reserve, API Worker MAY update KV plan_alloc:<pi> as a best-effort mirror.
+• After a successful commit, API Worker MAY update KV plan_alloc:<pi> as a best-effort mirror.
 • Mirror failures MUST NOT rollback publish.
 
 --------------------------------------------------------------------

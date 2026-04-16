@@ -1646,7 +1646,7 @@ async function initEmergencyBlock(countryOverride) {
 
     const fetchListPage = async (url) => {
       let res = await fetch(url, {
-        credentials: 'omit',              // no cookies → no credentialed CORS needed
+        credentials: 'include',              // no cookies → no credentialed CORS needed
         cache: 'no-store',
         headers: {} // rely on fetch's cache: 'no-store'
       });
@@ -1656,7 +1656,7 @@ async function initEmergencyBlock(countryOverride) {
       if (res && res.status === 404) {
         const alt = new URL(url.toString());
         if (!alt.pathname.endsWith('/')) alt.pathname += '/';
-        const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store', headers: {} }); // same headers/policy
+        const r2 = await fetch(alt, { credentials: 'include', cache: 'no-store', headers: {} }); // same headers/policy
         if (r2.ok) res = r2;
       }
 

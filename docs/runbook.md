@@ -274,10 +274,10 @@ git push origin main
 ### 12.2 Backend — API Worker (Production)
 
 cd C:\Users\USER\Documents\a_git\navigen-go\backend\worker
-git add .
+git add -A
 git commit -m "Backend deploy"
 git push origin main
-
+wrangler deploy
 cd C:\Users\USER\Documents\a_git\navigen-go\backend\worker
 wrangler deploy
 

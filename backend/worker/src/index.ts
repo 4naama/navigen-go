@@ -5017,7 +5017,8 @@ async function planAllocCall(env: Env, pi: string, op: string, payload: Record<s
   const ns =
     (env as any).PLAN_ALLOC ||
     (env as any).PLANALLOC ||
-    (env as any).PLAN_ALLOC_DO;
+    (env as any).PLAN_ALLOC_DO ||
+    (env as any).DO_PLAN_ALLOC;
 
   if (!ns || typeof ns.idFromName !== "function") {
     throw new Error("planalloc_binding_missing");
@@ -5125,7 +5126,8 @@ async function searchShardCall(
   const ns =
     (env as any).SEARCH_SHARD ||
     (env as any).SEARCH ||
-    (env as any).SEARCH_DO;
+    (env as any).SEARCH_DO ||
+    (env as any).DO_SEARCH_SHARD;
 
   if (!ns || typeof ns.idFromName !== "function") {
     throw new Error("searchshard_binding_missing");
@@ -5152,7 +5154,8 @@ async function contextShardCall(
   const ns =
     (env as any).CONTEXT_SHARD ||
     (env as any).CONTEXT ||
-    (env as any).CONTEXT_DO;
+    (env as any).CONTEXT_DO ||
+    (env as any).DO_CTX_SHARD;
 
   if (!ns || typeof ns.idFromName !== "function") {
     throw new Error("contextshard_binding_missing");
@@ -5859,6 +5862,33 @@ function statusKey(locationID: string): string {
 
 function aliasKey(legacy: string): string {
   return `alias:${legacy}`;
+}
+
+async function resolveUid(idOrAlias: string, env: Env): Promise<string | null> {
+  if (!idOrAlias) return null;
+
+  // If it already looks like a ULID, accept directly.
+  if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(idOrAlias)) return idOrAlias;
+
+  const key = aliasKey(idOrAlias);
+  const raw = await env.KV_ALIASES.get(key, "text");
+  if (!raw) return null;
+
+  const txt = String(raw || "").trim();
+  if (!txt) return null;
+
+  // Legacy compatibility:
+  // - plain ULID string
+  // - JSON string
+  // - JSON object { locationID: "<ULID>" }
+  if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(txt)) return txt;
+
+  try {
+    const parsed = JSON.parse(txt);
+    return (typeof parsed === "string" ? parsed : parsed?.locationID) || null;
+  } catch {
+    return null;
+  }
 }
 
 // Silent QA auto-tagging: store per-location QA flags alongside status/tier in KV_STATUS.

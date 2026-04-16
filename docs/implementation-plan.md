@@ -52,7 +52,7 @@ Explicit non-goals:
 Storage (Phase 1):
 • ownership:<ULID> stored in KV_STATUS
 • stripe_processed:<payment_intent.id> stored in KV_STATUS
-• plan:<payment_intent.id> stored in KV_STATUS (priceId + tier + maxPublishedLocations)
+• plan:<payment_intent.id> stored in KV_STATUS (priceId + tier + maxPublishedLocations + purchasedAt + expiresAt + initiationType + campaignPreset)
 • KV_OWNERSHIP and KV_IDEMPOTENCY are reserved for a later refactor
 
 Processing order:
@@ -72,7 +72,7 @@ Processing order:
 Happy-path tests:
 • Valid webhook creates ownership record
 • Repeat webhook does not extend ownership twice
-• plan:<payment_intent.id> is stored correctly (priceId / tier / maxPublishedLocations)
+• plan:<payment_intent.id> is stored correctly (priceId / tier / maxPublishedLocations / purchasedAt / expiresAt / initiationType / campaignPreset)
 • campaignPreset is stored correctly when supplied
 
 Failure & safeguard tests:
@@ -196,8 +196,14 @@ Validation rules:
 • Fetch Checkout Session using STRIPE_SECRET_KEY
 • Fetch Checkout Session line items and persist plan:<payment_intent.id> using internal price.id → tier mapping
 • Require payment_status="paid" and status="complete"
-• Require metadata.locationID
-• Resolve locationID → ULID via KV_ALIASES
+• Require one valid target identity route:
+  - existing-location: metadata.locationID
+  - brand-new private shell: metadata.draftULID + metadata.draftSessionId
+• Existing-location route:
+  - resolve locationID → ULID via KV_ALIASES
+• Brand-new private-shell route:
+  - treat draftULID as the authoritative target ULID before slug exists
+  - validate draftSessionId against the server-issued private-shell record
 • Reconcile ownership:<ULID> idempotently if missing/stale, then verify ownership:<ULID>.exclusiveUntil > now and ownership.lastEventId == payment_intent.id
 • Persist plan:<payment_intent.id> with expiresAt = ownership:<ULID>.exclusiveUntil (post-reconciliation)
 
@@ -232,8 +238,14 @@ Validation rules:
 • Lookup Checkout Session by payment_intent=pi_*
 • Fetch Checkout Session line items and persist plan:<pi_*> using internal price.id → tier mapping
 • Require payment_status="paid" AND status="complete"
-• Require metadata.locationID
-• Resolve locationID → ULID via KV_ALIASES
+• Require one valid target identity route:
+  - existing-location: metadata.locationID
+  - brand-new private shell: metadata.draftULID + metadata.draftSessionId
+• Existing-location route:
+  - resolve locationID → ULID via KV_ALIASES
+• Brand-new private-shell route:
+  - treat draftULID as the authoritative target ULID before slug exists
+  - validate draftSessionId against the server-issued private-shell record
 • Reconcile ownership:<ULID> idempotently if missing/stale, then verify ownership:<ULID>.exclusiveUntil > now and ownership.lastEventId == pi_*
 • Persist plan:<pi_*> with expiresAt = ownership:<ULID>.exclusiveUntil (post-reconciliation)
 
@@ -392,11 +404,12 @@ PHASE 3 — DASH & STATS GATING (OWNER-ONLY ANALYTICS)
 
 Goal (plain language):
 Prevent any real analytics from being shown unless:
-• the location is owned, and
-• the requester has a valid owner session.
+• the location is owned,
+• the requester has a valid owner session, and
+• Campaign Entitlement is active.
 
 Dash must be either:
-• fully accessible (owned + session), or
+• fully accessible (owned + valid session + Campaign Entitlement), or
 • fully blocked (all other cases).
 
 There is no partial visibility and no public fallback.
@@ -427,7 +440,8 @@ Analytics access is binary.
 Rules:
 • If ownership does not exist → analytics blocked
 • If ownership exists but no valid session → analytics blocked
-• If ownership exists and session valid → analytics allowed
+• If ownership exists and session is valid but Campaign Entitlement is inactive → analytics blocked
+• If ownership exists, session is valid, and Campaign Entitlement is active → analytics allowed
 • If location is flagged as Example Location → analytics allowed
 
 Blocked means:
@@ -460,12 +474,11 @@ Tech cookbook:
 5) If all checks pass → return full stats payload
 
 Blocked response contract:
-• HTTP 403 (or 200 with `{ blocked: true }`, choose one and be consistent)
+• HTTP 401 when the operator session is missing or expired
+• HTTP 403 when the operator session is valid but Campaign Entitlement is inactive or ownership is expired
+• HTTP 404 when the location is not resolvable
 • MUST NOT include any analytics fields
 • MUST be distinguishable by Dash UI
-
-A wrong-ULID request must return 403 Forbidden only after a valid owner session is established.
-If no valid session exists, 401 Unauthorized takes precedence.
 
 --------------------------------------------------------------------
 3.3 Dash UI behavior on blocked responses
@@ -494,7 +507,7 @@ Certain locations are explicitly allowed to show Dash without ownership.
 These are examples, not demos.
 
 Tech cookbook:
-• Example flag source: internal flag (per spec 8.3.1.1)
+• Example flag source: internal flag (per spec 8.3.3)
 • Gate bypass applies only if flag is true
 • All other rules remain unchanged
 
@@ -622,8 +635,10 @@ Rules:
 
 Decision table:
 
-A) Owned + valid session
+A) Owned + valid session + CampaignEntitled
 → Open Dash normally (/dash/<ULID>)
+A2) Owned + valid session + no CampaignEntitlement
+→ Do not open Dash; open the campaign-required owner-state instead
 
 B) Owned + no valid session
 → Dash is blocked
@@ -833,7 +848,7 @@ Explicit non-goals:
 
 Dependencies:
 • Modal system is available (modal-injector.js)
-• Existing flows for Campaign Funding / Campaign Management, Restore Access, MSM, Promotions, Help
+• Existing flows for Campaign Funding / Campaign Management, Owner Center, MSM, Promotions, Help
 
 --------------------------------------------------------------------
 5.1 Root shell detection (authoritative)
@@ -884,20 +899,19 @@ UI contract:
 
 Actions (minimum set):
 
-1) Run campaign
-   • Opens Campaign Funding / Plan selection
-   • If a location context is later required, prompt user to select a location
+1) How it works?
+   • Opens an explanatory modal
 
-2) Restore access
-   • Opens Restore Access modal
-   • Displays guidance to use the Payment ID (pi_...) from Stripe receipt / invoice / payment email
+2) Run campaign
+   • Opens a location selector
+   • Routes the chosen location into Owner Settings / Campaign Funding flow
 
-3) See example dashboards
+3) Owner Center
+   • Opens Owner Center modal for previously authenticated locations on this device
+
+4) See example dashboards
    • Opens Example Dashboards modal
    • Displays 3–6 designated example locations
-
-4) Find my location (optional)
-   • Focuses search or opens location selector
 
 Rules:
 • No analytics data is shown directly in this group.
@@ -1791,7 +1805,7 @@ Phase 7A is complete when:
 • scope = all auto-inherits newly eligible same-device additions only while capacity remains
 • both notices (immediate + inline) are present
 • inline upgrade path appears for scope / capacity overflow
-• Visibility only hides promo setup without changing paid rights
+• Visibility only hides promo setup but still creates an entitlement-bearing active row for Dash/private analytics and promoted ordering during the active Plan window
 • suspend/resume works for all, selected, and local override
 • single-location flows remain unchanged
 • no location-creation dependency exists
@@ -1801,27 +1815,36 @@ PHASE 8 — LOCATIONS PROJECT (DRAFT + PUBLISH + DO INDEX)
 --------------------------------------------------------------------
 
 Goal (plain language):
-Enable Business Owners to create and publish Location Profiles without JSON export tooling,
-using KV-backed canonical records + published overrides, with DO-backed indexing.
+Enable Business Owners to create and publish Location Profiles through a
+private-shell flow, using `/api/location/draft` + `/api/location/publish`,
+KV-backed runtime authority, and DO-backed indexing.
 
 Scope (Phase 8 only):
-• /api/location/draft endpoint (draft creation + updates)
-• /api/location/publish endpoint (publish promotion to override:<ULID>)
-• PlanAllocDO capacity enforcement (maxPublishedLocations)
-• DO index upsert wiring (SearchShardDO + ContextShardDO)
-• Read-path compatibility: KV-first, fallback to profiles.json where required
+• `/api/location/draft` private shell endpoint
+• existing-location draft route via `locationID`
+• brand-new manual shell via `draftULID` + `draftSessionId`
+• brand-new Google-reference shell via `googlePlaceId` (manual Google `place_id` lookup first)
+• `/api/location/publish` authoritative publish endpoint
+• post-payment hydration for Google-reference shells
+• PlanAllocDO capacity enforcement (`maxPublishedLocations`)
+• DO index upsert wiring (`SearchShardDO` + `ContextShardDO`)
+• KV-authoritative runtime reads (`profile_base:<ULID>` + `override:<ULID>`)
 
 Explicit non-goals:
-• No UI wizard implementation (UI comes after backend contracts are proven)
-• No migration removal of profiles.json yet
+• No full UI wizard implementation yet (UI comes after backend contracts are proven)
+• No profiles.json runtime fallback
+• No owner-created contexts
+• No post-publish geo / taxonomy mutation
 • No geocoding/address verification services
 • No geo-fencing of redeems
 • No automatic cross-location campaign propagation
 
 Dependencies:
-• Phase 1 ownership:<ULID> writer exists
-• Phase 2 opsess cookie + session record exists
-• Phase 6 SW network-only rules exist for /api/* and /owner/*
+• Phase 1 `ownership:<ULID>` writer exists
+• Phase 2 `opsess` cookie + session record exists
+• Stripe / ownership bridge supports both `locationID` and `draftULID` + `draftSessionId`
+• Existing public locations are preseeded into `profile_base:<ULID>` before runtime switch
+• Phase 6 SW network-only rules exist for `/api/*` and `/owner/*`
 • Spec sections: 8.3.5, 92.3.2–92.3.4, 13.12, Appendix H, Appendix G
 
 Storage (Phase 8):
@@ -1848,59 +1871,95 @@ Endpoint:
 • POST /api/location/draft
 
 Purpose:
-• Create/update non-authoritative drafts
+• Create/update non-authoritative private shells
+• Support:
+  – existing slug route
+  – new manual shell
+  – new Google-reference shell
 • Allow geo edits pre-publish (coordinates mutable during draft)
+• Allow taxonomy / context selection pre-publish
 • Do not mint final slug during draft phase (Appendix H)
 
 Auth:
 • None (draft has no authority effect)
 
 Behavior:
-A) locationID provided:
-  1) resolve slug → ULID via alias:<slug>
-  2) write override_draft:<ULID>:<actorKey>
-  3) return { ok:true, locationID:<slug> }
+A) existing location route (`locationID` provided):
+  1) resolve slug → ULID via `alias:<slug>`
+  2) write `override_draft:<ULID>:<draftSessionId>`
+  3) return `{ ok:true, locationID:<slug>, draftSessionId:<string> }`
 
-B) locationID absent (new draft shell):
-  1) mint ULID
-  2) store draft payload temporarily without final slug
-  3) return { ok:true, draftULID:<ULID>, draftSessionId:<string> }
+B) existing brand-new draft update (`draftULID` provided):
+  1) require `draftSessionId`
+  2) write `override_draft:<draftULID>:<draftSessionId>`
+  3) do not mint a new `draftULID`
 
-Critical invariant:
-• Draft creation MUST NOT create alias:<slug> unless slug is minted at publish time.
-• Draft writes MUST NOT trigger DO updates.
+C) new manual shell (`locationID` absent, `draftULID` absent, `googlePlaceId` absent):
+  1) mint `draftULID`
+  2) mint `draftSessionId`
+  3) write `override_draft:<draftULID>:<draftSessionId>`
+  4) return `{ ok:true, draftULID:<ULID>, draftSessionId:<string> }`
+
+D) new Google-reference shell (`locationID` absent, `draftULID` absent, `googlePlaceId` provided):
+  1) mint `draftULID`
+  2) mint `draftSessionId`
+  3) persist provider reference only
+  4) do not fetch paid/provider details yet
+  5) return `{ ok:true, draftULID:<ULID>, draftSessionId:<string> }`
+
+Field contract during draft:
+• BO provides `locationName`
+• BO provides editable coordinates
+• BO chooses one `groupKey`
+• BO chooses one `subgroupKey` from the selected group’s subgroup list only
+• BO chooses one or more `context` values from existing `contexts.json` shells only
+• BO may supply tags in normalized / validated form
+• UI MAY show generated slug preview from current `locationName` + current draft coordinates
+• final slug remains publish-only
+
+Critical invariants:
+• Draft creation MUST NOT create `alias:<slug>`
+• Draft writes MUST NOT trigger DO updates
+• Draft writes MUST NOT create public visibility
+• Draft writes MUST NOT create ownership or publish authority
 
 Happy-path tests:
-H1: draft update with existing slug:
-• POST draft with locationID
+H1: draft update with existing slug
 Expected:
-• override_draft written
+• `override_draft` written
 • no DO messages
 • no alias changes
 
-H2: new draft shell without slug:
-• POST draft without locationID
+H2: new manual shell
 Expected:
-• draft record created
+• `draftULID` + `draftSessionId` returned
 • no alias written
 • no DO messages
-• response contains draft reference
 
-H3 — draftSessionId stability:
-• First POST /api/location/draft returns draftSessionId.
-• Subsequent POSTs using the same draftSessionId overwrite only that actor’s draft key.
-• A different draftSessionId produces a separate override_draft record (no collisions).
+H3: new Google-reference shell
+Expected:
+• provider reference persisted
+• no paid/provider hydration yet
+• no alias written
+• no DO messages
+
+H4 — draft identity stability:
+• First POST returns `draftULID` + `draftSessionId`
+• Subsequent brand-new draft saves using the same `draftULID` + `draftSessionId` overwrite exactly that draft key
+• A different `draftSessionId` produces a separate `override_draft` record
 
 Failure & safeguard tests:
 F1: malformed JSON → 400, no writes
 F2: invalid coordinate range → 400, no writes
 F3: invalid slug → 404/400, no writes
+F4: invalid `googlePlaceId` shape → 400, no writes
 S1: existing promo/dash flows unaffected
 
-Ship gate for /api/location/draft:
+Ship gate for `/api/location/draft`:
 • Draft writes never create public visibility
 • Draft writes never alter aliases or DO indexes
 • Draft writes accept geo changes pre-publish
+• Draft writes accept controlled group/subgroup/context selection only
 
 --------------------------------------------------------------------
 8.2 /api/location/publish (Publish API)
@@ -1910,54 +1969,89 @@ Endpoint:
 • POST /api/location/publish
 
 Purpose:
-• Mint final slug (Appendix H)
+• Authoritatively promote a private shell into published state
+• Mint final slug at publish only (Appendix H)
 • Create alias mapping
-• Promote draft to published override (override:<ULID>)
-• Enforce publish capacity via plan_alloc
+• Ensure / materialize `profile_base:<ULID>`
+• Promote draft to published override (`override:<ULID>`)
+• Enforce publish capacity via `PlanAllocDO`
 • Trigger DO index upsert
 
 Auth:
-• require valid Operator Session (op_sess → opsess:<id>)
-• require active ownership window (ownership:<ULID>.exclusiveUntil > now)
+• require valid Operator Session (`op_sess → opsess:<id>`)
+• require active ownership window (`ownership:<ULID>.exclusiveUntil > now`)
+
+Input routes:
+A) existing-location publish:
+   • `locationID`
+B) brand-new publish:
+   • `draftULID`
+   • `draftSessionId`
 
 Publish steps (authoritative):
-1) Verify session:
-   • requireOwnerSession() returns ULID
-2) Verify ownership:
-   • ownership:<ULID>.exclusiveUntil > now
-3) Verify Plan capacity source (deterministic):
-   • payment_intent.id is the Plan allocation key (ownership.lastEventId)
-   • Read plan:<payment_intent.id> from KV_STATUS.
-   • Require now < plan.expiresAt AND plan.expiresAt == ownership.exclusiveUntil (invariant).
-   • Extract { priceId, tier, maxPublishedLocations } from the plan record.
-   • Publish MUST NOT call Stripe.
-   • Reserve allocation atomically via PlanAllocDO(payment_intent.id) before any publish writes.
-   • KV plan_alloc:<payment_intent.id> may be updated as a best-effort mirror after reservation.
-4) Capacity enforcement (authoritative):
-   • Call PlanAllocDO to reserve ULID under payment_intent.id with maxPublishedLocations.
-   • If DO rejects (capacity exceeded) → 403 and abort publish with no writes.
-   • If DO accepts → proceed with publish writes.
-5) Validate publish rules:
-   • ≥ 3 images
-   • description ≥ 200 chars
-   • at least one website OR social link
-   • social fields domain validated
-6) Slug stamping (Appendix H):
-   • normalize coordinates to 6 decimals
-   • compute slug per Appendix G
-   • enforce collision handling (append -2,-3,… if needed)
-   • write alias:<slug> → { locationID:<ULID> }
-   • set profile_base:<ULID>.locationID = slug
-7) Promote draft:
-   • write override:<ULID>
-   • write override_log:<ULID>:<ts> with payment_intent.id + initiationType
-7a) Commit point (authoritative):
-   • Once override:<ULID> and override_log:<ULID>:<ts> are written successfully,
+1) Resolve target ULID:
+   • existing-location route → resolve `locationID` → ULID via `alias:<slug>`
+   • brand-new route → require valid `draftULID` + `draftSessionId`
+
+2) Verify session:
+   • `requireOwnerSession()` returns ULID
+
+3) Verify ownership:
+   • `ownership:<ULID>.exclusiveUntil > now`
+
+4) Verify Plan capacity source (deterministic):
+   • `payment_intent.id` is the Plan allocation key (`ownership.lastEventId`)
+   • Read `plan:<payment_intent.id>` from `KV_STATUS`
+   • Require `now < plan.expiresAt` AND `plan.expiresAt == ownership.exclusiveUntil` (invariant)
+   • Extract `{ priceId, tier, maxPublishedLocations }` from the plan record
+   • Publish MUST NOT call Stripe
+   • Capacity reservation is enforced later in Step 8 as a provisional hold via `PlanAllocDO(payment_intent.id)`
+   • KV `plan_alloc:<payment_intent.id>` may be updated only as a best-effort mirror after successful commit
+
+5) Load draft payload:
+   • From `override_draft:<ULID>:<draftSessionId>`
+
+6) Optional post-payment hydration:
+   • If draft contains `googlePlaceId`, hydrate provider-backed fields now
+   • BO draft values win
+   • Imported/provider fields fill only missing gaps
+
+7) Validate publish rules:
+   • evaluate the prospective effective published profile, not the raw draft payload
+   • existing-location route: validate current effective published profile merged with draft changes
+   • brand-new route: validate the first-publish materialized profile
+
+8) Capacity enforcement (authoritative):
+   • Call `PlanAllocDO` to reserve ULID under `payment_intent.id` with `maxPublishedLocations`
+   • If DO rejects (`capacity_exceeded`) → 403 and abort publish with no writes
+   • If DO accepts → proceed with provisional hold only
+
+9) Slug handling (Appendix H):
+   • existing-location route:
+     – preserve the current canonical slug
+     – do not mint a new slug or rewrite alias identity
+   • brand-new route:
+     – normalize coordinates to 6 decimals
+     – compute slug per Appendix G from current `locationName` + geo suffix
+     – enforce collision handling (append `-2`, `-3`, … if needed)
+     – write `alias:<slug> → { locationID:<ULID> }`
+     – set `profile_base:<ULID>.locationID = <slug>`
+
+10) Publish commit:
+   • ensure / materialize `profile_base:<ULID>`
+   • write `override:<ULID>`
+   • write `override_log:<ULID>:<ts>` with `payment_intent.id` + `initiationType`
+   • finalize the PlanAllocDO hold only after authoritative KV commit succeeds
+   • release the hold if a post-reserve step fails before authoritative KV commit
+
+10a) Commit point (authoritative):
+   • Once `profile_base:<ULID>`, `override:<ULID>`, and `override_log:<ULID>:<ts>` are written successfully,
      publish is considered committed.
    • Subsequent failures (including DO upsert failure) MUST NOT rollback KV writes.
-8) DO upsert:
+
+11) DO upsert:
    • compute tokens + contexts
-   • send IndexUpsert to SearchShardDO and ContextShardDO shards
+   • send `IndexUpsert` to `SearchShardDO` and `ContextShardDO` shards
 
 Optional campaign join step (no automatic propagation):
 If owner chooses to join existing campaigns at publish time:
@@ -1966,17 +2060,31 @@ If owner chooses to join existing campaigns at publish time:
 • no campaignScope="all" dynamic inheritance is permitted
 
 Happy-path tests:
-H3: publish succeeds:
+H3: existing-location publish succeeds:
 • With valid op_sess, active ownership, valid draft
 Expected:
-• alias created
-• profile_base set
+• existing slug route resolves deterministically
+• profile_base present
 • override written
 • override_log written
 • plan_alloc updated
 • DO upsert sent
 
-H4: republish same ULID under same plan:
+H4: brand-new manual publish succeeds:
+Expected:
+• new slug stamped from current `locationName` + geo suffix
+• alias created
+• profile_base materialized
+• override written
+• DO upsert sent
+
+H5: brand-new Google-reference shell hydrates and publishes:
+Expected:
+• provider-backed missing fields filled after payment
+• BO-entered values preserved where present
+• slug stamped only at publish
+
+H6: republish same ULID under same plan:
 Expected:
 • plan_alloc not double-counted
 • override updated
@@ -1985,8 +2093,8 @@ Expected:
 Failure & safeguard tests:
 F4: no session → 401, no writes
 F5: ownership expired → 403, no writes
-F6: capacity exceeded → 403, no writes to override/log/DO
-F7: publish validation fails → 403, no writes to override/log/DO
+F6: capacity exceeded → 403, no writes to profile_base/override/log/DO
+F7: publish validation fails → 403, no writes to profile_base/override/log/DO
 F8: slug collision → suffix increments; alias points to correct ULID
 F9 — Concurrent publish race (capacity = 1):
 • With maxPublishedLocations = N and allocated = N−1,
@@ -2012,41 +2120,98 @@ Ship gate for /api/location/publish:
 • DO index always reflects published state only
 
 --------------------------------------------------------------------
-8.3 Read-path integration (KV-first with fallback)
+8.2a Retire + Recreate (Post-publish Correction Flow)
 --------------------------------------------------------------------
 
 Goal:
-Begin migration without breaking existing client contracts.
+Handle wrong geo / wrong taxonomy after publish without mutating identity.
 
-Changes:
-• /api/data/profile and /api/data/item must return:
-  effectiveProfile = deepMerge(profile_base, override)
-  when profile_base exists for the ULID.
-• If profile_base is missing:
-  fallback to profiles.json read path.
+Rules:
+• Post-publish corrections to coordinates, `groupKey`, `subgroupKey`, or `context`
+  are NOT normal edits.
+• The published location is retired / allowed to become not discoverable by normal rules.
+• A new private shell is created and published separately.
+• The replacement private shell MAY be prefilled from the retiring location’s content only.
+
+Carry-over allowed:
+• `locationName`
+• description
+• media
+• contacts
+• links
+• tags
+• `groupKey`
+• `subgroupKey`
+• `context`
+• draft coordinates
+
+Carry-over forbidden:
+• ULID
+• slug
+• alias
+• ownership history
+• campaign rows
+• stats / qrlog / billing history
 
 Happy-path tests:
-H5: KV-first:
-• With profile_base present
+H1: retire + recreate for wrong geo
+Expected:
+• old identity remains historically intact
+• new shell is prefilled with content only
+• new publish stamps a new slug
+
+H2: retire + recreate for wrong taxonomy
+Expected:
+• no mutable post-publish taxonomy edit
+• replacement shell uses corrected group/subgroup/context
+
+Ship gate:
+• No post-publish identity mutation exists
+• Correction flow is explicit
+• Content-only carry-over works without leaking identity/history
+
+--------------------------------------------------------------------
+8.3 Read-path integration (KV-authoritative runtime read path)
+--------------------------------------------------------------------
+
+Goal:
+Expose Phase 8 runtime authority without any `profiles.json` fallback.
+
+Changes:
+• `/api/data/list?context=<ctx>` MUST read membership from `ContextShardDO`, hydrate effective published profiles from KV (`profile_base:<ULID>` + `override:<ULID>`), apply visibility ordering (promoted → visible → hidden excluded), and MUST NOT consult `profiles.json` at runtime.
+  `effectiveProfile = deepMerge(profile_base, override)`
+• Public runtime reads MUST require `profile_base:<ULID>`
+• Draft-only shells are never publicly readable
+• `profiles.json` is not consulted as runtime fallback once Phase 8 is enabled
+• Existing public locations must be preseeded into `profile_base:<ULID>` before the runtime switch, and preseeded legacy public locations start as `visible` by default at cutover
+• Response contract remains the published profile schema
+
+Happy-path tests:
+H5: KV-authoritative read
+• With `profile_base` present
 Expected:
 • merged profile returned
-• contract remains profiles.json schema
+• contract remains stable
 
-H6: fallback:
-• Without profile_base present
+H6a: context list read
+• Request `/api/data/list?context=<ctx>`
 Expected:
-• profiles.json record returned as today
+• membership sourced from `ContextShardDO`
+• rows hydrated from KV effective published profiles
+• preseeded legacy public locations appear as `visible` by default unless already `promoted`
+• no runtime fallback to `profiles.json`
 
 Safeguards:
 S4: Never cache merged profile responses via Service Worker
-S5 — /api/status entitlement shape:
-• activeCampaignKeys MUST always be returned as an array (possibly empty).
-• activeCampaignKey, if present, must equal activeCampaignKeys[0] or "".
-• No publish or draft operation may alter entitlement shape.
+S5 — `/api/status` entitlement shape:
+• `activeCampaignKeys` MUST always be returned as an array (possibly empty)
+• `activeCampaignKey`, if present, must equal `activeCampaignKeys[0]` or `""`
+• No publish or draft operation may alter entitlement shape
 
 Ship gate for read-path:
 • Zero regressions in LPM rendering
-• Zero schema drift in /api/data/profile payloads
+• Zero schema drift in `/api/data/profile` payloads
+• No runtime fallback to `profiles.json`
 
 --------------------------------------------------------------------
 8.4 DO index implementation (SearchShardDO + ContextShardDO)
@@ -2092,7 +2257,8 @@ Done when:
 ✅ /api/location/publish implemented and verified
 ✅ plan_alloc enforced deterministically
 ✅ DO upsert works with shard naming contract
-✅ KV-first read path works with fallback
+✅ KV-authoritative runtime read path works (no fallback)
+✅ Retire + recreate correction flow is explicit
 ✅ No regressions in QR/promo/dash flows
 
 --------------------------------------------------------------------
@@ -2110,7 +2276,8 @@ Identity & Slug Integrity
 Draft Safety
 • Draft writes never create alias entries.
 • Draft writes never trigger DO index updates.
-• Draft state is never returned by /api/data/profile.
+• Draft state is never returned by `/api/data/profile`.
+• Draft UI may show advisory slug preview only.
 
 Publish Enforcement
 • Publish requires:
@@ -2118,18 +2285,20 @@ Publish Enforcement
     - active ownership
     - active Plan
     - available publish capacity
-• Capacity enforcement via PlanAllocDO(payment_intent.id) cannot be bypassed.
-• Re-publish does not double-count ULID in plan_alloc.
+• Capacity enforcement via `PlanAllocDO(payment_intent.id)` cannot be bypassed.
+• Re-publish does not double-count ULID in `plan_alloc`.
+• Existing-location and brand-new publish routes both resolve deterministically.
 
 Index Integrity
 • Only published overrides are indexed.
 • Draft state never appears in search or context lists.
+• `context` membership is derived exclusively from the stored `context` field.
 • Discoverability transitions remove items from DO index correctly.
 
 Read-Path Safety
-• KV-first read returns deepMerge(profile_base, override).
-• Fallback to profiles.json occurs only when profile_base is absent.
-• No response schema changes in /api/data/profile or /api/data/item.
+• Runtime reads are KV-authoritative and return `deepMerge(profile_base, override)`.
+• Draft-only shells are never publicly readable.
+• No response schema changes in `/api/data/profile` or `/api/data/item`.
 
 System Regression Safety
 • QR flow unaffected.
@@ -2138,9 +2307,9 @@ System Regression Safety
 • Ownership expiry behavior unchanged.
 
 Migration Safety
-• profiles.json and KV authority never conflict for the same ULID.
-• profile_base entries do not duplicate legacy entries.
-• No data loss occurs during fallback reads.
+• Existing public locations are preseeded into `profile_base:<ULID>` before runtime switch.
+• There is no runtime `profiles.json` fallback once Phase 8 is enabled.
+• Legacy export artifacts do not influence runtime reads, lists, or search.
 
 Only when ALL invariants pass may Phase 8 be considered production-ready.
 

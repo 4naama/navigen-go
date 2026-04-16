@@ -964,7 +964,7 @@ async function resolveULIDFor(idOrSlug) {
 
   try {
     const url = `${location.origin}/api/status?locationID=${encodeURIComponent(s)}`;
-    const r = await fetch(url, { cache: 'no-store', credentials: 'omit' });
+    const r = await fetch(url, { cache: 'no-store', credentials: 'include' });
     if (!r.ok) return '';
     const j = await r.json().catch(() => null);
     const uid = String(j?.locationID || '').trim();
@@ -1562,7 +1562,7 @@ export async function showLocationProfileModal(data) {
       } catch {}
 
       // Second: authoritative fetch from /api/status (may overwrite the hint).
-      const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+      const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
       if (!r.ok) return;
 
       const j = await r.json().catch(() => null);
@@ -3249,7 +3249,7 @@ export async function showSelectLocationModal() {
     try {
       const res = await fetch('/api/owner/location-options', {
         cache: 'no-store',
-        credentials: 'omit'
+        credentials: 'include'
       });
       if (!res.ok) return [];
       const j = await res.json().catch(() => null);
@@ -3427,7 +3427,7 @@ export async function showSelectLocationModal() {
           const u = new URL('/api/status', location.origin);
           u.searchParams.set('locationID', slug);
 
-          const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+          const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
           if (!r.ok) {
             ownedCache.set(slug, { owned: false, vis: 'visible', courtesyUntil: '', entitled: false });
             dot.classList.add('syb-free');
@@ -3801,7 +3801,7 @@ async function openOwnerSettingsForTarget({ target, locationName, noSelection })
     try {
       const u = new URL('/api/status', location.origin);
       u.searchParams.set('locationID', tgt);
-      const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+      const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
       const js = rs.ok ? await rs.json().catch(() => null) : null;
       ownedNow = js?.ownedNow === true;
     } catch { ownedNow = false; }
@@ -3842,7 +3842,7 @@ async function openOwnerSettingsForTarget({ target, locationName, noSelection })
   try {
     const u = new URL('/api/status', location.origin);
     u.searchParams.set('locationID', tgt);
-    const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+    const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
     const js = rs.ok ? await rs.json().catch(() => null) : null;
     ownedNow = js?.ownedNow === true;
   } catch {
@@ -4244,7 +4244,7 @@ function loadP8StructureCatalog() {
 
 function loadP8ContextCatalog() {
   if (!p8ContextCatalogPromise) {
-    p8ContextCatalogPromise = fetch('/api/data/contexts', { cache: 'no-store', credentials: 'omit' })
+    p8ContextCatalogPromise = fetch('/api/data/contexts', { cache: 'no-store', credentials: 'include' })
       .then((r) => (r.ok ? r.json().catch(() => []) : []))
       .then((j) => (Array.isArray(j) ? j : []))
       .catch(() => []);
@@ -4723,7 +4723,7 @@ export function createRequestListingModal(opts = {}) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(draftBody),
         cache: 'no-store',
-        credentials: 'omit'
+        credentials: 'include'
       });
       payload = await res.json().catch(() => null);
     } catch {
@@ -5248,7 +5248,7 @@ export async function resolveCampaignKeyForLocation(locationID) {
     const u = new URL('/api/status', location.origin);
     u.searchParams.set('locationID', slug);
 
-    const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+    const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
     if (!r.ok) return '';
 
     const j = await r.json().catch(() => null);
@@ -6331,7 +6331,7 @@ export async function createOwnerCenterModal() {
           const st = new URL('/api/status', location.origin);
           st.searchParams.set('locationID', q);
 
-          const r = await fetch(st.toString(), { cache: 'no-store', credentials: 'omit' });
+          const r = await fetch(st.toString(), { cache: 'no-store', credentials: 'include' });
           if (!r.ok) return;
 
           const j = await r.json().catch(() => null);
@@ -6578,7 +6578,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   try {
     const st = new URL('/api/status', location.origin);
     st.searchParams.set('locationID', displaySlug);
-    const r = await fetch(st.toString(), { cache: 'no-store', credentials: 'omit' });
+    const r = await fetch(st.toString(), { cache: 'no-store', credentials: 'include' });
     const j = r.ok ? await r.json().catch(() => null) : null;
     requestedUlid = String(j?.locationID || '').trim(); // /api/status returns canonical ULID in locationID
   } catch {}
