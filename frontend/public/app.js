@@ -265,7 +265,7 @@ async function maybeShowLpmInactiveNotice(idOrSlug) {
     const u = new URL('/api/status', location.origin);
     u.searchParams.set('locationID', raw);
 
-    const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+    const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
     if (!r.ok) return;
 
     const j = await r.json().catch(() => null);
@@ -1886,7 +1886,7 @@ async function initEmergencyBlock(countryOverride) {
 
         for (let i = 0; i < tries; i++) {
           try {
-            const r = await fetch(`${location.origin}/api/status?locationID=${encodeURIComponent(idOrSlug)}`, { cache: 'no-store', credentials: 'omit' });
+            const r = await fetch(`${location.origin}/api/status?locationID=${encodeURIComponent(idOrSlug)}`, { cache: 'no-store', credentials: 'include' });            
             if (r.ok) {
               const j = await r.json().catch(() => null);
               if (j?.campaignEntitled === true || j?.ownedNow === true) return;
