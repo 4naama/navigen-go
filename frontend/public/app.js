@@ -1348,6 +1348,24 @@ async function initEmergencyBlock(countryOverride) {
           (async () => {
             showToast('Select your business to start a campaign.', 2200);
 
+            let pendingDraft = null;
+            try {
+              const raw = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDraft') || 'null');
+              if (raw && typeof raw === 'object') pendingDraft = raw;
+            } catch {}
+
+            const pendingDraftULID = String(pendingDraft?.draftULID || '').trim();
+            const pendingDraftSessionId = String(pendingDraft?.draftSessionId || '').trim();
+
+            if (pendingDraftULID && pendingDraftSessionId) {
+              await showCampaignManagementModal(pendingDraftULID, {
+                guest: true,
+                p8Draft: pendingDraft,
+                preferEmptyDraft: true
+              });
+              return;
+            }
+
             const picked = await showSelectLocationModal();
             const locId = String(picked?.slug || picked?.locationID || '').trim();
             if (!locId) return;
@@ -3537,6 +3555,12 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
       try {
         sessionStorage.setItem('navigen.internalLpNav', '1');        // suppress qr-scan once
         sessionStorage.setItem('navigen.suppressLpmOpenOnce', '1');  // suppress lpm-open once
+
+        const draftULID = String(current.searchParams.get('draftULID') || '').trim();
+        const draftSessionId = String(current.searchParams.get('draftSessionId') || '').trim();
+        if (draftULID && draftSessionId) {
+          sessionStorage.setItem('navigen.resumeCampaignAfterExchange', '1');
+        }
       } catch {}
 
       // Remove one-time params so refresh won't re-run exchange.
@@ -3585,6 +3609,43 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   } catch (err) {
     console.error("Stripe return handling failed:", err);
   }
+})();
+
+(async function resumePendingCampaignAfterExchange() {
+  let shouldResume = false;
+  try {
+    shouldResume = sessionStorage.getItem('navigen.resumeCampaignAfterExchange') === '1';
+  } catch {}
+  if (!shouldResume) return;
+
+  try { sessionStorage.removeItem('navigen.resumeCampaignAfterExchange'); } catch {}
+
+  let pending = null;
+  try {
+    const raw = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDraft') || 'null');
+    if (raw && typeof raw === 'object') pending = raw;
+  } catch {}
+
+  const draftULID = String(pending?.draftULID || '').trim();
+  const draftSessionId = String(pending?.draftSessionId || '').trim();
+  if (!draftULID || !draftSessionId) return;
+
+  let guest = true;
+  try {
+    const rr = await fetch('/api/owner/campaigns', {
+      cache: 'no-store',
+      credentials: 'include'
+    });
+    guest = !rr.ok;
+  } catch {
+    guest = true;
+  }
+
+  await showCampaignManagementModal(draftULID, {
+    guest,
+    p8Draft: pending,
+    preferEmptyDraft: true
+  });
 })();
 
 // Maps Stripe donation amounts (in cents) to a known tier.

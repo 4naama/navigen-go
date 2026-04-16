@@ -53,6 +53,8 @@ type PlanRecord = {
   maxPublishedLocations: number;
   purchasedAt: string; // ISO
   expiresAt: string;   // ISO (must equal ownership.exclusiveUntil for same payment)
+  initiationType: string;
+  campaignPreset: string;
 };
 
 // Stripe price.id values from the Dashboard.
@@ -116,25 +118,31 @@ async function persistPlanRecord(
   sk: string,
   checkoutSessionId: string,
   paymentIntentId: string,
-  expiresAtIso: string
+  expiresAtIso: string,
+  provenance?: { initiationType?: unknown; campaignPreset?: unknown }
 ): Promise<PlanRecord> {
   const priceId = await fetchStripeCheckoutLineItemPriceId(sk, checkoutSessionId);
 
   const mapped = PRICE_ID_TO_PLAN[priceId];
   const tier: PlanTier = mapped?.tier || "unknown";
   const maxPublishedLocations = mapped?.maxPublishedLocations ?? 0;
+  const initiationType = String(provenance?.initiationType || "").trim();
+  const campaignPreset = String(provenance?.campaignPreset || "").trim();
 
   const rec: PlanRecord = {
     priceId,
     tier,
     maxPublishedLocations,
     purchasedAt: new Date().toISOString(),
-    expiresAt: expiresAtIso
+    expiresAt: expiresAtIso,
+    initiationType,
+    campaignPreset
   };
 
   await env.KV_STATUS.put(`plan:${paymentIntentId}`, JSON.stringify(rec));
   return rec;
 }
+
 // --- Stripe webhook verification (HMAC SHA-256) ---
 // Lead: keep verification server-side only; never expose secrets to clients.
 function parseStripeSigHeader(h: string): { t: string; v1: string[] } | null {
@@ -512,12 +520,15 @@ let redirectHint = ""; // ensure local scope for redirect logic used later in /o
   const meta = sess?.metadata || {};
     redirectHint = '';
 
-  const locationID = String(meta?.locationID || "").trim();
-  if (!locationID) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+  const target = await resolveTargetIdentity(env, {
+    locationID: meta?.locationID,
+    draftULID: meta?.draftULID,
+    draftSessionId: meta?.draftSessionId
+  }, { validateDraft: true });
+  if (!target) return new Response("Denied", { status: 403, headers: noStoreHeaders });
 
-  // Resolve slug → ULID (aliases are preseeded by design).
-  const ulid = await resolveUid(locationID, env);
-  if (!ulid) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+  const ulid = target.ulid;
+  const locationID = target.locationID;
 
   // Canonical: a paid campaign checkout is itself the state transition trigger.
   // Do NOT depend on webhook timing for ownership/session/campaign visibility.
@@ -555,7 +566,10 @@ let redirectHint = ""; // ensure local scope for redirect logic used later in /o
     const paymentIntentId = String(sess?.payment_intent || "").trim();
     if (paymentIntentId) {
       // expiresAt must align with ownership exclusiveUntil invariant
-      await persistPlanRecord(env, sk, String(sess?.id || "").trim(), paymentIntentId, exclusiveUntil.toISOString());
+      await persistPlanRecord(env, sk, String(sess?.id || "").trim(), paymentIntentId, exclusiveUntil.toISOString(), {
+        initiationType: meta?.initiationType,
+        campaignPreset: meta?.campaignPreset
+      });      
     }
   } catch (e: any) {
     console.error("owner_stripe_exchange: plan_persist_failed", { ulid, err: String(e?.message || e || "") });
@@ -791,21 +805,26 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
   if (!paymentIntentId) return new Response('Missing payment_intent', { status: 400 });
 
   const meta = (session?.metadata && typeof session.metadata === 'object') ? session.metadata : {};
-  const locationID = String(meta.locationID || '').trim();
   const ownershipSource = String(meta.ownershipSource || '').trim();   // "campaign" | "exclusive"
   const initiationType = String(meta.initiationType || '').trim();     // "owner" | "agent" | "platform"
 
   // Non-ownership checkouts (e.g. donations) may have empty metadata.
   // We must acknowledge the webhook to prevent Stripe retries and simply ignore it.
-  if (!locationID || !ownershipSource || !initiationType) {
+  if (!ownershipSource || !initiationType) {
     return new Response('Ignored (no ownership metadata)', { status: 200 });
   }
 
-  // Resolve slug → ULID (authoritative)
-  const ulid = await resolveUid(locationID, env);
-  if (!ulid || !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(ulid)) {
-    return new Response('locationID did not resolve to a canonical ULID', { status: 400 });
+  const target = await resolveTargetIdentity(env, {
+    locationID: meta?.locationID,
+    draftULID: meta?.draftULID,
+    draftSessionId: meta?.draftSessionId
+  }, { validateDraft: true });
+  if (!target || !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(target.ulid)) {
+    return new Response('target identity did not resolve to a canonical ULID', { status: 400 });
   }
+
+  const ulid = target.ulid;
+  const locationID = target.locationID;
 
   // Idempotency
   const idemKey = `stripe_processed:${paymentIntentId}`;
@@ -840,7 +859,10 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
     const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
     const checkoutSessionId = String(session?.id || "").trim();
     if (sk && checkoutSessionId) {
-      await persistPlanRecord(env, sk, checkoutSessionId, paymentIntentId, rec.exclusiveUntil);
+      await persistPlanRecord(env, sk, checkoutSessionId, paymentIntentId, rec.exclusiveUntil, {
+        initiationType,
+        campaignPreset: meta?.campaignPreset
+      });      
     }
   } catch (e: any) {
     console.error("stripe_webhook: plan_persist_failed", { ulid, err: String(e?.message || e || "") });
@@ -862,7 +884,9 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
   if (!sk) return json({ error: { code: "misconfigured", message: "STRIPE_SECRET_KEY not set" } }, 500, noStore);
 
-  const locationID = String(body?.locationID || "").trim();           // MUST be slug (no ULID)
+  const locationID = String(body?.locationID || "").trim();           // MUST be slug when provided
+  const draftULID = String(body?.draftULID || "").trim();
+  const draftSessionId = String(body?.draftSessionId || "").trim();
   const campaignKey = String(body?.campaignKey || "").trim();         // required for ownershipSource="campaign"
   const initiationType = String(body?.initiationType || "").trim();   // "owner" | "public"
   const ownershipSource = String(body?.ownershipSource || "").trim(); // "campaign"
@@ -873,9 +897,11 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   // Canonical product: campaign payment is the only purchase; session is minted on return.
   const okInitiation = (initiationType === "owner" || initiationType === "public");
   const requestedPlan = planDefinitionForCode(planCode);
-  if (!locationID || !campaignKey || !okInitiation || ownershipSource !== "campaign" || !requestedPlan) {
+  const hasLocationRoute = !!locationID;
+  const hasDraftRoute = !!draftULID || !!draftSessionId;
+  if ((!hasLocationRoute && !hasDraftRoute) || (hasLocationRoute && hasDraftRoute) || !campaignKey || !okInitiation || ownershipSource !== "campaign" || !requestedPlan) {
     return json(
-      { error: { code: "invalid_request", message: "locationID, campaignKey, valid planCode, initiationType in {'owner','public'}, ownershipSource='campaign' required" } },
+      { error: { code: "invalid_request", message: "exactly one target identity route (locationID OR draftULID + draftSessionId), campaignKey, valid planCode, initiationType in {'owner','public'}, ownershipSource='campaign' required" } },
       400,
       noStore
     );
@@ -892,14 +918,16 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   }
 
   // Enforce the spec invariant: clients must never supply ULIDs as locationID
-  if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationID)) {
+  if (locationID && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationID)) {
     return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore);
   }
 
-  const ulid = await resolveUid(locationID, env).catch(() => null);
-  if (!ulid) {
-    return json({ error: { code: "not_found", message: "unknown locationID" } }, 404, noStore);
+  const target = await resolveTargetIdentity(env, { locationID, draftULID, draftSessionId }, { validateDraft: hasDraftRoute }).catch(() => null);
+  if (!target) {
+    return json({ error: { code: "not_found", message: hasLocationRoute ? "unknown locationID" : "unknown private shell target" } }, 404, noStore);
   }
+
+  const ulid = target.ulid;
 
   // Validate the authoritative saved draft against the requested Plan tier before payment.
   // This keeps Stripe checkout aligned with scope/capacity rules and produces upgrade-safe failures.
@@ -938,14 +966,25 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   // Build redirect URLs on the web app origin (not the API Worker origin)
   const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
   // IMPORTANT: keep {CHECKOUT_SESSION_ID} unencoded or Stripe will not substitute it.
-  const successUrl =
-    `${siteOrigin}/?flow=campaign` +
-    `&locationID=${encodeURIComponent(locationID)}` +
-    `&sid={CHECKOUT_SESSION_ID}`;
+  const successUrlObj = new URL("/", siteOrigin);
+  successUrlObj.searchParams.set("flow", "campaign");
+  if (target.route === "existing-location") {
+    successUrlObj.searchParams.set("locationID", target.locationID);
+  } else {
+    successUrlObj.searchParams.set("draftULID", target.draftULID);
+    successUrlObj.searchParams.set("draftSessionId", target.draftSessionId);
+  }
+  successUrlObj.searchParams.set("sid", "{CHECKOUT_SESSION_ID}");
+  const successUrl = successUrlObj.toString().replace("%7BCHECKOUT_SESSION_ID%7D", "{CHECKOUT_SESSION_ID}");
 
   const cancelUrl = new URL("/", siteOrigin);
   cancelUrl.searchParams.set("flow", "campaign");
-  cancelUrl.searchParams.set("locationID", locationID);
+  if (target.route === "existing-location") {
+    cancelUrl.searchParams.set("locationID", target.locationID);
+  } else {
+    cancelUrl.searchParams.set("draftULID", target.draftULID);
+    cancelUrl.searchParams.set("draftSessionId", target.draftSessionId);
+  }
   cancelUrl.searchParams.set("canceled", "1");
 
   const form = new URLSearchParams();
@@ -959,7 +998,15 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   form.set("line_items[0][price]", requestedPlan.priceId);
 
   // Metadata contract (MUST be copied to PaymentIntent)
-  form.set("metadata[locationID]", locationID);
+  if (target.route === "existing-location") {
+    form.set("metadata[locationID]", target.locationID);
+    form.set("payment_intent_data[metadata][locationID]", target.locationID);
+  } else {
+    form.set("metadata[draftULID]", target.draftULID);
+    form.set("metadata[draftSessionId]", target.draftSessionId);
+    form.set("payment_intent_data[metadata][draftULID]", target.draftULID);
+    form.set("payment_intent_data[metadata][draftSessionId]", target.draftSessionId);
+  }
   form.set("metadata[campaignKey]", campaignKey);
   form.set("metadata[initiationType]", initiationType);
   form.set("metadata[ownershipSource]", ownershipSource);
@@ -967,7 +1014,6 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   form.set("metadata[navigenVersion]", navigenVersion);
 
   // Ensure metadata is also on PaymentIntent (spec requirement)
-  form.set("payment_intent_data[metadata][locationID]", locationID);
   form.set("payment_intent_data[metadata][campaignKey]", campaignKey);
   form.set("payment_intent_data[metadata][initiationType]", initiationType);
   form.set("payment_intent_data[metadata][ownershipSource]", ownershipSource);
@@ -1828,12 +1874,15 @@ export default {
         }
 
         const meta = sess?.metadata || {};
-        const locationID = String(meta?.locationID || "").trim();
-        if (!locationID) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+        const target = await resolveTargetIdentity(env, {
+          locationID: meta?.locationID,
+          draftULID: meta?.draftULID,
+          draftSessionId: meta?.draftSessionId
+        }, { validateDraft: true });
+        if (!target) return new Response("Denied", { status: 403, headers: noStoreHeaders });
 
-        // Resolve slug → ULID and verify entitlement window
-        const ulid = await resolveUid(locationID, env);
-        if (!ulid) return new Response("Denied", { status: 403, headers: noStoreHeaders });
+        const ulid = target.ulid;
+        const locationID = target.locationID;
 
         const ownKey = `ownership:${ulid}`;
         const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
@@ -1844,7 +1893,10 @@ export default {
         }
         
         try {
-          await persistPlanRecord(env, sk, String(sess?.id || "").trim(), pi, exclusiveUntil.toISOString());
+          await persistPlanRecord(env, sk, String(sess?.id || "").trim(), pi, exclusiveUntil.toISOString(), {
+            initiationType: meta?.initiationType,
+            campaignPreset: meta?.campaignPreset
+          });          
         } catch (e: any) {
           console.error("owner_restore: plan_persist_failed", { ulid, err: String(e?.message || e || "") });
         }        
@@ -3548,9 +3600,9 @@ export default {
 
         const body = await r.text();
 
-        // Discoverability policy (Business-first):
-        // Filter out locations whose visibilityState is "hidden" so inactive businesses do not appear in discovery lists.
-        // This does not affect direct-link LPM access; it only controls in-app discovery surfaces.
+        // Discoverability policy for context discovery:
+        // Keep the full upstream row set so context pages can mirror source visibility and priority.
+        // Direct-link LPM behavior remains unchanged; only list ordering is adjusted here.
         let outBody = body;
 
         try {
@@ -3571,7 +3623,7 @@ export default {
             // Build discovery list with preferential visibility:
             // - "promoted" (paid active) first
             // - then "visible" (courtesy/hold)
-            // - "hidden" excluded
+            // - then remaining rows, without excluding them from the context list
             //
             // NOTE: this is a deterministic, lightweight ordering (no ML, no ads).
             const ranked: Array<{ rec: any; rank: number }> = [];
@@ -3589,8 +3641,8 @@ export default {
               const vis = await computeVisibilityState(env, ulid);
 
               // Exclude hidden from discovery lists
-              if (vis.visibilityState === "hidden") continue;
-
+              // Keep hidden-state rows in the context list; only rank them after promoted and visible rows.
+              
               // Preferential visibility weight (highest first)
               const rank =
                 vis.visibilityState === "promoted" ? 2 :
@@ -4865,14 +4917,63 @@ async function computeVisibilityState(env: Env, ulid: string, nowMs = Date.now()
   };
 }
 
-async function resolveUid(idOrAlias: string, env: Env): Promise<string | null> {
-  if (!idOrAlias) return null;
-  // If it looks like a ULID, accept directly; else try alias map
-  const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(idOrAlias);
-  if (isUlid) return idOrAlias;
+type TargetIdentityRoute = "existing-location" | "brand-new-private-shell";
 
-  const mapped = await env.KV_ALIASES.get(aliasKey(idOrAlias), "json");
-  return (typeof mapped === "string" ? mapped : mapped?.locationID) || null;
+type TargetIdentity = {
+  route: TargetIdentityRoute;
+  ulid: string;
+  locationID: string;
+  draftULID: string;
+  draftSessionId: string;
+};
+
+async function readPrivateShellDraft(env: Env, draftULID: string, draftSessionId: string): Promise<any | null> {
+  const key = `override_draft:${draftULID}:${draftSessionId}`;
+  const hitJson = await env.KV_STATUS.get(key, { type: "json" }) as any;
+  if (hitJson) return hitJson;
+  const hitText = await env.KV_STATUS.get(key, "text");
+  if (!hitText) return null;
+  try { return JSON.parse(hitText); } catch { return { raw: hitText }; }
+}
+
+async function resolveTargetIdentity(
+  env: Env,
+  input: { locationID?: unknown; draftULID?: unknown; draftSessionId?: unknown },
+  opts: { validateDraft?: boolean } = {}
+): Promise<TargetIdentity | null> {
+  const locationID = String(input?.locationID || "").trim();
+  const draftULID = String(input?.draftULID || "").trim();
+  const draftSessionId = String(input?.draftSessionId || "").trim();
+
+  const hasLocation = !!locationID;
+  const hasDraft = !!draftULID || !!draftSessionId;
+  if ((hasLocation && hasDraft) || (!hasLocation && !hasDraft)) return null;
+
+  if (hasLocation) {
+    const ulid = await resolveUid(locationID, env);
+    if (!ulid) return null;
+    return {
+      route: "existing-location",
+      ulid,
+      locationID,
+      draftULID: "",
+      draftSessionId: ""
+    };
+  }
+
+  if (!ULID_RE.test(draftULID) || !draftSessionId) return null;
+  if (opts.validateDraft) {
+    const draft = await readPrivateShellDraft(env, draftULID, draftSessionId);
+    if (!draft) return null;
+  }
+
+  return {
+    route: "brand-new-private-shell",
+    ulid: draftULID,
+    locationID: "",
+    draftULID,
+    draftSessionId
+  };
 }
 
 async function increment(kv: KVNamespace, key: string): Promise<void> {
