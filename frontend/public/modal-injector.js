@@ -6551,7 +6551,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   // ───────────────────────────────────────────────────────────────────────────
 
   // A0) Location header line (inside body, under top bar)
-  const status = await fetch(`/api/status?locationID=${encodeURIComponent(displaySlug)}`, { cache:'no-store', credentials:'omit' })
+  const status = await fetch(`/api/status?locationID=${encodeURIComponent(displaySlug)}`, { cache:'no-store', credentials:'include' })  
     .then(r => r.ok ? r.json() : null)
     .catch(() => null);
 
