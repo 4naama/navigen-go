@@ -2402,8 +2402,12 @@ async function initEmergencyBlock(countryOverride) {
           : ["page.tagline"];
 
         let val = "";
-        for (const k of keys) { const v = t(k); if (v && v !== k) { val = v; break; } }
-        sub.textContent = val || t("page.tagline"); // prefer ctx; parent/default if missing
+        for (const k of keys) {
+          const v = String(t(k) || "").trim();
+          const unresolvedBracketed = v === `[${k}]`;
+          if (v && v !== k && !unresolvedBracketed) { val = v; break; }
+        }
+        sub.textContent = val || translatedOrFallback("page.tagline", "");
       }
 
       const s = document.getElementById("search"); if (s) s.placeholder = t("search.placeholder");

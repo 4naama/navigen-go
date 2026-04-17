@@ -5637,8 +5637,8 @@
       "Priority": "Yes",
       "groupKey": "🛒 Shops",
       "subgroupKey": "sub.pharmacy",
-      "context": "pharmacies/hungary;pharmacies/hungary/budapest;language-schools/helen-doron/hungary",
-      "qrUrl": "https://navigen.io/pharmacies/hungary;pharmacies/hungary/budapest;language-schools/helen-doron/hungary?lp=europa-patika-rakoczi-ter-1666",
+      "context": "pharmacies/hungary;pharmacies/hungary/budapest",
+      "qrUrl": "https://navigen.io/pharmacies/hungary/budapest?lp=europa-patika-rakoczi-ter-1666",      
       "coord": {
         "lat": 47.492389,
         "lng": 19.071666

@@ -1918,6 +1918,17 @@ button:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
+/* Context-page location cards: allow safe 2-line wrapping */
+.location-button{
+  height: auto;
+  min-height: 36px;
+  white-space: normal;
+  line-height: 1.15;
+  text-align: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
 /* Optional: softer hover background for Populars only */
 .quick-button.popular-button:hover {
   background-color: #fff3e5;
