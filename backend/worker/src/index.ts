@@ -1783,6 +1783,7 @@ export default {
         const body = await req.json().catch(() => ({})) as any;
         const targetSlug = String(body?.locationID || "").trim();
         const doAll = !!body?.all;
+        const force = !!body?.force;
 
         if (!targetSlug && !doAll) {
           return json(
@@ -1823,7 +1824,7 @@ export default {
 
         for (const rec of picked) {
           try {
-            const result = await preseedLegacyLocationRecord(env, rec);
+            const result = await preseedLegacyLocationRecord(env, rec, { force });
             out.push(result);
             if (result.created) created++;
             else if (result.skipped) skipped++;
@@ -1909,6 +1910,7 @@ export default {
         const body = await req.json().catch(() => ({})) as any;
         const targetSlug = String(body?.locationID || "").trim();
         const doAll = !!body?.all;
+        const force = !!body?.force;
 
         if (!targetSlug && !doAll) {
           return json(
@@ -6834,8 +6836,9 @@ function buildLegacyProfileBase(rec: any, ulid: string): any {
 
 async function preseedLegacyLocationRecord(
   env: Env,
-  rec: any
-): Promise<{ ok: boolean; slug: string; ulid: string; reason?: string; created?: boolean; skipped?: boolean }> {
+  rec: any,
+  opts: { force?: boolean } = {}
+): Promise<{ ok: boolean; slug: string; ulid: string; reason?: string; created?: boolean; skipped?: boolean; overwritten?: boolean }> {
   const slug = legacyLocationSlug(rec);
   const ulid = await resolveLegacyLocationUlid(rec, env);
 
@@ -6844,16 +6847,21 @@ async function preseedLegacyLocationRecord(
 
   const baseKey = `profile_base:${ulid}`;
   const existing = await env.KV_STATUS.get(baseKey, "text");
+  const force = !!opts.force;
 
   // Keep alias continuity authoritative even if base already exists
   await env.KV_ALIASES.put(aliasKey(slug), JSON.stringify({ locationID: ulid }));
 
-  if (existing) {
+  if (existing && !force) {
     return { ok: true, slug, ulid, skipped: true };
   }
 
   const base = buildLegacyProfileBase(rec, ulid);
   await env.KV_STATUS.put(baseKey, JSON.stringify(base));
+
+  if (existing && force) {
+    return { ok: true, slug, ulid, overwritten: true };
+  }
 
   return { ok: true, slug, ulid, created: true };
 }
