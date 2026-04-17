@@ -1826,7 +1826,7 @@ export default {
           try {
             const result = await preseedLegacyLocationRecord(env, rec, { force });
             out.push(result);
-            if (result.created) created++;
+            if (result.created || result.overwritten) created++;
             else if (result.skipped) skipped++;
             else failed++;
           } catch (e: any) {
