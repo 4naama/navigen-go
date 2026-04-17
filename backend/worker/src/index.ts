@@ -1890,6 +1890,102 @@ export default {
         );
       }
       
+      // --- Phase 8 DO backfill for preseeded published rows (admin-only, temporary)
+      // POST /api/_admin/p8/backfill-do
+      // Auth: Authorization: Bearer <JWT_SECRET>
+      // Body:
+      //   { "all": true }
+      //   OR
+      //   { "locationID": "<slug>" }
+      if (normPath === "/api/_admin/p8/backfill-do" && req.method === "POST") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const body = await req.json().catch(() => ({})) as any;
+        const targetSlug = String(body?.locationID || "").trim();
+        const doAll = !!body?.all;
+
+        if (!targetSlug && !doAll) {
+          return json(
+            { error: { code: "invalid_request", message: "set { all:true } or provide locationID" } },
+            400,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const targets: Array<{ ulid: string; slug: string }> = [];
+
+        if (targetSlug) {
+          const ulid = await resolveUid(targetSlug, env);
+          if (!ulid) {
+            return json(
+              { error: { code: "not_found", message: "unknown locationID" } },
+              404,
+              { "cache-control": "no-store" }
+            );
+          }
+          targets.push({ ulid, slug: targetSlug });
+        } else {
+          let cursor: string | undefined = undefined;
+          do {
+            const page = await env.KV_STATUS.list({ prefix: "profile_base:", cursor });
+            for (const key of page.keys) {
+              const name = String(key.name || "");
+              const ulid = name.replace(/^profile_base:/, "").trim();
+              if (!ULID_RE.test(ulid)) continue;
+
+              const rec = await readPublishedEffectiveProfileByUlid(ulid, env);
+              if (!rec) continue;
+
+              targets.push({ ulid, slug: rec.locationID });
+            }
+            cursor = page.cursor || undefined;
+          } while (cursor);
+        }
+
+        const out: Array<Record<string, any>> = [];
+        let indexed = 0;
+        let hidden = 0;
+        let failed = 0;
+
+        for (const t of targets) {
+          try {
+            const result = await backfillPublishedLocationDoState(env, t.ulid);
+            out.push(result);
+            if (result.ok && result.indexed) indexed++;
+            else if (result.ok && result.visibilityState === "hidden") hidden++;
+            else failed++;
+          } catch (e: any) {
+            failed++;
+            out.push({
+              ok: false,
+              ulid: t.ulid,
+              slug: t.slug,
+              reason: String(e?.message || "do_backfill_failed")
+            });
+          }
+        }
+
+        return json(
+          {
+            ok: true,
+            mode: targetSlug ? "single" : "all",
+            total: targets.length,
+            indexed,
+            hidden,
+            failed,
+            items: out
+          },
+          200,
+          { "cache-control": "no-store" }
+        );
+      }
+      
       // --- Stripe diag: /api/_diag/stripe-secret (safe fingerprint only)
       if (normPath === "/api/_diag/stripe-secret" && req.method === "GET") {
         const secretRaw = (env.STRIPE_WEBHOOK_SECRET || "").trim();
@@ -6760,6 +6856,39 @@ async function preseedLegacyLocationRecord(
   await env.KV_STATUS.put(baseKey, JSON.stringify(base));
 
   return { ok: true, slug, ulid, created: true };
+}
+
+async function backfillPublishedLocationDoState(
+  env: Env,
+  ulid: string
+): Promise<{ ok: boolean; ulid: string; slug: string; visibilityState?: string; indexed?: boolean; reason?: string }> {
+  const id = String(ulid || "").trim();
+  if (!ULID_RE.test(id)) {
+    return { ok: false, ulid: id, slug: "", reason: "invalid_ulid" };
+  }
+
+  const rec = await readPublishedEffectiveProfileByUlid(id, env);
+  if (!rec) {
+    return { ok: false, ulid: id, slug: "", reason: "missing_profile_base" };
+  }
+
+  const vis = await computeVisibilityState(env, id);
+
+  await syncPublishedDoIndex(env, {
+    ulid: id,
+    slug: rec.locationID,
+    prevProfile: {},
+    nextProfile: rec.effective,
+    visibilityState: vis.visibilityState
+  });
+
+  return {
+    ok: true,
+    ulid: id,
+    slug: rec.locationID,
+    visibilityState: vis.visibilityState,
+    indexed: vis.visibilityState !== "hidden"
+  };
 }
 
 function isAdminPreseedAuthorized(req: Request, env: Env): boolean {
