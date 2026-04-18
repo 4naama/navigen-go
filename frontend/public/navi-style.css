@@ -2038,9 +2038,18 @@ button:hover {
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-.location-button:hover {
-  box-shadow: 0 0 0 2px var(--group-color-ink, currentColor); /* was: currentColor */
-  background-color: var(--group-color, #fafafa);              /* was: #fafafa */
+/* Popular cards: same safe 2-line wrapping as context-page location cards */
+.quick-button.popular-button{
+  height: auto;
+  min-height: 36px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.15;
+  text-align: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 /* sub headers */

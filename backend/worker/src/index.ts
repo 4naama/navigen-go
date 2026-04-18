@@ -1784,6 +1784,9 @@ export default {
         const targetSlug = String(body?.locationID || "").trim();
         const doAll = !!body?.all;
         const force = !!body?.force;
+        const purgeContexts = Array.isArray(body?.purgeContexts)
+          ? body.purgeContexts.map((v: any) => String(v || "").trim()).filter(Boolean)
+          : [];
 
         if (!targetSlug && !doAll) {
           return json(
@@ -1911,6 +1914,9 @@ export default {
         const targetSlug = String(body?.locationID || "").trim();
         const doAll = !!body?.all;
         const force = !!body?.force;
+        const purgeContexts = Array.isArray(body?.purgeContexts)
+          ? body.purgeContexts.map((v: any) => String(v || "").trim()).filter(Boolean)
+          : [];
 
         if (!targetSlug && !doAll) {
           return json(
@@ -1957,7 +1963,7 @@ export default {
 
         for (const t of targets) {
           try {
-            const result = await backfillPublishedLocationDoState(env, t.ulid);
+            const result = await backfillPublishedLocationDoState(env, t.ulid, { purgeContexts });
             out.push(result);
             if (result.ok && result.indexed) indexed++;
             else if (result.ok && result.visibilityState === "hidden") hidden++;
@@ -6868,7 +6874,8 @@ async function preseedLegacyLocationRecord(
 
 async function backfillPublishedLocationDoState(
   env: Env,
-  ulid: string
+  ulid: string,
+  opts: { purgeContexts?: string[] } = {}
 ): Promise<{ ok: boolean; ulid: string; slug: string; visibilityState?: string; indexed?: boolean; reason?: string }> {
   const id = String(ulid || "").trim();
   if (!ULID_RE.test(id)) {
@@ -6881,11 +6888,12 @@ async function backfillPublishedLocationDoState(
   }
 
   const vis = await computeVisibilityState(env, id);
+  const purgeContexts = uniqueTrimmedStrings(Array.isArray(opts.purgeContexts) ? opts.purgeContexts : []);
 
   await syncPublishedDoIndex(env, {
     ulid: id,
     slug: rec.locationID,
-    prevProfile: {},
+    prevProfile: purgeContexts.length ? { context: purgeContexts.join(";") } : {},
     nextProfile: rec.effective,
     visibilityState: vis.visibilityState
   });
