@@ -337,10 +337,11 @@ git commit --allow-empty -m "Deploy: rebuild prod"
 git push origin main
 
 --------------------------------------------------------------------
-https://navigen.io/en/language-schools/helen-doron/hungary/
-https://navigen.io/laboratory-services/corden/hungary/budapest
-https://navigen.io/restaurants/hungary/budapest
-https://navigen.io/souvenirs/hungary/budapest
+https://navigen.io/language-schools/helen-doron/hungary/
+https://navigen.io/laboratory-services/corden/hungary/budapest/
+https://navigen.io/restaurants/hungary/budapest/
+https://navigen.io/souvenirs/hungary/budapest/
+https://navigen.io/pharmacies/hungary/budapest
 --------------------------------------------------------------------
 
 --------------------------------------------------------------------
