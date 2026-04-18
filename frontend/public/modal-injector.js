@@ -4363,6 +4363,13 @@ export function createRequestListingModal(opts = {}) {
       <div class="modal-form-stack">
         <p class="muted muted-note">Use this when your business does not appear in Select your business.</p>
 
+        <div id="request-listing-loading" class="modal-menu-item owner-center-loading" aria-disabled="true" style="pointer-events:none;">
+          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+            <strong id="request-listing-loading-title">Loading request form...</strong><br>
+            <small id="request-listing-loading-desc">Getting categories and context options.</small>
+          </span>
+        </div>
+
         <div class="modal-field">
           <label for="rl-name">Business name *</label>
           <input id="rl-name" class="input" type="text" maxlength="80" />
@@ -4489,6 +4496,21 @@ export function createRequestListingModal(opts = {}) {
   const rlCoord = modal.querySelector('#rl-coord');
   const rlHasCoord = modal.querySelector('#rl-has-coord');
   const rlCoordWrap = modal.querySelector('#rl-coord-wrap');
+  const requestListingLoading = modal.querySelector('#request-listing-loading');
+  const requestListingLoadingTitle = modal.querySelector('#request-listing-loading-title');
+  const requestListingLoadingDesc = modal.querySelector('#request-listing-loading-desc');
+  const requestListingSubmit = modal.querySelector('#request-listing-submit');
+
+  function setRequestListingLoading(visible, title = '', desc = '') {
+    requestListingLoading?.classList.toggle('hidden', !visible);
+    if (requestListingLoadingTitle && title) requestListingLoadingTitle.textContent = title;
+    if (requestListingLoadingDesc && desc) requestListingLoadingDesc.textContent = desc;
+    if (requestListingSubmit instanceof HTMLButtonElement) {
+      requestListingSubmit.disabled = !!visible;
+    }
+  }
+
+  setRequestListingLoading(true, 'Loading request form...', 'Getting categories and context options.');
 
   const prefillContexts = Array.isArray(prefill?.contexts)
     ? prefill.contexts.map((v) => String(v || '').trim()).filter(Boolean)
@@ -4540,10 +4562,18 @@ export function createRequestListingModal(opts = {}) {
       loadP8ContextCatalog()
     ]);
 
+    const groupsOk = Array.isArray(structureRows) && structureRows.length > 0;
+    const contextsOk = Array.isArray(contextRows) && contextRows.length > 0;
+
+    if (!groupsOk || !contextsOk) {
+      setRequestListingLoading(true, 'Request form unavailable', 'Could not load categories and context options.');
+      return;
+    }
+
     if (rlGroup) {
       const options = ['<option value="">Select group</option>']
         .concat(
-          (Array.isArray(structureRows) ? structureRows : []).map((row) => {
+          structureRows.map((row) => {
             const groupKey = String(row?.groupKey || '').trim();
             const groupName = String(row?.groupName || groupKey).trim();
             return groupKey ? `<option value="${groupKey}">${groupName}</option>` : '';
@@ -4613,7 +4643,7 @@ export function createRequestListingModal(opts = {}) {
     });
 
     if (rlContexts) {
-      rlContexts.innerHTML = (Array.isArray(contextRows) ? contextRows : []).map((row) => {
+      rlContexts.innerHTML = contextRows.map((row) => {
         const key = String(row?.key || '').trim();
         const label = p8ContextLabel(row);
         return key ? `<option value="${key}">${label}</option>` : '';
@@ -4624,6 +4654,8 @@ export function createRequestListingModal(opts = {}) {
         opt.selected = selected.has(String(opt.value || '').trim());
       });
     }
+
+    setRequestListingLoading(false);
   })();
 
   modal.querySelector('#request-listing-submit')?.addEventListener('click', async () => {
@@ -4716,7 +4748,7 @@ export function createRequestListingModal(opts = {}) {
       }
     };
 
-    let res, payload;
+    setRequestListingLoading(true, 'Saving listing draft...', 'Preparing your private location shell.');
     try {
       res = await fetch('/api/location/draft', {
         method: 'POST',
@@ -4732,6 +4764,7 @@ export function createRequestListingModal(opts = {}) {
     }
 
     if (!res?.ok) {
+      setRequestListingLoading(false);
       const msg = String(payload?.error?.message || '').trim();
       showToast(msg || (t('modal.requestListing.error') || 'Could not create draft.'), 2400);
       return;
@@ -4740,6 +4773,7 @@ export function createRequestListingModal(opts = {}) {
     const draftULID = String(payload?.draftULID || existingDraftULID).trim();
     const draftSessionId = String(payload?.draftSessionId || existingDraftSessionId).trim();
     if (!draftULID || !draftSessionId) {
+      setRequestListingLoading(false);
       showToast(t('modal.requestListing.error') || 'Could not create draft.', 2400);
       return;
     }
