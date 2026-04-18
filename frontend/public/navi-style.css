@@ -2495,7 +2495,7 @@ button:hover {
 .modal.visible{ display: flex; }
 .modal.hidden{ display: none; }
 
-/* Card (single scroller) */
+/* Card shell */
 .modal .modal-content{
   display: flex;
   flex-direction: column;
@@ -2510,21 +2510,22 @@ button:hover {
   /* A) never exceed visible viewport height */
   max-height: calc(100dvh - (2 * var(--modal-pad)) - var(--safe-b));
 
-  /* C) scrollbar flush to right edge: scroller owns scrollbar */
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 0;
-  scrollbar-gutter: stable;
+  /* Card itself no longer scrolls; body owns scrolling again */
+  overflow: hidden;
 
   box-sizing: border-box;
   font-size: 18px;
   line-height: 1.5;
 }
 
-/* Body should NOT be a competing scroller */
+/* Body is the only scrollport again, which restores universal sticky header/footer behavior */
 .modal .modal-body{
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 0;
+  scrollbar-gutter: stable;
 }
 
 /* Single source of content padding (also keeps scrollbar at rim) */
@@ -4027,9 +4028,9 @@ select.input{
   border-color:#60a5fa;
 }
 
-/* SYB: reserve space for the sticky footer cover so results do not scroll underneath it */
+/* SYB uses the shared modal body scroller again; keep normal bottom breathing room only */
 #select-location-modal .modal-body-inner{
-  padding-bottom: calc(72px + var(--safe-b));
+  padding-bottom: 16px;
 }
 
 /* Shared callout card spacing: keep a small room before the following modal list. */

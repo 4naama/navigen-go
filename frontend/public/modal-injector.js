@@ -3229,7 +3229,7 @@ export async function showSelectLocationModal() {
 
   const modal = document.getElementById(id);
   const input = modal?.querySelector('#select-location-search');
-  const list = modal?.querySelector('.modal-menu-list');
+  const list = modal?.querySelector('.modal-menu-list'); const loadingRow = modal?.querySelector('#select-location-loading');
   if (!modal || !list) return null;
 
   const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
@@ -3244,6 +3244,9 @@ export async function showSelectLocationModal() {
       .trim();
 
   const tokensOf = (q) => norm(q).split(/\s+/).filter(Boolean);
+
+  if (loadingRow) loadingRow.classList.remove('hidden');
+  list.innerHTML = '';
 
   const loadProfiles = async () => {
     try {
