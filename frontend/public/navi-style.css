@@ -2740,7 +2740,7 @@ button:hover {
 }
 
 .modal-footer.modal-footer-cover{
-  min-height:56px;
+  min-height:38px;
   pointer-events:none;
   background:#fff;
   border-top:1px solid rgba(0,0,0,.08);

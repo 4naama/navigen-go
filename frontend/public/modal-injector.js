@@ -3202,6 +3202,19 @@ export function createSelectLocationModal() {
   // IMPORTANT: this must be in the body (inner), not the sticky header (topBar)
   inner.appendChild(notListedBtn);
 
+  const loadingRow = document.createElement('div');
+  loadingRow.id = 'select-location-loading';
+  loadingRow.className = 'modal-menu-item owner-center-loading';
+  loadingRow.setAttribute('aria-disabled', 'true');
+  loadingRow.style.pointerEvents = 'none';
+  loadingRow.innerHTML = `
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>Loading businesses...</strong><br>
+      <small>Getting locations available on the platform.</small>
+    </span>
+  `;
+  inner.appendChild(loadingRow);
+
   const list = document.createElement('div');
   list.className = 'modal-menu-list';
   inner.appendChild(list);
@@ -3304,6 +3317,8 @@ export async function showSelectLocationModal() {
         .filter((x) => x.name && x.slug);
     } catch {
       return [];
+    } finally {
+      if (loadingRow) loadingRow.classList.add('hidden');
     }
   };
 
