@@ -4030,7 +4030,7 @@ select.input{
 
 /* SYB uses the shared modal body scroller again; keep normal bottom breathing room only */
 #select-location-modal .modal-body-inner{
-  padding-bottom: 16px;
+  padding-bottom: 8px;
 }
 
 /* Shared callout card spacing: keep a small room before the following modal list. */
