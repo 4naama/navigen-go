@@ -3154,7 +3154,7 @@ export function createSelectLocationModal() {
   clearBtn.id = 'select-location-clear-search';
   clearBtn.textContent = 'x';
   clearBtn.style.display = 'none';
-  clearBtn.setAttribute('aria-label', 'Clear search');
+  clearBtn.setAttribute('aria-label', t('common.search.clear') || 'Clear search');
 
   // Build row: [ input + clear ]
   searchLeft.appendChild(searchInput);
@@ -3209,8 +3209,8 @@ export function createSelectLocationModal() {
   loadingRow.style.pointerEvents = 'none';
   loadingRow.innerHTML = `
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>Loading businesses...</strong><br>
-      <small>Getting locations available on the platform.</small>
+      <strong>${t('root.bo.selectLocation.loading.title') || 'Loading businesses...'}</strong><br>
+      <small>${t('root.bo.selectLocation.loading.desc') || 'Getting locations available on the platform.'}</small>
     </span>
   `;
   inner.appendChild(loadingRow);
@@ -4379,12 +4379,12 @@ export function createRequestListingModal(opts = {}) {
     layout: 'menu',
     bodyHTML: `
       <div class="modal-form-stack">
-        <p class="muted muted-note">Use this when your business does not appear in Select your business.</p>
+        <p class="muted muted-note">${t('modal.requestListing.note') || 'Use this when your business does not appear in Select your business.'}</p>
 
         <div id="request-listing-loading" class="modal-menu-item owner-center-loading" aria-disabled="true" style="pointer-events:none;">
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-            <strong id="request-listing-loading-title">Loading request form...</strong><br>
-            <small id="request-listing-loading-desc">Getting categories and context options.</small>
+            <strong id="request-listing-loading-title">${t('modal.requestListing.loading.title') || 'Loading request form...'}</strong><br>
+            <small id="request-listing-loading-desc">${t('modal.requestListing.loading.desc') || 'Getting categories and context options.'}</small>
           </span>
         </div>
 
@@ -4528,7 +4528,7 @@ export function createRequestListingModal(opts = {}) {
     }
   }
 
-  setRequestListingLoading(true, 'Loading request form...', 'Getting categories and context options.');
+  setRequestListingLoading(true, t('modal.requestListing.loading.title') || 'Loading request form...', t('modal.requestListing.loading.desc') || 'Getting categories and context options.');
 
   const prefillContexts = Array.isArray(prefill?.contexts)
     ? prefill.contexts.map((v) => String(v || '').trim()).filter(Boolean)
@@ -4584,7 +4584,7 @@ export function createRequestListingModal(opts = {}) {
     const contextsOk = Array.isArray(contextRows) && contextRows.length > 0;
 
     if (!groupsOk || !contextsOk) {
-      setRequestListingLoading(true, 'Request form unavailable', 'Could not load categories and context options.');
+      setRequestListingLoading(true, t('modal.requestListing.unavailable.title') || 'Request form unavailable', t('modal.requestListing.unavailable.desc') || 'Could not load categories and context options.');
       return;
     }
 
@@ -9148,7 +9148,7 @@ export function showPromotionsModal() {
   clearBtn.id = 'promotions-clear-search';
   clearBtn.textContent = 'x';
   clearBtn.style.display = 'none';
-  clearBtn.setAttribute('aria-label', 'Clear search');
+  clearBtn.setAttribute('aria-label', t('common.search.clear') || 'Clear search');
 
   searchLeft.appendChild(input);
   searchLeft.appendChild(clearBtn);
