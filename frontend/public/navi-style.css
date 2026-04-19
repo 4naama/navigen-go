@@ -2578,6 +2578,11 @@ button:hover {
   text-align:left;
 }
 
+.required-star{
+  color:#d32f2f;
+  font-weight:700;
+}
+
 .modal-form-grid{
   display:grid;
   grid-template-columns:repeat(2, minmax(0, 1fr));
