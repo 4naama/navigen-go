@@ -4464,11 +4464,21 @@ export function createRequestListingModal(opts = {}) {
           <small class="modal-help-text">${t('modal.requestListing.contexts.help') || 'Select one or more existing context paths.'}</small>
         </div>
 
-        <div class="modal-field">
-          <label for="rl-description">${t('modal.requestListing.description.label') || 'Business description'}</label>
-          <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || 'Describe the business, services, and customers.'}"></textarea>
-          <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
-        </div>
+        <details id="rl-description-chip" class="cm-chip request-section-chip" style="margin-top:0;">
+          <summary class="modal-menu-item cm-chip-face">
+            <span class="label cm-chip-face-label">
+              ${t('modal.requestListing.description.label') || 'Business description'}
+              <small id="rl-description-chip-state">${translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional. Open to add details.')}</small>
+            </span>
+            <span class="cm-chip-face-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="cm-chip-body">
+            <div class="modal-field" style="margin:0;">
+              <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || 'Describe the business, services, and customers.'}"></textarea>
+              <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
+            </div>
+          </div>
+        </details>
 
         <div class="modal-field">
           <label for="rl-link">${t('modal.requestListing.link.label') || 'Official website or primary business link'}</label>
@@ -4535,6 +4545,8 @@ export function createRequestListingModal(opts = {}) {
   const rlFacebook = modal.querySelector('#rl-facebook');
   const rlInstagram = modal.querySelector('#rl-instagram');
   const rlDescription = modal.querySelector('#rl-description');
+  const rlDescriptionChipState = modal.querySelector('#rl-description-chip-state');
+  const rlDescriptionChipSummary = modal.querySelector('#rl-description-chip summary');  
   const rlGroup = modal.querySelector('#rl-group');
   const rlSubgroup = modal.querySelector('#rl-subgroup');
   const rlContexts = modal.querySelector('#rl-contexts');
@@ -4599,6 +4611,16 @@ export function createRequestListingModal(opts = {}) {
     syncRequestListingTags();
   }
 
+  function updateRequestListingDescriptionChip() {
+    const value = String(rlDescription?.value || '').trim();
+    const summary = value
+      ? (value.length > 96 ? `${value.slice(0, 93).trim()}...` : value)
+      : translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional. Open to add details.');
+
+    if (rlDescriptionChipState) rlDescriptionChipState.textContent = summary;
+    rlDescriptionChipSummary?.classList.toggle('is-active', !!value);
+  }
+
   syncRequestListingTags();
 
   if (prefill) {
@@ -4622,6 +4644,9 @@ export function createRequestListingModal(opts = {}) {
       rlCoordWrap?.classList.remove('hidden');
     }
   }
+
+  updateRequestListingDescriptionChip();
+  rlDescription?.addEventListener('input', updateRequestListingDescriptionChip);
 
   (async () => {
     const [structureRows, contextRows] = await Promise.all([
