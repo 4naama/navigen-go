@@ -4309,6 +4309,23 @@ function formatMediaUrlValues(values) {
     .join('\n');
 }
 
+function deriveRequestListingCountryCode() {
+  const metaCountry =
+    document.querySelector('meta[name="cf-country"]')?.content ||
+    document.querySelector('meta[name="app-country"]')?.content ||
+    document.documentElement.getAttribute('data-country') ||
+    (() => {
+      try {
+        return new Intl.Locale(document.documentElement.lang || navigator.language).region || '';
+      } catch {
+        return '';
+      }
+    })();
+
+  const cc = String(metaCountry || '').trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(cc) ? cc : '';
+}
+
 function setInputErrorState(el, bad) {
   if (!el) return;
   el.classList.toggle('input-error', !!bad);
@@ -4410,7 +4427,7 @@ export function createRequestListingModal(opts = {}) {
           </div>
           <div class="modal-field">
             <label for="rl-country">${t('modal.requestListing.country.label') || 'Country code'} <span class="required-star">*</span></label>
-            <input id="rl-country" class="input" type="text" maxlength="2" placeholder="${t('modal.requestListing.country.placeholder') || 'HU'}" />
+            <input id="rl-country" class="input" type="text" maxlength="2" />            
           </div>
         </div>
 
@@ -4563,6 +4580,7 @@ export function createRequestListingModal(opts = {}) {
     if (rlAddress) rlAddress.value = String(prefill.address || '').trim();
     if (rlCity) rlCity.value = String(prefill.city || '').trim();
     if (rlCountry) rlCountry.value = String(prefill.country || '').trim().toUpperCase();
+    if (!String(prefill?.country || '').trim() && rlCountry) rlCountry.value = deriveRequestListingCountryCode();
     if (rlLink) rlLink.value = prefillOfficialLink;
     if (rlFacebook) rlFacebook.value = prefillFacebook;
     if (rlInstagram) rlInstagram.value = prefillInstagram;
@@ -4833,6 +4851,7 @@ export function createRequestListingModal(opts = {}) {
     hideModal(id);
   });
 
+  modal.querySelector('#request-listing-cancel')?.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); hideModal(id); });
   const countryInput = modal.querySelector('#rl-country');
   countryInput?.addEventListener('input', (e) => {
     e.target.value = String(e.target.value || '').toUpperCase();
