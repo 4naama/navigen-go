@@ -1732,6 +1732,7 @@ body.high-contrast .qr-cta{
 /* Neutral note text (do not inherit bold label styling) */
 .modal-body .muted.muted-note{
   font-weight:400;
+  text-align:left;
 }
 
 .modal .modal-body strong,
