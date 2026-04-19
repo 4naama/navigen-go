@@ -4379,7 +4379,7 @@ export function createRequestListingModal(opts = {}) {
     layout: 'menu',
     bodyHTML: `
       <div class="modal-form-stack">
-        <p class="muted muted-note">${t('modal.requestListing.note') || 'Use this when your business does not appear in Select your business.'}</p>
+        <p class="muted muted-note" style="text-align:left;">${t('modal.requestListing.note') || 'Use this when your business does not appear in Select your business.'}</p>
 
         <div id="request-listing-loading" class="modal-menu-item owner-center-loading" aria-disabled="true" style="pointer-events:none;">
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
@@ -4433,17 +4433,17 @@ export function createRequestListingModal(opts = {}) {
 
         <div class="modal-form-grid">
           <div class="modal-field">
-            <label for="rl-group">${t('modal.requestListing.group.label') || 'Group *'}</label>
+            <label for="rl-group">${t('modal.requestListing.group.label') || 'Group'} <span class="required-star">*</span></label>
             <select id="rl-group" class="input"></select>
           </div>
           <div class="modal-field">
-            <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup *'}</label>
+            <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup'} <span class="required-star">*</span></label>
             <select id="rl-subgroup" class="input"></select>
           </div>
         </div>
 
         <div class="modal-field">
-          <label for="rl-contexts">${t('modal.requestListing.contexts.label') || 'Contexts * (one or more)'}</label>
+          <label for="rl-contexts">${t('modal.requestListing.contexts.label') || 'Contexts (one or more)'} <span class="required-star">*</span></label>
           <select id="rl-contexts" class="input" multiple size="6"></select>
           <small class="modal-help-text">${t('modal.requestListing.contexts.help') || 'Select one or more existing context paths.'}</small>
         </div>
