@@ -4601,23 +4601,6 @@ export function createRequestListingModal(opts = {}) {
 
   syncRequestListingTags();
 
-  const selectedTagSet = new Set(prefillTags);
-
-  function syncRequestListingTags() {
-    if (rlTags) rlTags.value = formatTagValues(Array.from(selectedTagSet));
-  }
-
-  function setRequestListingTags(values) {
-    selectedTagSet.clear();
-    (Array.isArray(values) ? values : []).forEach((value) => {
-      const tag = String(value || '').trim();
-      if (tag) selectedTagSet.add(tag);
-    });
-    syncRequestListingTags();
-  }
-
-  syncRequestListingTags();
-
   if (prefill) {
     if (rlName) rlName.value = String(prefill.name || '').trim();
     if (rlAddress) rlAddress.value = String(prefill.address || '').trim();
