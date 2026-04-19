@@ -2401,14 +2401,14 @@ button:hover {
   bottom:33vh; /* one-third from bottom */
   left:50%;
   transform:translateX(-50%) translateY(20px);
-  background:#fff;
-  color:#333;
+  background:rgba(15,23,42,.96);
+  color:#f8fafc;
   padding:14px 16px 16px;
   border-radius:12px;
   font-size:17px;
   font-weight:500;
   font-family:inherit;
-  box-shadow:0 4px 12px rgba(0,0,0,.15);
+  box-shadow:0 16px 40px rgba(15,23,42,.28);
   z-index:10000;
   opacity:0;
   pointer-events:auto;
@@ -2430,16 +2430,16 @@ button:hover {
   appearance:none; -webkit-appearance:none;
   background:transparent; border:0; cursor:pointer;
   font-size:18px; /* set your desired toast × size */
-  line-height:1; color:#d11;
+  line-height:1; color:#fca5a5;
   padding:2px 6px; border-radius:6px;
 }
 
-.toast .toast-close:hover{ color:#a00; }
+.toast .toast-close:hover{ color:#fecaca; }
 .toast .toast-close:focus-visible{ outline:2px solid currentColor; outline-offset:2px; }
 
 /* body + links */
 .toast .toast-body{ line-height:1.45; }
-.toast a, .toast .toast-link{ color:#1976d2; text-decoration:underline; }
+.toast a, .toast .toast-link{ color:#93c5fd; text-decoration:underline; }
 .toast a:hover, .toast .toast-link:hover{ text-decoration:none; }
 
 /* legacy helpers kept for compat */
@@ -2450,6 +2450,12 @@ button:hover {
   cursor:pointer; transition:background .3s ease;
 }
 .toast-btn:hover{ background:#c6dafe; }
+
+body.high-contrast .toast{
+  background:#000;
+  color:#fff;
+  box-shadow:0 0 0 2px currentColor;
+}
 /* .subtext intentionally not used anymore */
 
 #scroll-zone {

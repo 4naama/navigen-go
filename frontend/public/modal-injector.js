@@ -3196,7 +3196,7 @@ export function createSelectLocationModal() {
   notListedBtn.addEventListener('click', (e) => {
     e.preventDefault();
     hideModal(id);
-    showRequestListingModal();
+    showRequestListingModal({ returnTo: 'syb' });
   });
 
   // IMPORTANT: this must be in the body (inner), not the sticky header (topBar)
@@ -4394,11 +4394,20 @@ export function createRequestListingModal(opts = {}) {
   const id = 'request-listing-modal';
   document.getElementById(id)?.remove();
 
+  const shouldReturnToSelectLocation = String(opts?.returnTo || '').trim() === 'syb';
+  const closeRequestListing = (ev = null) => {
+    ev?.preventDefault?.();
+    ev?.stopPropagation?.();
+    hideModal(id);
+    if (shouldReturnToSelectLocation) showSelectLocationModal();
+  };
+
   // Shared modal shell; CTAs live inside the scrollable body (no legacy footer).
   const modal = injectModal({
     id,
     title: t('modal.requestListing.title') || 'Request a listing',
     layout: 'menu',
+    onClose: (ev) => { closeRequestListing(ev); },
     bodyHTML: `
       <div class="modal-form-stack">
         <p class="muted muted-note" style="text-align:left;">${t('modal.requestListing.note') || 'Use this when your business does not appear in Select your business.'}</p>
@@ -4431,6 +4440,36 @@ export function createRequestListingModal(opts = {}) {
           </div>
         </div>
 
+        <div class="modal-form-grid">
+          <div class="modal-field">
+            <label for="rl-group">${t('modal.requestListing.group.label') || 'Group'} <span class="required-star">*</span></label>
+            <select id="rl-group" class="input"></select>
+          </div>
+          <div class="modal-field">
+            <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup'} <span class="required-star">*</span></label>
+            <select id="rl-subgroup" class="input"></select>
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label>${t('modal.requestListing.tags.label') || 'Search tags'}</label>
+          <input id="rl-tags" type="hidden" />
+          <div id="rl-tag-suggestions" class="request-chip-row" aria-label="${t('modal.requestListing.tags.label') || 'Search tags'}"></div>
+          <small class="modal-help-text">${t('modal.requestListing.tags.help') || 'Optional search terms that match how customers look for this business.'}</small>
+        </div>
+
+        <div class="modal-field">
+          <label for="rl-contexts">${t('modal.requestListing.contexts.label') || 'Contexts (one or more)'} <span class="required-star">*</span></label>
+          <select id="rl-contexts" class="input" multiple size="6"></select>
+          <small class="modal-help-text">${t('modal.requestListing.contexts.help') || 'Select one or more existing context paths.'}</small>
+        </div>
+
+        <div class="modal-field">
+          <label for="rl-description">${t('modal.requestListing.description.label') || 'Business description'}</label>
+          <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || 'Describe the business, services, and customers.'}"></textarea>
+          <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
+        </div>
+
         <div class="modal-field">
           <label for="rl-link">${t('modal.requestListing.link.label') || 'Official website or primary business link'}</label>
           <input id="rl-link" class="input" type="text" maxlength="240" />
@@ -4445,36 +4484,6 @@ export function createRequestListingModal(opts = {}) {
             <label for="rl-instagram">${t('modal.requestListing.instagram.label') || 'Instagram link'}</label>
             <input id="rl-instagram" class="input" type="text" maxlength="240" />
           </div>
-        </div>
-
-        <div class="modal-field">
-          <label for="rl-description">${t('modal.requestListing.description.label') || 'Business description'}</label>
-          <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || 'Describe the business, services, and customers.'}"></textarea>
-          <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
-        </div>
-
-        <div class="modal-form-grid">
-          <div class="modal-field">
-            <label for="rl-group">${t('modal.requestListing.group.label') || 'Group'} <span class="required-star">*</span></label>
-            <select id="rl-group" class="input"></select>
-          </div>
-          <div class="modal-field">
-            <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup'} <span class="required-star">*</span></label>
-            <select id="rl-subgroup" class="input"></select>
-          </div>
-        </div>
-
-        <div class="modal-field">
-          <label for="rl-contexts">${t('modal.requestListing.contexts.label') || 'Contexts (one or more)'} <span class="required-star">*</span></label>
-          <select id="rl-contexts" class="input" multiple size="6"></select>
-          <small class="modal-help-text">${t('modal.requestListing.contexts.help') || 'Select one or more existing context paths.'}</small>
-        </div>
-
-        <div class="modal-field">
-          <label>${t('modal.requestListing.tags.label') || 'Search tags'}</label>
-          <input id="rl-tags" type="hidden" />
-          <div id="rl-tag-suggestions" class="request-chip-row" aria-label="${t('modal.requestListing.tags.label') || 'Search tags'}"></div>
-          <small class="modal-help-text">${t('modal.requestListing.tags.help') || 'Optional search terms that match how customers look for this business. Tap chips to add or remove them.'}</small>
         </div>
 
         <div class="modal-field">
@@ -4574,6 +4583,23 @@ export function createRequestListingModal(opts = {}) {
   const prefillImages = Array.isArray(prefill?.images)
     ? prefill.images
     : (Array.isArray(prefill?.media?.images) ? prefill.media.images : []);
+
+  const selectedTagSet = new Set(prefillTags);
+
+  function syncRequestListingTags() {
+    if (rlTags) rlTags.value = formatTagValues(Array.from(selectedTagSet));
+  }
+
+  function setRequestListingTags(values) {
+    selectedTagSet.clear();
+    (Array.isArray(values) ? values : []).forEach((value) => {
+      const tag = String(value || '').trim();
+      if (tag) selectedTagSet.add(tag);
+    });
+    syncRequestListingTags();
+  }
+
+  syncRequestListingTags();
 
   const selectedTagSet = new Set(prefillTags);
 
@@ -4876,10 +4902,10 @@ export function createRequestListingModal(opts = {}) {
     });
 
     showToast(t('modal.requestListing.success') || 'Draft saved.', 2500);
-    hideModal(id);
+    closeRequestListing();
   });
 
-  modal.querySelector('#request-listing-cancel')?.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); hideModal(id); });
+  modal.querySelector('#request-listing-cancel')?.addEventListener('click', (ev) => { closeRequestListing(ev); });
   const countryInput = modal.querySelector('#rl-country');
   countryInput?.addEventListener('input', (e) => {
     e.target.value = String(e.target.value || '').toUpperCase();
@@ -4891,7 +4917,7 @@ export function createRequestListingModal(opts = {}) {
     coordWrap?.classList.toggle('hidden', !e.target?.checked);
   });
 
-  setupTapOutClose(id);
+  setupTapOutClose(id, closeRequestListing);
 }
 
 export function showRequestListingModal(opts = {}) {
@@ -10461,13 +10487,18 @@ export function createIncomingLocationModal(coords) {
  */
 // Lead comments: close on container click or ESC; no overlay needed.
 // tap-out closes only when clicking the container (not inner content)
-export function setupTapOutClose(modalId) {
+export function setupTapOutClose(modalId, onClose = null) {
   const modal = document.getElementById(modalId);
   if (!modal) return;
 
   // Backdrop (tap-out): close only when clicking the overlay itself
   const onBackdropClick = (e) => {
-    if (e.target === modal) hideModal(modalId);
+    if (e.target !== modal) return;
+    if (typeof onClose === 'function') {
+      onClose(e, modal);
+      return;
+    }
+    hideModal(modalId);
   };
 
   modal.removeEventListener('click', onBackdropClick);
@@ -10477,7 +10508,12 @@ export function setupTapOutClose(modalId) {
   if (modal.dataset.escBound !== '1') {
     modal.dataset.escBound = '1';
     modal.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') hideModal(modalId);
+      if (e.key !== 'Escape') return;
+      if (typeof onClose === 'function') {
+        onClose(e, modal);
+        return;
+      }
+      hideModal(modalId);
     }, { capture: true });
   }
 
