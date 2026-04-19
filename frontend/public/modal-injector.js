@@ -4718,6 +4718,8 @@ export function createRequestListingModal(opts = {}) {
     const imageVals = parseMediaUrlValues(modal.querySelector('#rl-images')?.value || '');
     const coord = String(modal.querySelector('#rl-coord')?.value || '').trim();
 
+    const wantsCoord = !!rlHasCoord?.checked;
+
     setInputErrorState(rlName, !name);
     setInputErrorState(rlAddress, !address);
     setInputErrorState(rlCity, !city);
@@ -4725,8 +4727,9 @@ export function createRequestListingModal(opts = {}) {
     setInputErrorState(rlGroup, !groupKey);
     setInputErrorState(rlSubgroup, !subgroupKey);
     setInputErrorState(rlContexts, !contextVals.length);
+    setInputErrorState(rlCoord, wantsCoord && !coord);
 
-    if (!name || !address || !city || !country || country.length !== 2 || !groupKey || !subgroupKey || !contextVals.length) {
+    if (!name || !address || !city || !country || country.length !== 2 || !groupKey || !subgroupKey || !contextVals.length || (wantsCoord && !coord)) {
       showToast(t('modal.requestListing.validation.required') || 'Please fill in all required fields marked with *.', 2200);
       return;
     }
