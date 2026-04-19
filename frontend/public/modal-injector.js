@@ -4309,6 +4309,11 @@ function formatMediaUrlValues(values) {
     .join('\n');
 }
 
+function setInputErrorState(el, bad) {
+  if (!el) return;
+  el.classList.toggle('input-error', !!bad);
+}
+
 function p8DraftImageCount(draft) {
   const cover = String(draft?.cover || draft?.media?.cover || '').trim();
   const images = Array.isArray(draft?.images)
@@ -4469,7 +4474,7 @@ export function createRequestListingModal(opts = {}) {
         <div class="modal-field">
           <label class="modal-checkbox-row" for="rl-has-coord">
             <input id="rl-has-coord" type="checkbox" />
-            <span>${t('modal.requestListing.hasCoord.label') || 'Optional: I have coordinates'}</span>
+            <span>${t('modal.requestListing.hasCoord.label') || 'Suggested: I have coordinates'}</span>
           </label>
 
           <div id="rl-coord-wrap" class="modal-field hidden">
@@ -4695,13 +4700,16 @@ export function createRequestListingModal(opts = {}) {
     const imageVals = parseMediaUrlValues(modal.querySelector('#rl-images')?.value || '');
     const coord = String(modal.querySelector('#rl-coord')?.value || '').trim();
 
-    if (!name || !address || !city || !country || country.length !== 2) {
-      showToast(t('modal.requestListing.validation.basic') || 'Please provide name, street address, city, and 2-letter country code.', 2200);
-      return;
-    }
+    setInputErrorState(rlName, !name);
+    setInputErrorState(rlAddress, !address);
+    setInputErrorState(rlCity, !city);
+    setInputErrorState(rlCountry, !country || country.length !== 2);
+    setInputErrorState(rlGroup, !groupKey);
+    setInputErrorState(rlSubgroup, !subgroupKey);
+    setInputErrorState(rlContexts, !contextVals.length);
 
-    if (!groupKey || !subgroupKey || !contextVals.length) {
-      showToast(t('modal.requestListing.validation.classification') || 'Please select one group, one subgroup, and at least one context.', 2200);
+    if (!name || !address || !city || !country || country.length !== 2 || !groupKey || !subgroupKey || !contextVals.length) {
+      showToast(t('modal.requestListing.validation.required') || 'Please fill in all required fields marked with *.', 2200);
       return;
     }
 
