@@ -265,7 +265,7 @@ async function maybeShowLpmInactiveNotice(idOrSlug) {
     const u = new URL('/api/status', location.origin);
     u.searchParams.set('locationID', raw);
 
-    const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+    const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
     if (!r.ok) return;
 
     const j = await r.json().catch(() => null);
@@ -1348,6 +1348,24 @@ async function initEmergencyBlock(countryOverride) {
           (async () => {
             showToast('Select your business to start a campaign.', 2200);
 
+            let pendingDraft = null;
+            try {
+              const raw = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDraft') || 'null');
+              if (raw && typeof raw === 'object') pendingDraft = raw;
+            } catch {}
+
+            const pendingDraftULID = String(pendingDraft?.draftULID || '').trim();
+            const pendingDraftSessionId = String(pendingDraft?.draftSessionId || '').trim();
+
+            if (pendingDraftULID && pendingDraftSessionId) {
+              await showCampaignManagementModal(pendingDraftULID, {
+                guest: true,
+                p8Draft: pendingDraft,
+                preferEmptyDraft: true
+              });
+              return;
+            }
+
             const picked = await showSelectLocationModal();
             const locId = String(picked?.slug || picked?.locationID || '').trim();
             if (!locId) return;
@@ -1628,7 +1646,7 @@ async function initEmergencyBlock(countryOverride) {
 
     const fetchListPage = async (url) => {
       let res = await fetch(url, {
-        credentials: 'omit',              // no cookies → no credentialed CORS needed
+        credentials: 'include',              // no cookies → no credentialed CORS needed
         cache: 'no-store',
         headers: {} // rely on fetch's cache: 'no-store'
       });
@@ -1638,7 +1656,7 @@ async function initEmergencyBlock(countryOverride) {
       if (res && res.status === 404) {
         const alt = new URL(url.toString());
         if (!alt.pathname.endsWith('/')) alt.pathname += '/';
-        const r2 = await fetch(alt, { credentials: 'omit', cache: 'no-store', headers: {} }); // same headers/policy
+        const r2 = await fetch(alt, { credentials: 'include', cache: 'no-store', headers: {} }); // same headers/policy
         if (r2.ok) res = r2;
       }
 
@@ -1868,7 +1886,7 @@ async function initEmergencyBlock(countryOverride) {
 
         for (let i = 0; i < tries; i++) {
           try {
-            const r = await fetch(`${location.origin}/api/status?locationID=${encodeURIComponent(idOrSlug)}`, { cache: 'no-store', credentials: 'omit' });
+            const r = await fetch(`${location.origin}/api/status?locationID=${encodeURIComponent(idOrSlug)}`, { cache: 'no-store', credentials: 'include' });            
             if (r.ok) {
               const j = await r.json().catch(() => null);
               if (j?.campaignEntitled === true || j?.ownedNow === true) return;
@@ -2384,8 +2402,12 @@ async function initEmergencyBlock(countryOverride) {
           : ["page.tagline"];
 
         let val = "";
-        for (const k of keys) { const v = t(k); if (v && v !== k) { val = v; break; } }
-        sub.textContent = val || t("page.tagline"); // prefer ctx; parent/default if missing
+        for (const k of keys) {
+          const v = String(t(k) || "").trim();
+          const unresolvedBracketed = v === `[${k}]`;
+          if (v && v !== k && !unresolvedBracketed) { val = v; break; }
+        }
+        sub.textContent = val || translatedOrFallback("page.tagline", "");
       }
 
       const s = document.getElementById("search"); if (s) s.placeholder = t("search.placeholder");
@@ -3537,6 +3559,12 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
       try {
         sessionStorage.setItem('navigen.internalLpNav', '1');        // suppress qr-scan once
         sessionStorage.setItem('navigen.suppressLpmOpenOnce', '1');  // suppress lpm-open once
+
+        const draftULID = String(current.searchParams.get('draftULID') || '').trim();
+        const draftSessionId = String(current.searchParams.get('draftSessionId') || '').trim();
+        if (draftULID && draftSessionId) {
+          sessionStorage.setItem('navigen.resumeCampaignAfterExchange', '1');
+        }
       } catch {}
 
       // Remove one-time params so refresh won't re-run exchange.
@@ -3585,6 +3613,43 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   } catch (err) {
     console.error("Stripe return handling failed:", err);
   }
+})();
+
+(async function resumePendingCampaignAfterExchange() {
+  let shouldResume = false;
+  try {
+    shouldResume = sessionStorage.getItem('navigen.resumeCampaignAfterExchange') === '1';
+  } catch {}
+  if (!shouldResume) return;
+
+  try { sessionStorage.removeItem('navigen.resumeCampaignAfterExchange'); } catch {}
+
+  let pending = null;
+  try {
+    const raw = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDraft') || 'null');
+    if (raw && typeof raw === 'object') pending = raw;
+  } catch {}
+
+  const draftULID = String(pending?.draftULID || '').trim();
+  const draftSessionId = String(pending?.draftSessionId || '').trim();
+  if (!draftULID || !draftSessionId) return;
+
+  let guest = true;
+  try {
+    const rr = await fetch('/api/owner/campaigns', {
+      cache: 'no-store',
+      credentials: 'include'
+    });
+    guest = !rr.ok;
+  } catch {
+    guest = true;
+  }
+
+  await showCampaignManagementModal(draftULID, {
+    guest,
+    p8Draft: pending,
+    preferEmptyDraft: true
+  });
 })();
 
 // Maps Stripe donation amounts (in cents) to a known tier.

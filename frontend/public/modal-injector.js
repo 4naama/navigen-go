@@ -4471,10 +4471,10 @@ export function createRequestListingModal(opts = {}) {
         </div>
 
         <div class="modal-field">
-          <label for="rl-tags">${t('modal.requestListing.tags.label') || 'Search tags'}</label>
-          <input id="rl-tags" class="input" type="text" maxlength="240" placeholder="${t('modal.requestListing.tags.placeholder') || 'comma, separated, tags'}" />
-          <div id="rl-tag-suggestions" class="modal-menu-list" style="margin-top:.5rem;"></div>
-          <small class="modal-help-text">${t('modal.requestListing.tags.help') || 'Optional search terms that match how customers look for this business.'}</small>
+          <label>${t('modal.requestListing.tags.label') || 'Search tags'}</label>
+          <input id="rl-tags" type="hidden" />
+          <div id="rl-tag-suggestions" class="request-chip-row" aria-label="${t('modal.requestListing.tags.label') || 'Search tags'}"></div>
+          <small class="modal-help-text">${t('modal.requestListing.tags.help') || 'Optional search terms that match how customers look for this business. Tap chips to add or remove them.'}</small>
         </div>
 
         <div class="modal-field">
@@ -4575,6 +4575,23 @@ export function createRequestListingModal(opts = {}) {
     ? prefill.images
     : (Array.isArray(prefill?.media?.images) ? prefill.media.images : []);
 
+  const selectedTagSet = new Set(prefillTags);
+
+  function syncRequestListingTags() {
+    if (rlTags) rlTags.value = formatTagValues(Array.from(selectedTagSet));
+  }
+
+  function setRequestListingTags(values) {
+    selectedTagSet.clear();
+    (Array.isArray(values) ? values : []).forEach((value) => {
+      const tag = String(value || '').trim();
+      if (tag) selectedTagSet.add(tag);
+    });
+    syncRequestListingTags();
+  }
+
+  syncRequestListingTags();
+
   if (prefill) {
     if (rlName) rlName.value = String(prefill.name || '').trim();
     if (rlAddress) rlAddress.value = String(prefill.address || '').trim();
@@ -4585,7 +4602,7 @@ export function createRequestListingModal(opts = {}) {
     if (rlFacebook) rlFacebook.value = prefillFacebook;
     if (rlInstagram) rlInstagram.value = prefillInstagram;
     if (rlDescription) rlDescription.value = prefillDescription;
-    if (rlTags) rlTags.value = formatTagValues(prefillTags);
+    setRequestListingTags(prefillTags);
     if (rlCover) rlCover.value = prefillCover;
     if (rlImages) rlImages.value = formatMediaUrlValues(prefillImages);
 
@@ -4634,22 +4651,28 @@ export function createRequestListingModal(opts = {}) {
       const subs = p8SubgroupsForGroup(structureRows, groupKey);
       const activeSub = subs.find((sg) => String(sg?.key || '').trim() === subgroupKey);
       const keywords = Array.isArray(activeSub?.keywords) ? activeSub.keywords : [];
+      const tags = Array.from(new Set(
+        keywords
+          .concat(Array.from(selectedTagSet))
+          .map((kw) => String(kw || '').trim())
+          .filter(Boolean)
+      ));
 
-      if (!keywords.length) return;
+      rlTagSuggestions.classList.toggle('hidden', !tags.length);
+      if (!tags.length) return;
 
-      keywords.forEach((kw) => {
-        const tag = String(kw || '').trim();
-        if (!tag) return;
-
+      tags.forEach((tag) => {
+        const selected = selectedTagSet.has(tag);
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'modal-menu-item';
-        btn.style.padding = '.5rem .75rem';
-        btn.innerHTML = `<span class="label" style="text-align:left; flex:1 1 auto;">${tag}</span>`;
+        btn.className = `request-chip${selected ? ' is-selected' : ''}`;
+        btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        btn.textContent = tag;
         btn.addEventListener('click', () => {
-          const next = new Set(parseTagValues(rlTags?.value || ''));
-          next.add(tag);
-          if (rlTags) rlTags.value = formatTagValues(Array.from(next));
+          if (selectedTagSet.has(tag)) selectedTagSet.delete(tag);
+          else selectedTagSet.add(tag);
+          syncRequestListingTags();
+          renderTagSuggestions();
         });
         rlTagSuggestions.appendChild(btn);
       });
@@ -4796,6 +4819,8 @@ export function createRequestListingModal(opts = {}) {
     };
 
     setRequestListingLoading(true, t('modal.requestListing.saving.title') || 'Saving listing draft...', t('modal.requestListing.saving.desc') || 'Preparing your private location shell.');
+    let res = null;
+    let payload = null;
     try {
       res = await fetch('/api/location/draft', {
         method: 'POST',

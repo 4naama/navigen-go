@@ -964,7 +964,7 @@ async function resolveULIDFor(idOrSlug) {
 
   try {
     const url = `${location.origin}/api/status?locationID=${encodeURIComponent(s)}`;
-    const r = await fetch(url, { cache: 'no-store', credentials: 'omit' });
+    const r = await fetch(url, { cache: 'no-store', credentials: 'include' });
     if (!r.ok) return '';
     const j = await r.json().catch(() => null);
     const uid = String(j?.locationID || '').trim();
@@ -1211,16 +1211,7 @@ let lpmProfilesLocationsPromise;
 
 function getProfilesLocationRecords() {
   if (!lpmProfilesLocationsPromise) {
-    lpmProfilesLocationsPromise = fetch('/data/profiles.json', { cache: 'no-store' })
-      .then((res) => (res.ok ? res.json().catch(() => null) : null))
-      .then((payload) => {
-        if (Array.isArray(payload)) return payload;
-        if (Array.isArray(payload?.locations)) return payload.locations;
-        if (payload?.locations && typeof payload.locations === 'object') return Object.values(payload.locations);
-        if (payload && typeof payload === 'object') return Object.values(payload);
-        return [];
-      })
-      .catch(() => []);
+    lpmProfilesLocationsPromise = Promise.resolve([]);
   }
 
   return lpmProfilesLocationsPromise;
@@ -1571,7 +1562,7 @@ export async function showLocationProfileModal(data) {
       } catch {}
 
       // Second: authoritative fetch from /api/status (may overwrite the hint).
-      const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+      const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
       if (!r.ok) return;
 
       const j = await r.json().catch(() => null);
@@ -3163,7 +3154,7 @@ export function createSelectLocationModal() {
   clearBtn.id = 'select-location-clear-search';
   clearBtn.textContent = 'x';
   clearBtn.style.display = 'none';
-  clearBtn.setAttribute('aria-label', 'Clear search');
+  clearBtn.setAttribute('aria-label', t('common.search.clear') || 'Clear search');
 
   // Build row: [ input + clear ]
   searchLeft.appendChild(searchInput);
@@ -3211,6 +3202,19 @@ export function createSelectLocationModal() {
   // IMPORTANT: this must be in the body (inner), not the sticky header (topBar)
   inner.appendChild(notListedBtn);
 
+  const loadingRow = document.createElement('div');
+  loadingRow.id = 'select-location-loading';
+  loadingRow.className = 'modal-menu-item owner-center-loading';
+  loadingRow.setAttribute('aria-disabled', 'true');
+  loadingRow.style.pointerEvents = 'none';
+  loadingRow.innerHTML = `
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${t('root.bo.selectLocation.loading.title') || 'Loading businesses...'}</strong><br>
+      <small>${t('root.bo.selectLocation.loading.desc') || 'Getting locations available on the platform.'}</small>
+    </span>
+  `;
+  inner.appendChild(loadingRow);
+
   const list = document.createElement('div');
   list.className = 'modal-menu-list';
   inner.appendChild(list);
@@ -3227,8 +3231,9 @@ export function createSelectLocationModal() {
 }
 
 // Phase 5 BO: Select Location must not depend on pre-rendered DOM lists.
-// Root shell can have zero/partial `.location-button` nodes, so we load the full candidate set from `/data/profiles.json`
-// and perform token-AND, accent-insensitive search over name/slug/address/adminArea/postalCode/countryCode/tags/contact.
+// Root shell can have zero/partial `.location-button` nodes, so we load the full candidate set from
+// the authoritative `/api/owner/location-options` endpoint and perform token-AND, accent-insensitive
+// search over name/slug/address/adminArea/postalCode/countryCode/tags/contact.
 // UI rows display only "street, city" (no adminArea/countryCode/postalCode shown), but those fields remain searchable.
 export async function showSelectLocationModal() {
   const id = 'select-location-modal';
@@ -3237,7 +3242,7 @@ export async function showSelectLocationModal() {
 
   const modal = document.getElementById(id);
   const input = modal?.querySelector('#select-location-search');
-  const list = modal?.querySelector('.modal-menu-list');
+  const list = modal?.querySelector('.modal-menu-list'); const loadingRow = modal?.querySelector('#select-location-loading');
   if (!modal || !list) return null;
 
   const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
@@ -3253,24 +3258,21 @@ export async function showSelectLocationModal() {
 
   const tokensOf = (q) => norm(q).split(/\s+/).filter(Boolean);
 
+  if (loadingRow) loadingRow.classList.remove('hidden');
+  list.innerHTML = '';
+
   const loadProfiles = async () => {
     try {
-      const res = await fetch('/data/profiles.json', { cache: 'no-store' });
+      const res = await fetch('/api/owner/location-options', {
+        cache: 'no-store',
+        credentials: 'include'
+      });
       if (!res.ok) return [];
       const j = await res.json().catch(() => null);
-      if (!j) return [];
+      const arr = Array.isArray(j?.items) ? j.items : [];
+      if (!arr.length) return [];
 
-      // Accept multiple shapes:
-      // - Array
-      // - { locations: [...] } or { locations: {..} }
-      // - Object map
-      let arr = [];
-      if (Array.isArray(j)) arr = j;
-      else if (Array.isArray(j.locations)) arr = j.locations;
-      else if (j.locations && typeof j.locations === 'object') arr = Object.values(j.locations);
-      else if (typeof j === 'object') arr = Object.values(j);
-
-      return (Array.isArray(arr) ? arr : [])
+      return arr
         .map((rec) => {
           const locName =
             rec?.locationName && typeof rec.locationName === 'object'
@@ -3278,18 +3280,16 @@ export async function showSelectLocationModal() {
               : String(rec?.locationName || '').trim();
 
           const slug = String(rec?.locationID || rec?.slug || '').trim();
-          const rawId = String(rec?.ID || rec?.id || '').trim();
+          const rawId = String(rec?.ID || rec?.id || rec?.locationUID || '').trim();
           const uid = ULID.test(rawId) ? rawId : '';
 
           const c = (rec && rec.contactInformation) || {};
 
-          // Display: street, postalCode, city (postalCode must be visible on the card)
           const addrDisplay = [c.address, c.city, c.postalCode]
             .filter(Boolean)
             .map((v) => String(v).trim())
             .join(', ');
 
-          // Search: keep full surface (adminArea/countryCode remain searchable)
           const addrSearch = [c.address, c.city, c.adminArea, c.postalCode, c.countryCode]
             .filter(Boolean)
             .map((v) => String(v).trim())
@@ -3307,11 +3307,8 @@ export async function showSelectLocationModal() {
 
           const hay = norm([locName, slug, addrSearch, tags, person, contact].filter(Boolean).join(' '));
 
-          // Preserve media so LPM can render images when opened from SYB
           const media = (rec && typeof rec.media === 'object') ? rec.media : {};
           const cover = String((media?.cover || rec?.imageSrc || '')).trim();
-
-          // Keep explicit images list if present (either top-level or under media)
           const images = Array.isArray(rec?.images) ? rec.images
             : (Array.isArray(media?.images) ? media.images : []);
 
@@ -3320,6 +3317,8 @@ export async function showSelectLocationModal() {
         .filter((x) => x.name && x.slug);
     } catch {
       return [];
+    } finally {
+      if (loadingRow) loadingRow.classList.add('hidden');
     }
   };
 
@@ -3446,7 +3445,7 @@ export async function showSelectLocationModal() {
           const u = new URL('/api/status', location.origin);
           u.searchParams.set('locationID', slug);
 
-          const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+          const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
           if (!r.ok) {
             ownedCache.set(slug, { owned: false, vis: 'visible', courtesyUntil: '', entitled: false });
             dot.classList.add('syb-free');
@@ -3820,7 +3819,7 @@ async function openOwnerSettingsForTarget({ target, locationName, noSelection })
     try {
       const u = new URL('/api/status', location.origin);
       u.searchParams.set('locationID', tgt);
-      const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+      const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
       const js = rs.ok ? await rs.json().catch(() => null) : null;
       ownedNow = js?.ownedNow === true;
     } catch { ownedNow = false; }
@@ -3861,7 +3860,7 @@ async function openOwnerSettingsForTarget({ target, locationName, noSelection })
   try {
     const u = new URL('/api/status', location.origin);
     u.searchParams.set('locationID', tgt);
-    const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+    const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
     const js = rs.ok ? await rs.json().catch(() => null) : null;
     ownedNow = js?.ownedNow === true;
   } catch {
@@ -4221,9 +4220,177 @@ export async function showExampleDashboardsModal() {
   showModal(id);
 }
 
-// Phase 5 — Request Listing modal (manual onboarding pipeline)
+const P8_PENDING_LOCATION_DRAFT_KEY = 'navigen.p8.pendingLocationDraft';
+
+function savePendingLocationDraft(meta) {
+  try {
+    localStorage.setItem(P8_PENDING_LOCATION_DRAFT_KEY, JSON.stringify(meta || {}));
+  } catch {
+    // storage failures must never block the owner flow
+  }
+}
+
+function readPendingLocationDraft() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(P8_PENDING_LOCATION_DRAFT_KEY) || 'null');
+    return raw && typeof raw === 'object' ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearPendingLocationDraft() {
+  try {
+    localStorage.removeItem(P8_PENDING_LOCATION_DRAFT_KEY);
+  } catch {
+    // storage failures must never block the owner flow
+  }
+}
+
+let p8StructureCatalogPromise;
+let p8ContextCatalogPromise;
+
+function loadP8StructureCatalog() {
+  if (!p8StructureCatalogPromise) {
+    p8StructureCatalogPromise = fetch('/data/structure.json', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json().catch(() => []) : []))
+      .then((j) => (Array.isArray(j) ? j : []))
+      .catch(() => []);
+  }
+  return p8StructureCatalogPromise;
+}
+
+function loadP8ContextCatalog() {
+  if (!p8ContextCatalogPromise) {
+    p8ContextCatalogPromise = fetch('/data/contexts.json', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json().catch(() => []) : []))
+      .then((j) => (Array.isArray(j) ? j : []))
+      .catch(() => []);
+  }
+  return p8ContextCatalogPromise;
+}
+
+function p8ContextLabel(entry) {
+  const titles = (entry && typeof entry.titles === 'object') ? entry.titles : {};
+  return String(titles.en || Object.values(titles)[0] || entry?.key || '').trim();
+}
+
+function p8SubgroupsForGroup(structureRows, groupKey) {
+  const row = (Array.isArray(structureRows) ? structureRows : []).find((g) => String(g?.groupKey || '').trim() === String(groupKey || '').trim());
+  return Array.isArray(row?.subgroups) ? row.subgroups : [];
+}
+
+function parseTagValues(raw) {
+  return Array.from(new Set(
+    String(raw || '')
+      .split(/[;,]/)
+      .map((v) => String(v || '').trim())
+      .filter(Boolean)
+  ));
+}
+
+function formatTagValues(tags) {
+  return (Array.isArray(tags) ? tags : []).map((v) => String(v || '').trim()).filter(Boolean).join(', ');
+}
+
+function parseMediaUrlValues(raw) {
+  return Array.from(new Set(
+    String(raw || '')
+      .split(/[\n,]+/)
+      .map((v) => String(v || '').trim())
+      .filter(Boolean)
+  ));
+}
+
+function formatMediaUrlValues(values) {
+  return (Array.isArray(values) ? values : [])
+    .map((v) => String(v || '').trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
+function deriveRequestListingCountryCode() {
+  const metaCountry =
+    document.querySelector('meta[name="cf-country"]')?.content ||
+    document.querySelector('meta[name="app-country"]')?.content ||
+    document.documentElement.getAttribute('data-country') ||
+    (() => {
+      try {
+        return new Intl.Locale(document.documentElement.lang || navigator.language).region || '';
+      } catch {
+        return '';
+      }
+    })();
+
+  const cc = String(metaCountry || '').trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(cc) ? cc : '';
+}
+
+function setInputErrorState(el, bad) {
+  if (!el) return;
+  el.classList.toggle('input-error', !!bad);
+}
+
+function p8DraftImageCount(draft) {
+  const cover = String(draft?.cover || draft?.media?.cover || '').trim();
+  const images = Array.isArray(draft?.images)
+    ? draft.images
+    : (Array.isArray(draft?.media?.images) ? draft.media.images : []);
+  return (cover ? 1 : 0) + images.map((v) => String(v || '').trim()).filter(Boolean).length;
+}
+
+function p8DraftDescriptionLength(draft) {
+  return String(
+    draft?.description ||
+    draft?.descriptions?.en ||
+    Object.values(draft?.descriptions || {})[0] ||
+    ''
+  ).trim().length;
+}
+
+function p8DraftHasAnyLink(draft) {
+  return !!String(draft?.link || draft?.links?.official || '').trim() ||
+         !!String(draft?.facebook || draft?.links?.facebook || '').trim() ||
+         !!String(draft?.instagram || draft?.links?.instagram || '').trim();
+}
+
+function p8LocalPublishReadiness(draft) {
+  if (!draft || typeof draft !== 'object') return 'draft_missing';
+  if (p8DraftDescriptionLength(draft) < 200) return 'description_min_200';
+  if (p8DraftImageCount(draft) < 3) return 'images_min_3';
+  if (!p8DraftHasAnyLink(draft)) return 'website_or_social_required';
+  return '';
+}
+
+function p8PublishMessage(code) {
+  const key = String(code || '').trim();
+  if (!key) return 'Could not publish listing.';
+
+  if (key === 'description_min_200') {
+    return 'Please add a business description with at least 200 characters.';
+  }
+  if (key === 'images_min_3') {
+    return 'Please provide at least 3 images in total (cover + gallery).';
+  }
+  if (key === 'website_or_social_required') {
+    return 'Please provide at least one website or social link.';
+  }
+  if (key === 'classification_required') {
+    return 'Please select one group, one subgroup, and at least one context.';
+  }
+  if (key === 'missing_coordinates') {
+    return 'Please provide valid coordinates before publishing.';
+  }
+  if (key === 'missing_name') {
+    return 'Please provide a business name before publishing.';
+  }
+
+  return key;
+}
+
+// Phase 8 — Request Listing modal (manual private-shell intake)
 // Owners can request listing creation; no instant LPM creation is performed here.
-export function createRequestListingModal() {
+export function createRequestListingModal(opts = {}) {
   const id = 'request-listing-modal';
   document.getElementById(id)?.remove();
 
@@ -4234,44 +4401,103 @@ export function createRequestListingModal() {
     layout: 'menu',
     bodyHTML: `
       <div class="modal-form-stack">
-        <p class="muted muted-note">Use this when your business does not appear in Select your business.</p>
+        <p class="muted muted-note" style="text-align:left;">${t('modal.requestListing.note') || 'Use this when your business does not appear in Select your business.'}</p>
 
-        <div class="modal-field">
-          <label for="rl-name">Business name *</label>
-          <input id="rl-name" class="input" type="text" maxlength="80" />
+        <div id="request-listing-loading" class="modal-menu-item owner-center-loading" aria-disabled="true" style="pointer-events:none;">
+          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+            <strong id="request-listing-loading-title">${t('modal.requestListing.loading.title') || 'Loading request form...'}</strong><br>
+            <small id="request-listing-loading-desc">${t('modal.requestListing.loading.desc') || 'Getting categories and context options.'}</small>
+          </span>
         </div>
 
         <div class="modal-field">
-          <label for="rl-address">Street address *</label>
-          <input id="rl-address" class="input" type="text" maxlength="120" />
+          <label for="rl-name">${t('modal.requestListing.name.label') || 'Business name'} <span class="required-star">*</span></label>
+          <input id="rl-name" class="input" type="text" maxlength="120" />
+        </div>
+
+        <div class="modal-field">
+          <label for="rl-address">${t('modal.requestListing.address.label') || 'Street address'} <span class="required-star">*</span></label>
+          <input id="rl-address" class="input" type="text" maxlength="180" />
         </div>
 
         <div class="modal-form-grid">
           <div class="modal-field">
-            <label for="rl-city">City *</label>
-            <input id="rl-city" class="input" type="text" maxlength="60" />
+            <label for="rl-city">${t('modal.requestListing.city.label') || 'City'} <span class="required-star">*</span></label>
+            <input id="rl-city" class="input" type="text" maxlength="80" />
           </div>
           <div class="modal-field">
-            <label for="rl-country">Country code *</label>
-            <input id="rl-country" class="input" type="text" maxlength="2" placeholder="HU" />
+            <label for="rl-country">${t('modal.requestListing.country.label') || 'Country code'} <span class="required-star">*</span></label>
+            <input id="rl-country" class="input" type="text" maxlength="2" />            
           </div>
         </div>
 
         <div class="modal-field">
-          <label for="rl-link">Optional: Website or Google Maps link</label>
-          <input id="rl-link" class="input" type="text" maxlength="200" />
+          <label for="rl-link">${t('modal.requestListing.link.label') || 'Official website or primary business link'}</label>
+          <input id="rl-link" class="input" type="text" maxlength="240" />
+        </div>
+
+        <div class="modal-form-grid">
+          <div class="modal-field">
+            <label for="rl-facebook">${t('modal.requestListing.facebook.label') || 'Facebook link'}</label>
+            <input id="rl-facebook" class="input" type="text" maxlength="240" />
+          </div>
+          <div class="modal-field">
+            <label for="rl-instagram">${t('modal.requestListing.instagram.label') || 'Instagram link'}</label>
+            <input id="rl-instagram" class="input" type="text" maxlength="240" />
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label for="rl-description">${t('modal.requestListing.description.label') || 'Business description'}</label>
+          <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || 'Describe the business, services, and customers.'}"></textarea>
+          <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
+        </div>
+
+        <div class="modal-form-grid">
+          <div class="modal-field">
+            <label for="rl-group">${t('modal.requestListing.group.label') || 'Group'} <span class="required-star">*</span></label>
+            <select id="rl-group" class="input"></select>
+          </div>
+          <div class="modal-field">
+            <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup'} <span class="required-star">*</span></label>
+            <select id="rl-subgroup" class="input"></select>
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label for="rl-contexts">${t('modal.requestListing.contexts.label') || 'Contexts (one or more)'} <span class="required-star">*</span></label>
+          <select id="rl-contexts" class="input" multiple size="6"></select>
+          <small class="modal-help-text">${t('modal.requestListing.contexts.help') || 'Select one or more existing context paths.'}</small>
+        </div>
+
+        <div class="modal-field">
+          <label for="rl-tags">${t('modal.requestListing.tags.label') || 'Search tags'}</label>
+          <input id="rl-tags" class="input" type="text" maxlength="240" placeholder="${t('modal.requestListing.tags.placeholder') || 'comma, separated, tags'}" />
+          <div id="rl-tag-suggestions" class="modal-menu-list" style="margin-top:.5rem;"></div>
+          <small class="modal-help-text">${t('modal.requestListing.tags.help') || 'Optional search terms that match how customers look for this business.'}</small>
+        </div>
+
+        <div class="modal-field">
+          <label for="rl-cover">${t('modal.requestListing.cover.label') || 'Cover image URL'}</label>
+          <input id="rl-cover" class="input" type="text" maxlength="500" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
+        </div>
+
+        <div class="modal-field">
+          <label for="rl-images">${t('modal.requestListing.images.label') || 'Gallery image URLs'}</label>
+          <textarea id="rl-images" class="input" rows="4" maxlength="4000" placeholder="${t('modal.requestListing.images.placeholder') || 'One URL per line'}"></textarea>
+          <small class="modal-help-text">${t('modal.requestListing.images.help') || 'Publish-ready target: at least 3 total images counting cover + gallery.'}</small>
         </div>
 
         <div class="modal-field">
           <label class="modal-checkbox-row" for="rl-has-coord">
             <input id="rl-has-coord" type="checkbox" />
-            <span>Optional: I have coordinates</span>
+            <span>${t('modal.requestListing.hasCoord.label') || 'Suggested: I have coordinates'}</span>
           </label>
 
           <div id="rl-coord-wrap" class="modal-field hidden">
-            <label for="rl-coord">Coordinates (lat,lng) — 6 decimals</label>
-            <input id="rl-coord" class="input" type="text" placeholder="47.497900,19.040200" />
-            <small class="modal-help-text">Tip: you can copy this from Google Maps.</small>
+            <label for="rl-coord">${t('modal.requestListing.coord.label') || 'Coordinates (lat,lng) — 6 decimals'}</label>
+            <input id="rl-coord" class="input" type="text" placeholder="${t('modal.requestListing.coord.placeholder') || '52.527900,13.440200'}" />
+            <small class="modal-help-text">${t('modal.requestListing.coord.help') || 'Tip: you can copy this from Google Maps.'}</small>
           </div>
         </div>
 
@@ -4287,8 +4513,191 @@ export function createRequestListingModal() {
       </div>
     `
   });
-  
-  modal.querySelector('#request-listing-cancel')?.addEventListener('click', () => hideModal(id));
+
+  const prefill = (opts && opts.prefill && typeof opts.prefill === 'object')
+    ? opts.prefill
+    : (readPendingLocationDraft() || null);
+
+  const rlName = modal.querySelector('#rl-name');
+  const rlAddress = modal.querySelector('#rl-address');
+  const rlCity = modal.querySelector('#rl-city');
+  const rlCountry = modal.querySelector('#rl-country');
+  const rlLink = modal.querySelector('#rl-link');
+  const rlFacebook = modal.querySelector('#rl-facebook');
+  const rlInstagram = modal.querySelector('#rl-instagram');
+  const rlDescription = modal.querySelector('#rl-description');
+  const rlGroup = modal.querySelector('#rl-group');
+  const rlSubgroup = modal.querySelector('#rl-subgroup');
+  const rlContexts = modal.querySelector('#rl-contexts');
+  const rlTags = modal.querySelector('#rl-tags');
+  const rlTagSuggestions = modal.querySelector('#rl-tag-suggestions');
+  const rlCover = modal.querySelector('#rl-cover');
+  const rlImages = modal.querySelector('#rl-images');
+  const rlCoord = modal.querySelector('#rl-coord');
+  const rlHasCoord = modal.querySelector('#rl-has-coord');
+  const rlCoordWrap = modal.querySelector('#rl-coord-wrap');
+  const requestListingLoading = modal.querySelector('#request-listing-loading');
+  const requestListingLoadingTitle = modal.querySelector('#request-listing-loading-title');
+  const requestListingLoadingDesc = modal.querySelector('#request-listing-loading-desc');
+  const requestListingSubmit = modal.querySelector('#request-listing-submit');
+
+  function setRequestListingLoading(visible, title = '', desc = '') {
+    requestListingLoading?.classList.toggle('hidden', !visible);
+    if (requestListingLoadingTitle && title) requestListingLoadingTitle.textContent = title;
+    if (requestListingLoadingDesc && desc) requestListingLoadingDesc.textContent = desc;
+    if (requestListingSubmit instanceof HTMLButtonElement) {
+      requestListingSubmit.disabled = !!visible;
+    }
+  }
+
+  setRequestListingLoading(true, t('modal.requestListing.loading.title') || 'Loading request form...', t('modal.requestListing.loading.desc') || 'Getting categories and context options.');
+
+  const prefillContexts = Array.isArray(prefill?.contexts)
+    ? prefill.contexts.map((v) => String(v || '').trim()).filter(Boolean)
+    : String(prefill?.context || '').split(';').map((v) => String(v || '').trim()).filter(Boolean);
+
+  const prefillTags = Array.isArray(prefill?.tags)
+    ? prefill.tags.map((v) => String(v || '').trim()).filter(Boolean)
+    : parseTagValues(prefill?.tags || '');
+
+  const prefillDescription = String(
+    prefill?.description ||
+    prefill?.descriptions?.en ||
+    Object.values(prefill?.descriptions || {})[0] ||
+    ''
+  ).trim();
+
+  const prefillOfficialLink = String(prefill?.link || prefill?.links?.official || '').trim();
+  const prefillFacebook = String(prefill?.facebook || prefill?.links?.facebook || '').trim();
+  const prefillInstagram = String(prefill?.instagram || prefill?.links?.instagram || '').trim();
+  const prefillCover = String(prefill?.cover || prefill?.media?.cover || '').trim();
+  const prefillImages = Array.isArray(prefill?.images)
+    ? prefill.images
+    : (Array.isArray(prefill?.media?.images) ? prefill.media.images : []);
+
+  if (prefill) {
+    if (rlName) rlName.value = String(prefill.name || '').trim();
+    if (rlAddress) rlAddress.value = String(prefill.address || '').trim();
+    if (rlCity) rlCity.value = String(prefill.city || '').trim();
+    if (rlCountry) rlCountry.value = String(prefill.country || '').trim().toUpperCase();
+    if (!String(prefill?.country || '').trim() && rlCountry) rlCountry.value = deriveRequestListingCountryCode();
+    if (rlLink) rlLink.value = prefillOfficialLink;
+    if (rlFacebook) rlFacebook.value = prefillFacebook;
+    if (rlInstagram) rlInstagram.value = prefillInstagram;
+    if (rlDescription) rlDescription.value = prefillDescription;
+    if (rlTags) rlTags.value = formatTagValues(prefillTags);
+    if (rlCover) rlCover.value = prefillCover;
+    if (rlImages) rlImages.value = formatMediaUrlValues(prefillImages);
+
+    const coordPrefill = String(prefill.coord || '').trim();
+    if (coordPrefill) {
+      if (rlCoord) rlCoord.value = coordPrefill;
+      if (rlHasCoord) rlHasCoord.checked = true;
+      rlCoordWrap?.classList.remove('hidden');
+    }
+  }
+
+  (async () => {
+    const [structureRows, contextRows] = await Promise.all([
+      loadP8StructureCatalog(),
+      loadP8ContextCatalog()
+    ]);
+
+    const groupsOk = Array.isArray(structureRows) && structureRows.length > 0;
+    const contextsOk = Array.isArray(contextRows) && contextRows.length > 0;
+
+    if (!groupsOk || !contextsOk) {
+      setRequestListingLoading(true, t('modal.requestListing.unavailable.title') || 'Request form unavailable', t('modal.requestListing.unavailable.desc') || 'Could not load categories and context options.');
+      return;
+    }
+
+    if (rlGroup) {
+      const options = [`<option value="">${t('modal.requestListing.group.placeholder') || 'Select group'}</option>`]
+        .concat(
+          structureRows.map((row) => {
+            const groupKey = String(row?.groupKey || '').trim();
+            const groupName = String(row?.groupName || groupKey).trim();
+            return groupKey ? `<option value="${groupKey}">${groupName}</option>` : '';
+          }).filter(Boolean)
+        )
+        .join('');
+      rlGroup.innerHTML = options;
+      if (prefill?.groupKey) rlGroup.value = String(prefill.groupKey || '').trim();
+    }
+
+    const renderTagSuggestions = () => {
+      if (!rlTagSuggestions) return;
+      rlTagSuggestions.innerHTML = '';
+
+      const groupKey = String(rlGroup?.value || prefill?.groupKey || '').trim();
+      const subgroupKey = String(rlSubgroup?.value || prefill?.subgroupKey || '').trim();
+      const subs = p8SubgroupsForGroup(structureRows, groupKey);
+      const activeSub = subs.find((sg) => String(sg?.key || '').trim() === subgroupKey);
+      const keywords = Array.isArray(activeSub?.keywords) ? activeSub.keywords : [];
+
+      if (!keywords.length) return;
+
+      keywords.forEach((kw) => {
+        const tag = String(kw || '').trim();
+        if (!tag) return;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'modal-menu-item';
+        btn.style.padding = '.5rem .75rem';
+        btn.innerHTML = `<span class="label" style="text-align:left; flex:1 1 auto;">${tag}</span>`;
+        btn.addEventListener('click', () => {
+          const next = new Set(parseTagValues(rlTags?.value || ''));
+          next.add(tag);
+          if (rlTags) rlTags.value = formatTagValues(Array.from(next));
+        });
+        rlTagSuggestions.appendChild(btn);
+      });
+    };
+
+    const renderSubgroups = () => {
+      if (!rlSubgroup) return;
+      const groupKey = String(rlGroup?.value || prefill?.groupKey || '').trim();
+      const subs = p8SubgroupsForGroup(structureRows, groupKey);
+      rlSubgroup.innerHTML = [`<option value="">${t('modal.requestListing.subgroup.placeholder') || 'Select subgroup'}</option>`]
+        .concat(
+          subs.map((sg) => {
+            const key = String(sg?.key || '').trim();
+            const name = String(sg?.name || key).trim();
+            return key ? `<option value="${key}">${name}</option>` : '';
+          }).filter(Boolean)
+        )
+        .join('');
+      if (prefill?.subgroupKey) rlSubgroup.value = String(prefill.subgroupKey || '').trim();
+      renderTagSuggestions();
+    };
+
+    renderSubgroups();
+
+    rlGroup?.addEventListener('change', () => {
+      if (rlSubgroup) rlSubgroup.value = '';
+      renderSubgroups();
+    });
+
+    rlSubgroup?.addEventListener('change', () => {
+      renderTagSuggestions();
+    });
+
+    if (rlContexts) {
+      rlContexts.innerHTML = contextRows.map((row) => {
+        const key = String(row?.key || '').trim();
+        const label = p8ContextLabel(row);
+        return key ? `<option value="${key}">${label}</option>` : '';
+      }).join('');
+
+      const selected = new Set(prefillContexts);
+      Array.from(rlContexts.options).forEach((opt) => {
+        opt.selected = selected.has(String(opt.value || '').trim());
+      });
+    }
+
+    setRequestListingLoading(false);
+  })();
 
   modal.querySelector('#request-listing-submit')?.addEventListener('click', async () => {
     const name = String(modal.querySelector('#rl-name')?.value || '').trim();
@@ -4296,10 +4705,32 @@ export function createRequestListingModal() {
     const city = String(modal.querySelector('#rl-city')?.value || '').trim();
     const country = String(modal.querySelector('#rl-country')?.value || '').trim().toUpperCase();
     const link = String(modal.querySelector('#rl-link')?.value || '').trim();
+    const facebook = String(modal.querySelector('#rl-facebook')?.value || '').trim();
+    const instagram = String(modal.querySelector('#rl-instagram')?.value || '').trim();
+    const description = String(modal.querySelector('#rl-description')?.value || '').trim();
+    const groupKey = String(modal.querySelector('#rl-group')?.value || '').trim();
+    const subgroupKey = String(modal.querySelector('#rl-subgroup')?.value || '').trim();
+    const contextVals = Array.from(modal.querySelector('#rl-contexts')?.selectedOptions || [])
+      .map((o) => String(o?.value || '').trim())
+      .filter(Boolean);
+    const tagVals = parseTagValues(modal.querySelector('#rl-tags')?.value || '');
+    const cover = String(modal.querySelector('#rl-cover')?.value || '').trim();
+    const imageVals = parseMediaUrlValues(modal.querySelector('#rl-images')?.value || '');
     const coord = String(modal.querySelector('#rl-coord')?.value || '').trim();
 
-    if (!name || !address || !city || !country || country.length !== 2) {
-      showToast('Please provide name, street address, city, and 2-letter country code.', 2200);
+    const wantsCoord = !!rlHasCoord?.checked;
+
+    setInputErrorState(rlName, !name);
+    setInputErrorState(rlAddress, !address);
+    setInputErrorState(rlCity, !city);
+    setInputErrorState(rlCountry, !country || country.length !== 2);
+    setInputErrorState(rlGroup, !groupKey);
+    setInputErrorState(rlSubgroup, !subgroupKey);
+    setInputErrorState(rlContexts, !contextVals.length);
+    setInputErrorState(rlCoord, wantsCoord && !coord);
+
+    if (!name || !address || !city || !country || country.length !== 2 || !groupKey || !subgroupKey || !contextVals.length || (wantsCoord && !coord)) {
+      showToast(t('modal.requestListing.validation.required') || 'Please fill in all required fields marked with *.', 2200);
       return;
     }
 
@@ -4327,28 +4758,103 @@ export function createRequestListingModal() {
       coordNorm = `${lat.toFixed(6)},${lng.toFixed(6)}`;
     }
 
-    // Manual pipeline: store locally for now; admin can copy out later.
-    try {
-      const key = 'navigen.requestListing';
-      const arr = JSON.parse(localStorage.getItem(key) || '[]');
-      const next = Array.isArray(arr) ? arr : [];
-      next.unshift({
-        name,
-        nameNorm,
-        address,
-        city,
-        country,
-        link,
-        coord: coordNorm,
-        ts: Date.now()
-      });
-      localStorage.setItem(key, JSON.stringify(next));
-    } catch {}
+    const existingDraftULID = String(prefill?.draftULID || '').trim();
+    const existingDraftSessionId = String(prefill?.draftSessionId || '').trim();
 
-    showToast(t('modal.requestListing.success') || 'Thanks! We’ll add your listing soon.', 2500);
+    const links = {};
+    if (link) links.official = link;
+    if (facebook) links.facebook = facebook;
+    if (instagram) links.instagram = instagram;
+
+    const media = {};
+    if (cover) media.cover = cover;
+    if (imageVals.length) media.images = imageVals;
+
+    const draftBody = {
+      ...(existingDraftULID && existingDraftSessionId
+        ? {
+            draftULID: existingDraftULID,
+            draftSessionId: existingDraftSessionId
+          }
+        : {}),
+      draft: {
+        locationName: { en: name },
+        groupKey,
+        subgroupKey,
+        context: contextVals,
+        tags: tagVals,
+        contactInformation: {
+          address,
+          city,
+          countryCode: country
+        },
+        ...(description ? { descriptions: { en: description } } : {}),
+        ...(Object.keys(links).length ? { links } : {}),
+        ...(Object.keys(media).length ? { media } : {}),
+        ...(coordNorm ? { coord: coordNorm } : {})
+      }
+    };
+
+    setRequestListingLoading(true, t('modal.requestListing.saving.title') || 'Saving listing draft...', t('modal.requestListing.saving.desc') || 'Preparing your private location shell.');
+    try {
+      res = await fetch('/api/location/draft', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(draftBody),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      payload = await res.json().catch(() => null);
+    } catch {
+      res = null;
+      payload = null;
+    }
+
+    if (!res?.ok) {
+      setRequestListingLoading(false);
+      const msg = String(payload?.error?.message || '').trim();
+      showToast(msg || (t('modal.requestListing.error') || 'Could not create draft.'), 2400);
+      return;
+    }
+
+    const draftULID = String(payload?.draftULID || existingDraftULID).trim();
+    const draftSessionId = String(payload?.draftSessionId || existingDraftSessionId).trim();
+    if (!draftULID || !draftSessionId) {
+      setRequestListingLoading(false);
+      showToast(t('modal.requestListing.error') || 'Could not create draft.', 2400);
+      return;
+    }
+
+    savePendingLocationDraft({
+      draftULID,
+      draftSessionId,
+      mode: 'manual',
+      name,
+      nameNorm,
+      address,
+      city,
+      country,
+      link,
+      facebook,
+      instagram,
+      description,
+      cover,
+      images: imageVals,
+      coord: coordNorm,
+      groupKey,
+      subgroupKey,
+      contexts: contextVals,
+      context: contextVals.join(';'),
+      tags: tagVals,
+      createdAt: Number(prefill?.createdAt || Date.now()),
+      updatedAt: Date.now()
+    });
+
+    showToast(t('modal.requestListing.success') || 'Draft saved.', 2500);
     hideModal(id);
   });
 
+  modal.querySelector('#request-listing-cancel')?.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); hideModal(id); });
   const countryInput = modal.querySelector('#rl-country');
   countryInput?.addEventListener('input', (e) => {
     e.target.value = String(e.target.value || '').toUpperCase();
@@ -4363,10 +4869,10 @@ export function createRequestListingModal() {
   setupTapOutClose(id);
 }
 
-export function showRequestListingModal() {
+export function showRequestListingModal(opts = {}) {
   const id = 'request-listing-modal';
   document.getElementById(id)?.remove();
-  createRequestListingModal();
+  createRequestListingModal(opts);
   showModal(id);
 }
 
@@ -4824,7 +5330,7 @@ export async function resolveCampaignKeyForLocation(locationID) {
     const u = new URL('/api/status', location.origin);
     u.searchParams.set('locationID', slug);
 
-    const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'omit' });
+    const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
     if (!r.ok) return '';
 
     const j = await r.json().catch(() => null);
@@ -5907,7 +6413,7 @@ export async function createOwnerCenterModal() {
           const st = new URL('/api/status', location.origin);
           st.searchParams.set('locationID', q);
 
-          const r = await fetch(st.toString(), { cache: 'no-store', credentials: 'omit' });
+          const r = await fetch(st.toString(), { cache: 'no-store', credentials: 'include' });
           if (!r.ok) return;
 
           const j = await r.json().catch(() => null);
@@ -6064,30 +6570,6 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   `;
 
   showModal(id);
-  // Auto-promote if we are on Stripe return URL (?sid=cs_...)
-  const qs = new URLSearchParams(location.search);
-  const sid = String(qs.get('sid') || '').trim();
-  const flow = String(qs.get('flow') || '').trim();
-
-  if (flow === 'campaign' && sid) {
-    // Attempt promote; then clean URL so it doesn't re-run.
-    const { r, j } = await apiJson('/api/owner/campaigns/promote', {
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body: JSON.stringify({ sessionId: sid })
-    });
-
-    // Clean params regardless (avoid loops)
-    qs.delete('sid'); qs.delete('flow');
-    history.replaceState({}, document.title, `${location.pathname}${qs.toString()?('?'+qs.toString()):''}`);
-
-    if (r.ok) {
-      showToast((typeof t==='function' && t('campaign.ui.promoted')) || 'Campaign activated.', 2200);
-    } else {
-      // Keep this short; dev can inspect Network for details
-      showToast((typeof t==='function' && t('campaign.ui.promoteFailed')) || 'Could not activate campaign yet.', 2600);
-    }
-  }
 
   // Load owner campaigns (draft + active/history)
   const guestMode = (opts && opts.guest === true);
@@ -6106,6 +6588,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   }
 
   const prefillFrom = (opts && opts.prefillFrom && typeof opts.prefillFrom === 'object') ? opts.prefillFrom : null;
+  const p8Draft = (opts && opts.p8Draft && typeof opts.p8Draft === 'object') ? opts.p8Draft : null;  
   const draft = (opts && opts.preferEmptyDraft === true) ? (prefillFrom || null) : (listJ?.draft || prefillFrom || null);  
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
   const ulid = String(listJ?.ulid || '').trim(); // empty in guest mode; that's OK
@@ -6120,7 +6603,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
   const isUlid = (s) => /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(String(s || '').trim());
 
-  if (isUlid(displaySlug)) {
+  if (isUlid(displaySlug) && !p8Draft) {
     try {
       const rr = await fetch(
         `https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(displaySlug)}`,
@@ -6140,6 +6623,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     } catch {}
   }
 
+  if (!displayName && p8Draft) displayName = String(p8Draft.name || p8Draft.displayName || '').trim();
 
   // ───────────────────────────────────────────────────────────────────────────
   // CM v2: three-section layout
@@ -6149,7 +6633,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   // ───────────────────────────────────────────────────────────────────────────
 
   // A0) Location header line (inside body, under top bar)
-  const status = await fetch(`/api/status?locationID=${encodeURIComponent(displaySlug)}`, { cache:'no-store', credentials:'omit' })
+  const status = await fetch(`/api/status?locationID=${encodeURIComponent(displaySlug)}`, { cache:'no-store', credentials:'include' })  
     .then(r => r.ok ? r.json() : null)
     .catch(() => null);
 
@@ -6167,6 +6651,8 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
       : String(ln || '').trim();
     if (nm) locName = nm;
   } catch {}
+  
+  if (!locName && p8Draft) locName = String(p8Draft.name || p8Draft.displayName || '').trim();
 
   if (!locName) locName = String(displaySlug || '').trim(); // last-resort fallback
 
@@ -6174,7 +6660,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   try {
     const st = new URL('/api/status', location.origin);
     st.searchParams.set('locationID', displaySlug);
-    const r = await fetch(st.toString(), { cache: 'no-store', credentials: 'omit' });
+    const r = await fetch(st.toString(), { cache: 'no-store', credentials: 'include' });
     const j = r.ok ? await r.json().catch(() => null) : null;
     requestedUlid = String(j?.locationID || '').trim(); // /api/status returns canonical ULID in locationID
   } catch {}
@@ -7294,6 +7780,35 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const actions = document.createElement('div');
     actions.className = 'cm-actions';
 
+    let btnPublish = null;
+    if (p8Draft && p8Draft.draftULID && p8Draft.draftSessionId) {
+      const btnEditLocation = document.createElement('button');
+      btnEditLocation.className = 'modal-body-button';
+      btnEditLocation.type = 'button';
+      btnEditLocation.textContent = (typeof t === 'function' && t('locationDraft.ui.editBasics')) || 'Edit business details';
+      btnEditLocation.addEventListener('click', () => {
+        showRequestListingModal({ prefill: p8Draft });
+      });
+      actions.appendChild(btnEditLocation);
+
+      if (!guestMode) {
+        btnPublish = document.createElement('button');
+        btnPublish.className = 'modal-body-button';
+        btnPublish.type = 'button';
+        btnPublish.textContent = (typeof t === 'function' && t('locationDraft.ui.publish')) || 'Publish listing';
+        actions.appendChild(btnPublish);
+
+        const publishHint = document.createElement('small');
+        publishHint.className = 'muted';
+        publishHint.style.display = 'block';
+        publishHint.style.marginTop = '.5rem';
+        publishHint.textContent =
+          (typeof t === 'function' && t('locationDraft.ui.publishHint')) ||
+          'Publish-ready target: description (200+ chars), at least 3 images, and at least one website or social link.';
+        actions.appendChild(publishHint);
+      }
+    }
+
     const btnCheckout = document.createElement('button');
     btnCheckout.className = 'modal-body-button';
     btnCheckout.type = 'button';
@@ -7354,6 +7869,68 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       };
     };
 
+    if (btnPublish) {
+      btnPublish.addEventListener('click', async () => {
+        if (btnPublish.disabled || btnPublish.classList.contains('is-busy')) return;
+
+        const latestDraft = readPendingLocationDraft() || p8Draft || null;
+        const localIssue = p8LocalPublishReadiness(latestDraft);
+        if (localIssue) {
+          showToast(p8PublishMessage(localIssue), 2600);
+          return;
+        }
+
+        const publishLabel = (typeof t === 'function' && t('locationDraft.ui.publish')) || 'Publish listing';
+        const publishingLabel = (typeof t === 'function' && t('locationDraft.ui.publishing')) || 'Publishing…';
+
+        btnPublish.classList.add('is-busy');
+        btnPublish.disabled = true;
+        btnPublish.textContent = publishingLabel;
+
+        try {
+          const out = await apiJson('/api/location/publish', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              draftULID: String((latestDraft?.draftULID || p8Draft?.draftULID || '')).trim(),
+              draftSessionId: String((latestDraft?.draftSessionId || p8Draft?.draftSessionId || '')).trim()
+            })
+          });
+
+          if (!out.r.ok) {
+            const msg = String(out.j?.error?.message || '').trim();
+            showToast(
+              p8PublishMessage(msg) ||
+              ((typeof t === 'function' && t('locationDraft.ui.publishFailed')) || 'Could not publish listing.'),
+              2600
+            );
+            return;
+          }
+
+          const publishedSlug = String(out.j?.locationID || '').trim();
+          if (!publishedSlug) {
+            showToast((typeof t === 'function' && t('locationDraft.ui.publishFailed')) || 'Could not publish listing.', 2600);
+            return;
+          }
+
+          clearPendingLocationDraft();
+          showToast((typeof t === 'function' && t('locationDraft.ui.published')) || 'Listing published.', 2200);
+          hideModal(id);
+
+          try {
+            await openOwnerSettingsForLocation(publishedSlug);
+          } catch {
+            // final fallback: reopen CM on the published location
+            showCampaignManagementModal(publishedSlug, { preferEmptyDraft: true });
+          }
+        } finally {
+          btnPublish.classList.remove('is-busy');
+          btnPublish.disabled = false;
+          btnPublish.textContent = publishLabel;
+        }
+      });
+    }
+
     btnCheckout.addEventListener('click', async () => {
       if (btnCheckout.disabled || btnCheckout.classList.contains('is-busy')) return;
 
@@ -7410,10 +7987,25 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
           }
           chkJ = out.j;
         } else {
+          const checkoutBody = (p8Draft && p8Draft.draftULID && p8Draft.draftSessionId)
+            ? {
+                draftULID: String(p8Draft.draftULID || '').trim(),
+                draftSessionId: String(p8Draft.draftSessionId || '').trim(),
+                draft: d,
+                planCode: selectedPlanCode,
+                campaignPreset: selectedCampaignPreset
+              }
+            : {
+                locationID: slug,
+                draft: d,
+                planCode: selectedPlanCode,
+                campaignPreset: selectedCampaignPreset
+              };
+
           const out = await apiJson('/api/campaigns/checkout', {
             method:'POST',
             headers:{'content-type':'application/json'},
-            body: JSON.stringify({ locationID: slug, draft: d, planCode: selectedPlanCode, campaignPreset: selectedCampaignPreset })
+            body: JSON.stringify(checkoutBody)
           });
           if (!out.r.ok) {
             const code = String((out.j?.error?.code || '')).trim();
@@ -8586,7 +9178,7 @@ export function showPromotionsModal() {
   clearBtn.id = 'promotions-clear-search';
   clearBtn.textContent = 'x';
   clearBtn.style.display = 'none';
-  clearBtn.setAttribute('aria-label', 'Clear search');
+  clearBtn.setAttribute('aria-label', t('common.search.clear') || 'Clear search');
 
   searchLeft.appendChild(input);
   searchLeft.appendChild(clearBtn);

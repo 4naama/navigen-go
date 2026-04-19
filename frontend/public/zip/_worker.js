@@ -479,6 +479,31 @@ export default {
       });
     }
 
+    // /api/owner/location-options — proxy to API Worker (authoritative BO selector candidates)
+    if (url.pathname === '/api/owner/location-options') {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: 'GET',
+        headers: h
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+
     // /api/redeem-status — proxy to API Worker (authoritative redeem token status)
     if (url.pathname === '/api/redeem-status') {
       const apiBase = 'https://navigen-api.4naama.workers.dev';
@@ -553,6 +578,58 @@ export default {
         }
       });
     }
+
+    // /api/location/draft — proxy to API Worker (Phase 8 private shell)
+    if (url.pathname === '/api/location/draft') {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: req.method,
+        headers: h,
+        body: req.method === 'GET' || req.method === 'HEAD' ? undefined : req.body
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+
+    // /api/location/publish — proxy to API Worker (Phase 8 authoritative publish)
+    if (url.pathname === '/api/location/publish') {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: req.method,
+        headers: h,
+        body: req.method === 'GET' || req.method === 'HEAD' ? undefined : req.body
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
     
     // 401 gate disabled; RL/Bot Fight protect /api/data/*
     if (url.pathname.startsWith('/api/data/')) {
@@ -568,7 +645,7 @@ export default {
         return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
       }
 
-      // Ordered routing: contexts → all → list → profile → contact → 404
+      // Ordered routing: contexts → all → authoritative data routes → 404
       if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/')
         return handleContexts(req, env, url, corsHeaders(rlHdr));
 
@@ -578,14 +655,14 @@ export default {
           status: 200, headers: corsHeaders(rlHdr)
         });
 
-      if (url.pathname === '/api/data/list')
-        return handleList(req, env, url, corsHeaders(rlHdr));
-
-      if (url.pathname === '/api/data/profile')
-        return handleProfile(req, env, url, corsHeaders(rlHdr));
-
-      if (url.pathname === '/api/data/contact')
-        return handleContact(req, env, url, corsHeaders(rlHdr));
+      if (
+        url.pathname === '/api/data/list' ||
+        url.pathname === '/api/data/profile' ||
+        url.pathname === '/api/data/contact' ||
+        url.pathname === '/api/data/item'
+      ) {
+        return proxyApiData(req, url, corsHeaders(rlHdr));
+      }
 
       // Keep CORS echo on 404 so localhost can read status
       return new Response('Not Found', { status: 404, headers: corsHeaders(rlHdr) });
@@ -707,6 +784,33 @@ async function handleContexts(req, env, url, extraHdr){
   const h = new Headers({ 'content-type':'application/json', 'Cache-Control': cacheHdr });
   if (extraHdr) extraHdr.forEach((v, k) => h.set(k, v));
   return new Response(body, { status: 200, headers: h });
+}
+
+async function proxyApiData(req, url, extraHdr) {
+  const apiBase = 'https://navigen-api.4naama.workers.dev';
+  const target = new URL(url.pathname + url.search, apiBase);
+
+  const h = new Headers(req.headers);
+  h.set('Accept', 'application/json');
+  h.set('X-NG-Source', 'pages-worker');
+
+  const r = await fetch(target.toString(), {
+    method: req.method,
+    headers: h
+  });
+
+  const body = await r.text();
+
+  const out = new Headers({
+    'content-type': r.headers.get('content-type') || 'application/json',
+    'Cache-Control': 'no-store'
+  });
+  if (extraHdr) extraHdr.forEach((v, k) => out.set(k, v));
+
+  return new Response(body, {
+    status: r.status,
+    headers: out
+  });
 }
 
 // canonicalId: returns a ULID if input is a ULID; else resolves slug via KV_ALIASES

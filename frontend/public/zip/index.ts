@@ -298,6 +298,201 @@ function devIndexKey(dev: string): string {
   return `devsess:${dev}:index`;
 }
 
+const ULID_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+function uniqueTrimmedStrings(values: unknown[]): string[] {
+  return Array.from(
+    new Set(
+      values
+        .map(v => String(v || "").trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function encodeUlidTimePart(ms: number): string {
+  let n = Math.max(0, Math.floor(ms));
+  let out = "";
+  for (let i = 0; i < 10; i++) {
+    out = ULID_ALPHABET[n % 32] + out;
+    n = Math.floor(n / 32);
+  }
+  return out;
+}
+
+function encodeUlidRandomPart(len: number): string {
+  const bytes = new Uint8Array(len);
+  crypto.getRandomValues(bytes);
+  let out = "";
+  for (let i = 0; i < bytes.length; i++) out += ULID_ALPHABET[bytes[i] % 32];
+  return out;
+}
+
+function mintDraftUlid(): string {
+  return `${encodeUlidTimePart(Date.now())}${encodeUlidRandomPart(16)}`;
+}
+
+function mintDraftSessionId(): string {
+  const bytes = new Uint8Array(18);
+  crypto.getRandomValues(bytes);
+  return bytesToB64url(bytes);
+}
+
+function isValidGooglePlaceId(v: string): boolean {
+  return /^[A-Za-z0-9._:-]{6,255}$/.test(String(v || "").trim());
+}
+
+function round6(n: number): number {
+  return Number(n.toFixed(6));
+}
+
+function normalizeDraftCoord(raw: any): { lat: number; lng: number } | undefined {
+  if (raw == null || raw === "") return undefined;
+
+  let lat: number;
+  let lng: number;
+
+  if (typeof raw === "string") {
+    const parts = raw.split(/[,\s;]+/).map(s => s.trim()).filter(Boolean);
+    if (parts.length < 2) throw new Error("invalid_coordinates");
+    lat = Number(parts[0]);
+    lng = Number(parts[1]);
+  } else if (typeof raw === "object") {
+    lat = Number(raw?.lat ?? raw?.latitude);
+    lng = Number(raw?.lng ?? raw?.lon ?? raw?.longitude);
+  } else {
+    throw new Error("invalid_coordinates");
+  }
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error("invalid_coordinates");
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) throw new Error("invalid_coordinates");
+
+  return { lat: round6(lat), lng: round6(lng) };
+}
+
+function normalizeDraftPatch(raw: any, providerRef = ""): Record<string, any> {
+  const src = (raw && typeof raw === "object") ? raw : {};
+  const out: Record<string, any> = {};
+
+  for (const [k, v] of Object.entries(src)) {
+    if (v !== undefined) out[k] = v;
+  }
+
+  const coord = normalizeDraftCoord((src as any).coord ?? (src as any).coordinates);
+  if (coord) out.coord = coord;
+  delete out.coordinates;
+
+  if (Object.prototype.hasOwnProperty.call(src, "context")) {
+    const ctxVals = Array.isArray((src as any).context)
+      ? (src as any).context
+      : String((src as any).context || "").split(";");
+    out.context = uniqueTrimmedStrings(ctxVals).join(";");
+  }
+
+  if (Object.prototype.hasOwnProperty.call(src, "tags")) {
+    const tagVals = Array.isArray((src as any).tags)
+      ? (src as any).tags
+      : String((src as any).tags || "").split(";");
+    out.tags = uniqueTrimmedStrings(tagVals);
+  }
+
+  if (providerRef && !String(out.googlePlaceId || "").trim()) {
+    out.googlePlaceId = providerRef;
+  }
+
+  return out;
+}
+
+function mergeDraftPatch(base: any, patch: any): any {
+  const out: any = (base && typeof base === "object") ? { ...base } : {};
+  for (const [k, v] of Object.entries((patch && typeof patch === "object") ? patch : {})) {
+    if (v !== undefined) out[k] = v;
+  }
+  return out;
+}
+
+async function fetchStaticJson(req: Request, path: string): Promise<any> {
+  const origin = req.headers.get("Origin") || "https://navigen.io";
+  const u = new URL(path, origin).toString();
+  const r = await fetch(u, {
+    method: "GET",
+    headers: { accept: "application/json" },
+    cache: "no-store"
+  });
+  if (!r.ok) throw new Error(`catalog_fetch_failed:${path}`);
+  return await r.json();
+}
+
+async function loadStructureCatalog(req: Request): Promise<any[]> {
+  const j = await fetchStaticJson(req, "/data/structure.json");
+  return Array.isArray(j) ? j : [];
+}
+
+async function loadContextCatalog(req: Request): Promise<any[]> {
+  const origin = req.headers.get("Origin") || "https://navigen.io";
+  const u = new URL("/api/data/contexts", origin).toString();
+  const r = await fetch(u, {
+    method: "GET",
+    headers: { accept: "application/json" },
+    cache: "no-store"
+  });
+  if (!r.ok) throw new Error("catalog_fetch_failed:/api/data/contexts");
+  const j = await r.json().catch(() => null);
+  return Array.isArray(j) ? j : [];
+}
+
+function allowedSubgroupsByGroup(structureRows: any[]): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  for (const row of Array.isArray(structureRows) ? structureRows : []) {
+    const groupKey = String(row?.groupKey || "").trim();
+    if (!groupKey) continue;
+    const set = out.get(groupKey) || new Set<string>();
+    const subs = Array.isArray(row?.subgroups) ? row.subgroups : [];
+    for (const sg of subs) {
+      const key = String(sg?.key || "").trim();
+      if (key) set.add(key);
+    }
+    out.set(groupKey, set);
+  }
+  return out;
+}
+
+function allowedContextKeys(contextRows: any[]): Set<string> {
+  const out = new Set<string>();
+  for (const row of Array.isArray(contextRows) ? contextRows : []) {
+    const key = String(row?.key || "").trim();
+    if (key) out.add(key);
+  }
+  return out;
+}
+
+async function validateClassificationSelection(req: Request, profile: any): Promise<string | null> {
+  const groupKey = String(profile?.groupKey || "").trim();
+  const subgroupKey = String(profile?.subgroupKey || "").trim();
+  const contextVals = splitContextMemberships(profile?.context);
+
+  // Drafts may still be partial; only validate when the classification block is present.
+  if (!groupKey && !subgroupKey && !contextVals.length) return null;
+  if (!groupKey || !subgroupKey || !contextVals.length) return "classification_required";
+
+  const [structureRows, contextRows] = await Promise.all([
+    loadStructureCatalog(req),
+    loadContextCatalog(req)
+  ]);
+
+  const subgroups = allowedSubgroupsByGroup(structureRows);
+  const groupSubs = subgroups.get(groupKey);
+  if (!groupSubs) return "invalid_groupKey";
+  if (!groupSubs.has(subgroupKey)) return "invalid_subgroupKey";
+
+  const contexts = allowedContextKeys(contextRows);
+  for (const ctx of contextVals) {
+    if (!contexts.has(ctx)) return "invalid_context";
+  }
+
+  return null;
+}
+
 const RATING_WINDOW_MS = 30 * 60 * 1000;
 
 function ratingSummaryKey(locationID: string): string {
@@ -1120,42 +1315,423 @@ function pickName(name: any): string {
   return "";
 }
 
-// --- TEMP DO STUBS (deploy unblock) ---
-// These stubs exist only to satisfy Wrangler Durable Object export checks during the profiles.json revamp.
-// They must be replaced by the real implementations (or removed from wrangler.toml) when ready.
+const DO_ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+
+function doJson(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store"
+    }
+  });
+}
+
+function doError(reason: string, status = 400, extra: Record<string, unknown> = {}): Response {
+  return doJson({ ok: false, reason, ...extra }, status);
+}
+
+async function doReadJson(req: Request): Promise<any | null> {
+  try { return await req.json(); } catch { return null; }
+}
+
+function doNowIso(): string {
+  return new Date().toISOString();
+}
+
+function doUniqueStrings(values: unknown[]): string[] {
+  return Array.from(
+    new Set(
+      values
+        .map(v => String(v || "").trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function doNormalizeSlug(slug: unknown): string {
+  return String(slug || "").trim().toLowerCase();
+}
+
+function doNormalizeToken(value: unknown): string {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}\s-]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 32);
+}
+
+function doNormalizeTokens(values: unknown[]): string[] {
+  const out = values
+    .map(doNormalizeToken)
+    .filter(Boolean)
+    .sort();
+  return Array.from(new Set(out)).slice(0, 64);
+}
+
+// --- Phase 8 Durable Objects ---
+// Replaces the old deploy-unblock stubs with the real authoritative objects used by:
+// - publish-capacity enforcement (PlanAllocDO)
+// - search indexing (SearchShardDO)
+// - context membership indexing (ContextShardDO)
+
+type PlanAllocState = {
+  heldUlids: string[];
+  committedUlids: string[];
+  updatedAt: string;
+};
+
 export class PlanAllocDO {
   state: DurableObjectState;
   env: any;
+
   constructor(state: DurableObjectState, env: any) {
     this.state = state;
     this.env = env;
   }
-  async fetch(_req: Request): Promise<Response> {
-    return new Response("PlanAllocDO not implemented", { status: 501 });
+
+  private async readState(): Promise<PlanAllocState> {
+    const hit = await this.state.storage.get<PlanAllocState>("state");
+    return hit || { heldUlids: [], committedUlids: [], updatedAt: doNowIso() };
+  }
+
+  private async writeState(next: PlanAllocState): Promise<void> {
+    next.updatedAt = doNowIso();
+    await this.state.storage.put("state", next);
+  }
+
+  async fetch(req: Request): Promise<Response> {
+    const method = req.method.toUpperCase();
+    const body = method === "GET" ? null : await doReadJson(req);
+    const op = String(body?.op || new URL(req.url).searchParams.get("op") || "snapshot").trim().toLowerCase();
+
+    if (op === "snapshot") {
+      const state = await this.readState();
+      return doJson({
+        ok: true,
+        heldUlids: state.heldUlids,
+        committedUlids: state.committedUlids,
+        heldCount: state.heldUlids.length,
+        allocatedCount: state.committedUlids.length
+      });
+    }
+
+    const ulid = String(body?.ulid || "").trim();
+    const max = Math.max(0, Number(body?.max || 0) || 0);
+
+    if (!DO_ULID_RE.test(ulid)) return doError("invalid_ulid", 400);
+
+    const state = await this.readState();
+    const held = new Set(state.heldUlids);
+    const committed = new Set(state.committedUlids);
+
+    if (op === "reserve") {
+      if (!Number.isFinite(max) || max <= 0) return doError("invalid_max", 400, { max });
+
+      if (committed.has(ulid)) {
+        return doJson({
+          ok: true,
+          alreadyAllocated: true,
+          allocatedCount: committed.size,
+          max,
+          reservationState: "committed"
+        });
+      }
+
+      if (held.has(ulid)) {
+        return doJson({
+          ok: true,
+          alreadyAllocated: false,
+          allocatedCount: committed.size,
+          max,
+          reservationState: "held"
+        });
+      }
+
+      const used = committed.size + held.size;
+      if (used >= max) {
+        return doJson({
+          ok: false,
+          reason: "capacity_exceeded",
+          allocatedCount: committed.size,
+          heldCount: held.size,
+          max
+        }, 409);
+      }
+
+      held.add(ulid);
+      await this.writeState({
+        heldUlids: Array.from(held),
+        committedUlids: Array.from(committed),
+        updatedAt: doNowIso()
+      });
+
+      return doJson({
+        ok: true,
+        alreadyAllocated: false,
+        allocatedCount: committed.size,
+        heldCount: held.size,
+        max,
+        reservationState: "held"
+      });
+    }
+
+    if (op === "commit") {
+      if (committed.has(ulid)) {
+        return doJson({
+          ok: true,
+          alreadyAllocated: true,
+          allocatedCount: committed.size,
+          reservationState: "committed"
+        });
+      }
+
+      if (!held.has(ulid)) {
+        return doError("missing_hold", 409);
+      }
+
+      held.delete(ulid);
+      committed.add(ulid);
+
+      await this.writeState({
+        heldUlids: Array.from(held),
+        committedUlids: Array.from(committed),
+        updatedAt: doNowIso()
+      });
+
+      return doJson({
+        ok: true,
+        alreadyAllocated: false,
+        allocatedCount: committed.size,
+        reservationState: "committed"
+      });
+    }
+
+    if (op === "release") {
+      const existed = held.delete(ulid);
+
+      await this.writeState({
+        heldUlids: Array.from(held),
+        committedUlids: Array.from(committed),
+        updatedAt: doNowIso()
+      });
+
+      return doJson({
+        ok: true,
+        released: existed,
+        allocatedCount: committed.size,
+        heldCount: held.size
+      });
+    }
+
+    return doError("unsupported_op", 400, { op });
   }
 }
+
+type SearchShardState = {
+  slugToUlid: Record<string, string>;
+  slugByUlid: Record<string, string>;
+  tokensByUlid: Record<string, string[]>;
+  tokenToUlids: Record<string, string[]>;
+  metaByUlid: Record<string, { city?: string; postalCode?: string; name?: string }>;
+  hashByUlid: Record<string, string>;
+  updatedAt: string;
+};
 
 export class SearchShardDO {
   state: DurableObjectState;
   env: any;
+
   constructor(state: DurableObjectState, env: any) {
     this.state = state;
     this.env = env;
   }
-  async fetch(_req: Request): Promise<Response> {
-    return new Response("SearchShardDO not implemented", { status: 501 });
+
+  private async readState(): Promise<SearchShardState> {
+    const hit = await this.state.storage.get<SearchShardState>("state");
+    return hit || {
+      slugToUlid: {},
+      slugByUlid: {},
+      tokensByUlid: {},
+      tokenToUlids: {},
+      metaByUlid: {},
+      hashByUlid: {},
+      updatedAt: doNowIso()
+    };
+  }
+
+  private async writeState(next: SearchShardState): Promise<void> {
+    next.updatedAt = doNowIso();
+    await this.state.storage.put("state", next);
+  }
+
+  private removeExisting(state: SearchShardState, ulid: string): void {
+    const prevSlug = String(state.slugByUlid[ulid] || "").trim();
+    if (prevSlug) delete state.slugToUlid[prevSlug];
+    delete state.slugByUlid[ulid];
+
+    const prevTokens = Array.isArray(state.tokensByUlid[ulid]) ? state.tokensByUlid[ulid] : [];
+    for (const tok of prevTokens) {
+      const current = Array.isArray(state.tokenToUlids[tok]) ? state.tokenToUlids[tok] : [];
+      const next = current.filter(v => v !== ulid);
+      if (next.length) state.tokenToUlids[tok] = next;
+      else delete state.tokenToUlids[tok];
+    }
+    delete state.tokensByUlid[ulid];
+    delete state.metaByUlid[ulid];
+    delete state.hashByUlid[ulid];
+  }
+
+  async fetch(req: Request): Promise<Response> {
+    const method = req.method.toUpperCase();
+    const body = method === "GET" ? null : await doReadJson(req);
+    const url = new URL(req.url);
+    const op = String(body?.op || url.searchParams.get("op") || "snapshot").trim().toLowerCase();
+
+    if (op === "snapshot") {
+      const state = await this.readState();
+      return doJson({
+        ok: true,
+        slugs: Object.keys(state.slugToUlid).length,
+        tokens: Object.keys(state.tokenToUlids).length,
+        ulids: Object.keys(state.slugByUlid).length
+      });
+    }
+
+    if (op === "lookup_slug") {
+      const slug = doNormalizeSlug(body?.slug || url.searchParams.get("slug") || "");
+      if (!slug) return doError("invalid_slug", 400);
+      const state = await this.readState();
+      return doJson({ ok: true, ulid: String(state.slugToUlid[slug] || "") });
+    }
+
+    if (op === "search") {
+      const rawTokens = Array.isArray(body?.tokens)
+        ? body.tokens
+        : String(url.searchParams.get("tokens") || "").split(",");
+      const tokens = doNormalizeTokens(rawTokens);
+      const state = await this.readState();
+
+      if (!tokens.length) return doJson({ ok: true, ulids: [] });
+
+      let result: string[] | null = null;
+      for (const tok of tokens) {
+        const hits = Array.isArray(state.tokenToUlids[tok]) ? state.tokenToUlids[tok] : [];
+        result = result === null ? [...hits] : result.filter(v => hits.includes(v));
+        if (!result.length) break;
+      }
+
+      return doJson({ ok: true, ulids: result || [] });
+    }
+
+    const ulid = String(body?.ulid || "").trim();
+    if (!DO_ULID_RE.test(ulid)) return doError("invalid_ulid", 400);
+
+    const state = await this.readState();
+
+    if (op === "delete") {
+      this.removeExisting(state, ulid);
+      await this.writeState(state);
+      return doJson({ ok: true, deleted: true });
+    }
+
+    if (op === "upsert") {
+      const slug = doNormalizeSlug(body?.slug);
+      if (!slug) return doError("invalid_slug", 400);
+
+      const tokens = doNormalizeTokens(Array.isArray(body?.tokens) ? body.tokens : []);
+      const indexedFieldsHash = String(body?.indexedFieldsHash || "").trim();
+      const prevHash = String(state.hashByUlid[ulid] || "").trim();
+      const prevSlug = String(state.slugByUlid[ulid] || "").trim();
+
+      if (indexedFieldsHash && prevHash && indexedFieldsHash === prevHash && prevSlug === slug) {
+        return doJson({ ok: true, noChange: true });
+      }
+
+      this.removeExisting(state, ulid);
+
+      state.slugToUlid[slug] = ulid;
+      state.slugByUlid[ulid] = slug;
+      state.tokensByUlid[ulid] = tokens;
+      state.hashByUlid[ulid] = indexedFieldsHash;
+
+      const meta = body?.meta && typeof body.meta === "object" ? body.meta : {};
+      state.metaByUlid[ulid] = {
+        city: String(meta?.city || "").trim(),
+        postalCode: String(meta?.postalCode || "").trim(),
+        name: String(meta?.name || "").trim()
+      };
+
+      for (const tok of tokens) {
+        const current = Array.isArray(state.tokenToUlids[tok]) ? state.tokenToUlids[tok] : [];
+        if (!current.includes(ulid)) current.push(ulid);
+        state.tokenToUlids[tok] = current;
+      }
+
+      await this.writeState(state);
+      return doJson({ ok: true, upserted: true, tokenCount: tokens.length });
+    }
+
+    return doError("unsupported_op", 400, { op });
   }
 }
+
+type ContextShardState = {
+  ulids: string[];
+  updatedAt: string;
+};
 
 export class ContextShardDO {
   state: DurableObjectState;
   env: any;
+
   constructor(state: DurableObjectState, env: any) {
     this.state = state;
     this.env = env;
   }
-  async fetch(_req: Request): Promise<Response> {
-    return new Response("ContextShardDO not implemented", { status: 501 });
+
+  private async readState(): Promise<ContextShardState> {
+    const hit = await this.state.storage.get<ContextShardState>("state");
+    return hit || { ulids: [], updatedAt: doNowIso() };
+  }
+
+  private async writeState(next: ContextShardState): Promise<void> {
+    next.updatedAt = doNowIso();
+    await this.state.storage.put("state", next);
+  }
+
+  async fetch(req: Request): Promise<Response> {
+    const method = req.method.toUpperCase();
+    const body = method === "GET" ? null : await doReadJson(req);
+    const op = String(body?.op || new URL(req.url).searchParams.get("op") || "snapshot").trim().toLowerCase();
+
+    if (op === "snapshot" || op === "list") {
+      const state = await this.readState();
+      return doJson({ ok: true, ulids: state.ulids, count: state.ulids.length });
+    }
+
+    const ulid = String(body?.ulid || "").trim();
+    if (!DO_ULID_RE.test(ulid)) return doError("invalid_ulid", 400);
+
+    const state = await this.readState();
+    const set = new Set(state.ulids);
+
+    if (op === "upsert") {
+      set.add(ulid);
+      await this.writeState({ ulids: Array.from(set), updatedAt: doNowIso() });
+      return doJson({ ok: true, upserted: true, count: set.size });
+    }
+
+    if (op === "delete") {
+      const existed = set.delete(ulid);
+      await this.writeState({ ulids: Array.from(set), updatedAt: doNowIso() });
+      return doJson({ ok: true, deleted: existed, count: set.size });
+    }
+
+    return doError("unsupported_op", 400, { op });
   }
 }
 
@@ -1188,6 +1764,236 @@ export default {
     }
 
     try {
+      // --- Phase 8 one-time legacy preseed (admin-only, temporary; remove after preseed + KV read cutover ship)
+      // POST /api/_admin/p8/preseed
+      // Auth: Authorization: Bearer <JWT_SECRET>
+      // Body:
+      //   { "all": true }
+      //   OR
+      //   { "locationID": "<slug>" }
+      if (normPath === "/api/_admin/p8/preseed" && req.method === "POST") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const body = await req.json().catch(() => ({})) as any;
+        const targetSlug = String(body?.locationID || "").trim();
+        const doAll = !!body?.all;
+        const force = !!body?.force;
+        const purgeContexts = Array.isArray(body?.purgeContexts)
+          ? body.purgeContexts.map((v: any) => String(v || "").trim()).filter(Boolean)
+          : [];
+
+        if (!targetSlug && !doAll) {
+          return json(
+            { error: { code: "invalid_request", message: "set { all:true } or provide locationID" } },
+            400,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        let profiles: any;
+        try {
+          profiles = await fetchLegacyProfilesJson(req);
+        } catch (e: any) {
+          return json(
+            { error: { code: "upstream", message: String(e?.message || "profiles.json not reachable") } },
+            502,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const rows = legacyLocationsArray(profiles);
+        const picked = targetSlug
+          ? rows.filter((r: any) => legacyLocationSlug(r) === targetSlug)
+          : rows;
+
+        if (!picked.length) {
+          return json(
+            { error: { code: "not_found", message: "no matching legacy locations" } },
+            404,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const out: Array<Record<string, any>> = [];
+        let created = 0;
+        let skipped = 0;
+        let failed = 0;
+
+        for (const rec of picked) {
+          try {
+            const result = await preseedLegacyLocationRecord(env, rec, { force });
+            out.push(result);
+            if (result.created || result.overwritten) created++;
+            else if (result.skipped) skipped++;
+            else failed++;
+          } catch (e: any) {
+            failed++;
+            out.push({
+              ok: false,
+              slug: legacyLocationSlug(rec),
+              ulid: "",
+              reason: String(e?.message || "preseed_failed")
+            });
+          }
+        }
+
+        return json(
+          {
+            ok: true,
+            mode: targetSlug ? "single" : "all",
+            total: picked.length,
+            created,
+            skipped,
+            failed,
+            items: out
+          },
+          200,
+          { "cache-control": "no-store" }
+        );
+      }
+      
+      // --- Phase 8 preseed sanity check (admin-only, temporary)
+      // GET /api/_admin/p8/preseed-check?locationID=<slug>
+      if (normPath === "/api/_admin/p8/preseed-check" && req.method === "GET") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const slug = String(url.searchParams.get("locationID") || "").trim();
+        if (!slug) {
+          return json(
+            { error: { code: "invalid_request", message: "locationID required" } },
+            400,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const ulid = await resolveUid(slug, env);
+        const hasBase = ulid ? !!(await env.KV_STATUS.get(`profile_base:${ulid}`, "text")) : false;
+
+        return json(
+          {
+            ok: true,
+            locationID: slug,
+            ulid: ulid || "",
+            hasAlias: !!ulid,
+            hasProfileBase: hasBase
+          },
+          200,
+          { "cache-control": "no-store" }
+        );
+      }
+      
+      // --- Phase 8 DO backfill for preseeded published rows (admin-only, temporary)
+      // POST /api/_admin/p8/backfill-do
+      // Auth: Authorization: Bearer <JWT_SECRET>
+      // Body:
+      //   { "all": true }
+      //   OR
+      //   { "locationID": "<slug>" }
+      if (normPath === "/api/_admin/p8/backfill-do" && req.method === "POST") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const body = await req.json().catch(() => ({})) as any;
+        const targetSlug = String(body?.locationID || "").trim();
+        const doAll = !!body?.all;
+        const force = !!body?.force;
+        const purgeContexts = Array.isArray(body?.purgeContexts)
+          ? body.purgeContexts.map((v: any) => String(v || "").trim()).filter(Boolean)
+          : [];
+
+        if (!targetSlug && !doAll) {
+          return json(
+            { error: { code: "invalid_request", message: "set { all:true } or provide locationID" } },
+            400,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const targets: Array<{ ulid: string; slug: string }> = [];
+
+        if (targetSlug) {
+          const ulid = await resolveUid(targetSlug, env);
+          if (!ulid) {
+            return json(
+              { error: { code: "not_found", message: "unknown locationID" } },
+              404,
+              { "cache-control": "no-store" }
+            );
+          }
+          targets.push({ ulid, slug: targetSlug });
+        } else {
+          let cursor: string | undefined = undefined;
+          do {
+            const page = await env.KV_STATUS.list({ prefix: "profile_base:", cursor });
+            for (const key of page.keys) {
+              const name = String(key.name || "");
+              const ulid = name.replace(/^profile_base:/, "").trim();
+              if (!ULID_RE.test(ulid)) continue;
+
+              const rec = await readPublishedEffectiveProfileByUlid(ulid, env);
+              if (!rec) continue;
+
+              targets.push({ ulid, slug: rec.locationID });
+            }
+            cursor = page.cursor || undefined;
+          } while (cursor);
+        }
+
+        const out: Array<Record<string, any>> = [];
+        let indexed = 0;
+        let hidden = 0;
+        let failed = 0;
+
+        for (const t of targets) {
+          try {
+            const result = await backfillPublishedLocationDoState(env, t.ulid, { purgeContexts });
+            out.push(result);
+            if (result.ok && result.indexed) indexed++;
+            else if (result.ok && result.visibilityState === "hidden") hidden++;
+            else failed++;
+          } catch (e: any) {
+            failed++;
+            out.push({
+              ok: false,
+              ulid: t.ulid,
+              slug: t.slug,
+              reason: String(e?.message || "do_backfill_failed")
+            });
+          }
+        }
+
+        return json(
+          {
+            ok: true,
+            mode: targetSlug ? "single" : "all",
+            total: targets.length,
+            indexed,
+            hidden,
+            failed,
+            items: out
+          },
+          200,
+          { "cache-control": "no-store" }
+        );
+      }
+      
       // --- Stripe diag: /api/_diag/stripe-secret (safe fingerprint only)
       if (normPath === "/api/_diag/stripe-secret" && req.method === "GET") {
         const secretRaw = (env.STRIPE_WEBHOOK_SECRET || "").trim();
@@ -1201,6 +2007,13 @@ export default {
         }), { status: 200, headers: { "content-type": "application/json", "x-ng-worker": "navigen-api" } });
       }
 
+      // --- Owner location selector: authoritative published candidate set (no secrets)
+      // GET /api/owner/location-options
+      if (normPath === "/api/owner/location-options" && req.method === "GET") {
+        const items = await listPublishedLocationSelectorItems(env).catch(() => []);
+        return json({ items }, 200, { "cache-control": "no-store" });
+      }
+      
       // --- Owner Center: list device-bound locations (no secrets)
       if (normPath === "/api/owner/sessions" && req.method === "GET") {
         const dev = readDeviceId(req);
@@ -1482,22 +2295,31 @@ export default {
       }
 
       // --- Public Campaigns: create checkout session and persist draft without requiring owner session
-      // POST /api/campaigns/checkout  body: { locationID:"<slug>", draft:{...}, planCode?:string }
+      // POST /api/campaigns/checkout
+      //   existing route: { locationID:"<slug>", draft:{...}, planCode?:string }
+      //   brand-new route: { draftULID:"<ULID>", draftSessionId:"<opaque>", draft:{...}, planCode?:string }
       if (normPath === "/api/campaigns/checkout" && req.method === "POST") {
         const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
 
         const body = await req.json().catch(() => ({})) as any;
         const locationSlug = String(body?.locationID || "").trim();
+        const draftULID = String(body?.draftULID || "").trim();
+        const draftSessionId = String(body?.draftSessionId || "").trim();
         const draftIn = (body?.draft && typeof body.draft === "object") ? body.draft : {};
 
-        if (!locationSlug) return json({ error:{ code:"invalid_request", message:"locationID (slug) required" } }, 400, noStore);
-        if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationSlug)) {
-          return json({ error:{ code:"invalid_request", message:"locationID must be a slug, not a ULID" } }, 400, noStore);
-        }
+        const target = await resolveTargetIdentity(
+          env,
+          { locationID: locationSlug, draftULID, draftSessionId },
+          { validateDraft: !!draftULID || !!draftSessionId }
+        ).catch(() => null);
 
-        const resolved = await resolveUid(locationSlug, env).catch(() => null);
-        const ulid = String(resolved || "").trim();
-        if (!ulid) return json({ error:{ code:"not_found", message:"unknown locationID" } }, 404, noStore);
+        if (!target) {
+          return json(
+            { error: { code: "invalid_request", message: "valid locationID or draftULID + draftSessionId required" } },
+            400,
+            noStore
+          );
+        }
 
         // Validate draft minimally (server-authoritative; we only accept structurally valid campaigns).
         const campaignKey = String(draftIn?.campaignKey || "").trim();
@@ -1512,7 +2334,7 @@ export default {
         // Persist draft server-side, keyed by authoritative ULID.
         const draft = {
           ...draftIn,
-          locationID: ulid,
+          locationID: target.ulid,
           campaignKey,
           startDate,
           endDate,
@@ -1520,16 +2342,22 @@ export default {
           updatedAt: new Date().toISOString()
         };
 
-        await env.KV_STATUS.put(`campaigns:draft:${ulid}`, JSON.stringify(draft));
+        await env.KV_STATUS.put(`campaigns:draft:${target.ulid}`, JSON.stringify(draft));
 
-        const stripeReq = {
-          locationID: locationSlug,
+        const stripeReq: any = {
           campaignKey,
           initiationType: "public",
           ownershipSource: "campaign",
           navigenVersion: "phase5",
           planCode: body?.planCode
         };
+
+        if (target.route === "existing-location") {
+          stripeReq.locationID = locationSlug;
+        } else {
+          stripeReq.draftULID = target.draftULID;
+          stripeReq.draftSessionId = target.draftSessionId;
+        }
 
         return await createCampaignCheckoutSession(env, req, stripeReq, noStore);
       }
@@ -2067,6 +2895,16 @@ export default {
             ...noStoreHeaders
           }
         });
+      }
+
+      // --- Location draft: /api/location/draft (Phase 8 private shell)
+      if (normPath === "/api/location/draft" && req.method === "POST") {
+        return await handleLocationDraft(req, env);
+      }
+
+      // --- Location publish: /api/location/publish (Phase 8 authoritative publish)
+      if (normPath === "/api/location/publish" && req.method === "POST") {
+        return await handleLocationPublish(req, env);
       }
 
       // --- Stripe webhook: /api/stripe/webhook (Phase 1: ownership writer)
@@ -3549,7 +4387,7 @@ export default {
               const locationSlug = String(r?.locationSlug || "").trim();
 
               // Resolve human name by slug (profiles.json is keyed by locationID=slug)
-              const locationName = (await nameForLocation(locationSlug, req.headers.get("Origin") || "https://navigen.io")) || "";
+              const locationName = (await nameForLocation(locationSlug, env)) || "";
 
               const dvRaw = (r?.campaignDiscountValue != null) ? r.campaignDiscountValue : null;
               const discountValue =
@@ -3586,130 +4424,116 @@ export default {
         return json({ items: out }, 200, { "cache-control": "no-store" });
       }
 
-      // GET /api/data/list?context=...&limit=...
+      // GET /api/data/list?context=...&limit=...&cursor=...
+      // Authoritative Phase 8 context list:
+      // - membership from ContextShardDO
+      // - rows hydrated from KV effective published profiles
+      // - visibility ordering applied here: promoted → visible → hidden excluded
       if (normPath === "/api/data/list" && req.method === "GET") {
-        const target = new URL("https://navigen.io/api/data/list"); // fixed upstream path
-        url.searchParams.forEach((v, k) => target.searchParams.set(k, v)); // pass through query exactly
-        const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true }, headers: { "Accept": "application/json" } });
+        const contextKey = String(url.searchParams.get("context") || "").trim().toLowerCase();
+        const limitRaw = Number(url.searchParams.get("limit") || "99");
+        const limit = Math.max(1, Math.min(250, Number.isFinite(limitRaw) ? Math.floor(limitRaw) : 99));
 
-        if (r.status >= 400) {
-          const preview = await r.clone().text().then(t => t.slice(0, 256)).catch(() => "<no-body>");
-          const qs = Object.fromEntries(target.searchParams);
-          console.warn(JSON.stringify({ route: "/api/data/list", status: r.status, qs, preview }));
+        const cursorStr = String(url.searchParams.get("cursor") || "").trim();
+        const start = /^[0-9]+$/.test(cursorStr) ? Math.max(0, parseInt(cursorStr, 10)) : 0;
+
+        if (!contextKey) {
+          return json(
+            { items: [], nextCursor: null, totalApprox: 0 },
+            200,
+            { "x-navigen-route": "/api/data/list", "Cache-Control": "no-store" }
+          );
         }
-
-        const body = await r.text();
-
-        // Discoverability policy for context discovery:
-        // Keep the full upstream row set so context pages can mirror source visibility and priority.
-        // Direct-link LPM behavior remains unchanged; only list ordering is adjusted here.
-        let outBody = body;
 
         try {
-          // Only filter successful JSON responses.
-          if (r.ok) {
-            const parsed = JSON.parse(body);
+          const contextUlids = await listContextShardUlids(env, contextKey);
 
-            const arr: any[] = Array.isArray(parsed?.items)
-              ? parsed.items
-              : (parsed?.items && typeof parsed.items === "object")
-                ? Object.values(parsed.items)
-                : (Array.isArray(parsed?.locations)
-                    ? parsed.locations
-                    : (parsed?.locations && typeof parsed.locations === "object")
-                      ? Object.values(parsed.locations)
-                      : []);
+          const ranked: Array<{ payload: any; rank: number; idx: number }> = [];
 
-            // Build discovery list with preferential visibility:
-            // - "promoted" (paid active) first
-            // - then "visible" (courtesy/hold)
-            // - then remaining rows, without excluding them from the context list
-            //
-            // NOTE: this is a deterministic, lightweight ordering (no ML, no ads).
-            const ranked: Array<{ rec: any; rank: number }> = [];
+          for (let idx = 0; idx < contextUlids.length; idx++) {
+            const ulid = contextUlids[idx];
+            const rec = await readPublishedEffectiveProfileByUlid(ulid, env);
+            if (!rec) continue;
 
-            for (const rec of arr) {
-              const slug = String(rec?.alias || rec?.locationID || "").trim();
-              const ulid = (await resolveUid(slug, env)) || ""; // canonical ULID (required for ownership lookup)
+            const vis = await computeVisibilityState(env, ulid);
+            if (vis.visibilityState === "hidden") continue;
 
-              // If we can't resolve a ULID, fail open (treat as visible but non-promoted).
-              if (!ulid || !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(ulid)) {
-                ranked.push({ rec, rank: 0 });
-                continue;
-              }
+            const rank =
+              vis.visibilityState === "promoted" ? 2 :
+              vis.visibilityState === "visible" ? 1 : 0;
 
-              const vis = await computeVisibilityState(env, ulid);
+            ranked.push({
+              payload: buildPublicListPayload(rec),
+              rank,
+              idx
+            });
+          }
 
-              // Exclude hidden from discovery lists
-              // Keep hidden-state rows in the context list; only rank them after promoted and visible rows.
-              
-              // Preferential visibility weight (highest first)
-              const rank =
-                vis.visibilityState === "promoted" ? 2 :
-                vis.visibilityState === "visible"  ? 1 : 0;
+          ranked.sort((a, b) => {
+            if (b.rank !== a.rank) return b.rank - a.rank;
+            return a.idx - b.idx; // stable within same visibility class
+          });
 
-              ranked.push({ rec, rank });
+          const totalApprox = ranked.length;
+          const items = ranked.slice(start, start + limit).map((x) => x.payload);
+          const nextCursor = (start + limit) < totalApprox ? String(start + limit) : null;
+
+          return json(
+            { items, nextCursor, totalApprox },
+            200,
+            {
+              "x-navigen-route": "/api/data/list",
+              "x-ng-list-order": "promoted-visible-hidden-excluded",
+              "Cache-Control": "no-store"
             }
-
-            // Stable ordering: promoted first, then visible, then the rest
-            ranked.sort((a, b) => b.rank - a.rank);
-
-            const filtered = ranked.map(x => x.rec);
-
-            // Preserve original shape: if upstream returned { locations: [...] }, keep that.
-            outBody = JSON.stringify(parsed?.items ? { ...parsed, items: filtered } : { ...parsed, locations: filtered });
-          }
-        } catch {
-          // Fail open: never break list loading due to a filtering error.
-          outBody = body;
+          );
+        } catch (e: any) {
+          return json(
+            {
+              error: {
+                code: "list_failed",
+                message: String(e?.message || "context list failed")
+              }
+            },
+            500,
+            {
+              "x-navigen-route": "/api/data/list",
+              "Cache-Control": "no-store"
+            }
+          );
         }
-
-        return new Response(outBody, {
-          status: r.status,
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-            "Access-Control-Allow-Origin": "https://navigen.io",
-            "Access-Control-Allow-Credentials": "true",
-            "Vary": "Origin",
-            "Cache-Control": "no-store",
-            "x-navigen-route": "/api/data/list",
-            "x-ng-list-order": "promoted-first"
-          }
-        });
       }
 
       // GET /api/data/profile?id=...
-      // profile: accept alias or ULID; resolve alias → ULID via KV_ALIASES
+      // profile: accept alias or ULID; return merged effective published profile from KV authority
       if (normPath === "/api/data/profile" && req.method === "GET") {
-        const base = req.headers.get("Origin") || "https://navigen.io"; // keep caller origin
-        const target = new URL("/api/data/profile", base);
-
         const raw = (url.searchParams.get("id") || "").trim();
-        const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(raw);
-        const mapped = isUlid ? raw : (await resolveUid(raw, env)) || raw;
+        if (!raw) {
+          return json(
+            { error: { code: "invalid_request", message: "id required" } },
+            400,
+            { "x-navigen-route": "/api/data/profile" }
+          );
+        }
 
-        url.searchParams.forEach((v, k) => { if (k !== "id") target.searchParams.set(k, v); });
-        target.searchParams.set("id", mapped);
+        const rec = await readPublishedEffectiveProfileByAnyId(raw, env);
+        if (!rec) {
+          return json(
+            { error: { code: "not_found", message: "profile not found" } },
+            404,
+            { "x-navigen-route": "/api/data/profile" }
+          );
+        }
 
-        const r = await fetch(target.toString(), { cf: { cacheTtl: 30, cacheEverything: true }, headers: { "Accept": "application/json" } });
-
-        const body = await r.text();
-        
-        return new Response(body, {
-          status: r.status,
-          headers: {
-            "Content-Type": r.headers.get("Content-Type") || "application/json; charset=utf-8",
-            "Access-Control-Allow-Origin": "https://navigen.io",
-            "Access-Control-Allow-Credentials": "true",
-            "Vary": "Origin",
-            "Cache-Control": "no-store",
-            "x-navigen-route": "/api/data/profile"
-          }
-        });
+        return json(
+          buildPublicProfilePayload(rec),
+          200,
+          { "x-navigen-route": "/api/data/profile", "Cache-Control": "no-store" }
+        );
       }
 
       // GET /api/data/item?id=...
-      // item: accept alias or ULID; resolve alias → ULID; return single item + contexts[]
+      // item: accept alias or ULID; return single item + contexts[] from KV authority
       if (normPath === "/api/data/item" && req.method === "GET") {
         const idParam = (url.searchParams.get("id") || "").trim();
         if (!idParam) {
@@ -3720,86 +4544,8 @@ export default {
           );
         }
 
-        const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-
-        // 1) canonical ULID (if idParam is a slug)
-        const mapped = (await resolveUid(idParam, env)) || idParam;
-        const isUlid = ULID_RE.test(mapped);
-
-        // 2) load profiles.json once
-        const base = req.headers.get("Origin") || "https://navigen.io";
-        const src  = new URL("/data/profiles.json", base).toString();
-        const resp = await fetch(src, {
-          cf: { cacheTtl: 60, cacheEverything: true },
-          headers: { "Accept": "application/json" }
-        });
-
-        if (!resp.ok) {
-          return json(
-            { error: { code: "upstream", message: "profiles.json not reachable" } },
-            502,
-            { "x-navigen-route": "/api/data/item" }
-          );
-        }
-
-        let data: any;
-        try {
-          data = await resp.json();
-        } catch {
-          data = { locations: [] };
-        }
-
-        const locs: any[] = Array.isArray(data?.locations)
-          ? data.locations
-          : (data?.locations && typeof data.locations === "object")
-            ? Object.values(data.locations)
-            : [];
-
-        // 3) first try: direct slug/ID match from profiles.json
-        let hit = locs.find((p) => {
-          const slug = String(p?.locationID || "").trim();
-          const id   = String(p?.ID || p?.id || "").trim();
-          // match by slug OR by ULID (if profiles.json ever stores it)
-          return slug === idParam || id === mapped;
-        });
-
-        // 4) second try: ULID → slug via KV_ALIASES, then slug → profiles.json
-        if (!hit && isUlid && env.KV_ALIASES) {
-          let aliasSlug = "";
-          let cursor: string | undefined = undefined;
-
-          do {
-            const page = await env.KV_ALIASES.list({ prefix: "alias:", cursor });
-            for (const k of page.keys) {
-              const name = k.name; // "alias:<slug>"
-              const raw = await env.KV_ALIASES.get(name, "text");
-              if (!raw) continue;
-
-              let val = raw.trim();
-              if (val.startsWith("{")) {
-                try {
-                  const j = JSON.parse(val) as any;
-                  val = String(j?.locationID || "").trim();
-                } catch {
-                  val = "";
-                }
-              }
-
-              if (val && val === mapped) {
-                aliasSlug = name.replace(/^alias:/, "");
-                break;
-              }
-            }
-            if (aliasSlug) break;
-            cursor = page.cursor || undefined;
-          } while (cursor);
-
-          if (aliasSlug) {
-            hit = locs.find((p) => String(p?.locationID || "").trim() === aliasSlug);
-          }
-        }
-
-        if (!hit) {
+        const rec = await readPublishedEffectiveProfileByAnyId(idParam, env);
+        if (!rec) {
           return json(
             { error: { code: "not_found", message: "item not found" } },
             404,
@@ -3807,27 +4553,39 @@ export default {
           );
         }
 
-        const ctxStr = String(hit.context || hit.Context || "").trim();
-        const ctxArr = ctxStr
-          ? ctxStr.split(";").map((s: string) => s.trim()).filter(Boolean)
-          : [];
+        return json(
+          buildPublicItemPayload(rec),
+          200,
+          { "x-navigen-route": "/api/data/item", "Cache-Control": "no-store" }
+        );
+      }
+      
+      // GET /api/data/contact?id=...
+      // contact: accept alias or ULID; return contact payload from KV authority
+      if (normPath === "/api/data/contact" && req.method === "GET") {
+        const idParam = (url.searchParams.get("id") || url.searchParams.get("locationID") || "").trim();
+        if (!idParam) {
+          return json(
+            { error: { code: "invalid_request", message: "id required" } },
+            400,
+            { "x-navigen-route": "/api/data/contact" }
+          );
+        }
 
-        const payload = {
-          id: mapped || hit.ID || hit.id || hit.locationID,
-          locationID: String(hit.locationID || "").trim(),
-          contexts: ctxArr,
-          locationName: hit.locationName || hit.name,
-          media: hit.media || {},
-          coord: hit.coord || hit["Coordinate Compound"] || "",
-          links: hit.links || {},
-          contactInformation: hit.contactInformation || hit.contact || {},
-          descriptions: hit.descriptions || {},
-          tags: Array.isArray(hit.tags) ? hit.tags : [],
-          ratings: hit.ratings || {},
-          pricing: hit.pricing || {}
-        };
+        const rec = await readPublishedEffectiveProfileByAnyId(idParam, env);
+        if (!rec) {
+          return json(
+            { error: { code: "not_found", message: "contact not found" } },
+            404,
+            { "x-navigen-route": "/api/data/contact" }
+          );
+        }
 
-        return json(payload, 200, { "x-navigen-route": "/api/data/item" });
+        return json(
+          buildPublicContactPayload(rec),
+          200,
+          { "x-navigen-route": "/api/data/contact", "Cache-Control": "no-store" }
+        );
       }
 
       // Fallback 404 — include the evaluated path for live verification
@@ -3845,31 +4603,1075 @@ export default {
 
 // build per-request; base comes from Origin header (staging/prod safe)
 
-async function nameForLocation(id: string, siteOrigin?: string): Promise<string | undefined> {
+async function nameForLocation(id: string, env: Env): Promise<string | undefined> {
   try {
-    const base = siteOrigin || "https://navigen.io"; // fallback only
-    const url  = new URL("/data/profiles.json", base).toString();
-    const res  = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
-    if (!res.ok) return undefined;
-    const data: any = await res.json();
+    const mapped = (await resolveUid(id, env)) || String(id || "").trim();
+    const ulid = ULID_RE.test(mapped) ? mapped : "";
+    if (!ulid) return undefined;
 
-    // supports both: locations: [...] and locations: { [id]: {...} }
-    const arr = Array.isArray(data?.locations) ? data.locations : undefined;
-    const map = (!arr && data?.locations && typeof data.locations === "object") ? data.locations : undefined;
-    const hit = arr ? arr.find((x: any) => x?.locationID === id) : map?.[id];
+    const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" }) as any;
+    if (!base || typeof base !== "object") return undefined;
 
-    // supports { locationName: { en: "…" } } or { name: "…" }
-    const ln = hit?.locationName || hit?.name;
-    const name = typeof ln === "string" ? ln : (ln?.en || ln?.default);
-    return typeof name === "string" ? name : undefined; // safe fallback
-  } catch { return undefined; }
+    const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
+    const effective = deepMergeProfile(base, override);
+
+    const ln = effective?.locationName || effective?.name || effective?.listedName;
+    const name =
+      typeof ln === "string"
+        ? ln.trim()
+        : String(ln?.en || ln?.hu || Object.values(ln || {})[0] || "").trim();
+
+    return name || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 async function nameForEntity(_id: string): Promise<string | undefined> {
   return undefined; // entities don't have names in profiles.json
 }
 
+async function readPublishedEffectiveProfileByAnyId(
+  idOrAlias: string,
+  env: Env
+): Promise<{ ulid: string; locationID: string; effective: any } | null> {
+  const raw = String(idOrAlias || "").trim();
+  if (!raw) return null;
+
+  const mapped = (await resolveUid(raw, env)) || raw;
+  const ulid = ULID_RE.test(mapped) ? mapped : "";
+  if (!ulid) return null;
+
+  const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" }) as any;
+  if (!base || typeof base !== "object") return null;
+
+  const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
+  const effective = deepMergeProfile(base, override);
+  const locationID = String(effective?.locationID || base?.locationID || "").trim();
+
+  if (!locationID) return null;
+
+  return { ulid, locationID, effective };
+}
+
+function buildPublicProfilePayload(rec: { ulid: string; locationID: string; effective: any }): any {
+  const effective = (rec?.effective && typeof rec.effective === "object") ? rec.effective : {};
+  return {
+    ...effective,
+    id: rec.ulid,
+    ID: rec.ulid,
+    locationUID: rec.ulid,
+    locationID: rec.locationID,
+    contexts: splitContextMemberships(effective?.context)
+  };
+}
+
+function buildPublicItemPayload(rec: { ulid: string; locationID: string; effective: any }): any {
+  const effective = (rec?.effective && typeof rec.effective === "object") ? rec.effective : {};
+  return {
+    id: rec.ulid,
+    ID: rec.ulid,
+    locationUID: rec.ulid,
+    locationID: rec.locationID,
+    contexts: splitContextMemberships(effective?.context),
+    locationName: effective.locationName || effective.name,
+    media: effective.media || {},
+    coord: effective.coord || effective["Coordinate Compound"] || "",
+    links: effective.links || {},
+    contactInformation: effective.contactInformation || effective.contact || {},
+    descriptions: effective.descriptions || {},
+    tags: Array.isArray(effective.tags) ? effective.tags : [],
+    ratings: effective.ratings || {},
+    pricing: effective.pricing || {},
+    groupKey: effective.groupKey || "",
+    subgroupKey: effective.subgroupKey || ""
+  };
+}
+
+function buildPublicContactPayload(rec: { ulid: string; locationID: string; effective: any }): any {
+  const effective = (rec?.effective && typeof rec.effective === "object") ? rec.effective : {};
+  return {
+    id: rec.ulid,
+    ID: rec.ulid,
+    locationUID: rec.ulid,
+    locationID: rec.locationID,
+    contexts: splitContextMemberships(effective?.context),
+    locationName: effective.locationName || effective.name,
+    contactInformation: effective.contactInformation || effective.contact || {},
+    links: effective.links || {}
+  };
+}
+
+async function readPublishedEffectiveProfileByUlid(
+  ulid: string,
+  env: Env
+): Promise<{ ulid: string; locationID: string; effective: any } | null> {
+  const id = String(ulid || "").trim();
+  if (!ULID_RE.test(id)) return null;
+
+  const base = await env.KV_STATUS.get(`profile_base:${id}`, { type: "json" }) as any;
+  if (!base || typeof base !== "object") return null;
+
+  const override = (await env.KV_STATUS.get(`override:${id}`, { type: "json" }) as any) || {};
+  const effective = deepMergeProfile(base, override);
+  const locationID = String(effective?.locationID || base?.locationID || "").trim();
+  if (!locationID) return null;
+
+  return { ulid: id, locationID, effective };
+}
+
+function buildPublicListPayload(rec: { ulid: string; locationID: string; effective: any }): any {
+  const effective = (rec?.effective && typeof rec.effective === "object") ? rec.effective : {};
+  const media = (effective?.media && typeof effective.media === "object") ? effective.media : {};
+  const images = Array.isArray(media.images) ? media.images : [];
+
+  return {
+    ...effective,
+    id: rec.ulid,
+    ID: rec.ulid,
+    locationUID: rec.ulid,
+    locationID: rec.locationID,
+    alias: rec.locationID,
+    contexts: splitContextMemberships(effective?.context),
+    coord: effective?.coord || effective?.["Coordinate Compound"] || "",
+    media: {
+      ...media,
+      cover: String(media?.cover || "").trim(),
+      images: images.map((v: any) => (typeof v === "string" ? v : v?.src)).filter(Boolean)
+    },
+    contactInformation: effective?.contactInformation || effective?.contact || {},
+    links: effective?.links || {},
+    descriptions: effective?.descriptions || {},
+    tags: Array.isArray(effective?.tags) ? effective.tags : [],
+    ratings: effective?.ratings || {},
+    pricing: effective?.pricing || {}
+  };
+}
+
+async function listContextShardUlids(env: Env, contextKey: string): Promise<string[]> {
+  const key = String(contextKey || "").trim();
+  if (!key) return [];
+
+  const j = await contextShardCall(env, key, { ver: 1, op: "list" });
+  const arr = Array.isArray(j?.ulids) ? j.ulids : [];
+
+  return arr
+    .map((v: any) => String(v || "").trim())
+    .filter((v: string) => ULID_RE.test(v));
+}
+
+async function listPublishedLocationSelectorItems(env: Env): Promise<any[]> {
+  const out: any[] = [];
+  let cursor: string | undefined = undefined;
+
+  do {
+    const page = await env.KV_STATUS.list({ prefix: "profile_base:", cursor });
+    for (const key of page.keys) {
+      const name = String(key.name || "");
+      const ulid = name.replace(/^profile_base:/, "").trim();
+      if (!ULID_RE.test(ulid)) continue;
+
+      const base = await env.KV_STATUS.get(name, { type: "json" }) as any;
+      if (!base || typeof base !== "object") continue;
+
+      const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
+      const effective = deepMergeProfile(base, override);
+      const slug = String(effective?.locationID || base?.locationID || "").trim();
+      if (!slug) continue;
+
+      out.push({
+        ...effective,
+        id: ulid,
+        ID: ulid,
+        locationUID: ulid,
+        locationID: slug
+      });
+    }
+    cursor = page.cursor || undefined;
+  } while (cursor);
+
+  return out;
+}
+
 // ---------- handlers ----------
+
+async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
+  const noStore = { "cache-control": "no-store" };
+
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return json(
+      { error: { code: "invalid_request", message: "valid JSON body required" } },
+      400,
+      noStore
+    );
+  }
+
+  const locationID = String((body as any)?.locationID || "").trim();
+  const draftULID = String((body as any)?.draftULID || "").trim();
+  const googlePlaceId = String((body as any)?.googlePlaceId || (body as any)?.place_id || "").trim();
+  let draftSessionId = String((body as any)?.draftSessionId || "").trim();
+  const rawDraft = ((body as any)?.draft && typeof (body as any).draft === "object")
+    ? (body as any).draft
+    : {};
+
+  if (locationID && draftULID) {
+    return json(
+      { error: { code: "invalid_request", message: "locationID and draftULID cannot be combined" } },
+      400,
+      noStore
+    );
+  }
+
+  if (googlePlaceId && !isValidGooglePlaceId(googlePlaceId)) {
+    return json(
+      { error: { code: "invalid_request", message: "invalid googlePlaceId" } },
+      400,
+      noStore
+    );
+  }
+
+  let normalizedPatch: Record<string, any>;
+  try {
+    normalizedPatch = normalizeDraftPatch(rawDraft, googlePlaceId);
+  } catch (e: any) {
+    const msg = String(e?.message || "");
+    if (msg === "invalid_coordinates") {
+      return json(
+        { error: { code: "invalid_request", message: "invalid coordinates" } },
+        400,
+        noStore
+      );
+    }
+    return json(
+      { error: { code: "invalid_request", message: msg || "invalid draft payload" } },
+      400,
+      noStore
+    );
+  }
+
+  // A) existing location route
+  if (locationID) {
+    const ulid = await resolveUid(locationID, env);
+    if (!ulid) {
+      return json(
+        { error: { code: "not_found", message: "unknown locationID" } },
+        404,
+        noStore
+      );
+    }
+
+    if (!draftSessionId) draftSessionId = mintDraftSessionId();
+
+    const key = `override_draft:${ulid}:${draftSessionId}`;
+    const prev = await env.KV_STATUS.get(key, { type: "json" }) as any;
+    const nextDraft = mergeDraftPatch(prev, normalizedPatch);
+
+    const classificationError = await validateClassificationSelection(req, nextDraft);
+    if (classificationError) {
+      return json(
+        { error: { code: "invalid_request", message: classificationError } },
+        400,
+        noStore
+      );
+    }
+
+    nextDraft.updatedAt = new Date().toISOString();
+
+    await env.KV_STATUS.put(key, JSON.stringify(nextDraft));
+
+    return json(
+      { ok: true, locationID, draftSessionId },
+      200,
+      noStore
+    );
+  }
+
+  // B) existing brand-new draft update
+  if (draftULID) {
+    if (!ULID_RE.test(draftULID) || !draftSessionId) {
+      return json(
+        { error: { code: "invalid_request", message: "draftULID and draftSessionId required" } },
+        400,
+        noStore
+      );
+    }
+
+    const key = `override_draft:${draftULID}:${draftSessionId}`;
+    const prev = await env.KV_STATUS.get(key, { type: "json" }) as any;
+    if (!prev) {
+      return json(
+        { error: { code: "not_found", message: "draft not found" } },
+        404,
+        noStore
+      );
+    }
+
+    const nextDraft = mergeDraftPatch(prev, normalizedPatch);
+
+    const classificationError = await validateClassificationSelection(req, nextDraft);
+    if (classificationError) {
+      return json(
+        { error: { code: "invalid_request", message: classificationError } },
+        400,
+        noStore
+      );
+    }
+
+    nextDraft.updatedAt = new Date().toISOString();
+
+    await env.KV_STATUS.put(key, JSON.stringify(nextDraft));
+
+    return json(
+      { ok: true, draftULID, draftSessionId },
+      200,
+      noStore
+    );
+  }
+
+  // C / D) new manual shell or new Google-reference shell
+  const newDraftULID = mintDraftUlid();
+  const newDraftSessionId = mintDraftSessionId();
+  const key = `override_draft:${newDraftULID}:${newDraftSessionId}`;
+
+  const nextDraft = mergeDraftPatch({}, normalizedPatch);
+
+  const classificationError = await validateClassificationSelection(req, nextDraft);
+  if (classificationError) {
+    return json(
+      { error: { code: "invalid_request", message: classificationError } },
+      400,
+      noStore
+    );
+  }
+
+  nextDraft.updatedAt = new Date().toISOString();
+
+  await env.KV_STATUS.put(key, JSON.stringify(nextDraft));
+
+  return json(
+    { ok: true, draftULID: newDraftULID, draftSessionId: newDraftSessionId },
+    200,
+    noStore
+  );
+}
+
+function deepMergeProfile(base: any, patch: any): any {
+  if (patch === undefined) return base;
+  if (Array.isArray(base) || Array.isArray(patch)) return patch;
+  if (base && typeof base === "object" && patch && typeof patch === "object") {
+    const out: any = { ...base };
+    for (const [k, v] of Object.entries(patch)) {
+      out[k] = deepMergeProfile(out[k], v);
+    }
+    return out;
+  }
+  return patch;
+}
+
+function pickCanonicalName(raw: any): string {
+  if (!raw) return "";
+  if (typeof raw === "string") return raw.trim();
+  if (typeof raw === "object") {
+    return String(raw.en || raw.hu || Object.values(raw)[0] || "").trim();
+  }
+  return "";
+}
+
+function extractCoord(profile: any): { lat: number; lng: number } | null {
+  const c = profile?.coord;
+  if (!c || typeof c !== "object") return null;
+  const lat = Number(c?.lat);
+  const lng = Number(c?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return { lat, lng };
+}
+
+function slugifyNamePart(name: string): string {
+  return String(name || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+}
+
+function geoSuffixFromCoord(coord: { lat: number; lng: number }): string {
+  const lat = Math.round(Math.abs(coord.lat) * 1e6);
+  const lng = Math.round(Math.abs(coord.lng) * 1e6);
+  const composite = `${lat}${lng}`;
+  return composite.slice(-4).padStart(4, "0");
+}
+
+async function findAvailableSlug(env: Env, baseSlug: string, currentUlid = ""): Promise<string> {
+  let candidate = baseSlug;
+  for (let i = 0; i < 1000; i++) {
+    const mapped = await env.KV_ALIASES.get(aliasKey(candidate), "json") as any;
+    const hit = String(typeof mapped === "string" ? mapped : mapped?.locationID || "").trim();
+    if (!hit || (currentUlid && hit === currentUlid)) return candidate;
+    candidate = `${baseSlug}-${i + 2}`;
+  }
+  throw new Error("slug_collision_exhausted");
+}
+
+async function loadLegacyProfileBySlug(req: Request, locationID: string): Promise<any | null> {
+  const slug = String(locationID || "").trim();
+  if (!slug) return null;
+
+  const origin = req.headers.get("Origin") || "https://navigen.io";
+  const u = new URL("/api/data/profile", origin);
+  u.searchParams.set("id", slug);
+
+  const r = await fetch(u.toString(), {
+    method: "GET",
+    headers: { accept: "application/json" },
+    cache: "no-store"
+  });
+
+  if (!r.ok) return null;
+  return await r.json().catch(() => null);
+}
+
+async function readEffectivePublishedProfile(
+  req: Request,
+  env: Env,
+  ulid: string,
+  locationID: string
+): Promise<{ base: any; override: any; effective: any }> {
+  let base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" }) as any;
+  const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
+
+  if (!base && locationID) {
+    base = await loadLegacyProfileBySlug(req, locationID);
+  }
+
+  const effective = deepMergeProfile(base || {}, override || {});
+  return { base: base || {}, override: override || {}, effective };
+}
+
+function collectPublishImages(profile: any): string[] {
+  const media = (profile?.media && typeof profile.media === "object") ? profile.media : {};
+  const out: string[] = [];
+
+  const cover = String(media.cover || "").trim();
+  if (cover) out.push(cover);
+
+  if (Array.isArray(media.images)) {
+    for (const img of media.images) {
+      const s = String(img || "").trim();
+      if (s) out.push(s);
+    }
+  }
+
+  return Array.from(new Set(out));
+}
+
+function extractDescriptionText(profile: any): string {
+  const d = profile?.descriptions;
+  if (typeof d === "string") return d.trim();
+  if (d && typeof d === "object") return String(d.en || d.hu || Object.values(d)[0] || "").trim();
+  return String(profile?.description || "").trim();
+}
+
+function isHttpUrl(v: any): boolean {
+  try {
+    const u = new URL(String(v || "").trim());
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function hasWebsiteOrSocialLink(profile: any): boolean {
+  const links = (profile?.links && typeof profile.links === "object") ? profile.links : {};
+  for (const v of Object.values(links)) {
+    if (isHttpUrl(v)) return true;
+  }
+
+  const ci = (profile?.contactInformation && typeof profile.contactInformation === "object") ? profile.contactInformation : {};
+  if (isHttpUrl(ci?.website)) return true;
+
+  return false;
+}
+
+function validatePublishCandidate(profile: any): string | null {
+  const name = pickCanonicalName(profile?.locationName ?? profile?.listedName);
+  if (!name) return "missing_name";
+
+  const coord = extractCoord(profile);
+  if (!coord) return "missing_coordinates";
+
+  if (collectPublishImages(profile).length < 3) return "images_min_3";
+  if (extractDescriptionText(profile).length < 200) return "description_min_200";
+  if (!hasWebsiteOrSocialLink(profile)) return "website_or_social_required";
+
+  const groupKey = String(profile?.groupKey || "").trim();
+  const subgroupKey = String(profile?.subgroupKey || "").trim();
+  const context = String(profile?.context || "").trim();
+  if (!groupKey || !subgroupKey || !context) return "classification_required";
+
+  return null;
+}
+
+async function planAllocCall(env: Env, pi: string, op: string, payload: Record<string, unknown>): Promise<any> {
+  const ns =
+    (env as any).PLAN_ALLOC ||
+    (env as any).PLANALLOC ||
+    (env as any).PLAN_ALLOC_DO ||
+    (env as any).DO_PLAN_ALLOC;
+
+  if (!ns || typeof ns.idFromName !== "function") {
+    throw new Error("planalloc_binding_missing");
+  }
+
+  const id = ns.idFromName(`planalloc:${pi}`);
+  const stub = ns.get(id);
+
+  const r = await stub.fetch("https://do.internal/planalloc", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      ver: 1,
+      op,
+      pi,
+      ts: doNowIso(),
+      ...payload
+    })
+  });
+
+  const txt = await r.text();
+  let j: any = null;
+  try { j = JSON.parse(txt); } catch {}
+
+  if (!r.ok && !j) throw new Error(`planalloc_${op}_failed:${r.status}`);
+  return j || { ok: r.ok };
+}
+
+function splitContextMemberships(raw: unknown): string[] {
+  const vals = Array.isArray(raw) ? raw : String(raw || "").split(";");
+  return uniqueTrimmedStrings(vals);
+}
+
+function publishedCountryCode(profile: any): string {
+  const cc = String(
+    profile?.contactInformation?.countryCode ||
+    profile?.contact?.countryCode ||
+    ""
+  ).trim().toUpperCase();
+
+  return /^[A-Z]{2}$/.test(cc) ? cc : "XX";
+}
+
+function searchBucketForSlug(slug: string): string {
+  const s = doNormalizeSlug(slug);
+  const ch = s.slice(0, 1);
+  return /^[a-z0-9]$/.test(ch) ? ch : "_";
+}
+
+function extractIndexNameValues(profile: any): string[] {
+  const out: string[] = [];
+  const ln = profile?.locationName;
+
+  if (typeof ln === "string") out.push(ln);
+  else if (ln && typeof ln === "object") {
+    for (const v of Object.values(ln)) {
+      const s = String(v || "").trim();
+      if (s) out.push(s);
+    }
+  }
+
+  const listed = String(profile?.listedName || "").trim();
+  if (listed) out.push(listed);
+
+  return uniqueTrimmedStrings(out);
+}
+
+function extractIndexAddressValues(profile: any): string[] {
+  const ci = (profile?.contactInformation && typeof profile.contactInformation === "object")
+    ? profile.contactInformation
+    : ((profile?.contact && typeof profile.contact === "object") ? profile.contact : {});
+
+  return uniqueTrimmedStrings([
+    ci?.address,
+    profile?.listedAddress,
+    ci?.postalCode,
+    profile?.postalCode,
+    ci?.city,
+    profile?.city,
+    ci?.adminArea,
+    profile?.adminArea
+  ]);
+}
+
+function extractIndexTagValues(profile: any): string[] {
+  const rawTags = Array.isArray(profile?.tags)
+    ? profile.tags
+    : String(profile?.tags || "").split(";");
+
+  return uniqueTrimmedStrings(rawTags);
+}
+
+async function computeIndexedFieldsHash(bundle: unknown): Promise<string> {
+  const enc = new TextEncoder();
+  const dig = await crypto.subtle.digest("SHA-256", enc.encode(JSON.stringify(bundle)));
+  return `sha256:${bytesToHex(new Uint8Array(dig))}`;
+}
+
+async function searchShardCall(
+  env: Env,
+  countryCode: string,
+  bucket: string,
+  payload: Record<string, unknown>
+): Promise<any> {
+  const ns =
+    (env as any).SEARCH_SHARD ||
+    (env as any).SEARCH ||
+    (env as any).SEARCH_DO ||
+    (env as any).DO_SEARCH_SHARD;
+
+  if (!ns || typeof ns.idFromName !== "function") {
+    throw new Error("searchshard_binding_missing");
+  }
+
+  const id = ns.idFromName(`search:${countryCode}:${bucket}`);
+  const stub = ns.get(id);
+
+  const r = await stub.fetch("https://do.internal/search", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const txt = await r.text();
+  try { return JSON.parse(txt); } catch { return { ok: r.ok, raw: txt }; }
+}
+
+async function contextShardCall(
+  env: Env,
+  contextKey: string,
+  payload: Record<string, unknown>
+): Promise<any> {
+  const ns =
+    (env as any).CONTEXT_SHARD ||
+    (env as any).CONTEXT ||
+    (env as any).CONTEXT_DO ||
+    (env as any).DO_CTX_SHARD;
+
+  if (!ns || typeof ns.idFromName !== "function") {
+    throw new Error("contextshard_binding_missing");
+  }
+
+  const id = ns.idFromName(`ctx:${contextKey}`);
+  const stub = ns.get(id);
+
+  const r = await stub.fetch("https://do.internal/context", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const txt = await r.text();
+  try { return JSON.parse(txt); } catch { return { ok: r.ok, raw: txt }; }
+}
+
+async function syncPublishedDoIndex(
+  env: Env,
+  args: {
+    ulid: string;
+    slug: string;
+    prevProfile: any;
+    nextProfile: any;
+    visibilityState: VisibilityState;
+  }
+): Promise<void> {
+  const ulid = String(args.ulid || "").trim();
+  const slug = String(args.slug || "").trim();
+  if (!DO_ULID_RE.test(ulid) || !slug) throw new Error("invalid_index_target");
+
+  const prevContexts = splitContextMemberships(args.prevProfile?.context);
+  const nextContexts = splitContextMemberships(args.nextProfile?.context);
+  const allContexts = uniqueTrimmedStrings([...prevContexts, ...nextContexts]);
+
+  const countryCode = publishedCountryCode(args.nextProfile);
+  const bucket = searchBucketForSlug(slug);
+  const ts = doNowIso();
+
+  if (args.visibilityState === "hidden") {
+    await searchShardCall(env, countryCode, bucket, {
+      ver: 1,
+      op: "delete",
+      ulid,
+      slug,
+      countryCode,
+      contexts: allContexts,
+      ts
+    });
+
+    for (const ctx of allContexts) {
+      await contextShardCall(env, ctx, {
+        ver: 1,
+        op: "delete",
+        ulid,
+        ts
+      });
+    }
+    return;
+  }
+
+  const tokens = doNormalizeTokens([
+    ...extractIndexNameValues(args.nextProfile),
+    ...extractIndexAddressValues(args.nextProfile),
+    ...extractIndexTagValues(args.nextProfile),
+    slug
+  ]);
+
+  const indexedFieldsHash = await computeIndexedFieldsHash({
+    slug,
+    countryCode,
+    contexts: nextContexts,
+    tokens
+  });
+
+  await searchShardCall(env, countryCode, bucket, {
+    ver: 1,
+    op: "upsert",
+    ulid,
+    slug,
+    countryCode,
+    contexts: nextContexts,
+    tokens,
+    indexedFieldsHash,
+    meta: {
+      city: String(
+        args.nextProfile?.contactInformation?.city ||
+        args.nextProfile?.contact?.city ||
+        args.nextProfile?.city ||
+        ""
+      ).trim(),
+      postalCode: String(
+        args.nextProfile?.contactInformation?.postalCode ||
+        args.nextProfile?.contact?.postalCode ||
+        args.nextProfile?.postalCode ||
+        ""
+      ).trim(),
+      name: pickCanonicalName(args.nextProfile?.locationName ?? args.nextProfile?.listedName)
+    },
+    ts
+  });
+
+  const staleContexts = prevContexts.filter(ctx => !nextContexts.includes(ctx));
+  for (const ctx of staleContexts) {
+    await contextShardCall(env, ctx, {
+      ver: 1,
+      op: "delete",
+      ulid,
+      ts
+    });
+  }
+
+  for (const ctx of nextContexts) {
+    await contextShardCall(env, ctx, {
+      ver: 1,
+      op: "upsert",
+      ulid,
+      ts
+    });
+  }
+}
+
+async function handleLocationPublish(req: Request, env: Env): Promise<Response> {
+  const noStore = { "cache-control": "no-store" };
+
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return json(
+      { error: { code: "invalid_request", message: "valid JSON body required" } },
+      400,
+      noStore
+    );
+  }
+
+  const locationID = String((body as any)?.locationID || "").trim();
+  const draftULID = String((body as any)?.draftULID || "").trim();
+  const sourceDraftActorKey = String((body as any)?.sourceDraftActorKey || (body as any)?.draftSessionId || "").trim();
+
+  if (!sourceDraftActorKey) {
+    return json(
+      { error: { code: "invalid_request", message: "draftSessionId required" } },
+      400,
+      noStore
+    );
+  }
+
+  const target = locationID
+    ? await resolveTargetIdentity(env, { locationID }, {})
+    : await resolveTargetIdentity(env, { draftULID, draftSessionId: sourceDraftActorKey }, { validateDraft: true });
+
+  if (!target) {
+    return json(
+      { error: { code: "not_found", message: "publish target not found" } },
+      404,
+      noStore
+    );
+  }
+
+  const auth = await requireOwnerSession(req, env);
+  if (auth instanceof Response) return auth;
+  if (String(auth.ulid || "").trim() !== target.ulid) {
+    return new Response("Denied", {
+      status: 403,
+      headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+    });
+  }
+
+  const ownKey = `ownership:${target.ulid}`;
+  const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+  const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+  const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+
+  if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+    return json(
+      { error: { code: "ownership_inactive", message: "active ownership required" } },
+      403,
+      noStore
+    );
+  }
+
+  const paymentIntentId = String(ownership?.lastEventId || "").trim();
+  if (!paymentIntentId) {
+    return json(
+      { error: { code: "plan_missing", message: "ownership has no plan anchor" } },
+      403,
+      noStore
+    );
+  }
+
+  const plan = await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" }) as any;
+  const planExpIso = String(plan?.expiresAt || "").trim();
+  const planExp = planExpIso ? new Date(planExpIso) : null;
+
+  if (!plan || !planExp || Number.isNaN(planExp.getTime()) || planExp.getTime() <= Date.now()) {
+    return json(
+      { error: { code: "plan_inactive", message: "active plan required" } },
+      403,
+      noStore
+    );
+  }
+
+  if (planExp.toISOString() !== exclusiveUntil.toISOString()) {
+    return json(
+      { error: { code: "plan_invariant_failed", message: "plan/ownership expiry mismatch" } },
+      403,
+      noStore
+    );
+  }
+
+  const draftKey = `override_draft:${target.ulid}:${sourceDraftActorKey}`;
+  const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+  if (!draft) {
+    return json(
+      { error: { code: "not_found", message: "draft not found" } },
+      404,
+      noStore
+    );
+  }
+
+  const current = await readEffectivePublishedProfile(req, env, target.ulid, target.locationID);
+  const candidate = target.route === "existing-location"
+    ? deepMergeProfile(current.effective || {}, draft)
+    : deepMergeProfile({}, draft);
+
+  if (target.route === "existing-location" && target.locationID) {
+    candidate.locationID = target.locationID;
+  }
+
+  const classificationError = await validateClassificationSelection(req, candidate);
+  if (classificationError) {
+    return json(
+      { error: { code: "validation_failed", message: classificationError } },
+      403,
+      noStore
+    );
+  }
+
+  const validationError = validatePublishCandidate(candidate);
+  if (validationError) {
+    return json(
+      { error: { code: "validation_failed", message: validationError } },
+      403,
+      noStore
+    );
+  }
+
+  let slug = "";
+  let aliasWritten = false;
+  let capacityHeld = false;
+  let kvCommitted = false;
+
+  try {
+    const reserve = await planAllocCall(env, paymentIntentId, "reserve", {
+      ulid: target.ulid,
+      max: Math.max(0, Number(plan?.maxPublishedLocations || 0) || 0)
+    });
+
+    if (!reserve?.ok) {
+      return json(
+        { error: { code: "capacity_exceeded", message: "publish capacity exceeded" } },
+        403,
+        noStore
+      );
+    }
+
+    capacityHeld = String(reserve?.reservationState || "").toLowerCase() === "held";
+
+    let baseWrite: any = null;
+    let overrideWrite: any = null;
+
+    if (target.route === "existing-location") {
+      slug = String(target.locationID || current.base?.locationID || current.effective?.locationID || "").trim();
+      if (!slug) throw new Error("missing_existing_slug");
+
+      if (!current.base || !Object.keys(current.base).length) {
+        baseWrite = deepMergeProfile({}, current.effective || {});
+        baseWrite.locationID = slug;
+      }
+
+      overrideWrite = deepMergeProfile(current.override || {}, draft);
+      if (overrideWrite && typeof overrideWrite === "object") {
+        delete overrideWrite.locationID;
+      }
+    } else {
+      const name = pickCanonicalName(candidate?.locationName ?? candidate?.listedName);
+      const coord = extractCoord(candidate);
+      if (!name || !coord) throw new Error("invalid_brand_new_identity");
+
+      const baseSlug = `${slugifyNamePart(name)}-${geoSuffixFromCoord(coord)}`.replace(/^-+|-+$/g, "").slice(0, 64);
+      slug = await findAvailableSlug(env, baseSlug, target.ulid);
+
+      baseWrite = deepMergeProfile({}, candidate);
+      baseWrite.locationID = slug;
+      overrideWrite = {};
+    }
+
+    if (target.route === "brand-new-private-shell") {
+      await env.KV_ALIASES.put(aliasKey(slug), JSON.stringify({ locationID: target.ulid }));
+      aliasWritten = true;
+    }
+
+    if (baseWrite) {
+      await env.KV_STATUS.put(`profile_base:${target.ulid}`, JSON.stringify(baseWrite));
+    }
+
+    await env.KV_STATUS.put(`override:${target.ulid}`, JSON.stringify(overrideWrite || {}));
+
+    await env.KV_STATUS.put(
+      `override_log:${target.ulid}:${Date.now()}`,
+      JSON.stringify({
+        ts: doNowIso(),
+        ulid: target.ulid,
+        locationID: slug,
+        paymentIntentId,
+        initiationType: String(plan?.initiationType || "").trim(),
+        route: target.route,
+        draftSessionId: sourceDraftActorKey
+      })
+    );
+
+    kvCommitted = true;
+
+    if (capacityHeld) {
+      try {
+        const commit = await planAllocCall(env, paymentIntentId, "commit", { ulid: target.ulid });
+        if (commit?.ok) {
+          try {
+            await env.KV_STATUS.put(
+              `plan_alloc:${paymentIntentId}`,
+              JSON.stringify({
+                lastCommittedUlid: target.ulid,
+                updatedAt: doNowIso()
+              })
+            );
+          } catch {
+            // mirror only; never block publish
+          }
+        } else {
+          console.error("planalloc_commit_failed", { ulid: target.ulid, paymentIntentId, commit });
+        }
+      } catch (e: any) {
+        console.error("planalloc_commit_failed", {
+          ulid: target.ulid,
+          paymentIntentId,
+          err: String(e?.message || e || "")
+        });
+      }
+    }
+
+    const effectiveAfterCommit = target.route === "existing-location"
+      ? deepMergeProfile(baseWrite || current.base || current.effective || {}, overrideWrite || {})
+      : deepMergeProfile(baseWrite || {}, overrideWrite || {});
+
+    effectiveAfterCommit.locationID = slug;
+
+    const visibility = await computeVisibilityState(env, target.ulid);
+
+    try {
+      await syncPublishedDoIndex(env, {
+        ulid: target.ulid,
+        slug,
+        prevProfile: current.effective || {},
+        nextProfile: effectiveAfterCommit,
+        visibilityState: visibility.visibilityState
+      });
+    } catch (e: any) {
+      console.error("publish_index_sync_failed", {
+        ulid: target.ulid,
+        slug,
+        err: String(e?.message || e || "")
+      });
+      // DO best-effort only; never block or rollback committed publish
+    }
+
+    return json(
+      { ok: true, locationID: slug },
+      200,
+      noStore
+    );
+  } catch (e: any) {
+    if (!kvCommitted && capacityHeld) {
+      try {
+        await planAllocCall(env, paymentIntentId, "release", { ulid: target.ulid });
+      } catch {}
+    }
+
+    if (!kvCommitted && aliasWritten && slug) {
+      try { await env.KV_ALIASES.delete(aliasKey(slug)); } catch {}
+    }
+
+    if (kvCommitted) {
+      console.error("publish_postcommit_error", {
+        ulid: target.ulid,
+        slug,
+        err: String(e?.message || e || "")
+      });
+
+      return json(
+        { ok: true, locationID: slug },
+        200,
+        noStore
+      );
+    }
+
+    return json(
+      { error: { code: "publish_failed", message: String(e?.message || "publish failed") } },
+      500,
+      noStore
+    );
+  }
+}
 
 async function handleQr(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
@@ -3884,54 +5686,38 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
   const fmt = (url.searchParams.get("fmt") || "svg").toLowerCase();
   const size = clamp(parseInt(url.searchParams.get("size") || "512", 10), 128, 1024);
 
-  // 1) Load profiles.json and find the matching record by slug or ID
-  let profiles: any;
-  try {
-    const src = new URL("/data/profiles.json", "https://navigen.io").toString();
-    const resp = await fetch(src, {
-      cf: { cacheTtl: 60, cacheEverything: true },
-      headers: { Accept: "application/json" }
-    });
-    if (!resp.ok) {
-      return json(
-        { error: { code: "upstream", message: "profiles.json not reachable" } },
-        502
-      );
-    }
-    profiles = await resp.json();
-  } catch {
-    profiles = { locations: [] };
+  const mapped = (await resolveUid(raw, env)) || raw;
+  const ulid = ULID_RE.test(mapped) ? mapped : "";
+  if (!ulid) {
+    return json(
+      { error: { code: "not_found", message: "location not found" } },
+      404
+    );
   }
 
-  const locs: any[] = Array.isArray(profiles?.locations)
-    ? profiles.locations
-    : (profiles?.locations && typeof profiles.locations === "object")
-      ? Object.values(profiles.locations)
-      : [];
+  const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" }) as any;
+  if (!base || typeof base !== "object") {
+    return json(
+      { error: { code: "not_found", message: "published profile not found" } },
+      404
+    );
+  }
 
-  const hit = locs.find((p) => {
-    const slug = String(p?.locationID || "").trim();
-    const id   = String(p?.ID || p?.id || "").trim();
-    return slug === raw || id === raw;
-  });
+  const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
+  const effective = deepMergeProfile(base, override);
 
-  // 2) Resolve final landing URL (qrUrl, or fallback ?lp=<raw>), then wrap it in /out/qr-scan
-  let targetUrl = "";
-  if (hit && hit.qrUrl) {
-    targetUrl = String(hit.qrUrl).trim();
-  } else {
-    // Fallback: not expected in practice, but keep a sane default
+  const canonicalSlug = String(effective?.locationID || base?.locationID || raw).trim();
+  let targetUrl = String(effective?.qrUrl || "").trim();
+
+  if (!targetUrl) {
     const dest = new URL("/", "https://navigen.io");
-    dest.searchParams.set("lp", raw);
+    dest.searchParams.set("lp", canonicalSlug);
     targetUrl = dest.toString();
   }
 
-  // Build tracked scan URL on navigen.io that will increment qr-scan, then redirect to targetUrl
-  const scanUrl = new URL(`/out/qr-scan/${encodeURIComponent(raw)}`, "https://navigen.io");
+  const scanUrl = new URL(`/out/qr-scan/${encodeURIComponent(canonicalSlug)}`, "https://navigen.io");
   scanUrl.searchParams.set("to", targetUrl);
   const dataUrl = scanUrl.toString();
-
-  // 3) Generate QR code with dataUrl as the payload (tracked via /out/qr-scan, then redirected to qrUrl)
 
   if (fmt === "svg") {
     const svg = await QRCode.toString(dataUrl, { type: "svg", width: size, margin: 0 });
@@ -4180,6 +5966,33 @@ function statusKey(locationID: string): string {
 
 function aliasKey(legacy: string): string {
   return `alias:${legacy}`;
+}
+
+async function resolveUid(idOrAlias: string, env: Env): Promise<string | null> {
+  if (!idOrAlias) return null;
+
+  // If it already looks like a ULID, accept directly.
+  if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(idOrAlias)) return idOrAlias;
+
+  const key = aliasKey(idOrAlias);
+  const raw = await env.KV_ALIASES.get(key, "text");
+  if (!raw) return null;
+
+  const txt = String(raw || "").trim();
+  if (!txt) return null;
+
+  // Legacy compatibility:
+  // - plain ULID string
+  // - JSON string
+  // - JSON object { locationID: "<ULID>" }
+  if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(txt)) return txt;
+
+  try {
+    const parsed = JSON.parse(txt);
+    return (typeof parsed === "string" ? parsed : parsed?.locationID) || null;
+  } catch {
+    return null;
+  }
 }
 
 // Silent QA auto-tagging: store per-location QA flags alongside status/tier in KV_STATUS.
@@ -4974,6 +6787,131 @@ async function resolveTargetIdentity(
     draftULID,
     draftSessionId
   };
+}
+
+async function fetchLegacyProfilesJson(req: Request): Promise<any> {
+  const origin = req.headers.get("Origin") || "https://navigen.io";
+  const src = new URL("/data/profiles.json", origin).toString();
+  const resp = await fetch(src, {
+    cf: { cacheTtl: 60, cacheEverything: true },
+    headers: { Accept: "application/json" }
+  });
+  if (!resp.ok) throw new Error("profiles_json_not_reachable");
+  return await resp.json();
+}
+
+function legacyLocationsArray(data: any): any[] {
+  return Array.isArray(data?.locations)
+    ? data.locations
+    : (data?.locations && typeof data.locations === "object")
+      ? Object.values(data.locations)
+      : [];
+}
+
+function legacyLocationSlug(rec: any): string {
+  return String(rec?.locationID || "").trim();
+}
+
+function legacyLocationEmbeddedUlid(rec: any): string {
+  const raw = String(rec?.ID || rec?.id || "").trim();
+  return ULID_RE.test(raw) ? raw : "";
+}
+
+async function resolveLegacyLocationUlid(rec: any, env: Env): Promise<string> {
+  const slug = legacyLocationSlug(rec);
+  const embedded = legacyLocationEmbeddedUlid(rec);
+  if (embedded) return embedded;
+  if (slug) {
+    const mapped = await resolveUid(slug, env);
+    if (mapped) return mapped;
+  }
+  return "";
+}
+
+function buildLegacyProfileBase(rec: any, ulid: string): any {
+  const out = (rec && typeof rec === "object")
+    ? JSON.parse(JSON.stringify(rec))
+    : {};
+
+  const slug = legacyLocationSlug(rec);
+  if (slug) out.locationID = slug;
+  out.locationUID = ulid;
+
+  return out;
+}
+
+async function preseedLegacyLocationRecord(
+  env: Env,
+  rec: any,
+  opts: { force?: boolean } = {}
+): Promise<{ ok: boolean; slug: string; ulid: string; reason?: string; created?: boolean; skipped?: boolean; overwritten?: boolean }> {
+  const slug = legacyLocationSlug(rec);
+  const ulid = await resolveLegacyLocationUlid(rec, env);
+
+  if (!slug) return { ok: false, slug: "", ulid: "", reason: "missing_slug" };
+  if (!ulid) return { ok: false, slug, ulid: "", reason: "missing_ulid" };
+
+  const baseKey = `profile_base:${ulid}`;
+  const existing = await env.KV_STATUS.get(baseKey, "text");
+  const force = !!opts.force;
+
+  // Keep alias continuity authoritative even if base already exists
+  await env.KV_ALIASES.put(aliasKey(slug), JSON.stringify({ locationID: ulid }));
+
+  if (existing && !force) {
+    return { ok: true, slug, ulid, skipped: true };
+  }
+
+  const base = buildLegacyProfileBase(rec, ulid);
+  await env.KV_STATUS.put(baseKey, JSON.stringify(base));
+
+  if (existing && force) {
+    return { ok: true, slug, ulid, overwritten: true };
+  }
+
+  return { ok: true, slug, ulid, created: true };
+}
+
+async function backfillPublishedLocationDoState(
+  env: Env,
+  ulid: string,
+  opts: { purgeContexts?: string[] } = {}
+): Promise<{ ok: boolean; ulid: string; slug: string; visibilityState?: string; indexed?: boolean; reason?: string }> {
+  const id = String(ulid || "").trim();
+  if (!ULID_RE.test(id)) {
+    return { ok: false, ulid: id, slug: "", reason: "invalid_ulid" };
+  }
+
+  const rec = await readPublishedEffectiveProfileByUlid(id, env);
+  if (!rec) {
+    return { ok: false, ulid: id, slug: "", reason: "missing_profile_base" };
+  }
+
+  const vis = await computeVisibilityState(env, id);
+  const purgeContexts = uniqueTrimmedStrings(Array.isArray(opts.purgeContexts) ? opts.purgeContexts : []);
+
+  await syncPublishedDoIndex(env, {
+    ulid: id,
+    slug: rec.locationID,
+    prevProfile: purgeContexts.length ? { context: purgeContexts.join(";") } : {},
+    nextProfile: rec.effective,
+    visibilityState: vis.visibilityState
+  });
+
+  return {
+    ok: true,
+    ulid: id,
+    slug: rec.locationID,
+    visibilityState: vis.visibilityState,
+    indexed: vis.visibilityState !== "hidden"
+  };
+}
+
+function isAdminPreseedAuthorized(req: Request, env: Env): boolean {
+  const auth = String(req.headers.get("Authorization") || "").trim();
+  const secret = String(env.JWT_SECRET || "").trim();
+  if (!secret) return false;
+  return auth === `Bearer ${secret}`;
 }
 
 async function increment(kv: KVNamespace, key: string): Promise<void> {

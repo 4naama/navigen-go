@@ -2610,53 +2610,6 @@ textarea.input.input-error{
   text-align:left;
 }
 
-#request-listing-modal .request-chip-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  align-items:flex-start;
-}
-
-#request-listing-modal .request-chip-row:empty{
-  display:none;
-}
-
-#request-listing-modal .request-chip{
-  appearance:none;
-  border:1px solid #cbd5e1;
-  background:#f8fafc;
-  color:#0f172a;
-  border-radius:999px;
-  padding:0.35rem 0.75rem;
-  font:inherit;
-  font-size:0.85rem;
-  line-height:1.2;
-  cursor:pointer;
-  transition:background .2s ease, border-color .2s ease, box-shadow .2s ease, color .2s ease;
-}
-
-#request-listing-modal .request-chip:hover{
-  background:#eef2ff;
-  border-color:#94a3b8;
-}
-
-#request-listing-modal .request-chip:focus-visible{
-  outline:0;
-  box-shadow:0 0 0 2px rgba(59,130,246,.18);
-}
-
-#request-listing-modal .request-chip.is-selected{
-  background:#dbeafe;
-  border-color:#60a5fa;
-  color:#1d4ed8;
-  font-weight:600;
-}
-
-body.high-contrast #request-listing-modal .request-chip.is-selected{
-  border-color:currentColor;
-  box-shadow:inset 0 0 0 1px currentColor;
-}
-
 @media (max-width: 520px){
   .modal-form-grid{
     grid-template-columns:1fr;
