@@ -4033,6 +4033,11 @@ select.input{
   margin-top: 10px;
 }
 
+/* Keep the same gap after the loader disappears */
+#select-location-modal #select-location-loading + .modal-menu-list{
+  margin-top: 10px;
+}
+
 /* SYB uses the shared modal body scroller again; keep normal bottom breathing room only */
 #select-location-modal .modal-body-inner{
   padding-bottom: 8px;

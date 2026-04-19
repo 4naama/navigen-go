@@ -4389,93 +4389,93 @@ export function createRequestListingModal(opts = {}) {
         </div>
 
         <div class="modal-field">
-          <label for="rl-name">Business name *</label>
-          <input id="rl-name" class="input" type="text" maxlength="80" />
+          <label for="rl-name">${t('modal.requestListing.name.label') || 'Business name'} <span class="required-star">*</span></label>
+          <input id="rl-name" class="input" type="text" maxlength="120" />
         </div>
 
         <div class="modal-field">
-          <label for="rl-address">Street address *</label>
-          <input id="rl-address" class="input" type="text" maxlength="120" />
+          <label for="rl-address">${t('modal.requestListing.address.label') || 'Street address'} <span class="required-star">*</span></label>
+          <input id="rl-address" class="input" type="text" maxlength="180" />
         </div>
 
         <div class="modal-form-grid">
           <div class="modal-field">
-            <label for="rl-city">City *</label>
-            <input id="rl-city" class="input" type="text" maxlength="60" />
+            <label for="rl-city">${t('modal.requestListing.city.label') || 'City'} <span class="required-star">*</span></label>
+            <input id="rl-city" class="input" type="text" maxlength="80" />
           </div>
           <div class="modal-field">
-            <label for="rl-country">Country code *</label>
-            <input id="rl-country" class="input" type="text" maxlength="2" placeholder="HU" />
+            <label for="rl-country">${t('modal.requestListing.country.label') || 'Country code'} <span class="required-star">*</span></label>
+            <input id="rl-country" class="input" type="text" maxlength="2" placeholder="${t('modal.requestListing.country.placeholder') || 'HU'}" />
           </div>
         </div>
 
         <div class="modal-field">
-          <label for="rl-link">Official website or primary business link</label>
+          <label for="rl-link">${t('modal.requestListing.link.label') || 'Official website or primary business link'}</label>
           <input id="rl-link" class="input" type="text" maxlength="240" />
         </div>
 
         <div class="modal-form-grid">
           <div class="modal-field">
-            <label for="rl-facebook">Facebook link</label>
+            <label for="rl-facebook">${t('modal.requestListing.facebook.label') || 'Facebook link'}</label>
             <input id="rl-facebook" class="input" type="text" maxlength="240" />
           </div>
           <div class="modal-field">
-            <label for="rl-instagram">Instagram link</label>
+            <label for="rl-instagram">${t('modal.requestListing.instagram.label') || 'Instagram link'}</label>
             <input id="rl-instagram" class="input" type="text" maxlength="240" />
           </div>
         </div>
 
         <div class="modal-field">
-          <label for="rl-description">Business description</label>
-          <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="Describe the business, services, and customers."></textarea>
-          <small class="modal-help-text">Publish-ready target: at least 200 characters.</small>
+          <label for="rl-description">${t('modal.requestListing.description.label') || 'Business description'}</label>
+          <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || 'Describe the business, services, and customers.'}"></textarea>
+          <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
         </div>
 
         <div class="modal-form-grid">
           <div class="modal-field">
-            <label for="rl-group">Group *</label>
+            <label for="rl-group">${t('modal.requestListing.group.label') || 'Group *'}</label>
             <select id="rl-group" class="input"></select>
           </div>
           <div class="modal-field">
-            <label for="rl-subgroup">Subgroup *</label>
+            <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup *'}</label>
             <select id="rl-subgroup" class="input"></select>
           </div>
         </div>
 
         <div class="modal-field">
-          <label for="rl-contexts">Contexts * (one or more)</label>
+          <label for="rl-contexts">${t('modal.requestListing.contexts.label') || 'Contexts * (one or more)'}</label>
           <select id="rl-contexts" class="input" multiple size="6"></select>
-          <small class="modal-help-text">Select one or more existing context paths.</small>
+          <small class="modal-help-text">${t('modal.requestListing.contexts.help') || 'Select one or more existing context paths.'}</small>
         </div>
 
         <div class="modal-field">
-          <label for="rl-tags">Search tags</label>
-          <input id="rl-tags" class="input" type="text" maxlength="240" placeholder="comma, separated, tags" />
+          <label for="rl-tags">${t('modal.requestListing.tags.label') || 'Search tags'}</label>
+          <input id="rl-tags" class="input" type="text" maxlength="240" placeholder="${t('modal.requestListing.tags.placeholder') || 'comma, separated, tags'}" />
           <div id="rl-tag-suggestions" class="modal-menu-list" style="margin-top:.5rem;"></div>
-          <small class="modal-help-text">Optional search terms that match how customers look for this business.</small>
+          <small class="modal-help-text">${t('modal.requestListing.tags.help') || 'Optional search terms that match how customers look for this business.'}</small>
         </div>
 
         <div class="modal-field">
-          <label for="rl-cover">Cover image URL</label>
-          <input id="rl-cover" class="input" type="text" maxlength="500" placeholder="https://..." />
+          <label for="rl-cover">${t('modal.requestListing.cover.label') || 'Cover image URL'}</label>
+          <input id="rl-cover" class="input" type="text" maxlength="500" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
         </div>
 
         <div class="modal-field">
-          <label for="rl-images">Gallery image URLs</label>
-          <textarea id="rl-images" class="input" rows="4" maxlength="4000" placeholder="One URL per line"></textarea>
-          <small class="modal-help-text">Publish-ready target: at least 3 total images counting cover + gallery.</small>
+          <label for="rl-images">${t('modal.requestListing.images.label') || 'Gallery image URLs'}</label>
+          <textarea id="rl-images" class="input" rows="4" maxlength="4000" placeholder="${t('modal.requestListing.images.placeholder') || 'One URL per line'}"></textarea>
+          <small class="modal-help-text">${t('modal.requestListing.images.help') || 'Publish-ready target: at least 3 total images counting cover + gallery.'}</small>
         </div>
 
         <div class="modal-field">
           <label class="modal-checkbox-row" for="rl-has-coord">
             <input id="rl-has-coord" type="checkbox" />
-            <span>Optional: I have coordinates</span>
+            <span>${t('modal.requestListing.hasCoord.label') || 'Optional: I have coordinates'}</span>
           </label>
 
           <div id="rl-coord-wrap" class="modal-field hidden">
-            <label for="rl-coord">Coordinates (lat,lng) — 6 decimals</label>
-            <input id="rl-coord" class="input" type="text" placeholder="52.520625, 13.365660" />
-            <small class="modal-help-text">Tip: you can copy this from Google Maps.</small>
+            <label for="rl-coord">${t('modal.requestListing.coord.label') || 'Coordinates (lat,lng) — 6 decimals'}</label>
+            <input id="rl-coord" class="input" type="text" placeholder="${t('modal.requestListing.coord.placeholder') || '52.527900,13.440200'}" />
+            <small class="modal-help-text">${t('modal.requestListing.coord.help') || 'Tip: you can copy this from Google Maps.'}</small>
           </div>
         </div>
 
@@ -4589,7 +4589,7 @@ export function createRequestListingModal(opts = {}) {
     }
 
     if (rlGroup) {
-      const options = ['<option value="">Select group</option>']
+      const options = [`<option value="">${t('modal.requestListing.group.placeholder') || 'Select group'}</option>`]
         .concat(
           structureRows.map((row) => {
             const groupKey = String(row?.groupKey || '').trim();
@@ -4636,7 +4636,7 @@ export function createRequestListingModal(opts = {}) {
       if (!rlSubgroup) return;
       const groupKey = String(rlGroup?.value || prefill?.groupKey || '').trim();
       const subs = p8SubgroupsForGroup(structureRows, groupKey);
-      rlSubgroup.innerHTML = ['<option value="">Select subgroup</option>']
+      rlSubgroup.innerHTML = [`<option value="">${t('modal.requestListing.subgroup.placeholder') || 'Select subgroup'}</option>`]
         .concat(
           subs.map((sg) => {
             const key = String(sg?.key || '').trim();
@@ -4696,12 +4696,12 @@ export function createRequestListingModal(opts = {}) {
     const coord = String(modal.querySelector('#rl-coord')?.value || '').trim();
 
     if (!name || !address || !city || !country || country.length !== 2) {
-      showToast('Please provide name, street address, city, and 2-letter country code.', 2200);
+      showToast(t('modal.requestListing.validation.basic') || 'Please provide name, street address, city, and 2-letter country code.', 2200);
       return;
     }
 
     if (!groupKey || !subgroupKey || !contextVals.length) {
-      showToast('Please select one group, one subgroup, and at least one context.', 2200);
+      showToast(t('modal.requestListing.validation.classification') || 'Please select one group, one subgroup, and at least one context.', 2200);
       return;
     }
 
@@ -4766,7 +4766,7 @@ export function createRequestListingModal(opts = {}) {
       }
     };
 
-    setRequestListingLoading(true, 'Saving listing draft...', 'Preparing your private location shell.');
+    setRequestListingLoading(true, t('modal.requestListing.saving.title') || 'Saving listing draft...', t('modal.requestListing.saving.desc') || 'Preparing your private location shell.');
     try {
       res = await fetch('/api/location/draft', {
         method: 'POST',
