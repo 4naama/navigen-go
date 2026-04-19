@@ -2519,6 +2519,7 @@ button:hover {
   line-height: 1.5;
 }
 
+/* Body is the only scrollport again, which restores universal sticky header/footer behavior */
 .modal .modal-body{
   overflow-y: auto;
   overflow-x: hidden;
@@ -2528,9 +2529,10 @@ button:hover {
   scrollbar-gutter: stable;
 }
 
+/* Single source of content padding (also keeps scrollbar at rim) */
 .modal .modal-body-inner{
   font-size: 16px;
-  padding: 0 12px 16px 12px;
+  padding: 0 12px 16px 12px; /* B) tighter side gutter, consistent everywhere */
   box-sizing: border-box;
 }
 
@@ -2619,7 +2621,7 @@ button:hover {
 
 /* Header flush to top; content retains side/bottom padding */
 .modal .modal-content.modal-menu{
-  padding: 0 1.5em 1.5em;   /* ⬅️ remove ONLY the top padding */
+  padding: 0;
 }
 
 .modal-menu-list{

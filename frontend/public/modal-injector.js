@@ -4262,7 +4262,7 @@ function loadP8StructureCatalog() {
 
 function loadP8ContextCatalog() {
   if (!p8ContextCatalogPromise) {
-    p8ContextCatalogPromise = fetch('/api/data/contexts', { cache: 'no-store', credentials: 'include' })
+    p8ContextCatalogPromise = fetch('/data/contexts.json', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json().catch(() => []) : []))
       .then((j) => (Array.isArray(j) ? j : []))
       .catch(() => []);
