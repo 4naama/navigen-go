@@ -1016,5 +1016,17 @@
   "modal.requestListing.sections.media.title": "Media",
   "modal.requestListing.booking.label": "Booking",
   "modal.requestListing.images.label": "Gallery image URL 1",
-  "modal.requestListing.images.label2": "Gallery image URL 2"
+  "modal.requestListing.images.label2": "Gallery image URL 2",
+  "modal.requestListing.submitDraft": "Save draft",
+  "modal.requestListing.help.private": "Saving creates a private draft only. It does not publish the location.",
+  "modal.requestListing.help.paid": "Publishing requires a paid plan. In the next step you can choose Visibility only or Promotion.",
+  "modal.requestListing.help.resume": "You can stop after saving and resume later from this device.",
+  "modal.requestListing.next.savedTitle": "Your location draft is private and saved.",
+  "modal.requestListing.next.savedDesc": "Continue to paid publish now, or stop here and resume later from this device.",
+  "modal.requestListing.next.publishTitle": "Choose how you want to go live next",
+  "modal.requestListing.next.publishDesc": "In the paid step you can choose Visibility only or Promotion.",
+  "modal.requestListing.next.publishCta": "Continue to publish",
+  "modal.requestListing.next.resumeCta": "Resume later",
+  "locationDraft.commercial.title": "Visibility & promotion",
+  "locationDraft.commercial.cta": "Continue to payment"
 }

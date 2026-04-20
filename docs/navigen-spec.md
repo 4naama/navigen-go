@@ -5662,70 +5662,85 @@ All paths share the same invariant:
 
 --------------------------------------------------------------------
 
-A) Owner Platform Creation (Automated)
+A) Owner Self-Creation (Manual Structured Draft)
 
 Description:
-A Location Profile Modal (LPM) is created through NaviGen’s automated
-Owner Platform using structured input provided for the business.
+A Business Owner creates a private shell directly in NaviGen using structured
+input. This is the primary self-serve creation path.
 
-This flow may be initiated by:
-• the business owner
-• an agent acting on behalf of the owner
-• NaviGen personnel acting in a facilitation or outreach role
+Legacy UI copy such as “Request a listing” is non-normative and does not imply
+an admin review queue. The operative meaning is self-creation draft save.
 
-All initiators use the same platform tools and data requirements.
-
-Required inputs (standardized):
-• business name
-• address (optional) OR coordinates (required)
-• contact details (phone, email)
-• website or reference links
-• social links (optional)
-• images (optional, within limits)
+Structured inputs may include:
+• business information
+• context information
+• business description
+• links to the business
+• media
+• optional coordinates
 
 Flow:
-1) Initiator completes the Owner Platform creation form.
-2) Owner completes Stripe Checkout for a campaign.
-3) LPM is created automatically.
-4) Ownership is established immediately.
-5) Campaign activates.
+1) BO completes the structured self-creation form.
+2) System saves a private shell draft.
+3) BO obtains a paid Plan.
+4) BO publishes the location.
+5) Within the same paid window, BO may later choose **Visibility only** or **Promotion**.
 
 Notes:
-• There is exactly one LPM creation mechanism.
-• Creation method does not affect ownership rules.
-• Authority is established only through payment.
-• Campaign checkout is the Plan purchase; the tier defines publish capacity.
+• Draft save alone creates no public visibility.
+• Draft save alone creates no ownership authority.
+• First publication is paid only.
 
 --------------------------------------------------------------------
 
-C) Agent-Initiated Creation (Referral / Deal Flow)
+B) Owner Self-Creation (Google-Reference Import)
 
 Description:
-An Agent introduces a store to NaviGen and initiates the onboarding process.
+A Business Owner performs a free Google lookup outside NaviGen’s paid provider
+path, pastes `googlePlaceId`, and creates a Google-reference private shell.
 
 Flow:
-1) Agent initiates LPM creation for a store.
-2) Agent attribution is recorded.
-3) Store completes Stripe Checkout for a campaign.
-4) LPM is created.
-5) Ownership is established for the store.
-6) Campaign activates.
-7) Agent becomes eligible for referral compensation.
+1) BO pastes `googlePlaceId`.
+2) System saves a provider-reference private draft.
+3) BO may complete or override structured fields manually.
+4) BO obtains a paid Plan.
+5) BO publishes the location.
+6) Missing fields may be hydrated at publish; BO-provided values win on conflict.
 
 Notes:
-• Agents never gain ownership.
-• Agent attribution must be captured before or at payment time.
-• Leads without payment are not recognized.
+• This is a BO self-creation path, not an admin request path.
+• Publication is paid only.
+
+--------------------------------------------------------------------
+
+C) Admin Bulk Seeding (Internal / Optional)
+
+Description:
+NaviGen may bulk seed records for migration, coverage, outreach, or operational
+preparation. This is an internal inventory path, not a BO self-serve path.
+
+Typical outcomes:
+• preseeded alias / ULID mappings
+• preseeded public inventory during migration / cutover
+• draft-ready internal records for later owner-controlled completion
+
+Notes:
+• Bulk seeding does not itself grant ownership.
+• Bulk seeding does not replace BO self-creation.
 
 --------------------------------------------------------------------
 Convergence Rules (Non-Negotiable)
 
-• Campaign or Plan payment is required for all LPM publication.
+• No LPM may be published without an active paid Plan.
 • Draft creation may occur without payment but has no visibility or authority effect.
+• Draft creation never creates an unpaid parked public state.
+• Publication and later visibility restoration are paid only.
+• For an already published but expired location, discoverability is restored only through a new paid Plan window surfaced in owner flows as **Run campaign** / **Renew visibility**.
+• Within that paid window, the owner may choose **Visibility only** or **Promotion**.
 • Ownership always belongs to the store operator.
-• Creation path (self, assisted, agent) does not alter authority.
-• There is no free, reserved, or pending LPM state.
-• All onboarding paths converge at payment-based ownership.
+• Manual self-creation and Google-reference self-creation are the BO Phase 8 paths.
+• Admin bulk seeding is separate from BO self-serve creation.
+• There is no admin approval queue in BO self-creation.
 
 --------------------------------------------------------------------
 
@@ -7037,13 +7052,32 @@ Behavior (authoritative)
    • Provider hydration is deferred until publish / post-payment flow
    • Slug + alias are NOT minted during draft
 
+Self-Creation Field Contract (normative)
+
+• Manual self-creation route accepts structured draft content compatible with
+  the published profile schema:
+  – Business information: `locationName`, address, `city`, `countryCode`
+    (2-letter), `groupKey`, `subgroupKey`, optional `tags`
+  – Context information: one to three `context` values chosen from existing
+    `contexts.json` shells only
+  – Business description: optional `descriptions`
+  – Links to the business: optional `links.official`, `links.facebook`,
+    `links.instagram`, `links.bookingUrl`
+  – Media: optional `media.cover` + gallery image URLs
+  – Coordinates: optional during draft; if present they are validated and
+    normalized to 6 decimals at publish
+• Google-reference route may carry `googlePlaceId` plus BO-provided draft
+  values; provider hydration is deferred until publish and BO-provided values
+  win on conflict
+• Draft UI MAY show a generated slug preview derived from current
+  `locationName` + current draft coordinates
+• The preview is advisory only; final slug is stamped only at publish
+
 Draft Invariants
 
 • Draft records are unlimited
 • Draft writes MUST NOT trigger DO index updates
 • Draft writes MUST NOT create ownership or publish authority
-• Draft UI MAY show a generated slug preview derived from current `locationName` + current draft coordinates
-• The preview is advisory only; final slug is stamped only at publish
 
 Response
 

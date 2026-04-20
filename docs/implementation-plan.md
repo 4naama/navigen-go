@@ -1815,29 +1815,41 @@ PHASE 8 — LOCATIONS PROJECT (DRAFT + PUBLISH + DO INDEX)
 --------------------------------------------------------------------
 
 Goal (plain language):
-Enable Business Owners to create and publish Location Profiles through a
+Enable Business Owners to self-create and publish Location Profiles through a
 private-shell flow, using `/api/location/draft` + `/api/location/publish`,
 KV-backed runtime authority, and DO-backed indexing.
 
+Clarification:
+• Legacy UI copy such as “Request a listing” is deprecated in meaning.
+• In Phase 8 this flow is BO self-creation draft save / publish preparation,
+  not an admin review request.
+• Draft save is private only and creates no unpaid public parking state.
+• First publication requires an active paid Plan.
+• The same paid window may later be used as **Visibility only** or **Promotion**.
+• Already-published expired LPMs regain visibility only through a new paid Plan
+  window surfaced in owner flows as **Run campaign** / **Renew visibility**.
+  That renewal path is not the Phase 8 self-creation critical path.
+
 Scope (Phase 8 only):
-• `/api/location/draft` private shell endpoint
-• existing-location draft route via `locationID`
+• structured BO self-creation UI for manual draft authoring
 • brand-new manual shell via `draftULID` + `draftSessionId`
 • brand-new Google-reference shell via `googlePlaceId` (manual Google `place_id` lookup first)
-• `/api/location/publish` authoritative publish endpoint
+• `/api/location/draft` private shell endpoint
+• `/api/location/publish` authoritative publish endpoint for first publish and content publish
 • post-payment hydration for Google-reference shells
 • PlanAllocDO capacity enforcement (`maxPublishedLocations`)
 • DO index upsert wiring (`SearchShardDO` + `ContextShardDO`)
 • KV-authoritative runtime reads (`profile_base:<ULID>` + `override:<ULID>`)
 
 Explicit non-goals:
-• No full UI wizard implementation yet (UI comes after backend contracts are proven)
-• No profiles.json runtime fallback
+• No admin approval queue / moderation request workflow
+• No unpaid parked public visibility for drafts
 • No owner-created contexts
 • No post-publish geo / taxonomy mutation
 • No geocoding/address verification services
 • No geo-fencing of redeems
 • No automatic cross-location campaign propagation
+• No expired-LPM renewal redesign inside the self-creation critical path
 
 Dependencies:
 • Phase 1 `ownership:<ULID>` writer exists
@@ -1871,11 +1883,12 @@ Endpoint:
 • POST /api/location/draft
 
 Purpose:
-• Create/update non-authoritative private shells
+• Create/update non-authoritative private shells only
 • Support:
   – existing slug route
   – new manual shell
   – new Google-reference shell
+• Preserve private-draft-only state until the BO reaches paid publish
 • Allow geo edits pre-publish (coordinates mutable during draft)
 • Allow taxonomy / context selection pre-publish
 • Do not mint final slug during draft phase (Appendix H)
@@ -1907,14 +1920,28 @@ D) new Google-reference shell (`locationID` absent, `draftULID` absent, `googleP
   4) do not fetch paid/provider details yet
   5) return `{ ok:true, draftULID:<ULID>, draftSessionId:<string> }`
 
-Field contract during draft:
-• BO provides `locationName`
-• BO provides editable coordinates
-• BO chooses one `groupKey`
-• BO chooses one `subgroupKey` from the selected group’s subgroup list only
-• BO chooses one or more `context` values from existing `contexts.json` shells only
-• BO may supply tags in normalized / validated form
-• UI MAY show generated slug preview from current `locationName` + current draft coordinates
+Field contract during draft (owner self-creation UI):
+• Business information:
+  – BO provides `locationName`
+  – BO provides address, `city`, and `countryCode` (2-letter)
+  – BO chooses one `groupKey`
+  – BO chooses one `subgroupKey` from the selected group’s subgroup list only
+  – BO may supply normalized / validated `tags`
+• Context information:
+  – BO chooses one to three `context` values from existing `contexts.json`
+    shells only
+• Business description:
+  – BO may supply `descriptions`
+• Links to the business:
+  – BO may supply `links.official`, `links.facebook`, `links.instagram`,
+    `links.bookingUrl`
+• Media:
+  – BO may supply `media.cover` and gallery image URLs
+• Coordinates:
+  – BO may supply editable coordinates pre-publish
+  – if provided, publish validates range and normalizes to 6 decimals
+• UI MAY show generated slug preview from current `locationName` +
+  current draft coordinates
 • final slug remains publish-only
 
 Critical invariants:
@@ -1969,13 +1996,15 @@ Endpoint:
 • POST /api/location/publish
 
 Purpose:
-• Authoritatively promote a private shell into published state
+• Authoritatively promote a private shell into published state after paid Plan entitlement exists
 • Mint final slug at publish only (Appendix H)
 • Create alias mapping
 • Ensure / materialize `profile_base:<ULID>`
 • Promote draft to published override (`override:<ULID>`)
 • Enforce publish capacity via `PlanAllocDO`
 • Trigger DO index upsert
+• Cover first publication of BO-created drafts and authoritative content publish
+• Do not act as a free reactivation path for already-published expired LPMs
 
 Auth:
 • require valid Operator Session (`op_sess → opsess:<id>`)

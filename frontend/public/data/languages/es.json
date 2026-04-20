@@ -1016,5 +1016,17 @@
   "modal.requestListing.sections.media.title": "Medios",
   "modal.requestListing.booking.label": "Reserva",
   "modal.requestListing.images.label": "URL de imagen de la galería 1",
-  "modal.requestListing.images.label2": "URL de imagen de la galería 2"
+  "modal.requestListing.images.label2": "URL de imagen de la galería 2",
+  "modal.requestListing.submitDraft": "Guardar borrador",
+  "modal.requestListing.help.private": "Guardar crea solo un borrador privado. No publica la ubicación.",
+  "modal.requestListing.help.paid": "Publicar requiere un plan de pago. En el siguiente paso puedes elegir solo Visibilidad o Promoción.",
+  "modal.requestListing.help.resume": "Puedes detenerte después de guardar y continuar más tarde desde este dispositivo.",
+  "modal.requestListing.next.savedTitle": "Tu borrador de ubicación es privado y está guardado.",
+  "modal.requestListing.next.savedDesc": "Continúa ahora con la publicación de pago o detente aquí y retoma más tarde desde este dispositivo.",
+  "modal.requestListing.next.publishTitle": "Elige cómo quieres publicar a continuación",
+  "modal.requestListing.next.publishDesc": "En el paso de pago puedes elegir solo Visibilidad o Promoción.",
+  "modal.requestListing.next.publishCta": "Continuar a publicar",
+  "modal.requestListing.next.resumeCta": "Continuar más tarde",
+  "locationDraft.commercial.title": "Visibilidad y promoción",
+  "locationDraft.commercial.cta": "Continuar al pago"
 }

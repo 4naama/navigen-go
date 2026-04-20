@@ -4388,8 +4388,8 @@ function p8PublishMessage(code) {
   return key;
 }
 
-// Phase 8 — Request Listing modal (manual private-shell intake)
-// Owners can request listing creation; no instant LPM creation is performed here.
+// Phase 8 — Create Location modal (manual private-shell intake)
+// Owners create a private shell draft here; paid publish happens later in the commercial flow.
 export function createRequestListingModal(opts = {}) {
   const id = 'request-listing-modal';
   const contextModalId = 'request-listing-contexts-modal';
@@ -4409,7 +4409,7 @@ export function createRequestListingModal(opts = {}) {
   // Shared modal shell; CTAs live inside the scrollable body (no legacy footer).
   const modal = injectModal({
     id,
-    title: t('modal.requestListing.title') || 'Request a listing',
+        title: t('root.bo.notListed.title') || 'Create a location',
     layout: 'menu',
     onClose: (ev) => { closeRequestListing(ev); },
     bodyHTML: `
@@ -4597,7 +4597,7 @@ export function createRequestListingModal(opts = {}) {
 
         <div class="modal-actions">
           <button id="request-listing-submit" type="button" class="modal-body-button">
-            ${t('modal.requestListing.submit') || 'Send request'}
+            ${t('modal.requestListing.submitDraft') || 'Save draft'}
           </button>
 
           <button id="request-listing-cancel" type="button" class="modal-body-button">
@@ -5277,7 +5277,7 @@ export function createRequestListingModal(opts = {}) {
       return;
     }
 
-    savePendingLocationDraft({
+    const savedDraft = {
       draftULID,
       draftSessionId,
       mode: 'manual',
@@ -5289,7 +5289,6 @@ export function createRequestListingModal(opts = {}) {
       link,
       facebook,
       instagram,
-      booking,
       description,
       cover,
       images: imageVals,
@@ -5301,10 +5300,11 @@ export function createRequestListingModal(opts = {}) {
       tags: tagVals,
       createdAt: Number(prefill?.createdAt || Date.now()),
       updatedAt: Date.now()
-    });
+    };
 
-    showToast(t('modal.requestListing.success') || 'Draft saved.', 2500);
-    closeRequestListing();
+    savePendingLocationDraft(savedDraft);
+    hideModal(id);
+    showLocationDraftNextStepsModal(savedDraft, { returnTo: opts?.returnTo });
   });
 
   modal.querySelector('#request-listing-cancel')?.addEventListener('click', (ev) => { closeRequestListing(ev); });
@@ -5323,8 +5323,84 @@ export function createRequestListingModal(opts = {}) {
 
 export function showRequestListingModal(opts = {}) {
   const id = 'request-listing-modal';
+  document.getElementById('location-draft-next-modal')?.remove();
   document.getElementById(id)?.remove();
   createRequestListingModal(opts);
+  showModal(id);
+}
+
+export function showLocationDraftNextStepsModal(draftMeta = {}, opts = {}) {
+  const id = 'location-draft-next-modal';
+  document.getElementById(id)?.remove();
+
+  const shouldReturnToSelectLocation = String(opts?.returnTo || '').trim() === 'syb';
+  const draftULID = String(draftMeta?.draftULID || '').trim();
+  const draftSessionId = String(draftMeta?.draftSessionId || '').trim();
+
+  const closeNextSteps = (ev = null) => {
+    ev?.preventDefault?.();
+    ev?.stopPropagation?.();
+    hideModal(id);
+    if (shouldReturnToSelectLocation) showSelectLocationModal();
+  };
+
+  const modal = injectModal({
+    id,
+    title: t('modal.requestListing.success') || 'Draft saved.',
+    layout: 'menu',
+    onClose: (ev) => { closeNextSteps(ev); },
+    bodyHTML: `
+      <div class="modal-form-stack">
+        <div class="modal-menu-item modal-static-card request-draft-next-card" aria-disabled="true">
+          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+            <strong>${t('modal.requestListing.next.savedTitle') || 'Your location draft is private and saved.'}</strong><br>
+            <small>${t('modal.requestListing.next.savedDesc') || 'Continue to paid publish now, or stop here and resume later from this device.'}</small>
+          </span>
+        </div>
+
+        <div class="modal-menu-item modal-static-card request-draft-next-card" aria-disabled="true">
+          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+            <strong>${t('modal.requestListing.next.publishTitle') || 'Choose how you want to go live next'}</strong><br>
+            <small>${t('modal.requestListing.next.publishDesc') || 'In the paid step you can choose Visibility only or Promotion.'}</small>
+          </span>
+        </div>
+
+        <div class="modal-actions">
+          <button id="request-draft-next-publish" type="button" class="modal-body-button">
+            ${t('modal.requestListing.next.publishCta') || 'Continue to publish'}
+          </button>
+
+          <button id="request-draft-next-later" type="button" class="modal-body-button">
+            ${t('modal.requestListing.next.resumeCta') || 'Resume later'}
+          </button>
+        </div>
+      </div>
+    `
+  });
+
+  modal.querySelector('#request-draft-next-later')?.addEventListener('click', (ev) => {
+    closeNextSteps(ev);
+  });
+
+  modal.querySelector('#request-draft-next-publish')?.addEventListener('click', async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    hideModal(id);
+
+    if (!draftULID || !draftSessionId) {
+      showToast(t('modal.requestListing.error') || 'Could not create draft.', 2400);
+      if (shouldReturnToSelectLocation) showSelectLocationModal();
+      return;
+    }
+
+    await showCampaignManagementModal(draftULID, {
+      guest: true,
+      p8Draft: draftMeta,
+      preferEmptyDraft: true
+    });
+  });
+
+  setupTapOutClose(id, closeNextSteps);
   showModal(id);
 }
 
@@ -5421,6 +5497,29 @@ function getModalHeaderHelpSpec(target) {
         _ownerText('modal.requestListing.contexts.help.line1', 'Search the existing context catalog and choose the best matching paths for this business.'),
         _ownerText('modal.requestListing.contexts.help', 'Select up to 3 existing context paths.'),
         _ownerText('modal.requestListing.contexts.help.line3', 'Close returns you to Request Listing so you can keep editing the form.')
+      ].map((line) => String(line || '').trim()).filter(Boolean)
+    };
+  }
+  
+  if (modalId === 'request-listing-modal') {
+    return {
+      title: _ownerText('modal.help.title', 'How it works'),
+      bodyLines: [
+        _ownerText('modal.requestListing.note', 'Use this when your business does not appear in Select your business.'),
+        _ownerText('modal.requestListing.help.private', 'Saving creates a private draft only. It does not publish the location.'),
+        _ownerText('modal.requestListing.help.paid', 'Publishing requires a paid plan. In the next step you can choose Visibility only or Promotion.'),
+        _ownerText('modal.requestListing.help.resume', 'You can stop after saving and resume later from this device.')
+      ].map((line) => String(line || '').trim()).filter(Boolean)
+    };
+  }
+
+  if (modalId === 'location-draft-next-modal') {
+    return {
+      title: _ownerText('modal.help.title', 'How it works'),
+      bodyLines: [
+        _ownerText('modal.requestListing.help.private', 'Saving creates a private draft only. It does not publish the location.'),
+        _ownerText('modal.requestListing.help.paid', 'Publishing requires a paid plan. In the next step you can choose Visibility only or Promotion.'),
+        _ownerText('modal.requestListing.help.resume', 'You can stop after saving and resume later from this device.')
       ].map((line) => String(line || '').trim()).filter(Boolean)
     };
   }
@@ -7075,6 +7174,13 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
   const prefillFrom = (opts && opts.prefillFrom && typeof opts.prefillFrom === 'object') ? opts.prefillFrom : null;
   const p8Draft = (opts && opts.p8Draft && typeof opts.p8Draft === 'object') ? opts.p8Draft : null;  
+  const modalTitleNode = modal.querySelector('.modal-top-bar .modal-title, .modal-top-bar h1, .modal-top-bar h2');
+  if (modalTitleNode) {
+    modalTitleNode.textContent = p8Draft
+      ? ((typeof t === 'function' && t('locationDraft.commercial.title')) || 'Visibility & promotion')
+      : ((typeof t === 'function' && t('campaign.ui.title')) || 'Campaign management');
+  }
+  syncModalHeaderHelp(modal);
   const draft = (opts && opts.preferEmptyDraft === true) ? (prefillFrom || null) : (listJ?.draft || prefillFrom || null);  
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
   const ulid = String(listJ?.ulid || '').trim(); // empty in guest mode; that's OK
@@ -8298,7 +8404,9 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const btnCheckout = document.createElement('button');
     btnCheckout.className = 'modal-body-button';
     btnCheckout.type = 'button';
-    btnCheckout.textContent = (typeof t==='function' && t('campaign.ui.activate')) || 'Activate';
+    btnCheckout.textContent = p8Draft
+      ? ((typeof t === 'function' && t('locationDraft.commercial.cta')) || 'Continue to payment')
+      : ((typeof t === 'function' && t('campaign.ui.activate')) || 'Activate');
     btnCheckout.disabled = true;
 
     actions.appendChild(btnCheckout);

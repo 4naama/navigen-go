@@ -1016,5 +1016,17 @@
   "modal.requestListing.sections.media.title": "Média",
   "modal.requestListing.booking.label": "Foglalás",
   "modal.requestListing.images.label": "Galéria kép URL 1",
-  "modal.requestListing.images.label2": "Galéria kép URL 2"
+  "modal.requestListing.images.label2": "Galéria kép URL 2",
+  "modal.requestListing.submitDraft": "Piszkozat mentése",
+  "modal.requestListing.help.private": "A mentés csak egy privát piszkozatot hoz létre. Nem teszi közzé a helyszínt.",
+  "modal.requestListing.help.paid": "A közzétételhez fizetős csomag szükséges. A következő lépésben választhatod a csak láthatóságot vagy a promóciót.",
+  "modal.requestListing.help.resume": "Mentés után megállhatsz, és később folytathatod ezen az eszközön.",
+  "modal.requestListing.next.savedTitle": "A helyszín piszkozatod privát és el van mentve.",
+  "modal.requestListing.next.savedDesc": "Folytasd most a fizetős közzétételt, vagy állj meg itt és folytasd később ezen az eszközön.",
+  "modal.requestListing.next.publishTitle": "Válaszd ki, hogyan szeretnél ezután élesbe menni",
+  "modal.requestListing.next.publishDesc": "A fizetős lépésben választhatod a csak láthatóságot vagy a promóciót.",
+  "modal.requestListing.next.publishCta": "Tovább a közzétételhez",
+  "modal.requestListing.next.resumeCta": "Folytatás később",
+  "locationDraft.commercial.title": "Láthatóság és promóció",
+  "locationDraft.commercial.cta": "Tovább a fizetéshez"
 }

@@ -1016,5 +1016,17 @@
   "modal.requestListing.sections.media.title": "Médias",
   "modal.requestListing.booking.label": "Réservation",
   "modal.requestListing.images.label": "URL de l’image de la galerie 1",
-  "modal.requestListing.images.label2": "URL de l’image de la galerie 2"
+  "modal.requestListing.images.label2": "URL de l’image de la galerie 2",
+  "modal.requestListing.submitDraft": "Enregistrer le brouillon",
+  "modal.requestListing.help.private": "L’enregistrement crée uniquement un brouillon privé. Il ne publie pas la localisation.",
+  "modal.requestListing.help.paid": "La publication nécessite un plan payant. À l’étape suivante, vous pouvez choisir Visibilité uniquement ou Promotion.",
+  "modal.requestListing.help.resume": "Vous pouvez arrêter après l’enregistrement et reprendre plus tard sur cet appareil.",
+  "modal.requestListing.next.savedTitle": "Votre brouillon de localisation est privé et enregistré.",
+  "modal.requestListing.next.savedDesc": "Continuez vers la publication payante maintenant, ou arrêtez ici et reprenez plus tard sur cet appareil.",
+  "modal.requestListing.next.publishTitle": "Choisissez comment passer en ligne ensuite",
+  "modal.requestListing.next.publishDesc": "À l’étape payante, vous pouvez choisir Visibilité uniquement ou Promotion.",
+  "modal.requestListing.next.publishCta": "Continuer vers la publication",
+  "modal.requestListing.next.resumeCta": "Reprendre plus tard",
+  "locationDraft.commercial.title": "Visibilité et promotion",
+  "locationDraft.commercial.cta": "Continuer vers le paiement"
 }

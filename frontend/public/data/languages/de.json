@@ -1016,5 +1016,17 @@
   "modal.requestListing.sections.media.title": "Medien",
   "modal.requestListing.booking.label": "Buchung",
   "modal.requestListing.images.label": "URL des Galerie-Bildes 1",
-  "modal.requestListing.images.label2": "URL des Galerie-Bildes 2"
+  "modal.requestListing.images.label2": "URL des Galerie-Bildes 2",
+  "modal.requestListing.submitDraft": "Entwurf speichern",
+  "modal.requestListing.help.private": "Speichern erstellt nur einen privaten Entwurf. Der Standort wird nicht veröffentlicht.",
+  "modal.requestListing.help.paid": "Für die Veröffentlichung ist ein kostenpflichtiger Plan erforderlich. Im nächsten Schritt können Sie „Nur Sichtbarkeit“ oder „Promotion“ wählen.",
+  "modal.requestListing.help.resume": "Sie können nach dem Speichern stoppen und später auf diesem Gerät fortfahren.",
+  "modal.requestListing.next.savedTitle": "Ihr Standortentwurf ist privat und gespeichert.",
+  "modal.requestListing.next.savedDesc": "Fahren Sie jetzt mit der kostenpflichtigen Veröffentlichung fort oder stoppen Sie hier und machen Sie später auf diesem Gerät weiter.",
+  "modal.requestListing.next.publishTitle": "Wählen Sie, wie Sie als Nächstes online gehen möchten",
+  "modal.requestListing.next.publishDesc": "Im kostenpflichtigen Schritt können Sie „Nur Sichtbarkeit“ oder „Promotion“ wählen.",
+  "modal.requestListing.next.publishCta": "Weiter zur Veröffentlichung",
+  "modal.requestListing.next.resumeCta": "Später fortfahren",
+  "locationDraft.commercial.title": "Sichtbarkeit und Promotion",
+  "locationDraft.commercial.cta": "Weiter zur Zahlung"
 }

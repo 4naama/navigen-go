@@ -1016,5 +1016,17 @@
   "modal.requestListing.sections.media.title": "מדיה",
   "modal.requestListing.booking.label": "הזמנה",
   "modal.requestListing.images.label": "כתובת URL של תמונת גלריה 1",
-  "modal.requestListing.images.label2": "כתובת URL של תמונת גלריה 2"
+  "modal.requestListing.images.label2": "כתובת URL של תמונת גלריה 2",
+  "modal.requestListing.submitDraft": "שמור טיוטה",
+  "modal.requestListing.help.private": "שמירה יוצרת טיוטה פרטית בלבד. היא לא מפרסמת את המיקום.",
+  "modal.requestListing.help.paid": "פרסום דורש תוכנית בתשלום. בשלב הבא ניתן לבחור רק נראות או קידום.",
+  "modal.requestListing.help.resume": "ניתן לעצור לאחר השמירה ולהמשיך מאוחר יותר מהמכשיר הזה.",
+  "modal.requestListing.next.savedTitle": "טיוטת המיקום שלך פרטית ונשמרה.",
+  "modal.requestListing.next.savedDesc": "המשך לפרסום בתשלום עכשיו, או עצור כאן והמשך מאוחר יותר מהמכשיר הזה.",
+  "modal.requestListing.next.publishTitle": "בחר כיצד לעלות לאוויר בהמשך",
+  "modal.requestListing.next.publishDesc": "בשלב התשלום ניתן לבחור רק נראות או קידום.",
+  "modal.requestListing.next.publishCta": "המשך לפרסום",
+  "modal.requestListing.next.resumeCta": "המשך מאוחר יותר",
+  "locationDraft.commercial.title": "נראות וקידום",
+  "locationDraft.commercial.cta": "המשך לתשלום"
 }

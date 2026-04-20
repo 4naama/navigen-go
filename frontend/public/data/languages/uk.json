@@ -1016,5 +1016,17 @@
   "modal.requestListing.sections.media.title": "Медіа",
   "modal.requestListing.booking.label": "Бронювання",
   "modal.requestListing.images.label": "URL зображення галереї 1",
-  "modal.requestListing.images.label2": "URL зображення галереї 2"
+  "modal.requestListing.images.label2": "URL зображення галереї 2",
+  "modal.requestListing.submitDraft": "Зберегти чернетку",
+  "modal.requestListing.help.private": "Збереження створює лише приватну чернетку. Воно не публікує локацію.",
+  "modal.requestListing.help.paid": "Публікація потребує платного плану. На наступному кроці можна обрати лише видимість або просування.",
+  "modal.requestListing.help.resume": "Ви можете зупинитися після збереження та продовжити пізніше з цього пристрою.",
+  "modal.requestListing.next.savedTitle": "Чернетка вашої локації приватна та збережена.",
+  "modal.requestListing.next.savedDesc": "Продовжуйте до платної публікації зараз або зупиніться тут і відновіть пізніше з цього пристрою.",
+  "modal.requestListing.next.publishTitle": "Оберіть, як ви хочете вийти онлайн далі",
+  "modal.requestListing.next.publishDesc": "На платному кроці можна обрати лише видимість або просування.",
+  "modal.requestListing.next.publishCta": "Продовжити до публікації",
+  "modal.requestListing.next.resumeCta": "Продовжити пізніше",
+  "locationDraft.commercial.title": "Видимість і просування",
+  "locationDraft.commercial.cta": "Продовжити до оплати"
 }

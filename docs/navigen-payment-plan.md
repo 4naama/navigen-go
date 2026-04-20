@@ -30,21 +30,30 @@ End users (visitors) never pay.
 --------------------------------------------------------------------
 
 ## What can exist without payment
-- A Location Profile (LPM) may be created without payment.
-- Until published under an active Plan, it remains a draft state.
-- Existence does **not** guarantee discoverability.
-- Direct links may still open an LPM, but NaviGen does not amplify unpaid listings.
+- A Business Owner may create a private shell draft without payment.
+- That draft is not a published LPM and is not a public “parking” state.
+- NaviGen does **not** grant unpaid visibility or unpaid discoverability merely because a BO entered data.
+- First publication requires an active paid Plan.
+- An already published LPM may later remain addressable as an expired record, but its visibility is restored only through a new paid Plan window.
 
 --------------------------------------------------------------------
 
-## Primary product: Campaign (Plan Purchase)
+## Primary product: Paid Plan (campaign-capable)
 
-A campaign purchase is also a Plan purchase.
+A paid Plan purchase is the only commercial token that authorizes:
+
+• first publication of a BO-created location  
+• restoration of visibility for an already published but expired location  
+• optional campaign setup within the same paid window
+
+For most BOs, the same paid window will be used together with a campaign.
+However, NaviGen also allows a BO to publish / remain visible without a promotion
+offer by choosing **Visibility only**.
 
 The selected tier (Standard / Multi / Large / Network) determines:
 
-• Campaign capability  
-• Publish capacity (maximum number of locations that may be published under this Plan)
+• publish capacity (maximum number of locations that may be published under this Plan)  
+• campaign capability (if the owner chooses to use it)
 
 This does NOT introduce a second pricing dimension.
 
@@ -75,7 +84,8 @@ Network is presented to owners as **10+ locations**.
 Backend enforcement remains a fixed numeric capacity mapped from the Plan record.
 
 One paid Plan purchase buys:
-- 30 days of active campaign entitlement
+- the right to publish or restore visibility for covered locations
+- 30 days of active paid presence
 - followed automatically by 60 days of courtesy visibility
 
 | Aspect          | Details                                                               |
@@ -156,6 +166,15 @@ NaviGen does not sell a separate Hold Visibility or €5 visibility-extension pr
 If the owner wants to continue after the active 30-day Plan window and the automatic 60-day courtesy window, the next step is to buy a new Plan.
 
 There is no cheaper intermediate paid state between Courtesy visibility and Inactive.
+
+--------------------------------------------------------------------
+
+## Restore visibility for an expired published location
+
+- An expired published LPM is not re-published for free.
+- The only way to restore discoverability is to start a new paid Plan window through the owner commercial flow surfaced as **Run campaign** / **Renew visibility**.
+- Within that new paid window, the owner may choose **Visibility only** or **Promotion**.
+- Restore Access alone never restores visibility; it only restores the owner session when an active paid window already exists.
 
 --------------------------------------------------------------------
 

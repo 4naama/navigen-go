@@ -1016,5 +1016,17 @@
   "modal.requestListing.sections.media.title": "Media",
   "modal.requestListing.booking.label": "Prenotazione",
   "modal.requestListing.images.label": "URL immagine galleria 1",
-  "modal.requestListing.images.label2": "URL immagine galleria 2"
+  "modal.requestListing.images.label2": "URL immagine galleria 2",
+  "modal.requestListing.submitDraft": "Salva bozza",
+  "modal.requestListing.help.private": "Il salvataggio crea solo una bozza privata. Non pubblica la sede.",
+  "modal.requestListing.help.paid": "La pubblicazione richiede un piano a pagamento. Nel passaggio successivo puoi scegliere solo Visibilità o Promozione.",
+  "modal.requestListing.help.resume": "Puoi fermarti dopo il salvataggio e riprendere più tardi da questo dispositivo.",
+  "modal.requestListing.next.savedTitle": "La bozza della sede è privata e salvata.",
+  "modal.requestListing.next.savedDesc": "Continua ora con la pubblicazione a pagamento oppure fermati qui e riprendi più tardi da questo dispositivo.",
+  "modal.requestListing.next.publishTitle": "Scegli come andare online successivamente",
+  "modal.requestListing.next.publishDesc": "Nel passaggio a pagamento puoi scegliere solo Visibilità o Promozione.",
+  "modal.requestListing.next.publishCta": "Continua alla pubblicazione",
+  "modal.requestListing.next.resumeCta": "Riprendi più tardi",
+  "locationDraft.commercial.title": "Visibilità e promozione",
+  "locationDraft.commercial.cta": "Continua al pagamento"
 }
