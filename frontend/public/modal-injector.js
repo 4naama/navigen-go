@@ -4484,7 +4484,7 @@ export function createRequestListingModal(opts = {}) {
           <div class="cm-chip-body">
             <div class="modal-form-stack">
               <div class="modal-field">
-                <label for="rl-open-contexts">${t('modal.requestListing.contexts.label') || 'Contexts (one or more)'} <span class="required-star">*</span></label>
+                <label for="rl-open-contexts">${t('modal.requestListing.contexts.label') || 'Contexts'} <span class="required-star">*</span></label>
                 <select id="rl-contexts" class="input hidden" multiple size="6" aria-hidden="true" tabindex="-1"></select>
                 <button id="rl-open-contexts" type="button" class="modal-menu-item request-context-launch">
                   <span class="label">
@@ -4511,7 +4511,10 @@ export function createRequestListingModal(opts = {}) {
           <div class="cm-chip-body">
             <div class="modal-field" style="margin:0;">
               <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || 'Describe the business, services, and customers.'}"></textarea>
-              <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
+              <div class="modal-help-split">
+                <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
+                <small id="rl-description-count" class="modal-help-counter">0/200</small>
+              </div>
             </div>
           </div>
         </details>
@@ -4528,18 +4531,23 @@ export function createRequestListingModal(opts = {}) {
             <div class="modal-form-stack">
               <div class="modal-field">
                 <label for="rl-link">${t('modal.requestListing.link.label') || 'Official website or primary business link'}</label>
-                <input id="rl-link" class="input" type="text" maxlength="240" />
+                <input id="rl-link" class="input" type="text" maxlength="240" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
               </div>
 
               <div class="modal-form-grid">
                 <div class="modal-field">
                   <label for="rl-facebook">${t('modal.requestListing.facebook.label') || 'Facebook link'}</label>
-                  <input id="rl-facebook" class="input" type="text" maxlength="240" />
+                  <input id="rl-facebook" class="input" type="text" maxlength="240" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
                 </div>
                 <div class="modal-field">
                   <label for="rl-instagram">${t('modal.requestListing.instagram.label') || 'Instagram link'}</label>
-                  <input id="rl-instagram" class="input" type="text" maxlength="240" />
+                  <input id="rl-instagram" class="input" type="text" maxlength="240" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
                 </div>
+              </div>
+
+              <div class="modal-field">
+                <label for="rl-booking">${t('modal.requestListing.booking.label') || 'Booking'}</label>
+                <input id="rl-booking" class="input" type="text" maxlength="240" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
               </div>
             </div>
           </div>
@@ -4561,26 +4569,31 @@ export function createRequestListingModal(opts = {}) {
               </div>
 
               <div class="modal-field">
-                <label for="rl-images">${t('modal.requestListing.images.label') || 'Gallery image URLs'}</label>
-                <textarea id="rl-images" class="input" rows="4" maxlength="4000" placeholder="${t('modal.requestListing.images.placeholder') || 'One URL per line'}"></textarea>
-                <small class="modal-help-text">${t('modal.requestListing.images.help') || 'Publish-ready target: at least 3 total images counting cover + gallery.'}</small>
+                <label for="rl-image-1">${t('modal.requestListing.images.label') || 'Gallery image URL 1'}</label>
+                <input id="rl-image-1" class="input" type="text" maxlength="500" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
               </div>
 
               <div class="modal-field">
-                <label class="modal-checkbox-row" for="rl-has-coord">
-                  <input id="rl-has-coord" type="checkbox" />
-                  <span>${t('modal.requestListing.hasCoord.label') || 'Suggested: I have coordinates'}</span>
-                </label>
-
-                <div id="rl-coord-wrap" class="modal-field hidden">
-                  <label for="rl-coord">${t('modal.requestListing.coord.label') || 'Coordinates (lat,lng) — 6 decimals'}</label>
-                  <input id="rl-coord" class="input" type="text" placeholder="${t('modal.requestListing.coord.placeholder') || '52.527900,13.440200'}" />
-                  <small class="modal-help-text">${t('modal.requestListing.coord.help') || 'Tip: you can copy this from Google Maps.'}</small>
-                </div>
+                <label for="rl-image-2">${t('modal.requestListing.images.label2') || 'Gallery image URL 2'}</label>
+                <input id="rl-image-2" class="input" type="text" maxlength="500" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
+                <small class="modal-help-text">${t('modal.requestListing.images.help') || 'Publish-ready target: at least 3 total images counting cover + gallery.'}</small>
               </div>
             </div>
           </div>
         </details>
+
+        <div class="modal-menu-item modal-static-card request-surface-card">
+          <label class="modal-checkbox-row" for="rl-has-coord">
+            <input id="rl-has-coord" type="checkbox" />
+            <span>${t('modal.requestListing.hasCoord.label') || 'Suggested: I have coordinates'}</span>
+          </label>
+
+          <div id="rl-coord-wrap" class="modal-field hidden request-surface-card-body">
+            <label for="rl-coord">${t('modal.requestListing.coord.label') || 'Coordinates (lat,lng) — 6 decimals'}</label>
+            <input id="rl-coord" class="input" type="text" placeholder="${t('modal.requestListing.coord.placeholder') || '52.527900,13.440200'}" />
+            <small class="modal-help-text">${t('modal.requestListing.coord.help') || 'Tip: you can copy this from Google Maps.'}</small>
+          </div>
+        </div>
 
         <div class="modal-actions">
           <button id="request-listing-submit" type="button" class="modal-body-button">
@@ -4603,15 +4616,18 @@ export function createRequestListingModal(opts = {}) {
   const rlAddress = modal.querySelector('#rl-address');
   const rlCity = modal.querySelector('#rl-city');
   const rlCountry = modal.querySelector('#rl-country');
+  
   const rlLink = modal.querySelector('#rl-link');
   const rlFacebook = modal.querySelector('#rl-facebook');
   const rlInstagram = modal.querySelector('#rl-instagram');
-  const rlBusinessSection = modal.querySelector('#rl-business-section');
-  const rlContextSection = modal.querySelector('#rl-context-section');
-  const rlDescriptionSection = modal.querySelector('#rl-description-section');
+  const rlBooking = modal.querySelector('#rl-booking');
   const rlDescription = modal.querySelector('#rl-description');
   const rlDescriptionChipState = modal.querySelector('#rl-description-chip-state');
-  const rlMediaSection = modal.querySelector('#rl-media-section');
+  const rlDescriptionCount = modal.querySelector('#rl-description-count');
+  
+  const rlBusinessSection = modal.querySelector('#rl-business-section');
+  const rlContextSection = modal.querySelector('#rl-context-section');
+  const rlDescriptionSection = modal.querySelector('#rl-description-section');  
   const rlGroup = modal.querySelector('#rl-group');
   const rlSubgroup = modal.querySelector('#rl-subgroup');
   const rlContexts = modal.querySelector('#rl-contexts');
@@ -4622,7 +4638,8 @@ export function createRequestListingModal(opts = {}) {
   const rlTags = modal.querySelector('#rl-tags');
   const rlTagSuggestions = modal.querySelector('#rl-tag-suggestions');
   const rlCover = modal.querySelector('#rl-cover');
-  const rlImages = modal.querySelector('#rl-images');
+  const rlImage1 = modal.querySelector('#rl-image-1');
+  const rlImage2 = modal.querySelector('#rl-image-2');
   const rlCoord = modal.querySelector('#rl-coord');
   const rlHasCoord = modal.querySelector('#rl-has-coord');
   const rlCoordWrap = modal.querySelector('#rl-coord-wrap');
@@ -4660,10 +4677,15 @@ export function createRequestListingModal(opts = {}) {
   const prefillOfficialLink = String(prefill?.link || prefill?.links?.official || '').trim();
   const prefillFacebook = String(prefill?.facebook || prefill?.links?.facebook || '').trim();
   const prefillInstagram = String(prefill?.instagram || prefill?.links?.instagram || '').trim();
-  const prefillCover = String(prefill?.cover || prefill?.media?.cover || '').trim();
-  const prefillImages = Array.isArray(prefill?.images)
+  const prefillBooking = String(prefill?.booking || prefill?.links?.bookingUrl || '').trim();
+  const prefillCover = String(prefill?.cover || prefill?.media?.cover?.src || prefill?.media?.cover || '').trim();
+  const prefillImages = (Array.isArray(prefill?.images)
     ? prefill.images
-    : (Array.isArray(prefill?.media?.images) ? prefill.media.images : []);
+    : (Array.isArray(prefill?.media?.images) ? prefill.media.images : []))
+    .map((value) => String(value?.src || value || '').trim())
+    .filter(Boolean);
+  const prefillImage1 = String(prefillImages[0] || '').trim();
+  const prefillImage2 = String(prefillImages[1] || '').trim();
 
   const REQUEST_LISTING_CONTEXT_LIMIT = 3;
   const selectedTagSet = new Set(prefillTags);
@@ -4731,9 +4753,16 @@ export function createRequestListingModal(opts = {}) {
   }
 
   function updateRequestListingDescriptionChip() {
-    const value = String(rlDescription?.value || '').replace(/\s+/g, ' ').trim();
+    const rawValue = String(rlDescription?.value || '');
+    const value = rawValue.replace(/\s+/g, ' ').trim();
     const summary = value || translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional. Open to add details.');
+    const count = rawValue.trim().length;
+
     if (rlDescriptionChipState) rlDescriptionChipState.textContent = summary;
+    if (rlDescriptionCount) {
+      rlDescriptionCount.textContent = `${count}/200`;
+      rlDescriptionCount.classList.toggle('is-good', count >= 200);
+    }
     rlDescriptionSection?.classList.toggle('has-value', !!value);
   }
 
@@ -4750,10 +4779,12 @@ export function createRequestListingModal(opts = {}) {
     if (rlLink) rlLink.value = prefillOfficialLink;
     if (rlFacebook) rlFacebook.value = prefillFacebook;
     if (rlInstagram) rlInstagram.value = prefillInstagram;
+    if (rlBooking) rlBooking.value = prefillBooking;
     if (rlDescription) rlDescription.value = prefillDescription;
     setRequestListingTags(prefillTags);
     if (rlCover) rlCover.value = prefillCover;
-    if (rlImages) rlImages.value = formatMediaUrlValues(prefillImages);
+    if (rlImage1) rlImage1.value = prefillImage1;
+    if (rlImage2) rlImage2.value = prefillImage2;
 
     const coordPrefill = String(prefill.coord || '').trim();
     if (coordPrefill) {
@@ -5112,6 +5143,7 @@ export function createRequestListingModal(opts = {}) {
     const link = String(modal.querySelector('#rl-link')?.value || '').trim();
     const facebook = String(modal.querySelector('#rl-facebook')?.value || '').trim();
     const instagram = String(modal.querySelector('#rl-instagram')?.value || '').trim();
+    const booking = String(modal.querySelector('#rl-booking')?.value || '').trim();
     const description = String(modal.querySelector('#rl-description')?.value || '').trim();
     const groupKey = String(modal.querySelector('#rl-group')?.value || '').trim();
     const subgroupKey = String(modal.querySelector('#rl-subgroup')?.value || '').trim();
@@ -5120,7 +5152,10 @@ export function createRequestListingModal(opts = {}) {
       .filter(Boolean);
     const tagVals = parseTagValues(modal.querySelector('#rl-tags')?.value || '');
     const cover = String(modal.querySelector('#rl-cover')?.value || '').trim();
-    const imageVals = parseMediaUrlValues(modal.querySelector('#rl-images')?.value || '');
+    const imageVals = Array.from(new Set([
+      String(modal.querySelector('#rl-image-1')?.value || '').trim(),
+      String(modal.querySelector('#rl-image-2')?.value || '').trim()
+    ].filter(Boolean)));
     const coord = String(modal.querySelector('#rl-coord')?.value || '').trim();
 
     const wantsCoord = !!rlHasCoord?.checked;
@@ -5141,7 +5176,7 @@ export function createRequestListingModal(opts = {}) {
     if (hasBusinessError || hasContextError || hasCoordError) {
       if (hasBusinessError) rlBusinessSection?.setAttribute('open', '');
       if (hasContextError) rlContextSection?.setAttribute('open', '');
-      if (hasCoordError) rlMediaSection?.setAttribute('open', '');
+      if (hasCoordError) rlCoord?.focus?.();
       showToast(t('modal.requestListing.validation.required') || 'Please fill in all required fields marked with *.', 2200);
       return;
     }
@@ -5158,14 +5193,14 @@ export function createRequestListingModal(opts = {}) {
     if (coord) {
       const m = coord.match(/^\s*(-?\d+(?:\.\d{1,6})?)\s*,\s*(-?\d+(?:\.\d{1,6})?)\s*$/);
       if (!m) {
-        rlMediaSection?.setAttribute('open', '');
+        rlCoord?.focus?.();
         showToast('Coordinates must be "lat,lng" with up to 6 decimals.', 2200);
         return;
       }
       const lat = Number(m[1]);
       const lng = Number(m[2]);
       if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-        rlMediaSection?.setAttribute('open', '');
+        rlCoord?.focus?.();
         showToast('Coordinates are out of range.', 2200);
         return;
       }
@@ -5179,6 +5214,7 @@ export function createRequestListingModal(opts = {}) {
     if (link) links.official = link;
     if (facebook) links.facebook = facebook;
     if (instagram) links.instagram = instagram;
+    if (booking) links.bookingUrl = booking;
 
     const media = {};
     if (cover) media.cover = cover;
@@ -5253,6 +5289,7 @@ export function createRequestListingModal(opts = {}) {
       link,
       facebook,
       instagram,
+      booking,
       description,
       cover,
       images: imageVals,
