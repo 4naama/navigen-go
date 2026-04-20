@@ -996,7 +996,7 @@
   "modal.requestListing.contexts.unavailable": "Kontextoptionen werden noch geladen.",
   "modal.requestListing.contexts.modal.title": "Verfügbare Kontexte",
   "modal.requestListing.contexts.selected.title": "Ausgewählte Kontexte",
-  "modal.requestListing.contexts.selected.help": "Wählen Sie bis zu 3 Kontexte. Tippen Sie auf ein ausgewähltes Element, um es zu entfernen.",
+  "modal.requestListing.contexts.selected.help": "Tippen Sie auf ein ausgewähltes Element, um es zu entfernen.",
   "modal.requestListing.contexts.search.placeholder": "Kontexte suchen…",
   "modal.requestListing.contexts.empty.title": "Keine passenden Kontexte",
   "modal.requestListing.contexts.empty.desc": "Versuchen Sie einen anderen Suchbegriff.",
@@ -1004,5 +1004,15 @@
   "modal.requestListing.contexts.help.title": "So funktioniert es",
   "modal.requestListing.contexts.help.line1": "Suchen Sie im bestehenden Kontextkatalog und wählen Sie die am besten passenden Pfade für diesen Standort.",
   "modal.requestListing.contexts.help.line2": "Sie können bis zu 3 Kontexte auswählen.",
-  "modal.requestListing.contexts.help.line3": "Schließen bringt Sie zurück zu „Eintrag anfordern“, damit Sie das Formular weiter bearbeiten können."
+  "modal.requestListing.contexts.help.line3": "Schließen bringt Sie zurück zu „Eintrag anfordern“, damit Sie das Formular weiter bearbeiten können.",
+  "modal.requestListing.help.line2": "Bitte füllen Sie zuerst die erforderlichen Unternehmensinformationen aus.",
+  "modal.requestListing.help.line4": "Beschreibung, Links und Medien verbessern Qualität und Veröffentlichungsbereitschaft.",
+  "modal.requestListing.description.summary.empty": "Optional. Öffnen, um Details hinzuzufügen.",
+  "modal.requestListing.section.required": "Erforderlich",
+  "modal.requestListing.section.suggested": "Vorgeschlagen",
+  "modal.requestListing.section.optional": "Optional",
+  "modal.requestListing.sections.business.title": "Unternehmensinformationen",
+  "modal.requestListing.sections.context.title": "Kontextinformationen",
+  "modal.requestListing.sections.links.title": "Links zum Unternehmen",
+  "modal.requestListing.sections.media.title": "Medien"
 }

@@ -996,7 +996,7 @@
   "modal.requestListing.contexts.unavailable": "Las opciones de contexto aún se están cargando.",
   "modal.requestListing.contexts.modal.title": "Contextos disponibles",
   "modal.requestListing.contexts.selected.title": "Contextos seleccionados",
-  "modal.requestListing.contexts.selected.help": "Elige hasta 3 contextos. Toca un elemento seleccionado para eliminarlo.",
+  "modal.requestListing.contexts.selected.help": "Toca un elemento seleccionado para eliminarlo.",
   "modal.requestListing.contexts.search.placeholder": "Buscar contextos…",
   "modal.requestListing.contexts.empty.title": "No hay contextos coincidentes",
   "modal.requestListing.contexts.empty.desc": "Prueba con otro término de búsqueda.",
@@ -1004,5 +1004,15 @@
   "modal.requestListing.contexts.help.title": "Cómo funciona",
   "modal.requestListing.contexts.help.line1": "Busca en el catálogo de contextos existente y elige las rutas más adecuadas para este negocio.",
   "modal.requestListing.contexts.help.line2": "Puedes seleccionar hasta 3 contextos.",
-  "modal.requestListing.contexts.help.line3": "Cerrar te devuelve a Solicitar listado para seguir editando el formulario."
+  "modal.requestListing.contexts.help.line3": "Cerrar te devuelve a Solicitar listado para seguir editando el formulario.",
+  "modal.requestListing.help.line2": "Completa primero la información obligatoria del negocio.",
+  "modal.requestListing.help.line4": "La descripción, los enlaces y los medios mejoran la calidad y la preparación para publicar.",
+  "modal.requestListing.description.summary.empty": "Opcional. Abre para añadir detalles.",
+  "modal.requestListing.section.required": "Obligatorio",
+  "modal.requestListing.section.suggested": "Sugerido",
+  "modal.requestListing.section.optional": "Opcional",
+  "modal.requestListing.sections.business.title": "Información del negocio",
+  "modal.requestListing.sections.context.title": "Información de contexto",
+  "modal.requestListing.sections.links.title": "Enlaces al negocio",
+  "modal.requestListing.sections.media.title": "Medios"
 }

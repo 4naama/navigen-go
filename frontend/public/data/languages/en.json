@@ -996,7 +996,7 @@
   "modal.requestListing.contexts.unavailable": "Context options are still loading.",
   "modal.requestListing.contexts.modal.title": "Available contexts",
   "modal.requestListing.contexts.selected.title": "Selected contexts",
-  "modal.requestListing.contexts.selected.help": "Choose up to 3 contexts. Tap a selected chip to remove it.",
+  "modal.requestListing.contexts.selected.help": "Tap a selected chip to remove it.",
   "modal.requestListing.contexts.search.placeholder": "Search contexts…",
   "modal.requestListing.contexts.empty.title": "No matching contexts",
   "modal.requestListing.contexts.empty.desc": "Try another search term.",
@@ -1004,5 +1004,15 @@
   "modal.requestListing.contexts.help.title": "How it works",
   "modal.requestListing.contexts.help.line1": "Search the existing context catalog and choose the best matching paths for this business.",
   "modal.requestListing.contexts.help.line2": "You can select up to 3 contexts.",
-  "modal.requestListing.contexts.help.line3": "Close returns you to Request Listing so you can keep editing the form."
+  "modal.requestListing.contexts.help.line3": "Close returns you to Request Listing so you can keep editing the form.",
+  "modal.requestListing.help.line2": "Complete the required business information first.",
+  "modal.requestListing.help.line4": "Description, links, and media improve quality and publish readiness.",
+  "modal.requestListing.description.summary.empty": "Optional. Open to add details.",
+  "modal.requestListing.section.required": "Required",
+  "modal.requestListing.section.suggested": "Suggested",
+  "modal.requestListing.section.optional": "Optional",
+  "modal.requestListing.sections.business.title": "Business information",
+  "modal.requestListing.sections.context.title": "Context information",
+  "modal.requestListing.sections.links.title": "Links to the business",
+  "modal.requestListing.sections.media.title": "Media"
 }

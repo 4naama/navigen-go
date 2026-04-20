@@ -996,7 +996,7 @@
   "modal.requestListing.contexts.unavailable": "Le opzioni di contesto sono ancora in caricamento.",
   "modal.requestListing.contexts.modal.title": "Contesti disponibili",
   "modal.requestListing.contexts.selected.title": "Contesti selezionati",
-  "modal.requestListing.contexts.selected.help": "Scegli fino a 3 contesti. Tocca un elemento selezionato per rimuoverlo.",
+  "modal.requestListing.contexts.selected.help": "Tocca un elemento selezionato per rimuoverlo.",
   "modal.requestListing.contexts.search.placeholder": "Cerca contesti…",
   "modal.requestListing.contexts.empty.title": "Nessun contesto corrispondente",
   "modal.requestListing.contexts.empty.desc": "Prova un altro termine di ricerca.",
@@ -1004,5 +1004,15 @@
   "modal.requestListing.contexts.help.title": "Come funziona",
   "modal.requestListing.contexts.help.line1": "Cerca nel catalogo dei contesti esistenti e scegli i percorsi più adatti per questa attività.",
   "modal.requestListing.contexts.help.line2": "Puoi selezionare fino a 3 contesti.",
-  "modal.requestListing.contexts.help.line3": "Chiudi ti riporta a Richiedi scheda per continuare a modificare il modulo."
+  "modal.requestListing.contexts.help.line3": "Chiudi ti riporta a Richiedi scheda per continuare a modificare il modulo.",
+  "modal.requestListing.help.line2": "Completa prima le informazioni obbligatorie sull’attività.",
+  "modal.requestListing.help.line4": "Descrizione, link e media migliorano qualità e prontezza alla pubblicazione.",
+  "modal.requestListing.description.summary.empty": "Opzionale. Apri per aggiungere dettagli.",
+  "modal.requestListing.section.required": "Obbligatorio",
+  "modal.requestListing.section.suggested": "Suggerito",
+  "modal.requestListing.section.optional": "Opzionale",
+  "modal.requestListing.sections.business.title": "Informazioni attività",
+  "modal.requestListing.sections.context.title": "Informazioni contesto",
+  "modal.requestListing.sections.links.title": "Link all’attività",
+  "modal.requestListing.sections.media.title": "Media"
 }

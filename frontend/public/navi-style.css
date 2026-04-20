@@ -2612,6 +2612,127 @@ body.high-contrast .toast{
   gap:12px;
 }
 
+#request-listing-modal .modal-body-inner,
+#request-listing-contexts-modal .modal-body-inner{
+  padding-left:calc(1.2rem + 2px);
+  padding-right:calc(1.2rem + 2px);
+}
+
+#request-listing-modal .modal-form-stack,
+#request-listing-modal .request-form-section,
+#request-listing-modal .request-section-card,
+#request-listing-modal .modal-form-grid,
+#request-listing-modal .modal-field,
+#request-listing-modal .modal-menu-item,
+#request-listing-modal .cm-chip,
+#request-listing-modal .cm-chip .cm-chip-body,
+#request-listing-contexts-modal .modal-form-stack,
+#request-listing-contexts-modal .modal-menu-item{
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+
+#request-listing-modal .request-form-section{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+#request-listing-modal .request-section-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+#request-listing-modal .request-section-title{
+  margin:0;
+  font-size:1rem;
+  font-weight:700;
+  line-height:1.2;
+  text-align:left;
+}
+
+#request-listing-modal .request-section-badge{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0.2rem 0.65rem;
+  border:1px solid transparent;
+  border-radius:999px;
+  font-size:0.75rem;
+  font-weight:700;
+  line-height:1.2;
+  white-space:nowrap;
+}
+
+#request-listing-modal .request-section-badge.is-required{
+  background:#fee2e2;
+  border-color:#fecaca;
+  color:#991b1b;
+}
+
+#request-listing-modal .request-section-badge.is-suggested{
+  background:#dbeafe;
+  border-color:#bfdbfe;
+  color:#1d4ed8;
+}
+
+#request-listing-modal .request-section-badge.is-optional{
+  background:#f3f4f6;
+  border-color:#e5e7eb;
+  color:#374151;
+}
+
+#request-listing-modal .request-section-card{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:12px;
+  background:#fcfcfc;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:12px;
+}
+
+#request-listing-modal .request-description-chip{
+  width:100%;
+  margin-top:0;
+}
+
+#request-listing-modal .request-description-chip .cm-chip-face{
+  background:#f8f8f8;
+}
+
+#request-listing-modal .request-description-chip.has-value .cm-chip-face,
+#request-listing-modal .request-description-chip[open] .cm-chip-face{
+  background:#eef6ff;
+  border-color:#93c5fd;
+}
+
+#request-listing-modal .request-description-chip .cm-chip-face-label{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+  overflow:hidden;
+}
+
+#request-listing-modal .request-description-chip .request-description-chip-state{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+#request-listing-modal .request-description-chip .cm-chip-body{
+  margin:10px 0 0;
+}
+
 .modal-field{
   display:flex;
   flex-direction:column;

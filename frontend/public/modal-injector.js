@@ -4392,12 +4392,16 @@ function p8PublishMessage(code) {
 // Owners can request listing creation; no instant LPM creation is performed here.
 export function createRequestListingModal(opts = {}) {
   const id = 'request-listing-modal';
+  const contextModalId = 'request-listing-contexts-modal';
   document.getElementById(id)?.remove();
+  document.getElementById(contextModalId)?.remove();
 
   const shouldReturnToSelectLocation = String(opts?.returnTo || '').trim() === 'syb';
   const closeRequestListing = (ev = null) => {
     ev?.preventDefault?.();
     ev?.stopPropagation?.();
+    hideModal(contextModalId);
+    removeModal(contextModalId);
     hideModal(id);
     if (shouldReturnToSelectLocation) showSelectLocationModal();
   };
@@ -4410,8 +4414,6 @@ export function createRequestListingModal(opts = {}) {
     onClose: (ev) => { closeRequestListing(ev); },
     bodyHTML: `
       <div class="modal-form-stack">
-        <p class="muted muted-note" style="text-align:left;">${t('modal.requestListing.note') || 'Use this when your business does not appear in Select your business.'}</p>
-
         <div id="request-listing-loading" class="modal-menu-item owner-center-loading" aria-disabled="true" style="pointer-events:none;">
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
             <strong id="request-listing-loading-title">${t('modal.requestListing.loading.title') || 'Loading request form...'}</strong><br>
@@ -4419,114 +4421,153 @@ export function createRequestListingModal(opts = {}) {
           </span>
         </div>
 
-        <div class="modal-field">
-          <label for="rl-name">${t('modal.requestListing.name.label') || 'Business name'} <span class="required-star">*</span></label>
-          <input id="rl-name" class="input" type="text" maxlength="120" />
-        </div>
-
-        <div class="modal-field">
-          <label for="rl-address">${t('modal.requestListing.address.label') || 'Street address'} <span class="required-star">*</span></label>
-          <input id="rl-address" class="input" type="text" maxlength="180" />
-        </div>
-
-        <div class="modal-form-grid">
-          <div class="modal-field">
-            <label for="rl-city">${t('modal.requestListing.city.label') || 'City'} <span class="required-star">*</span></label>
-            <input id="rl-city" class="input" type="text" maxlength="80" />
+        <section class="request-form-section">
+          <div class="request-section-head">
+            <h3 class="request-section-title">${t('modal.requestListing.sections.business.title') || 'Business information'}</h3>
+            <span class="request-section-badge is-required">${t('modal.requestListing.section.required') || 'Required'}</span>
           </div>
-          <div class="modal-field">
-            <label for="rl-country">${t('modal.requestListing.country.label') || 'Country code'} <span class="required-star">*</span></label>
-            <input id="rl-country" class="input" type="text" maxlength="2" />            
-          </div>
-        </div>
+          <div class="request-section-card modal-form-stack">
+            <div class="modal-field">
+              <label for="rl-name">${t('modal.requestListing.name.label') || 'Business name'} <span class="required-star">*</span></label>
+              <input id="rl-name" class="input" type="text" maxlength="120" />
+            </div>
 
-        <div class="modal-form-grid">
-          <div class="modal-field">
-            <label for="rl-group">${t('modal.requestListing.group.label') || 'Group'} <span class="required-star">*</span></label>
-            <select id="rl-group" class="input"></select>
-          </div>
-          <div class="modal-field">
-            <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup'} <span class="required-star">*</span></label>
-            <select id="rl-subgroup" class="input"></select>
-          </div>
-        </div>
+            <div class="modal-field">
+              <label for="rl-address">${t('modal.requestListing.address.label') || 'Street address'} <span class="required-star">*</span></label>
+              <input id="rl-address" class="input" type="text" maxlength="180" />
+            </div>
 
-        <div class="modal-field">
-          <label>${t('modal.requestListing.tags.label') || 'Search tags'}</label>
-          <input id="rl-tags" type="hidden" />
-          <div id="rl-tag-suggestions" class="request-chip-row" aria-label="${t('modal.requestListing.tags.label') || 'Search tags'}"></div>
-          <small class="modal-help-text">${t('modal.requestListing.tags.help') || 'Optional search terms that match how customers look for this business.'}</small>
-        </div>
+            <div class="modal-form-grid">
+              <div class="modal-field">
+                <label for="rl-city">${t('modal.requestListing.city.label') || 'City'} <span class="required-star">*</span></label>
+                <input id="rl-city" class="input" type="text" maxlength="80" />
+              </div>
+              <div class="modal-field">
+                <label for="rl-country">${t('modal.requestListing.country.label') || 'Country code'} <span class="required-star">*</span></label>
+                <input id="rl-country" class="input" type="text" maxlength="2" />
+              </div>
+            </div>
 
-        <div class="modal-field">
-          <label for="rl-open-contexts">${t('modal.requestListing.contexts.label') || 'Contexts (one or more)'} <span class="required-star">*</span></label>
-          <select id="rl-contexts" class="input hidden" multiple size="6" aria-hidden="true" tabindex="-1"></select>
-          <button id="rl-open-contexts" type="button" class="modal-menu-item request-context-launch">
-            <span class="label">
-              <strong>${t('modal.requestListing.contexts.cta') || 'Choose contexts'}</strong>
-              <small id="rl-context-summary-text">${t('modal.requestListing.contexts.summary.empty') || 'Required. Search and choose up to 3 contexts.'}</small>
-            </span>
-            <span id="rl-context-count" class="request-context-count">0/3</span>
-          </button>
-          <div id="rl-context-selected" class="request-chip-row request-context-selected" aria-live="polite"></div>
-          <small class="modal-help-text">${t('modal.requestListing.contexts.help') || 'Select up to 3 existing context paths.'}</small>
-        </div>
+            <div class="modal-form-grid">
+              <div class="modal-field">
+                <label for="rl-group">${t('modal.requestListing.group.label') || 'Group'} <span class="required-star">*</span></label>
+                <select id="rl-group" class="input"></select>
+              </div>
+              <div class="modal-field">
+                <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup'} <span class="required-star">*</span></label>
+                <select id="rl-subgroup" class="input"></select>
+              </div>
+            </div>
 
-        <details id="rl-description-chip" class="cm-chip request-section-chip" style="margin-top:0;">
-          <summary class="modal-menu-item cm-chip-face">
-            <span class="label cm-chip-face-label">
-              ${t('modal.requestListing.description.label') || 'Business description'}
-              <small id="rl-description-chip-state">${translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional. Open to add details.')}</small>
-            </span>
-            <span class="cm-chip-face-chevron" aria-hidden="true"></span>
-          </summary>
-          <div class="cm-chip-body">
-            <div class="modal-field" style="margin:0;">
-              <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || 'Describe the business, services, and customers.'}"></textarea>
-              <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
+            <div class="modal-field">
+              <label>${t('modal.requestListing.tags.label') || 'Search tags'}</label>
+              <input id="rl-tags" type="hidden" />
+              <div id="rl-tag-suggestions" class="request-chip-row" aria-label="${t('modal.requestListing.tags.label') || 'Search tags'}"></div>
+              <small class="modal-help-text">${t('modal.requestListing.tags.help') || 'Optional search terms that match how customers look for this business.'}</small>
             </div>
           </div>
-        </details>
+        </section>
 
-        <div class="modal-field">
-          <label for="rl-link">${t('modal.requestListing.link.label') || 'Official website or primary business link'}</label>
-          <input id="rl-link" class="input" type="text" maxlength="240" />
-        </div>
-
-        <div class="modal-form-grid">
-          <div class="modal-field">
-            <label for="rl-facebook">${t('modal.requestListing.facebook.label') || 'Facebook link'}</label>
-            <input id="rl-facebook" class="input" type="text" maxlength="240" />
+        <section class="request-form-section">
+          <div class="request-section-head">
+            <h3 class="request-section-title">${t('modal.requestListing.sections.context.title') || 'Context information'}</h3>
+            <span class="request-section-badge is-required">${t('modal.requestListing.section.required') || 'Required'}</span>
           </div>
-          <div class="modal-field">
-            <label for="rl-instagram">${t('modal.requestListing.instagram.label') || 'Instagram link'}</label>
-            <input id="rl-instagram" class="input" type="text" maxlength="240" />
+          <div class="request-section-card modal-form-stack">
+            <div class="modal-field">
+              <label for="rl-open-contexts">${t('modal.requestListing.contexts.label') || 'Contexts (one or more)'} <span class="required-star">*</span></label>
+              <select id="rl-contexts" class="input hidden" multiple size="6" aria-hidden="true" tabindex="-1"></select>
+              <button id="rl-open-contexts" type="button" class="modal-menu-item request-context-launch">
+                <span class="label">
+                  <strong>${t('modal.requestListing.contexts.cta') || 'Choose contexts'}</strong>
+                  <small id="rl-context-summary-text">${t('modal.requestListing.contexts.summary.empty') || 'Required. Search and choose up to 3 contexts.'}</small>
+                </span>
+                <span id="rl-context-count" class="request-context-count">0/3</span>
+              </button>
+              <div id="rl-context-selected" class="request-chip-row request-context-selected" aria-live="polite"></div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div class="modal-field">
-          <label for="rl-cover">${t('modal.requestListing.cover.label') || 'Cover image URL'}</label>
-          <input id="rl-cover" class="input" type="text" maxlength="500" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
-        </div>
-
-        <div class="modal-field">
-          <label for="rl-images">${t('modal.requestListing.images.label') || 'Gallery image URLs'}</label>
-          <textarea id="rl-images" class="input" rows="4" maxlength="4000" placeholder="${t('modal.requestListing.images.placeholder') || 'One URL per line'}"></textarea>
-          <small class="modal-help-text">${t('modal.requestListing.images.help') || 'Publish-ready target: at least 3 total images counting cover + gallery.'}</small>
-        </div>
-
-        <div class="modal-field">
-          <label class="modal-checkbox-row" for="rl-has-coord">
-            <input id="rl-has-coord" type="checkbox" />
-            <span>${t('modal.requestListing.hasCoord.label') || 'Suggested: I have coordinates'}</span>
-          </label>
-
-          <div id="rl-coord-wrap" class="modal-field hidden">
-            <label for="rl-coord">${t('modal.requestListing.coord.label') || 'Coordinates (lat,lng) — 6 decimals'}</label>
-            <input id="rl-coord" class="input" type="text" placeholder="${t('modal.requestListing.coord.placeholder') || '52.527900,13.440200'}" />
-            <small class="modal-help-text">${t('modal.requestListing.coord.help') || 'Tip: you can copy this from Google Maps.'}</small>
+        <section class="request-form-section">
+          <div class="request-section-head">
+            <h3 class="request-section-title">${t('modal.requestListing.description.label') || 'Business description'}</h3>
+            <span class="request-section-badge is-suggested">${t('modal.requestListing.section.suggested') || 'Suggested'}</span>
           </div>
-        </div>
+          <div class="request-section-card">
+            <details id="rl-description-chip" class="cm-chip request-description-chip">
+              <summary class="modal-menu-item cm-chip-face">
+                <span class="label cm-chip-face-label">
+                  <strong>${t('modal.requestListing.description.label') || 'Business description'}</strong>
+                  <small id="rl-description-chip-state" class="request-description-chip-state">${translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional. Open to add details.')}</small>
+                </span>
+                <span class="cm-chip-face-chevron" aria-hidden="true"></span>
+              </summary>
+              <div class="cm-chip-body">
+                <div class="modal-field" style="margin:0;">
+                  <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || 'Describe the business, services, and customers.'}"></textarea>
+                  <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
+                </div>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section class="request-form-section">
+          <div class="request-section-head">
+            <h3 class="request-section-title">${t('modal.requestListing.sections.links.title') || 'Links to the business'}</h3>
+            <span class="request-section-badge is-optional">${t('modal.requestListing.section.optional') || 'Optional'}</span>
+          </div>
+          <div class="request-section-card modal-form-stack">
+            <div class="modal-field">
+              <label for="rl-link">${t('modal.requestListing.link.label') || 'Official website or primary business link'}</label>
+              <input id="rl-link" class="input" type="text" maxlength="240" />
+            </div>
+
+            <div class="modal-form-grid">
+              <div class="modal-field">
+                <label for="rl-facebook">${t('modal.requestListing.facebook.label') || 'Facebook link'}</label>
+                <input id="rl-facebook" class="input" type="text" maxlength="240" />
+              </div>
+              <div class="modal-field">
+                <label for="rl-instagram">${t('modal.requestListing.instagram.label') || 'Instagram link'}</label>
+                <input id="rl-instagram" class="input" type="text" maxlength="240" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="request-form-section">
+          <div class="request-section-head">
+            <h3 class="request-section-title">${t('modal.requestListing.sections.media.title') || 'Media'}</h3>
+            <span class="request-section-badge is-optional">${t('modal.requestListing.section.optional') || 'Optional'}</span>
+          </div>
+          <div class="request-section-card modal-form-stack">
+            <div class="modal-field">
+              <label for="rl-cover">${t('modal.requestListing.cover.label') || 'Cover image URL'}</label>
+              <input id="rl-cover" class="input" type="text" maxlength="500" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
+            </div>
+
+            <div class="modal-field">
+              <label for="rl-images">${t('modal.requestListing.images.label') || 'Gallery image URLs'}</label>
+              <textarea id="rl-images" class="input" rows="4" maxlength="4000" placeholder="${t('modal.requestListing.images.placeholder') || 'One URL per line'}"></textarea>
+              <small class="modal-help-text">${t('modal.requestListing.images.help') || 'Publish-ready target: at least 3 total images counting cover + gallery.'}</small>
+            </div>
+
+            <div class="modal-field">
+              <label class="modal-checkbox-row" for="rl-has-coord">
+                <input id="rl-has-coord" type="checkbox" />
+                <span>${t('modal.requestListing.hasCoord.label') || 'Suggested: I have coordinates'}</span>
+              </label>
+
+              <div id="rl-coord-wrap" class="modal-field hidden">
+                <label for="rl-coord">${t('modal.requestListing.coord.label') || 'Coordinates (lat,lng) — 6 decimals'}</label>
+                <input id="rl-coord" class="input" type="text" placeholder="${t('modal.requestListing.coord.placeholder') || '52.527900,13.440200'}" />
+                <small class="modal-help-text">${t('modal.requestListing.coord.help') || 'Tip: you can copy this from Google Maps.'}</small>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <div class="modal-actions">
           <button id="request-listing-submit" type="button" class="modal-body-button">
@@ -4553,8 +4594,8 @@ export function createRequestListingModal(opts = {}) {
   const rlFacebook = modal.querySelector('#rl-facebook');
   const rlInstagram = modal.querySelector('#rl-instagram');
   const rlDescription = modal.querySelector('#rl-description');
+  const rlDescriptionChip = modal.querySelector('#rl-description-chip');
   const rlDescriptionChipState = modal.querySelector('#rl-description-chip-state');
-  const rlDescriptionChipSummary = modal.querySelector('#rl-description-chip summary');  
   const rlGroup = modal.querySelector('#rl-group');
   const rlSubgroup = modal.querySelector('#rl-subgroup');
   const rlContexts = modal.querySelector('#rl-contexts');
@@ -4591,7 +4632,7 @@ export function createRequestListingModal(opts = {}) {
 
   const prefillTags = Array.isArray(prefill?.tags)
     ? prefill.tags.map((v) => String(v || '').trim()).filter(Boolean)
-    : parseTagValues(prefill?.tags || '');
+    : parseTagValues(prefill?.tags);
 
   const prefillDescription = String(
     prefill?.description ||
@@ -4604,12 +4645,15 @@ export function createRequestListingModal(opts = {}) {
   const prefillFacebook = String(prefill?.facebook || prefill?.links?.facebook || '').trim();
   const prefillInstagram = String(prefill?.instagram || prefill?.links?.instagram || '').trim();
   const prefillCover = String(prefill?.cover || prefill?.media?.cover || '').trim();
+  const prefillImages = Array.isArray(prefill?.images)
+    ? prefill.images
+    : (Array.isArray(prefill?.media?.images) ? prefill.media.images : []);
+
   const REQUEST_LISTING_CONTEXT_LIMIT = 3;
-  const selectedContextSet = new Set(prefillContexts);
+  const selectedTagSet = new Set(prefillTags);
+  const selectedContextSet = new Set();
   let requestListingContextRows = [];
   let requestListingContextIndex = new Map();
-
-  const selectedTagSet = new Set(prefillTags);
 
   function syncRequestListingTags() {
     if (rlTags) rlTags.value = formatTagValues(Array.from(selectedTagSet));
@@ -4634,7 +4678,7 @@ export function createRequestListingModal(opts = {}) {
     selectedContextSet.clear();
     (Array.isArray(values) ? values : []).forEach((value) => {
       const key = String(value || '').trim();
-      if (key) selectedContextSet.add(key);
+      if (key && selectedContextSet.size < REQUEST_LISTING_CONTEXT_LIMIT) selectedContextSet.add(key);
     });
   }
 
@@ -4648,8 +4692,8 @@ export function createRequestListingModal(opts = {}) {
     if (rlContextCount) rlContextCount.textContent = `${selectedContextSet.size}/${REQUEST_LISTING_CONTEXT_LIMIT}`;
     if (rlContextSummaryText) {
       rlContextSummaryText.textContent = selectedContextSet.size
-        ? translatedOrFallback('modal.requestListing.contexts.summary.selected', 'Tap to review or change your selected contexts.')
-        : translatedOrFallback('modal.requestListing.contexts.summary.empty', 'Required. Search and choose up to 3 contexts.');
+        ? (t('modal.requestListing.contexts.summary.selected') || 'Tap to review or change your selected contexts.')
+        : (t('modal.requestListing.contexts.summary.empty') || 'Required. Search and choose up to 3 contexts.');
     }
 
     rlOpenContexts?.classList.toggle('is-active', selectedContextSet.size > 0);
@@ -4671,13 +4715,10 @@ export function createRequestListingModal(opts = {}) {
   }
 
   function updateRequestListingDescriptionChip() {
-    const value = String(rlDescription?.value || '').trim();
-    const summary = value
-      ? (value.length > 96 ? `${value.slice(0, 93).trim()}...` : value)
-      : translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional. Open to add details.');
-
+    const value = String(rlDescription?.value || '').replace(/\s+/g, ' ').trim();
+    const summary = value || translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional. Open to add details.');
     if (rlDescriptionChipState) rlDescriptionChipState.textContent = summary;
-    rlDescriptionChipSummary?.classList.toggle('is-active', !!value);
+    rlDescriptionChip?.classList.toggle('has-value', !!value);
   }
 
   syncRequestListingTags();
@@ -4715,21 +4756,21 @@ export function createRequestListingModal(opts = {}) {
       return;
     }
 
-    const ctxId = 'request-listing-contexts-modal';
-    document.getElementById(ctxId)?.remove();
+    document.getElementById(contextModalId)?.remove();
 
     const closeContextPicker = (ev = null) => {
       ev?.preventDefault?.();
       ev?.stopPropagation?.();
-      hideModal(ctxId);
-      removeModal(ctxId);
+      hideModal(contextModalId);
+      removeModal(contextModalId);
       showModal(id);
       syncRequestListingContexts();
       setRequestListingContextError(!selectedContextSet.size);
+      rlOpenContexts?.focus?.();
     };
 
     const ctxModal = injectModal({
-      id: ctxId,
+      id: contextModalId,
       title: t('modal.requestListing.contexts.modal.title') || 'Available contexts',
       layout: 'menu',
       onClose: (ev) => { closeContextPicker(ev); },
@@ -4738,7 +4779,7 @@ export function createRequestListingModal(opts = {}) {
           <div id="request-context-selected-card" class="modal-menu-item modal-static-card request-context-selected-card hidden">
             <span class="label">
               <strong>${t('modal.requestListing.contexts.selected.title') || 'Selected contexts'}</strong>
-              <small>${t('modal.requestListing.contexts.selected.help') || 'Choose up to 3 contexts. Tap a selected chip to remove it.'}</small>
+              <small>${t('modal.requestListing.contexts.selected.help') || 'Tap a selected chip to remove it.'}</small>
             </span>
             <div id="request-context-selected-chips" class="request-chip-row"></div>
           </div>
@@ -4927,9 +4968,9 @@ export function createRequestListingModal(opts = {}) {
     renderContextPicker();
 
     hideModal(id);
-    showModal(ctxId);
+    showModal(contextModalId);
     searchInput.focus();
-    setupTapOutClose(ctxId, closeContextPicker);
+    setupTapOutClose(contextModalId, closeContextPicker);
   }
 
   rlOpenContexts?.addEventListener('click', (ev) => {
@@ -5211,9 +5252,8 @@ export function createRequestListingModal(opts = {}) {
   });
 
   const coordToggle = modal.querySelector('#rl-has-coord');
-  const coordWrap = modal.querySelector('#rl-coord-wrap');
   coordToggle?.addEventListener('change', (e) => {
-    coordWrap?.classList.toggle('hidden', !e.target?.checked);
+    rlCoordWrap?.classList.toggle('hidden', !e.target?.checked);
   });
 
   setupTapOutClose(id, closeRequestListing);
@@ -5297,6 +5337,29 @@ function getModalHeaderHelpSpec(target) {
         translatedOrFallback('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts.'),
         translatedOrFallback('modal.requestListing.contexts.help.line3', 'Close returns you to Request Listing so you can keep editing the form.')
       ]
+    };
+  }
+  
+  if (modalId === 'request-listing-modal') {
+    return {
+      title: _ownerText('modal.help.title', 'How it works'),
+      bodyLines: [
+        _ownerText('modal.requestListing.note', 'Use this when your business does not appear in Select your business.'),
+        _ownerText('modal.requestListing.help.line2', 'Complete the required business information first.'),
+        _ownerText('modal.requestListing.contexts.help', 'Select up to 3 existing context paths.'),
+        _ownerText('modal.requestListing.help.line4', 'Description, links, and media improve quality and publish readiness.')
+      ].map((line) => String(line || '').trim()).filter(Boolean)
+    };
+  }
+
+  if (modalId === 'request-listing-contexts-modal') {
+    return {
+      title: _ownerText('modal.requestListing.contexts.help.title', 'How it works'),
+      bodyLines: [
+        _ownerText('modal.requestListing.contexts.help.line1', 'Search the existing context catalog and choose the best matching paths for this business.'),
+        _ownerText('modal.requestListing.contexts.help', 'Select up to 3 existing context paths.'),
+        _ownerText('modal.requestListing.contexts.help.line3', 'Close returns you to Request Listing so you can keep editing the form.')
+      ].map((line) => String(line || '').trim()).filter(Boolean)
     };
   }
 

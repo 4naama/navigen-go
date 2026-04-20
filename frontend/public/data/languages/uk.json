@@ -996,7 +996,7 @@
   "modal.requestListing.contexts.unavailable": "Параметри контексту ще завантажуються.",
   "modal.requestListing.contexts.modal.title": "Доступні контексти",
   "modal.requestListing.contexts.selected.title": "Вибрані контексти",
-  "modal.requestListing.contexts.selected.help": "Виберіть до 3 контекстів. Натисніть на вибраний елемент, щоб видалити його.",
+  "modal.requestListing.contexts.selected.help": "Натисніть на вибраний елемент, щоб видалити його.",
   "modal.requestListing.contexts.search.placeholder": "Пошук контекстів…",
   "modal.requestListing.contexts.empty.title": "Немає відповідних контекстів",
   "modal.requestListing.contexts.empty.desc": "Спробуйте інший пошуковий запит.",
@@ -1004,5 +1004,15 @@
   "modal.requestListing.contexts.help.title": "Як це працює",
   "modal.requestListing.contexts.help.line1": "Знайдіть у наявному каталозі контекстів і виберіть найвідповідніші шляхи для цього бізнесу.",
   "modal.requestListing.contexts.help.line2": "Ви можете вибрати до 3 контекстів.",
-  "modal.requestListing.contexts.help.line3": "Закрити повертає вас до «Запросити лістинг», щоб продовжити редагування форми."
+  "modal.requestListing.contexts.help.line3": "Закрити повертає вас до «Запросити лістинг», щоб продовжити редагування форми.",
+  "modal.requestListing.help.line2": "Спочатку заповніть обов’язкову інформацію про бізнес.",
+  "modal.requestListing.help.line4": "Опис, посилання та медіа покращують якість і готовність до публікації.",
+  "modal.requestListing.description.summary.empty": "Необов’язково. Відкрийте, щоб додати деталі.",
+  "modal.requestListing.section.required": "Обов’язково",
+  "modal.requestListing.section.suggested": "Рекомендовано",
+  "modal.requestListing.section.optional": "Необов’язково",
+  "modal.requestListing.sections.business.title": "Інформація про бізнес",
+  "modal.requestListing.sections.context.title": "Інформація контексту",
+  "modal.requestListing.sections.links.title": "Посилання на бізнес",
+  "modal.requestListing.sections.media.title": "Медіа"
 }

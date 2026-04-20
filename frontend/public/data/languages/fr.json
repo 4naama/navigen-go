@@ -996,7 +996,7 @@
   "modal.requestListing.contexts.unavailable": "Les options de contexte sont en cours de chargement.",
   "modal.requestListing.contexts.modal.title": "Contextes disponibles",
   "modal.requestListing.contexts.selected.title": "Contextes sélectionnés",
-  "modal.requestListing.contexts.selected.help": "Choisissez jusqu’à 3 contextes. Appuyez sur un élément sélectionné pour le supprimer.",
+  "modal.requestListing.contexts.selected.help": "Appuyez sur un élément sélectionné pour le supprimer.",
   "modal.requestListing.contexts.search.placeholder": "Rechercher des contextes…",
   "modal.requestListing.contexts.empty.title": "Aucun contexte correspondant",
   "modal.requestListing.contexts.empty.desc": "Essayez un autre terme de recherche.",
@@ -1004,5 +1004,15 @@
   "modal.requestListing.contexts.help.title": "Comment ça marche",
   "modal.requestListing.contexts.help.line1": "Recherchez dans le catalogue de contextes existant et choisissez les chemins les plus pertinents pour cet établissement.",
   "modal.requestListing.contexts.help.line2": "Vous pouvez sélectionner jusqu’à 3 contextes.",
-  "modal.requestListing.contexts.help.line3": "Fermer vous ramène à Demander un établissement pour continuer à modifier le formulaire."
+  "modal.requestListing.contexts.help.line3": "Fermer vous ramène à Demander un établissement pour continuer à modifier le formulaire.",
+  "modal.requestListing.help.line2": "Complétez d’abord les informations obligatoires sur l’établissement.",
+  "modal.requestListing.help.line4": "La description, les liens et les médias améliorent la qualité et la préparation à la publication.",
+  "modal.requestListing.description.summary.empty": "Optionnel. Ouvrir pour ajouter des détails.",
+  "modal.requestListing.section.required": "Obligatoire",
+  "modal.requestListing.section.suggested": "Suggéré",
+  "modal.requestListing.section.optional": "Optionnel",
+  "modal.requestListing.sections.business.title": "Informations sur l’établissement",
+  "modal.requestListing.sections.context.title": "Informations de contexte",
+  "modal.requestListing.sections.links.title": "Liens vers l’établissement",
+  "modal.requestListing.sections.media.title": "Médias"
 }

@@ -996,7 +996,7 @@
   "modal.requestListing.contexts.unavailable": "אפשרויות ההקשר עדיין נטענות.",
   "modal.requestListing.contexts.modal.title": "הקשרים זמינים",
   "modal.requestListing.contexts.selected.title": "הקשרים שנבחרו",
-  "modal.requestListing.contexts.selected.help": "בחר עד 3 הקשרים. הקש על פריט שנבחר כדי להסיר אותו.",
+  "modal.requestListing.contexts.selected.help": "הקש על פריט שנבחר כדי להסיר אותו.",
   "modal.requestListing.contexts.search.placeholder": "חפש הקשרים…",
   "modal.requestListing.contexts.empty.title": "אין הקשרים תואמים",
   "modal.requestListing.contexts.empty.desc": "נסה מונח חיפוש אחר.",
@@ -1004,5 +1004,15 @@
   "modal.requestListing.contexts.help.title": "איך זה עובד",
   "modal.requestListing.contexts.help.line1": "חפש בקטלוג ההקשרים הקיים ובחר את הנתיבים המתאימים ביותר לעסק זה.",
   "modal.requestListing.contexts.help.line2": "ניתן לבחור עד 3 הקשרים.",
-  "modal.requestListing.contexts.help.line3": "סגור מחזיר אותך לבקש רישום כדי להמשיך לערוך את הטופס."
+  "modal.requestListing.contexts.help.line3": "סגור מחזיר אותך לבקש רישום כדי להמשיך לערוך את הטופס.",
+  "modal.requestListing.help.line2": "השלם תחילה את פרטי העסק הנדרשים.",
+  "modal.requestListing.help.line4": "תיאור, קישורים ומדיה משפרים את האיכות והמוכנות לפרסום.",
+  "modal.requestListing.description.summary.empty": "אופציונלי. פתח כדי להוסיף פרטים.",
+  "modal.requestListing.section.required": "חובה",
+  "modal.requestListing.section.suggested": "מומלץ",
+  "modal.requestListing.section.optional": "אופציונלי",
+  "modal.requestListing.sections.business.title": "פרטי העסק",
+  "modal.requestListing.sections.context.title": "מידע הקשר",
+  "modal.requestListing.sections.links.title": "קישורים לעסק",
+  "modal.requestListing.sections.media.title": "מדיה"
 }
