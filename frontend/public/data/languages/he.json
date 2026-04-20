@@ -952,7 +952,7 @@
   "modal.requestListing.facebook.label": "קישור לפייסבוק",
   "modal.requestListing.instagram.label": "קישור לאינסטגרם",
   "modal.requestListing.description.label": "תיאור העסק",
-  "modal.requestListing.description.placeholder": "תאר את העסק",
+  "modal.requestListing.description.placeholder": "🔍 תאר את העסק",
   "modal.requestListing.description.help": "יעד לפרסום: לפחות 200 תווים.",
   "modal.requestListing.group.label": "קבוצה",
   "modal.requestListing.group.placeholder": "בחר קבוצה",
@@ -1003,7 +1003,7 @@
   "modal.requestListing.contexts.help.title": "איך זה עובד",
   "modal.requestListing.contexts.help.line1": "חפש בקטלוג ההקשרים הקיים ובחר את הנתיבים המתאימים ביותר לעסק זה.",
   "modal.requestListing.contexts.help.line2": "ניתן לבחור עד 3 הקשרים.",
-  "modal.requestListing.contexts.help.line3": "סגור מחזיר אותך לבקש רישום כדי להמשיך לערוך את הטופס.",
+  "modal.requestListing.contexts.help.line3": "השתמש ב־סיום כדי לחזור לבקש רישום.",
   "modal.requestListing.help.line2": "השלם תחילה את פרטי העסק הנדרשים.",
   "modal.requestListing.help.line4": "תיאור, קישורים ומדיה משפרים את האיכות והמוכנות לפרסום.",
   "modal.requestListing.description.summary.empty": "אופציונלי. פתח כדי להוסיף פרטים.",
@@ -1028,5 +1028,6 @@
   "modal.requestListing.next.publishCta": "המשך לפרסום",
   "modal.requestListing.next.resumeCta": "המשך מאוחר יותר",
   "locationDraft.commercial.title": "נראות וקידום",
-  "locationDraft.commercial.cta": "המשך לתשלום"
+  "locationDraft.commercial.cta": "המשך לתשלום",
+  "modal.requestListing.contexts.done": "סיום"
 }

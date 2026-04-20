@@ -952,7 +952,7 @@
   "modal.requestListing.facebook.label": "Enlace de Facebook",
   "modal.requestListing.instagram.label": "Enlace de Instagram",
   "modal.requestListing.description.label": "Descripción del negocio",
-  "modal.requestListing.description.placeholder": "Describe el negocio",
+  "modal.requestListing.description.placeholder": "🔍 Describe el negocio",
   "modal.requestListing.description.help": "Objetivo listo para publicar: al menos 200 caracteres.",
   "modal.requestListing.group.label": "Grupo",
   "modal.requestListing.group.placeholder": "Seleccionar grupo",
@@ -1003,7 +1003,7 @@
   "modal.requestListing.contexts.help.title": "Cómo funciona",
   "modal.requestListing.contexts.help.line1": "Busca en el catálogo de contextos existente y elige las rutas más adecuadas para este negocio.",
   "modal.requestListing.contexts.help.line2": "Puedes seleccionar hasta 3 contextos.",
-  "modal.requestListing.contexts.help.line3": "Cerrar te devuelve a Solicitar listado para seguir editando el formulario.",
+  "modal.requestListing.contexts.help.line3": "Usa Listo para volver a Solicitar listado.",
   "modal.requestListing.help.line2": "Completa primero la información obligatoria del negocio.",
   "modal.requestListing.help.line4": "La descripción, los enlaces y los medios mejoran la calidad y la preparación para publicar.",
   "modal.requestListing.description.summary.empty": "Opcional. Abre para añadir detalles.",
@@ -1028,5 +1028,6 @@
   "modal.requestListing.next.publishCta": "Continuar a publicar",
   "modal.requestListing.next.resumeCta": "Continuar más tarde",
   "locationDraft.commercial.title": "Visibilidad y promoción",
-  "locationDraft.commercial.cta": "Continuar al pago"
+  "locationDraft.commercial.cta": "Continuar al pago",
+  "modal.requestListing.contexts.done": "Listo"
 }

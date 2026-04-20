@@ -4510,7 +4510,7 @@ export function createRequestListingModal(opts = {}) {
           </summary>
           <div class="cm-chip-body">
             <div class="modal-field" style="margin:0;">
-              <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || 'Describe the business, services, and customers.'}"></textarea>
+                            <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || '🔍 Describe the business'}"></textarea>
               <div class="modal-help-split">
                 <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
                 <small id="rl-description-count" class="modal-help-counter">0/200</small>
@@ -4823,11 +4823,17 @@ export function createRequestListingModal(opts = {}) {
       onClose: (ev) => { closeContextPicker(ev); },
       bodyHTML: `
         <div class="modal-form-stack">
-          <div id="request-context-selected-card" class="modal-menu-item modal-static-card request-context-selected-card hidden">
-            <span class="label">
-              <strong>${t('modal.requestListing.contexts.selected.title') || 'Selected contexts'}</strong>
-              <small>${t('modal.requestListing.contexts.selected.help') || 'Tap a selected chip to remove it.'}</small>
-            </span>
+          <div id="request-context-selected-card" class="modal-menu-item modal-static-card request-context-selected-card">
+            <div class="request-context-selected-head">
+              <span class="label">
+                <strong>${t('modal.requestListing.contexts.selected.title') || 'Selected contexts'}</strong>
+                <small id="request-context-selected-help">${t('modal.requestListing.contexts.help') || 'Select up to 3 existing context paths.'}</small>
+              </span>
+              <button id="request-context-done" type="button" class="request-context-done">
+                <span aria-hidden="true">✅</span>
+                <span>${t('modal.requestListing.contexts.done') || 'Done'}</span>
+              </button>
+            </div>
             <div id="request-context-selected-chips" class="request-chip-row"></div>
           </div>
 
@@ -4838,7 +4844,9 @@ export function createRequestListingModal(opts = {}) {
 
     const ctxTopBar = ctxModal.querySelector('.modal-top-bar');
     const ctxSelectedCard = ctxModal.querySelector('#request-context-selected-card');
+    const ctxSelectedHelp = ctxModal.querySelector('#request-context-selected-help');
     const ctxSelectedChips = ctxModal.querySelector('#request-context-selected-chips');
+    const ctxDoneBtn = ctxModal.querySelector('#request-context-done');
     const ctxResults = ctxModal.querySelector('#request-context-results');
 
     if (!ctxTopBar || !ctxResults) {
@@ -4914,7 +4922,13 @@ export function createRequestListingModal(opts = {}) {
 
       if (ctxSelectedCard && ctxSelectedChips) {
         ctxSelectedChips.innerHTML = '';
-        ctxSelectedCard.classList.toggle('hidden', !selectedKeys.length);
+        ctxSelectedCard.classList.toggle('is-empty', !selectedKeys.length);
+
+        if (ctxSelectedHelp) {
+          ctxSelectedHelp.textContent = selectedKeys.length
+            ? (t('modal.requestListing.contexts.selected.help') || 'Tap a selected chip to remove it.')
+            : (t('modal.requestListing.contexts.help') || 'Select up to 3 existing context paths.');
+        }
 
         selectedKeys.forEach((key) => {
           const chip = document.createElement('button');
@@ -5011,8 +5025,9 @@ export function createRequestListingModal(opts = {}) {
       searchInput.focus();
     });
 
-    syncClear();
-    renderContextPicker();
+    ctxDoneBtn?.addEventListener('click', (ev) => {
+      closeContextPicker(ev);
+    });
 
     hideModal(id);
     showModal(contextModalId);
@@ -5473,7 +5488,7 @@ function getModalHeaderHelpSpec(target) {
       bodyLines: [
         translatedOrFallback('modal.requestListing.contexts.help.line1', 'Search the existing context catalog and choose the best matching paths for this business.'),
         translatedOrFallback('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts.'),
-        translatedOrFallback('modal.requestListing.contexts.help.line3', 'Close returns you to Request Listing so you can keep editing the form.')
+        translatedOrFallback('modal.requestListing.contexts.help.line3', 'Use Done to return to Request Listing.')
       ]
     };
   }

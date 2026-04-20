@@ -952,7 +952,7 @@
   "modal.requestListing.facebook.label": "Facebook link",
   "modal.requestListing.instagram.label": "Instagram link",
   "modal.requestListing.description.label": "Business description",
-  "modal.requestListing.description.placeholder": "Describe the business",
+  "modal.requestListing.description.placeholder": "🔍 Describe the business",
   "modal.requestListing.description.help": "Publish-ready target: at least 200 characters.",
   "modal.requestListing.group.label": "Group",
   "modal.requestListing.group.placeholder": "Select group",
@@ -1003,7 +1003,7 @@
   "modal.requestListing.contexts.help.title": "How it works",
   "modal.requestListing.contexts.help.line1": "Search the existing context catalog and choose the best matching paths for this business.",
   "modal.requestListing.contexts.help.line2": "You can select up to 3 contexts.",
-  "modal.requestListing.contexts.help.line3": "Close returns you to Request Listing so you can keep editing the form.",
+  "modal.requestListing.contexts.help.line3": "Use Done to return to Request Listing.",
   "modal.requestListing.help.line2": "Complete the required business information first.",
   "modal.requestListing.help.line4": "Description, links, and media improve quality and publish readiness.",
   "modal.requestListing.description.summary.empty": "Optional. Open to add details.",
@@ -1028,5 +1028,6 @@
   "modal.requestListing.next.publishCta": "Continue to publish",
   "modal.requestListing.next.resumeCta": "Resume later",
   "locationDraft.commercial.title": "Visibility & promotion",
-  "locationDraft.commercial.cta": "Continue to payment"
+  "locationDraft.commercial.cta": "Continue to payment",
+  "modal.requestListing.contexts.done": "Done"
 }

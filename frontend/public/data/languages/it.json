@@ -952,7 +952,7 @@
   "modal.requestListing.facebook.label": "Link Facebook",
   "modal.requestListing.instagram.label": "Link Instagram",
   "modal.requestListing.description.label": "Descrizione attività",
-  "modal.requestListing.description.placeholder": "Descrivi l’attività",
+  "modal.requestListing.description.placeholder": "🔍 Descrivi l’attività",
   "modal.requestListing.description.help": "Obiettivo pronto per la pubblicazione: almeno 200 caratteri.",
   "modal.requestListing.group.label": "Gruppo",
   "modal.requestListing.group.placeholder": "Seleziona gruppo",
@@ -1003,7 +1003,7 @@
   "modal.requestListing.contexts.help.title": "Come funziona",
   "modal.requestListing.contexts.help.line1": "Cerca nel catalogo dei contesti esistenti e scegli i percorsi più adatti per questa attività.",
   "modal.requestListing.contexts.help.line2": "Puoi selezionare fino a 3 contesti.",
-  "modal.requestListing.contexts.help.line3": "Chiudi ti riporta a Richiedi scheda per continuare a modificare il modulo.",
+  "modal.requestListing.contexts.help.line3": "Usa Fatto per tornare a Richiedi scheda.",
   "modal.requestListing.help.line2": "Completa prima le informazioni obbligatorie sull’attività.",
   "modal.requestListing.help.line4": "Descrizione, link e media migliorano qualità e prontezza alla pubblicazione.",
   "modal.requestListing.description.summary.empty": "Opzionale. Apri per aggiungere dettagli.",
@@ -1028,5 +1028,6 @@
   "modal.requestListing.next.publishCta": "Continua alla pubblicazione",
   "modal.requestListing.next.resumeCta": "Riprendi più tardi",
   "locationDraft.commercial.title": "Visibilità e promozione",
-  "locationDraft.commercial.cta": "Continua al pagamento"
+  "locationDraft.commercial.cta": "Continua al pagamento",
+  "modal.requestListing.contexts.done": "Fatto"
 }

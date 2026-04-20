@@ -952,7 +952,7 @@
   "modal.requestListing.facebook.label": "Посилання Facebook",
   "modal.requestListing.instagram.label": "Посилання Instagram",
   "modal.requestListing.description.label": "Опис бізнесу",
-  "modal.requestListing.description.placeholder": "Опишіть бізнес",
+  "modal.requestListing.description.placeholder": "🔍 Опишіть бізнес",
   "modal.requestListing.description.help": "Ціль для публікації: щонайменше 200 символів.",
   "modal.requestListing.group.label": "Група",
   "modal.requestListing.group.placeholder": "Виберіть групу",
@@ -1003,7 +1003,7 @@
   "modal.requestListing.contexts.help.title": "Як це працює",
   "modal.requestListing.contexts.help.line1": "Знайдіть у наявному каталозі контекстів і виберіть найвідповідніші шляхи для цього бізнесу.",
   "modal.requestListing.contexts.help.line2": "Ви можете вибрати до 3 контекстів.",
-  "modal.requestListing.contexts.help.line3": "Закрити повертає вас до «Запросити лістинг», щоб продовжити редагування форми.",
+  "modal.requestListing.contexts.help.line3": "Використайте «Готово», щоб повернутися до «Запросити лістинг».",
   "modal.requestListing.help.line2": "Спочатку заповніть обов’язкову інформацію про бізнес.",
   "modal.requestListing.help.line4": "Опис, посилання та медіа покращують якість і готовність до публікації.",
   "modal.requestListing.description.summary.empty": "Необов’язково. Відкрийте, щоб додати деталі.",
@@ -1028,5 +1028,6 @@
   "modal.requestListing.next.publishCta": "Продовжити до публікації",
   "modal.requestListing.next.resumeCta": "Продовжити пізніше",
   "locationDraft.commercial.title": "Видимість і просування",
-  "locationDraft.commercial.cta": "Продовжити до оплати"
+  "locationDraft.commercial.cta": "Продовжити до оплати",
+  "modal.requestListing.contexts.done": "Готово"
 }

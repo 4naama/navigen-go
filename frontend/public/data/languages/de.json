@@ -952,7 +952,7 @@
   "modal.requestListing.facebook.label": "Facebook-Link",
   "modal.requestListing.instagram.label": "Instagram-Link",
   "modal.requestListing.description.label": "Unternehmensbeschreibung",
-  "modal.requestListing.description.placeholder": "Beschreiben Sie das Unternehmen",
+  "modal.requestListing.description.placeholder": "🔍 Beschreiben Sie das Unternehmen",
   "modal.requestListing.description.help": "Ziel für Veröffentlichung: mindestens 200 Zeichen.",
   "modal.requestListing.group.label": "Gruppe",
   "modal.requestListing.group.placeholder": "Gruppe auswählen",
@@ -1003,7 +1003,7 @@
   "modal.requestListing.contexts.help.title": "So funktioniert es",
   "modal.requestListing.contexts.help.line1": "Suchen Sie im bestehenden Kontextkatalog und wählen Sie die am besten passenden Pfade für diesen Standort.",
   "modal.requestListing.contexts.help.line2": "Sie können bis zu 3 Kontexte auswählen.",
-  "modal.requestListing.contexts.help.line3": "Schließen bringt Sie zurück zu „Eintrag anfordern“, damit Sie das Formular weiter bearbeiten können.",
+  "modal.requestListing.contexts.help.line3": "Verwenden Sie „Fertig“, um zu „Eintrag anfordern“ zurückzukehren.",
   "modal.requestListing.help.line2": "Bitte füllen Sie zuerst die erforderlichen Unternehmensinformationen aus.",
   "modal.requestListing.help.line4": "Beschreibung, Links und Medien verbessern Qualität und Veröffentlichungsbereitschaft.",
   "modal.requestListing.description.summary.empty": "Optional. Öffnen, um Details hinzuzufügen.",
@@ -1028,5 +1028,6 @@
   "modal.requestListing.next.publishCta": "Weiter zur Veröffentlichung",
   "modal.requestListing.next.resumeCta": "Später fortfahren",
   "locationDraft.commercial.title": "Sichtbarkeit und Promotion",
-  "locationDraft.commercial.cta": "Weiter zur Zahlung"
+  "locationDraft.commercial.cta": "Weiter zur Zahlung",
+  "modal.requestListing.contexts.done": "Fertig"
 }

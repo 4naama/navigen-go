@@ -952,7 +952,7 @@
   "modal.requestListing.facebook.label": "Facebook link",
   "modal.requestListing.instagram.label": "Instagram link",
   "modal.requestListing.description.label": "Vállalkozás leírása",
-  "modal.requestListing.description.placeholder": "Írd le a vállalkozást",
+  "modal.requestListing.description.placeholder": "🔍 Írd le a vállalkozást",
   "modal.requestListing.description.help": "Közzétételi cél: legalább 200 karakter.",
   "modal.requestListing.group.label": "Csoport",
   "modal.requestListing.group.placeholder": "Csoport kiválasztása",
@@ -1003,7 +1003,7 @@
   "modal.requestListing.contexts.help.title": "Így működik",
   "modal.requestListing.contexts.help.line1": "Keresd meg a meglévő kontextus katalógusban a leginkább megfelelő útvonalakat ehhez a vállalkozáshoz.",
   "modal.requestListing.contexts.help.line2": "Legfeljebb 3 kontextust választhatsz.",
-  "modal.requestListing.contexts.help.line3": "A Bezárás visszavisz a Listing igénylése oldalra, hogy folytathasd az űrlap szerkesztését.",
+  "modal.requestListing.contexts.help.line3": "A Kész gombbal visszatérhetsz a Listing igénylése oldalra.",
   "modal.requestListing.help.line2": "Töltsd ki először a kötelező vállalkozási adatokat.",
   "modal.requestListing.help.line4": "A leírás, linkek és média javítják a minőséget és a közzétételi készültséget.",
   "modal.requestListing.description.summary.empty": "Opcionális. Nyisd meg a részletek hozzáadásához.",
@@ -1028,5 +1028,6 @@
   "modal.requestListing.next.publishCta": "Tovább a közzétételhez",
   "modal.requestListing.next.resumeCta": "Folytatás később",
   "locationDraft.commercial.title": "Láthatóság és promóció",
-  "locationDraft.commercial.cta": "Tovább a fizetéshez"
+  "locationDraft.commercial.cta": "Tovább a fizetéshez",
+  "modal.requestListing.contexts.done": "Kész"
 }
