@@ -4459,9 +4459,17 @@ export function createRequestListingModal(opts = {}) {
         </div>
 
         <div class="modal-field">
-          <label for="rl-contexts">${t('modal.requestListing.contexts.label') || 'Contexts (one or more)'} <span class="required-star">*</span></label>
-          <select id="rl-contexts" class="input" multiple size="6"></select>
-          <small class="modal-help-text">${t('modal.requestListing.contexts.help') || 'Select one or more existing context paths.'}</small>
+          <label for="rl-open-contexts">${t('modal.requestListing.contexts.label') || 'Contexts (one or more)'} <span class="required-star">*</span></label>
+          <select id="rl-contexts" class="input hidden" multiple size="6" aria-hidden="true" tabindex="-1"></select>
+          <button id="rl-open-contexts" type="button" class="modal-menu-item request-context-launch">
+            <span class="label">
+              <strong>${t('modal.requestListing.contexts.cta') || 'Choose contexts'}</strong>
+              <small id="rl-context-summary-text">${t('modal.requestListing.contexts.summary.empty') || 'Required. Search and choose up to 3 contexts.'}</small>
+            </span>
+            <span id="rl-context-count" class="request-context-count">0/3</span>
+          </button>
+          <div id="rl-context-selected" class="request-chip-row request-context-selected" aria-live="polite"></div>
+          <small class="modal-help-text">${t('modal.requestListing.contexts.help') || 'Select up to 3 existing context paths.'}</small>
         </div>
 
         <details id="rl-description-chip" class="cm-chip request-section-chip" style="margin-top:0;">
@@ -4550,6 +4558,10 @@ export function createRequestListingModal(opts = {}) {
   const rlGroup = modal.querySelector('#rl-group');
   const rlSubgroup = modal.querySelector('#rl-subgroup');
   const rlContexts = modal.querySelector('#rl-contexts');
+  const rlOpenContexts = modal.querySelector('#rl-open-contexts');
+  const rlContextSummaryText = modal.querySelector('#rl-context-summary-text');
+  const rlContextCount = modal.querySelector('#rl-context-count');
+  const rlContextSelected = modal.querySelector('#rl-context-selected');
   const rlTags = modal.querySelector('#rl-tags');
   const rlTagSuggestions = modal.querySelector('#rl-tag-suggestions');
   const rlCover = modal.querySelector('#rl-cover');
@@ -4592,9 +4604,10 @@ export function createRequestListingModal(opts = {}) {
   const prefillFacebook = String(prefill?.facebook || prefill?.links?.facebook || '').trim();
   const prefillInstagram = String(prefill?.instagram || prefill?.links?.instagram || '').trim();
   const prefillCover = String(prefill?.cover || prefill?.media?.cover || '').trim();
-  const prefillImages = Array.isArray(prefill?.images)
-    ? prefill.images
-    : (Array.isArray(prefill?.media?.images) ? prefill.media.images : []);
+  const REQUEST_LISTING_CONTEXT_LIMIT = 3;
+  const selectedContextSet = new Set(prefillContexts);
+  let requestListingContextRows = [];
+  let requestListingContextIndex = new Map();
 
   const selectedTagSet = new Set(prefillTags);
 
@@ -4611,6 +4624,52 @@ export function createRequestListingModal(opts = {}) {
     syncRequestListingTags();
   }
 
+  function getRequestListingContextLabel(key) {
+    const cleanKey = String(key || '').trim();
+    if (!cleanKey) return '';
+    return p8ContextLabel(requestListingContextIndex.get(cleanKey) || { key: cleanKey, titles: { en: cleanKey } });
+  }
+
+  function setRequestListingContexts(values) {
+    selectedContextSet.clear();
+    (Array.isArray(values) ? values : []).forEach((value) => {
+      const key = String(value || '').trim();
+      if (key) selectedContextSet.add(key);
+    });
+  }
+
+  function syncRequestListingContexts() {
+    if (rlContexts) {
+      Array.from(rlContexts.options || []).forEach((opt) => {
+        opt.selected = selectedContextSet.has(String(opt.value || '').trim());
+      });
+    }
+
+    if (rlContextCount) rlContextCount.textContent = `${selectedContextSet.size}/${REQUEST_LISTING_CONTEXT_LIMIT}`;
+    if (rlContextSummaryText) {
+      rlContextSummaryText.textContent = selectedContextSet.size
+        ? translatedOrFallback('modal.requestListing.contexts.summary.selected', 'Tap to review or change your selected contexts.')
+        : translatedOrFallback('modal.requestListing.contexts.summary.empty', 'Required. Search and choose up to 3 contexts.');
+    }
+
+    rlOpenContexts?.classList.toggle('is-active', selectedContextSet.size > 0);
+
+    if (rlContextSelected) {
+      rlContextSelected.innerHTML = '';
+      Array.from(selectedContextSet).forEach((key) => {
+        const chip = document.createElement('span');
+        chip.className = 'request-chip is-selected request-chip-static';
+        chip.textContent = getRequestListingContextLabel(key);
+        rlContextSelected.appendChild(chip);
+      });
+    }
+  }
+
+  function setRequestListingContextError(bad) {
+    rlOpenContexts?.classList.toggle('input-error', !!bad);
+    setInputErrorState(rlContexts, !!bad);
+  }
+
   function updateRequestListingDescriptionChip() {
     const value = String(rlDescription?.value || '').trim();
     const summary = value
@@ -4622,6 +4681,8 @@ export function createRequestListingModal(opts = {}) {
   }
 
   syncRequestListingTags();
+  setRequestListingContexts(prefillContexts);
+  syncRequestListingContexts();
 
   if (prefill) {
     if (rlName) rlName.value = String(prefill.name || '').trim();
@@ -4647,6 +4708,235 @@ export function createRequestListingModal(opts = {}) {
 
   updateRequestListingDescriptionChip();
   rlDescription?.addEventListener('input', updateRequestListingDescriptionChip);
+
+  function openRequestListingContextsModal() {
+    if (!requestListingContextRows.length) {
+      showToast(t('modal.requestListing.contexts.unavailable') || 'Context options are still loading.', 2200);
+      return;
+    }
+
+    const ctxId = 'request-listing-contexts-modal';
+    document.getElementById(ctxId)?.remove();
+
+    const closeContextPicker = (ev = null) => {
+      ev?.preventDefault?.();
+      ev?.stopPropagation?.();
+      hideModal(ctxId);
+      removeModal(ctxId);
+      showModal(id);
+      syncRequestListingContexts();
+      setRequestListingContextError(!selectedContextSet.size);
+    };
+
+    const ctxModal = injectModal({
+      id: ctxId,
+      title: t('modal.requestListing.contexts.modal.title') || 'Available contexts',
+      layout: 'menu',
+      onClose: (ev) => { closeContextPicker(ev); },
+      bodyHTML: `
+        <div class="modal-form-stack">
+          <div id="request-context-selected-card" class="modal-menu-item modal-static-card request-context-selected-card hidden">
+            <span class="label">
+              <strong>${t('modal.requestListing.contexts.selected.title') || 'Selected contexts'}</strong>
+              <small>${t('modal.requestListing.contexts.selected.help') || 'Choose up to 3 contexts. Tap a selected chip to remove it.'}</small>
+            </span>
+            <div id="request-context-selected-chips" class="request-chip-row"></div>
+          </div>
+
+          <div id="request-context-results" class="modal-menu-list request-context-list"></div>
+        </div>
+      `
+    });
+
+    const ctxTopBar = ctxModal.querySelector('.modal-top-bar');
+    const ctxSelectedCard = ctxModal.querySelector('#request-context-selected-card');
+    const ctxSelectedChips = ctxModal.querySelector('#request-context-selected-chips');
+    const ctxResults = ctxModal.querySelector('#request-context-results');
+
+    if (!ctxTopBar || !ctxResults) {
+      closeContextPicker();
+      return;
+    }
+
+    const searchRow = document.createElement('div');
+    searchRow.className = 'select-location-search-row';
+
+    const searchLeft = document.createElement('div');
+    searchLeft.className = 'select-location-search-left';
+
+    const searchInput = document.createElement('input');
+    searchInput.type = 'search';
+    searchInput.id = 'request-context-search';
+    searchInput.spellcheck = false;
+    searchInput.autocapitalize = 'off';
+    searchInput.autocomplete = 'off';
+    searchInput.value = '';
+    const contextPlaceholder = (t('modal.requestListing.contexts.search.placeholder') || 'Search contexts…').trim();
+    searchInput.placeholder = contextPlaceholder.startsWith('🔍') ? contextPlaceholder : `🔍 ${contextPlaceholder}`;
+
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'clear-x';
+    clearBtn.id = 'request-context-clear-search';
+    clearBtn.textContent = 'x';
+    clearBtn.style.display = 'none';
+    clearBtn.setAttribute('aria-label', t('common.search.clear') || 'Clear search');
+
+    searchLeft.appendChild(searchInput);
+    searchLeft.appendChild(clearBtn);
+    searchRow.appendChild(searchLeft);
+    ctxTopBar.appendChild(searchRow);
+
+    const norm = (s) =>
+      String(s || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[-_.\/]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const tokensOf = (q) => norm(q).split(/\s+/).filter(Boolean);
+
+    const syncClear = () => {
+      const hasValue = !!String(searchInput.value || '').trim();
+      clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
+    };
+
+    const searchableContextText = (row) => norm([
+      row?.key,
+      row?.pageKey,
+      row?.namespace,
+      row?.theme,
+      p8ContextLabel(row),
+      ...Object.values((row && typeof row.titles === 'object') ? row.titles : {})
+    ].join(' '));
+
+    const sortContextRows = (rows) => rows.slice().sort((a, b) => {
+      const aKey = String(a?.key || '').trim();
+      const bKey = String(b?.key || '').trim();
+      const aSelected = selectedContextSet.has(aKey) ? 1 : 0;
+      const bSelected = selectedContextSet.has(bKey) ? 1 : 0;
+      if (aSelected !== bSelected) return bSelected - aSelected;
+      return getRequestListingContextLabel(aKey).localeCompare(getRequestListingContextLabel(bKey), undefined, { sensitivity: 'base' });
+    });
+
+    const renderContextPicker = () => {
+      const selectedKeys = Array.from(selectedContextSet);
+
+      if (ctxSelectedCard && ctxSelectedChips) {
+        ctxSelectedChips.innerHTML = '';
+        ctxSelectedCard.classList.toggle('hidden', !selectedKeys.length);
+
+        selectedKeys.forEach((key) => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'request-chip is-selected';
+          chip.textContent = getRequestListingContextLabel(key);
+          chip.addEventListener('click', () => {
+            selectedContextSet.delete(key);
+            syncRequestListingContexts();
+            renderContextPicker();
+          });
+          ctxSelectedChips.appendChild(chip);
+        });
+      }
+
+      const tokens = tokensOf(searchInput.value);
+      const rows = sortContextRows(requestListingContextRows.filter((row) => {
+        if (!tokens.length) return true;
+        const hay = searchableContextText(row);
+        return tokens.every((token) => hay.includes(token));
+      }));
+
+      ctxResults.innerHTML = '';
+      if (!rows.length) {
+        const empty = document.createElement('div');
+        empty.className = 'modal-menu-item modal-static-card request-context-empty';
+        empty.innerHTML = `
+          <span class="label">
+            <strong>${t('modal.requestListing.contexts.empty.title') || 'No matching contexts'}</strong>
+            <small>${t('modal.requestListing.contexts.empty.desc') || 'Try another search term.'}</small>
+          </span>
+        `;
+        ctxResults.appendChild(empty);
+        return;
+      }
+
+      rows.forEach((row) => {
+        const key = String(row?.key || '').trim();
+        if (!key) return;
+
+        const isSelected = selectedContextSet.has(key);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `modal-menu-item request-context-option${isSelected ? ' is-selected' : ''}`;
+
+        const labelWrap = document.createElement('span');
+        labelWrap.className = 'label';
+
+        const title = document.createElement('strong');
+        title.textContent = getRequestListingContextLabel(key);
+
+        const meta = document.createElement('small');
+        meta.textContent = key;
+
+        labelWrap.appendChild(title);
+        labelWrap.appendChild(meta);
+
+        const check = document.createElement('span');
+        check.className = 'request-context-check';
+        check.setAttribute('aria-hidden', 'true');
+        check.textContent = isSelected ? '✓' : '';
+
+        button.appendChild(labelWrap);
+        button.appendChild(check);
+
+        button.addEventListener('click', () => {
+          if (selectedContextSet.has(key)) {
+            selectedContextSet.delete(key);
+          } else {
+            if (selectedContextSet.size >= REQUEST_LISTING_CONTEXT_LIMIT) {
+              showToast(t('modal.requestListing.contexts.limit') || 'You can select up to 3 contexts.', 2200);
+              return;
+            }
+            selectedContextSet.add(key);
+          }
+
+          syncRequestListingContexts();
+          renderContextPicker();
+        });
+
+        ctxResults.appendChild(button);
+      });
+    };
+
+    searchInput.addEventListener('input', () => {
+      syncClear();
+      renderContextPicker();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      syncClear();
+      renderContextPicker();
+      searchInput.focus();
+    });
+
+    syncClear();
+    renderContextPicker();
+
+    hideModal(id);
+    showModal(ctxId);
+    searchInput.focus();
+    setupTapOutClose(ctxId, closeContextPicker);
+  }
+
+  rlOpenContexts?.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    openRequestListingContextsModal();
+  });
 
   (async () => {
     const [structureRows, contextRows] = await Promise.all([
@@ -4740,19 +5030,20 @@ export function createRequestListingModal(opts = {}) {
       renderTagSuggestions();
     });
 
+    requestListingContextRows = contextRows.slice();
+    requestListingContextIndex = new Map(
+      requestListingContextRows.map((row) => [String(row?.key || '').trim(), row])
+    );
+
     if (rlContexts) {
-      rlContexts.innerHTML = contextRows.map((row) => {
+      rlContexts.innerHTML = requestListingContextRows.map((row) => {
         const key = String(row?.key || '').trim();
         const label = p8ContextLabel(row);
         return key ? `<option value="${key}">${label}</option>` : '';
       }).join('');
-
-      const selected = new Set(prefillContexts);
-      Array.from(rlContexts.options).forEach((opt) => {
-        opt.selected = selected.has(String(opt.value || '').trim());
-      });
     }
 
+    syncRequestListingContexts();
     setRequestListingLoading(false);
   })();
 
@@ -4767,8 +5058,8 @@ export function createRequestListingModal(opts = {}) {
     const description = String(modal.querySelector('#rl-description')?.value || '').trim();
     const groupKey = String(modal.querySelector('#rl-group')?.value || '').trim();
     const subgroupKey = String(modal.querySelector('#rl-subgroup')?.value || '').trim();
-    const contextVals = Array.from(modal.querySelector('#rl-contexts')?.selectedOptions || [])
-      .map((o) => String(o?.value || '').trim())
+    const contextVals = Array.from(selectedContextSet)
+      .map((value) => String(value || '').trim())
       .filter(Boolean);
     const tagVals = parseTagValues(modal.querySelector('#rl-tags')?.value || '');
     const cover = String(modal.querySelector('#rl-cover')?.value || '').trim();
@@ -4783,7 +5074,7 @@ export function createRequestListingModal(opts = {}) {
     setInputErrorState(rlCountry, !country || country.length !== 2);
     setInputErrorState(rlGroup, !groupKey);
     setInputErrorState(rlSubgroup, !subgroupKey);
-    setInputErrorState(rlContexts, !contextVals.length);
+    setRequestListingContextError(!contextVals.length);
     setInputErrorState(rlCoord, wantsCoord && !coord);
 
     if (!name || !address || !city || !country || country.length !== 2 || !groupKey || !subgroupKey || !contextVals.length || (wantsCoord && !coord)) {
@@ -4994,6 +5285,17 @@ function getModalHeaderHelpSpec(target) {
           title: _ownerText('root.bo.selectLocation.help.promoted.title', '🎁 Promoted — active campaign.'),
           desc: _ownerText('root.bo.selectLocation.help.promoted.desc', 'This business is running an active campaign right now.')
         }
+      ]
+    };
+  }
+  
+    if (modalId === 'request-listing-contexts-modal') {
+    return {
+      title: translatedOrFallback('modal.requestListing.contexts.help.title', 'How it works'),
+      bodyLines: [
+        translatedOrFallback('modal.requestListing.contexts.help.line1', 'Search the existing context catalog and choose the best matching paths for this business.'),
+        translatedOrFallback('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts.'),
+        translatedOrFallback('modal.requestListing.contexts.help.line3', 'Close returns you to Request Listing so you can keep editing the form.')
       ]
     };
   }
