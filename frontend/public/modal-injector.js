@@ -3229,11 +3229,6 @@ export function createSelectLocationModal() {
   entryStack.appendChild(recentBtn);
   inner.appendChild(entryStack);
 
-  const hintRow = document.createElement('div');
-  hintRow.id = 'select-location-search-hint';
-  hintRow.className = 'modal-menu-item modal-static-card syb-inline-note';
-  inner.appendChild(hintRow);
-
   const recentWrap = document.createElement('div');
   recentWrap.id = 'select-location-recent-wrap';
   recentWrap.className = 'hidden';
