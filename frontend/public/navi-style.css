@@ -4789,22 +4789,29 @@ select.input[multiple]{
   border-color:#b6c2cf;
 }
 
-#select-location-modal .syb-entry-card.syb-entry-card-primary{
-  background:#eef6ff;
-  border-color:#93c5fd;
+#select-location-modal .syb-inline-copy{
+  margin:0 0 12px;
+  text-align:left;
+  line-height:1.35;
 }
 
-#select-location-modal .syb-entry-card.syb-entry-card-primary:hover{
-  background:#e2f0ff;
-  border-color:#60a5fa;
+#select-location-modal .syb-inline-copy strong{
+  display:block;
+  font-size:0.95rem;
+  font-weight:700;
 }
 
-#select-location-modal .syb-inline-note,
+#select-location-modal .syb-inline-copy small{
+  display:block;
+  margin-top:2px;
+  font-size:0.85rem;
+  opacity:.78;
+}
+
 #select-location-modal .syb-empty-row{
   cursor:default;
 }
 
-#select-location-modal .syb-inline-note:hover,
 #select-location-modal .syb-empty-row:hover{
   transform:none;
 }

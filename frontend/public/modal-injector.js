@@ -3172,12 +3172,17 @@ export function createSelectLocationModal() {
   syncClear();
   topBar.appendChild(searchRow);
 
+  const hintRow = document.createElement('div');
+  hintRow.id = 'select-location-search-hint';
+  hintRow.className = 'syb-inline-copy';
+  inner.appendChild(hintRow);
+
   const entryStack = document.createElement('div');
   entryStack.className = 'syb-entry-stack';
 
   const createBtn = document.createElement('button');
   createBtn.type = 'button';
-  createBtn.className = 'modal-menu-item modal-callout-card syb-entry-card syb-entry-card-primary';
+  createBtn.className = 'modal-menu-item modal-callout-card syb-entry-card';
   createBtn.innerHTML = `
     <span class="icon-img">➕</span>
     <span class="label">
