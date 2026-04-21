@@ -4534,7 +4534,7 @@ export function createRequestListingModal(opts = {}) {
           </summary>
           <div class="cm-chip-body">
             <div class="modal-field" style="margin:0;">
-                            <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || '🔍 Describe the business'}"></textarea>
+              <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || '🔍 Describe the business'}"></textarea>
               <div class="modal-help-split">
                 <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
                 <small id="rl-description-count" class="modal-help-counter">0/200</small>
@@ -4864,11 +4864,16 @@ export function createRequestListingModal(opts = {}) {
             <div class="request-context-selected-head">
               <span class="label">
                 <strong>${t('modal.requestListing.contexts.selected.title') || 'Selected contexts'}</strong>
-                <small id="request-context-selected-help">${t('modal.requestListing.contexts.help') || 'Select up to 3 existing context paths.'}</small>
+                <small id="request-context-selected-help">${t('modal.requestListing.contexts.selected.empty') || 'Choose up to 3.'}</small>
               </span>
-              <button id="request-context-done" type="button" class="request-context-done">
+              <button
+                id="request-context-done"
+                type="button"
+                class="request-context-done"
+                aria-label="${t('modal.requestListing.contexts.done') || 'Done'}"
+                title="${t('modal.requestListing.contexts.done') || 'Done'}"
+              >
                 <span aria-hidden="true">✅</span>
-                <span>${t('modal.requestListing.contexts.done') || 'Done'}</span>
               </button>
             </div>
             <div id="request-context-selected-chips" class="request-chip-row"></div>
@@ -4945,12 +4950,30 @@ export function createRequestListingModal(opts = {}) {
       ...Object.values((row && typeof row.titles === 'object') ? row.titles : {})
     ].join(' '));
 
-    const sortContextRows = (rows) => rows.slice().sort((a, b) => {
+    const requestListingContextSeedTokens = () => tokensOf([
+      String(rlSubgroup?.selectedOptions?.[0]?.textContent || '').trim(),
+      String(rlGroup?.selectedOptions?.[0]?.textContent || '').trim(),
+      ...Array.from(selectedTagSet).map((tag) => String(tag || '').trim()),
+      String(rlCity?.value || '').trim()
+    ].join(' '));
+
+    const requestListingContextSeedScore = (row, tokens) => {
+      if (!tokens.length) return 0;
+      const hay = searchableContextText(row);
+      return tokens.reduce((score, token) => score + (hay.includes(token) ? Math.max(10 - Math.min(token.length, 9), 1) : 0), 0);
+    };
+
+    const sortContextRows = (rows, boostTokens = []) => rows.slice().sort((a, b) => {
       const aKey = String(a?.key || '').trim();
       const bKey = String(b?.key || '').trim();
       const aSelected = selectedContextSet.has(aKey) ? 1 : 0;
       const bSelected = selectedContextSet.has(bKey) ? 1 : 0;
       if (aSelected !== bSelected) return bSelected - aSelected;
+
+      const aBoost = requestListingContextSeedScore(a, boostTokens);
+      const bBoost = requestListingContextSeedScore(b, boostTokens);
+      if (aBoost !== bBoost) return bBoost - aBoost;
+
       return getRequestListingContextLabel(aKey).localeCompare(getRequestListingContextLabel(bKey), undefined, { sensitivity: 'base' });
     });
 
@@ -4964,7 +4987,7 @@ export function createRequestListingModal(opts = {}) {
         if (ctxSelectedHelp) {
           ctxSelectedHelp.textContent = selectedKeys.length
             ? (t('modal.requestListing.contexts.selected.help') || 'Tap a selected chip to remove it.')
-            : (t('modal.requestListing.contexts.help') || 'Select up to 3 existing context paths.');
+            : (t('modal.requestListing.contexts.selected.empty') || 'Choose up to 3.');
         }
 
         selectedKeys.forEach((key) => {
@@ -4982,11 +5005,12 @@ export function createRequestListingModal(opts = {}) {
       }
 
       const tokens = tokensOf(searchInput.value);
+      const boostTokens = tokens.length ? [] : requestListingContextSeedTokens();
       const rows = sortContextRows(requestListingContextRows.filter((row) => {
         if (!tokens.length) return true;
         const hay = searchableContextText(row);
         return tokens.every((token) => hay.includes(token));
-      }));
+      }), boostTokens);
 
       ctxResults.innerHTML = '';
       if (!rows.length) {
