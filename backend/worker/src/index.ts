@@ -2007,19 +2007,32 @@ export default {
         }), { status: 200, headers: { "content-type": "application/json", "x-ng-worker": "navigen-api" } });
       }
 
-      // --- Owner location selector: authoritative published candidate set (no secrets)
-      // GET /api/owner/location-options
+      // --- Owner location selector: query-first, capped, status-enriched BO search
+      // GET /api/owner/location-options?q=...&limit=5
       if (normPath === "/api/owner/location-options" && req.method === "GET") {
-        const items = await listPublishedLocationSelectorItems(env).catch(() => []);
-        return json({ items }, 200, { "cache-control": "no-store" });
+        const url = new URL(req.url);
+        const q = String(url.searchParams.get("q") || "").trim();
+        const limitRaw = Number(url.searchParams.get("limit") || 5);
+        const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(Math.trunc(limitRaw), 5)) : 5;
+
+        if (selectorNormalizeText(q).replace(/\s+/g, "").length < 3) {
+          return json(
+            { items: [], q, limit, threshold: 3 },
+            200,
+            { "cache-control": "no-store" }
+          );
+        }
+
+        const items = await listPublishedLocationSelectorItems(env, { query: q, limit }).catch(() => []);
+        return json({ items, q, limit }, 200, { "cache-control": "no-store" });
       }
       
-      // --- Owner Center: list device-bound locations (no secrets)
+      // --- Owner Center / SYB Recently used: list device-bound locations (no secrets)
       if (normPath === "/api/owner/sessions" && req.method === "GET") {
         const dev = readDeviceId(req);
         if (!dev) {
           // No device id cookie set on this browser. Owner Center is device-bound, so we can’t list sessions yet.
-          return json({ items: [], reason: "no_device_id" }, 200, { "cache-control": "no-store" });
+          return json({ items: [], rows: [], reason: "no_device_id" }, 200, { "cache-control": "no-store" });
         }
 
         const idxKey = devIndexKey(dev);
@@ -2028,7 +2041,6 @@ export default {
         try { ulids = rawIdx ? JSON.parse(rawIdx) : []; } catch { ulids = []; }
         if (!Array.isArray(ulids)) ulids = [];
 
-        // Only return ULIDs that still have a mapped session id
         const out: string[] = [];
         for (const u of ulids) {
           const ulid = String(u || "").trim();
@@ -2037,7 +2049,15 @@ export default {
           if (sid) out.push(ulid);
         }
 
-        return json({ items: out }, 200, { "cache-control": "no-store" });
+        const rows = (await Promise.all(
+          out.map(async (ulid) => {
+            const effective = await readPublishedEffectiveProfile(env, ulid).catch(() => null);
+            if (!effective) return null;
+            return await buildLocationSelectorItem(env, ulid, effective).catch(() => null);
+          })
+        )).filter(Boolean);
+
+        return json({ items: out, rows }, 200, { "cache-control": "no-store" });
       }
 
       // --- Owner Center: remove a device-bound location from this device registry
@@ -4760,37 +4780,190 @@ async function listContextShardUlids(env: Env, contextKey: string): Promise<stri
     .filter((v: string) => ULID_RE.test(v));
 }
 
-async function listPublishedLocationSelectorItems(env: Env): Promise<any[]> {
-  const out: any[] = [];
+function selectorNormalizeText(value: unknown): string {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[-_.\/]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function selectorTokens(value: unknown): string[] {
+  return selectorNormalizeText(value).split(/\s+/).filter(Boolean);
+}
+
+function selectorDisplayName(profile: any): string {
+  const raw = profile?.locationName ?? profile?.listedName ?? profile?.name ?? "";
+  if (typeof raw === "string") return String(raw || "").trim();
+  if (raw && typeof raw === "object") {
+    return String((raw as any).en || Object.values(raw)[0] || "").trim();
+  }
+  return "";
+}
+
+function selectorAddressLine(profile: any): string {
+  const c =
+    profile?.contactInformation && typeof profile.contactInformation === "object"
+      ? profile.contactInformation
+      : (profile?.contact && typeof profile.contact === "object" ? profile.contact : {});
+
+  return [c.address, c.city]
+    .map((v: any) => String(v || "").trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
+function selectorSearchHay(profile: any, slug: string): string {
+  const c =
+    profile?.contactInformation && typeof profile.contactInformation === "object"
+      ? profile.contactInformation
+      : (profile?.contact && typeof profile.contact === "object" ? profile.contact : {});
+
+  const tags = Array.isArray(profile?.tags)
+    ? profile.tags.map((k: any) => String(k || "").replace(/^tag\./, "")).join(" ")
+    : "";
+
+  const person = String(c.contactPerson || "").trim();
+  const contact = [c.phone, c.email, c.whatsapp, c.telegram, c.messenger]
+    .map((v: any) => String(v || "").trim())
+    .filter(Boolean)
+    .join(" ");
+
+  const addressSearch = [c.address, c.city, c.adminArea, c.postalCode, c.countryCode]
+    .map((v: any) => String(v || "").trim())
+    .filter(Boolean)
+    .join(" ");
+
+  const names = (() => {
+    const ln = profile?.locationName;
+    if (typeof ln === "string") return ln;
+    if (ln && typeof ln === "object") return Object.values(ln).map(v => String(v || "").trim()).filter(Boolean).join(" ");
+    return "";
+  })();
+
+  return selectorNormalizeText([names, slug, addressSearch, tags, person, contact].filter(Boolean).join(" "));
+}
+
+function selectorScore(profile: any, slug: string, query: string): number {
+  const qNorm = selectorNormalizeText(query);
+  const tokens = selectorTokens(query);
+  if (!tokens.length) return 0;
+
+  const nameNorm = selectorNormalizeText(selectorDisplayName(profile));
+  const slugNorm = selectorNormalizeText(slug);
+  const hay = selectorSearchHay(profile, slug);
+
+  if (!tokens.every((tok) => hay.includes(tok))) return 0;
+
+  let score = 0;
+
+  if (slugNorm === qNorm) score += 520;
+  if (nameNorm === qNorm) score += 480;
+  if (slugNorm.startsWith(qNorm)) score += 260;
+  if (nameNorm.startsWith(qNorm)) score += 220;
+  if (hay.includes(qNorm)) score += 40;
+
+  for (const tok of tokens) {
+    if (nameNorm.includes(tok)) score += 32;
+    if (slugNorm.includes(tok)) score += 28;
+    if (hay.includes(tok)) score += 8;
+  }
+
+  return score;
+}
+
+async function readPublishedEffectiveProfile(env: Env, ulid: string): Promise<any | null> {
+  const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" }) as any;
+  if (!base || typeof base !== "object") return null;
+
+  const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
+  return deepMergeProfile(base, override);
+}
+
+async function buildLocationSelectorItem(env: Env, ulid: string, effective: any): Promise<any | null> {
+  const slug = String(effective?.locationID || "").trim();
+  if (!slug) return null;
+
+  const vis = await computeVisibilityState(env, ulid);
+  const camp = await campaignEntitlementForUlid(env, ulid);
+
+  return {
+    ...effective,
+    id: ulid,
+    ID: ulid,
+    locationUID: ulid,
+    locationID: slug,
+    sybAddressLine: selectorAddressLine(effective),
+    sybStatus: {
+      ownedNow: vis.ownedNow,
+      visibilityState: vis.visibilityState,
+      courtesyUntil: vis.courtesyUntil,
+      campaignEntitled: camp.entitled,
+      campaignEndsAt: camp.endDate,
+      activeCampaignKey: camp.campaignKey
+    }
+  };
+}
+
+async function listPublishedLocationSelectorItems(
+  env: Env,
+  opts: { query?: string; limit?: number } = {}
+): Promise<any[]> {
+  const query = String(opts?.query || "").trim();
+  const tokens = selectorTokens(query);
+  const limitRaw = Number(opts?.limit || 5);
+  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(Math.trunc(limitRaw), 10)) : 5;
+
+  if (!tokens.length) return [];
+
+  const candidates: Array<{ ulid: string; effective: any; slug: string; score: number; displayName: string }> = [];
   let cursor: string | undefined = undefined;
 
   do {
     const page = await env.KV_STATUS.list({ prefix: "profile_base:", cursor });
     for (const key of page.keys) {
-      const name = String(key.name || "");
-      const ulid = name.replace(/^profile_base:/, "").trim();
+      const keyName = String(key.name || "");
+      const ulid = keyName.replace(/^profile_base:/, "").trim();
       if (!ULID_RE.test(ulid)) continue;
 
-      const base = await env.KV_STATUS.get(name, { type: "json" }) as any;
-      if (!base || typeof base !== "object") continue;
+      const effective = await readPublishedEffectiveProfile(env, ulid);
+      if (!effective || typeof effective !== "object") continue;
 
-      const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
-      const effective = deepMergeProfile(base, override);
-      const slug = String(effective?.locationID || base?.locationID || "").trim();
+      const slug = String(effective?.locationID || "").trim();
       if (!slug) continue;
 
-      out.push({
-        ...effective,
-        id: ulid,
-        ID: ulid,
-        locationUID: ulid,
-        locationID: slug
+      const score = selectorScore(effective, slug, query);
+      if (score <= 0) continue;
+
+      candidates.push({
+        ulid,
+        effective,
+        slug,
+        score,
+        displayName: selectorDisplayName(effective)
       });
     }
     cursor = page.cursor || undefined;
   } while (cursor);
 
-  return out;
+  if (!candidates.length) return [];
+
+  candidates.sort((a, b) => {
+    if (a.score !== b.score) return b.score - a.score;
+    return a.displayName.localeCompare(b.displayName, undefined, { sensitivity: "base" });
+  });
+
+  const top = candidates.slice(0, limit);
+
+  const items = await Promise.all(
+    top.map(async (row) => {
+      return await buildLocationSelectorItem(env, row.ulid, row.effective);
+    })
+  );
+
+  return items.filter(Boolean);
 }
 
 // ---------- handlers ----------

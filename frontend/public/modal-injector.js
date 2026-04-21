@@ -3113,7 +3113,7 @@ export function createSelectLocationModal() {
   const inner = modal.querySelector('.modal-body-inner');
 
   // injectModal already returns the modal hidden by default.
-  // Select your business now uses the shared modal header, so no bespoke sticky-offset sync is needed.
+  // Select your business uses the shared modal header; search stays in the sticky header and the rest lives in the body.
   if (!topBar || !inner) return;
 
   // Clone the existing root search input for identical styling (fallback to a plain input).
@@ -3126,7 +3126,6 @@ export function createSelectLocationModal() {
     ? rootSearch.cloneNode(true)
     : document.createElement('input');
 
-  // Ensure it's an input element.
   const searchInput = input instanceof HTMLInputElement ? input : document.createElement('input');
   searchInput.type = 'search';
   searchInput.id = 'select-location-search';
@@ -3135,19 +3134,15 @@ export function createSelectLocationModal() {
   searchInput.autocomplete = 'off';
   searchInput.value = '';
 
-  // ensure 🔍 prefix (even when i18n provides a string)
   const _ph = (t('root.bo.selectLocation.placeholder') || 'Search here…').trim();
   searchInput.placeholder = _ph.startsWith('🔍') ? _ph : `🔍 ${_ph}`;
 
-  // Search row wrapper stays inside the shared modal top bar.
   const searchRow = document.createElement('div');
   searchRow.className = 'select-location-search-row';
 
-  // Mirror the main shell structure: a relative wrapper around input + clear button.
   const searchLeft = document.createElement('div');
   searchLeft.className = 'select-location-search-left';
 
-  // clear button (visual + behavior like main shell)
   const clearBtn = document.createElement('button');
   clearBtn.type = 'button';
   clearBtn.className = 'clear-x';
@@ -3156,12 +3151,10 @@ export function createSelectLocationModal() {
   clearBtn.style.display = 'none';
   clearBtn.setAttribute('aria-label', t('common.search.clear') || 'Clear search');
 
-  // Build row: [ input + clear ]
   searchLeft.appendChild(searchInput);
   searchLeft.appendChild(clearBtn);
   searchRow.appendChild(searchLeft);
 
-  // Behavior: show/hide X and clear value
   const syncClear = () => {
     const hasValue = !!String(searchInput.value || '').trim();
     clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
@@ -3176,50 +3169,111 @@ export function createSelectLocationModal() {
     syncClear();
   });
 
-  // initial state
   syncClear();
-
-  // Insert the search row into the shared top bar so it aligns with Owner Center.
   topBar.appendChild(searchRow);
 
-  // ➕ My business isn’t listed (below search row, above results list)
-  const notListedBtn = document.createElement('button');
-  notListedBtn.type = 'button';
-  notListedBtn.className = 'modal-menu-item modal-callout-card';
-  notListedBtn.innerHTML = `
+  const entryStack = document.createElement('div');
+  entryStack.className = 'syb-entry-stack';
+
+  const createBtn = document.createElement('button');
+  createBtn.type = 'button';
+  createBtn.className = 'modal-menu-item modal-callout-card syb-entry-card syb-entry-card-primary';
+  createBtn.innerHTML = `
     <span class="icon-img">➕</span>
     <span class="label">
       <strong>${t('root.bo.notListed.title') || 'Create a location'}</strong><br>
       <small>${t('root.bo.notListed.desc') || 'Add your business.'}</small>
     </span>
   `;
-  notListedBtn.addEventListener('click', (e) => {
+  createBtn.addEventListener('click', (e) => {
     e.preventDefault();
     hideModal(id);
     showRequestListingModal({ returnTo: 'syb' });
   });
 
-  // IMPORTANT: this must be in the body (inner), not the sticky header (topBar)
-  inner.appendChild(notListedBtn);
+  const googleBtn = document.createElement('button');
+  googleBtn.type = 'button';
+  googleBtn.className = 'modal-menu-item modal-callout-card syb-entry-card';
+  googleBtn.innerHTML = `
+    <span class="icon-img">🌐</span>
+    <span class="label">
+      <strong>${t('root.bo.googleImport.title') || 'Import from Google'}</strong><br>
+      <small>${t('root.bo.googleImport.desc') || 'Bring in your business details.'}</small>
+    </span>
+  `;
+  googleBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    hideModal(id);
+    showImportGoogleLocationModal({ returnTo: 'syb' });
+  });
+
+  const recentBtn = document.createElement('button');
+  recentBtn.type = 'button';
+  recentBtn.id = 'select-location-recent-trigger';
+  recentBtn.className = 'modal-menu-item modal-callout-card syb-entry-card';
+  recentBtn.innerHTML = `
+    <span class="icon-img">📍</span>
+    <span class="label">
+      <strong>${t('root.bo.recent.title') || 'Recently used'}</strong><br>
+      <small>${t('root.bo.recent.desc') || 'View and manage your places.'}</small>
+    </span>
+  `;
+
+  entryStack.appendChild(createBtn);
+  entryStack.appendChild(googleBtn);
+  entryStack.appendChild(recentBtn);
+  inner.appendChild(entryStack);
+
+  const hintRow = document.createElement('div');
+  hintRow.id = 'select-location-search-hint';
+  hintRow.className = 'modal-menu-item modal-static-card syb-inline-note';
+  inner.appendChild(hintRow);
+
+  const recentWrap = document.createElement('div');
+  recentWrap.id = 'select-location-recent-wrap';
+  recentWrap.className = 'hidden';
+
+  const recentTitle = document.createElement('div');
+  recentTitle.className = 'syb-section-title';
+  recentTitle.textContent = t('root.bo.recent.listTitle') || 'Recently used';
+
+  const recentList = document.createElement('div');
+  recentList.id = 'select-location-recent-list';
+  recentList.className = 'modal-menu-list';
+
+  recentWrap.appendChild(recentTitle);
+  recentWrap.appendChild(recentList);
+  inner.appendChild(recentWrap);
 
   const loadingRow = document.createElement('div');
   loadingRow.id = 'select-location-loading';
-  loadingRow.className = 'modal-menu-item owner-center-loading';
+  loadingRow.className = 'modal-menu-item owner-center-loading hidden';
   loadingRow.setAttribute('aria-disabled', 'true');
   loadingRow.style.pointerEvents = 'none';
   loadingRow.innerHTML = `
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${t('root.bo.selectLocation.loading.title') || 'Loading businesses...'}</strong><br>
-      <small>${t('root.bo.selectLocation.loading.desc') || 'Getting locations available on the platform.'}</small>
+      <strong>${t('root.bo.selectLocation.search.loading.title') || 'Searching businesses...'}</strong><br>
+      <small>${t('root.bo.selectLocation.search.loading.desc') || 'Looking for matching businesses.'}</small>
     </span>
   `;
   inner.appendChild(loadingRow);
 
-  const list = document.createElement('div');
-  list.className = 'modal-menu-list';
-  inner.appendChild(list);
+  const resultsWrap = document.createElement('div');
+  resultsWrap.id = 'select-location-results-wrap';
+  resultsWrap.className = 'hidden';
 
-  // Select Location keeps a shared footer cover band so long result lists finish cleanly.
+  const resultsTitle = document.createElement('div');
+  resultsTitle.className = 'syb-section-title';
+  resultsTitle.textContent = t('root.bo.selectLocation.results.title') || 'Matching businesses';
+
+  const list = document.createElement('div');
+  list.id = 'select-location-results';
+  list.className = 'modal-menu-list';
+
+  resultsWrap.appendChild(resultsTitle);
+  resultsWrap.appendChild(list);
+  inner.appendChild(resultsWrap);
+
   if (!modal.querySelector('.modal-footer')) {
     const footer = document.createElement('div');
     footer.className = 'modal-footer modal-footer-cover';
@@ -3230,22 +3284,157 @@ export function createSelectLocationModal() {
   setupTapOutClose(id);
 }
 
-// Phase 5 BO: Select Location must not depend on pre-rendered DOM lists.
-// Root shell can have zero/partial `.location-button` nodes, so we load the full candidate set from
-// the authoritative `/api/owner/location-options` endpoint and perform token-AND, accent-insensitive
-// search over name/slug/address/adminArea/postalCode/countryCode/tags/contact.
-// UI rows display only "street, city" (no adminArea/countryCode/postalCode shown), but those fields remain searchable.
+function createImportGoogleLocationModal(opts = {}) {
+  const id = 'import-google-location-modal';
+  document.getElementById(id)?.remove();
+
+  const shouldReturnToSelectLocation = String(opts?.returnTo || '').trim() === 'syb';
+  const closeImportGoogle = (ev = null) => {
+    ev?.preventDefault?.();
+    ev?.stopPropagation();
+    hideModal(id);
+    if (shouldReturnToSelectLocation) showSelectLocationModal();
+  };
+
+  const modal = injectModal({
+    id,
+    title: t('root.bo.googleImport.title') || 'Import from Google',
+    layout: 'menu',
+    onClose: (ev) => { closeImportGoogle(ev); },
+    bodyHTML: `
+      <div class="modal-form-stack">
+        <div class="modal-menu-item modal-static-card syb-inline-note" aria-disabled="true">
+          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+            <strong>${t('root.bo.googleImport.title') || 'Import from Google'}</strong><br>
+            <small>${t('root.bo.googleImport.desc') || 'Bring in your business details.'}</small>
+          </span>
+        </div>
+
+        <div class="modal-field">
+          <label for="google-import-place-id">${t('root.bo.googleImport.placeholder') || 'Google place_id'}</label>
+          <input id="google-import-place-id" class="input" type="text" maxlength="256" placeholder="${t('root.bo.googleImport.placeholder') || 'Google place_id'}" />
+        </div>
+
+        <div class="modal-actions">
+          <button id="google-import-submit" type="button" class="modal-body-button">
+            ${t('root.bo.googleImport.submit') || 'Save Google draft'}
+          </button>
+
+          <button id="google-import-cancel" type="button" class="modal-body-button">
+            ${t('common.cancel') || 'Cancel'}
+          </button>
+        </div>
+      </div>
+    `
+  });
+
+  const placeIdInput = modal.querySelector('#google-import-place-id');
+  const submitBtn = modal.querySelector('#google-import-submit');
+
+  modal.querySelector('#google-import-cancel')?.addEventListener('click', (ev) => {
+    closeImportGoogle(ev);
+  });
+
+  submitBtn?.addEventListener('click', async () => {
+    const googlePlaceId = String(placeIdInput?.value || '').trim();
+    setInputErrorState(placeIdInput, !googlePlaceId);
+
+    if (!googlePlaceId) {
+      showToast(t('root.bo.googleImport.error') || 'Could not create Google draft.', 2200);
+      return;
+    }
+
+    if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = true;
+
+    let res = null;
+    let payload = null;
+    try {
+      res = await fetch('/api/location/draft', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          googlePlaceId,
+          draft: {}
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      payload = await res.json().catch(() => null);
+    } catch {
+      res = null;
+      payload = null;
+    }
+
+    if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = false;
+
+    if (!res?.ok) {
+      const msg = String(payload?.error?.message || '').trim();
+      showToast(msg || (t('root.bo.googleImport.error') || 'Could not create Google draft.'), 2400);
+      return;
+    }
+
+    const draftULID = String(payload?.draftULID || '').trim();
+    const draftSessionId = String(payload?.draftSessionId || '').trim();
+    if (!draftULID || !draftSessionId) {
+      showToast(t('root.bo.googleImport.error') || 'Could not create Google draft.', 2400);
+      return;
+    }
+
+    const savedDraft = {
+      draftULID,
+      draftSessionId,
+      mode: 'google',
+      googlePlaceId,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    savePendingLocationDraft(savedDraft);
+    hideModal(id);
+    showToast(t('root.bo.googleImport.success') || 'Google draft saved.', 2200);
+    await showCampaignManagementModal(draftULID, {
+      guest: true,
+      p8Draft: savedDraft,
+      preferEmptyDraft: true
+    });
+  });
+
+  setupTapOutClose(id, closeImportGoogle);
+}
+
+export function showImportGoogleLocationModal(opts = {}) {
+  const id = 'import-google-location-modal';
+  document.getElementById(id)?.remove();
+  createImportGoogleLocationModal(opts);
+  showModal(id);
+}
+
 export async function showSelectLocationModal() {
   const id = 'select-location-modal';
-  if (!document.getElementById(id)) createSelectLocationModal();
+  document.getElementById(id)?.remove();
+  createSelectLocationModal();
   showModal(id);
 
   const modal = document.getElementById(id);
   const input = modal?.querySelector('#select-location-search');
-  const list = modal?.querySelector('.modal-menu-list'); const loadingRow = modal?.querySelector('#select-location-loading');
-  if (!modal || !list) return null;
+  const list = modal?.querySelector('#select-location-results');
+  const listWrap = modal?.querySelector('#select-location-results-wrap');
+  const loadingRow = modal?.querySelector('#select-location-loading');
+  const hintRow = modal?.querySelector('#select-location-search-hint');
+  const recentBtn = modal?.querySelector('#select-location-recent-trigger');
+  const recentWrap = modal?.querySelector('#select-location-recent-wrap');
+  const recentList = modal?.querySelector('#select-location-recent-list');
 
-  const ULID = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+  if (!modal || !(input instanceof HTMLInputElement) || !list || !listWrap || !loadingRow || !hintRow || !recentBtn || !recentWrap || !recentList) return null;
+
+  modal.dataset.pick = '';
+
+  const MIN_QUERY_LEN = 3;
+  const SEARCH_LIMIT = 5;
+  let searchSeq = 0;
+  let searchTimer = 0;
+  let recentLoaded = false;
+  let recentLoading = false;
 
   const norm = (s) =>
     String(s || '')
@@ -3256,236 +3445,253 @@ export async function showSelectLocationModal() {
       .replace(/\s+/g, ' ')
       .trim();
 
-  const tokensOf = (q) => norm(q).split(/\s+/).filter(Boolean);
+  const compactQueryLen = (q) => norm(q).replace(/\s+/g, '').length;
 
-  if (loadingRow) loadingRow.classList.remove('hidden');
-  list.innerHTML = '';
-
-  const loadProfiles = async () => {
-    try {
-      const res = await fetch('/api/owner/location-options', {
-        cache: 'no-store',
-        credentials: 'include'
-      });
-      if (!res.ok) return [];
-      const j = await res.json().catch(() => null);
-      const arr = Array.isArray(j?.items) ? j.items : [];
-      if (!arr.length) return [];
-
-      return arr
-        .map((rec) => {
-          const locName =
-            rec?.locationName && typeof rec.locationName === 'object'
-              ? String(rec.locationName.en || Object.values(rec.locationName)[0] || '').trim()
-              : String(rec?.locationName || '').trim();
-
-          const slug = String(rec?.locationID || rec?.slug || '').trim();
-          const rawId = String(rec?.ID || rec?.id || rec?.locationUID || '').trim();
-          const uid = ULID.test(rawId) ? rawId : '';
-
-          const c = (rec && rec.contactInformation) || {};
-
-          const addrDisplay = [c.address, c.city, c.postalCode]
-            .filter(Boolean)
-            .map((v) => String(v).trim())
-            .join(', ');
-
-          const addrSearch = [c.address, c.city, c.adminArea, c.postalCode, c.countryCode]
-            .filter(Boolean)
-            .map((v) => String(v).trim())
-            .join(' ');
-
-          const tags = Array.isArray(rec?.tags)
-            ? rec.tags.map((k) => String(k).replace(/^tag\./, '')).join(' ')
-            : '';
-
-          const person = String(c.contactPerson || '').trim();
-          const contact = [c.phone, c.email, c.whatsapp, c.telegram, c.messenger]
-            .filter(Boolean)
-            .map((v) => String(v).trim())
-            .join(' ');
-
-          const hay = norm([locName, slug, addrSearch, tags, person, contact].filter(Boolean).join(' '));
-
-          const media = (rec && typeof rec.media === 'object') ? rec.media : {};
-          const cover = String((media?.cover || rec?.imageSrc || '')).trim();
-          const images = Array.isArray(rec?.images) ? rec.images
-            : (Array.isArray(media?.images) ? media.images : []);
-
-          return { name: locName, slug, uid, addrDisplay, hay, media, images, cover, raw: rec };
-        })
-        .filter((x) => x.name && x.slug);
-    } catch {
-      return [];
-    } finally {
-      if (loadingRow) loadingRow.classList.add('hidden');
+  const getName = (item) => {
+    const raw = item?.locationName;
+    if (typeof raw === 'string') return String(raw || '').trim();
+    if (raw && typeof raw === 'object') {
+      return String(raw.en || Object.values(raw)[0] || '').trim();
     }
+    return String(item?.displayName || item?.name || item?.locationID || '').trim();
   };
 
-  const items = await loadProfiles();
+  const setHint = (title, desc = '') => {
+    hintRow.classList.remove('hidden');
+    hintRow.innerHTML = `
+      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+        <strong>${title}</strong>${desc ? `<br><small>${desc}</small>` : ''}
+      </span>
+    `;
+  };
 
-  // De-dupe by authoritative slug (locationID) only
-  const bySlug = new Map();
-  items.forEach((x) => bySlug.set(x.slug, x));
-  const uniqItems = Array.from(bySlug.values());
-  // Cache ownership probes per tab to avoid repeated /api/status calls during SYB browsing.
-  const ownedCache = new Map(); // slug -> { owned:boolean, vis:string, courtesyUntil:string }
+  const applyStatusDecor = (row, status) => {
+    const dot = row.querySelector('.syb-status-dot');
+    const gift = row.querySelector('.syb-gift');
+    if (!dot || !gift) return;
 
-  const render = (q) => {
-    const toks = tokensOf(q);
-    list.innerHTML = '';
+    const owned = status?.ownedNow === true;
+    const vis = String(status?.visibilityState || '').trim();
+    const courtesyUntil = String(status?.courtesyUntil || '').trim();
+    const entitled = status?.campaignEntitled === true;
 
-    const filtered = uniqItems
-      .filter((x) => (toks.length ? toks.every((tok) => x.hay.includes(tok)) : true))
-      .slice(0, 40);
+    dot.classList.toggle('syb-taken', owned);
+    dot.classList.toggle('syb-parked', !owned && vis === 'hidden');
+    dot.classList.toggle('syb-held', !owned && !!courtesyUntil);
+    dot.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
 
-    if (!filtered.length) {
-      const p = document.createElement('p');
-      p.className = 'muted';
-      p.textContent = t('root.bo.selectLocation.none') || 'No matches.';
-      list.appendChild(p);
+    gift.classList.toggle('syb-gift-on', entitled);
+    gift.style.display = entitled ? '' : 'none';
+  };
+
+  const buildPickPayload = (item) => {
+    const media = (item && typeof item.media === 'object') ? item.media : {};
+    const images = Array.isArray(item?.images) ? item.images
+      : (Array.isArray(media?.images) ? media.images : []);
+    const cover = String(media?.cover || item?.imageSrc || '').trim();
+
+    return {
+      locationID: String(item?.locationID || '').trim(),
+      slug: String(item?.locationID || '').trim(),
+      id: String(item?.ID || item?.id || item?.locationUID || '').trim() || String(item?.locationID || '').trim(),
+      displayName: getName(item),
+      name: getName(item),
+      imageSrc: cover,
+      media: {
+        ...(media || {}),
+        cover: cover || String(media?.cover || '').trim()
+      },
+      images,
+      tags: Array.isArray(item?.tags) ? item.tags : [],
+      descriptions: (item && typeof item.descriptions === 'object') ? item.descriptions : {},
+      contactInformation: (item && typeof item.contactInformation === 'object') ? item.contactInformation : {},
+      links: (item && typeof item.links === 'object') ? item.links : {},
+      raw: item || null
+    };
+  };
+
+  const makeRow = (item) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'modal-menu-item syb-card';
+
+    const displayName = getName(item);
+    const line2 = String(item?.sybAddressLine || '').trim() || String(item?.locationID || '').trim();
+
+    btn.innerHTML = `
+      <span class="icon-img">📍</span>
+      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+        <strong>${displayName}</strong><br><small>${line2}</small>
+      </span>
+      <span class="syb-status-dot" aria-hidden="true"></span>
+      <span class="syb-gift" aria-hidden="true">🎁</span>
+    `;
+
+    applyStatusDecor(btn, item?.sybStatus || {});
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      modal.dataset.pick = '';
+      modal.dataset.pick = JSON.stringify(buildPickPayload(item));
+      hideModal(id);
+    });
+
+    return btn;
+  };
+
+  const renderRows = (targetList, items, emptyTitle, emptyDesc) => {
+    targetList.innerHTML = '';
+
+    if (!Array.isArray(items) || !items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'modal-menu-item modal-static-card syb-empty-row';
+      empty.innerHTML = `
+        <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+          <strong>${emptyTitle}</strong>${emptyDesc ? `<br><small>${emptyDesc}</small>` : ''}
+        </span>
+      `;
+      targetList.appendChild(empty);
       return;
     }
 
-    filtered.forEach((x) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'modal-menu-item';
-      btn.dataset.slug = String(x.slug || '').trim(); // used by post-render owned-dot pass
-
-      const line2 = x.addrDisplay ? x.addrDisplay : x.slug;
-
-      btn.classList.add('syb-card');
-
-      btn.innerHTML = `
-        <span class="icon-img">📍</span>
-        <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-          <strong>${x.name}</strong><br><small>${line2}</small>
-        </span>
-
-        <span class="syb-status-dot" aria-hidden="true"></span>
-        <span class="syb-gift" aria-hidden="true">🎁</span>
-      `;
-
-      // Owned dot is applied in a single post-render pass (prevents async races on rerender).
-
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        hideModal(id);
-
-        const payload = {
-          locationID: x.slug,
-          id: x.uid || x.slug,
-          displayName: x.name,
-          name: x.name,
-
-          // Provide image inputs the LPM already understands
-          imageSrc: x.cover || '',
-          media: {
-            ...(x.media || {}),
-            cover: x.cover || (x.media && x.media.cover) || ''
-          },
-          images: Array.isArray(x.images) ? x.images : (x.media && Array.isArray(x.media.images) ? x.media.images : []),
-
-          // Pass-through fields the LPM wiring expects (keeps BO-opened LPM identical to ctx-opened LPM)
-          tags: Array.isArray((x.raw && x.raw.tags)) ? x.raw.tags : [],
-          descriptions: (x.raw && typeof x.raw.descriptions === 'object') ? x.raw.descriptions : {},
-          contactInformation: (x.raw && typeof x.raw.contactInformation === 'object') ? x.raw.contactInformation : {},
-          links: (x.raw && typeof x.raw.links === 'object') ? x.raw.links : {},
-          raw: x.raw || null          
-        };
-
-        modal.dataset.pick = ''; // clear any stale pick before writing a new one
-
-        modal.dataset.pick = JSON.stringify(payload);
-      });
-
-      list.appendChild(btn);
+    items.forEach((item) => {
+      targetList.appendChild(makeRow(item));
     });
-    
-    // Apply owned dots in a single post-render pass (works even when list rerenders quickly).
-    ;(async () => {
-      const rows = Array.from(list.querySelectorAll('button.modal-menu-item'));
-      await Promise.all(rows.map(async (el) => {
-        try {
-          const slug = String(el.dataset.slug || '').trim();
-          if (!slug) return;
-
-          const dot = el.querySelector('.syb-status-dot');
-          const gift = el.querySelector('.syb-gift');
-          if (gift) gift.style.display = 'none';
-          if (!dot) return;
-
-          if (ownedCache.has(slug)) {
-            const s = ownedCache.get(slug) || {};
-            const owned = s.owned === true;
-            const vis = String(s.vis || '').trim();
-            const courtesyUntil = String(s.courtesyUntil || '').trim();
-
-            // 🔴 taken (owned)
-            dot.classList.toggle('syb-taken', owned);
-
-            // 🟠 parked (unowned + hidden)
-            dot.classList.toggle('syb-parked', !owned && vis === 'hidden');
-
-            // 🔵 held/courtesy (unowned + courtesy window)
-            dot.classList.toggle('syb-held', !owned && !!courtesyUntil);
-
-            // 🟢 free (unowned + discoverable baseline)
-            dot.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
-
-            if (gift) {
-              gift.classList.toggle('syb-gift-on', (s.entitled === true));
-              gift.style.display = (s.entitled === true) ? '' : 'none';
-            }
-
-            return;
-          }
-
-          const u = new URL('/api/status', location.origin);
-          u.searchParams.set('locationID', slug);
-
-          const r = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
-          if (!r.ok) {
-            ownedCache.set(slug, { owned: false, vis: 'visible', courtesyUntil: '', entitled: false });
-            dot.classList.add('syb-free');
-            dot.classList.remove('syb-taken');
-            return;
-          }
-
-          const j = await r.json().catch(() => null);
-          const owned = (j?.ownedNow === true);
-          const vis = String(j?.visibilityState || '').trim();
-          const courtesyUntil = String(j?.courtesyUntil || '').trim();
-          
-          const entitled = (j?.campaignEntitled === true);
-          if (gift) {
-            // Deterministic UX: never show an undecided gift.
-            gift.classList.toggle('syb-gift-on', entitled);
-            gift.style.display = entitled ? '' : 'none';
-          }
-
-          ownedCache.set(slug, { owned, vis, courtesyUntil, entitled });
-
-          // 🔴 taken (owned)
-          dot.classList.toggle('syb-taken', owned);
-
-          // 🟠 parked (unowned + hidden)
-          dot.classList.toggle('syb-parked', !owned && vis === 'hidden');
-
-          // 🔵 held/courtesy (unowned + courtesy window)
-          dot.classList.toggle('syb-held', !owned && !!courtesyUntil);
-
-          // 🟢 free (unowned + discoverable baseline)
-          dot.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
-        } catch {}
-      }));
-    })();
-        
   };
 
-  render('');
-  if (input) input.oninput = () => render(input.value);
+  const resetSearchUi = () => {
+    searchSeq += 1;
+    loadingRow.classList.add('hidden');
+    listWrap.classList.add('hidden');
+    list.innerHTML = '';
+    if (String(input.value || '').trim()) {
+      setHint(
+        t('root.bo.selectLocation.search.waiting.title') || 'Keep typing',
+        t('root.bo.selectLocation.search.waiting.desc') || 'Search starts after 3 characters.'
+      );
+    } else {
+      setHint(
+        t('root.bo.selectLocation.search.idle.title') || 'Start with search or choose a route',
+        t('root.bo.selectLocation.search.idle.desc') || 'Type at least 3 characters to search existing businesses.'
+      );
+    }
+  };
+
+  const runSearch = async (rawQuery) => {
+    const query = String(rawQuery || '').trim();
+    const queryLen = compactQueryLen(query);
+
+    if (queryLen < MIN_QUERY_LEN) {
+      resetSearchUi();
+      return;
+    }
+
+    const seq = ++searchSeq;
+    recentWrap.classList.add('hidden');
+    hintRow.classList.add('hidden');
+    loadingRow.classList.remove('hidden');
+    listWrap.classList.add('hidden');
+    list.innerHTML = '';
+
+    let items = [];
+    try {
+      const res = await fetch(`/api/owner/location-options?q=${encodeURIComponent(query)}&limit=${SEARCH_LIMIT}`, {
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      const j = res.ok ? await res.json().catch(() => null) : null;
+      items = Array.isArray(j?.items) ? j.items : [];
+    } catch {
+      items = [];
+    }
+
+    if (seq !== searchSeq || !document.getElementById(id)) return;
+
+    loadingRow.classList.add('hidden');
+    listWrap.classList.remove('hidden');
+
+    if (items.length) {
+      hintRow.classList.add('hidden');
+      renderRows(
+        list,
+        items,
+        t('root.bo.selectLocation.search.none.title') || 'No matching businesses',
+        t('root.bo.selectLocation.search.none.desc') || 'Continue typing, or use Create a location / Import from Google.'
+      );
+      return;
+    }
+
+    setHint(
+      t('root.bo.selectLocation.search.none.title') || 'No matching businesses',
+      t('root.bo.selectLocation.search.none.desc') || 'Continue typing, or use Create a location / Import from Google.'
+    );
+    listWrap.classList.add('hidden');
+  };
+
+  const loadRecentlyUsed = async () => {
+    if (recentLoading) return;
+    recentLoading = true;
+    recentWrap.classList.remove('hidden');
+    recentList.innerHTML = '';
+
+    const loading = document.createElement('div');
+    loading.className = 'modal-menu-item modal-static-card syb-empty-row';
+    loading.innerHTML = `
+      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+        <strong>${t('root.bo.recent.loading.title') || 'Loading recently used...'}</strong><br>
+        <small>${t('root.bo.recent.loading.desc') || 'Getting places saved on this device.'}</small>
+      </span>
+    `;
+    recentList.appendChild(loading);
+
+    let rows = [];
+    try {
+      const res = await fetch('/api/owner/sessions', {
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      const j = res.ok ? await res.json().catch(() => null) : null;
+      rows = Array.isArray(j?.rows) ? j.rows : [];
+    } catch {
+      rows = [];
+    }
+
+    recentList.innerHTML = '';
+    renderRows(
+      recentList,
+      rows.slice(0, 5),
+      t('root.bo.recent.empty.title') || 'No saved places yet',
+      t('root.bo.recent.empty.desc') || 'Places you manage on this device will appear here.'
+    );
+    recentLoaded = true;
+    recentLoading = false;
+  };
+
+  recentBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+
+    const opening = recentWrap.classList.contains('hidden');
+    recentWrap.classList.toggle('hidden', !opening);
+    listWrap.classList.add('hidden');
+    loadingRow.classList.add('hidden');
+
+    if (opening) {
+      hintRow.classList.add('hidden');
+      if (!recentLoaded) await loadRecentlyUsed();
+    } else {
+      resetSearchUi();
+    }
+  });
+
+  input.addEventListener('input', () => {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => {
+      runSearch(input.value);
+    }, 280);
+  });
+
+  resetSearchUi();
+  requestAnimationFrame(() => input.focus());
 
   return await new Promise((resolve) => {
     const tick = setInterval(() => {

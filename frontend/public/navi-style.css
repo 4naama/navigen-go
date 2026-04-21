@@ -4773,6 +4773,62 @@ select.input[multiple]{
   padding-bottom: 8px;
 }
 
+#select-location-modal .syb-entry-stack{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+#select-location-modal .syb-entry-card{
+  background:#f8fafc;
+  border-color:#dbe1e8;
+}
+
+#select-location-modal .syb-entry-card:hover{
+  background:#f1f5f9;
+  border-color:#b6c2cf;
+}
+
+#select-location-modal .syb-entry-card.syb-entry-card-primary{
+  background:#eef6ff;
+  border-color:#93c5fd;
+}
+
+#select-location-modal .syb-entry-card.syb-entry-card-primary:hover{
+  background:#e2f0ff;
+  border-color:#60a5fa;
+}
+
+#select-location-modal .syb-inline-note,
+#select-location-modal .syb-empty-row{
+  cursor:default;
+}
+
+#select-location-modal .syb-inline-note:hover,
+#select-location-modal .syb-empty-row:hover{
+  transform:none;
+}
+
+#select-location-modal .syb-section-title{
+  margin:14px 0 8px;
+  font-size:0.8rem;
+  font-weight:700;
+  line-height:1.2;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  opacity:.72;
+  text-align:left;
+}
+
+#select-location-modal #select-location-loading{
+  margin-top:12px;
+}
+
+#select-location-modal #select-location-results-wrap.hidden,
+#select-location-modal #select-location-recent-wrap.hidden{
+  display:none;
+}
+
 /* Shared callout card spacing: keep a small room before the following modal list. */
 .modal-menu-item.modal-callout-card + .modal-menu-list{
   margin-top: 10px;

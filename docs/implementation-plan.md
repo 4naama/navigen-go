@@ -903,8 +903,14 @@ Actions (minimum set):
    • Opens an explanatory modal
 
 2) Run campaign
-   • Opens a location selector
-   • Routes the chosen location into Owner Settings / Campaign Funding flow
+   • Opens a search-first “Select your business” (SYB) modal
+   • SYB opens blank (no generic location list)
+   • SYB presents three static owner routes:
+     – Create a location
+     – Import from Google
+     – Recently used
+   • Existing locations appear only after typed query threshold is satisfied
+   • Selecting an existing location routes into the owner / commercial flow
 
 3) Owner Center
    • Opens Owner Center modal for previously authenticated locations on this device
@@ -917,6 +923,58 @@ Rules:
 • No analytics data is shown directly in this group.
 • All labels and descriptions must be translation-driven.
 • Actions must reuse existing modals where available.
+
+--------------------------------------------------------------------
+5.3a Search-first “Select your business” (SYB) modal
+--------------------------------------------------------------------
+
+Plain language:
+SYB is not a browse surface.
+It is an owner lookup surface for finding one known business with minimal load.
+
+UI contract on open:
+• Search field visible
+• No generic location cards rendered initially
+• Three static owner cards shown:
+  1) Create a location
+  2) Import from Google
+  3) Recently used
+
+Static routes:
+• Create a location
+  – opens the manual self-creation draft flow
+
+• Import from Google
+  – opens the Google-reference self-creation path
+  – owner pastes `googlePlaceId` / `place_id`
+
+• Recently used
+  – opens the device-bound owner subset already known on this device
+  – this is the quick-return surface for owner-managed places
+  – it must not require loading platform-wide business inventory
+
+Search contract:
+• Client debounces typing (~250–300 ms)
+• Client does not request search before normalized query length reaches 3
+• Client calls:
+  – `/api/owner/location-options?q=<term>&limit=5`
+• Server returns at most 5 already-ranked rows
+• Result rows already include display-ready status metadata
+• Client MUST NOT make per-row `/api/status` follow-up calls
+• “Loading businesses...” style UI, if shown, appears only after an actual search request begins
+
+Result contract (minimum semantics per row):
+• stable location identity
+• display name
+• compact address line
+• visibility / ownership display state for SYB dot rendering
+• campaign / promotion presence indicator when applicable
+
+Rules:
+• No full inventory render on modal open
+• No client-side filtering over a preloaded global location list
+• Search is query-first, capped, and server-ranked
+• Search-first SYB exists to minimize Cloudflare compute, bandwidth, DOM work, and owner scanning burden
 
 --------------------------------------------------------------------
 5.4 Individuals group
@@ -967,9 +1025,20 @@ Expected:
 H2 — Business Owners actions
 1) Expand Business Owners
 2) Click each card
+
 Expected:
 • Correct modal opens for each action
 • No navigation to Dash occurs
+
+For Run campaign / SYB specifically:
+• SYB opens with search field visible
+• No generic platform-wide location list is rendered initially
+• Create a location card visible
+• Import from Google card visible
+• Recently used card visible
+• No network search occurs before 3 typed characters
+• After threshold query, at most 5 ranked results appear
+• Result rows already include status indicators without per-row `/api/status` fan-out
 
 H3 — Individuals actions
 1) Expand Individuals
@@ -2253,8 +2322,18 @@ Implementation:
 • SearchShardDO:
   - store slug:<slug> → ULID
   - store tok:<token> postings lists
+  - power `/api/owner/location-options?q=<term>&limit=5` without dataset scans
+  - support deterministic capped ranking for owner lookup results
+
 • ContextShardDO:
   - store ulids list per contextKey
+
+SYB endpoint contract:
+• `/api/owner/location-options` MUST use indexed lookup only
+• it MUST NOT preload or scan the full business inventory
+• it MUST return at most 5 ranked matches
+• it MUST include display-ready SYB status metadata in the same payload
+• client MUST NOT fan out `/api/status` per result row
 
 Update source:
 • Only publish and KV base changes trigger DO updates.

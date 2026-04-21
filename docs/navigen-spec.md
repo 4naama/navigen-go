@@ -3048,7 +3048,14 @@ Rules:
 
 Business Owners actions (minimum set):
 • How it works? → opens an explanatory modal
-• Run campaign → opens location selector, then Owner Settings / Campaign Funding flow
+• Run campaign → opens a search-first “Select your business” (SYB) modal
+  – SYB opens blank and does not render a generic location list up front
+  – SYB presents three static owner routes:
+    • Create a location
+    • Import from Google
+    • Recently used
+  – Existing locations appear only after the owner types a query that satisfies the search threshold
+  – Selecting an existing location routes into the owner / commercial flow
 • Owner Center → opens Owner Center modal
 • See example dashboards → opens Example Dashboards modal
 
@@ -5199,9 +5206,9 @@ Search is intentionally simple. It is not a general-purpose full-text engine.
 --------------------------------------------------------------------
 13.2 Search Modalities
 
-There are **three categories** of search:
+There are **four categories** of search:
 
-A) **Context-Based Search (Primary)**  
+A) **Context-Based Search (Primary Public Mode)**  
    Activated when the user navigates into a context such as:
      • souvenirs/germany/berlin
      • restaurants/germany
@@ -5214,16 +5221,35 @@ A) **Context-Based Search (Primary)**
    The server returns only the locations mapped to that context.
    Search then only filters/sorts these results locally.
 
-B) **Name-Based Search (Local Filter)**  
-   The search bar filters the **already loaded** list of locations by:
+B) **Context-Scoped Name Filter (Local Filter)**  
+   Within an already loaded public context list, the search bar filters by:
 
      • locationName (localized)  
      • detailSlug (optional)  
      • transliteration-safe matching (accents removed)  
 
-   The app does **not** request new data while typing.
+   The app does **not** request new context data while typing.
 
-C) **Category / Tag Search (Context-Aware)**  
+C) **Owner Business Lookup (SYB, Search-First)**  
+   The Business Owner “Select your business” modal is a query-first owner lookup surface.
+
+   Rules:
+     • no generic location list is rendered on modal open
+     • owner types first
+     • client waits for a normalized query threshold of at least 3 characters
+     • client debounces typing (~250–300 ms)
+     • client requests:
+         /api/owner/location-options?q=<term>&limit=5
+     • server returns at most 5 already-ranked matches
+     • the same response includes display-ready ownership / visibility status for each row
+     • client MUST NOT fan out per-row `/api/status` calls
+
+   SYB also presents three static owner routes before search:
+     • Create a location
+     • Import from Google
+     • Recently used
+
+D) **Category / Tag Search (Context-Aware)**  
    Categories are surfaced by contexts.json and published profile attributes.
    User may filter within a context by:
      • groupKey / subgroupKey
@@ -5247,7 +5273,11 @@ Search uses:
   • locationName in the active language  
   • tags as customer-intent match terms
 
-No ranking, boosting, or behavioral personalization is applied.
+Behavioral or personalized ranking is never applied.
+
+Deterministic ranking MAY be applied for capped owner lookup results (SYB) using
+normalized token hits, prefix matches, exact slug / name matches, and indexed
+status-aware ordering.
 
 --------------------------------------------------------------------
 13.4 Search Behavior in the App Shell
@@ -5261,7 +5291,13 @@ Search adopts these rules:
   • Fallback to English if translation missing  
   • Input does not alter URL unless context changes  
 
-The app never loads more data than the context-scope dataset already fetched.
+Public context search never loads more data than the context-scope dataset already fetched.
+
+Owner business lookup (SYB) is separate:
+  • no generic list is preloaded on open
+  • network search begins only after query threshold is satisfied
+  • response size is capped
+  • owner status metadata is returned in the same result payload
 
 --------------------------------------------------------------------
 13.5 Search Limitations (Deliberate)
