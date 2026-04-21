@@ -35,7 +35,7 @@ import {
   showPromotionsModal,
   showRedeemConfirmationModal,      // cashier-side redeem confirmation UX
   showRedeemInvalidModal            // cashier-side invalid/used promo UX
-} from './modal-injector.js';
+} from './modal-injector.js?v=2026-04-21-syb-hotfix-1';
 
 // PWA: register SW only in production (keeps install prompt there)
 /* In preview/dev (pages.dev, localhost), skip SW to force fresh CSS/JS on reload */
