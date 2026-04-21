@@ -2992,6 +2992,18 @@ body.high-contrast #request-listing-modal .request-chip.is-selected{
   margin:0;
 }
 
+#request-listing-modal .request-listing-status-card{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:10px;
+}
+
+#request-listing-modal #request-listing-retry{
+  align-self:flex-start;
+  min-width:120px;
+}
+
 #request-listing-modal .request-context-launch{
   align-items:center;
 }

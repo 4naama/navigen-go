@@ -4250,22 +4250,43 @@ function clearPendingLocationDraft() {
 let p8StructureCatalogPromise;
 let p8ContextCatalogPromise;
 
-function loadP8StructureCatalog() {
+function resetP8CatalogPromises() {
+  p8StructureCatalogPromise = null;
+  p8ContextCatalogPromise = null;
+}
+
+function loadP8StructureCatalog(force = false) {
+  if (force) p8StructureCatalogPromise = null;
   if (!p8StructureCatalogPromise) {
     p8StructureCatalogPromise = fetch('/data/structure.json', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json().catch(() => []) : []))
-      .then((j) => (Array.isArray(j) ? j : []))
-      .catch(() => []);
+      .then((j) => {
+        const rows = Array.isArray(j) ? j : [];
+        if (!rows.length) p8StructureCatalogPromise = null;
+        return rows;
+      })
+      .catch(() => {
+        p8StructureCatalogPromise = null;
+        return [];
+      });
   }
   return p8StructureCatalogPromise;
 }
 
-function loadP8ContextCatalog() {
+function loadP8ContextCatalog(force = false) {
+  if (force) p8ContextCatalogPromise = null;
   if (!p8ContextCatalogPromise) {
     p8ContextCatalogPromise = fetch('/data/contexts.json', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json().catch(() => []) : []))
-      .then((j) => (Array.isArray(j) ? j : []))
-      .catch(() => []);
+      .then((j) => {
+        const rows = Array.isArray(j) ? j : [];
+        if (!rows.length) p8ContextCatalogPromise = null;
+        return rows;
+      })
+      .catch(() => {
+        p8ContextCatalogPromise = null;
+        return [];
+      });
   }
   return p8ContextCatalogPromise;
 }
@@ -4414,11 +4435,14 @@ export function createRequestListingModal(opts = {}) {
     onClose: (ev) => { closeRequestListing(ev); },
     bodyHTML: `
       <div class="modal-form-stack">
-        <div id="request-listing-loading" class="modal-menu-item owner-center-loading" aria-disabled="true" style="pointer-events:none;">
+        <div id="request-listing-loading" class="modal-menu-item owner-center-loading request-listing-status-card" aria-live="polite">
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
             <strong id="request-listing-loading-title">${t('modal.requestListing.loading.title') || 'Loading request form...'}</strong><br>
             <small id="request-listing-loading-desc">${t('modal.requestListing.loading.desc') || 'Getting categories and context options.'}</small>
           </span>
+          <button id="request-listing-retry" type="button" class="modal-body-button hidden">
+            ${t('common.retry') || 'Retry'}
+          </button>
         </div>
 
         <details id="rl-business-section" class="cm-chip request-section-chip">
@@ -4646,19 +4670,32 @@ export function createRequestListingModal(opts = {}) {
   const requestListingLoading = modal.querySelector('#request-listing-loading');
   const requestListingLoadingTitle = modal.querySelector('#request-listing-loading-title');
   const requestListingLoadingDesc = modal.querySelector('#request-listing-loading-desc');
+  const requestListingRetry = modal.querySelector('#request-listing-retry');
   const requestListingSubmit = modal.querySelector('#request-listing-submit');
+
+  function setRequestListingRetryVisible(visible) {
+    if (!(requestListingRetry instanceof HTMLButtonElement)) return;
+    requestListingRetry.classList.toggle('hidden', !visible);
+    requestListingRetry.disabled = !visible;
+  }
 
   function setRequestListingLoading(visible, title = '', desc = '') {
     requestListingLoading?.classList.toggle('hidden', !visible);
     if (requestListingLoadingTitle && title) requestListingLoadingTitle.textContent = title;
     if (requestListingLoadingDesc && desc) requestListingLoadingDesc.textContent = desc;
+    setRequestListingRetryVisible(false);
     if (requestListingSubmit instanceof HTMLButtonElement) {
       requestListingSubmit.disabled = !!visible;
     }
   }
 
-  setRequestListingLoading(true, t('modal.requestListing.loading.title') || 'Loading request form...', t('modal.requestListing.loading.desc') || 'Getting categories and context options.');
-
+  requestListingRetry?.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    resetP8CatalogPromises();
+    showRequestListingModal(opts);
+  });
+  
   const prefillContexts = Array.isArray(prefill?.contexts)
     ? prefill.contexts.map((v) => String(v || '').trim()).filter(Boolean)
     : String(prefill?.context || '').split(';').map((v) => String(v || '').trim()).filter(Boolean);
@@ -5052,6 +5089,7 @@ export function createRequestListingModal(opts = {}) {
 
     if (!groupsOk || !contextsOk) {
       setRequestListingLoading(true, t('modal.requestListing.unavailable.title') || 'Request form unavailable', t('modal.requestListing.unavailable.desc') || 'Could not load categories and context options.');
+      setRequestListingRetryVisible(true);
       return;
     }
 
