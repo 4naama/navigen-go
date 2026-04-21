@@ -2775,6 +2775,67 @@ textarea.input.input-error{
   text-align:left;
 }
 
+#request-listing-modal .request-description-editor{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:12px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:12px;
+  background:#fff;
+}
+
+#request-listing-modal .request-description-editor-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+#request-listing-modal .request-description-editor-prompt{
+  display:block;
+  font-size:0.95rem;
+  font-weight:600;
+  line-height:1.25;
+  text-align:left;
+}
+
+#request-listing-modal .request-description-textarea{
+  min-height:140px;
+  resize:none;
+  overflow:hidden;
+}
+
+#request-listing-modal .modal-help-split{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+#request-listing-modal .modal-help-split .modal-help-text{
+  flex:1 1 auto;
+  min-width:0;
+  margin:0;
+}
+
+#request-listing-modal .modal-help-counter{
+  flex:0 0 auto;
+  margin:0;
+  font-size:0.82rem;
+  font-variant-numeric:tabular-nums;
+  line-height:1.25;
+  white-space:nowrap;
+  opacity:.72;
+  text-align:right;
+}
+
+#request-listing-modal .modal-help-counter.is-good{
+  color:#166534;
+  opacity:1;
+  font-weight:600;
+}
+
 #request-listing-modal .request-chip-row{
   display:flex;
   flex-wrap:wrap;

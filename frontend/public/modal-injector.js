@@ -4533,11 +4533,16 @@ export function createRequestListingModal(opts = {}) {
             <span class="cm-chip-face-chevron" aria-hidden="true"></span>
           </summary>
           <div class="cm-chip-body">
-            <div class="modal-field" style="margin:0;">
-              <textarea id="rl-description" class="input" rows="6" maxlength="3000" placeholder="${t('modal.requestListing.description.placeholder') || '🔍 Describe the business'}"></textarea>
-              <div class="modal-help-split">
-                <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
-                <small id="rl-description-count" class="modal-help-counter">0/200</small>
+            <div class="request-description-editor">
+              <div class="request-description-editor-head">
+                <span class="request-description-editor-prompt">${t('modal.requestListing.description.placeholder') || '🔍 Describe the business'}</span>
+              </div>
+              <div class="modal-field" style="margin:0;">
+                <textarea id="rl-description" class="input request-description-textarea" rows="5" maxlength="3000" placeholder=""></textarea>
+                <div class="modal-help-split">
+                  <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
+                  <small id="rl-description-count" class="modal-help-counter">0/200</small>
+                </div>
               </div>
             </div>
           </div>
@@ -4850,6 +4855,12 @@ export function createRequestListingModal(opts = {}) {
     setInputErrorState(rlContexts, !!bad);
   }
 
+  function resizeRequestListingDescriptionInput() {
+    if (!(rlDescription instanceof HTMLTextAreaElement)) return;
+    rlDescription.style.height = 'auto';
+    rlDescription.style.height = `${Math.max(140, rlDescription.scrollHeight)}px`;
+  }
+
   function updateRequestListingDescriptionChip() {
     const rawValue = String(rlDescription?.value || '');
     const value = rawValue.replace(/\s+/g, ' ').trim();
@@ -4893,7 +4904,11 @@ export function createRequestListingModal(opts = {}) {
   }
 
   updateRequestListingDescriptionChip();
-  rlDescription?.addEventListener('input', updateRequestListingDescriptionChip);
+  resizeRequestListingDescriptionInput();
+  rlDescription?.addEventListener('input', () => {
+    resizeRequestListingDescriptionInput();
+    updateRequestListingDescriptionChip();
+  });
 
   function openRequestListingContextsModal() {
     if (!requestListingContextRows.length) {
