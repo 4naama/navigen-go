@@ -4650,6 +4650,10 @@ export function createRequestListingModal(opts = {}) {
   const rlDescriptionChipState = modal.querySelector('#rl-description-chip-state');
   const rlDescriptionCount = modal.querySelector('#rl-description-count');
   
+  const rlBusinessSection = modal.querySelector('#rl-business-section');
+  const rlContextSection = modal.querySelector('#rl-context-section');
+  const rlDescriptionSection = modal.querySelector('#rl-description-section');
+  
   const requestListingSectionChips = Array.from(modal.querySelectorAll('.request-section-chip'));
   requestListingSectionChips.forEach((section) => {
     section.addEventListener('toggle', () => {
