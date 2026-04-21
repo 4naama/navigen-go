@@ -3104,28 +3104,21 @@ export function createSelectLocationModal() {
 
   const modal = injectModal({
     id,
-    title: (t('root.bo.selectLocation.title') || 'Select your business'),
+    title: (typeof t === 'function' && t('root.bo.selectLocation.title')) || 'Select your business',
     layout: 'menu',
-    bodyHTML: ``
+    bodyHTML: ''
   });
 
   const topBar = modal.querySelector('.modal-top-bar');
   const inner = modal.querySelector('.modal-body-inner');
-
-  // injectModal already returns the modal hidden by default.
-  // Select your business uses the shared modal header; search stays in the sticky header and the rest lives in the body.
   if (!topBar || !inner) return;
 
-  // Clone the existing root search input for identical styling (fallback to a plain input).
   const rootSearch =
     document.getElementById('search') ||
     document.querySelector('input#search') ||
     document.querySelector('input[type="search"]');
 
-  const input = rootSearch
-    ? rootSearch.cloneNode(true)
-    : document.createElement('input');
-
+  const input = rootSearch ? rootSearch.cloneNode(true) : document.createElement('input');
   const searchInput = input instanceof HTMLInputElement ? input : document.createElement('input');
   searchInput.type = 'search';
   searchInput.id = 'select-location-search';
@@ -3134,8 +3127,8 @@ export function createSelectLocationModal() {
   searchInput.autocomplete = 'off';
   searchInput.value = '';
 
-  const _ph = (t('root.bo.selectLocation.placeholder') || 'Search here…').trim();
-  searchInput.placeholder = _ph.startsWith('🔍') ? _ph : `🔍 ${_ph}`;
+  const placeholder = ((typeof t === 'function' && t('root.bo.selectLocation.placeholder')) || 'Search here…').trim();
+  searchInput.placeholder = placeholder.startsWith('🔍') ? placeholder : `🔍 ${placeholder}`;
 
   const searchRow = document.createElement('div');
   searchRow.className = 'select-location-search-row';
@@ -3149,11 +3142,7 @@ export function createSelectLocationModal() {
   clearBtn.id = 'select-location-clear-search';
   clearBtn.textContent = 'x';
   clearBtn.style.display = 'none';
-  clearBtn.setAttribute('aria-label', t('common.search.clear') || 'Clear search');
-
-  searchLeft.appendChild(searchInput);
-  searchLeft.appendChild(clearBtn);
-  searchRow.appendChild(searchLeft);
+  clearBtn.setAttribute('aria-label', (typeof t === 'function' && t('common.search.clear')) || 'Clear search');
 
   const syncClear = () => {
     const hasValue = !!String(searchInput.value || '').trim();
@@ -3161,7 +3150,6 @@ export function createSelectLocationModal() {
   };
 
   searchInput.addEventListener('input', syncClear);
-
   clearBtn.addEventListener('click', () => {
     searchInput.value = '';
     searchInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -3169,7 +3157,9 @@ export function createSelectLocationModal() {
     syncClear();
   });
 
-  syncClear();
+  searchLeft.appendChild(searchInput);
+  searchLeft.appendChild(clearBtn);
+  searchRow.appendChild(searchLeft);
   topBar.appendChild(searchRow);
 
   const hintRow = document.createElement('div');
@@ -3186,8 +3176,8 @@ export function createSelectLocationModal() {
   createBtn.innerHTML = `
     <span class="icon-img">➕</span>
     <span class="label">
-      <strong>${t('root.bo.notListed.title') || 'Create a location'}</strong><br>
-      <small>${t('root.bo.notListed.desc') || 'Add your business.'}</small>
+      <strong>${(typeof t === 'function' && t('root.bo.notListed.title')) || 'Create a location'}</strong><br>
+      <small>${(typeof t === 'function' && t('root.bo.notListed.desc')) || 'Add your business.'}</small>
     </span>
   `;
   createBtn.addEventListener('click', (e) => {
@@ -3202,8 +3192,8 @@ export function createSelectLocationModal() {
   googleBtn.innerHTML = `
     <span class="icon-img">🌐</span>
     <span class="label">
-      <strong>${t('root.bo.googleImport.title') || 'Import from Google'}</strong><br>
-      <small>${t('root.bo.googleImport.desc') || 'Bring in your business details.'}</small>
+      <strong>${(typeof t === 'function' && t('root.bo.googleImport.title')) || 'Import from Google'}</strong><br>
+      <small>${(typeof t === 'function' && t('root.bo.googleImport.desc')) || 'Bring in your business details.'}</small>
     </span>
   `;
   googleBtn.addEventListener('click', (e) => {
@@ -3219,8 +3209,8 @@ export function createSelectLocationModal() {
   recentBtn.innerHTML = `
     <span class="icon-img">📍</span>
     <span class="label">
-      <strong>${t('root.bo.recent.title') || 'Recently used'}</strong><br>
-      <small>${t('root.bo.recent.desc') || 'View and manage your places.'}</small>
+      <strong>${(typeof t === 'function' && t('root.bo.recent.title')) || 'Recently used'}</strong><br>
+      <small>${(typeof t === 'function' && t('root.bo.recent.desc')) || 'View and manage your places.'}</small>
     </span>
   `;
 
@@ -3235,7 +3225,7 @@ export function createSelectLocationModal() {
 
   const recentTitle = document.createElement('div');
   recentTitle.className = 'syb-section-title';
-  recentTitle.textContent = t('root.bo.recent.listTitle') || 'Recently used';
+  recentTitle.textContent = (typeof t === 'function' && t('root.bo.recent.listTitle')) || 'Recently used';
 
   const recentList = document.createElement('div');
   recentList.id = 'select-location-recent-list';
@@ -3252,8 +3242,8 @@ export function createSelectLocationModal() {
   loadingRow.style.pointerEvents = 'none';
   loadingRow.innerHTML = `
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${t('root.bo.selectLocation.search.loading.title') || 'Searching businesses...'}</strong><br>
-      <small>${t('root.bo.selectLocation.search.loading.desc') || 'Looking for matching businesses.'}</small>
+      <strong>${(typeof t === 'function' && t('root.bo.selectLocation.search.loading.title')) || 'Searching businesses...'}</strong><br>
+      <small>${(typeof t === 'function' && t('root.bo.selectLocation.search.loading.desc')) || 'Looking for matching businesses.'}</small>
     </span>
   `;
   inner.appendChild(loadingRow);
@@ -3264,7 +3254,7 @@ export function createSelectLocationModal() {
 
   const resultsTitle = document.createElement('div');
   resultsTitle.className = 'syb-section-title';
-  resultsTitle.textContent = t('root.bo.selectLocation.results.title') || 'Matching businesses';
+  resultsTitle.textContent = (typeof t === 'function' && t('root.bo.selectLocation.results.title')) || 'Matching businesses';
 
   const list = document.createElement('div');
   list.id = 'select-location-results';
@@ -3284,6 +3274,86 @@ export function createSelectLocationModal() {
   setupTapOutClose(id);
 }
 
+function createLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
+  const id = 'location-draft-publish-setup-modal';
+  document.getElementById(id)?.remove();
+
+  const shouldReturnToSelectLocation = String(opts?.returnTo || '').trim() === 'syb';
+  const draftULID = String(draftMeta?.draftULID || '').trim();
+
+  const closePublishSetup = (ev = null) => {
+    ev?.preventDefault?.();
+    ev?.stopPropagation?.();
+    hideModal(id);
+    if (shouldReturnToSelectLocation) showSelectLocationModal();
+  };
+
+  const modal = injectModal({
+    id,
+    title: (typeof t === 'function' && t('locationDraft.publishSetup.title')) || 'Profile draft saved',
+    layout: 'menu',
+    onClose: (ev) => { closePublishSetup(ev); },
+    bodyHTML: `
+      <div class="modal-form-stack">
+        <div class="modal-menu-item modal-static-card syb-empty-row" aria-disabled="true">
+          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+            <strong>${(typeof t === 'function' && t('locationDraft.publishSetup.savedTitle')) || 'Your profile draft is private and saved.'}</strong><br>
+            <small>${(typeof t === 'function' && t('locationDraft.publishSetup.savedDesc')) || 'The draft is stamped first. Publish comes next and requires payment.'}</small>
+          </span>
+        </div>
+
+        <div class="modal-menu-item modal-static-card syb-empty-row" aria-disabled="true">
+          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+            <strong>${(typeof t === 'function' && t('locationDraft.publishSetup.publishTitle')) || 'Continue when you are ready to publish'}</strong><br>
+            <small>${(typeof t === 'function' && t('locationDraft.publishSetup.publishDesc')) || 'The paid step sets up publish entitlement. Promotion remains optional after that.'}</small>
+          </span>
+        </div>
+
+        <div class="modal-actions">
+          <button id="location-draft-publish-continue" type="button" class="modal-body-button">
+            ${(typeof t === 'function' && t('locationDraft.publishSetup.continue')) || 'Continue to publish'}
+          </button>
+
+          <button id="location-draft-publish-later" type="button" class="modal-body-button">
+            ${(typeof t === 'function' && t('locationDraft.publishSetup.later')) || 'Resume later'}
+          </button>
+        </div>
+      </div>
+    `
+  });
+
+  modal.querySelector('#location-draft-publish-later')?.addEventListener('click', (ev) => {
+    closePublishSetup(ev);
+  });
+
+  modal.querySelector('#location-draft-publish-continue')?.addEventListener('click', async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    hideModal(id);
+
+    if (!draftULID) {
+      showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not save profile draft.', 2400);
+      if (shouldReturnToSelectLocation) showSelectLocationModal();
+      return;
+    }
+
+    await showCampaignManagementModal(draftULID, {
+      guest: true,
+      p8Draft: draftMeta,
+      preferEmptyDraft: true
+    });
+  });
+
+  setupTapOutClose(id, closePublishSetup);
+}
+
+function showLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
+  const id = 'location-draft-publish-setup-modal';
+  document.getElementById(id)?.remove();
+  createLocationDraftPublishSetupModal(draftMeta, opts);
+  showModal(id);
+}
+
 function createImportGoogleLocationModal(opts = {}) {
   const id = 'import-google-location-modal';
   document.getElementById(id)?.remove();
@@ -3291,37 +3361,37 @@ function createImportGoogleLocationModal(opts = {}) {
   const shouldReturnToSelectLocation = String(opts?.returnTo || '').trim() === 'syb';
   const closeImportGoogle = (ev = null) => {
     ev?.preventDefault?.();
-    ev?.stopPropagation();
+    ev?.stopPropagation?.();
     hideModal(id);
     if (shouldReturnToSelectLocation) showSelectLocationModal();
   };
 
   const modal = injectModal({
     id,
-    title: t('root.bo.googleImport.title') || 'Import from Google',
+    title: (typeof t === 'function' && t('root.bo.googleImport.title')) || 'Import from Google',
     layout: 'menu',
     onClose: (ev) => { closeImportGoogle(ev); },
     bodyHTML: `
       <div class="modal-form-stack">
-        <div class="modal-menu-item modal-static-card syb-inline-note" aria-disabled="true">
+        <div class="modal-menu-item modal-static-card syb-empty-row" aria-disabled="true">
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-            <strong>${t('root.bo.googleImport.title') || 'Import from Google'}</strong><br>
-            <small>${t('root.bo.googleImport.desc') || 'Bring in your business details.'}</small>
+            <strong>${(typeof t === 'function' && t('root.bo.googleImport.title')) || 'Import from Google'}</strong><br>
+            <small>${(typeof t === 'function' && t('root.bo.googleImport.desc')) || 'Bring in your business details.'}</small>
           </span>
         </div>
 
         <div class="modal-field">
-          <label for="google-import-place-id">${t('root.bo.googleImport.placeholder') || 'Google place_id'}</label>
-          <input id="google-import-place-id" class="input" type="text" maxlength="256" placeholder="${t('root.bo.googleImport.placeholder') || 'Google place_id'}" />
+          <label for="google-import-place-id">${(typeof t === 'function' && t('root.bo.googleImport.field.label')) || 'Paste Google place_id'}</label>
+          <input id="google-import-place-id" class="input" type="text" maxlength="256" placeholder="${(typeof t === 'function' && t('root.bo.googleImport.field.placeholder')) || 'Paste Google place_id'}" />
         </div>
 
         <div class="modal-actions">
           <button id="google-import-submit" type="button" class="modal-body-button">
-            ${t('root.bo.googleImport.submit') || 'Save Google draft'}
+            ${(typeof t === 'function' && t('root.bo.googleImport.submitDraft')) || 'Save profile draft'}
           </button>
 
           <button id="google-import-cancel" type="button" class="modal-body-button">
-            ${t('common.cancel') || 'Cancel'}
+            ${(typeof t === 'function' && t('common.cancel')) || 'Cancel'}
           </button>
         </div>
       </div>
@@ -3340,7 +3410,7 @@ function createImportGoogleLocationModal(opts = {}) {
     setInputErrorState(placeIdInput, !googlePlaceId);
 
     if (!googlePlaceId) {
-      showToast(t('root.bo.googleImport.error') || 'Could not create Google draft.', 2200);
+      showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not save profile draft.', 2200);
       return;
     }
 
@@ -3369,14 +3439,14 @@ function createImportGoogleLocationModal(opts = {}) {
 
     if (!res?.ok) {
       const msg = String(payload?.error?.message || '').trim();
-      showToast(msg || (t('root.bo.googleImport.error') || 'Could not create Google draft.'), 2400);
+      showToast(msg || ((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not save profile draft.'), 2400);
       return;
     }
 
     const draftULID = String(payload?.draftULID || '').trim();
     const draftSessionId = String(payload?.draftSessionId || '').trim();
     if (!draftULID || !draftSessionId) {
-      showToast(t('root.bo.googleImport.error') || 'Could not create Google draft.', 2400);
+      showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not save profile draft.', 2400);
       return;
     }
 
@@ -3391,12 +3461,7 @@ function createImportGoogleLocationModal(opts = {}) {
 
     savePendingLocationDraft(savedDraft);
     hideModal(id);
-    showToast(t('root.bo.googleImport.success') || 'Google draft saved.', 2200);
-    await showCampaignManagementModal(draftULID, {
-      guest: true,
-      p8Draft: savedDraft,
-      preferEmptyDraft: true
-    });
+    showLocationDraftPublishSetupModal(savedDraft, { returnTo: opts?.returnTo });
   });
 
   setupTapOutClose(id, closeImportGoogle);
@@ -3459,9 +3524,8 @@ export async function showSelectLocationModal() {
   const setHint = (title, desc = '') => {
     hintRow.classList.remove('hidden');
     hintRow.innerHTML = `
-      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-        <strong>${title}</strong>${desc ? `<br><small>${desc}</small>` : ''}
-      </span>
+      <strong>${title}</strong>
+      ${desc ? `<small>${desc}</small>` : ''}
     `;
   };
 
@@ -3486,7 +3550,8 @@ export async function showSelectLocationModal() {
 
   const buildPickPayload = (item) => {
     const media = (item && typeof item.media === 'object') ? item.media : {};
-    const images = Array.isArray(item?.images) ? item.images
+    const images = Array.isArray(item?.images)
+      ? item.images
       : (Array.isArray(media?.images) ? media.images : []);
     const cover = String(media?.cover || item?.imageSrc || '').trim();
 
@@ -3564,15 +3629,16 @@ export async function showSelectLocationModal() {
     loadingRow.classList.add('hidden');
     listWrap.classList.add('hidden');
     list.innerHTML = '';
+
     if (String(input.value || '').trim()) {
       setHint(
-        t('root.bo.selectLocation.search.waiting.title') || 'Keep typing',
-        t('root.bo.selectLocation.search.waiting.desc') || 'Search starts after 3 characters.'
+        (typeof t === 'function' && t('root.bo.selectLocation.search.waiting.title')) || 'Keep typing',
+        (typeof t === 'function' && t('root.bo.selectLocation.search.waiting.desc')) || 'Search starts after 3 characters.'
       );
     } else {
       setHint(
-        t('root.bo.selectLocation.search.idle.title') || 'Start with search or choose a route',
-        t('root.bo.selectLocation.search.idle.desc') || 'Type at least 3 characters to search existing businesses.'
+        (typeof t === 'function' && t('root.bo.selectLocation.search.idle.title')) || 'Start with search or choose a route',
+        (typeof t === 'function' && t('root.bo.selectLocation.search.idle.desc')) || 'Type at least 3 characters to search existing businesses.'
       );
     }
   };
@@ -3608,24 +3674,23 @@ export async function showSelectLocationModal() {
     if (seq !== searchSeq || !document.getElementById(id)) return;
 
     loadingRow.classList.add('hidden');
-    listWrap.classList.remove('hidden');
 
     if (items.length) {
-      hintRow.classList.add('hidden');
       renderRows(
         list,
         items,
-        t('root.bo.selectLocation.search.none.title') || 'No matching businesses',
-        t('root.bo.selectLocation.search.none.desc') || 'Continue typing, or use Create a location / Import from Google.'
+        (typeof t === 'function' && t('root.bo.selectLocation.search.none.title')) || 'No matching businesses',
+        (typeof t === 'function' && t('root.bo.selectLocation.search.none.desc')) || 'Continue typing, or use Create a location / Import from Google.'
       );
+      listWrap.classList.remove('hidden');
       return;
     }
 
-    setHint(
-      t('root.bo.selectLocation.search.none.title') || 'No matching businesses',
-      t('root.bo.selectLocation.search.none.desc') || 'Continue typing, or use Create a location / Import from Google.'
-    );
     listWrap.classList.add('hidden');
+    setHint(
+      (typeof t === 'function' && t('root.bo.selectLocation.search.none.title')) || 'No matching businesses',
+      (typeof t === 'function' && t('root.bo.selectLocation.search.none.desc')) || 'Continue typing, or use Create a location / Import from Google.'
+    );
   };
 
   const loadRecentlyUsed = async () => {
@@ -3638,8 +3703,8 @@ export async function showSelectLocationModal() {
     loading.className = 'modal-menu-item modal-static-card syb-empty-row';
     loading.innerHTML = `
       <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-        <strong>${t('root.bo.recent.loading.title') || 'Loading recently used...'}</strong><br>
-        <small>${t('root.bo.recent.loading.desc') || 'Getting places saved on this device.'}</small>
+        <strong>${(typeof t === 'function' && t('root.bo.recent.loading.title')) || 'Loading recently used...'}</strong><br>
+        <small>${(typeof t === 'function' && t('root.bo.recent.loading.desc')) || 'Getting places saved on this device.'}</small>
       </span>
     `;
     recentList.appendChild(loading);
@@ -3660,8 +3725,8 @@ export async function showSelectLocationModal() {
     renderRows(
       recentList,
       rows.slice(0, 5),
-      t('root.bo.recent.empty.title') || 'No saved places yet',
-      t('root.bo.recent.empty.desc') || 'Places you manage on this device will appear here.'
+      (typeof t === 'function' && t('root.bo.recent.empty.title')) || 'No saved places yet',
+      (typeof t === 'function' && t('root.bo.recent.empty.desc')) || 'Places you manage on this device will appear here.'
     );
     recentLoaded = true;
     recentLoading = false;
@@ -3690,6 +3755,7 @@ export async function showSelectLocationModal() {
     }, 280);
   });
 
+  syncClear();
   resetSearchUi();
   requestAnimationFrame(() => input.focus());
 
@@ -3999,50 +4065,7 @@ function _ownerText(key, fallback) {
 async function openOwnerSettingsForTarget({ target, locationName, noSelection }) {
   const tgt = String(target || '').trim();
   if (!tgt) { showToast('Missing location', 1600); return; }
-  
-  // Minimal 1-day window (never exposes analytics when blocked)
-  const ymd = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  const statsUrl = new URL('/api/stats', location.origin);
-  statsUrl.searchParams.set('locationID', tgt);
-  statsUrl.searchParams.set('from', ymd);
-  statsUrl.searchParams.set('to', ymd);
 
-  const rStats = await fetch(statsUrl.toString(), { cache: 'no-store', credentials: 'include' });
-
-  if (rStats.status === 200) {
-    showOwnerSettingsModal({
-      variant: 'signedin',
-      locationIdOrSlug: tgt,
-      locationName: String(locationName || '').trim(),
-      noSelection: noSelection === true
-    });
-    return;
-  }
-
-  if (rStats.status === 401) {
-    // 401 means "no valid owner session". Decide restore vs claim based on ownership state.
-    let ownedNow = false;
-    try {
-      const u = new URL('/api/status', location.origin);
-      u.searchParams.set('locationID', tgt);
-      const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
-      const js = rs.ok ? await rs.json().catch(() => null) : null;
-      ownedNow = js?.ownedNow === true;
-    } catch { ownedNow = false; }
-
-    showOwnerSettingsModal({
-      variant: ownedNow ? 'restore' : 'claim',
-      locationIdOrSlug: tgt,
-      locationName: String(locationName || '').trim(),
-      noSelection: noSelection === true
-    });
-    return;
-  }
-
-  // 403 can mean either:
-  // - this device is active for a different listing, or
-  // - this listing simply has no active entitlement yet.
-  // Decide mismatch only when the selected target and the device-bound session resolve to different ULIDs.
   let activeUlid = '';
   let hasSess = false;
   try {
@@ -4072,11 +4095,21 @@ async function openOwnerSettingsForTarget({ target, locationName, noSelection })
   } catch {
     ownedNow = false;
   }
-  
+
+  if (hasSess && activeUlid && targetUlid && activeUlid === targetUlid) {
+    showOwnerSettingsModal({
+      variant: 'signedin',
+      locationIdOrSlug: tgt,
+      locationName: String(locationName || '').trim(),
+      noSelection: noSelection === true
+    });
+    return;
+  }
+
   const isMismatch = !!hasSess && !!activeUlid && !!targetUlid && activeUlid !== targetUlid;
 
   showOwnerSettingsModal({
-    variant: isMismatch ? 'mismatch' : (hasSess && ownedNow ? 'renew' : 'claim'),    
+    variant: isMismatch ? 'mismatch' : (ownedNow ? 'restore' : 'claim'),
     locationIdOrSlug: tgt,
     locationName: String(locationName || '').trim(),
     noSelection: noSelection === true
@@ -5894,6 +5927,24 @@ function getModalHeaderHelpSpec(target) {
     };
   }
 
+  if (modalId === 'import-google-location-modal') {
+    return {
+      title: _ownerText('modal.help.title', 'How it works'),
+      bodyLines: [
+        _ownerText('root.bo.googleImport.help.line1', 'Find your business with Google’s free Place ID Finder.'),
+        _ownerText('root.bo.googleImport.help.line2', 'Select the whole ID and keep every hyphen exactly as shown.'),
+        _ownerText('root.bo.googleImport.help.line3', 'On mobile, press and hold to copy the ID, then paste it into NaviGen.'),
+        _ownerText('root.bo.googleImport.help.line4', 'Saving creates a private profile draft first. Publish comes later in the paid step.')
+      ],
+      buttons: [
+        {
+          label: _ownerText('root.bo.googleImport.help.cta', 'Open Place ID Finder'),
+          href: 'https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder'
+        }
+      ]
+    };
+  }
+
   if (modalId === 'owner-center-modal') {
     const ownerCenterBody = _ownerText(
       'owner.center.help.body',
@@ -5960,6 +6011,9 @@ function showModalHeaderHelpModal(target) {
   const intro = String(spec.intro || '').trim();
   const items = Array.isArray(spec.items) ? spec.items.filter(Boolean) : [];
   const bodyLines = Array.isArray(spec.bodyLines) ? spec.bodyLines.filter(Boolean) : [];
+  const buttons = Array.isArray(spec.buttons) ? spec.buttons.filter(Boolean) : [];
+
+  if (intro) {
 
   if (intro) {
     const p = document.createElement('p');
@@ -6004,6 +6058,28 @@ function showModalHeaderHelpModal(target) {
     p.style.opacity = '0.92';
     inner.appendChild(p);
   });
+
+  if (buttons.length) {
+    const actions = document.createElement('div');
+    actions.className = 'modal-actions';
+    actions.style.marginTop = '14px';
+
+    buttons.forEach((item) => {
+      const href = String(item?.href || '').trim();
+      const label = String(item?.label || '').trim();
+      if (!href || !label) return;
+
+      const linkBtn = document.createElement('a');
+      linkBtn.className = 'modal-body-button';
+      linkBtn.href = href;
+      linkBtn.target = '_blank';
+      linkBtn.rel = 'noopener noreferrer';
+      linkBtn.textContent = label;
+      actions.appendChild(linkBtn);
+    });
+
+    if (actions.childElementCount) inner.appendChild(actions);
+  }
 
   showModal(id);
 }

@@ -2015,12 +2015,8 @@ export default {
         const limitRaw = Number(url.searchParams.get("limit") || 5);
         const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(Math.trunc(limitRaw), 5)) : 5;
 
-        if (selectorNormalizeText(q).replace(/\s+/g, "").length < 3) {
-          return json(
-            { items: [], q, limit, threshold: 3 },
-            200,
-            { "cache-control": "no-store" }
-          );
+        if (ownerSelectorNormalizeText(q).replace(/\s+/g, "").length < 3) {
+          return json({ items: [], q, limit, threshold: 3 }, 200, { "cache-control": "no-store" });
         }
 
         const items = await listPublishedLocationSelectorItems(env, { query: q, limit }).catch(() => []);
@@ -2051,9 +2047,9 @@ export default {
 
         const rows = (await Promise.all(
           out.map(async (ulid) => {
-            const effective = await readPublishedEffectiveProfile(env, ulid).catch(() => null);
-            if (!effective) return null;
-            return await buildLocationSelectorItem(env, ulid, effective).catch(() => null);
+            const rec = await readPublishedEffectiveProfileByUlid(ulid, env);
+            if (!rec) return null;
+            return await buildOwnerLocationSelectorItem(env, rec);
           })
         )).filter(Boolean);
 
@@ -4907,44 +4903,164 @@ async function buildLocationSelectorItem(env: Env, ulid: string, effective: any)
   };
 }
 
+function ownerSelectorNormalizeText(value: unknown): string {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[-_.\/]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function ownerSelectorTokens(value: unknown): string[] {
+  return ownerSelectorNormalizeText(value).split(/\s+/).filter(Boolean);
+}
+
+function ownerSelectorDisplayName(profile: any): string {
+  const raw = profile?.locationName ?? profile?.listedName ?? profile?.name ?? "";
+  if (typeof raw === "string") return String(raw || "").trim();
+  if (raw && typeof raw === "object") {
+    return String((raw as any).en || Object.values(raw)[0] || "").trim();
+  }
+  return "";
+}
+
+function ownerSelectorAddressLine(profile: any): string {
+  const c =
+    profile?.contactInformation && typeof profile.contactInformation === "object"
+      ? profile.contactInformation
+      : ((profile?.contact && typeof profile.contact === "object") ? profile.contact : {});
+
+  return [c.address, c.city]
+    .map((v: any) => String(v || "").trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
+function ownerSelectorSearchHay(profile: any, slug: string): string {
+  const c =
+    profile?.contactInformation && typeof profile.contactInformation === "object"
+      ? profile.contactInformation
+      : ((profile?.contact && typeof profile.contact === "object") ? profile.contact : {});
+
+  const tags = Array.isArray(profile?.tags)
+    ? profile.tags.map((k: any) => String(k || "").replace(/^tag\./, "")).join(" ")
+    : "";
+
+  const person = String(c.contactPerson || "").trim();
+  const contact = [c.phone, c.email, c.whatsapp, c.telegram, c.messenger]
+    .map((v: any) => String(v || "").trim())
+    .filter(Boolean)
+    .join(" ");
+
+  const addressSearch = [c.address, c.city, c.adminArea, c.postalCode, c.countryCode]
+    .map((v: any) => String(v || "").trim())
+    .filter(Boolean)
+    .join(" ");
+
+  const names = (() => {
+    const ln = profile?.locationName;
+    if (typeof ln === "string") return ln;
+    if (ln && typeof ln === "object") return Object.values(ln).map(v => String(v || "").trim()).filter(Boolean).join(" ");
+    return "";
+  })();
+
+  return ownerSelectorNormalizeText([names, slug, addressSearch, tags, person, contact].filter(Boolean).join(" "));
+}
+
+function ownerSelectorScore(profile: any, slug: string, query: string): number {
+  const qNorm = ownerSelectorNormalizeText(query);
+  const tokens = ownerSelectorTokens(query);
+  if (!tokens.length) return 0;
+
+  const nameNorm = ownerSelectorNormalizeText(ownerSelectorDisplayName(profile));
+  const slugNorm = ownerSelectorNormalizeText(slug);
+  const hay = ownerSelectorSearchHay(profile, slug);
+
+  if (!tokens.every((tok) => hay.includes(tok))) return 0;
+
+  let score = 0;
+
+  if (slugNorm === qNorm) score += 520;
+  if (nameNorm === qNorm) score += 480;
+  if (slugNorm.startsWith(qNorm)) score += 260;
+  if (nameNorm.startsWith(qNorm)) score += 220;
+  if (hay.includes(qNorm)) score += 40;
+
+  for (const tok of tokens) {
+    if (nameNorm.includes(tok)) score += 32;
+    if (slugNorm.includes(tok)) score += 28;
+    if (hay.includes(tok)) score += 8;
+  }
+
+  return score;
+}
+
+async function buildOwnerLocationSelectorItem(
+  env: Env,
+  rec: { ulid: string; locationID: string; effective: any }
+): Promise<any | null> {
+  const vis = await computeVisibilityState(env, rec.ulid);
+  const camp = await campaignEntitlementForUlid(env, rec.ulid);
+
+  return {
+    ...buildPublicListPayload(rec),
+    sybAddressLine: ownerSelectorAddressLine(rec.effective),
+    sybStatus: {
+      ownedNow: vis.ownedNow,
+      visibilityState: vis.visibilityState,
+      courtesyUntil: vis.courtesyUntil,
+      campaignEntitled: camp.entitled,
+      campaignEndsAt: camp.endDate,
+      activeCampaignKey: camp.campaignKey
+    }
+  };
+}
+
 async function listPublishedLocationSelectorItems(
   env: Env,
   opts: { query?: string; limit?: number } = {}
 ): Promise<any[]> {
   const query = String(opts?.query || "").trim();
-  const tokens = selectorTokens(query);
   const limitRaw = Number(opts?.limit || 5);
   const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(Math.trunc(limitRaw), 10)) : 5;
 
-  if (!tokens.length) return [];
+  if (ownerSelectorNormalizeText(query).replace(/\s+/g, "").length < 3) return [];
 
-  const candidates: Array<{ ulid: string; effective: any; slug: string; score: number; displayName: string }> = [];
+  const candidates: Array<{ ulid: string; locationID: string; score: number; displayName: string }> = [];
   let cursor: string | undefined = undefined;
 
   do {
     const page = await env.KV_STATUS.list({ prefix: "profile_base:", cursor });
-    for (const key of page.keys) {
-      const keyName = String(key.name || "");
-      const ulid = keyName.replace(/^profile_base:/, "").trim();
-      if (!ULID_RE.test(ulid)) continue;
+    const pageHits = await Promise.all(
+      page.keys.map(async (key) => {
+        const name = String(key.name || "");
+        const ulid = name.replace(/^profile_base:/, "").trim();
+        if (!ULID_RE.test(ulid)) return null;
 
-      const effective = await readPublishedEffectiveProfile(env, ulid);
-      if (!effective || typeof effective !== "object") continue;
+        const base = await env.KV_STATUS.get(name, { type: "json" }) as any;
+        if (!base || typeof base !== "object") return null;
 
-      const slug = String(effective?.locationID || "").trim();
-      if (!slug) continue;
+        const slug = String(base?.locationID || "").trim();
+        if (!slug) return null;
 
-      const score = selectorScore(effective, slug, query);
-      if (score <= 0) continue;
+        const score = ownerSelectorScore(base, slug, query);
+        if (score <= 0) return null;
 
-      candidates.push({
-        ulid,
-        effective,
-        slug,
-        score,
-        displayName: selectorDisplayName(effective)
-      });
-    }
+        return {
+          ulid,
+          locationID: slug,
+          score,
+          displayName: ownerSelectorDisplayName(base) || slug
+        };
+      })
+    );
+
+    pageHits.forEach((hit) => {
+      if (hit) candidates.push(hit);
+    });
+
     cursor = page.cursor || undefined;
   } while (cursor);
 
@@ -4959,7 +5075,9 @@ async function listPublishedLocationSelectorItems(
 
   const items = await Promise.all(
     top.map(async (row) => {
-      return await buildLocationSelectorItem(env, row.ulid, row.effective);
+      const rec = await readPublishedEffectiveProfileByUlid(row.ulid, env);
+      if (!rec) return null;
+      return await buildOwnerLocationSelectorItem(env, rec);
     })
   );
 

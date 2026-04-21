@@ -4773,6 +4773,69 @@ select.input[multiple]{
   padding-bottom: 8px;
 }
 
+#select-location-modal .syb-inline-copy{
+  margin: 0 0 12px;
+  text-align: left;
+  line-height: 1.35;
+}
+
+#select-location-modal .syb-inline-copy strong{
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+#select-location-modal .syb-inline-copy small{
+  display: block;
+  margin-top: 2px;
+  font-size: 0.85rem;
+  opacity: .78;
+}
+
+#select-location-modal .syb-entry-stack{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#select-location-modal .syb-entry-card{
+  background: #f8fafc;
+  border-color: #dbe1e8;
+}
+
+#select-location-modal .syb-entry-card:hover{
+  background: #f1f5f9;
+  border-color: #b6c2cf;
+}
+
+#select-location-modal .syb-section-title{
+  margin: 14px 0 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  opacity: .72;
+  text-align: left;
+}
+
+#select-location-modal #select-location-loading{
+  margin-top: 12px;
+}
+
+#select-location-modal #select-location-results-wrap.hidden,
+#select-location-modal #select-location-recent-wrap.hidden{
+  display: none;
+}
+
+#select-location-modal .syb-empty-row{
+  cursor: default;
+}
+
+#select-location-modal .syb-empty-row:hover{
+  transform: none;
+}
+
 #select-location-modal .syb-entry-stack{
   display:flex;
   flex-direction:column;

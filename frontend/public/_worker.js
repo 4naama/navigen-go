@@ -554,6 +554,57 @@ export default {
         }
       });
     }
+
+    // /api/owner/sessions — proxy to API Worker (device-bound Recently used)
+    if (url.pathname === '/api/owner/sessions') {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: 'GET',
+        headers: h
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+
+    // /api/owner/sessions/remove — proxy to API Worker (device-bound removal)
+    if (url.pathname === '/api/owner/sessions/remove') {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: req.method,
+        headers: h,
+        body: req.method === 'GET' || req.method === 'HEAD' ? undefined : req.body
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
     
     // /api/redeem-status — proxy to API Worker (authoritative redeem token status)
     if (url.pathname === '/api/redeem-status') {
