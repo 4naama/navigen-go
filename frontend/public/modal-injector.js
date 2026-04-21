@@ -4517,7 +4517,6 @@ export function createRequestListingModal(opts = {}) {
                   </span>
                   <span id="rl-context-count" class="request-context-count">0/3</span>
                 </button>
-                <div id="rl-context-suggested" class="request-chip-row request-context-suggested hidden" aria-live="polite"></div>
                 <div id="rl-context-selected" class="request-chip-row request-context-selected" aria-live="polite"></div>
               </div>
             </div>
@@ -4650,9 +4649,15 @@ export function createRequestListingModal(opts = {}) {
   const rlDescriptionChipState = modal.querySelector('#rl-description-chip-state');
   const rlDescriptionCount = modal.querySelector('#rl-description-count');
   
-  const rlBusinessSection = modal.querySelector('#rl-business-section');
-  const rlContextSection = modal.querySelector('#rl-context-section');
-  const rlDescriptionSection = modal.querySelector('#rl-description-section');
+  const requestListingSectionChips = Array.from(modal.querySelectorAll('.request-section-chip'));
+  requestListingSectionChips.forEach((section) => {
+    section.addEventListener('toggle', () => {
+      if (!section.open) return;
+      requestListingSectionChips.forEach((other) => {
+        if (other !== section) other.removeAttribute('open');
+      });
+    });
+  });
   
   const requestListingSectionChips = Array.from(modal.querySelectorAll('.request-section-chip'));
   requestListingSectionChips.forEach((section) => {
@@ -4669,7 +4674,6 @@ export function createRequestListingModal(opts = {}) {
   const rlOpenContexts = modal.querySelector('#rl-open-contexts');
   const rlContextSummaryText = modal.querySelector('#rl-context-summary-text');
   const rlContextCount = modal.querySelector('#rl-context-count');
-  const rlContextSuggested = modal.querySelector('#rl-context-suggested');
   const rlContextSelected = modal.querySelector('#rl-context-selected');
   const rlTags = modal.querySelector('#rl-tags');
   const rlTagSuggestions = modal.querySelector('#rl-tag-suggestions');
@@ -4811,55 +4815,10 @@ export function createRequestListingModal(opts = {}) {
   }
 
   function renderRequestListingContextSuggestions() {
-    if (!rlContextSuggested) return;
-
-    rlContextSuggested.innerHTML = '';
-    if (!requestListingContextRows.length) {
-      rlContextSuggested.classList.add('hidden');
-      return;
-    }
-
-    const seedTokens = requestListingContextSeedTokens();
-    const suggestedRows = requestListingContextRows
-      .map((row) => ({ row, score: requestListingContextSeedScore(row, seedTokens) }))
-      .filter(({ row, score }) => {
-        const key = String(row?.key || '').trim();
-        return !!key && score > 0 && !selectedContextSet.has(key);
-      })
-      .sort((a, b) => {
-        if (a.score !== b.score) return b.score - a.score;
-        const aKey = String(a.row?.key || '').trim();
-        const bKey = String(b.row?.key || '').trim();
-        return getRequestListingContextLabel(aKey).localeCompare(getRequestListingContextLabel(bKey), undefined, { sensitivity: 'base' });
-      })
-      .slice(0, 6)
-      .map(({ row }) => row);
-
-    rlContextSuggested.classList.toggle('hidden', !suggestedRows.length);
-    if (!suggestedRows.length) return;
-
-    suggestedRows.forEach((row) => {
-      const key = String(row?.key || '').trim();
-      if (!key) return;
-
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'request-chip';
-      chip.textContent = getRequestListingContextLabel(key);
-      chip.addEventListener('click', () => {
-        if (selectedContextSet.has(key)) {
-          selectedContextSet.delete(key);
-        } else {
-          if (selectedContextSet.size >= REQUEST_LISTING_CONTEXT_LIMIT) {
-            showToast(t('modal.requestListing.contexts.limit') || 'You can select up to 3 contexts.', 2200);
-            return;
-          }
-          selectedContextSet.add(key);
-        }
-        syncRequestListingContexts();
-      });
-      rlContextSuggested.appendChild(chip);
-    });
+    const suggestedRow = modal.querySelector('#rl-context-suggested');
+    if (!suggestedRow) return;
+    suggestedRow.innerHTML = '';
+    suggestedRow.classList.add('hidden');
   }
 
   function syncRequestListingContexts() {    
@@ -5242,22 +5201,27 @@ export function createRequestListingModal(opts = {}) {
       if (!rlTagSuggestions) return;
       rlTagSuggestions.innerHTML = '';
 
-      const groupKey = String(rlGroup?.value || prefill?.groupKey || '').trim();
-      const subgroupKey = String(rlSubgroup?.value || prefill?.subgroupKey || '').trim();
+      const groupKey = String(rlGroup?.value || '').trim();
+      const subgroupKey = String(rlSubgroup?.value || '').trim();
       const subs = p8SubgroupsForGroup(structureRows, groupKey);
       const activeSub = subs.find((sg) => String(sg?.key || '').trim() === subgroupKey);
       const keywords = Array.isArray(activeSub?.keywords) ? activeSub.keywords : [];
-      const tags = Array.from(new Set(
+      const activeTags = Array.from(new Set(
         keywords
-          .concat(Array.from(selectedTagSet))
           .map((kw) => String(kw || '').trim())
           .filter(Boolean)
       ));
+      const activeTagSet = new Set(activeTags);
 
-      rlTagSuggestions.classList.toggle('hidden', !tags.length);
-      if (!tags.length) return;
+      Array.from(selectedTagSet).forEach((tag) => {
+        if (!activeTagSet.has(tag)) selectedTagSet.delete(tag);
+      });
+      syncRequestListingTags();
 
-      tags.forEach((tag) => {
+      rlTagSuggestions.classList.toggle('hidden', !activeTags.length);
+      if (!activeTags.length) return;
+
+      activeTags.forEach((tag) => {
         const selected = selectedTagSet.has(tag);
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -5269,7 +5233,6 @@ export function createRequestListingModal(opts = {}) {
           else selectedTagSet.add(tag);
           syncRequestListingTags();
           renderTagSuggestions();
-          renderRequestListingContextSuggestions();
         });
         rlTagSuggestions.appendChild(btn);
       });

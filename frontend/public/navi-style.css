@@ -3032,10 +3032,6 @@ body.high-contrast #request-listing-modal .request-chip.is-selected{
   box-shadow:0 0 0 1px rgba(211,47,47,.12);
 }
 
-#request-listing-modal .request-context-suggested{
-  margin-top:10px;
-}
-
 #request-listing-modal .request-chip.request-chip-static{
   cursor:default;
 }
@@ -3043,6 +3039,7 @@ body.high-contrast #request-listing-modal .request-chip.is-selected{
 #request-listing-modal .request-chip.request-chip-static:hover{
   background:#dbeafe;
   border-color:#60a5fa;
+  transform:none;
 }
 
 #request-listing-contexts-modal .request-chip-row{
