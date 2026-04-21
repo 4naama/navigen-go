@@ -952,7 +952,6 @@
   "modal.requestListing.facebook.label": "Link Facebook",
   "modal.requestListing.instagram.label": "Link Instagram",
   "modal.requestListing.description.label": "Descrizione attività",
-  "modal.requestListing.description.placeholder": "🔍 Descrivi l’attività",
   "modal.requestListing.description.help": "Obiettivo pronto per la pubblicazione: almeno 200 caratteri.",
   "modal.requestListing.group.label": "Gruppo",
   "modal.requestListing.group.placeholder": "Seleziona gruppo",
@@ -1029,5 +1028,7 @@
   "modal.requestListing.next.resumeCta": "Riprendi più tardi",
   "locationDraft.commercial.title": "Visibilità e promozione",
   "locationDraft.commercial.cta": "Continua al pagamento",
-  "modal.requestListing.contexts.done": "Fatto"
+  "modal.requestListing.contexts.done": "Fatto",
+  "modal.requestListing.description.placeholder": "🔍 Descrivi l’attività",
+  "modal.requestListing.contexts.selected.empty": "Scegli fino a 3."
 }

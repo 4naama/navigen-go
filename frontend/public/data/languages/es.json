@@ -952,7 +952,6 @@
   "modal.requestListing.facebook.label": "Enlace de Facebook",
   "modal.requestListing.instagram.label": "Enlace de Instagram",
   "modal.requestListing.description.label": "Descripción del negocio",
-  "modal.requestListing.description.placeholder": "🔍 Describe el negocio",
   "modal.requestListing.description.help": "Objetivo listo para publicar: al menos 200 caracteres.",
   "modal.requestListing.group.label": "Grupo",
   "modal.requestListing.group.placeholder": "Seleccionar grupo",
@@ -1029,5 +1028,7 @@
   "modal.requestListing.next.resumeCta": "Continuar más tarde",
   "locationDraft.commercial.title": "Visibilidad y promoción",
   "locationDraft.commercial.cta": "Continuar al pago",
-  "modal.requestListing.contexts.done": "Listo"
+  "modal.requestListing.contexts.done": "Listo",
+  "modal.requestListing.description.placeholder": "🔍 Describe el negocio",
+  "modal.requestListing.contexts.selected.empty": "Elige hasta 3."
 }

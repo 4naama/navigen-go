@@ -952,7 +952,6 @@
   "modal.requestListing.facebook.label": "Посилання Facebook",
   "modal.requestListing.instagram.label": "Посилання Instagram",
   "modal.requestListing.description.label": "Опис бізнесу",
-  "modal.requestListing.description.placeholder": "🔍 Опишіть бізнес",
   "modal.requestListing.description.help": "Ціль для публікації: щонайменше 200 символів.",
   "modal.requestListing.group.label": "Група",
   "modal.requestListing.group.placeholder": "Виберіть групу",
@@ -1029,5 +1028,7 @@
   "modal.requestListing.next.resumeCta": "Продовжити пізніше",
   "locationDraft.commercial.title": "Видимість і просування",
   "locationDraft.commercial.cta": "Продовжити до оплати",
-  "modal.requestListing.contexts.done": "Готово"
+  "modal.requestListing.contexts.done": "Готово",
+  "modal.requestListing.description.placeholder": "🔍 Опишіть бізнес",
+  "modal.requestListing.contexts.selected.empty": "Виберіть до 3."
 }

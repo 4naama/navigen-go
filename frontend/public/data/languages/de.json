@@ -952,7 +952,6 @@
   "modal.requestListing.facebook.label": "Facebook-Link",
   "modal.requestListing.instagram.label": "Instagram-Link",
   "modal.requestListing.description.label": "Unternehmensbeschreibung",
-  "modal.requestListing.description.placeholder": "🔍 Beschreiben Sie das Unternehmen",
   "modal.requestListing.description.help": "Ziel für Veröffentlichung: mindestens 200 Zeichen.",
   "modal.requestListing.group.label": "Gruppe",
   "modal.requestListing.group.placeholder": "Gruppe auswählen",
@@ -1029,5 +1028,7 @@
   "modal.requestListing.next.resumeCta": "Später fortfahren",
   "locationDraft.commercial.title": "Sichtbarkeit und Promotion",
   "locationDraft.commercial.cta": "Weiter zur Zahlung",
-  "modal.requestListing.contexts.done": "Fertig"
+  "modal.requestListing.contexts.done": "Fertig",
+  "modal.requestListing.description.placeholder": "🔍 Beschreiben Sie das Unternehmen",
+  "modal.requestListing.contexts.selected.empty": "Wählen Sie bis zu 3."
 }

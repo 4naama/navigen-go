@@ -952,7 +952,6 @@
   "modal.requestListing.facebook.label": "Facebook link",
   "modal.requestListing.instagram.label": "Instagram link",
   "modal.requestListing.description.label": "Vállalkozás leírása",
-  "modal.requestListing.description.placeholder": "🔍 Írd le a vállalkozást",
   "modal.requestListing.description.help": "Közzétételi cél: legalább 200 karakter.",
   "modal.requestListing.group.label": "Csoport",
   "modal.requestListing.group.placeholder": "Csoport kiválasztása",
@@ -1029,5 +1028,7 @@
   "modal.requestListing.next.resumeCta": "Folytatás később",
   "locationDraft.commercial.title": "Láthatóság és promóció",
   "locationDraft.commercial.cta": "Tovább a fizetéshez",
-  "modal.requestListing.contexts.done": "Kész"
+  "modal.requestListing.contexts.done": "Kész",
+  "modal.requestListing.description.placeholder": "🔍 Írd le a vállalkozást",
+  "modal.requestListing.contexts.selected.empty": "Válassz legfeljebb 3-at."
 }

@@ -952,7 +952,6 @@
   "modal.requestListing.facebook.label": "Lien Facebook",
   "modal.requestListing.instagram.label": "Lien Instagram",
   "modal.requestListing.description.label": "Description de l’établissement",
-  "modal.requestListing.description.placeholder": "🔍 Décrivez l’établissement",
   "modal.requestListing.description.help": "Objectif prêt à publier : au moins 200 caractères.",
   "modal.requestListing.group.label": "Groupe",
   "modal.requestListing.group.placeholder": "Sélectionner un groupe",
@@ -1029,5 +1028,7 @@
   "modal.requestListing.next.resumeCta": "Reprendre plus tard",
   "locationDraft.commercial.title": "Visibilité et promotion",
   "locationDraft.commercial.cta": "Continuer vers le paiement",
-  "modal.requestListing.contexts.done": "Terminé"
+  "modal.requestListing.contexts.done": "Terminé",
+  "modal.requestListing.description.placeholder": "🔍 Décrivez l’établissement",
+  "modal.requestListing.contexts.selected.empty": "Choisissez jusqu’à 3."
 }

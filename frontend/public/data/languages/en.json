@@ -952,7 +952,6 @@
   "modal.requestListing.facebook.label": "Facebook link",
   "modal.requestListing.instagram.label": "Instagram link",
   "modal.requestListing.description.label": "Business description",
-  "modal.requestListing.description.placeholder": "🔍 Describe the business",
   "modal.requestListing.description.help": "Publish-ready target: at least 200 characters.",
   "modal.requestListing.group.label": "Group",
   "modal.requestListing.group.placeholder": "Select group",
@@ -1029,5 +1028,7 @@
   "modal.requestListing.next.resumeCta": "Resume later",
   "locationDraft.commercial.title": "Visibility & promotion",
   "locationDraft.commercial.cta": "Continue to payment",
-  "modal.requestListing.contexts.done": "Done"
+  "modal.requestListing.contexts.done": "Done",
+  "modal.requestListing.description.placeholder": "🔍 Describe the business",
+  "modal.requestListing.contexts.selected.empty": "Choose up to 3."
 }

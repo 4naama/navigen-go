@@ -4517,6 +4517,7 @@ export function createRequestListingModal(opts = {}) {
                   </span>
                   <span id="rl-context-count" class="request-context-count">0/3</span>
                 </button>
+                <div id="rl-context-suggested" class="request-chip-row request-context-suggested hidden" aria-live="polite"></div>
                 <div id="rl-context-selected" class="request-chip-row request-context-selected" aria-live="polite"></div>
               </div>
             </div>
@@ -4649,15 +4650,22 @@ export function createRequestListingModal(opts = {}) {
   const rlDescriptionChipState = modal.querySelector('#rl-description-chip-state');
   const rlDescriptionCount = modal.querySelector('#rl-description-count');
   
-  const rlBusinessSection = modal.querySelector('#rl-business-section');
-  const rlContextSection = modal.querySelector('#rl-context-section');
-  const rlDescriptionSection = modal.querySelector('#rl-description-section');  
+  const requestListingSectionChips = Array.from(modal.querySelectorAll('.request-section-chip'));
+  requestListingSectionChips.forEach((section) => {
+    section.addEventListener('toggle', () => {
+      if (!section.open) return;
+      requestListingSectionChips.forEach((other) => {
+        if (other !== section) other.removeAttribute('open');
+      });
+    });
+  }); 
   const rlGroup = modal.querySelector('#rl-group');
   const rlSubgroup = modal.querySelector('#rl-subgroup');
   const rlContexts = modal.querySelector('#rl-contexts');
   const rlOpenContexts = modal.querySelector('#rl-open-contexts');
   const rlContextSummaryText = modal.querySelector('#rl-context-summary-text');
   const rlContextCount = modal.querySelector('#rl-context-count');
+  const rlContextSuggested = modal.querySelector('#rl-context-suggested');
   const rlContextSelected = modal.querySelector('#rl-context-selected');
   const rlTags = modal.querySelector('#rl-tags');
   const rlTagSuggestions = modal.querySelector('#rl-tag-suggestions');
@@ -4757,7 +4765,100 @@ export function createRequestListingModal(opts = {}) {
     });
   }
 
-  function syncRequestListingContexts() {
+  function requestListingContextSeedTokens() {
+    const toTokens = (value) => String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .split(/\s+/)
+      .map((token) => token.trim())
+      .filter((token) => token.length > 2);
+
+    return Array.from(new Set([
+      String(rlSubgroup?.selectedOptions?.[0]?.textContent || '').trim(),
+      String(rlGroup?.selectedOptions?.[0]?.textContent || '').trim(),
+      String(rlCity?.value || '').trim(),
+      ...Array.from(selectedTagSet).map((tag) => String(tag || '').trim())
+    ].flatMap(toTokens)));
+  }
+
+  function requestListingContextSeedScore(row, tokens) {
+    if (!tokens.length) return 0;
+
+    const haystack = String([
+      row?.key,
+      row?.pageKey,
+      row?.namespace,
+      row?.theme,
+      p8ContextLabel(row),
+      ...Object.values((row && typeof row.titles === 'object') ? row.titles : {})
+    ].join(' ') || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ');
+
+    return tokens.reduce((score, token) => {
+      if (haystack.includes(` ${token} `) || haystack.startsWith(`${token} `) || haystack.endsWith(` ${token}`)) return score + 4;
+      if (haystack.includes(token)) return score + 2;
+      return score;
+    }, 0);
+  }
+
+  function renderRequestListingContextSuggestions() {
+    if (!rlContextSuggested) return;
+
+    rlContextSuggested.innerHTML = '';
+    if (!requestListingContextRows.length) {
+      rlContextSuggested.classList.add('hidden');
+      return;
+    }
+
+    const seedTokens = requestListingContextSeedTokens();
+    const suggestedRows = requestListingContextRows
+      .map((row) => ({ row, score: requestListingContextSeedScore(row, seedTokens) }))
+      .filter(({ row, score }) => {
+        const key = String(row?.key || '').trim();
+        return !!key && score > 0 && !selectedContextSet.has(key);
+      })
+      .sort((a, b) => {
+        if (a.score !== b.score) return b.score - a.score;
+        const aKey = String(a.row?.key || '').trim();
+        const bKey = String(b.row?.key || '').trim();
+        return getRequestListingContextLabel(aKey).localeCompare(getRequestListingContextLabel(bKey), undefined, { sensitivity: 'base' });
+      })
+      .slice(0, 6)
+      .map(({ row }) => row);
+
+    rlContextSuggested.classList.toggle('hidden', !suggestedRows.length);
+    if (!suggestedRows.length) return;
+
+    suggestedRows.forEach((row) => {
+      const key = String(row?.key || '').trim();
+      if (!key) return;
+
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'request-chip';
+      chip.textContent = getRequestListingContextLabel(key);
+      chip.addEventListener('click', () => {
+        if (selectedContextSet.has(key)) {
+          selectedContextSet.delete(key);
+        } else {
+          if (selectedContextSet.size >= REQUEST_LISTING_CONTEXT_LIMIT) {
+            showToast(t('modal.requestListing.contexts.limit') || 'You can select up to 3 contexts.', 2200);
+            return;
+          }
+          selectedContextSet.add(key);
+        }
+        syncRequestListingContexts();
+      });
+      rlContextSuggested.appendChild(chip);
+    });
+  }
+
+  function syncRequestListingContexts() {    
     if (rlContexts) {
       Array.from(rlContexts.options || []).forEach((opt) => {
         opt.selected = selectedContextSet.has(String(opt.value || '').trim());
@@ -4782,6 +4883,8 @@ export function createRequestListingModal(opts = {}) {
         rlContextSelected.appendChild(chip);
       });
     }
+
+    renderRequestListingContextSuggestions();
   }
 
   function setRequestListingContextError(bad) {
@@ -5162,6 +5265,7 @@ export function createRequestListingModal(opts = {}) {
           else selectedTagSet.add(tag);
           syncRequestListingTags();
           renderTagSuggestions();
+          renderRequestListingContextSuggestions();
         });
         rlTagSuggestions.appendChild(btn);
       });
@@ -5182,6 +5286,7 @@ export function createRequestListingModal(opts = {}) {
         .join('');
       if (prefill?.subgroupKey) rlSubgroup.value = String(prefill.subgroupKey || '').trim();
       renderTagSuggestions();
+      renderRequestListingContextSuggestions();
     };
 
     renderSubgroups();
@@ -5193,6 +5298,7 @@ export function createRequestListingModal(opts = {}) {
 
     rlSubgroup?.addEventListener('change', () => {
       renderTagSuggestions();
+      renderRequestListingContextSuggestions();
     });
 
     requestListingContextRows = contextRows.slice();
@@ -5251,9 +5357,13 @@ export function createRequestListingModal(opts = {}) {
     const hasCoordError = wantsCoord && !coord;
 
     if (hasBusinessError || hasContextError || hasCoordError) {
-      if (hasBusinessError) rlBusinessSection?.setAttribute('open', '');
-      if (hasContextError) rlContextSection?.setAttribute('open', '');
-      if (hasCoordError) rlCoord?.focus?.();
+      if (hasBusinessError) {
+        rlBusinessSection?.setAttribute('open', '');
+      } else if (hasContextError) {
+        rlContextSection?.setAttribute('open', '');
+      } else if (hasCoordError) {
+        rlCoord?.focus?.();
+      }
       showToast(t('modal.requestListing.validation.required') || 'Please fill in all required fields marked with *.', 2200);
       return;
     }

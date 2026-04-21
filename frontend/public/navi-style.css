@@ -3032,8 +3032,8 @@ body.high-contrast #request-listing-modal .request-chip.is-selected{
   box-shadow:0 0 0 1px rgba(211,47,47,.12);
 }
 
-#request-listing-modal .request-context-selected{
-  margin-top:8px;
+#request-listing-modal .request-context-suggested{
+  margin-top:10px;
 }
 
 #request-listing-modal .request-chip.request-chip-static{

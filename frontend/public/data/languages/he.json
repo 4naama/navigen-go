@@ -952,7 +952,6 @@
   "modal.requestListing.facebook.label": "קישור לפייסבוק",
   "modal.requestListing.instagram.label": "קישור לאינסטגרם",
   "modal.requestListing.description.label": "תיאור העסק",
-  "modal.requestListing.description.placeholder": "🔍 תאר את העסק",
   "modal.requestListing.description.help": "יעד לפרסום: לפחות 200 תווים.",
   "modal.requestListing.group.label": "קבוצה",
   "modal.requestListing.group.placeholder": "בחר קבוצה",
@@ -1029,5 +1028,7 @@
   "modal.requestListing.next.resumeCta": "המשך מאוחר יותר",
   "locationDraft.commercial.title": "נראות וקידום",
   "locationDraft.commercial.cta": "המשך לתשלום",
-  "modal.requestListing.contexts.done": "סיום"
+  "modal.requestListing.contexts.done": "סיום",
+  "modal.requestListing.description.placeholder": "🔍 תאר את העסק",
+  "modal.requestListing.contexts.selected.empty": "בחר עד 3."
 }
