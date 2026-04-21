@@ -4657,17 +4657,8 @@ export function createRequestListingModal(opts = {}) {
         if (other !== section) other.removeAttribute('open');
       });
     });
-  });
-  
-  const requestListingSectionChips = Array.from(modal.querySelectorAll('.request-section-chip'));
-  requestListingSectionChips.forEach((section) => {
-    section.addEventListener('toggle', () => {
-      if (!section.open) return;
-      requestListingSectionChips.forEach((other) => {
-        if (other !== section) other.removeAttribute('open');
-      });
-    });
   }); 
+  
   const rlGroup = modal.querySelector('#rl-group');
   const rlSubgroup = modal.querySelector('#rl-subgroup');
   const rlContexts = modal.querySelector('#rl-contexts');
