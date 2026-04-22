@@ -7624,7 +7624,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   const modalTitleNode = modal.querySelector('.modal-top-bar .modal-title, .modal-top-bar h1, .modal-top-bar h2');
   if (modalTitleNode) {
     modalTitleNode.textContent = p8Draft
-      ? ((typeof t === 'function' && t('locationDraft.commercial.title')) || 'Visibility & promotion')
+      ? ((typeof t === 'function' && t('locationDraft.commercial.title')) || 'Publish setup')
       : ((typeof t === 'function' && t('campaign.ui.title')) || 'Campaign management');
   }
   syncModalHeaderHelp(modal);

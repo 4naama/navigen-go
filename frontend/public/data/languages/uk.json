@@ -1026,7 +1026,7 @@
   "modal.requestListing.next.publishDesc": "На платному кроці можна обрати лише видимість або просування.",
   "modal.requestListing.next.publishCta": "Продовжити до публікації",
   "modal.requestListing.next.resumeCta": "Продовжити пізніше",
-  "locationDraft.commercial.title": "Видимість і просування",
+  "locationDraft.commercial.title": "Налаштування публікації",
   "locationDraft.commercial.cta": "Продовжити до оплати",
   "modal.requestListing.contexts.done": "Готово",
   "modal.requestListing.description.placeholder": "🔍 Опишіть бізнес",

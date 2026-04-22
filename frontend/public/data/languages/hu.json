@@ -1026,7 +1026,7 @@
   "modal.requestListing.next.publishDesc": "A fizetős lépésben választhatod a csak láthatóságot vagy a promóciót.",
   "modal.requestListing.next.publishCta": "Tovább a közzétételhez",
   "modal.requestListing.next.resumeCta": "Folytatás később",
-  "locationDraft.commercial.title": "Láthatóság és promóció",
+  "locationDraft.commercial.title": "Közzététel beállítása",
   "locationDraft.commercial.cta": "Tovább a fizetéshez",
   "modal.requestListing.contexts.done": "Kész",
   "modal.requestListing.description.placeholder": "🔍 Írd le a vállalkozást",

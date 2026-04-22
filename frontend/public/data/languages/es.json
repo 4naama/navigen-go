@@ -1026,7 +1026,7 @@
   "modal.requestListing.next.publishDesc": "En el paso de pago puedes elegir solo Visibilidad o Promoción.",
   "modal.requestListing.next.publishCta": "Continuar a publicar",
   "modal.requestListing.next.resumeCta": "Continuar más tarde",
-  "locationDraft.commercial.title": "Visibilidad y promoción",
+  "locationDraft.commercial.title": "Configuración de publicación",
   "locationDraft.commercial.cta": "Continuar al pago",
   "modal.requestListing.contexts.done": "Listo",
   "modal.requestListing.description.placeholder": "🔍 Describe el negocio",

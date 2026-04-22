@@ -3758,12 +3758,14 @@ select.input[multiple]{
 /* Draft actions row */
 .cm-actions{
   display:flex;
+  flex-direction:column;
+  align-items:stretch;
   gap:10px;
   margin-top:12px;
-  flex-wrap:wrap;
 }
 
 .cm-action-btn{
+  width:100%;
   border:1px solid #e0e0e0;
   background:#f8f8f8;
   border-radius:10px;
@@ -3771,6 +3773,7 @@ select.input[multiple]{
   cursor:pointer;
   font:inherit;
   font-weight:600;
+  box-sizing:border-box;
 }
 
 .cm-action-btn:hover{
@@ -3779,6 +3782,7 @@ select.input[multiple]{
 }
 
 .cm-action-primary{
+  width:100%;
   background:#d1e0fe;
   color:#0f172a;
   font-weight:600;
@@ -3786,6 +3790,7 @@ select.input[multiple]{
   border-radius:10px;
   padding:10px 14px;
   cursor:pointer;
+  box-sizing:border-box;
 }
 
 .cm-action-primary:hover{

@@ -1026,7 +1026,7 @@
   "modal.requestListing.next.publishDesc": "À l’étape payante, vous pouvez choisir Visibilité uniquement ou Promotion.",
   "modal.requestListing.next.publishCta": "Continuer vers la publication",
   "modal.requestListing.next.resumeCta": "Reprendre plus tard",
-  "locationDraft.commercial.title": "Visibilité et promotion",
+  "locationDraft.commercial.title": "Configuration de publication",
   "locationDraft.commercial.cta": "Continuer vers le paiement",
   "modal.requestListing.contexts.done": "Terminé",
   "modal.requestListing.description.placeholder": "🔍 Décrivez l’établissement",
