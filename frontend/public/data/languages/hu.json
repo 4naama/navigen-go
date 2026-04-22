@@ -1059,7 +1059,7 @@
   "root.bo.googleImport.help.line1": "Keresd meg a vállalkozásodat a Google ingyenes Place ID Finder eszközével.",
   "root.bo.googleImport.help.line2": "Jelöld ki a teljes azonosítót, és hagyd meg az összes kötőjelet pontosan úgy, ahogy látszik.",
   "root.bo.googleImport.help.line3": "Mobilon tartsd lenyomva a másoláshoz, majd illeszd be a NaviGenbe.",
-  "root.bo.googleImport.help.line4": "A mentés először egy privát profil piszkozatot hoz létre. A közzététel később, a fizetős lépésben történik.",
+  "root.bo.googleImport.help.line4": "Ez ugyanarra a piszkozatfolyamatra visz, mint a Hely létrehozása. A közzététel később, a fizetős lépésben történik.",
   "root.bo.googleImport.help.cta": "Place ID Finder megnyitása",
   "locationDraft.publishSetup.title": "Profil piszkozat mentve",
   "locationDraft.publishSetup.savedTitle": "A profil piszkozatod privát és el van mentve.",

@@ -1059,7 +1059,7 @@
   "root.bo.googleImport.help.line1": "Trouvez votre établissement avec l’outil gratuit Place ID Finder de Google.",
   "root.bo.googleImport.help.line2": "Sélectionnez l’ID complet et conservez chaque tiret exactement comme affiché.",
   "root.bo.googleImport.help.line3": "Sur mobile, maintenez appuyé pour copier l’ID, puis collez-le dans NaviGen.",
-  "root.bo.googleImport.help.line4": "L’enregistrement crée d’abord un brouillon de profil privé. La publication vient ensuite à l’étape payante.",
+  "root.bo.googleImport.help.line4": "Cela vous place sur le même flux de brouillon que Créer un établissement. La publication vient plus tard à l’étape payante.",
   "root.bo.googleImport.help.cta": "Ouvrir Place ID Finder",
   "locationDraft.publishSetup.title": "Brouillon de profil enregistré",
   "locationDraft.publishSetup.savedTitle": "Votre brouillon de profil est privé et enregistré.",

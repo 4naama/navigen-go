@@ -1059,7 +1059,7 @@
   "root.bo.googleImport.help.line1": "Find your business with Google’s free Place ID Finder.",
   "root.bo.googleImport.help.line2": "Select the whole ID and keep every hyphen exactly as shown.",
   "root.bo.googleImport.help.line3": "On mobile, press and hold to copy the ID, then paste it into NaviGen.",
-  "root.bo.googleImport.help.line4": "Saving creates a private profile draft first. Publish comes later in the paid step.",
+  "root.bo.googleImport.help.line4": "This puts you onto the same draft path as Create a location. Publish comes later in the paid step.",
   "root.bo.googleImport.help.cta": "Open Place ID Finder",
   "locationDraft.publishSetup.title": "Profile draft saved",
   "locationDraft.publishSetup.savedTitle": "Your profile draft is private and saved.",

@@ -3700,7 +3700,7 @@ export async function showSelectLocationModal() {
     recentList.innerHTML = '';
 
     const loading = document.createElement('div');
-    loading.className = 'modal-menu-item modal-static-card syb-empty-row';
+    loading.className = 'modal-menu-item modal-static-card owner-center-loading syb-empty-row';
     loading.innerHTML = `
       <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
         <strong>${(typeof t === 'function' && t('root.bo.recent.loading.title')) || 'Loading recently used...'}</strong><br>
@@ -5844,6 +5844,12 @@ function getModalHeaderHelpSpec(target) {
 
   if (modalId === 'select-location-modal') {
     return {
+      bodyLines: [
+        `${_ownerText('root.bo.notListed.title', 'Create a location')} — ${_ownerText('root.bo.notListed.desc', 'Add your business.')}`,
+        `${_ownerText('root.bo.googleImport.title', 'Import from Google')} — ${_ownerText('root.bo.googleImport.desc', 'Bring in your business details.')}`,
+        `${_ownerText('root.bo.recent.title', 'Recently used')} — ${_ownerText('root.bo.recent.desc', 'View and manage your places.')}`,
+        _ownerText('root.bo.selectLocation.search.idle.desc', 'Type at least 3 characters to search existing businesses.')
+      ].map((line) => String(line || '').trim()).filter(Boolean),
       items: [
         {
           title: _ownerText('root.bo.selectLocation.help.taken.title', '🔴 Taken — already operated.'),
@@ -5933,7 +5939,7 @@ function getModalHeaderHelpSpec(target) {
         _ownerText('root.bo.googleImport.help.line1', 'Find your business with Google’s free Place ID Finder.'),
         _ownerText('root.bo.googleImport.help.line2', 'Select the whole ID and keep every hyphen exactly as shown.'),
         _ownerText('root.bo.googleImport.help.line3', 'On mobile, press and hold to copy the ID, then paste it into NaviGen.'),
-        _ownerText('root.bo.googleImport.help.line4', 'Saving creates a private profile draft first. Publish comes later in the paid step.')
+        _ownerText('root.bo.googleImport.help.line4', 'This puts you onto the same draft path as Create a location. Publish comes later in the paid step.')
       ],
       buttons: [
         {
@@ -6021,10 +6027,23 @@ function showModalHeaderHelpModal(target) {
     inner.appendChild(p);
   }
 
+  const lines = bodyLines.length
+    ? bodyLines
+    : (!items.length ? [_ownerText('modal.help.empty', 'Guidance for this step is coming soon.')] : []);
+
+  lines.forEach((line, idx) => {
+    const p = document.createElement('p');
+    p.textContent = line;
+    p.style.textAlign = 'left';
+    p.style.margin = idx === 0 && !intro ? '0' : '10px 0 0';
+    p.style.opacity = '0.92';
+    inner.appendChild(p);
+  });
+
   if (items.length) {
     const list = document.createElement('div');
     list.className = 'modal-menu-list';
-    list.style.marginTop = intro ? '12px' : '0';
+    list.style.marginTop = (intro || lines.length) ? '12px' : '0';
 
     items.forEach((item) => {
       const row = document.createElement('div');
@@ -6039,22 +6058,7 @@ function showModalHeaderHelpModal(target) {
     });
 
     inner.appendChild(list);
-    showModal(id);
-    return;
   }
-
-  const lines = bodyLines.length
-    ? bodyLines
-    : [_ownerText('modal.help.empty', 'Guidance for this step is coming soon.')];
-
-  lines.forEach((line, idx) => {
-    const p = document.createElement('p');
-    p.textContent = line;
-    p.style.textAlign = 'left';
-    p.style.margin = idx === 0 && !intro ? '0' : '10px 0 0';
-    p.style.opacity = '0.92';
-    inner.appendChild(p);
-  });
 
   if (buttons.length) {
     const actions = document.createElement('div');
