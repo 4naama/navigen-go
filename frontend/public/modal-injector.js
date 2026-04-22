@@ -3755,7 +3755,6 @@ export async function showSelectLocationModal() {
     }, 280);
   });
 
-  syncClear();
   resetSearchUi();
   requestAnimationFrame(() => input.focus());
 
