@@ -5409,6 +5409,9 @@ export function createRequestListingModal(opts = {}) {
       closeContextPicker(ev);
     });
 
+    syncClear();
+    renderContextPicker();
+
     hideModal(id);
     showModal(contextModalId);
     searchInput.focus();
