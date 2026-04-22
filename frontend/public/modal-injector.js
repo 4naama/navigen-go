@@ -6014,8 +6014,6 @@ function showModalHeaderHelpModal(target) {
   const buttons = Array.isArray(spec.buttons) ? spec.buttons.filter(Boolean) : [];
 
   if (intro) {
-
-  if (intro) {
     const p = document.createElement('p');
     p.textContent = intro;
     p.style.textAlign = 'left';
