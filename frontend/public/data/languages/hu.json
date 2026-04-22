@@ -1063,7 +1063,7 @@
   "root.bo.googleImport.help.cta": "Place ID Finder megnyitása",
   "locationDraft.publishSetup.title": "Profil piszkozat mentve",
   "locationDraft.publishSetup.savedTitle": "A profil piszkozatod privát és el van mentve.",
-  "locationDraft.publishSetup.savedDesc": "A piszkozat készül el először. A közzététel ezután következik, és fizetést igényel.",
+  "locationDraft.publishSetup.savedDesc": "A következő lépés a közzététel, és fizetést igényel.",
   "locationDraft.publishSetup.publishTitle": "Folytasd, amikor készen állsz a közzétételre",
   "locationDraft.publishSetup.publishDesc": "A fizetős lépés beállítja a közzétételi jogosultságot. A promóció ezután opcionális marad.",
   "locationDraft.publishSetup.continue": "Tovább a közzétételhez",

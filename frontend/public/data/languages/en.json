@@ -1063,7 +1063,7 @@
   "root.bo.googleImport.help.cta": "Open Place ID Finder",
   "locationDraft.publishSetup.title": "Profile draft saved",
   "locationDraft.publishSetup.savedTitle": "Your profile draft is private and saved.",
-  "locationDraft.publishSetup.savedDesc": "The draft is stamped first. Publish comes next and requires payment.",
+  "locationDraft.publishSetup.savedDesc": "The next step is publish and requires payment.",
   "locationDraft.publishSetup.publishTitle": "Continue when you are ready to publish",
   "locationDraft.publishSetup.publishDesc": "The paid step sets up publish entitlement. Promotion remains optional after that.",
   "locationDraft.publishSetup.continue": "Continue to publish",

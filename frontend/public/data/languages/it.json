@@ -1063,7 +1063,7 @@
   "root.bo.googleImport.help.cta": "Apri Place ID Finder",
   "locationDraft.publishSetup.title": "Bozza profilo salvata",
   "locationDraft.publishSetup.savedTitle": "La bozza del profilo è privata e salvata.",
-  "locationDraft.publishSetup.savedDesc": "La bozza viene creata prima. La pubblicazione arriva dopo e richiede pagamento.",
+  "locationDraft.publishSetup.savedDesc": "Il passaggio successivo è la pubblicazione e richiede pagamento.",
   "locationDraft.publishSetup.publishTitle": "Continua quando sei pronto a pubblicare",
   "locationDraft.publishSetup.publishDesc": "Il passaggio a pagamento imposta il diritto di pubblicazione. La promozione resta opzionale dopo.",
   "locationDraft.publishSetup.continue": "Continua alla pubblicazione",

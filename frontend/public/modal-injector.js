@@ -3298,15 +3298,13 @@ function createLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
         <div class="modal-menu-item modal-static-card syb-empty-row" aria-disabled="true">
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
             <strong>${(typeof t === 'function' && t('locationDraft.publishSetup.savedTitle')) || 'Your profile draft is private and saved.'}</strong><br>
-            <small>${(typeof t === 'function' && t('locationDraft.publishSetup.savedDesc')) || 'The draft is stamped first. Publish comes next and requires payment.'}</small>
+            <small>${(typeof t === 'function' && t('locationDraft.publishSetup.savedDesc')) || 'The next step is publish and requires payment.'}</small>
           </span>
         </div>
 
-        <div class="modal-menu-item modal-static-card syb-empty-row" aria-disabled="true">
-          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-            <strong>${(typeof t === 'function' && t('locationDraft.publishSetup.publishTitle')) || 'Continue when you are ready to publish'}</strong><br>
-            <small>${(typeof t === 'function' && t('locationDraft.publishSetup.publishDesc')) || 'The paid step sets up publish entitlement. Promotion remains optional after that.'}</small>
-          </span>
+        <div style="text-align:left; line-height:1.35; margin-top:2px;">
+          <strong>${(typeof t === 'function' && t('locationDraft.publishSetup.publishTitle')) || 'Continue when you are ready to publish'}</strong><br>
+          <small>${(typeof t === 'function' && t('locationDraft.publishSetup.publishDesc')) || 'The paid step sets up publish entitlement. Promotion remains optional after that.'}</small>
         </div>
 
         <div class="modal-actions">
@@ -5936,14 +5934,14 @@ function getModalHeaderHelpSpec(target) {
     return {
       title: _ownerText('modal.help.title', 'How it works'),
       bodyLines: [
-        _ownerText('root.bo.googleImport.help.line1', 'Find your business with Google’s free Place ID Finder.'),
-        _ownerText('root.bo.googleImport.help.line2', 'Select the whole ID and keep every hyphen exactly as shown.'),
-        _ownerText('root.bo.googleImport.help.line3', 'On mobile, press and hold to copy the ID, then paste it into NaviGen.'),
-        _ownerText('root.bo.googleImport.help.line4', 'This puts you onto the same draft path as Create a location. Publish comes later in the paid step.')
+        `${_ownerText('root.bo.googleImport.title', 'Import from Google')} — ${_ownerText('root.bo.googleImport.desc', 'Bring in your business details.')}`,
+        'Find your business with Google’s free Place ID Finder.',
+        'Select the whole ID, keep every hyphen exactly as shown, and on mobile press and hold to copy.',
+        'This puts you onto the same draft path as Create a location.'
       ],
       buttons: [
         {
-          label: _ownerText('root.bo.googleImport.help.cta', 'Open Place ID Finder'),
+          label: 'Open Place ID Finder',
           href: 'https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder'
         }
       ]
@@ -5963,6 +5961,18 @@ function getModalHeaderHelpSpec(target) {
   }
 
   if (modalId === 'campaign-management-modal') {
+    const currentTitle = getModalHeaderText(target);
+    if (/publish setup/i.test(String(currentTitle || ''))) {
+      return {
+        title: _ownerText('modal.help.title', 'How it works'),
+        bodyLines: [
+          _ownerText('locationDraft.publishSetup.savedDesc', 'The next step is publish and requires payment.'),
+          _ownerText('locationDraft.publishSetup.publishDesc', 'The paid step sets up publish entitlement. Promotion remains optional after that.'),
+          'Changes are saved automatically while you work.'
+        ].map(s => String(s || '').trim()).filter(Boolean)
+      };
+    }
+
     const campaignMgmtBody = _ownerText(
       'campaign.ui.help.body',
       'Create or edit a campaign for this location.\nChanges are saved automatically while you work.\nYour campaign becomes active only after checkout.'
@@ -6063,7 +6073,6 @@ function showModalHeaderHelpModal(target) {
   if (buttons.length) {
     const actions = document.createElement('div');
     actions.className = 'modal-actions';
-    actions.style.marginTop = '14px';
 
     buttons.forEach((item) => {
       const href = String(item?.href || '').trim();

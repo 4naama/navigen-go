@@ -1063,7 +1063,7 @@
   "root.bo.googleImport.help.cta": "Ouvrir Place ID Finder",
   "locationDraft.publishSetup.title": "Brouillon de profil enregistré",
   "locationDraft.publishSetup.savedTitle": "Votre brouillon de profil est privé et enregistré.",
-  "locationDraft.publishSetup.savedDesc": "Le brouillon est créé en premier. La publication vient ensuite et nécessite un paiement.",
+  "locationDraft.publishSetup.savedDesc": "L’étape suivante est la publication et nécessite un paiement.",
   "locationDraft.publishSetup.publishTitle": "Continuez lorsque vous êtes prêt à publier",
   "locationDraft.publishSetup.publishDesc": "L’étape payante configure le droit de publication. La promotion reste optionnelle ensuite.",
   "locationDraft.publishSetup.continue": "Continuer vers la publication",
