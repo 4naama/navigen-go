@@ -1059,13 +1059,13 @@
   "root.bo.googleImport.help.line1": "Знайдіть свій бізнес за допомогою безкоштовного інструмента Google Place ID Finder.",
   "root.bo.googleImport.help.line2": "Виберіть увесь ID і збережіть кожен дефіс точно як показано.",
   "root.bo.googleImport.help.line3": "На мобільному натисніть і утримуйте, щоб скопіювати ID, потім вставте його в NaviGen.",
-  "root.bo.googleImport.help.line4": "Це переводить вас на той самий шлях чернетки, що й «Створити локацію». Публікація відбудеться пізніше на платному етапі.",
+  "root.bo.googleImport.help.line4": "Це переводить на той самий шлях чернетки NaviGen, що й «Створити локацію».",
   "root.bo.googleImport.help.cta": "Відкрити Place ID Finder",
   "locationDraft.publishSetup.title": "Чернетку профілю збережено",
   "locationDraft.publishSetup.savedTitle": "Чернетка вашого профілю приватна та збережена.",
   "locationDraft.publishSetup.savedDesc": "Наступний крок — публікація, і він потребує оплати.",
   "locationDraft.publishSetup.publishTitle": "Продовжуйте, коли будете готові опублікувати",
   "locationDraft.publishSetup.publishDesc": "Платний крок налаштовує право на публікацію. Просування залишається необов’язковим після цього.",
-  "locationDraft.publishSetup.continue": "Продовжити до публікації",
-  "locationDraft.publishSetup.later": "Продовжити пізніше"
+  "locationDraft.publishSetup.later": "Продовжити пізніше",
+  "locationDraft.publishSetup.continue": "Редагувати дані бізнесу"
 }

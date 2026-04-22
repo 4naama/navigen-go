@@ -1059,13 +1059,13 @@
   "root.bo.googleImport.help.line1": "Trova la tua attività con il Place ID Finder gratuito di Google.",
   "root.bo.googleImport.help.line2": "Seleziona l’ID completo e mantieni ogni trattino esattamente come mostrato.",
   "root.bo.googleImport.help.line3": "Su mobile, tieni premuto per copiare l’ID, poi incollalo in NaviGen.",
-  "root.bo.googleImport.help.line4": "Questo ti porta nello stesso flusso di bozza di Crea una sede. La pubblicazione avviene più tardi nel passaggio a pagamento.",
+  "root.bo.googleImport.help.line4": "Questo segue lo stesso flusso di bozza NaviGen di Crea una sede.",
   "root.bo.googleImport.help.cta": "Apri Place ID Finder",
   "locationDraft.publishSetup.title": "Bozza profilo salvata",
   "locationDraft.publishSetup.savedTitle": "La bozza del profilo è privata e salvata.",
   "locationDraft.publishSetup.savedDesc": "Il passaggio successivo è la pubblicazione e richiede pagamento.",
   "locationDraft.publishSetup.publishTitle": "Continua quando sei pronto a pubblicare",
   "locationDraft.publishSetup.publishDesc": "Il passaggio a pagamento imposta il diritto di pubblicazione. La promozione resta opzionale dopo.",
-  "locationDraft.publishSetup.continue": "Continua alla pubblicazione",
-  "locationDraft.publishSetup.later": "Riprendi più tardi"
+  "locationDraft.publishSetup.later": "Riprendi più tardi",
+  "locationDraft.publishSetup.continue": "Modifica dettagli attività"
 }

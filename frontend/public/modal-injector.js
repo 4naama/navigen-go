@@ -3309,7 +3309,7 @@ function createLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
 
         <div class="modal-actions">
           <button id="location-draft-publish-continue" type="button" class="modal-body-button">
-            ${(typeof t === 'function' && t('locationDraft.publishSetup.continue')) || 'Continue to publish'}
+            ${(typeof t === 'function' && t('locationDraft.publishSetup.continue')) || 'Edit business details'}
           </button>
 
           <button id="location-draft-publish-later" type="button" class="modal-body-button">
@@ -3324,7 +3324,7 @@ function createLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
     closePublishSetup(ev);
   });
 
-  modal.querySelector('#location-draft-publish-continue')?.addEventListener('click', async (ev) => {
+  modal.querySelector('#location-draft-publish-continue')?.addEventListener('click', (ev) => {
     ev.preventDefault();
     ev.stopPropagation();
     hideModal(id);
@@ -3335,11 +3335,7 @@ function createLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
       return;
     }
 
-    await showCampaignManagementModal(draftULID, {
-      guest: true,
-      p8Draft: draftMeta,
-      preferEmptyDraft: true
-    });
+    showRequestListingModal({ prefill: draftMeta, returnTo: opts?.returnTo });
   });
 
   setupTapOutClose(id, closePublishSetup);
@@ -3371,12 +3367,13 @@ function createImportGoogleLocationModal(opts = {}) {
     onClose: (ev) => { closeImportGoogle(ev); },
     bodyHTML: `
       <div class="modal-form-stack">
-        <div class="modal-menu-item modal-static-card syb-empty-row" aria-disabled="true">
+        <button id="google-placeid-finder" type="button" class="modal-menu-item modal-callout-card">
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
             <strong>${(typeof t === 'function' && t('root.bo.googleImport.title')) || 'Import from Google'}</strong><br>
-            <small>${(typeof t === 'function' && t('root.bo.googleImport.desc')) || 'Bring in your business details.'}</small>
+            <small>${(typeof t === 'function' && t('root.bo.googleImport.desc')) || 'Bring in your business details.'}</small><br>
+            <small>Open Place ID Finder</small>
           </span>
-        </div>
+        </button>
 
         <div class="modal-field">
           <label for="google-import-place-id">${(typeof t === 'function' && t('root.bo.googleImport.field.label')) || 'Paste Google place_id'}</label>
@@ -3398,6 +3395,16 @@ function createImportGoogleLocationModal(opts = {}) {
 
   const placeIdInput = modal.querySelector('#google-import-place-id');
   const submitBtn = modal.querySelector('#google-import-submit');
+
+  modal.querySelector('#google-placeid-finder')?.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    window.open(
+      'https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder',
+      '_blank',
+      'noopener,noreferrer'
+    );
+  });
 
   modal.querySelector('#google-import-cancel')?.addEventListener('click', (ev) => {
     closeImportGoogle(ev);
@@ -5934,16 +5941,10 @@ function getModalHeaderHelpSpec(target) {
     return {
       title: _ownerText('modal.help.title', 'How it works'),
       bodyLines: [
-        `${_ownerText('root.bo.googleImport.title', 'Import from Google')} — ${_ownerText('root.bo.googleImport.desc', 'Bring in your business details.')}`,
-        'Find your business with Google’s free Place ID Finder.',
-        'Select the whole ID, keep every hyphen exactly as shown, and on mobile press and hold to copy.',
-        'This puts you onto the same draft path as Create a location.'
-      ],
-      buttons: [
-        {
-          label: 'Open Place ID Finder',
-          href: 'https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder'
-        }
+        _ownerText('root.bo.googleImport.help.line1', 'Find your business with Google’s free Place ID Finder.'),
+        _ownerText('root.bo.googleImport.help.line2', 'Select the whole ID and keep every hyphen exactly as shown.'),
+        _ownerText('root.bo.googleImport.help.line3', 'On mobile, press and hold to copy the ID, then paste it into NaviGen.'),
+        _ownerText('root.bo.googleImport.help.line4', 'This joins the same NaviGen draft path as Create a location.')
       ]
     };
   }
@@ -6073,6 +6074,7 @@ function showModalHeaderHelpModal(target) {
   if (buttons.length) {
     const actions = document.createElement('div');
     actions.className = 'modal-actions';
+    actions.style.marginTop = '14px';
 
     buttons.forEach((item) => {
       const href = String(item?.href || '').trim();
@@ -7687,22 +7689,23 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
 
   // Prefer the data item endpoint for the real business name (authoritative profile payload).
   let locName = String(displayName || '').trim();
-  try {
-    const rr = await fetch(
-      `https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(displaySlug)}`,
-      { cache: 'no-store' }
-    );
-    const jj = rr.ok ? await rr.json().catch(() => null) : null;
-    const ln = jj?.locationName;
-    const nm = (ln && typeof ln === 'object')
-      ? String(ln.en || Object.values(ln)[0] || '').trim()
-      : String(ln || '').trim();
-    if (nm) locName = nm;
-  } catch {}
-  
-  if (!locName && p8Draft) locName = String(p8Draft.name || p8Draft.displayName || '').trim();
+  if (!p8Draft) {
+    try {
+      const rr = await fetch(
+        `https://navigen-api.4naama.workers.dev/api/data/item?id=${encodeURIComponent(displaySlug)}`,
+        { cache: 'no-store' }
+      );
+      const jj = rr.ok ? await rr.json().catch(() => null) : null;
+      const ln = jj?.locationName;
+      const nm = (ln && typeof ln === 'object')
+        ? String(ln.en || Object.values(ln)[0] || '').trim()
+        : String(ln || '').trim();
+      if (nm) locName = nm;
+    } catch {}
+  }
 
-  if (!locName) locName = String(displaySlug || '').trim(); // last-resort fallback
+  if (!locName && p8Draft) locName = String(p8Draft.name || p8Draft.displayName || '').trim();
+  if (!locName) locName = p8Draft ? 'Profile draft' : String(displaySlug || '').trim(); // last-resort fallback
 
   let requestedUlid = '';
   try {

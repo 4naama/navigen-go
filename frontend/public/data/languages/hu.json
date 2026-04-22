@@ -1059,13 +1059,13 @@
   "root.bo.googleImport.help.line1": "Keresd meg a vállalkozásodat a Google ingyenes Place ID Finder eszközével.",
   "root.bo.googleImport.help.line2": "Jelöld ki a teljes azonosítót, és hagyd meg az összes kötőjelet pontosan úgy, ahogy látszik.",
   "root.bo.googleImport.help.line3": "Mobilon tartsd lenyomva a másoláshoz, majd illeszd be a NaviGenbe.",
-  "root.bo.googleImport.help.line4": "Ez ugyanarra a piszkozatfolyamatra visz, mint a Hely létrehozása. A közzététel később, a fizetős lépésben történik.",
+  "root.bo.googleImport.help.line4": "Ez ugyanarra a NaviGen piszkozatfolyamatra visz, mint a Hely létrehozása.",
   "root.bo.googleImport.help.cta": "Place ID Finder megnyitása",
   "locationDraft.publishSetup.title": "Profil piszkozat mentve",
   "locationDraft.publishSetup.savedTitle": "A profil piszkozatod privát és el van mentve.",
   "locationDraft.publishSetup.savedDesc": "A következő lépés a közzététel, és fizetést igényel.",
   "locationDraft.publishSetup.publishTitle": "Folytasd, amikor készen állsz a közzétételre",
   "locationDraft.publishSetup.publishDesc": "A fizetős lépés beállítja a közzétételi jogosultságot. A promóció ezután opcionális marad.",
-  "locationDraft.publishSetup.continue": "Tovább a közzétételhez",
-  "locationDraft.publishSetup.later": "Folytatás később"
+  "locationDraft.publishSetup.later": "Folytatás később",
+  "locationDraft.publishSetup.continue": "Vállalkozás adatainak szerkesztése"
 }

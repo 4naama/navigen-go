@@ -1059,13 +1059,13 @@
   "root.bo.googleImport.help.line1": "Finden Sie Ihr Unternehmen mit dem kostenlosen Place ID Finder von Google.",
   "root.bo.googleImport.help.line2": "Wählen Sie die gesamte ID aus und behalten Sie jeden Bindestrich genau wie angezeigt bei.",
   "root.bo.googleImport.help.line3": "Auf dem Handy gedrückt halten, um die ID zu kopieren, und dann in NaviGen einfügen.",
-  "root.bo.googleImport.help.line4": "Dies führt Sie auf denselben Entwurfspfad wie „Standort erstellen“. Die Veröffentlichung erfolgt später im kostenpflichtigen Schritt.",
+  "root.bo.googleImport.help.line4": "Dies führt auf denselben NaviGen-Entwurfspfad wie „Standort erstellen“.",
   "root.bo.googleImport.help.cta": "Place ID Finder öffnen",
   "locationDraft.publishSetup.title": "Profilentwurf gespeichert",
   "locationDraft.publishSetup.savedTitle": "Ihr Profilentwurf ist privat und gespeichert.",
   "locationDraft.publishSetup.savedDesc": "Der nächste Schritt ist die Veröffentlichung und erfordert eine Zahlung.",
   "locationDraft.publishSetup.publishTitle": "Fahren Sie fort, wenn Sie bereit sind zu veröffentlichen",
   "locationDraft.publishSetup.publishDesc": "Der kostenpflichtige Schritt richtet die Veröffentlichungsberechtigung ein. Die Promotion bleibt danach optional.",
-  "locationDraft.publishSetup.continue": "Weiter zur Veröffentlichung",
-  "locationDraft.publishSetup.later": "Später fortfahren"
+  "locationDraft.publishSetup.later": "Später fortfahren",
+  "locationDraft.publishSetup.continue": "Unternehmensdetails bearbeiten"
 }

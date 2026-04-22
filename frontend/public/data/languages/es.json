@@ -1059,13 +1059,13 @@
   "root.bo.googleImport.help.line1": "Encuentra tu negocio con la herramienta gratuita Place ID Finder de Google.",
   "root.bo.googleImport.help.line2": "Selecciona todo el ID y mantén cada guion exactamente como se muestra.",
   "root.bo.googleImport.help.line3": "En móvil, mantén pulsado para copiar el ID y luego pégalo en NaviGen.",
-  "root.bo.googleImport.help.line4": "Esto te lleva al mismo flujo de borrador que Crear una ubicación. La publicación viene después en el paso de pago.",
+  "root.bo.googleImport.help.line4": "Esto te lleva al mismo flujo de borrador de NaviGen que Crear una ubicación.",
   "root.bo.googleImport.help.cta": "Abrir Place ID Finder",
   "locationDraft.publishSetup.title": "Borrador de perfil guardado",
   "locationDraft.publishSetup.savedTitle": "Tu borrador de perfil es privado y está guardado.",
   "locationDraft.publishSetup.savedDesc": "El siguiente paso es publicar y requiere pago.",
   "locationDraft.publishSetup.publishTitle": "Continúa cuando estés listo para publicar",
   "locationDraft.publishSetup.publishDesc": "El paso de pago configura el derecho de publicación. La promoción sigue siendo opcional después.",
-  "locationDraft.publishSetup.continue": "Continuar a publicar",
-  "locationDraft.publishSetup.later": "Continuar más tarde"
+  "locationDraft.publishSetup.later": "Continuar más tarde",
+  "locationDraft.publishSetup.continue": "Editar datos del negocio"
 }

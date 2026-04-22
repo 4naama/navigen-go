@@ -1059,13 +1059,13 @@
   "root.bo.googleImport.help.line1": "מצא את העסק שלך עם כלי Place ID Finder החינמי של Google.",
   "root.bo.googleImport.help.line2": "בחר את כל המזהה ושמור כל מקף בדיוק כפי שמוצג.",
   "root.bo.googleImport.help.line3": "בנייד, לחץ והחזק כדי להעתיק את המזהה, ואז הדבק אותו ב-NaviGen.",
-  "root.bo.googleImport.help.line4": "זה מעביר אותך לאותו מסלול טיוטה כמו יצירת מיקום. הפרסום מגיע מאוחר יותר בשלב התשלום.",
+  "root.bo.googleImport.help.line4": "זה מצרף לאותו מסלול טיוטה של NaviGen כמו יצירת מיקום.",
   "root.bo.googleImport.help.cta": "פתח את Place ID Finder",
   "locationDraft.publishSetup.title": "טיוטת פרופיל נשמרה",
   "locationDraft.publishSetup.savedTitle": "טיוטת הפרופיל שלך פרטית ונשמרה.",
   "locationDraft.publishSetup.savedDesc": "השלב הבא הוא פרסום ודורש תשלום.",
   "locationDraft.publishSetup.publishTitle": "המשך כשאתה מוכן לפרסם",
   "locationDraft.publishSetup.publishDesc": "שלב התשלום מגדיר את הרשאת הפרסום. קידום נשאר אופציונלי לאחר מכן.",
-  "locationDraft.publishSetup.continue": "המשך לפרסום",
-  "locationDraft.publishSetup.later": "המשך מאוחר יותר"
+  "locationDraft.publishSetup.later": "המשך מאוחר יותר",
+  "locationDraft.publishSetup.continue": "ערוך פרטי העסק"
 }
