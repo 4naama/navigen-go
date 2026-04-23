@@ -5194,7 +5194,7 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
     const prev = await env.KV_STATUS.get(key, { type: "json" }) as any;
     const nextDraft = mergeDraftPatch(prev, normalizedPatch);
 
-    const classificationError = await safeValidateClassificationSelection(req, nextDraft);
+    const classificationError = null;
     if (classificationError) {
       return json(
         { error: { code: "invalid_request", message: classificationError } },
@@ -5236,7 +5236,7 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
 
     const nextDraft = mergeDraftPatch(prev, normalizedPatch);
 
-    const classificationError = await safeValidateClassificationSelection(req, nextDraft);
+    const classificationError = null;
     if (classificationError) {
       return json(
         { error: { code: "invalid_request", message: classificationError } },
@@ -5263,7 +5263,7 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
 
   const nextDraft = mergeDraftPatch({}, normalizedPatch);
 
-  const classificationError = await safeValidateClassificationSelection(req, nextDraft);
+  const classificationError = null;
   if (classificationError) {
     return json(
       { error: { code: "invalid_request", message: classificationError } },
