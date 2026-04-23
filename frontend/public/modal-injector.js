@@ -3125,6 +3125,8 @@ export function createSelectLocationModal() {
   searchInput.spellcheck = false;
   searchInput.autocapitalize = 'off';
   searchInput.autocomplete = 'off';
+  searchInput.autofocus = false;
+  searchInput.removeAttribute('autofocus');
   searchInput.value = '';
 
   const placeholder = ((typeof t === 'function' && t('root.bo.selectLocation.placeholder')) || 'Search here…').trim();
@@ -3170,6 +3172,33 @@ export function createSelectLocationModal() {
   const entryStack = document.createElement('div');
   entryStack.className = 'syb-entry-stack';
 
+  const pendingDraft = readPendingLocationDraft();
+  const pendingDraftLabel = String(
+    pendingDraft?.name ||
+    pendingDraft?.displayName ||
+    pendingDraft?.googlePlaceId ||
+    ''
+  ).trim();
+
+  let continueDraftBtn = null;
+  if (pendingDraft && (pendingDraft.draftULID || pendingDraft.draftSessionId)) {
+    continueDraftBtn = document.createElement('button');
+    continueDraftBtn.type = 'button';
+    continueDraftBtn.className = 'modal-menu-item modal-callout-card syb-entry-card';
+    continueDraftBtn.innerHTML = `
+      <span class="icon-img">📝</span>
+      <span class="label">
+        <strong>Continue draft</strong><br>
+        <small>${pendingDraftLabel || 'Resume recent work on this device.'}</small>
+      </span>
+    `;
+    continueDraftBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      hideModal(id);
+      showRequestListingModal({ prefill: pendingDraft, returnTo: 'syb' });
+    });
+  }
+
   const createBtn = document.createElement('button');
   createBtn.type = 'button';
   createBtn.className = 'modal-menu-item modal-callout-card syb-entry-card';
@@ -3214,6 +3243,7 @@ export function createSelectLocationModal() {
     </span>
   `;
 
+  if (continueDraftBtn) entryStack.appendChild(continueDraftBtn);
   entryStack.appendChild(createBtn);
   entryStack.appendChild(googleBtn);
   entryStack.appendChild(recentBtn);
@@ -3761,7 +3791,7 @@ export async function showSelectLocationModal() {
   });
 
   resetSearchUi();
-  requestAnimationFrame(() => input.focus());
+  rrequestAnimationFrame(() => input.blur());
 
   return await new Promise((resolve) => {
     const tick = setInterval(() => {
