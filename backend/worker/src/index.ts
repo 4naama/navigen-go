@@ -429,15 +429,7 @@ async function loadStructureCatalog(req: Request): Promise<any[]> {
 }
 
 async function loadContextCatalog(req: Request): Promise<any[]> {
-  const origin = req.headers.get("Origin") || "https://navigen.io";
-  const u = new URL("/api/data/contexts", origin).toString();
-  const r = await fetch(u, {
-    method: "GET",
-    headers: { accept: "application/json" },
-    cache: "no-store"
-  });
-  if (!r.ok) throw new Error("catalog_fetch_failed:/api/data/contexts");
-  const j = await r.json().catch(() => null);
+  const j = await fetchStaticJson(req, "/data/contexts.json");
   return Array.isArray(j) ? j : [];
 }
 
@@ -491,6 +483,18 @@ async function validateClassificationSelection(req: Request, profile: any): Prom
   }
 
   return null;
+}
+
+async function safeValidateClassificationSelection(req: Request, profile: any): Promise<string | null> {
+  try {
+    return await validateClassificationSelection(req, profile);
+  } catch (e: any) {
+    const msg = String(e?.message || "").trim();
+    if (msg.startsWith("catalog_fetch_failed:")) {
+      return "Could not validate categories and context options.";
+    }
+    throw e;
+  }
 }
 
 const RATING_WINDOW_MS = 30 * 60 * 1000;
@@ -5158,7 +5162,7 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
     const prev = await env.KV_STATUS.get(key, { type: "json" }) as any;
     const nextDraft = mergeDraftPatch(prev, normalizedPatch);
 
-    const classificationError = await validateClassificationSelection(req, nextDraft);
+    const classificationError = await safeValidateClassificationSelection(req, nextDraft);
     if (classificationError) {
       return json(
         { error: { code: "invalid_request", message: classificationError } },
@@ -5200,7 +5204,7 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
 
     const nextDraft = mergeDraftPatch(prev, normalizedPatch);
 
-    const classificationError = await validateClassificationSelection(req, nextDraft);
+    const classificationError = await safeValidateClassificationSelection(req, nextDraft);
     if (classificationError) {
       return json(
         { error: { code: "invalid_request", message: classificationError } },
@@ -5227,7 +5231,7 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
 
   const nextDraft = mergeDraftPatch({}, normalizedPatch);
 
-  const classificationError = await validateClassificationSelection(req, nextDraft);
+  const classificationError = await safeValidateClassificationSelection(req, nextDraft);
   if (classificationError) {
     return json(
       { error: { code: "invalid_request", message: classificationError } },

@@ -4608,7 +4608,9 @@ select.input[multiple]{
 }
 
 #request-listing-contexts-modal .request-context-selected-head .label{
+  flex:1 1 auto;
   min-width:0;
+  text-align:left;
 }
 
 #request-listing-contexts-modal .request-context-selected-card .request-chip-row{
@@ -4654,6 +4656,14 @@ select.input[multiple]{
 
 #request-listing-contexts-modal .request-context-option{
   align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+#request-listing-contexts-modal .request-context-option .label{
+  flex:1 1 auto;
+  min-width:0;
+  text-align:left;
 }
 
 #request-listing-contexts-modal .request-context-option.is-selected{
