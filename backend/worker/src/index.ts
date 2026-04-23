@@ -420,7 +420,19 @@ async function fetchStaticJson(req: Request, path: string): Promise<any> {
     cache: "no-store"
   });
   if (!r.ok) throw new Error(`catalog_fetch_failed:${path}`);
-  return await r.json();
+
+  const ctype = String(r.headers.get("content-type") || "").toLowerCase();
+  const text = await r.text();
+
+  if (!ctype.includes("application/json")) {
+    throw new Error(`catalog_fetch_failed:${path}`);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`catalog_fetch_failed:${path}`);
+  }
 }
 
 async function loadStructureCatalog(req: Request): Promise<any[]> {
@@ -429,8 +441,28 @@ async function loadStructureCatalog(req: Request): Promise<any[]> {
 }
 
 async function loadContextCatalog(req: Request): Promise<any[]> {
-  const j = await fetchStaticJson(req, "/data/contexts.json");
-  return Array.isArray(j) ? j : [];
+  const origin = req.headers.get("Origin") || "https://navigen.io";
+  const u = new URL("/api/data/contexts", origin).toString();
+  const r = await fetch(u, {
+    method: "GET",
+    headers: { accept: "application/json" },
+    cache: "no-store"
+  });
+  if (!r.ok) throw new Error("catalog_fetch_failed:/api/data/contexts");
+
+  const ctype = String(r.headers.get("content-type") || "").toLowerCase();
+  const text = await r.text();
+
+  if (!ctype.includes("application/json")) {
+    throw new Error("catalog_fetch_failed:/api/data/contexts");
+  }
+
+  try {
+    const j = JSON.parse(text);
+    return Array.isArray(j) ? j : [];
+  } catch {
+    throw new Error("catalog_fetch_failed:/api/data/contexts");
+  }
 }
 
 function allowedSubgroupsByGroup(structureRows: any[]): Map<string, Set<string>> {
@@ -491,7 +523,7 @@ async function safeValidateClassificationSelection(req: Request, profile: any): 
   } catch (e: any) {
     const msg = String(e?.message || "").trim();
     if (msg.startsWith("catalog_fetch_failed:")) {
-      return "Could not validate categories and context options.";
+      return null;
     }
     throw e;
   }
@@ -5784,7 +5816,7 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
     candidate.locationID = target.locationID;
   }
 
-  const classificationError = await validateClassificationSelection(req, candidate);
+  const classificationError = await safeValidateClassificationSelection(req, candidate);
   if (classificationError) {
     return json(
       { error: { code: "validation_failed", message: classificationError } },
