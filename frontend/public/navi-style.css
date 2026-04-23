@@ -3696,6 +3696,50 @@ select.input[multiple]{
   font-weight:600;
 }
 
+.cm-chip .cm-chip-face{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto auto;
+  align-items:start;
+  gap:10px;
+}
+
+.cm-chip .cm-section-chip-label{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-width:0;
+  min-height:2.4em;
+  text-align:left;
+}
+
+.cm-chip .cm-section-chip-title{
+  display:block;
+  line-height:1.2;
+  font-weight:700;
+}
+
+.cm-chip .cm-section-badge{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0.2rem 0.65rem;
+  border:1px solid transparent;
+  border-radius:999px;
+  font-size:0.75rem;
+  font-weight:700;
+  line-height:1.2;
+  white-space:nowrap;
+  align-self:start;
+  margin-top:2px;
+}
+
+.cm-chip .cm-section-badge-required{
+  background:#fee2e2;
+  border-color:#fecaca;
+  color:#991b1b;
+}
+
 .cm-chip .cm-chip-face-chevron{
   flex:0 0 auto;
   margin-left:12px;
@@ -3754,7 +3798,6 @@ select.input[multiple]{
   font-size:16px;
   line-height:1.2;
 }
-
 /* Draft actions row */
 .cm-actions{
   display:flex;

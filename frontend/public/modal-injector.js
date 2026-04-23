@@ -3791,7 +3791,7 @@ export async function showSelectLocationModal() {
   });
 
   resetSearchUi();
-  rrequestAnimationFrame(() => input.blur());
+  requestAnimationFrame(() => input.blur());
 
   return await new Promise((resolve) => {
     const tick = setInterval(() => {
@@ -8557,13 +8557,18 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     planSummary.className = 'modal-menu-item cm-chip-face';
 
     const planSummaryLabel = document.createElement('span');
-    planSummaryLabel.className = 'cm-chip-face-label';
+    planSummaryLabel.className = 'cm-chip-face-label cm-section-chip-label';
+
+    const planSummaryBadge = document.createElement('span');
+    planSummaryBadge.className = 'cm-section-badge cm-section-badge-required';
+    planSummaryBadge.textContent = 'Required';
 
     const planSummaryChevron = document.createElement('span');
     planSummaryChevron.className = 'cm-chip-face-chevron';
     planSummaryChevron.setAttribute('aria-hidden', 'true');
 
     planSummary.appendChild(planSummaryLabel);
+    planSummary.appendChild(planSummaryBadge);
     planSummary.appendChild(planSummaryChevron);
 
     const planBody = document.createElement('div');
@@ -8619,9 +8624,13 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
         ? tSafe('campaign.plan.blocked.note', 'This location is eligible on this device, but the running all-locations campaign is already at capacity. Upgrade the plan or remove another location from scope.')
         : tSafe('campaign.plan.choose.note', 'Choose a plan before campaign scope and locations.');
 
-    planSummaryLabel.textContent = currentPlanTitle
-      ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
-      : tSafe('campaign.plan.choose.title', 'Choose plan');
+    planSummaryLabel.innerHTML = `
+      <strong class="cm-section-chip-title">${
+        currentPlanTitle
+          ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
+          : tSafe('campaign.plan.choose.title', 'Choose plan')
+      }</strong>
+    `;
 
     const suggestedUpgradeTitle = currentPlanTier === 'standard'
       ? tSafe('campaign.plan.multi.title', 'Multi')
@@ -8743,14 +8752,21 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     setupSummary.className = 'modal-menu-item cm-chip-face';
 
     const setupSummaryLabel = document.createElement('span');
-    setupSummaryLabel.className = 'cm-chip-face-label';
-    setupSummaryLabel.textContent = tSafe('campaign.ui.setupChip.title', 'Campaign set up');
+    setupSummaryLabel.className = 'cm-chip-face-label cm-section-chip-label';
+    setupSummaryLabel.innerHTML = `
+      <strong class="cm-section-chip-title">${tSafe('campaign.ui.setupChip.title', 'Campaign set up')}</strong>
+    `;
+
+    const setupSummaryBadge = document.createElement('span');
+    setupSummaryBadge.className = 'cm-section-badge cm-section-badge-required';
+    setupSummaryBadge.textContent = 'Required';
 
     const setupSummaryChevron = document.createElement('span');
     setupSummaryChevron.className = 'cm-chip-face-chevron';
     setupSummaryChevron.setAttribute('aria-hidden', 'true');
 
     setupSummary.appendChild(setupSummaryLabel);
+    setupSummary.appendChild(setupSummaryBadge);
     setupSummary.appendChild(setupSummaryChevron);
 
     const setupBody = document.createElement('div');
