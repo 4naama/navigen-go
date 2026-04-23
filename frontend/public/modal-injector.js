@@ -5786,7 +5786,7 @@ export function showLocationDraftNextStepsModal(draftMeta = {}, opts = {}) {
 
   const modal = injectModal({
     id,
-    title: t('modal.requestListing.success') || 'Draft saved.',
+    title: t('modal.requestListing.success') || 'Draft saved',
     layout: 'menu',
     onClose: (ev) => { closeNextSteps(ev); },
     bodyHTML: `
