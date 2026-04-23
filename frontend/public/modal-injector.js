@@ -3180,22 +3180,40 @@ export function createSelectLocationModal() {
     ''
   ).trim();
 
-  let continueDraftBtn = null;
+  let continueDraftCard = null;
   if (pendingDraft && (pendingDraft.draftULID || pendingDraft.draftSessionId)) {
-    continueDraftBtn = document.createElement('button');
-    continueDraftBtn.type = 'button';
-    continueDraftBtn.className = 'modal-menu-item modal-callout-card syb-entry-card';
-    continueDraftBtn.innerHTML = `
+    const openPendingDraft = (ev = null) => {
+      ev?.preventDefault?.();
+      ev?.stopPropagation?.();
+      hideModal(id);
+      showRequestListingModal({ prefill: pendingDraft, returnTo: 'syb' });
+    };
+
+    continueDraftCard = document.createElement('div');
+    continueDraftCard.className = 'modal-menu-item modal-callout-card syb-entry-card syb-draft-card';
+    continueDraftCard.innerHTML = `
       <span class="icon-img">📝</span>
       <span class="label">
         <strong>Continue draft</strong><br>
         <small>${pendingDraftLabel || 'Resume recent work on this device.'}</small>
       </span>
+      <span class="syb-draft-actions">
+        <button type="button" class="syb-draft-action" data-action="edit" aria-label="Edit draft" title="Edit draft">✏️</button>
+        <button type="button" class="syb-draft-action" data-action="delete" aria-label="Delete draft" title="Delete draft">🗑️</button>
+      </span>
     `;
-    continueDraftBtn.addEventListener('click', (e) => {
+
+    continueDraftCard.addEventListener('click', openPendingDraft);
+
+    continueDraftCard.querySelector('[data-action="edit"]')?.addEventListener('click', (e) => {
+      openPendingDraft(e);
+    });
+
+    continueDraftCard.querySelector('[data-action="delete"]')?.addEventListener('click', (e) => {
       e.preventDefault();
-      hideModal(id);
-      showRequestListingModal({ prefill: pendingDraft, returnTo: 'syb' });
+      e.stopPropagation();
+      clearPendingLocationDraft();
+      continueDraftCard?.remove();
     });
   }
 
@@ -3243,7 +3261,7 @@ export function createSelectLocationModal() {
     </span>
   `;
 
-  if (continueDraftBtn) entryStack.appendChild(continueDraftBtn);
+  if (continueDraftCard) entryStack.appendChild(continueDraftCard);
   entryStack.appendChild(createBtn);
   entryStack.appendChild(googleBtn);
   entryStack.appendChild(recentBtn);
@@ -3446,6 +3464,13 @@ function createImportGoogleLocationModal(opts = {}) {
 
     if (!googlePlaceId) {
       showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not save profile draft.', 2200);
+      return;
+    }
+
+    const existingDraft = readPendingLocationDraftByGooglePlaceId(googlePlaceId);
+    if (existingDraft && existingDraft.draftULID && existingDraft.draftSessionId) {
+      hideModal(id);
+      showRequestListingModal({ prefill: existingDraft, returnTo: opts?.returnTo });
       return;
     }
 
@@ -4497,7 +4522,26 @@ const P8_PENDING_LOCATION_DRAFT_KEY = 'navigen.p8.pendingLocationDraft';
 
 function savePendingLocationDraft(meta) {
   try {
-    localStorage.setItem(P8_PENDING_LOCATION_DRAFT_KEY, JSON.stringify(meta || {}));
+    const next = meta && typeof meta === 'object' ? meta : {};
+    const prev = readPendingLocationDraft();
+
+    const nextDraftULID = String(next?.draftULID || '').trim();
+    const prevDraftULID = String(prev?.draftULID || '').trim();
+    const nextGooglePlaceId = String(next?.googlePlaceId || '').trim();
+    const prevGooglePlaceId = String(prev?.googlePlaceId || '').trim();
+
+    const sameDraft = !!nextDraftULID && !!prevDraftULID && nextDraftULID === prevDraftULID;
+    const sameGooglePlace = !!nextGooglePlaceId && !!prevGooglePlaceId && nextGooglePlaceId === prevGooglePlaceId;
+
+    const base = (sameDraft || sameGooglePlace) ? (prev || {}) : {};
+    const merged = {
+      ...base,
+      ...next,
+      createdAt: Number(next?.createdAt || base?.createdAt || Date.now()),
+      updatedAt: Number(next?.updatedAt || Date.now())
+    };
+
+    localStorage.setItem(P8_PENDING_LOCATION_DRAFT_KEY, JSON.stringify(merged));
   } catch {
     // storage failures must never block the owner flow
   }
@@ -4518,6 +4562,16 @@ function clearPendingLocationDraft() {
   } catch {
     // storage failures must never block the owner flow
   }
+}
+
+function readPendingLocationDraftByGooglePlaceId(googlePlaceId) {
+  const wanted = String(googlePlaceId || '').trim();
+  if (!wanted) return null;
+
+  const pending = readPendingLocationDraft();
+  const currentPlaceId = String(pending?.googlePlaceId || '').trim();
+
+  return currentPlaceId && currentPlaceId === wanted ? pending : null;
 }
 
 let p8StructureCatalogPromise;
@@ -4813,7 +4867,7 @@ export function createRequestListingModal(opts = {}) {
               <div class="modal-field" style="margin:0;">
                 <textarea id="rl-description" class="input request-description-textarea" rows="5" maxlength="3000" placeholder=""></textarea>
                 <div class="modal-help-split">
-                  <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target: at least 200 characters.'}</small>
+                  <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target is at least 200 characters.'}</small>
                   <small id="rl-description-count" class="modal-help-counter">0/200</small>
                 </div>
               </div>
@@ -5791,18 +5845,8 @@ export function showLocationDraftNextStepsModal(draftMeta = {}, opts = {}) {
     onClose: (ev) => { closeNextSteps(ev); },
     bodyHTML: `
       <div class="modal-form-stack">
-        <div class="modal-menu-item modal-static-card request-draft-next-card" aria-disabled="true">
-          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-            <strong>${t('modal.requestListing.next.savedTitle') || 'Your location draft is private and saved.'}</strong><br>
-            <small>${t('modal.requestListing.next.savedDesc') || 'Continue to paid publish now, or stop here and resume later from this device.'}</small>
-          </span>
-        </div>
-
-        <div class="modal-menu-item modal-static-card request-draft-next-card" aria-disabled="true">
-          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-            <strong>${t('modal.requestListing.next.publishTitle') || 'Choose how you want to go live next'}</strong><br>
-            <small>${t('modal.requestListing.next.publishDesc') || 'In the paid step you can choose Visibility only or Promotion.'}</small>
-          </span>
+        <div style="text-align:left; line-height:1.35;">
+          <strong>${t('modal.requestListing.next.publishTitle') || 'Continue when you are ready to publish business location'}</strong>
         </div>
 
         <div class="modal-actions">
@@ -5919,7 +5963,7 @@ function getModalHeaderHelpSpec(target) {
       bodyLines: [
         translatedOrFallback('modal.requestListing.contexts.help.line1', 'Search the existing context catalog and choose the best matching paths for this business.'),
         translatedOrFallback('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts.'),
-        translatedOrFallback('modal.requestListing.contexts.help.line3', 'Use Done to return to Request Listing.')
+        translatedOrFallback('modal.requestListing.contexts.help.line3', 'Use the green check to return to Request Listing.')
       ]
     };
   }
@@ -5928,7 +5972,6 @@ function getModalHeaderHelpSpec(target) {
     return {
       title: _ownerText('modal.help.title', 'How it works'),
       bodyLines: [
-        _ownerText('modal.requestListing.note', 'Use this when your business does not appear in Select your business.'),
         _ownerText('modal.requestListing.help.line2', 'Complete the required business information first.'),
         _ownerText('modal.requestListing.contexts.help', 'Select up to 3 existing context paths.'),
         _ownerText('modal.requestListing.help.line4', 'Description, links, and media improve quality and publish readiness.')
@@ -5963,7 +6006,7 @@ function getModalHeaderHelpSpec(target) {
     return {
       title: _ownerText('modal.help.title', 'How it works'),
       bodyLines: [
-        _ownerText('modal.requestListing.help.private', 'Saving creates a private draft only. It does not publish the location.'),
+        _ownerText('modal.requestListing.help.private', 'You have a private draft of the business location only which is not published yet.'),
         _ownerText('modal.requestListing.help.paid', 'Publishing requires a paid plan. In the next step you can choose Visibility only or Promotion.'),
         _ownerText('modal.requestListing.help.resume', 'You can stop after saving and resume later from this device.')
       ].map((line) => String(line || '').trim()).filter(Boolean)
@@ -8530,7 +8573,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     if (!multiScopeEnabled()) scopeSelect.disabled = true;
 
     const labels = {
-      plan: tSafe('campaign.plan.choose.title', 'Choose plan'),
+      plan: tSafe('campaign.plan.choose.title', 'Choose a plan which covers your needs.'),
       campaignPreset: tSafe('campaign.plan.preset.label', 'Campaign mode'),
       campaignKey: 'Campaign key',
       campaignName: 'Campaign name',
@@ -8622,13 +8665,15 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
       : hasBlockedInheritance
         ? tSafe('campaign.plan.blocked.note', 'This location is eligible on this device, but the running all-locations campaign is already at capacity. Upgrade the plan or remove another location from scope.')
-        : tSafe('campaign.plan.choose.note', 'Choose a plan before campaign scope and locations.');
+        : '';
+
+    planStateNote.style.display = planStateNote.textContent ? '' : 'none';
 
     planSummaryLabel.innerHTML = `
       <strong class="cm-section-chip-title">${
         currentPlanTitle
           ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
-          : tSafe('campaign.plan.choose.title', 'Choose plan')
+          : tSafe('campaign.plan.choose.title', 'Choose a plan which covers your needs.')
       }</strong>
     `;
 
