@@ -151,6 +151,26 @@ import {
 // Use local injectStaticTranslations() defined later in this file
 import { loadTranslations, t, RTL_LANGS } from "./scripts/i18n.js"; // keep: static import
 
+function returnFlowLang() {
+  const seg0 = (location.pathname.split('/').filter(Boolean)[0] || '').toLowerCase();
+  return /^[a-z]{2}$/.test(seg0) ? seg0 : 'en';
+}
+
+function returnFlowText(key, fallback = '') {
+  if (typeof t !== 'function') return fallback;
+  const raw = String(t(key) || '').trim();
+  if (!raw || raw === key || raw === `[${key}]`) return fallback;
+  return raw;
+}
+
+async function ensureReturnFlowTranslations() {
+  try {
+    await loadTranslations(returnFlowLang());
+  } catch {
+    // Keep return flows usable even if translation loading fails.
+  }
+}
+
 // Early: ?lang → path-locale; /{lang}/ respected; root stays EN; persist prefix.
 // Also persists the decision before i18n module side-effects run.
 (() => {
@@ -3657,12 +3677,14 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   
   const hasGooglePlaceId = !!String(pending?.googlePlaceId || '').trim();
   if (hasGooglePlaceId) {
+    await ensureReturnFlowTranslations();
+
     const hydrated = await hydrateLocationDraftForCompletion(pending);
     const nextDraft = (hydrated?.draft && typeof hydrated.draft === 'object') ? hydrated.draft : pending;
     showToast(
       hydrated?.hydrated
-        ? ((typeof t === 'function' && t('locationDraft.googleHydrate.success')) || 'Google details imported. Complete any missing fields.')
-        : ((typeof t === 'function' && t('locationDraft.googleHydrate.fallback')) || 'Google import could not complete. You can finish the draft manually.'),
+        ? returnFlowText('locationDraft.googleHydrate.success', 'Google details imported. Complete any missing fields.')
+        : returnFlowText('locationDraft.googleHydrate.fallback', 'Google import could not complete. You can finish the draft manually.'),
       2600
     );
     await showRequestListingModal({ prefill: nextDraft, returnTo: 'syb' });
@@ -3690,7 +3712,8 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   } catch {}
 
   const openSyb = async () => {
-    showToast((typeof t === 'function' && t('campaign.payment.cancelSavedDraft')) || 'Payment canceled. Your local draft is still saved.', 2600);
+    await ensureReturnFlowTranslations();
+    showToast(returnFlowText('campaign.payment.cancelSavedDraft', 'Payment canceled. Your local draft is still saved.'), 2600);
     await showSelectLocationModal();
   };
 

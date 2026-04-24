@@ -3104,7 +3104,7 @@ export function createSelectLocationModal() {
 
   const modal = injectModal({
     id,
-    title: (typeof t === 'function' && t('root.bo.selectLocation.title')) || 'Select your business',
+    title: translatedOrFallback('root.bo.selectLocation.title', 'Select your business'),
     layout: 'menu',
     bodyHTML: ''
   });
@@ -3129,7 +3129,7 @@ export function createSelectLocationModal() {
   searchInput.removeAttribute('autofocus');
   searchInput.value = '';
 
-  const placeholder = ((typeof t === 'function' && t('root.bo.selectLocation.placeholder')) || 'Search here…').trim();
+  const placeholder = translatedOrFallback('root.bo.selectLocation.placeholder', 'Search here…').trim();
   searchInput.placeholder = placeholder.startsWith('🔍') ? placeholder : `🔍 ${placeholder}`;
 
   const searchRow = document.createElement('div');
@@ -3144,7 +3144,7 @@ export function createSelectLocationModal() {
   clearBtn.id = 'select-location-clear-search';
   clearBtn.textContent = 'x';
   clearBtn.style.display = 'none';
-  clearBtn.setAttribute('aria-label', (typeof t === 'function' && t('common.search.clear')) || 'Clear search');
+  clearBtn.setAttribute('aria-label', translatedOrFallback('common.search.clear', 'Clear search'));
 
   const syncClear = () => {
     const hasValue = !!String(searchInput.value || '').trim();
@@ -3184,7 +3184,7 @@ export function createSelectLocationModal() {
 
     const draftTitle = document.createElement('div');
     draftTitle.className = 'syb-section-title';
-    draftTitle.textContent = (typeof t === 'function' && t('root.bo.drafts.title')) || 'Drafts on this device';
+    draftTitle.textContent = translatedOrFallback('root.bo.drafts.title', 'Drafts on this device');
 
     const draftList = document.createElement('div');
     draftList.className = 'modal-menu-list syb-draft-list';
@@ -3218,16 +3218,16 @@ export function createSelectLocationModal() {
     editBtn.type = 'button';
     editBtn.className = 'syb-draft-action';
     editBtn.setAttribute('data-action', 'edit');
-    editBtn.setAttribute('aria-label', (typeof t === 'function' && t('root.bo.drafts.edit')) || 'Edit draft');
-    editBtn.title = (typeof t === 'function' && t('root.bo.drafts.edit')) || 'Edit draft';
+    editBtn.setAttribute('aria-label', translatedOrFallback('root.bo.drafts.edit', 'Edit draft'));
+    editBtn.title = translatedOrFallback('root.bo.drafts.edit', 'Edit draft');
     editBtn.textContent = '✏️';
 
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.className = 'syb-draft-action';
     deleteBtn.setAttribute('data-action', 'delete');
-    deleteBtn.setAttribute('aria-label', (typeof t === 'function' && t('root.bo.drafts.delete')) || 'Delete draft');
-    deleteBtn.title = (typeof t === 'function' && t('root.bo.drafts.delete')) || 'Delete draft';
+    deleteBtn.setAttribute('aria-label', translatedOrFallback('root.bo.drafts.delete', 'Delete draft'));
+    deleteBtn.title = translatedOrFallback('root.bo.drafts.delete', 'Delete draft');
     deleteBtn.textContent = '🗑️';
 
     actions.appendChild(editBtn);
@@ -3263,8 +3263,8 @@ export function createSelectLocationModal() {
   createBtn.innerHTML = `
     <span class="icon-img">➕</span>
     <span class="label">
-      <strong>${(typeof t === 'function' && t('root.bo.notListed.title')) || 'Create a location'}</strong><br>
-      <small>${(typeof t === 'function' && t('root.bo.notListed.desc')) || 'Add your business.'}</small>
+      <strong>${translatedOrFallback('root.bo.notListed.title', 'Create a location')}</strong><br>
+      <small>${translatedOrFallback('root.bo.notListed.desc', 'Add your business.')}</small>
     </span>
   `;
   createBtn.addEventListener('click', (e) => {
@@ -3279,8 +3279,8 @@ export function createSelectLocationModal() {
   googleBtn.innerHTML = `
     <span class="icon-img">🌐</span>
     <span class="label">
-      <strong>${(typeof t === 'function' && t('root.bo.googleImport.title')) || 'Import from Google'}</strong><br>
-      <small>${(typeof t === 'function' && t('root.bo.googleImport.desc')) || 'Bring in your business details.'}</small>
+      <strong>${translatedOrFallback('root.bo.googleImport.title', 'Import from Google')}</strong><br>
+      <small>${translatedOrFallback('root.bo.googleImport.desc', 'Bring in your business details.')}</small>
     </span>
   `;
   googleBtn.addEventListener('click', (e) => {
@@ -3296,8 +3296,8 @@ export function createSelectLocationModal() {
   recentBtn.innerHTML = `
     <span class="icon-img">📍</span>
     <span class="label">
-      <strong>${(typeof t === 'function' && t('root.bo.recent.title')) || 'Recently used'}</strong><br>
-      <small>${(typeof t === 'function' && t('root.bo.recent.desc')) || 'View and manage your places.'}</small>
+      <strong>${translatedOrFallback('root.bo.recent.title', 'Recently used')}</strong><br>
+      <small>${translatedOrFallback('root.bo.recent.desc', 'View and manage your places.')}</small>
     </span>
   `;
 
@@ -3724,13 +3724,13 @@ export async function showSelectLocationModal() {
 
     if (String(input.value || '').trim()) {
       setHint(
-        (typeof t === 'function' && t('root.bo.selectLocation.search.waiting.title')) || 'Keep typing',
-        (typeof t === 'function' && t('root.bo.selectLocation.search.waiting.desc')) || 'Search starts after 3 characters.'
+        translatedOrFallback('root.bo.selectLocation.search.waiting.title', 'Keep typing'),
+        translatedOrFallback('root.bo.selectLocation.search.waiting.desc', 'Search starts after 3 characters.')
       );
     } else {
       setHint(
-        (typeof t === 'function' && t('root.bo.selectLocation.search.idle.title')) || 'Start with search or choose a route',
-        (typeof t === 'function' && t('root.bo.selectLocation.search.idle.desc')) || 'Type at least 3 characters to search existing businesses.'
+        translatedOrFallback('root.bo.selectLocation.search.idle.title', 'Start with search or choose a route'),
+        translatedOrFallback('root.bo.selectLocation.search.idle.desc', 'Type at least 3 characters to search existing businesses.')
       );
     }
   };
@@ -4634,16 +4634,16 @@ function p8DraftCoordString(value) {
 function p8DraftModeLabel(draft) {
   const mode = String(draft?.mode || '').trim().toLowerCase();
   if (mode === 'google' || String(draft?.googlePlaceId || '').trim()) {
-    return (typeof t === 'function' && t('root.bo.drafts.google')) || 'Google path';
+    return translatedOrFallback('root.bo.drafts.google', 'Google path');
   }
-  return (typeof t === 'function' && t('root.bo.drafts.manual')) || 'Manual path';
+  return translatedOrFallback('root.bo.drafts.manual', 'Manual path');
 }
 
 function p8DraftUpdatedLabel(draft) {
   const raw = Number(draft?.updatedAt || draft?.createdAt || 0);
   if (!Number.isFinite(raw) || raw <= 0) return '';
   try {
-    const label = (typeof t === 'function' && t('root.bo.drafts.updated')) || 'Updated';
+    const label = translatedOrFallback('root.bo.drafts.updated', 'Updated');
     return `${label} ${new Date(raw).toLocaleDateString()}`;
   } catch {
     return '';
@@ -4654,7 +4654,7 @@ function p8DraftTitle(draft) {
   return p8DraftLocationName(draft) ||
     String(draft?.googlePlaceId || '').trim() ||
     String(draft?.draftULID || '').trim() ||
-    ((typeof t === 'function' && t('root.bo.drafts.card.title')) || 'Continue draft');
+    return parts.join(' · ') || ((typeof t === 'function' && t('root.bo.drafts.card.desc')) || 'Resume recent work on this device.');
 }
 
 function p8DraftSubtitle(draft) {
