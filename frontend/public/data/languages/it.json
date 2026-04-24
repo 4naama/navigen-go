@@ -1067,5 +1067,17 @@
   "locationDraft.publishSetup.publishTitle": "Continua quando sei pronto a pubblicare la sede dell’attività",
   "locationDraft.publishSetup.publishDesc": "Il passaggio a pagamento imposta il diritto di pubblicazione. La promozione resta opzionale dopo.",
   "locationDraft.publishSetup.later": "Riprendi più tardi",
-  "locationDraft.publishSetup.continue": "Modifica dettagli attività"
+  "locationDraft.publishSetup.continue": "Modifica dettagli attività",
+  "root.bo.drafts.title": "Bozze su questo dispositivo",
+  "root.bo.drafts.card.title": "Continua bozza",
+  "root.bo.drafts.card.desc": "Riprendi il lavoro recente su questo dispositivo",
+  "root.bo.drafts.google": "Percorso Google",
+  "root.bo.drafts.manual": "Percorso manuale",
+  "root.bo.drafts.updated": "Aggiornato",
+  "root.bo.drafts.edit": "Modifica bozza",
+  "root.bo.drafts.delete": "Elimina bozza",
+  "campaign.ui.setupChip.desc": "I campi obbligatori sono contrassegnati.",
+  "locationDraft.googleHydrate.success": "Dettagli Google importati. Completa i campi mancanti.",
+  "locationDraft.googleHydrate.fallback": "L’importazione Google non è stata completata. Puoi completare la bozza manualmente.",
+  "campaign.payment.cancelSavedDraft": "Pagamento annullato. La bozza locale è ancora salvata."
 }

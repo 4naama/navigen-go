@@ -1067,5 +1067,17 @@
   "locationDraft.publishSetup.publishTitle": "Continúa cuando estés listo para publicar la ubicación del negocio",
   "locationDraft.publishSetup.publishDesc": "El paso de pago configura el derecho de publicación. La promoción sigue siendo opcional después.",
   "locationDraft.publishSetup.later": "Continuar más tarde",
-  "locationDraft.publishSetup.continue": "Editar datos del negocio"
+  "locationDraft.publishSetup.continue": "Editar datos del negocio",
+  "root.bo.drafts.title": "Borradores en este dispositivo",
+  "root.bo.drafts.card.title": "Continuar borrador",
+  "root.bo.drafts.card.desc": "Retoma el trabajo reciente en este dispositivo",
+  "root.bo.drafts.google": "Ruta de Google",
+  "root.bo.drafts.manual": "Ruta manual",
+  "root.bo.drafts.updated": "Actualizado",
+  "root.bo.drafts.edit": "Editar borrador",
+  "root.bo.drafts.delete": "Eliminar borrador",
+  "campaign.ui.setupChip.desc": "Los campos obligatorios están marcados.",
+  "locationDraft.googleHydrate.success": "Datos de Google importados. Completa los campos faltantes.",
+  "locationDraft.googleHydrate.fallback": "La importación de Google no se pudo completar. Puedes terminar el borrador manualmente.",
+  "campaign.payment.cancelSavedDraft": "Pago cancelado. Tu borrador local sigue guardado."
 }

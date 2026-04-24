@@ -1067,5 +1067,17 @@
   "locationDraft.publishSetup.publishTitle": "Fahren Sie fort, wenn Sie bereit sind, den Unternehmensstandort zu veröffentlichen",
   "locationDraft.publishSetup.publishDesc": "Der kostenpflichtige Schritt richtet die Veröffentlichungsberechtigung ein. Die Promotion bleibt danach optional.",
   "locationDraft.publishSetup.later": "Später fortfahren",
-  "locationDraft.publishSetup.continue": "Unternehmensdetails bearbeiten"
+  "locationDraft.publishSetup.continue": "Unternehmensdetails bearbeiten",
+  "root.bo.drafts.title": "Entwürfe auf diesem Gerät",
+  "root.bo.drafts.card.title": "Entwurf fortsetzen",
+  "root.bo.drafts.card.desc": "Letzte Arbeit auf diesem Gerät fortsetzen",
+  "root.bo.drafts.google": "Google-Pfad",
+  "root.bo.drafts.manual": "Manueller Pfad",
+  "root.bo.drafts.updated": "Aktualisiert",
+  "root.bo.drafts.edit": "Entwurf bearbeiten",
+  "root.bo.drafts.delete": "Entwurf löschen",
+  "campaign.ui.setupChip.desc": "Pflichtfelder sind gekennzeichnet.",
+  "locationDraft.googleHydrate.success": "Google-Daten importiert. Ergänzen Sie fehlende Felder.",
+  "locationDraft.googleHydrate.fallback": "Google-Import konnte nicht abgeschlossen werden. Sie können den Entwurf manuell fertigstellen.",
+  "campaign.payment.cancelSavedDraft": "Zahlung abgebrochen. Ihr lokaler Entwurf ist weiterhin gespeichert."
 }

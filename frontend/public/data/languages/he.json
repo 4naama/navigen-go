@@ -1067,5 +1067,17 @@
   "locationDraft.publishSetup.publishTitle": "המשך כשאתה מוכן לפרסם את מיקום העסק",
   "locationDraft.publishSetup.publishDesc": "שלב התשלום מגדיר את הרשאת הפרסום. קידום נשאר אופציונלי לאחר מכן.",
   "locationDraft.publishSetup.later": "המשך מאוחר יותר",
-  "locationDraft.publishSetup.continue": "ערוך פרטי העסק"
+  "locationDraft.publishSetup.continue": "ערוך פרטי העסק",
+  "root.bo.drafts.title": "טיוטות במכשיר זה",
+  "root.bo.drafts.card.title": "המשך טיוטה",
+  "root.bo.drafts.card.desc": "המשך עבודה אחרונה במכשיר זה",
+  "root.bo.drafts.google": "מסלול Google",
+  "root.bo.drafts.manual": "מסלול ידני",
+  "root.bo.drafts.updated": "עודכן",
+  "root.bo.drafts.edit": "ערוך טיוטה",
+  "root.bo.drafts.delete": "מחק טיוטה",
+  "campaign.ui.setupChip.desc": "שדות חובה מסומנים.",
+  "locationDraft.googleHydrate.success": "פרטי Google יובאו. השלם שדות חסרים.",
+  "locationDraft.googleHydrate.fallback": "ייבוא Google לא הושלם. ניתן להשלים את הטיוטה ידנית.",
+  "campaign.payment.cancelSavedDraft": "התשלום בוטל. הטיוטה המקומית עדיין נשמרה."
 }

@@ -1067,5 +1067,17 @@
   "locationDraft.publishSetup.publishTitle": "Continue when you are ready to publish business location",
   "locationDraft.publishSetup.publishDesc": "The paid step sets up publish entitlement. Promotion remains optional after that.",
   "locationDraft.publishSetup.later": "Resume later",
-  "locationDraft.publishSetup.continue": "Edit business details"
+  "locationDraft.publishSetup.continue": "Edit business details",
+  "root.bo.drafts.title": "Drafts on this device",
+  "root.bo.drafts.card.title": "Continue draft",
+  "root.bo.drafts.card.desc": "Resume recent work on this device.",
+  "root.bo.drafts.google": "Google path",
+  "root.bo.drafts.manual": "Manual path",
+  "root.bo.drafts.updated": "Updated",
+  "root.bo.drafts.edit": "Edit draft",
+  "root.bo.drafts.delete": "Delete draft",
+  "campaign.ui.setupChip.desc": "Required fields are marked.",
+  "locationDraft.googleHydrate.success": "Google details imported. Complete any missing fields.",
+  "locationDraft.googleHydrate.fallback": "Google import could not complete. You can finish the draft manually.",
+  "campaign.payment.cancelSavedDraft": "Payment canceled. Your local draft is still saved."
 }

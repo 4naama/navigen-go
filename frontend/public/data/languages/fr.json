@@ -1067,5 +1067,17 @@
   "locationDraft.publishSetup.publishTitle": "Continuez lorsque vous êtes prêt à publier la localisation de l’établissement",
   "locationDraft.publishSetup.publishDesc": "L’étape payante configure le droit de publication. La promotion reste optionnelle ensuite.",
   "locationDraft.publishSetup.later": "Reprendre plus tard",
-  "locationDraft.publishSetup.continue": "Modifier les informations de l’établissement"
+  "locationDraft.publishSetup.continue": "Modifier les informations de l’établissement",
+  "root.bo.drafts.title": "Brouillons sur cet appareil",
+  "root.bo.drafts.card.title": "Continuer le brouillon",
+  "root.bo.drafts.card.desc": "Reprenez le travail récent sur cet appareil.",
+  "root.bo.drafts.google": "Parcours Google",
+  "root.bo.drafts.manual": "Parcours manuel",
+  "root.bo.drafts.updated": "Mis à jour",
+  "root.bo.drafts.edit": "Modifier le brouillon",
+  "root.bo.drafts.delete": "Supprimer le brouillon",
+  "campaign.ui.setupChip.desc": "Les champs obligatoires sont indiqués.",
+  "locationDraft.googleHydrate.success": "Données Google importées. Complétez les champs manquants.",
+  "locationDraft.googleHydrate.fallback": "L’import Google n’a pas pu être terminé. Vous pouvez terminer le brouillon manuellement.",
+  "campaign.payment.cancelSavedDraft": "Paiement annulé. Votre brouillon local est toujours enregistré."
 }

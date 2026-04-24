@@ -1067,5 +1067,17 @@
   "locationDraft.publishSetup.publishTitle": "Продовжуйте, коли будете готові опублікувати локацію бізнесу",
   "locationDraft.publishSetup.publishDesc": "Платний крок налаштовує право на публікацію. Просування залишається необов’язковим після цього.",
   "locationDraft.publishSetup.later": "Продовжити пізніше",
-  "locationDraft.publishSetup.continue": "Редагувати дані бізнесу"
+  "locationDraft.publishSetup.continue": "Редагувати дані бізнесу",
+  "root.bo.drafts.title": "Чернетки на цьому пристрої",
+  "root.bo.drafts.card.title": "Продовжити чернетку",
+  "root.bo.drafts.card.desc": "Продовжіть останню роботу на цьому пристрої",
+  "root.bo.drafts.google": "Шлях Google",
+  "root.bo.drafts.manual": "Ручний шлях",
+  "root.bo.drafts.updated": "Оновлено",
+  "root.bo.drafts.edit": "Редагувати чернетку",
+  "root.bo.drafts.delete": "Видалити чернетку",
+  "campaign.ui.setupChip.desc": "Обов’язкові поля позначені.",
+  "locationDraft.googleHydrate.success": "Дані Google імпортовано. Заповніть відсутні поля.",
+  "locationDraft.googleHydrate.fallback": "Імпорт Google не вдалося завершити. Ви можете завершити чернетку вручну.",
+  "campaign.payment.cancelSavedDraft": "Платіж скасовано. Ваш локальний чернетковий запис збережено."
 }
