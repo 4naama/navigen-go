@@ -26,6 +26,7 @@ import {
   openOwnerSettingsForLocation,
   showRequestListingModal,
   showSelectLocationModal,
+  hydrateLocationDraftForCompletion,
   showCampaignManagementModal,
   showCampaignFundingModal,
   resolveCampaignKeyForLocation,
@@ -3528,11 +3529,20 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
 // This should run on page load (in app.js or similar init script)
 (async function handleStripeReturn() {
   const url = new URL(window.location.href);
-  // Campaign cancel return has no sid; normalize back to main shell deterministically.
+  // Campaign cancel return has no sid; normalize back to SYB and keep the local draft context.
   {
     const flow = String(url.searchParams.get("flow") || "").trim().toLowerCase();
     const canceled = String(url.searchParams.get("canceled") || "").trim();
     if (flow === "campaign" && canceled === "1" && !url.searchParams.get("sid")) {
+      try {
+        const draftULID = String(url.searchParams.get('draftULID') || '').trim();
+        const draftSessionId = String(url.searchParams.get('draftSessionId') || '').trim();
+        sessionStorage.setItem('navigen.resumeSybAfterCampaignCancel', '1');
+        if (draftULID && draftSessionId) {
+          sessionStorage.setItem('navigen.resumeSybDraftULID', draftULID);
+          sessionStorage.setItem('navigen.resumeSybDraftSessionId', draftSessionId);
+        }
+      } catch {}
       history.replaceState({}, document.title, "/");
     }
   }
@@ -3644,12 +3654,51 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   } catch {
     guest = true;
   }
+  
+  const hasGooglePlaceId = !!String(pending?.googlePlaceId || '').trim();
+  if (hasGooglePlaceId) {
+    const hydrated = await hydrateLocationDraftForCompletion(pending);
+    const nextDraft = (hydrated?.draft && typeof hydrated.draft === 'object') ? hydrated.draft : pending;
+    showToast(
+      hydrated?.hydrated
+        ? ((typeof t === 'function' && t('locationDraft.googleHydrate.success')) || 'Google details imported. Complete any missing fields.')
+        : ((typeof t === 'function' && t('locationDraft.googleHydrate.fallback')) || 'Google import could not complete. You can finish the draft manually.'),
+      2600
+    );
+    await showRequestListingModal({ prefill: nextDraft, returnTo: 'syb' });
+    return;
+  }
 
   await showCampaignManagementModal(draftULID, {
     guest,
     p8Draft: pending,
     preferEmptyDraft: true
   });
+})();
+
+(function resumeSybAfterCampaignCancel() {
+  let shouldResume = false;
+  try {
+    shouldResume = sessionStorage.getItem('navigen.resumeSybAfterCampaignCancel') === '1';
+    sessionStorage.removeItem('navigen.resumeSybAfterCampaignCancel');
+  } catch {}
+  if (!shouldResume) return;
+
+  try {
+    sessionStorage.removeItem('navigen.resumeSybDraftULID');
+    sessionStorage.removeItem('navigen.resumeSybDraftSessionId');
+  } catch {}
+
+  const openSyb = async () => {
+    showToast((typeof t === 'function' && t('campaign.payment.cancelSavedDraft')) || 'Payment canceled. Your local draft is still saved.', 2600);
+    await showSelectLocationModal();
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', openSyb, { once: true });
+  } else {
+    openSyb();
+  }
 })();
 
 // Maps Stripe donation amounts (in cents) to a known tier.

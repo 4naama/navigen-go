@@ -5733,15 +5733,20 @@ B) Owner Self-Creation (Google-Reference Import)
 
 Description:
 A Business Owner performs a free Google lookup outside NaviGen’s paid provider
-path, pastes `googlePlaceId`, and creates a Google-reference private shell.
+path, pastes `googlePlaceId`, and creates one NG private draft with that
+provider reference.
 
-Flow:
-1) BO pastes `googlePlaceId`.
-2) System saves a provider-reference private draft.
-3) BO may complete or override structured fields manually.
-4) BO obtains a paid Plan.
-5) BO publishes the location.
-6) Missing fields may be hydrated at publish; BO-provided values win on conflict.
+Current state:
+• this path currently captures the provider reference only
+• the real Google import / hydration step is still missing
+
+Approved direction:
+1) BO pastes `googlePlaceId`
+2) system creates one NG private draft with that provider reference
+3) duplicate `googlePlaceId` must reopen / update the same draft instead of creating a second draft
+4) paid Google hydration imports business details into that same NG draft
+5) Create a location becomes the BO completion step, meaningfully prefilled
+6) BO-completed values remain authoritative over imported/provider values
 
 Notes:
 • This is a BO self-creation path, not an admin request path.
@@ -7085,7 +7090,8 @@ Behavior (authoritative)
    • Mint new `draftULID`
    • Mint new `draftSessionId`
    • Write `override_draft:<draftULID>:<draftSessionId>` including provider reference only
-   • Provider hydration is deferred until publish / post-payment flow
+   • Current implementation stops at provider-reference capture
+   • Open issue: repeated `googlePlaceId` should reopen / update the same draft instead of creating a duplicate
    • Slug + alias are NOT minted during draft
 
 Self-Creation Field Contract (normative)
@@ -7102,9 +7108,10 @@ Self-Creation Field Contract (normative)
   – Media: optional `media.cover` + gallery image URLs
   – Coordinates: optional during draft; if present they are validated and
     normalized to 6 decimals at publish
-• Google-reference route may carry `googlePlaceId` plus BO-provided draft
-  values; provider hydration is deferred until publish and BO-provided values
-  win on conflict
+• Google-reference route may carry `googlePlaceId` plus BO-provided draft values.
+  Current implementation captures the provider reference only.
+  Open issue: paid Google hydration must populate that same NG draft before /
+  during the BO completion flow, and BO-provided values remain authoritative
 • Draft UI MAY show a generated slug preview derived from current
   `locationName` + current draft coordinates
 • The preview is advisory only; final slug is stamped only at publish
@@ -7179,10 +7186,12 @@ Publish Steps (authoritative order)
 5) Load draft payload
    • From `override_draft:<ULID>:<draftSessionId>`
 
-6) Optional post-payment hydration
-   • If draft contains `googlePlaceId`, API Worker MAY hydrate provider-backed fields at publish time
-   • BO draft values win
-   • Imported/provider values fill only missing gaps
+6) Google-reference import / hydration (open issue)
+   • current implementation does not yet perform the real Google import / hydration
+   • approved direction is that the Google path becomes a real import, not mere lookup
+   • paid Google hydration must populate that same NG draft
+   • Create a location should then act as the BO completion step with meaningful prefill
+   • BO-completed values remain authoritative over imported/provider values
 
 7) Validate publish rules (Section 92.3.3)
 

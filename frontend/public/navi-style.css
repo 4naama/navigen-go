@@ -3505,6 +3505,25 @@ select.input[multiple]{
   gap: 10px;
 }
 
+.campaign-mgmt-form .cm-form-field{
+  min-width:0;
+}
+
+.campaign-mgmt-form .cm-form-label{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:4px;
+}
+
+.campaign-mgmt-form .cm-field-required{
+  flex:0 0 auto;
+  font-size:0.7rem;
+  font-weight:700;
+  opacity:.72;
+}
+
 @media (max-width: 520px){
   .campaign-mgmt-form{
     grid-template-columns: 1fr;
@@ -3716,6 +3735,14 @@ select.input[multiple]{
   display:block;
   line-height:1.2;
   font-weight:700;
+}
+
+.cm-chip .cm-section-chip-summary{
+  display:block;
+  margin-top:3px;
+  font-size:0.8rem;
+  font-weight:500;
+  opacity:.72;
 }
 
 .cm-chip .cm-section-badge{
@@ -4889,9 +4916,17 @@ select.input[multiple]{
   border-color: #b6c2cf;
 }
 
+#select-location-modal .syb-draft-wrap,
+#select-location-modal .syb-draft-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
 #select-location-modal .syb-draft-card{
   align-items:center;
   gap:12px;
+  cursor:pointer;
 }
 
 #select-location-modal .syb-draft-card .label{

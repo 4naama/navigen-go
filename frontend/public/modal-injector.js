@@ -3169,18 +3169,8 @@ export function createSelectLocationModal() {
   hintRow.className = 'syb-inline-copy';
   inner.appendChild(hintRow);
 
-  const entryStack = document.createElement('div');
-  entryStack.className = 'syb-entry-stack';
-
   const pendingDraft = readPendingLocationDraft();
-  const pendingDraftLabel = String(
-    pendingDraft?.name ||
-    pendingDraft?.displayName ||
-    pendingDraft?.googlePlaceId ||
-    ''
-  ).trim();
-
-  let continueDraftCard = null;
+  let draftWrap = null;
   if (pendingDraft && (pendingDraft.draftULID || pendingDraft.draftSessionId)) {
     const openPendingDraft = (ev = null) => {
       ev?.preventDefault?.();
@@ -3189,33 +3179,83 @@ export function createSelectLocationModal() {
       showRequestListingModal({ prefill: pendingDraft, returnTo: 'syb' });
     };
 
-    continueDraftCard = document.createElement('div');
-    continueDraftCard.className = 'modal-menu-item modal-callout-card syb-entry-card syb-draft-card';
-    continueDraftCard.innerHTML = `
-      <span class="icon-img">📝</span>
-      <span class="label">
-        <strong>Continue draft</strong><br>
-        <small>${pendingDraftLabel || 'Resume recent work on this device.'}</small>
-      </span>
-      <span class="syb-draft-actions">
-        <button type="button" class="syb-draft-action" data-action="edit" aria-label="Edit draft" title="Edit draft">✏️</button>
-        <button type="button" class="syb-draft-action" data-action="delete" aria-label="Delete draft" title="Delete draft">🗑️</button>
-      </span>
-    `;
+    draftWrap = document.createElement('div');
+    draftWrap.className = 'syb-draft-wrap';
 
-    continueDraftCard.addEventListener('click', openPendingDraft);
+    const draftTitle = document.createElement('div');
+    draftTitle.className = 'syb-section-title';
+    draftTitle.textContent = (typeof t === 'function' && t('root.bo.drafts.title')) || 'Drafts on this device';
 
-    continueDraftCard.querySelector('[data-action="edit"]')?.addEventListener('click', (e) => {
-      openPendingDraft(e);
+    const draftList = document.createElement('div');
+    draftList.className = 'modal-menu-list syb-draft-list';
+
+    const draftCard = document.createElement('div');
+    draftCard.className = 'modal-menu-item syb-card syb-draft-card';
+    draftCard.setAttribute('role', 'button');
+    draftCard.tabIndex = 0;
+
+    const icon = document.createElement('span');
+    icon.className = 'icon-img';
+    icon.textContent = '📝';
+
+    const label = document.createElement('span');
+    label.className = 'label';
+
+    const strong = document.createElement('strong');
+    strong.textContent = p8DraftTitle(pendingDraft);
+
+    const small = document.createElement('small');
+    small.textContent = p8DraftSubtitle(pendingDraft);
+
+    label.appendChild(strong);
+    label.appendChild(document.createElement('br'));
+    label.appendChild(small);
+
+    const actions = document.createElement('span');
+    actions.className = 'syb-draft-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'syb-draft-action';
+    editBtn.setAttribute('data-action', 'edit');
+    editBtn.setAttribute('aria-label', (typeof t === 'function' && t('root.bo.drafts.edit')) || 'Edit draft');
+    editBtn.title = (typeof t === 'function' && t('root.bo.drafts.edit')) || 'Edit draft';
+    editBtn.textContent = '✏️';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'syb-draft-action';
+    deleteBtn.setAttribute('data-action', 'delete');
+    deleteBtn.setAttribute('aria-label', (typeof t === 'function' && t('root.bo.drafts.delete')) || 'Delete draft');
+    deleteBtn.title = (typeof t === 'function' && t('root.bo.drafts.delete')) || 'Delete draft';
+    deleteBtn.textContent = '🗑️';
+
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+    draftCard.appendChild(icon);
+    draftCard.appendChild(label);
+    draftCard.appendChild(actions);
+
+    draftCard.addEventListener('click', openPendingDraft);
+    draftCard.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') openPendingDraft(e);
     });
-
-    continueDraftCard.querySelector('[data-action="delete"]')?.addEventListener('click', (e) => {
+    editBtn.addEventListener('click', openPendingDraft);
+    deleteBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       clearPendingLocationDraft();
-      continueDraftCard?.remove();
+      draftWrap?.remove();
     });
+
+    draftList.appendChild(draftCard);
+    draftWrap.appendChild(draftTitle);
+    draftWrap.appendChild(draftList);
+    inner.appendChild(draftWrap);
   }
+
+  const entryStack = document.createElement('div');
+  entryStack.className = 'syb-entry-stack';
 
   const createBtn = document.createElement('button');
   createBtn.type = 'button';
@@ -3261,7 +3301,6 @@ export function createSelectLocationModal() {
     </span>
   `;
 
-  if (continueDraftCard) entryStack.appendChild(continueDraftCard);
   entryStack.appendChild(createBtn);
   entryStack.appendChild(googleBtn);
   entryStack.appendChild(recentBtn);
@@ -3343,14 +3382,7 @@ function createLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
     onClose: (ev) => { closePublishSetup(ev); },
     bodyHTML: `
       <div class="modal-form-stack">
-        <div class="modal-menu-item modal-static-card syb-empty-row" aria-disabled="true">
-          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-            <strong>${(typeof t === 'function' && t('locationDraft.publishSetup.savedTitle')) || 'Your profile draft is private and saved.'}</strong><br>
-            <small>${(typeof t === 'function' && t('locationDraft.publishSetup.savedDesc')) || 'The next step is publish and requires payment.'}</small>
-          </span>
-        </div>
-
-        <div style="text-align:left; line-height:1.35; margin-top:2px;">
+        <div style="text-align:left; line-height:1.35;">
           <strong>${(typeof t === 'function' && t('locationDraft.publishSetup.publishTitle')) || 'Continue when you are ready to publish'}</strong><br>
           <small>${(typeof t === 'function' && t('locationDraft.publishSetup.publishDesc')) || 'The paid step sets up publish entitlement. Promotion remains optional after that.'}</small>
         </div>
@@ -4574,6 +4606,143 @@ function readPendingLocationDraftByGooglePlaceId(googlePlaceId) {
   return currentPlaceId && currentPlaceId === wanted ? pending : null;
 }
 
+function p8DraftLocationName(draft) {
+  const raw = draft?.name || draft?.displayName || draft?.locationName || draft?.listedName || '';
+  if (typeof raw === 'string') return String(raw || '').trim();
+  if (raw && typeof raw === 'object') return String(raw.en || raw.hu || Object.values(raw)[0] || '').trim();
+  return '';
+}
+
+function p8DraftDescriptionText(draft) {
+  const raw = draft?.description || draft?.descriptions || '';
+  if (typeof raw === 'string') return String(raw || '').trim();
+  if (raw && typeof raw === 'object') return String(raw.en || raw.hu || Object.values(raw)[0] || '').trim();
+  return '';
+}
+
+function p8DraftCoordString(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return String(value || '').trim();
+  if (typeof value === 'object') {
+    const lat = Number(value.lat ?? value.latitude);
+    const lng = Number(value.lng ?? value.lon ?? value.longitude);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) return `${lat.toFixed(6)},${lng.toFixed(6)}`;
+  }
+  return '';
+}
+
+function p8DraftModeLabel(draft) {
+  const mode = String(draft?.mode || '').trim().toLowerCase();
+  if (mode === 'google' || String(draft?.googlePlaceId || '').trim()) {
+    return (typeof t === 'function' && t('root.bo.drafts.google')) || 'Google path';
+  }
+  return (typeof t === 'function' && t('root.bo.drafts.manual')) || 'Manual path';
+}
+
+function p8DraftUpdatedLabel(draft) {
+  const raw = Number(draft?.updatedAt || draft?.createdAt || 0);
+  if (!Number.isFinite(raw) || raw <= 0) return '';
+  try {
+    const label = (typeof t === 'function' && t('root.bo.drafts.updated')) || 'Updated';
+    return `${label} ${new Date(raw).toLocaleDateString()}`;
+  } catch {
+    return '';
+  }
+}
+
+function p8DraftTitle(draft) {
+  return p8DraftLocationName(draft) ||
+    String(draft?.googlePlaceId || '').trim() ||
+    String(draft?.draftULID || '').trim() ||
+    ((typeof t === 'function' && t('root.bo.drafts.card.title')) || 'Continue draft');
+}
+
+function p8DraftSubtitle(draft) {
+  const parts = [p8DraftModeLabel(draft), p8DraftUpdatedLabel(draft)]
+    .map((value) => String(value || '').trim())
+    .filter(Boolean);
+  const placeId = String(draft?.googlePlaceId || '').trim();
+  if (placeId && !p8DraftLocationName(draft)) parts.unshift(`place_id: ${placeId}`);
+  return parts.join(' · ') || ((typeof t === 'function' && t('root.bo.drafts.card.desc')) || 'Resume recent work on this device.');
+}
+
+function p8LocalDraftMetaFromServer(serverDraft = {}, baseMeta = {}) {
+  const source = serverDraft && typeof serverDraft === 'object' ? serverDraft : {};
+  const base = baseMeta && typeof baseMeta === 'object' ? baseMeta : {};
+  const contact = (source.contactInformation && typeof source.contactInformation === 'object') ? source.contactInformation : {};
+  const links = (source.links && typeof source.links === 'object') ? source.links : {};
+  const media = (source.media && typeof source.media === 'object') ? source.media : {};
+  const images = Array.isArray(source.images)
+    ? source.images
+    : (Array.isArray(media.images) ? media.images : (Array.isArray(base.images) ? base.images : []));
+  const contexts = Array.isArray(source.contexts)
+    ? source.contexts
+    : String(source.context || base.context || '').split(';');
+
+  return {
+    ...base,
+    ...source,
+    draftULID: String(source.draftULID || base.draftULID || '').trim(),
+    draftSessionId: String(source.draftSessionId || base.draftSessionId || '').trim(),
+    mode: String(source.mode || base.mode || (source.googlePlaceId || base.googlePlaceId ? 'google' : 'manual')).trim(),
+    googlePlaceId: String(source.googlePlaceId || base.googlePlaceId || '').trim(),
+    name: p8DraftLocationName(source) || p8DraftLocationName(base),
+    address: String(source.address || contact.address || base.address || '').trim(),
+    city: String(source.city || contact.city || base.city || '').trim(),
+    country: String(source.country || contact.countryCode || base.country || '').trim().toUpperCase(),
+    link: String(source.link || links.official || base.link || '').trim(),
+    facebook: String(source.facebook || links.facebook || base.facebook || '').trim(),
+    instagram: String(source.instagram || links.instagram || base.instagram || '').trim(),
+    booking: String(source.booking || links.bookingUrl || base.booking || '').trim(),
+    description: p8DraftDescriptionText(source) || p8DraftDescriptionText(base),
+    cover: String(source.cover || media.cover?.src || media.cover || base.cover || '').trim(),
+    images: images.map((value) => String(value?.src || value || '').trim()).filter(Boolean),
+    coord: p8DraftCoordString(source.coord || base.coord),
+    contexts: contexts.map((value) => String(value || '').trim()).filter(Boolean),
+    context: String(source.context || base.context || '').trim(),
+    tags: Array.isArray(source.tags) ? source.tags : (Array.isArray(base.tags) ? base.tags : parseTagValues(source.tags || base.tags)),
+    createdAt: Number(source.createdAt || base.createdAt || Date.now()),
+    updatedAt: Date.now()
+  };
+}
+
+export async function hydrateLocationDraftForCompletion(draftMeta = {}) {
+  const draftULID = String(draftMeta?.draftULID || '').trim();
+  const draftSessionId = String(draftMeta?.draftSessionId || '').trim();
+  if (!draftULID || !draftSessionId) {
+    return { ok: false, hydrated: false, draft: draftMeta || null, error: { code: 'missing_draft_identity' } };
+  }
+
+  let res = null;
+  let payload = null;
+  try {
+    res = await fetch('/api/location/hydrate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ draftULID, draftSessionId }),
+      cache: 'no-store',
+      credentials: 'include'
+    });
+    payload = await res.json().catch(() => null);
+  } catch {
+    res = null;
+    payload = null;
+  }
+
+  const mergedDraft = p8LocalDraftMetaFromServer(
+    (payload?.draft && typeof payload.draft === 'object') ? payload.draft : {},
+    draftMeta
+  );
+  savePendingLocationDraft(mergedDraft);
+
+  return {
+    ok: !!res?.ok,
+    hydrated: !!payload?.hydrated,
+    draft: mergedDraft,
+    error: payload?.error || (res?.ok ? null : { code: 'hydrate_failed' })
+  };
+}
+
 let p8StructureCatalogPromise;
 let p8ContextCatalogPromise;
 
@@ -5039,6 +5208,14 @@ export function createRequestListingModal(opts = {}) {
     showRequestListingModal(opts);
   });
   
+  const prefillContact = (prefill?.contactInformation && typeof prefill.contactInformation === 'object')
+    ? prefill.contactInformation
+    : {};
+  const prefillName = p8DraftLocationName(prefill);
+  const prefillAddress = String(prefill?.address || prefillContact.address || '').trim();
+  const prefillCity = String(prefill?.city || prefillContact.city || '').trim();
+  const prefillCountry = String(prefill?.country || prefillContact.countryCode || '').trim().toUpperCase();
+  
   const prefillContexts = Array.isArray(prefill?.contexts)
     ? prefill.contexts.map((v) => String(v || '').trim()).filter(Boolean)
     : String(prefill?.context || '').split(';').map((v) => String(v || '').trim()).filter(Boolean);
@@ -5047,12 +5224,7 @@ export function createRequestListingModal(opts = {}) {
     ? prefill.tags.map((v) => String(v || '').trim()).filter(Boolean)
     : parseTagValues(prefill?.tags);
 
-  const prefillDescription = String(
-    prefill?.description ||
-    prefill?.descriptions?.en ||
-    Object.values(prefill?.descriptions || {})[0] ||
-    ''
-  ).trim();
+  const prefillDescription = p8DraftDescriptionText(prefill);
 
   const prefillOfficialLink = String(prefill?.link || prefill?.links?.official || '').trim();
   const prefillFacebook = String(prefill?.facebook || prefill?.links?.facebook || '').trim();
@@ -5207,11 +5379,11 @@ export function createRequestListingModal(opts = {}) {
   syncRequestListingContexts();
 
   if (prefill) {
-    if (rlName) rlName.value = String(prefill.name || '').trim();
-    if (rlAddress) rlAddress.value = String(prefill.address || '').trim();
-    if (rlCity) rlCity.value = String(prefill.city || '').trim();
-    if (rlCountry) rlCountry.value = String(prefill.country || '').trim().toUpperCase();
-    if (!String(prefill?.country || '').trim() && rlCountry) rlCountry.value = deriveRequestListingCountryCode();
+    if (rlName) rlName.value = prefillName;
+    if (rlAddress) rlAddress.value = prefillAddress;
+    if (rlCity) rlCity.value = prefillCity;
+    if (rlCountry) rlCountry.value = prefillCountry;
+    if (!prefillCountry && rlCountry) rlCountry.value = deriveRequestListingCountryCode();
     if (rlLink) rlLink.value = prefillOfficialLink;
     if (rlFacebook) rlFacebook.value = prefillFacebook;
     if (rlInstagram) rlInstagram.value = prefillInstagram;
@@ -5222,7 +5394,7 @@ export function createRequestListingModal(opts = {}) {
     if (rlImage1) rlImage1.value = prefillImage1;
     if (rlImage2) rlImage2.value = prefillImage2;
 
-    const coordPrefill = String(prefill.coord || '').trim();
+    const coordPrefill = p8DraftCoordString(prefill.coord);
     if (coordPrefill) {
       if (rlCoord) rlCoord.value = coordPrefill;
       if (rlHasCoord) rlHasCoord.checked = true;
@@ -5774,7 +5946,8 @@ export function createRequestListingModal(opts = {}) {
     const savedDraft = {
       draftULID,
       draftSessionId,
-      mode: 'manual',
+      mode: String(prefill?.mode || '').trim() || (String(prefill?.googlePlaceId || '').trim() ? 'google' : 'manual'),
+      googlePlaceId: String(prefill?.googlePlaceId || '').trim(),
       name,
       nameNorm,
       address,
@@ -5783,6 +5956,7 @@ export function createRequestListingModal(opts = {}) {
       link,
       facebook,
       instagram,
+      booking,
       description,
       cover,
       images: imageVals,
@@ -6043,6 +6217,7 @@ function getModalHeaderHelpSpec(target) {
       return {
         title: _ownerText('modal.help.title', 'How it works'),
         bodyLines: [
+          _ownerText('locationDraft.publishSetup.savedTitle', 'Your profile draft is private and saved.'),          
           _ownerText('locationDraft.publishSetup.savedDesc', 'The next step is publish and requires payment.'),
           _ownerText('locationDraft.publishSetup.publishDesc', 'The paid step sets up publish entitlement. Promotion remains optional after that.'),
           'Changes are saved automatically while you work.'
@@ -8516,12 +8691,18 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const form = document.createElement('div');
     form.className = 'campaign-mgmt-form';
 
-    const field = (labelTxt, control) => {
+    const field = (labelTxt, control, meta = {}) => {
       const w = document.createElement('div');
+      w.className = 'cm-form-field';
       const lab = document.createElement('div');
-      lab.className = 'muted';
-      lab.style.marginBottom = '4px';
+      lab.className = 'muted cm-form-label';
       lab.textContent = labelTxt;
+      if (meta?.required) {
+        const badge = document.createElement('span');
+        badge.className = 'cm-field-required';
+        badge.textContent = tSafe('modal.requestListing.section.required', 'Required');
+        lab.appendChild(badge);
+      }
       w.appendChild(lab);
       w.appendChild(control);
       return w;
@@ -8604,7 +8785,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
     const planSummaryBadge = document.createElement('span');
     planSummaryBadge.className = 'cm-section-badge cm-section-badge-required';
-    planSummaryBadge.textContent = 'Required';
+    planSummaryBadge.textContent = tSafe('modal.requestListing.section.required', 'Required');
 
     const planSummaryChevron = document.createElement('span');
     planSummaryChevron.className = 'cm-chip-face-chevron';
@@ -8747,7 +8928,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const promoGrid = document.createElement('div');
     promoGrid.className = 'campaign-mgmt-form';
 
-    const scopeField = field(labels.campaignScope, scopeSelect);
+    const scopeField = field(labels.campaignScope, scopeSelect, { required: true });
 
     function refreshScopeUi() {
       const enabled = multiScopeEnabled();
@@ -8758,9 +8939,9 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
     refreshScopeUi();
 
-    form.appendChild(field(labels.campaignPreset, presetSelect));
+    form.appendChild(field(labels.campaignPreset, presetSelect, { required: true }));
     form.appendChild(scopeField);
-    form.appendChild(field(labels.campaignKey, campaignKey));
+    form.appendChild(field(labels.campaignKey, campaignKey, { required: true }));
     form.appendChild(field(labels.campaignName, campaignName));
     form.appendChild(field(labels.productName, productName));
     form.appendChild(field(labels.campaignType, campaignType));
@@ -8770,8 +8951,8 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     form.appendChild(field(labels.utmSource, utmSource));
     form.appendChild(field(labels.utmMedium, utmMedium));
     form.appendChild(field(labels.utmCampaign, utmCampaign));
-    form.appendChild(field(labels.startDate, startDate));
-    form.appendChild(field(labels.endDate, endDate));
+    form.appendChild(field(labels.startDate, startDate, { required: true }));
+    form.appendChild(field(labels.endDate, endDate, { required: true }));
 
     promoGrid.appendChild(field(labels.offerType, offerType));
     promoGrid.appendChild(field(labels.discountKind, discountKind));
@@ -8800,12 +8981,13 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     setupSummaryLabel.className = 'cm-chip-face-label cm-section-chip-label';
     setupSummaryLabel.innerHTML = `
       <strong class="cm-section-chip-title">${tSafe('campaign.ui.setupChip.title', 'Campaign set up')}</strong>
+      <small class="cm-section-chip-summary">${tSafe('campaign.ui.setupChip.desc', 'Required fields are marked.')}</small>
     `;
 
     const setupSummaryBadge = document.createElement('span');
     setupSummaryBadge.className = 'cm-section-badge cm-section-badge-required';
-    setupSummaryBadge.textContent = 'Required';
-
+    setupSummaryBadge.textContent = tSafe('modal.requestListing.section.required', 'Required');
+    
     const setupSummaryChevron = document.createElement('span');
     setupSummaryChevron.className = 'cm-chip-face-chevron';
     setupSummaryChevron.setAttribute('aria-hidden', 'true');

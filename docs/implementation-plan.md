@@ -1985,9 +1985,11 @@ C) new manual shell (`locationID` absent, `draftULID` absent, `googlePlaceId` ab
 D) new Google-reference shell (`locationID` absent, `draftULID` absent, `googlePlaceId` provided):
   1) mint `draftULID`
   2) mint `draftSessionId`
-  3) persist provider reference only
-  4) do not fetch paid/provider details yet
-  5) return `{ ok:true, draftULID:<ULID>, draftSessionId:<string> }`
+  3) persist `googlePlaceId` on one NG draft
+  4) current implementation stops at provider-reference capture only
+  5) open issue: implement the real paid Google import / hydration into that same NG draft
+  6) repeated `googlePlaceId` must reopen / update the same draft instead of creating a duplicate
+  7) return `{ ok:true, draftULID:<ULID>, draftSessionId:<string> }`
 
 Field contract during draft (owner self-creation UI):
 • Business information:
@@ -2109,7 +2111,13 @@ Publish steps (authoritative):
 5) Load draft payload:
    • From `override_draft:<ULID>:<draftSessionId>`
 
-6) Optional post-payment hydration:
+6) Google-reference import / hydration (open issue):
+   • current implementation does not yet perform the real Google import / hydration
+   • approved direction is that the Google path becomes a real import, not mere lookup
+   • one NG draft only
+   • paid Google hydration must populate that same NG draft
+   • Create a location should then open meaningfully prefilled for BO completion
+   • BO-completed values remain authoritative over imported/provider values
    • If draft contains `googlePlaceId`, hydrate provider-backed fields now
    • BO draft values win
    • Imported/provider fields fill only missing gaps
@@ -2357,17 +2365,25 @@ Ship gate for DO index:
 • Drafts never appear in index
 
 --------------------------------------------------------------------
-📌 Phase 8 status (locked)
+📌 Phase 8 open issues
 --------------------------------------------------------------------
 
-Done when:
-✅ /api/location/draft implemented and verified
-✅ /api/location/publish implemented and verified
-✅ plan_alloc enforced deterministically
-✅ DO upsert works with shard naming contract
-✅ KV-authoritative runtime read path works (no fallback)
-✅ Retire + recreate correction flow is explicit
-✅ No regressions in QR/promo/dash flows
+• Google path is still provider-reference capture only; real paid Google import / hydration into the same NG draft is still missing.
+• Create a location should be the completion step for the Google path, meaningfully prefilled after hydration.
+• Single device-bound draft UX still needs to be finalized in SYB:
+  – show Drafts on this device
+  – card click = edit
+  – ✏️ edit = same action
+  – 🗑️ delete = local delete only
+  – keep Recently used and Drafts separate
+  – overwrite, no multiple drafts
+  – dedupe by `draftULID`
+  – repeated `googlePlaceId` must reopen / update the same draft instead of creating a duplicate
+• “Your profile draft is private and saved. The next step is publish and requires payment.” belongs in HIW only, not as a front chip.
+• Stripe abort / back path should fall back to SYB and preserve local draft context.
+• Publish / Campaign setup still needs structured required-field UX similar to Create a location.
+• Draft classification validation was relaxed to unblock testing; final authoritative validation placement still needs to be settled.
+• Stable catalog sourcing / access still needs to be finalized so validation is not environment-sensitive.
 
 --------------------------------------------------------------------
 8.5 Ship gate (Phase 8 complete — Authoritative Invariants)

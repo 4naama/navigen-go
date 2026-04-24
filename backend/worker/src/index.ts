@@ -411,28 +411,260 @@ function mergeDraftPatch(base: any, patch: any): any {
   return out;
 }
 
-async function fetchStaticJson(req: Request, path: string): Promise<any> {
-  const origin = req.headers.get("Origin") || "https://navigen.io";
-  const u = new URL(path, origin).toString();
-  const r = await fetch(u, {
-    method: "GET",
-    headers: { accept: "application/json" },
-    cache: "no-store"
-  });
-  if (!r.ok) throw new Error(`catalog_fetch_failed:${path}`);
+function googlePlacesApiKey(env: Env): string {
+  return String(
+    (env as any).GOOGLE_PLACES_API_KEY ||
+    (env as any).GOOGLE_MAPS_API_KEY ||
+    (env as any).GOOGLE_API_KEY ||
+    (env as any).PLACES_API_KEY ||
+    ""
+  ).trim();
+}
 
-  const ctype = String(r.headers.get("content-type") || "").toLowerCase();
-  const text = await r.text();
+function googleAddressComponent(components: any, wantedType: string, field: "long_name" | "short_name" = "long_name"): string {
+  const rows = Array.isArray(components) ? components : [];
+  const hit = rows.find((row: any) => Array.isArray(row?.types) && row.types.includes(wantedType));
+  return String(hit?.[field] || "").trim();
+}
 
-  if (!ctype.includes("application/json")) {
-    throw new Error(`catalog_fetch_failed:${path}`);
+function mapGooglePlaceDetailsToDraft(googlePlaceId: string, place: any): Record<string, any> {
+  const nowIso = new Date().toISOString();
+  const out: Record<string, any> = {
+    googlePlaceId,
+    googleHydrationStatus: "hydrated",
+    googleHydratedAt: nowIso,
+    updatedAt: nowIso
+  };
+
+  const name = String(place?.name || "").trim();
+  if (name) {
+    out.locationName = { en: name };
+    out.listedName = name;
   }
+
+  const formattedAddress = String(place?.formatted_address || "").trim();
+  const city = String(
+    googleAddressComponent(place?.address_components, "locality") ||
+    googleAddressComponent(place?.address_components, "postal_town") ||
+    googleAddressComponent(place?.address_components, "administrative_area_level_2") ||
+    googleAddressComponent(place?.address_components, "administrative_area_level_1") ||
+    ""
+  ).trim();
+  const countryCode = googleAddressComponent(place?.address_components, "country", "short_name").toUpperCase();
+  const phone = String(place?.international_phone_number || place?.formatted_phone_number || "").trim();
+
+  const contactInformation: Record<string, any> = {};
+  if (formattedAddress) contactInformation.address = formattedAddress;
+  if (city) contactInformation.city = city;
+  if (countryCode) contactInformation.countryCode = countryCode;
+  if (phone) contactInformation.phone = phone;
+  if (Object.keys(contactInformation).length) out.contactInformation = contactInformation;
+
+  const links: Record<string, any> = {};
+  const website = String(place?.website || "").trim();
+  const mapsUrl = String(place?.url || "").trim();
+  if (website) links.official = website;
+  if (mapsUrl) links.googleMaps = mapsUrl;
+  if (Object.keys(links).length) out.links = links;
+
+  const lat = Number(place?.geometry?.location?.lat);
+  const lng = Number(place?.geometry?.location?.lng);
+  if (Number.isFinite(lat) && Number.isFinite(lng)) {
+    out.coord = { lat: round6(lat), lng: round6(lng) };
+  }
+
+  const googleMeta: Record<string, any> = { placeId: googlePlaceId };
+  if (Number.isFinite(Number(place?.rating))) googleMeta.rating = Number(place.rating);
+  if (Number.isFinite(Number(place?.user_ratings_total))) googleMeta.userRatingsTotal = Number(place.user_ratings_total);
+  if (mapsUrl) googleMeta.url = mapsUrl;
+  if (String(place?.business_status || "").trim()) googleMeta.businessStatus = String(place.business_status).trim();
+  if (Array.isArray(place?.types)) googleMeta.types = uniqueTrimmedStrings(place.types);
+  out.google = googleMeta;
+
+  return out;
+}
+
+function isDraftFieldEmpty(value: any): boolean {
+  if (value == null) return true;
+  if (typeof value === "string") return !value.trim();
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === "object") return Object.keys(value).length === 0;
+  return false;
+}
+
+function mergeMissingDraftFields(base: any, imported: any): any {
+  const out: any = (base && typeof base === "object") ? { ...base } : {};
+  for (const [key, value] of Object.entries((imported && typeof imported === "object") ? imported : {})) {
+    const current = out[key];
+    if (isDraftFieldEmpty(current)) {
+      out[key] = value;
+      continue;
+    }
+
+    if (
+      current && typeof current === "object" && !Array.isArray(current) &&
+      value && typeof value === "object" && !Array.isArray(value)
+    ) {
+      out[key] = mergeMissingDraftFields(current, value);
+    }
+  }
+  return out;
+}
+
+function mergeGoogleImportIntoDraft(base: any, imported: any): any {
+  const out = mergeMissingDraftFields(base, imported);
+  out.googlePlaceId = String(out.googlePlaceId || imported?.googlePlaceId || "").trim();
+  out.googleHydrationStatus = String(imported?.googleHydrationStatus || out.googleHydrationStatus || "").trim();
+  out.googleHydratedAt = String(imported?.googleHydratedAt || out.googleHydratedAt || "").trim();
+  out.updatedAt = String(imported?.updatedAt || new Date().toISOString()).trim();
+  return out;
+}
+
+async function hydrateDraftWithGoogleDetails(env: Env, draft: any): Promise<{ hydrated: boolean; draft: any; error: any | null }> {
+  const googlePlaceId = String(draft?.googlePlaceId || "").trim();
+  if (!googlePlaceId) return { hydrated: false, draft, error: { code: "google_place_id_missing" } };
+  if (!isValidGooglePlaceId(googlePlaceId)) return { hydrated: false, draft, error: { code: "invalid_google_place_id" } };
+
+  const key = googlePlacesApiKey(env);
+  if (!key) return { hydrated: false, draft, error: { code: "google_api_key_missing" } };
+
+  const u = new URL("https://maps.googleapis.com/maps/api/place/details/json");
+  u.searchParams.set("place_id", googlePlaceId);
+  u.searchParams.set("fields", [
+    "place_id",
+    "name",
+    "formatted_address",
+    "address_components",
+    "geometry",
+    "website",
+    "url",
+    "international_phone_number",
+    "formatted_phone_number",
+    "rating",
+    "user_ratings_total",
+    "types",
+    "business_status"
+  ].join(","));
+  u.searchParams.set("key", key);
 
   try {
-    return JSON.parse(text);
+    const r = await fetch(u.toString(), {
+      method: "GET",
+      headers: { accept: "application/json" },
+      cache: "no-store"
+    });
+    if (!r.ok) return { hydrated: false, draft, error: { code: "google_details_http_error", status: r.status } };
+
+    const j = await r.json().catch(() => null) as any;
+    const status = String(j?.status || "").trim();
+    if (status !== "OK" || !j?.result) {
+      return { hydrated: false, draft, error: { code: "google_details_failed", status: status || "UNKNOWN" } };
+    }
+
+    const imported = mapGooglePlaceDetailsToDraft(googlePlaceId, j.result);
+    const nextDraft = mergeGoogleImportIntoDraft(draft, imported);
+    return { hydrated: true, draft: nextDraft, error: null };
   } catch {
-    throw new Error(`catalog_fetch_failed:${path}`);
+    return { hydrated: false, draft, error: { code: "google_details_unreachable" } };
   }
+}
+
+async function assertPaidDraftHydrationEntitlement(req: Request, env: Env, target: TargetIdentity): Promise<Response | null> {
+  const auth = await requireOwnerSession(req, env);
+  if (auth instanceof Response) return auth;
+  if (String(auth.ulid || "").trim() !== target.ulid) {
+    return new Response("Denied", {
+      status: 403,
+      headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
+    });
+  }
+
+  const ownership = await env.KV_STATUS.get(`ownership:${target.ulid}`, { type: "json" }) as any;
+  const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
+  const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
+  if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+    return json(
+      { error: { code: "ownership_inactive", message: "active ownership required" } },
+      403,
+      { "cache-control": "no-store" }
+    );
+  }
+
+  const paymentIntentId = String(ownership?.lastEventId || "").trim();
+  if (!paymentIntentId) {
+    return json(
+      { error: { code: "plan_missing", message: "ownership has no plan anchor" } },
+      403,
+      { "cache-control": "no-store" }
+    );
+  }
+
+  const plan = await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" }) as any;
+  const planExpIso = String(plan?.expiresAt || "").trim();
+  const planExp = planExpIso ? new Date(planExpIso) : null;
+  if (!plan || !planExp || Number.isNaN(planExp.getTime()) || planExp.getTime() <= Date.now()) {
+    return json(
+      { error: { code: "plan_inactive", message: "active plan required" } },
+      403,
+      { "cache-control": "no-store" }
+    );
+  }
+
+  if (planExp.toISOString() !== exclusiveUntil.toISOString()) {
+    return json(
+      { error: { code: "plan_invariant_failed", message: "plan/ownership expiry mismatch" } },
+      403,
+      { "cache-control": "no-store" }
+    );
+  }
+
+  return null;
+}
+
+function catalogFetchOrigins(req: Request): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (raw: string) => {
+    try {
+      const origin = new URL(String(raw || "").trim()).origin;
+      if (!/^https?:\/\//i.test(origin) || seen.has(origin)) return;
+      seen.add(origin);
+      out.push(origin);
+    } catch {
+      // Ignore malformed origins and keep the fixed production fallbacks below.
+    }
+  };
+
+  push(req.headers.get("Origin") || "");
+  push(new URL(req.url).origin);
+  push("https://navigen.io");
+  push("https://www.navigen.io");
+
+  return out;
+}
+
+async function fetchStaticJson(req: Request, path: string): Promise<any> {
+  for (const origin of catalogFetchOrigins(req)) {
+    try {
+      const u = new URL(path, origin).toString();
+      const r = await fetch(u, {
+        method: "GET",
+        headers: { accept: "application/json" },
+        cache: "no-store"
+      });
+      if (!r.ok) continue;
+
+      const ctype = String(r.headers.get("content-type") || "").toLowerCase();
+      const text = await r.text();
+      if (!ctype.includes("application/json")) continue;
+
+      return JSON.parse(text);
+    } catch {
+      // Try the next catalog source before failing closed at the caller.
+    }
+  }
+
+  throw new Error(`catalog_fetch_failed:${path}`);
 }
 
 async function loadStructureCatalog(req: Request): Promise<any[]> {
@@ -441,28 +673,8 @@ async function loadStructureCatalog(req: Request): Promise<any[]> {
 }
 
 async function loadContextCatalog(req: Request): Promise<any[]> {
-  const origin = req.headers.get("Origin") || "https://navigen.io";
-  const u = new URL("/api/data/contexts", origin).toString();
-  const r = await fetch(u, {
-    method: "GET",
-    headers: { accept: "application/json" },
-    cache: "no-store"
-  });
-  if (!r.ok) throw new Error("catalog_fetch_failed:/api/data/contexts");
-
-  const ctype = String(r.headers.get("content-type") || "").toLowerCase();
-  const text = await r.text();
-
-  if (!ctype.includes("application/json")) {
-    throw new Error("catalog_fetch_failed:/api/data/contexts");
-  }
-
-  try {
-    const j = JSON.parse(text);
-    return Array.isArray(j) ? j : [];
-  } catch {
-    throw new Error("catalog_fetch_failed:/api/data/contexts");
-  }
+  const j = await fetchStaticJson(req, "/api/data/contexts");
+  return Array.isArray(j) ? j : [];
 }
 
 function allowedSubgroupsByGroup(structureRows: any[]): Map<string, Set<string>> {
@@ -517,13 +729,17 @@ async function validateClassificationSelection(req: Request, profile: any): Prom
   return null;
 }
 
-async function safeValidateClassificationSelection(req: Request, profile: any): Promise<string | null> {
+async function safeValidateClassificationSelection(
+  req: Request,
+  profile: any,
+  opts: { failClosedOnCatalogError?: boolean } = {}
+): Promise<string | null> {
   try {
     return await validateClassificationSelection(req, profile);
   } catch (e: any) {
     const msg = String(e?.message || "").trim();
     if (msg.startsWith("catalog_fetch_failed:")) {
-      return null;
+      return opts.failClosedOnCatalogError ? "catalog_unavailable" : null;
     }
     throw e;
   }
@@ -2954,6 +3170,11 @@ export default {
         return await handleLocationDraft(req, env);
       }
 
+      // --- Location hydrate: /api/location/hydrate (Phase 8 paid Google import into same draft)
+      if (normPath === "/api/location/hydrate" && req.method === "POST") {
+        return await handleLocationHydrate(req, env);
+      }
+
       // --- Location publish: /api/location/publish (Phase 8 authoritative publish)
       if (normPath === "/api/location/publish" && req.method === "POST") {
         return await handleLocationPublish(req, env);
@@ -5283,6 +5504,64 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
   );
 }
 
+async function handleLocationHydrate(req: Request, env: Env): Promise<Response> {
+  const noStore = { "cache-control": "no-store" };
+
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return json(
+      { error: { code: "invalid_request", message: "valid JSON body required" } },
+      400,
+      noStore
+    );
+  }
+
+  const draftULID = String((body as any)?.draftULID || "").trim();
+  const draftSessionId = String((body as any)?.draftSessionId || "").trim();
+  const target = await resolveTargetIdentity(env, { draftULID, draftSessionId }, { validateDraft: true });
+  if (!target) {
+    return json(
+      { error: { code: "not_found", message: "draft not found" } },
+      404,
+      noStore
+    );
+  }
+
+  const entitlementError = await assertPaidDraftHydrationEntitlement(req, env, target);
+  if (entitlementError) return entitlementError;
+
+  const draftKey = `override_draft:${target.ulid}:${draftSessionId}`;
+  const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+  if (!draft) {
+    return json(
+      { error: { code: "not_found", message: "draft not found" } },
+      404,
+      noStore
+    );
+  }
+
+  const result = await hydrateDraftWithGoogleDetails(env, draft);
+  if (result.hydrated) {
+    await env.KV_STATUS.put(draftKey, JSON.stringify(result.draft));
+  }
+
+  return json(
+    {
+      ok: true,
+      hydrated: result.hydrated,
+      error: result.error,
+      draft: {
+        ...(result.draft && typeof result.draft === "object" ? result.draft : {}),
+        draftULID: target.ulid,
+        draftSessionId
+      },
+      hydratedAt: result.hydrated ? String(result.draft?.googleHydratedAt || "").trim() : ""
+    },
+    200,
+    noStore
+  );
+}
+
 function deepMergeProfile(base: any, patch: any): any {
   if (patch === undefined) return base;
   if (Array.isArray(base) || Array.isArray(patch)) return patch;
@@ -5798,13 +6077,21 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
   }
 
   const draftKey = `override_draft:${target.ulid}:${sourceDraftActorKey}`;
-  const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+  let draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
   if (!draft) {
     return json(
       { error: { code: "not_found", message: "draft not found" } },
       404,
       noStore
     );
+  }
+  
+  if (String(draft?.googlePlaceId || "").trim()) {
+    const hydration = await hydrateDraftWithGoogleDetails(env, draft);
+    if (hydration.hydrated) {
+      draft = hydration.draft;
+      await env.KV_STATUS.put(draftKey, JSON.stringify(draft));
+    }
   }
 
   const current = await readEffectivePublishedProfile(req, env, target.ulid, target.locationID);
@@ -5816,7 +6103,7 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
     candidate.locationID = target.locationID;
   }
 
-  const classificationError = await safeValidateClassificationSelection(req, candidate);
+  const classificationError = await safeValidateClassificationSelection(req, candidate, { failClosedOnCatalogError: true });
   if (classificationError) {
     return json(
       { error: { code: "validation_failed", message: classificationError } },

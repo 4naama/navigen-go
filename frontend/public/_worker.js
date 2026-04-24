@@ -681,8 +681,8 @@ export default {
       });
     }
 
-    // /api/location/draft — proxy to API Worker (Phase 8 private shell)
-    if (url.pathname === '/api/location/draft') {
+    // /api/location/draft + /api/location/hydrate — proxy to API Worker (Phase 8 private shell)
+    if (url.pathname === '/api/location/draft' || url.pathname === '/api/location/hydrate') {
       const apiBase = 'https://navigen-api.4naama.workers.dev';
       const target = new URL(url.pathname + url.search, apiBase);
 
