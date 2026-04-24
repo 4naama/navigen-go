@@ -4654,7 +4654,7 @@ function p8DraftTitle(draft) {
   return p8DraftLocationName(draft) ||
     String(draft?.googlePlaceId || '').trim() ||
     String(draft?.draftULID || '').trim() ||
-    return parts.join(' · ') || ((typeof t === 'function' && t('root.bo.drafts.card.desc')) || 'Resume recent work on this device.');
+    translatedOrFallback('root.bo.drafts.card.title', 'Continue draft');
 }
 
 function p8DraftSubtitle(draft) {
@@ -4663,7 +4663,7 @@ function p8DraftSubtitle(draft) {
     .filter(Boolean);
   const placeId = String(draft?.googlePlaceId || '').trim();
   if (placeId && !p8DraftLocationName(draft)) parts.unshift(`place_id: ${placeId}`);
-  return parts.join(' · ') || ((typeof t === 'function' && t('root.bo.drafts.card.desc')) || 'Resume recent work on this device.');
+  return parts.join(' · ') || translatedOrFallback('root.bo.drafts.card.desc', 'Resume recent work on this device.');
 }
 
 function p8LocalDraftMetaFromServer(serverDraft = {}, baseMeta = {}) {
