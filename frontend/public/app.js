@@ -3594,6 +3594,8 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
         const draftSessionId = String(current.searchParams.get('draftSessionId') || '').trim();
         if (draftULID && draftSessionId) {
           sessionStorage.setItem('navigen.resumeCampaignAfterExchange', '1');
+          sessionStorage.setItem('navigen.resumeCampaignDraftULID', draftULID);
+          sessionStorage.setItem('navigen.resumeCampaignDraftSessionId', draftSessionId);
         }
       } catch {}
 
@@ -3652,20 +3654,56 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   } catch {}
   if (!shouldResume) return;
 
-  try {
-    sessionStorage.removeItem('navigen.resumeCampaignDraftULID');
-    sessionStorage.removeItem('navigen.resumeCampaignDraftSessionId');
-  } catch {}
-  
   let pending = null;
   try {
     const raw = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDraft') || 'null');
     if (raw && typeof raw === 'object') pending = raw;
   } catch {}
 
-  const draftULID = String(pending?.draftULID || '').trim();
-  const draftSessionId = String(pending?.draftSessionId || '').trim();
+  let draftULID = String(pending?.draftULID || '').trim();
+  let draftSessionId = String(pending?.draftSessionId || '').trim();
+
+  try {
+    const storedDraftULID = String(sessionStorage.getItem('navigen.resumeCampaignDraftULID') || '').trim();
+    const storedDraftSessionId = String(sessionStorage.getItem('navigen.resumeCampaignDraftSessionId') || '').trim();
+
+    if (storedDraftULID && storedDraftSessionId) {
+      draftULID = storedDraftULID;
+      draftSessionId = storedDraftSessionId;
+    }
+  } catch {}
+
+  try {
+    const current = new URL(window.location.href);
+    const urlDraftULID = String(current.searchParams.get('draftULID') || '').trim();
+    const urlDraftSessionId = String(current.searchParams.get('draftSessionId') || '').trim();
+
+    if (urlDraftULID && urlDraftSessionId) {
+      draftULID = urlDraftULID;
+      draftSessionId = urlDraftSessionId;
+    }
+  } catch {}
+
   if (!draftULID || !draftSessionId) return;
+  
+  try {
+    sessionStorage.removeItem('navigen.resumeCampaignAfterExchange');
+    sessionStorage.removeItem('navigen.resumeCampaignDraftULID');
+    sessionStorage.removeItem('navigen.resumeCampaignDraftSessionId');
+  } catch {}
+
+  if (!pending || String(pending?.draftULID || '').trim() !== draftULID || String(pending?.draftSessionId || '').trim() !== draftSessionId) {
+    pending = {
+      ...(pending && typeof pending === 'object' ? pending : {}),
+      draftULID,
+      draftSessionId,
+      mode: String(pending?.mode || 'return').trim()
+    };
+
+    try {
+      localStorage.setItem('navigen.p8.pendingLocationDraft', JSON.stringify(pending));
+    } catch {}
+  }
 
   let guest = true;
   try {
