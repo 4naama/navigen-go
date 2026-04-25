@@ -3652,8 +3652,11 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   } catch {}
   if (!shouldResume) return;
 
-  try { sessionStorage.removeItem('navigen.resumeCampaignAfterExchange'); } catch {}
-
+  try {
+    sessionStorage.removeItem('navigen.resumeCampaignDraftULID');
+    sessionStorage.removeItem('navigen.resumeCampaignDraftSessionId');
+  } catch {}
+  
   let pending = null;
   try {
     const raw = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDraft') || 'null');
@@ -3675,25 +3678,30 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
     guest = true;
   }
   
-  const hasGooglePlaceId = !!String(pending?.googlePlaceId || '').trim();
-  if (hasGooglePlaceId) {
-    await ensureReturnFlowTranslations();
+  await ensureReturnFlowTranslations();
 
-    const hydrated = await hydrateLocationDraftForCompletion(pending);
-    const nextDraft = (hydrated?.draft && typeof hydrated.draft === 'object') ? hydrated.draft : pending;
-    showToast(
-      hydrated?.hydrated
-        ? returnFlowText('locationDraft.googleHydrate.success', 'Google details imported. Complete any missing fields.')
-        : returnFlowText('locationDraft.googleHydrate.fallback', 'Google import could not complete. You can finish the draft manually.'),
-      2600
-    );
+  const hydrated = await hydrateLocationDraftForCompletion(pending);
+  const nextDraft = (hydrated?.draft && typeof hydrated.draft === 'object') ? hydrated.draft : pending;
+  const hydrateErrorCode = String(hydrated?.error?.code || '').trim();
+
+  if (hydrated?.hydrated) {
+    showToast(returnFlowText('locationDraft.googleHydrate.success', 'Google details imported. Complete any missing fields.'), 2600);
+    await showRequestListingModal({ prefill: nextDraft, returnTo: 'syb' });
+    return;
+  }
+
+  const hasGoogleContext = !!String(nextDraft?.googlePlaceId || pending?.googlePlaceId || '').trim() ||
+    String(nextDraft?.mode || pending?.mode || '').trim().toLowerCase() === 'google';
+
+  if (hasGoogleContext && hydrateErrorCode !== 'google_place_id_missing') {
+    showToast(returnFlowText('locationDraft.googleHydrate.fallback', 'Google import could not complete. You can finish the draft manually.'), 2600);
     await showRequestListingModal({ prefill: nextDraft, returnTo: 'syb' });
     return;
   }
 
   await showCampaignManagementModal(draftULID, {
     guest,
-    p8Draft: pending,
+    p8Draft: nextDraft,
     preferEmptyDraft: true
   });
 })();

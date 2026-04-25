@@ -5518,8 +5518,19 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
   }
   
   // C0) same-device Google-reference draft reopen/update
-  const deviceId = readDeviceId(req);
+  let deviceId = readDeviceId(req);
+  let deviceSetCookie = "";
+
+  if (googlePlaceId && !deviceId) {
+    const minted = mintDeviceId();
+    deviceId = minted.dev;
+    deviceSetCookie = minted.cookie;
+  }
+
   const googleIndexKey = googlePlaceId && deviceId ? googleDraftIndexKey(deviceId, googlePlaceId) : "";
+  const draftResponseHeaders: Record<string, string> = deviceSetCookie
+    ? { ...noStore, "Set-Cookie": deviceSetCookie }
+    : noStore;
 
   if (googleIndexKey) {
     const indexed = await env.KV_STATUS.get(googleIndexKey, { type: "json" }) as any;
@@ -5549,7 +5560,7 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
         return json(
           { ok: true, draftULID: indexedDraftULID, draftSessionId: indexedDraftSessionId, reopened: true },
           200,
-          noStore
+          draftResponseHeaders
         );
       }
     }
@@ -5591,7 +5602,7 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
   return json(
     { ok: true, draftULID: newDraftULID, draftSessionId: newDraftSessionId },
     200,
-    noStore
+    draftResponseHeaders
   );
 }
 
