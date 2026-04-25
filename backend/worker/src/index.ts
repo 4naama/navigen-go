@@ -39,6 +39,7 @@ export interface Env {
   JWT_SECRET: string; // set via wrangler secret
   STRIPE_SECRET_KEY: string; // Stripe secret key for creating Checkout Sessions (server-only)
   STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
+  GOOGLE_PLACES_API_KEY?: string; // Places API New server key; do not expose in frontend JS
 }
 
 // --- Plan persistence (Phase 8 prerequisite) ---
@@ -412,46 +413,52 @@ function mergeDraftPatch(base: any, patch: any): any {
 }
 
 function googlePlacesApiKey(env: Env): string {
-  return String(
-    (env as any).GOOGLE_PLACES_API_KEY ||
-    (env as any).GOOGLE_MAPS_API_KEY ||
-    (env as any).GOOGLE_API_KEY ||
-    (env as any).PLACES_API_KEY ||
-    ""
-  ).trim();
+  return String(env.GOOGLE_PLACES_API_KEY || "").trim();
 }
 
-function googleAddressComponent(components: any, wantedType: string, field: "long_name" | "short_name" = "long_name"): string {
+function googleAddressComponent(
+  components: any,
+  wantedType: string,
+  field: "longText" | "shortText" | "long_name" | "short_name" = "longText"
+): string {
   const rows = Array.isArray(components) ? components : [];
   const hit = rows.find((row: any) => Array.isArray(row?.types) && row.types.includes(wantedType));
-  return String(hit?.[field] || "").trim();
+  if (!hit) return "";
+
+  const wantsShort = field === "shortText" || field === "short_name";
+  return String(
+    wantsShort
+      ? hit.shortText || hit.short_name || hit.longText || hit.long_name || ""
+      : hit.longText || hit.long_name || hit.shortText || hit.short_name || ""
+  ).trim();
 }
 
 function mapGooglePlaceDetailsToDraft(googlePlaceId: string, place: any): Record<string, any> {
   const nowIso = new Date().toISOString();
+  const resolvedGooglePlaceId = String(place?.id || googlePlaceId || "").trim();
   const out: Record<string, any> = {
-    googlePlaceId,
+    googlePlaceId: resolvedGooglePlaceId,
     googleHydrationStatus: "hydrated",
     googleHydratedAt: nowIso,
     updatedAt: nowIso
   };
 
-  const name = String(place?.name || "").trim();
+  const name = String(place?.displayName?.text || "").trim();
   if (name) {
     out.locationName = { en: name };
     out.listedName = name;
   }
 
-  const formattedAddress = String(place?.formatted_address || "").trim();
+  const formattedAddress = String(place?.formattedAddress || "").trim();
   const city = String(
-    googleAddressComponent(place?.address_components, "locality") ||
-    googleAddressComponent(place?.address_components, "postal_town") ||
-    googleAddressComponent(place?.address_components, "administrative_area_level_2") ||
-    googleAddressComponent(place?.address_components, "administrative_area_level_1") ||
+    googleAddressComponent(place?.addressComponents, "locality") ||
+    googleAddressComponent(place?.addressComponents, "postal_town") ||
+    googleAddressComponent(place?.addressComponents, "administrative_area_level_2") ||
+    googleAddressComponent(place?.addressComponents, "administrative_area_level_1") ||
     ""
   ).trim();
-  const countryCode = googleAddressComponent(place?.address_components, "country", "short_name").toUpperCase();
-  const phone = String(place?.international_phone_number || place?.formatted_phone_number || "").trim();
+  const countryCode = googleAddressComponent(place?.addressComponents, "country", "shortText").toUpperCase();
+  const phone = String(place?.internationalPhoneNumber || place?.nationalPhoneNumber || "").trim();
 
   const contactInformation: Record<string, any> = {};
   if (formattedAddress) contactInformation.address = formattedAddress;
@@ -461,23 +468,28 @@ function mapGooglePlaceDetailsToDraft(googlePlaceId: string, place: any): Record
   if (Object.keys(contactInformation).length) out.contactInformation = contactInformation;
 
   const links: Record<string, any> = {};
-  const website = String(place?.website || "").trim();
-  const mapsUrl = String(place?.url || "").trim();
+  const website = String(place?.websiteUri || "").trim();
+  const mapsUrl = String(place?.googleMapsUri || "").trim();
   if (website) links.official = website;
   if (mapsUrl) links.googleMaps = mapsUrl;
   if (Object.keys(links).length) out.links = links;
 
-  const lat = Number(place?.geometry?.location?.lat);
-  const lng = Number(place?.geometry?.location?.lng);
+  const lat = Number(place?.location?.latitude);
+  const lng = Number(place?.location?.longitude);
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
     out.coord = { lat: round6(lat), lng: round6(lng) };
   }
 
-  const googleMeta: Record<string, any> = { placeId: googlePlaceId };
+  const googleMeta: Record<string, any> = { placeId: resolvedGooglePlaceId, provider: "places_api_new" };
   if (Number.isFinite(Number(place?.rating))) googleMeta.rating = Number(place.rating);
-  if (Number.isFinite(Number(place?.user_ratings_total))) googleMeta.userRatingsTotal = Number(place.user_ratings_total);
+  if (Number.isFinite(Number(place?.userRatingCount))) {
+    googleMeta.userRatingCount = Number(place.userRatingCount);
+    googleMeta.userRatingsTotal = Number(place.userRatingCount);
+  }
   if (mapsUrl) googleMeta.url = mapsUrl;
-  if (String(place?.business_status || "").trim()) googleMeta.businessStatus = String(place.business_status).trim();
+  if (website) googleMeta.websiteUri = website;
+  if (formattedAddress) googleMeta.formattedAddress = formattedAddress;
+  if (String(place?.businessStatus || "").trim()) googleMeta.businessStatus = String(place.businessStatus).trim();
   if (Array.isArray(place?.types)) googleMeta.types = uniqueTrimmedStrings(place.types);
   out.google = googleMeta;
 
@@ -528,40 +540,53 @@ async function hydrateDraftWithGoogleDetails(env: Env, draft: any): Promise<{ hy
   const key = googlePlacesApiKey(env);
   if (!key) return { hydrated: false, draft, error: { code: "google_api_key_missing" } };
 
-  const u = new URL("https://maps.googleapis.com/maps/api/place/details/json");
-  u.searchParams.set("place_id", googlePlaceId);
-  u.searchParams.set("fields", [
-    "place_id",
-    "name",
-    "formatted_address",
-    "address_components",
-    "geometry",
-    "website",
-    "url",
-    "international_phone_number",
-    "formatted_phone_number",
+  const fieldMask = [
+    "id",
+    "displayName",
+    "formattedAddress",
+    "addressComponents",
+    "location",
+    "websiteUri",
+    "internationalPhoneNumber",
+    "nationalPhoneNumber",
     "rating",
-    "user_ratings_total",
+    "userRatingCount",
+    "businessStatus",
     "types",
-    "business_status"
-  ].join(","));
-  u.searchParams.set("key", key);
+    "googleMapsUri"
+  ].join(",");
+
+  const u = new URL(`https://places.googleapis.com/v1/places/${encodeURIComponent(googlePlaceId)}`);
 
   try {
     const r = await fetch(u.toString(), {
       method: "GET",
-      headers: { accept: "application/json" },
+      headers: {
+        accept: "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": fieldMask
+      },
       cache: "no-store"
     });
-    if (!r.ok) return { hydrated: false, draft, error: { code: "google_details_http_error", status: r.status } };
 
     const j = await r.json().catch(() => null) as any;
-    const status = String(j?.status || "").trim();
-    if (status !== "OK" || !j?.result) {
-      return { hydrated: false, draft, error: { code: "google_details_failed", status: status || "UNKNOWN" } };
+    if (!r.ok) {
+      return {
+        hydrated: false,
+        draft,
+        error: {
+          code: "google_details_http_error",
+          status: r.status,
+          googleStatus: String(j?.error?.status || "").trim() || undefined
+        }
+      };
     }
 
-    const imported = mapGooglePlaceDetailsToDraft(googlePlaceId, j.result);
+    if (!j || typeof j !== "object" || !String(j?.id || "").trim()) {
+      return { hydrated: false, draft, error: { code: "google_details_failed", status: "MISSING_PLACE" } };
+    }
+
+    const imported = mapGooglePlaceDetailsToDraft(googlePlaceId, j);
     const nextDraft = mergeGoogleImportIntoDraft(draft, imported);
     return { hydrated: true, draft: nextDraft, error: null };
   } catch {
