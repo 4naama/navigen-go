@@ -30,7 +30,7 @@ End users (visitors) never pay.
 --------------------------------------------------------------------
 
 ## What can exist without payment
-- A Business Owner may create a private shell draft without payment.
+- Google-reference lookup before payment is ID-only / provider-reference capture; full Places API New hydration is paid-only.
 - That draft is not a published LPM and is not a public “parking” state.
 - NaviGen does **not** grant unpaid visibility or unpaid discoverability merely because a BO entered data.
 - First publication requires an active paid Plan.

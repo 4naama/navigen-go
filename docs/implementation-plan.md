@@ -1986,8 +1986,8 @@ D) new Google-reference shell (`locationID` absent, `draftULID` absent, `googleP
   1) mint `draftULID`
   2) mint `draftSessionId`
   3) persist `googlePlaceId` on one NG draft
-  4) current implementation stops at provider-reference capture only
-  5) open issue: implement the real paid Google import / hydration into that same NG draft
+  4) draft phase remains provider-reference capture only; no Google details import occurs before payment
+  5) after completed Checkout + owner session exchange, `/api/location/hydrate` imports Places API New details into that same NG draft
   6) repeated `googlePlaceId` must reopen / update the same draft instead of creating a duplicate
   7) return `{ ok:true, draftULID:<ULID>, draftSessionId:<string> }`
 
@@ -2037,7 +2037,7 @@ Expected:
 H3: new Google-reference shell
 Expected:
 • provider reference persisted
-• no paid/provider hydration yet
+• no unpaid/provider hydration during draft save
 • no alias written
 • no DO messages
 
@@ -2111,16 +2111,17 @@ Publish steps (authoritative):
 5) Load draft payload:
    • From `override_draft:<ULID>:<draftSessionId>`
 
-6) Google-reference import / hydration (open issue):
-   • current implementation does not yet perform the real Google import / hydration
-   • approved direction is that the Google path becomes a real import, not mere lookup
+6) Google-reference import / hydration (implemented; paid only):
+   • Places API New hydration runs through `/api/location/hydrate`
+   • the Google path is a real paid provider prefill, not mere lookup
    • one NG draft only
-   • paid Google hydration must populate that same NG draft
-   • Create a location should then open meaningfully prefilled for BO completion
+   • paid Google hydration populates that same NG draft after Checkout + owner session exchange
+   • Create a location then opens meaningfully prefilled for BO completion
    • BO-completed values remain authoritative over imported/provider values
-   • If draft contains `googlePlaceId`, hydrate provider-backed fields now
    • BO draft values win
-   • Imported/provider fields fill only missing gaps
+   • imported/provider fields fill only missing gaps
+   • imported provider fields currently include display name, formatted address, city/country, phone, website, Google Maps URL, coordinates, rating/rating count, business status, and Google types
+   • Google Places photos are not imported into NaviGen-owned `media.*` fields unless a separate compliant photo-display flow with required attribution is implemented
 
 7) Validate publish rules:
    • evaluate the prospective effective published profile, not the raw draft payload
@@ -2368,8 +2369,8 @@ Ship gate for DO index:
 📌 Phase 8 open issues
 --------------------------------------------------------------------
 
-• Google path is still provider-reference capture only; real paid Google import / hydration into the same NG draft is still missing.
-• Create a location should be the completion step for the Google path, meaningfully prefilled after hydration.
+• Google-reference draft save remains provider-reference capture only before payment; paid Places API New hydration into the same NG draft is implemented through `/api/location/hydrate`.
+• Create a location is the BO completion step for the Google path, meaningfully prefilled after hydration.
 • Single device-bound draft UX still needs to be finalized in SYB:
   – show Drafts on this device
   – card click = edit

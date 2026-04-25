@@ -299,6 +299,10 @@ function devIndexKey(dev: string): string {
   return `devsess:${dev}:index`;
 }
 
+function googleDraftIndexKey(dev: string, googlePlaceId: string): string {
+  return `google_draft:${dev}:${googlePlaceId}`;
+}
+
 const ULID_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 function uniqueTrimmedStrings(values: unknown[]): string[] {
@@ -565,19 +569,30 @@ async function hydrateDraftWithGoogleDetails(env: Env, draft: any): Promise<{ hy
         accept: "application/json",
         "X-Goog-Api-Key": key,
         "X-Goog-FieldMask": fieldMask
-      },
-      cache: "no-store"
+      }
     });
 
-    const j = await r.json().catch(() => null) as any;
+    const responseText = await r.text();
+    let j: any = null;
+
+    try {
+      j = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      j = null;
+    }
+
     if (!r.ok) {
+      const googleStatus = String(j?.error?.status || j?.status || "").trim();
+      const googleMessage = String(j?.error?.message || j?.error_message || j?.message || "").trim();
+
       return {
         hydrated: false,
         draft,
         error: {
           code: "google_details_http_error",
           status: r.status,
-          googleStatus: String(j?.error?.status || "").trim() || undefined
+          googleStatus: googleStatus || undefined,
+          googleMessage: googleMessage ? googleMessage.slice(0, 700) : undefined
         }
       };
     }
@@ -5501,6 +5516,44 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
       noStore
     );
   }
+  
+  // C0) same-device Google-reference draft reopen/update
+  const deviceId = readDeviceId(req);
+  const googleIndexKey = googlePlaceId && deviceId ? googleDraftIndexKey(deviceId, googlePlaceId) : "";
+
+  if (googleIndexKey) {
+    const indexed = await env.KV_STATUS.get(googleIndexKey, { type: "json" }) as any;
+    const indexedDraftULID = String(indexed?.draftULID || "").trim();
+    const indexedDraftSessionId = String(indexed?.draftSessionId || "").trim();
+
+    if (ULID_RE.test(indexedDraftULID) && indexedDraftSessionId) {
+      const existingKey = `override_draft:${indexedDraftULID}:${indexedDraftSessionId}`;
+      const prev = await env.KV_STATUS.get(existingKey, { type: "json" }) as any;
+
+      if (prev && typeof prev === "object") {
+        const nextDraft = mergeDraftPatch(prev, normalizedPatch);
+
+        const classificationError = null;
+        if (classificationError) {
+          return json(
+            { error: { code: "invalid_request", message: classificationError } },
+            400,
+            noStore
+          );
+        }
+
+        nextDraft.updatedAt = new Date().toISOString();
+
+        await env.KV_STATUS.put(existingKey, JSON.stringify(nextDraft));
+
+        return json(
+          { ok: true, draftULID: indexedDraftULID, draftSessionId: indexedDraftSessionId, reopened: true },
+          200,
+          noStore
+        );
+      }
+    }
+  }
 
   // C / D) new manual shell or new Google-reference shell
   const newDraftULID = mintDraftUlid();
@@ -5521,6 +5574,19 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
   nextDraft.updatedAt = new Date().toISOString();
 
   await env.KV_STATUS.put(key, JSON.stringify(nextDraft));
+  
+  if (googleIndexKey) {
+    await env.KV_STATUS.put(
+      googleIndexKey,
+      JSON.stringify({
+        draftULID: newDraftULID,
+        draftSessionId: newDraftSessionId,
+        googlePlaceId,
+        updatedAt: nextDraft.updatedAt
+      }),
+      { expirationTtl: 60 * 60 * 24 * 30 }
+    );
+  }
 
   return json(
     { ok: true, draftULID: newDraftULID, draftSessionId: newDraftSessionId },

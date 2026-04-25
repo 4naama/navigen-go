@@ -5732,19 +5732,22 @@ Notes:
 B) Owner Self-Creation (Google-Reference Import)
 
 Description:
-A Business Owner performs a free Google lookup outside NaviGen’s paid provider
-path, pastes `googlePlaceId`, and creates one NG private draft with that
+A Business Owner performs a free Google ID-only lookup / place_id selection before
+payment, provides `googlePlaceId`, and creates one NG private draft with that
 provider reference.
 
 Current state:
-• this path currently captures the provider reference only
-• the real Google import / hydration step is still missing
+• Google-reference draft capture is implemented
+• paid Places API New hydration is implemented through `/api/location/hydrate`
+  after completed Checkout + owner session exchange
+• hydration imports provider-backed business details into the same NG draft
+• BO-completed values remain authoritative over imported/provider values
 
-Approved direction:
-1) BO pastes `googlePlaceId`
+Implemented behavior:
+1) BO supplies `googlePlaceId`
 2) system creates one NG private draft with that provider reference
 3) duplicate `googlePlaceId` must reopen / update the same draft instead of creating a second draft
-4) paid Google hydration imports business details into that same NG draft
+4) paid `/api/location/hydrate` imports Places API New business details into that same NG draft
 5) Create a location becomes the BO completion step, meaningfully prefilled
 6) BO-completed values remain authoritative over imported/provider values
 
@@ -6959,7 +6962,7 @@ Validation binds to the following JSON paths:
 
 Images:
 • Count = (media.coverImage present ? 1 : 0) + length(media.images[])
-• Requirement: Count ≥ 3
+• Google Places photos do not count toward the ≥3 image requirement unless the BO provides rights-compatible media independently of Google Places.
 
 Description:
 • Field: description (top-level string)
@@ -7090,7 +7093,8 @@ Behavior (authoritative)
    • Mint new `draftULID`
    • Mint new `draftSessionId`
    • Write `override_draft:<draftULID>:<draftSessionId>` including provider reference only
-   • Current implementation stops at provider-reference capture
+   • draft save does not import Google details before payment
+   • paid Google details hydration occurs later through `/api/location/hydrate`
    • Open issue: repeated `googlePlaceId` should reopen / update the same draft instead of creating a duplicate
    • Slug + alias are NOT minted during draft
 
@@ -7105,13 +7109,13 @@ Self-Creation Field Contract (normative)
   – Business description: optional `descriptions`
   – Links to the business: optional `links.official`, `links.facebook`,
     `links.instagram`, `links.bookingUrl`
-  – Media: optional `media.cover` + gallery image URLs
+  – Media: optional BO-provided `media.cover` + gallery image URLs; Google Places photos are provider-sourced display candidates only and do not become NaviGen-owned media
   – Coordinates: optional during draft; if present they are validated and
     normalized to 6 decimals at publish
 • Google-reference route may carry `googlePlaceId` plus BO-provided draft values.
-  Current implementation captures the provider reference only.
-  Open issue: paid Google hydration must populate that same NG draft before /
-  during the BO completion flow, and BO-provided values remain authoritative
+  Draft save captures the provider reference only before payment.
+  Paid `/api/location/hydrate` populates that same NG draft before / during
+  the BO completion flow, and BO-provided values remain authoritative.
 • Draft UI MAY show a generated slug preview derived from current
   `locationName` + current draft coordinates
 • The preview is advisory only; final slug is stamped only at publish
@@ -7130,6 +7134,58 @@ Response
   `{ ok: true, draftULID: <ULID>, draftSessionId: <string> }`
 • 404 if `locationID` cannot be resolved
 • 400 on invalid payload
+
+--------------------------------------------------------------------
+
+A2) Paid Google Hydration API
+
+Purpose:
+• Hydrate a Google-reference private shell after paid entitlement exists.
+• Import Places API New provider-backed business details into the same NG draft.
+• Preserve BO-entered values where present.
+
+Method: POST
+Path: /api/location/hydrate
+Auth requirement:
+• valid Operator Session (`op_sess → opsess:<id>`)
+• active ownership window for the same `draftULID`
+• active paid Plan aligned with ownership
+
+Input:
+• `draftULID`
+• `draftSessionId`
+
+Behavior:
+1) Resolve `draftULID` + `draftSessionId` to the private draft.
+2) Require the draft to contain a valid `googlePlaceId`.
+3) Verify paid owner entitlement.
+4) Call Places API New Place Details using server-only `GOOGLE_PLACES_API_KEY`.
+5) Merge imported/provider values into the same draft.
+6) BO-entered values remain authoritative; provider fields fill only missing gaps.
+7) Return the hydrated draft.
+
+Imported provider-backed fields:
+• display name
+• formatted address
+• city / country code where derivable
+• phone
+• website
+• Google Maps URL
+• coordinates
+• rating / rating count
+• business status
+• Google types
+
+Media rule:
+• Google Places photos are not imported into NaviGen-owned `media.coverImage`
+  or `media.images[]` by default.
+• Google photo resources may be displayed only through a compliant provider-photo
+  flow with required Google / author attribution.
+• BO-owned uploaded/provided media remains the source for publish image requirements.
+
+Response:
+• `{ ok:true, hydrated:true, draft:<draft>, hydratedAt:<iso> }`
+• `{ ok:true, hydrated:false, error:<object>, draft:<draft>, hydratedAt:"" }`
 
 --------------------------------------------------------------------
 
@@ -7186,12 +7242,14 @@ Publish Steps (authoritative order)
 5) Load draft payload
    • From `override_draft:<ULID>:<draftSessionId>`
 
-6) Google-reference import / hydration (open issue)
-   • current implementation does not yet perform the real Google import / hydration
-   • approved direction is that the Google path becomes a real import, not mere lookup
-   • paid Google hydration must populate that same NG draft
-   • Create a location should then act as the BO completion step with meaningful prefill
+6) Google-reference import / hydration (implemented; paid only)
+   • paid Places API New hydration runs through `/api/location/hydrate`
+   • the Google path is a real provider prefill, not mere lookup
+   • paid Google hydration populates that same NG draft after Checkout + owner session exchange
+   • Create a location then acts as the BO completion step with meaningful prefill
    • BO-completed values remain authoritative over imported/provider values
+   • imported/provider fields fill only missing gaps
+   • Google Places photos are not treated as NaviGen-owned media by default
 
 7) Validate publish rules (Section 92.3.3)
 
