@@ -1384,6 +1384,26 @@ const descs = resolveDescriptionMapForLocation(payload, [
 
   const inner = body.querySelector('.modal-body-inner');
   if (inner) {
+    const providerRating = googleProviderRatingSummary(payload);
+    if (providerRating) {
+      const provider = document.createElement('details');
+      provider.className = 'lpm-chip lpm-google-rating-chip';
+      provider.innerHTML = `
+        <summary class="modal-menu-item lpm-chip-face">
+          <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.googleProvider', 'Google rating')}</span>
+          <span class="lpm-chip-face-icons" aria-hidden="true">⭐ ${googleProviderRatingText(providerRating)}</span>
+          <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="lpm-chip-body">
+          <div class="lpm-provider-rating-note">${translatedOrFallback('lpm.rating.googleProviderNote', 'Provider-sourced rating. It is separate from NaviGen visitor ratings.')}</div>
+        </div>
+      `;
+
+      const statusChip = inner.querySelector('.lpm-status-chip');
+      if (statusChip) inner.insertBefore(provider, statusChip);
+      else inner.appendChild(provider);
+    }
+
     const rate = document.createElement('details');
     rate.className = 'lpm-chip lpm-rating-chip';
     rate.id = 'lpm-rate-section';
@@ -3428,6 +3448,185 @@ function showLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
   showModal(id);
 }
 
+let googleImportBrowserConfigPromise = null;
+let googleMapsPlacesLibraryPromise = null;
+
+function googleImportDisplayText(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'object') return String(value.text || value.name || value.displayName || '').trim();
+  return String(value || '').trim();
+}
+
+function googleProviderRatingSummary(source = {}) {
+  const google = (source?.google && typeof source.google === 'object') ? source.google : {};
+  const ratings = (source?.ratings && typeof source.ratings === 'object') ? source.ratings : {};
+  const rating = Number(google.rating ?? ratings?.google?.rating);
+  const count = Number(google.userRatingCount ?? google.userRatingsTotal ?? ratings?.google?.count ?? 0);
+
+  if (!Number.isFinite(rating) || rating <= 0) return null;
+
+  return {
+    rating,
+    count: Number.isFinite(count) && count > 0 ? count : 0
+  };
+}
+
+function googleProviderRatingText(summary) {
+  if (!summary) return '';
+  const lang = document.documentElement?.lang || undefined;
+  const count = Number(summary.count || 0);
+  const countText = count > 0 ? ` (${count.toLocaleString(lang)})` : '';
+  return `${Number(summary.rating).toFixed(1)}${countText}`;
+}
+
+async function getGoogleImportBrowserConfig() {
+  if (!googleImportBrowserConfigPromise) {
+    googleImportBrowserConfigPromise = fetch('/api/location/google-import/config', {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+      cache: 'no-store',
+      credentials: 'include'
+    }).then(async (res) => {
+      const payload = await res.json().catch(() => null);
+      if (!res.ok || !payload?.browserKey) {
+        const msg = String(payload?.error?.message || '').trim();
+        throw new Error(msg || 'Google import browser key is not configured.');
+      }
+      return payload;
+    });
+  }
+
+  return googleImportBrowserConfigPromise;
+}
+
+async function loadGooglePlacesLibraryForImport(browserKey) {
+  const existingImportLibrary = globalThis.google?.maps?.importLibrary;
+  if (typeof existingImportLibrary === 'function') {
+    return await existingImportLibrary('places');
+  }
+
+  if (!googleMapsPlacesLibraryPromise) {
+    googleMapsPlacesLibraryPromise = new Promise((resolve, reject) => {
+      const existingScript = document.querySelector('script[data-navigen-google-import="places"]');
+      const finish = async () => {
+        try {
+          const importLibrary = globalThis.google?.maps?.importLibrary;
+          if (typeof importLibrary !== 'function') throw new Error('Google Maps importLibrary unavailable.');
+          resolve(await importLibrary('places'));
+        } catch (err) {
+          reject(err);
+        }
+      };
+
+      if (existingScript) {
+        existingScript.addEventListener('load', finish, { once: true });
+        existingScript.addEventListener('error', () => reject(new Error('Google Maps script failed to load.')), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(browserKey)}&v=weekly&loading=async&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.dataset.navigenGoogleImport = 'places';
+      script.addEventListener('load', finish, { once: true });
+      script.addEventListener('error', () => reject(new Error('Google Maps script failed to load.')), { once: true });
+      document.head.appendChild(script);
+    });
+  }
+
+  return googleMapsPlacesLibraryPromise;
+}
+
+async function createGoogleImportAutocompleteElement() {
+  const config = await getGoogleImportBrowserConfig();
+  const placesLibrary = await loadGooglePlacesLibraryForImport(String(config.browserKey || '').trim());
+  const AutocompleteCtor = placesLibrary?.PlaceAutocompleteElement || globalThis.google?.maps?.places?.PlaceAutocompleteElement;
+
+  if (typeof AutocompleteCtor !== 'function') {
+    throw new Error('Google PlaceAutocompleteElement unavailable.');
+  }
+
+  const autocomplete = new AutocompleteCtor({});
+  autocomplete.classList.add('google-import-autocomplete');
+  autocomplete.setAttribute('requested-language', String(document.documentElement?.lang || 'en').split('-')[0]);
+  autocomplete.setAttribute('placeholder', translatedOrFallback('root.bo.googleImport.search.placeholder', 'Search business name and city'));
+  autocomplete.setAttribute('aria-label', translatedOrFallback('root.bo.googleImport.search.aria', 'Search Google businesses'));
+  return autocomplete;
+}
+
+async function resolveGoogleImportSelection(event) {
+  const prediction = event?.placePrediction || null;
+  let place = event?.place || null;
+
+  if (!place && prediction && typeof prediction.toPlace === 'function') {
+    place = prediction.toPlace();
+  }
+
+  try {
+    if (place && typeof place.fetchFields === 'function') {
+      await place.fetchFields({ fields: ['id', 'displayName', 'formattedAddress'] });
+    }
+  } catch {
+    // keep behavior: place_id is enough for server-side hydration; details are only for local preview text
+  }
+
+  const googlePlaceId = String(
+    place?.id ||
+    place?.placeId ||
+    prediction?.placeId ||
+    prediction?.id ||
+    event?.place?.id ||
+    ''
+  ).trim();
+
+  const displayName = googleImportDisplayText(place?.displayName || prediction?.mainText || prediction?.text || '');
+  const address = googleImportDisplayText(place?.formattedAddress || prediction?.secondaryText || '');
+
+  return {
+    googlePlaceId,
+    label: [displayName, address].filter(Boolean).join(' — ')
+  };
+}
+
+function googleImportDraftFromPayload(payload = {}, googlePlaceId = '') {
+  const draft = (payload?.draft && typeof payload.draft === 'object') ? payload.draft : {};
+  const draftULID = String(draft?.draftULID || payload?.draftULID || '').trim();
+  const draftSessionId = String(draft?.draftSessionId || payload?.draftSessionId || '').trim();
+  const resolvedGooglePlaceId = String(draft?.googlePlaceId || googlePlaceId || '').trim();
+  const now = Date.now();
+
+  return {
+    ...draft,
+    draftULID,
+    draftSessionId,
+    mode: 'google',
+    googlePlaceId: resolvedGooglePlaceId,
+    createdAt: Number(draft?.createdAt || now),
+    updatedAt: now
+  };
+}
+
+function renderGoogleProviderRatingCard(card, source = {}) {
+  if (!card) return;
+
+  const summary = googleProviderRatingSummary(source);
+  if (!summary) {
+    card.classList.add('hidden');
+    card.innerHTML = '';
+    return;
+  }
+
+  card.classList.remove('hidden');
+  card.innerHTML = `
+    <span class="label google-provider-rating-label">
+      <strong>${translatedOrFallback('root.bo.googleImport.rating.label', 'Google rating')}</strong>
+      <small>${googleProviderRatingText(summary)} · ${translatedOrFallback('root.bo.googleImport.rating.source', 'Provider-sourced, not editable')}</small>
+    </span>
+  `;
+}
+
 function createImportGoogleLocationModal(opts = {}) {
   const id = 'import-google-location-modal';
   document.getElementById(id)?.remove();
@@ -3447,22 +3646,31 @@ function createImportGoogleLocationModal(opts = {}) {
     onClose: (ev) => { closeImportGoogle(ev); },
     bodyHTML: `
       <div class="modal-form-stack">
-        <button id="google-placeid-finder" type="button" class="modal-menu-item modal-callout-card">
+        <div class="modal-menu-item modal-static-card google-import-intro-card">
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
             <strong>${(typeof t === 'function' && t('root.bo.googleImport.title')) || 'Import from Google'}</strong><br>
-            <small>${(typeof t === 'function' && t('root.bo.googleImport.desc')) || 'Bring in your business details.'}</small><br>
-            <small>Open Place ID Finder</small>
+            <small>${(typeof t === 'function' && t('root.bo.googleImport.desc')) || 'Find your business on Google and prefill your profile.'}</small>
           </span>
-        </button>
+        </div>
 
-        <div class="modal-field">
-          <label for="google-import-place-id">${(typeof t === 'function' && t('root.bo.googleImport.field.label')) || 'Paste Google place_id'}</label>
-          <input id="google-import-place-id" class="input" type="text" maxlength="256" placeholder="${(typeof t === 'function' && t('root.bo.googleImport.field.placeholder')) || 'Paste Google place_id'}" />
+        <div class="modal-field google-import-search-field">
+          <label>${(typeof t === 'function' && t('root.bo.googleImport.search.label')) || 'Search Google businesses'}</label>
+          <div id="google-import-autocomplete-host" class="google-import-autocomplete-host" aria-live="polite"></div>
+          <small class="modal-help-text">${(typeof t === 'function' && t('root.bo.googleImport.search.help')) || 'Search by business name and city, then choose the correct Google business.'}</small>
+        </div>
+
+        <div id="google-import-selection" class="modal-menu-item modal-static-card google-import-selection hidden" aria-live="polite"></div>
+
+        <div id="google-import-status" class="modal-menu-item owner-center-loading google-import-status hidden" aria-live="polite">
+          <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+            <strong id="google-import-status-title">${(typeof t === 'function' && t('root.bo.googleImport.loading.title')) || 'Preparing Google import...'}</strong><br>
+            <small id="google-import-status-desc">${(typeof t === 'function' && t('root.bo.googleImport.loading.desc')) || 'Loading embedded Google lookup.'}</small>
+          </span>
         </div>
 
         <div class="modal-actions">
-          <button id="google-import-submit" type="button" class="modal-body-button">
-            ${(typeof t === 'function' && t('root.bo.googleImport.submitDraft')) || 'Save profile draft'}
+          <button id="google-import-submit" type="button" class="modal-body-button" disabled>
+            ${(typeof t === 'function' && t('root.bo.googleImport.submitDraft')) || 'Import and edit profile'}
           </button>
 
           <button id="google-import-cancel" type="button" class="modal-body-button">
@@ -3473,29 +3681,79 @@ function createImportGoogleLocationModal(opts = {}) {
     `
   });
 
-  const placeIdInput = modal.querySelector('#google-import-place-id');
+  const autocompleteHost = modal.querySelector('#google-import-autocomplete-host');
+  const selectionCard = modal.querySelector('#google-import-selection');
+  const statusCard = modal.querySelector('#google-import-status');
+  const statusTitle = modal.querySelector('#google-import-status-title');
+  const statusDesc = modal.querySelector('#google-import-status-desc');
   const submitBtn = modal.querySelector('#google-import-submit');
 
-  modal.querySelector('#google-placeid-finder')?.addEventListener('click', (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-    window.open(
-      'https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder',
-      '_blank',
-      'noopener,noreferrer'
-    );
-  });
+  let selectedGooglePlaceId = '';
+  let selectedLabel = '';
+
+  function setGoogleImportStatus(visible, title = '', desc = '') {
+    statusCard?.classList.toggle('hidden', !visible);
+    if (statusTitle && title) statusTitle.textContent = title;
+    if (statusDesc && desc) statusDesc.textContent = desc;
+  }
+
+  function setGoogleImportSelection(googlePlaceId, label = '') {
+    selectedGooglePlaceId = String(googlePlaceId || '').trim();
+    selectedLabel = String(label || '').trim();
+
+    if (selectionCard) {
+      selectionCard.classList.toggle('hidden', !selectedGooglePlaceId);
+      selectionCard.innerHTML = selectedGooglePlaceId
+        ? `<span class="label"><strong>${translatedOrFallback('root.bo.googleImport.selected.title', 'Selected business')}</strong><br><small>${selectedLabel || translatedOrFallback('root.bo.googleImport.selected.desc', 'Google business selected.')}</small></span>`
+        : '';
+    }
+
+    if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = !selectedGooglePlaceId;
+  }
 
   modal.querySelector('#google-import-cancel')?.addEventListener('click', (ev) => {
     closeImportGoogle(ev);
   });
 
+  setGoogleImportStatus(true);
+  createGoogleImportAutocompleteElement()
+    .then((autocomplete) => {
+      autocompleteHost?.replaceChildren(autocomplete);
+      setGoogleImportStatus(false);
+
+      autocomplete.addEventListener('gmp-select', async (event) => {
+        setGoogleImportStatus(true, translatedOrFallback('root.bo.googleImport.selecting.title', 'Reading selection...'), translatedOrFallback('root.bo.googleImport.selecting.desc', 'Preparing the selected Google business.'));
+        const selection = await resolveGoogleImportSelection(event).catch(() => ({ googlePlaceId: '', label: '' }));
+        setGoogleImportStatus(false);
+
+        if (!selection.googlePlaceId) {
+          showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not read the selected Google business.', 2400);
+          setGoogleImportSelection('', '');
+          return;
+        }
+
+        setGoogleImportSelection(selection.googlePlaceId, selection.label);
+      });
+    })
+    .catch((err) => {
+      setGoogleImportStatus(false);
+      if (autocompleteHost) {
+        autocompleteHost.innerHTML = `
+          <div class="modal-menu-item modal-static-card google-import-unavailable">
+            <span class="label">
+              <strong>${translatedOrFallback('root.bo.googleImport.unavailable.title', 'Google import unavailable')}</strong><br>
+              <small>${String(err?.message || translatedOrFallback('root.bo.googleImport.unavailable.desc', 'Google lookup is not configured yet.'))}</small>
+            </span>
+          </div>
+        `;
+      }
+    });
+
   submitBtn?.addEventListener('click', async () => {
-    const googlePlaceId = String(placeIdInput?.value || '').trim();
-    setInputErrorState(placeIdInput, !googlePlaceId);
+    const googlePlaceId = String(selectedGooglePlaceId || '').trim();
 
     if (!googlePlaceId) {
-      showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not save profile draft.', 2200);
+      showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Choose a Google business first.', 2200);
       return;
     }
 
@@ -3507,17 +3765,15 @@ function createImportGoogleLocationModal(opts = {}) {
     }
 
     if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = true;
+    setGoogleImportStatus(true, translatedOrFallback('root.bo.googleImport.hydrating.title', 'Importing Google details...'), translatedOrFallback('root.bo.googleImport.hydrating.desc', 'Prefilling your private Create Location draft.'));
 
     let res = null;
     let payload = null;
     try {
-      res = await fetch('/api/location/draft', {
+      res = await fetch('/api/location/hydrate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          googlePlaceId,
-          draft: {}
-        }),
+        body: JSON.stringify({ googlePlaceId }),
         cache: 'no-store',
         credentials: 'include'
       });
@@ -3527,33 +3783,40 @@ function createImportGoogleLocationModal(opts = {}) {
       payload = null;
     }
 
+    setGoogleImportStatus(false);
     if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = false;
 
-    if (!res?.ok) {
+    if (!res?.ok || !payload?.hydrated) {
+      const errorCode = String(payload?.error?.code || '').trim();
       const msg = String(payload?.error?.message || '').trim();
-      showToast(msg || ((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not save profile draft.'), 2400);
+
+      if (payload?.needsCheckout && payload?.draft?.draftULID && payload?.draft?.draftSessionId) {
+        const quotaDraft = googleImportDraftFromPayload(payload, googlePlaceId);
+        savePendingLocationDraft(quotaDraft);
+        hideModal(id);
+        showToast(msg || translatedOrFallback('root.bo.googleImport.quota', 'Google import quota reached. Activate a Plan to continue.'), 3200);
+        showLocationDraftPublishSetupModal(quotaDraft, { returnTo: opts?.returnTo });
+        return;
+      }
+
+      const fallback = errorCode.includes('quota')
+        ? translatedOrFallback('root.bo.googleImport.quota', 'Google import quota reached. Save manually or activate a Plan to continue.')
+        : ((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not import Google business details.');
+      showToast(msg || fallback, 3200);
       return;
     }
 
-    const draftULID = String(payload?.draftULID || '').trim();
-    const draftSessionId = String(payload?.draftSessionId || '').trim();
-    if (!draftULID || !draftSessionId) {
+    const savedDraft = googleImportDraftFromPayload(payload, googlePlaceId);
+    if (!savedDraft.draftULID || !savedDraft.draftSessionId) {
       showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not save profile draft.', 2400);
       return;
     }
 
-    const savedDraft = {
-      draftULID,
-      draftSessionId,
-      mode: 'google',
-      googlePlaceId,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    };
+    if (selectedLabel && !p8DraftLocationName(savedDraft)) savedDraft.name = selectedLabel;
 
     savePendingLocationDraft(savedDraft);
     hideModal(id);
-    showLocationDraftPublishSetupModal(savedDraft, { returnTo: opts?.returnTo });
+    showRequestListingModal({ prefill: savedDraft, returnTo: opts?.returnTo });
   });
 
   setupTapOutClose(id, closeImportGoogle);
@@ -4993,6 +5256,8 @@ export function createRequestListingModal(opts = {}) {
           </div>
         </details>
 
+        <div id="rl-google-provider-rating-card" class="modal-menu-item modal-static-card google-provider-rating hidden" aria-live="polite"></div>
+
         <details id="rl-context-section" class="cm-chip request-section-chip">
           <summary class="modal-menu-item cm-chip-face request-section-chip-face">
             <span class="label cm-chip-face-label request-section-chip-label">
@@ -5184,6 +5449,9 @@ export function createRequestListingModal(opts = {}) {
   const requestListingLoadingDesc = modal.querySelector('#request-listing-loading-desc');
   const requestListingRetry = modal.querySelector('#request-listing-retry');
   const requestListingSubmit = modal.querySelector('#request-listing-submit');
+  const rlGoogleProviderRatingCard = modal.querySelector('#rl-google-provider-rating-card');
+
+  function setRequestListingRetryVisible(visible) {
 
   function setRequestListingRetryVisible(visible) {
     if (!(requestListingRetry instanceof HTMLButtonElement)) return;
@@ -5238,6 +5506,8 @@ export function createRequestListingModal(opts = {}) {
     .filter(Boolean);
   const prefillImage1 = String(prefillImages[0] || '').trim();
   const prefillImage2 = String(prefillImages[1] || '').trim();
+
+  renderGoogleProviderRatingCard(rlGoogleProviderRatingCard, prefill || {});
 
   const REQUEST_LISTING_CONTEXT_LIMIT = 3;
   const selectedTagSet = new Set(prefillTags);
