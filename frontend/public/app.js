@@ -3648,6 +3648,14 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
 })();
 
 (async function resumePendingCampaignAfterExchange() {
+  try {
+    const current = new URL(window.location.href);
+    const sessionId = String(current.searchParams.get('sid') || '').trim();
+    const flow = String(current.searchParams.get('flow') || '').trim().toLowerCase();
+
+    if (sessionId && flow === 'campaign') return;
+  } catch {}
+
   let shouldResume = false;
   try {
     shouldResume = sessionStorage.getItem('navigen.resumeCampaignAfterExchange') === '1';
