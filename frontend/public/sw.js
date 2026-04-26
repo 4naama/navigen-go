@@ -110,18 +110,22 @@ self.addEventListener("fetch", event => {
     const hit = await caches.match(req);
     if (hit) return hit;
 
-    const net = await fetch(req);
-    if (net && net.ok) {
-      const ct = (net.headers.get('content-type') || '').toLowerCase();
-      const path = new URL(req.url).pathname;
-      const isImgReq = /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(path);
-      const okToCache = isImgReq ? ct.startsWith('image/') : true;
-      if (okToCache) {
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(req, net.clone());
+    try {
+      const net = await fetch(req);
+      if (net && net.ok) {
+        const ct = (net.headers.get('content-type') || '').toLowerCase();
+        const path = new URL(req.url).pathname;
+        const isImgReq = /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(path);
+        const okToCache = isImgReq ? ct.startsWith('image/') : true;
+        if (okToCache) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(req, net.clone());
+        }
       }
+      return net;
+    } catch {
+      return Response.error();
     }
-    return net;
   })());
 
 });
