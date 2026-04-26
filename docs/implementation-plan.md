@@ -905,9 +905,10 @@ Actions (minimum set):
 2) Run campaign
    • Opens a search-first “Select your business” (SYB) modal
    • SYB opens blank (no generic location list)
-   • SYB presents three static owner routes:
+   • SYB presents four static owner routes:
      – Create a location
      – Import from Google
+     – Create an outlet
      – Recently used
    • Existing locations appear only after typed query threshold is satisfied
    • Selecting an existing location routes into the owner / commercial flow
@@ -935,19 +936,31 @@ It is an owner lookup surface for finding one known business with minimal load.
 UI contract on open:
 • Search field visible
 • No generic location cards rendered initially
-• Three static owner cards shown:
+• Four static owner cards shown:
   1) Create a location
   2) Import from Google
-  3) Recently used
+  3) Create an outlet
+  4) Recently used
 
 Static routes:
 • Create a location
   – opens the manual self-creation draft flow
 
 • Import from Google
-  – opens the Google-reference self-creation path
-  – owner pastes `googlePlaceId` / `place_id`
+  – opens embedded Google business lookup
+  – BO searches by business name and city
+  – BO selects the correct Google business
+  – NaviGen receives `place_id` internally
+  – NaviGen runs the Google import policy flow
 
+• Create an outlet
+  – opens the outlet spin-off path
+  – BO selects or imports a source business profile
+  – source profile can come from an existing NaviGen profile or embedded Google business lookup
+  – NaviGen copies portable profile fields into a new outlet draft
+  – BO must provide separate outlet venue, address, dates, hours, and map pin
+  – outlet source Google identity does not become the outlet’s own identity
+  
 • Recently used
   – opens the device-bound owner subset already known on this device
   – this is the quick-return surface for owner-managed places
@@ -1902,10 +1915,12 @@ Clarification:
 Scope (Phase 8 only):
 • structured BO self-creation UI for manual draft authoring
 • brand-new manual shell via `draftULID` + `draftSessionId`
-• brand-new Google-reference shell via `googlePlaceId` (manual Google `place_id` lookup first)
+• brand-new Google-import shell via internal `googlePlaceId` / `place_id` reference
+  – P9 replaces BO-visible `place_id` handling with embedded Google lookup in the normal UX
 • `/api/location/draft` private shell endpoint
 • `/api/location/publish` authoritative publish endpoint for first publish and content publish
-• post-payment hydration for Google-reference shells
+• Google hydration regression coverage for same-draft replay after Checkout + owner session exchange
+  – P9 supersedes the normal path with upfront Google Import under quota/cache/ledger
 • PlanAllocDO capacity enforcement (`maxPublishedLocations`)
 • DO index upsert wiring (`SearchShardDO` + `ContextShardDO`)
 • KV-authoritative runtime reads (`profile_base:<ULID>` + `override:<ULID>`)
@@ -1956,7 +1971,7 @@ Purpose:
 • Support:
   – existing slug route
   – new manual shell
-  – new Google-reference shell
+  – new Google-import shell using internal `googlePlaceId` / `place_id`
 • Preserve private-draft-only state until the BO reaches paid publish
 • Allow geo edits pre-publish (coordinates mutable during draft)
 • Allow taxonomy / context selection pre-publish
@@ -1982,15 +1997,16 @@ C) new manual shell (`locationID` absent, `draftULID` absent, `googlePlaceId` ab
   3) write `override_draft:<draftULID>:<draftSessionId>`
   4) return `{ ok:true, draftULID:<ULID>, draftSessionId:<string> }`
 
-D) new Google-reference shell (`locationID` absent, `draftULID` absent, `googlePlaceId` provided):
+D) new Google-import shell (`locationID` absent, `draftULID` absent, `googlePlaceId` provided):
   1) mint `draftULID`
   2) mint `draftSessionId`
-  3) persist `googlePlaceId` on one NG draft
-  4) draft phase remains provider-reference capture only; no Google details import occurs before payment
-  5) after completed Checkout + owner session exchange, `/api/location/hydrate` imports Places API New details into that same NG draft
-  6) repeated `googlePlaceId` must reopen / update the same draft instead of creating a duplicate
-  7) return `{ ok:true, draftULID:<ULID>, draftSessionId:<string> }`
-
+  3) persist `googlePlaceId` on one NG draft as an internal provider reference
+  4) P9 import policy may hydrate Places API New details upfront before checkout when quota/cache/ledger rules allow
+  5) after completed Checkout + owner session exchange, `/api/location/hydrate` may resume or rehydrate that same NG draft
+  6) BO-entered draft values remain authoritative over imported/provider values
+  7) repeated `googlePlaceId` must reopen / update the same draft instead of creating a duplicate
+  8) return `{ ok:true, draftULID:<ULID>, draftSessionId:<string> }`
+  
 Field contract during draft (owner self-creation UI):
 • Business information:
   – BO provides `locationName`
@@ -2034,10 +2050,11 @@ Expected:
 • no alias written
 • no DO messages
 
-H3: new Google-reference shell
+H3: new Google-import shell
 Expected:
-• provider reference persisted
-• no unpaid/provider hydration during draft save
+• provider reference persisted internally
+• no unbounded provider hydration during ordinary draft save
+• hydration runs only through the P9 import policy / cache / ledger path or paid replay path
 • no alias written
 • no DO messages
 
@@ -2111,12 +2128,13 @@ Publish steps (authoritative):
 5) Load draft payload:
    • From `override_draft:<ULID>:<draftSessionId>`
 
-6) Google-reference import / hydration (implemented; paid only):
+6) Google import / hydration (P9-aware):
    • Places API New hydration runs through `/api/location/hydrate`
-   • the Google path is a real paid provider prefill, not mere lookup
-   • one NG draft only
-   • paid Google hydration populates that same NG draft after Checkout + owner session exchange
-   • Create a location then opens meaningfully prefilled for BO completion
+   • the Google path is a real provider-backed draft prefill, not mere lookup   
+   • one NG draft only per same-device same-place import
+   • P9 allows upfront Google hydration before checkout when quota/cache/ledger rules allow
+   • paid owner entitlement may resume or rehydrate that same NG draft after Checkout + owner session exchange   
+   • Create Location opens meaningfully prefilled for BO completion
    • BO-completed values remain authoritative over imported/provider values
    • BO draft values win
    • imported/provider fields fill only missing gaps
@@ -2185,9 +2203,9 @@ Expected:
 • override written
 • DO upsert sent
 
-H5: brand-new Google-reference shell hydrates and publishes:
+H5: brand-new Google-import shell hydrates and publishes:
 Expected:
-• provider-backed missing fields filled after payment
+• provider-backed missing fields filled by upfront import policy or paid replay path
 • BO-entered values preserved where present
 • slug stamped only at publish
 
@@ -2366,11 +2384,20 @@ Ship gate for DO index:
 • Drafts never appear in index
 
 --------------------------------------------------------------------
-📌 Phase 8 open issues
+📌 Phase 8 closure notes / Phase 9 deferrals
 --------------------------------------------------------------------
 
-• Google-reference draft save remains provider-reference capture only before payment; paid Places API New hydration into the same NG draft is implemented through `/api/location/hydrate`.
-• Create a location is the BO completion step for the Google path, meaningfully prefilled after hydration.
+• Phase 8 validation closed on 2026-04-26:
+  – production `app.js` freshness verified
+  – `/owner/stripe-exchange` minted `op_sess`
+  – `/api/owner/campaigns` accepted the owner cookie
+  – `/api/location/hydrate` returned `ok:true`, `hydrated:true`
+  – Google fields imported correctly
+  – BO-entered `listedName` and phone were preserved
+  – fresh Edge replay opened the hydrated Create Location flow
+  – final validation used 0 new paid checkouts
+• Phase 9 supersedes the Phase 8 Google import baseline with embedded Google lookup and upfront full Places API New hydration protected by quota/cache/ledger.
+• Google rating visibility is a Phase 9 UI requirement, not a Phase 8 blocker.
 • Single device-bound draft UX still needs to be finalized in SYB:
   – show Drafts on this device
   – card click = edit
@@ -2437,6 +2464,191 @@ Migration Safety
 • Legacy export artifacts do not influence runtime reads, lists, or search.
 
 Only when ALL invariants pass may Phase 8 be considered production-ready.
+
+--------------------------------------------------------------------
+PHASE 9 — UPFRONT GOOGLE IMPORT + OUTLET SPIN-OFF + RATING UI
+--------------------------------------------------------------------
+
+Goal:
+Replace BO-visible `place_id` handling with embedded Google lookup and upfront
+full Places API New hydration, protected by same-device quota, IP quota,
+place_id cache, and a cost ledger.
+
+Plain language:
+Google creates the fastest complete draft.
+The BO reviews, edits, approves, and publishes the final business profile.
+
+Scope:
+• embedded Google business lookup in Create Location SYB
+• browser lookup key for Google lookup UI
+• server-side full Places API New hydration
+• same-device duplicate draft detection
+• place_id cache
+• unpaid unique-location quota
+• IP-based daily protective quota
+• cost ledger
+• Create an outlet path in Create Location SYB
+• Create Location rating UI
+• LPM rating UI
+
+Explicit non-goals:
+• no BO-visible `place_id` paste flow in the normal UX
+• no embedded lookup UI for arbitrary bulk scraping
+• no raw Google provider JSON export
+• no Google photo import into NaviGen-owned media
+• no Google reviews import
+• no automatic outlet detection from address edits
+
+Google key split:
+• `NaviGen Google Import Browser Key`
+  – frontend lookup only
+  – HTTP referrer restricted
+  – used by embedded Google business lookup
+
+• `NaviGen Places Server Key`
+  – backend hydration only
+  – stored in Cloudflare Worker secret `GOOGLE_PLACES_API_KEY`
+  – restricted to Places API (New)
+
+Create Location SYB menu:
+• Create a location
+  – Add your business.
+
+• Import from Google
+  – Find your business on Google and prefill your profile.
+
+• Create an outlet
+  – Use an existing business profile as a template for a pop-up, temporary outlet, or festival booth.
+
+• Recently used
+  – View and manage your places.
+
+Import from Google flow:
+1) BO clicks Import from Google.
+2) NaviGen shows embedded Google business lookup.
+3) BO searches by business name and city.
+4) BO selects the correct Google business.
+5) NaviGen receives `place_id` internally.
+6) NaviGen checks same-device duplicate draft.
+7) NaviGen checks place_id cache.
+8) NaviGen checks unpaid unique-place quota.
+9) If allowed, NaviGen performs full Places API New hydration.
+10) Hydrated Create Location draft opens immediately.
+11) BO reviews and edits all fields.
+12) BO proceeds to checkout / plan activation.
+13) Plan activation arms publish / network continuation.
+
+Unpaid quota:
+• 3 unique full Google imports per device before checkout / first publish trigger
+• 10 unique full hydrations per IP per rolling 24h
+• same place_id retry does not count again
+• same-device same place_id reopens/updates the same draft
+• after quota, prompt checkout / plan activation and preserve drafts
+
+place_id cache:
+• cache key: `google_place_cache:<place_id>`
+• cache normalized provider import payload
+• use cache to avoid repeated paid Google hydration for the same business
+• initial TTL target: 14 days
+• cache is an onboarding accelerator, not the canonical source of published BO-approved data
+
+Cost ledger:
+• write one lightweight event per full hydration attempt
+• record placeId, deviceId, ipHash, draftULID, mode, cacheHit, quotaCounted, fieldMaskVersion, estimatedCostCents, createdAt
+• future admin dashboard consumes this ledger
+
+Outlet spin-off flow:
+1) BO clicks Create an outlet in Create Location SYB.
+2) NaviGen asks for the source profile.
+3) BO chooses one of:
+   – existing NaviGen business profile
+   – Google business lookup
+4) If BO chooses Google business lookup, NaviGen uses the same embedded Google lookup UI.
+5) NaviGen hydrates or loads the source profile from cache.
+6) NaviGen copies portable profile fields into a new outlet draft.
+7) BO must provide separate outlet physical details.
+8) BO confirms the outlet is physically separate from the source business.
+9) BO reviews and edits all fields.
+10) BO proceeds to checkout / plan activation.
+11) Plan activation arms publish / network continuation.
+
+Outlet rules:
+• source Google place_id belongs to the source profile
+• outlet does not inherit source Google place_id as its own identity
+• outlet must have its own venue, address, dates, hours, and map pin
+• outlet googlePlaceId remains empty unless the outlet has its own legitimate Google place_id
+
+Outlet-required fields:
+• outlet name or label
+• outlet kind
+• venue or event name
+• outlet address or venue address
+• outlet map pin / coordinates
+• start date
+• end date
+• outlet opening hours or operating notes
+• confirmation that the outlet is physically separate from the source business
+
+Create Location rating UI:
+• when Google import provides rating and rating count, show a compact Google-sourced rating display in Create Location
+• rating is shown as provider-sourced context, not as an editable NaviGen visitor rating
+• label must make the source clear, e.g. “Google rating”
+• BO can review and edit profile fields, but cannot rewrite Google rating as if it were NaviGen-owned visitor rating
+• Google rating metadata remains under provider metadata
+
+LPM rating UI:
+• LPM may display Google-sourced rating where imported and available
+• source label must remain clear
+• NaviGen visitor ratings remain separate from Google provider rating
+• if both exist, UI must not merge them into one ambiguous number
+• provider rating must not imply NaviGen verification or NaviGen visitor rating
+
+Field mask version:
+• `google-full-v1`
+
+Full hydration fields:
+• id
+• displayName
+• formattedAddress
+• addressComponents
+• location
+• websiteUri
+• internationalPhoneNumber
+• nationalPhoneNumber
+• rating
+• userRatingCount
+• businessStatus
+• types
+• googleMapsUri
+
+Compliance posture:
+• NaviGen uses Google import as BO onboarding, not bulk data extraction
+• no raw provider payload export
+• no bulk hydrated listing export
+• one active Create Location chip/modal at a time
+• quota + cache + ledger enforce bounded use
+• Google photos are not imported into NaviGen-owned media
+• Google reviews are not imported
+
+Happy-path tests:
+• embedded Google lookup returns internal place_id
+• full hydration opens Create Location immediately
+• repeated same-device same place_id reopens same draft
+• place_id cache avoids repeated Google hydration
+• quota counts unique place_id only
+• quota prompts checkout after allowed unpaid imports
+• outlet spin-off copies portable fields and requires separate outlet physical details
+• Create Location shows Google rating UI after import
+• LPM shows source-clear rating UI where provider rating exists
+
+Ship gate:
+• no BO-visible place_id paste in normal flow
+• upfront full hydration works with quota/cache/ledger
+• same-device duplicate place_id reopens same draft
+• outlet spin-off is discoverable from Create Location SYB
+• outlet does not inherit source Google physical identity
+• Create Location rating UI is source-clear
+• LPM rating UI is source-clear
 
 --------------------------------------------------------------------
 

@@ -3,7 +3,7 @@
 ## Core positioning
 
 **NaviGen is an ad platform for time-limited active presence inside NaviGen.  
-During your active Plan window, you are the exclusive operator of your listing.
+During your active Plan window, you are the exclusive operator of your listing.**
 
 NaviGen is not “hosting a page”.  
 It is **keeping a business present in people’s awareness**, with optional promotion mechanics when the owner chooses to run them.
@@ -30,11 +30,46 @@ End users (visitors) never pay.
 --------------------------------------------------------------------
 
 ## What can exist without payment
-- Google-reference lookup before payment is ID-only / provider-reference capture; full Places API New hydration is paid-only.
+- Google import before payment may perform full Places API New hydration within import policy limits; this creates only a private draft and does not grant publish, visibility, ownership, analytics, Dash access, or campaign rights.
 - That draft is not a published LPM and is not a public “parking” state.
+- Unpaid Google import is limited by import policy:
+  • 3 unique full Google imports per device before checkout / first publish trigger
+  • 10 unique full hydrations per IP per rolling 24h
+  • same place_id retry does not count again
+  • same-device same place_id reopens / updates the same private draft
+- After quota, NaviGen prompts checkout / plan activation and preserves existing drafts.
+- Plan activation arms publication and, where applicable, network continuation.
 - NaviGen does **not** grant unpaid visibility or unpaid discoverability merely because a BO entered data.
 - First publication requires an active paid Plan.
 - An already published LPM may later remain addressable as an expired record, but its visibility is restored only through a new paid Plan window.
+
+--------------------------------------------------------------------
+
+## Google import and outlet drafts before payment
+
+Google import and outlet spin-off may create private BO drafts before payment.
+
+These drafts:
+- are not published LPMs
+- are not publicly discoverable
+- do not create ownership authority
+- do not open Dash access
+- do not create campaign entitlement
+- do not reserve plan capacity until checkout / plan activation
+
+Import from Google:
+- uses embedded Google business lookup
+- receives place_id internally
+- may run full Places API New hydration within import policy limits
+- opens Create Location for BO review/edit
+
+Create an outlet:
+- uses an existing source profile or embedded Google lookup
+- creates a separate outlet draft
+- requires separate outlet physical details
+- requires confirmation that outlet is physically separate from the source business
+
+Checkout / plan activation is the commercial step that arms publish and continuation.
 
 --------------------------------------------------------------------
 

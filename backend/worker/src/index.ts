@@ -40,6 +40,7 @@ export interface Env {
   STRIPE_SECRET_KEY: string; // Stripe secret key for creating Checkout Sessions (server-only)
   STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
   GOOGLE_PLACES_API_KEY?: string; // Places API New server key; do not expose in frontend JS
+  GOOGLE_IMPORT_BROWSER_KEY?: string; // Maps JavaScript / Places widget browser key; HTTP referrer restricted  
 }
 
 // --- Plan persistence (Phase 8 prerequisite) ---
@@ -418,6 +419,207 @@ function mergeDraftPatch(base: any, patch: any): any {
 
 function googlePlacesApiKey(env: Env): string {
   return String(env.GOOGLE_PLACES_API_KEY || "").trim();
+}
+
+function googleImportBrowserKey(env: Env): string {
+  return String(env.GOOGLE_IMPORT_BROWSER_KEY || "").trim();
+}
+
+const GOOGLE_IMPORT_FIELD_MASK_VERSION = "google-full-v1";
+const GOOGLE_IMPORT_CACHE_TTL_SECONDS = 60 * 60 * 24 * 14;
+const GOOGLE_IMPORT_QUOTA_TTL_SECONDS = 60 * 60 * 24;
+const GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT = 3;
+const GOOGLE_IMPORT_IP_DAILY_LIMIT = 10;
+
+function googlePlaceCacheKey(googlePlaceId: string): string {
+  return `google_place_cache:${googlePlaceId}`;
+}
+
+function googleImportDeviceQuotaKey(deviceId: string): string {
+  return `google_import_quota:device:${deviceId}`;
+}
+
+function googleImportIpQuotaKey(ipHash: string): string {
+  return `google_import_quota:ip:${ipHash}`;
+}
+
+function googleImportLedgerKey(): string {
+  return `google_import_ledger:${Date.now()}:${mintDraftSessionId()}`;
+}
+
+function googleImportQuotaPlaceIds(record: any): string[] {
+  const rows = Array.isArray(record?.placeIds) ? record.placeIds : [];
+  return uniqueTrimmedStrings(rows).filter(isValidGooglePlaceId);
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function googleImportIpHash(req: Request, env: Env): Promise<string> {
+  const ip = String(
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0] ||
+    "unknown"
+  ).trim();
+  const salt = String(env.JWT_SECRET || "navigen-google-import").trim();
+  return await sha256Hex(`${salt}:${ip || "unknown"}`);
+}
+
+async function readGoogleImportQuotaIds(env: Env, key: string): Promise<string[]> {
+  const rec = await env.KV_STATUS.get(key, { type: "json" }) as any;
+  return googleImportQuotaPlaceIds(rec);
+}
+
+async function writeGoogleImportQuotaIds(env: Env, key: string, placeIds: string[]): Promise<void> {
+  await env.KV_STATUS.put(
+    key,
+    JSON.stringify({
+      placeIds: uniqueTrimmedStrings(placeIds).filter(isValidGooglePlaceId),
+      updatedAt: new Date().toISOString()
+    }),
+    { expirationTtl: GOOGLE_IMPORT_QUOTA_TTL_SECONDS }
+  );
+}
+
+async function checkGoogleImportPolicy(
+  req: Request,
+  env: Env,
+  deviceId: string,
+  googlePlaceId: string,
+  sameDeviceReopen: boolean
+): Promise<{ allowed: boolean; quotaCounted: boolean; ipHash: string; error: any | null }> {
+  const ipHash = await googleImportIpHash(req, env);
+  if (sameDeviceReopen) {
+    return { allowed: true, quotaCounted: false, ipHash, error: null };
+  }
+
+  const deviceKey = googleImportDeviceQuotaKey(deviceId);
+  const ipKey = googleImportIpQuotaKey(ipHash);
+  const [devicePlaceIds, ipPlaceIds] = await Promise.all([
+    readGoogleImportQuotaIds(env, deviceKey),
+    readGoogleImportQuotaIds(env, ipKey)
+  ]);
+
+  const deviceSeen = devicePlaceIds.includes(googlePlaceId);
+  const ipSeen = ipPlaceIds.includes(googlePlaceId);
+
+  if (!deviceSeen && devicePlaceIds.length >= GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT) {
+    return {
+      allowed: false,
+      quotaCounted: false,
+      ipHash,
+      error: {
+        code: "google_import_device_quota_exceeded",
+        message: "Google import quota reached for this device.",
+        needsCheckout: true,
+        deviceLimit: GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT
+      }
+    };
+  }
+
+  if (!ipSeen && ipPlaceIds.length >= GOOGLE_IMPORT_IP_DAILY_LIMIT) {
+    return {
+      allowed: false,
+      quotaCounted: false,
+      ipHash,
+      error: {
+        code: "google_import_ip_quota_exceeded",
+        message: "Google import quota reached for this network today.",
+        needsCheckout: true,
+        ipDailyLimit: GOOGLE_IMPORT_IP_DAILY_LIMIT
+      }
+    };
+  }
+
+  return { allowed: true, quotaCounted: !deviceSeen || !ipSeen, ipHash, error: null };
+}
+
+async function recordGoogleImportQuota(env: Env, deviceId: string, ipHash: string, googlePlaceId: string): Promise<void> {
+  const deviceKey = googleImportDeviceQuotaKey(deviceId);
+  const ipKey = googleImportIpQuotaKey(ipHash);
+  const [devicePlaceIds, ipPlaceIds] = await Promise.all([
+    readGoogleImportQuotaIds(env, deviceKey),
+    readGoogleImportQuotaIds(env, ipKey)
+  ]);
+
+  await Promise.all([
+    writeGoogleImportQuotaIds(env, deviceKey, [...devicePlaceIds, googlePlaceId]),
+    writeGoogleImportQuotaIds(env, ipKey, [...ipPlaceIds, googlePlaceId])
+  ]);
+}
+
+async function readGooglePlaceCache(env: Env, googlePlaceId: string): Promise<any | null> {
+  const cached = await env.KV_STATUS.get(googlePlaceCacheKey(googlePlaceId), { type: "json" }) as any;
+  const draft = (cached?.draft && typeof cached.draft === "object") ? cached.draft : null;
+  return draft;
+}
+
+async function writeGooglePlaceCache(env: Env, googlePlaceId: string, draft: any): Promise<void> {
+  if (!draft || typeof draft !== "object") return;
+  await env.KV_STATUS.put(
+    googlePlaceCacheKey(googlePlaceId),
+    JSON.stringify({
+      draft,
+      fieldMaskVersion: GOOGLE_IMPORT_FIELD_MASK_VERSION,
+      cachedAt: new Date().toISOString()
+    }),
+    { expirationTtl: GOOGLE_IMPORT_CACHE_TTL_SECONDS }
+  );
+}
+
+async function resolveGoogleImportPayload(env: Env, googlePlaceId: string): Promise<{ hydrated: boolean; draft: any; cacheHit: boolean; error: any | null }> {
+  const cachedDraft = await readGooglePlaceCache(env, googlePlaceId);
+  if (cachedDraft) {
+    return { hydrated: true, draft: cachedDraft, cacheHit: true, error: null };
+  }
+
+  const result = await hydrateDraftWithGoogleDetails(env, { googlePlaceId });
+  if (result.hydrated) {
+    await writeGooglePlaceCache(env, googlePlaceId, result.draft);
+  }
+
+  return {
+    hydrated: result.hydrated,
+    draft: result.draft,
+    cacheHit: false,
+    error: result.error
+  };
+}
+
+async function writeGoogleImportLedger(env: Env, entry: Record<string, any>): Promise<void> {
+  await env.KV_STATUS.put(
+    googleImportLedgerKey(),
+    JSON.stringify({
+      ...entry,
+      fieldMaskVersion: GOOGLE_IMPORT_FIELD_MASK_VERSION,
+      createdAt: new Date().toISOString()
+    }),
+    { expirationTtl: 60 * 60 * 24 * 366 }
+  );
+}
+
+function ratingsFromGoogleProvider(effective: any): Record<string, any> {
+  const base = (effective?.ratings && typeof effective.ratings === "object") ? { ...effective.ratings } : {};
+  const google = (effective?.google && typeof effective.google === "object") ? effective.google : {};
+  const rating = Number(google?.rating ?? base?.google?.rating);
+  const count = Number(google?.userRatingCount ?? google?.userRatingsTotal ?? base?.google?.count ?? 0);
+
+  if (Number.isFinite(rating) && rating > 0) {
+    base.google = {
+      ...(base.google && typeof base.google === "object" ? base.google : {}),
+      rating,
+      count: Number.isFinite(count) && count > 0 ? count : 0,
+      provider: "google",
+      source: "places_api_new"
+    };
+  }
+
+  return base;
 }
 
 function googleAddressComponent(
@@ -3204,13 +3406,18 @@ export default {
           }
         });
       }
+      
+      // --- Location Google import config: browser key for embedded Places lookup
+      if (normPath === "/api/location/google-import/config" && req.method === "GET") {
+        return await handleGoogleImportConfig(req, env);
+      }      
 
       // --- Location draft: /api/location/draft (Phase 8 private shell)
       if (normPath === "/api/location/draft" && req.method === "POST") {
         return await handleLocationDraft(req, env);
       }
 
-      // --- Location hydrate: /api/location/hydrate (Phase 8 paid Google import into same draft)
+      // --- Location hydrate: /api/location/hydrate (Phase 8 paid replay + Phase 9 upfront Google import)
       if (normPath === "/api/location/hydrate" && req.method === "POST") {
         return await handleLocationHydrate(req, env);
       }
@@ -4975,7 +5182,8 @@ function buildPublicProfilePayload(rec: { ulid: string; locationID: string; effe
     ID: rec.ulid,
     locationUID: rec.ulid,
     locationID: rec.locationID,
-    contexts: splitContextMemberships(effective?.context)
+    contexts: splitContextMemberships(effective?.context),
+    ratings: ratingsFromGoogleProvider(effective)    
   };
 }
 
@@ -4994,7 +5202,7 @@ function buildPublicItemPayload(rec: { ulid: string; locationID: string; effecti
     contactInformation: effective.contactInformation || effective.contact || {},
     descriptions: effective.descriptions || {},
     tags: Array.isArray(effective.tags) ? effective.tags : [],
-    ratings: effective.ratings || {},
+    ratings: ratingsFromGoogleProvider(effective),    
     pricing: effective.pricing || {},
     groupKey: effective.groupKey || "",
     subgroupKey: effective.subgroupKey || ""
@@ -5056,7 +5264,7 @@ function buildPublicListPayload(rec: { ulid: string; locationID: string; effecti
     links: effective?.links || {},
     descriptions: effective?.descriptions || {},
     tags: Array.isArray(effective?.tags) ? effective.tags : [],
-    ratings: effective?.ratings || {},
+    ratings: ratingsFromGoogleProvider(effective),    
     pricing: effective?.pricing || {}
   };
 }
@@ -5606,6 +5814,221 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
   );
 }
 
+async function handleGoogleImportConfig(_req: Request, env: Env): Promise<Response> {
+  const noStore = { "cache-control": "no-store" };
+  const browserKey = googleImportBrowserKey(env);
+
+  return json(
+    {
+      ok: !!browserKey,
+      browserKeyAvailable: !!browserKey,
+      browserKey,
+      library: "places",
+      widget: "PlaceAutocompleteElement"
+    },
+    browserKey ? 200 : 503,
+    noStore
+  );
+}
+
+async function handleUpfrontGoogleImportHydrate(
+  req: Request,
+  env: Env,
+  body: any,
+  googlePlaceId: string
+): Promise<Response> {
+  const noStore = { "cache-control": "no-store" };
+
+  if (!isValidGooglePlaceId(googlePlaceId)) {
+    return json(
+      { error: { code: "invalid_request", message: "invalid googlePlaceId" } },
+      400,
+      noStore
+    );
+  }
+
+  const rawDraft = (body?.draft && typeof body.draft === "object") ? body.draft : {};
+  let normalizedPatch: Record<string, any>;
+
+  try {
+    normalizedPatch = normalizeDraftPatch(rawDraft, googlePlaceId);
+  } catch (e: any) {
+    const msg = String(e?.message || "");
+    return json(
+      { error: { code: "invalid_request", message: msg === "invalid_coordinates" ? "invalid coordinates" : (msg || "invalid draft payload") } },
+      400,
+      noStore
+    );
+  }
+
+  let deviceId = readDeviceId(req);
+  let deviceSetCookie = "";
+
+  if (!deviceId) {
+    const minted = mintDeviceId();
+    deviceId = minted.dev;
+    deviceSetCookie = minted.cookie;
+  }
+
+  const responseHeaders: Record<string, string> = deviceSetCookie
+    ? { ...noStore, "Set-Cookie": deviceSetCookie }
+    : noStore;
+
+  const requestedDraftULID = String(body?.draftULID || "").trim();
+  const requestedDraftSessionId = String(body?.draftSessionId || "").trim();
+  const googleIndexKey = googleDraftIndexKey(deviceId, googlePlaceId);
+
+  let draftULID = "";
+  let draftSessionId = "";
+  let existingDraft: any = null;
+  let reopened = false;
+
+  if (ULID_RE.test(requestedDraftULID) && requestedDraftSessionId) {
+    const requestedKey = `override_draft:${requestedDraftULID}:${requestedDraftSessionId}`;
+    const requestedDraft = await env.KV_STATUS.get(requestedKey, { type: "json" }) as any;
+    if (requestedDraft && typeof requestedDraft === "object") {
+      draftULID = requestedDraftULID;
+      draftSessionId = requestedDraftSessionId;
+      existingDraft = requestedDraft;
+      reopened = true;
+    }
+  }
+
+  if (!draftULID) {
+    const indexed = await env.KV_STATUS.get(googleIndexKey, { type: "json" }) as any;
+    const indexedDraftULID = String(indexed?.draftULID || "").trim();
+    const indexedDraftSessionId = String(indexed?.draftSessionId || "").trim();
+
+    if (ULID_RE.test(indexedDraftULID) && indexedDraftSessionId) {
+      const indexedKey = `override_draft:${indexedDraftULID}:${indexedDraftSessionId}`;
+      const indexedDraft = await env.KV_STATUS.get(indexedKey, { type: "json" }) as any;
+      if (indexedDraft && typeof indexedDraft === "object") {
+        draftULID = indexedDraftULID;
+        draftSessionId = indexedDraftSessionId;
+        existingDraft = indexedDraft;
+        reopened = true;
+      }
+    }
+  }
+
+  if (!draftULID) {
+    draftULID = mintDraftUlid();
+    draftSessionId = mintDraftSessionId();
+  }
+
+  const sameDeviceReopen = reopened && String(existingDraft?.googlePlaceId || "").trim() === googlePlaceId;
+  const importPolicy = await checkGoogleImportPolicy(req, env, deviceId, googlePlaceId, sameDeviceReopen);
+
+  if (!importPolicy.allowed) {
+    const quotaDraft = mergeDraftPatch(existingDraft || {}, normalizedPatch);
+    quotaDraft.googleHydrationStatus = "quota_blocked";
+    quotaDraft.updatedAt = new Date().toISOString();
+
+    const quotaDraftKey = `override_draft:${draftULID}:${draftSessionId}`;
+    await env.KV_STATUS.put(quotaDraftKey, JSON.stringify(quotaDraft));
+    await env.KV_STATUS.put(
+      googleIndexKey,
+      JSON.stringify({
+        draftULID,
+        draftSessionId,
+        googlePlaceId,
+        updatedAt: quotaDraft.updatedAt
+      }),
+      { expirationTtl: 60 * 60 * 24 * 30 }
+    );
+
+    return json(
+      {
+        ok: false,
+        hydrated: false,
+        needsCheckout: true,
+        error: importPolicy.error,
+        draft: {
+          ...quotaDraft,
+          draftULID,
+          draftSessionId
+        },
+        draftULID,
+        draftSessionId
+      },
+      429,
+      responseHeaders
+    );
+  }
+
+  const provider = await resolveGoogleImportPayload(env, googlePlaceId);
+  if (!provider.hydrated) {
+    return json(
+      {
+        ok: false,
+        hydrated: false,
+        error: provider.error || { code: "google_import_failed", message: "Google import failed" },
+        draftULID: reopened ? draftULID : "",
+        draftSessionId: reopened ? draftSessionId : ""
+      },
+      502,
+      responseHeaders
+    );
+  }
+
+  const baseDraft = mergeDraftPatch(existingDraft || {}, normalizedPatch);
+  const nextDraft = mergeGoogleImportIntoDraft(baseDraft, provider.draft);
+  nextDraft.updatedAt = new Date().toISOString();
+
+  const draftKey = `override_draft:${draftULID}:${draftSessionId}`;
+  await env.KV_STATUS.put(draftKey, JSON.stringify(nextDraft));
+
+  await env.KV_STATUS.put(
+    googleIndexKey,
+    JSON.stringify({
+      draftULID,
+      draftSessionId,
+      googlePlaceId,
+      updatedAt: nextDraft.updatedAt
+    }),
+    { expirationTtl: 60 * 60 * 24 * 30 }
+  );
+
+  if (importPolicy.quotaCounted) {
+    await recordGoogleImportQuota(env, deviceId, importPolicy.ipHash, googlePlaceId);
+  }
+
+  await writeGoogleImportLedger(env, {
+    placeId: googlePlaceId,
+    deviceId,
+    ipHash: importPolicy.ipHash,
+    draftULID,
+    mode: "upfront_google_import",
+    cacheHit: provider.cacheHit,
+    quotaCounted: importPolicy.quotaCounted,
+    estimatedCostCents: provider.cacheHit ? 0 : 2
+  });
+
+  return json(
+    {
+      ok: true,
+      hydrated: true,
+      reopened,
+      cacheHit: provider.cacheHit,
+      quotaCounted: importPolicy.quotaCounted,
+      draft: {
+        ...nextDraft,
+        draftULID,
+        draftSessionId
+      },
+      draftULID,
+      draftSessionId,
+      hydratedAt: String(nextDraft?.googleHydratedAt || "").trim(),
+      importPolicy: {
+        deviceLimit: GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT,
+        ipDailyLimit: GOOGLE_IMPORT_IP_DAILY_LIMIT
+      }
+    },
+    200,
+    responseHeaders
+  );
+}
+
 async function handleLocationHydrate(req: Request, env: Env): Promise<Response> {
   const noStore = { "cache-control": "no-store" };
 
@@ -5616,6 +6039,11 @@ async function handleLocationHydrate(req: Request, env: Env): Promise<Response> 
       400,
       noStore
     );
+  }
+  
+  const googlePlaceId = String((body as any)?.googlePlaceId || (body as any)?.place_id || "").trim();
+  if (googlePlaceId) {
+    return await handleUpfrontGoogleImportHydrate(req, env, body, googlePlaceId);
   }
 
   const draftULID = String((body as any)?.draftULID || "").trim();
