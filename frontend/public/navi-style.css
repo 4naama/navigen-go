@@ -5663,3 +5663,31 @@ body.high-contrast .modal-menu-item.is-active {
   background: #EAF2FF; /* same-grade blueish tint across the whole column */
   box-shadow: 1px 0 0 var(--border), 8px 0 8px -6px rgba(0,0,0,.12); /* right-edge shade */
 }
+
+/* P9 Google Import: embedded lookup and source-labeled provider rating. */
+.google-import-autocomplete-host{
+  display:block;
+  width:100%;
+}
+
+.google-import-autocomplete-host gmp-place-autocomplete,
+.google-import-autocomplete-host .google-import-autocomplete{
+  display:block;
+  width:100%;
+}
+
+.google-import-selection,
+.google-provider-rating,
+.google-import-unavailable{
+  text-align:left;
+}
+
+.google-provider-rating-label small,
+.lpm-provider-rating-note{
+  color:var(--muted, #666);
+  line-height:1.35;
+}
+
+#location-profile-modal .lpm-google-rating-chip .lpm-chip-face-icons{
+  white-space:nowrap;
+}
