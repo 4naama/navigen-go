@@ -3407,6 +3407,11 @@ export default {
         });
       }
       
+      // --- Location Google import autocomplete: server-side Places API New predictions
+      if (normPath === "/api/location/google-import/autocomplete" && req.method === "POST") {
+        return await handleGoogleImportAutocomplete(req, env);
+      }
+      
       // --- Location Google import config: browser key for embedded Places lookup
       if (normPath === "/api/location/google-import/config" && req.method === "GET") {
         return await handleGoogleImportConfig(req, env);
@@ -5811,6 +5816,107 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
     { ok: true, draftULID: newDraftULID, draftSessionId: newDraftSessionId },
     200,
     draftResponseHeaders
+  );
+}
+
+async function handleGoogleImportAutocomplete(req: Request, env: Env): Promise<Response> {
+  const noStore = { "cache-control": "no-store" };
+  const apiKey = googlePlacesApiKey(env);
+
+  if (!apiKey) {
+    return json(
+      { error: { code: "google_places_key_missing", message: "Google Places server key is not configured." } },
+      503,
+      noStore
+    );
+  }
+
+  const body = await req.json().catch(() => null) as any;
+  const input = String(body?.input || "").trim();
+  const languageCode = String(body?.languageCode || "en").trim().slice(0, 12) || "en";
+
+  if (input.length < 3) {
+    return json(
+      { ok: true, predictions: [] },
+      200,
+      noStore
+    );
+  }
+
+  if (input.length > 160) {
+    return json(
+      { error: { code: "invalid_request", message: "Search input is too long." } },
+      400,
+      noStore
+    );
+  }
+
+  const googleRes = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": [
+        "suggestions.placePrediction.placeId",
+        "suggestions.placePrediction.text.text",
+        "suggestions.placePrediction.structuredFormat.mainText.text",
+        "suggestions.placePrediction.structuredFormat.secondaryText.text"
+      ].join(",")
+    },
+    body: JSON.stringify({
+      input,
+      languageCode,
+      includeQueryPredictions: false
+    })
+  });
+
+  const googlePayload = await googleRes.json().catch(() => null) as any;
+
+  if (!googleRes.ok) {
+    const message = String(
+      googlePayload?.error?.message ||
+      googlePayload?.error ||
+      "Google autocomplete request failed."
+    ).trim();
+
+    return json(
+      {
+        error: {
+          code: "google_autocomplete_failed",
+          message,
+          status: googleRes.status
+        }
+      },
+      502,
+      noStore
+    );
+  }
+
+  const suggestions = Array.isArray(googlePayload?.suggestions) ? googlePayload.suggestions : [];
+  const predictions = suggestions
+    .map((row: any) => {
+      const prediction = row?.placePrediction || {};
+      const placeId = String(prediction?.placeId || "").trim();
+      const mainText = String(prediction?.structuredFormat?.mainText?.text || "").trim();
+      const secondaryText = String(prediction?.structuredFormat?.secondaryText?.text || "").trim();
+      const text = String(prediction?.text?.text || [mainText, secondaryText].filter(Boolean).join(", ")).trim();
+
+      return {
+        placeId,
+        mainText: mainText || text,
+        secondaryText,
+        text
+      };
+    })
+    .filter((row: any) => isValidGooglePlaceId(row.placeId));
+
+  return json(
+    {
+      ok: true,
+      predictions
+    },
+    200,
+    noStore
   );
 }
 

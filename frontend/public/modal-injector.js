@@ -3564,24 +3564,134 @@ async function loadGooglePlacesLibraryForImport(browserKey) {
   return googleMapsPlacesLibraryPromise;
 }
 
-async function createGoogleImportAutocompleteElement() {
-  const config = await getGoogleImportBrowserConfig();
-  const placesLibrary = await loadGooglePlacesLibraryForImport(String(config.browserKey || '').trim());
-  const AutocompleteCtor = placesLibrary?.PlaceAutocompleteElement || globalThis.google?.maps?.places?.PlaceAutocompleteElement;
+async function fetchGoogleImportPredictions(input, signal = null) {
+  const res = await fetch('/api/location/google-import/autocomplete', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json'
+    },
+    body: JSON.stringify({
+      input,
+      languageCode: String(document.documentElement?.lang || 'en').split('-')[0] || 'en'
+    }),
+    cache: 'no-store',
+    credentials: 'include',
+    signal
+  });
 
-  if (typeof AutocompleteCtor !== 'function') {
-    throw new Error('Google PlaceAutocompleteElement unavailable.');
+  const payload = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    const msg = String(payload?.error?.message || '').trim();
+    throw new Error(msg || 'Google autocomplete failed.');
   }
 
-  const autocomplete = new AutocompleteCtor({});
-  autocomplete.classList.add('google-import-autocomplete');
-  autocomplete.setAttribute('requested-language', String(document.documentElement?.lang || 'en').split('-')[0]);
-  autocomplete.setAttribute('placeholder', translatedOrFallback('root.bo.googleImport.search.placeholder', 'Search business name and city'));
-  autocomplete.setAttribute('aria-label', translatedOrFallback('root.bo.googleImport.search.aria', 'Search Google businesses'));
-  return autocomplete;
+  return Array.isArray(payload?.predictions) ? payload.predictions : [];
+}
+
+async function createGoogleImportAutocompleteElement() {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'google-import-typeahead';
+
+  wrapper.innerHTML = `
+    <input
+      class="input google-import-typeahead-input"
+      type="search"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="${translatedOrFallback('root.bo.googleImport.search.placeholder', 'Search business name and city')}"
+      aria-label="${translatedOrFallback('root.bo.googleImport.search.aria', 'Search Google businesses')}"
+    />
+    <div class="google-import-results hidden" role="listbox" aria-live="polite"></div>
+    <div class="google-import-powered">Powered by Google</div>
+  `;
+
+  const input = wrapper.querySelector('.google-import-typeahead-input');
+  const results = wrapper.querySelector('.google-import-results');
+  let timer = 0;
+  let controller = null;
+
+  function renderPredictions(predictions) {
+    if (!results) return;
+
+    results.innerHTML = '';
+    results.classList.toggle('hidden', !predictions.length);
+
+    predictions.forEach((prediction) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'google-import-result-button';
+      button.setAttribute('role', 'option');
+
+      const mainText = String(prediction.mainText || prediction.text || '').trim();
+      const secondaryText = String(prediction.secondaryText || '').trim();
+
+      button.innerHTML = `
+        <span class="google-import-result-main">${mainText}</span>
+        ${secondaryText ? `<span class="google-import-result-secondary">${secondaryText}</span>` : ''}
+      `;
+
+      button.addEventListener('click', () => {
+        wrapper.dispatchEvent(new CustomEvent('gmp-select', {
+          bubbles: true,
+          detail: {
+            googlePlaceId: String(prediction.placeId || '').trim(),
+            label: [mainText, secondaryText].filter(Boolean).join(' — ')
+          }
+        }));
+      });
+
+      results.appendChild(button);
+    });
+  }
+
+  function renderMessage(message) {
+    if (!results) return;
+    results.classList.remove('hidden');
+    results.innerHTML = `<div class="google-import-result-empty">${message}</div>`;
+  }
+
+  input?.addEventListener('input', () => {
+    const query = String(input.value || '').trim();
+
+    window.clearTimeout(timer);
+    if (controller) controller.abort();
+
+    if (query.length < 3) {
+      renderPredictions([]);
+      return;
+    }
+
+    timer = window.setTimeout(async () => {
+      controller = new AbortController();
+
+      try {
+        const predictions = await fetchGoogleImportPredictions(query, controller.signal);
+        if (!predictions.length) {
+          renderMessage(translatedOrFallback('root.bo.googleImport.search.empty', 'No Google businesses found.'));
+          return;
+        }
+        renderPredictions(predictions);
+      } catch (err) {
+        if (err?.name === 'AbortError') return;
+        renderMessage(String(err?.message || translatedOrFallback('root.bo.googleImport.error', 'Could not import Google business details.')));
+      }
+    }, 280);
+  });
+
+  return wrapper;
 }
 
 async function resolveGoogleImportSelection(event) {
+  const detail = event?.detail || null;
+  if (detail?.googlePlaceId) {
+    return {
+      googlePlaceId: String(detail.googlePlaceId || '').trim(),
+      label: String(detail.label || '').trim()
+    };
+  }
+
   const prediction = event?.placePrediction || null;
   let place = event?.place || null;
 

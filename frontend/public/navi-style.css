@@ -5691,3 +5691,65 @@ body.high-contrast .modal-menu-item.is-active {
 #location-profile-modal .lpm-google-rating-chip .lpm-chip-face-icons{
   white-space:nowrap;
 }
+
+/* P9 Google Import: first-party Places autocomplete results. */
+.google-import-typeahead{
+  display:block;
+  width:100%;
+}
+
+.google-import-typeahead-input{
+  width:100%;
+}
+
+.google-import-results{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:8px;
+}
+
+.google-import-result-button{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--border, #d9dfe7);
+  border-radius:10px;
+  background:var(--surface, #fff);
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+
+.google-import-result-button:hover,
+.google-import-result-button:focus{
+  border-color:var(--accent, #0b63ce);
+  outline:none;
+}
+
+.google-import-result-main{
+  font-weight:600;
+}
+
+.google-import-result-secondary,
+.google-import-result-empty,
+.google-import-powered{
+  color:var(--muted, #666);
+  font-size:.88rem;
+  line-height:1.35;
+}
+
+.google-import-result-empty{
+  padding:10px 12px;
+  border:1px solid var(--border, #d9dfe7);
+  border-radius:10px;
+  background:var(--surface, #fff);
+}
+
+.google-import-powered{
+  margin-top:6px;
+  text-align:right;
+}
