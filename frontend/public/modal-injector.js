@@ -3501,6 +3501,9 @@ async function getGoogleImportBrowserConfig() {
 }
 
 async function loadGooglePlacesLibraryForImport(browserKey) {
+  const key = String(browserKey || '').trim();
+  if (!key) throw new Error('Google import browser key is not configured.');
+
   const existingImportLibrary = globalThis.google?.maps?.importLibrary;
   if (typeof existingImportLibrary === 'function') {
     return await existingImportLibrary('places');
@@ -3508,30 +3511,44 @@ async function loadGooglePlacesLibraryForImport(browserKey) {
 
   if (!googleMapsPlacesLibraryPromise) {
     googleMapsPlacesLibraryPromise = new Promise((resolve, reject) => {
-      const existingScript = document.querySelector('script[data-navigen-google-import="places"]');
-      const finish = async () => {
+      const googleNamespace = globalThis.google || (globalThis.google = {});
+      const mapsNamespace = googleNamespace.maps || (googleNamespace.maps = {});
+      const callbackName = '__navigenGoogleImportReady';
+
+      mapsNamespace[callbackName] = async () => {
         try {
           const importLibrary = globalThis.google?.maps?.importLibrary;
-          if (typeof importLibrary !== 'function') throw new Error('Google Maps importLibrary unavailable.');
+          if (typeof importLibrary !== 'function') {
+            throw new Error('Google Maps importLibrary unavailable.');
+          }
           resolve(await importLibrary('places'));
         } catch (err) {
           reject(err);
+        } finally {
+          try { delete mapsNamespace[callbackName]; } catch {}
         }
       };
 
+      const existingScript = document.querySelector('script[data-navigen-google-import="places"]');
       if (existingScript) {
-        existingScript.addEventListener('load', finish, { once: true });
-        existingScript.addEventListener('error', () => reject(new Error('Google Maps script failed to load.')), { once: true });
         return;
       }
 
+      const params = new URLSearchParams();
+      params.set('key', key);
+      params.set('v', 'weekly');
+      params.set('loading', 'async');
+      params.set('libraries', 'places');
+      params.set('callback', `google.maps.${callbackName}`);
+      params.set('auth_referrer_policy', 'origin');
+
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(browserKey)}&v=weekly&loading=async&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
       script.async = true;
       script.defer = true;
       script.dataset.navigenGoogleImport = 'places';
-      script.addEventListener('load', finish, { once: true });
       script.addEventListener('error', () => reject(new Error('Google Maps script failed to load.')), { once: true });
+      script.nonce = document.querySelector('script[nonce]')?.nonce || '';
       document.head.appendChild(script);
     });
   }
@@ -6459,10 +6476,10 @@ function getModalHeaderHelpSpec(target) {
     return {
       title: _ownerText('modal.help.title', 'How it works'),
       bodyLines: [
-        _ownerText('root.bo.googleImport.help.line1', 'Find your business with Google’s free Place ID Finder.'),
-        _ownerText('root.bo.googleImport.help.line2', 'Select the whole ID and keep every hyphen exactly as shown.'),
-        _ownerText('root.bo.googleImport.help.line3', 'On mobile, press and hold to copy the ID, then paste it into NaviGen.'),
-        _ownerText('root.bo.googleImport.help.line4', 'This joins the same NaviGen draft path as Create a location.')
+        _ownerText('root.bo.googleImport.help.line1', 'Search for your business by name and city.'),
+        _ownerText('root.bo.googleImport.help.line2', 'Choose the matching Google business from the embedded lookup.'),
+        _ownerText('root.bo.googleImport.help.line3', 'NaviGen imports available provider details into a private draft for review.'),
+        _ownerText('root.bo.googleImport.help.line4', 'You can edit the draft before choosing a paid Plan.')
       ]
     };
   }
