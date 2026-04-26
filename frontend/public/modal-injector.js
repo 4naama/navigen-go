@@ -5452,8 +5452,6 @@ export function createRequestListingModal(opts = {}) {
   const rlGoogleProviderRatingCard = modal.querySelector('#rl-google-provider-rating-card');
 
   function setRequestListingRetryVisible(visible) {
-
-  function setRequestListingRetryVisible(visible) {
     if (!(requestListingRetry instanceof HTMLButtonElement)) return;
     requestListingRetry.classList.toggle('hidden', !visible);
     requestListingRetry.disabled = !visible;
