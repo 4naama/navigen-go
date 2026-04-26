@@ -3489,11 +3489,19 @@ async function getGoogleImportBrowserConfig() {
       credentials: 'include'
     }).then(async (res) => {
       const payload = await res.json().catch(() => null);
-      if (!res.ok || !payload?.browserKey) {
+      const browserKey = String(payload?.browserKey || '').trim();
+      const hasControlChars = /[\u0000-\u001f\u007f]/.test(browserKey);
+      const looksLikeGoogleApiKey = /^AIza[0-9A-Za-z_-]{20,}$/.test(browserKey);
+
+      if (!res.ok || !browserKey || hasControlChars || !looksLikeGoogleApiKey) {
         const msg = String(payload?.error?.message || '').trim();
-        throw new Error(msg || 'Google import browser key is not configured.');
+        throw new Error(msg || 'Google import browser key is not valid at runtime.');
       }
-      return payload;
+
+      return {
+        ...payload,
+        browserKey
+      };
     });
   }
 
