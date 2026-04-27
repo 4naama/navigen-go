@@ -6039,21 +6039,13 @@ body.high-contrast .modal-menu-item.is-active {
 }
 
 #import-google-location-modal .google-import-typeahead::before{
-  content:"🔍";
-  position:absolute;
-  left:12px;
-  top:10px;
-  z-index:1;
-  pointer-events:none;
-  font-size:1rem;
-  line-height:1;
-  opacity:.82;
+  content:none;
 }
 
 #import-google-location-modal .google-import-typeahead-input{
   width:100%;
   height:40px;
-  padding-left:38px;
+  padding-left:12px;
   border:0;
   border-radius:10px;
   background:#f6f8fb;
@@ -6251,4 +6243,110 @@ body.high-contrast .modal-menu-item.is-active {
 #request-listing-contexts-modal .request-context-option .label small{
   color:#667085;
   opacity:1;
+}
+
+/* P9 Create Location refinements: provider facts, completion checks, and clearer sections. */
+#request-listing-modal .google-provider-rating{
+  padding:10px 12px;
+  border-radius:10px;
+  background:#ecfdf3;
+  box-shadow:inset 0 0 0 1px #bbf7d0;
+}
+
+#request-listing-modal .google-provider-rating-label{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:4px 8px;
+  color:#166534;
+  line-height:1.3;
+}
+
+#request-listing-modal .google-provider-rating-label strong{
+  font-size:.95rem;
+  font-weight:700;
+}
+
+#request-listing-modal .google-provider-rating-label span{
+  font-size:.95rem;
+  font-weight:600;
+}
+
+#request-listing-modal .google-provider-rating-label small{
+  flex-basis:100%;
+  color:#4b7c5b;
+  font-size:.84rem;
+  line-height:1.25;
+}
+
+#request-listing-modal .request-section-badge-stack{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  align-self:start;
+}
+
+#request-listing-modal .request-section-badge-stack .request-section-badge{
+  margin-top:0;
+}
+
+#request-listing-modal .request-section-complete-check{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  background:#dcfce7;
+  color:#166534;
+  font-size:.9rem;
+  font-weight:800;
+  line-height:1;
+  opacity:0;
+  transform:scale(.82);
+  transition:opacity .16s ease, transform .16s ease;
+}
+
+#request-listing-modal .request-section-chip.is-complete .request-section-complete-check{
+  opacity:1;
+  transform:scale(1);
+}
+
+#request-listing-modal .request-surface-card{
+  padding:12px;
+  background:#f6f8fb;
+  border:0;
+  border-radius:10px;
+  box-shadow:none;
+}
+
+#request-listing-modal .request-surface-card .modal-checkbox-row{
+  align-items:center;
+}
+
+#select-location-modal .syb-draft-wrap{
+  margin-bottom:16px;
+  padding-bottom:14px;
+  border-bottom:1px solid #e5e7eb;
+}
+
+#select-location-modal .syb-entry-stack{
+  margin-top:4px;
+}
+
+#request-listing-contexts-modal .request-context-selected-head{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  align-items:start;
+  gap:12px;
+}
+
+#request-listing-contexts-modal .request-context-done{
+  justify-self:end;
+  margin-left:0;
+}
+
+#request-listing-contexts-modal .request-context-selected-card .request-chip-row{
+  justify-content:flex-start;
 }

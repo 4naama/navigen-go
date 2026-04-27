@@ -3284,7 +3284,7 @@ export function createSelectLocationModal() {
     <span class="icon-img">➕</span>
     <span class="label">
       <strong>${translatedOrFallback('root.bo.notListed.title', 'Create a location')}</strong><br>
-      <small>${translatedOrFallback('root.bo.notListed.desc', 'Add your business.')}</small>
+      <small>${translatedOrFallback('root.bo.notListed.desc', 'Manually add your business.')}</small>
     </span>
   `;
   createBtn.addEventListener('click', (e) => {
@@ -3668,9 +3668,10 @@ function renderGoogleProviderRatingCard(card, source = {}) {
 
   card.classList.remove('hidden');
   card.innerHTML = `
-    <span class="label google-provider-rating-label">
+    <span class="google-provider-rating-label">
       <strong>${translatedOrFallback('root.bo.googleImport.rating.label', 'Google rating')}</strong>
-      <small>${googleProviderRatingText(summary)} · ${translatedOrFallback('root.bo.googleImport.rating.source', 'Provider-sourced, not editable')}</small>
+      <span>${googleProviderRatingText(summary)}</span>
+      <small>${translatedOrFallback('root.bo.googleImport.rating.source', 'Provider-sourced, not editable')}</small>
     </span>
   `;
 }
@@ -3702,7 +3703,7 @@ function createImportGoogleLocationModal(opts = {}) {
         </div>
 
         <div class="modal-field google-import-search-field">
-          <label>${translatedOrFallback('root.bo.googleImport.search.label', 'Search Google businesses')}</label>
+          <label>${translatedOrFallback('root.bo.googleImport.search.label', 'Search for your business on Google')}</label>
           <div id="google-import-autocomplete-host" class="google-import-autocomplete-host" aria-live="polite"></div>
           <small class="modal-help-text">${translatedOrFallback('root.bo.googleImport.search.help', 'Search by business name and city, then choose the correct Google business.')}</small>
         </div>
@@ -5154,6 +5155,58 @@ function deriveRequestListingCountryCode() {
   return /^[A-Z]{2}$/.test(cc) ? cc : '';
 }
 
+function googleDraftAddressPartsForRequestListing(draft) {
+  const contact = (draft?.contactInformation && typeof draft.contactInformation === 'object')
+    ? draft.contactInformation
+    : {};
+
+  const rawAddress = String(draft?.address || contact.address || '').trim();
+  const city = String(draft?.city || contact.city || '').trim();
+  const country = String(draft?.country || contact.countryCode || '').trim().toUpperCase();
+
+  const normalize = (value) => String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  const countryNames = {
+    BR: ['brazil'],
+    CO: ['colombia'],
+    GB: ['united kingdom', 'uk', 'great britain'],
+    HU: ['hungary'],
+    NG: ['nigeria'],
+    US: ['united states', 'usa']
+  };
+
+  let streetAddress = rawAddress;
+
+  if (rawAddress.includes(',')) {
+    const cityNorm = normalize(city);
+    const countryTokens = [country, ...(countryNames[country] || [])].map(normalize).filter(Boolean);
+
+    const parts = rawAddress
+      .split(',')
+      .map((part) => String(part || '').trim())
+      .filter(Boolean)
+      .filter((part) => {
+        const norm = normalize(part);
+        if (cityNorm && (norm === cityNorm || norm.includes(cityNorm))) return false;
+        if (countryTokens.some((token) => norm === token || norm.endsWith(` ${token}`) || norm.includes(` ${token} `))) return false;
+        return true;
+      });
+
+    streetAddress = parts[0] || rawAddress;
+  }
+
+  return {
+    address: streetAddress,
+    city,
+    country
+  };
+}
+
 function setInputErrorState(el, bad) {
   if (!el) return;
   el.classList.toggle('input-error', !!bad);
@@ -5257,7 +5310,10 @@ export function createRequestListingModal(opts = {}) {
             <span class="label cm-chip-face-label request-section-chip-label">
               <strong class="request-section-chip-title">${t('modal.requestListing.sections.business.title') || 'Business information'}</strong>
             </span>
-            <span class="request-section-badge is-required">${t('modal.requestListing.section.required') || 'Required'}</span>
+            <span class="request-section-badge-stack">
+              <span class="request-section-badge is-required">${t('modal.requestListing.section.required') || 'Required'}</span>
+              <span class="request-section-complete-check" aria-hidden="true">✓</span>
+            </span>            
             <span class="cm-chip-face-chevron" aria-hidden="true"></span>
           </summary>
           <div class="cm-chip-body">
@@ -5300,18 +5356,34 @@ export function createRequestListingModal(opts = {}) {
                 <div id="rl-tag-suggestions" class="request-chip-row" aria-label="${t('modal.requestListing.tags.label') || 'Search tags'}"></div>
                 <small class="modal-help-text">${t('modal.requestListing.tags.help') || 'Optional search terms that match how customers look for this business.'}</small>
               </div>
+
+              <div id="rl-google-provider-rating-card" class="google-provider-rating hidden" aria-live="polite"></div>
+
+              <div class="request-surface-card">
+                <label class="modal-checkbox-row" for="rl-has-coord">
+                  <input id="rl-has-coord" type="checkbox" />
+                  <span>${t('modal.requestListing.hasCoord.label') || 'I have coordinates'}</span>
+                </label>
+
+                <div id="rl-coord-wrap" class="modal-field hidden request-surface-card-body">
+                  <label for="rl-coord">${t('modal.requestListing.coord.label') || 'Coordinates (lat,lng) — 6 decimals'}</label>
+                  <input id="rl-coord" class="input" type="text" placeholder="${t('modal.requestListing.coord.placeholder') || '52.527900,13.440200'}" />
+                  <small class="modal-help-text">${t('modal.requestListing.coord.help') || 'Tip: you can copy this from Google Maps.'}</small>
+                </div>
+              </div>
             </div>
           </div>
         </details>
 
-        <div id="rl-google-provider-rating-card" class="modal-menu-item modal-static-card google-provider-rating hidden" aria-live="polite"></div>
-
-        <details id="rl-context-section" class="cm-chip request-section-chip">
+        <details id="rl-context-section" class="cm-chip request-section-chip">        
           <summary class="modal-menu-item cm-chip-face request-section-chip-face">
             <span class="label cm-chip-face-label request-section-chip-label">
               <strong class="request-section-chip-title">${t('modal.requestListing.sections.context.title') || 'Context information'}</strong>
             </span>
-            <span class="request-section-badge is-required">${t('modal.requestListing.section.required') || 'Required'}</span>
+            <span class="request-section-badge-stack">
+              <span class="request-section-badge is-required">${t('modal.requestListing.section.required') || 'Required'}</span>
+              <span class="request-section-complete-check" aria-hidden="true">✓</span>
+            </span>            
             <span class="cm-chip-face-chevron" aria-hidden="true"></span>
           </summary>
           <div class="cm-chip-body">
@@ -5420,19 +5492,6 @@ export function createRequestListingModal(opts = {}) {
           </div>
         </details>
 
-        <div class="modal-menu-item modal-static-card request-surface-card">
-          <label class="modal-checkbox-row" for="rl-has-coord">
-            <input id="rl-has-coord" type="checkbox" />
-            <span>${t('modal.requestListing.hasCoord.label') || 'Suggested: I have coordinates'}</span>
-          </label>
-
-          <div id="rl-coord-wrap" class="modal-field hidden request-surface-card-body">
-            <label for="rl-coord">${t('modal.requestListing.coord.label') || 'Coordinates (lat,lng) — 6 decimals'}</label>
-            <input id="rl-coord" class="input" type="text" placeholder="${t('modal.requestListing.coord.placeholder') || '52.527900,13.440200'}" />
-            <small class="modal-help-text">${t('modal.requestListing.coord.help') || 'Tip: you can copy this from Google Maps.'}</small>
-          </div>
-        </div>
-
         <div class="modal-actions">
           <button id="request-listing-submit" type="button" class="modal-body-button">
             ${t('modal.requestListing.submitDraft') || 'Save draft'}
@@ -5526,9 +5585,10 @@ export function createRequestListingModal(opts = {}) {
     ? prefill.contactInformation
     : {};
   const prefillName = p8DraftLocationName(prefill);
-  const prefillAddress = String(prefill?.address || prefillContact.address || '').trim();
-  const prefillCity = String(prefill?.city || prefillContact.city || '').trim();
-  const prefillCountry = String(prefill?.country || prefillContact.countryCode || '').trim().toUpperCase();
+  const prefillAddressParts = googleDraftAddressPartsForRequestListing(prefill);
+  const prefillAddress = prefillAddressParts.address;
+  const prefillCity = prefillAddressParts.city;
+  const prefillCountry = prefillAddressParts.country;
   
   const prefillContexts = Array.isArray(prefill?.contexts)
     ? prefill.contexts.map((v) => String(v || '').trim()).filter(Boolean)
@@ -5651,7 +5711,8 @@ export function createRequestListingModal(opts = {}) {
     }
 
     rlOpenContexts?.classList.toggle('is-active', selectedContextSet.size > 0);
-
+    syncRequestListingRequiredChecks();
+    
     if (rlContextSelected) {
       rlContextSelected.innerHTML = '';
       Array.from(selectedContextSet).forEach((key) => {
@@ -5690,6 +5751,20 @@ export function createRequestListingModal(opts = {}) {
     rlDescriptionSection?.classList.toggle('has-value', !!value);
   }
 
+  function syncRequestListingRequiredChecks() {
+    const businessComplete = [
+      rlName,
+      rlAddress,
+      rlCity,
+      rlCountry,
+      rlGroup,
+      rlSubgroup
+    ].every((el) => String(el?.value || '').trim());
+
+    rlBusinessSection?.classList.toggle('is-complete', businessComplete);
+    rlContextSection?.classList.toggle('is-complete', selectedContextSet.size > 0);
+  }
+
   syncRequestListingTags();
   setRequestListingContexts(prefillContexts);
   syncRequestListingContexts();
@@ -5724,6 +5799,20 @@ export function createRequestListingModal(opts = {}) {
     resizeRequestListingDescriptionInput();
     updateRequestListingDescriptionChip();
   });
+
+  [
+    rlName,
+    rlAddress,
+    rlCity,
+    rlCountry,
+    rlGroup,
+    rlSubgroup
+  ].forEach((el) => {
+    el?.addEventListener('input', syncRequestListingRequiredChecks);
+    el?.addEventListener('change', syncRequestListingRequiredChecks);
+  });
+
+  syncRequestListingRequiredChecks();
 
   function openRequestListingContextsModal() {
     if (!requestListingContextRows.length) {
