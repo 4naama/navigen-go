@@ -1097,5 +1097,6 @@
   "root.bo.googleImport.quota": "Se alcanzó la cuota de importación de Google. Activa un plan para continuar.",
   "root.bo.googleImport.rating.label": "Calificación de Google",
   "root.bo.googleImport.rating.source": "Proporcionado por el proveedor, no editable",
-  "root.bo.googleImport.search.empty": "No se encontraron negocios de Google."
+  "root.bo.googleImport.search.empty": "No se encontraron negocios de Google.",
+  "modal.requestListing.description.summary.empty Optional.": "Opcional."
 }

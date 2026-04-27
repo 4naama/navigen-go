@@ -1097,5 +1097,6 @@
   "root.bo.googleImport.quota": "Досягнуто квоти імпорту Google. Активуйте план, щоб продовжити.",
   "root.bo.googleImport.rating.label": "Рейтинг Google",
   "root.bo.googleImport.rating.source": "Надано постачальником, не редагується",
-  "root.bo.googleImport.search.empty": "Не знайдено бізнесів Google."
+  "root.bo.googleImport.search.empty": "Не знайдено бізнесів Google.",
+  "modal.requestListing.description.summary.empty Optional.": "Необов’язково."
 }

@@ -1097,5 +1097,6 @@
   "root.bo.googleImport.quota": "מכסת ייבוא Google הגיעה למגבלה. הפעל תוכנית כדי להמשיך.",
   "root.bo.googleImport.rating.label": "דירוג Google",
   "root.bo.googleImport.rating.source": "מסופק על ידי הספק, לא ניתן לעריכה",
-  "root.bo.googleImport.search.empty": "לא נמצאו עסקים ב-Google."
+  "root.bo.googleImport.search.empty": "לא נמצאו עסקים ב-Google.",
+  "modal.requestListing.description.summary.empty Optional.": "אופציונלי."
 }

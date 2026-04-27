@@ -5336,7 +5336,7 @@ export function createRequestListingModal(opts = {}) {
           <summary class="modal-menu-item cm-chip-face request-section-chip-face">
             <span class="label cm-chip-face-label request-section-chip-label">
               <strong class="request-section-chip-title">${t('modal.requestListing.description.label') || 'Business description'}</strong>
-              <small id="rl-description-chip-state" class="request-section-chip-summary">${translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional. Open to add details.')}</small>
+              <small id="rl-description-chip-state" class="request-section-chip-summary">${translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional.')}</small>
             </span>
             <span class="request-section-badge is-suggested">${t('modal.requestListing.section.suggested') || 'Suggested'}</span>
             <span class="cm-chip-face-chevron" aria-hidden="true"></span>
@@ -5679,7 +5679,7 @@ export function createRequestListingModal(opts = {}) {
   function updateRequestListingDescriptionChip() {
     const rawValue = String(rlDescription?.value || '');
     const value = rawValue.replace(/\s+/g, ' ').trim();
-    const summary = value || translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional. Open to add details.');
+    const summary = value || translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional.');
     const count = rawValue.trim().length;
 
     if (rlDescriptionChipState) rlDescriptionChipState.textContent = summary;

@@ -1097,5 +1097,6 @@
   "root.bo.googleImport.quota": "A Google import kvóta elérve. Aktiválj egy csomagot a folytatáshoz.",
   "root.bo.googleImport.rating.label": "Google értékelés",
   "root.bo.googleImport.rating.source": "Szolgáltató által biztosított, nem szerkeszthető",
-  "root.bo.googleImport.search.empty": "Nem találhatók Google vállalkozások."
+  "root.bo.googleImport.search.empty": "Nem találhatók Google vállalkozások.",
+  "modal.requestListing.description.summary.empty Optional.": "Opcionális."
 }

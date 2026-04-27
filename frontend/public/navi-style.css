@@ -5994,3 +5994,261 @@ body.high-contrast .modal-menu-item.is-active {
   border-color:#8fb2ff;
   color:#1d4ed8;
 }
+
+/* P9 UX hierarchy refresh: quiet info, shaded fields, distinct result rows. */
+#import-google-location-modal .google-import-intro-card,
+#import-google-location-modal .modal-form-stack > .modal-static-card:first-child{
+  cursor:default;
+  padding:10px 12px;
+  background:#f6f8fb;
+  border-color:transparent;
+  box-shadow:inset 0 0 0 1px #d9e4ee;
+}
+
+#import-google-location-modal .google-import-intro-card:hover,
+#import-google-location-modal .modal-form-stack > .modal-static-card:first-child:hover{
+  background:#f6f8fb;
+  border-color:transparent;
+}
+
+#import-google-location-modal .google-import-intro-card .label strong,
+#import-google-location-modal .modal-form-stack > .modal-static-card:first-child .label strong{
+  font-size:1rem;
+  font-weight:600;
+  line-height:1.25;
+}
+
+#import-google-location-modal .google-import-intro-card .label small,
+#import-google-location-modal .modal-form-stack > .modal-static-card:first-child .label small{
+  margin-top:2px;
+  color:#667085;
+  font-size:.95rem;
+  line-height:1.35;
+  opacity:1;
+}
+
+#import-google-location-modal .modal-field > label{
+  font-size:1rem;
+  font-weight:700;
+  line-height:1.25;
+}
+
+#import-google-location-modal .google-import-typeahead{
+  position:relative;
+  width:100%;
+}
+
+#import-google-location-modal .google-import-typeahead::before{
+  content:"🔍";
+  position:absolute;
+  left:12px;
+  top:10px;
+  z-index:1;
+  pointer-events:none;
+  font-size:1rem;
+  line-height:1;
+  opacity:.82;
+}
+
+#import-google-location-modal .google-import-typeahead-input{
+  width:100%;
+  height:40px;
+  padding-left:38px;
+  border:0;
+  border-radius:10px;
+  background:#f6f8fb;
+  box-shadow:inset 0 0 0 1px #d9e4ee;
+  font-size:1rem;
+}
+
+#import-google-location-modal .google-import-typeahead-input::placeholder{
+  color:#7a8699;
+  font-size:.92rem;
+  opacity:1;
+}
+
+#import-google-location-modal .google-import-typeahead-input:focus,
+#import-google-location-modal .google-import-typeahead-input:focus-visible{
+  outline:0;
+  background:#fff;
+  box-shadow:inset 0 0 0 1px #7aa7ff, 0 0 0 2px rgba(59,130,246,.16);
+}
+
+#import-google-location-modal .google-import-results{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-height:min(42vh, 280px);
+  margin-top:10px;
+  padding-right:2px;
+  overflow-y:auto;
+}
+
+#import-google-location-modal .google-import-result-button{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:3px;
+  width:100%;
+  padding:10px 12px;
+  border:1px solid #d9e4ee;
+  border-radius:10px;
+  background:#fff;
+  color:#1f2937;
+  text-align:left;
+  cursor:pointer;
+  box-shadow:0 1px 2px rgba(15,23,42,.03);
+}
+
+#import-google-location-modal .google-import-result-button:hover{
+  background:#f8fbff;
+  border-color:#bfd3f6;
+}
+
+#import-google-location-modal .google-import-result-button:focus{
+  outline:none;
+}
+
+#import-google-location-modal .google-import-result-button:focus-visible{
+  border-color:#7aa7ff;
+  box-shadow:0 0 0 2px rgba(59,130,246,.16);
+}
+
+#import-google-location-modal .google-import-result-main{
+  font-size:.95rem;
+  font-weight:700;
+  line-height:1.25;
+}
+
+#import-google-location-modal .google-import-result-secondary{
+  color:#667085;
+  font-size:.9rem;
+  line-height:1.3;
+}
+
+#import-google-location-modal .google-import-result-empty{
+  padding:10px 12px;
+  border:0;
+  border-radius:10px;
+  background:#f6f8fb;
+  box-shadow:inset 0 0 0 1px #d9e4ee;
+  color:#667085;
+  font-size:.95rem;
+}
+
+#import-google-location-modal .google-import-powered{
+  margin-top:6px;
+  color:#667085;
+  font-size:.78rem;
+  line-height:1.2;
+  text-align:right;
+}
+
+#import-google-location-modal .modal-help-text{
+  color:#667085;
+  font-size:.95rem;
+  line-height:1.4;
+}
+
+#import-google-location-modal .google-import-selection{
+  cursor:default;
+  padding:10px 12px;
+  background:#f6f8fb;
+  border-color:transparent;
+  box-shadow:inset 0 0 0 1px #d9e4ee;
+}
+
+#import-google-location-modal .google-import-selection:hover{
+  background:#f6f8fb;
+  border-color:transparent;
+}
+
+#import-google-location-modal .google-import-selection .label strong{
+  font-size:1rem;
+  font-weight:600;
+}
+
+#import-google-location-modal .google-import-selection .label small{
+  color:#667085;
+  font-size:.95rem;
+  line-height:1.35;
+  opacity:1;
+}
+
+#import-google-location-modal .modal-actions{
+  margin-top:12px;
+}
+
+#request-listing-modal .request-section-chip .request-section-chip-face{
+  background:#edf4fb;
+}
+
+#request-listing-modal .request-section-chip.has-value .request-section-chip-face,
+#request-listing-modal .request-section-chip[open] .request-section-chip-face{
+  background:#e6f1ff;
+  border-bottom-color:#c8d9ef;
+}
+
+#request-listing-modal .input,
+#request-listing-modal select.input,
+#request-listing-modal textarea.input{
+  border:0;
+  background-color:#f6f8fb;
+  box-shadow:inset 0 0 0 1px #d9e4ee;
+}
+
+#request-listing-modal .input::placeholder,
+#request-listing-modal textarea.input::placeholder{
+  color:#7a8699;
+  font-size:.92rem;
+  opacity:1;
+}
+
+#request-listing-modal .input:focus,
+#request-listing-modal select.input:focus,
+#request-listing-modal textarea.input:focus,
+#request-listing-modal .input:focus-visible,
+#request-listing-modal select.input:focus-visible,
+#request-listing-modal textarea.input:focus-visible{
+  outline:0;
+  background-color:#fff;
+  box-shadow:inset 0 0 0 1px #7aa7ff, 0 0 0 2px rgba(59,130,246,.16);
+}
+
+#request-listing-modal .request-description-chip .request-section-chip-summary{
+  color:#667085;
+  font-size:.92rem;
+  opacity:1;
+}
+
+#request-listing-contexts-modal .request-context-selected-card{
+  background:#edf4fb;
+  border-color:#c8d9ef;
+  box-shadow:0 6px 14px rgba(15,23,42,.06);
+}
+
+#request-listing-contexts-modal .request-context-selected-card.is-empty{
+  background:#f6f8fb;
+  border-color:#d9e4ee;
+  box-shadow:none;
+}
+
+#request-listing-contexts-modal .request-context-option{
+  background:#fff;
+  border-color:#d9e4ee;
+}
+
+#request-listing-contexts-modal .request-context-option:hover{
+  background:#f8fbff;
+  border-color:#bfd3f6;
+}
+
+#request-listing-contexts-modal .request-context-option.is-selected{
+  background:#edf4fb;
+  border-color:#8fb2ff;
+}
+
+#request-listing-contexts-modal .request-context-option .label small{
+  color:#667085;
+  opacity:1;
+}

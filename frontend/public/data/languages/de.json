@@ -1097,5 +1097,6 @@
   "root.bo.googleImport.quota": "Google-Importkontingent erreicht. Aktivieren Sie einen Plan, um fortzufahren.",
   "root.bo.googleImport.rating.label": "Google-Bewertung",
   "root.bo.googleImport.rating.source": "Vom Anbieter bereitgestellt, nicht bearbeitbar",
-  "root.bo.googleImport.search.empty": "Keine Google-Unternehmen gefunden."
+  "root.bo.googleImport.search.empty": "Keine Google-Unternehmen gefunden.",
+  "modal.requestListing.description.summary.empty Optional.": "Optional."
 }

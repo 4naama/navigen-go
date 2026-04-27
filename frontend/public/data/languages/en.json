@@ -1097,5 +1097,6 @@
   "root.bo.googleImport.quota": "Google import quota reached. Activate a Plan to continue.",
   "root.bo.googleImport.rating.label": "Google rating",
   "root.bo.googleImport.rating.source": "Provider-sourced, not editable",
-  "root.bo.googleImport.search.empty": "No Google businesses found."
+  "root.bo.googleImport.search.empty": "No Google businesses found.",
+  "modal.requestListing.description.summary.empty Optional.": ""
 }
