@@ -3430,7 +3430,7 @@ function createLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
     hideModal(id);
 
     if (!draftULID) {
-      showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not save profile draft.', 2400);
+      showToast(translatedOrFallback('root.bo.googleImport.error', 'Could not save profile draft.'), 2400);
       if (shouldReturnToSelectLocation) showSelectLocationModal();
       return;
     }
@@ -3689,36 +3689,36 @@ function createImportGoogleLocationModal(opts = {}) {
 
   const modal = injectModal({
     id,
-    title: (typeof t === 'function' && t('root.bo.googleImport.title')) || 'Import from Google',
+    title: translatedOrFallback('root.bo.googleImport.title', 'Import from Google'),
     layout: 'menu',
     onClose: (ev) => { closeImportGoogle(ev); },
     bodyHTML: `
       <div class="modal-form-stack">
         <div class="modal-menu-item modal-static-card google-import-intro-card">
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-            <strong>${(typeof t === 'function' && t('root.bo.googleImport.title')) || 'Import from Google'}</strong><br>
-            <small>${(typeof t === 'function' && t('root.bo.googleImport.desc')) || 'Find your business on Google and prefill your profile.'}</small>
+            <strong>${translatedOrFallback('root.bo.googleImport.title', 'Import from Google')}</strong><br>
+            <small>${translatedOrFallback('root.bo.googleImport.desc', 'Find your business on Google and prefill your profile.')}</small>
           </span>
         </div>
 
         <div class="modal-field google-import-search-field">
-          <label>${(typeof t === 'function' && t('root.bo.googleImport.search.label')) || 'Search Google businesses'}</label>
+          <label>${translatedOrFallback('root.bo.googleImport.search.label', 'Search Google businesses')}</label>
           <div id="google-import-autocomplete-host" class="google-import-autocomplete-host" aria-live="polite"></div>
-          <small class="modal-help-text">${(typeof t === 'function' && t('root.bo.googleImport.search.help')) || 'Search by business name and city, then choose the correct Google business.'}</small>
+          <small class="modal-help-text">${translatedOrFallback('root.bo.googleImport.search.help', 'Search by business name and city, then choose the correct Google business.')}</small>
         </div>
 
         <div id="google-import-selection" class="modal-menu-item modal-static-card google-import-selection hidden" aria-live="polite"></div>
 
         <div id="google-import-status" class="modal-menu-item owner-center-loading google-import-status hidden" aria-live="polite">
           <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-            <strong id="google-import-status-title">${(typeof t === 'function' && t('root.bo.googleImport.loading.title')) || 'Preparing Google import...'}</strong><br>
-            <small id="google-import-status-desc">${(typeof t === 'function' && t('root.bo.googleImport.loading.desc')) || 'Loading embedded Google lookup.'}</small>
+            <strong id="google-import-status-title">${translatedOrFallback('root.bo.googleImport.loading.title', 'Preparing Google import...')}</strong><br>
+            <small id="google-import-status-desc">${translatedOrFallback('root.bo.googleImport.loading.desc', 'Loading embedded Google lookup.')}</small>
           </span>
         </div>
 
         <div class="modal-actions">
           <button id="google-import-submit" type="button" class="modal-body-button" disabled>
-            ${(typeof t === 'function' && t('root.bo.googleImport.submitDraft')) || 'Import and edit profile'}
+            ${translatedOrFallback('root.bo.googleImport.submitDraft', 'Import and edit profile')}
           </button>
 
           <button id="google-import-cancel" type="button" class="modal-body-button">
@@ -3775,7 +3775,7 @@ function createImportGoogleLocationModal(opts = {}) {
         setGoogleImportStatus(false);
 
         if (!selection.googlePlaceId) {
-          showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not read the selected Google business.', 2400);
+          showToast(translatedOrFallback('root.bo.googleImport.error', 'Could not read the selected Google business.'), 2400);
           setGoogleImportSelection('', '');
           return;
         }
@@ -3801,7 +3801,7 @@ function createImportGoogleLocationModal(opts = {}) {
     const googlePlaceId = String(selectedGooglePlaceId || '').trim();
 
     if (!googlePlaceId) {
-      showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Choose a Google business first.', 2200);
+      showToast(translatedOrFallback('root.bo.googleImport.error', 'Choose a Google business first.'), 2200);
       return;
     }
 
@@ -3849,14 +3849,14 @@ function createImportGoogleLocationModal(opts = {}) {
 
       const fallback = errorCode.includes('quota')
         ? translatedOrFallback('root.bo.googleImport.quota', 'Google import quota reached. Save manually or activate a Plan to continue.')
-        : ((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not import Google business details.');
+        : translatedOrFallback('root.bo.googleImport.error', 'Could not import Google business details.');
       showToast(msg || fallback, 3200);
       return;
     }
 
     const savedDraft = googleImportDraftFromPayload(payload, googlePlaceId);
     if (!savedDraft.draftULID || !savedDraft.draftSessionId) {
-      showToast((typeof t === 'function' && t('root.bo.googleImport.error')) || 'Could not save profile draft.', 2400);
+      showToast(translatedOrFallback('root.bo.googleImport.error', 'Could not save profile draft.'), 2400);      
       return;
     }
 
