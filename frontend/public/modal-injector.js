@@ -3448,9 +3448,6 @@ function showLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
   showModal(id);
 }
 
-let googleImportBrowserConfigPromise = null;
-let googleMapsPlacesLibraryPromise = null;
-
 function googleImportDisplayText(value) {
   if (value == null) return '';
   if (typeof value === 'string') return value.trim();
@@ -3478,90 +3475,6 @@ function googleProviderRatingText(summary) {
   const count = Number(summary.count || 0);
   const countText = count > 0 ? ` (${count.toLocaleString(lang)})` : '';
   return `${Number(summary.rating).toFixed(1)}${countText}`;
-}
-
-async function getGoogleImportBrowserConfig() {
-  if (!googleImportBrowserConfigPromise) {
-    googleImportBrowserConfigPromise = fetch('/api/location/google-import/config', {
-      method: 'GET',
-      headers: { accept: 'application/json' },
-      cache: 'no-store',
-      credentials: 'include'
-    }).then(async (res) => {
-      const payload = await res.json().catch(() => null);
-      const browserKey = String(payload?.browserKey || '').trim();
-      const hasControlChars = /[\u0000-\u001f\u007f]/.test(browserKey);
-      const looksLikeGoogleApiKey = /^AIza[0-9A-Za-z_-]{20,}$/.test(browserKey);
-
-      if (!res.ok || !browserKey || hasControlChars || !looksLikeGoogleApiKey) {
-        const msg = String(payload?.error?.message || '').trim();
-        throw new Error(msg || 'Google import browser key is not valid at runtime.');
-      }
-
-      return {
-        ...payload,
-        browserKey
-      };
-    });
-  }
-
-  return googleImportBrowserConfigPromise;
-}
-
-async function loadGooglePlacesLibraryForImport(browserKey) {
-  const key = String(browserKey || '').trim();
-  if (!key) throw new Error('Google import browser key is not configured.');
-
-  const existingImportLibrary = globalThis.google?.maps?.importLibrary;
-  if (typeof existingImportLibrary === 'function') {
-    return await existingImportLibrary('places');
-  }
-
-  if (!googleMapsPlacesLibraryPromise) {
-    googleMapsPlacesLibraryPromise = new Promise((resolve, reject) => {
-      const googleNamespace = globalThis.google || (globalThis.google = {});
-      const mapsNamespace = googleNamespace.maps || (googleNamespace.maps = {});
-      const callbackName = '__navigenGoogleImportReady';
-
-      mapsNamespace[callbackName] = async () => {
-        try {
-          const importLibrary = globalThis.google?.maps?.importLibrary;
-          if (typeof importLibrary !== 'function') {
-            throw new Error('Google Maps importLibrary unavailable.');
-          }
-          resolve(await importLibrary('places'));
-        } catch (err) {
-          reject(err);
-        } finally {
-          try { delete mapsNamespace[callbackName]; } catch {}
-        }
-      };
-
-      const existingScript = document.querySelector('script[data-navigen-google-import="places"]');
-      if (existingScript) {
-        return;
-      }
-
-      const params = new URLSearchParams();
-      params.set('key', key);
-      params.set('v', 'weekly');
-      params.set('loading', 'async');
-      params.set('libraries', 'places');
-      params.set('callback', `google.maps.${callbackName}`);
-      params.set('auth_referrer_policy', 'origin');
-
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
-      script.async = true;
-      script.defer = true;
-      script.dataset.navigenGoogleImport = 'places';
-      script.addEventListener('error', () => reject(new Error('Google Maps script failed to load.')), { once: true });
-      script.nonce = document.querySelector('script[nonce]')?.nonce || '';
-      document.head.appendChild(script);
-    });
-  }
-
-  return googleMapsPlacesLibraryPromise;
 }
 
 async function fetchGoogleImportPredictions(input, signal = null) {

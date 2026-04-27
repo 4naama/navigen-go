@@ -36,12 +36,17 @@ Thumbs.db
 .idea/
 *.swp
 
-# Internal / operational docs (must never ship)
-docs/*.md
-docs/internal/
+# Internal / operational docs (must never ship or be committed)
+docs/
+frontend/public/docs/
+frontend/public/**/*.md
+frontend/public/**/*.mdx
 
-# Do not commit private data
+# Do not commit private data or local data snapshots
+frontend/data-safe/
+frontend/public/data-safe/
 public/data/data-safe/
+!frontend/public/data-safe/.gitkeep
 !public/data/data-safe/.gitkeep
 
 # backend worker artifacts

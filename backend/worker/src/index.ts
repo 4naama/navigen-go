@@ -40,7 +40,6 @@ export interface Env {
   STRIPE_SECRET_KEY: string; // Stripe secret key for creating Checkout Sessions (server-only)
   STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
   GOOGLE_PLACES_API_KEY?: string; // Places API New server key; do not expose in frontend JS
-  GOOGLE_IMPORT_BROWSER_KEY?: string; // Maps JavaScript / Places widget browser key; HTTP referrer restricted  
 }
 
 // --- Plan persistence (Phase 8 prerequisite) ---
@@ -419,10 +418,6 @@ function mergeDraftPatch(base: any, patch: any): any {
 
 function googlePlacesApiKey(env: Env): string {
   return String(env.GOOGLE_PLACES_API_KEY || "").trim();
-}
-
-function googleImportBrowserKey(env: Env): string {
-  return String(env.GOOGLE_IMPORT_BROWSER_KEY || "").trim();
 }
 
 const GOOGLE_IMPORT_FIELD_MASK_VERSION = "google-full-v1";
@@ -3411,11 +3406,6 @@ export default {
       if (normPath === "/api/location/google-import/autocomplete" && req.method === "POST") {
         return await handleGoogleImportAutocomplete(req, env);
       }
-      
-      // --- Location Google import config: browser key for embedded Places lookup
-      if (normPath === "/api/location/google-import/config" && req.method === "GET") {
-        return await handleGoogleImportConfig(req, env);
-      }      
 
       // --- Location draft: /api/location/draft (Phase 8 private shell)
       if (normPath === "/api/location/draft" && req.method === "POST") {
@@ -5916,23 +5906,6 @@ async function handleGoogleImportAutocomplete(req: Request, env: Env): Promise<R
       predictions
     },
     200,
-    noStore
-  );
-}
-
-async function handleGoogleImportConfig(_req: Request, env: Env): Promise<Response> {
-  const noStore = { "cache-control": "no-store" };
-  const browserKey = googleImportBrowserKey(env);
-
-  return json(
-    {
-      ok: !!browserKey,
-      browserKeyAvailable: !!browserKey,
-      browserKey,
-      library: "places",
-      widget: "PlaceAutocompleteElement"
-    },
-    browserKey ? 200 : 503,
     noStore
   );
 }
