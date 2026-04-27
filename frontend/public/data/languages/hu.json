@@ -672,7 +672,7 @@
   "root.bo.examples.title": "Példa irányítópultok megtekintése",
   "root.bo.examples.desc": "Valós elemzések megtekintése kijelölt példákhoz.",
   "root.bo.notListed.title": "Hely létrehozása",
-  "root.bo.notListed.desc": "Add hozzá a vállalkozásodat.",
+  "root.bo.notListed.desc": "Add meg a vállalkozásodat kézzel",
   "modal.requestListing.title": "Listing igénylése",
   "modal.requestListing.submit": "Kérés elküldése",
   "modal.requestListing.success": "Piszkozat mentve.",
@@ -1098,5 +1098,6 @@
   "root.bo.googleImport.rating.label": "Google értékelés",
   "root.bo.googleImport.rating.source": "Szolgáltató által biztosított, nem szerkeszthető",
   "root.bo.googleImport.search.empty": "Nem találhatók Google vállalkozások.",
-  "modal.requestListing.description.summary.empty Optional.": "Opcionális."
+  "modal.requestListing.description.summary.empty Optional.": "Opcionális.",
+  "root.bo.googleImport.poweredByGoogle": "A Google biztosítja"
 }

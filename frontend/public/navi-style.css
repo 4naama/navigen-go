@@ -4945,18 +4945,26 @@ select.input[multiple]{
 
 #select-location-modal .syb-draft-action{
   appearance:none;
-  border:0;
-  background:transparent;
-  padding:2px 4px;
-  border-radius:8px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:44px;
+  height:44px;
+  padding:0;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  background:#fff;
+  color:inherit;
   cursor:pointer;
   font:inherit;
-  font-size:1rem;
+  font-size:20px;
   line-height:1;
+  box-shadow:0 1px 2px rgba(15,23,42,.08);
 }
 
 #select-location-modal .syb-draft-action:hover{
-  background:rgba(15,23,42,.06);
+  background:#f8fbff;
+  border-color:#93c5fd;
 }
 
 #select-location-modal .syb-draft-action:focus-visible{
@@ -6340,6 +6348,43 @@ body.high-contrast .modal-menu-item.is-active {
   grid-template-columns:minmax(0, 1fr) auto;
   align-items:start;
   gap:12px;
+}
+
+#request-listing-contexts-modal .request-context-done{
+  justify-self:end;
+  margin-left:0;
+}
+
+#request-listing-contexts-modal .request-context-selected-card .request-chip-row{
+  justify-content:flex-start;
+}#select-location-modal .syb-draft-action{
+  appearance:none;
+  border:0;
+  background:transparent;
+  padding:2px 4px;
+  border-radius:8px;
+  cursor:pointer;
+  font:inherit;
+  font-size:1rem;
+  line-height:1;
+}
+
+/* Context picker header: left text, right Done action. */
+#request-listing-contexts-modal .request-context-selected-card{
+  align-items:stretch;
+}
+
+#request-listing-contexts-modal .request-context-selected-head{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  align-items:start;
+  gap:12px;
+  width:100%;
+}
+
+#request-listing-contexts-modal .request-context-selected-head .label{
+  min-width:0;
+  text-align:left;
 }
 
 #request-listing-contexts-modal .request-context-done{

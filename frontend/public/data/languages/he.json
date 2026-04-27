@@ -672,7 +672,7 @@
   "root.bo.examples.title": "הצג לוחות בקרה לדוגמה",
   "root.bo.examples.desc": "צפה בניתוחים אמיתיים עבור דוגמאות ייעודיות.",
   "root.bo.notListed.title": "צור מיקום",
-  "root.bo.notListed.desc": "הוסף את העסק שלך.",
+  "root.bo.notListed.desc": "הוסף את העסק שלך ידנית",
   "modal.requestListing.title": "בקש רישום",
   "modal.requestListing.submit": "שלח בקשה",
   "modal.requestListing.success": "הטיוטה נשמרה.",
@@ -1098,5 +1098,6 @@
   "root.bo.googleImport.rating.label": "דירוג Google",
   "root.bo.googleImport.rating.source": "מסופק על ידי הספק, לא ניתן לעריכה",
   "root.bo.googleImport.search.empty": "לא נמצאו עסקים ב-Google.",
-  "modal.requestListing.description.summary.empty Optional.": "אופציונלי."
+  "modal.requestListing.description.summary.empty Optional.": "אופציונלי.",
+  "root.bo.googleImport.poweredByGoogle": "מופעל על ידי Google"
 }

@@ -672,7 +672,7 @@
   "root.bo.examples.title": "Переглянути приклади панелей",
   "root.bo.examples.desc": "Переглянути реальну аналітику для визначених прикладів.",
   "root.bo.notListed.title": "Створити місце",
-  "root.bo.notListed.desc": "Додайте свій бізнес.",
+  "root.bo.notListed.desc": "Додайте свій бізнес вручну",
   "modal.requestListing.title": "Запросити лістинг",
   "modal.requestListing.submit": "Надіслати запит",
   "modal.requestListing.success": "Чернетку збережено.",
@@ -1098,5 +1098,6 @@
   "root.bo.googleImport.rating.label": "Рейтинг Google",
   "root.bo.googleImport.rating.source": "Надано постачальником, не редагується",
   "root.bo.googleImport.search.empty": "Не знайдено бізнесів Google.",
-  "modal.requestListing.description.summary.empty Optional.": "Необов’язково."
+  "modal.requestListing.description.summary.empty Optional.": "Необов’язково.",
+  "root.bo.googleImport.poweredByGoogle": "Надано Google"
 }

@@ -672,7 +672,7 @@
   "root.bo.examples.title": "Voir des tableaux de bord exemples",
   "root.bo.examples.desc": "Consultez de vraies analyses pour des exemples désignés.",
   "root.bo.notListed.title": "Créer un emplacement",
-  "root.bo.notListed.desc": "Ajoutez votre entreprise.",
+  "root.bo.notListed.desc": "Ajoutez votre établissement manuellement.",
   "modal.requestListing.title": "Demander un établissement",
   "modal.requestListing.submit": "Envoyer la demande",
   "modal.requestListing.success": "Brouillon enregistré.",
@@ -1098,5 +1098,6 @@
   "root.bo.googleImport.rating.label": "Note Google",
   "root.bo.googleImport.rating.source": "Fourni par le fournisseur, non modifiable",
   "root.bo.googleImport.search.empty": "Aucun établissement Google trouvé.",
-  "modal.requestListing.description.summary.empty Optional.": "Optionnel."
+  "modal.requestListing.description.summary.empty Optional.": "Optionnel.",
+  "root.bo.googleImport.poweredByGoogle": "Fourni par Google"
 }

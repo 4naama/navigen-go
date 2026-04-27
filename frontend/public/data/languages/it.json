@@ -672,7 +672,7 @@
   "root.bo.examples.title": "Vedi dashboard di esempio",
   "root.bo.examples.desc": "Visualizza analisi reali per esempi designati.",
   "root.bo.notListed.title": "Crea una posizione",
-  "root.bo.notListed.desc": "Aggiungi la tua attività.",
+  "root.bo.notListed.desc": "Aggiungi manualmente la tua attività",
   "modal.requestListing.title": "Richiedi una scheda",
   "modal.requestListing.submit": "Invia richiesta",
   "modal.requestListing.success": "Bozza salvata.",
@@ -1098,5 +1098,6 @@
   "root.bo.googleImport.rating.label": "Valutazione Google",
   "root.bo.googleImport.rating.source": "Fornito dal provider, non modificabile",
   "root.bo.googleImport.search.empty": "Nessuna attività Google trovata.",
-  "modal.requestListing.description.summary.empty Optional.": "Opzionale."
+  "modal.requestListing.description.summary.empty Optional.": "Opzionale.",
+  "root.bo.googleImport.poweredByGoogle": "Offerto da Google"
 }

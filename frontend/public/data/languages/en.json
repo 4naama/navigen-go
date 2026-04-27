@@ -672,7 +672,7 @@
   "root.bo.examples.title": "See example dashboards",
   "root.bo.examples.desc": "View real analytics for designated examples.",
   "root.bo.notListed.title": "Create a location",
-  "root.bo.notListed.desc": "Add your business.",
+  "root.bo.notListed.desc": "Manually add your business.",
   "modal.requestListing.title": "Request a listing",
   "modal.requestListing.submit": "Send request",
   "modal.requestListing.success": "Draft saved.",
@@ -1098,5 +1098,6 @@
   "root.bo.googleImport.rating.label": "Google rating",
   "root.bo.googleImport.rating.source": "Provider-sourced, not editable",
   "root.bo.googleImport.search.empty": "No Google businesses found.",
-  "modal.requestListing.description.summary.empty Optional.": ""
+  "modal.requestListing.description.summary.empty Optional.": "",
+  "root.bo.googleImport.poweredByGoogle": "Powered by Google"
 }
