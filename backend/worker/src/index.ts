@@ -503,25 +503,9 @@ async function checkGoogleImportPolicy(
   const deviceSeen = devicePlaceIds.includes(googlePlaceId);
   const ipSeen = ipPlaceIds.includes(googlePlaceId);
 
-  if (!deviceSeen && devicePlaceIds.length >= GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT) {
-    return {
-      allowed: false,
-      quotaCounted: false,
-      ipHash,
-      error: {
-        code: "google_import_device_quota_exceeded",
-        message: "Google import quota reached for this device.",
-        needsCheckout: true,
-        deviceLimit: GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT
-      }
-    };
-  }
-
-  const ipDailyLimitReached = !ipSeen && ipPlaceIds.length >= GOOGLE_IMPORT_IP_DAILY_LIMIT;
-  if (ipDailyLimitReached) {
-    // IP quota remains observable through ledger/quota storage, but it must not hard-block the BO before the local 3-draft UX limit.
-  }
-
+  // Draft capacity is enforced by the device-local Profile drafts manager.
+  // These backend records are retained for telemetry / abuse observation only.
+  // They must not hard-block the BO after a local draft was discarded.
   return { allowed: true, quotaCounted: !deviceSeen || !ipSeen, ipHash, error: null };
 }
 
