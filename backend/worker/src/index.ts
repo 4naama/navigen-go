@@ -503,7 +503,7 @@ async function checkGoogleImportPolicy(
   const deviceSeen = devicePlaceIds.includes(googlePlaceId);
   const ipSeen = ipPlaceIds.includes(googlePlaceId);
 
-  if (!deviceSeen && devicePlaceIds.length > GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT) {
+  if (!deviceSeen && devicePlaceIds.length >= GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT) {
     return {
       allowed: false,
       quotaCounted: false,
@@ -517,18 +517,9 @@ async function checkGoogleImportPolicy(
     };
   }
 
-  if (!ipSeen && ipPlaceIds.length >= GOOGLE_IMPORT_IP_DAILY_LIMIT) {
-    return {
-      allowed: false,
-      quotaCounted: false,
-      ipHash,
-      error: {
-        code: "google_import_ip_quota_exceeded",
-        message: "Google import quota reached for this network today.",
-        needsCheckout: true,
-        ipDailyLimit: GOOGLE_IMPORT_IP_DAILY_LIMIT
-      }
-    };
+  const ipDailyLimitReached = !ipSeen && ipPlaceIds.length >= GOOGLE_IMPORT_IP_DAILY_LIMIT;
+  if (ipDailyLimitReached) {
+    // IP quota remains observable through ledger/quota storage, but it must not hard-block the BO before the local 3-draft UX limit.
   }
 
   return { allowed: true, quotaCounted: !deviceSeen || !ipSeen, ipHash, error: null };
