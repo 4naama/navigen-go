@@ -503,7 +503,7 @@ async function checkGoogleImportPolicy(
   const deviceSeen = devicePlaceIds.includes(googlePlaceId);
   const ipSeen = ipPlaceIds.includes(googlePlaceId);
 
-  if (!deviceSeen && devicePlaceIds.length >= GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT) {
+  if (!deviceSeen && devicePlaceIds.length > GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT) {
     return {
       allowed: false,
       quotaCounted: false,
@@ -6040,31 +6040,20 @@ async function handleUpfrontGoogleImportHydrate(
     }
   }
 
-  if (!draftULID) {
-    draftULID = mintDraftUlid();
-    draftSessionId = mintDraftSessionId();
-  }
-
   const sameDeviceReopen = reopened && String(existingDraft?.googlePlaceId || "").trim() === googlePlaceId;
   const importPolicy = await checkGoogleImportPolicy(req, env, deviceId, googlePlaceId, sameDeviceReopen);
 
   if (!importPolicy.allowed) {
-    const quotaDraft = mergeDraftPatch(existingDraft || {}, normalizedPatch);
-    quotaDraft.googleHydrationStatus = "quota_blocked";
-    quotaDraft.updatedAt = new Date().toISOString();
-
-    const quotaDraftKey = `override_draft:${draftULID}:${draftSessionId}`;
-    await env.KV_STATUS.put(quotaDraftKey, JSON.stringify(quotaDraft));
-    await env.KV_STATUS.put(
-      googleIndexKey,
-      JSON.stringify({
-        draftULID,
-        draftSessionId,
-        googlePlaceId,
-        updatedAt: quotaDraft.updatedAt
-      }),
-      { expirationTtl: 60 * 60 * 24 * 30 }
-    );
+    await writeGoogleImportLedger(env, {
+      placeId: googlePlaceId,
+      deviceId,
+      ipHash: importPolicy.ipHash,
+      draftULID: "",
+      mode: "upfront_google_import_blocked",
+      cacheHit: false,
+      quotaCounted: false,
+      estimatedCostCents: 0
+    });
 
     return json(
       {
@@ -6072,13 +6061,9 @@ async function handleUpfrontGoogleImportHydrate(
         hydrated: false,
         needsCheckout: true,
         error: importPolicy.error,
-        draft: {
-          ...quotaDraft,
-          draftULID,
-          draftSessionId
-        },
-        draftULID,
-        draftSessionId
+        draft: null,
+        draftULID: "",
+        draftSessionId: ""
       },
       429,
       responseHeaders
@@ -6098,6 +6083,11 @@ async function handleUpfrontGoogleImportHydrate(
       502,
       responseHeaders
     );
+  }
+
+  if (!draftULID) {
+    draftULID = mintDraftUlid();
+    draftSessionId = mintDraftSessionId();
   }
 
   const baseDraft = mergeDraftPatch(existingDraft || {}, normalizedPatch);

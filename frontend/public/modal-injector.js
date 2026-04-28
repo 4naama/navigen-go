@@ -1521,6 +1521,8 @@ export async function showLocationProfileModal(data) {
   const locULID = String(data?.locationID || '').trim();
   const lpmId   = String(data?.id || locULID).trim(); // used only for LPM beacons/fallback
 
+  rememberRecentlyUsedLocation(data);
+
   // 1. Remove any existing modal
   const old = document.getElementById('location-profile-modal');
   if (old) old.remove();
@@ -3643,8 +3645,6 @@ function createImportGoogleLocationModal(opts = {}) {
     }
 
     if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = true;
-
-    if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = true;
     setGoogleImportStatus(true, translatedOrFallback('root.bo.googleImport.hydrating.title', 'Importing Google details...'), translatedOrFallback('root.bo.googleImport.hydrating.desc', 'Prefilling your private Create Location draft.'));
 
     let res = null;
@@ -3670,12 +3670,8 @@ function createImportGoogleLocationModal(opts = {}) {
       const errorCode = String(payload?.error?.code || '').trim();
       const msg = String(payload?.error?.message || '').trim();
 
-      if (payload?.needsCheckout && payload?.draft?.draftULID && payload?.draft?.draftSessionId) {
-        const quotaDraft = googleImportDraftFromPayload(payload, googlePlaceId);
-        savePendingLocationDraft(quotaDraft);
-        hideModal(id);
+      if (payload?.needsCheckout) {
         showToast(msg || translatedOrFallback('root.bo.googleImport.quota', 'Google import quota reached. Activate a Plan to continue.'), 3200);
-        showLocationDraftPublishSetupModal(quotaDraft, { returnTo: opts?.returnTo });
         return;
       }
 
@@ -3707,6 +3703,71 @@ export function showImportGoogleLocationModal(opts = {}) {
   document.getElementById(id)?.remove();
   createImportGoogleLocationModal(opts);
   showModal(id);
+}
+
+const SYB_RECENTLY_USED_LOCATIONS_KEY = 'navigen.syb.recentlyUsedLocations';
+const SYB_RECENTLY_USED_LOCATIONS_LIMIT = 10;
+
+function normalizeRecentlyUsedLocation(item, recentAt = Date.now()) {
+  const source = item && typeof item === 'object' ? item : {};
+  const payload = sybBuildPickPayload(source);
+  const locationID = String(payload.locationID || payload.id || source.locationID || source.id || '').trim();
+  const displayName = String(payload.displayName || payload.name || sybLocationName(source) || locationID).trim();
+
+  if (!locationID || !displayName) return null;
+
+  return {
+    ...payload,
+    locationID,
+    id: String(payload.id || locationID).trim(),
+    displayName,
+    name: displayName,
+    sybAddressLine: String(source.sybAddressLine || source.contactInformation?.address || payload.contactInformation?.address || '').trim(),
+    sybStatus: (source.sybStatus && typeof source.sybStatus === 'object') ? source.sybStatus : {},
+    recentAt: Number(recentAt || source.recentAt || Date.now())
+  };
+}
+
+function readRecentlyUsedLocations() {
+  try {
+    const rows = JSON.parse(localStorage.getItem(SYB_RECENTLY_USED_LOCATIONS_KEY) || '[]');
+    return (Array.isArray(rows) ? rows : [])
+      .map((row) => normalizeRecentlyUsedLocation(row, Number(row?.recentAt || 0)))
+      .filter(Boolean)
+      .sort((a, b) => Number(b.recentAt || 0) - Number(a.recentAt || 0))
+      .slice(0, SYB_RECENTLY_USED_LOCATIONS_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
+function writeRecentlyUsedLocations(rows) {
+  try {
+    const cleanRows = (Array.isArray(rows) ? rows : [])
+      .map((row) => normalizeRecentlyUsedLocation(row, Number(row?.recentAt || Date.now())))
+      .filter(Boolean)
+      .sort((a, b) => Number(b.recentAt || 0) - Number(a.recentAt || 0))
+      .slice(0, SYB_RECENTLY_USED_LOCATIONS_LIMIT);
+
+    localStorage.setItem(SYB_RECENTLY_USED_LOCATIONS_KEY, JSON.stringify(cleanRows));
+    return cleanRows;
+  } catch {
+    return readRecentlyUsedLocations();
+  }
+}
+
+function rememberRecentlyUsedLocation(item) {
+  const next = normalizeRecentlyUsedLocation(item, Date.now());
+  if (!next) return;
+
+  const current = readRecentlyUsedLocations();
+  const filtered = current.filter((row) => {
+    const rowId = String(row.locationID || row.id || '').trim();
+    const nextId = String(next.locationID || next.id || '').trim();
+    return rowId && nextId ? rowId !== nextId : true;
+  });
+
+  writeRecentlyUsedLocations([next, ...filtered]);
 }
 
 function sybLocationName(item) {
@@ -4005,6 +4066,7 @@ async function showExistingNaviGenProfileModal() {
         translatedOrFallback('root.bo.selectLocation.search.none.title', 'No matching businesses'),
         translatedOrFallback('root.bo.selectLocation.search.none.desc', 'Continue typing, or use Create a location / Import from Google.'),
         (picked) => {
+          rememberRecentlyUsedLocation(picked);
           hideModal(id);
           finish?.(picked);
         }
@@ -4078,33 +4140,15 @@ async function showRecentlyUsedLocationsModal() {
   });
 
   const loading = document.createElement('div');
-  loading.className = 'modal-menu-item modal-static-card owner-center-loading syb-empty-row';
-  loading.innerHTML = `
-    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${translatedOrFallback('root.bo.recent.loading.title', 'Loading recently used...')}</strong><br>
-      <small>${translatedOrFallback('root.bo.recent.loading.desc', 'Getting places saved on this device.')}</small>
-    </span>
-  `;
-  list.appendChild(loading);
-
-  let rows = [];
-  try {
-    const res = await fetch('/api/owner/sessions', {
-      cache: 'no-store',
-      credentials: 'include'
-    });
-    const j = res.ok ? await res.json().catch(() => null) : null;
-    rows = Array.isArray(j?.rows) ? j.rows : [];
-  } catch {
-    rows = [];
-  }
+  const rows = readRecentlyUsedLocations();
 
   sybRenderLocationRows(
     list,
     rows.slice(0, 5),
-    translatedOrFallback('root.bo.recent.empty.title', 'No saved places yet'),
-    translatedOrFallback('root.bo.recent.empty.desc', 'Places you manage on this device will appear here.'),
+    translatedOrFallback('root.bo.recent.empty.title', 'No recently used places yet'),
+    translatedOrFallback('root.bo.recent.empty.desc', 'Places you open will appear here.'),
     (picked) => {
+      rememberRecentlyUsedLocation(picked);
       hideModal(id);
       finish?.(picked);
     }
