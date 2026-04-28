@@ -4887,6 +4887,14 @@ export function showRestoreAccessModal() {
   document.getElementById(id)?.remove();
   createRestoreAccessModal();
   showModal(id);
+
+  requestAnimationFrame(() => {
+    const input = document.getElementById('owner-restore-pi');
+    if (input instanceof HTMLInputElement) {
+      input.focus();
+      input.select();
+    }
+  });  
 }
 
 function _exampleFlag(rec) {
