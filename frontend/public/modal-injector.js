@@ -3129,247 +3129,70 @@ export function createSelectLocationModal() {
     bodyHTML: ''
   });
 
-  const topBar = modal.querySelector('.modal-top-bar');
   const inner = modal.querySelector('.modal-body-inner');
-  if (!topBar || !inner) return;
+  if (!inner) return;
 
-  const rootSearch =
-    document.getElementById('search') ||
-    document.querySelector('input#search') ||
-    document.querySelector('input[type="search"]');
-
-  const input = rootSearch ? rootSearch.cloneNode(true) : document.createElement('input');
-  const searchInput = input instanceof HTMLInputElement ? input : document.createElement('input');
-  searchInput.type = 'search';
-  searchInput.id = 'select-location-search';
-  searchInput.spellcheck = false;
-  searchInput.autocapitalize = 'off';
-  searchInput.autocomplete = 'off';
-  searchInput.autofocus = false;
-  searchInput.removeAttribute('autofocus');
-  searchInput.value = '';
-
-  const placeholder = translatedOrFallback('root.bo.selectLocation.placeholder', 'Search here…').trim();
-  searchInput.placeholder = placeholder.startsWith('🔍') ? placeholder : `🔍 ${placeholder}`;
-
-  const searchRow = document.createElement('div');
-  searchRow.className = 'select-location-search-row';
-
-  const searchLeft = document.createElement('div');
-  searchLeft.className = 'select-location-search-left';
-
-  const clearBtn = document.createElement('button');
-  clearBtn.type = 'button';
-  clearBtn.className = 'clear-x';
-  clearBtn.id = 'select-location-clear-search';
-  clearBtn.textContent = 'x';
-  clearBtn.style.display = 'none';
-  clearBtn.setAttribute('aria-label', translatedOrFallback('common.search.clear', 'Clear search'));
-
-  const syncClear = () => {
-    const hasValue = !!String(searchInput.value || '').trim();
-    clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
-  };
-
-  searchInput.addEventListener('input', syncClear);
-  clearBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-    searchInput.focus();
-    syncClear();
-  });
-
-  searchLeft.appendChild(searchInput);
-  searchLeft.appendChild(clearBtn);
-  searchRow.appendChild(searchLeft);
-  topBar.appendChild(searchRow);
-
-  const hintRow = document.createElement('div');
-  hintRow.id = 'select-location-search-hint';
-  hintRow.className = 'syb-inline-copy';
-  inner.appendChild(hintRow);
-
-  const pendingDraft = readPendingLocationDraft();
-  let draftWrap = null;
-  if (pendingDraft && (pendingDraft.draftULID || pendingDraft.draftSessionId)) {
-    const openPendingDraft = (ev = null) => {
-      ev?.preventDefault?.();
-      ev?.stopPropagation?.();
-      hideModal(id);
-      showRequestListingModal({ prefill: pendingDraft, returnTo: 'syb' });
-    };
-
-    draftWrap = document.createElement('div');
-    draftWrap.className = 'syb-draft-wrap';
-
-    const draftTitle = document.createElement('div');
-    draftTitle.className = 'syb-section-title';
-    draftTitle.textContent = translatedOrFallback('root.bo.drafts.title', 'Drafts on this device');
-
-    const draftList = document.createElement('div');
-    draftList.className = 'modal-menu-list syb-draft-list';
-
-    const draftCard = document.createElement('div');
-    draftCard.className = 'modal-menu-item syb-card syb-draft-card';
-    draftCard.setAttribute('role', 'button');
-    draftCard.tabIndex = 0;
-
-    const icon = document.createElement('span');
-    icon.className = 'icon-img';
-    icon.textContent = '📝';
-
-    const label = document.createElement('span');
-    label.className = 'label';
-
-    const strong = document.createElement('strong');
-    strong.textContent = p8DraftTitle(pendingDraft);
-
-    const small = document.createElement('small');
-    small.textContent = p8DraftSubtitle(pendingDraft);
-
-    label.appendChild(strong);
-    label.appendChild(document.createElement('br'));
-    label.appendChild(small);
-
-    const actions = document.createElement('span');
-    actions.className = 'syb-draft-actions';
-
-    const editBtn = document.createElement('button');
-    editBtn.type = 'button';
-    editBtn.className = 'syb-draft-action';
-    editBtn.setAttribute('data-action', 'edit');
-    editBtn.setAttribute('aria-label', translatedOrFallback('root.bo.drafts.edit', 'Edit draft'));
-    editBtn.title = translatedOrFallback('root.bo.drafts.edit', 'Edit draft');
-    editBtn.textContent = '✏️';
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.type = 'button';
-    deleteBtn.className = 'syb-draft-action';
-    deleteBtn.setAttribute('data-action', 'delete');
-    deleteBtn.setAttribute('aria-label', translatedOrFallback('root.bo.drafts.delete', 'Delete draft'));
-    deleteBtn.title = translatedOrFallback('root.bo.drafts.delete', 'Delete draft');
-    deleteBtn.textContent = '🗑️';
-
-    actions.appendChild(editBtn);
-    actions.appendChild(deleteBtn);
-    draftCard.appendChild(icon);
-    draftCard.appendChild(label);
-    draftCard.appendChild(actions);
-
-    draftCard.addEventListener('click', openPendingDraft);
-    draftCard.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') openPendingDraft(e);
-    });
-    editBtn.addEventListener('click', openPendingDraft);
-    deleteBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      clearPendingLocationDraft();
-      draftWrap?.remove();
-    });
-
-    draftList.appendChild(draftCard);
-    draftWrap.appendChild(draftTitle);
-    draftWrap.appendChild(draftList);
-    inner.appendChild(draftWrap);
-  }
+  const drafts = readPendingLocationDrafts();
+  const newestDraft = drafts[0] || null;
+  const draftCount = drafts.length;
+  const draftHint = draftCount
+    ? `${draftCount} ${draftCount === 1 ? translatedOrFallback('root.bo.drafts.root.one', 'saved draft') : translatedOrFallback('root.bo.drafts.root.many', 'saved drafts')} · ${translatedOrFallback('root.bo.drafts.root.newest', 'Newest')}: ${p8DraftTitle(newestDraft)}`
+    : translatedOrFallback('root.bo.drafts.root.empty', 'No drafts saved on this device.');
 
   const entryStack = document.createElement('div');
-  entryStack.className = 'syb-entry-stack';
+  entryStack.className = 'syb-entry-stack syb-route-hub';
 
-  const createBtn = document.createElement('button');
-  createBtn.type = 'button';
-  createBtn.className = 'modal-menu-item modal-callout-card syb-entry-card';
-  createBtn.innerHTML = `
-    <span class="icon-img">➕</span>
-    <span class="label">
-      <strong>${translatedOrFallback('root.bo.notListed.title', 'Create a location')}</strong><br>
-      <small>${translatedOrFallback('root.bo.notListed.desc', 'Manually add your business.')}</small>
-    </span>
-  `;
-  createBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    hideModal(id);
-    showRequestListingModal({ returnTo: 'syb' });
-  });
+  const makeRouteCard = (routeId, icon, title, desc) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = routeId;
+    btn.className = 'modal-menu-item modal-callout-card syb-entry-card syb-route-card';
+    btn.innerHTML = `
+      <span class="icon-img">${icon}</span>
+      <span class="label">
+        <strong>${title}</strong><br>
+        <small>${desc}</small>
+      </span>
+    `;
+    return btn;
+  };
 
-  const googleBtn = document.createElement('button');
-  googleBtn.type = 'button';
-  googleBtn.className = 'modal-menu-item modal-callout-card syb-entry-card';
-  googleBtn.innerHTML = `
-    <span class="icon-img">🌐</span>
-    <span class="label">
-      <strong>${translatedOrFallback('root.bo.googleImport.title', 'Import from Google')}</strong><br>
-      <small>${translatedOrFallback('root.bo.googleImport.desc', 'Bring in your business details.')}</small>
-    </span>
-  `;
-  googleBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    hideModal(id);
-    showImportGoogleLocationModal({ returnTo: 'syb' });
-  });
+  entryStack.appendChild(makeRouteCard(
+    'select-location-create-route',
+    '➕',
+    translatedOrFallback('root.bo.notListed.title', 'Create a location'),
+    translatedOrFallback('root.bo.notListed.desc', 'Manually add your business.')
+  ));
 
-  const recentBtn = document.createElement('button');
-  recentBtn.type = 'button';
-  recentBtn.id = 'select-location-recent-trigger';
-  recentBtn.className = 'modal-menu-item modal-callout-card syb-entry-card';
-  recentBtn.innerHTML = `
-    <span class="icon-img">📍</span>
-    <span class="label">
-      <strong>${translatedOrFallback('root.bo.recent.title', 'Recently used')}</strong><br>
-      <small>${translatedOrFallback('root.bo.recent.desc', 'View and manage your places.')}</small>
-    </span>
-  `;
+  entryStack.appendChild(makeRouteCard(
+    'select-location-google-route',
+    '🌐',
+    translatedOrFallback('root.bo.googleImport.title', 'Import from Google'),
+    translatedOrFallback('root.bo.googleImport.desc', 'Bring in your business details.')
+  ));
 
-  entryStack.appendChild(createBtn);
-  entryStack.appendChild(googleBtn);
-  entryStack.appendChild(recentBtn);
+  entryStack.appendChild(makeRouteCard(
+    'select-location-existing-route',
+    '🔎',
+    translatedOrFallback('root.bo.existing.title', 'Find existing NaviGen profile'),
+    translatedOrFallback('root.bo.existing.desc', 'Search profiles already on NaviGen.')
+  ));
+
+  entryStack.appendChild(makeRouteCard(
+    'select-location-drafts-route',
+    '📝',
+    translatedOrFallback('root.bo.drafts.title', 'Profile drafts'),
+    draftHint
+  ));
+
+  entryStack.appendChild(makeRouteCard(
+    'select-location-recent-route',
+    '📍',
+    translatedOrFallback('root.bo.recent.title', 'Recently used'),
+    translatedOrFallback('root.bo.recent.desc', 'View places you opened recently.')
+  ));
+
   inner.appendChild(entryStack);
-
-  const recentWrap = document.createElement('div');
-  recentWrap.id = 'select-location-recent-wrap';
-  recentWrap.className = 'hidden';
-
-  const recentTitle = document.createElement('div');
-  recentTitle.className = 'syb-section-title';
-  recentTitle.textContent = (typeof t === 'function' && t('root.bo.recent.listTitle')) || 'Recently used';
-
-  const recentList = document.createElement('div');
-  recentList.id = 'select-location-recent-list';
-  recentList.className = 'modal-menu-list';
-
-  recentWrap.appendChild(recentTitle);
-  recentWrap.appendChild(recentList);
-  inner.appendChild(recentWrap);
-
-  const loadingRow = document.createElement('div');
-  loadingRow.id = 'select-location-loading';
-  loadingRow.className = 'modal-menu-item owner-center-loading hidden';
-  loadingRow.setAttribute('aria-disabled', 'true');
-  loadingRow.style.pointerEvents = 'none';
-  loadingRow.innerHTML = `
-    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-      <strong>${(typeof t === 'function' && t('root.bo.selectLocation.search.loading.title')) || 'Searching businesses...'}</strong><br>
-      <small>${(typeof t === 'function' && t('root.bo.selectLocation.search.loading.desc')) || 'Looking for matching businesses.'}</small>
-    </span>
-  `;
-  inner.appendChild(loadingRow);
-
-  const resultsWrap = document.createElement('div');
-  resultsWrap.id = 'select-location-results-wrap';
-  resultsWrap.className = 'hidden';
-
-  const resultsTitle = document.createElement('div');
-  resultsTitle.className = 'syb-section-title';
-  resultsTitle.textContent = (typeof t === 'function' && t('root.bo.selectLocation.results.title')) || 'Matching businesses';
-
-  const list = document.createElement('div');
-  list.id = 'select-location-results';
-  list.className = 'modal-menu-list';
-
-  resultsWrap.appendChild(resultsTitle);
-  resultsWrap.appendChild(list);
-  inner.appendChild(resultsWrap);
 
   if (!modal.querySelector('.modal-footer')) {
     const footer = document.createElement('div');
@@ -3813,6 +3636,14 @@ function createImportGoogleLocationModal(opts = {}) {
       return;
     }
 
+    if (pendingLocationDraftLimitReachedFor({ googlePlaceId })) {
+      hideModal(id);
+      showProfileDraftsModal({ returnTo: opts?.returnTo, limitReached: true });
+      return;
+    }
+
+    if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = true;
+
     if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = true;
     setGoogleImportStatus(true, translatedOrFallback('root.bo.googleImport.hydrating.title', 'Importing Google details...'), translatedOrFallback('root.bo.googleImport.hydrating.desc', 'Prefilling your private Create Location draft.'));
 
@@ -3878,32 +3709,202 @@ export function showImportGoogleLocationModal(opts = {}) {
   showModal(id);
 }
 
-export async function showSelectLocationModal() {
-  const id = 'select-location-modal';
+function sybLocationName(item) {
+  const raw = item?.locationName;
+  if (typeof raw === 'string') return String(raw || '').trim();
+  if (raw && typeof raw === 'object') {
+    return String(raw.en || Object.values(raw)[0] || '').trim();
+  }
+  return String(item?.displayName || item?.name || item?.locationID || '').trim();
+}
+
+function sybApplyStatusDecor(row, status) {
+  const dot = row.querySelector('.syb-status-dot');
+  const gift = row.querySelector('.syb-gift');
+  if (!dot || !gift) return;
+
+  const owned = status?.ownedNow === true;
+  const vis = String(status?.visibilityState || '').trim();
+  const courtesyUntil = String(status?.courtesyUntil || '').trim();
+  const entitled = status?.campaignEntitled === true;
+
+  dot.classList.toggle('syb-taken', owned);
+  dot.classList.toggle('syb-parked', !owned && vis === 'hidden');
+  dot.classList.toggle('syb-held', !owned && !!courtesyUntil);
+  dot.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
+
+  gift.classList.toggle('syb-gift-on', entitled);
+  gift.style.display = entitled ? '' : 'none';
+}
+
+function sybBuildPickPayload(item) {
+  const media = (item && typeof item.media === 'object') ? item.media : {};
+  const images = Array.isArray(item?.images)
+    ? item.images
+    : (Array.isArray(media?.images) ? media.images : []);
+  const cover = String(media?.cover || item?.imageSrc || '').trim();
+
+  return {
+    locationID: String(item?.locationID || '').trim(),
+    slug: String(item?.locationID || '').trim(),
+    id: String(item?.ID || item?.id || item?.locationUID || '').trim() || String(item?.locationID || '').trim(),
+    displayName: sybLocationName(item),
+    name: sybLocationName(item),
+    imageSrc: cover,
+    media: {
+      ...(media || {}),
+      cover: cover || String(media?.cover || '').trim()
+    },
+    images,
+    tags: Array.isArray(item?.tags) ? item.tags : [],
+    descriptions: (item && typeof item.descriptions === 'object') ? item.descriptions : {},
+    contactInformation: (item && typeof item.contactInformation === 'object') ? item.contactInformation : {},
+    links: (item && typeof item.links === 'object') ? item.links : {},
+    raw: item || null
+  };
+}
+
+function sybMakeLocationRow(item, onPick) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'modal-menu-item syb-card';
+
+  const displayName = sybLocationName(item);
+  const line2 = String(item?.sybAddressLine || '').trim() || String(item?.locationID || '').trim();
+
+  btn.innerHTML = `
+    <span class="icon-img">📍</span>
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${displayName}</strong><br><small>${line2}</small>
+    </span>
+    <span class="syb-status-dot" aria-hidden="true"></span>
+    <span class="syb-gift" aria-hidden="true">🎁</span>
+  `;
+
+  sybApplyStatusDecor(btn, item?.sybStatus || {});
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    onPick?.(sybBuildPickPayload(item));
+  });
+
+  return btn;
+}
+
+function sybRenderLocationRows(targetList, items, emptyTitle, emptyDesc, onPick) {
+  targetList.innerHTML = '';
+
+  if (!Array.isArray(items) || !items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'modal-menu-item modal-static-card syb-empty-row';
+    empty.innerHTML = `
+      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+        <strong>${emptyTitle}</strong>${emptyDesc ? `<br><small>${emptyDesc}</small>` : ''}
+      </span>
+    `;
+    targetList.appendChild(empty);
+    return;
+  }
+
+  items.forEach((item) => {
+    targetList.appendChild(sybMakeLocationRow(item, onPick));
+  });
+}
+
+async function showExistingNaviGenProfileModal() {
+  const id = 'existing-navigen-profile-modal';
   document.getElementById(id)?.remove();
-  createSelectLocationModal();
+
+  const modal = injectModal({
+    id,
+    title: translatedOrFallback('root.bo.existing.title', 'Find existing NaviGen profile'),
+    layout: 'menu',
+    bodyHTML: ''
+  });
+
+  const topBar = modal.querySelector('.modal-top-bar');
+  const inner = modal.querySelector('.modal-body-inner');
+  if (!topBar || !inner) return null;
+
+  const input = document.createElement('input');
+  input.type = 'search';
+  input.id = 'existing-navigen-profile-search';
+  input.className = 'input';
+  input.spellcheck = false;
+  input.autocapitalize = 'off';
+  input.autocomplete = 'off';
+  input.placeholder = translatedOrFallback('root.bo.existing.placeholder', '🔍 Search profile name or city');
+
+  const searchRow = document.createElement('div');
+  searchRow.className = 'select-location-search-row';
+
+  const searchLeft = document.createElement('div');
+  searchLeft.className = 'select-location-search-left';
+
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'clear-x';
+  clearBtn.id = 'existing-navigen-profile-clear-search';
+  clearBtn.textContent = 'x';
+  clearBtn.style.display = 'none';
+  clearBtn.setAttribute('aria-label', translatedOrFallback('common.search.clear', 'Clear search'));
+
+  const syncClear = () => {
+    const hasValue = !!String(input.value || '').trim();
+    clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
+  };
+
+  input.addEventListener('input', syncClear);
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+    syncClear();
+  });
+
+  searchLeft.appendChild(input);
+  searchLeft.appendChild(clearBtn);
+  searchRow.appendChild(searchLeft);
+  topBar.appendChild(searchRow);
+
+  const hintRow = document.createElement('div');
+  hintRow.className = 'syb-inline-copy';
+  inner.appendChild(hintRow);
+
+  const loadingRow = document.createElement('div');
+  loadingRow.className = 'modal-menu-item owner-center-loading hidden';
+  loadingRow.setAttribute('aria-disabled', 'true');
+  loadingRow.style.pointerEvents = 'none';
+  loadingRow.innerHTML = `
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${translatedOrFallback('root.bo.selectLocation.search.loading.title', 'Searching businesses...')}</strong><br>
+      <small>${translatedOrFallback('root.bo.selectLocation.search.loading.desc', 'Looking for matching businesses.')}</small>
+    </span>
+  `;
+  inner.appendChild(loadingRow);
+
+  const resultsWrap = document.createElement('div');
+  resultsWrap.className = 'hidden';
+
+  const resultsTitle = document.createElement('div');
+  resultsTitle.className = 'syb-section-title';
+  resultsTitle.textContent = translatedOrFallback('root.bo.selectLocation.results.title', 'Matching businesses');
+
+  const list = document.createElement('div');
+  list.className = 'modal-menu-list';
+
+  resultsWrap.appendChild(resultsTitle);
+  resultsWrap.appendChild(list);
+  inner.appendChild(resultsWrap);
+
+  setupTapOutClose(id);
+
   showModal(id);
-
-  const modal = document.getElementById(id);
-  const input = modal?.querySelector('#select-location-search');
-  const list = modal?.querySelector('#select-location-results');
-  const listWrap = modal?.querySelector('#select-location-results-wrap');
-  const loadingRow = modal?.querySelector('#select-location-loading');
-  const hintRow = modal?.querySelector('#select-location-search-hint');
-  const recentBtn = modal?.querySelector('#select-location-recent-trigger');
-  const recentWrap = modal?.querySelector('#select-location-recent-wrap');
-  const recentList = modal?.querySelector('#select-location-recent-list');
-
-  if (!modal || !(input instanceof HTMLInputElement) || !list || !listWrap || !loadingRow || !hintRow || !recentBtn || !recentWrap || !recentList) return null;
-
-  modal.dataset.pick = '';
 
   const MIN_QUERY_LEN = 3;
   const SEARCH_LIMIT = 5;
   let searchSeq = 0;
   let searchTimer = 0;
-  let recentLoaded = false;
-  let recentLoading = false;
 
   const norm = (s) =>
     String(s || '')
@@ -3916,15 +3917,6 @@ export async function showSelectLocationModal() {
 
   const compactQueryLen = (q) => norm(q).replace(/\s+/g, '').length;
 
-  const getName = (item) => {
-    const raw = item?.locationName;
-    if (typeof raw === 'string') return String(raw || '').trim();
-    if (raw && typeof raw === 'object') {
-      return String(raw.en || Object.values(raw)[0] || '').trim();
-    }
-    return String(item?.displayName || item?.name || item?.locationID || '').trim();
-  };
-
   const setHint = (title, desc = '') => {
     hintRow.classList.remove('hidden');
     hintRow.innerHTML = `
@@ -3933,105 +3925,10 @@ export async function showSelectLocationModal() {
     `;
   };
 
-  const applyStatusDecor = (row, status) => {
-    const dot = row.querySelector('.syb-status-dot');
-    const gift = row.querySelector('.syb-gift');
-    if (!dot || !gift) return;
-
-    const owned = status?.ownedNow === true;
-    const vis = String(status?.visibilityState || '').trim();
-    const courtesyUntil = String(status?.courtesyUntil || '').trim();
-    const entitled = status?.campaignEntitled === true;
-
-    dot.classList.toggle('syb-taken', owned);
-    dot.classList.toggle('syb-parked', !owned && vis === 'hidden');
-    dot.classList.toggle('syb-held', !owned && !!courtesyUntil);
-    dot.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
-
-    gift.classList.toggle('syb-gift-on', entitled);
-    gift.style.display = entitled ? '' : 'none';
-  };
-
-  const buildPickPayload = (item) => {
-    const media = (item && typeof item.media === 'object') ? item.media : {};
-    const images = Array.isArray(item?.images)
-      ? item.images
-      : (Array.isArray(media?.images) ? media.images : []);
-    const cover = String(media?.cover || item?.imageSrc || '').trim();
-
-    return {
-      locationID: String(item?.locationID || '').trim(),
-      slug: String(item?.locationID || '').trim(),
-      id: String(item?.ID || item?.id || item?.locationUID || '').trim() || String(item?.locationID || '').trim(),
-      displayName: getName(item),
-      name: getName(item),
-      imageSrc: cover,
-      media: {
-        ...(media || {}),
-        cover: cover || String(media?.cover || '').trim()
-      },
-      images,
-      tags: Array.isArray(item?.tags) ? item.tags : [],
-      descriptions: (item && typeof item.descriptions === 'object') ? item.descriptions : {},
-      contactInformation: (item && typeof item.contactInformation === 'object') ? item.contactInformation : {},
-      links: (item && typeof item.links === 'object') ? item.links : {},
-      raw: item || null
-    };
-  };
-
-  const makeRow = (item) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'modal-menu-item syb-card';
-
-    const displayName = getName(item);
-    const line2 = String(item?.sybAddressLine || '').trim() || String(item?.locationID || '').trim();
-
-    btn.innerHTML = `
-      <span class="icon-img">📍</span>
-      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-        <strong>${displayName}</strong><br><small>${line2}</small>
-      </span>
-      <span class="syb-status-dot" aria-hidden="true"></span>
-      <span class="syb-gift" aria-hidden="true">🎁</span>
-    `;
-
-    applyStatusDecor(btn, item?.sybStatus || {});
-
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      modal.dataset.pick = '';
-      modal.dataset.pick = JSON.stringify(buildPickPayload(item));
-      hideModal(id);
-    });
-
-    return btn;
-  };
-
-  const renderRows = (targetList, items, emptyTitle, emptyDesc) => {
-    targetList.innerHTML = '';
-
-    if (!Array.isArray(items) || !items.length) {
-      const empty = document.createElement('div');
-      empty.className = 'modal-menu-item modal-static-card syb-empty-row';
-      empty.innerHTML = `
-        <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-          <strong>${emptyTitle}</strong>${emptyDesc ? `<br><small>${emptyDesc}</small>` : ''}
-        </span>
-      `;
-      targetList.appendChild(empty);
-      return;
-    }
-
-    items.forEach((item) => {
-      targetList.appendChild(makeRow(item));
-    });
-  };
-
   const resetSearchUi = () => {
     searchSeq += 1;
     loadingRow.classList.add('hidden');
-    listWrap.classList.add('hidden');
+    resultsWrap.classList.add('hidden');
     list.innerHTML = '';
 
     if (String(input.value || '').trim()) {
@@ -4041,11 +3938,34 @@ export async function showSelectLocationModal() {
       );
     } else {
       setHint(
-        translatedOrFallback('root.bo.selectLocation.search.idle.title', 'Start with search or choose a route'),
-        translatedOrFallback('root.bo.selectLocation.search.idle.desc', 'Type at least 3 characters to search existing businesses.')
+        translatedOrFallback('root.bo.existing.idle.title', 'Search profiles already on NaviGen'),
+        translatedOrFallback('root.bo.existing.idle.desc', 'Type at least 3 characters to search existing profiles.')
       );
     }
   };
+
+  let finish = null;
+  const pickedPromise = new Promise((resolve) => {
+    let done = false;
+
+    finish = (value = null) => {
+      if (done) return;
+      done = true;
+      resolve(value);
+    };
+
+    const tick = setInterval(() => {
+      if (done) {
+        clearInterval(tick);
+        return;
+      }
+
+      if (modal.classList.contains('hidden')) {
+        clearInterval(tick);
+        finish(null);
+      }
+    }, 150);
+  });
 
   const runSearch = async (rawQuery) => {
     const query = String(rawQuery || '').trim();
@@ -4057,10 +3977,9 @@ export async function showSelectLocationModal() {
     }
 
     const seq = ++searchSeq;
-    recentWrap.classList.add('hidden');
     hintRow.classList.add('hidden');
     loadingRow.classList.remove('hidden');
-    listWrap.classList.add('hidden');
+    resultsWrap.classList.add('hidden');
     list.innerHTML = '';
 
     let items = [];
@@ -4080,77 +3999,26 @@ export async function showSelectLocationModal() {
     loadingRow.classList.add('hidden');
 
     if (items.length) {
-      renderRows(
+      sybRenderLocationRows(
         list,
         items,
-        (typeof t === 'function' && t('root.bo.selectLocation.search.none.title')) || 'No matching businesses',
-        (typeof t === 'function' && t('root.bo.selectLocation.search.none.desc')) || 'Continue typing, or use Create a location / Import from Google.'
+        translatedOrFallback('root.bo.selectLocation.search.none.title', 'No matching businesses'),
+        translatedOrFallback('root.bo.selectLocation.search.none.desc', 'Continue typing, or use Create a location / Import from Google.'),
+        (picked) => {
+          hideModal(id);
+          finish?.(picked);
+        }
       );
-      listWrap.classList.remove('hidden');
+      resultsWrap.classList.remove('hidden');
       return;
     }
 
-    listWrap.classList.add('hidden');
+    resultsWrap.classList.add('hidden');
     setHint(
-      (typeof t === 'function' && t('root.bo.selectLocation.search.none.title')) || 'No matching businesses',
-      (typeof t === 'function' && t('root.bo.selectLocation.search.none.desc')) || 'Continue typing, or use Create a location / Import from Google.'
+      translatedOrFallback('root.bo.selectLocation.search.none.title', 'No matching businesses'),
+      translatedOrFallback('root.bo.selectLocation.search.none.desc', 'Continue typing, or use Create a location / Import from Google.')
     );
   };
-
-  const loadRecentlyUsed = async () => {
-    if (recentLoading) return;
-    recentLoading = true;
-    recentWrap.classList.remove('hidden');
-    recentList.innerHTML = '';
-
-    const loading = document.createElement('div');
-    loading.className = 'modal-menu-item modal-static-card owner-center-loading syb-empty-row';
-    loading.innerHTML = `
-      <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
-        <strong>${(typeof t === 'function' && t('root.bo.recent.loading.title')) || 'Loading recently used...'}</strong><br>
-        <small>${(typeof t === 'function' && t('root.bo.recent.loading.desc')) || 'Getting places saved on this device.'}</small>
-      </span>
-    `;
-    recentList.appendChild(loading);
-
-    let rows = [];
-    try {
-      const res = await fetch('/api/owner/sessions', {
-        cache: 'no-store',
-        credentials: 'include'
-      });
-      const j = res.ok ? await res.json().catch(() => null) : null;
-      rows = Array.isArray(j?.rows) ? j.rows : [];
-    } catch {
-      rows = [];
-    }
-
-    recentList.innerHTML = '';
-    renderRows(
-      recentList,
-      rows.slice(0, 5),
-      (typeof t === 'function' && t('root.bo.recent.empty.title')) || 'No saved places yet',
-      (typeof t === 'function' && t('root.bo.recent.empty.desc')) || 'Places you manage on this device will appear here.'
-    );
-    recentLoaded = true;
-    recentLoading = false;
-  };
-
-  recentBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-
-    const opening = recentWrap.classList.contains('hidden');
-    recentWrap.classList.toggle('hidden', !opening);
-    listWrap.classList.add('hidden');
-    loadingRow.classList.add('hidden');
-
-    if (opening) {
-      hintRow.classList.add('hidden');
-      if (!recentLoaded) await loadRecentlyUsed();
-    } else {
-      resetSearchUi();
-    }
-  });
 
   input.addEventListener('input', () => {
     if (searchTimer) clearTimeout(searchTimer);
@@ -4160,23 +4028,303 @@ export async function showSelectLocationModal() {
   });
 
   resetSearchUi();
-  requestAnimationFrame(() => input.blur());
+  requestAnimationFrame(() => input.focus());
 
-  return await new Promise((resolve) => {
+  return await pickedPromise;
+}
+
+async function showRecentlyUsedLocationsModal() {
+  const id = 'recently-used-locations-modal';
+  document.getElementById(id)?.remove();
+
+  const modal = injectModal({
+    id,
+    title: translatedOrFallback('root.bo.recent.title', 'Recently used'),
+    layout: 'menu',
+    bodyHTML: `
+      <div class="modal-form-stack">
+        <div class="modal-menu-list" id="recently-used-locations-list"></div>
+      </div>
+    `
+  });
+
+  const list = modal.querySelector('#recently-used-locations-list');
+  if (!list) return null;
+
+  setupTapOutClose(id);
+  showModal(id);
+
+  let finish = null;
+  const pickedPromise = new Promise((resolve) => {
+    let done = false;
+
+    finish = (value = null) => {
+      if (done) return;
+      done = true;
+      resolve(value);
+    };
+
     const tick = setInterval(() => {
-      const picked = modal.dataset.pick;
-      if (picked) {
+      if (done) {
         clearInterval(tick);
-        modal.dataset.pick = '';
-        try {
-          resolve(JSON.parse(picked));
-        } catch {
-          resolve(null);
-        }
+        return;
       }
+
       if (modal.classList.contains('hidden')) {
         clearInterval(tick);
-        resolve(null);
+        finish(null);
+      }
+    }, 150);
+  });
+
+  const loading = document.createElement('div');
+  loading.className = 'modal-menu-item modal-static-card owner-center-loading syb-empty-row';
+  loading.innerHTML = `
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${translatedOrFallback('root.bo.recent.loading.title', 'Loading recently used...')}</strong><br>
+      <small>${translatedOrFallback('root.bo.recent.loading.desc', 'Getting places saved on this device.')}</small>
+    </span>
+  `;
+  list.appendChild(loading);
+
+  let rows = [];
+  try {
+    const res = await fetch('/api/owner/sessions', {
+      cache: 'no-store',
+      credentials: 'include'
+    });
+    const j = res.ok ? await res.json().catch(() => null) : null;
+    rows = Array.isArray(j?.rows) ? j.rows : [];
+  } catch {
+    rows = [];
+  }
+
+  sybRenderLocationRows(
+    list,
+    rows.slice(0, 5),
+    translatedOrFallback('root.bo.recent.empty.title', 'No saved places yet'),
+    translatedOrFallback('root.bo.recent.empty.desc', 'Places you manage on this device will appear here.'),
+    (picked) => {
+      hideModal(id);
+      finish?.(picked);
+    }
+  );
+
+  return await pickedPromise;
+}
+
+function showProfileDraftsModal(opts = {}) {
+  const id = 'profile-drafts-modal';
+  document.getElementById(id)?.remove();
+
+  const shouldReturnToSelectLocation = String(opts?.returnTo || '').trim() === 'syb';
+
+  const closeDrafts = (ev = null) => {
+    ev?.preventDefault?.();
+    ev?.stopPropagation?.();
+    hideModal(id);
+    if (shouldReturnToSelectLocation) showSelectLocationModal();
+  };
+
+  const modal = injectModal({
+    id,
+    title: translatedOrFallback('root.bo.drafts.title', 'Profile drafts'),
+    layout: 'menu',
+    onClose: (ev) => { closeDrafts(ev); },
+    bodyHTML: `
+      <div class="modal-form-stack">
+        <div id="profile-drafts-limit-note" class="modal-menu-item modal-static-card syb-draft-limit-note hidden">
+          <span class="label">
+            <strong>${translatedOrFallback('root.bo.drafts.full.title', 'You already have 3 profile drafts.')}</strong><br>
+            <small>${translatedOrFallback('root.bo.drafts.full.desc', 'Edit or discard one before creating another.')}</small>
+          </span>
+        </div>
+
+        <div class="syb-inline-copy">
+          <strong>${translatedOrFallback('root.bo.drafts.modal.help.title', 'Saved on this device')}</strong>
+          <small>${translatedOrFallback('root.bo.drafts.modal.help.desc', 'Drafts are private until published.')}</small>
+        </div>
+
+        <div id="profile-drafts-list" class="modal-menu-list syb-draft-list"></div>
+      </div>
+    `
+  });
+
+  const list = modal.querySelector('#profile-drafts-list');
+  const limitNote = modal.querySelector('#profile-drafts-limit-note');
+
+  function renderDrafts() {
+    const drafts = readPendingLocationDrafts();
+    if (limitNote) limitNote.classList.toggle('hidden', opts?.limitReached !== true);
+
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (!drafts.length) {
+      const empty = document.createElement('div');
+      empty.className = 'modal-menu-item modal-static-card syb-empty-row';
+      empty.innerHTML = `
+        <span class="label">
+          <strong>${translatedOrFallback('root.bo.drafts.empty.title', 'No profile drafts yet')}</strong><br>
+          <small>${translatedOrFallback('root.bo.drafts.empty.desc', 'Create or import a profile to save a private draft.')}</small>
+        </span>
+      `;
+      list.appendChild(empty);
+      return;
+    }
+
+    drafts.forEach((draft) => {
+      const card = document.createElement('div');
+      card.className = 'modal-menu-item syb-card syb-draft-card';
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
+
+      const icon = document.createElement('span');
+      icon.className = 'icon-img';
+      icon.textContent = '📝';
+
+      const label = document.createElement('span');
+      label.className = 'label';
+
+      const strong = document.createElement('strong');
+      strong.textContent = p8DraftTitle(draft);
+
+      const small = document.createElement('small');
+      small.textContent = p8DraftSubtitle(draft);
+
+      label.appendChild(strong);
+      label.appendChild(document.createElement('br'));
+      label.appendChild(small);
+
+      const actions = document.createElement('span');
+      actions.className = 'syb-draft-actions';
+
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'syb-draft-action';
+      editBtn.setAttribute('data-action', 'edit');
+      editBtn.setAttribute('aria-label', translatedOrFallback('root.bo.drafts.edit', 'Edit draft'));
+      editBtn.title = translatedOrFallback('root.bo.drafts.edit', 'Edit draft');
+      editBtn.textContent = '✏️';
+
+      const discardBtn = document.createElement('button');
+      discardBtn.type = 'button';
+      discardBtn.className = 'syb-draft-action';
+      discardBtn.setAttribute('data-action', 'discard');
+      discardBtn.setAttribute('aria-label', translatedOrFallback('root.bo.drafts.discard', 'Discard draft'));
+      discardBtn.title = translatedOrFallback('root.bo.drafts.discard', 'Discard draft');
+      discardBtn.textContent = '🗑️';
+
+      const openDraft = (ev = null) => {
+        ev?.preventDefault?.();
+        ev?.stopPropagation?.();
+        hideModal(id);
+        showRequestListingModal({ prefill: draft, returnTo: opts?.returnTo });
+      };
+
+      card.addEventListener('click', openDraft);
+      card.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') openDraft(ev);
+      });
+
+      editBtn.addEventListener('click', openDraft);
+
+      discardBtn.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        discardBtn.disabled = true;
+        const ok = await discardPendingLocationDraft(draft);
+        discardBtn.disabled = false;
+
+        if (ok) {
+          showToast(translatedOrFallback('root.bo.drafts.discarded', 'Draft discarded.'), 1800);
+          renderDrafts();
+        }
+      });
+
+      actions.appendChild(editBtn);
+      actions.appendChild(discardBtn);
+      card.appendChild(icon);
+      card.appendChild(label);
+      card.appendChild(actions);
+
+      list.appendChild(card);
+    });
+  }
+
+  renderDrafts();
+  setupTapOutClose(id, closeDrafts);
+  showModal(id);
+}
+
+export async function showSelectLocationModal() {
+  const id = 'select-location-modal';
+  document.getElementById(id)?.remove();
+  createSelectLocationModal();
+  showModal(id);
+
+  const modal = document.getElementById(id);
+  if (!modal) return null;
+
+  let awaitingChild = false;
+  let done = false;
+  let interval = null;
+
+  return await new Promise((resolve) => {
+    const finish = (value = null) => {
+      if (done) return;
+      done = true;
+      if (interval) clearInterval(interval);
+      resolve(value);
+    };
+
+    const openNonPickingChild = (openFn) => {
+      awaitingChild = true;
+      hideModal(id);
+      openFn?.();
+      finish(null);
+    };
+
+    modal.querySelector('#select-location-create-route')?.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      openNonPickingChild(() => showRequestListingModal({ returnTo: 'syb' }));
+    });
+
+    modal.querySelector('#select-location-google-route')?.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      openNonPickingChild(() => showImportGoogleLocationModal({ returnTo: 'syb' }));
+    });
+
+    modal.querySelector('#select-location-drafts-route')?.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      openNonPickingChild(() => showProfileDraftsModal({ returnTo: 'syb' }));
+    });
+
+    modal.querySelector('#select-location-existing-route')?.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      awaitingChild = true;
+      hideModal(id);
+      const picked = await showExistingNaviGenProfileModal();
+      finish(picked || null);
+    });
+
+    modal.querySelector('#select-location-recent-route')?.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      awaitingChild = true;
+      hideModal(id);
+      const picked = await showRecentlyUsedLocationsModal();
+      finish(picked || null);
+    });
+
+    interval = setInterval(() => {
+      if (done) {
+        clearInterval(interval);
+        return;
+      }
+
+      if (!awaitingChild && modal.classList.contains('hidden')) {
+        finish(null);
       }
     }, 150);
   });
@@ -4863,59 +5011,205 @@ export async function showExampleDashboardsModal() {
 }
 
 const P8_PENDING_LOCATION_DRAFT_KEY = 'navigen.p8.pendingLocationDraft';
+const P8_PENDING_LOCATION_DRAFTS_KEY = 'navigen.p8.pendingLocationDrafts';
+const P8_PENDING_LOCATION_DRAFT_LIMIT = 3;
+
+function normalizePendingLocationDraft(meta) {
+  const source = meta && typeof meta === 'object' ? meta : {};
+  return {
+    ...source,
+    draftULID: String(source?.draftULID || '').trim(),
+    draftSessionId: String(source?.draftSessionId || '').trim(),
+    googlePlaceId: String(source?.googlePlaceId || '').trim(),
+    createdAt: Number(source?.createdAt || Date.now()),
+    updatedAt: Number(source?.updatedAt || Date.now())
+  };
+}
+
+function pendingLocationDraftSortValue(draft) {
+  const value = Number(draft?.updatedAt || draft?.createdAt || 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function pendingLocationDraftsSorted(drafts) {
+  return (Array.isArray(drafts) ? drafts : [])
+    .filter((draft) => draft && typeof draft === 'object')
+    .map(normalizePendingLocationDraft)
+    .sort((a, b) => pendingLocationDraftSortValue(b) - pendingLocationDraftSortValue(a))
+    .slice(0, P8_PENDING_LOCATION_DRAFT_LIMIT);
+}
+
+function readPendingLocationDrafts() {
+  try {
+    const rawList = JSON.parse(localStorage.getItem(P8_PENDING_LOCATION_DRAFTS_KEY) || '[]');
+    const list = pendingLocationDraftsSorted(Array.isArray(rawList) ? rawList : []);
+
+    if (list.length) return list;
+
+    const legacy = JSON.parse(localStorage.getItem(P8_PENDING_LOCATION_DRAFT_KEY) || 'null');
+    if (legacy && typeof legacy === 'object') return pendingLocationDraftsSorted([legacy]);
+
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+function writePendingLocationDrafts(drafts) {
+  try {
+    const next = pendingLocationDraftsSorted(drafts);
+    localStorage.setItem(P8_PENDING_LOCATION_DRAFTS_KEY, JSON.stringify(next));
+    localStorage.removeItem(P8_PENDING_LOCATION_DRAFT_KEY);
+    return next;
+  } catch {
+    // storage failures must never block the owner flow
+    return readPendingLocationDrafts();
+  }
+}
+
+function pendingLocationDraftMatches(a, b) {
+  const aDraftULID = String(a?.draftULID || '').trim();
+  const bDraftULID = String(b?.draftULID || '').trim();
+  const aGooglePlaceId = String(a?.googlePlaceId || '').trim();
+  const bGooglePlaceId = String(b?.googlePlaceId || '').trim();
+
+  if (aDraftULID && bDraftULID && aDraftULID === bDraftULID) return true;
+  if (aGooglePlaceId && bGooglePlaceId && aGooglePlaceId === bGooglePlaceId) return true;
+
+  return false;
+}
+
+function findPendingLocationDraftMatch(meta) {
+  const wanted = normalizePendingLocationDraft(meta);
+  return readPendingLocationDrafts().find((draft) => pendingLocationDraftMatches(draft, wanted)) || null;
+}
+
+function pendingLocationDraftLimitReachedFor(meta) {
+  const drafts = readPendingLocationDrafts();
+  if (findPendingLocationDraftMatch(meta)) return false;
+  return drafts.length >= P8_PENDING_LOCATION_DRAFT_LIMIT;
+}
 
 function savePendingLocationDraft(meta) {
   try {
-    const next = meta && typeof meta === 'object' ? meta : {};
-    const prev = readPendingLocationDraft();
+    const next = normalizePendingLocationDraft(meta);
+    const drafts = readPendingLocationDrafts();
+    const existingIndex = drafts.findIndex((draft) => pendingLocationDraftMatches(draft, next));
 
-    const nextDraftULID = String(next?.draftULID || '').trim();
-    const prevDraftULID = String(prev?.draftULID || '').trim();
-    const nextGooglePlaceId = String(next?.googlePlaceId || '').trim();
-    const prevGooglePlaceId = String(prev?.googlePlaceId || '').trim();
+    if (existingIndex >= 0) {
+      const base = drafts[existingIndex] || {};
+      drafts[existingIndex] = {
+        ...base,
+        ...next,
+        createdAt: Number(next?.createdAt || base?.createdAt || Date.now()),
+        updatedAt: Number(next?.updatedAt || Date.now())
+      };
 
-    const sameDraft = !!nextDraftULID && !!prevDraftULID && nextDraftULID === prevDraftULID;
-    const sameGooglePlace = !!nextGooglePlaceId && !!prevGooglePlaceId && nextGooglePlaceId === prevGooglePlaceId;
+      return {
+        ok: true,
+        draft: drafts[existingIndex],
+        drafts: writePendingLocationDrafts(drafts),
+        blocked: false
+      };
+    }
 
-    const base = (sameDraft || sameGooglePlace) ? (prev || {}) : {};
-    const merged = {
-      ...base,
+    if (drafts.length >= P8_PENDING_LOCATION_DRAFT_LIMIT) {
+      return {
+        ok: false,
+        draft: next,
+        drafts,
+        blocked: true,
+        reason: 'draft_limit'
+      };
+    }
+
+    const saved = {
       ...next,
-      createdAt: Number(next?.createdAt || base?.createdAt || Date.now()),
+      createdAt: Number(next?.createdAt || Date.now()),
       updatedAt: Number(next?.updatedAt || Date.now())
     };
 
-    localStorage.setItem(P8_PENDING_LOCATION_DRAFT_KEY, JSON.stringify(merged));
+    return {
+      ok: true,
+      draft: saved,
+      drafts: writePendingLocationDrafts([saved, ...drafts]),
+      blocked: false
+    };
   } catch {
     // storage failures must never block the owner flow
+    return {
+      ok: false,
+      draft: meta || null,
+      drafts: readPendingLocationDrafts(),
+      blocked: false,
+      reason: 'storage_failed'
+    };
   }
 }
 
 function readPendingLocationDraft() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(P8_PENDING_LOCATION_DRAFT_KEY) || 'null');
-    return raw && typeof raw === 'object' ? raw : null;
-  } catch {
-    return null;
-  }
+  return readPendingLocationDrafts()[0] || null;
 }
 
-function clearPendingLocationDraft() {
+function clearPendingLocationDraft(target = null) {
   try {
-    localStorage.removeItem(P8_PENDING_LOCATION_DRAFT_KEY);
+    if (!target) {
+      localStorage.removeItem(P8_PENDING_LOCATION_DRAFTS_KEY);
+      localStorage.removeItem(P8_PENDING_LOCATION_DRAFT_KEY);
+      return;
+    }
+
+    const wanted = normalizePendingLocationDraft(target);
+    const next = readPendingLocationDrafts().filter((draft) => !pendingLocationDraftMatches(draft, wanted));
+    writePendingLocationDrafts(next);
   } catch {
     // storage failures must never block the owner flow
   }
+}
+
+async function discardPendingLocationDraft(target) {
+  const draft = normalizePendingLocationDraft(target);
+  const draftULID = String(draft?.draftULID || '').trim();
+  const draftSessionId = String(draft?.draftSessionId || '').trim();
+
+  if (draftULID && draftSessionId) {
+    let ok = false;
+
+    try {
+      const res = await fetch('/api/location/draft', {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          draftULID,
+          draftSessionId,
+          googlePlaceId: String(draft?.googlePlaceId || '').trim()
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      ok = !!res?.ok;
+    } catch {
+      ok = false;
+    }
+
+    if (!ok) {
+      showToast(translatedOrFallback('root.bo.drafts.discard.error', 'Could not discard draft.'), 2400);
+      return false;
+    }
+  }
+
+  clearPendingLocationDraft(draft);
+  return true;
 }
 
 function readPendingLocationDraftByGooglePlaceId(googlePlaceId) {
   const wanted = String(googlePlaceId || '').trim();
   if (!wanted) return null;
 
-  const pending = readPendingLocationDraft();
-  const currentPlaceId = String(pending?.googlePlaceId || '').trim();
-
-  return currentPlaceId && currentPlaceId === wanted ? pending : null;
+  return readPendingLocationDrafts().find((draft) => {
+    const currentPlaceId = String(draft?.googlePlaceId || '').trim();
+    return currentPlaceId && currentPlaceId === wanted;
+  }) || null;
 }
 
 function p8DraftLocationName(draft) {
@@ -6281,6 +6575,12 @@ export function createRequestListingModal(opts = {}) {
     const existingDraftULID = String(prefill?.draftULID || '').trim();
     const existingDraftSessionId = String(prefill?.draftSessionId || '').trim();
 
+    if (!existingDraftULID && !existingDraftSessionId && pendingLocationDraftLimitReachedFor({ mode: 'manual' })) {
+      hideModal(id);
+      showProfileDraftsModal({ returnTo: opts?.returnTo, limitReached: true });
+      return;
+    }
+
     const links = {};
     if (link) links.official = link;
     if (facebook) links.facebook = facebook;
@@ -6506,7 +6806,7 @@ function getModalHeaderHelpSpec(target) {
   if (modalId === 'select-location-modal') {
     return {
       bodyLines: [
-        `${_ownerText('root.bo.notListed.title', 'Create a location')} — ${_ownerText('root.bo.notListed.desc', 'Add your business.')}`,
+        `${_ownerText('root.bo.notListed.title', 'Create a location')} — ${_ownerText('root.bo.notListed.desc', 'Manually add your business.')}`,
         `${_ownerText('root.bo.googleImport.title', 'Import from Google')} — ${_ownerText('root.bo.googleImport.desc', 'Bring in your business details.')}`,
         `${_ownerText('root.bo.recent.title', 'Recently used')} — ${_ownerText('root.bo.recent.desc', 'View and manage your places.')}`,
         _ownerText('root.bo.selectLocation.search.idle.desc', 'Type at least 3 characters to search existing businesses.')
@@ -9647,7 +9947,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
             return;
           }
 
-          clearPendingLocationDraft();
+          clearPendingLocationDraft(draftMeta);
           showToast((typeof t === 'function' && t('locationDraft.ui.published')) || 'Listing published.', 2200);
           hideModal(id);
 

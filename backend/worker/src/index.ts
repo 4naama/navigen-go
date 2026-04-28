@@ -3412,6 +3412,11 @@ export default {
         return await handleLocationDraft(req, env);
       }
 
+      // --- Location draft discard: /api/location/draft (private unpublished draft only)
+      if (normPath === "/api/location/draft" && req.method === "DELETE") {
+        return await handleLocationDraftDelete(req, env);
+      }
+
       // --- Location hydrate: /api/location/hydrate (Phase 8 paid replay + Phase 9 upfront Google import)
       if (normPath === "/api/location/hydrate" && req.method === "POST") {
         return await handleLocationHydrate(req, env);
@@ -5806,6 +5811,51 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
     { ok: true, draftULID: newDraftULID, draftSessionId: newDraftSessionId },
     200,
     draftResponseHeaders
+  );
+}
+
+async function handleLocationDraftDelete(req: Request, env: Env): Promise<Response> {
+  const noStore = { "cache-control": "no-store" };
+
+  const body = await req.json().catch(() => null) as any;
+  if (!body || typeof body !== "object") {
+    return json(
+      { error: { code: "invalid_request", message: "valid JSON body required" } },
+      400,
+      noStore
+    );
+  }
+
+  const draftULID = String(body?.draftULID || "").trim();
+  const draftSessionId = String(body?.draftSessionId || "").trim();
+  const googlePlaceId = String(body?.googlePlaceId || body?.place_id || "").trim();
+
+  if (!ULID_RE.test(draftULID) || !draftSessionId) {
+    return json(
+      { error: { code: "invalid_request", message: "draftULID and draftSessionId required" } },
+      400,
+      noStore
+    );
+  }
+
+  await env.KV_STATUS.delete(`override_draft:${draftULID}:${draftSessionId}`);
+
+  const deviceId = readDeviceId(req);
+  if (deviceId && googlePlaceId && isValidGooglePlaceId(googlePlaceId)) {
+    const indexKey = googleDraftIndexKey(deviceId, googlePlaceId);
+    const indexed = await env.KV_STATUS.get(indexKey, { type: "json" }) as any;
+    const indexedDraftULID = String(indexed?.draftULID || "").trim();
+    const indexedDraftSessionId = String(indexed?.draftSessionId || "").trim();
+
+    if (indexedDraftULID === draftULID && indexedDraftSessionId === draftSessionId) {
+      await env.KV_STATUS.delete(indexKey);
+    }
+  }
+
+  return json(
+    { ok: true, draftULID, draftSessionId },
+    200,
+    noStore
   );
 }
 
