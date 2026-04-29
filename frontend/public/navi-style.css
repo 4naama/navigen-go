@@ -6653,3 +6653,111 @@ body.high-contrast .modal-menu-item.is-active {
   border-color:#fb923c;
   box-shadow:inset 0 0 0 1px rgba(251,146,60,.24);
 }
+
+/* Campaign Management publish path: canonical chip + required state styling. */
+#campaign-management-modal .cm-chip{
+  border:1px solid #d9e4ee;
+  border-radius:14px;
+  background:#fff;
+  overflow:hidden;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+
+#campaign-management-modal .cm-chip .cm-chip-face{
+  min-height:72px;
+  padding:14px 16px;
+  background:#edf4fb;
+  border:0;
+  border-bottom:1px solid #d9e4ee;
+  border-radius:0;
+}
+
+#campaign-management-modal .cm-chip[open] .cm-chip-face,
+#campaign-management-modal .cm-chip.is-complete .cm-chip-face{
+  background:#e6f1ff;
+  border-bottom-color:#c8d9ef;
+}
+
+#campaign-management-modal .cm-chip .cm-chip-body{
+  margin:0;
+  padding:14px 16px 16px;
+  border:0;
+  border-radius:0 0 14px 14px;
+  background:#fff;
+}
+
+#campaign-management-modal .cm-chip.is-complete .cm-section-badge-required{
+  background:#dcfce7;
+  border-color:#86efac;
+  color:#166534;
+}
+
+#campaign-management-modal .cm-plan-chip .campaign-funding-chips{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin:0;
+}
+
+#campaign-management-modal .cm-plan-chip .campaign-funding-chip{
+  display:block;
+  width:100%;
+  max-width:none;
+  box-sizing:border-box;
+  padding:10px 12px;
+  border:1px solid #d9e4ee;
+  border-radius:10px;
+  background:#fff;
+  color:#1f2937;
+  text-align:left;
+}
+
+#campaign-management-modal .cm-plan-chip .campaign-funding-chip:hover{
+  background:#f8fbff;
+  border-color:#bfd3f6;
+  transform:none;
+}
+
+#campaign-management-modal .cm-plan-chip .campaign-funding-chip.is-selected{
+  background:#e6f1ff;
+  border-color:#7aa7ff;
+  box-shadow:inset 0 0 0 1px rgba(59,130,246,.18);
+}
+
+#campaign-management-modal .campaign-mgmt-form .input,
+#campaign-management-modal .campaign-location-search{
+  border:0;
+  border-radius:10px;
+  background:#f6f8fb;
+  box-shadow:inset 0 0 0 1px #d9e4ee;
+}
+
+#campaign-management-modal .campaign-mgmt-form .input:focus,
+#campaign-management-modal .campaign-mgmt-form .input:focus-visible,
+#campaign-management-modal .campaign-location-search:focus,
+#campaign-management-modal .campaign-location-search:focus-visible{
+  outline:0;
+  background:#fff;
+  box-shadow:inset 0 0 0 1px #7aa7ff, 0 0 0 2px rgba(59,130,246,.16);
+}
+
+#campaign-management-modal .cm-form-field.is-required-empty .input{
+  background:#fff7ed;
+  box-shadow:inset 0 0 0 1px #fb923c;
+}
+
+#campaign-management-modal .cm-form-field.is-required-empty .cm-form-label{
+  color:#9a3412;
+}
+
+#campaign-management-modal .cm-required-star{
+  flex:0 0 auto;
+  color:#d32f2f;
+  font-size:1rem;
+  font-weight:800;
+  line-height:1;
+}
+
+#campaign-management-modal .cm-form-label-text{
+  min-width:0;
+}

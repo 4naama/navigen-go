@@ -9485,11 +9485,9 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 }
 
   const renderDraftEditor = () => {
-    let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(listJ?.plan?.tier || '').trim().toLowerCase())
-      ? String(listJ.plan.tier).trim().toLowerCase()
-      : (['standard', 'multi', 'large', 'network'].includes(String(listJ?.inheritedNotice?.blockedPlanTier || '').trim().toLowerCase())
-          ? String(listJ.inheritedNotice.blockedPlanTier).trim().toLowerCase()
-          : 'standard'); // TESTING: default to the current active tier when known; otherwise Standard
+    let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(draft?.planCode || '').trim().toLowerCase())
+      ? String(draft.planCode).trim().toLowerCase()
+      : '';
     let selectedCampaignPreset = String(draft?.campaignPreset || 'promotion').trim().toLowerCase() === 'visibility'
       ? 'visibility'
       : 'promotion';
@@ -9502,16 +9500,23 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
     const field = (labelTxt, control, meta = {}) => {
       const w = document.createElement('div');
-      w.className = 'cm-form-field';
+      w.className = `cm-form-field${meta?.required ? ' is-required' : ''}`;
+
       const lab = document.createElement('div');
       lab.className = 'muted cm-form-label';
-      lab.textContent = labelTxt;
+
+      const labelText = document.createElement('span');
+      labelText.className = 'cm-form-label-text';
+      labelText.textContent = labelTxt;
+      lab.appendChild(labelText);
+
       if (meta?.required) {
-        const badge = document.createElement('span');
-        badge.className = 'cm-field-required';
-        badge.textContent = tSafe('modal.requestListing.section.required', 'Required');
-        lab.appendChild(badge);
+        const star = document.createElement('span');
+        star.className = 'cm-required-star';
+        star.textContent = '*';
+        lab.appendChild(star);
       }
+
       w.appendChild(lab);
       w.appendChild(control);
       return w;
@@ -9660,11 +9665,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     planStateNote.style.display = planStateNote.textContent ? '' : 'none';
 
     planSummaryLabel.innerHTML = `
-      <strong class="cm-section-chip-title">${
-        currentPlanTitle
-          ? `${tSafe('campaign.plan.current.label', 'Current plan')}: ${currentPlanTitle} · ${currentPlanCapacityText}`
-          : tSafe('campaign.plan.choose.title', 'Choose a plan which covers your needs.')
-      }</strong>
+      <strong class="cm-section-chip-title">${tSafe('campaign.plan.choose.title', 'Choose a plan which covers your needs.')}</strong>
     `;
 
     const suggestedUpgradeTitle = currentPlanTier === 'standard'
@@ -9685,16 +9686,30 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     const planChips = document.createElement('div');
     planChips.className = 'campaign-funding-chips';
 
+    function syncPlanUi() {
+      const selectedPlan = PLAN_OPTIONS.find((plan) => plan.code === selectedPlanCode) || null;
+      planField.classList.toggle('is-complete', !!selectedPlan);
+
+      planSummaryLabel.innerHTML = selectedPlan
+        ? `<strong class="cm-section-chip-title">${selectedPlan.title} · €${selectedPlan.priceEur} · ${selectedPlan.capacityText}</strong>`
+        : `<strong class="cm-section-chip-title">${tSafe('campaign.plan.choose.title', 'Choose a plan which covers your needs.')}</strong>`;
+
+      planChips.querySelectorAll('.campaign-funding-chip').forEach((node) => {
+        const code = String(node.getAttribute('data-plan-code') || '').trim();
+        node.classList.toggle('is-selected', code === selectedPlanCode);
+      });
+    }
+
     PLAN_OPTIONS.forEach((plan) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = `campaign-funding-chip${plan.code === selectedPlanCode ? ' is-selected' : ''}`;
+      btn.className = 'campaign-funding-chip';
+      btn.setAttribute('data-plan-code', plan.code);
       btn.textContent = `${plan.title} · €${plan.priceEur} · ${plan.capacityText}`;
       btn.addEventListener('click', () => {
         selectedPlanCode = plan.code;
         upgradeNote.style.display = 'none';
-        planChips.querySelectorAll('.campaign-funding-chip').forEach((node) => node.classList.remove('is-selected'));
-        btn.classList.add('is-selected');
+        syncPlanUi();
         refreshScopeUi();
         if (multiScopeEnabled()) {
           try { scopeSelect.focus(); } catch {}
@@ -9706,6 +9721,8 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       });
       planChips.appendChild(btn);
     });
+
+    syncPlanUi();
 
     planBody.appendChild(planStateNote);
     planBody.appendChild(planLabel);
@@ -9959,13 +9976,29 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     function updateActivateState() {
       const campaignScope = multiScopeEnabled() ? String(scopeSelect.value || 'single').trim() : 'single';
       const selectedCount = Array.from(selectedSet).filter((id) => eligibleByUlid.has(id)).length;
-      const ok =
-        !!String(campaignKey.value || '').trim() &&
-        !!String(startDate.value || '').trim() &&
-        !!String(endDate.value || '').trim() &&
-        (campaignScope !== 'selected' || selectedCount > 0);
 
-      btnCheckout.disabled = !ok || btnCheckout.classList.contains('is-busy');
+      const planComplete = !!String(selectedPlanCode || '').trim();
+      const campaignKeyComplete = !!String(campaignKey.value || '').trim();
+      const startDateComplete = !!String(startDate.value || '').trim();
+      const endDateComplete = !!String(endDate.value || '').trim();
+      const scopeComplete = campaignScope !== 'selected' || selectedCount > 0;
+      const setupComplete = campaignKeyComplete && startDateComplete && endDateComplete && scopeComplete;
+
+      const setCampaignRequiredState = (control, complete) => {
+        if (!(control instanceof HTMLElement)) return;
+        control.classList.toggle('is-required-empty', !complete);
+        control.closest('.cm-form-field')?.classList.toggle('is-required-empty', !complete);
+      };
+
+      planField.classList.toggle('is-complete', planComplete);
+      setupChip.classList.toggle('is-complete', setupComplete);
+
+      setCampaignRequiredState(campaignKey, campaignKeyComplete);
+      setCampaignRequiredState(startDate, startDateComplete);
+      setCampaignRequiredState(endDate, endDateComplete);
+      setCampaignRequiredState(scopeSelect, scopeField.style.display === 'none' ? true : scopeComplete);
+
+      btnCheckout.disabled = !(planComplete && setupComplete) || btnCheckout.classList.contains('is-busy');
     }
 
     search.addEventListener('input', syncLocationRoster);
@@ -10189,7 +10222,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     { code: 'promotion', title: tSafe('campaign.plan.preset.promotion', 'Promotion') }
   ];
 
-  let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(listJ?.plan?.tier || '').trim().toLowerCase()) ? String(listJ.plan.tier).trim().toLowerCase() : 'standard'; // Default to the current active tier when known; otherwise Standard
+  // Plan selection is scoped inside renderDraftEditor; no plan is preselected on publish setup.
   
   const scopeSingleLabel = tSafe('campaign.ui.scope.single', 'This location only');
   const scopeSelectedLabel = tSafe('campaign.ui.scope.selected', 'Selected locations');
