@@ -6098,17 +6098,25 @@ export function createRequestListingModal(opts = {}) {
   }
 
   function syncRequestListingRequiredChecks() {
-    const businessComplete = [
+    const requiredBusinessFields = [
       rlName,
       rlAddress,
       rlCity,
       rlCountry,
       rlGroup,
       rlSubgroup
-    ].every((el) => String(el?.value || '').trim());
+    ];
 
+    requiredBusinessFields.forEach((el) => {
+      el?.classList.toggle('is-required-empty', !String(el?.value || '').trim());
+    });
+
+    const businessComplete = requiredBusinessFields.every((el) => String(el?.value || '').trim());
+    const contextComplete = selectedContextSet.size > 0;
+
+    rlOpenContexts?.classList.toggle('is-required-empty', !contextComplete);
     rlBusinessSection?.classList.toggle('is-complete', businessComplete);
-    rlContextSection?.classList.toggle('is-complete', selectedContextSet.size > 0);
+    rlContextSection?.classList.toggle('is-complete', contextComplete);
   }
 
   syncRequestListingTags();
@@ -6199,7 +6207,7 @@ export function createRequestListingModal(opts = {}) {
                 aria-label="${t('modal.requestListing.contexts.done') || 'Done'}"
                 title="${t('modal.requestListing.contexts.done') || 'Done'}"
               >
-                <span aria-hidden="true">✅</span>
+                <span aria-hidden="true">&#10003;</span>
               </button>
             </div>
             <div id="request-context-selected-chips" class="request-chip-row"></div>
@@ -6305,6 +6313,7 @@ export function createRequestListingModal(opts = {}) {
 
     const renderContextPicker = () => {
       const selectedKeys = Array.from(selectedContextSet);
+      ctxDoneBtn?.classList.toggle('is-active', selectedKeys.length > 0);
 
       if (ctxSelectedCard && ctxSelectedChips) {
         ctxSelectedChips.innerHTML = '';
