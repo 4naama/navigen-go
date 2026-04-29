@@ -1117,5 +1117,9 @@
   "root.bo.drafts.full.desc": "Modifiez ou supprimez-en un avant d’en créer un autre.",
   "root.bo.drafts.discard": "Supprimer le brouillon",
   "root.bo.drafts.discard.error": "Impossible de supprimer le brouillon.",
-  "root.bo.drafts.discarded": "Brouillon supprimé."
+  "root.bo.drafts.discarded": "Brouillon supprimé.",
+  "owner.restore.progress.title": "Restauration de l’accès propriétaire...",
+  "owner.restore.progress.desc": "Actualisation de l’établissement actif sur cet appareil.",
+  "owner.restore.settingsProgress.title": "Restauration de l’accès propriétaire...",
+  "owner.restore.settingsProgress.desc": "En attente du chargement complet de l’établissement restauré."
 }

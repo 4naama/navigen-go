@@ -1117,5 +1117,9 @@
   "root.bo.drafts.full.desc": "Edita o elimina uno antes de crear otro.",
   "root.bo.drafts.discard": "Descartar borrador",
   "root.bo.drafts.discard.error": "No se pudo descartar el borrador.",
-  "root.bo.drafts.discarded": "Borrador descartado."
+  "root.bo.drafts.discarded": "Borrador descartado.",
+  "owner.restore.progress.title": "Restaurando acceso de propietario...",
+  "owner.restore.progress.desc": "Actualizando el listado activo en este dispositivo.",
+  "owner.restore.settingsProgress.title": "Restaurando acceso de propietario...",
+  "owner.restore.settingsProgress.desc": "Esperando a que el listado restaurado termine de cargarse."
 }

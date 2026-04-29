@@ -1117,5 +1117,9 @@
   "root.bo.drafts.full.desc": "ערוך או מחק אחד לפני יצירת חדש.",
   "root.bo.drafts.discard": "מחק טיוטה",
   "root.bo.drafts.discard.error": "לא ניתן למחוק טיוטה.",
-  "root.bo.drafts.discarded": "הטיוטה נמחקה."
+  "root.bo.drafts.discarded": "הטיוטה נמחקה.",
+  "owner.restore.progress.title": "משחזר גישת בעלים...",
+  "owner.restore.progress.desc": "מרענן את הרישום הפעיל במכשיר זה.",
+  "owner.restore.settingsProgress.title": "משחזר גישת בעלים...",
+  "owner.restore.settingsProgress.desc": "ממתין לטעינת הרישום ששוחזר."
 }

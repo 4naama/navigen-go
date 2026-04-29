@@ -1117,5 +1117,9 @@
   "root.bo.drafts.full.desc": "Bearbeiten oder löschen Sie einen, bevor Sie einen neuen erstellen.",
   "root.bo.drafts.discard": "Entwurf verwerfen",
   "root.bo.drafts.discard.error": "Entwurf konnte nicht verworfen werden.",
-  "root.bo.drafts.discarded": "Entwurf verworfen."
+  "root.bo.drafts.discarded": "Entwurf verworfen.",
+  "owner.restore.progress.title": "Wiederherstellen des Inhaberzugriffs...",
+  "owner.restore.progress.desc": "Aktualisieren des aktiven Eintrags auf diesem Gerät.",
+  "owner.restore.settingsProgress.title": "Wiederherstellen des Inhaberzugriffs...",
+  "owner.restore.settingsProgress.desc": "Warten, bis der wiederhergestellte Eintrag vollständig geladen ist."
 }

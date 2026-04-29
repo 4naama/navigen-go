@@ -1117,5 +1117,9 @@
   "root.bo.drafts.full.desc": "Modifica o elimina uno prima di crearne un altro.",
   "root.bo.drafts.discard": "Elimina bozza",
   "root.bo.drafts.discard.error": "Impossibile eliminare la bozza.",
-  "root.bo.drafts.discarded": "Bozza eliminata."
+  "root.bo.drafts.discarded": "Bozza eliminata.",
+  "owner.restore.progress.title": "Ripristino accesso proprietario...",
+  "owner.restore.progress.desc": "Aggiornamento della scheda attiva su questo dispositivo.",
+  "owner.restore.settingsProgress.title": "Ripristino accesso proprietario...",
+  "owner.restore.settingsProgress.desc": "In attesa del completamento del caricamento della scheda ripristinata."
 }

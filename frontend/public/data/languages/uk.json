@@ -1117,5 +1117,9 @@
   "root.bo.drafts.full.desc": "Відредагуйте або видаліть один перед створенням нового.",
   "root.bo.drafts.discard": "Видалити чернетку",
   "root.bo.drafts.discard.error": "Не вдалося видалити чернетку.",
-  "root.bo.drafts.discarded": "Чернетку видалено."
+  "root.bo.drafts.discarded": "Чернетку видалено.",
+  "owner.restore.progress.title": "Відновлення доступу власника...",
+  "owner.restore.progress.desc": "Оновлення активного лістингу на цьому пристрої.",
+  "owner.restore.settingsProgress.title": "Відновлення доступу власника...",
+  "owner.restore.settingsProgress.desc": "Очікування завершення завантаження відновленого лістингу."
 }

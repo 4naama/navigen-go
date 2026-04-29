@@ -1117,5 +1117,9 @@
   "root.bo.drafts.full.desc": "Szerkessz vagy törölj egyet, mielőtt újat hozol létre.",
   "root.bo.drafts.discard": "Piszkozat elvetése",
   "root.bo.drafts.discard.error": "Nem sikerült törölni a piszkozatot.",
-  "root.bo.drafts.discarded": "Piszkozat törölve."
+  "root.bo.drafts.discarded": "Piszkozat törölve.",
+  "owner.restore.progress.title": "Tulajdonosi hozzáférés visszaállítása...",
+  "owner.restore.progress.desc": "Az aktív listing frissítése ezen az eszközön.",
+  "owner.restore.settingsProgress.title": "Tulajdonosi hozzáférés visszaállítása...",
+  "owner.restore.settingsProgress.desc": "Várakozás a visszaállított listing betöltésének befejezésére."
 }

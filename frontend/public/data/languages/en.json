@@ -1117,5 +1117,9 @@
   "root.bo.drafts.full.desc": "Edit or discard one before creating another.",
   "root.bo.drafts.discard": "Discard draft",
   "root.bo.drafts.discard.error": "Could not discard draft.",
-  "root.bo.drafts.discarded": "Draft discarded."
+  "root.bo.drafts.discarded": "Draft discarded.",
+  "owner.restore.progress.title": "Restoring owner access...",
+  "owner.restore.progress.desc": "Refreshing the active listing on this device.",
+  "owner.restore.settingsProgress.title": "Restoring owner access...",
+  "owner.restore.settingsProgress.desc": "Waiting for the restored listing to finish loading."
 }

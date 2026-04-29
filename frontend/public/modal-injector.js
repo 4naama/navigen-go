@@ -4350,7 +4350,14 @@ export async function showSelectLocationModal() {
       awaitingChild = true;
       hideModal(id);
       const picked = await showExistingNaviGenProfileModal();
-      finish(picked || null);
+      const target = String(picked?.locationID || picked?.slug || picked?.id || '').trim();
+
+      if (target) {
+        rememberRecentlyUsedLocation(picked);
+        await showCampaignManagementModal(target, { guest: true });
+      }
+
+      finish(null);
     });
 
     modal.querySelector('#select-location-recent-route')?.addEventListener('click', async (ev) => {
@@ -4358,7 +4365,14 @@ export async function showSelectLocationModal() {
       awaitingChild = true;
       hideModal(id);
       const picked = await showRecentlyUsedLocationsModal();
-      finish(picked || null);
+      const target = String(picked?.locationID || picked?.slug || picked?.id || '').trim();
+
+      if (target) {
+        rememberRecentlyUsedLocation(picked);
+        await showCampaignManagementModal(target, { guest: true });
+      }
+
+      finish(null);
     });
 
     interval = setInterval(() => {
@@ -4758,6 +4772,14 @@ export function createRestoreAccessModal() {
         autocomplete="off"
         spellcheck="false"
       />
+
+      <div id="owner-restore-progress" class="modal-menu-item modal-static-card owner-center-loading hidden" aria-live="polite">
+        <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+          <strong>${_ownerText('owner.restore.progress.title', 'Restoring owner access...')}</strong><br>
+          <small>${_ownerText('owner.restore.progress.desc', 'Refreshing the active listing on this device.')}</small>
+        </span>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="modal-body-button" id="owner-restore-pi-submit">
           ${
@@ -4773,12 +4795,14 @@ export function createRestoreAccessModal() {
   const top = modal.querySelector('.modal-top-bar');
   const input = modal.querySelector('#owner-restore-pi');
   const btn = modal.querySelector('#owner-restore-pi-submit');
+  const progress = modal.querySelector('#owner-restore-progress');
 
   if (
     !(card instanceof HTMLElement) ||
     !(top instanceof HTMLElement) ||
     !(input instanceof HTMLInputElement) ||
-    !(btn instanceof HTMLButtonElement)
+    !(btn instanceof HTMLButtonElement) ||
+    !(progress instanceof HTMLElement)
   ) {
     return;
   }
@@ -4802,6 +4826,7 @@ export function createRestoreAccessModal() {
 
     btn.disabled = true;
     input.disabled = true;
+    progress.classList.remove('hidden');
     card.setAttribute('aria-busy', 'true');
 
     const closeBtn = top.querySelector('.modal-close');
@@ -4811,6 +4836,7 @@ export function createRestoreAccessModal() {
       btn.dataset.busy = '0';
       btn.disabled = false;
       input.disabled = false;
+      progress.classList.add('hidden');
       card.removeAttribute('aria-busy');
       if (closeBtn instanceof HTMLButtonElement) closeBtn.disabled = false;
       try { delete document.body.dataset.ownerRestoreBusy; } catch {}
@@ -7564,6 +7590,18 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   `;
   inner.appendChild(activeCard);
 
+  const ownerSettingsRestoreProgress = document.createElement('div');
+  ownerSettingsRestoreProgress.id = 'owner-settings-restore-progress';
+  ownerSettingsRestoreProgress.className = 'modal-menu-item modal-static-card owner-center-loading hidden';
+  ownerSettingsRestoreProgress.setAttribute('aria-live', 'polite');
+  ownerSettingsRestoreProgress.innerHTML = `
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${_ownerText('owner.restore.settingsProgress.title', 'Restoring owner access...')}</strong><br>
+      <small>${_ownerText('owner.restore.settingsProgress.desc', 'Waiting for the restored listing to finish loading.')}</small>
+    </span>
+  `;
+  inner.appendChild(ownerSettingsRestoreProgress);
+
   const ownerImmediateNote = document.createElement('div');
   ownerImmediateNote.className = 'campaign-inline-note owner-immediate-note';
   ownerImmediateNote.style.marginBottom = '10px';
@@ -7575,6 +7613,8 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     try {
       const restoreHintUlid = String(sessionStorage.getItem('ng_owner_restore_ulid') || '').trim();
       const restoreHintUntil = Number(sessionStorage.getItem('ng_owner_restore_until') || '0');
+      const restoreProgressActive = restoreHintUntil > Date.now() && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(restoreHintUlid);
+      ownerSettingsRestoreProgress.classList.toggle('hidden', !restoreProgressActive);
 
       const rr = await fetch('/api/_diag/opsess', { cache: 'no-store', credentials: 'include' });
       const jj = rr.ok ? await rr.json().catch(() => null) : null;
@@ -7748,6 +7788,8 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
         if (mismatchExpl) {
           mismatchExpl.style.display = isMismatch ? '' : 'none';
         }
+
+        ownerSettingsRestoreProgress.classList.add('hidden');
       } catch {}
     } catch {}
   })();
