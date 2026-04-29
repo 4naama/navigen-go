@@ -3595,6 +3595,14 @@ function createImportGoogleLocationModal(opts = {}) {
       autocompleteHost?.replaceChildren(autocomplete);
       setGoogleImportStatus(false);
 
+      requestAnimationFrame(() => {
+        const input = autocomplete.querySelector('.google-import-typeahead-input');
+        if (input instanceof HTMLInputElement) {
+          input.focus();
+          input.select();
+        }
+      });
+
       autocomplete.addEventListener('gmp-select', async (event) => {
         setGoogleImportStatus(true, translatedOrFallback('root.bo.googleImport.selecting.title', 'Reading selection...'), translatedOrFallback('root.bo.googleImport.selecting.desc', 'Preparing the selected Google business.'));
         const selection = await resolveGoogleImportSelection(event).catch(() => ({ googlePlaceId: '', label: '' }));
