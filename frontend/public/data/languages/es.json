@@ -1124,5 +1124,6 @@
   "owner.restore.settingsProgress.desc": "Esperando a que el listado restaurado termine de cargarse.",
   "campaign.ui.discountValue.numberOnly": "El valor del descuento debe ser un número.",
   "common.optional": "Opcional",
-  "locationDraft.commercial.renderFailed": "No se pudo cargar la configuración de publicación."
+  "locationDraft.commercial.renderFailed": "No se pudo cargar la configuración de publicación.",
+  "locationDraft.commercial.processing": "Preparando el pago…"
 }

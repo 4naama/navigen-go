@@ -675,7 +675,7 @@
   "root.bo.notListed.desc": "Manually add your business.",
   "modal.requestListing.title": "Request a listing",
   "modal.requestListing.submit": "Send request",
-  "modal.requestListing.success": "Draft saved.",
+  "modal.requestListing.success": "Draft saved",
   "root.bo.selectLocation.title": "Select your business",
   "root.bo.selectLocation.placeholder": "Search here…",
   "root.bo.selectLocation.none": "No matches.",
@@ -1124,5 +1124,6 @@
   "owner.restore.settingsProgress.desc": "Waiting for the restored listing to finish loading.",
   "campaign.ui.discountValue.numberOnly": "Discount value must be a number.",
   "common.optional": "Optional",
-  "locationDraft.commercial.renderFailed": "Publish setup could not load."
+  "locationDraft.commercial.renderFailed": "Publish setup could not load.",
+  "locationDraft.commercial.processing": "Preparing checkout…"
 }

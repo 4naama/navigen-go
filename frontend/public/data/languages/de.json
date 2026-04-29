@@ -675,7 +675,7 @@
   "root.bo.notListed.desc": "Fügen Sie Ihr Unternehmen manuell hinzu",
   "modal.requestListing.title": "Einen Eintrag anfordern",
   "modal.requestListing.submit": "Anfrage senden",
-  "modal.requestListing.success": "Entwurf gespeichert.",
+  "modal.requestListing.success": "Entwurf gespeichert",
   "root.bo.selectLocation.title": "Wählen Sie Ihr Unternehmen aus",
   "root.bo.selectLocation.placeholder": "Hier suchen…",
   "root.bo.selectLocation.none": "Keine Treffer.",
@@ -1124,5 +1124,6 @@
   "owner.restore.settingsProgress.desc": "Warten, bis der wiederhergestellte Eintrag vollständig geladen ist.",
   "campaign.ui.discountValue.numberOnly": "Der Rabattwert muss eine Zahl sein.",
   "common.optional": "Optional",
-  "locationDraft.commercial.renderFailed": "Veröffentlichungseinrichtung konnte nicht geladen werden."
+  "locationDraft.commercial.renderFailed": "Veröffentlichungseinrichtung konnte nicht geladen werden.",
+  "locationDraft.commercial.processing": "Checkout wird vorbereitet…"
 }

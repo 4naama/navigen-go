@@ -10135,14 +10135,19 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     btnCheckout.addEventListener('click', async () => {
       if (btnCheckout.disabled || btnCheckout.classList.contains('is-busy')) return;
 
-      const activateLabel = (typeof t === 'function' && t('campaign.ui.activate')) || 'Activate';
-      const activatingLabel = (typeof t === 'function' && t('campaign.ui.activating')) || 'Activating…';
+      const checkoutLabel = p8Draft
+        ? ((typeof t === 'function' && t('locationDraft.commercial.cta')) || 'Continue to payment')
+        : ((typeof t === 'function' && t('campaign.ui.activate')) || 'Activate');
+      const checkoutBusyLabel = p8Draft
+        ? ((typeof t === 'function' && t('locationDraft.commercial.processing')) || 'Preparing checkout…')
+        : ((typeof t === 'function' && t('campaign.ui.activating')) || 'Activating…');
 
       btnCheckout.classList.add('is-busy');
       btnCheckout.disabled = true;
-      btnCheckout.textContent = activatingLabel;
+      btnCheckout.textContent = checkoutBusyLabel;
 
       try {
+        const d = buildDraft();
         const discountValueRaw = String(discountValue.value || '').trim();
         if (discountValueRaw && (discountValue.validity?.badInput || !Number.isFinite(Number(discountValueRaw)))) {
           showToast(tSafe('campaign.ui.discountValue.numberOnly', 'Discount value must be a number.'), 2400);
@@ -10233,7 +10238,7 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
         location.href = String(chkJ.url);
       } finally {
         btnCheckout.classList.remove('is-busy');
-        btnCheckout.textContent = activateLabel;
+        btnCheckout.textContent = checkoutLabel;
         updateActivateState();
       }
     });

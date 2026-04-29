@@ -1124,5 +1124,6 @@
   "owner.restore.settingsProgress.desc": "Очікування завершення завантаження відновленого лістингу.",
   "campaign.ui.discountValue.numberOnly": "Значення знижки має бути числом.",
   "common.optional": "Необов’язково",
-  "locationDraft.commercial.renderFailed": "Не вдалося завантажити налаштування публікації."
+  "locationDraft.commercial.renderFailed": "Не вдалося завантажити налаштування публікації.",
+  "locationDraft.commercial.processing": "Підготовка оплати…"
 }

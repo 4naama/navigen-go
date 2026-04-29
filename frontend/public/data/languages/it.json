@@ -675,7 +675,7 @@
   "root.bo.notListed.desc": "Aggiungi manualmente la tua attività",
   "modal.requestListing.title": "Richiedi una scheda",
   "modal.requestListing.submit": "Invia richiesta",
-  "modal.requestListing.success": "Bozza salvata.",
+  "modal.requestListing.success": "Bozza salvata",
   "root.bo.selectLocation.title": "Seleziona la tua attività",
   "root.bo.selectLocation.placeholder": "Cerca qui…",
   "root.bo.selectLocation.none": "Nessun risultato.",
@@ -1124,5 +1124,6 @@
   "owner.restore.settingsProgress.desc": "In attesa del completamento del caricamento della scheda ripristinata.",
   "campaign.ui.discountValue.numberOnly": "Il valore dello sconto deve essere un numero.",
   "common.optional": "Opzionale",
-  "locationDraft.commercial.renderFailed": "Impossibile caricare la configurazione di pubblicazione."
+  "locationDraft.commercial.renderFailed": "Impossibile caricare la configurazione di pubblicazione.",
+  "locationDraft.commercial.processing": "Preparazione del pagamento…"
 }

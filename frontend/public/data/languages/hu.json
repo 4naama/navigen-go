@@ -675,7 +675,7 @@
   "root.bo.notListed.desc": "Add meg a vállalkozásodat kézzel",
   "modal.requestListing.title": "Listing igénylése",
   "modal.requestListing.submit": "Kérés elküldése",
-  "modal.requestListing.success": "Piszkozat mentve.",
+  "modal.requestListing.success": "Piszkozat mentve",
   "root.bo.selectLocation.title": "Válassza ki vállalkozását",
   "root.bo.selectLocation.placeholder": "Keresés itt…",
   "root.bo.selectLocation.none": "Nincs találat.",
@@ -1124,5 +1124,6 @@
   "owner.restore.settingsProgress.desc": "Várakozás a visszaállított listing betöltésének befejezésére.",
   "campaign.ui.discountValue.numberOnly": "A kedvezmény értékének számnak kell lennie.",
   "common.optional": "Opcionális",
-  "locationDraft.commercial.renderFailed": "A közzétételi beállítás nem tölthető be."
+  "locationDraft.commercial.renderFailed": "A közzétételi beállítás nem tölthető be.",
+  "locationDraft.commercial.processing": "Fizetés előkészítése…"
 }
