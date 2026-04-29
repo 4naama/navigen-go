@@ -609,6 +609,67 @@ function googleAddressComponent(
   ).trim();
 }
 
+function normalizeGoogleAddressToken(value: string): string {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function googleStreetAddressFromComponents(components: any, formattedAddress: string): string {
+  const route = googleAddressComponent(components, "route");
+  const streetNumber = googleAddressComponent(components, "street_number");
+  const premise = googleAddressComponent(components, "premise");
+  const subpremise = googleAddressComponent(components, "subpremise");
+  const postalCode = googleAddressComponent(components, "postal_code");
+  const countryLong = googleAddressComponent(components, "country");
+  const countryShort = googleAddressComponent(components, "country", "shortText");
+
+  if (route && streetNumber) {
+    const formattedLower = String(formattedAddress || "").toLowerCase();
+    const routeIndex = formattedLower.indexOf(route.toLowerCase());
+    const numberIndex = formattedLower.indexOf(streetNumber.toLowerCase());
+    const streetBase = routeIndex >= 0 && numberIndex >= 0 && routeIndex < numberIndex
+      ? `${route} ${streetNumber}`
+      : `${streetNumber} ${route}`;
+
+    return [streetBase, subpremise].map((part) => String(part || "").trim()).filter(Boolean).join(", ");
+  }
+
+  const componentStreet = [streetNumber, route].map((part) => String(part || "").trim()).filter(Boolean).join(" ");
+  if (componentStreet) return componentStreet;
+  if (premise) return [premise, subpremise].map((part) => String(part || "").trim()).filter(Boolean).join(", ");
+  if (subpremise) return subpremise;
+
+  const cityTokens = [
+    googleAddressComponent(components, "locality"),
+    googleAddressComponent(components, "postal_town"),
+    googleAddressComponent(components, "administrative_area_level_2"),
+    googleAddressComponent(components, "administrative_area_level_1")
+  ].map(normalizeGoogleAddressToken).filter(Boolean);
+
+  const nonStreetTokens = [
+    ...cityTokens,
+    normalizeGoogleAddressToken(postalCode),
+    normalizeGoogleAddressToken(countryLong),
+    normalizeGoogleAddressToken(countryShort)
+  ].filter(Boolean);
+
+  const addressParts = String(formattedAddress || "")
+    .split(",")
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .filter((part) => {
+      const normalizedPart = normalizeGoogleAddressToken(part);
+      if (!normalizedPart) return false;
+      return !nonStreetTokens.some((token) => normalizedPart === token || normalizedPart.includes(token));
+    });
+
+  return String(addressParts[0] || "").trim();
+}
+
 function mapGooglePlaceDetailsToDraft(googlePlaceId: string, place: any): Record<string, any> {
   const nowIso = new Date().toISOString();
   const resolvedGooglePlaceId = String(place?.id || googlePlaceId || "").trim();
@@ -626,6 +687,7 @@ function mapGooglePlaceDetailsToDraft(googlePlaceId: string, place: any): Record
   }
 
   const formattedAddress = String(place?.formattedAddress || "").trim();
+  const structuredStreetAddress = googleStreetAddressFromComponents(place?.addressComponents, formattedAddress);
   const city = String(
     googleAddressComponent(place?.addressComponents, "locality") ||
     googleAddressComponent(place?.addressComponents, "postal_town") ||
@@ -637,7 +699,7 @@ function mapGooglePlaceDetailsToDraft(googlePlaceId: string, place: any): Record
   const phone = String(place?.internationalPhoneNumber || place?.nationalPhoneNumber || "").trim();
 
   const contactInformation: Record<string, any> = {};
-  if (formattedAddress) contactInformation.address = formattedAddress;
+  if (structuredStreetAddress) contactInformation.address = structuredStreetAddress;
   if (city) contactInformation.city = city;
   if (countryCode) contactInformation.countryCode = countryCode;
   if (phone) contactInformation.phone = phone;

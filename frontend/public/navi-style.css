@@ -6201,6 +6201,22 @@ body.high-contrast .modal-menu-item.is-active {
   box-shadow:inset 0 0 0 1px #7aa7ff, 0 0 0 2px rgba(59,130,246,.16);
 }
 
+#import-google-location-modal .google-import-typeahead-input:placeholder-shown{
+  background:#fff7ed;
+  box-shadow:inset 0 0 0 1px #fb923c;
+}
+
+#import-google-location-modal .google-import-typeahead-input:placeholder-shown::placeholder{
+  color:#9a3412;
+  opacity:1;
+}
+
+#import-google-location-modal .google-import-typeahead-input:placeholder-shown:focus,
+#import-google-location-modal .google-import-typeahead-input:placeholder-shown:focus-visible{
+  background:#fff7ed;
+  box-shadow:inset 0 0 0 1px #fb923c, 0 0 0 2px rgba(251,146,60,.18);
+}
+
 #import-google-location-modal .google-import-results{
   display:flex;
   flex-direction:column;

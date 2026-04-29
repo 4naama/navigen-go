@@ -6340,6 +6340,7 @@ export function createRequestListingModal(opts = {}) {
     const renderContextPicker = () => {
       const selectedKeys = Array.from(selectedContextSet);
       ctxDoneBtn?.classList.toggle('is-active', selectedKeys.length > 0);
+      ctxSelectedCard?.classList.toggle('hidden', !selectedKeys.length);
 
       if (ctxSelectedCard && ctxSelectedChips) {
         ctxSelectedChips.innerHTML = '';
