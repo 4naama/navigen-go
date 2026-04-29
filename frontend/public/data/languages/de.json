@@ -1121,5 +1121,6 @@
   "owner.restore.progress.title": "Wiederherstellen des Inhaberzugriffs...",
   "owner.restore.progress.desc": "Aktualisieren des aktiven Eintrags auf diesem Gerät.",
   "owner.restore.settingsProgress.title": "Wiederherstellen des Inhaberzugriffs...",
-  "owner.restore.settingsProgress.desc": "Warten, bis der wiederhergestellte Eintrag vollständig geladen ist."
+  "owner.restore.settingsProgress.desc": "Warten, bis der wiederhergestellte Eintrag vollständig geladen ist.",
+  "campaign.ui.discountValue.numberOnly": "Der Rabattwert muss eine Zahl sein."
 }

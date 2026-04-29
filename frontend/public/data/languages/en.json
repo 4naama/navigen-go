@@ -1121,5 +1121,6 @@
   "owner.restore.progress.title": "Restoring owner access...",
   "owner.restore.progress.desc": "Refreshing the active listing on this device.",
   "owner.restore.settingsProgress.title": "Restoring owner access...",
-  "owner.restore.settingsProgress.desc": "Waiting for the restored listing to finish loading."
+  "owner.restore.settingsProgress.desc": "Waiting for the restored listing to finish loading.",
+  "campaign.ui.discountValue.numberOnly": "Discount value must be a number."
 }

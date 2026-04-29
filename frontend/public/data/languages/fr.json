@@ -1121,5 +1121,6 @@
   "owner.restore.progress.title": "Restauration de l’accès propriétaire...",
   "owner.restore.progress.desc": "Actualisation de l’établissement actif sur cet appareil.",
   "owner.restore.settingsProgress.title": "Restauration de l’accès propriétaire...",
-  "owner.restore.settingsProgress.desc": "En attente du chargement complet de l’établissement restauré."
+  "owner.restore.settingsProgress.desc": "En attente du chargement complet de l’établissement restauré.",
+  "campaign.ui.discountValue.numberOnly": "La valeur de la remise doit être un nombre."
 }

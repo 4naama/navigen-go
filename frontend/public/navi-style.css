@@ -4591,7 +4591,8 @@ select.input[multiple]{
   grid-template-columns:minmax(0, 1fr) auto;
   grid-template-areas:
     "title actions"
-    "search search";
+    "search search"
+    "help help";
   align-items:start;
   column-gap:10px;
   row-gap:8px;
@@ -4626,14 +4627,14 @@ select.input[multiple]{
   margin-right:-8px;
 }
 
-#request-listing-contexts-modal .modal-top-bar .select-location-search-row{
-  grid-area:search;
-  min-width:0;
-  width:100%;
-  display:flex;
-  align-items:center;
-  gap:10px;
+#request-listing-contexts-modal .request-context-search-help{
+  grid-area:help;
+  display:block;
   margin:0;
+  color:#667085;
+  font-size:.95rem;
+  line-height:1.35;
+  text-align:left;
 }
 
 #request-listing-contexts-modal .select-location-search-left{
@@ -6728,7 +6729,7 @@ body.high-contrast .modal-menu-item.is-active {
 #campaign-management-modal .campaign-location-search{
   border:0;
   border-radius:10px;
-  background:#f6f8fb;
+  background-color:#f6f8fb;
   box-shadow:inset 0 0 0 1px #d9e4ee;
 }
 
@@ -6737,12 +6738,12 @@ body.high-contrast .modal-menu-item.is-active {
 #campaign-management-modal .campaign-location-search:focus,
 #campaign-management-modal .campaign-location-search:focus-visible{
   outline:0;
-  background:#fff;
+  background-color:#fff;
   box-shadow:inset 0 0 0 1px #7aa7ff, 0 0 0 2px rgba(59,130,246,.16);
 }
 
 #campaign-management-modal .cm-form-field.is-required-empty .input{
-  background:#fff7ed;
+  background-color:#fff7ed;
   box-shadow:inset 0 0 0 1px #fb923c;
 }
 
@@ -6803,4 +6804,21 @@ body.high-contrast .modal-menu-item.is-active {
   color:#166534;
   text-align:center;
   box-shadow:inset 0 0 0 1px rgba(34,197,94,.18);
+}
+
+#campaign-management-modal #cm-campaign-preset,
+#campaign-management-modal #cm-campaign-scope{
+  background-color:transparent;
+  border-color:transparent;
+  box-shadow:none;
+  color:#475467;
+}
+
+#campaign-management-modal #cm-campaign-preset:focus,
+#campaign-management-modal #cm-campaign-preset:focus-visible,
+#campaign-management-modal #cm-campaign-scope:focus,
+#campaign-management-modal #cm-campaign-scope:focus-visible{
+  outline:0;
+  background-color:#fff;
+  box-shadow:inset 0 0 0 1px #d9e4ee;
 }

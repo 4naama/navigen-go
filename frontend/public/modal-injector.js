@@ -6284,6 +6284,11 @@ export function createRequestListingModal(opts = {}) {
     searchLeft.appendChild(clearBtn);
     searchRow.appendChild(searchLeft);
     ctxTopBar.appendChild(searchRow);
+    
+    const searchHelp = document.createElement('small');
+    searchHelp.className = 'modal-help-text request-context-search-help';
+    searchHelp.textContent = t('modal.requestListing.contexts.selected.empty') || 'Choose up to 3.';
+    ctxTopBar.appendChild(searchHelp);
 
     const norm = (s) =>
       String(s || '')
@@ -8598,10 +8603,12 @@ function elOption(v, selected) {
   return o;
 }
 
-function buildSelect(values, current) {
+function buildSelect(values, current, placeholder = 'Optional') {
   const sel = document.createElement('select');
   sel.className = 'input';
-  sel.appendChild(elOption('', !current));
+  const emptyOption = elOption('', !current);
+  emptyOption.textContent = placeholder;
+  sel.appendChild(emptyOption);
   values.forEach(v => sel.appendChild(elOption(v, String(current||'') === v)));
   return sel;
 }
@@ -9556,7 +9563,9 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     const campaignType = buildSelect(CAMPAIGN_VOCAB.campaignType, draft?.campaignType || '');
     const offerType = buildSelect(CAMPAIGN_VOCAB.offerType, draft?.offerType || 'Discount');
     const discountKind = buildSelect(CAMPAIGN_VOCAB.discountKind, draft?.discountKind || 'Percent');
-    const discountValue = buildInput('number', draft?.campaignDiscountValue ?? draft?.discountValue ?? '');
+    discountValue.inputMode = 'decimal';
+    discountValue.min = '0';
+    discountValue.step = '0.01';
 
     const eligibilityType = buildSelect(CAMPAIGN_VOCAB.eligibilityType, draft?.eligibilityType || 'Everyone');
     const eligibilityNotes = buildInput('text', draft?.eligibilityNotes || '');
@@ -9567,6 +9576,7 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     const targetChannels = buildSelect(CAMPAIGN_VOCAB.targetChannels, (draft?.targetChannels && draft.targetChannels[0]) || 'QR');
 
     const scopeSelect = document.createElement('select');
+    scopeSelect.id = 'cm-campaign-scope';
     scopeSelect.className = 'input';
 
     [
@@ -9595,7 +9605,7 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
       targetChannels: 'Channels',
       offerType: 'Offer type',
       discountKind: 'Discount type',
-      campaignDiscountValue: 'Discount value',
+      campaignDiscountValue: 'Discount value (%)',
       eligibilityType: 'Eligibility',
       eligibilityNotes: 'Eligibility notes',
       utmSource: 'UTM source',
@@ -9751,6 +9761,7 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     panel.appendChild(planField);
 
     const presetSelect = document.createElement('select');
+    presetSelect.id = 'cm-campaign-preset';
     presetSelect.className = 'input';
     PRESET_OPTIONS.forEach((preset) => {
       const o = document.createElement('option');
@@ -9784,10 +9795,10 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     refreshScopeUi();
 
     form.appendChild(field(labels.campaignPreset, presetSelect, { required: true }));
-    form.appendChild(scopeField);
-    form.appendChild(field(labels.campaignName, campaignName));
+    form.appendChild(scopeField);    
     form.appendChild(field(labels.startDate, startDate, { required: true }));
     form.appendChild(field(labels.endDate, endDate, { required: true }));
+    form.appendChild(field(labels.campaignName, campaignName));
     form.appendChild(field(labels.campaignKey, campaignKey, { required: true }));
     form.appendChild(field(labels.productName, productName));
     form.appendChild(field(labels.campaignType, campaignType));
@@ -10131,7 +10142,11 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
       btnCheckout.textContent = activatingLabel;
 
       try {
-        const d = buildDraft();
+        const discountValueRaw = String(discountValue.value || '').trim();
+        if (discountValueRaw && (discountValue.validity?.badInput || !Number.isFinite(Number(discountValueRaw)))) {
+          showToast(tSafe('campaign.ui.discountValue.numberOnly', 'Discount value must be a number.'), 2400);
+          return;
+        }        
         if (!d.campaignKey || !d.startDate || !d.endDate) {
           showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
           return;

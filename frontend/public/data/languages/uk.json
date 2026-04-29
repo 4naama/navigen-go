@@ -1121,5 +1121,6 @@
   "owner.restore.progress.title": "Відновлення доступу власника...",
   "owner.restore.progress.desc": "Оновлення активного лістингу на цьому пристрої.",
   "owner.restore.settingsProgress.title": "Відновлення доступу власника...",
-  "owner.restore.settingsProgress.desc": "Очікування завершення завантаження відновленого лістингу."
+  "owner.restore.settingsProgress.desc": "Очікування завершення завантаження відновленого лістингу.",
+  "campaign.ui.discountValue.numberOnly": "Значення знижки має бути числом."
 }
