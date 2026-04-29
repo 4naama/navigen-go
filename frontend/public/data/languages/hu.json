@@ -1122,5 +1122,7 @@
   "owner.restore.progress.desc": "Az aktív listing frissítése ezen az eszközön.",
   "owner.restore.settingsProgress.title": "Tulajdonosi hozzáférés visszaállítása...",
   "owner.restore.settingsProgress.desc": "Várakozás a visszaállított listing betöltésének befejezésére.",
-  "campaign.ui.discountValue.numberOnly": "A kedvezmény értékének számnak kell lennie."
+  "campaign.ui.discountValue.numberOnly": "A kedvezmény értékének számnak kell lennie.",
+  "common.optional": "Opcionális",
+  "locationDraft.commercial.renderFailed": "A közzétételi beállítás nem tölthető be."
 }

@@ -1122,5 +1122,7 @@
   "owner.restore.progress.desc": "Actualizando el listado activo en este dispositivo.",
   "owner.restore.settingsProgress.title": "Restaurando acceso de propietario...",
   "owner.restore.settingsProgress.desc": "Esperando a que el listado restaurado termine de cargarse.",
-  "campaign.ui.discountValue.numberOnly": "El valor del descuento debe ser un número."
+  "campaign.ui.discountValue.numberOnly": "El valor del descuento debe ser un número.",
+  "common.optional": "Opcional",
+  "locationDraft.commercial.renderFailed": "No se pudo cargar la configuración de publicación."
 }

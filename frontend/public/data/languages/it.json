@@ -1122,5 +1122,7 @@
   "owner.restore.progress.desc": "Aggiornamento della scheda attiva su questo dispositivo.",
   "owner.restore.settingsProgress.title": "Ripristino accesso proprietario...",
   "owner.restore.settingsProgress.desc": "In attesa del completamento del caricamento della scheda ripristinata.",
-  "campaign.ui.discountValue.numberOnly": "Il valore dello sconto deve essere un numero."
+  "campaign.ui.discountValue.numberOnly": "Il valore dello sconto deve essere un numero.",
+  "common.optional": "Opzionale",
+  "locationDraft.commercial.renderFailed": "Impossibile caricare la configurazione di pubblicazione."
 }

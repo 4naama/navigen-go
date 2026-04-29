@@ -8603,11 +8603,11 @@ function elOption(v, selected) {
   return o;
 }
 
-function buildSelect(values, current, placeholder = 'Optional') {
+function buildSelect(values, current, placeholder = '') {
   const sel = document.createElement('select');
   sel.className = 'input';
   const emptyOption = elOption('', !current);
-  emptyOption.textContent = placeholder;
+  emptyOption.textContent = placeholder || translatedOrFallback('common.optional', 'Optional');
   sel.appendChild(emptyOption);
   values.forEach(v => sel.appendChild(elOption(v, String(current||'') === v)));
   return sel;
@@ -10296,6 +10296,22 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     renderCampaignCards(rowsFinished, 'history');
   };
 
+  if (p8Draft) {
+    controls.style.display = 'none';
+    clearPanel();
+
+    try {
+      renderDraftEditor();
+    } catch (err) {
+      renderEmpty(
+        `${tSafe('locationDraft.commercial.renderFailed', 'Publish setup could not load.')} ${String(err?.message || err || '').trim()}`
+      );
+    }
+
+    showModal(id);
+    return;
+  }
+
   viewSel.addEventListener('change', () => {
     const v = String(viewSel.value || 'new');
     setActiveTab(v);
@@ -10306,6 +10322,7 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
 
   showModal(id);
 }
+
 // --- End Campaign Management ----------------------------------------------------
 
 export async function showOwnerCenterModal() {

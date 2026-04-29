@@ -1122,5 +1122,7 @@
   "owner.restore.progress.desc": "Actualisation de l’établissement actif sur cet appareil.",
   "owner.restore.settingsProgress.title": "Restauration de l’accès propriétaire...",
   "owner.restore.settingsProgress.desc": "En attente du chargement complet de l’établissement restauré.",
-  "campaign.ui.discountValue.numberOnly": "La valeur de la remise doit être un nombre."
+  "campaign.ui.discountValue.numberOnly": "La valeur de la remise doit être un nombre.",
+  "common.optional": "Optionnel",
+  "locationDraft.commercial.renderFailed": "La configuration de publication n’a pas pu être chargée."
 }

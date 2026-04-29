@@ -1122,5 +1122,7 @@
   "owner.restore.progress.desc": "מרענן את הרישום הפעיל במכשיר זה.",
   "owner.restore.settingsProgress.title": "משחזר גישת בעלים...",
   "owner.restore.settingsProgress.desc": "ממתין לטעינת הרישום ששוחזר.",
-  "campaign.ui.discountValue.numberOnly": "ערך ההנחה חייב להיות מספר."
+  "campaign.ui.discountValue.numberOnly": "ערך ההנחה חייב להיות מספר.",
+  "common.optional": "אופציונלי",
+  "locationDraft.commercial.renderFailed": "לא ניתן לטעון את הגדרת הפרסום."
 }
