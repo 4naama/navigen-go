@@ -9563,6 +9563,7 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     const campaignType = buildSelect(CAMPAIGN_VOCAB.campaignType, draft?.campaignType || '');
     const offerType = buildSelect(CAMPAIGN_VOCAB.offerType, draft?.offerType || 'Discount');
     const discountKind = buildSelect(CAMPAIGN_VOCAB.discountKind, draft?.discountKind || 'Percent');
+    const discountValue = buildInput('number', draft?.campaignDiscountValue ?? draft?.discountValue ?? '');
     discountValue.inputMode = 'decimal';
     discountValue.min = '0';
     discountValue.step = '0.01';
