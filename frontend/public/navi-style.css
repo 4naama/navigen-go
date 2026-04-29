@@ -6761,3 +6761,46 @@ body.high-contrast .modal-menu-item.is-active {
 #campaign-management-modal .cm-form-label-text{
   min-width:0;
 }
+
+#existing-navigen-profile-modal .select-location-search-left input:placeholder-shown{
+  background:#fff7ed;
+  box-shadow:inset 0 0 0 1px #fb923c;
+}
+
+#existing-navigen-profile-modal .select-location-search-left input:placeholder-shown::placeholder{
+  color:#9a3412;
+  opacity:1;
+}
+
+#existing-navigen-profile-modal .select-location-search-left input:focus,
+#existing-navigen-profile-modal .select-location-search-left input:focus-visible{
+  outline:0;
+  background:#fff;
+  box-shadow:inset 0 0 0 1px #7aa7ff, 0 0 0 2px rgba(59,130,246,.16);
+}
+
+#existing-navigen-profile-modal .select-location-search-left input:placeholder-shown:focus,
+#existing-navigen-profile-modal .select-location-search-left input:placeholder-shown:focus-visible{
+  background:#fff7ed;
+  box-shadow:inset 0 0 0 1px #fb923c, 0 0 0 2px rgba(251,146,60,.18);
+}
+
+#campaign-management-modal .cm-plan-chip .campaign-funding-chip{
+  background:#fff7ed;
+  border-color:#fb923c;
+  color:#7c2d12;
+  text-align:center;
+}
+
+#campaign-management-modal .cm-plan-chip .campaign-funding-chip:hover{
+  background:#ffedd5;
+  border-color:#f97316;
+}
+
+#campaign-management-modal .cm-plan-chip .campaign-funding-chip.is-selected{
+  background:#dcfce7;
+  border-color:#86efac;
+  color:#166534;
+  text-align:center;
+  box-shadow:inset 0 0 0 1px rgba(34,197,94,.18);
+}

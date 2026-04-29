@@ -9462,13 +9462,26 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
     panel.appendChild(list);
   };
 
-function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
-  const base = String(baseSlug || '').trim();
-  const year = String(yy || '').trim();
+function campaignKeySafeBase(value) {
+  const clean = String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/^[0-9a-hjkmnp-tv-z]{26}$/i, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+
+  return clean || 'campaign';
+}
+
+function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
+  const base = campaignKeySafeBase(baseSlug);
+  const stamp = String(dateStamp || '').replace(/[^0-9]/g, '').slice(0, 8) || ymdToday().replace(/-/g, '');
   const rows = Array.isArray(rowsAll) ? rowsAll : [];
 
   const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const re = new RegExp(`^${esc(base)}-${esc(year)}-(\\d{2,})$`);
+  const re = new RegExp(`^${esc(base)}-${esc(stamp)}-(\\d{2,})$`);
 
   let maxN = 0;
   for (const r of rows) {
@@ -9481,7 +9494,7 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
   const next = maxN + 1;
   const suffix = String(next).padStart(2, '0');
-  return `${base}-${year}-${suffix}`;
+  return `${base}-${stamp}-${suffix}`;
 }
 
   const renderDraftEditor = () => {
@@ -9522,13 +9535,18 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
       return w;
     };
 
-    const yy = String(new Date().getFullYear()).slice(-2);
-    const baseSlug = String(displaySlug || slug || '').trim() || 'location';
-    const suggestedKey = nextRollingCampaignKey(baseSlug, yy, rowsAll);
+    const campaignDateStamp = ymdToday().replace(/-/g, '');
+    const campaignKeyBase = campaignKeySafeBase(
+      displayName ||
+      displaySlug ||
+      slug ||
+      p8DraftLocationName(p8Draft || draft || {}) ||
+      'campaign'
+    );
+    const suggestedKey = nextRollingCampaignKey(campaignKeyBase, campaignDateStamp, rowsAll);
 
-    const campaignKey = buildInput('text', /^ps-/i.test(String(draft?.campaignKey || '').trim()) ? suggestedKey : (draft?.campaignKey || suggestedKey));    
-    campaignKey.readOnly = true;
-    campaignKey.setAttribute('aria-readonly', 'true');
+    const campaignKey = buildInput('text', /^ps-/i.test(String(draft?.campaignKey || '').trim()) ? suggestedKey : (draft?.campaignKey || suggestedKey));
+    campaignKey.placeholder = suggestedKey;
 
     const campaignName = buildInput('text', draft?.campaignName || '');
     const productName = buildInput('text', draft?.productName || '');
@@ -9767,8 +9785,10 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
 
     form.appendChild(field(labels.campaignPreset, presetSelect, { required: true }));
     form.appendChild(scopeField);
-    form.appendChild(field(labels.campaignKey, campaignKey, { required: true }));
     form.appendChild(field(labels.campaignName, campaignName));
+    form.appendChild(field(labels.startDate, startDate, { required: true }));
+    form.appendChild(field(labels.endDate, endDate, { required: true }));
+    form.appendChild(field(labels.campaignKey, campaignKey, { required: true }));
     form.appendChild(field(labels.productName, productName));
     form.appendChild(field(labels.campaignType, campaignType));
     form.appendChild(field(labels.targetChannels, targetChannels));
@@ -9777,8 +9797,6 @@ function nextRollingCampaignKey(baseSlug, yy, rowsAll) {
     form.appendChild(field(labels.utmSource, utmSource));
     form.appendChild(field(labels.utmMedium, utmMedium));
     form.appendChild(field(labels.utmCampaign, utmCampaign));
-    form.appendChild(field(labels.startDate, startDate, { required: true }));
-    form.appendChild(field(labels.endDate, endDate, { required: true }));
 
     promoGrid.appendChild(field(labels.offerType, offerType));
     promoGrid.appendChild(field(labels.discountKind, discountKind));
