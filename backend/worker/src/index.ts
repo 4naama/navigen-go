@@ -247,6 +247,19 @@ function stripeProcessedKey(paymentIntentId: string): string {
   return `stripe_processed:${paymentIntentId}`;
 }
 
+function stripeCheckoutSessionPurchasedAtMs(session: any): number {
+  const createdSeconds = Number(session?.created || 0);
+  if (Number.isFinite(createdSeconds) && createdSeconds > 0) {
+    return Math.floor(createdSeconds * 1000);
+  }
+  return Date.now();
+}
+
+function parseIsoMsSafe(value: unknown): number {
+  const ms = Date.parse(String(value || "").trim());
+  return Number.isFinite(ms) ? ms : NaN;
+}
+
 function mintPlanSelectionId(): string {
   const bytes = new Uint8Array(18);
   (crypto as any).getRandomValues(bytes);
@@ -519,8 +532,10 @@ async function reconcilePaidCheckoutSessionPlan(
   const paymentIntentId = String(session?.payment_intent || "").trim();
   if (!paymentIntentId || !/^pi_/i.test(paymentIntentId)) throw new Error("payment_intent_missing");
 
-  const now = new Date();
-  const nowMs = now.getTime();
+  const processedAt = new Date();
+  const nowMs = processedAt.getTime();
+  const purchaseMs = stripeCheckoutSessionPurchasedAtMs(session);
+  const purchasedAtDate = new Date(purchaseMs);
   const idemKey = stripeProcessedKey(paymentIntentId);
   const alreadyProcessedMarker = await env.KV_STATUS.get(idemKey, "text");
 
@@ -561,18 +576,33 @@ async function reconcilePaidCheckoutSessionPlan(
   if (alreadyAppliedExpMs > 0) {
     expiresAt = new Date(alreadyAppliedExpMs);
   } else {
-    let baseMs = nowMs;
+    let baseMs = purchaseMs;
+    const stackingToleranceMs = 5 * 60 * 1000;
+
     for (const own of previousOwnershipRows) {
-      const prevExIso = String(own?.exclusiveUntil || "").trim();
-      const prevEx = prevExIso ? new Date(prevExIso) : null;
-      if (prevEx && !Number.isNaN(prevEx.getTime()) && prevEx.getTime() > baseMs) {
-        baseMs = prevEx.getTime();
+      const prevExMs = parseIsoMsSafe(own?.exclusiveUntil);
+      const prevUpdatedAtMs = parseIsoMsSafe(own?.updatedAt || own?.createdAt);
+      const prevLastEventId = String(own?.lastEventId || "").trim();
+
+      const canStackFromPreviousCoverage =
+        prevLastEventId !== paymentIntentId &&
+        Number.isFinite(prevUpdatedAtMs) &&
+        prevUpdatedAtMs <= (purchaseMs + stackingToleranceMs);
+
+      if (canStackFromPreviousCoverage && Number.isFinite(prevExMs) && prevExMs > baseMs) {
+        baseMs = prevExMs;
       }
     }
+
     expiresAt = new Date(baseMs + def.activeDurationDays * 24 * 60 * 60 * 1000);
   }
 
-  const purchasedAt = now.toISOString();
+  if (expiresAt.getTime() <= nowMs) {
+    throw new Error("plan_coverage_already_expired");
+  }
+
+  const purchasedAt = purchasedAtDate.toISOString();
+  const processedAtIso = processedAt.toISOString();
   const plan = planRecordFromDefinition(def, purchasedAt, expiresAt.toISOString(), target.initiationType, target.planMode);
 
   const allocation: PlanAllocationRecord = {
@@ -629,7 +659,7 @@ async function reconcilePaidCheckoutSessionPlan(
     planSelectionId: target.planSelectionId,
     ulids: target.coveredUlids,
     planMode: plan.planMode,
-    processedAt: purchasedAt
+    processedAt: processedAtIso
   }));
 
   return {
