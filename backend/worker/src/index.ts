@@ -2062,7 +2062,8 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
     }
   }
 
-  const scope = requiresCampaignDraft ? normCampaignScope(draft?.campaignScope) : "single";
+  const requestedScopeSource = requiresCampaignDraft ? draft : body;
+  const scope = normCampaignScope(requestedScopeSource?.campaignScope);
   const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
   const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
   const eligibleUlids = eligibleLocations.map((x) => x.ulid);
@@ -2073,7 +2074,7 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
 
   let includedUlids: string[] = [ulid];
   if (scope === "selected") {
-    includedUlids = Array.from(new Set((Array.isArray(draft?.selectedLocationULIDs) ? draft.selectedLocationULIDs : []).map((x: any) => String(x || "").trim()).filter(Boolean)));
+    includedUlids = Array.from(new Set((Array.isArray(requestedScopeSource?.selectedLocationULIDs) ? requestedScopeSource.selectedLocationULIDs : []).map((x: any) => String(x || "").trim()).filter(Boolean)));
     includedUlids = includedUlids.filter((id) => eligibleByUlid.has(id));
     if (!includedUlids.length) {
       return json({ error: { code: "invalid_state", message: "selected scope has no eligible locations" } }, 409, noStore);
@@ -3216,7 +3217,8 @@ export default {
         const startDate = String(body?.startDate || "").trim();
         const endDate = String(body?.endDate || "").trim();
         const scope = normCampaignScope(body?.campaignScope);
-        const campaignPreset = normCampaignPreset(body?.campaignPreset);
+        const planMode = normalizePlanMode(body?.planMode, body?.campaignPreset);
+        const campaignPreset = planMode === "managed_presence" ? "visibility" : "promotion";
         const requestedPlan = planDefinitionForCode(body?.planCode) || await currentPlanForUlid(env, ulid);
 
         if (!campaignKey) {
@@ -3266,6 +3268,7 @@ export default {
           campaignGroupKey: scope === "single" ? "" : String(body?.campaignGroupKey || deriveCampaignGroupKey(String(body?.locationSlug || ulid), campaignKey)).trim(),
           campaignScope: scope,
           campaignPreset,
+          planMode,
           planCode: String(body?.planCode || "").trim().toLowerCase(),
           selectedLocationULIDs,
           startDate,
@@ -3292,6 +3295,8 @@ export default {
         const draftULID = String(body?.draftULID || "").trim();
         const draftSessionId = String(body?.draftSessionId || "").trim();
         const draftIn = (body?.draft && typeof body.draft === "object") ? body.draft : {};
+        const planMode = normalizePlanMode(body?.planMode, body?.campaignPreset);
+        const requiresCampaignDraft = planMode === "campaign_with_promo_qr";
 
         const target = await resolveTargetIdentity(
           env,
@@ -3307,36 +3312,54 @@ export default {
           );
         }
 
-        // Validate draft minimally (server-authoritative; we only accept structurally valid campaigns).
-        const campaignKey = String(draftIn?.campaignKey || "").trim();
-        const startDate = String(draftIn?.startDate || "").trim();
-        const endDate = String(draftIn?.endDate || "").trim();
+        let campaignKey = "";
+        let startDate = "";
+        let endDate = "";
 
-        if (!campaignKey) return json({ error:{ code:"invalid_request", message:"draft.campaignKey required" } }, 400, noStore);
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
-          return json({ error:{ code:"invalid_request", message:"draft.startDate/endDate must be YYYY-MM-DD" } }, 400, noStore);
+        if (requiresCampaignDraft) {
+          // Validate campaign draft minimally only for Campaign with Promo QR.
+          campaignKey = String(draftIn?.campaignKey || "").trim();
+          startDate = String(draftIn?.startDate || "").trim();
+          endDate = String(draftIn?.endDate || "").trim();
+
+          if (!campaignKey) return json({ error:{ code:"invalid_request", message:"draft.campaignKey required for Campaign with Promo QR" } }, 400, noStore);
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+            return json({ error:{ code:"invalid_request", message:"draft.startDate/endDate must be YYYY-MM-DD for Campaign with Promo QR" } }, 400, noStore);
+          }
+
+          // Persist campaign draft server-side, keyed by authoritative ULID.
+          const draft = {
+            ...draftIn,
+            locationID: target.ulid,
+            campaignKey,
+            startDate,
+            endDate,
+            planMode,
+            campaignPreset: "promotion", // transition field for campaign runtime only
+            status: "Draft",
+            updatedAt: new Date().toISOString()
+          };
+
+          await env.KV_STATUS.put(`campaigns:draft:${target.ulid}`, JSON.stringify(draft));
         }
 
-        // Persist draft server-side, keyed by authoritative ULID.
-        const draft = {
-          ...draftIn,
-          locationID: target.ulid,
-          campaignKey,
-          startDate,
-          endDate,
-          status: "Draft",
-          updatedAt: new Date().toISOString()
-        };
-
-        await env.KV_STATUS.put(`campaigns:draft:${target.ulid}`, JSON.stringify(draft));
+        const selectedLocationULIDs: string[] = Array.isArray(body?.selectedLocationULIDs)
+          ? Array.from(new Set(body.selectedLocationULIDs.map((x: any) => String(x || "").trim()).filter(Boolean))) as string[]
+          : [];
 
         const stripeReq: any = {
-          campaignKey,
           initiationType: "public",
-          ownershipSource: "campaign",
+          ownershipSource: "plan",
           navigenVersion: "phase5",
-          planCode: body?.planCode
+          planCode: body?.planCode,
+          planMode,
+          campaignScope: normCampaignScope(body?.campaignScope),
+          selectedLocationULIDs
         };
+
+        if (requiresCampaignDraft) {
+          stripeReq.campaignKey = campaignKey;
+        }
 
         if (target.route === "existing-location") {
           stripeReq.locationID = locationSlug;
@@ -3359,6 +3382,8 @@ export default {
 
         const body = await req.json().catch(() => ({})) as any;
         const locationSlug = String(body?.locationID || "").trim();
+        const planMode = normalizePlanMode(body?.planMode, body?.campaignPreset);
+        const requiresCampaignDraft = planMode === "campaign_with_promo_qr";
 
         if (!locationSlug) {
           return json({ error: { code: "invalid_request", message: "locationID (slug) required" } }, 400, noStore);
@@ -3374,22 +3399,42 @@ export default {
           return new Response("Denied", { status: 401, headers: noStore });
         }
 
-        const draftKey = `campaigns:draft:${ulid}`;
-        const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
-        const campaignKey = String(draft?.campaignKey || "").trim();
-        if (!campaignKey) {
-          return json({ error: { code: "invalid_request", message: "no draft campaign found for this location" } }, 400, noStore);
+        let campaignKey = "";
+        let campaignScope = normCampaignScope(body?.campaignScope);
+        let selectedLocationULIDs: string[] = Array.isArray(body?.selectedLocationULIDs)
+          ? Array.from(new Set(body.selectedLocationULIDs.map((x: any) => String(x || "").trim()).filter(Boolean))) as string[]
+          : [];
+
+        if (requiresCampaignDraft) {
+          const draftKey = `campaigns:draft:${ulid}`;
+          const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+          campaignKey = String(draft?.campaignKey || "").trim();
+
+          if (!campaignKey) {
+            return json({ error: { code: "invalid_request", message: "no draft Campaign with Promo QR found for this location" } }, 400, noStore);
+          }
+
+          campaignScope = normCampaignScope(draft?.campaignScope);
+          selectedLocationULIDs = Array.isArray(draft?.selectedLocationULIDs)
+            ? Array.from(new Set(draft.selectedLocationULIDs.map((x: any) => String(x || "").trim()).filter(Boolean))) as string[]
+            : [];
         }
 
-        // Delegate to the same Stripe session creator used by /api/stripe/create-checkout-session
-        const stripeReq = {
+        // Delegate to the same Stripe session creator used by /api/stripe/create-checkout-session.
+        const stripeReq: any = {
           locationID: locationSlug,
-          campaignKey,
           initiationType: "owner",
-          ownershipSource: "campaign",
+          ownershipSource: "plan",
           navigenVersion: "phase5",
-          planCode: body?.planCode
+          planCode: body?.planCode,
+          planMode,
+          campaignScope,
+          selectedLocationULIDs
         };
+
+        if (requiresCampaignDraft) {
+          stripeReq.campaignKey = campaignKey;
+        }
 
         return await createCampaignCheckoutSession(env, req, stripeReq, { "cache-control": "no-store" });
       }
@@ -8104,6 +8149,7 @@ interface CampaignGroupRow {
   campaignKey: string;
   campaignScope: "single" | "selected" | "all";
   campaignPreset?: "visibility" | "promotion";
+  planMode?: PlanMode;
   seedLocationULID: string;
   seedLocationSlug: string;
   startDate: string;
@@ -8159,6 +8205,7 @@ async function promoteCampaignDraftToActiveRows(params: {
 
   const scope = normCampaignScope(draft?.campaignScope);
   const campaignPreset = normCampaignPreset(draft?.campaignPreset);
+  const planMode = normalizePlanMode(draft?.planMode, campaignPreset);
   const eligibleLocations = await eligibleLocationsForRequest(req, env, ownerUlid);
   const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
 
@@ -8247,6 +8294,7 @@ async function promoteCampaignDraftToActiveRows(params: {
       campaignKey,
       campaignScope: scope,
       campaignPreset,
+      planMode,
       seedLocationULID: ownerUlid,
       seedLocationSlug: locationSlug,
       startDate: String(draft?.startDate || "").trim(),
@@ -8264,7 +8312,7 @@ async function promoteCampaignDraftToActiveRows(params: {
       env,
       targetUlid: target.ulid,
       targetSlug: target.slug,
-      draft: { ...draft, campaignPreset },
+      draft: { ...draft, campaignPreset, planMode },
       campaignGroupKey,
       stripeSessionId,
       inherited: false
