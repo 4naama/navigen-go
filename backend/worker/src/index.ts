@@ -3267,7 +3267,6 @@ export default {
           campaignKey,
           campaignGroupKey: scope === "single" ? "" : String(body?.campaignGroupKey || deriveCampaignGroupKey(String(body?.locationSlug || ulid), campaignKey)).trim(),
           campaignScope: scope,
-          campaignPreset,
           planMode,
           planCode: String(body?.planCode || "").trim().toLowerCase(),
           selectedLocationULIDs,
@@ -3335,7 +3334,6 @@ export default {
             startDate,
             endDate,
             planMode,
-            campaignPreset: "promotion", // transition field for campaign runtime only
             status: "Draft",
             updatedAt: new Date().toISOString()
           };
@@ -8310,7 +8308,6 @@ async function promoteCampaignDraftToActiveRows(params: {
       campaignGroupKey,
       campaignKey,
       campaignScope: scope,
-      campaignPreset,
       planMode,
       seedLocationULID: ownerUlid,
       seedLocationSlug: locationSlug,
@@ -8329,7 +8326,7 @@ async function promoteCampaignDraftToActiveRows(params: {
       env,
       targetUlid: target.ulid,
       targetSlug: target.slug,
-      draft: { ...draft, campaignPreset, planMode },
+      draft: { ...draft, planMode },
       campaignGroupKey,
       stripeSessionId,
       inherited: false

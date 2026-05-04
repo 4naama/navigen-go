@@ -10181,7 +10181,6 @@ function campaignPlanModeRequiresPromoQr(planMode) {
         endDate: String(endDate.value || '').trim(),
         campaignScope,
         planMode: selectedPlanMode,
-        campaignPreset: legacyCampaignPresetFromPlanMode(selectedPlanMode),
         planCode: selectedPlanCode,
         selectedLocationULIDs
       };
