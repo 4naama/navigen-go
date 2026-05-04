@@ -1150,5 +1150,7 @@
   "owner.settings.claim.activatePlan.desc": "Configura la copertura del piano per questa sede. Campagna con QR promo è opzionale.",
   "lpm.visibility.publicRecordMode": "Questa attività è attualmente in modalità record pubblico. Attiva un piano per gestire Dash oppure scegli Campagna con QR promo per le promozioni.",
   "root.bo.manageBusiness.title": "Gestisci attività su NaviGen",
-  "root.bo.manageBusiness.desc": "Attiva o rinnova un piano, gestisci la copertura o avvia una campagna con QR promo."
+  "root.bo.manageBusiness.desc": "Attiva o rinnova un piano, gestisci la copertura o avvia una campagna con QR promo.",
+  "promo.gated.promoQrRequired": "Campagna con QR promo è richiesta per QR promo.",
+  "promo.gated.promoQrCampaignRequired": "Le promozioni sono disponibili solo mentre questa attività esegue una campagna attiva con QR promo."
 }

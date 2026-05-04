@@ -1150,5 +1150,7 @@
   "owner.settings.claim.activatePlan.desc": "הגדר כיסוי תוכנית למיקום זה. קמפיין עם QR פרומו הוא אופציונלי.",
   "lpm.visibility.publicRecordMode": "עסק זה נמצא כעת במצב רשומה ציבורית. הפעל תוכנית לניהול Dash או בחר קמפיין עם QR פרומו לקידומים.",
   "root.bo.manageBusiness.title": "נהל את העסק ב-NaviGen",
-  "root.bo.manageBusiness.desc": "הפעל או חדש תוכנית, נהל כיסוי או הפעל קמפיין עם QR פרומו."
+  "root.bo.manageBusiness.desc": "הפעל או חדש תוכנית, נהל כיסוי או הפעל קמפיין עם QR פרומו.",
+  "promo.gated.promoQrRequired": "קמפיין עם QR פרומו נדרש עבור QR פרומו.",
+  "promo.gated.promoQrCampaignRequired": "מבצעים זמינים רק כאשר העסק מפעיל קמפיין פעיל עם QR פרומו."
 }

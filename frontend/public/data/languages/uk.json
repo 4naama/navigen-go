@@ -1150,5 +1150,7 @@
   "owner.settings.claim.activatePlan.desc": "Налаштуйте покриття плану для цієї локації. Кампанія з промо QR необов’язкова.",
   "lpm.visibility.publicRecordMode": "Цей бізнес зараз у режимі публічного запису. Активуйте план, щоб керувати Dash, або оберіть Кампанія з промо QR для акцій.",
   "root.bo.manageBusiness.title": "Керуйте бізнесом у NaviGen",
-  "root.bo.manageBusiness.desc": "Активуйте або поновіть план, керуйте покриттям або запустіть кампанію з промо QR."
+  "root.bo.manageBusiness.desc": "Активуйте або поновіть план, керуйте покриттям або запустіть кампанію з промо QR.",
+  "promo.gated.promoQrRequired": "Кампанія з промо QR потрібна для промо QR.",
+  "promo.gated.promoQrCampaignRequired": "Акції доступні лише поки цей бізнес проводить активну кампанію з промо QR."
 }

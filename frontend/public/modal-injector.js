@@ -654,10 +654,9 @@ async function openPromotionQrModal(modal, data) {
       if (res.status === 403) {
         const payload = await res.json().catch(() => null);
         const code = String(payload?.error?.code || '').trim();
-        const msg = code === 'campaign_preset_visibility'
-          ? (String(payload?.error?.message || '').trim() || ((typeof t === 'function' && t('campaign.plan.preset.visibility.note')) || 'Promotion is turned off for this campaign.'))
-          : ((typeof t === 'function' && t('promo.gated.campaignRequired')) ||
-            'Promotions are available only while this business is running an active NaviGen campaign.');
+        const msg = (code === 'campaign_with_promo_qr_required' || code === 'campaign_preset_visibility')
+          ? (String(payload?.error?.message || '').trim() || translatedOrFallback('promo.gated.promoQrRequired', 'Campaign with Promo QR is required for promotion QR.'))
+          : translatedOrFallback('promo.gated.promoQrCampaignRequired', 'Promotions are available only while this business is running an active Campaign with Promo QR.');
 
         showToast(msg, 3500);
       } else if (res.status === 404) {

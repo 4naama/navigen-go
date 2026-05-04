@@ -3984,6 +3984,9 @@ export default {
           const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
           if (st !== "active") return false;
 
+          const rowPlanMode = normalizePlanMode(r?.planMode, r?.campaignPreset);
+          if (rowPlanMode !== "campaign_with_promo_qr") return false;
+
           const sMs = parseYmdUtcMs(String(r?.startDate || ""));
           const eMs = parseYmdUtcMs(String(r?.endDate || ""));
           if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
@@ -4080,6 +4083,9 @@ export default {
           const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
           if (st !== "active") return false;
 
+          const rowPlanMode = normalizePlanMode(r?.planMode, r?.campaignPreset);
+          if (rowPlanMode !== "campaign_with_promo_qr") return false;
+
           const sMs = parseYmdUtcMs(String(r?.startDate || ""));
           const eMs = parseYmdUtcMs(String(r?.endDate || ""));
           if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
@@ -4139,9 +4145,10 @@ export default {
           );
         }
 
-        if (normCampaignPreset(activeRow?.campaignPreset) === "visibility") {
+        const activeRowPlanMode = normalizePlanMode(activeRow?.planMode, activeRow?.campaignPreset);
+        if (activeRowPlanMode !== "campaign_with_promo_qr") {
           return json(
-            { error: { code: "campaign_preset_visibility", message: "Promotion is turned off for this campaign." } },
+            { error: { code: "campaign_with_promo_qr_required", message: "Campaign with Promo QR is required for promotion QR." } },
             403,
             { "cache-control": "no-store" }
           );
@@ -5318,7 +5325,12 @@ export default {
             return await finish("invalid", tokenCampaignKey);
           }
 
-          // Validate: the token's campaignKey must still be active for this ULID (no "winner" logic).
+          const plan = await readPlanEntitlementForUlid(env, loc);
+          if (!plan.planEntitled) {
+            return await finish("inactive", tokenCampaignKey);
+          }
+
+          // Validate: the token's campaignKey must still be active as Campaign with Promo QR for this ULID.
           const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(loc), { type: "json" }) as any;
           const rows: any[] = Array.isArray(rawRows) ? rawRows : [];
 
@@ -5327,6 +5339,8 @@ export default {
             if (!r || String(r.locationID || "").trim() !== loc) return false;
             const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
             if (st !== "active") return false;
+            const rowPlanMode = normalizePlanMode(r?.planMode, r?.campaignPreset);
+            if (rowPlanMode !== "campaign_with_promo_qr") return false;
             const sMs = parseYmdUtcMs(String(r?.startDate || ""));
             const eMs = parseYmdUtcMs(String(r?.endDate || ""));
             if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
@@ -8552,7 +8566,8 @@ async function campaignEntitlementForUlid(
       const entitled = fast.entitled === true;
       const campaignKey = String(fast.campaignKey || "").trim();
       const endDate = String(fast.endDate || "").trim();
-      if (entitled && campaignKey && /^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+      const fastPlanMode = normalizePlanMode(fast?.planMode, fast?.campaignPreset);
+      if (entitled && fastPlanMode === "campaign_with_promo_qr" && campaignKey && /^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
         const endMs = parseYmdUtcMs(endDate);
         if (Number.isFinite(endMs) && endMs >= nowMs) {
           return { entitled: true, campaignKey, endDate };
@@ -8579,6 +8594,9 @@ async function campaignEntitlementForUlid(
 
     const st = effectiveCampaignStatus(row);
     if (st !== "active") continue;
+
+    const rowPlanMode = normalizePlanMode((row as any)?.planMode, (row as any)?.campaignPreset);
+    if (rowPlanMode !== "campaign_with_promo_qr") continue;
 
     const startMs = parseYmdUtcMs(String(row.startDate || ""));
     const endMs = parseYmdUtcMs(String(row.endDate || ""));
