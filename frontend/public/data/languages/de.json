@@ -1130,5 +1130,7 @@
   "campaign.plan.mode.promoQr": "Kampagne mit Promo-QR",
   "campaign.ui.activatePlan": "Plan aktivieren",
   "campaign.ui.runPromoQrCampaign": "Kampagne mit Promo-QR starten",
-  "campaign.ui.missingPromoQrFields": "Kampagnenschlüssel, Startdatum und Enddatum sind für Kampagne mit Promo-QR erforderlich."
+  "campaign.ui.missingPromoQrFields": "Kampagnenschlüssel, Startdatum und Enddatum sind für Kampagne mit Promo-QR erforderlich.",
+  "campaign.ui.activateManagedPresencePlan": "Plan „Verwaltete Präsenz“ aktivieren",
+  "campaign.ui.section.complete": "Fertig"
 }

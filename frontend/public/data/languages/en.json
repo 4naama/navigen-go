@@ -1130,5 +1130,7 @@
   "campaign.plan.mode.promoQr": "Campaign with Promo QR",
   "campaign.ui.activatePlan": "Activate Plan",
   "campaign.ui.runPromoQrCampaign": "Run a Campaign with Promo QR",
-  "campaign.ui.missingPromoQrFields": "Campaign key, start date, and end date are required for Campaign with Promo QR."
+  "campaign.ui.missingPromoQrFields": "Campaign key, start date, and end date are required for Campaign with Promo QR.",
+  "campaign.ui.activateManagedPresencePlan": "Activate Managed Presence Plan",
+  "campaign.ui.section.complete": "Complete"
 }

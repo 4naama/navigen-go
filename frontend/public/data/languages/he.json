@@ -1130,5 +1130,7 @@
   "campaign.plan.mode.promoQr": "קמפיין עם QR פרומו",
   "campaign.ui.activatePlan": "הפעל תוכנית",
   "campaign.ui.runPromoQrCampaign": "הפעל קמפיין עם QR פרומו",
-  "campaign.ui.missingPromoQrFields": "מפתח קמפיין, תאריך התחלה ותאריך סיום נדרשים לקמפיין עם QR פרומו."
+  "campaign.ui.missingPromoQrFields": "מפתח קמפיין, תאריך התחלה ותאריך סיום נדרשים לקמפיין עם QR פרומו.",
+  "campaign.ui.activateManagedPresencePlan": "הפעל תוכנית נוכחות מנוהלת",
+  "campaign.ui.section.complete": "הושלם"
 }

@@ -1130,5 +1130,7 @@
   "campaign.plan.mode.promoQr": "Kampány Promo QR-rel",
   "campaign.ui.activatePlan": "Csomag aktiválása",
   "campaign.ui.runPromoQrCampaign": "Kampány indítása Promo QR-rel",
-  "campaign.ui.missingPromoQrFields": "A kampánykulcs, kezdési dátum és befejezési dátum kötelező a Kampány Promo QR-rel esetén."
+  "campaign.ui.missingPromoQrFields": "A kampánykulcs, kezdési dátum és befejezési dátum kötelező a Kampány Promo QR-rel esetén.",
+  "campaign.ui.activateManagedPresencePlan": "Kezelt jelenlét csomag aktiválása",
+  "campaign.ui.section.complete": "Kész"
 }

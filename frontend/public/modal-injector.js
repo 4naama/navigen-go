@@ -9846,9 +9846,13 @@ function campaignPlanModeRequiresPromoQr(planMode) {
     form.appendChild(utmMediumField);
     form.appendChild(utmCampaignField);
 
-    promoGrid.appendChild(field(labels.offerType, offerType));
-    promoGrid.appendChild(field(labels.discountKind, discountKind));
-    promoGrid.appendChild(field(labels.campaignDiscountValue, discountValue));
+    const offerTypeField = field(labels.offerType, offerType);
+    const discountKindField = field(labels.discountKind, discountKind);
+    const discountValueField = field(labels.campaignDiscountValue, discountValue);
+
+    promoGrid.appendChild(offerTypeField);
+    promoGrid.appendChild(discountKindField);
+    promoGrid.appendChild(discountValueField);
     promoFieldsWrap.appendChild(promoGrid);
     form.appendChild(promoFieldsWrap);
 
@@ -9869,7 +9873,13 @@ function campaignPlanModeRequiresPromoQr(planMode) {
         utmCampaignField
       ];
 
-      campaignFields.forEach((row) => {
+      const promoFieldRows = [
+        offerTypeField,
+        discountKindField,
+        discountValueField
+      ];
+
+      [...campaignFields, ...promoFieldRows].forEach((row) => {
         if (row) row.style.display = requiresPromoQr ? '' : 'none';
       });
 
@@ -10024,7 +10034,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
       if (p8Draft) return tSafe('locationDraft.commercial.cta', 'Continue to payment');
       return campaignPlanModeRequiresPromoQr(selectedPlanMode)
         ? tSafe('campaign.ui.runPromoQrCampaign', 'Run a Campaign with Promo QR')
-        : tSafe('campaign.ui.activatePlan', 'Activate Plan');
+        : tSafe('campaign.ui.activateManagedPresencePlan', 'Activate Managed Presence Plan');
     }
 
     function checkoutBusyLabelText() {
@@ -10091,6 +10101,14 @@ function campaignPlanModeRequiresPromoQr(planMode) {
 
       planField.classList.toggle('is-complete', planComplete);
       setupChip.classList.toggle('is-complete', setupComplete);
+
+      planSummaryBadge.textContent = planComplete
+        ? tSafe('campaign.ui.section.complete', 'Complete')
+        : tSafe('modal.requestListing.section.required', 'Required');
+
+      setupSummaryBadge.textContent = setupComplete
+        ? tSafe('campaign.ui.section.complete', 'Complete')
+        : tSafe('modal.requestListing.section.required', 'Required');
 
       setCampaignRequiredState(campaignKey, !requiresPromoQr || campaignKeyComplete);
       setCampaignRequiredState(startDate, !requiresPromoQr || startDateComplete);
@@ -10261,42 +10279,6 @@ function campaignPlanModeRequiresPromoQr(planMode) {
               campaignScope: d.campaignScope,
               selectedLocationULIDs: d.selectedLocationULIDs
             })
-          });
-          if (!out.r.ok) {
-            const code = String((out.j?.error?.code || '')).trim();
-            const msg = String((out.j?.error?.message || '')).trim();
-            if (code === 'plan_upgrade_required' && msg) {
-              upgradeNote.textContent = msg;
-              upgradeNote.style.display = '';
-            }
-            showToast(msg || tSafe('campaign.ui.checkoutFailed', 'Checkout could not start.'), 2600);
-            return;
-          }
-          chkJ = out.j;
-        } else {
-          const checkoutBody = (p8Draft && p8Draft.draftULID && p8Draft.draftSessionId)
-            ? {
-                draftULID: String(p8Draft.draftULID || '').trim(),
-                draftSessionId: String(p8Draft.draftSessionId || '').trim(),
-                planCode: selectedPlanCode,
-                planMode: d.planMode,
-                campaignScope: d.campaignScope,
-                selectedLocationULIDs: d.selectedLocationULIDs
-              }
-            : {
-                locationID: slug,
-                planCode: selectedPlanCode,
-                planMode: d.planMode,
-                campaignScope: d.campaignScope,
-                selectedLocationULIDs: d.selectedLocationULIDs
-              };
-
-          if (requiresPromoQr) checkoutBody.draft = d;
-
-          const out = await apiJson('/api/campaigns/checkout', {
-            method:'POST',
-            headers:{'content-type':'application/json'},
-            body: JSON.stringify(checkoutBody)
           });
           if (!out.r.ok) {
             const code = String((out.j?.error?.code || '')).trim();

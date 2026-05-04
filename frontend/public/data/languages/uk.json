@@ -1130,5 +1130,7 @@
   "campaign.plan.mode.promoQr": "Кампанія з промо QR",
   "campaign.ui.activatePlan": "Активувати план",
   "campaign.ui.runPromoQrCampaign": "Запустити кампанію з промо QR",
-  "campaign.ui.missingPromoQrFields": "Ключ кампанії, дата початку та дата завершення потрібні для Кампанія з промо QR."
+  "campaign.ui.missingPromoQrFields": "Ключ кампанії, дата початку та дата завершення потрібні для Кампанія з промо QR.",
+  "campaign.ui.activateManagedPresencePlan": "Активувати план «Керована присутність»",
+  "campaign.ui.section.complete": "Завершено"
 }
