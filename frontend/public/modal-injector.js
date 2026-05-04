@@ -7923,7 +7923,13 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       onClick: () => {
         hideModal(id);
         const target = String(locId || selectedKey || '').trim();
-        if (target) showCampaignManagementModal(target, { guest: true, openTab: 'new', preferEmptyDraft: true });
+        if (target) showCampaignManagementModal(target, {
+          guest: true,
+          openTab: 'new',
+          preferEmptyDraft: true,
+          defaultPlanCode: 'standard',
+          defaultPlanMode: 'managed_presence'
+        });
       }
     });
 
@@ -8026,7 +8032,12 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       onClick: () => {
         hideModal(id);
         const target = String(locId || selectedKey || '').trim();
-        if (target) showCampaignManagementModal(target, { openTab: 'new', preferEmptyDraft: true });
+        if (target) showCampaignManagementModal(target, {
+          openTab: 'new',
+          preferEmptyDraft: true,
+          defaultPlanCode: 'standard',
+          defaultPlanMode: 'managed_presence'
+        });
       }
     });
 
@@ -8133,7 +8144,13 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
           // Claim flow (no owner session): open Plan setup through Campaign Management.
           // Campaign with Promo QR remains optional inside the Plan flow.
-          showCampaignManagementModal(slug, { guest: true, openTab: 'new', preferEmptyDraft: true });
+          showCampaignManagementModal(slug, {
+            guest: true,
+            openTab: 'new',
+            preferEmptyDraft: true,
+            defaultPlanCode: 'standard',
+            defaultPlanMode: 'managed_presence'
+          });
         })();
       }
     });
@@ -9532,10 +9549,19 @@ function campaignPlanModeRequiresPromoQr(planMode) {
 }
 
   const renderDraftEditor = () => {
-    let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(draft?.planCode || '').trim().toLowerCase())
-      ? String(draft.planCode).trim().toLowerCase()
-      : '';
-    let selectedPlanMode = campaignPlanModeFromLegacy(draft?.planMode, draft?.campaignPreset);
+    const allowedPlanCodes = ['standard', 'multi', 'large', 'network'];
+    const draftPlanCode = String(draft?.planCode || '').trim().toLowerCase();
+    const defaultPlanCode = String(opts?.defaultPlanCode || '').trim().toLowerCase();
+    const currentPlanCode = String(listJ?.plan?.tier || '').trim().toLowerCase();
+
+    let selectedPlanCode = allowedPlanCodes.includes(draftPlanCode)
+      ? draftPlanCode
+      : allowedPlanCodes.includes(defaultPlanCode)
+        ? defaultPlanCode
+        : allowedPlanCodes.includes(currentPlanCode)
+          ? currentPlanCode
+          : '';
+    let selectedPlanMode = campaignPlanModeFromLegacy(draft?.planMode || opts?.defaultPlanMode, draft?.campaignPreset);
 
     const planAllowsMultiScope = (planCode) => ['multi', 'large', 'network'].includes(String(planCode || '').trim().toLowerCase());
     const multiScopeEnabled = () => planAllowsMultiScope(selectedPlanCode) || !!listJ?.plan?.multiLocationEnabled;

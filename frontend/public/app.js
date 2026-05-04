@@ -1369,7 +1369,12 @@ async function initEmergencyBlock(countryOverride) {
           (async () => {
             const directTarget = (bo && bo !== '1') ? bo : '';
             if (directTarget) {
-              await showCampaignManagementModal(directTarget, { openTab: 'new', preferEmptyDraft: true });
+              await showCampaignManagementModal(directTarget, {
+                openTab: 'new',
+                preferEmptyDraft: true,
+                defaultPlanCode: 'standard',
+                defaultPlanMode: 'managed_presence'
+              });
               return;
             }
 
