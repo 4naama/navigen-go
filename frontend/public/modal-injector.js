@@ -1124,8 +1124,8 @@ function getSharedBusinessStatusMeta(kind) {
     },
     promoted: {
       icon: '🎁',
-      title: translatedOrFallback('root.bo.selectLocation.help.promoted.title', '🎁 Promoted — active campaign.'),
-      desc: translatedOrFallback('root.bo.selectLocation.help.promoted.desc', 'This business is running an active campaign right now.')
+      title: translatedOrFallback('root.bo.selectLocation.help.promoted.title', '🎁 Promo QR active.'),
+      desc: translatedOrFallback('root.bo.selectLocation.help.promoted.desc', 'This business is running an active Campaign with Promo QR right now.')
     }
   };
 
@@ -1136,7 +1136,7 @@ function buildLpmStatusItems(status = {}) {
   const owned = status?.ownedNow === true;
   const visibilityState = String(status?.visibilityState || '').trim();
   const courtesyUntil = String(status?.courtesyUntil || '').trim();
-  const campaignEntitled = status?.campaignEntitled === true;
+  const promoQrCampaignActive = status?.promoQrCampaignActive === true;
 
   const items = [];
 
@@ -1145,7 +1145,7 @@ function buildLpmStatusItems(status = {}) {
   else if (courtesyUntil) items.push(getSharedBusinessStatusMeta('stillVisible'));
   else items.push(getSharedBusinessStatusMeta('free'));
 
-  if (campaignEntitled) items.push(getSharedBusinessStatusMeta('promoted'));
+  if (promoQrCampaignActive) items.push(getSharedBusinessStatusMeta('promoted'));
 
   return items.filter(Boolean);
 }
@@ -3795,15 +3795,15 @@ function sybApplyStatusDecor(row, status) {
   const owned = status?.ownedNow === true;
   const vis = String(status?.visibilityState || '').trim();
   const courtesyUntil = String(status?.courtesyUntil || '').trim();
-  const entitled = status?.campaignEntitled === true;
+  const promoQrCampaignActive = status?.promoQrCampaignActive === true;
 
   dot.classList.toggle('syb-taken', owned);
   dot.classList.toggle('syb-parked', !owned && vis === 'hidden');
   dot.classList.toggle('syb-held', !owned && !!courtesyUntil);
   dot.classList.toggle('syb-free', !owned && vis !== 'hidden' && !courtesyUntil);
 
-  gift.classList.toggle('syb-gift-on', entitled);
-  gift.style.display = entitled ? '' : 'none';
+  gift.classList.toggle('syb-gift-on', promoQrCampaignActive);
+  gift.style.display = promoQrCampaignActive ? '' : 'none';
 }
 
 function sybBuildPickPayload(item) {
@@ -4702,20 +4702,24 @@ async function openOwnerSettingsForTarget({ target, locationName, noSelection })
     targetUlid = '';
   }
 
-  let ownedNow = false;
+  let planEntitled = false;
+  let activePaidPlan = false;
   try {
     const u = new URL('/api/status', location.origin);
     u.searchParams.set('locationID', tgt);
     const rs = await fetch(u.toString(), { cache: 'no-store', credentials: 'include' });
     const js = rs.ok ? await rs.json().catch(() => null) : null;
-    ownedNow = js?.ownedNow === true;
+    planEntitled = js?.planEntitled === true;
+    activePaidPlan = js?.activePaidPlan === true;
   } catch {
-    ownedNow = false;
+    planEntitled = false;
+    activePaidPlan = false;
   }
 
-  if (hasSess && activeUlid && targetUlid && activeUlid === targetUlid) {
+  const sameDeviceTarget = !!hasSess && !!activeUlid && !!targetUlid && activeUlid === targetUlid;
+  if (sameDeviceTarget) {
     showOwnerSettingsModal({
-      variant: 'signedin',
+      variant: planEntitled ? 'signedin' : 'renew',
       locationIdOrSlug: tgt,
       locationName: String(locationName || '').trim(),
       noSelection: noSelection === true
@@ -4726,7 +4730,7 @@ async function openOwnerSettingsForTarget({ target, locationName, noSelection })
   const isMismatch = !!hasSess && !!activeUlid && !!targetUlid && activeUlid !== targetUlid;
 
   showOwnerSettingsModal({
-    variant: isMismatch ? 'mismatch' : (ownedNow ? 'restore' : 'claim'),
+    variant: isMismatch ? 'mismatch' : ((planEntitled || activePaidPlan) ? 'restore' : 'claim'),
     locationIdOrSlug: tgt,
     locationName: String(locationName || '').trim(),
     noSelection: noSelection === true
@@ -7845,29 +7849,29 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
   let rawExpl = '';
   if (variant === 'restore') {
     rawExpl = _ownerText(
-      'owner.settings.restore.explain',
-      'Owner access for this listing is not active on this device yet.\nUse 🔑 Restore owner access to add it here, or run a campaign 🎯 if access has not been set up yet.'      
+      'owner.settings.restore.planExplain',
+      'An active Plan exists for this listing, but owner access is not active on this device yet.\nUse 🔑 Restore owner access with the Stripe payment ID (pi_...) for this listing.'      
     );
   } else if (variant === 'mismatch') {
     rawExpl = _ownerText(
-      'owner.settings.mismatch.explain',
+      'owner.settings.mismatch.planExplain',
       'This device is currently active for a different listing.\n\nTo manage the selected listing here, open Owner center and switch this device to that listing.'      
     );
   } else if (variant === 'renew') {
     rawExpl = _ownerText(
-      'owner.settings.renew.explain',
-      'Owner access is active on this device, but this location is not running an active campaign right now. Run a campaign to activate analytics and campaign controls.'
+      'owner.settings.renew.planExplain',
+      'Owner access is active on this device, but this location does not have active Plan coverage right now.\nActivate or renew a Plan to open Dash. Choose Campaign with Promo QR only if you want promotion codes.'
     );
   } else if (variant === 'claim') {
     rawExpl = _ownerText(
-      'owner.settings.claim.explain',
-      'Owner access to the selected location isn’t set up on this device yet.\nRun a campaign 🎯 for this location. Owner access 🔑 will be stored on this device after checkout.'
+      'owner.settings.claim.planExplain',
+      'Set up Plan coverage for the selected location.\nOwner access will be stored on this device after checkout.'
     );
   } else {
     // signedin (and any future variants): no warning headline
     rawExpl = _ownerText(
-      'owner.settings.signedin.explain',
-      'Manage analytics or campaigns for this location below.'
+      'owner.settings.signedin.planExplain',
+      'Dash is available while an active Plan covers this location. You can also manage Plan coverage or run a Campaign with Promo QR below.'
     );
   }
 
@@ -7912,14 +7916,14 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     });
 
     addItem({
-      id: 'owner-run-campaign',
-      icon: '🎯',
-      title: _ownerText('owner.settings.restore.runCampaign.title', 'Run a campaign'),
-      desc: _ownerText('owner.settings.restore.runCampaign.desc', 'Start a campaign for this location.'),
+      id: 'owner-activate-plan',
+      icon: '🧾',
+      title: _ownerText('owner.settings.restore.activatePlan.title', 'Activate Plan'),
+      desc: _ownerText('owner.settings.restore.activatePlan.desc', 'Start Plan checkout for this location if you do not have the Payment ID.'),
       onClick: () => {
         hideModal(id);
         const target = String(locId || selectedKey || '').trim();
-        if (target) showCampaignManagementModal(target, { guest: true });
+        if (target) showCampaignManagementModal(target, { guest: true, openTab: 'new', preferEmptyDraft: true });
       }
     });
 
@@ -7959,10 +7963,10 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     });
 
     addItem({
-      id: 'owner-manage-campaign',
-      icon: '🎯',
-      title: _ownerText('owner.settings.signedin.runCampaign.title', 'Manage campaign'),
-      desc: _ownerText('owner.settings.signedin.runCampaign.desc', 'Edit draft ✍️, checkout 💳, or manage this campaign.'),
+      id: 'owner-manage-plan',
+      icon: '🧭',
+      title: _ownerText('owner.settings.signedin.managePlan.title', 'Manage Plan or Campaign with Promo QR'),
+      desc: _ownerText('owner.settings.signedin.managePlan.desc', 'Renew Plan coverage, adjust coverage, or run a Campaign with Promo QR.'),
       onClick: () => {
         hideModal(id);
         showCampaignManagementModal(String(locId || '').trim());
@@ -8015,14 +8019,14 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
   } else if (variant === 'renew') {
     addItem({
-      id: 'owner-run-campaign',
-      icon: '🎯',
-      title: _ownerText('owner.settings.renew.runCampaign.title', 'Run a campaign'),
-      desc: _ownerText('owner.settings.renew.runCampaign.desc', 'Start or renew a campaign for this location.'),
+      id: 'owner-renew-plan',
+      icon: '🧾',
+      title: _ownerText('owner.settings.renew.plan.title', 'Renew Plan'),
+      desc: _ownerText('owner.settings.renew.plan.desc', 'Activate Plan coverage for this location. Choose Campaign with Promo QR only if you want promotion codes.'),
       onClick: () => {
         hideModal(id);
         const target = String(locId || selectedKey || '').trim();
-        if (target) showCampaignManagementModal(target);
+        if (target) showCampaignManagementModal(target, { openTab: 'new', preferEmptyDraft: true });
       }
     });
 
@@ -8116,10 +8120,10 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
 
   } else {
     addItem({
-      id: 'owner-run-campaign',
-      icon: '🎯',
-      title: _ownerText('owner.settings.claim.runCampaign.title', 'Run campaign'),
-      desc: _ownerText('owner.settings.claim.runCampaign.desc', 'Run a campaign for this location.'),
+      id: 'owner-activate-plan',
+      icon: '🧾',
+      title: _ownerText('owner.settings.claim.activatePlan.title', 'Activate Plan'),
+      desc: _ownerText('owner.settings.claim.activatePlan.desc', 'Set up Plan coverage for this location. Campaign with Promo QR is optional.'),
       onClick: () => {
         (async () => {
           hideModal(id);
@@ -8127,12 +8131,9 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
           const slug = String(locId || '').trim();
           if (!slug) return;
 
-          // Claim flow (no owner session): use existing funding modal / public checkout path.
-          // This keeps UX correct for unowned locations.
-          let campaignKey = await resolveCampaignKeyForLocation(slug);
-          if (!campaignKey) campaignKey = "campaign-30d";
-
-          showCampaignManagementModal(slug, { guest: true });
+          // Claim flow (no owner session): open Plan setup through Campaign Management.
+          // Campaign with Promo QR remains optional inside the Plan flow.
+          showCampaignManagementModal(slug, { guest: true, openTab: 'new', preferEmptyDraft: true });
         })();
       }
     });
@@ -8533,8 +8534,9 @@ export async function createOwnerCenterModal() {
           if (!r.ok) return;
 
           const j = await r.json().catch(() => null);
-          const entitled = (j?.campaignEntitled === true);
-          if (giftEl) giftEl.classList.toggle('syb-gift-on', entitled);
+          const promoQrCampaignActive = (j?.promoQrCampaignActive === true);
+          if (giftEl) giftEl.classList.toggle('syb-gift-on', promoQrCampaignActive);
+          if (giftEl) giftEl.style.display = promoQrCampaignActive ? '' : 'none';
           
           const owned = (j?.ownedNow === true);
           const vis = String(j?.visibilityState || '').trim();

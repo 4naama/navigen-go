@@ -436,18 +436,18 @@ async function getSessionBoundLocationHint() {
       : (typeof ln === 'string') ? ln.trim()
       : '';
 
-    // Also check whether this signed-in location is actually eligible for Dash (campaignEntitled).
-    // Reason: avoid offering "Open my signed-in location" when it would just loop back to "Campaign required".
-    let campaignEntitled = false;
+    // Also check whether this signed-in location is actually eligible for Dash (planEntitled).
+    // Reason: avoid offering "Open my signed-in location" when it would just loop back to "Plan required".
+    let planEntitled = false;
     try {
       const st = await fetch(`/api/status?locationID=${encodeURIComponent(ulid)}`, { cache: 'no-store', credentials: 'omit' });
       if (st.ok) {
         const sj = await st.json().catch(() => null);
-        campaignEntitled = sj?.campaignEntitled === true;
+        planEntitled = sj?.planEntitled === true;
       }
     } catch {}
 
-    return { ulid, slug, name, campaignEntitled };
+    return { ulid, slug, name, planEntitled };
   } catch {
     return null;
   }
@@ -468,8 +468,8 @@ async function renderAccessBlocked({ status, detail }) {
     'You can restore more than one listing on this device, one Stripe payment ID (pi_...) at a time.';    
 
   const msg403Default =
-    (typeof t === 'function' && t('owner.settings.claim.runCampaign.desc')) ||
-    'Activate analytics by running a campaign for this location.';
+    (typeof t === 'function' && t('dash.blocked.planRequired.desc')) ||
+    'Activate or renew a Plan for this location to open Dash.';
 
   const examplesTitle =
     (typeof t === 'function' && t('owner.settings.examples.action.title')) ||
@@ -488,7 +488,7 @@ async function renderAccessBlocked({ status, detail }) {
     'Add another listing to this device using its Stripe payment ID (pi_...).';    
 
   // 403 can be either:
-  // A) campaign required (entitlement inactive), or
+  // A) Plan required or expired for this location, or
   // B) session is valid but for a different location (ULID mismatch).
   // Detect B and show an explicit hint to reduce operator confusion.
   let mismatchHint = null;
@@ -538,7 +538,7 @@ async function renderAccessBlocked({ status, detail }) {
                 `
                 : `
                   ${
-                    (mismatchHint && mismatchHint.ulid && mismatchHint.campaignEntitled === true)
+                    (mismatchHint && mismatchHint.ulid && mismatchHint.planEntitled === true)
                       ? `
                         <button type="button" class="modal-menu-item" id="dash-open-bound-location">
                           <span class="icon-img">📍</span>
@@ -551,11 +551,11 @@ async function renderAccessBlocked({ status, detail }) {
                       : ``
                   }
 
-                  <button type="button" class="modal-menu-item" id="dash-run-campaign">
-                    <span class="icon-img">🎯</span>
+                  <button type="button" class="modal-menu-item" id="dash-activate-plan">
+                    <span class="icon-img">🧾</span>
                     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
                       <strong>${
-                        (typeof t === 'function' && t('owner.settings.claim.runCampaign.title')) || 'Run campaign'
+                        (typeof t === 'function' && t('dash.blocked.activatePlan.title')) || 'Activate / Renew Plan'
                       }</strong><br><small>${msg403}</small>
                     </span>
                   </button>
@@ -613,11 +613,15 @@ async function renderAccessBlocked({ status, detail }) {
     } catch {}
   });
 
-  const runBtn = document.getElementById('dash-run-campaign');
-  runBtn?.addEventListener('click', () => {
+  const planBtn = document.getElementById('dash-activate-plan');
+  planBtn?.addEventListener('click', () => {
     try {
-      // Main shell owns campaign purchase flow; pass an explicit intent.
-      window.location.href = 'https://navigen.io/?bo=1&open=campaign';
+      // Main shell owns Plan activation/renewal flow; pass the current Dash target when available.
+      const target = String(locEl?.dataset?.canonicalId || locEl?.value || '').trim();
+      const u = new URL('https://navigen.io/');
+      u.searchParams.set('open', 'campaign');
+      if (target) u.searchParams.set('bo', target);
+      window.location.href = u.toString();
     } catch {}
   });
 

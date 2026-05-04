@@ -313,8 +313,8 @@ async function maybeShowLpmInactiveNotice(idOrSlug) {
 
     // Translation-first with safe fallback
     const msg =
-      (typeof t === 'function' ? (t('lpm.visibility.inactive') || '') : '') ||
-      'This business is currently inactive on NaviGen. Start a campaign to become discoverable again.';
+      (typeof t === 'function' ? (t('lpm.visibility.publicRecordMode') || '') : '') ||
+      'This business is currently in Public Record Mode. Activate a Plan to manage Dash, or choose Campaign with Promo QR for promotions.';
 
     box.textContent = msg;
 
@@ -690,9 +690,9 @@ function renderBusinessOwnersGroup() {
         }
       },      
       {
-        icon: "🎯",
-        titleKey: "root.bo.startCampaign.title",
-        descKey: "root.bo.startCampaign.desc",
+        icon: "🧭",
+        titleKey: "root.bo.manageBusiness.title",
+        descKey: "root.bo.manageBusiness.desc",
         onClick: async () => {
           const picked = await showSelectLocationModal();
           if (!picked) return;
@@ -1355,7 +1355,7 @@ async function initEmergencyBlock(countryOverride) {
         }
 
         if (open === 'restore') {
-          if (bo) {
+          if (bo && bo !== '1') {
             // Restore landing: open OS without a user-selected location (Selected stays empty).
             openOwnerSettingsForLocation(bo, '', true);
             return;
@@ -1365,9 +1365,15 @@ async function initEmergencyBlock(countryOverride) {
         }
 
         if (open === 'campaign') {
-          // 🎯 Start campaign: select business (SYB), then open Campaign Management (no LPM)
+          // 🧭 Manage Plan or Campaign with Promo QR: direct target when provided, otherwise select business.
           (async () => {
-            showToast('Select your business to start a campaign.', 2200);
+            const directTarget = (bo && bo !== '1') ? bo : '';
+            if (directTarget) {
+              await showCampaignManagementModal(directTarget, { openTab: 'new', preferEmptyDraft: true });
+              return;
+            }
+
+            showToast('Select your business to manage Plan or Campaign with Promo QR.', 2200);
 
             let pendingDraft = null;
             try {
