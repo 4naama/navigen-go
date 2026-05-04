@@ -7687,6 +7687,9 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
           const st = String(row?.statusOverride || row?.status || "").trim().toLowerCase();
           if (st !== "active") return false;
 
+          const rowPlanMode = normalizePlanMode(row?.planMode, row?.campaignPreset);
+          if (rowPlanMode !== "campaign_with_promo_qr") return false;
+
           const startMs = parseYmdUtcMs(String(row?.startDate || ""));
           const endMs = parseYmdUtcMs(String(row?.endDate || ""));
           if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return false;
