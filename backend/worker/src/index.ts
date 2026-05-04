@@ -4099,7 +4099,7 @@ export default {
         const actives = rows.filter(isActiveRow);
 
         if (!actives.length) {
-          return json({ error: { code: "forbidden", message: "campaign required" } }, 403);
+          return json({ error: { code: "campaign_with_promo_qr_required", message: "Active Campaign with Promo QR required." } }, 403);
         }
 
         // If caller specified campaignKey, use it only if it's active.
@@ -4140,7 +4140,7 @@ export default {
         }
         if (!activeRow) {
           return json(
-            { error: { code: "forbidden", message: "campaign required" } },
+            { error: { code: "campaign_with_promo_qr_required", message: "Active Campaign with Promo QR required." } },
             403
           );
         }
@@ -4157,7 +4157,7 @@ export default {
         const chosenKey = String(activeRow.campaignKey || "").trim();
         if (!chosenKey) {
           return json(
-            { error: { code: "forbidden", message: "campaign required" } },
+            { error: { code: "campaign_with_promo_qr_required", message: "Active Campaign with Promo QR required." } },
             403
           );
         }
