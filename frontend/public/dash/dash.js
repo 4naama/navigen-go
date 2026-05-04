@@ -440,7 +440,7 @@ async function getSessionBoundLocationHint() {
     // Reason: avoid offering "Open my signed-in location" when it would just loop back to "Plan required".
     let planEntitled = false;
     try {
-      const st = await fetch(`/api/status?locationID=${encodeURIComponent(ulid)}`, { cache: 'no-store', credentials: 'include' });
+      const st = await fetch(`https://navigen-api.4naama.workers.dev/api/status?locationID=${encodeURIComponent(ulid)}`, { cache: 'no-store', credentials: 'omit' });
       if (st.ok) {
         const sj = await st.json().catch(() => null);
         planEntitled = sj?.planEntitled === true;
