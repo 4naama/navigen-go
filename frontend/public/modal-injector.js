@@ -9512,13 +9512,28 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
   return `${base}-${stamp}-${suffix}`;
 }
 
+function campaignPlanModeFromLegacy(planMode, campaignPreset) {
+  const mode = String(planMode || '').trim().toLowerCase();
+  if (mode === 'managed_presence') return 'managed_presence';
+  if (mode === 'campaign_with_promo_qr') return 'campaign_with_promo_qr';
+
+  const legacy = String(campaignPreset || '').trim().toLowerCase();
+  return legacy === 'visibility' ? 'managed_presence' : 'campaign_with_promo_qr';
+}
+
+function legacyCampaignPresetFromPlanMode(planMode) {
+  return campaignPlanModeFromLegacy(planMode) === 'managed_presence' ? 'visibility' : 'promotion';
+}
+
+function campaignPlanModeRequiresPromoQr(planMode) {
+  return campaignPlanModeFromLegacy(planMode) === 'campaign_with_promo_qr';
+}
+
   const renderDraftEditor = () => {
     let selectedPlanCode = ['standard', 'multi', 'large', 'network'].includes(String(draft?.planCode || '').trim().toLowerCase())
       ? String(draft.planCode).trim().toLowerCase()
       : '';
-    let selectedCampaignPreset = String(draft?.campaignPreset || 'promotion').trim().toLowerCase() === 'visibility'
-      ? 'visibility'
-      : 'promotion';
+    let selectedPlanMode = campaignPlanModeFromLegacy(draft?.planMode, draft?.campaignPreset);
 
     const planAllowsMultiScope = (planCode) => ['multi', 'large', 'network'].includes(String(planCode || '').trim().toLowerCase());
     const multiScopeEnabled = () => planAllowsMultiScope(selectedPlanCode) || !!listJ?.plan?.multiLocationEnabled;
@@ -9606,7 +9621,7 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
 
     const labels = {
       plan: tSafe('campaign.plan.choose.title', 'Choose a plan which covers your needs.'),
-      campaignPreset: tSafe('campaign.plan.preset.label', 'Campaign mode'),
+      planMode: tSafe('campaign.plan.mode.label', 'Plan mode'),
       campaignKey: 'Campaign key',
       campaignName: 'Campaign name',
       productName: 'Product / service',
@@ -9769,21 +9784,20 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     planField.appendChild(planBody);
     panel.appendChild(planField);
 
-    const presetSelect = document.createElement('select');
-    presetSelect.id = 'cm-campaign-preset';
-    presetSelect.className = 'input';
-    PRESET_OPTIONS.forEach((preset) => {
+    const planModeSelect = document.createElement('select');
+    planModeSelect.id = 'cm-plan-mode';
+    planModeSelect.className = 'input';
+    PLAN_MODE_OPTIONS.forEach((mode) => {
       const o = document.createElement('option');
-      o.value = preset.code;
-      o.textContent = preset.title;
-      if (preset.code === selectedCampaignPreset) o.selected = true;
-      presetSelect.appendChild(o);
+      o.value = mode.code;
+      o.textContent = mode.title;
+      if (mode.code === selectedPlanMode) o.selected = true;
+      planModeSelect.appendChild(o);
     });
-    presetSelect.addEventListener('change', () => {
-      selectedCampaignPreset = String(presetSelect.value || 'promotion').trim().toLowerCase() === 'visibility'
-        ? 'visibility'
-        : 'promotion';
+    planModeSelect.addEventListener('change', () => {
+      selectedPlanMode = campaignPlanModeFromLegacy(planModeSelect.value);
       syncPresetUi();
+      updateActivateState();
     });
 
     const promoFieldsWrap = document.createElement('div');
@@ -9803,20 +9817,34 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
 
     refreshScopeUi();
 
-    form.appendChild(field(labels.campaignPreset, presetSelect, { required: true }));
-    form.appendChild(scopeField);    
-    form.appendChild(field(labels.startDate, startDate, { required: true }));
-    form.appendChild(field(labels.endDate, endDate, { required: true }));
-    form.appendChild(field(labels.campaignName, campaignName));
-    form.appendChild(field(labels.campaignKey, campaignKey, { required: true }));
-    form.appendChild(field(labels.productName, productName));
-    form.appendChild(field(labels.campaignType, campaignType));
-    form.appendChild(field(labels.targetChannels, targetChannels));
-    form.appendChild(field(labels.eligibilityType, eligibilityType));
-    form.appendChild(field(labels.eligibilityNotes, eligibilityNotes));
-    form.appendChild(field(labels.utmSource, utmSource));
-    form.appendChild(field(labels.utmMedium, utmMedium));
-    form.appendChild(field(labels.utmCampaign, utmCampaign));
+    const planModeField = field(labels.planMode, planModeSelect, { required: true });
+    const startDateField = field(labels.startDate, startDate, { required: true });
+    const endDateField = field(labels.endDate, endDate, { required: true });
+    const campaignNameField = field(labels.campaignName, campaignName);
+    const campaignKeyField = field(labels.campaignKey, campaignKey, { required: true });
+    const productNameField = field(labels.productName, productName);
+    const campaignTypeField = field(labels.campaignType, campaignType);
+    const targetChannelsField = field(labels.targetChannels, targetChannels);
+    const eligibilityTypeField = field(labels.eligibilityType, eligibilityType);
+    const eligibilityNotesField = field(labels.eligibilityNotes, eligibilityNotes);
+    const utmSourceField = field(labels.utmSource, utmSource);
+    const utmMediumField = field(labels.utmMedium, utmMedium);
+    const utmCampaignField = field(labels.utmCampaign, utmCampaign);
+
+    form.appendChild(planModeField);
+    form.appendChild(scopeField);
+    form.appendChild(startDateField);
+    form.appendChild(endDateField);
+    form.appendChild(campaignNameField);
+    form.appendChild(campaignKeyField);
+    form.appendChild(productNameField);
+    form.appendChild(campaignTypeField);
+    form.appendChild(targetChannelsField);
+    form.appendChild(eligibilityTypeField);
+    form.appendChild(eligibilityNotesField);
+    form.appendChild(utmSourceField);
+    form.appendChild(utmMediumField);
+    form.appendChild(utmCampaignField);
 
     promoGrid.appendChild(field(labels.offerType, offerType));
     promoGrid.appendChild(field(labels.discountKind, discountKind));
@@ -9825,12 +9853,33 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     form.appendChild(promoFieldsWrap);
 
     const syncPresetUi = () => {
-      const isVisibility = selectedCampaignPreset === 'visibility';
-      promoFieldsWrap.style.display = '';
-      promoFieldsWrap.style.opacity = isVisibility ? '0.72' : '1';
-      offerType.disabled = isVisibility;
-      discountKind.disabled = isVisibility;
-      discountValue.disabled = isVisibility;
+      const requiresPromoQr = campaignPlanModeRequiresPromoQr(selectedPlanMode);
+      const campaignFields = [
+        startDateField,
+        endDateField,
+        campaignNameField,
+        campaignKeyField,
+        productNameField,
+        campaignTypeField,
+        targetChannelsField,
+        eligibilityTypeField,
+        eligibilityNotesField,
+        utmSourceField,
+        utmMediumField,
+        utmCampaignField
+      ];
+
+      campaignFields.forEach((row) => {
+        if (row) row.style.display = requiresPromoQr ? '' : 'none';
+      });
+
+      promoFieldsWrap.style.display = requiresPromoQr ? '' : 'none';
+      offerType.disabled = !requiresPromoQr;
+      discountKind.disabled = !requiresPromoQr;
+      discountValue.disabled = !requiresPromoQr;
+      campaignKey.required = requiresPromoQr;
+      startDate.required = requiresPromoQr;
+      endDate.required = requiresPromoQr;
     };
 
     syncPresetUi();
@@ -9844,8 +9893,8 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     const setupSummaryLabel = document.createElement('span');
     setupSummaryLabel.className = 'cm-chip-face-label cm-section-chip-label';
     setupSummaryLabel.innerHTML = `
-      <strong class="cm-section-chip-title">${tSafe('campaign.ui.setupChip.title', 'Campaign set up')}</strong>
-      <small class="cm-section-chip-summary">${tSafe('campaign.ui.setupChip.desc', 'Required fields are marked.')}</small>
+      <strong class="cm-section-chip-title">${tSafe('campaign.ui.setupChip.title', 'Plan setup')}</strong>
+      <small class="cm-section-chip-summary">${tSafe('campaign.ui.setupChip.desc', 'Select Plan mode and coverage. Promo QR fields are required only for Campaign with Promo QR.')}</small>
     `;
 
     const setupSummaryBadge = document.createElement('span');
@@ -9971,6 +10020,18 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     const actions = document.createElement('div');
     actions.className = 'cm-actions';
 
+    function checkoutLabelText() {
+      if (p8Draft) return tSafe('locationDraft.commercial.cta', 'Continue to payment');
+      return campaignPlanModeRequiresPromoQr(selectedPlanMode)
+        ? tSafe('campaign.ui.runPromoQrCampaign', 'Run a Campaign with Promo QR')
+        : tSafe('campaign.ui.activatePlan', 'Activate Plan');
+    }
+
+    function checkoutBusyLabelText() {
+      if (p8Draft) return tSafe('locationDraft.commercial.processing', 'Preparing checkout…');
+      return tSafe('campaign.ui.activating', 'Preparing checkout…');
+    }
+
     let btnPublish = null;
     if (p8Draft && p8Draft.draftULID && p8Draft.draftSessionId) {
       const btnEditLocation = document.createElement('button');
@@ -10003,9 +10064,7 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     const btnCheckout = document.createElement('button');
     btnCheckout.className = 'modal-body-button';
     btnCheckout.type = 'button';
-    btnCheckout.textContent = p8Draft
-      ? ((typeof t === 'function' && t('locationDraft.commercial.cta')) || 'Continue to payment')
-      : ((typeof t === 'function' && t('campaign.ui.activate')) || 'Activate');
+    btnCheckout.textContent = checkoutLabelText();
     btnCheckout.disabled = true;
 
     actions.appendChild(btnCheckout);
@@ -10016,11 +10075,13 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
       const selectedCount = Array.from(selectedSet).filter((id) => eligibleByUlid.has(id)).length;
 
       const planComplete = !!String(selectedPlanCode || '').trim();
+      const requiresPromoQr = campaignPlanModeRequiresPromoQr(selectedPlanMode);
       const campaignKeyComplete = !!String(campaignKey.value || '').trim();
       const startDateComplete = !!String(startDate.value || '').trim();
       const endDateComplete = !!String(endDate.value || '').trim();
       const scopeComplete = campaignScope !== 'selected' || selectedCount > 0;
-      const setupComplete = campaignKeyComplete && startDateComplete && endDateComplete && scopeComplete;
+      const promoQrFieldsComplete = !requiresPromoQr || (campaignKeyComplete && startDateComplete && endDateComplete);
+      const setupComplete = promoQrFieldsComplete && scopeComplete;
 
       const setCampaignRequiredState = (control, complete) => {
         if (!(control instanceof HTMLElement)) return;
@@ -10031,12 +10092,12 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
       planField.classList.toggle('is-complete', planComplete);
       setupChip.classList.toggle('is-complete', setupComplete);
 
-      setCampaignRequiredState(campaignKey, campaignKeyComplete);
-      setCampaignRequiredState(startDate, startDateComplete);
-      setCampaignRequiredState(endDate, endDateComplete);
+      setCampaignRequiredState(campaignKey, !requiresPromoQr || campaignKeyComplete);
+      setCampaignRequiredState(startDate, !requiresPromoQr || startDateComplete);
+      setCampaignRequiredState(endDate, !requiresPromoQr || endDateComplete);
       setCampaignRequiredState(scopeSelect, scopeField.style.display === 'none' ? true : scopeComplete);
 
-      btnCheckout.disabled = !(planComplete && setupComplete) || btnCheckout.classList.contains('is-busy');
+      if (!btnCheckout.classList.contains('is-busy')) btnCheckout.textContent = checkoutLabelText();
     }
 
     search.addEventListener('input', syncLocationRoster);
@@ -10072,7 +10133,8 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
         startDate: String(startDate.value || '').trim(),
         endDate: String(endDate.value || '').trim(),
         campaignScope,
-        campaignPreset: selectedCampaignPreset,
+        planMode: selectedPlanMode,
+        campaignPreset: legacyCampaignPresetFromPlanMode(selectedPlanMode),
         planCode: selectedPlanCode,
         selectedLocationULIDs
       };
@@ -10143,12 +10205,8 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     btnCheckout.addEventListener('click', async () => {
       if (btnCheckout.disabled || btnCheckout.classList.contains('is-busy')) return;
 
-      const checkoutLabel = p8Draft
-        ? ((typeof t === 'function' && t('locationDraft.commercial.cta')) || 'Continue to payment')
-        : ((typeof t === 'function' && t('campaign.ui.activate')) || 'Activate');
-      const checkoutBusyLabel = p8Draft
-        ? ((typeof t === 'function' && t('locationDraft.commercial.processing')) || 'Preparing checkout…')
-        : ((typeof t === 'function' && t('campaign.ui.activating')) || 'Activating…');
+      const checkoutLabel = checkoutLabelText();
+      const checkoutBusyLabel = checkoutBusyLabelText();
 
       btnCheckout.classList.add('is-busy');
       btnCheckout.disabled = true;
@@ -10156,13 +10214,14 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
 
       try {
         const d = buildDraft();
+        const requiresPromoQr = campaignPlanModeRequiresPromoQr(d.planMode);
         const discountValueRaw = String(discountValue.value || '').trim();
-        if (discountValueRaw && (discountValue.validity?.badInput || !Number.isFinite(Number(discountValueRaw)))) {
+        if (requiresPromoQr && discountValueRaw && (discountValue.validity?.badInput || !Number.isFinite(Number(discountValueRaw)))) {
           showToast(tSafe('campaign.ui.discountValue.numberOnly', 'Discount value must be a number.'), 2400);
           return;
-        }        
-        if (!d.campaignKey || !d.startDate || !d.endDate) {
-          showToast((typeof t==='function' && t('campaign.ui.missingFields')) || 'campaignKey/startDate/endDate required.', 2400);
+        }
+        if (requiresPromoQr && (!d.campaignKey || !d.startDate || !d.endDate)) {
+          showToast(tSafe('campaign.ui.missingPromoQrFields', 'Campaign key, start date, and end date are required for Campaign with Promo QR.'), 2400);
           return;
         }
         if (d.campaignScope === 'selected' && !d.selectedLocationULIDs.length) {
@@ -10172,26 +10231,34 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
 
         let chkJ = null;
         if (listJ) {
-          const { r: rSave, j: rSaveJ } = await apiJson('/api/owner/campaigns/draft', {
-            method:'POST',
-            headers:{'content-type':'application/json'},
-            body: JSON.stringify({ ...d, planCode: selectedPlanCode })
-          });
-          if (!rSave.ok) {
-            const code = String((rSaveJ?.error?.code || '')).trim();
-            const msg = String((rSaveJ?.error?.message || '')).trim();
-            if (code === 'plan_upgrade_required' && msg) {
-              upgradeNote.textContent = msg;
-              upgradeNote.style.display = '';
+          if (requiresPromoQr) {
+            const { r: rSave, j: rSaveJ } = await apiJson('/api/owner/campaigns/draft', {
+              method:'POST',
+              headers:{'content-type':'application/json'},
+              body: JSON.stringify({ ...d, planCode: selectedPlanCode })
+            });
+            if (!rSave.ok) {
+              const code = String((rSaveJ?.error?.code || '')).trim();
+              const msg = String((rSaveJ?.error?.message || '')).trim();
+              if (code === 'plan_upgrade_required' && msg) {
+                upgradeNote.textContent = msg;
+                upgradeNote.style.display = '';
+              }
+              showToast(msg || tSafe('campaign.ui.saveFailed', 'Could not save draft.'), 2400);
+              return;
             }
-            showToast(msg || ((typeof t==='function' && t('campaign.ui.saveFailed')) || 'Could not save draft.'), 2400);
-            return;
           }
 
           const out = await apiJson('/api/owner/campaigns/checkout', {
             method:'POST',
             headers:{'content-type':'application/json'},
-            body: JSON.stringify({ locationID: slug, planCode: selectedPlanCode, campaignPreset: selectedCampaignPreset })
+            body: JSON.stringify({
+              locationID: slug,
+              planCode: selectedPlanCode,
+              planMode: d.planMode,
+              campaignScope: d.campaignScope,
+              selectedLocationULIDs: d.selectedLocationULIDs
+            })
           });
           if (!out.r.ok) {
             const code = String((out.j?.error?.code || '')).trim();
@@ -10200,7 +10267,7 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
               upgradeNote.textContent = msg;
               upgradeNote.style.display = '';
             }
-            showToast(msg || ((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.'), 2600);
+            showToast(msg || tSafe('campaign.ui.checkoutFailed', 'Checkout could not start.'), 2600);
             return;
           }
           chkJ = out.j;
@@ -10209,16 +10276,20 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
             ? {
                 draftULID: String(p8Draft.draftULID || '').trim(),
                 draftSessionId: String(p8Draft.draftSessionId || '').trim(),
-                draft: d,
                 planCode: selectedPlanCode,
-                campaignPreset: selectedCampaignPreset
+                planMode: d.planMode,
+                campaignScope: d.campaignScope,
+                selectedLocationULIDs: d.selectedLocationULIDs
               }
             : {
                 locationID: slug,
-                draft: d,
                 planCode: selectedPlanCode,
-                campaignPreset: selectedCampaignPreset
+                planMode: d.planMode,
+                campaignScope: d.campaignScope,
+                selectedLocationULIDs: d.selectedLocationULIDs
               };
+
+          if (requiresPromoQr) checkoutBody.draft = d;
 
           const out = await apiJson('/api/campaigns/checkout', {
             method:'POST',
@@ -10232,14 +10303,14 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
               upgradeNote.textContent = msg;
               upgradeNote.style.display = '';
             }
-            showToast(msg || ((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.'), 2600);
+            showToast(msg || tSafe('campaign.ui.checkoutFailed', 'Checkout could not start.'), 2600);
             return;
           }
           chkJ = out.j;
         }
 
         if (!chkJ?.url) {
-          showToast((typeof t==='function' && t('campaign.ui.checkoutFailed')) || 'Checkout could not start.', 2600);
+          showToast(tSafe('campaign.ui.checkoutFailed', 'Checkout could not start.'), 2600);
           return;
         }
 
@@ -10252,10 +10323,7 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     });
   };
 
-  const tSafe = (key, fallback) => {
-    const raw = (typeof t === 'function') ? String(t(key) || '').trim() : '';
-    return raw && raw !== key ? raw : fallback;
-  };
+  const tSafe = (key, fallback) => translatedOrFallback(key, fallback);
 
   const PLAN_OPTIONS = [
     { code: 'standard', title: tSafe('campaign.plan.standard.title', 'Standard'), priceEur: 1, capacityText: tSafe('campaign.plan.standard.capacity', '1 location') }, // TESTING: keep €1 until production restore
@@ -10264,9 +10332,9 @@ function nextRollingCampaignKey(baseSlug, dateStamp, rowsAll) {
     { code: 'network', title: tSafe('campaign.plan.network.title', 'Network'), priceEur: 749, capacityText: tSafe('campaign.plan.network.capacity', '10+ locations') }
   ];
 
-  const PRESET_OPTIONS = [
-    { code: 'visibility', title: tSafe('campaign.plan.preset.visibility', 'Visibility only') },
-    { code: 'promotion', title: tSafe('campaign.plan.preset.promotion', 'Promotion') }
+  const PLAN_MODE_OPTIONS = [
+    { code: 'managed_presence', title: tSafe('campaign.plan.mode.managedPresence', 'Managed Presence') },
+    { code: 'campaign_with_promo_qr', title: tSafe('campaign.plan.mode.promoQr', 'Campaign with Promo QR') }
   ];
 
   // Plan selection is scoped inside renderDraftEditor; no plan is preselected on publish setup.
