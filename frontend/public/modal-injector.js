@@ -10098,6 +10098,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
       setCampaignRequiredState(scopeSelect, scopeField.style.display === 'none' ? true : scopeComplete);
 
       if (!btnCheckout.classList.contains('is-busy')) btnCheckout.textContent = checkoutLabelText();
+      btnCheckout.disabled = !(planComplete && setupComplete) || btnCheckout.classList.contains('is-busy');
     }
 
     search.addEventListener('input', syncLocationRoster);
@@ -10105,6 +10106,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
       syncLocationRoster();
       updateActivateState();
     });
+    campaignKey.addEventListener('input', updateActivateState);
     startDate.addEventListener('input', updateActivateState);
     endDate.addEventListener('input', updateActivateState);
     syncLocationRoster();
