@@ -10267,6 +10267,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
           return;
         }
         if (requiresPromoQr && (!d.campaignKey || !d.startDate || !d.endDate)) {
+          updateActivateState();
           showToast(tSafe('campaign.ui.missingPromoQrFields', 'Campaign key, start date, and end date are required for Campaign with Promo QR.'), 2400);
           return;
         }
@@ -10305,6 +10306,42 @@ function campaignPlanModeRequiresPromoQr(planMode) {
               campaignScope: d.campaignScope,
               selectedLocationULIDs: d.selectedLocationULIDs
             })
+          });
+          if (!out.r.ok) {
+            const code = String((out.j?.error?.code || '')).trim();
+            const msg = String((out.j?.error?.message || '')).trim();
+            if (code === 'plan_upgrade_required' && msg) {
+              upgradeNote.textContent = msg;
+              upgradeNote.style.display = '';
+            }
+            showToast(msg || tSafe('campaign.ui.checkoutFailed', 'Checkout could not start.'), 2600);
+            return;
+          }
+          chkJ = out.j;
+        } else {
+          const checkoutBody = (p8Draft && p8Draft.draftULID && p8Draft.draftSessionId)
+            ? {
+                draftULID: String(p8Draft.draftULID || '').trim(),
+                draftSessionId: String(p8Draft.draftSessionId || '').trim(),
+                planCode: selectedPlanCode,
+                planMode: d.planMode,
+                campaignScope: d.campaignScope,
+                selectedLocationULIDs: d.selectedLocationULIDs
+              }
+            : {
+                locationID: slug,
+                planCode: selectedPlanCode,
+                planMode: d.planMode,
+                campaignScope: d.campaignScope,
+                selectedLocationULIDs: d.selectedLocationULIDs
+              };
+
+          if (requiresPromoQr) checkoutBody.draft = d;
+
+          const out = await apiJson('/api/campaigns/checkout', {
+            method:'POST',
+            headers:{'content-type':'application/json'},
+            body: JSON.stringify(checkoutBody)
           });
           if (!out.r.ok) {
             const code = String((out.j?.error?.code || '')).trim();
