@@ -1206,12 +1206,21 @@ function formatLpmRatingCount(count) {
   return n.toLocaleString(document.documentElement?.lang || undefined);
 }
 
-function formatLpmRatingSummary(value, count = 0) {
+function formatLpmRatingCompactCount(count) {
+  const n = Number(count || 0);
+  if (!Number.isFinite(n) || n <= 0) return '';
+  if (n >= 1000000) return `${(n / 1000000).toFixed(n >= 10000000 ? 0 : 1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K`;
+  return formatLpmRatingCount(n);
+}
+
+function formatLpmRatingSummary(value, count = 0, opts = {}) {
   const score = Number(value);
   const safeScore = (Number.isFinite(score) && score > 0) ? score : 3.0;
   const safeCount = Number(count || 0);
+  const countFormatter = opts?.compactCount === true ? formatLpmRatingCompactCount : formatLpmRatingCount;
   const countText = (Number.isFinite(safeCount) && safeCount > 0)
-    ? ` (${formatLpmRatingCount(safeCount)})`
+    ? ` (${countFormatter(safeCount)})`
     : '';
 
   return `${getLpmRatingFaceEmoji(safeScore)} ${safeScore.toFixed(1)}${countText}`;
@@ -1219,8 +1228,8 @@ function formatLpmRatingSummary(value, count = 0) {
 
 function lpmRatingEvidenceWeight(count) {
   const n = Number(count || 0);
-  if (!Number.isFinite(n) || n <= 0) return 1;
-  return Math.sqrt(Math.min(Math.max(n, 0), 5000));
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(Math.max(n, 0), 5000);
 }
 
 function lpmDisplayRatingSummary(providerRating = null, navigenRating = {}) {
@@ -1230,24 +1239,32 @@ function lpmDisplayRatingSummary(providerRating = null, navigenRating = {}) {
   const ngCount = Number(navigenRating?.count || 0);
 
   const hasGoogle = Number.isFinite(googleRating) && googleRating > 0;
-  const hasNgVotes = Number.isFinite(ngRating) && ngRating > 0 && Number.isFinite(ngCount) && ngCount > 0;
+  const hasNgEvidence = Number.isFinite(ngRating) && ngRating > 0 && Number.isFinite(ngCount) && ngCount > 0;
 
-  if (hasGoogle && !hasNgVotes) {
-    return { rating: googleRating, source: 'google' };
+  if (hasGoogle && !hasNgEvidence) {
+    return { rating: googleRating, count: googleCount, source: 'google' };
   }
 
-  if (!hasGoogle && hasNgVotes) {
-    return { rating: ngRating, source: 'navigen' };
+  if (!hasGoogle && hasNgEvidence) {
+    return { rating: ngRating, count: ngCount, source: 'navigen' };
   }
 
-  if (hasGoogle && hasNgVotes) {
+  if (hasGoogle && hasNgEvidence) {
     const googleWeight = lpmRatingEvidenceWeight(googleCount);
     const ngWeight = lpmRatingEvidenceWeight(ngCount);
-    const rating = ((googleRating * googleWeight) + (ngRating * ngWeight)) / (googleWeight + ngWeight);
-    return { rating, source: 'weighted_google_navigen' };
+    const totalWeight = googleWeight + ngWeight;
+
+    if (totalWeight > 0) {
+      const rating = ((googleRating * googleWeight) + (ngRating * ngWeight)) / totalWeight;
+      return {
+        rating,
+        count: Math.max(0, googleCount) + Math.max(0, ngCount),
+        source: 'weighted_google_navigen'
+      };
+    }
   }
 
-  return { rating: 3.0, source: 'navigen_baseline' };
+  return { rating: 3.0, count: ngCount > 0 ? ngCount : 1, source: 'navigen_baseline' };
 }
 
 let lpmProfilesLocationsPromise;
@@ -1357,7 +1374,7 @@ const descs = resolveDescriptionMapForLocation(payload, [
   body.className = 'modal-body';
 
   const ratingSeedValue = 3.0;
-  const ratingSeedCount = 0;
+  const ratingSeedCount = 1;
   const ratingSeedSummary = formatLpmRatingSummary(ratingSeedValue, ratingSeedCount);
 
   const heroSrc = (() => {    const pickFirstSrc = (arr) => {
@@ -1429,7 +1446,7 @@ const descs = resolveDescriptionMapForLocation(payload, [
   if (inner) {
     const providerRating = googleProviderRatingSummary(payload);
     const displayRating = lpmDisplayRatingSummary(providerRating, { rating: ratingSeedValue, count: ratingSeedCount });
-    const displayRatingSummary = formatLpmRatingSummary(displayRating.rating, 0);
+    const displayRatingSummary = formatLpmRatingSummary(displayRating.rating, displayRating.count, { compactCount: true });
 
     const rate = document.createElement('details');
     rate.className = 'lpm-chip lpm-rating-chip';
@@ -1445,36 +1462,42 @@ const descs = resolveDescriptionMapForLocation(payload, [
         ${
           providerRating
             ? `
-              <section class="lpm-rating-source-card lpm-google-rating-card">
-                <div class="lpm-rating-source-head">
-                  <span class="lpm-rating-source-title">${translatedOrFallback('lpm.rating.googleProvider', 'Google rating')}</span>
-                  <span class="lpm-rating-source-value">${googleProviderRatingWithStarText(providerRating)}</span>
+              <details class="lpm-chip lpm-rating-source-chip lpm-google-rating-card">
+                <summary class="modal-menu-item lpm-chip-face">
+                  <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.googleProvider', 'Google rating')}</span>
+                  <span class="lpm-chip-face-icons" aria-hidden="true">${googleProviderRatingWithStarText(providerRating)}</span>
+                  <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="lpm-chip-body">
+                  <div class="lpm-provider-rating-note">${translatedOrFallback('lpm.rating.googleProviderNote', 'Provider-sourced rating. It is separate from NaviGen visitor ratings.')}</div>
                 </div>
-                <div class="lpm-provider-rating-note">${translatedOrFallback('lpm.rating.googleProviderNote', 'Provider-sourced rating. It is separate from NaviGen visitor ratings.')}</div>
-              </section>
+              </details>
             `
             : ''
         }
 
-        <section class="lpm-rating-source-card lpm-navigen-rating-card">
-          <div class="lpm-rating-source-head">
-            <span class="lpm-rating-source-title">${translatedOrFallback('lpm.rating.rateThisProfile', 'Rate this profile')}</span>
-            <span class="lpm-rating-source-value" id="lpm-ng-rating-summary">${ratingSeedSummary}</span>
+        <details class="lpm-chip lpm-rating-source-chip lpm-navigen-rating-card">
+          <summary class="modal-menu-item lpm-chip-face">
+            <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.rateThisProfile', 'Rate this profile')}</span>
+            <span class="lpm-chip-face-icons" id="lpm-ng-rating-summary" aria-hidden="true">${ratingSeedSummary}</span>
+            <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="lpm-chip-body">
+            <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate')}">
+              <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
+              <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
+              <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
+              <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
+              <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
+            </div>
+            <div class="lpm-rating-average-line" id="lpm-ng-rating-average">
+              ${translatedOrFallback('lpm.rating.average', 'Average')} ${ratingSeedSummary}
+            </div>
           </div>
-          <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate')}">
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
-          </div>
-          <div class="lpm-rating-average-line" id="lpm-ng-rating-average">
-            ${translatedOrFallback('lpm.rating.average', 'Average')} ${ratingSeedSummary}
-          </div>
-        </section>
+        </details>
       </div>
     `;
-
+    
     const statusChip = inner.querySelector('.lpm-status-chip');
     const introChip = inner.querySelector('.lpm-introduction-chip');
     const tagsSection = inner.querySelector('.location-tags');
@@ -2967,11 +2990,11 @@ async function initLpmImageSlider(modal, data) {
       };
 
       const render = () => {
-        const ngCount = state.count > 0 ? state.count : 0;
-        const ngAvg = state.count > 0 ? state.avg : 3;
+        const ngCount = state.count > 0 ? state.count : ratingSeedCount;
+        const ngAvg = state.count > 0 ? state.avg : ratingSeedValue;
         const ngText = formatLpmRatingSummary(ngAvg, ngCount);
         const display = lpmDisplayRatingSummary(providerRating, { rating: ngAvg, count: ngCount });
-        const displayText = formatLpmRatingSummary(display.rating, 0);
+        const displayText = formatLpmRatingSummary(display.rating, display.count, { compactCount: true });
 
         btns.forEach((b, i) => {
           b.setAttribute('aria-checked', String(i + 1 === state.userScore));
