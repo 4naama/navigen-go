@@ -1152,5 +1152,8 @@
   "root.bo.manageBusiness.title": "Gestionar negocio en NaviGen",
   "root.bo.manageBusiness.desc": "Activa o renueva un plan, gestiona la cobertura o ejecuta una campaña con QR promocional.",
   "promo.gated.promoQrRequired": "Campaña con QR promocional es obligatoria para QR promocional.",
-  "promo.gated.promoQrCampaignRequired": "Las promociones están disponibles solo mientras este negocio ejecuta una campaña activa con QR promocional."
+  "promo.gated.promoQrCampaignRequired": "Las promociones están disponibles solo mientras este negocio ejecuta una campaña activa con QR promocional.",
+  "lpm.rating.average": "Promedio",
+  "lpm.rating.googleProvider": "Calificación de Google",
+  "lpm.rating.googleProviderNote": "Calificación proporcionada por el proveedor. Es independiente de las valoraciones de los visitantes de NaviGen."
 }

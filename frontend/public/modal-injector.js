@@ -1206,6 +1206,50 @@ function formatLpmRatingCount(count) {
   return n.toLocaleString(document.documentElement?.lang || undefined);
 }
 
+function formatLpmRatingSummary(value, count = 0) {
+  const score = Number(value);
+  const safeScore = (Number.isFinite(score) && score > 0) ? score : 3.0;
+  const safeCount = Number(count || 0);
+  const countText = (Number.isFinite(safeCount) && safeCount > 0)
+    ? ` (${formatLpmRatingCount(safeCount)})`
+    : '';
+
+  return `${getLpmRatingFaceEmoji(safeScore)} ${safeScore.toFixed(1)}${countText}`;
+}
+
+function lpmRatingEvidenceWeight(count) {
+  const n = Number(count || 0);
+  if (!Number.isFinite(n) || n <= 0) return 1;
+  return Math.sqrt(Math.min(Math.max(n, 0), 5000));
+}
+
+function lpmDisplayRatingSummary(providerRating = null, navigenRating = {}) {
+  const googleRating = Number(providerRating?.rating || 0);
+  const googleCount = Number(providerRating?.count || 0);
+  const ngRating = Number(navigenRating?.rating || 0);
+  const ngCount = Number(navigenRating?.count || 0);
+
+  const hasGoogle = Number.isFinite(googleRating) && googleRating > 0;
+  const hasNgVotes = Number.isFinite(ngRating) && ngRating > 0 && Number.isFinite(ngCount) && ngCount > 0;
+
+  if (hasGoogle && !hasNgVotes) {
+    return { rating: googleRating, source: 'google' };
+  }
+
+  if (!hasGoogle && hasNgVotes) {
+    return { rating: ngRating, source: 'navigen' };
+  }
+
+  if (hasGoogle && hasNgVotes) {
+    const googleWeight = lpmRatingEvidenceWeight(googleCount);
+    const ngWeight = lpmRatingEvidenceWeight(ngCount);
+    const rating = ((googleRating * googleWeight) + (ngRating * ngWeight)) / (googleWeight + ngWeight);
+    return { rating, source: 'weighted_google_navigen' };
+  }
+
+  return { rating: 3.0, source: 'navigen_baseline' };
+}
+
 let lpmProfilesLocationsPromise;
 
 function getProfilesLocationRecords() {
@@ -1313,8 +1357,8 @@ const descs = resolveDescriptionMapForLocation(payload, [
   body.className = 'modal-body';
 
   const ratingSeedValue = 3.0;
-  const ratingSeedCount = 1;
-  const ratingSeedSummary = `${getLpmRatingFaceEmoji(ratingSeedValue)} ${ratingSeedValue.toFixed(1)} (${formatLpmRatingCount(ratingSeedCount)})`;
+  const ratingSeedCount = 0;
+  const ratingSeedSummary = formatLpmRatingSummary(ratingSeedValue, ratingSeedCount);
 
   const heroSrc = (() => {    const pickFirstSrc = (arr) => {
       const a = Array.isArray(arr) ? arr : [];
@@ -1384,24 +1428,8 @@ const descs = resolveDescriptionMapForLocation(payload, [
   const inner = body.querySelector('.modal-body-inner');
   if (inner) {
     const providerRating = googleProviderRatingSummary(payload);
-    if (providerRating) {
-      const provider = document.createElement('details');
-      provider.className = 'lpm-chip lpm-google-rating-chip';
-      provider.innerHTML = `
-        <summary class="modal-menu-item lpm-chip-face">
-          <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.googleProvider', 'Google rating')}</span>
-          <span class="lpm-chip-face-icons" aria-hidden="true">⭐ ${googleProviderRatingText(providerRating)}</span>
-          <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
-        </summary>
-        <div class="lpm-chip-body">
-          <div class="lpm-provider-rating-note">${translatedOrFallback('lpm.rating.googleProviderNote', 'Provider-sourced rating. It is separate from NaviGen visitor ratings.')}</div>
-        </div>
-      `;
-
-      const statusChip = inner.querySelector('.lpm-status-chip');
-      if (statusChip) inner.insertBefore(provider, statusChip);
-      else inner.appendChild(provider);
-    }
+    const displayRating = lpmDisplayRatingSummary(providerRating, { rating: ratingSeedValue, count: ratingSeedCount });
+    const displayRatingSummary = formatLpmRatingSummary(displayRating.rating, 0);
 
     const rate = document.createElement('details');
     rate.className = 'lpm-chip lpm-rating-chip';
@@ -1409,18 +1437,41 @@ const descs = resolveDescriptionMapForLocation(payload, [
 
     rate.innerHTML = `
       <summary class="modal-menu-item lpm-chip-face">
-        <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.rateThisProfile', 'Rate this profile')}</span>
-        <span class="lpm-chip-face-icons" id="lpm-rating-face-icons" aria-hidden="true">${ratingSeedSummary}</span>
+        <span class="lpm-chip-face-label">${translatedOrFallback('lpm.rating.label', 'Rating')}</span>
+        <span class="lpm-chip-face-icons" id="lpm-rating-face-icons" aria-hidden="true">${displayRatingSummary}</span>
         <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
       </summary>
       <div class="lpm-chip-body">
-        <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate')}">
-          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
-          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
-          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
-          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
-          <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
-        </div>
+        ${
+          providerRating
+            ? `
+              <section class="lpm-rating-source-card lpm-google-rating-card">
+                <div class="lpm-rating-source-head">
+                  <span class="lpm-rating-source-title">${translatedOrFallback('lpm.rating.googleProvider', 'Google rating')}</span>
+                  <span class="lpm-rating-source-value">${googleProviderRatingWithStarText(providerRating)}</span>
+                </div>
+                <div class="lpm-provider-rating-note">${translatedOrFallback('lpm.rating.googleProviderNote', 'Provider-sourced rating. It is separate from NaviGen visitor ratings.')}</div>
+              </section>
+            `
+            : ''
+        }
+
+        <section class="lpm-rating-source-card lpm-navigen-rating-card">
+          <div class="lpm-rating-source-head">
+            <span class="lpm-rating-source-title">${translatedOrFallback('lpm.rating.rateThisProfile', 'Rate this profile')}</span>
+            <span class="lpm-rating-source-value" id="lpm-ng-rating-summary">${ratingSeedSummary}</span>
+          </div>
+          <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate')}">
+            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
+            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
+            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
+            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
+            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
+          </div>
+          <div class="lpm-rating-average-line" id="lpm-ng-rating-average">
+            ${translatedOrFallback('lpm.rating.average', 'Average')} ${ratingSeedSummary}
+          </div>
+        </section>
       </div>
     `;
 
@@ -2892,6 +2943,9 @@ async function initLpmImageSlider(modal, data) {
 
       const btns = Array.from(group.querySelectorAll('.rate-btn'));
       const face = modal.querySelector('#lpm-rating-face-icons');
+      const ngSummary = modal.querySelector('#lpm-ng-rating-summary');
+      const ngAverage = modal.querySelector('#lpm-ng-rating-average');
+      const providerRating = googleProviderRatingSummary(data);
       const target = String(data?.locationID || data?.id || '').trim();
 
       const state = {
@@ -2913,15 +2967,26 @@ async function initLpmImageSlider(modal, data) {
       };
 
       const render = () => {
-        const displayCount = state.count > 0 ? state.count : 1;
-        const displayAvg = state.count > 0 ? state.avg : 3;
+        const ngCount = state.count > 0 ? state.count : 0;
+        const ngAvg = state.count > 0 ? state.avg : 3;
+        const ngText = formatLpmRatingSummary(ngAvg, ngCount);
+        const display = lpmDisplayRatingSummary(providerRating, { rating: ngAvg, count: ngCount });
+        const displayText = formatLpmRatingSummary(display.rating, 0);
 
         btns.forEach((b, i) => {
           b.setAttribute('aria-checked', String(i + 1 === state.userScore));
         });
 
         if (face) {
-          face.textContent = `${getLpmRatingFaceEmoji(displayAvg)} ${displayAvg.toFixed(1)} (${formatLpmRatingCount(displayCount)})`;
+          face.textContent = displayText;
+        }
+
+        if (ngSummary) {
+          ngSummary.textContent = ngText;
+        }
+
+        if (ngAverage) {
+          ngAverage.textContent = `${translatedOrFallback('lpm.rating.average', 'Average')} ${ngText}`;
         }
       };
 
@@ -3299,6 +3364,19 @@ function googleProviderRatingText(summary) {
   const count = Number(summary.count || 0);
   const countText = count > 0 ? ` (${count.toLocaleString(lang)})` : '';
   return `${Number(summary.rating).toFixed(1)}${countText}`;
+}
+
+function googleProviderRatingWithStarText(summary) {
+  if (!summary) return '';
+  const lang = document.documentElement?.lang || undefined;
+  const rating = Number(summary.rating || 0);
+  const count = Number(summary.count || 0);
+  const ratingText = Number.isFinite(rating) && rating > 0
+    ? rating.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+    : '0.0';
+  const countText = count > 0 ? ` (${count.toLocaleString(lang)})` : '';
+
+  return `${ratingText} ⭐${countText}`;
 }
 
 async function fetchGoogleImportPredictions(input, signal = null) {

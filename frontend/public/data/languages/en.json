@@ -1152,5 +1152,8 @@
   "root.bo.manageBusiness.title": "Manage business on NaviGen",
   "root.bo.manageBusiness.desc": "Activate or renew a Plan, manage coverage, or run a Campaign with Promo QR.",
   "promo.gated.promoQrRequired": "Campaign with Promo QR is required for promotion QR.",
-  "promo.gated.promoQrCampaignRequired": "Promotions are available only while this business is running an active Campaign with Promo QR."
+  "promo.gated.promoQrCampaignRequired": "Promotions are available only while this business is running an active Campaign with Promo QR.",
+  "lpm.rating.average": "Average",
+  "lpm.rating.googleProvider": "Google rating",
+  "lpm.rating.googleProviderNote": "Provider-sourced rating. It is separate from NaviGen visitor ratings."
 }

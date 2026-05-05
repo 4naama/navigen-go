@@ -1152,5 +1152,8 @@
   "root.bo.manageBusiness.title": "Vállalkozás kezelése NaviGenen",
   "root.bo.manageBusiness.desc": "Aktiválj vagy újíts meg csomagot, kezeld a lefedettséget vagy indíts kampányt Promo QR-rel.",
   "promo.gated.promoQrRequired": "A Kampány Promo QR-rel szükséges a promóciós QR-hez.",
-  "promo.gated.promoQrCampaignRequired": "A promóciók csak akkor érhetők el, amikor a vállalkozás aktív kampányt futtat Promo QR-rel."
+  "promo.gated.promoQrCampaignRequired": "A promóciók csak akkor érhetők el, amikor a vállalkozás aktív kampányt futtat Promo QR-rel.",
+  "lpm.rating.average": "Átlag",
+  "lpm.rating.googleProvider": "Google értékelés",
+  "lpm.rating.googleProviderNote": "Szolgáltató által biztosított értékelés. Ez külön áll a NaviGen látogatói értékeléseitől."
 }
