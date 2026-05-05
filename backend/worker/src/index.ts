@@ -5501,7 +5501,7 @@ export default {
         try {
           const contextUlids = await listContextShardUlids(env, contextKey);
 
-          const ranked: Array<{ payload: any; rank: number; idx: number }> = [];
+          const ranked: Array<{ ulid: string; payload: any; rank: number; idx: number }> = [];
 
           for (let idx = 0; idx < contextUlids.length; idx++) {
             const ulid = contextUlids[idx];
@@ -5516,6 +5516,7 @@ export default {
               vis.visibilityState === "visible" ? 1 : 0;
 
             ranked.push({
+              ulid,
               payload: buildPublicListPayload(rec),
               rank,
               idx
@@ -5528,7 +5529,52 @@ export default {
           });
 
           const totalApprox = ranked.length;
-          const items = ranked.slice(start, start + limit).map((x) => x.payload);
+          const popularLimit = totalApprox > 0 ? Math.min(5, Math.max(1, Math.ceil(totalApprox * 0.15))) : 0;
+          const popularComputedAt = new Date().toISOString();
+          const popularContextKey = contextKey;
+
+          const popularByUlid = new Map<string, {
+            rank: number;
+            score: number;
+            reason: string;
+            computedAt: string;
+            contextKey: string;
+          }>();
+
+          [...ranked]
+            .sort((a, b) => a.idx - b.idx)
+            .slice(0, popularLimit)
+            .forEach((x, i) => {
+              popularByUlid.set(x.ulid, {
+                rank: i + 1,
+                score: 0,
+                reason: totalApprox === 1 ? "single_candidate" : "seed_order_fallback",
+                computedAt: popularComputedAt,
+                contextKey: popularContextKey
+              });
+            });
+
+          const items = ranked.slice(start, start + limit).map((x) => {
+            const popularMeta = popularByUlid.get(x.ulid);
+            return {
+              ...x.payload,
+              popular: !!popularMeta,
+              popularRank: popularMeta?.rank || 0,
+              popularScore: popularMeta?.score || 0,
+              popularReason: popularMeta?.reason || "",
+              popularContextKey: popularMeta?.contextKey || popularContextKey,
+              popularComputedAt: popularMeta?.computedAt || popularComputedAt,
+              popularSignals: popularMeta ? {
+                lpmOpen: 0,
+                official: 0,
+                map: 0,
+                share: 0,
+                save: 0,
+                distinctActors: 0
+              } : undefined
+            };
+          });
+
           const nextCursor = (start + limit) < totalApprox ? String(start + limit) : null;
 
           return json(

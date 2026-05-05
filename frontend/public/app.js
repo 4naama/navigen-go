@@ -424,14 +424,44 @@ function handleAccordionToggle(header, contentEl) {
   }
 }
 
+function publicPopularRank(rec) {
+  const n = Number(rec?.popularRank || 0);
+  if (Number.isFinite(n) && n > 0) return Math.floor(n);
+  return rec?.popular === true ? 1 : 0;
+}
+
+function isPublicPopularRecord(rec) {
+  return publicPopularRank(rec) > 0;
+}
+
+function comparePublicPopular(a, b) {
+  const ar = publicPopularRank(a);
+  const br = publicPopularRank(b);
+  if (ar !== br) return ar - br;
+
+  const as = Number(a?.popularScore || 0);
+  const bs = Number(b?.popularScore || 0);
+  if (Number.isFinite(as) && Number.isFinite(bs) && bs !== as) return bs - as;
+
+  const ao = Number(a?.contextOrder ?? a?.seedOrder ?? Number.MAX_SAFE_INTEGER);
+  const bo = Number(b?.contextOrder ?? b?.seedOrder ?? Number.MAX_SAFE_INTEGER);
+  if (Number.isFinite(ao) && Number.isFinite(bo) && ao !== bo) return ao - bo;
+
+  const an = String(a?.locationName?.en ?? a?.locationName ?? a?.name ?? a?.locationID ?? a?.ID ?? "");
+  const bn = String(b?.locationName?.en ?? b?.locationName ?? b?.name ?? b?.locationID ?? b?.ID ?? "");
+  return an.localeCompare(bn);
+}
+
 // ✅ Render ⭐ Popular group (normal accordion section)
 function renderPopularGroup(list = geoPoints) {
   const container = document.querySelector("#locations");
   if (!container) { console.warn('⚠️ #locations not found; skipping Popular group'); return; }
 
-  // Popular = Priority:"Yes" only; no fallback; ignore Visible
-  const isPriority = (rec) => String(rec?.Priority || '').toLowerCase() === 'yes';
-  const popular = (Array.isArray(list) ? list : []).filter(isPriority);
+  // Popular is backend-computed for the current context candidate set.
+  // Legacy profile flags do not create public Popular placement.
+  const popular = (Array.isArray(list) ? list : [])
+    .filter(isPublicPopularRecord)
+    .sort(comparePublicPopular);
 
   const section = document.createElement("div");
   section.classList.add("accordion-section");
@@ -1091,7 +1121,7 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
         }
       }
 
-      // ✅ Expose Popular/Featured flag and group keys for quick filters
+      // ✅ Expose computed Popular flag and group keys for quick filters
       {
         const id = locBtn.getAttribute('data-id');
         const rec = Array.isArray(injectedGeoPoints)
@@ -1099,9 +1129,9 @@ function wireAccordionGroups(structure_data, injectedGeoPoints = []) {
           : null;
 
         if (rec) {
-          // Popular/Featured detection (keeps your earlier mapper logic)
-          const pri = (String(rec?.Priority || '').toLowerCase() === 'yes') ? 'Yes' : 'No';
-          locBtn.setAttribute('data-priority', pri);
+          const popularRank = publicPopularRank(rec);
+          locBtn.setAttribute('data-popular', popularRank > 0 ? '1' : '0');
+          locBtn.setAttribute('data-popular-rank', String(popularRank));
 
           // group/subgroup attributes (keys)
           if (rec.groupKey || rec.Group) {
@@ -1846,10 +1876,11 @@ async function initEmergencyBlock(countryOverride) {
       const grp = String(it?.groupKey ?? it?.group ?? ctxRow?.groupKey ?? fallbackGroup);
       const sub = String(it?.subgroupKey ?? it?.subgroup ?? ctxRow?.subgroupKey ?? '');
       
-      // Popular is a data flag (locations_data), not a content tag
-      const v = (it?.Priority ?? it?.Popular ?? it?.priority);
-      const pri = (v === true || v === 1 || String(v ?? '').toLowerCase() === 'yes' || String(v ?? '').toLowerCase() === 'true')
-        ? 'Yes' : 'No';
+      // Popular is backend-computed for the current context candidate set.
+      // Legacy Priority/Popular/profile flags are not public Popular drivers.
+      const popularRank = publicPopularRank(it);
+      const popular = popularRank > 0;
+      const popularScore = Number(it?.popularScore || 0);
 
       const cc  = toCoord(it);
       const ctx = Array.isArray(it?.contexts) && it.contexts.length ? it.contexts.join(';') : String(ACTIVE_PAGE || '');
@@ -1866,7 +1897,13 @@ async function initEmergencyBlock(countryOverride) {
         Group: grp,
         "Subgroup key": sub,
         Visible: "Yes", // keep: legacy UI expects "Yes"/"No"; Popular ignores this
-        Priority: pri,
+        popular,
+        popularRank: popular ? popularRank : 0,
+        popularScore: Number.isFinite(popularScore) ? popularScore : 0,
+        popularReason: String(it?.popularReason || ''),
+        popularContextKey: String(it?.popularContextKey || ''),
+        popularComputedAt: String(it?.popularComputedAt || ''),
+        popularSignals: it?.popularSignals || null,
         "Coordinate Compound": cc,
         coord: cc,              // used by distance mode
         Context: ctx,
@@ -2158,7 +2195,7 @@ async function initEmergencyBlock(countryOverride) {
         )
       : geoPoints;
 
-    // Popular: scope by context only (Priority filter happens inside renderPopularGroup)
+    // Popular: render computed Popular fields from this already-selected context candidate set.
     const popularCtx = ACTIVE_PAGE
       ? geoPoints.filter(loc =>
           String(loc.Context || '')
