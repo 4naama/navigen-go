@@ -2988,6 +2988,9 @@ async function initLpmImageSlider(modal, data) {
         state.userScore = (Number.isFinite(userScoreRaw) && userScoreRaw >= 1 && userScoreRaw <= 5) ? userScoreRaw : 0;
         state.lockedUntil = String(payload?.ratingLockedUntil ?? payload?.rating_locked_until ?? '').trim();
       };
+      
+      const ratingSeedValue = 3.0;
+      const ratingSeedCount = 1;
 
       const render = () => {
         const ngCount = state.count > 0 ? state.count : ratingSeedCount;
