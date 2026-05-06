@@ -6500,12 +6500,12 @@ export function createRequestListingModal(opts = {}) {
       }
 
       const tokens = tokensOf(searchInput.value);
-      const boostTokens = tokens.length ? [] : requestListingContextSeedTokens();
-      const rows = sortContextRows(requestListingContextRows.filter((row) => {
-        if (!tokens.length) return true;
-        const hay = searchableContextText(row);
-        return tokens.every((token) => hay.includes(token));
-      }), boostTokens);
+      const rows = tokens.length
+        ? sortContextRows(requestListingContextRows.filter((row) => {
+            const hay = searchableContextText(row);
+            return tokens.every((token) => hay.includes(token));
+          }), [])
+        : [];
       const visibleRows = rows.slice(0, REQUEST_LISTING_CONTEXT_RESULT_LIMIT);
 
       ctxResults.innerHTML = '';
@@ -6514,8 +6514,8 @@ export function createRequestListingModal(opts = {}) {
         empty.className = 'modal-menu-item modal-static-card request-context-empty';
         empty.innerHTML = `
           <span class="label">
-            <strong>${t('modal.requestListing.contexts.empty.title') || 'No matching contexts'}</strong>
-            <small>${t('modal.requestListing.contexts.empty.desc') || 'Try another search term.'}</small>
+            <strong>${tokens.length ? (t('modal.requestListing.contexts.empty.title') || 'No matching contexts') : (t('modal.requestListing.contexts.search.title') || 'Search available contexts')}</strong>
+            <small>${tokens.length ? (t('modal.requestListing.contexts.empty.desc') || 'Try another search term.') : (t('modal.requestListing.contexts.search.desc') || 'Type to search backend-published context options.')}</small>
           </span>
         `;
         ctxResults.appendChild(empty);
