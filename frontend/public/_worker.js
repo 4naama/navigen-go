@@ -118,7 +118,7 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders() });
     }
 
-    // Early route: contexts API public (before any gates)
+    // Early route: legacy contexts catalog is retired; taxonomy now comes from Worker/KV.
     if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/') {
       const r = rateHit(req);
       const rlHdr = {
@@ -127,7 +127,7 @@ export default {
         'X-RateLimit-Reset': String(Math.ceil(r.resetAt/1000))
       };
       if (!r.ok) return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
-      return handleContexts(req, env, url, corsHeaders(rlHdr));
+      return deprecatedContextsResponse(corsHeaders(rlHdr));
     }
 
     // Hard gate for /data/* (allow boot JSON; gate the rest)
@@ -137,7 +137,7 @@ export default {
       const ADMIN_COOKIE = 'navigen_gate_v2';
       const authed = new RegExp(`\\b${ADMIN_COOKIE}=ok\\b`).test(cookie);
       // Public boot JSON for app startup; allow list only
-      const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json|contexts\.json)$/.test(url.pathname);
+      const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json)$/.test(url.pathname);
     }
     
     // PWA & modules: early pass-through for static assets and JS modules
@@ -747,9 +747,9 @@ export default {
         return new Response('Too Many Requests', { status: 429, headers: corsHeaders(rlHdr) });
       }
 
-      // Ordered routing: contexts → all → authoritative data routes → 404
+      // Ordered routing: retired contexts route → all → authoritative data routes → 404
       if (url.pathname === '/api/data/contexts' || url.pathname === '/api/data/contexts/')
-        return handleContexts(req, env, url, corsHeaders(rlHdr));
+        return deprecatedContextsResponse(corsHeaders(rlHdr));
 
       // Honeypot: pretend "all" exists; always empty
       if (url.pathname === '/api/data/all' || url.pathname === '/api/data/all/')
@@ -877,15 +877,16 @@ export default {
 };
 
 // -------- Data handlers (tiny payloads; no secrets) --------
-async function handleContexts(req, env, url, extraHdr){
-  // Serve contexts via API to avoid Access on /data/*
-  const r = await env.ASSETS.fetch(new Request(new URL('/data/contexts.json', url), { headers: req.headers }));
-  if (!r.ok) return new Response('Data load error', { status: 500 });
-  const body = await r.text();
-  const cacheHdr = url.hostname.endsWith('pages.dev') ? 'no-store' : 'private, max-age=60';
-  const h = new Headers({ 'content-type':'application/json', 'Cache-Control': cacheHdr });
+
+function deprecatedContextsResponse(extraHdr){
+  const h = new Headers({ 'content-type':'application/json', 'Cache-Control':'no-store' });
   if (extraHdr) extraHdr.forEach((v, k) => h.set(k, v));
-  return new Response(body, { status: 200, headers: h });
+  return new Response(JSON.stringify({
+    error: {
+      code: 'contexts_runtime_moved',
+      message: 'Context taxonomy is served by /api/contexts/business-taxonomy.'
+    }
+  }), { status: 410, headers: h });
 }
 
 async function proxyApiData(req, url, extraHdr) {
