@@ -5517,16 +5517,32 @@ export async function hydrateLocationDraftForCompletion(draftMeta = {}) {
   };
 }
 
-let p8BusinessTaxonomyCatalogPromise;
-let p8BusinessTaxonomyCatalogCache = null;
+let p8StructureCatalogPromise;
+let p8ContextCatalogPromise;
+let p8ContextCatalogRowsCache = null;
 
 function resetP8CatalogPromises() {
-  p8BusinessTaxonomyCatalogPromise = null;
-  p8BusinessTaxonomyCatalogCache = null;
+  p8StructureCatalogPromise = null;
+  p8ContextCatalogPromise = null;
+  p8ContextCatalogRowsCache = null;
 }
 
-function emptyP8BusinessTaxonomyCatalog() {
-  return { version: 'unpublished', publishedAt: '', groups: [], contexts: [] };
+function loadP8StructureCatalog(force = false) {
+  if (force) p8StructureCatalogPromise = null;
+  if (!p8StructureCatalogPromise) {
+    p8StructureCatalogPromise = fetch('/data/structure.json', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json().catch(() => []) : []))
+      .then((j) => {
+        const rows = Array.isArray(j) ? j : [];
+        if (!rows.length) p8StructureCatalogPromise = null;
+        return rows;
+      })
+      .catch(() => {
+        p8StructureCatalogPromise = null;
+        return [];
+      });
+  }
+  return p8StructureCatalogPromise;
 }
 
 function normalizeP8BusinessTaxonomyCatalog(payload) {
@@ -5534,50 +5550,8 @@ function normalizeP8BusinessTaxonomyCatalog(payload) {
   return {
     version: String(src.version || 'unpublished').trim() || 'unpublished',
     publishedAt: String(src.publishedAt || '').trim(),
-    groups: Array.isArray(src.groups) ? src.groups : [],
     contexts: Array.isArray(src.contexts) ? src.contexts : []
   };
-}
-
-function p8UniqueStrings(values) {
-  return Array.from(new Set(
-    (Array.isArray(values) ? values : [])
-      .map((value) => String(value || '').trim())
-      .filter(Boolean)
-  ));
-}
-
-function loadP8BusinessTaxonomyCatalog(force = false) {
-  if (force) {
-    p8BusinessTaxonomyCatalogPromise = null;
-    p8BusinessTaxonomyCatalogCache = null;
-  }
-
-  if (p8BusinessTaxonomyCatalogCache && !force) return Promise.resolve(p8BusinessTaxonomyCatalogCache);
-
-  if (!p8BusinessTaxonomyCatalogPromise) {
-    p8BusinessTaxonomyCatalogPromise = fetch('/api/contexts/business-taxonomy', {
-      cache: 'no-store',
-      credentials: 'include',
-      headers: { accept: 'application/json' }
-    })
-      .then((r) => (r.ok ? r.json().catch(() => null) : null))
-      .then((j) => {
-        const next = normalizeP8BusinessTaxonomyCatalog(j);
-        const previousVersion = String(p8BusinessTaxonomyCatalogCache?.version || '');
-        if (!p8BusinessTaxonomyCatalogCache || String(next.version || '') !== previousVersion || next.groups.length || next.contexts.length) {
-          p8BusinessTaxonomyCatalogCache = next;
-        }
-        if (!next.groups.length || !next.contexts.length) p8BusinessTaxonomyCatalogPromise = null;
-        return p8BusinessTaxonomyCatalogCache || next;
-      })
-      .catch(() => {
-        p8BusinessTaxonomyCatalogPromise = null;
-        return p8BusinessTaxonomyCatalogCache || emptyP8BusinessTaxonomyCatalog();
-      });
-  }
-
-  return p8BusinessTaxonomyCatalogPromise;
 }
 
 function p8ContextRowsFromBusinessTaxonomy(catalog) {
@@ -5590,35 +5564,34 @@ function p8ContextRowsFromBusinessTaxonomy(catalog) {
     .filter(Boolean);
 }
 
-function p8BusinessStructureRowsFromTaxonomy(catalog) {
-  const contextRows = p8ContextRowsFromBusinessTaxonomy(catalog);
-  const contextIndex = new Map(contextRows.map((row) => [String(row?.key || '').trim(), row]));
+function loadP8ContextCatalog(force = false) {
+  if (force) {
+    p8ContextCatalogPromise = null;
+    p8ContextCatalogRowsCache = null;
+  }
 
-  return (Array.isArray(catalog?.groups) ? catalog.groups : [])
-    .map((group) => {
-      const groupKey = String(group?.key || '').trim();
-      const groupName = String(group?.label || groupKey).trim();
-      if (!groupKey) return null;
+  if (p8ContextCatalogRowsCache && !force) return Promise.resolve(p8ContextCatalogRowsCache);
 
-      const subgroups = (Array.isArray(group?.subgroups) ? group.subgroups : [])
-        .map((subgroup) => {
-          const key = String(subgroup?.key || '').trim();
-          const name = String(subgroup?.label || key).trim();
-          const subgroupContextKeys = p8UniqueStrings(subgroup?.contexts);
-          const keywords = p8UniqueStrings([
-            ...(Array.isArray(subgroup?.keywords) ? subgroup.keywords : []),
-            ...subgroupContextKeys.flatMap((contextKey) => {
-              const contextRow = contextIndex.get(contextKey);
-              return Array.isArray(contextRow?.keywords) ? contextRow.keywords : [];
-            })
-          ]);
-          return key ? { key, name, keywords } : null;
-        })
-        .filter(Boolean);
-
-      return { groupKey, groupName, subgroups };
+  if (!p8ContextCatalogPromise) {
+    p8ContextCatalogPromise = fetch('/api/contexts/business-taxonomy', {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { accept: 'application/json' }
     })
-    .filter(Boolean);
+      .then((r) => (r.ok ? r.json().catch(() => null) : null))
+      .then((j) => {
+        const rows = p8ContextRowsFromBusinessTaxonomy(normalizeP8BusinessTaxonomyCatalog(j));
+        if (rows.length) p8ContextCatalogRowsCache = rows;
+        else p8ContextCatalogPromise = null;
+        return p8ContextCatalogRowsCache || rows;
+      })
+      .catch(() => {
+        p8ContextCatalogPromise = null;
+        return p8ContextCatalogRowsCache || [];
+      });
+  }
+
+  return p8ContextCatalogPromise;
 }
 
 function p8ContextLabel(entry) {
@@ -6623,9 +6596,10 @@ export function createRequestListingModal(opts = {}) {
   });
 
   (async () => {
-    const businessTaxonomy = await loadP8BusinessTaxonomyCatalog();
-    const structureRows = p8BusinessStructureRowsFromTaxonomy(businessTaxonomy);
-    const contextRows = p8ContextRowsFromBusinessTaxonomy(businessTaxonomy);
+    const [structureRows, contextRows] = await Promise.all([
+      loadP8StructureCatalog(),
+      loadP8ContextCatalog()
+    ]);
 
     const groupsOk = Array.isArray(structureRows) && structureRows.length > 0;
     const contextsOk = Array.isArray(contextRows) && contextRows.length > 0;

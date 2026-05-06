@@ -132,12 +132,24 @@ export default {
 
     // Hard gate for /data/* (allow boot JSON; gate the rest)
     // <!-- explicit; avoids any fall-through -->
-    {
+    if (url.pathname.startsWith('/data/')) {
       const cookie = req.headers.get('cookie') || '';
       const ADMIN_COOKIE = 'navigen_gate_v2';
       const authed = new RegExp(`\\b${ADMIN_COOKIE}=ok\\b`).test(cookie);
-      // Public boot JSON for app startup; allow list only
+      // Public boot JSON for app startup; contexts.json is not a runtime authority.
       const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json)$/.test(url.pathname);
+
+      if (isBootJson) {
+        const asset = await env.ASSETS.fetch(req);
+        const h = new Headers(asset.headers);
+        h.set('Cache-Control', url.hostname.endsWith('pages.dev') ? 'no-store' : 'private, max-age=60');
+        h.set('X-Content-Type-Options', 'nosniff');
+        return new Response(asset.body, { status: asset.status, headers: h });
+      }
+
+      if (!authed) {
+        return new Response('Not Found', { status: 404 });
+      }
     }
     
     // PWA & modules: early pass-through for static assets and JS modules
@@ -427,6 +439,32 @@ export default {
         headers: r.headers
       });
     }
+    
+    // /api/contexts/business-taxonomy — proxy to API Worker (context taxonomy runtime read)
+    if (url.pathname === '/api/contexts/business-taxonomy') {
+      const apiBase = 'https://navigen-api.4naama.workers.dev';
+      const target = new URL(url.pathname + url.search, apiBase);
+
+      const h = new Headers(req.headers);
+      h.set('Accept', 'application/json');
+      h.set('X-NG-Source', 'pages-worker');
+
+      const r = await fetch(target.toString(), {
+        method: 'GET',
+        headers: h
+      });
+
+      const body = await r.text();
+
+      return new Response(body, {
+        status: r.status,
+        headers: {
+          'content-type': r.headers.get('content-type') || 'application/json',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+    
 
     // /api/stats — proxy to API Worker (single canonical source of truth)
     if (url.pathname === '/api/stats') {

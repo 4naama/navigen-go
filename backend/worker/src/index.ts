@@ -1417,6 +1417,59 @@ async function assertPaidDraftHydrationEntitlement(req: Request, env: Env, targe
   return null;
 }
 
+function catalogFetchOrigins(req: Request): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (raw: string) => {
+    try {
+      const origin = new URL(String(raw || "").trim()).origin;
+      if (!/^https?:\/\//i.test(origin) || seen.has(origin)) return;
+      seen.add(origin);
+      out.push(origin);
+    } catch {
+      // Ignore malformed origins and keep the fixed production fallbacks below.
+    }
+  };
+
+  push(req.headers.get("Origin") || "");
+  push(new URL(req.url).origin);
+  push("https://navigen.io");
+  push("https://www.navigen.io");
+
+  return out;
+}
+
+async function fetchStaticJson(req: Request, path: string): Promise<any> {
+  for (const origin of catalogFetchOrigins(req)) {
+    try {
+      const u = new URL(path, origin).toString();
+      const r = await fetch(u, {
+        method: "GET",
+        headers: { accept: "application/json" },
+        cache: "no-store"
+      });
+      if (!r.ok) continue;
+
+      const ctype = String(r.headers.get("content-type") || "").toLowerCase();
+      const text = await r.text();
+      if (!ctype.includes("application/json")) continue;
+
+      return JSON.parse(text);
+    } catch {
+      // Try the next catalog source before failing closed at the caller.
+    }
+  }
+
+  throw new Error(`catalog_fetch_failed:${path}`);
+}
+
+async function loadStructureCatalog(req: Request): Promise<any[]> {
+  const j = await fetchStaticJson(req, "/data/structure.json");
+  return Array.isArray(j) ? j : [];
+}
+
+// Structure catalog helpers above are reused by mixed structure/context validation.
+
 async function loadBusinessTaxonomyForValidation(env: Env): Promise<Record<string, unknown>> {
   const [rawProjection, manifest] = await Promise.all([
     env.KV_CONTEXTS.get(CONTEXTS_BUSINESS_TAXONOMY_KEY, { type: "json" }) as Promise<any>,
@@ -1426,19 +1479,12 @@ async function loadBusinessTaxonomyForValidation(env: Env): Promise<Record<strin
   return sanitizeBusinessTaxonomyProjection(rawProjection, manifest);
 }
 
-function allowedSubgroupsByBusinessTaxonomy(groups: any[]): Map<string, Set<string>> {
-  const out = new Map<string, Set<string>>();
-  for (const group of Array.isArray(groups) ? groups : []) {
-    const groupKey = taxonomyString(group?.key);
-    if (!groupKey) continue;
-    const set = out.get(groupKey) || new Set<string>();
-    for (const subgroup of Array.isArray(group?.subgroups) ? group.subgroups : []) {
-      const subgroupKey = taxonomyString(subgroup?.key);
-      if (subgroupKey) set.add(subgroupKey);
-    }
-    out.set(groupKey, set);
-  }
-  return out;
+function isValidBusinessGroupKey(value: string): boolean {
+  return /^group\.[a-z0-9][a-z0-9-]*$/i.test(String(value || "").trim());
+}
+
+function isValidBusinessSubgroupKey(value: string): boolean {
+  return /^(sub|group)\.[a-z0-9][a-z0-9-]*$/i.test(String(value || "").trim());
 }
 
 function allowedContextKeysFromBusinessTaxonomy(projection: any): Set<string> {
@@ -1459,12 +1505,10 @@ async function validateClassificationSelection(env: Env, profile: any): Promise<
   if (!groupKey && !subgroupKey && !contextVals.length) return null;
   if (!groupKey || !subgroupKey || !contextVals.length) return "classification_required";
 
-  const taxonomy = await loadBusinessTaxonomyForValidation(env);
-  const subgroups = allowedSubgroupsByBusinessTaxonomy(Array.isArray((taxonomy as any).groups) ? (taxonomy as any).groups : []);
-  const groupSubs = subgroups.get(groupKey);
-  if (!groupSubs) return "invalid_groupKey";
-  if (!groupSubs.has(subgroupKey)) return "invalid_subgroupKey";
+  if (!isValidBusinessGroupKey(groupKey)) return "invalid_groupKey";
+  if (!isValidBusinessSubgroupKey(subgroupKey)) return "invalid_subgroupKey";
 
+  const taxonomy = await loadBusinessTaxonomyForValidation(env);
   const contexts = allowedContextKeysFromBusinessTaxonomy(taxonomy);
   for (const ctx of contextVals) {
     if (!contexts.has(ctx)) return "invalid_context";
@@ -7331,7 +7375,7 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
     candidate.locationID = target.locationID;
   }
 
-  const classificationError = await safeValidateClassificationSelection(env, candidate, { failClosedOnCatalogError: true });
+  const classificationError = await safeValidateClassificationSelection(req, env, candidate, { failClosedOnCatalogError: true });
   if (classificationError) {
     return json(
       { error: { code: "validation_failed", message: classificationError } },
@@ -7948,9 +7992,6 @@ function sanitizeContextsManifest(raw: any): ContextsManifest {
 
 function sanitizeBusinessTaxonomyProjection(raw: any, manifest: ContextsManifest): Record<string, unknown> {
   const src = (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw : {};
-  const groups = Array.isArray((src as any).groups)
-    ? (src as any).groups.map(sanitizeBusinessTaxonomyGroup).filter(Boolean)
-    : [];
   const contexts = Array.isArray((src as any).contexts)
     ? (src as any).contexts.map(sanitizeBusinessTaxonomyContextRow).filter(Boolean)
     : [];
@@ -7958,7 +7999,7 @@ function sanitizeBusinessTaxonomyProjection(raw: any, manifest: ContextsManifest
   return {
     version: taxonomyString((src as any).version) || manifest.activeVersion || "unpublished",
     publishedAt: taxonomyString((src as any).publishedAt) || manifest.publishedAt || "",
-    groups,
+    groups: [],
     contexts
   };
 }
