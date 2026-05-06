@@ -36,6 +36,7 @@ export interface Env {
   KV_ALIASES: KVNamespace;
   KV_OVERRIDES: KVNamespace;
   KV_STATS: KVNamespace;
+  KV_CONTEXTS: KVNamespace;
   JWT_SECRET: string; // set via wrangler secret
   STRIPE_SECRET_KEY: string; // Stripe secret key for creating Checkout Sessions (server-only)
   STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
@@ -2735,6 +2736,23 @@ export default {
     }
 
     try {
+      // --- Context taxonomy: public BO-facing read projection
+      if (normPath === "/api/contexts/business-taxonomy" && req.method === "GET") {
+        return await handleBusinessTaxonomyRead(env);
+      }
+
+      // --- Context taxonomy admin manifest: active taxonomy version metadata
+      if (normPath === "/api/admin/contexts/manifest" && req.method === "GET") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+        return await handleContextsManifestRead(env);
+      }
+
       // --- Phase 8 one-time legacy preseed (admin-only, temporary; remove after preseed + KV read cutover ship)
       // POST /api/_admin/p8/preseed
       // Auth: Authorization: Bearer <JWT_SECRET>
@@ -7810,6 +7828,189 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
     200,
     { "cache-control": "no-store" }
   );
+}
+
+const CONTEXTS_ACTIVE_KEY = "contexts:active";
+const CONTEXTS_VERSION_PREFIX = "contexts:version:";
+const CONTEXTS_MANIFEST_KEY = "contexts:manifest";
+const CONTEXTS_ALIASES_KEY = "contexts:aliases";
+const CONTEXTS_BUSINESS_TAXONOMY_KEY = "contexts:business-taxonomy";
+const CONTEXT_TAXONOMY_KEY_RE = /^[a-z0-9][a-z0-9-]*(?:\/[a-z0-9][a-z0-9-]*)*$/;
+
+type ContextsManifest = {
+  activeVersion: string;
+  publishedAt: string;
+  publishedBy: string;
+  source: string;
+  checksum: string;
+  count: number;
+};
+
+function emptyContextsManifest(): ContextsManifest {
+  return {
+    activeVersion: "unpublished",
+    publishedAt: "",
+    publishedBy: "",
+    source: "",
+    checksum: "",
+    count: 0
+  };
+}
+
+function taxonomyString(value: unknown): string {
+  return String(value || "").trim();
+}
+
+function taxonomyLabel(value: unknown, fallback = ""): string {
+  if (typeof value === "string") return value.trim() || fallback;
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    const picked = taxonomyString(obj.en || obj.hu || Object.values(obj)[0]);
+    return picked || fallback;
+  }
+  return fallback;
+}
+
+function taxonomyOrder(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function taxonomyStringArray(value: unknown): string[] {
+  const vals = Array.isArray(value) ? value : String(value || "").split(";");
+  return uniqueTrimmedStrings(vals);
+}
+
+function isExplicitTaxonomyFalse(value: unknown): boolean {
+  return value === false || String(value || "").trim().toLowerCase() === "false";
+}
+
+function isValidTaxonomyKey(value: string): boolean {
+  return CONTEXT_TAXONOMY_KEY_RE.test(value);
+}
+
+function sanitizeBusinessTaxonomyContextRow(row: any): Record<string, unknown> | null {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return null;
+  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext)) return null;
+
+  const key = taxonomyString(row.key);
+  if (!key || !isValidTaxonomyKey(key)) return null;
+
+  const out: Record<string, unknown> = {
+    key,
+    label: taxonomyLabel(row.label, key),
+    order: taxonomyOrder(row.order)
+  };
+
+  const groupKey = taxonomyString(row.groupKey);
+  if (groupKey && isValidTaxonomyKey(groupKey)) out.groupKey = groupKey;
+
+  const subgroupKey = taxonomyString(row.subgroupKey);
+  if (subgroupKey && isValidTaxonomyKey(subgroupKey)) out.subgroupKey = subgroupKey;
+
+  const pageKey = taxonomyString(row.pageKey);
+  if (pageKey) out.pageKey = pageKey;
+
+  const defaultView = taxonomyString(row.defaultView);
+  if (defaultView) out.defaultView = defaultView;
+
+  const subgroupMode = taxonomyString(row.subgroupMode);
+  if (subgroupMode) out.subgroupMode = subgroupMode;
+
+  const viewOptions = taxonomyString(row.viewOptions);
+  if (viewOptions) out.viewOptions = viewOptions;
+
+  const keywords = taxonomyStringArray(row.keywords);
+  if (keywords.length) out.keywords = keywords;
+
+  return out;
+}
+
+function sanitizeBusinessTaxonomySubgroup(row: any): Record<string, unknown> | null {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return null;
+  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext)) return null;
+
+  const key = taxonomyString(row.key || row.subgroupKey);
+  if (!key || !isValidTaxonomyKey(key)) return null;
+
+  const contexts = taxonomyStringArray(row.contexts).filter(isValidTaxonomyKey);
+
+  return {
+    key,
+    label: taxonomyLabel(row.label, key),
+    order: taxonomyOrder(row.order),
+    contexts
+  };
+}
+
+function sanitizeBusinessTaxonomyGroup(row: any): Record<string, unknown> | null {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return null;
+  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext)) return null;
+
+  const key = taxonomyString(row.key || row.groupKey);
+  if (!key || !isValidTaxonomyKey(key)) return null;
+
+  const subgroups = Array.isArray(row.subgroups)
+    ? row.subgroups.map(sanitizeBusinessTaxonomySubgroup).filter(Boolean)
+    : [];
+
+  return {
+    key,
+    label: taxonomyLabel(row.label, key),
+    order: taxonomyOrder(row.order),
+    subgroups
+  };
+}
+
+function sanitizeContextsManifest(raw: any): ContextsManifest {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return emptyContextsManifest();
+  return {
+    activeVersion: taxonomyString(raw.activeVersion) || "unpublished",
+    publishedAt: taxonomyString(raw.publishedAt),
+    publishedBy: taxonomyString(raw.publishedBy),
+    source: taxonomyString(raw.source),
+    checksum: taxonomyString(raw.checksum),
+    count: Number.isFinite(Number(raw.count)) ? Number(raw.count) : 0
+  };
+}
+
+function sanitizeBusinessTaxonomyProjection(raw: any, manifest: ContextsManifest): Record<string, unknown> {
+  const src = (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw : {};
+  const groups = Array.isArray((src as any).groups)
+    ? (src as any).groups.map(sanitizeBusinessTaxonomyGroup).filter(Boolean)
+    : [];
+  const contexts = Array.isArray((src as any).contexts)
+    ? (src as any).contexts.map(sanitizeBusinessTaxonomyContextRow).filter(Boolean)
+    : [];
+
+  return {
+    version: taxonomyString((src as any).version) || manifest.activeVersion || "unpublished",
+    publishedAt: taxonomyString((src as any).publishedAt) || manifest.publishedAt || "",
+    groups,
+    contexts
+  };
+}
+
+async function readContextsManifest(env: Env): Promise<ContextsManifest> {
+  const raw = await env.KV_CONTEXTS.get(CONTEXTS_MANIFEST_KEY, { type: "json" }) as any;
+  return sanitizeContextsManifest(raw);
+}
+
+async function handleBusinessTaxonomyRead(env: Env): Promise<Response> {
+  const [rawProjection, manifest] = await Promise.all([
+    env.KV_CONTEXTS.get(CONTEXTS_BUSINESS_TAXONOMY_KEY, { type: "json" }) as Promise<any>,
+    readContextsManifest(env)
+  ]);
+
+  return json(
+    sanitizeBusinessTaxonomyProjection(rawProjection, manifest),
+    200,
+    { "cache-control": "no-store" }
+  );
+}
+
+async function handleContextsManifestRead(env: Env): Promise<Response> {
+  return json(await readContextsManifest(env), 200, { "cache-control": "no-store" });
 }
 
 // ---------- helpers ----------
