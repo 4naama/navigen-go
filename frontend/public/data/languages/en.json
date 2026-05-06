@@ -1157,5 +1157,6 @@
   "lpm.rating.googleProvider": "Google rating",
   "lpm.rating.googleProviderNote": "Provider-sourced rating. It is separate from NaviGen visitor ratings.",
   "modal.requestListing.contexts.search.title": "Search available contexts",
-  "modal.requestListing.contexts.search.desc": "Type to search available context options."
+  "modal.requestListing.contexts.search.desc": "Type to search available context options.",
+  "modal.requestListing.contexts.location.placeholder": "Country / city"
 }

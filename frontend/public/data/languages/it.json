@@ -1157,5 +1157,6 @@
   "lpm.rating.googleProvider": "Valutazione Google",
   "lpm.rating.googleProviderNote": "Valutazione fornita dal provider. È separata dalle valutazioni dei visitatori NaviGen.",
   "modal.requestListing.contexts.search.title": "Cerca contesti disponibili",
-  "modal.requestListing.contexts.search.desc": "Digita per cercare le opzioni di contesto disponibili."
+  "modal.requestListing.contexts.search.desc": "Digita per cercare le opzioni di contesto disponibili.",
+  "modal.requestListing.contexts.location.placeholder": "Paese / città"
 }

@@ -1157,5 +1157,6 @@
   "lpm.rating.googleProvider": "דירוג Google",
   "lpm.rating.googleProviderNote": "דירוג שמסופק על ידי הספק. הוא נפרד מדירוגי המבקרים של NaviGen.",
   "modal.requestListing.contexts.search.title": "חפש הקשרים זמינים",
-  "modal.requestListing.contexts.search.desc": "הקלד כדי לחפש אפשרויות הקשר זמינות."
+  "modal.requestListing.contexts.search.desc": "הקלד כדי לחפש אפשרויות הקשר זמינות.",
+  "modal.requestListing.contexts.location.placeholder": "מדינה / עיר"
 }
