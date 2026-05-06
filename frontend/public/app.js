@@ -1559,11 +1559,14 @@ async function initEmergencyBlock(countryOverride) {
 
     // guard all three; 2-line comment: avoid boot break on 404/500
     const safeJson = async (p, fb) => { const r = await p.catch(() => null); return (r && r.ok) ? r.json() : fb; };
-    const [actions, structure, businessTaxonomy] = await Promise.all([
-      safeJson(fetch('/data/actions.json',   { cache:'no-store' }), []),
-      safeJson(fetch('/data/structure.json', { cache:'no-store' }), []),
+    const [actions, structurePayload, businessTaxonomy] = await Promise.all([
+      safeJson(fetch('/data/actions.json', { cache:'no-store' }), []),
+      safeJson(fetch('/api/structure/business-categories', { cache:'no-store', credentials:'include' }), { groups: [] }),
       loadBusinessTaxonomy()
     ]);
+    const structure = Array.isArray(structurePayload?.groups)
+      ? structurePayload.groups
+      : (Array.isArray(structurePayload) ? structurePayload : []);
     const contexts = Array.isArray(businessTaxonomy?.contexts) ? businessTaxonomy.contexts : [];
 
     state.actions = actions;

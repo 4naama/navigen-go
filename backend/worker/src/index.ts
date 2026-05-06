@@ -37,6 +37,7 @@ export interface Env {
   KV_OVERRIDES: KVNamespace;
   KV_STATS: KVNamespace;
   KV_CONTEXTS: KVNamespace;
+  KV_STRUCTURE: KVNamespace;
   JWT_SECRET: string; // set via wrangler secret
   STRIPE_SECRET_KEY: string; // Stripe secret key for creating Checkout Sessions (server-only)
   STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
@@ -1417,58 +1418,16 @@ async function assertPaidDraftHydrationEntitlement(req: Request, env: Env, targe
   return null;
 }
 
-function catalogFetchOrigins(req: Request): string[] {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  const push = (raw: string) => {
-    try {
-      const origin = new URL(String(raw || "").trim()).origin;
-      if (!/^https?:\/\//i.test(origin) || seen.has(origin)) return;
-      seen.add(origin);
-      out.push(origin);
-    } catch {
-      // Ignore malformed origins and keep the fixed production fallbacks below.
-    }
-  };
+// Structure validation reads from KV_STRUCTURE; public structure.json is a seed/audit artifact only.
 
-  push(req.headers.get("Origin") || "");
-  push(new URL(req.url).origin);
-  push("https://navigen.io");
-  push("https://www.navigen.io");
-
-  return out;
+async function loadStructureBusinessCategoriesForValidation(env: Env): Promise<Record<string, unknown>> {
+  const [rawProjection, manifest] = await Promise.all([
+    env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_CATEGORIES_KEY, { type: "json" }) as Promise<any>,
+    readStructureManifest(env)
+  ]);
+  if (!rawProjection || manifest.activeVersion === "unpublished") throw new Error("structure_catalog_unavailable");
+  return sanitizeStructureBusinessCategoriesProjection(rawProjection, manifest);
 }
-
-async function fetchStaticJson(req: Request, path: string): Promise<any> {
-  for (const origin of catalogFetchOrigins(req)) {
-    try {
-      const u = new URL(path, origin).toString();
-      const r = await fetch(u, {
-        method: "GET",
-        headers: { accept: "application/json" },
-        cache: "no-store"
-      });
-      if (!r.ok) continue;
-
-      const ctype = String(r.headers.get("content-type") || "").toLowerCase();
-      const text = await r.text();
-      if (!ctype.includes("application/json")) continue;
-
-      return JSON.parse(text);
-    } catch {
-      // Try the next catalog source before failing closed at the caller.
-    }
-  }
-
-  throw new Error(`catalog_fetch_failed:${path}`);
-}
-
-async function loadStructureCatalog(req: Request): Promise<any[]> {
-  const j = await fetchStaticJson(req, "/data/structure.json");
-  return Array.isArray(j) ? j : [];
-}
-
-// Structure catalog helpers above are reused by mixed structure/context validation.
 
 async function loadBusinessTaxonomyForValidation(env: Env): Promise<Record<string, unknown>> {
   const [rawProjection, manifest] = await Promise.all([
@@ -1479,12 +1438,20 @@ async function loadBusinessTaxonomyForValidation(env: Env): Promise<Record<strin
   return sanitizeBusinessTaxonomyProjection(rawProjection, manifest);
 }
 
-function isValidBusinessGroupKey(value: string): boolean {
-  return /^group\.[a-z0-9][a-z0-9-]*$/i.test(String(value || "").trim());
-}
+function allowedSubgroupsByStructureProjection(projection: any): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  for (const group of Array.isArray(projection?.groups) ? projection.groups : []) {
+    const groupKey = structureString(group?.groupKey);
+    if (!groupKey) continue;
 
-function isValidBusinessSubgroupKey(value: string): boolean {
-  return /^(sub|group)\.[a-z0-9][a-z0-9-]*$/i.test(String(value || "").trim());
+    const set = out.get(groupKey) || new Set<string>();
+    for (const subgroup of Array.isArray(group?.subgroups) ? group.subgroups : []) {
+      const key = structureString(subgroup?.key);
+      if (key) set.add(key);
+    }
+    out.set(groupKey, set);
+  }
+  return out;
 }
 
 function allowedContextKeysFromBusinessTaxonomy(projection: any): Set<string> {
@@ -1505,10 +1472,16 @@ async function validateClassificationSelection(env: Env, profile: any): Promise<
   if (!groupKey && !subgroupKey && !contextVals.length) return null;
   if (!groupKey || !subgroupKey || !contextVals.length) return "classification_required";
 
-  if (!isValidBusinessGroupKey(groupKey)) return "invalid_groupKey";
-  if (!isValidBusinessSubgroupKey(subgroupKey)) return "invalid_subgroupKey";
+  const [structure, taxonomy] = await Promise.all([
+    loadStructureBusinessCategoriesForValidation(env),
+    loadBusinessTaxonomyForValidation(env)
+  ]);
 
-  const taxonomy = await loadBusinessTaxonomyForValidation(env);
+  const subgroups = allowedSubgroupsByStructureProjection(structure);
+  const groupSubs = subgroups.get(groupKey);
+  if (!groupSubs) return "invalid_groupKey";
+  if (!groupSubs.has(subgroupKey)) return "invalid_subgroupKey";
+
   const contexts = allowedContextKeysFromBusinessTaxonomy(taxonomy);
   for (const ctx of contextVals) {
     if (!contexts.has(ctx)) return "invalid_context";
@@ -1526,7 +1499,7 @@ async function safeValidateClassificationSelection(
     return await validateClassificationSelection(env, profile);
   } catch (e: any) {
     const msg = String(e?.message || "").trim();
-    if (msg === "taxonomy_catalog_unavailable") {
+    if (msg === "taxonomy_catalog_unavailable" || msg === "structure_catalog_unavailable") {
       return opts.failClosedOnCatalogError ? "catalog_unavailable" : null;
     }
     throw e;
@@ -2731,6 +2704,48 @@ export default {
       // --- Context taxonomy: public BO-facing read projection
       if (normPath === "/api/contexts/business-taxonomy" && req.method === "GET") {
         return await handleBusinessTaxonomyRead(env);
+      }
+
+
+      // --- Structure taxonomy: public BO-facing business category read projection
+      if (normPath === "/api/structure/business-categories" && req.method === "GET") {
+        return await handleStructureBusinessCategoriesRead(env);
+      }
+
+      // --- Structure taxonomy admin manifest: active business category version metadata
+      if (normPath === "/api/admin/structure/manifest" && req.method === "GET") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+        return await handleStructureManifestRead(env);
+      }
+
+      // --- Structure taxonomy admin publish: validate, version, and publish active business categories
+      if (normPath === "/api/admin/structure/publish" && req.method === "POST") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+        return await handleStructurePublish(req, env);
+      }
+
+      // --- Structure taxonomy admin rollback: activate an existing historical business category version
+      if (normPath === "/api/admin/structure/activate-version" && req.method === "POST") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+        return await handleStructureActivateVersion(req, env);
       }
 
       // --- Context taxonomy admin manifest: active taxonomy version metadata
@@ -7375,7 +7390,7 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
     candidate.locationID = target.locationID;
   }
 
-  const classificationError = await safeValidateClassificationSelection(req, env, candidate, { failClosedOnCatalogError: true });
+  const classificationError = await safeValidateClassificationSelection(env, candidate, { failClosedOnCatalogError: true });
   if (classificationError) {
     return json(
       { error: { code: "validation_failed", message: classificationError } },
@@ -7844,6 +7859,321 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
     200,
     { "cache-control": "no-store" }
   );
+}
+
+const STRUCTURE_ACTIVE_KEY = "structure:active";
+const STRUCTURE_VERSION_PREFIX = "structure:version:";
+const STRUCTURE_MANIFEST_KEY = "structure:manifest";
+const STRUCTURE_BUSINESS_CATEGORIES_KEY = "structure:business-categories";
+const STRUCTURE_GROUP_KEY_RE = /^group\.[a-z0-9][a-z0-9-]*$/i;
+const STRUCTURE_SUBGROUP_KEY_RE = /^(sub|group)\.[a-z0-9][a-z0-9-]*$/i;
+const STRUCTURE_VERSION_RE = /^\d{4}-?\d{2}-?\d{2}T\d{6}Z-[a-f0-9]{6,64}$/i;
+
+type StructureManifest = {
+  activeVersion: string;
+  publishedAt: string;
+  publishedBy: string;
+  source: string;
+  checksum: string;
+  count: number;
+};
+
+type NormalizedStructureSubgroup = {
+  key: string;
+  name: string;
+  keywords: string[];
+  order: number;
+};
+
+type NormalizedStructureGroup = {
+  groupKey: string;
+  groupName: string;
+  groupKeywords: string[];
+  fallbackSubgroupKey: string;
+  order: number;
+  subgroups: NormalizedStructureSubgroup[];
+};
+
+type PreparedStructurePayload = {
+  rows: NormalizedStructureGroup[];
+  errors: string[];
+};
+
+function emptyStructureManifest(): StructureManifest {
+  return {
+    activeVersion: "unpublished",
+    publishedAt: "",
+    publishedBy: "",
+    source: "",
+    checksum: "",
+    count: 0
+  };
+}
+
+function structureString(value: unknown): string {
+  return String(value || "").trim();
+}
+
+function structureStringArray(value: unknown): string[] {
+  const vals = Array.isArray(value) ? value : String(value || "").split(";");
+  return uniqueTrimmedStrings(vals);
+}
+
+function structureOrder(value: unknown, fallback: number): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function structureInputRows(payload: any): any[] | null {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return null;
+  if (Array.isArray(payload.rows)) return payload.rows;
+  if (Array.isArray(payload.groups)) return payload.groups;
+  if (Array.isArray(payload.structure)) return payload.structure;
+  return null;
+}
+
+function sanitizeStructureManifest(raw: any): StructureManifest {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return emptyStructureManifest();
+  return {
+    activeVersion: structureString(raw.activeVersion) || "unpublished",
+    publishedAt: structureString(raw.publishedAt),
+    publishedBy: structureString(raw.publishedBy),
+    source: structureString(raw.source),
+    checksum: structureString(raw.checksum),
+    count: Number.isFinite(Number(raw.count)) ? Number(raw.count) : 0
+  };
+}
+
+function sanitizeStructureBusinessCategoriesProjection(raw: any, manifest: StructureManifest): Record<string, unknown> {
+  const src = (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw : {};
+  const groups = Array.isArray((src as any).groups)
+    ? (src as any).groups.map((group: any) => {
+        const groupKey = structureString(group?.groupKey);
+        if (!STRUCTURE_GROUP_KEY_RE.test(groupKey)) return null;
+
+        const subgroups = (Array.isArray(group?.subgroups) ? group.subgroups : [])
+          .map((subgroup: any) => {
+            const key = structureString(subgroup?.key);
+            if (!STRUCTURE_SUBGROUP_KEY_RE.test(key)) return null;
+            return {
+              key,
+              name: structureString(subgroup?.name) || key,
+              order: structureOrder(subgroup?.order, 0),
+              keywords: structureStringArray(subgroup?.keywords)
+            };
+          })
+          .filter(Boolean);
+
+        return {
+          groupKey,
+          groupName: structureString(group?.groupName) || groupKey,
+          order: structureOrder(group?.order, 0),
+          groupKeywords: structureStringArray(group?.groupKeywords),
+          fallbackSubgroupKey: structureString(group?.fallbackSubgroupKey),
+          subgroups
+        };
+      })
+      .filter(Boolean)
+    : [];
+
+  return {
+    version: structureString((src as any).version) || manifest.activeVersion || "unpublished",
+    publishedAt: structureString((src as any).publishedAt) || manifest.publishedAt || "",
+    groups
+  };
+}
+
+async function readStructureManifest(env: Env): Promise<StructureManifest> {
+  const raw = await env.KV_STRUCTURE.get(STRUCTURE_MANIFEST_KEY, { type: "json" }) as any;
+  return sanitizeStructureManifest(raw);
+}
+
+async function handleStructureBusinessCategoriesRead(env: Env): Promise<Response> {
+  const [rawProjection, manifest] = await Promise.all([
+    env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_CATEGORIES_KEY, { type: "json" }) as Promise<any>,
+    readStructureManifest(env)
+  ]);
+
+  return json(
+    sanitizeStructureBusinessCategoriesProjection(rawProjection, manifest),
+    200,
+    { "cache-control": "no-store" }
+  );
+}
+
+async function handleStructureManifestRead(env: Env): Promise<Response> {
+  return json(await readStructureManifest(env), 200, { "cache-control": "no-store" });
+}
+
+function prepareStructurePayload(payload: any): PreparedStructurePayload {
+  const inputRows = structureInputRows(payload);
+  if (!inputRows) return { rows: [], errors: ["structure payload must be an array or contain rows/groups/structure array"] };
+
+  const errors: string[] = [];
+  const rows: NormalizedStructureGroup[] = [];
+  const seenGroups = new Set<string>();
+
+  inputRows.forEach((row: any, index: number) => {
+    const rowId = `row ${index + 1}`;
+    if (!row || typeof row !== "object" || Array.isArray(row)) {
+      errors.push(`${rowId}: row must be an object`);
+      return;
+    }
+
+    const groupKey = structureString(row.groupKey);
+    if (!STRUCTURE_GROUP_KEY_RE.test(groupKey)) {
+      errors.push(`${rowId}: invalid groupKey "${groupKey}"`);
+      return;
+    }
+
+    if (seenGroups.has(groupKey)) errors.push(`${rowId}: duplicate groupKey "${groupKey}"`);
+    seenGroups.add(groupKey);
+
+    const groupName = structureString(row.groupName || row.label || row.name);
+    if (!groupName) errors.push(`${rowId}: groupName is required`);
+
+    const subgroupRows = Array.isArray(row.subgroups) ? row.subgroups : [];
+    if (!subgroupRows.length) errors.push(`${rowId}: subgroups must contain at least one subgroup`);
+
+    const seenSubgroupsInGroup = new Set<string>();
+    const subgroups: NormalizedStructureSubgroup[] = subgroupRows.map((subgroup: any, subgroupIndex: number) => {
+      const subgroupId = `${rowId} subgroup ${subgroupIndex + 1}`;
+      const key = structureString(subgroup?.key);
+      const name = structureString(subgroup?.name || subgroup?.label);
+
+      if (!STRUCTURE_SUBGROUP_KEY_RE.test(key)) errors.push(`${subgroupId}: invalid key "${key}"`);
+      if (!name) errors.push(`${subgroupId}: name is required`);
+      if (seenSubgroupsInGroup.has(key)) errors.push(`${subgroupId}: duplicate subgroup key "${key}" inside "${groupKey}"`);
+      seenSubgroupsInGroup.add(key);
+
+      return {
+        key,
+        name: name || key,
+        keywords: structureStringArray(subgroup?.keywords),
+        order: structureOrder(subgroup?.order ?? subgroup?.sortOrder, (subgroupIndex + 1) * 10)
+      };
+    });
+
+    const fallbackSubgroupKey = structureString(row.fallbackSubgroupKey);
+    if (fallbackSubgroupKey && !seenSubgroupsInGroup.has(fallbackSubgroupKey)) {
+      errors.push(`${rowId}: fallbackSubgroupKey "${fallbackSubgroupKey}" is not a subgroup in "${groupKey}"`);
+    }
+
+    rows.push({
+      groupKey,
+      groupName: groupName || groupKey,
+      groupKeywords: structureStringArray(row.groupKeywords || row.keywords),
+      fallbackSubgroupKey,
+      order: structureOrder(row.order ?? row.sortOrder, (index + 1) * 10),
+      subgroups
+    });
+  });
+
+  if (!rows.length) errors.push("structure must contain at least one group");
+  return { rows, errors };
+}
+
+function deriveStructureBusinessCategoriesProjection(rows: NormalizedStructureGroup[], manifest: StructureManifest): Record<string, unknown> {
+  return {
+    version: manifest.activeVersion,
+    publishedAt: manifest.publishedAt,
+    groups: rows
+      .slice()
+      .sort((a, b) => a.order - b.order || a.groupKey.localeCompare(b.groupKey))
+      .map((group) => ({
+        groupKey: group.groupKey,
+        groupName: group.groupName,
+        order: group.order,
+        groupKeywords: group.groupKeywords,
+        fallbackSubgroupKey: group.fallbackSubgroupKey,
+        subgroups: group.subgroups
+          .slice()
+          .sort((a, b) => a.order - b.order || a.key.localeCompare(b.key))
+          .map((subgroup) => ({
+            key: subgroup.key,
+            name: subgroup.name,
+            order: subgroup.order,
+            keywords: subgroup.keywords
+          }))
+      }))
+  };
+}
+
+async function writePreparedStructureVersion(
+  env: Env,
+  prepared: PreparedStructurePayload,
+  manifest: StructureManifest,
+  opts: { persistVersion?: boolean } = {}
+): Promise<void> {
+  const activePayload = { version: manifest.activeVersion, publishedAt: manifest.publishedAt, source: manifest.source, rows: prepared.rows };
+  const projection = sanitizeStructureBusinessCategoriesProjection(deriveStructureBusinessCategoriesProjection(prepared.rows, manifest), manifest);
+  const versionPayload = { manifest, rows: prepared.rows };
+
+  if (opts.persistVersion !== false) {
+    await env.KV_STRUCTURE.put(`${STRUCTURE_VERSION_PREFIX}${manifest.activeVersion}`, JSON.stringify(versionPayload));
+  }
+  await env.KV_STRUCTURE.put(STRUCTURE_ACTIVE_KEY, JSON.stringify(activePayload));
+  await env.KV_STRUCTURE.put(STRUCTURE_BUSINESS_CATEGORIES_KEY, JSON.stringify(projection));
+  await env.KV_STRUCTURE.put(STRUCTURE_MANIFEST_KEY, JSON.stringify(manifest));
+}
+
+async function handleStructurePublish(req: Request, env: Env): Promise<Response> {
+  const parsed = await parseTaxonomyJsonBody(req);
+  if (parsed.ok === false) return parsed.response;
+
+  const prepared = prepareStructurePayload(parsed.payload);
+  if (prepared.errors.length) {
+    return json({ error: { code: "validation_failed", message: "structure validation failed", details: prepared.errors } }, 400, { "cache-control": "no-store" });
+  }
+
+  const checksum = await taxonomyChecksumHex(stableTaxonomyJson({ rows: prepared.rows }));
+  const now = new Date();
+  const manifest: StructureManifest = {
+    activeVersion: `${taxonomyVersionStamp(now)}-${checksum.slice(0, 6)}`,
+    publishedAt: now.toISOString(),
+    publishedBy: readAdminPublisher(req),
+    source: structureString(parsed.payload?.source || parsed.payload?.metadata?.source) || "structure-json-export",
+    checksum,
+    count: prepared.rows.length
+  };
+
+  await writePreparedStructureVersion(env, prepared, manifest);
+  return json(manifest, 200, { "cache-control": "no-store" });
+}
+
+async function handleStructureActivateVersion(req: Request, env: Env): Promise<Response> {
+  const parsed = await parseTaxonomyJsonBody(req);
+  if (parsed.ok === false) return parsed.response;
+
+  const versionId = structureString(parsed.payload?.versionId);
+  if (!versionId || !STRUCTURE_VERSION_RE.test(versionId)) {
+    return json({ error: { code: "invalid_version", message: "versionId is required" } }, 400, { "cache-control": "no-store" });
+  }
+
+  const versionRecord = await env.KV_STRUCTURE.get(`${STRUCTURE_VERSION_PREFIX}${versionId}`, { type: "json" }) as any;
+  if (!versionRecord) {
+    return json({ error: { code: "not_found", message: "structure version not found" } }, 404, { "cache-control": "no-store" });
+  }
+
+  const prepared = prepareStructurePayload({ rows: versionRecord.rows });
+  if (prepared.errors.length) {
+    return json({ error: { code: "validation_failed", message: "stored structure version is invalid", details: prepared.errors } }, 409, { "cache-control": "no-store" });
+  }
+
+  const now = new Date();
+  const checksum = structureString(versionRecord?.manifest?.checksum) || await taxonomyChecksumHex(stableTaxonomyJson({ rows: prepared.rows }));
+  const manifest: StructureManifest = {
+    activeVersion: versionId,
+    publishedAt: now.toISOString(),
+    publishedBy: readAdminPublisher(req),
+    source: structureString(versionRecord?.manifest?.source) || "activate-version",
+    checksum,
+    count: prepared.rows.length
+  };
+
+  await writePreparedStructureVersion(env, prepared, manifest, { persistVersion: false });
+  return json(manifest, 200, { "cache-control": "no-store" });
 }
 
 const CONTEXTS_ACTIVE_KEY = "contexts:active";

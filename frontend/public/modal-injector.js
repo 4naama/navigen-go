@@ -5530,10 +5530,14 @@ function resetP8CatalogPromises() {
 function loadP8StructureCatalog(force = false) {
   if (force) p8StructureCatalogPromise = null;
   if (!p8StructureCatalogPromise) {
-    p8StructureCatalogPromise = fetch('/data/structure.json', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json().catch(() => []) : []))
+    p8StructureCatalogPromise = fetch('/api/structure/business-categories', {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { accept: 'application/json' }
+    })
+      .then((r) => (r.ok ? r.json().catch(() => null) : null))
       .then((j) => {
-        const rows = Array.isArray(j) ? j : [];
+        const rows = Array.isArray(j?.groups) ? j.groups : (Array.isArray(j) ? j : []);
         if (!rows.length) p8StructureCatalogPromise = null;
         return rows;
       })
@@ -6111,6 +6115,7 @@ export function createRequestListingModal(opts = {}) {
   renderGoogleProviderRatingCard(rlGoogleProviderRatingCard, prefill || {});
 
   const REQUEST_LISTING_CONTEXT_LIMIT = 3;
+  const REQUEST_LISTING_CONTEXT_RESULT_LIMIT = 5;
   const selectedTagSet = new Set(prefillTags);
   const selectedContextSet = new Set();
   let requestListingContextRows = [];
@@ -6501,9 +6506,10 @@ export function createRequestListingModal(opts = {}) {
         const hay = searchableContextText(row);
         return tokens.every((token) => hay.includes(token));
       }), boostTokens);
+      const visibleRows = rows.slice(0, REQUEST_LISTING_CONTEXT_RESULT_LIMIT);
 
       ctxResults.innerHTML = '';
-      if (!rows.length) {
+      if (!visibleRows.length) {
         const empty = document.createElement('div');
         empty.className = 'modal-menu-item modal-static-card request-context-empty';
         empty.innerHTML = `
@@ -6516,7 +6522,7 @@ export function createRequestListingModal(opts = {}) {
         return;
       }
 
-      rows.forEach((row) => {
+      visibleRows.forEach((row) => {
         const key = String(row?.key || '').trim();
         if (!key) return;
 

@@ -137,7 +137,7 @@ export default {
       const ADMIN_COOKIE = 'navigen_gate_v2';
       const authed = new RegExp(`\\b${ADMIN_COOKIE}=ok\\b`).test(cookie);
       // Public boot JSON for app startup; contexts.json is not a runtime authority.
-      const isBootJson = /^\/data\/(languages\/[^/]+\.json|structure\.json|actions\.json|alert\.json)$/.test(url.pathname);
+      const isBootJson = /^\/data\/(languages\/[^/]+\.json|actions\.json|alert\.json)$/.test(url.pathname);
 
       if (isBootJson) {
         const asset = await env.ASSETS.fetch(req);

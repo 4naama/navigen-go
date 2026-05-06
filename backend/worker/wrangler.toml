@@ -42,6 +42,10 @@ id      = "306bdf6786d34a008902cafb4f264ecd"
 binding = "KV_CONTEXTS"
 id      = "35a36f5169034a87886ce8cae9c5cfc6"
 
+[[kv_namespaces]]
+binding = "KV_STRUCTURE"
+id      = "de6a6f1e1d4344f695fea522bc79969b"
+
 # --- Durable Objects (Phase 8) ---
 [[durable_objects.bindings]]
 name = "DO_PLAN_ALLOC"
