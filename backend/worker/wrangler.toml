@@ -40,7 +40,7 @@ id      = "306bdf6786d34a008902cafb4f264ecd"
 
 [[kv_namespaces]]
 binding = "KV_CONTEXTS"
-id      = "<35a36f5169034a87886ce8cae9c5cfc6>"
+id      = "35a36f5169034a87886ce8cae9c5cfc6"
 
 # --- Durable Objects (Phase 8) ---
 [[durable_objects.bindings]]
