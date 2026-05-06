@@ -6492,9 +6492,11 @@ export function createRequestListingModal(opts = {}) {
 
     const locationOptions = document.createElement('datalist');
     locationOptions.id = 'request-context-location-options';
-    locationOptions.innerHTML = requestListingContextLocationRows
-      .map((row) => `<option value="${escapeHTML(String(row?.label || ''))}"></option>`)
-      .join('');
+    requestListingContextLocationRows.forEach((row) => {
+      const option = document.createElement('option');
+      option.value = String(row?.label || '').trim();
+      if (option.value) locationOptions.appendChild(option);
+    });
 
     locationLeft.appendChild(locationInput);
     locationRow.appendChild(locationLeft);
@@ -6522,6 +6524,15 @@ export function createRequestListingModal(opts = {}) {
       clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
     };
 
+    const searchableContextText = (row) => norm([
+      row?.key,
+      row?.pageKey,
+      row?.namespace,
+      row?.theme,
+      p8ContextLabel(row),
+      ...Object.values((row && typeof row.titles === 'object') ? row.titles : {})
+    ].join(' '));
+    
     const searchableContextLocationText = (row) => {
       const parts = String(row?.key || '').split('/').map((part) => part.trim()).filter(Boolean);
       const countryKey = parts[1] || '';
@@ -6612,10 +6623,11 @@ export function createRequestListingModal(opts = {}) {
       if (!visibleRows.length) {
         const empty = document.createElement('div');
         empty.className = 'modal-menu-item modal-static-card request-context-empty';
+        const hasAnySearch = tokens.length || locationTokens.length;
         empty.innerHTML = `
           <span class="label">
-            <strong>${tokens.length ? (t('modal.requestListing.contexts.empty.title') || 'No matching contexts') : (t('modal.requestListing.contexts.search.title') || 'Search available contexts')}</strong>
-            <small>${tokens.length ? (t('modal.requestListing.contexts.empty.desc') || 'Try another search term.') : (t('modal.requestListing.contexts.search.desc') || 'Type to search backend-published context options.')}</small>
+            <strong>${hasAnySearch ? (t('modal.requestListing.contexts.empty.title') || 'No matching contexts') : (t('modal.requestListing.contexts.search.title') || 'Search available contexts')}</strong>
+            <small>${hasAnySearch ? (t('modal.requestListing.contexts.empty.desc') || 'Try another search term.') : (t('modal.requestListing.contexts.search.desc') || 'Type to search backend-published context options.')}</small>
           </span>
         `;
         ctxResults.appendChild(empty);
