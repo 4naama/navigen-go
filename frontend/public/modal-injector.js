@@ -5520,11 +5520,13 @@ export async function hydrateLocationDraftForCompletion(draftMeta = {}) {
 let p8StructureCatalogPromise;
 let p8ContextCatalogPromise;
 let p8ContextCatalogRowsCache = null;
+let p8ContextLocationRowsCache = [];
 
 function resetP8CatalogPromises() {
   p8StructureCatalogPromise = null;
   p8ContextCatalogPromise = null;
   p8ContextCatalogRowsCache = null;
+  p8ContextLocationRowsCache = [];
 }
 
 function loadP8StructureCatalog(force = false) {
@@ -5554,7 +5556,8 @@ function normalizeP8BusinessTaxonomyCatalog(payload) {
   return {
     version: String(src.version || 'unpublished').trim() || 'unpublished',
     publishedAt: String(src.publishedAt || '').trim(),
-    contexts: Array.isArray(src.contexts) ? src.contexts : []
+    contexts: Array.isArray(src.contexts) ? src.contexts : [],
+    locations: Array.isArray(src.locations) ? src.locations : []
   };
 }
 
@@ -5566,6 +5569,60 @@ function p8ContextRowsFromBusinessTaxonomy(catalog) {
       return key ? { ...row, key, label, titles: (row?.titles && typeof row.titles === 'object') ? row.titles : { en: label } } : null;
     })
     .filter(Boolean);
+}
+
+function p8ContextLocationLabelFromSlug(value) {
+  return String(value || '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function p8ContextLocationRowsFromContexts(contextRows) {
+  const seen = new Set();
+
+  return (Array.isArray(contextRows) ? contextRows : [])
+    .map((row) => {
+      const parts = String(row?.key || '').split('/').map((part) => part.trim()).filter(Boolean);
+      if (parts.length < 2) return null;
+
+      const countryKey = parts[1];
+      const cityKey = parts[2] || '';
+      const key = cityKey ? `${countryKey}/${cityKey}` : countryKey;
+      if (!countryKey || seen.has(key)) return null;
+      seen.add(key);
+
+      const countryLabel = p8ContextLocationLabelFromSlug(countryKey);
+      const cityLabel = cityKey ? p8ContextLocationLabelFromSlug(cityKey) : '';
+
+      return {
+        key,
+        countryKey,
+        countryLabel,
+        cityKey,
+        cityLabel,
+        label: cityLabel ? `${countryLabel} · ${cityLabel}` : countryLabel
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => String(a.label || '').localeCompare(String(b.label || ''), undefined, { sensitivity: 'base' }));
+}
+
+function p8ContextLocationRowsFromBusinessTaxonomy(catalog, contextRows) {
+  const rows = (Array.isArray(catalog?.locations) ? catalog.locations : [])
+    .map((row) => {
+      const key = String(row?.key || '').trim();
+      const countryKey = String(row?.countryKey || '').trim();
+      const cityKey = String(row?.cityKey || '').trim();
+      const countryLabel = String(row?.countryLabel || p8ContextLocationLabelFromSlug(countryKey)).trim();
+      const cityLabel = String(row?.cityLabel || (cityKey ? p8ContextLocationLabelFromSlug(cityKey) : '')).trim();
+      const label = String(row?.label || (cityLabel ? `${countryLabel} · ${cityLabel}` : countryLabel)).trim();
+      return key && countryKey ? { key, countryKey, countryLabel, cityKey, cityLabel, label } : null;
+    })
+    .filter(Boolean);
+
+  return rows.length ? rows : p8ContextLocationRowsFromContexts(contextRows);
 }
 
 function loadP8ContextCatalog(force = false) {
@@ -5584,7 +5641,9 @@ function loadP8ContextCatalog(force = false) {
     })
       .then((r) => (r.ok ? r.json().catch(() => null) : null))
       .then((j) => {
-        const rows = p8ContextRowsFromBusinessTaxonomy(normalizeP8BusinessTaxonomyCatalog(j));
+        const catalog = normalizeP8BusinessTaxonomyCatalog(j);
+        const rows = p8ContextRowsFromBusinessTaxonomy(catalog);
+        p8ContextLocationRowsCache = p8ContextLocationRowsFromBusinessTaxonomy(catalog, rows);
         if (rows.length) p8ContextCatalogRowsCache = rows;
         else p8ContextCatalogPromise = null;
         return p8ContextCatalogRowsCache || rows;
@@ -6119,6 +6178,7 @@ export function createRequestListingModal(opts = {}) {
   const selectedTagSet = new Set(prefillTags);
   const selectedContextSet = new Set();
   let requestListingContextRows = [];
+  let requestListingContextLocationRows = [];
   let requestListingContextIndex = new Map();
 
   function syncRequestListingTags() {
@@ -6412,6 +6472,34 @@ export function createRequestListingModal(opts = {}) {
     searchLeft.appendChild(clearBtn);
     searchRow.appendChild(searchLeft);
     ctxTopBar.appendChild(searchRow);
+
+    const locationRow = document.createElement('div');
+    locationRow.className = 'select-location-search-row';
+
+    const locationLeft = document.createElement('div');
+    locationLeft.className = 'select-location-search-left';
+
+    const locationInput = document.createElement('input');
+    locationInput.type = 'search';
+    locationInput.id = 'request-context-location-search';
+    locationInput.spellcheck = false;
+    locationInput.autocapitalize = 'off';
+    locationInput.autocomplete = 'off';
+    locationInput.setAttribute('list', 'request-context-location-options');
+    locationInput.value = '';
+    const locationPlaceholder = (t('modal.requestListing.contexts.location.placeholder') || 'Country / city').trim();
+    locationInput.placeholder = locationPlaceholder.startsWith('🔍') ? locationPlaceholder : `🔍 ${locationPlaceholder}`;
+
+    const locationOptions = document.createElement('datalist');
+    locationOptions.id = 'request-context-location-options';
+    locationOptions.innerHTML = requestListingContextLocationRows
+      .map((row) => `<option value="${escapeHTML(String(row?.label || ''))}"></option>`)
+      .join('');
+
+    locationLeft.appendChild(locationInput);
+    locationRow.appendChild(locationLeft);
+    ctxTopBar.appendChild(locationRow);
+    ctxTopBar.appendChild(locationOptions);
     
     const searchHelp = document.createElement('small');
     searchHelp.className = 'modal-help-text request-context-search-help';
@@ -6434,14 +6522,23 @@ export function createRequestListingModal(opts = {}) {
       clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
     };
 
-    const searchableContextText = (row) => norm([
-      row?.key,
-      row?.pageKey,
-      row?.namespace,
-      row?.theme,
-      p8ContextLabel(row),
-      ...Object.values((row && typeof row.titles === 'object') ? row.titles : {})
-    ].join(' '));
+    const searchableContextLocationText = (row) => {
+      const parts = String(row?.key || '').split('/').map((part) => part.trim()).filter(Boolean);
+      const countryKey = parts[1] || '';
+      const cityKey = parts[2] || '';
+      const location = requestListingContextLocationRows.find((item) => {
+        const itemKey = String(item?.key || '').trim();
+        return itemKey && (itemKey === countryKey || itemKey === `${countryKey}/${cityKey}`);
+      });
+
+      return norm([
+        countryKey,
+        cityKey,
+        location?.label,
+        location?.countryLabel,
+        location?.cityLabel
+      ].join(' '));
+    };
 
     const requestListingContextSeedTokens = () => tokensOf([
       String(rlSubgroup?.selectedOptions?.[0]?.textContent || '').trim(),
@@ -6500,10 +6597,13 @@ export function createRequestListingModal(opts = {}) {
       }
 
       const tokens = tokensOf(searchInput.value);
-      const rows = tokens.length
+      const locationTokens = tokensOf(locationInput.value);
+      const rows = (tokens.length || locationTokens.length)
         ? sortContextRows(requestListingContextRows.filter((row) => {
             const hay = searchableContextText(row);
-            return tokens.every((token) => hay.includes(token));
+            const locationHay = searchableContextLocationText(row);
+            return (!tokens.length || tokens.every((token) => hay.includes(token)))
+              && (!locationTokens.length || locationTokens.every((token) => locationHay.includes(token)));
           }), [])
         : [];
       const visibleRows = rows.slice(0, REQUEST_LISTING_CONTEXT_RESULT_LIMIT);
@@ -6572,6 +6672,10 @@ export function createRequestListingModal(opts = {}) {
 
     searchInput.addEventListener('input', () => {
       syncClear();
+      renderContextPicker();
+    });
+
+    locationInput.addEventListener('input', () => {
       renderContextPicker();
     });
 
@@ -6702,6 +6806,7 @@ export function createRequestListingModal(opts = {}) {
     });
 
     requestListingContextRows = contextRows.slice();
+    requestListingContextLocationRows = Array.isArray(p8ContextLocationRowsCache) ? p8ContextLocationRowsCache.slice() : [];
     requestListingContextIndex = new Map(
       requestListingContextRows.map((row) => [String(row?.key || '').trim(), row])
     );

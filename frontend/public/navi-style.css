@@ -6786,6 +6786,29 @@ body.high-contrast .modal-menu-item.is-active {
   box-shadow:inset 0 0 0 1px #fb923c, 0 0 0 2px rgba(251,146,60,.18);
 }
 
+#request-listing-contexts-modal #request-context-search:placeholder-shown{
+  background:#fff7ed;
+  box-shadow:inset 0 0 0 1px #fb923c;
+}
+
+#request-listing-contexts-modal #request-context-search:placeholder-shown::placeholder{
+  color:#9a3412;
+  opacity:1;
+}
+
+#request-listing-contexts-modal #request-context-search:focus,
+#request-listing-contexts-modal #request-context-search:focus-visible{
+  outline:0;
+  background:#fff;
+  box-shadow:inset 0 0 0 1px #7aa7ff, 0 0 0 2px rgba(59,130,246,.16);
+}
+
+#request-listing-contexts-modal #request-context-search:placeholder-shown:focus,
+#request-listing-contexts-modal #request-context-search:placeholder-shown:focus-visible{
+  background:#fff7ed;
+  box-shadow:inset 0 0 0 1px #fb923c, 0 0 0 2px rgba(251,146,60,.18);
+}
+
 #campaign-management-modal .cm-plan-chip .campaign-funding-chip{
   background:#fff7ed;
   border-color:#fb923c;

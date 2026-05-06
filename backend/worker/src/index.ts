@@ -8272,6 +8272,67 @@ function sanitizeBusinessTaxonomyContextRow(row: any): Record<string, unknown> |
   return out;
 }
 
+function taxonomySlugLabel(value: string): string {
+  return taxonomyString(value)
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function businessTaxonomyLocationKeyFromContextKey(key: string): { key: string; countryKey: string; countryLabel: string; cityKey: string; cityLabel: string; label: string } | null {
+  const parts = taxonomyString(key).split("/").filter(Boolean);
+  if (parts.length < 2) return null;
+
+  const countryKey = parts[1] || "";
+  const cityKey = parts[2] || "";
+  if (!countryKey) return null;
+
+  const countryLabel = taxonomySlugLabel(countryKey);
+  const cityLabel = cityKey ? taxonomySlugLabel(cityKey) : "";
+  const locationKey = cityKey ? `${countryKey}/${cityKey}` : countryKey;
+
+  return {
+    key: locationKey,
+    countryKey,
+    countryLabel,
+    cityKey,
+    cityLabel,
+    label: cityLabel ? `${countryLabel} · ${cityLabel}` : countryLabel
+  };
+}
+
+function businessTaxonomyLocationsFromContexts(contexts: any[]): Record<string, unknown>[] {
+  const seen = new Set<string>();
+  const out: Record<string, unknown>[] = [];
+
+  for (const row of Array.isArray(contexts) ? contexts : []) {
+    const loc = businessTaxonomyLocationKeyFromContextKey(taxonomyString(row?.key));
+    if (!loc || seen.has(loc.key)) continue;
+    seen.add(loc.key);
+    out.push(loc);
+  }
+
+  return out.sort((a, b) => taxonomyString(a.label).localeCompare(taxonomyString(b.label), undefined, { sensitivity: "base" }));
+}
+
+function sanitizeBusinessTaxonomyLocationRow(row: any): Record<string, unknown> | null {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return null;
+
+  const key = taxonomyString(row.key);
+  const countryKey = taxonomyString(row.countryKey);
+  const cityKey = taxonomyString(row.cityKey);
+
+  if (!key || !countryKey || !isValidTaxonomyKey(key) || !isValidTaxonomyKey(countryKey)) return null;
+  if (cityKey && !isValidTaxonomyKey(cityKey)) return null;
+
+  const countryLabel = taxonomyLabel(row.countryLabel, taxonomySlugLabel(countryKey));
+  const cityLabel = cityKey ? taxonomyLabel(row.cityLabel, taxonomySlugLabel(cityKey)) : "";
+  const label = taxonomyLabel(row.label, cityLabel ? `${countryLabel} · ${cityLabel}` : countryLabel);
+
+  return { key, countryKey, countryLabel, cityKey, cityLabel, label };
+}
+
 function sanitizeBusinessTaxonomySubgroup(row: any): Record<string, unknown> | null {
   if (!row || typeof row !== "object" || Array.isArray(row)) return null;
   if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext) || isExplicitTaxonomyFalse(row.published)) return null;
@@ -8325,12 +8386,16 @@ function sanitizeBusinessTaxonomyProjection(raw: any, manifest: ContextsManifest
   const contexts = Array.isArray((src as any).contexts)
     ? (src as any).contexts.map(sanitizeBusinessTaxonomyContextRow).filter(Boolean)
     : [];
+  const locations = Array.isArray((src as any).locations)
+    ? (src as any).locations.map(sanitizeBusinessTaxonomyLocationRow).filter(Boolean)
+    : businessTaxonomyLocationsFromContexts(contexts);
 
   return {
     version: taxonomyString((src as any).version) || manifest.activeVersion || "unpublished",
     publishedAt: taxonomyString((src as any).publishedAt) || manifest.publishedAt || "",
     groups: [],
-    contexts
+    contexts,
+    locations
   };
 }
 
