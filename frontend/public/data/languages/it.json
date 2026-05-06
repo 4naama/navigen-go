@@ -1155,5 +1155,7 @@
   "promo.gated.promoQrCampaignRequired": "Le promozioni sono disponibili solo mentre questa attività esegue una campagna attiva con QR promo.",
   "lpm.rating.average": "Media",
   "lpm.rating.googleProvider": "Valutazione Google",
-  "lpm.rating.googleProviderNote": "Valutazione fornita dal provider. È separata dalle valutazioni dei visitatori NaviGen."
+  "lpm.rating.googleProviderNote": "Valutazione fornita dal provider. È separata dalle valutazioni dei visitatori NaviGen.",
+  "modal.requestListing.contexts.search.title": "Cerca contesti disponibili",
+  "modal.requestListing.contexts.search.desc": "Digita per cercare le opzioni di contesto disponibili."
 }

@@ -1155,5 +1155,7 @@
   "promo.gated.promoQrCampaignRequired": "A promóciók csak akkor érhetők el, amikor a vállalkozás aktív kampányt futtat Promo QR-rel.",
   "lpm.rating.average": "Átlag",
   "lpm.rating.googleProvider": "Google értékelés",
-  "lpm.rating.googleProviderNote": "Szolgáltató által biztosított értékelés. Ez külön áll a NaviGen látogatói értékeléseitől."
+  "lpm.rating.googleProviderNote": "Szolgáltató által biztosított értékelés. Ez külön áll a NaviGen látogatói értékeléseitől.",
+  "modal.requestListing.contexts.search.title": "Elérhető kontextusok keresése",
+  "modal.requestListing.contexts.search.desc": "Gépelj az elérhető kontextus opciók kereséséhez."
 }

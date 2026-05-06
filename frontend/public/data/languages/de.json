@@ -1155,5 +1155,7 @@
   "promo.gated.promoQrCampaignRequired": "Promotionen sind nur verfügbar, solange dieses Unternehmen eine aktive Kampagne mit Promo-QR ausführt.",
   "lpm.rating.average": "Durchschnitt",
   "lpm.rating.googleProvider": "Google-Bewertung",
-  "lpm.rating.googleProviderNote": "Vom Anbieter bereitgestellte Bewertung. Sie ist getrennt von den Besucherbewertungen von NaviGen."
+  "lpm.rating.googleProviderNote": "Vom Anbieter bereitgestellte Bewertung. Sie ist getrennt von den Besucherbewertungen von NaviGen.",
+  "modal.requestListing.contexts.search.title": "Verfügbare Kontexte suchen",
+  "modal.requestListing.contexts.search.desc": "Geben Sie Text ein, um verfügbare Kontextoptionen zu suchen."
 }

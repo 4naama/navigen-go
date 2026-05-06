@@ -1155,5 +1155,7 @@
   "promo.gated.promoQrCampaignRequired": "Promotions are available only while this business is running an active Campaign with Promo QR.",
   "lpm.rating.average": "Average",
   "lpm.rating.googleProvider": "Google rating",
-  "lpm.rating.googleProviderNote": "Provider-sourced rating. It is separate from NaviGen visitor ratings."
+  "lpm.rating.googleProviderNote": "Provider-sourced rating. It is separate from NaviGen visitor ratings.",
+  "modal.requestListing.contexts.search.title": "Search available contexts",
+  "modal.requestListing.contexts.search.desc": "Type to search available context options."
 }

@@ -1155,5 +1155,7 @@
   "promo.gated.promoQrCampaignRequired": "Акції доступні лише поки цей бізнес проводить активну кампанію з промо QR.",
   "lpm.rating.average": "Середнє",
   "lpm.rating.googleProvider": "Рейтинг Google",
-  "lpm.rating.googleProviderNote": "Рейтинг, наданий постачальником. Він окремий від оцінок відвідувачів NaviGen."
+  "lpm.rating.googleProviderNote": "Рейтинг, наданий постачальником. Він окремий від оцінок відвідувачів NaviGen.",
+  "modal.requestListing.contexts.search.title": "Пошук доступних контекстів",
+  "modal.requestListing.contexts.search.desc": "Введіть текст для пошуку доступних параметрів контексту."
 }
