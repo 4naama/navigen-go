@@ -70,6 +70,56 @@ const BUILD_ID = '2026-03-11-redeem-compat-promo-card-v4'; // disabled cache-bus
 try { localStorage.setItem('BUILD_ID', BUILD_ID); } catch {}
 // (No redirect; leave URL untouched)
 
+const BUSINESS_TAXONOMY_URL = '/api/contexts/business-taxonomy';
+let businessTaxonomySessionCache = null;
+let businessTaxonomySessionPromise = null;
+
+function emptyBusinessTaxonomyPayload() {
+  return { version: 'unpublished', publishedAt: '', groups: [], contexts: [] };
+}
+
+function normalizeBusinessTaxonomyPayload(payload) {
+  const src = (payload && typeof payload === 'object' && !Array.isArray(payload)) ? payload : {};
+  return {
+    version: String(src.version || 'unpublished').trim() || 'unpublished',
+    publishedAt: String(src.publishedAt || '').trim(),
+    groups: Array.isArray(src.groups) ? src.groups : [],
+    contexts: Array.isArray(src.contexts) ? src.contexts : []
+  };
+}
+
+async function loadBusinessTaxonomy(force = false) {
+  if (force) {
+    businessTaxonomySessionCache = null;
+    businessTaxonomySessionPromise = null;
+  }
+
+  if (businessTaxonomySessionCache && !force) return businessTaxonomySessionCache;
+
+  if (!businessTaxonomySessionPromise) {
+    businessTaxonomySessionPromise = fetch(BUSINESS_TAXONOMY_URL, {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { accept: 'application/json' }
+    })
+      .then(async (r) => {
+        if (!r.ok) return businessTaxonomySessionCache || emptyBusinessTaxonomyPayload();
+        const next = normalizeBusinessTaxonomyPayload(await r.json().catch(() => null));
+        const previousVersion = String(businessTaxonomySessionCache?.version || '');
+        if (!businessTaxonomySessionCache || String(next.version || '') !== previousVersion || next.groups.length || next.contexts.length) {
+          businessTaxonomySessionCache = next;
+        }
+        return businessTaxonomySessionCache || next;
+      })
+      .catch(() => businessTaxonomySessionCache || emptyBusinessTaxonomyPayload())
+      .finally(() => {
+        businessTaxonomySessionPromise = null;
+      });
+  }
+
+  return businessTaxonomySessionPromise;
+}
+
 // Helper: Match locationName OR tag keys (strip "tag."), case-insensitive; supports multi-word queries.
 function matchesQueryByNameOrTag(loc, q) {
   const qStr = String(q || '').toLowerCase().trim();
@@ -1505,18 +1555,16 @@ async function initEmergencyBlock(countryOverride) {
     }
 
     // Load JSONs: profiles.json (API) carries locations.
-    // Static: actions/structure; contexts is static on Pages/local, API on navigen.io.
-
-    // Prefer same-origin contexts on Pages/local; API on navigen.io (avoids CORS).
-    const CONTEXTS_URL = '/data/contexts.json';
+    // Static actions/structure remain UI scaffolding; context taxonomy now comes from the Worker/KV projection.
 
     // guard all three; 2-line comment: avoid boot break on 404/500
     const safeJson = async (p, fb) => { const r = await p.catch(() => null); return (r && r.ok) ? r.json() : fb; };
-    const [actions, structure, contexts] = await Promise.all([
+    const [actions, structure, businessTaxonomy] = await Promise.all([
       safeJson(fetch('/data/actions.json',   { cache:'no-store' }), []),
       safeJson(fetch('/data/structure.json', { cache:'no-store' }), []),
-      safeJson(fetch(CONTEXTS_URL, (CONTEXTS_URL.startsWith('/') ? { cache:'no-store' } : { cache:'no-store', credentials:'include' })), [])
+      loadBusinessTaxonomy()
     ]);
+    const contexts = Array.isArray(businessTaxonomy?.contexts) ? businessTaxonomy.contexts : [];
 
     state.actions = actions;
 
@@ -1674,7 +1722,9 @@ async function initEmergencyBlock(countryOverride) {
     }    
 
     // Active context row for this page (used for default group/sub)
-    const ctxRow = Array.isArray(contexts) ? contexts.find(c => c.pageKey === ACTIVE_PAGE) : null;
+    const ctxRow = Array.isArray(contexts)
+      ? contexts.find(c => String(c?.pageKey || '').trim() === ACTIVE_PAGE || String(c?.key || '').trim() === ACTIVE_PAGE)
+      : null;
 
     const API_LIMIT = 99; // request the largest supported page size; keep paging until exhausted
     const API_MAX_PAGES = 100; // defensive loop guard only; not a product discovery cap

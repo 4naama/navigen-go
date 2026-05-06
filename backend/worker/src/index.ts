@@ -1417,88 +1417,40 @@ async function assertPaidDraftHydrationEntitlement(req: Request, env: Env, targe
   return null;
 }
 
-function catalogFetchOrigins(req: Request): string[] {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  const push = (raw: string) => {
-    try {
-      const origin = new URL(String(raw || "").trim()).origin;
-      if (!/^https?:\/\//i.test(origin) || seen.has(origin)) return;
-      seen.add(origin);
-      out.push(origin);
-    } catch {
-      // Ignore malformed origins and keep the fixed production fallbacks below.
-    }
-  };
-
-  push(req.headers.get("Origin") || "");
-  push(new URL(req.url).origin);
-  push("https://navigen.io");
-  push("https://www.navigen.io");
-
-  return out;
+async function loadBusinessTaxonomyForValidation(env: Env): Promise<Record<string, unknown>> {
+  const [rawProjection, manifest] = await Promise.all([
+    env.KV_CONTEXTS.get(CONTEXTS_BUSINESS_TAXONOMY_KEY, { type: "json" }) as Promise<any>,
+    readContextsManifest(env)
+  ]);
+  if (!rawProjection || manifest.activeVersion === "unpublished") throw new Error("taxonomy_catalog_unavailable");
+  return sanitizeBusinessTaxonomyProjection(rawProjection, manifest);
 }
 
-async function fetchStaticJson(req: Request, path: string): Promise<any> {
-  for (const origin of catalogFetchOrigins(req)) {
-    try {
-      const u = new URL(path, origin).toString();
-      const r = await fetch(u, {
-        method: "GET",
-        headers: { accept: "application/json" },
-        cache: "no-store"
-      });
-      if (!r.ok) continue;
-
-      const ctype = String(r.headers.get("content-type") || "").toLowerCase();
-      const text = await r.text();
-      if (!ctype.includes("application/json")) continue;
-
-      return JSON.parse(text);
-    } catch {
-      // Try the next catalog source before failing closed at the caller.
-    }
-  }
-
-  throw new Error(`catalog_fetch_failed:${path}`);
-}
-
-async function loadStructureCatalog(req: Request): Promise<any[]> {
-  const j = await fetchStaticJson(req, "/data/structure.json");
-  return Array.isArray(j) ? j : [];
-}
-
-async function loadContextCatalog(req: Request): Promise<any[]> {
-  const j = await fetchStaticJson(req, "/api/data/contexts");
-  return Array.isArray(j) ? j : [];
-}
-
-function allowedSubgroupsByGroup(structureRows: any[]): Map<string, Set<string>> {
+function allowedSubgroupsByBusinessTaxonomy(groups: any[]): Map<string, Set<string>> {
   const out = new Map<string, Set<string>>();
-  for (const row of Array.isArray(structureRows) ? structureRows : []) {
-    const groupKey = String(row?.groupKey || "").trim();
+  for (const group of Array.isArray(groups) ? groups : []) {
+    const groupKey = taxonomyString(group?.key);
     if (!groupKey) continue;
     const set = out.get(groupKey) || new Set<string>();
-    const subs = Array.isArray(row?.subgroups) ? row.subgroups : [];
-    for (const sg of subs) {
-      const key = String(sg?.key || "").trim();
-      if (key) set.add(key);
+    for (const subgroup of Array.isArray(group?.subgroups) ? group.subgroups : []) {
+      const subgroupKey = taxonomyString(subgroup?.key);
+      if (subgroupKey) set.add(subgroupKey);
     }
     out.set(groupKey, set);
   }
   return out;
 }
 
-function allowedContextKeys(contextRows: any[]): Set<string> {
+function allowedContextKeysFromBusinessTaxonomy(projection: any): Set<string> {
   const out = new Set<string>();
-  for (const row of Array.isArray(contextRows) ? contextRows : []) {
-    const key = String(row?.key || "").trim();
+  for (const row of Array.isArray(projection?.contexts) ? projection.contexts : []) {
+    const key = taxonomyString(row?.key);
     if (key) out.add(key);
   }
   return out;
 }
 
-async function validateClassificationSelection(req: Request, profile: any): Promise<string | null> {
+async function validateClassificationSelection(env: Env, profile: any): Promise<string | null> {
   const groupKey = String(profile?.groupKey || "").trim();
   const subgroupKey = String(profile?.subgroupKey || "").trim();
   const contextVals = splitContextMemberships(profile?.context);
@@ -1507,17 +1459,13 @@ async function validateClassificationSelection(req: Request, profile: any): Prom
   if (!groupKey && !subgroupKey && !contextVals.length) return null;
   if (!groupKey || !subgroupKey || !contextVals.length) return "classification_required";
 
-  const [structureRows, contextRows] = await Promise.all([
-    loadStructureCatalog(req),
-    loadContextCatalog(req)
-  ]);
-
-  const subgroups = allowedSubgroupsByGroup(structureRows);
+  const taxonomy = await loadBusinessTaxonomyForValidation(env);
+  const subgroups = allowedSubgroupsByBusinessTaxonomy(Array.isArray((taxonomy as any).groups) ? (taxonomy as any).groups : []);
   const groupSubs = subgroups.get(groupKey);
   if (!groupSubs) return "invalid_groupKey";
   if (!groupSubs.has(subgroupKey)) return "invalid_subgroupKey";
 
-  const contexts = allowedContextKeys(contextRows);
+  const contexts = allowedContextKeysFromBusinessTaxonomy(taxonomy);
   for (const ctx of contextVals) {
     if (!contexts.has(ctx)) return "invalid_context";
   }
@@ -1526,15 +1474,15 @@ async function validateClassificationSelection(req: Request, profile: any): Prom
 }
 
 async function safeValidateClassificationSelection(
-  req: Request,
+  env: Env,
   profile: any,
   opts: { failClosedOnCatalogError?: boolean } = {}
 ): Promise<string | null> {
   try {
-    return await validateClassificationSelection(req, profile);
+    return await validateClassificationSelection(env, profile);
   } catch (e: any) {
     const msg = String(e?.message || "").trim();
-    if (msg.startsWith("catalog_fetch_failed:")) {
+    if (msg === "taxonomy_catalog_unavailable") {
       return opts.failClosedOnCatalogError ? "catalog_unavailable" : null;
     }
     throw e;
@@ -2751,6 +2699,30 @@ export default {
           );
         }
         return await handleContextsManifestRead(env);
+      }
+
+      // --- Context taxonomy admin publish: validate, version, and publish active taxonomy
+      if (normPath === "/api/admin/contexts/publish" && req.method === "POST") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+        return await handleContextsPublish(req, env);
+      }
+
+      // --- Context taxonomy admin rollback: activate an existing historical taxonomy version
+      if (normPath === "/api/admin/contexts/activate-version" && req.method === "POST") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+        return await handleContextsActivateVersion(req, env);
       }
 
       // --- Phase 8 one-time legacy preseed (admin-only, temporary; remove after preseed + KV read cutover ship)
@@ -7359,7 +7331,7 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
     candidate.locationID = target.locationID;
   }
 
-  const classificationError = await safeValidateClassificationSelection(req, candidate, { failClosedOnCatalogError: true });
+  const classificationError = await safeValidateClassificationSelection(env, candidate, { failClosedOnCatalogError: true });
   if (classificationError) {
     return json(
       { error: { code: "validation_failed", message: classificationError } },
@@ -7891,7 +7863,7 @@ function isValidTaxonomyKey(value: string): boolean {
 
 function sanitizeBusinessTaxonomyContextRow(row: any): Record<string, unknown> | null {
   if (!row || typeof row !== "object" || Array.isArray(row)) return null;
-  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext)) return null;
+  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext) || isExplicitTaxonomyFalse(row.published)) return null;
 
   const key = taxonomyString(row.key);
   if (!key || !isValidTaxonomyKey(key)) return null;
@@ -7928,7 +7900,7 @@ function sanitizeBusinessTaxonomyContextRow(row: any): Record<string, unknown> |
 
 function sanitizeBusinessTaxonomySubgroup(row: any): Record<string, unknown> | null {
   if (!row || typeof row !== "object" || Array.isArray(row)) return null;
-  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext)) return null;
+  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext) || isExplicitTaxonomyFalse(row.published)) return null;
 
   const key = taxonomyString(row.key || row.subgroupKey);
   if (!key || !isValidTaxonomyKey(key)) return null;
@@ -7945,7 +7917,7 @@ function sanitizeBusinessTaxonomySubgroup(row: any): Record<string, unknown> | n
 
 function sanitizeBusinessTaxonomyGroup(row: any): Record<string, unknown> | null {
   if (!row || typeof row !== "object" || Array.isArray(row)) return null;
-  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext)) return null;
+  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext) || isExplicitTaxonomyFalse(row.published)) return null;
 
   const key = taxonomyString(row.key || row.groupKey);
   if (!key || !isValidTaxonomyKey(key)) return null;
@@ -8011,6 +7983,372 @@ async function handleBusinessTaxonomyRead(env: Env): Promise<Response> {
 
 async function handleContextsManifestRead(env: Env): Promise<Response> {
   return json(await readContextsManifest(env), 200, { "cache-control": "no-store" });
+}
+
+
+type NormalizedContextTaxonomyRow = {
+  key: string;
+  label: string;
+  labels: Record<string, string>;
+  parentKey: string;
+  groupKey: string;
+  subgroupKey: string;
+  boSelectable: boolean;
+  publicContext: boolean;
+  published: boolean;
+  order: number;
+  keywords: string[];
+  aliases: string[];
+  pageKey: string;
+  defaultView: string;
+  subgroupMode: string;
+  viewOptions: string;
+};
+
+type PreparedContextTaxonomy = {
+  rows: NormalizedContextTaxonomyRow[];
+  aliases: Record<string, string>;
+  errors: string[];
+};
+
+const CONTEXT_TAXONOMY_VERSION_RE = /^\d{4}-?\d{2}-?\d{2}T\d{6}Z-[a-f0-9]{6,64}$/i;
+
+function parseTaxonomyBoolean(value: unknown, fallback: boolean): { value: boolean; ok: boolean } {
+  if (value === undefined || value === null || value === "") return { value: fallback, ok: true };
+  if (typeof value === "boolean") return { value, ok: true };
+  const s = String(value || "").trim().toLowerCase();
+  if (["true", "yes", "y", "1"].includes(s)) return { value: true, ok: true };
+  if (["false", "no", "n", "0"].includes(s)) return { value: false, ok: true };
+  return { value: fallback, ok: false };
+}
+
+function taxonomyInputRows(payload: any): any[] | null {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return null;
+  if (Array.isArray(payload.rows)) return payload.rows;
+  if (Array.isArray(payload.taxonomy)) return payload.taxonomy;
+  if (Array.isArray(payload.contexts)) return payload.contexts;
+  return null;
+}
+
+function derivedParentKey(key: string): string {
+  const idx = key.lastIndexOf("/");
+  return idx > 0 ? key.slice(0, idx) : "";
+}
+
+function firstContextSegment(key: string): string {
+  return taxonomyString(key).split("/")[0] || "";
+}
+
+function taxonomyLabelsObject(raw: unknown, errors: string[], rowId: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (raw === undefined || raw === null || raw === "") return out;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    errors.push(`${rowId}: labels/titles must be an object when provided`);
+    return out;
+  }
+  for (const [langRaw, labelRaw] of Object.entries(raw as Record<string, unknown>)) {
+    const lang = taxonomyString(langRaw).toLowerCase();
+    const label = taxonomyString(labelRaw);
+    if (!/^[a-z]{2,8}(?:-[a-z0-9]{2,8})?$/i.test(lang)) errors.push(`${rowId}: invalid label language "${langRaw}"`);
+    else if (!label) errors.push(`${rowId}: empty label for language "${lang}"`);
+    else out[lang] = label;
+  }
+  return out;
+}
+
+function isPublicTaxonomyRow(row: NormalizedContextTaxonomyRow): boolean {
+  return row.published && row.boSelectable && row.publicContext;
+}
+
+function prepareContextTaxonomyPayload(payload: any): PreparedContextTaxonomy {
+  const inputRows = taxonomyInputRows(payload);
+  if (!inputRows) return { rows: [], aliases: {}, errors: ["taxonomy payload must be an array or contain rows/taxonomy/contexts array"] };
+
+  const errors: string[] = [];
+  const rows: NormalizedContextTaxonomyRow[] = [];
+  const seenKeys = new Set<string>();
+
+  inputRows.forEach((row: any, index: number) => {
+    const rowId = `row ${index + 1}`;
+    if (!row || typeof row !== "object" || Array.isArray(row)) {
+      errors.push(`${rowId}: row must be an object`);
+      return;
+    }
+
+    const key = taxonomyString(row.key);
+    if (!key || !isValidTaxonomyKey(key)) {
+      errors.push(`${rowId}: invalid key`);
+      return;
+    }
+    if (seenKeys.has(key)) errors.push(`${rowId}: duplicate key "${key}"`);
+    seenKeys.add(key);
+
+    const inferredParent = derivedParentKey(key);
+    const parentKey = taxonomyString(row.parentKey) || inferredParent;
+    if (parentKey && !isValidTaxonomyKey(parentKey)) errors.push(`${rowId}: invalid parentKey "${parentKey}"`);
+    if (row.parentKey && inferredParent && taxonomyString(row.parentKey) !== inferredParent) {
+      errors.push(`${rowId}: parentKey must be "${inferredParent}" for key "${key}"`);
+    }
+
+    const groupKey = taxonomyString(row.groupKey) || firstContextSegment(key);
+    const subgroupKey = taxonomyString(row.subgroupKey) || key;
+    if (!groupKey || !isValidTaxonomyKey(groupKey)) errors.push(`${rowId}: invalid groupKey "${groupKey}"`);
+    if (!subgroupKey || !isValidTaxonomyKey(subgroupKey)) errors.push(`${rowId}: invalid subgroupKey "${subgroupKey}"`);
+    if (groupKey && subgroupKey && subgroupKey !== groupKey && !subgroupKey.startsWith(`${groupKey}/`)) {
+      errors.push(`${rowId}: subgroupKey "${subgroupKey}" is not under groupKey "${groupKey}"`);
+    }
+
+    const labels = taxonomyLabelsObject(row.labels ?? row.localizedLabels ?? row.titles, errors, rowId);
+    const label = taxonomyLabel(row.label, "") || taxonomyString(labels.en) || taxonomyString(Object.values(labels)[0]) || taxonomyLabel(row.title, "") || key;
+
+    const order = Number(row.order ?? row.sortOrder ?? row.displayOrder ?? (index + 1) * 10);
+    if (!Number.isFinite(order)) errors.push(`${rowId}: order must be numeric`);
+
+    const boSelectable = parseTaxonomyBoolean(row.boSelectable, true);
+    const publicContext = parseTaxonomyBoolean(row.publicContext, true);
+    const publishedFlag = parseTaxonomyBoolean(row.published ?? row.isPublished, true);
+    const unpublishedFlag = parseTaxonomyBoolean(row.unpublished, false);
+    if (!boSelectable.ok) errors.push(`${rowId}: boSelectable must be boolean`);
+    if (!publicContext.ok) errors.push(`${rowId}: publicContext must be boolean`);
+    if (!publishedFlag.ok) errors.push(`${rowId}: published must be boolean when provided`);
+    if (!unpublishedFlag.ok) errors.push(`${rowId}: unpublished must be boolean when provided`);
+
+    const status = taxonomyString(row.status).toLowerCase();
+    const statusPublished = ["draft", "unpublished", "disabled", "archived"].includes(status) ? false : publishedFlag.value;
+
+    rows.push({
+      key,
+      label,
+      labels,
+      parentKey,
+      groupKey,
+      subgroupKey,
+      boSelectable: boSelectable.value,
+      publicContext: publicContext.value,
+      published: unpublishedFlag.value ? false : statusPublished,
+      order: Number.isFinite(order) ? order : (index + 1) * 10,
+      keywords: taxonomyStringArray(row.keywords),
+      aliases: taxonomyStringArray(row.aliases),
+      pageKey: taxonomyString(row.pageKey),
+      defaultView: taxonomyString(row.defaultView),
+      subgroupMode: taxonomyString(row.subgroupMode),
+      viewOptions: taxonomyString(row.viewOptions)
+    });
+  });
+
+  const byKey = new Map<string, NormalizedContextTaxonomyRow>();
+  for (const row of rows) byKey.set(row.key, row);
+
+  const aliases: Record<string, string> = {};
+  const seenAliases = new Map<string, string>();
+  const seenGroupSubgroups = new Map<string, string>();
+  let publicRowCount = 0;
+
+  for (const row of rows) {
+    if (row.parentKey && !byKey.has(row.parentKey)) errors.push(`${row.key}: parentKey "${row.parentKey}" does not exist`);
+    if (!byKey.has(row.groupKey)) errors.push(`${row.key}: groupKey "${row.groupKey}" does not exist`);
+    if (!byKey.has(row.subgroupKey)) errors.push(`${row.key}: subgroupKey "${row.subgroupKey}" does not exist`);
+
+    if (isPublicTaxonomyRow(row)) {
+      publicRowCount += 1;
+      const groupRow = byKey.get(row.groupKey);
+      const subgroupRow = byKey.get(row.subgroupKey);
+      if (!groupRow || !isPublicTaxonomyRow(groupRow)) errors.push(`${row.key}: public row uses non-public groupKey "${row.groupKey}"`);
+      if (!subgroupRow || !isPublicTaxonomyRow(subgroupRow)) errors.push(`${row.key}: public row uses non-public subgroupKey "${row.subgroupKey}"`);
+      const combo = `${row.groupKey}\u0000${row.subgroupKey}`;
+      const previous = seenGroupSubgroups.get(combo);
+      if (previous && previous !== row.key) errors.push(`${row.key}: duplicate group/subgroup combination already used by "${previous}"`);
+      else seenGroupSubgroups.set(combo, row.key);
+    }
+
+    for (const alias of row.aliases) {
+      const normalizedAlias = alias.toLowerCase();
+      const previous = seenAliases.get(normalizedAlias);
+      if (previous && previous !== row.key) errors.push(`${row.key}: duplicate alias "${alias}" already used by "${previous}"`);
+      else {
+        seenAliases.set(normalizedAlias, row.key);
+        aliases[alias] = row.key;
+      }
+    }
+  }
+
+  if (!publicRowCount) errors.push("taxonomy must contain at least one published BO-selectable public context");
+  return { rows, aliases, errors };
+}
+
+function taxonomyTitleFromKey(key: string): string {
+  const tail = taxonomyString(key).split("/").filter(Boolean).pop() || key;
+  return tail.split("-").filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+}
+
+function contextChainForSubgroup(subgroupKey: string, publicKeys: Set<string>): string[] {
+  const parts = taxonomyString(subgroupKey).split("/").filter(Boolean);
+  const chain: string[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    const candidate = parts.slice(0, i + 1).join("/");
+    if (publicKeys.has(candidate)) chain.push(candidate);
+  }
+  return uniqueTrimmedStrings(chain);
+}
+
+function deriveBusinessTaxonomyProjection(rows: NormalizedContextTaxonomyRow[], manifest: ContextsManifest): Record<string, unknown> {
+  const publicRows = rows.filter(isPublicTaxonomyRow).sort((a, b) => a.order - b.order || a.key.localeCompare(b.key));
+  const byKey = new Map(publicRows.map((row) => [row.key, row]));
+  const publicKeys = new Set(publicRows.map((row) => row.key));
+  const groupMap = new Map<string, { key: string; label: string; order: number; subgroups: Map<string, { key: string; label: string; order: number; contexts: string[] }> }>();
+
+  for (const row of publicRows) {
+    const groupRow = byKey.get(row.groupKey);
+    const groupLabel = groupRow?.label || taxonomyTitleFromKey(row.groupKey);
+    const groupOrder = Number.isFinite(groupRow?.order) ? Number(groupRow?.order) : row.order;
+    let group = groupMap.get(row.groupKey);
+    if (!group) {
+      group = { key: row.groupKey, label: groupLabel, order: groupOrder, subgroups: new Map() };
+      groupMap.set(row.groupKey, group);
+    }
+
+    const subgroupRow = byKey.get(row.subgroupKey);
+    if (!group.subgroups.has(row.subgroupKey)) {
+      group.subgroups.set(row.subgroupKey, {
+        key: row.subgroupKey,
+        label: subgroupRow?.label || row.label || `${group.label} · ${taxonomyTitleFromKey(row.subgroupKey)}`,
+        order: Number.isFinite(subgroupRow?.order) ? Number(subgroupRow?.order) : row.order,
+        contexts: contextChainForSubgroup(row.subgroupKey, publicKeys)
+      });
+    }
+  }
+
+  return {
+    version: manifest.activeVersion,
+    publishedAt: manifest.publishedAt,
+    groups: Array.from(groupMap.values()).sort((a, b) => a.order - b.order || a.key.localeCompare(b.key)).map((group) => ({
+      key: group.key,
+      label: group.label,
+      order: group.order,
+      subgroups: Array.from(group.subgroups.values()).sort((a, b) => a.order - b.order || a.key.localeCompare(b.key))
+    })),
+    contexts: publicRows.map((row) => {
+      const out: Record<string, unknown> = { key: row.key, label: row.label, groupKey: row.groupKey, subgroupKey: row.subgroupKey, order: row.order };
+      if (row.pageKey) out.pageKey = row.pageKey;
+      if (row.defaultView) out.defaultView = row.defaultView;
+      if (row.subgroupMode) out.subgroupMode = row.subgroupMode;
+      if (row.viewOptions) out.viewOptions = row.viewOptions;
+      if (row.keywords.length) out.keywords = row.keywords;
+      return out;
+    })
+  };
+}
+
+function stableTaxonomyJson(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    const scalar = JSON.stringify(value);
+    return typeof scalar === "string" ? scalar : "null";
+  }
+  if (Array.isArray(value)) return `[${value.map(stableTaxonomyJson).join(",")}]`;
+  const obj = value as Record<string, unknown>;
+  return `{${Object.keys(obj).sort().map((key) => `${JSON.stringify(key)}:${stableTaxonomyJson(obj[key])}`).join(",")}}`;
+}
+
+async function taxonomyChecksumHex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function taxonomyVersionStamp(date: Date): string {
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function readAdminPublisher(req: Request): string {
+  return taxonomyString(req.headers.get("X-NG-Admin") || req.headers.get("X-Admin-User")) || "admin";
+}
+
+async function parseTaxonomyJsonBody(req: Request): Promise<{ ok: true; payload: any } | { ok: false; response: Response }> {
+  try {
+    return { ok: true, payload: await req.json() };
+  } catch {
+    return {
+      ok: false,
+      response: json({ error: { code: "invalid_json", message: "request body must be valid JSON" } }, 400, { "cache-control": "no-store" })
+    };
+  }
+}
+
+async function writePreparedTaxonomyVersion(
+  env: Env,
+  prepared: PreparedContextTaxonomy,
+  manifest: ContextsManifest,
+  opts: { persistVersion?: boolean } = {}
+): Promise<void> {
+  const activePayload = { version: manifest.activeVersion, publishedAt: manifest.publishedAt, source: manifest.source, rows: prepared.rows };
+  const projection = sanitizeBusinessTaxonomyProjection(deriveBusinessTaxonomyProjection(prepared.rows, manifest), manifest);
+  const versionPayload = { manifest, rows: prepared.rows };
+
+  if (opts.persistVersion !== false) {
+    await env.KV_CONTEXTS.put(`${CONTEXTS_VERSION_PREFIX}${manifest.activeVersion}`, JSON.stringify(versionPayload));
+  }
+  await env.KV_CONTEXTS.put(CONTEXTS_ACTIVE_KEY, JSON.stringify(activePayload));
+  await env.KV_CONTEXTS.put(CONTEXTS_ALIASES_KEY, JSON.stringify(prepared.aliases));
+  await env.KV_CONTEXTS.put(CONTEXTS_BUSINESS_TAXONOMY_KEY, JSON.stringify(projection));
+  await env.KV_CONTEXTS.put(CONTEXTS_MANIFEST_KEY, JSON.stringify(manifest));
+}
+
+async function handleContextsPublish(req: Request, env: Env): Promise<Response> {
+  const parsed = await parseTaxonomyJsonBody(req);
+  if (parsed.ok === false) return parsed.response;
+
+  const prepared = prepareContextTaxonomyPayload(parsed.payload);
+  if (prepared.errors.length) {
+    return json({ error: { code: "validation_failed", message: "taxonomy validation failed", details: prepared.errors } }, 400, { "cache-control": "no-store" });
+  }
+
+  const checksum = await taxonomyChecksumHex(stableTaxonomyJson({ rows: prepared.rows }));
+  const now = new Date();
+  const manifest: ContextsManifest = {
+    activeVersion: `${taxonomyVersionStamp(now)}-${checksum.slice(0, 6)}`,
+    publishedAt: now.toISOString(),
+    publishedBy: readAdminPublisher(req),
+    source: taxonomyString(parsed.payload?.source || parsed.payload?.metadata?.source) || "google-sheets-export",
+    checksum,
+    count: prepared.rows.length
+  };
+
+  await writePreparedTaxonomyVersion(env, prepared, manifest);
+  return json(manifest, 200, { "cache-control": "no-store" });
+}
+
+async function handleContextsActivateVersion(req: Request, env: Env): Promise<Response> {
+  const parsed = await parseTaxonomyJsonBody(req);
+  if (parsed.ok === false) return parsed.response;
+
+  const versionId = taxonomyString(parsed.payload?.versionId);
+  if (!versionId || !CONTEXT_TAXONOMY_VERSION_RE.test(versionId)) {
+    return json({ error: { code: "invalid_version", message: "versionId is required" } }, 400, { "cache-control": "no-store" });
+  }
+
+  const versionRecord = await env.KV_CONTEXTS.get(`${CONTEXTS_VERSION_PREFIX}${versionId}`, { type: "json" }) as any;
+  if (!versionRecord) {
+    return json({ error: { code: "not_found", message: "taxonomy version not found" } }, 404, { "cache-control": "no-store" });
+  }
+
+  const prepared = prepareContextTaxonomyPayload({ rows: versionRecord.rows });
+  if (prepared.errors.length) {
+    return json({ error: { code: "validation_failed", message: "stored taxonomy version is invalid", details: prepared.errors } }, 409, { "cache-control": "no-store" });
+  }
+
+  const now = new Date();
+  const checksum = taxonomyString(versionRecord?.manifest?.checksum) || await taxonomyChecksumHex(stableTaxonomyJson({ rows: prepared.rows }));
+  const manifest: ContextsManifest = {
+    activeVersion: versionId,
+    publishedAt: now.toISOString(),
+    publishedBy: readAdminPublisher(req),
+    source: taxonomyString(versionRecord?.manifest?.source) || "activate-version",
+    checksum,
+    count: prepared.rows.length
+  };
+
+  await writePreparedTaxonomyVersion(env, prepared, manifest, { persistVersion: false });
+  return json(manifest, 200, { "cache-control": "no-store" });
 }
 
 // ---------- helpers ----------
