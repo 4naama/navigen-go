@@ -6474,9 +6474,13 @@ export function createRequestListingModal(opts = {}) {
     ctxTopBar.appendChild(searchRow);
 
     const locationRow = document.createElement('div');
+    locationRow.style.width = '100%';
+    locationRow.style.display = 'block';
+    locationRow.style.flex = '1 1 100%';
     locationRow.className = 'select-location-search-row';
 
     const locationLeft = document.createElement('div');
+    locationLeft.style.width = '100%';
     locationLeft.className = 'select-location-search-left';
 
     const locationInput = document.createElement('input');
@@ -11745,9 +11749,14 @@ export function showPromotionsModal() {
   input.placeholder = placeholder.startsWith('🔍') ? placeholder : `🔍 ${placeholder}`;
 
   const searchRow = document.createElement('div');
+  searchRow.style.width = '100%';
+  searchRow.style.display = 'block';
+  searchRow.style.flex = '1 1 100%';
+  
   searchRow.className = 'select-location-search-row';
 
   const searchLeft = document.createElement('div');
+  searchLeft.style.width = '100%';
   searchLeft.className = 'select-location-search-left';
 
   const clearBtn = document.createElement('button');

@@ -470,14 +470,15 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   box-shadow: 0 0 0 3px var(--search-shadow, rgba(122,162,255,.2));
 }
 
-#request-listing-contexts-modal #request-context-search{
+#request-listing-contexts-modal #request-context-search,
+#request-listing-contexts-modal #request-context-location-search{
   width:100%;
   box-sizing:border-box;
   height:36px;
   margin:0;
   padding:8px 10px;
-  background:#fff;
-  border:1px solid var(--search-border, #d7dde4);
+  background:#fff7ed;
+  border:1px solid #fb923c;
   border-radius:6px;
   font-family:'Poppins', system-ui, sans-serif;
   font-size:16px;
@@ -490,6 +491,11 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   padding-right:2.25rem;
 }
 
+#request-listing-contexts-modal #request-context-location-search:not(:placeholder-shown){
+  background:#fff;
+  border-color:var(--search-border, #d7dde4);
+}
+
 #request-listing-contexts-modal #request-context-search:not(:placeholder-shown) + #request-context-clear-search{
   display:inline-flex;
   align-items:center;
@@ -499,6 +505,12 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
 #request-listing-contexts-modal #request-context-search::placeholder{
   font-weight:400;
   color:#666;
+  opacity:1;
+}
+
+#request-listing-contexts-modal #request-context-location-search::placeholder{
+  font-weight:400;
+  color:#9a3412;
   opacity:1;
 }
 
@@ -4592,6 +4604,7 @@ select.input[multiple]{
   grid-template-areas:
     "title actions"
     "search search"
+    "location location"
     "help help";
   align-items:start;
   column-gap:10px;
@@ -4625,6 +4638,26 @@ select.input[multiple]{
 
 #request-listing-contexts-modal .modal-top-bar > .modal-close{
   margin-right:-8px;
+}
+
+#request-listing-contexts-modal .modal-top-bar .select-location-search-row:has(#request-context-search){
+  grid-area:search;
+  min-width:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:0;
+}
+
+#request-listing-contexts-modal .modal-top-bar .select-location-search-row:has(#request-context-location-search){
+  grid-area:location;
+  min-width:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:0;
 }
 
 #request-listing-contexts-modal .request-context-search-help{
