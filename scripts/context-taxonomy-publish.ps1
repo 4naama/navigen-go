@@ -89,7 +89,7 @@ if (-not $TaxonomyPath) {
 }
 
 $resolvedTaxonomyPath = Resolve-Path $TaxonomyPath
-$rawJson = Get-Content -Raw $resolvedTaxonomyPath.Path
+$rawJson = [System.IO.File]::ReadAllText($resolvedTaxonomyPath.Path, [System.Text.Encoding]::UTF8)
 $built = Build-PublishPayload -RawJson $rawJson -SourceName $Source
 
 Write-Host "Taxonomy file:" $resolvedTaxonomyPath.Path

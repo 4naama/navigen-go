@@ -6489,7 +6489,7 @@ export function createRequestListingModal(opts = {}) {
     locationInput.spellcheck = false;
     locationInput.autocapitalize = 'off';
     locationInput.autocomplete = 'off';
-    locationInput.setAttribute('list', 'request-context-location-options');
+    locationInput.removeAttribute('list');
     locationInput.value = '';
     const locationPlaceholder = (t('modal.requestListing.contexts.location.placeholder') || 'Country / city').trim();
     locationInput.placeholder = locationPlaceholder.startsWith('🔍') ? locationPlaceholder : `🔍 ${locationPlaceholder}`;

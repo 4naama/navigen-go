@@ -89,7 +89,7 @@ if (-not $StructurePath) {
 }
 
 $resolvedStructurePath = Resolve-Path $StructurePath
-$rawJson = Get-Content -Raw $resolvedStructurePath.Path
+$rawJson = [System.IO.File]::ReadAllText($resolvedStructurePath.Path, [System.Text.Encoding]::UTF8)
 $built = Build-PublishPayload -RawJson $rawJson -SourceName $Source
 
 Write-Host "Structure file:" $resolvedStructurePath.Path
