@@ -1001,7 +1001,7 @@
   "modal.requestListing.contexts.help.title": "How it works",
   "modal.requestListing.contexts.help.line1": "Search the existing context catalog and choose the best matching paths for this business.",
   "modal.requestListing.contexts.help.line2": "You can select up to 3 contexts.",
-  "modal.requestListing.contexts.help.line3": "Use the green check to return to Request Listing.",
+  "modal.requestListing.contexts.help.line3": "Use the green check to return to Request listing.",
   "modal.requestListing.help.line2": "Complete the required business information first.",
   "modal.requestListing.help.line4": "Description, links, and media improve quality and publish readiness.",
   "modal.requestListing.description.summary.empty": "Optional. Open to add details.",

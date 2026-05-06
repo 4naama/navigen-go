@@ -7062,7 +7062,7 @@ function getModalHeaderHelpSpec(target) {
   
     if (modalId === 'request-listing-contexts-modal') {
     return {
-      title: translatedOrFallback('modal.requestListing.contexts.help.title', 'How it works'),
+      title: translatedOrFallback('modal.requestListing.contexts.modal.title', 'Available contexts'),
       bodyLines: [
         translatedOrFallback('modal.requestListing.contexts.help.line1', 'Search the existing context catalog and choose the best matching paths for this business.'),
         translatedOrFallback('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts.'),
@@ -7076,22 +7076,13 @@ function getModalHeaderHelpSpec(target) {
       title: _ownerText('modal.help.title', 'How it works'),
       bodyLines: [
         _ownerText('modal.requestListing.help.line2', 'Complete the required business information first.'),
-        _ownerText('modal.requestListing.contexts.help', 'Select up to 3 existing context paths.'),
+        _ownerText('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts.'),
         _ownerText('modal.requestListing.help.line4', 'Description, links, and media improve quality and publish readiness.')
       ].map((line) => String(line || '').trim()).filter(Boolean)
     };
   }
 
-  if (modalId === 'request-listing-contexts-modal') {
-    return {
-      title: _ownerText('modal.requestListing.contexts.help.title', 'How it works'),
-      bodyLines: [
-        _ownerText('modal.requestListing.contexts.help.line1', 'Search the existing context catalog and choose the best matching paths for this business.'),
-        _ownerText('modal.requestListing.contexts.help', 'Select up to 3 existing context paths.'),
-        _ownerText('modal.requestListing.contexts.help.line3', 'Close returns you to Request Listing so you can keep editing the form.')
-      ].map((line) => String(line || '').trim()).filter(Boolean)
-    };
-  }
+  // request-listing-contexts-modal help is handled above with line-based translation keys.
   
   if (modalId === 'request-listing-modal') {
     return {
