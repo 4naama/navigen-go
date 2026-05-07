@@ -5696,6 +5696,32 @@ function formatMediaUrlValues(values) {
     .join('\n');
 }
 
+const REQUEST_LISTING_COUNTRY_CODES = 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ');
+const REQUEST_LISTING_COUNTRY_CODE_SET = new Set(REQUEST_LISTING_COUNTRY_CODES);
+
+function isValidRequestListingCountryCode(value) {
+  return REQUEST_LISTING_COUNTRY_CODE_SET.has(String(value || '').trim().toUpperCase());
+}
+
+function requestListingCountryName(code) {
+  try {
+    return new Intl.DisplayNames([document.documentElement.lang || navigator.language || 'en'], { type: 'region' }).of(code) || code;
+  } catch {
+    return code;
+  }
+}
+
+function renderRequestListingCountryOptions(datalist) {
+  if (!datalist) return;
+  datalist.innerHTML = '';
+  REQUEST_LISTING_COUNTRY_CODES.forEach((code) => {
+    const option = document.createElement('option');
+    option.value = code;
+    option.label = requestListingCountryName(code);
+    datalist.appendChild(option);
+  });
+}
+
 function deriveRequestListingCountryCode() {
   const metaCountry =
     document.querySelector('meta[name="cf-country"]')?.content ||
@@ -5710,7 +5736,7 @@ function deriveRequestListingCountryCode() {
     })();
 
   const cc = String(metaCountry || '').trim().toUpperCase();
-  return /^[A-Z]{2}$/.test(cc) ? cc : '';
+  return isValidRequestListingCountryCode(cc) ? cc : '';
 }
 
 function googleDraftAddressPartsForRequestListing(draft) {
@@ -5893,7 +5919,8 @@ export function createRequestListingModal(opts = {}) {
                 </div>
                 <div class="modal-field">
                   <label for="rl-country">${t('modal.requestListing.country.label') || 'Country code'} <span class="required-star">*</span></label>
-                  <input id="rl-country" class="input" type="text" maxlength="2" />
+                  <input id="rl-country" class="input" type="text" maxlength="2" list="rl-country-options" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+                  <datalist id="rl-country-options"></datalist>
                 </div>
               </div>
 
@@ -6070,7 +6097,7 @@ export function createRequestListingModal(opts = {}) {
   const rlName = modal.querySelector('#rl-name');
   const rlAddress = modal.querySelector('#rl-address');
   const rlCity = modal.querySelector('#rl-city');
-  const rlCountry = modal.querySelector('#rl-country');
+  renderRequestListingCountryOptions(modal.querySelector('#rl-country-options'));
   
   const rlLink = modal.querySelector('#rl-link');
   const rlFacebook = modal.querySelector('#rl-facebook');
@@ -6292,7 +6319,7 @@ export function createRequestListingModal(opts = {}) {
   }
   
   function requestListingHasLocationSeed() {
-    return !!String(rlCity?.value || rlCountry?.value || '').trim();
+    return !!String(rlCity?.value || '').trim() || isValidRequestListingCountryCode(rlCountry?.value);
   }
 
   function syncRequestListingContextAvailability() {
@@ -6346,7 +6373,7 @@ export function createRequestListingModal(opts = {}) {
 
     rlOpenContexts?.classList.toggle('is-required-empty', !contextComplete);
     rlBusinessSection?.classList.toggle('is-complete', businessComplete);
-    rlContextSection?.classList.toggle('is-complete', contextComplete);
+    syncRequestListingContextAvailability();
   }
   
   syncRequestListingContextAvailability();
@@ -6929,13 +6956,13 @@ export function createRequestListingModal(opts = {}) {
     setInputErrorState(rlName, !name);
     setInputErrorState(rlAddress, !address);
     setInputErrorState(rlCity, !city);
-    setInputErrorState(rlCountry, !country || country.length !== 2);
+    setInputErrorState(rlCountry, !isValidRequestListingCountryCode(country));
     setInputErrorState(rlGroup, !groupKey);
     setInputErrorState(rlSubgroup, !subgroupKey);
     setRequestListingContextError(!contextVals.length);
     setInputErrorState(rlCoord, wantsCoord && !coord);
 
-    const hasBusinessError = !name || !address || !city || !country || country.length !== 2 || !groupKey || !subgroupKey;
+    const hasBusinessError = !name || !address || !city || !isValidRequestListingCountryCode(country) || !groupKey || !subgroupKey;
     const hasContextError = !contextVals.length;
     const hasCoordError = wantsCoord && !coord;
 
@@ -7088,7 +7115,8 @@ export function createRequestListingModal(opts = {}) {
   modal.querySelector('#request-listing-cancel')?.addEventListener('click', (ev) => { closeRequestListing(ev); });
   const countryInput = modal.querySelector('#rl-country');
   countryInput?.addEventListener('input', (e) => {
-    e.target.value = String(e.target.value || '').toUpperCase();
+    e.target.value = String(e.target.value || '').replace(/[^a-z]/gi, '').toUpperCase().slice(0, 2);
+    syncRequestListingRequiredChecks();
   });
 
   const coordToggle = modal.querySelector('#rl-has-coord');
