@@ -6097,6 +6097,7 @@ export function createRequestListingModal(opts = {}) {
   const rlName = modal.querySelector('#rl-name');
   const rlAddress = modal.querySelector('#rl-address');
   const rlCity = modal.querySelector('#rl-city');
+  const rlCountry = modal.querySelector('#rl-country');
   renderRequestListingCountryOptions(modal.querySelector('#rl-country-options'));
   
   const rlLink = modal.querySelector('#rl-link');
@@ -6126,6 +6127,23 @@ export function createRequestListingModal(opts = {}) {
   const rlContexts = modal.querySelector('#rl-contexts');
   const rlOpenContexts = modal.querySelector('#rl-open-contexts');
   const rlContextSummaryText = modal.querySelector('#rl-context-summary-text');
+  
+  function requestListingHasLocationSeed() {
+    return !!String(rlCity?.value || '').trim() || isValidRequestListingCountryCode(rlCountry?.value);
+  }
+
+  function syncRequestListingContextAvailability() {
+    const ready = requestListingHasLocationSeed();
+    if (rlOpenContexts) {
+      rlOpenContexts.disabled = !ready;
+      rlOpenContexts.setAttribute('aria-disabled', ready ? 'false' : 'true');
+      rlOpenContexts.title = ready ? '' : (t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.');
+    }
+    if (!ready && rlContextSummaryText && !selectedContextSet.size) {
+      rlContextSummaryText.textContent = t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.';
+    }
+  }  
+  
   const rlContextCount = modal.querySelector('#rl-context-count');
   const rlContextSelected = modal.querySelector('#rl-context-selected');
   const rlTags = modal.querySelector('#rl-tags');
@@ -6318,21 +6336,7 @@ export function createRequestListingModal(opts = {}) {
     setInputErrorState(rlContexts, !!bad);
   }
   
-  function requestListingHasLocationSeed() {
-    return !!String(rlCity?.value || '').trim() || isValidRequestListingCountryCode(rlCountry?.value);
-  }
-
-  function syncRequestListingContextAvailability() {
-    const ready = requestListingHasLocationSeed();
-    if (rlOpenContexts) {
-      rlOpenContexts.disabled = !ready;
-      rlOpenContexts.setAttribute('aria-disabled', ready ? 'false' : 'true');
-      rlOpenContexts.title = ready ? '' : (t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.');
-    }
-    if (!ready && rlContextSummaryText && !selectedContextSet.size) {
-      rlContextSummaryText.textContent = t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.';
-    }
-  }
+  // Context availability helpers are scoped inside createRequestListingModal().
 
   function resizeRequestListingDescriptionInput() {
     if (!(rlDescription instanceof HTMLTextAreaElement)) return;
@@ -6368,7 +6372,7 @@ export function createRequestListingModal(opts = {}) {
       el?.classList.toggle('is-required-empty', !String(el?.value || '').trim());
     });
 
-    const businessComplete = requiredBusinessFields.every((el) => String(el?.value || '').trim());
+    const businessComplete = requiredBusinessFields.every((el) => String(el?.value || '').trim()) && isValidRequestListingCountryCode(rlCountry?.value);
     const contextComplete = selectedContextSet.size > 0;
 
     rlOpenContexts?.classList.toggle('is-required-empty', !contextComplete);
