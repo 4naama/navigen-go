@@ -5967,6 +5967,31 @@ body.high-contrast .modal-menu-item.is-active {
   border-bottom-color:#bfd3f6;
 }
 
+#request-listing-modal #rl-context-section[aria-disabled="true"] .request-section-chip-face{
+  background:#f3f5f7;
+  border-bottom-color:#d9dee5;
+  cursor:not-allowed;
+}
+
+#request-listing-modal #rl-context-section[aria-disabled="true"] .request-section-chip-title,
+#request-listing-modal #rl-context-section[aria-disabled="true"] .request-section-chip-summary{
+  color:#667085;
+}
+
+#request-listing-modal #rl-context-section[aria-disabled="true"] .request-section-badge.is-required{
+  background:#f3f5f7;
+  border-color:#d9dee5;
+  color:#667085;
+}
+
+#request-listing-modal #rl-context-section[aria-disabled="true"] .cm-chip-face-chevron{
+  opacity:.35;
+}
+
+#request-listing-modal #rl-context-section[aria-disabled="true"] .cm-chip-body{
+  display:none;
+}
+
 #request-listing-modal .request-section-chip .request-section-chip-title{
   color:#1f2937;
 }
