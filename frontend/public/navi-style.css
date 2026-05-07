@@ -6907,16 +6907,27 @@ body.high-contrast .modal-menu-item.is-active {
   display:inline-flex;
   align-items:center;
   justify-content:center;
+  width:auto;
+  height:auto;
+  min-width:0;
+  padding:0;
+  margin:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
   color:#dc2626;
-  border-color:#fecaca;
-  background:#fff;
+  font-size:24px;
+  font-weight:600;
+  line-height:1;
+  cursor:pointer;
 }
 
 #context-loading-chip #context-loading-chip-close:hover,
 #context-loading-chip #context-loading-chip-close:focus-visible{
   color:#b91c1c;
-  border-color:#fca5a5;
-  background:#fff5f5;
+  background:transparent;
+  box-shadow:none;
+  outline:0;
 }
 
 #context-loading-chip small{

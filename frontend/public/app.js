@@ -1736,49 +1736,49 @@ async function initEmergencyBlock(countryOverride) {
     // canonical API; keep single source of truth
     const API_BASE = 'https://navigen-api.4naama.workers.dev';
 
-    const contextLoadingChipStorageKey = () => `context-loading-chip-dismissed:${ACTIVE_PAGE || 'home'}`;
-
-    const isContextLoadingChipDismissed = () => {
-      try {
-        return sessionStorage.getItem(contextLoadingChipStorageKey()) === '1';
-      } catch {
-        return false;
-      }
-    };
-
     const hideContextLoadingChip = () => {
       document.getElementById('context-loading-chip')?.remove();
     };
 
     const dismissContextLoadingChip = () => {
-      try {
-        sessionStorage.setItem(contextLoadingChipStorageKey(), '1');
-      } catch {}
       hideContextLoadingChip();
     };
 
-    const showContextLoadingChip = () => {
-      if (!ACTIVE_PAGE || DEMO_ALLSUBS || isContextLoadingChipDismissed()) return;
+    const placeContextLoadingChip = (chip) => {
       const container = document.getElementById('locations');
-      if (!container || document.getElementById('context-loading-chip')) return;
+      if (!container || !chip) return false;
 
-      const chip = document.createElement('div');
-      chip.id = 'context-loading-chip';
-      chip.className = 'modal-menu-item modal-static-card owner-center-loading';
-      chip.setAttribute('aria-live', 'polite');
-      chip.innerHTML = `
-        <span class="label">
-          <span id="context-loading-chip-head">
-            <strong>${t('context.loading.chip.title') || 'Getting this context ready'}</strong>
-            <button id="context-loading-chip-close" class="clear-x" type="button" aria-label="${t('common.close') || 'Close'}">x</button>
+      const firstAccordionSection = container.querySelector(':scope > .accordion-section');
+      if (firstAccordionSection) container.insertBefore(chip, firstAccordionSection);
+      else container.prepend(chip);
+
+      return true;
+    };
+
+    const showContextLoadingChip = () => {
+      if (!ACTIVE_PAGE || DEMO_ALLSUBS) return;
+
+      let chip = document.getElementById('context-loading-chip');
+      if (!chip) {
+        chip = document.createElement('div');
+        chip.id = 'context-loading-chip';
+        chip.className = 'modal-menu-item modal-static-card owner-center-loading';
+        chip.setAttribute('aria-live', 'polite');
+        chip.innerHTML = `
+          <span class="label">
+            <span id="context-loading-chip-head">
+              <strong>${t('context.loading.chip.title') || 'Getting this context ready'}</strong>
+              <button id="context-loading-chip-close" type="button" aria-label="${t('common.close') || 'Close'}">×</button>
+            </span>
+            <small>${t('context.loading.chip.line1') || 'We are finding the best matching places for this context.'}</small>
+            <small>${t('context.loading.chip.line2') || 'Popular places may appear first, followed by the full browse list.'}</small>
+            <small>${t('context.loading.chip.line3') || 'Larger cities and event pages can take a few seconds.'}</small>
           </span>
-          <small>${t('context.loading.chip.line1') || 'We are finding the best matching places for this context.'}</small>
-          <small>${t('context.loading.chip.line2') || 'Popular places may appear first, followed by the full browse list.'}</small>
-          <small>${t('context.loading.chip.line3') || 'Larger cities and event pages can take a few seconds.'}</small>
-        </span>
-      `;
-      container.prepend(chip);
-      chip.querySelector('#context-loading-chip-close')?.addEventListener('click', dismissContextLoadingChip);
+        `;
+        chip.querySelector('#context-loading-chip-close')?.addEventListener('click', dismissContextLoadingChip);
+      }
+
+      placeContextLoadingChip(chip);
     };
 
     showContextLoadingChip();
@@ -2540,6 +2540,7 @@ async function initEmergencyBlock(countryOverride) {
     buildAccordion(groupedForPage, viewList);
     wireAccordionGroups(structure_data, viewList);
     paintAccordionColors();
+    showContextLoadingChip();
     
     // coverage: remove placeholders from accordion only (keep others)
     document.querySelectorAll('#accordion .empty-state').forEach(el => el.remove());
