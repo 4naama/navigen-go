@@ -999,8 +999,8 @@
   "modal.requestListing.contexts.empty.desc": "Prova un altro termine di ricerca.",
   "modal.requestListing.contexts.limit": "Puoi selezionare fino a 3 contesti.",
   "modal.requestListing.contexts.help.title": "Come funziona",
-  "modal.requestListing.contexts.help.line1": "Cerca nel catalogo dei contesti esistenti e scegli i percorsi più adatti per questa attività.",
-  "modal.requestListing.contexts.help.line2": "Puoi selezionare fino a 3 contesti.",
+  "modal.requestListing.contexts.help.line1": "Scegli i percorsi pubblicati di categoria/località in cui questa attività deve apparire.",
+  "modal.requestListing.contexts.help.line2": "Puoi selezionare fino a 3 contesti. Un contesto è un percorso predefinito come Ristoranti · Germania · Berlino.",
   "modal.requestListing.contexts.help.line3": "Usa il segno di spunta verde per tornare a Richiedi scheda.",
   "modal.requestListing.help.line2": "Completa prima le informazioni obbligatorie sull’attività.",
   "modal.requestListing.help.line4": "Descrizione, link e media migliorano qualità e prontezza alla pubblicazione.",
@@ -1156,8 +1156,8 @@
   "lpm.rating.average": "Media",
   "lpm.rating.googleProvider": "Valutazione Google",
   "lpm.rating.googleProviderNote": "Valutazione fornita dal provider. È separata dalle valutazioni dei visitatori NaviGen.",
-  "modal.requestListing.contexts.search.title": "Cerca contesti disponibili",
-  "modal.requestListing.contexts.search.desc": "Digita per cercare le opzioni di contesto disponibili.",
+  "modal.requestListing.contexts.search.title": "Cerca dove appartiene questa attività",
+  "modal.requestListing.contexts.search.desc": "I contesti sono percorsi predefiniti di categoria e località, ad esempio Ristoranti · Germania · Berlino.",
   "modal.requestListing.contexts.location.placeholder": "Paese / città",
   "modal.requestListing.contexts.locationRequired": "Aggiungi prima città o codice paese nelle informazioni attività."
 }

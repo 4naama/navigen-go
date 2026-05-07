@@ -999,9 +999,9 @@
   "modal.requestListing.contexts.empty.desc": "Try another search term.",
   "modal.requestListing.contexts.limit": "You can select up to 3 contexts.",
   "modal.requestListing.contexts.help.title": "How it works",
-  "modal.requestListing.contexts.help.line1": "Search the existing context catalog and choose the best matching paths for this business.",
-  "modal.requestListing.contexts.help.line2": "You can select up to 3 contexts.",
-  "modal.requestListing.contexts.help.line3": "Use the green check to return to Request listing.",
+  "modal.requestListing.contexts.help.line1": "Choose the published category/location paths where this business should appear.",
+  "modal.requestListing.contexts.help.line2": "You can select up to 3 contexts. A context is a ready-made path such as Restaurants · Germany· Berlin.",
+  "modal.requestListing.contexts.help.line3": "Use the green check to return to Request Listing.",
   "modal.requestListing.help.line2": "Complete the required business information first.",
   "modal.requestListing.help.line4": "Description, links, and media improve quality and publish readiness.",
   "modal.requestListing.description.summary.empty": "Optional. Open to add details.",
@@ -1156,8 +1156,8 @@
   "lpm.rating.average": "Average",
   "lpm.rating.googleProvider": "Google rating",
   "lpm.rating.googleProviderNote": "Provider-sourced rating. It is separate from NaviGen visitor ratings.",
-  "modal.requestListing.contexts.search.title": "Search available contexts",
-  "modal.requestListing.contexts.search.desc": "Type to search available context options.",
+  "modal.requestListing.contexts.search.title": "Search where this business belongs",
+  "modal.requestListing.contexts.search.desc": "Contexts are ready-made category and location paths, for example Restaurants · Germany· Berlin.",
   "modal.requestListing.contexts.location.placeholder": "Country / city",
   "modal.requestListing.contexts.locationRequired": "Add City or Country code in Business information first."
 }

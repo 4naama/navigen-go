@@ -6748,8 +6748,8 @@ export function createRequestListingModal(opts = {}) {
         const hasAnySearch = tokens.length || locationTokens.length;
         empty.innerHTML = `
           <span class="label">
-            <strong>${hasAnySearch ? (t('modal.requestListing.contexts.empty.title') || 'No matching contexts') : (t('modal.requestListing.contexts.search.title') || 'Search available contexts')}</strong>
-            <small>${hasAnySearch ? (t('modal.requestListing.contexts.empty.desc') || 'Try another search term.') : (t('modal.requestListing.contexts.search.desc') || 'Type to search backend-published context options.')}</small>
+            <strong>${hasAnySearch ? (t('modal.requestListing.contexts.empty.title') || 'No matching contexts') : (t('modal.requestListing.contexts.search.title') || 'Search where this business belongs')}</strong>
+            <small>${hasAnySearch ? (t('modal.requestListing.contexts.empty.desc') || 'Try another search term.') : (t('modal.requestListing.contexts.search.desc') || 'Contexts are ready-made category and location paths, for example Restaurants · Germany · Berlin.')}</small>
           </span>
         `;
         ctxResults.appendChild(empty);
@@ -7314,8 +7314,8 @@ function getModalHeaderHelpSpec(target) {
     return {
       title: translatedOrFallback('modal.requestListing.contexts.modal.title', 'Available contexts'),
       bodyLines: [
-        translatedOrFallback('modal.requestListing.contexts.help.line1', 'Search the existing context catalog and choose the best matching paths for this business.'),
-        translatedOrFallback('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts.'),
+        translatedOrFallback('modal.requestListing.contexts.help.line1', 'Choose the published category/location paths where this business should appear.'),
+        translatedOrFallback('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts. A context is a ready-made path such as Restaurants · Germany · Berlin.'),
         translatedOrFallback('modal.requestListing.contexts.help.line3', 'Use the green check to return to Request Listing.')
       ]
     };
@@ -7326,7 +7326,7 @@ function getModalHeaderHelpSpec(target) {
       title: _ownerText('modal.help.title', 'How it works'),
       bodyLines: [
         _ownerText('modal.requestListing.help.line2', 'Complete the required business information first.'),
-        _ownerText('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts.'),
+        _ownerText('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts. A context is a ready-made path such as Restaurants · Germany · Berlin.'),
         _ownerText('modal.requestListing.help.line4', 'Description, links, and media improve quality and publish readiness.')
       ].map((line) => String(line || '').trim()).filter(Boolean)
     };
@@ -11879,13 +11879,13 @@ export function showPromotionsModal() {
 
   const searchRow = document.createElement('div');
   searchRow.style.width = '100%';
-  searchRow.style.display = 'block';
+  searchRow.style.display = 'flex';
   searchRow.style.flex = '1 1 100%';
   
   searchRow.className = 'select-location-search-row';
 
   const searchLeft = document.createElement('div');
-  searchLeft.style.width = '100%';
+  searchLeft.style.width = 'auto';
   searchLeft.className = 'select-location-search-left';
 
   const clearBtn = document.createElement('button');

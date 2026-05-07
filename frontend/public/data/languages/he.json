@@ -999,8 +999,8 @@
   "modal.requestListing.contexts.empty.desc": "נסה מונח חיפוש אחר.",
   "modal.requestListing.contexts.limit": "ניתן לבחור עד 3 הקשרים.",
   "modal.requestListing.contexts.help.title": "איך זה עובד",
-  "modal.requestListing.contexts.help.line1": "חפש בקטלוג ההקשרים הקיים ובחר את הנתיבים המתאימים ביותר לעסק זה.",
-  "modal.requestListing.contexts.help.line2": "ניתן לבחור עד 3 הקשרים.",
+  "modal.requestListing.contexts.help.line1": "בחר את נתיבי הקטגוריה/מיקום שפורסמו שבהם העסק הזה צריך להופיע.",
+  "modal.requestListing.contexts.help.line2": "ניתן לבחור עד 3 הקשרים. הקשר הוא נתיב מוכן מראש כמו מסעדות · גרמניה · ברלין.",
   "modal.requestListing.contexts.help.line3": "השתמש בסימון הירוק כדי לחזור לבקש רישום.",
   "modal.requestListing.help.line2": "השלם תחילה את פרטי העסק הנדרשים.",
   "modal.requestListing.help.line4": "תיאור, קישורים ומדיה משפרים את האיכות והמוכנות לפרסום.",
@@ -1156,8 +1156,8 @@
   "lpm.rating.average": "ממוצע",
   "lpm.rating.googleProvider": "דירוג Google",
   "lpm.rating.googleProviderNote": "דירוג שמסופק על ידי הספק. הוא נפרד מדירוגי המבקרים של NaviGen.",
-  "modal.requestListing.contexts.search.title": "חפש הקשרים זמינים",
-  "modal.requestListing.contexts.search.desc": "הקלד כדי לחפש אפשרויות הקשר זמינות.",
+  "modal.requestListing.contexts.search.title": "חפש לאן העסק הזה שייך",
+  "modal.requestListing.contexts.search.desc": "הקשרים הם נתיבי קטגוריה ומיקום מוכנים מראש, לדוגמה מסעדות · גרמניה · ברלין.",
   "modal.requestListing.contexts.location.placeholder": "מדינה / עיר",
   "modal.requestListing.contexts.locationRequired": "הוסף תחילה עיר או קוד מדינה בפרטי העסק."
 }

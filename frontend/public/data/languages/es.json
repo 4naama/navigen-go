@@ -999,8 +999,8 @@
   "modal.requestListing.contexts.empty.desc": "Prueba con otro término de búsqueda.",
   "modal.requestListing.contexts.limit": "Puedes seleccionar hasta 3 contextos.",
   "modal.requestListing.contexts.help.title": "Cómo funciona",
-  "modal.requestListing.contexts.help.line1": "Busca en el catálogo de contextos existente y elige las rutas más adecuadas para este negocio.",
-  "modal.requestListing.contexts.help.line2": "Puedes seleccionar hasta 3 contextos.",
+  "modal.requestListing.contexts.help.line1": "Elige las rutas publicadas de categoría/ubicación donde este negocio debe aparecer.",
+  "modal.requestListing.contexts.help.line2": "Puedes seleccionar hasta 3 contextos. Un contexto es una ruta predefinida como Restaurantes · Alemania · Berlín.",
   "modal.requestListing.contexts.help.line3": "Usa la marca verde para volver a Solicitar listado.",
   "modal.requestListing.help.line2": "Completa primero la información obligatoria del negocio.",
   "modal.requestListing.help.line4": "La descripción, los enlaces y los medios mejoran la calidad y la preparación para publicar.",
@@ -1156,8 +1156,8 @@
   "lpm.rating.average": "Promedio",
   "lpm.rating.googleProvider": "Calificación de Google",
   "lpm.rating.googleProviderNote": "Calificación proporcionada por el proveedor. Es independiente de las valoraciones de los visitantes de NaviGen.",
-  "modal.requestListing.contexts.search.title": "Buscar contextos disponibles",
-  "modal.requestListing.contexts.search.desc": "Escribe para buscar las opciones de contexto disponibles.",
+  "modal.requestListing.contexts.search.title": "Buscar dónde pertenece este negocio",
+  "modal.requestListing.contexts.search.desc": "Los contextos son rutas predefinidas de categoría y ubicación, por ejemplo Restaurantes · Alemania · Berlín.",
   "modal.requestListing.contexts.location.placeholder": "País / ciudad",
   "modal.requestListing.contexts.locationRequired": "Primero añade ciudad o código de país en la información del negocio."
 }

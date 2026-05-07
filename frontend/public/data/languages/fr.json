@@ -999,8 +999,8 @@
   "modal.requestListing.contexts.empty.desc": "Essayez un autre terme de recherche.",
   "modal.requestListing.contexts.limit": "Vous pouvez sélectionner jusqu’à 3 contextes.",
   "modal.requestListing.contexts.help.title": "Comment ça marche",
-  "modal.requestListing.contexts.help.line1": "Recherchez dans le catalogue de contextes existant et choisissez les chemins les plus pertinents pour cet établissement.",
-  "modal.requestListing.contexts.help.line2": "Vous pouvez sélectionner jusqu’à 3 contextes.",
+  "modal.requestListing.contexts.help.line1": "Choisissez les chemins publiés de catégorie/localisation où cet établissement doit apparaître.",
+  "modal.requestListing.contexts.help.line2": "Vous pouvez sélectionner jusqu’à 3 contextes. Un contexte est un chemin prédéfini comme Restaurants · Allemagne · Berlin.",
   "modal.requestListing.contexts.help.line3": "Utilisez la coche verte pour revenir à Demander un établissement.",
   "modal.requestListing.help.line2": "Complétez d’abord les informations obligatoires sur l’établissement.",
   "modal.requestListing.help.line4": "La description, les liens et les médias améliorent la qualité et la préparation à la publication.",
@@ -1156,8 +1156,8 @@
   "lpm.rating.average": "Moyenne",
   "lpm.rating.googleProvider": "Note Google",
   "lpm.rating.googleProviderNote": "Note fournie par le fournisseur. Elle est distincte des évaluations des visiteurs NaviGen.",
-  "modal.requestListing.contexts.search.title": "Rechercher des contextes disponibles",
-  "modal.requestListing.contexts.search.desc": "Saisissez pour rechercher les options de contexte disponibles.",
+  "modal.requestListing.contexts.search.title": "Rechercher où cet établissement appartient",
+  "modal.requestListing.contexts.search.desc": "Les contextes sont des chemins prédéfinis de catégorie et de localisation, par exemple Restaurants · Allemagne · Berlin.",
   "modal.requestListing.contexts.location.placeholder": "Pays / ville",
   "modal.requestListing.contexts.locationRequired": "Ajoutez d’abord la ville ou le code pays dans les informations de l’établissement."
 }

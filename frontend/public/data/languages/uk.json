@@ -999,8 +999,8 @@
   "modal.requestListing.contexts.empty.desc": "Спробуйте інший пошуковий запит.",
   "modal.requestListing.contexts.limit": "Ви можете вибрати до 3 контекстів.",
   "modal.requestListing.contexts.help.title": "Як це працює",
-  "modal.requestListing.contexts.help.line1": "Знайдіть у наявному каталозі контекстів і виберіть найвідповідніші шляхи для цього бізнесу.",
-  "modal.requestListing.contexts.help.line2": "Ви можете вибрати до 3 контекстів.",
+  "modal.requestListing.contexts.help.line1": "Виберіть опубліковані шляхи категорій/локацій, де має з’являтися цей бізнес.",
+  "modal.requestListing.contexts.help.line2": "Ви можете вибрати до 3 контекстів. Контекст — це готовий шлях, наприклад Ресторани · Німеччина · Берлін.",
   "modal.requestListing.contexts.help.line3": "Скористайтеся зеленою позначкою, щоб повернутися до «Запросити лістинг».",
   "modal.requestListing.help.line2": "Спочатку заповніть обов’язкову інформацію про бізнес.",
   "modal.requestListing.help.line4": "Опис, посилання та медіа покращують якість і готовність до публікації.",
@@ -1156,8 +1156,8 @@
   "lpm.rating.average": "Середнє",
   "lpm.rating.googleProvider": "Рейтинг Google",
   "lpm.rating.googleProviderNote": "Рейтинг, наданий постачальником. Він окремий від оцінок відвідувачів NaviGen.",
-  "modal.requestListing.contexts.search.title": "Пошук доступних контекстів",
-  "modal.requestListing.contexts.search.desc": "Введіть текст для пошуку доступних параметрів контексту.",
+  "modal.requestListing.contexts.search.title": "Пошук, до якої категорії належить цей бізнес",
+  "modal.requestListing.contexts.search.desc": "Контексти — це готові шляхи категорій і локацій, наприклад Ресторани · Німеччина · Берлін.",
   "modal.requestListing.contexts.location.placeholder": "Країна / місто",
   "modal.requestListing.contexts.locationRequired": "Спочатку додайте місто або код країни в інформації про бізнес."
 }

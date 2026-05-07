@@ -999,8 +999,8 @@
   "modal.requestListing.contexts.empty.desc": "Próbálj meg más keresési kifejezést.",
   "modal.requestListing.contexts.limit": "Legfeljebb 3 kontextust választhatsz.",
   "modal.requestListing.contexts.help.title": "Így működik",
-  "modal.requestListing.contexts.help.line1": "Keresd meg a meglévő kontextus katalógusban a leginkább megfelelő útvonalakat ehhez a vállalkozáshoz.",
-  "modal.requestListing.contexts.help.line2": "Legfeljebb 3 kontextust választhatsz.",
+  "modal.requestListing.contexts.help.line1": "Válaszd ki a közzétett kategória/helyszín útvonalakat, ahol ennek a vállalkozásnak meg kell jelennie.",
+  "modal.requestListing.contexts.help.line2": "Legfeljebb 3 kontextust választhatsz. A kontextus egy kész útvonal, például Éttermek · Németország · Berlin.",
   "modal.requestListing.contexts.help.line3": "A zöld pipával térhetsz vissza a Listing igénylése oldalra.",
   "modal.requestListing.help.line2": "Töltsd ki először a kötelező vállalkozási adatokat.",
   "modal.requestListing.help.line4": "A leírás, linkek és média javítják a minőséget és a közzétételi készültséget.",
@@ -1156,8 +1156,8 @@
   "lpm.rating.average": "Átlag",
   "lpm.rating.googleProvider": "Google értékelés",
   "lpm.rating.googleProviderNote": "Szolgáltató által biztosított értékelés. Ez külön áll a NaviGen látogatói értékeléseitől.",
-  "modal.requestListing.contexts.search.title": "Elérhető kontextusok keresése",
-  "modal.requestListing.contexts.search.desc": "Gépelj az elérhető kontextus opciók kereséséhez.",
+  "modal.requestListing.contexts.search.title": "Keresd meg, hová tartozik ez a vállalkozás",
+  "modal.requestListing.contexts.search.desc": "A kontextusok kész kategória- és helyszínútvonalak, például Éttermek · Németország · Berlin.",
   "modal.requestListing.contexts.location.placeholder": "Ország / város",
   "modal.requestListing.contexts.locationRequired": "Először add meg a várost vagy országkódot a vállalkozási adatoknál."
 }
