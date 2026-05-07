@@ -1736,8 +1736,29 @@ async function initEmergencyBlock(countryOverride) {
     // canonical API; keep single source of truth
     const API_BASE = 'https://navigen-api.4naama.workers.dev';
 
+    const contextLoadingChipStorageKey = () => `context-loading-chip-dismissed:${ACTIVE_PAGE || 'home'}`;
+
+    const isContextLoadingChipDismissed = () => {
+      try {
+        return sessionStorage.getItem(contextLoadingChipStorageKey()) === '1';
+      } catch {
+        return false;
+      }
+    };
+
+    const hideContextLoadingChip = () => {
+      document.getElementById('context-loading-chip')?.remove();
+    };
+
+    const dismissContextLoadingChip = () => {
+      try {
+        sessionStorage.setItem(contextLoadingChipStorageKey(), '1');
+      } catch {}
+      hideContextLoadingChip();
+    };
+
     const showContextLoadingChip = () => {
-      if (!ACTIVE_PAGE || DEMO_ALLSUBS) return;
+      if (!ACTIVE_PAGE || DEMO_ALLSUBS || isContextLoadingChipDismissed()) return;
       const container = document.getElementById('locations');
       if (!container || document.getElementById('context-loading-chip')) return;
 
@@ -1747,17 +1768,17 @@ async function initEmergencyBlock(countryOverride) {
       chip.setAttribute('aria-live', 'polite');
       chip.innerHTML = `
         <span class="label">
-          <strong>${t('context.loading.chip.title') || 'Getting this context ready'}</strong>
+          <span id="context-loading-chip-head">
+            <strong>${t('context.loading.chip.title') || 'Getting this context ready'}</strong>
+            <button id="context-loading-chip-close" class="clear-x" type="button" aria-label="${t('common.close') || 'Close'}">x</button>
+          </span>
           <small>${t('context.loading.chip.line1') || 'We are finding the best matching places for this context.'}</small>
           <small>${t('context.loading.chip.line2') || 'Popular places may appear first, followed by the full browse list.'}</small>
           <small>${t('context.loading.chip.line3') || 'Larger cities and event pages can take a few seconds.'}</small>
         </span>
       `;
       container.prepend(chip);
-    };
-
-    const hideContextLoadingChip = () => {
-      document.getElementById('context-loading-chip')?.remove();
+      chip.querySelector('#context-loading-chip-close')?.addEventListener('click', dismissContextLoadingChip);
     };
 
     showContextLoadingChip();
@@ -1881,7 +1902,6 @@ async function initEmergencyBlock(countryOverride) {
       console.warn('list API failed', err);
       showToast('Data API unavailable. Showing cached items.');
       listJson = { items: [] };
-      hideContextLoadingChip();
     }
 
     const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
@@ -2520,7 +2540,6 @@ async function initEmergencyBlock(countryOverride) {
     buildAccordion(groupedForPage, viewList);
     wireAccordionGroups(structure_data, viewList);
     paintAccordionColors();
-    hideContextLoadingChip();
     
     // coverage: remove placeholders from accordion only (keep others)
     document.querySelectorAll('#accordion .empty-state').forEach(el => el.remove());

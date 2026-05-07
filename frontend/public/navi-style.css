@@ -6883,3 +6883,43 @@ body.high-contrast .modal-menu-item.is-active {
   background-color:#fff;
   box-shadow:inset 0 0 0 1px #d9e4ee;
 }
+
+/* Context loading... chip */
+#context-loading-chip .label{
+  gap:7px;
+}
+
+#context-loading-chip #context-loading-chip-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+}
+
+#context-loading-chip #context-loading-chip-head strong{
+  min-width:0;
+}
+
+#context-loading-chip #context-loading-chip-close{
+  position:static;
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:#dc2626;
+  border-color:#fecaca;
+  background:#fff;
+}
+
+#context-loading-chip #context-loading-chip-close:hover,
+#context-loading-chip #context-loading-chip-close:focus-visible{
+  color:#b91c1c;
+  border-color:#fca5a5;
+  background:#fff5f5;
+}
+
+#context-loading-chip small{
+  line-height:1.45;
+  margin-top:2px;
+}
