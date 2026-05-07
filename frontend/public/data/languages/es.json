@@ -1159,5 +1159,9 @@
   "modal.requestListing.contexts.search.title": "Buscar dónde pertenece este negocio",
   "modal.requestListing.contexts.search.desc": "Los contextos son rutas predefinidas de categoría y ubicación, por ejemplo Restaurantes · Alemania · Berlín.",
   "modal.requestListing.contexts.location.placeholder": "País / ciudad",
-  "modal.requestListing.contexts.locationRequired": "Primero añade ciudad o código de país en la información del negocio."
+  "modal.requestListing.contexts.locationRequired": "Primero añade ciudad o código de país en la información del negocio.",
+  "context.loading.chip.title": "Preparando este contexto",
+  "context.loading.chip.line1": "Estamos buscando los lugares más adecuados para este contexto.",
+  "context.loading.chip.line2": "Pueden aparecer primero los lugares populares, seguidos de la lista completa.",
+  "context.loading.chip.line3": "Las ciudades grandes y las páginas de eventos pueden tardar unos segundos."
 }

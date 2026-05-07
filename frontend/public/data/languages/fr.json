@@ -1159,5 +1159,9 @@
   "modal.requestListing.contexts.search.title": "Rechercher où cet établissement appartient",
   "modal.requestListing.contexts.search.desc": "Les contextes sont des chemins prédéfinis de catégorie et de localisation, par exemple Restaurants · Allemagne · Berlin.",
   "modal.requestListing.contexts.location.placeholder": "Pays / ville",
-  "modal.requestListing.contexts.locationRequired": "Ajoutez d’abord la ville ou le code pays dans les informations de l’établissement."
+  "modal.requestListing.contexts.locationRequired": "Ajoutez d’abord la ville ou le code pays dans les informations de l’établissement.",
+  "context.loading.chip.title": "Préparation de ce contexte",
+  "context.loading.chip.line1": "Nous recherchons les lieux les plus pertinents pour ce contexte.",
+  "context.loading.chip.line2": "Les lieux populaires peuvent apparaître en premier, suivis de la liste complète.",
+  "context.loading.chip.line3": "Les grandes villes et les pages d’événements peuvent prendre quelques secondes."
 }

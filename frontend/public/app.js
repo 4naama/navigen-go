@@ -1736,6 +1736,32 @@ async function initEmergencyBlock(countryOverride) {
     // canonical API; keep single source of truth
     const API_BASE = 'https://navigen-api.4naama.workers.dev';
 
+    const showContextLoadingChip = () => {
+      if (!ACTIVE_PAGE || DEMO_ALLSUBS) return;
+      const container = document.getElementById('locations');
+      if (!container || document.getElementById('context-loading-chip')) return;
+
+      const chip = document.createElement('div');
+      chip.id = 'context-loading-chip';
+      chip.className = 'modal-menu-item modal-static-card owner-center-loading';
+      chip.setAttribute('aria-live', 'polite');
+      chip.innerHTML = `
+        <span class="label">
+          <strong>${t('context.loading.chip.title') || 'Getting this context ready'}</strong>
+          <small>${t('context.loading.chip.line1') || 'We are finding the best matching places for this context.'}</small>
+          <small>${t('context.loading.chip.line2') || 'Popular places may appear first, followed by the full browse list.'}</small>
+          <small>${t('context.loading.chip.line3') || 'Larger cities and event pages can take a few seconds.'}</small>
+        </span>
+      `;
+      container.prepend(chip);
+    };
+
+    const hideContextLoadingChip = () => {
+      document.getElementById('context-loading-chip')?.remove();
+    };
+
+    showContextLoadingChip();
+    
     const getListPageItems = (payload) => {
       if (Array.isArray(payload?.items)) return payload.items;
       if (Array.isArray(payload?.locations)) return payload.locations;
@@ -1855,6 +1881,7 @@ async function initEmergencyBlock(countryOverride) {
       console.warn('list API failed', err);
       showToast('Data API unavailable. Showing cached items.');
       listJson = { items: [] };
+      hideContextLoadingChip();
     }
 
     const apiItems = Array.isArray(listJson.items) ? listJson.items : [];
@@ -2493,6 +2520,7 @@ async function initEmergencyBlock(countryOverride) {
     buildAccordion(groupedForPage, viewList);
     wireAccordionGroups(structure_data, viewList);
     paintAccordionColors();
+    hideContextLoadingChip();
     
     // coverage: remove placeholders from accordion only (keep others)
     document.querySelectorAll('#accordion .empty-state').forEach(el => el.remove());

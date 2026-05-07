@@ -1159,5 +1159,9 @@
   "modal.requestListing.contexts.search.title": "Keresd meg, hová tartozik ez a vállalkozás",
   "modal.requestListing.contexts.search.desc": "A kontextusok kész kategória- és helyszínútvonalak, például Éttermek · Németország · Berlin.",
   "modal.requestListing.contexts.location.placeholder": "Ország / város",
-  "modal.requestListing.contexts.locationRequired": "Először add meg a várost vagy országkódot a vállalkozási adatoknál."
+  "modal.requestListing.contexts.locationRequired": "Először add meg a várost vagy országkódot a vállalkozási adatoknál.",
+  "context.loading.chip.title": "Kontextus előkészítése",
+  "context.loading.chip.line1": "Megkeressük a legjobban illeszkedő helyeket ehhez a kontextushoz.",
+  "context.loading.chip.line2": "A népszerű helyek jelenhetnek meg először, majd a teljes böngészési lista következik.",
+  "context.loading.chip.line3": "A nagyobb városok és eseményoldalak betöltése néhány másodpercet igénybe vehet."
 }

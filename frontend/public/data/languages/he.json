@@ -1159,5 +1159,9 @@
   "modal.requestListing.contexts.search.title": "חפש לאן העסק הזה שייך",
   "modal.requestListing.contexts.search.desc": "הקשרים הם נתיבי קטגוריה ומיקום מוכנים מראש, לדוגמה מסעדות · גרמניה · ברלין.",
   "modal.requestListing.contexts.location.placeholder": "מדינה / עיר",
-  "modal.requestListing.contexts.locationRequired": "הוסף תחילה עיר או קוד מדינה בפרטי העסק."
+  "modal.requestListing.contexts.locationRequired": "הוסף תחילה עיר או קוד מדינה בפרטי העסק.",
+  "context.loading.chip.title": "מכין את ההקשר הזה",
+  "context.loading.chip.line1": "אנחנו מחפשים את המקומות המתאימים ביותר להקשר הזה.",
+  "context.loading.chip.line2": "מקומות פופולריים עשויים להופיע ראשונים, ולאחר מכן רשימת העיון המלאה.",
+  "context.loading.chip.line3": "ערים גדולות ודפי אירועים עשויים להימשך כמה שניות."
 }

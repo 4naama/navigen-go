@@ -1159,5 +1159,9 @@
   "modal.requestListing.contexts.search.title": "Пошук, до якої категорії належить цей бізнес",
   "modal.requestListing.contexts.search.desc": "Контексти — це готові шляхи категорій і локацій, наприклад Ресторани · Німеччина · Берлін.",
   "modal.requestListing.contexts.location.placeholder": "Країна / місто",
-  "modal.requestListing.contexts.locationRequired": "Спочатку додайте місто або код країни в інформації про бізнес."
+  "modal.requestListing.contexts.locationRequired": "Спочатку додайте місто або код країни в інформації про бізнес.",
+  "context.loading.chip.title": "Підготовка цього контексту",
+  "context.loading.chip.line1": "Ми шукаємо найкраще відповідні місця для цього контексту.",
+  "context.loading.chip.line2": "Популярні місця можуть з’являтися першими, а потім повний список перегляду.",
+  "context.loading.chip.line3": "Великі міста та сторінки подій можуть завантажуватися кілька секунд."
 }

@@ -1159,5 +1159,9 @@
   "modal.requestListing.contexts.search.title": "Suchen, wo dieses Unternehmen hingehört",
   "modal.requestListing.contexts.search.desc": "Kontexte sind vordefinierte Kategorie- und Standortpfade, zum Beispiel Restaurants · Deutschland · Berlin.",
   "modal.requestListing.contexts.location.placeholder": "Land / Stadt",
-  "modal.requestListing.contexts.locationRequired": "Fügen Sie zuerst Stadt oder Ländercode in den Unternehmensinformationen hinzu."
+  "modal.requestListing.contexts.locationRequired": "Fügen Sie zuerst Stadt oder Ländercode in den Unternehmensinformationen hinzu.",
+  "context.loading.chip.title": "Kontext wird vorbereitet",
+  "context.loading.chip.line1": "Wir suchen die am besten passenden Orte für diesen Kontext.",
+  "context.loading.chip.line2": "Beliebte Orte können zuerst erscheinen, gefolgt von der vollständigen Liste.",
+  "context.loading.chip.line3": "Größere Städte und Veranstaltungsseiten können einige Sekunden dauern."
 }

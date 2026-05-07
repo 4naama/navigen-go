@@ -1159,5 +1159,9 @@
   "modal.requestListing.contexts.search.title": "Cerca dove appartiene questa attività",
   "modal.requestListing.contexts.search.desc": "I contesti sono percorsi predefiniti di categoria e località, ad esempio Ristoranti · Germania · Berlino.",
   "modal.requestListing.contexts.location.placeholder": "Paese / città",
-  "modal.requestListing.contexts.locationRequired": "Aggiungi prima città o codice paese nelle informazioni attività."
+  "modal.requestListing.contexts.locationRequired": "Aggiungi prima città o codice paese nelle informazioni attività.",
+  "context.loading.chip.title": "Preparazione di questo contesto",
+  "context.loading.chip.line1": "Stiamo trovando i luoghi più adatti per questo contesto.",
+  "context.loading.chip.line2": "I luoghi popolari possono apparire per primi, seguiti dall’elenco completo.",
+  "context.loading.chip.line3": "Le città più grandi e le pagine evento possono richiedere alcuni secondi."
 }

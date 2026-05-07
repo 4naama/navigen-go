@@ -1159,5 +1159,9 @@
   "modal.requestListing.contexts.search.title": "Search where this business belongs",
   "modal.requestListing.contexts.search.desc": "Contexts are ready-made category and location paths, for example Restaurants · Germany· Berlin.",
   "modal.requestListing.contexts.location.placeholder": "Country / city",
-  "modal.requestListing.contexts.locationRequired": "Add City or Country code in Business information first."
+  "modal.requestListing.contexts.locationRequired": "Add City or Country code in Business information first.",
+  "context.loading.chip.title": "Getting this context ready",
+  "context.loading.chip.line1": "We are finding the best matching places for this context.",
+  "context.loading.chip.line2": "Popular places may appear first, followed by the full browse list.",
+  "context.loading.chip.line3": "Larger cities and event pages can take a few seconds."
 }
