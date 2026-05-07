@@ -6140,8 +6140,9 @@ export function createRequestListingModal(opts = {}) {
       rlOpenContexts.setAttribute('aria-disabled', ready ? 'false' : 'true');
       rlOpenContexts.title = ready ? '' : (t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.');
     }
-    if (!ready && rlContextSummaryText && !selectedContextSet.size) {
-      rlContextSummaryText.textContent = t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.';
+    const contextSummaryText = modal.querySelector('#rl-context-summary-text');
+    if (!ready && contextSummaryText) {
+      contextSummaryText.textContent = t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.';
     }
   }  
   
@@ -6349,14 +6350,16 @@ export function createRequestListingModal(opts = {}) {
     const ready = requestListingHasLocationSeed();
     const lockedText = t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.';
     const readyText = t('modal.requestListing.contexts.summary.empty') || 'Required. Search and choose up to 3 contexts.';
+    const contextSectionState = modal.querySelector('#rl-context-section-state');
+    const contextSummaryText = modal.querySelector('#rl-context-summary-text');
 
     if (rlContextSection) {
       rlContextSection.setAttribute('aria-disabled', ready ? 'false' : 'true');
       if (!ready) rlContextSection.removeAttribute('open');
     }
 
-    if (rlContextSectionState) {
-      rlContextSectionState.textContent = ready ? readyText : lockedText;
+    if (contextSectionState) {
+      contextSectionState.textContent = ready ? readyText : lockedText;
     }
 
     if (rlOpenContexts) {
@@ -6365,8 +6368,8 @@ export function createRequestListingModal(opts = {}) {
       rlOpenContexts.title = ready ? '' : lockedText;
     }
 
-    if (!ready && rlContextSummaryText && !selectedContextSet.size) {
-      rlContextSummaryText.textContent = lockedText;
+    if (!ready && contextSummaryText) {
+      contextSummaryText.textContent = lockedText;
     }
   }
   
