@@ -6290,6 +6290,22 @@ export function createRequestListingModal(opts = {}) {
     rlOpenContexts?.classList.toggle('input-error', !!bad);
     setInputErrorState(rlContexts, !!bad);
   }
+  
+  function requestListingHasLocationSeed() {
+    return !!String(rlCity?.value || rlCountry?.value || '').trim();
+  }
+
+  function syncRequestListingContextAvailability() {
+    const ready = requestListingHasLocationSeed();
+    if (rlOpenContexts) {
+      rlOpenContexts.disabled = !ready;
+      rlOpenContexts.setAttribute('aria-disabled', ready ? 'false' : 'true');
+      rlOpenContexts.title = ready ? '' : (t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.');
+    }
+    if (!ready && rlContextSummaryText && !selectedContextSet.size) {
+      rlContextSummaryText.textContent = t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.';
+    }
+  }
 
   function resizeRequestListingDescriptionInput() {
     if (!(rlDescription instanceof HTMLTextAreaElement)) return;
@@ -6332,7 +6348,8 @@ export function createRequestListingModal(opts = {}) {
     rlBusinessSection?.classList.toggle('is-complete', businessComplete);
     rlContextSection?.classList.toggle('is-complete', contextComplete);
   }
-
+  
+  syncRequestListingContextAvailability();
   syncRequestListingTags();
   setRequestListingContexts(prefillContexts);
   syncRequestListingContexts();
@@ -6383,6 +6400,14 @@ export function createRequestListingModal(opts = {}) {
   syncRequestListingRequiredChecks();
 
   function openRequestListingContextsModal() {
+    if (!requestListingHasLocationSeed()) {
+      rlContextSection?.removeAttribute('open');
+      if (rlBusinessSection) rlBusinessSection.open = true;
+      (rlCity || rlCountry)?.focus?.();
+      syncRequestListingContextAvailability();
+      return;
+    }    
+    
     if (!requestListingContextRows.length) {
       showToast(t('modal.requestListing.contexts.unavailable') || 'Context options are still loading.', 2200);
       return;
@@ -6493,16 +6518,21 @@ export function createRequestListingModal(opts = {}) {
     locationInput.value = '';
     const locationPlaceholder = (t('modal.requestListing.contexts.location.placeholder') || 'Country / city').trim();
     locationInput.placeholder = locationPlaceholder.startsWith('🔍') ? locationPlaceholder : `🔍 ${locationPlaceholder}`;
+    
+    const locationClearBtn = document.createElement('button');
+    locationClearBtn.type = 'button';
+    locationClearBtn.className = 'clear-x';
+    locationClearBtn.id = 'request-context-location-clear-search';
+    locationClearBtn.textContent = 'x';
+    locationClearBtn.style.display = 'none';
+    locationClearBtn.setAttribute('aria-label', t('common.search.clear') || 'Clear search');
 
     const locationOptions = document.createElement('datalist');
     locationOptions.id = 'request-context-location-options';
-    requestListingContextLocationRows.forEach((row) => {
-      const option = document.createElement('option');
-      option.value = String(row?.label || '').trim();
-      if (option.value) locationOptions.appendChild(option);
-    });
+    locationOptions.innerHTML = '';
 
     locationLeft.appendChild(locationInput);
+    locationLeft.appendChild(locationClearBtn);
     locationRow.appendChild(locationLeft);
     ctxTopBar.appendChild(locationRow);
     ctxTopBar.appendChild(locationOptions);
@@ -6522,6 +6552,24 @@ export function createRequestListingModal(opts = {}) {
         .trim();
 
     const tokensOf = (q) => norm(q).split(/\s+/).filter(Boolean);
+    
+    const renderLocationOptions = () => {
+      const locationTokens = tokensOf(locationInput.value);
+      locationOptions.innerHTML = '';
+      if (!locationTokens.length) return;
+
+      requestListingContextLocationRows
+        .filter((row) => {
+          const hay = norm([row?.key, row?.label, row?.countryLabel, row?.cityLabel, row?.countryKey, row?.cityKey].join(' '));
+          return locationTokens.every((token) => hay.includes(token));
+        })
+        .slice(0, REQUEST_LISTING_CONTEXT_RESULT_LIMIT)
+        .forEach((row) => {
+          const option = document.createElement('option');
+          option.value = String(row?.label || '').trim();
+          if (option.value) locationOptions.appendChild(option);
+        });
+    };    
 
     const syncClear = () => {
       const hasValue = !!String(searchInput.value || '').trim();
@@ -6581,6 +6629,8 @@ export function createRequestListingModal(opts = {}) {
 
       return getRequestListingContextLabel(aKey).localeCompare(getRequestListingContextLabel(bKey), undefined, { sensitivity: 'base' });
     });
+    
+    // Country/city clear visibility is updated from the location input handler.
 
     const renderContextPicker = () => {
       const selectedKeys = Array.from(selectedContextSet);
@@ -6692,9 +6742,19 @@ export function createRequestListingModal(opts = {}) {
     });
 
     locationInput.addEventListener('input', () => {
+      locationClearBtn.style.display = String(locationInput.value || '').trim() ? 'inline-flex' : 'none';
+      renderLocationOptions();
       renderContextPicker();
     });
 
+    locationClearBtn.addEventListener('click', () => {
+      locationInput.value = '';
+      locationClearBtn.style.display = 'none';
+      renderLocationOptions();
+      renderContextPicker();
+      locationInput.focus();
+    });
+    
     clearBtn.addEventListener('click', () => {
       searchInput.value = '';
       syncClear();

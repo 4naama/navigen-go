@@ -1158,5 +1158,6 @@
   "lpm.rating.googleProviderNote": "Szolgáltató által biztosított értékelés. Ez külön áll a NaviGen látogatói értékeléseitől.",
   "modal.requestListing.contexts.search.title": "Elérhető kontextusok keresése",
   "modal.requestListing.contexts.search.desc": "Gépelj az elérhető kontextus opciók kereséséhez.",
-  "modal.requestListing.contexts.location.placeholder": "Ország / város"
+  "modal.requestListing.contexts.location.placeholder": "Ország / város",
+  "modal.requestListing.contexts.locationRequired": "Először add meg a várost vagy országkódot a vállalkozási adatoknál."
 }

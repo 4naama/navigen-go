@@ -1158,5 +1158,6 @@
   "lpm.rating.googleProviderNote": "Рейтинг, наданий постачальником. Він окремий від оцінок відвідувачів NaviGen.",
   "modal.requestListing.contexts.search.title": "Пошук доступних контекстів",
   "modal.requestListing.contexts.search.desc": "Введіть текст для пошуку доступних параметрів контексту.",
-  "modal.requestListing.contexts.location.placeholder": "Країна / місто"
+  "modal.requestListing.contexts.location.placeholder": "Країна / місто",
+  "modal.requestListing.contexts.locationRequired": "Спочатку додайте місто або код країни в інформації про бізнес."
 }

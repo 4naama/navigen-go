@@ -1158,5 +1158,6 @@
   "lpm.rating.googleProviderNote": "Vom Anbieter bereitgestellte Bewertung. Sie ist getrennt von den Besucherbewertungen von NaviGen.",
   "modal.requestListing.contexts.search.title": "Verfügbare Kontexte suchen",
   "modal.requestListing.contexts.search.desc": "Geben Sie Text ein, um verfügbare Kontextoptionen zu suchen.",
-  "modal.requestListing.contexts.location.placeholder": "Land / Stadt"
+  "modal.requestListing.contexts.location.placeholder": "Land / Stadt",
+  "modal.requestListing.contexts.locationRequired": "Fügen Sie zuerst Stadt oder Ländercode in den Unternehmensinformationen hinzu."
 }
