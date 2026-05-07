@@ -6128,7 +6128,6 @@ export function createRequestListingModal(opts = {}) {
   const rlContexts = modal.querySelector('#rl-contexts');
   const rlContextSummaryText = modal.querySelector('#rl-context-summary-text');
   const rlOpenContexts = modal.querySelector('#rl-open-contexts');
-  const rlContextSectionState = modal.querySelector('#rl-context-section-state');
   
   // Context availability is handled below after context selection helpers are defined.
   
@@ -6410,10 +6409,8 @@ export function createRequestListingModal(opts = {}) {
 
     rlOpenContexts?.classList.toggle('is-required-empty', !contextComplete);
     rlBusinessSection?.classList.toggle('is-complete', businessComplete);
-    syncRequestListingContextAvailability();
   }
   
-  syncRequestListingContextAvailability();
   syncRequestListingTags();
   setRequestListingContexts(prefillContexts);
   syncRequestListingContexts();
@@ -6464,16 +6461,11 @@ export function createRequestListingModal(opts = {}) {
     syncRequestListingContextAvailability();
   };
 
-  [
-    rlCity,
-    rlCountry
-  ].forEach((el) => {
-    el?.addEventListener('input', syncRequestListingLocationDependentState);
-    el?.addEventListener('change', syncRequestListingLocationDependentState);
-  });
+  rlCity?.addEventListener('input', syncRequestListingLocationDependentState);
+  rlCity?.addEventListener('change', syncRequestListingLocationDependentState);
+  rlCountry?.addEventListener('change', syncRequestListingLocationDependentState);
 
-  syncRequestListingRequiredChecks();
-  syncRequestListingContextAvailability();
+  syncRequestListingLocationDependentState();
 
   function openRequestListingContextsModal() {
     if (!requestListingHasLocationSeed()) {
@@ -6483,14 +6475,6 @@ export function createRequestListingModal(opts = {}) {
       syncRequestListingContextAvailability();
       return;
     }
-    
-    if (!requestListingHasLocationSeed()) {
-      rlContextSection?.removeAttribute('open');
-      if (rlBusinessSection) rlBusinessSection.open = true;
-      (rlCity || rlCountry)?.focus?.();
-      syncRequestListingContextAvailability();
-      return;
-    }    
     
     if (!requestListingContextRows.length) {
       showToast(t('modal.requestListing.contexts.unavailable') || 'Context options are still loading.', 2200);

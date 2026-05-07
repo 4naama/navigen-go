@@ -487,13 +487,12 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   outline:none;
 }
 
-#request-listing-contexts-modal #request-context-search:not(:placeholder-shown){
-  padding-right:2.25rem;
-}
-
+#request-listing-contexts-modal #request-context-search:not(:placeholder-shown),
 #request-listing-contexts-modal #request-context-location-search:not(:placeholder-shown){
+  padding-right:2.25rem;
   background:#fff;
   border-color:var(--search-border, #d7dde4);
+  box-shadow:none;
 }
 
 #request-listing-contexts-modal #request-context-search:not(:placeholder-shown) + #request-context-clear-search{
@@ -508,26 +507,17 @@ input[type="search"]::-webkit-search-cancel-button{ -webkit-appearance: none; }
   justify-content:center;
 }
 
-#request-listing-contexts-modal #request-context-location-search:not(:placeholder-shown){
-  background:#fff;
-  border-color:var(--search-border, #d7dde4);
-  box-shadow:none;
-}
-
-#request-listing-contexts-modal #request-context-search::placeholder{
-  font-weight:400;
-  color:#666;
-  opacity:1;
-}
-
+#request-listing-contexts-modal #request-context-search::placeholder,
 #request-listing-contexts-modal #request-context-location-search::placeholder{
   font-weight:400;
   color:#9a3412;
   opacity:1;
 }
 
-#request-listing-contexts-modal #request-context-search:focus,
-#request-listing-contexts-modal #request-context-search:focus-visible{
+#request-listing-contexts-modal #request-context-search:not(:placeholder-shown):focus,
+#request-listing-contexts-modal #request-context-search:not(:placeholder-shown):focus-visible,
+#request-listing-contexts-modal #request-context-location-search:not(:placeholder-shown):focus,
+#request-listing-contexts-modal #request-context-location-search:not(:placeholder-shown):focus-visible{
   border-color:var(--search-focus, #7aa2ff);
   box-shadow:0 0 0 3px var(--search-shadow, rgba(122,162,255,.2));
 }
@@ -6853,39 +6843,6 @@ body.high-contrast .modal-menu-item.is-active {
 
 #existing-navigen-profile-modal .select-location-search-left input:placeholder-shown:focus,
 #existing-navigen-profile-modal .select-location-search-left input:placeholder-shown:focus-visible{
-  background:#fff7ed;
-  box-shadow:inset 0 0 0 1px #fb923c, 0 0 0 2px rgba(251,146,60,.18);
-}
-
-#request-listing-contexts-modal #request-context-search:placeholder-shown{
-  background:#fff7ed;
-  box-shadow:inset 0 0 0 1px #fb923c;
-}
-
-#request-listing-contexts-modal #request-context-location-search:placeholder-shown{
-  background:#fff7ed;
-  box-shadow:inset 0 0 0 1px #fb923c;
-}
-
-#request-listing-contexts-modal #request-context-search:placeholder-shown::placeholder{
-  color:#9a3412;
-  opacity:1;
-}
-
-#request-listing-contexts-modal #request-context-location-search:placeholder-shown::placeholder{
-  color:#9a3412;
-  opacity:1;
-}
-
-#request-listing-contexts-modal #request-context-search:focus,
-#request-listing-contexts-modal #request-context-search:focus-visible{
-  outline:0;
-  background:#fff;
-  box-shadow:inset 0 0 0 1px #7aa7ff, 0 0 0 2px rgba(59,130,246,.16);
-}
-
-#request-listing-contexts-modal #request-context-search:placeholder-shown:focus,
-#request-listing-contexts-modal #request-context-search:placeholder-shown:focus-visible{
   background:#fff7ed;
   box-shadow:inset 0 0 0 1px #fb923c, 0 0 0 2px rgba(251,146,60,.18);
 }
