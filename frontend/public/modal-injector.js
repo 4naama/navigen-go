@@ -6126,25 +6126,11 @@ export function createRequestListingModal(opts = {}) {
   const rlGroup = modal.querySelector('#rl-group');
   const rlSubgroup = modal.querySelector('#rl-subgroup');
   const rlContexts = modal.querySelector('#rl-contexts');
+  const rlContextSummaryText = modal.querySelector('#rl-context-summary-text');
   const rlOpenContexts = modal.querySelector('#rl-open-contexts');
   const rlContextSectionState = modal.querySelector('#rl-context-section-state');
   
-  function requestListingHasLocationSeed() {
-    return !!String(rlCity?.value || '').trim() || isValidRequestListingCountryCode(rlCountry?.value);
-  }
-
-  function syncRequestListingContextAvailability() {
-    const ready = requestListingHasLocationSeed();
-    if (rlOpenContexts) {
-      rlOpenContexts.disabled = !ready;
-      rlOpenContexts.setAttribute('aria-disabled', ready ? 'false' : 'true');
-      rlOpenContexts.title = ready ? '' : (t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.');
-    }
-    const contextSummaryText = modal.querySelector('#rl-context-summary-text');
-    if (!ready && contextSummaryText) {
-      contextSummaryText.textContent = t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.';
-    }
-  }  
+  // Context availability is handled below after context selection helpers are defined.
   
   const rlContextCount = modal.querySelector('#rl-context-count');
   const rlContextSelected = modal.querySelector('#rl-context-selected');
