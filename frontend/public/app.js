@@ -2168,67 +2168,66 @@ async function initEmergencyBlock(countryOverride) {
           String(x?.ID || x?.id || '') === uid ||              // ULID match
           String(x?.locationID || '') === uid                  // slug / alias match
         ); // find by ULID or slug in local list
+
         if (rec) {
           const media   = rec.media || {};
           const gallery = Array.isArray(media.images) ? media.images : [];
           const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
 
           const cover = (media.cover && String(media.cover).trim()) || images[0];
-          if (!cover) { console.warn('Data error: cover required'); }
-          else {
-            const cc = String(rec["Coordinate Compound"] || rec.coord || "");
-            const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
+          if (!cover) console.warn('Media fallback: no legacy cover before redirect LPM open');
 
-            showLocationProfileModal({
-              // identifiers (single-field model)
-              locationID: String(rec?.locationID || ''),           // human slug if present
-              id:         String(rec?.ID || rec?.id || uid),       // ULID
+          const cc = String(rec["Coordinate Compound"] || rec.coord || "");
+          const [lat, lng] = cc.includes(",") ? cc.split(",").map(s => s.trim()) : ["",""];
 
-              // display
-              displayName: String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
-              name:        String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
+          showLocationProfileModal({
+            // identifiers (single-field model)
+            locationID: String(rec?.locationID || ''),           // human slug if present
+            id:         String(rec?.ID || rec?.id || uid),       // ULID
 
-              // geo
-              lat, lng,
+            // display
+            displayName: String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
+            name:        String((rec?.locationName?.en ?? rec?.locationName ?? 'Unnamed')).trim(),
 
-              // media
-              imageSrc: cover,
-              images,
-              media,
+            // geo
+            lat, lng,
 
-              // meta
-              descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
-              tags: Array.isArray(rec?.tags) ? rec.tags : [],
-              contactInformation: (rec && rec.contactInformation) || {},
-              links: (rec && rec.links) || {},
-              ratings: (rec && rec.ratings) || {},
-              pricing: (rec && rec.pricing) || {},
+            // media
+            imageSrc: cover,
+            images,
+            media,
 
-              // origin
-              openSource: 'redirect',
-              originEl: null              
+            // meta
+            descriptions: (rec && typeof rec.descriptions === 'object') ? rec.descriptions : {},
+            tags: Array.isArray(rec?.tags) ? rec.tags : [],
+            contactInformation: (rec && rec.contactInformation) || {},
+            links: (rec && rec.links) || {},
+            ratings: (rec && rec.ratings) || {},
+            pricing: (rec && rec.pricing) || {},
+
+            // origin
+            openSource: 'redirect',
+            originEl: null
+          });
+
+          await maybeShowLpmInactiveNotice(uid);
+        } else if (uid) {
+          // Fallback: fetch by alias or ULID when the list for this context wasn’t loaded
+          try {
+            const res = await fetch(`${API_BASE}/api/data/item?id=${encodeURIComponent(uid)}`, {
+              cache: 'no-store',
+              credentials: 'omit'
             });
 
-            await maybeShowLpmInactiveNotice(uid);
-          }
-        }
-      } else if (uid) {
-        // Fallback: fetch by alias or ULID when the list for this context wasn’t loaded
-        try {
-          const res = await fetch(`${API_BASE}/api/data/item?id=${encodeURIComponent(uid)}`, {
-            cache: 'no-store',
-            credentials: 'omit'
-          });
-          if (res.ok) {
-            const it    = await res.json();
-            const media = (it && typeof it.media === 'object') ? it.media : {};
-            const raw   = Array.isArray(media.images) ? media.images : (Array.isArray(it?.images) ? it.images : []);
-            const images= raw.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
-            const cover = (media.cover && String(media.cover).trim()) || images[0] || '';
+            if (res.ok) {
+              const it     = await res.json();
+              const media  = (it && typeof it.media === 'object') ? it.media : {};
+              const raw    = Array.isArray(media.images) ? media.images : (Array.isArray(it?.images) ? it.images : []);
+              const images = raw.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
+              const cover  = (media.cover && String(media.cover).trim()) || images[0] || '';
 
-            if (!cover) {
-              console.warn('Data error: cover required (QR)');
-            } else {
+              if (!cover) console.warn('Media fallback: no legacy cover before QR LPM open');
+
               const cc = (() => {
                 if (typeof it?.coord === 'string') return it.coord;
                 if (it?.coord && it.coord.lat != null && it.coord.lng != null) return `${it.coord.lat},${it.coord.lng}`;
@@ -2264,17 +2263,17 @@ async function initEmergencyBlock(countryOverride) {
 
                 // origin
                 openSource: 'redirect',
-                originEl: null                
+                originEl: null
               });
 
               await maybeShowLpmInactiveNotice(uid);
             }
+          } catch (e) {
+            console.warn('QR fallback fetch failed', e);
           }
-        } catch (e) {
-          console.warn('QR fallback fetch failed', e);
         }
       }
-      
+
       // Drop redeem bootstrap params so refresh never replays the attempt or leaks the token in the URL.
       q.delete('lp');
       q.delete('rt');

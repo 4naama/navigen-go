@@ -4548,8 +4548,8 @@ function makeLocationButton(loc) {
       (media.cover && String(media.cover).trim())
       || (images[0] && (typeof images[0] === 'string' ? images[0] : images[0]?.src));
 
-    // guard: strict data model; hero + ≥2 images required
-    if (!cover) { console.warn('Data error: cover required', loc?.locationID || loc?.ID || loc?.id); return; } // allow 1+ images
+    // IMG-4: no legacy cover may exist when manifest/static fallback is expected; allow LPM fallback to resolve.
+    if (!cover) console.warn('Media fallback: no legacy cover before LPM open', loc?.locationID || loc?.ID || loc?.id);
 
     // Open the Location Profile Modal; include contact + links for CTAs
     // pass ULID if present, else slug only to LPM; ULID remains canonical

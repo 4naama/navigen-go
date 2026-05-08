@@ -3524,6 +3524,25 @@ export class MediaTargetDO {
       return doJson({ ok: true, images: imagesToDelete, manifest });
     }
 
+    if (op === "replace-manifest") {
+      const incoming = normalizeMediaManifest(body?.manifest || {}, targetType, targetId);
+      incoming.targetType = targetType;
+      incoming.targetId = targetId;
+      incoming.images = incoming.images
+        .filter((img) => img.status === "active")
+        .slice(0, MEDIA_MAX_ACTIVE_IMAGES)
+        .map((img, index) => ({
+          ...img,
+          status: "active",
+          slot: index + 1,
+          expiresAt: "",
+          updatedAt: new Date(nowMs).toISOString()
+        }));
+
+      incoming.coverImageId = incoming.images[0]?.mediaId || "";
+      manifest = await this.writeState(incoming);
+      return doJson({ ok: true, manifest });
+    }
 
     if (op === "cancel-reservation") {
       const uploadSessionId = String(body?.uploadSessionId || "").trim();
@@ -6827,7 +6846,7 @@ export default {
 
             ranked.push({
               ulid,
-              payload: buildPublicListPayload(rec),
+              payload: await buildPublicListPayloadWithManifestMedia(env, rec),
               rank,
               idx
             });
@@ -6935,7 +6954,7 @@ export default {
         }
 
         return json(
-          buildPublicProfilePayload(rec),
+          await buildPublicProfilePayloadWithManifestMedia(env, rec),
           200,
           { "x-navigen-route": "/api/data/profile", "Cache-Control": "no-store" }
         );
@@ -6963,7 +6982,7 @@ export default {
         }
 
         return json(
-          buildPublicItemPayload(rec),
+          await buildPublicItemPayloadWithManifestMedia(env, rec),
           200,
           { "x-navigen-route": "/api/data/item", "Cache-Control": "no-store" }
         );
@@ -7062,6 +7081,106 @@ async function readPublishedEffectiveProfileByAnyId(
 
   return { ulid, locationID, effective };
 }
+
+function publicMediaFallback(media: any): { cover: string; images: string[] } & Record<string, unknown> {
+  const src = (media && typeof media === "object") ? media : {};
+  const rawImages = Array.isArray(src.images) ? src.images : [];
+
+  return {
+    ...src,
+    cover: String(src.cover || "").trim(),
+    images: rawImages
+      .map((v: any) => String(typeof v === "string" ? v : v?.src || "").trim())
+      .filter(Boolean)
+  };
+}
+
+function publicMediaVariantUrl(image: any, preferred: MediaVariantName): string {
+  const variants = (image?.variants && typeof image.variants === "object") ? image.variants : {};
+  const preferredUrl = String(variants?.[preferred] || "").trim();
+  if (preferredUrl) return preferredUrl;
+
+  for (const name of ["gallery", "lpm", "card", "thumb"] as MediaVariantName[]) {
+    const url = String(variants?.[name] || "").trim();
+    if (url) return url;
+  }
+
+  return "";
+}
+
+async function publicLocationMediaProjection(env: Env, ulid: string, fallbackMedia: any): Promise<{ media: any; manifest: any | null; manifestHit: boolean }> {
+  const fallback = publicMediaFallback(fallbackMedia);
+  const id = String(ulid || "").trim();
+
+  if (!ULID_RE.test(id)) {
+    return { media: fallback, manifest: null, manifestHit: false };
+  }
+
+  const raw = await env.KV_MEDIA.get(mediaManifestKey("location", id), { type: "json" }) as any;
+  if (!raw) {
+    return { media: fallback, manifest: null, manifestHit: false };
+  }
+
+  const manifest = normalizeMediaManifest(raw, "location", id);
+  const clientManifest = mediaManifestForClient(manifest, false);
+  const activeImages = Array.isArray(clientManifest.images)
+    ? clientManifest.images.filter((img: any) => String(img?.status || "") === "active")
+    : [];
+
+  if (!activeImages.length) {
+    return { media: fallback, manifest: clientManifest, manifestHit: false };
+  }
+
+  const cover = publicMediaVariantUrl(activeImages[0], "lpm") || fallback.cover;
+  const images = activeImages
+    .map((img: any) => publicMediaVariantUrl(img, "gallery"))
+    .filter(Boolean);
+
+  return {
+    media: {
+      ...fallback,
+      cover,
+      images,
+      source: "media_manifest"
+    },
+    manifest: clientManifest,
+    manifestHit: true
+  };
+}
+
+async function buildPublicProfilePayloadWithManifestMedia(env: Env, rec: { ulid: string; locationID: string; effective: any }): Promise<any> {
+  const payload = buildPublicProfilePayload(rec);
+  const projection = await publicLocationMediaProjection(env, rec.ulid, payload.media || rec.effective?.media || {});
+
+  return {
+    ...payload,
+    media: projection.media,
+    ...(projection.manifest ? { mediaManifest: projection.manifest } : {})
+  };
+}
+
+async function buildPublicItemPayloadWithManifestMedia(env: Env, rec: { ulid: string; locationID: string; effective: any }): Promise<any> {
+  const payload = buildPublicItemPayload(rec);
+  const projection = await publicLocationMediaProjection(env, rec.ulid, payload.media || rec.effective?.media || {});
+
+  return {
+    ...payload,
+    media: projection.media,
+    ...(projection.manifest ? { mediaManifest: projection.manifest } : {})
+  };
+}
+
+async function buildPublicListPayloadWithManifestMedia(env: Env, rec: { ulid: string; locationID: string; effective: any }): Promise<any> {
+  const payload = buildPublicListPayload(rec);
+  const projection = await publicLocationMediaProjection(env, rec.ulid, payload.media || rec.effective?.media || {});
+
+  return {
+    ...payload,
+    media: projection.media,
+    ...(projection.manifest ? { mediaManifest: projection.manifest } : {})
+  };
+}
+
 
 function buildPublicProfilePayload(rec: { ulid: string; locationID: string; effective: any }): any {
   const effective = (rec?.effective && typeof rec.effective === "object") ? rec.effective : {};
@@ -7404,7 +7523,7 @@ async function buildOwnerLocationSelectorItem(
   const camp = await campaignEntitlementForUlid(env, rec.ulid);
 
   return {
-    ...buildPublicListPayload(rec),
+    ...(await buildPublicListPayloadWithManifestMedia(env, rec)),
     sybAddressLine: ownerSelectorAddressLine(rec.effective),
     sybStatus: {
       planEntitled: vis.planEntitled,
@@ -8537,6 +8656,59 @@ async function syncPublishedDoIndex(
   }
 }
 
+async function promoteDraftMediaManifestToPublishedLocation(env: Env, draftULID: string, locationULID: string): Promise<{ ok: boolean; promotedCount: number }> {
+  const draftId = String(draftULID || "").trim();
+  const locationId = String(locationULID || "").trim();
+
+  if (!ULID_RE.test(draftId) || !ULID_RE.test(locationId)) {
+    return { ok: false, promotedCount: 0 };
+  }
+
+  const raw = await env.KV_MEDIA.get(mediaManifestKey("draft", draftId), { type: "json" }) as any;
+  if (!raw) {
+    return { ok: true, promotedCount: 0 };
+  }
+
+  const draftManifest = normalizeMediaManifest(raw, "draft", draftId);
+  const activeImages = draftManifest.images
+    .filter((img) => img.status === "active")
+    .sort((a, b) => {
+      if (a.slot !== b.slot) return a.slot - b.slot;
+      return a.createdAt.localeCompare(b.createdAt);
+    })
+    .slice(0, MEDIA_MAX_ACTIVE_IMAGES);
+
+  if (!activeImages.length) {
+    return { ok: true, promotedCount: 0 };
+  }
+
+  const nowIso = new Date().toISOString();
+  const locationManifest: MediaManifest = {
+    version: 1,
+    targetType: "location",
+    targetId: locationId,
+    coverImageId: activeImages[0]?.mediaId || "",
+    images: activeImages.map((img, index) => ({
+      ...img,
+      status: "active",
+      slot: index + 1,
+      expiresAt: "",
+      updatedAt: nowIso
+    })),
+    updatedAt: nowIso
+  };
+
+  const promoted = await mediaTargetDoFetch(env, "location", locationId, {
+    op: "replace-manifest",
+    manifest: locationManifest
+  });
+
+  return {
+    ok: promoted.payload?.ok === true,
+    promotedCount: activeImages.length
+  };
+}
+
 async function handleLocationPublish(req: Request, env: Env): Promise<Response> {
   const noStore = { "cache-control": "no-store" };
 
@@ -8802,6 +8974,23 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
         err: String(e?.message || e || "")
       });
       // DO best-effort only; never block or rollback committed publish
+    }
+
+    try {
+      const mediaPromotion = await promoteDraftMediaManifestToPublishedLocation(env, target.ulid, target.ulid);
+      if (!mediaPromotion.ok) {
+        console.error("publish_media_manifest_promotion_failed", {
+          ulid: target.ulid,
+          locationID: slug,
+          promotedCount: mediaPromotion.promotedCount
+        });
+      }
+    } catch (e: any) {
+      console.error("publish_media_manifest_promotion_failed", {
+        ulid: target.ulid,
+        locationID: slug,
+        err: String(e?.message || e || "")
+      });
     }
 
     return json(
