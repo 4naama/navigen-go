@@ -1185,5 +1185,6 @@
   "media.gallery.label": "גלריה",
   "media.action.delete": "מחק",
   "media.action.moveUp": "העבר למעלה",
-  "media.action.moveDown": "העבר למטה"
+  "media.action.moveDown": "העבר למטה",
+  "media.upload.cleanupFailed": "לא ניתן לנקות את תמונות הטיוטה."
 }

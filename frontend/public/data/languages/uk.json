@@ -1185,5 +1185,6 @@
   "media.gallery.label": "Галерея",
   "media.action.delete": "Видалити",
   "media.action.moveUp": "Перемістити вгору",
-  "media.action.moveDown": "Перемістити вниз"
+  "media.action.moveDown": "Перемістити вниз",
+  "media.upload.cleanupFailed": "Не вдалося очистити зображення чернетки."
 }

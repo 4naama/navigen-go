@@ -1185,5 +1185,6 @@
   "media.gallery.label": "Galleria",
   "media.action.delete": "Elimina",
   "media.action.moveUp": "Sposta su",
-  "media.action.moveDown": "Sposta giù"
+  "media.action.moveDown": "Sposta giù",
+  "media.upload.cleanupFailed": "Impossibile pulire le immagini della bozza."
 }

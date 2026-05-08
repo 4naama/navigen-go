@@ -1185,5 +1185,6 @@
   "media.gallery.label": "Galerie",
   "media.action.delete": "Löschen",
   "media.action.moveUp": "Nach oben",
-  "media.action.moveDown": "Nach unten"
+  "media.action.moveDown": "Nach unten",
+  "media.upload.cleanupFailed": "Entwurfsbilder konnten nicht bereinigt werden."
 }

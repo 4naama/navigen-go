@@ -1185,5 +1185,6 @@
   "media.gallery.label": "Galerie",
   "media.action.delete": "Supprimer",
   "media.action.moveUp": "Monter",
-  "media.action.moveDown": "Descendre"
+  "media.action.moveDown": "Descendre",
+  "media.upload.cleanupFailed": "Impossible de nettoyer les images du brouillon."
 }

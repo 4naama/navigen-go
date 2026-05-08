@@ -1185,5 +1185,6 @@
   "media.gallery.label": "Galéria",
   "media.action.delete": "Törlés",
   "media.action.moveUp": "Vissza fel",
-  "media.action.moveDown": "Lejjebb"
+  "media.action.moveDown": "Lejjebb",
+  "media.upload.cleanupFailed": "Nem sikerült megtisztítani a piszkozat képeit."
 }

@@ -1185,5 +1185,6 @@
   "media.gallery.label": "Gallery",
   "media.action.delete": "Delete",
   "media.action.moveUp": "Move up",
-  "media.action.moveDown": "Move down"
+  "media.action.moveDown": "Move down",
+  "media.upload.cleanupFailed": "Could not clean up draft images."
 }

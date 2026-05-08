@@ -1185,5 +1185,6 @@
   "media.gallery.label": "Galería",
   "media.action.delete": "Eliminar",
   "media.action.moveUp": "Subir",
-  "media.action.moveDown": "Bajar"
+  "media.action.moveDown": "Bajar",
+  "media.upload.cleanupFailed": "No se pudieron limpiar las imágenes del borrador."
 }

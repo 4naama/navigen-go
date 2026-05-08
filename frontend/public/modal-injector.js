@@ -5335,12 +5335,47 @@ function clearPendingLocationDraft(target = null) {
   }
 }
 
+async function abandonPendingLocationDraftMedia(target, reason = 'discard', options = {}) {
+  const draftULID = String(target?.draftULID || '').trim();
+  const draftSessionId = String(target?.draftSessionId || '').trim();
+  if (!draftULID || !draftSessionId) return true;
+
+  let res = null;
+  try {
+    res = await fetch('/api/media/abandon-draft', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        target: {
+          targetType: 'draft',
+          targetId: draftULID,
+          draftSessionId
+        },
+        reason: String(reason || 'discard').trim()
+      }),
+      cache: 'no-store',
+      credentials: 'include',
+      keepalive: !!options?.keepalive
+    });
+  } catch {
+    res = null;
+  }
+
+  return !!res?.ok;
+}
+
 async function discardPendingLocationDraft(target) {
   const draft = normalizePendingLocationDraft(target);
   const draftULID = String(draft?.draftULID || '').trim();
   const draftSessionId = String(draft?.draftSessionId || '').trim();
 
   if (draftULID && draftSessionId) {
+    const mediaOk = await abandonPendingLocationDraftMedia(draft, 'discard');
+    if (!mediaOk) {
+      showToast(translatedOrFallback('media.upload.cleanupFailed', 'Could not clean up draft images.'), 2400);
+      return false;
+    }
+
     let ok = false;
 
     try {
@@ -6047,6 +6082,12 @@ export function createRequestListingModal(opts = {}) {
   const closeRequestListing = (ev = null) => {
     ev?.preventDefault?.();
     ev?.stopPropagation?.();
+    if (requestListingMediaBusy) {
+      showToast(translatedOrFallback('media.upload.uploading', 'Uploading image...'), 1800);
+      return;
+    }
+
+    requestListingMediaAbandonDraft('cancel');
     hideModal(contextModalId);
     removeModal(contextModalId);
     hideModal(id);
@@ -6396,6 +6437,9 @@ export function createRequestListingModal(opts = {}) {
   let requestListingMediaDraftSessionId = String(prefill?.draftSessionId || '').trim();
   let requestListingMediaManifest = null;
   let requestListingMediaBusy = false;
+  let requestListingMediaDraftCreatedByMedia = false;
+  let requestListingMediaDraftCommitted = Boolean(requestListingMediaDraftULID && requestListingMediaDraftSessionId);
+  let requestListingMediaAbandonStarted = false;
   const requestListingMediaLocalPreviews = new Map();
 
   function requestListingMediaSetStatus(message = '', isError = false) {
@@ -6413,6 +6457,45 @@ export function createRequestListingModal(opts = {}) {
       }
     };
   }
+  
+  function requestListingMediaAbandonDraft(reason = 'cancel') {
+    if (requestListingMediaAbandonStarted) return;
+    if (requestListingMediaDraftCommitted) return;
+    if (!requestListingMediaDraftCreatedByMedia) return;
+    if (!requestListingMediaDraftULID || !requestListingMediaDraftSessionId) return;
+
+    requestListingMediaAbandonStarted = true;
+
+    const draft = {
+      draftULID: requestListingMediaDraftULID,
+      draftSessionId: requestListingMediaDraftSessionId,
+      googlePlaceId: String(prefill?.googlePlaceId || '').trim()
+    };
+
+    void (async () => {
+      const mediaOk = await abandonPendingLocationDraftMedia(draft, reason, { keepalive: true });
+      if (!mediaOk) return;
+
+      try {
+        await fetch('/api/location/draft', {
+          method: 'DELETE',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            draftULID: draft.draftULID,
+            draftSessionId: draft.draftSessionId,
+            googlePlaceId: draft.googlePlaceId
+          }),
+          cache: 'no-store',
+          credentials: 'include',
+          keepalive: true
+        });
+      } catch {
+        // best-effort cleanup only; media cleanup already ran
+      }
+
+      clearPendingLocationDraft(draft);
+    })();
+  }  
 
   function requestListingMediaSetBusy(busy) {
     requestListingMediaBusy = !!busy;
@@ -6456,6 +6539,11 @@ export function createRequestListingModal(opts = {}) {
 
     requestListingMediaDraftULID = draftULID;
     requestListingMediaDraftSessionId = draftSessionId;
+
+    if (payload?.createdDraft === true && !String(prefill?.draftULID || '').trim()) {
+      requestListingMediaDraftCreatedByMedia = true;
+      requestListingMediaDraftCommitted = false;
+    }
 
     savePendingLocationDraft({
       ...(prefill && typeof prefill === 'object' ? prefill : {}),
@@ -7786,6 +7874,9 @@ export function createRequestListingModal(opts = {}) {
       createdAt: Number(prefill?.createdAt || Date.now()),
       updatedAt: Date.now()
     };
+
+    requestListingMediaDraftCommitted = true;
+    requestListingMediaDraftCreatedByMedia = false;
 
     savePendingLocationDraft(savedDraft);
     hideModal(id);

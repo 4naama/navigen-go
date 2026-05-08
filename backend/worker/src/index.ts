@@ -3084,6 +3084,82 @@ async function handleMediaReorder(req: Request, env: Env): Promise<Response> {
   );
 }
 
+async function handleMediaAbandonDraft(req: Request, env: Env): Promise<Response> {
+  const body = await req.json().catch(() => null) as any;
+  if (!body || typeof body !== "object") {
+    return mediaError("invalid_request", "valid JSON body required", 400);
+  }
+
+  const input = extractMediaTargetInput(body);
+  if (input.targetType !== "draft") {
+    return mediaError("invalid_target", "Only draft media can be abandoned.", 400);
+  }
+
+  const targetCheck = await resolveExistingMediaWriteTarget(req, env, body);
+  if ("response" in targetCheck) return targetCheck.response;
+
+  const target = targetCheck.target;
+  if (target.targetType !== "draft") {
+    return mediaError("invalid_target", "Only draft media can be abandoned.", 400);
+  }
+
+  const abandoned = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
+    op: "abandon-draft",
+    reason: String(body?.reason || "cancel").trim().slice(0, 80)
+  });
+
+  if (!abandoned.payload?.ok) {
+    return mediaError(
+      String(abandoned.payload?.reason || "media_abandon_failed"),
+      String(abandoned.payload?.message || "Draft media cleanup failed."),
+      abandoned.status || 409
+    );
+  }
+
+  const images = Array.isArray(abandoned.payload?.images) ? abandoned.payload.images : [];
+  let manifest = abandoned.payload.manifest;
+  let providerDeletedCount = 0;
+  let deletePendingCount = 0;
+
+  for (const image of images) {
+    const mediaId = String(image?.mediaId || "").trim();
+    const cfImageId = String(image?.cfImageId || "").trim();
+    if (!mediaId || !cfImageId) continue;
+
+    const providerResult = await deleteCloudflareImage(env, cfImageId);
+    if (providerResult.ok) {
+      providerDeletedCount += 1;
+      continue;
+    }
+
+    deletePendingCount += 1;
+    const pending = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
+      op: "mark-delete-pending",
+      mediaId,
+      cfImageId,
+      reason: providerResult.code
+    });
+
+    if (pending.payload?.ok) {
+      manifest = pending.payload.manifest;
+    }
+  }
+
+  return json(
+    {
+      ok: true,
+      targetType: target.targetType,
+      targetId: target.targetId,
+      deletedCount: images.length,
+      providerDeletedCount,
+      deletePendingCount,
+      manifest: mediaManifestForClient(manifest, true)
+    },
+    200,
+    { "cache-control": "no-store" }
+  );
+}
+
 async function handleMediaManifestRead(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
   const targetType = normalizeMediaTargetType(url.searchParams.get("targetType"));
@@ -3428,6 +3504,24 @@ export class MediaTargetDO {
       this.compactActiveSlots(manifest);
       manifest = await this.writeState(manifest);
       return doJson({ ok: true, manifest });
+    }
+
+    if (op === "abandon-draft") {
+      if (targetType !== "draft") return doError("invalid_target", 400);
+
+      const imagesToDelete = manifest.images.filter((img) => img.status !== "deleted");
+      if (!imagesToDelete.length) {
+        return doJson({ ok: true, images: [], manifest });
+      }
+
+      for (const image of imagesToDelete) {
+        image.status = "deleted";
+        image.updatedAt = new Date(nowMs).toISOString();
+      }
+
+      this.compactActiveSlots(manifest);
+      manifest = await this.writeState(manifest);
+      return doJson({ ok: true, images: imagesToDelete, manifest });
     }
 
 
@@ -5097,6 +5191,11 @@ export default {
       // --- IMG v1 media completion: verify provider upload before activating manifest image
       if (normPath === "/api/media/complete" && req.method === "POST") {
         return await handleMediaComplete(req, env);
+      }
+
+      // --- IMG v1 draft media abandon: clean up uploaded draft media on cancel/discard
+      if (normPath === "/api/media/abandon-draft" && req.method === "POST") {
+        return await handleMediaAbandonDraft(req, env);
       }
 
       // --- IMG v1 media manifest read: manifest-first rendering foundation
