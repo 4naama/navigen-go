@@ -6390,6 +6390,8 @@ export function createRequestListingModal(opts = {}) {
     : (Array.isArray(prefill?.media?.images) ? prefill.media.images : []))
     .map((value) => String(value?.src || value || '').trim())
     .filter(Boolean);
+  const prefillImage1 = String(prefillImages[0] || '').trim();
+  const prefillImage2 = String(prefillImages[1] || '').trim();
   let requestListingMediaDraftULID = String(prefill?.draftULID || '').trim();
   let requestListingMediaDraftSessionId = String(prefill?.draftSessionId || '').trim();
   let requestListingMediaManifest = null;
