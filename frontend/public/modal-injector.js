@@ -6079,18 +6079,31 @@ export function createRequestListingModal(opts = {}) {
   document.getElementById(contextModalId)?.remove();
 
   const shouldReturnToSelectLocation = String(opts?.returnTo || '').trim() === 'syb';
-  const closeRequestListing = (ev = null) => {
+  let requestListingCloseStarted = false;
+  const closeRequestListing = async (ev = null) => {
     ev?.preventDefault?.();
     ev?.stopPropagation?.();
+
+    if (requestListingCloseStarted) return;
+
     if (requestListingMediaBusy) {
       showToast(translatedOrFallback('media.upload.uploading', 'Uploading image...'), 1800);
       return;
     }
 
-    requestListingMediaAbandonDraft('cancel');
+    requestListingCloseStarted = true;
+
+    const cleanupOk = await requestListingMediaAbandonDraft('cancel');
+    if (!cleanupOk) {
+      requestListingCloseStarted = false;
+      showToast(translatedOrFallback('media.upload.cleanupFailed', 'Could not clean up draft images.'), 2400);
+      return;
+    }
+
     hideModal(contextModalId);
     removeModal(contextModalId);
     hideModal(id);
+
     if (shouldReturnToSelectLocation) showSelectLocationModal();
   };
 
@@ -7913,31 +7926,13 @@ export function showLocationDraftNextStepsModal(draftMeta = {}, opts = {}) {
   document.getElementById(id)?.remove();
 
   const shouldReturnToSelectLocation = String(opts?.returnTo || '').trim() === 'syb';
-  let requestListingCloseStarted = false;
-  const closeRequestListing = async (ev = null) => {
+  const draftULID = String(draftMeta?.draftULID || '').trim();
+  const draftSessionId = String(draftMeta?.draftSessionId || '').trim();
+
+  const closeNextSteps = (ev = null) => {
     ev?.preventDefault?.();
     ev?.stopPropagation?.();
-
-    if (requestListingCloseStarted) return;
-
-    if (requestListingMediaBusy) {
-      showToast(translatedOrFallback('media.upload.uploading', 'Uploading image...'), 1800);
-      return;
-    }
-
-    requestListingCloseStarted = true;
-
-    const cleanupOk = await requestListingMediaAbandonDraft('cancel');
-    if (!cleanupOk) {
-      requestListingCloseStarted = false;
-      showToast(translatedOrFallback('media.upload.cleanupFailed', 'Could not clean up draft images.'), 2400);
-      return;
-    }
-
-    hideModal(contextModalId);
-    removeModal(contextModalId);
     hideModal(id);
-
     if (shouldReturnToSelectLocation) showSelectLocationModal();
   };
 
