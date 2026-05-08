@@ -5696,6 +5696,188 @@ function formatMediaUrlValues(values) {
     .join('\n');
 }
 
+const REQUEST_LISTING_MEDIA_MAX_IMAGES = 3;
+const REQUEST_LISTING_MEDIA_MAX_BYTES = 10 * 1024 * 1024;
+const REQUEST_LISTING_MEDIA_VARIANT_ORDER = ['gallery', 'lpm', 'card', 'thumb'];
+
+function requestListingMediaFileType(file) {
+  const explicit = String(file?.type || '').trim().toLowerCase();
+  if (explicit) return explicit;
+
+  const name = String(file?.name || '').trim().toLowerCase();
+  if (/\.jpe?g$/.test(name)) return 'image/jpeg';
+  if (/\.png$/.test(name)) return 'image/png';
+  if (/\.webp$/.test(name)) return 'image/webp';
+  if (/\.hei[cf]$/.test(name)) return 'image/heic';
+  if (/\.gif$/.test(name)) return 'image/gif';
+  return '';
+}
+
+function requestListingMediaBestUrl(image, preferred = 'gallery') {
+  const variants = (image?.variants && typeof image.variants === 'object') ? image.variants : {};
+  const direct = String(variants?.[preferred] || '').trim();
+  if (direct) return direct;
+
+  for (const name of REQUEST_LISTING_MEDIA_VARIANT_ORDER) {
+    const url = String(variants?.[name] || '').trim();
+    if (url) return url;
+  }
+
+  return String(image?.src || image?.url || '').trim();
+}
+
+function requestListingMediaActiveImages(manifest) {
+  const images = Array.isArray(manifest?.images) ? manifest.images : [];
+  return images
+    .filter((image) => String(image?.status || '').trim() === 'active')
+    .sort((a, b) => {
+      const slotDelta = Number(a?.slot || 0) - Number(b?.slot || 0);
+      if (slotDelta) return slotDelta;
+      return String(a?.createdAt || '').localeCompare(String(b?.createdAt || ''));
+    });
+}
+
+function requestListingMediaVisibleImages(manifest) {
+  const images = Array.isArray(manifest?.images) ? manifest.images : [];
+  return images
+    .filter((image) => {
+      const status = String(image?.status || '').trim();
+      return status === 'active' || status === 'uploaded' || status === 'reserved' || status === 'deletePending';
+    })
+    .sort((a, b) => {
+      const slotDelta = Number(a?.slot || 0) - Number(b?.slot || 0);
+      if (slotDelta) return slotDelta;
+      return String(a?.createdAt || '').localeCompare(String(b?.createdAt || ''));
+    });
+}
+
+function requestListingMediaLooksAnimatedWebp(buffer) {
+  const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : null;
+  if (!bytes || bytes.length < 22) return false;
+
+  const text = (start, len) => Array.from(bytes.slice(start, start + len)).map((b) => String.fromCharCode(b)).join('');
+  if (text(0, 4) !== 'RIFF' || text(8, 4) !== 'WEBP') return false;
+
+  for (let i = 12; i + 8 <= bytes.length;) {
+    const chunk = text(i, 4);
+    const size = bytes[i + 4] | (bytes[i + 5] << 8) | (bytes[i + 6] << 16) | (bytes[i + 7] << 24);
+    if (chunk === 'ANIM') return true;
+    if (chunk === 'VP8X' && i + 9 < bytes.length && (bytes[i + 8] & 0x02)) return true;
+    i += 8 + Math.max(0, size) + (size % 2);
+  }
+
+  return false;
+}
+
+function requestListingMediaCanvasToBlob(canvas, type, quality) {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), type, quality);
+  });
+}
+
+async function requestListingMediaDecodeImage(file) {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(file);
+      return {
+        width: bitmap.width,
+        height: bitmap.height,
+        draw: (ctx, width, height) => {
+          ctx.drawImage(bitmap, 0, 0, width, height);
+          bitmap.close?.();
+        }
+      };
+    } catch {
+      // Fall back to HTMLImageElement decoding below.
+    }
+  }
+
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.decoding = 'async';
+    const loaded = new Promise((resolve, reject) => {
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('image_decode_failed'));
+    });
+    img.src = url;
+    await loaded;
+    return {
+      width: img.naturalWidth || img.width,
+      height: img.naturalHeight || img.height,
+      draw: (ctx, width, height) => { ctx.drawImage(img, 0, 0, width, height); }
+    };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function normalizeRequestListingMediaFile(file) {
+  if (!(file instanceof File)) {
+    throw new Error('unsupported');
+  }
+
+  const originalType = requestListingMediaFileType(file);
+  if (originalType === 'image/gif') {
+    throw new Error('unsupported');
+  }
+
+  if (originalType === 'image/webp') {
+    const head = await file.slice(0, Math.min(file.size, 2 * 1024 * 1024)).arrayBuffer();
+    if (requestListingMediaLooksAnimatedWebp(head)) {
+      throw new Error('animated');
+    }
+  }
+
+  const directlyAllowed = originalType === 'image/jpeg' || originalType === 'image/png' || originalType === 'image/webp';
+  if (directlyAllowed && file.size > 0 && file.size <= REQUEST_LISTING_MEDIA_MAX_BYTES) {
+    return file;
+  }
+
+  const canTryDecode = directlyAllowed || originalType === 'image/heic' || originalType === 'image/heif';
+  if (!canTryDecode) {
+    throw new Error('unsupported');
+  }
+
+  let decoded;
+  try {
+    decoded = await requestListingMediaDecodeImage(file);
+  } catch {
+    throw new Error(originalType === 'image/heic' || originalType === 'image/heif' ? 'heic_unsupported' : 'unsupported');
+  }
+
+  if (!decoded?.width || !decoded?.height) {
+    throw new Error('unsupported');
+  }
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('unsupported');
+
+  let scale = Math.min(1, 2400 / Math.max(decoded.width, decoded.height));
+  const qualities = [0.88, 0.78, 0.68, 0.58];
+
+  for (let pass = 0; pass < 5; pass += 1) {
+    const width = Math.max(1, Math.round(decoded.width * scale));
+    const height = Math.max(1, Math.round(decoded.height * scale));
+    canvas.width = width;
+    canvas.height = height;
+    ctx.clearRect(0, 0, width, height);
+    decoded.draw(ctx, width, height);
+
+    for (const quality of qualities) {
+      const blob = await requestListingMediaCanvasToBlob(canvas, 'image/jpeg', quality);
+      if (blob && blob.size > 0 && blob.size <= REQUEST_LISTING_MEDIA_MAX_BYTES) {
+        return new File([blob], String(file.name || 'location-photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+      }
+    }
+
+    scale *= 0.82;
+  }
+
+  throw new Error('too_large');
+}
+
 const REQUEST_LISTING_COUNTRY_CODES = 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ');
 const REQUEST_LISTING_COUNTRY_CODE_SET = new Set(REQUEST_LISTING_COUNTRY_CODES);
 
@@ -6052,27 +6234,29 @@ export function createRequestListingModal(opts = {}) {
         <details id="rl-media-section" class="cm-chip request-section-chip">
           <summary class="modal-menu-item cm-chip-face request-section-chip-face">
             <span class="label cm-chip-face-label request-section-chip-label">
-              <strong class="request-section-chip-title">${t('modal.requestListing.sections.media.title') || 'Media'}</strong>
+              <strong class="request-section-chip-title">${translatedOrFallback('media.section.title', 'Media')}</strong>
+              <small id="rl-media-chip-state" class="request-section-chip-summary">${translatedOrFallback('media.section.desc', 'Upload up to 3 real business/location photos. First image is the cover.')}</small>
             </span>
             <span class="request-section-badge is-optional">${t('modal.requestListing.section.optional') || 'Optional'}</span>
             <span class="cm-chip-face-chevron" aria-hidden="true"></span>
           </summary>
           <div class="cm-chip-body">
             <div class="modal-form-stack">
-              <div class="modal-field">
-                <label for="rl-cover">${t('modal.requestListing.cover.label') || 'Cover image URL'}</label>
-                <input id="rl-cover" class="input" type="text" maxlength="500" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
-              </div>
+              <input id="rl-cover" type="hidden" />
+              <input id="rl-image-1" type="hidden" />
+              <input id="rl-image-2" type="hidden" />
 
-              <div class="modal-field">
-                <label for="rl-image-1">${t('modal.requestListing.images.label') || 'Gallery image URL 1'}</label>
-                <input id="rl-image-1" class="input" type="text" maxlength="500" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
-              </div>
-
-              <div class="modal-field">
-                <label for="rl-image-2">${t('modal.requestListing.images.label2') || 'Gallery image URL 2'}</label>
-                <input id="rl-image-2" class="input" type="text" maxlength="500" placeholder="${t('modal.requestListing.cover.placeholder') || 'https://...'}" />
-                <small class="modal-help-text">${t('modal.requestListing.images.help') || 'Publish-ready target: at least 3 total images counting cover + gallery.'}</small>
+              <div id="rl-media-upload" class="request-media-upload">
+                <input id="rl-media-file" class="request-media-file" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple />
+                <button id="rl-media-drop" class="modal-menu-item request-media-drop" type="button">
+                  <span class="label">
+                    <strong>${translatedOrFallback('media.upload.drop', 'Drop photos here or browse')}</strong>
+                    <small>${translatedOrFallback('media.upload.limit', 'JPEG, PNG, or WebP. Up to 3 active images, 10 MB each after optimization.')}</small>
+                  </span>
+                  <span class="request-media-browse-label">${translatedOrFallback('media.upload.browse', 'Browse')}</span>
+                </button>
+                <div id="rl-media-status" class="modal-help-text request-media-status" aria-live="polite"></div>
+                <div id="rl-media-grid" class="request-media-grid"></div>
               </div>
             </div>
           </div>
@@ -6138,6 +6322,12 @@ export function createRequestListingModal(opts = {}) {
   const rlCover = modal.querySelector('#rl-cover');
   const rlImage1 = modal.querySelector('#rl-image-1');
   const rlImage2 = modal.querySelector('#rl-image-2');
+  const rlMediaSection = modal.querySelector('#rl-media-section');
+  const rlMediaChipState = modal.querySelector('#rl-media-chip-state');
+  const rlMediaFile = modal.querySelector('#rl-media-file');
+  const rlMediaDrop = modal.querySelector('#rl-media-drop');
+  const rlMediaStatus = modal.querySelector('#rl-media-status');
+  const rlMediaGrid = modal.querySelector('#rl-media-grid');
   const rlCoord = modal.querySelector('#rl-coord');
   const rlHasCoord = modal.querySelector('#rl-has-coord');
   const rlCoordWrap = modal.querySelector('#rl-coord-wrap');
@@ -6200,8 +6390,420 @@ export function createRequestListingModal(opts = {}) {
     : (Array.isArray(prefill?.media?.images) ? prefill.media.images : []))
     .map((value) => String(value?.src || value || '').trim())
     .filter(Boolean);
-  const prefillImage1 = String(prefillImages[0] || '').trim();
-  const prefillImage2 = String(prefillImages[1] || '').trim();
+  let requestListingMediaDraftULID = String(prefill?.draftULID || '').trim();
+  let requestListingMediaDraftSessionId = String(prefill?.draftSessionId || '').trim();
+  let requestListingMediaManifest = null;
+  let requestListingMediaBusy = false;
+  const requestListingMediaLocalPreviews = new Map();
+
+  function requestListingMediaSetStatus(message = '', isError = false) {
+    if (!rlMediaStatus) return;
+    rlMediaStatus.textContent = String(message || '').trim();
+    rlMediaStatus.classList.toggle('is-error', !!isError);
+  }
+
+  function requestListingMediaTargetPayload() {
+    return {
+      target: {
+        targetType: 'draft',
+        ...(requestListingMediaDraftULID ? { targetId: requestListingMediaDraftULID } : {}),
+        ...(requestListingMediaDraftSessionId ? { draftSessionId: requestListingMediaDraftSessionId } : {})
+      }
+    };
+  }
+
+  function requestListingMediaSetBusy(busy) {
+    requestListingMediaBusy = !!busy;
+    if (rlMediaDrop instanceof HTMLButtonElement) rlMediaDrop.disabled = requestListingMediaBusy;
+    if (rlMediaFile instanceof HTMLInputElement) rlMediaFile.disabled = requestListingMediaBusy;
+    if (requestListingSubmit instanceof HTMLButtonElement) requestListingSubmit.disabled = requestListingMediaBusy || !requestListingLoading?.classList.contains('hidden');
+  }
+
+  function requestListingMediaCapacityCount() {
+    return requestListingMediaVisibleImages(requestListingMediaManifest)
+      .filter((image) => {
+        const status = String(image?.status || '').trim();
+        return status === 'active' || status === 'uploaded' || status === 'reserved';
+      })
+      .length;
+  }
+
+  function requestListingMediaSyncHiddenInputs() {
+    const activeImages = requestListingMediaActiveImages(requestListingMediaManifest);
+    const urls = activeImages.length
+      ? activeImages.map((image) => requestListingMediaBestUrl(image, 'gallery')).filter(Boolean)
+      : [prefillCover, prefillImage1, prefillImage2].map((value) => String(value || '').trim()).filter(Boolean);
+
+    if (rlCover) rlCover.value = String(urls[0] || '').trim();
+    if (rlImage1) rlImage1.value = String(urls[1] || '').trim();
+    if (rlImage2) rlImage2.value = String(urls[2] || '').trim();
+
+    const count = urls.length;
+    rlMediaSection?.classList.toggle('has-value', count > 0);
+    if (rlMediaChipState) {
+      rlMediaChipState.textContent = count
+        ? `${count}/${REQUEST_LISTING_MEDIA_MAX_IMAGES} · ${translatedOrFallback('media.cover.label', 'Cover')}: 1, ${translatedOrFallback('media.gallery.label', 'Gallery')}: ${Math.max(0, count - 1)}`
+        : translatedOrFallback('media.section.desc', 'Upload up to 3 real business/location photos. First image is the cover.');
+    }
+  }
+
+  function requestListingMediaRememberDraft(payload) {
+    const draftULID = String(payload?.draftULID || '').trim();
+    const draftSessionId = String(payload?.draftSessionId || '').trim();
+    if (!draftULID || !draftSessionId) return;
+
+    requestListingMediaDraftULID = draftULID;
+    requestListingMediaDraftSessionId = draftSessionId;
+
+    savePendingLocationDraft({
+      ...(prefill && typeof prefill === 'object' ? prefill : {}),
+      draftULID,
+      draftSessionId,
+      mode: String(prefill?.mode || '').trim() || (String(prefill?.googlePlaceId || '').trim() ? 'google' : 'manual'),
+      googlePlaceId: String(prefill?.googlePlaceId || '').trim(),
+      name: String(prefillName || '').trim(),
+      address: String(prefillAddress || '').trim(),
+      city: String(prefillCity || '').trim(),
+      country: String(prefillCountry || '').trim(),
+      cover: String(rlCover?.value || '').trim(),
+      images: [String(rlImage1?.value || '').trim(), String(rlImage2?.value || '').trim()].filter(Boolean),
+      createdAt: Number(prefill?.createdAt || Date.now()),
+      updatedAt: Date.now()
+    });
+  }
+
+  function requestListingMediaRender() {
+    if (!rlMediaGrid) return;
+
+    requestListingMediaSyncHiddenInputs();
+    const images = requestListingMediaVisibleImages(requestListingMediaManifest);
+    const activeImages = requestListingMediaActiveImages(requestListingMediaManifest);
+    const activeIds = activeImages.map((image) => String(image?.mediaId || '').trim()).filter(Boolean);
+
+    rlMediaGrid.innerHTML = '';
+
+    if (!images.length) {
+      const empty = document.createElement('div');
+      empty.className = 'request-media-empty';
+      empty.textContent = translatedOrFallback('media.upload.empty', 'No uploaded photos yet.');
+      rlMediaGrid.appendChild(empty);
+      return;
+    }
+
+    images.forEach((image) => {
+      const mediaId = String(image?.mediaId || '').trim();
+      const status = String(image?.status || '').trim();
+      const isActive = status === 'active';
+      const activeIndex = activeIds.indexOf(mediaId);
+      const roleLabel = isActive && activeIndex === 0
+        ? translatedOrFallback('media.cover.label', 'Cover')
+        : translatedOrFallback('media.gallery.label', 'Gallery');
+      const imgUrl = requestListingMediaLocalPreviews.get(mediaId) || requestListingMediaBestUrl(image, 'thumb');
+
+      const card = document.createElement('div');
+      card.className = `request-media-card${isActive ? '' : ' is-pending'}`;
+      card.dataset.mediaId = mediaId;
+
+      const preview = document.createElement('div');
+      preview.className = 'request-media-preview';
+      if (imgUrl) {
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.alt = roleLabel;
+        img.loading = 'lazy';
+        preview.appendChild(img);
+      } else {
+        preview.textContent = '…';
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'request-media-meta';
+
+      const role = document.createElement('strong');
+      role.textContent = roleLabel;
+
+      const state = document.createElement('small');
+      state.textContent = isActive ? translatedOrFallback('media.upload.ready', 'Uploaded') : status;
+
+      meta.appendChild(role);
+      meta.appendChild(state);
+
+      const actions = document.createElement('div');
+      actions.className = 'request-media-actions';
+
+      const moveUp = document.createElement('button');
+      moveUp.type = 'button';
+      moveUp.className = 'request-media-action';
+      moveUp.textContent = '↑';
+      moveUp.setAttribute('aria-label', translatedOrFallback('media.action.moveUp', 'Move up'));
+      moveUp.disabled = !isActive || activeIndex <= 0 || requestListingMediaBusy;
+      moveUp.addEventListener('click', () => { requestListingMediaMove(mediaId, -1); });
+
+      const moveDown = document.createElement('button');
+      moveDown.type = 'button';
+      moveDown.className = 'request-media-action';
+      moveDown.textContent = '↓';
+      moveDown.setAttribute('aria-label', translatedOrFallback('media.action.moveDown', 'Move down'));
+      moveDown.disabled = !isActive || activeIndex < 0 || activeIndex >= activeIds.length - 1 || requestListingMediaBusy;
+      moveDown.addEventListener('click', () => { requestListingMediaMove(mediaId, 1); });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'request-media-action request-media-delete';
+      del.textContent = '×';
+      del.setAttribute('aria-label', translatedOrFallback('media.action.delete', 'Delete'));
+      del.disabled = !mediaId || requestListingMediaBusy;
+      del.addEventListener('click', () => { requestListingMediaDelete(mediaId); });
+
+      actions.appendChild(moveUp);
+      actions.appendChild(moveDown);
+      actions.appendChild(del);
+
+      card.appendChild(preview);
+      card.appendChild(meta);
+      card.appendChild(actions);
+      rlMediaGrid.appendChild(card);
+    });
+  }
+
+  async function requestListingMediaLoadManifest() {
+    if (!requestListingMediaDraftULID || !requestListingMediaDraftSessionId) {
+      requestListingMediaRender();
+      return;
+    }
+
+    let payload = null;
+    try {
+      const qs = new URLSearchParams({
+        targetType: 'draft',
+        targetId: requestListingMediaDraftULID,
+        draftSessionId: requestListingMediaDraftSessionId
+      });
+      const res = await fetch(`/api/media/manifest?${qs.toString()}`, {
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      payload = await res.json().catch(() => null);
+      if (res?.ok && payload?.manifest) requestListingMediaManifest = payload.manifest;
+    } catch {
+      payload = null;
+    }
+
+    requestListingMediaRender();
+  }
+
+  function requestListingMediaUploadToProvider(uploadURL, file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const form = new FormData();
+      form.append('file', file, file.name || 'location-photo.jpg');
+
+      xhr.open('POST', uploadURL);
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable && typeof onProgress === 'function') {
+          onProgress(Math.round((ev.loaded / ev.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve(true);
+        else reject(new Error('provider_upload_failed'));
+      };
+      xhr.onerror = () => reject(new Error('provider_upload_failed'));
+      xhr.send(form);
+    });
+  }
+
+  async function requestListingMediaUploadOne(originalFile) {
+    if (!(originalFile instanceof File) || requestListingMediaBusy) return;
+
+    if (!requestListingMediaDraftULID && !requestListingMediaDraftSessionId && pendingLocationDraftLimitReachedFor({ mode: 'manual' })) {
+      hideModal(id);
+      showProfileDraftsModal({ returnTo: opts?.returnTo, limitReached: true });
+      return;
+    }
+
+    if (requestListingMediaCapacityCount() >= REQUEST_LISTING_MEDIA_MAX_IMAGES) {
+      requestListingMediaSetStatus(translatedOrFallback('media.upload.tooMany', 'Delete an image before uploading another.'), true);
+      showToast(translatedOrFallback('media.upload.tooMany', 'Delete an image before uploading another.'), 2200);
+      return;
+    }
+
+    requestListingMediaSetBusy(true);
+    requestListingMediaSetStatus(translatedOrFallback('media.upload.optimizing', 'Optimizing image...'));
+
+    let normalizedFile = null;
+    let previewUrl = '';
+    try {
+      normalizedFile = await normalizeRequestListingMediaFile(originalFile);
+      if (normalizedFile.size > REQUEST_LISTING_MEDIA_MAX_BYTES) throw new Error('too_large');
+      previewUrl = URL.createObjectURL(normalizedFile);
+
+      requestListingMediaSetStatus(translatedOrFallback('media.upload.uploading', 'Uploading image...'));
+      const directRes = await fetch('/api/media/direct-upload', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...requestListingMediaTargetPayload(),
+          file: {
+            name: normalizedFile.name || originalFile.name || 'location-photo.jpg',
+            type: normalizedFile.type || 'image/jpeg',
+            size: normalizedFile.size
+          }
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      const directPayload = await directRes.json().catch(() => null);
+
+      if (!directRes?.ok) {
+        const code = String(directPayload?.error?.code || '').trim();
+        if (code === 'too_many_images') throw new Error('too_many');
+        if (code === 'too_large') throw new Error('too_large');
+        if (code === 'unsupported_mime' || code === 'animated_unsupported') throw new Error('unsupported');
+        throw new Error('upload_failed');
+      }
+
+      requestListingMediaRememberDraft(directPayload);
+      requestListingMediaManifest = directPayload?.manifest || requestListingMediaManifest;
+      const mediaId = String(directPayload?.mediaId || '').trim();
+      if (mediaId && previewUrl) requestListingMediaLocalPreviews.set(mediaId, previewUrl);
+      requestListingMediaRender();
+
+      await requestListingMediaUploadToProvider(String(directPayload?.uploadURL || '').trim(), normalizedFile, (pct) => {
+        requestListingMediaSetStatus(`${translatedOrFallback('media.upload.uploading', 'Uploading image...')} ${pct}%`);
+      });
+
+      const completeRes = await fetch('/api/media/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...requestListingMediaTargetPayload(),
+          uploadSessionId: String(directPayload?.uploadSessionId || '').trim(),
+          cfImageId: String(directPayload?.cfImageId || '').trim()
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      const completePayload = await completeRes.json().catch(() => null);
+      if (!completeRes?.ok) throw new Error(String(completePayload?.error?.code || 'upload_failed'));
+
+      requestListingMediaManifest = completePayload?.manifest || requestListingMediaManifest;
+      if (mediaId) requestListingMediaLocalPreviews.delete(mediaId);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = '';
+      requestListingMediaRender();
+      requestListingMediaSetStatus(translatedOrFallback('media.upload.ready', 'Uploaded'));
+    } catch (err) {
+      const code = String(err?.message || '').trim();
+      const message = code === 'too_many'
+        ? translatedOrFallback('media.upload.tooMany', 'Delete an image before uploading another.')
+        : code === 'too_large'
+          ? translatedOrFallback('media.upload.tooLarge', 'Image is too large after optimization.')
+          : code === 'animated'
+            ? translatedOrFallback('media.upload.unsupported', 'Animated images are not supported.')
+            : code === 'heic_unsupported'
+              ? translatedOrFallback('media.upload.heicUnsupported', 'This browser cannot convert HEIC. Upload JPEG, PNG, or WebP.')
+              : code === 'unsupported'
+                ? translatedOrFallback('media.upload.unsupported', 'Use JPEG, PNG, or WebP photos only.')
+                : translatedOrFallback('media.upload.failed', 'Image upload failed. Try another photo.');
+      requestListingMediaSetStatus(message, true);
+      showToast(message, 2600);
+    } finally {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      requestListingMediaSetBusy(false);
+      if (rlMediaFile instanceof HTMLInputElement) rlMediaFile.value = '';
+      requestListingMediaRender();
+    }
+  }
+
+  async function requestListingMediaDelete(mediaId) {
+    const cleanMediaId = String(mediaId || '').trim();
+    if (!cleanMediaId || requestListingMediaBusy || !requestListingMediaDraftULID || !requestListingMediaDraftSessionId) return;
+
+    requestListingMediaSetBusy(true);
+    requestListingMediaSetStatus('');
+    try {
+      const res = await fetch('/api/media/delete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...requestListingMediaTargetPayload(),
+          mediaId: cleanMediaId
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res?.ok) throw new Error(String(payload?.error?.code || 'delete_failed'));
+      requestListingMediaManifest = payload?.manifest || requestListingMediaManifest;
+      requestListingMediaLocalPreviews.delete(cleanMediaId);
+      requestListingMediaRender();
+      if (payload?.deletePending) requestListingMediaSetStatus(translatedOrFallback('media.upload.deletePending', 'Deleted from listing. Provider cleanup is pending.'));
+    } catch {
+      const message = translatedOrFallback('media.upload.deleteFailed', 'Could not delete image.');
+      requestListingMediaSetStatus(message, true);
+      showToast(message, 2200);
+    } finally {
+      requestListingMediaSetBusy(false);
+    }
+  }
+
+  async function requestListingMediaMove(mediaId, delta) {
+    const activeIds = requestListingMediaActiveImages(requestListingMediaManifest)
+      .map((image) => String(image?.mediaId || '').trim())
+      .filter(Boolean);
+    const index = activeIds.indexOf(String(mediaId || '').trim());
+    const nextIndex = index + Number(delta || 0);
+    if (index < 0 || nextIndex < 0 || nextIndex >= activeIds.length || requestListingMediaBusy || !requestListingMediaDraftULID || !requestListingMediaDraftSessionId) return;
+
+    const nextIds = activeIds.slice();
+    [nextIds[index], nextIds[nextIndex]] = [nextIds[nextIndex], nextIds[index]];
+
+    requestListingMediaSetBusy(true);
+    requestListingMediaSetStatus('');
+    try {
+      const res = await fetch('/api/media/reorder', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...requestListingMediaTargetPayload(),
+          mediaIds: nextIds
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      const payload = await res.json().catch(() => null);
+      if (!res?.ok) throw new Error(String(payload?.error?.code || 'reorder_failed'));
+      requestListingMediaManifest = payload?.manifest || requestListingMediaManifest;
+      requestListingMediaRender();
+    } catch {
+      const message = translatedOrFallback('media.upload.reorderFailed', 'Could not reorder images.');
+      requestListingMediaSetStatus(message, true);
+      showToast(message, 2200);
+    } finally {
+      requestListingMediaSetBusy(false);
+    }
+  }
+
+  function requestListingMediaHandleFiles(fileList) {
+    const files = Array.from(fileList || []).filter((file) => file instanceof File);
+    if (!files.length) return;
+    const remaining = Math.max(0, REQUEST_LISTING_MEDIA_MAX_IMAGES - requestListingMediaCapacityCount());
+    if (remaining <= 0) {
+      requestListingMediaSetStatus(translatedOrFallback('media.upload.tooMany', 'Delete an image before uploading another.'), true);
+      showToast(translatedOrFallback('media.upload.tooMany', 'Delete an image before uploading another.'), 2200);
+      return;
+    }
+
+    files.slice(0, remaining).reduce(
+      (chain, file) => chain.then(() => requestListingMediaUploadOne(file)),
+      Promise.resolve()
+    );
+
+    if (files.length > remaining) {
+      requestListingMediaSetStatus(translatedOrFallback('media.upload.tooMany', 'Only 3 active images are allowed.'), true);
+    }
+  }
 
   renderGoogleProviderRatingCard(rlGoogleProviderRatingCard, prefill || {});
 
@@ -6444,6 +7046,33 @@ export function createRequestListingModal(opts = {}) {
   rlDescription?.addEventListener('input', () => {
     resizeRequestListingDescriptionInput();
     updateRequestListingDescriptionChip();
+  });
+
+  requestListingMediaRender();
+  requestListingMediaLoadManifest();
+
+  rlMediaDrop?.addEventListener('click', () => {
+    if (requestListingMediaBusy) return;
+    rlMediaFile?.click?.();
+  });
+
+  rlMediaFile?.addEventListener('change', (ev) => {
+    requestListingMediaHandleFiles(ev.target?.files);
+  });
+
+  rlMediaDrop?.addEventListener('dragover', (ev) => {
+    ev.preventDefault();
+    rlMediaDrop.classList.add('is-dragover');
+  });
+
+  rlMediaDrop?.addEventListener('dragleave', () => {
+    rlMediaDrop.classList.remove('is-dragover');
+  });
+
+  rlMediaDrop?.addEventListener('drop', (ev) => {
+    ev.preventDefault();
+    rlMediaDrop.classList.remove('is-dragover');
+    requestListingMediaHandleFiles(ev.dataTransfer?.files);
   });
 
   [
@@ -6970,6 +7599,11 @@ export function createRequestListingModal(opts = {}) {
   })();
 
   modal.querySelector('#request-listing-submit')?.addEventListener('click', async () => {
+    if (requestListingMediaBusy) {
+      showToast(translatedOrFallback('media.upload.uploading', 'Uploading image...'), 1800);
+      return;
+    }
+
     const name = String(modal.querySelector('#rl-name')?.value || '').trim();
     const address = String(modal.querySelector('#rl-address')?.value || '').trim();
     const city = String(modal.querySelector('#rl-city')?.value || '').trim();
@@ -6985,6 +7619,7 @@ export function createRequestListingModal(opts = {}) {
       .map((value) => String(value || '').trim())
       .filter((value) => value && requestListingContextIndex.has(value));
     const tagVals = parseTagValues(modal.querySelector('#rl-tags')?.value || '');
+    requestListingMediaSyncHiddenInputs();
     const cover = String(modal.querySelector('#rl-cover')?.value || '').trim();
     const imageVals = Array.from(new Set([
       String(modal.querySelector('#rl-image-1')?.value || '').trim(),
@@ -7045,8 +7680,8 @@ export function createRequestListingModal(opts = {}) {
       coordNorm = `${lat.toFixed(6)},${lng.toFixed(6)}`;
     }
 
-    const existingDraftULID = String(prefill?.draftULID || '').trim();
-    const existingDraftSessionId = String(prefill?.draftSessionId || '').trim();
+    const existingDraftULID = String(requestListingMediaDraftULID || prefill?.draftULID || '').trim();
+    const existingDraftSessionId = String(requestListingMediaDraftSessionId || prefill?.draftSessionId || '').trim();
 
     if (!existingDraftULID && !existingDraftSessionId && pendingLocationDraftLimitReachedFor({ mode: 'manual' })) {
       hideModal(id);
@@ -7138,6 +7773,7 @@ export function createRequestListingModal(opts = {}) {
       description,
       cover,
       images: imageVals,
+      mediaManifest: requestListingMediaManifest,
       coord: coordNorm,
       groupKey,
       subgroupKey,

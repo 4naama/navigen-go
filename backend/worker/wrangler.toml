@@ -46,6 +46,12 @@ id      = "35a36f5169034a87886ce8cae9c5cfc6"
 binding = "KV_STRUCTURE"
 id      = "de6a6f1e1d4344f695fea522bc79969b"
 
+[[kv_namespaces]]
+binding = "KV_MEDIA"
+id      = "ee5015b818e14f5c810866c053a7a66c"
+
+# --- Durable Objects (Phase 8 + IMG v1) ---
+
 # --- Durable Objects (Phase 8) ---
 [[durable_objects.bindings]]
 name = "DO_PLAN_ALLOC"
@@ -59,6 +65,14 @@ class_name = "SearchShardDO"
 name = "DO_CTX_SHARD"
 class_name = "ContextShardDO"
 
+[[durable_objects.bindings]]
+name = "DO_MEDIA_TARGET"
+class_name = "MediaTargetDO"
+
 [[migrations]]
 tag = "v1"
 new_classes = ["PlanAllocDO", "SearchShardDO", "ContextShardDO"]
+
+[[migrations]]
+tag = "v2-img-media-target"
+new_classes = ["MediaTargetDO"]

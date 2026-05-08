@@ -1772,7 +1772,7 @@ async function initEmergencyBlock(countryOverride) {
             </span>
             <small>${t('context.loading.chip.line1') || 'We are finding the best matching places for this context.'}</small>
             <small>${t('context.loading.chip.line2') || 'Popular places may appear first, followed by the full browse list.'}</small>
-            <small>${t('context.loading.chip.line3') || 'Larger cities and event pages can take a few seconds.'}</small>
+            <small>${t('context.loading.chip.line3') || 'Larger cities and event pages can take a few seconds to load.'}</small>
           </span>
         `;
         chip.querySelector('#context-loading-chip-close')?.addEventListener('click', dismissContextLoadingChip);

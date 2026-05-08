@@ -38,10 +38,15 @@ export interface Env {
   KV_STATS: KVNamespace;
   KV_CONTEXTS: KVNamespace;
   KV_STRUCTURE: KVNamespace;
+  KV_MEDIA: KVNamespace;
+  DO_MEDIA_TARGET: DurableObjectNamespace;
   JWT_SECRET: string; // set via wrangler secret
   STRIPE_SECRET_KEY: string; // Stripe secret key for creating Checkout Sessions (server-only)
   STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
   GOOGLE_PLACES_API_KEY?: string; // Places API New server key; do not expose in frontend JS
+  CF_IMAGES_ACCOUNT_ID: string; // Cloudflare Images account id; not exposed to frontend
+  CF_IMAGES_API_TOKEN: string; // Worker secret for Cloudflare Images API; never exposed to frontend
+  CF_IMAGES_ACCOUNT_HASH?: string; // Cloudflare Images delivery account hash used to build backend-owned variant URLs
 }
 
 // --- Plan persistence and reconciliation (Plan Entitlement authority) ---
@@ -2309,6 +2314,1138 @@ function doNormalizeTokens(values: unknown[]): string[] {
   return Array.from(new Set(out)).slice(0, 64);
 }
 
+// --- IMG v1 media upload manifest foundation ---
+// Cloudflare Images stores binaries; this Worker/DO pair stores only target manifests and reservations.
+type MediaTargetType = "draft" | "location";
+type MediaImageStatus = "reserved" | "uploaded" | "active" | "deleted" | "expired" | "deletePending";
+type MediaVariantName = "thumb" | "card" | "lpm" | "gallery";
+
+type MediaImageRecord = {
+  mediaId: string;
+  cfImageId: string;
+  uploadSessionId: string;
+  status: MediaImageStatus;
+  slot: number;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  createdBy: string;
+  mimeType: string;
+  sizeBytes: number;
+  filename: string;
+  variants: Partial<Record<MediaVariantName, string>>;
+};
+
+type MediaManifest = {
+  version: 1;
+  targetType: MediaTargetType;
+  targetId: string;
+  coverImageId: string;
+  images: MediaImageRecord[];
+  updatedAt: string;
+};
+
+type MediaAccessTarget = {
+  targetType: MediaTargetType;
+  targetId: string;
+  draftULID: string;
+  draftSessionId: string;
+  createdDraft: boolean;
+  actor: string;
+};
+
+type MediaUploadMetadata = {
+  mimeType: string;
+  sizeBytes: number;
+  filename: string;
+};
+
+const MEDIA_MAX_ACTIVE_IMAGES = 3;
+const MEDIA_MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const MEDIA_RESERVATION_TTL_MS = 30 * 60 * 1000;
+const MEDIA_VARIANT_NAMES: MediaVariantName[] = ["thumb", "card", "lpm", "gallery"];
+const MEDIA_ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+function mediaError(code: string, message: string, status = 400, extra: Record<string, unknown> = {}): Response {
+  return json({ error: { code, message, ...extra } }, status, { "cache-control": "no-store" });
+}
+
+function normalizeMediaTargetType(value: unknown): MediaTargetType | "" {
+  const s = String(value || "").trim().toLowerCase();
+  return s === "draft" || s === "location" ? s : "";
+}
+
+function mediaManifestKey(targetType: MediaTargetType, targetId: string): string {
+  return `media:${targetType}:${targetId}`;
+}
+
+function mintMediaToken(prefix: string): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return `${prefix}_${bytesToB64url(bytes)}`;
+}
+
+function mediaEmptyManifest(targetType: MediaTargetType, targetId: string): MediaManifest {
+  return {
+    version: 1,
+    targetType,
+    targetId,
+    coverImageId: "",
+    images: [],
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function normalizeMediaStatus(value: unknown): MediaImageStatus {
+  const s = String(value || "").trim();
+  if (s === "reserved" || s === "uploaded" || s === "active" || s === "deleted" || s === "expired" || s === "deletePending") return s;
+  return "reserved";
+}
+
+function normalizeMediaImageRecord(raw: any): MediaImageRecord | null {
+  const mediaId = String(raw?.mediaId || "").trim();
+  const uploadSessionId = String(raw?.uploadSessionId || "").trim();
+  if (!mediaId || !uploadSessionId) return null;
+
+  const variants = (raw?.variants && typeof raw.variants === "object") ? raw.variants : {};
+  const normalizedVariants: Partial<Record<MediaVariantName, string>> = {};
+  for (const name of MEDIA_VARIANT_NAMES) {
+    const url = String(variants?.[name] || "").trim();
+    if (url) normalizedVariants[name] = url;
+  }
+
+  return {
+    mediaId,
+    cfImageId: String(raw?.cfImageId || "").trim(),
+    uploadSessionId,
+    status: normalizeMediaStatus(raw?.status),
+    slot: Math.max(1, Math.min(MEDIA_MAX_ACTIVE_IMAGES, Math.floor(Number(raw?.slot || 0) || 0) || 1)),
+    createdAt: String(raw?.createdAt || new Date().toISOString()).trim(),
+    updatedAt: String(raw?.updatedAt || raw?.createdAt || new Date().toISOString()).trim(),
+    expiresAt: String(raw?.expiresAt || "").trim(),
+    createdBy: String(raw?.createdBy || "").trim(),
+    mimeType: String(raw?.mimeType || "").trim().toLowerCase(),
+    sizeBytes: Math.max(0, Math.floor(Number(raw?.sizeBytes || 0) || 0)),
+    filename: String(raw?.filename || "").trim().slice(0, 160),
+    variants: normalizedVariants
+  };
+}
+
+function normalizeMediaManifest(raw: any, targetType: MediaTargetType, targetId: string): MediaManifest {
+  const base = mediaEmptyManifest(targetType, targetId);
+  const images = Array.isArray(raw?.images)
+    ? raw.images.map(normalizeMediaImageRecord).filter(Boolean) as MediaImageRecord[]
+    : [];
+
+  images.sort((a, b) => {
+    if (a.slot !== b.slot) return a.slot - b.slot;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+
+  const activeCover = images.find((img) => img.status === "active");
+  return {
+    ...base,
+    coverImageId: String(activeCover?.mediaId || ""),
+    images,
+    updatedAt: String(raw?.updatedAt || new Date().toISOString()).trim()
+  };
+}
+
+function mediaCapacityStatus(status: MediaImageStatus, expiresAt: string, nowMs: number): boolean {
+  if (status === "active" || status === "uploaded") return true;
+  if (status !== "reserved") return false;
+  const expMs = Date.parse(String(expiresAt || ""));
+  return Number.isFinite(expMs) && expMs > nowMs;
+}
+
+function mediaManifestForClient(raw: MediaManifest, includeReserved: boolean): MediaManifest & { activeCount: number; maxActiveImages: number } {
+  const nowMs = Date.now();
+  const manifest = normalizeMediaManifest(raw, raw.targetType, raw.targetId);
+  const images = manifest.images.filter((img) => {
+    if (img.status === "active") return true;
+    if (!includeReserved) return false;
+    if (img.status === "uploaded") return true;
+    if (img.status !== "reserved") return false;
+    const expMs = Date.parse(String(img.expiresAt || ""));
+    return Number.isFinite(expMs) && expMs > nowMs;
+  });
+
+  images.sort((a, b) => {
+    if (a.slot !== b.slot) return a.slot - b.slot;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+
+  const activeImages = images.filter((img) => img.status === "active");
+  return {
+    ...manifest,
+    coverImageId: String(activeImages[0]?.mediaId || ""),
+    images,
+    activeCount: activeImages.length,
+    maxActiveImages: MEDIA_MAX_ACTIVE_IMAGES
+  };
+}
+
+function validateMediaUploadMetadata(body: any): { ok: true; upload: MediaUploadMetadata } | { ok: false; response: Response } {
+  const file = (body?.file && typeof body.file === "object") ? body.file : {};
+  const mimeType = String(body?.mimeType || body?.contentType || file?.mimeType || file?.type || "").trim().toLowerCase();
+  const sizeBytes = Math.floor(Number(body?.sizeBytes ?? body?.fileSize ?? file?.size ?? 0));
+  const filename = String(body?.filename || body?.fileName || file?.name || "upload").trim().slice(0, 160) || "upload";
+  const animated = body?.animated === true || body?.hasAnimation === true || file?.animated === true || file?.hasAnimation === true;
+
+  if (!MEDIA_ALLOWED_MIME_TYPES.has(mimeType)) {
+    return { ok: false, response: mediaError("unsupported_mime", "Only JPEG, PNG, and WebP image uploads are supported.", 415) };
+  }
+
+  if (animated) {
+    return { ok: false, response: mediaError("animated_unsupported", "Animated images are not supported for location media.", 415) };
+  }
+
+  if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
+    return { ok: false, response: mediaError("invalid_size", "A positive normalized image size is required.", 400) };
+  }
+
+  if (sizeBytes > MEDIA_MAX_UPLOAD_BYTES) {
+    return {
+      ok: false,
+      response: mediaError("too_large", "Normalized image must be 10 MB or smaller before upload.", 413, {
+        maxBytes: MEDIA_MAX_UPLOAD_BYTES
+      })
+    };
+  }
+
+  return { ok: true, upload: { mimeType, sizeBytes, filename } };
+}
+
+function extractMediaTargetInput(body: any): { targetType: MediaTargetType | ""; targetId: string; draftSessionId: string } {
+  const target = (body?.target && typeof body.target === "object") ? body.target : body;
+  return {
+    targetType: normalizeMediaTargetType(target?.targetType || body?.targetType),
+    targetId: String(target?.targetId || body?.targetId || body?.draftULID || "").trim(),
+    draftSessionId: String(target?.draftSessionId || body?.draftSessionId || "").trim()
+  };
+}
+
+async function resolveMediaWriteTarget(req: Request, env: Env, body: any): Promise<{ ok: true; target: MediaAccessTarget } | { ok: false; response: Response }> {
+  const input = extractMediaTargetInput(body);
+
+  if (!input.targetType) {
+    return { ok: false, response: mediaError("invalid_target", "targetType must be draft or location.", 400) };
+  }
+
+  if (input.targetType === "draft") {
+    if (!input.targetId) {
+      if (input.draftSessionId) {
+        return { ok: false, response: mediaError("invalid_target", "draftSessionId cannot be supplied without draft targetId.", 400) };
+      }
+
+      const draftULID = mintDraftUlid();
+      const draftSessionId = mintDraftSessionId();
+      const nowIso = new Date().toISOString();
+      await env.KV_STATUS.put(
+        `override_draft:${draftULID}:${draftSessionId}`,
+        JSON.stringify({ createdAt: nowIso, updatedAt: nowIso, mediaUploadDraft: true })
+      );
+
+      return {
+        ok: true,
+        target: {
+          targetType: "draft",
+          targetId: draftULID,
+          draftULID,
+          draftSessionId,
+          createdDraft: true,
+          actor: "draft_session"
+        }
+      };
+    }
+
+    if (!ULID_RE.test(input.targetId) || !input.draftSessionId) {
+      return { ok: false, response: mediaError("invalid_target", "draft targetId and draftSessionId are required.", 400) };
+    }
+
+    const draft = await readPrivateShellDraft(env, input.targetId, input.draftSessionId);
+    if (!draft) {
+      return { ok: false, response: mediaError("forbidden", "Draft media access is not allowed for this session.", 403) };
+    }
+
+    return {
+      ok: true,
+      target: {
+        targetType: "draft",
+        targetId: input.targetId,
+        draftULID: input.targetId,
+        draftSessionId: input.draftSessionId,
+        createdDraft: false,
+        actor: "draft_session"
+      }
+    };
+  }
+
+  if (!input.targetId) {
+    return { ok: false, response: mediaError("invalid_target", "location targetId is required.", 400) };
+  }
+
+  const targetId = ULID_RE.test(input.targetId)
+    ? input.targetId
+    : String(await resolveUid(input.targetId, env) || "").trim();
+
+  if (!ULID_RE.test(targetId)) {
+    return { ok: false, response: mediaError("invalid_target", "location targetId must resolve to a known ULID.", 400) };
+  }
+
+  const auth = await requireOwnerSession(req, env);
+  if (auth instanceof Response) {
+    return { ok: false, response: mediaError("unauthorized", "Owner session is required for location media uploads.", auth.status || 401) };
+  }
+
+  if (String(auth.ulid || "").trim() !== targetId) {
+    return { ok: false, response: mediaError("forbidden", "Owner session is not authorized for this location.", 403) };
+  }
+
+  const entitlement = await readPlanEntitlementForUlid(env, targetId);
+  if (!entitlement.planEntitled) {
+    return { ok: false, response: mediaError("plan_required", "Active Plan coverage is required for location media uploads.", 403) };
+  }
+
+  return {
+    ok: true,
+    target: {
+      targetType: "location",
+      targetId,
+      draftULID: "",
+      draftSessionId: "",
+      createdDraft: false,
+      actor: `owner:${targetId}`
+    }
+  };
+}
+
+function buildCloudflareImageVariantUrls(env: Env, cfImageId: string): Record<MediaVariantName, string> {
+  const hash = String(env.CF_IMAGES_ACCOUNT_HASH || "").trim();
+  if (!hash) throw new Error("cf_images_account_hash_missing");
+
+  const id = encodeURIComponent(cfImageId);
+  return {
+    thumb: `https://imagedelivery.net/${hash}/${id}/thumb`,
+    card: `https://imagedelivery.net/${hash}/${id}/card`,
+    lpm: `https://imagedelivery.net/${hash}/${id}/lpm`,
+    gallery: `https://imagedelivery.net/${hash}/${id}/gallery`
+  };
+}
+
+async function createCloudflareDirectUpload(env: Env, target: MediaAccessTarget, upload: MediaUploadMetadata, reservation: any): Promise<{ cfImageId: string; uploadURL: string; variants: Record<MediaVariantName, string> }> {
+  const accountId = String(env.CF_IMAGES_ACCOUNT_ID || "").trim();
+  const token = String(env.CF_IMAGES_API_TOKEN || "").trim();
+  const accountHash = String(env.CF_IMAGES_ACCOUNT_HASH || "").trim();
+
+  if (!accountId || !token) {
+    throw new Error("cf_images_config_missing");
+  }
+
+  if (!accountHash) {
+    throw new Error("cf_images_account_hash_missing");
+  }
+
+  const form = new FormData();
+  form.set("metadata", JSON.stringify({
+    source: "navigen-img-v1",
+    targetType: target.targetType,
+    targetId: target.targetId,
+    mediaId: String(reservation?.mediaId || ""),
+    uploadSessionId: String(reservation?.uploadSessionId || ""),
+    mimeType: upload.mimeType,
+    sizeBytes: upload.sizeBytes
+  }));
+
+  const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/images/v2/direct_upload`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form
+  });
+
+  const payload = await cfRes.json().catch(() => null) as any;
+  if (!cfRes.ok || !payload?.success) {
+    const message = String(payload?.errors?.[0]?.message || payload?.error || "Cloudflare Images direct upload request failed.").trim();
+    throw new Error(`cf_images_direct_upload_failed:${message}`);
+  }
+
+  const cfImageId = String(payload?.result?.id || "").trim();
+  const uploadURL = String(payload?.result?.uploadURL || "").trim();
+  if (!cfImageId || !uploadURL) {
+    throw new Error("cf_images_direct_upload_incomplete");
+  }
+
+  return {
+    cfImageId,
+    uploadURL,
+    variants: buildCloudflareImageVariantUrls(env, cfImageId)
+  };
+}
+
+async function readCloudflareImageUploadState(env: Env, cfImageId: string): Promise<{ ok: true; uploaded: boolean } | { ok: false; status: number; code: string; message: string }> {
+  const accountId = String(env.CF_IMAGES_ACCOUNT_ID || "").trim();
+  const token = String(env.CF_IMAGES_API_TOKEN || "").trim();
+  const imageId = String(cfImageId || "").trim();
+
+  if (!accountId || !token) {
+    return {
+      ok: false,
+      status: 503,
+      code: "cf_images_config_missing",
+      message: "Cloudflare Images configuration is missing."
+    };
+  }
+
+  if (!imageId) {
+    return {
+      ok: false,
+      status: 400,
+      code: "invalid_cf_image_id",
+      message: "Cloudflare image id is required."
+    };
+  }
+
+  const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/images/v1/${encodeURIComponent(imageId)}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const payload = await cfRes.json().catch(() => null) as any;
+  if (!cfRes.ok || !payload?.success) {
+    return {
+      ok: false,
+      status: cfRes.status >= 400 ? cfRes.status : 502,
+      code: "cf_images_status_failed",
+      message: String(payload?.errors?.[0]?.message || "Cloudflare Images upload status could not be verified.")
+    };
+  }
+
+  const result = (payload?.result && typeof payload.result === "object") ? payload.result : {};
+  if (String(result?.id || "").trim() !== imageId) {
+    return {
+      ok: false,
+      status: 502,
+      code: "cf_images_status_mismatch",
+      message: "Cloudflare Images returned an unexpected image record."
+    };
+  }
+
+  return {
+    ok: true,
+    uploaded: result?.draft !== true && Boolean(String(result?.uploaded || "").trim())
+  };
+}
+
+async function deleteCloudflareImage(env: Env, cfImageId: string): Promise<{ ok: true } | { ok: false; code: string; message: string }> {
+  const accountId = String(env.CF_IMAGES_ACCOUNT_ID || "").trim();
+  const token = String(env.CF_IMAGES_API_TOKEN || "").trim();
+  const imageId = String(cfImageId || "").trim();
+
+  if (!accountId || !token) {
+    return {
+      ok: false,
+      code: "cf_images_config_missing",
+      message: "Cloudflare Images configuration is missing."
+    };
+  }
+
+  if (!imageId) {
+    return {
+      ok: true
+    };
+  }
+
+  const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/images/v1/${encodeURIComponent(imageId)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (cfRes.status === 404) {
+    return { ok: true };
+  }
+
+  const payload = await cfRes.json().catch(() => null) as any;
+  if (!cfRes.ok || payload?.success === false) {
+    return {
+      ok: false,
+      code: "cf_images_delete_failed",
+      message: String(payload?.errors?.[0]?.message || "Cloudflare Images delete failed.")
+    };
+  }
+
+  return { ok: true };
+}
+
+async function mediaTargetDoFetch(env: Env, targetType: MediaTargetType, targetId: string, body: Record<string, unknown>): Promise<{ status: number; payload: any }> {
+  const id = env.DO_MEDIA_TARGET.idFromName(mediaManifestKey(targetType, targetId));
+  const stub = env.DO_MEDIA_TARGET.get(id);
+  const res = await stub.fetch("https://media-target.internal/", {
+    method: "POST",
+    headers: { "content-type": "application/json; charset=utf-8" },
+    body: JSON.stringify({ targetType, targetId, ...body })
+  });
+  const payload = await res.json().catch(() => null) as any;
+  return { status: res.status, payload };
+}
+
+async function cancelMediaReservation(env: Env, target: MediaAccessTarget, uploadSessionId: string): Promise<void> {
+  try {
+    await mediaTargetDoFetch(env, target.targetType, target.targetId, {
+      op: "cancel-reservation",
+      uploadSessionId
+    });
+  } catch {}
+}
+
+async function handleMediaDirectUpload(req: Request, env: Env): Promise<Response> {
+  const body = await req.json().catch(() => null) as any;
+  if (!body || typeof body !== "object") {
+    return mediaError("invalid_request", "valid JSON body required", 400);
+  }
+
+  const uploadCheck = validateMediaUploadMetadata(body);
+  if ("response" in uploadCheck) return uploadCheck.response;
+
+  const targetCheck = await resolveMediaWriteTarget(req, env, body);
+  if ("response" in targetCheck) return targetCheck.response;
+
+  const target = targetCheck.target;
+  const reserve = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
+    op: "reserve",
+    actor: target.actor,
+    upload: uploadCheck.upload
+  });
+
+  if (!reserve.payload?.ok) {
+    return mediaError(
+      String(reserve.payload?.reason || "media_reservation_failed"),
+      String(reserve.payload?.message || "Media upload reservation failed."),
+      reserve.status || 409,
+      {
+        maxActiveImages: MEDIA_MAX_ACTIVE_IMAGES,
+        manifest: reserve.payload?.manifest || mediaEmptyManifest(target.targetType, target.targetId)
+      }
+    );
+  }
+
+  const uploadSessionId = String(reserve.payload?.reservation?.uploadSessionId || "").trim();
+  if (!uploadSessionId) {
+    return mediaError("media_reservation_incomplete", "Media upload reservation did not return a session id.", 500);
+  }
+
+  let cf: { cfImageId: string; uploadURL: string; variants: Record<MediaVariantName, string> };
+  try {
+    cf = await createCloudflareDirectUpload(env, target, uploadCheck.upload, reserve.payload.reservation);
+  } catch (e: any) {
+    await cancelMediaReservation(env, target, uploadSessionId);
+    const raw = String(e?.message || "").trim();
+    const code = raw.startsWith("cf_images_direct_upload_failed") ? "cf_images_direct_upload_failed" : raw || "cf_images_direct_upload_failed";
+    return mediaError(code, raw || "Cloudflare Images direct upload could not be created.", code === "cf_images_config_missing" || code === "cf_images_account_hash_missing" ? 503 : 502);
+  }
+
+  const attached = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
+    op: "attach-cloudflare-id",
+    uploadSessionId,
+    cfImageId: cf.cfImageId,
+    variants: cf.variants
+  });
+
+  if (!attached.payload?.ok) {
+    await cancelMediaReservation(env, target, uploadSessionId);
+    return mediaError(
+      String(attached.payload?.reason || "media_reservation_attach_failed"),
+      String(attached.payload?.message || "Cloudflare image id could not be attached to the media reservation."),
+      attached.status || 409
+    );
+  }
+
+  return json(
+    {
+      ok: true,
+      targetType: target.targetType,
+      targetId: target.targetId,
+      draftULID: target.draftULID,
+      draftSessionId: target.draftSessionId,
+      createdDraft: target.createdDraft,
+      mediaId: String(reserve.payload?.reservation?.mediaId || ""),
+      uploadSessionId,
+      cfImageId: cf.cfImageId,
+      uploadURL: cf.uploadURL,
+      variants: cf.variants,
+      manifest: mediaManifestForClient(attached.payload.manifest, true)
+    },
+    200,
+    { "cache-control": "no-store" }
+  );
+}
+
+async function resolveExistingMediaWriteTarget(req: Request, env: Env, body: any): Promise<{ ok: true; target: MediaAccessTarget } | { ok: false; response: Response }> {
+  const input = extractMediaTargetInput(body);
+
+  if (!input.targetType) {
+    return { ok: false, response: mediaError("invalid_target", "targetType must be draft or location.", 400) };
+  }
+
+  if (!input.targetId) {
+    return { ok: false, response: mediaError("invalid_target", "Existing media mutation requires targetId.", 400) };
+  }
+
+  return await resolveMediaWriteTarget(req, env, body);
+}
+
+async function handleMediaComplete(req: Request, env: Env): Promise<Response> {
+  const body = await req.json().catch(() => null) as any;
+  if (!body || typeof body !== "object") {
+    return mediaError("invalid_request", "valid JSON body required", 400);
+  }
+
+  const uploadSessionId = String(body?.uploadSessionId || "").trim();
+  const cfImageId = String(body?.cfImageId || "").trim();
+
+  if (!uploadSessionId || !cfImageId) {
+    return mediaError("invalid_upload_session", "uploadSessionId and cfImageId are required.", 400);
+  }
+
+  const targetCheck = await resolveExistingMediaWriteTarget(req, env, body);
+  if ("response" in targetCheck) return targetCheck.response;
+
+  const target = targetCheck.target;
+
+  const inspected = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
+    op: "inspect-complete",
+    uploadSessionId,
+    cfImageId
+  });
+
+  if (!inspected.payload?.ok) {
+    return mediaError(
+      String(inspected.payload?.reason || "media_complete_failed"),
+      String(inspected.payload?.message || "Media upload completion failed."),
+      inspected.status || 409
+    );
+  }
+
+  const uploadState = await readCloudflareImageUploadState(env, cfImageId);
+  if (!uploadState.ok) {
+    return mediaError(uploadState.code, uploadState.message, uploadState.status);
+  }
+
+  if (!uploadState.uploaded) {
+    return mediaError("upload_not_finished", "Cloudflare Images has not received the uploaded image yet.", 409);
+  }
+
+  const completed = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
+    op: "complete",
+    uploadSessionId,
+    cfImageId,
+    providerUploaded: true
+  });
+
+  if (!completed.payload?.ok) {
+    return mediaError(
+      String(completed.payload?.reason || "media_complete_failed"),
+      String(completed.payload?.message || "Media upload completion failed."),
+      completed.status || 409
+    );
+  }
+
+  return json(
+    {
+      ok: true,
+      targetType: target.targetType,
+      targetId: target.targetId,
+      mediaId: String(completed.payload?.mediaId || ""),
+      manifest: mediaManifestForClient(completed.payload.manifest, true)
+    },
+    200,
+    { "cache-control": "no-store" }
+  );
+}
+
+async function handleMediaDelete(req: Request, env: Env): Promise<Response> {
+  const body = await req.json().catch(() => null) as any;
+  if (!body || typeof body !== "object") {
+    return mediaError("invalid_request", "valid JSON body required", 400);
+  }
+
+  const mediaId = String(body?.mediaId || "").trim();
+  if (!mediaId) {
+    return mediaError("invalid_media", "mediaId is required.", 400);
+  }
+
+  const targetCheck = await resolveExistingMediaWriteTarget(req, env, body);
+  if ("response" in targetCheck) return targetCheck.response;
+
+  const target = targetCheck.target;
+
+  const deleted = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
+    op: "delete",
+    mediaId
+  });
+
+  if (!deleted.payload?.ok) {
+    return mediaError(
+      String(deleted.payload?.reason || "media_delete_failed"),
+      String(deleted.payload?.message || "Media delete failed."),
+      deleted.status || 409
+    );
+  }
+
+  const deletedImage = (deleted.payload?.image && typeof deleted.payload.image === "object") ? deleted.payload.image : {};
+  const cfImageId = String(deletedImage?.cfImageId || "").trim();
+  let manifest = deleted.payload.manifest;
+  let deletePending = false;
+  let providerDelete: Record<string, unknown> = { attempted: Boolean(cfImageId), ok: true };
+
+  if (cfImageId) {
+    const providerResult = await deleteCloudflareImage(env, cfImageId);
+    providerDelete = {
+      attempted: true,
+      ok: providerResult.ok,
+      code: providerResult.ok ? "" : providerResult.code
+    };
+
+    if (!providerResult.ok) {
+      deletePending = true;
+      const pending = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
+        op: "mark-delete-pending",
+        mediaId,
+        cfImageId,
+        reason: providerResult.code
+      });
+
+      if (pending.payload?.ok) {
+        manifest = pending.payload.manifest;
+      }
+    }
+  }
+
+  return json(
+    {
+      ok: true,
+      targetType: target.targetType,
+      targetId: target.targetId,
+      mediaId,
+      deletePending,
+      providerDelete,
+      manifest: mediaManifestForClient(manifest, true)
+    },
+    200,
+    { "cache-control": "no-store" }
+  );
+}
+
+async function handleMediaReorder(req: Request, env: Env): Promise<Response> {
+  const body = await req.json().catch(() => null) as any;
+  if (!body || typeof body !== "object") {
+    return mediaError("invalid_request", "valid JSON body required", 400);
+  }
+
+  const rawOrder = Array.isArray(body?.mediaIds)
+    ? body.mediaIds
+    : Array.isArray(body?.order)
+      ? body.order
+      : [];
+
+  const mediaIds = rawOrder.map((id: unknown) => String(id || "").trim()).filter(Boolean);
+  const uniqueCount = new Set(mediaIds).size;
+
+  if (!mediaIds.length || uniqueCount !== mediaIds.length) {
+    return mediaError("invalid_order", "mediaIds must contain each active media id exactly once.", 400);
+  }
+
+  const targetCheck = await resolveExistingMediaWriteTarget(req, env, body);
+  if ("response" in targetCheck) return targetCheck.response;
+
+  const target = targetCheck.target;
+
+  const reordered = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
+    op: "reorder",
+    mediaIds
+  });
+
+  if (!reordered.payload?.ok) {
+    return mediaError(
+      String(reordered.payload?.reason || "media_reorder_failed"),
+      String(reordered.payload?.message || "Media reorder failed."),
+      reordered.status || 409
+    );
+  }
+
+  return json(
+    {
+      ok: true,
+      targetType: target.targetType,
+      targetId: target.targetId,
+      manifest: mediaManifestForClient(reordered.payload.manifest, true)
+    },
+    200,
+    { "cache-control": "no-store" }
+  );
+}
+
+async function handleMediaManifestRead(req: Request, env: Env): Promise<Response> {
+  const url = new URL(req.url);
+  const targetType = normalizeMediaTargetType(url.searchParams.get("targetType"));
+  const rawTargetId = String(url.searchParams.get("targetId") || "").trim();
+
+  if (!targetType || !rawTargetId) {
+    return mediaError("invalid_target", "targetType and targetId are required.", 400);
+  }
+
+  let targetId = rawTargetId;
+  let includeReserved = false;
+
+  if (targetType === "draft") {
+    const draftSessionId = String(url.searchParams.get("draftSessionId") || "").trim();
+    const admin = isAdminPreseedAuthorized(req, env);
+    if (!ULID_RE.test(targetId) || (!draftSessionId && !admin)) {
+      return mediaError("forbidden", "Draft media manifest access requires the draft session.", 403);
+    }
+
+    if (!admin) {
+      const draft = await readPrivateShellDraft(env, targetId, draftSessionId);
+      if (!draft) return mediaError("forbidden", "Draft media manifest access is not allowed for this session.", 403);
+    }
+
+    includeReserved = true;
+  } else {
+    targetId = ULID_RE.test(rawTargetId)
+      ? rawTargetId
+      : String(await resolveUid(rawTargetId, env) || "").trim();
+
+    if (!ULID_RE.test(targetId)) {
+      return mediaError("not_found", "Published location target was not found.", 404);
+    }
+
+    const published = await readPublishedEffectiveProfileByUlid(targetId, env);
+    if (!published) {
+      return mediaError("not_found", "Published location target was not found.", 404);
+    }
+  }
+
+  const raw = await env.KV_MEDIA.get(mediaManifestKey(targetType, targetId), { type: "json" }) as any;
+  const manifest = normalizeMediaManifest(raw || {}, targetType, targetId);
+
+  return json(
+    {
+      ok: true,
+      manifest: mediaManifestForClient(manifest, includeReserved)
+    },
+    200,
+    { "cache-control": "no-store" }
+  );
+}
+
+export class MediaTargetDO {
+  state: DurableObjectState;
+  env: any;
+
+  constructor(state: DurableObjectState, env: any) {
+    this.state = state;
+    this.env = env;
+  }
+
+  private async readState(targetType: MediaTargetType, targetId: string): Promise<MediaManifest> {
+    const hit = await this.state.storage.get<MediaManifest>("manifest");
+    return normalizeMediaManifest(hit || {}, targetType, targetId);
+  }
+
+  private expireReservations(manifest: MediaManifest, nowMs: number): boolean {
+    let changed = false;
+    for (const img of manifest.images) {
+      if (img.status !== "reserved") continue;
+      const expMs = Date.parse(String(img.expiresAt || ""));
+      if (!Number.isFinite(expMs) || expMs > nowMs) continue;
+      img.status = "expired";
+      img.updatedAt = new Date(nowMs).toISOString();
+      changed = true;
+    }
+    return changed;
+  }
+
+  private compactActiveSlots(manifest: MediaManifest): void {
+    const activeImages = manifest.images
+      .filter((img) => img.status === "active")
+      .sort((a, b) => {
+        if (a.slot !== b.slot) return a.slot - b.slot;
+        return a.createdAt.localeCompare(b.createdAt);
+      });
+
+    activeImages.forEach((img, index) => {
+      img.slot = index + 1;
+    });
+  }
+
+
+  private async writeState(manifest: MediaManifest): Promise<MediaManifest> {
+    const normalized = normalizeMediaManifest({ ...manifest, updatedAt: new Date().toISOString() }, manifest.targetType, manifest.targetId);
+    await this.state.storage.put("manifest", normalized);
+    await this.env.KV_MEDIA.put(mediaManifestKey(normalized.targetType, normalized.targetId), JSON.stringify(normalized));
+    return normalized;
+  }
+
+  async fetch(req: Request): Promise<Response> {
+    const body = await doReadJson(req);
+    const op = String(body?.op || "snapshot").trim().toLowerCase();
+    const targetType = normalizeMediaTargetType(body?.targetType);
+    const targetId = String(body?.targetId || "").trim();
+
+    if (!targetType || !DO_ULID_RE.test(targetId)) return doError("invalid_target", 400);
+
+    const nowMs = Date.now();
+    let manifest = await this.readState(targetType, targetId);
+    const expired = this.expireReservations(manifest, nowMs);
+    if (expired) manifest = await this.writeState(manifest);
+
+    if (op === "snapshot") {
+      return doJson({ ok: true, manifest });
+    }
+
+    if (op === "reserve") {
+      const upload = (body?.upload && typeof body.upload === "object") ? body.upload : {};
+      const mimeType = String(upload?.mimeType || "").trim().toLowerCase();
+      const sizeBytes = Math.floor(Number(upload?.sizeBytes || 0) || 0);
+      const filename = String(upload?.filename || "upload").trim().slice(0, 160) || "upload";
+
+      if (!MEDIA_ALLOWED_MIME_TYPES.has(mimeType)) return doError("unsupported_mime", 415);
+      if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) return doError("invalid_size", 400);
+      if (sizeBytes > MEDIA_MAX_UPLOAD_BYTES) return doError("too_large", 413, { maxBytes: MEDIA_MAX_UPLOAD_BYTES });
+
+      const capacityCount = manifest.images.filter((img) => mediaCapacityStatus(img.status, img.expiresAt, nowMs)).length;
+      if (capacityCount >= MEDIA_MAX_ACTIVE_IMAGES) {
+        return doError("too_many_images", 409, {
+          message: "Delete an image before uploading another.",
+          maxActiveImages: MEDIA_MAX_ACTIVE_IMAGES,
+          manifest
+        });
+      }
+
+      const nowIso = new Date(nowMs).toISOString();
+      const image: MediaImageRecord = {
+        mediaId: mintMediaToken("ngm"),
+        cfImageId: "",
+        uploadSessionId: mintMediaToken("ngu"),
+        status: "reserved",
+        slot: capacityCount + 1,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        expiresAt: new Date(nowMs + MEDIA_RESERVATION_TTL_MS).toISOString(),
+        createdBy: String(body?.actor || "").trim().slice(0, 120),
+        mimeType,
+        sizeBytes,
+        filename,
+        variants: {}
+      };
+
+      manifest.images.push(image);
+      manifest = await this.writeState(manifest);
+      return doJson({ ok: true, reservation: image, manifest });
+    }
+
+    if (op === "attach-cloudflare-id") {
+      const uploadSessionId = String(body?.uploadSessionId || "").trim();
+      const cfImageId = String(body?.cfImageId || "").trim();
+      const variants = (body?.variants && typeof body.variants === "object") ? body.variants : {};
+      if (!uploadSessionId || !cfImageId) return doError("invalid_upload_session", 400);
+
+      const image = manifest.images.find((img) => img.uploadSessionId === uploadSessionId);
+      if (!image || image.status !== "reserved") return doError("unknown_upload_session", 404);
+      if (!mediaCapacityStatus(image.status, image.expiresAt, nowMs)) return doError("reservation_expired", 409);
+      if (image.cfImageId && image.cfImageId !== cfImageId) return doError("cf_image_mismatch", 409);
+
+      const normalizedVariants: Partial<Record<MediaVariantName, string>> = {};
+      for (const name of MEDIA_VARIANT_NAMES) {
+        const variantUrl = String((variants as any)?.[name] || "").trim();
+        if (variantUrl) normalizedVariants[name] = variantUrl;
+      }
+
+      image.cfImageId = cfImageId;
+      image.variants = normalizedVariants;
+      image.updatedAt = new Date(nowMs).toISOString();
+      manifest = await this.writeState(manifest);
+      return doJson({ ok: true, manifest });
+    }
+
+    if (op === "inspect-complete") {
+      const uploadSessionId = String(body?.uploadSessionId || "").trim();
+      const cfImageId = String(body?.cfImageId || "").trim();
+      if (!uploadSessionId || !cfImageId) return doError("invalid_upload_session", 400);
+
+      const image = manifest.images.find((img) => img.uploadSessionId === uploadSessionId);
+      if (!image) return doError("unknown_upload_session", 404);
+
+      if (image.cfImageId !== cfImageId) return doError("cf_image_mismatch", 409);
+
+      if (image.status === "expired" || image.status === "deleted" || image.status === "deletePending") {
+        return doError("invalid_media_status", 409, { status: image.status });
+      }
+
+      if (image.status !== "active") {
+        const expMs = Date.parse(String(image.expiresAt || ""));
+        if (!Number.isFinite(expMs) || expMs <= nowMs) {
+          image.status = "expired";
+          image.updatedAt = new Date(nowMs).toISOString();
+          manifest = await this.writeState(manifest);
+          return doError("reservation_expired", 409, { manifest });
+        }
+      }
+
+      const capacityCount = manifest.images.filter((img) => {
+        if (img.mediaId === image.mediaId) return false;
+        return mediaCapacityStatus(img.status, img.expiresAt, nowMs);
+      }).length;
+
+      if (capacityCount >= MEDIA_MAX_ACTIVE_IMAGES) {
+        return doError("too_many_images", 409, {
+          message: "Delete an image before completing another upload.",
+          maxActiveImages: MEDIA_MAX_ACTIVE_IMAGES,
+          manifest
+        });
+      }
+
+      return doJson({ ok: true, image, manifest });
+    }
+
+    if (op === "complete") {
+      const uploadSessionId = String(body?.uploadSessionId || "").trim();
+      const cfImageId = String(body?.cfImageId || "").trim();
+      const providerUploaded = body?.providerUploaded === true;
+      if (!uploadSessionId || !cfImageId) return doError("invalid_upload_session", 400);
+
+      const image = manifest.images.find((img) => img.uploadSessionId === uploadSessionId);
+      if (!image) return doError("unknown_upload_session", 404);
+
+      if (image.cfImageId !== cfImageId) return doError("cf_image_mismatch", 409);
+
+      if (image.status === "active") {
+        this.compactActiveSlots(manifest);
+        manifest = await this.writeState(manifest);
+        return doJson({ ok: true, mediaId: image.mediaId, manifest });
+      }
+
+      if (image.status !== "reserved" && image.status !== "uploaded") {
+        return doError("invalid_media_status", 409, { status: image.status });
+      }
+
+      const expMs = Date.parse(String(image.expiresAt || ""));
+      if (!Number.isFinite(expMs) || expMs <= nowMs) {
+        image.status = "expired";
+        image.updatedAt = new Date(nowMs).toISOString();
+        manifest = await this.writeState(manifest);
+        return doError("reservation_expired", 409, { manifest });
+      }
+
+      if (!providerUploaded) {
+        return doError("upload_not_finished", 409);
+      }
+
+      const capacityCount = manifest.images.filter((img) => {
+        if (img.mediaId === image.mediaId) return false;
+        return mediaCapacityStatus(img.status, img.expiresAt, nowMs);
+      }).length;
+
+      if (capacityCount >= MEDIA_MAX_ACTIVE_IMAGES) {
+        return doError("too_many_images", 409, {
+          message: "Delete an image before completing another upload.",
+          maxActiveImages: MEDIA_MAX_ACTIVE_IMAGES,
+          manifest
+        });
+      }
+
+      image.status = "active";
+      image.updatedAt = new Date(nowMs).toISOString();
+      this.compactActiveSlots(manifest);
+      manifest = await this.writeState(manifest);
+      return doJson({ ok: true, mediaId: image.mediaId, manifest });
+    }
+
+    if (op === "delete") {
+      const mediaId = String(body?.mediaId || "").trim();
+      if (!mediaId) return doError("invalid_media", 400);
+
+      const image = manifest.images.find((img) => img.mediaId === mediaId);
+      if (!image) return doError("media_not_found", 404);
+
+      if (image.status !== "deleted") {
+        image.status = "deleted";
+        image.updatedAt = new Date(nowMs).toISOString();
+        this.compactActiveSlots(manifest);
+        manifest = await this.writeState(manifest);
+      }
+
+      return doJson({ ok: true, image, manifest });
+    }
+
+    if (op === "mark-delete-pending") {
+      const mediaId = String(body?.mediaId || "").trim();
+      const cfImageId = String(body?.cfImageId || "").trim();
+      if (!mediaId) return doError("invalid_media", 400);
+
+      const image = manifest.images.find((img) => img.mediaId === mediaId);
+      if (!image) return doError("media_not_found", 404);
+
+      if (!cfImageId || image.cfImageId === cfImageId) {
+        image.status = "deletePending";
+        image.updatedAt = new Date(nowMs).toISOString();
+        this.compactActiveSlots(manifest);
+        manifest = await this.writeState(manifest);
+      }
+
+      return doJson({ ok: true, image, manifest });
+    }
+
+    if (op === "reorder") {
+      const mediaIds = Array.isArray(body?.mediaIds)
+        ? body.mediaIds.map((id: unknown) => String(id || "").trim()).filter(Boolean)
+        : [];
+
+      if (!mediaIds.length || new Set(mediaIds).size !== mediaIds.length) {
+        return doError("invalid_order", 400);
+      }
+
+      const activeImages = manifest.images.filter((img) => img.status === "active");
+      const activeIds = new Set(activeImages.map((img) => img.mediaId));
+
+      if (mediaIds.length !== activeImages.length) {
+        return doError("invalid_order", 409, {
+          message: "Reorder must include each active media id exactly once.",
+          activeCount: activeImages.length
+        });
+      }
+
+      for (const mediaId of mediaIds) {
+        if (!activeIds.has(mediaId)) {
+          return doError("unknown_media_id", 400, { mediaId });
+        }
+      }
+
+      for (const image of activeImages) {
+        image.slot = mediaIds.indexOf(image.mediaId) + 1;
+        image.updatedAt = new Date(nowMs).toISOString();
+      }
+
+      this.compactActiveSlots(manifest);
+      manifest = await this.writeState(manifest);
+      return doJson({ ok: true, manifest });
+    }
+
+
+    if (op === "cancel-reservation") {
+      const uploadSessionId = String(body?.uploadSessionId || "").trim();
+      const image = manifest.images.find((img) => img.uploadSessionId === uploadSessionId && img.status === "reserved");
+      if (image) {
+        image.status = "expired";
+        image.updatedAt = new Date(nowMs).toISOString();
+        manifest = await this.writeState(manifest);
+      }
+      return doJson({ ok: true, manifest });
+    }
+
+    return doError("unsupported_op", 400, { op });
+  }
+}
+
 // --- Phase 8 Durable Objects ---
 // Replaces the old deploy-unblock stubs with the real authoritative objects used by:
 // - publish-capacity enforcement (PlanAllocDO)
@@ -3950,6 +5087,31 @@ export default {
             ...noStoreHeaders
           }
         });
+      }
+
+      // --- IMG v1 media direct upload reservation: Create Location Media upload foundation
+      if (normPath === "/api/media/direct-upload" && req.method === "POST") {
+        return await handleMediaDirectUpload(req, env);
+      }
+
+      // --- IMG v1 media completion: verify provider upload before activating manifest image
+      if (normPath === "/api/media/complete" && req.method === "POST") {
+        return await handleMediaComplete(req, env);
+      }
+
+      // --- IMG v1 media manifest read: manifest-first rendering foundation
+      if (normPath === "/api/media/manifest" && req.method === "GET") {
+        return await handleMediaManifestRead(req, env);
+      }
+
+      // --- IMG v1 media delete: soft-delete manifest first, then attempt provider cleanup
+      if (normPath === "/api/media/delete" && req.method === "POST") {
+        return await handleMediaDelete(req, env);
+      }
+
+      // --- IMG v1 media reorder: slot order determines cover/gallery roles
+      if (normPath === "/api/media/reorder" && req.method === "POST") {
+        return await handleMediaReorder(req, env);
       }
       
       // --- Location Google import autocomplete: server-side Places API New predictions
