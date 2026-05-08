@@ -6458,11 +6458,11 @@ export function createRequestListingModal(opts = {}) {
     };
   }
   
-  function requestListingMediaAbandonDraft(reason = 'cancel') {
-    if (requestListingMediaAbandonStarted) return;
-    if (requestListingMediaDraftCommitted) return;
-    if (!requestListingMediaDraftCreatedByMedia) return;
-    if (!requestListingMediaDraftULID || !requestListingMediaDraftSessionId) return;
+  async function requestListingMediaAbandonDraft(reason = 'cancel') {
+    if (requestListingMediaAbandonStarted) return true;
+    if (requestListingMediaDraftCommitted) return true;
+    if (!requestListingMediaDraftCreatedByMedia) return true;
+    if (!requestListingMediaDraftULID || !requestListingMediaDraftSessionId) return true;
 
     requestListingMediaAbandonStarted = true;
 
@@ -6472,30 +6472,32 @@ export function createRequestListingModal(opts = {}) {
       googlePlaceId: String(prefill?.googlePlaceId || '').trim()
     };
 
-    void (async () => {
-      const mediaOk = await abandonPendingLocationDraftMedia(draft, reason, { keepalive: true });
-      if (!mediaOk) return;
+    const mediaOk = await abandonPendingLocationDraftMedia(draft, reason, { keepalive: true });
+    if (!mediaOk) {
+      requestListingMediaAbandonStarted = false;
+      return false;
+    }
 
-      try {
-        await fetch('/api/location/draft', {
-          method: 'DELETE',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            draftULID: draft.draftULID,
-            draftSessionId: draft.draftSessionId,
-            googlePlaceId: draft.googlePlaceId
-          }),
-          cache: 'no-store',
-          credentials: 'include',
-          keepalive: true
-        });
-      } catch {
-        // best-effort cleanup only; media cleanup already ran
-      }
+    try {
+      await fetch('/api/location/draft', {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          draftULID: draft.draftULID,
+          draftSessionId: draft.draftSessionId,
+          googlePlaceId: draft.googlePlaceId
+        }),
+        cache: 'no-store',
+        credentials: 'include',
+        keepalive: true
+      });
+    } catch {
+      // best-effort cleanup only; media cleanup already ran
+    }
 
-      clearPendingLocationDraft(draft);
-    })();
-  }  
+    clearPendingLocationDraft(draft);
+    return true;
+  }
 
   function requestListingMediaSetBusy(busy) {
     requestListingMediaBusy = !!busy;
@@ -7911,13 +7913,31 @@ export function showLocationDraftNextStepsModal(draftMeta = {}, opts = {}) {
   document.getElementById(id)?.remove();
 
   const shouldReturnToSelectLocation = String(opts?.returnTo || '').trim() === 'syb';
-  const draftULID = String(draftMeta?.draftULID || '').trim();
-  const draftSessionId = String(draftMeta?.draftSessionId || '').trim();
-
-  const closeNextSteps = (ev = null) => {
+  let requestListingCloseStarted = false;
+  const closeRequestListing = async (ev = null) => {
     ev?.preventDefault?.();
     ev?.stopPropagation?.();
+
+    if (requestListingCloseStarted) return;
+
+    if (requestListingMediaBusy) {
+      showToast(translatedOrFallback('media.upload.uploading', 'Uploading image...'), 1800);
+      return;
+    }
+
+    requestListingCloseStarted = true;
+
+    const cleanupOk = await requestListingMediaAbandonDraft('cancel');
+    if (!cleanupOk) {
+      requestListingCloseStarted = false;
+      showToast(translatedOrFallback('media.upload.cleanupFailed', 'Could not clean up draft images.'), 2400);
+      return;
+    }
+
+    hideModal(contextModalId);
+    removeModal(contextModalId);
     hideModal(id);
+
     if (shouldReturnToSelectLocation) showSelectLocationModal();
   };
 
