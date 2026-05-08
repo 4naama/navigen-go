@@ -6253,7 +6253,7 @@ export function createRequestListingModal(opts = {}) {
                     <strong>${translatedOrFallback('media.upload.drop', 'Drop photos here or browse')}</strong>
                     <small>${translatedOrFallback('media.upload.limit', 'JPEG, PNG, or WebP. Up to 3 active images, 10 MB each after optimization.')}</small>
                   </span>
-                  <span class="request-media-browse-label">${translatedOrFallback('media.upload.browse', 'Browse')}</span>
+                  <span class="modal-body-button request-media-browse-label">${translatedOrFallback('media.upload.browse', 'Browse')}</span>
                 </button>
                 <div id="rl-media-status" class="modal-help-text request-media-status" aria-live="polite"></div>
                 <div id="rl-media-grid" class="request-media-grid"></div>
@@ -6522,6 +6522,7 @@ export function createRequestListingModal(opts = {}) {
       meta.className = 'request-media-meta';
 
       const role = document.createElement('strong');
+      role.className = isActive && activeIndex === 0 ? 'request-media-role is-cover' : 'request-media-role';
       role.textContent = roleLabel;
 
       const state = document.createElement('small');
@@ -6739,7 +6740,6 @@ export function createRequestListingModal(opts = {}) {
       if (!res?.ok) throw new Error(String(payload?.error?.code || 'delete_failed'));
       requestListingMediaManifest = payload?.manifest || requestListingMediaManifest;
       requestListingMediaLocalPreviews.delete(cleanMediaId);
-      requestListingMediaRender();
       if (payload?.deletePending) requestListingMediaSetStatus(translatedOrFallback('media.upload.deletePending', 'Deleted from listing. Provider cleanup is pending.'));
     } catch {
       const message = translatedOrFallback('media.upload.deleteFailed', 'Could not delete image.');
@@ -6747,6 +6747,7 @@ export function createRequestListingModal(opts = {}) {
       showToast(message, 2200);
     } finally {
       requestListingMediaSetBusy(false);
+      requestListingMediaRender();
     }
   }
 
@@ -6777,13 +6778,13 @@ export function createRequestListingModal(opts = {}) {
       const payload = await res.json().catch(() => null);
       if (!res?.ok) throw new Error(String(payload?.error?.code || 'reorder_failed'));
       requestListingMediaManifest = payload?.manifest || requestListingMediaManifest;
-      requestListingMediaRender();
     } catch {
       const message = translatedOrFallback('media.upload.reorderFailed', 'Could not reorder images.');
       requestListingMediaSetStatus(message, true);
       showToast(message, 2200);
     } finally {
       requestListingMediaSetBusy(false);
+      requestListingMediaRender();
     }
   }
 

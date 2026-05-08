@@ -6556,16 +6556,8 @@ body.high-contrast .modal-menu-item.is-active {
 }
 
 #request-listing-modal .request-media-browse-label{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-height:32px;
-  padding:0 12px;
-  border:1px solid #8fb2ff;
-  border-radius:999px;
-  background:#dbeafe;
-  color:#1d4ed8;
-  font-weight:700;
+  flex:0 0 auto;
+  min-width:110px;
   white-space:nowrap;
 }
 
@@ -6636,6 +6628,15 @@ body.high-contrast .modal-menu-item.is-active {
 #request-listing-modal .request-media-meta strong{
   color:#1f2937;
   font-size:.86rem;
+}
+
+#request-listing-modal .request-media-role.is-cover{
+  color:#92400e;
+}
+
+#request-listing-modal .request-media-role.is-cover::before{
+  content:"★ ";
+  color:#f59e0b;
 }
 
 #request-listing-modal .request-media-meta small{
