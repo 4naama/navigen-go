@@ -6485,6 +6485,8 @@ export function createRequestListingModal(opts = {}) {
       googlePlaceId: String(prefill?.googlePlaceId || '').trim()
     };
 
+    clearPendingLocationDraft(draft);
+
     const mediaOk = await abandonPendingLocationDraftMedia(draft, reason, { keepalive: true });
     if (!mediaOk) {
       requestListingMediaAbandonStarted = false;
@@ -6560,21 +6562,24 @@ export function createRequestListingModal(opts = {}) {
       requestListingMediaDraftCommitted = false;
     }
 
-    savePendingLocationDraft({
-      ...(prefill && typeof prefill === 'object' ? prefill : {}),
-      draftULID,
-      draftSessionId,
-      mode: String(prefill?.mode || '').trim() || (String(prefill?.googlePlaceId || '').trim() ? 'google' : 'manual'),
-      googlePlaceId: String(prefill?.googlePlaceId || '').trim(),
-      name: String(prefillName || '').trim(),
-      address: String(prefillAddress || '').trim(),
-      city: String(prefillCity || '').trim(),
-      country: String(prefillCountry || '').trim(),
-      cover: String(rlCover?.value || '').trim(),
-      images: [String(rlImage1?.value || '').trim(), String(rlImage2?.value || '').trim()].filter(Boolean),
-      createdAt: Number(prefill?.createdAt || Date.now()),
-      updatedAt: Date.now()
-    });
+    if (!requestListingMediaDraftCreatedByMedia) {
+      savePendingLocationDraft({
+        ...(prefill && typeof prefill === 'object' ? prefill : {}),
+        draftULID,
+        draftSessionId,
+        mode: String(prefill?.mode || '').trim() || (String(prefill?.googlePlaceId || '').trim() ? 'google' : 'manual'),
+        googlePlaceId: String(prefill?.googlePlaceId || '').trim(),
+        name: String(prefillName || '').trim(),
+        address: String(prefillAddress || '').trim(),
+        city: String(prefillCity || '').trim(),
+        country: String(prefillCountry || '').trim(),
+        cover: String(rlCover?.value || '').trim(),
+        images: [String(rlImage1?.value || '').trim(), String(rlImage2?.value || '').trim()].filter(Boolean),
+        mediaManifest: requestListingMediaManifest,
+        createdAt: Number(prefill?.createdAt || Date.now()),
+        updatedAt: Date.now()
+      });
+    }
   }
 
   function requestListingMediaRender() {
@@ -7880,6 +7885,7 @@ export function createRequestListingModal(opts = {}) {
       cover,
       images: imageVals,
       mediaManifest: requestListingMediaManifest,
+      mediaOnlyDraft: false,
       coord: coordNorm,
       groupKey,
       subgroupKey,
