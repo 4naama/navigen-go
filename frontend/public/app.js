@@ -2073,6 +2073,8 @@ async function initEmergencyBlock(countryOverride) {
       const camp   = (q.get('camp') || '').trim();
       const isLegacyRedeemSuccess = redeemed === '1';
       const isRedeemLanding = !!uid && (redeem === 'pending' || isLegacyRedeemSuccess);
+      
+      let directLpOpened = false;
 
       // Redeem landings must bypass the normal ?lp LPM boot path.
       // Otherwise promo QR traffic is treated like a regular LPM/QR-scan entry.
@@ -2163,18 +2165,20 @@ async function initEmergencyBlock(countryOverride) {
             outcome: 'invalid'
           });
         }
-      } else if (uid && Array.isArray(geoPoints) && geoPoints.length) {
-        const rec = geoPoints.find(x =>
-          String(x?.ID || x?.id || '') === uid ||              // ULID match
-          String(x?.locationID || '') === uid                  // slug / alias match
-        ); // find by ULID or slug in local list
+      } else if (uid) {
+        const rec = Array.isArray(geoPoints) && geoPoints.length
+          ? geoPoints.find(x =>
+              String(x?.ID || x?.id || '') === uid ||              // ULID match
+              String(x?.locationID || '') === uid                  // slug / alias match
+            )
+          : null; // find by ULID or slug in local list before API fallback
 
         if (rec) {
           const media   = rec.media || {};
           const gallery = Array.isArray(media.images) ? media.images : [];
           const images  = gallery.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
 
-          const cover = (media.cover && String(media.cover).trim()) || images[0];
+          const cover = (media.cover && String(media.cover).trim()) || images[0] || '';
           if (!cover) console.warn('Media fallback: no legacy cover before redirect LPM open');
 
           const cc = String(rec["Coordinate Compound"] || rec.coord || "");
@@ -2210,9 +2214,10 @@ async function initEmergencyBlock(countryOverride) {
             originEl: null
           });
 
+          directLpOpened = true;
           await maybeShowLpmInactiveNotice(uid);
-        } else if (uid) {
-          // Fallback: fetch by alias or ULID when the list for this context wasn’t loaded
+        } else {
+          // Fallback: fetch by alias or ULID when the list for this context wasn’t loaded or does not contain the direct profile.
           try {
             const res = await fetch(`${API_BASE}/api/data/item?id=${encodeURIComponent(uid)}`, {
               cache: 'no-store',
@@ -2226,7 +2231,7 @@ async function initEmergencyBlock(countryOverride) {
               const images = raw.map(v => (typeof v === 'string' ? v : v?.src)).filter(Boolean);
               const cover  = (media.cover && String(media.cover).trim()) || images[0] || '';
 
-              if (!cover) console.warn('Media fallback: no legacy cover before QR LPM open');
+              if (!cover) console.warn('Media fallback: no legacy cover before fetched LPM open');
 
               const cc = (() => {
                 if (typeof it?.coord === 'string') return it.coord;
@@ -2266,7 +2271,10 @@ async function initEmergencyBlock(countryOverride) {
                 originEl: null
               });
 
+              directLpOpened = true;
               await maybeShowLpmInactiveNotice(uid);
+            } else {
+              console.warn('Direct LPM fallback item fetch failed', uid, res.status);
             }
           } catch (e) {
             console.warn('QR fallback fetch failed', e);
@@ -2275,7 +2283,7 @@ async function initEmergencyBlock(countryOverride) {
       }
 
       // Drop redeem bootstrap params so refresh never replays the attempt or leaks the token in the URL.
-      q.delete('lp');
+      if (isRedeemLanding || directLpOpened) q.delete('lp');
       q.delete('rt');
       q.delete('redeem');
       q.delete('redeemed');
