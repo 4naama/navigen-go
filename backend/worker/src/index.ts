@@ -8792,10 +8792,18 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
   const auth = await requireOwnerSession(req, env);
   if (auth instanceof Response) return auth;
   if (String(auth.ulid || "").trim() !== target.ulid) {
-    return new Response("Denied", {
-      status: 403,
-      headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
-    });
+    return json(
+      {
+        error: {
+          code: "owner_session_mismatch",
+          message: "Owner session does not match publish target.",
+          ownerUlid: String(auth.ulid || "").trim(),
+          targetUlid: target.ulid
+        }
+      },
+      403,
+      noStore
+    );
   }
 
   const ownKey = `ownership:${target.ulid}`;
