@@ -1186,5 +1186,7 @@
   "media.action.delete": "Elimina",
   "media.action.moveUp": "Sposta su",
   "media.action.moveDown": "Sposta giù",
-  "media.upload.cleanupFailed": "Impossibile pulire le immagini della bozza."
+  "media.upload.cleanupFailed": "Impossibile pulire le immagini della bozza.",
+  "owner.settings.signedin.visitProfile.title": "Visita profilo pubblico",
+  "owner.settings.signedin.visitProfile.desc": "Apri la pagina pubblica del listing per questa attività."
 }

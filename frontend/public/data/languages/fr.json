@@ -1186,5 +1186,7 @@
   "media.action.delete": "Supprimer",
   "media.action.moveUp": "Monter",
   "media.action.moveDown": "Descendre",
-  "media.upload.cleanupFailed": "Impossible de nettoyer les images du brouillon."
+  "media.upload.cleanupFailed": "Impossible de nettoyer les images du brouillon.",
+  "owner.settings.signedin.visitProfile.title": "Visiter le profil public",
+  "owner.settings.signedin.visitProfile.desc": "Ouvrez la page publique du listing pour cette entreprise."
 }

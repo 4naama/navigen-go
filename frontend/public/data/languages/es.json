@@ -1186,5 +1186,7 @@
   "media.action.delete": "Eliminar",
   "media.action.moveUp": "Subir",
   "media.action.moveDown": "Bajar",
-  "media.upload.cleanupFailed": "No se pudieron limpiar las imágenes del borrador."
+  "media.upload.cleanupFailed": "No se pudieron limpiar las imágenes del borrador.",
+  "owner.settings.signedin.visitProfile.title": "Visitar perfil público",
+  "owner.settings.signedin.visitProfile.desc": "Abre la página pública del listado de este negocio."
 }

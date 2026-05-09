@@ -1186,5 +1186,7 @@
   "media.action.delete": "Delete",
   "media.action.moveUp": "Move up",
   "media.action.moveDown": "Move down",
-  "media.upload.cleanupFailed": "Could not clean up draft images."
+  "media.upload.cleanupFailed": "Could not clean up draft images.",
+  "owner.settings.signedin.visitProfile.title": "Visit public profile",
+  "owner.settings.signedin.visitProfile.desc": "Open the public listing page for this business."
 }

@@ -7981,8 +7981,19 @@ export function showLocationDraftNextStepsModal(draftMeta = {}, opts = {}) {
       return;
     }
 
+    let guest = true;
+    try {
+      const rr = await fetch('/api/owner/campaigns', {
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      guest = !rr.ok;
+    } catch {
+      guest = true;
+    }
+
     await showCampaignManagementModal(draftULID, {
-      guest: true,
+      guest,
       p8Draft: draftMeta,
       preferEmptyDraft: true
     });
@@ -9067,6 +9078,19 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
     });
     
   } else if (variant === 'signedin') {
+    addItem({
+      id: 'owner-visit-profile',
+      icon: '👀',
+      title: _ownerText('owner.settings.signedin.visitProfile.title', 'Visit public profile'),
+      desc: _ownerText('owner.settings.signedin.visitProfile.desc', 'Open the public listing page for this business.'),
+      onClick: () => {
+        hideModal(id);
+        const seg = String(locId || selectedKey || '').trim();
+        if (seg) window.location.href = `${location.origin}/?lp=${encodeURIComponent(seg)}`;
+      }
+    });
+
+    
     addItem({
       id: 'owner-open-dash',
       icon: '📈',

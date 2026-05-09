@@ -1186,5 +1186,7 @@
   "media.action.delete": "Törlés",
   "media.action.moveUp": "Vissza fel",
   "media.action.moveDown": "Lejjebb",
-  "media.upload.cleanupFailed": "Nem sikerült megtisztítani a piszkozat képeit."
+  "media.upload.cleanupFailed": "Nem sikerült megtisztítani a piszkozat képeit.",
+  "owner.settings.signedin.visitProfile.title": "Nyilvános profil megnyitása",
+  "owner.settings.signedin.visitProfile.desc": "Nyisd meg a vállalkozás nyilvános listing oldalát."
 }

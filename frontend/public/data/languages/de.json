@@ -1186,5 +1186,7 @@
   "media.action.delete": "Löschen",
   "media.action.moveUp": "Nach oben",
   "media.action.moveDown": "Nach unten",
-  "media.upload.cleanupFailed": "Entwurfsbilder konnten nicht bereinigt werden."
+  "media.upload.cleanupFailed": "Entwurfsbilder konnten nicht bereinigt werden.",
+  "owner.settings.signedin.visitProfile.title": "Öffentliches Profil besuchen",
+  "owner.settings.signedin.visitProfile.desc": "Öffnen Sie die öffentliche Listing-Seite für dieses Unternehmen."
 }

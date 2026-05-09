@@ -1186,5 +1186,7 @@
   "media.action.delete": "מחק",
   "media.action.moveUp": "העבר למעלה",
   "media.action.moveDown": "העבר למטה",
-  "media.upload.cleanupFailed": "לא ניתן לנקות את תמונות הטיוטה."
+  "media.upload.cleanupFailed": "לא ניתן לנקות את תמונות הטיוטה.",
+  "owner.settings.signedin.visitProfile.title": "בקר בפרופיל הציבורי",
+  "owner.settings.signedin.visitProfile.desc": "פתח את דף הרישום הציבורי של העסק."
 }
