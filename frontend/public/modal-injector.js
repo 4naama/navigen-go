@@ -9088,7 +9088,7 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
         if (!seg) return;
 
         try {
-          const rr = await fetch(`/api/data/item?id=${encodeURIComponent(seg)}`, {
+          const rr = await fetch(API(`/api/data/item?id=${encodeURIComponent(seg)}`), {
             cache: 'no-store',
             credentials: 'omit'
           });
