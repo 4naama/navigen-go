@@ -3701,7 +3701,7 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   {
     const flow = String(url.searchParams.get("flow") || "").trim().toLowerCase();
     const canceled = String(url.searchParams.get("canceled") || "").trim();
-    if (flow === "campaign" && canceled === "1" && !url.searchParams.get("sid")) {
+    if ((flow === "campaign" || flow === "plan") && canceled === "1" && !url.searchParams.get("sid")) {
       try {
         const draftULID = String(url.searchParams.get('draftULID') || '').trim();
         const draftSessionId = String(url.searchParams.get('draftSessionId') || '').trim();
@@ -3718,9 +3718,9 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   const sessionId = url.searchParams.get("sid");
   const flow = String(url.searchParams.get("flow") || "").trim().toLowerCase();
   if (!sessionId) return;
-  // Campaign checkout return is webhook-authoritative.
+  // Plan/Campaign checkout return is Worker-authoritative.
   // Do NOT call the donation session endpoint or store "myPurchases".
-  if (flow === "campaign") {
+  if (flow === "campaign" || flow === "plan") {
     try {
       const current = new URL(window.location.href);
 
@@ -3808,6 +3808,18 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   try {
     shouldResume = sessionStorage.getItem('navigen.resumeCampaignAfterExchange') === '1';
   } catch {}
+
+  try {
+    if (!shouldResume) {
+      const current = new URL(window.location.href);
+      const urlDraftULID = String(current.searchParams.get('draftULID') || '').trim();
+      const urlDraftSessionId = String(current.searchParams.get('draftSessionId') || '').trim();
+      const hasCheckoutSession = !!String(current.searchParams.get('sid') || '').trim();
+      const returnFlow = String(current.searchParams.get('flow') || '').trim().toLowerCase();
+      shouldResume = !!urlDraftULID && !!urlDraftSessionId && !hasCheckoutSession && !returnFlow;
+    }
+  } catch {}
+
   if (!shouldResume) return;
 
   let pending = null;
