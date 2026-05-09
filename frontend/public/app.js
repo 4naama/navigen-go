@@ -3801,7 +3801,7 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
     const sessionId = String(current.searchParams.get('sid') || '').trim();
     const flow = String(current.searchParams.get('flow') || '').trim().toLowerCase();
 
-    if (sessionId && flow === 'campaign') return;
+    if (sessionId && (flow === 'campaign' || flow === 'plan')) return;
   } catch {}
 
   let shouldResume = false;
@@ -3853,7 +3853,29 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   } catch {}
 
   if (!draftULID || !draftSessionId) return;
-  
+
+  try {
+    const qs = new URLSearchParams({ draftULID, draftSessionId });
+    const draftRes = await fetch(`/api/location/draft?${qs.toString()}`, {
+      cache: 'no-store',
+      credentials: 'include'
+    });
+    const draftPayload = draftRes.ok ? await draftRes.json().catch(() => null) : null;
+    const serverDraft = (draftPayload?.draft && typeof draftPayload.draft === 'object') ? draftPayload.draft : null;
+
+    if (serverDraft) {
+      pending = {
+        ...(pending && typeof pending === 'object' ? pending : {}),
+        ...serverDraft,
+        draftULID,
+        draftSessionId,
+        mode: String(serverDraft?.mode || pending?.mode || 'return').trim()
+      };
+
+      localStorage.setItem('navigen.p8.pendingLocationDraft', JSON.stringify(pending));
+    }
+  } catch {}
+
   try {
     sessionStorage.removeItem('navigen.resumeCampaignAfterExchange');
     sessionStorage.removeItem('navigen.resumeCampaignDraftULID');

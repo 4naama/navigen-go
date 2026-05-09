@@ -5237,6 +5237,11 @@ export default {
         return await handleGoogleImportAutocomplete(req, env);
       }
 
+      // --- Location draft read: private unpublished draft recovery by draft session
+      if (normPath === "/api/location/draft" && req.method === "GET") {
+        return await handleLocationDraftRead(req, env);
+      }
+
       // --- Location draft: /api/location/draft (Phase 8 private shell)
       if (normPath === "/api/location/draft" && req.method === "POST") {
         return await handleLocationDraft(req, env);
@@ -7608,6 +7613,45 @@ async function listPublishedLocationSelectorItems(
 }
 
 // ---------- handlers ----------
+
+async function handleLocationDraftRead(req: Request, env: Env): Promise<Response> {
+  const noStore = { "cache-control": "no-store" };
+  const url = new URL(req.url);
+  const draftULID = String(url.searchParams.get("draftULID") || "").trim();
+  const draftSessionId = String(url.searchParams.get("draftSessionId") || "").trim();
+
+  if (!ULID_RE.test(draftULID) || !draftSessionId) {
+    return json(
+      { error: { code: "invalid_request", message: "draftULID and draftSessionId required" } },
+      400,
+      noStore
+    );
+  }
+
+  const draft = await readPrivateShellDraft(env, draftULID, draftSessionId);
+  if (!draft) {
+    return json(
+      { error: { code: "not_found", message: "draft not found" } },
+      404,
+      noStore
+    );
+  }
+
+  return json(
+    {
+      ok: true,
+      draftULID,
+      draftSessionId,
+      draft: {
+        ...(draft && typeof draft === "object" ? draft : {}),
+        draftULID,
+        draftSessionId
+      }
+    },
+    200,
+    noStore
+  );
+}
 
 async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
   const noStore = { "cache-control": "no-store" };

@@ -1188,5 +1188,6 @@
   "media.action.moveDown": "Bajar",
   "media.upload.cleanupFailed": "No se pudieron limpiar las imágenes del borrador.",
   "owner.settings.signedin.visitProfile.title": "Visitar perfil público",
-  "owner.settings.signedin.visitProfile.desc": "Abre la página pública del listado de este negocio."
+  "owner.settings.signedin.visitProfile.desc": "Abre la página pública del listado de este negocio.",
+  "owner.settings.signedin.visitProfile.unpublished": "Este perfil aún no está publicado."
 }

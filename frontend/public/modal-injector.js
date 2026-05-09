@@ -9083,13 +9083,30 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
       icon: '👀',
       title: _ownerText('owner.settings.signedin.visitProfile.title', 'Visit public profile'),
       desc: _ownerText('owner.settings.signedin.visitProfile.desc', 'Open the public listing page for this business.'),
-      onClick: () => {
-        hideModal(id);
+      onClick: async () => {
         const seg = String(locId || selectedKey || '').trim();
-        if (seg) window.location.href = `${location.origin}/?lp=${encodeURIComponent(seg)}`;
+        if (!seg) return;
+
+        try {
+          const rr = await fetch(`/api/data/item?id=${encodeURIComponent(seg)}`, {
+            cache: 'no-store',
+            credentials: 'omit'
+          });
+          const item = rr.ok ? await rr.json().catch(() => null) : null;
+          const publicSlug = String(item?.locationID || item?.slug || seg).trim();
+
+          if (!rr.ok || !publicSlug) {
+            showToast(_ownerText('owner.settings.signedin.visitProfile.unpublished', 'This profile is not published yet.'), 2400);
+            return;
+          }
+
+          hideModal(id);
+          window.location.href = `${location.origin}/?lp=${encodeURIComponent(publicSlug)}`;
+        } catch {
+          showToast(_ownerText('owner.settings.signedin.visitProfile.unpublished', 'This profile is not published yet.'), 2400);
+        }
       }
     });
-
     
     addItem({
       id: 'owner-open-dash',

@@ -1188,5 +1188,6 @@
   "media.action.moveDown": "Lejjebb",
   "media.upload.cleanupFailed": "Nem sikerült megtisztítani a piszkozat képeit.",
   "owner.settings.signedin.visitProfile.title": "Nyilvános profil megnyitása",
-  "owner.settings.signedin.visitProfile.desc": "Nyisd meg a vállalkozás nyilvános listing oldalát."
+  "owner.settings.signedin.visitProfile.desc": "Nyisd meg a vállalkozás nyilvános listing oldalát.",
+  "owner.settings.signedin.visitProfile.unpublished": "Ez a profil még nincs közzétéve."
 }

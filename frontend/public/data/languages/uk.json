@@ -1188,5 +1188,6 @@
   "media.action.moveDown": "Перемістити вниз",
   "media.upload.cleanupFailed": "Не вдалося очистити зображення чернетки.",
   "owner.settings.signedin.visitProfile.title": "Відкрити публічний профіль",
-  "owner.settings.signedin.visitProfile.desc": "Відкрити публічну сторінку лістингу для цього бізнесу."
+  "owner.settings.signedin.visitProfile.desc": "Відкрити публічну сторінку лістингу для цього бізнесу.",
+  "owner.settings.signedin.visitProfile.unpublished": "Цей профіль ще не опублікований."
 }

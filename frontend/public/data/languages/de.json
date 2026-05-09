@@ -1188,5 +1188,6 @@
   "media.action.moveDown": "Nach unten",
   "media.upload.cleanupFailed": "Entwurfsbilder konnten nicht bereinigt werden.",
   "owner.settings.signedin.visitProfile.title": "Öffentliches Profil besuchen",
-  "owner.settings.signedin.visitProfile.desc": "Öffnen Sie die öffentliche Listing-Seite für dieses Unternehmen."
+  "owner.settings.signedin.visitProfile.desc": "Öffnen Sie die öffentliche Listing-Seite für dieses Unternehmen.",
+  "owner.settings.signedin.visitProfile.unpublished": "Dieses Profil ist noch nicht veröffentlicht."
 }
