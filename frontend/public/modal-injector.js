@@ -11383,7 +11383,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
             return;
           }
 
-          clearPendingLocationDraft(draftMeta);
+          clearPendingLocationDraft(latestDraft || p8Draft || { draftULID: String(p8Draft?.draftULID || '').trim(), draftSessionId: String(p8Draft?.draftSessionId || '').trim() });
           showToast((typeof t === 'function' && t('locationDraft.ui.published')) || 'Listing published.', 2200);
           hideModal(id);
 

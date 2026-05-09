@@ -4996,18 +4996,63 @@ export default {
       // --- Restore by PaymentIntent id (pi_...) for cross-device recovery
       if (normPath === "/owner/restore" && req.method === "GET") {
         const u = new URL(req.url);
-        const pi = String(u.searchParams.get("pi") || "").trim();
+        const normalizeRestoreId = (value: unknown) =>
+          String(value || "")
+            .trim()
+            .replace(/^["'<]+/, "")
+            .replace(/[>"']+$/, "");
+
+        const pi = normalizeRestoreId(
+          u.searchParams.get("pi") ||
+          u.searchParams.get("payment_intent") ||
+          u.searchParams.get("paymentIntent") ||
+          u.searchParams.get("payment_intent_id")
+        );
+
+        const sidParam = normalizeRestoreId(
+          u.searchParams.get("sid") ||
+          u.searchParams.get("session_id") ||
+          u.searchParams.get("sessionId") ||
+          u.searchParams.get("checkout_session") ||
+          u.searchParams.get("checkoutSession")
+        );
+
         const nextRaw = String(u.searchParams.get("next") || "").trim();
 
         const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+        const jsonMode = u.searchParams.get("json") === "1" || /\bapplication\/json\b/i.test(String(req.headers.get("Accept") || ""));
 
-        if (!pi || !/^pi_/i.test(pi)) return new Response("Denied", { status: 400, headers: noStoreHeaders });
+        const restoreByPi = /^pi_/i.test(pi);
+        const restoreBySid = /^cs_/i.test(sidParam);
+
+        if (!restoreByPi && !restoreBySid) {
+          if (jsonMode) {
+            return json(
+              {
+                error: {
+                  code: "invalid_restore_id",
+                  message: "Use pi=<PaymentIntent ID> or sid=<Checkout Session ID>.",
+                  received: {
+                    piLength: pi.length,
+                    piPrefix: pi.slice(0, 3),
+                    sidLength: sidParam.length,
+                    sidPrefix: sidParam.slice(0, 3),
+                    params: Array.from(u.searchParams.keys()).sort()
+                  }
+                }
+              },
+              400,
+              noStoreHeaders
+            );
+          }
+
+          return new Response("Denied", { status: 400, headers: noStoreHeaders });
+        }
 
         const isSafeNext = (p: string) =>
           p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
 
         const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "";
-        const jsonMode = u.searchParams.get("json") === "1" || /\bapplication\/json\b/i.test(String(req.headers.get("Accept") || ""));
         let redirectHint = "";
 
         const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
@@ -5020,19 +5065,55 @@ export default {
         let exclusiveUntil = new Date(0);
 
         try {
-          sess = await fetchStripeCheckoutSessionByPaymentIntent(sk, pi);
+          sess = restoreBySid
+            ? await fetchStripeCheckoutSession(sk, sidParam)
+            : await fetchStripeCheckoutSessionByPaymentIntent(sk, pi);
+
           const reconciled = await reconcilePaidCheckoutSessionPlan(env, sk, sess, { logTag: "owner_restore" });
           ulid = String(reconciled.primaryUlid || "").trim();
           locationID = String(reconciled.locationID || "").trim();
           exclusiveUntil = new Date(String(reconciled.plan.expiresAt || ""));
         } catch (e: any) {
-          console.error("owner_restore: plan_reconcile_failed", { pi, err: String(e?.message || e || "") });
+          const err = String(e?.message || e || "");
+          console.error("owner_restore: plan_reconcile_failed", { pi, sid: sidParam, err });
+
+          if (jsonMode) {
+            return json(
+              {
+                error: {
+                  code: "restore_reconcile_failed",
+                  message: err,
+                  pi: restoreByPi ? pi : "",
+                  sid: restoreBySid ? sidParam : ""
+                }
+              },
+              403,
+              noStoreHeaders
+            );
+          }
+
           return new Response("Denied", { status: 403, headers: noStoreHeaders });
         }
 
         if (!ULID_RE.test(ulid) || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
+          if (jsonMode) {
+            return json(
+              {
+                error: {
+                  code: "restore_inactive_entitlement",
+                  message: "Restore did not resolve an active owner entitlement.",
+                  ulid,
+                  locationID,
+                  expiresAt: Number.isNaN(exclusiveUntil.getTime()) ? "" : exclusiveUntil.toISOString()
+                }
+              },
+              403,
+              noStoreHeaders
+            );
+          }
+
           return new Response("Denied", { status: 403, headers: noStoreHeaders });
-        }      
+        }           
 
         // Mint op_sess exactly like handleOwnerStripeExchange
         const sidBytes = new Uint8Array(18);
@@ -5103,7 +5184,7 @@ export default {
         headers.append("Set-Cookie", cookie);
         if (devSetCookie) headers.append("Set-Cookie", devSetCookie);
 
-        console.info("owner_restore_success", { ulid, locationID, pi, sessionId });
+        console.info("owner_restore_success", { ulid, locationID, pi, sid: sidParam, sessionId });
 
         if (jsonMode) {
           headers.set("Content-Type", "application/json; charset=utf-8");
