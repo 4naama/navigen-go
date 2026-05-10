@@ -1458,22 +1458,23 @@ const descs = resolveDescriptionMapForLocation(payload, [
               <section class="lpm-rating-panel-section lpm-google-rating-panel">
                 <p><strong>${translatedOrFallback('lpm.rating.googleProvider', 'Google rating')}</strong></p>
                 <p>${googleProviderRatingWithStarText(providerRating)}</p>
-                <p class="lpm-provider-rating-note">${translatedOrFallback('lpm.rating.googleProviderNote', 'Provider-sourced rating. It is separate from NaviGen visitor ratings.')}</p>
+                <p class="lpm-provider-rating-note">${translatedOrFallback('lpm.rating.googleProviderNote', 'Source: Google Maps')}</p>
               </section>
             `
             : ''
         }
 
         <section class="lpm-rating-panel-section lpm-navigen-rating-panel">
-          <p><strong>${translatedOrFallback('lpm.rating.rateThisProfile', 'Rate this profile')}</strong></p>
-          <p class="lpm-rating-average-line" id="lpm-ng-rating-average">${translatedOrFallback('lpm.rating.average', 'Average')} ${ratingSeedSummary}</p>
-          <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate')}">
+          <p><strong>${translatedOrFallback('lpm.rating.navigenVisitor', 'NaviGen visitor rating')}</strong></p>
+          <p class="lpm-rating-average-line" id="lpm-ng-rating-average">${ratingSeedSummary}</p>
+          <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate on NaviGen')}">
             <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
             <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
             <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
             <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
             <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
           </div>
+          <p class="lpm-rating-action-line">${translatedOrFallback('lpm.rating.rateOnNavigen', 'Rate on NaviGen')}</p>
         </section>
       </div>
     `;
@@ -3033,7 +3034,7 @@ async function initLpmImageSlider(modal, data) {
         }
 
         if (averageLine) {
-          averageLine.textContent = `${translatedOrFallback('lpm.rating.average', 'Average')} ${ngSummary}`;
+          averageLine.textContent = ngSummary;
         }
       };
 

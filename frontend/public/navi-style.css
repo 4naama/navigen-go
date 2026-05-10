@@ -5854,9 +5854,10 @@ body.high-contrast .modal-menu-item.is-active {
   text-align:left;
 }
 
-.google-provider-rating-label small,
-.lpm-provider-rating-note{
+.lpm-rating-action-line{
+  margin:.45rem 0 0;
   color:var(--muted, #666);
+  font-size:.9rem;
   line-height:1.35;
 }
 
