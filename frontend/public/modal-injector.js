@@ -2356,6 +2356,8 @@ async function initLpmImageSlider(modal, data) {
           const contactPerson = String(data?.contactInformation?.contactPerson || '').trim(); // contact person only
           const phone = String(data?.contactInformation?.phone || '').trim();
           const email = String(data?.contactInformation?.email || '').trim();
+          const profileId = String(data?.locationID || data?.id || '').trim();
+          const platformProfileUrl = profileId ? `${location.origin}/?lp=${encodeURIComponent(profileId)}` : '';
 
           const values = [contactPerson, phone, email].filter(Boolean);
           values.forEach((value) => {
@@ -2369,14 +2371,38 @@ async function initLpmImageSlider(modal, data) {
             infoInner.appendChild(p); // no labels
           }
 
+          if (platformProfileUrl) {
+            const p = document.createElement('p');
+            p.className = 'business-card-platform-url';
+            const a = document.createElement('a');
+            a.href = platformProfileUrl;
+            a.textContent = platformProfileUrl;
+            p.appendChild(a);
+            infoInner.appendChild(p);
+          }
+
           const qrRow = document.createElement('div');
           qrRow.className = 'modal-menu-list';
           qrRow.innerHTML = `
+            <button type="button" class="modal-menu-item" id="som-info-profile">
+              <span class="icon-img">👀</span><span class="label">${translatedOrFallback('business.card.platformProfile', 'NaviGen profile')}</span>
+            </button>
             <button type="button" class="modal-menu-item" id="som-info-qr">
               <span class="icon-img">🔳</span><span class="label">QR code</span>
             </button>
           `;
           infoInner.appendChild(qrRow);
+          
+          qrRow.querySelector('#som-info-profile')?.addEventListener('click', (ev) => {
+            ev.preventDefault();
+
+            if (!platformProfileUrl) {
+              showToast('Missing profile URL', 1600);
+              return;
+            }
+
+            window.location.href = platformProfileUrl;
+          });        
 
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();
@@ -2411,7 +2437,7 @@ async function initLpmImageSlider(modal, data) {
             }
 
             try {
-              const text = [displayName, contactPerson, phone, email].filter(Boolean).join('\n');
+              const text = [displayName, contactPerson, phone, email, platformProfileUrl].filter(Boolean).join('\n');
               if (navigator.share && text) {
                 await navigator.share({ title: 'Business card', text });
               } else if (text && navigator.clipboard) {

@@ -1189,5 +1189,6 @@
   "media.upload.cleanupFailed": "Impossibile pulire le immagini della bozza.",
   "owner.settings.signedin.visitProfile.title": "Visita profilo pubblico",
   "owner.settings.signedin.visitProfile.desc": "Apri la pagina pubblica del listing per questa attività.",
-  "owner.settings.signedin.visitProfile.unpublished": "Questo profilo non è ancora pubblicato."
+  "owner.settings.signedin.visitProfile.unpublished": "Questo profilo non è ancora pubblicato.",
+  "business.card.platformProfile": "Profilo NaviGen"
 }

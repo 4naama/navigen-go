@@ -55,6 +55,14 @@ backend/worker/package-lock.json
 /frontend/wrangler.toml
 /navigen-go/
 
-# secrets
-backend/worker/ownerlink_secret.txt
+# Local secret helper files; never commit
 ownerlink_secret.txt
+backend/worker/ownerlink_secret.txt
+backend/worker/jwt_secret.txt
+backend/worker/*secret*.txt
+backend/worker/cf_images_*.txt
+backend/worker/*api_token*.txt
+backend/worker/*account_hash*.txt
+backend/worker/*account_id*.txt
+backend/worker/*.secret
+backend/worker/*.secrets

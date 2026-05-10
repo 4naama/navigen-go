@@ -7276,7 +7276,7 @@ function buildPublicProfilePayload(rec: { ulid: string; locationID: string; effe
     ID: rec.ulid,
     locationUID: rec.ulid,
     locationID: rec.locationID,
-    contexts: splitContextMemberships(effective?.context),
+    contexts: profileContextMemberships(effective),
     ratings: ratingsFromGoogleProvider(effective)    
   };
 }
@@ -7288,7 +7288,7 @@ function buildPublicItemPayload(rec: { ulid: string; locationID: string; effecti
     ID: rec.ulid,
     locationUID: rec.ulid,
     locationID: rec.locationID,
-    contexts: splitContextMemberships(effective?.context),
+    contexts: profileContextMemberships(effective),
     locationName: effective.locationName || effective.name,
     media: effective.media || {},
     coord: effective.coord || effective["Coordinate Compound"] || "",
@@ -7310,7 +7310,7 @@ function buildPublicContactPayload(rec: { ulid: string; locationID: string; effe
     ID: rec.ulid,
     locationUID: rec.ulid,
     locationID: rec.locationID,
-    contexts: splitContextMemberships(effective?.context),
+    contexts: profileContextMemberships(effective),
     locationName: effective.locationName || effective.name,
     contactInformation: effective.contactInformation || effective.contact || {},
     links: effective.links || {}
@@ -7347,7 +7347,7 @@ function buildPublicListPayload(rec: { ulid: string; locationID: string; effecti
     locationUID: rec.ulid,
     locationID: rec.locationID,
     alias: rec.locationID,
-    contexts: splitContextMemberships(effective?.context),
+    contexts: profileContextMemberships(effective),
     coord: effective?.coord || effective?.["Coordinate Compound"] || "",
     media: {
       ...media,
@@ -8550,8 +8550,16 @@ async function planAllocCall(env: Env, pi: string, op: string, payload: Record<s
 }
 
 function splitContextMemberships(raw: unknown): string[] {
-  const vals = Array.isArray(raw) ? raw : String(raw || "").split(";");
-  return uniqueTrimmedStrings(vals);
+  if (Array.isArray(raw)) return uniqueTrimmedStrings(raw);
+  return uniqueTrimmedStrings(String(raw || "").split(/[;,]/));
+}
+
+function profileContextMemberships(profile: any): string[] {
+  const src = (profile && typeof profile === "object") ? profile : {};
+  return uniqueTrimmedStrings([
+    ...splitContextMemberships(src.context),
+    ...splitContextMemberships(src.contexts)
+  ]);
 }
 
 function publishedCountryCode(profile: any): string {
@@ -8690,8 +8698,8 @@ async function syncPublishedDoIndex(
   const slug = String(args.slug || "").trim();
   if (!DO_ULID_RE.test(ulid) || !slug) throw new Error("invalid_index_target");
 
-  const prevContexts = splitContextMemberships(args.prevProfile?.context);
-  const nextContexts = splitContextMemberships(args.nextProfile?.context);
+  const prevContexts = profileContextMemberships(args.prevProfile);
+  const nextContexts = profileContextMemberships(args.nextProfile);
   const allContexts = uniqueTrimmedStrings([...prevContexts, ...nextContexts]);
 
   const countryCode = publishedCountryCode(args.nextProfile);

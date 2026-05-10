@@ -1189,5 +1189,6 @@
   "media.upload.cleanupFailed": "Could not clean up draft images.",
   "owner.settings.signedin.visitProfile.title": "Visit public profile",
   "owner.settings.signedin.visitProfile.desc": "Open the public listing page for this business.",
-  "owner.settings.signedin.visitProfile.unpublished": "This profile is not published yet."
+  "owner.settings.signedin.visitProfile.unpublished": "This profile is not published yet.",
+  "business.card.platformProfile": "NaviGen profile"
 }

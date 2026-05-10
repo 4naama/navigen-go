@@ -1189,5 +1189,6 @@
   "media.upload.cleanupFailed": "לא ניתן לנקות את תמונות הטיוטה.",
   "owner.settings.signedin.visitProfile.title": "בקר בפרופיל הציבורי",
   "owner.settings.signedin.visitProfile.desc": "פתח את דף הרישום הציבורי של העסק.",
-  "owner.settings.signedin.visitProfile.unpublished": "הפרופיל הזה עדיין לא פורסם."
+  "owner.settings.signedin.visitProfile.unpublished": "הפרופיל הזה עדיין לא פורסם.",
+  "business.card.platformProfile": "פרופיל NaviGen"
 }

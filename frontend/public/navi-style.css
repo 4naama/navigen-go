@@ -7103,3 +7103,15 @@ body.high-contrast .modal-menu-item.is-active {
   line-height:1.45;
   margin-top:2px;
 }
+
+#bizcard-modal .business-card-platform-url{
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  font-size:.86rem;
+  line-height:1.35;
+}
+
+#bizcard-modal .business-card-platform-url a{
+  color:inherit;
+  text-decoration:underline;
+}
