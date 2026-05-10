@@ -1214,5 +1214,9 @@
   "owner.edit.saved": "Profiländerungen gespeichert.",
   "owner.edit.error.noTarget": "Kein Profil ausgewählt.",
   "owner.edit.error.unauthorized": "Stellen Sie den Inhaberzugriff wieder her, bevor Sie dieses Profil bearbeiten.",
-  "owner.edit.error.failed": "Profiländerungen konnten nicht gespeichert werden."
+  "owner.edit.error.failed": "Profiländerungen konnten nicht gespeichert werden.",
+  "owner.edit.media.title": "Fotos",
+  "owner.edit.media.desc": "Bearbeiten Sie die öffentlichen Titel- und Galeriefotos für dieses Profil. Das erste Bild ist das Titelbild.",
+  "owner.edit.media.empty": "Noch keine verwalteten Profilfotos vorhanden.",
+  "owner.edit.media.authFailed": "Stellen Sie den Inhaberzugriff wieder her, bevor Sie Fotos bearbeiten."
 }

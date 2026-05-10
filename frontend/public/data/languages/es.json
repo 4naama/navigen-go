@@ -1214,5 +1214,9 @@
   "owner.edit.saved": "Cambios del perfil guardados.",
   "owner.edit.error.noTarget": "No hay perfil seleccionado.",
   "owner.edit.error.unauthorized": "Restaura el acceso de propietario antes de editar este perfil.",
-  "owner.edit.error.failed": "No se pudieron guardar los cambios del perfil."
+  "owner.edit.error.failed": "No se pudieron guardar los cambios del perfil.",
+  "owner.edit.media.title": "Fotos",
+  "owner.edit.media.desc": "Edita las fotos públicas de portada y galería de este perfil. La primera imagen es la portada.",
+  "owner.edit.media.empty": "Aún no hay fotos de perfil gestionadas.",
+  "owner.edit.media.authFailed": "Restaura el acceso de propietario antes de editar las fotos."
 }

@@ -1214,5 +1214,9 @@
   "owner.edit.saved": "Profil módosítások mentve.",
   "owner.edit.error.noTarget": "Nincs kiválasztott profil.",
   "owner.edit.error.unauthorized": "Állítsd vissza a tulajdonosi hozzáférést a profil szerkesztése előtt.",
-  "owner.edit.error.failed": "Nem sikerült menteni a profil módosításokat."
+  "owner.edit.error.failed": "Nem sikerült menteni a profil módosításokat.",
+  "owner.edit.media.title": "Fotók",
+  "owner.edit.media.desc": "Szerkeszd a profil nyilvános borító- és galériafotóit. Az első kép a borító.",
+  "owner.edit.media.empty": "Még nincsenek kezelt profilfotók.",
+  "owner.edit.media.authFailed": "Állítsd vissza a tulajdonosi hozzáférést a fotók szerkesztése előtt."
 }

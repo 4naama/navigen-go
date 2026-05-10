@@ -1214,5 +1214,9 @@
   "owner.edit.saved": "Зміни профілю збережено.",
   "owner.edit.error.noTarget": "Профіль не вибрано.",
   "owner.edit.error.unauthorized": "Відновіть доступ власника перед редагуванням цього профілю.",
-  "owner.edit.error.failed": "Не вдалося зберегти зміни профілю."
+  "owner.edit.error.failed": "Не вдалося зберегти зміни профілю.",
+  "owner.edit.media.title": "Фото",
+  "owner.edit.media.desc": "Редагуйте публічні фото обкладинки та галереї для цього профілю. Перше зображення — обкладинка.",
+  "owner.edit.media.empty": "Поки що немає керованих фото профілю.",
+  "owner.edit.media.authFailed": "Відновіть доступ власника перед редагуванням фото."
 }

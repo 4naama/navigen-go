@@ -8880,6 +8880,411 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
 
   inner.appendChild(form);
 
+  const ownerMediaWrap = document.createElement('div');
+  ownerMediaWrap.className = 'modal-form-stack owner-edit-media';
+  ownerMediaWrap.innerHTML = `
+    <div class="modal-field">
+      <label>${_ownerText('owner.edit.media.title', 'Photos')}</label>
+      <small class="modal-help-text">${_ownerText('owner.edit.media.desc', 'Edit the public cover and gallery photos for this profile. First image is the cover.')}</small>
+
+      <div class="request-media-upload">
+        <input id="owner-edit-media-file" class="request-media-file" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple />
+        <button id="owner-edit-media-drop" class="modal-menu-item request-media-drop" type="button">
+          <span class="label">
+            <strong>${translatedOrFallback('media.upload.drop', 'Drop photos here or browse')}</strong>
+            <small>${translatedOrFallback('media.upload.limit', 'JPEG, PNG, or WebP. Up to 3 active images, 10 MB each after optimization.')}</small>
+          </span>
+          <span class="modal-body-button request-media-browse-label">${translatedOrFallback('media.upload.browse', 'Browse')}</span>
+        </button>
+        <div id="owner-edit-media-status" class="modal-help-text request-media-status" aria-live="polite"></div>
+        <div id="owner-edit-media-grid" class="request-media-grid"></div>
+      </div>
+    </div>
+  `;
+  inner.appendChild(ownerMediaWrap);
+
+  const ownerMediaFile = ownerMediaWrap.querySelector('#owner-edit-media-file');
+  const ownerMediaDrop = ownerMediaWrap.querySelector('#owner-edit-media-drop');
+  const ownerMediaStatus = ownerMediaWrap.querySelector('#owner-edit-media-status');
+  const ownerMediaGrid = ownerMediaWrap.querySelector('#owner-edit-media-grid');
+  let ownerMediaManifest = item?.mediaManifest || null;
+  let ownerMediaBusy = false;
+  const ownerMediaLocalPreviews = new Map();
+
+  function ownerMediaTargetPayload() {
+    return {
+      target: {
+        targetType: 'location',
+        targetId: profileUlid
+      }
+    };
+  }
+
+  function ownerMediaSetStatus(message = '', isError = false) {
+    if (!ownerMediaStatus) return;
+    ownerMediaStatus.textContent = String(message || '').trim();
+    ownerMediaStatus.classList.toggle('is-error', !!isError);
+  }
+
+  function ownerMediaSetBusy(busy) {
+    ownerMediaBusy = !!busy;
+    if (ownerMediaDrop instanceof HTMLButtonElement) ownerMediaDrop.disabled = ownerMediaBusy;
+    if (ownerMediaFile instanceof HTMLInputElement) ownerMediaFile.disabled = ownerMediaBusy;
+  }
+
+  function ownerMediaCapacityCount() {
+    return requestListingMediaVisibleImages(ownerMediaManifest)
+      .filter((image) => {
+        const status = String(image?.status || '').trim();
+        return status === 'active' || status === 'uploaded' || status === 'reserved';
+      })
+      .length;
+  }
+
+  function ownerMediaRender() {
+    if (!ownerMediaGrid) return;
+
+    const images = requestListingMediaVisibleImages(ownerMediaManifest);
+    const activeImages = requestListingMediaActiveImages(ownerMediaManifest);
+    const activeIds = activeImages.map((image) => String(image?.mediaId || '').trim()).filter(Boolean);
+
+    ownerMediaGrid.innerHTML = '';
+
+    if (!images.length) {
+      const empty = document.createElement('div');
+      empty.className = 'request-media-empty';
+      empty.textContent = _ownerText('owner.edit.media.empty', 'No managed profile photos yet.');
+      ownerMediaGrid.appendChild(empty);
+      return;
+    }
+
+    images.forEach((image) => {
+      const mediaId = String(image?.mediaId || '').trim();
+      const status = String(image?.status || '').trim();
+      const isActive = status === 'active';
+      const activeIndex = activeIds.indexOf(mediaId);
+      const roleLabel = isActive && activeIndex === 0
+        ? translatedOrFallback('media.cover.label', 'Cover')
+        : translatedOrFallback('media.gallery.label', 'Gallery');
+      const imgUrl = ownerMediaLocalPreviews.get(mediaId) || requestListingMediaBestUrl(image, 'thumb');
+
+      const cardEl = document.createElement('div');
+      cardEl.className = `request-media-card${isActive ? '' : ' is-pending'}`;
+      cardEl.dataset.mediaId = mediaId;
+
+      const preview = document.createElement('div');
+      preview.className = 'request-media-preview';
+      if (imgUrl) {
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.alt = roleLabel;
+        img.loading = 'lazy';
+        preview.appendChild(img);
+      } else {
+        preview.textContent = '…';
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'request-media-meta';
+
+      const role = document.createElement('strong');
+      role.className = isActive && activeIndex === 0 ? 'request-media-role is-cover' : 'request-media-role';
+      role.textContent = roleLabel;
+
+      const state = document.createElement('small');
+      state.textContent = isActive ? translatedOrFallback('media.upload.ready', 'Uploaded') : status;
+
+      meta.appendChild(role);
+      meta.appendChild(state);
+
+      const actions = document.createElement('div');
+      actions.className = 'request-media-actions';
+
+      const moveUp = document.createElement('button');
+      moveUp.type = 'button';
+      moveUp.className = 'request-media-action';
+      moveUp.textContent = '↑';
+      moveUp.setAttribute('aria-label', translatedOrFallback('media.action.moveUp', 'Move up'));
+      moveUp.disabled = !isActive || activeIndex <= 0 || ownerMediaBusy;
+      moveUp.addEventListener('click', () => { ownerMediaMove(mediaId, -1); });
+
+      const moveDown = document.createElement('button');
+      moveDown.type = 'button';
+      moveDown.className = 'request-media-action';
+      moveDown.textContent = '↓';
+      moveDown.setAttribute('aria-label', translatedOrFallback('media.action.moveDown', 'Move down'));
+      moveDown.disabled = !isActive || activeIndex < 0 || activeIndex >= activeIds.length - 1 || ownerMediaBusy;
+      moveDown.addEventListener('click', () => { ownerMediaMove(mediaId, 1); });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'request-media-action request-media-delete';
+      del.textContent = '×';
+      del.setAttribute('aria-label', translatedOrFallback('media.action.delete', 'Delete'));
+      del.disabled = !mediaId || ownerMediaBusy;
+      del.addEventListener('click', () => { ownerMediaDelete(mediaId); });
+
+      actions.appendChild(moveUp);
+      actions.appendChild(moveDown);
+      actions.appendChild(del);
+
+      cardEl.appendChild(preview);
+      cardEl.appendChild(meta);
+      cardEl.appendChild(actions);
+      ownerMediaGrid.appendChild(cardEl);
+    });
+  }
+
+  async function ownerMediaLoadManifest() {
+    if (!profileUlid) {
+      ownerMediaRender();
+      return;
+    }
+
+    try {
+      const qs = new URLSearchParams({
+        targetType: 'location',
+        targetId: profileUlid
+      });
+
+      const res = await fetch(API(`/api/media/manifest?${qs.toString()}`), {
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      const payload = await res.json().catch(() => null);
+      if (res?.ok && payload?.manifest) ownerMediaManifest = payload.manifest;
+    } catch {
+      // Keep existing item.mediaManifest if available.
+    }
+
+    ownerMediaRender();
+  }
+
+  function ownerMediaUploadToProvider(uploadURL, file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const uploadForm = new FormData();
+      uploadForm.append('file', file, file.name || 'location-photo.jpg');
+
+      xhr.open('POST', uploadURL);
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable && typeof onProgress === 'function') {
+          onProgress(Math.round((ev.loaded / ev.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve(true);
+        else reject(new Error('provider_upload_failed'));
+      };
+      xhr.onerror = () => reject(new Error('provider_upload_failed'));
+      xhr.send(uploadForm);
+    });
+  }
+
+  async function ownerMediaUploadOne(originalFile) {
+    if (!(originalFile instanceof File) || ownerMediaBusy) return;
+
+    if (ownerMediaCapacityCount() >= REQUEST_LISTING_MEDIA_MAX_IMAGES) {
+      ownerMediaSetStatus(translatedOrFallback('media.upload.tooMany', 'Delete an image before uploading another.'), true);
+      showToast(translatedOrFallback('media.upload.tooMany', 'Delete an image before uploading another.'), 2200);
+      return;
+    }
+
+    ownerMediaSetBusy(true);
+    ownerMediaSetStatus(translatedOrFallback('media.upload.optimizing', 'Optimizing image...'));
+
+    let normalizedFile = null;
+    let previewUrl = '';
+
+    try {
+      normalizedFile = await normalizeRequestListingMediaFile(originalFile);
+      if (normalizedFile.size > REQUEST_LISTING_MEDIA_MAX_BYTES) throw new Error('too_large');
+      previewUrl = URL.createObjectURL(normalizedFile);
+
+      ownerMediaSetStatus(translatedOrFallback('media.upload.uploading', 'Uploading image...'));
+      const directRes = await fetch(API('/api/media/direct-upload'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...ownerMediaTargetPayload(),
+          file: {
+            name: normalizedFile.name || originalFile.name || 'location-photo.jpg',
+            type: normalizedFile.type || 'image/jpeg',
+            size: normalizedFile.size
+          }
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      const directPayload = await directRes.json().catch(() => null);
+
+      if (!directRes?.ok) {
+        const code = String(directPayload?.error?.code || '').trim();
+        if (code === 'too_many_images') throw new Error('too_many');
+        if (code === 'too_large') throw new Error('too_large');
+        if (code === 'unsupported_mime' || code === 'animated_unsupported') throw new Error('unsupported');
+        if (code === 'unauthorized' || code === 'forbidden' || code === 'plan_required') throw new Error('owner_media_auth');
+        if (code === 'cf_images_config_missing' || code === 'cf_images_account_hash_missing') throw new Error('media_backend_unconfigured');
+        if (code === 'cf_images_direct_upload_failed' || code === 'cf_images_status_failed') throw new Error('media_provider_failed');
+        throw new Error('upload_failed');
+      }
+
+      ownerMediaManifest = directPayload?.manifest || ownerMediaManifest;
+      const mediaId = String(directPayload?.mediaId || '').trim();
+      if (mediaId && previewUrl) ownerMediaLocalPreviews.set(mediaId, previewUrl);
+      ownerMediaRender();
+
+      await ownerMediaUploadToProvider(String(directPayload?.uploadURL || '').trim(), normalizedFile, (pct) => {
+        ownerMediaSetStatus(`${translatedOrFallback('media.upload.uploading', 'Uploading image...')} ${pct}%`);
+      });
+
+      const completeRes = await fetch(API('/api/media/complete'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...ownerMediaTargetPayload(),
+          uploadSessionId: String(directPayload?.uploadSessionId || '').trim(),
+          cfImageId: String(directPayload?.cfImageId || '').trim()
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      const completePayload = await completeRes.json().catch(() => null);
+      if (!completeRes?.ok) throw new Error(String(completePayload?.error?.code || 'upload_failed'));
+
+      ownerMediaManifest = completePayload?.manifest || ownerMediaManifest;
+      if (mediaId) ownerMediaLocalPreviews.delete(mediaId);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = '';
+
+      ownerMediaSetStatus(translatedOrFallback('media.upload.ready', 'Uploaded'));
+    } catch (err) {
+      const code = String(err?.message || '').trim();
+      const message = code === 'too_many'
+        ? translatedOrFallback('media.upload.tooMany', 'Delete an image before uploading another.')
+        : code === 'too_large'
+          ? translatedOrFallback('media.upload.tooLarge', 'Image is too large after optimization.')
+          : code === 'animated'
+            ? translatedOrFallback('media.upload.unsupported', 'Animated images are not supported.')
+            : code === 'heic_unsupported'
+              ? translatedOrFallback('media.upload.heicUnsupported', 'This browser cannot convert HEIC. Upload JPEG, PNG, or WebP.')
+              : code === 'unsupported'
+                ? translatedOrFallback('media.upload.unsupported', 'Use JPEG, PNG, or WebP photos only.')
+                : code === 'owner_media_auth'
+                  ? _ownerText('owner.edit.media.authFailed', 'Restore owner access before editing photos.')
+                  : code === 'media_backend_unconfigured'
+                    ? translatedOrFallback('media.upload.serviceUnconfigured', 'Image upload service is not configured yet.')
+                    : code === 'media_provider_failed'
+                      ? translatedOrFallback('media.upload.serviceFailed', 'Image upload service could not start the upload.')
+                      : translatedOrFallback('media.upload.failed', 'Image upload failed. Try another photo.');
+
+      ownerMediaSetStatus(message, true);
+      showToast(message, 2600);
+    } finally {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      ownerMediaSetBusy(false);
+      if (ownerMediaFile instanceof HTMLInputElement) ownerMediaFile.value = '';
+      ownerMediaRender();
+    }
+  }
+
+  async function ownerMediaDelete(mediaId) {
+    const cleanMediaId = String(mediaId || '').trim();
+    if (!cleanMediaId || ownerMediaBusy || !profileUlid) return;
+
+    ownerMediaSetBusy(true);
+    ownerMediaSetStatus('');
+
+    try {
+      const res = await fetch(API('/api/media/delete'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...ownerMediaTargetPayload(),
+          mediaId: cleanMediaId
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+
+      const payload = await res.json().catch(() => null);
+      if (!res?.ok) throw new Error(String(payload?.error?.code || 'delete_failed'));
+
+      ownerMediaManifest = payload?.manifest || ownerMediaManifest;
+      ownerMediaLocalPreviews.delete(cleanMediaId);
+      if (payload?.deletePending) ownerMediaSetStatus(translatedOrFallback('media.upload.deletePending', 'Deleted from listing. Provider cleanup is pending.'));
+    } catch {
+      const message = translatedOrFallback('media.upload.deleteFailed', 'Could not delete image.');
+      ownerMediaSetStatus(message, true);
+      showToast(message, 2200);
+    } finally {
+      ownerMediaSetBusy(false);
+      ownerMediaRender();
+    }
+  }
+
+  async function ownerMediaMove(mediaId, delta) {
+    const activeIds = requestListingMediaActiveImages(ownerMediaManifest)
+      .map((image) => String(image?.mediaId || '').trim())
+      .filter(Boolean);
+    const index = activeIds.indexOf(String(mediaId || '').trim());
+    const nextIndex = index + Number(delta || 0);
+
+    if (index < 0 || nextIndex < 0 || nextIndex >= activeIds.length || ownerMediaBusy || !profileUlid) return;
+
+    const nextIds = activeIds.slice();
+    [nextIds[index], nextIds[nextIndex]] = [nextIds[nextIndex], nextIds[index]];
+
+    ownerMediaSetBusy(true);
+    ownerMediaSetStatus('');
+
+    try {
+      const res = await fetch(API('/api/media/reorder'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...ownerMediaTargetPayload(),
+          mediaIds: nextIds
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+
+      const payload = await res.json().catch(() => null);
+      if (!res?.ok) throw new Error(String(payload?.error?.code || 'reorder_failed'));
+
+      ownerMediaManifest = payload?.manifest || ownerMediaManifest;
+    } catch {
+      const message = translatedOrFallback('media.upload.reorderFailed', 'Could not reorder images.');
+      ownerMediaSetStatus(message, true);
+      showToast(message, 2200);
+    } finally {
+      ownerMediaSetBusy(false);
+      ownerMediaRender();
+    }
+  }
+
+  function ownerMediaHandleFiles(fileList) {
+    const files = Array.from(fileList || []).filter((file) => file instanceof File);
+    if (!files.length) return;
+
+    const remaining = Math.max(0, REQUEST_LISTING_MEDIA_MAX_IMAGES - ownerMediaCapacityCount());
+    if (remaining <= 0) {
+      ownerMediaSetStatus(translatedOrFallback('media.upload.tooMany', 'Delete an image before uploading another.'), true);
+      showToast(translatedOrFallback('media.upload.tooMany', 'Delete an image before uploading another.'), 2200);
+      return;
+    }
+
+    files.slice(0, remaining).reduce(
+      (chain, file) => chain.then(() => ownerMediaUploadOne(file)),
+      Promise.resolve()
+    );
+
+    if (files.length > remaining) {
+      ownerMediaSetStatus(translatedOrFallback('media.upload.tooMany', 'Only 3 active images are allowed.'), true);
+    }
+  }
+  
   const actionRow = document.createElement('div');
   actionRow.className = 'modal-form-stack';
   actionRow.innerHTML = `
@@ -8951,6 +9356,33 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
     } finally {
       if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = false;
     }
+  });
+
+  ownerMediaRender();
+  ownerMediaLoadManifest();
+
+  ownerMediaDrop?.addEventListener('click', () => {
+    if (ownerMediaBusy) return;
+    ownerMediaFile?.click?.();
+  });
+
+  ownerMediaFile?.addEventListener('change', (ev) => {
+    ownerMediaHandleFiles(ev.target?.files);
+  });
+
+  ownerMediaDrop?.addEventListener('dragover', (ev) => {
+    ev.preventDefault();
+    ownerMediaDrop.classList.add('is-dragover');
+  });
+
+  ownerMediaDrop?.addEventListener('dragleave', () => {
+    ownerMediaDrop.classList.remove('is-dragover');
+  });
+
+  ownerMediaDrop?.addEventListener('drop', (ev) => {
+    ev.preventDefault();
+    ownerMediaDrop.classList.remove('is-dragover');
+    ownerMediaHandleFiles(ev.dataTransfer?.files);
   });
 
   showModal(id);

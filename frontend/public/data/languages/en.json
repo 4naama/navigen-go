@@ -1214,5 +1214,9 @@
   "owner.edit.saved": "Profile changes saved.",
   "owner.edit.error.noTarget": "No profile selected.",
   "owner.edit.error.unauthorized": "Restore owner access before editing this profile.",
-  "owner.edit.error.failed": "Could not save profile changes."
+  "owner.edit.error.failed": "Could not save profile changes.",
+  "owner.edit.media.title": "Photos",
+  "owner.edit.media.desc": "Edit the public cover and gallery photos for this profile. First image is the cover.",
+  "owner.edit.media.empty": "No managed profile photos yet.",
+  "owner.edit.media.authFailed": "Restore owner access before editing photos."
 }

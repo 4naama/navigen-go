@@ -1214,5 +1214,9 @@
   "owner.edit.saved": "שינויי הפרופיל נשמרו.",
   "owner.edit.error.noTarget": "לא נבחר פרופיל.",
   "owner.edit.error.unauthorized": "שחזר גישת בעלים לפני עריכת פרופיל זה.",
-  "owner.edit.error.failed": "לא ניתן לשמור את שינויי הפרופיל."
+  "owner.edit.error.failed": "לא ניתן לשמור את שינויי הפרופיל.",
+  "owner.edit.media.title": "תמונות",
+  "owner.edit.media.desc": "ערוך את תמונות הכיסוי והגלריה הציבוריות עבור פרופיל זה. התמונה הראשונה היא תמונת הכיסוי.",
+  "owner.edit.media.empty": "אין עדיין תמונות פרופיל מנוהלות.",
+  "owner.edit.media.authFailed": "שחזר גישת בעלים לפני עריכת התמונות."
 }

@@ -1214,5 +1214,9 @@
   "owner.edit.saved": "Modifications du profil enregistrées.",
   "owner.edit.error.noTarget": "Aucun profil sélectionné.",
   "owner.edit.error.unauthorized": "Restaurez l’accès propriétaire avant de modifier ce profil.",
-  "owner.edit.error.failed": "Impossible d’enregistrer les modifications du profil."
+  "owner.edit.error.failed": "Impossible d’enregistrer les modifications du profil.",
+  "owner.edit.media.title": "Photos",
+  "owner.edit.media.desc": "Modifiez les photos publiques de couverture et de galerie pour ce profil. La première image est la couverture.",
+  "owner.edit.media.empty": "Aucune photo de profil gérée pour le moment.",
+  "owner.edit.media.authFailed": "Restaurez l’accès propriétaire avant de modifier les photos."
 }

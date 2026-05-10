@@ -1214,5 +1214,9 @@
   "owner.edit.saved": "Modifiche profilo salvate.",
   "owner.edit.error.noTarget": "Nessun profilo selezionato.",
   "owner.edit.error.unauthorized": "Ripristina l’accesso proprietario prima di modificare questo profilo.",
-  "owner.edit.error.failed": "Impossibile salvare le modifiche del profilo."
+  "owner.edit.error.failed": "Impossibile salvare le modifiche del profilo.",
+  "owner.edit.media.title": "Foto",
+  "owner.edit.media.desc": "Modifica le foto pubbliche di copertina e galleria per questo profilo. La prima immagine è la copertina.",
+  "owner.edit.media.empty": "Nessuna foto profilo gestita al momento.",
+  "owner.edit.media.authFailed": "Ripristina l’accesso proprietario prima di modificare le foto."
 }
