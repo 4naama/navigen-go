@@ -1218,5 +1218,6 @@
   "owner.edit.media.title": "Fotos",
   "owner.edit.media.desc": "Edita las fotos públicas de portada y galería de este perfil. La primera imagen es la portada.",
   "owner.edit.media.empty": "Aún no hay fotos de perfil gestionadas.",
-  "owner.edit.media.authFailed": "Restaura el acceso de propietario antes de editar las fotos."
+  "owner.edit.media.authFailed": "Restaura el acceso de propietario antes de editar las fotos.",
+  "owner.edit.prefillHint": "Los valores públicos actuales están rellenados previamente abajo. Edita los campos que quieras sobrescribir y luego guarda."
 }

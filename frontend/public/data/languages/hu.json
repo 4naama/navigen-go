@@ -1218,5 +1218,6 @@
   "owner.edit.media.title": "Fotók",
   "owner.edit.media.desc": "Szerkeszd a profil nyilvános borító- és galériafotóit. Az első kép a borító.",
   "owner.edit.media.empty": "Még nincsenek kezelt profilfotók.",
-  "owner.edit.media.authFailed": "Állítsd vissza a tulajdonosi hozzáférést a fotók szerkesztése előtt."
+  "owner.edit.media.authFailed": "Állítsd vissza a tulajdonosi hozzáférést a fotók szerkesztése előtt.",
+  "owner.edit.prefillHint": "Az aktuális nyilvános értékek előre ki vannak töltve lent. Szerkeszd a felülírni kívánt mezőket, majd mentsd el."
 }

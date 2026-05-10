@@ -1218,5 +1218,6 @@
   "owner.edit.media.title": "Photos",
   "owner.edit.media.desc": "Modifiez les photos publiques de couverture et de galerie pour ce profil. La première image est la couverture.",
   "owner.edit.media.empty": "Aucune photo de profil gérée pour le moment.",
-  "owner.edit.media.authFailed": "Restaurez l’accès propriétaire avant de modifier les photos."
+  "owner.edit.media.authFailed": "Restaurez l’accès propriétaire avant de modifier les photos.",
+  "owner.edit.prefillHint": "Les valeurs publiques actuelles sont préremplies ci-dessous. Modifiez les champs que vous souhaitez remplacer, puis enregistrez."
 }

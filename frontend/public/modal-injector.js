@@ -8758,6 +8758,22 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
   const links = (item?.links && typeof item.links === 'object') ? item.links : {};
   const social = (links?.social && typeof links.social === 'object') ? links.social : {};
 
+  const currentWebsite = String(
+    contact.website ||
+    contact.officialUrl ||
+    contact.officialURL ||
+    links.official ||
+    links.website ||
+    links.site ||
+    ''
+  ).trim();
+
+  const currentSocialLink = (key) => String(
+    social?.[key] ||
+    links?.[key] ||
+    ''
+  ).trim();
+  
   const wrap = document.createElement('div');
   wrap.className = 'modal hidden';
   wrap.id = id;
@@ -8816,6 +8832,11 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
   if (identityInputs[3]) identityInputs[3].value = profileSlug ? `${location.origin}/?lp=${profileSlug}` : profileUlid;
   inner.appendChild(identity);
 
+  const editHint = document.createElement('p');
+  editHint.className = 'modal-help-text owner-edit-prefill-hint';
+  editHint.textContent = _ownerText('owner.edit.prefillHint', 'Current public values are prefilled below. Edit the fields you want to overwrite, then save.');
+  inner.appendChild(editHint);
+  
   const form = document.createElement('form');
   form.className = 'modal-form-stack owner-edit-form';
   form.innerHTML = `
@@ -8872,11 +8893,11 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
   if (descriptionEl) descriptionEl.value = descriptionValue;
   if (phoneEl) phoneEl.value = String(contact.phone || '').trim();
   if (emailEl) emailEl.value = String(contact.email || '').trim();
-  if (websiteEl) websiteEl.value = String(contact.website || links.website || '').trim();
-  if (instagramEl) instagramEl.value = String(social.instagram || links.instagram || '').trim();
-  if (facebookEl) facebookEl.value = String(social.facebook || links.facebook || '').trim();
-  if (tiktokEl) tiktokEl.value = String(social.tiktok || links.tiktok || '').trim();
-  if (youtubeEl) youtubeEl.value = String(social.youtube || links.youtube || '').trim();
+  if (websiteEl) websiteEl.value = currentWebsite;
+  if (instagramEl) instagramEl.value = currentSocialLink('instagram');
+  if (facebookEl) facebookEl.value = currentSocialLink('facebook');
+  if (tiktokEl) tiktokEl.value = currentSocialLink('tiktok');
+  if (youtubeEl) youtubeEl.value = currentSocialLink('youtube');
 
   inner.appendChild(form);
 
@@ -9047,7 +9068,7 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
         targetId: profileUlid
       });
 
-      const res = await fetch(API(`/api/media/manifest?${qs.toString()}`), {
+      const res = await fetch(`/api/media/manifest?${qs.toString()}`, {
         cache: 'no-store',
         credentials: 'include'
       });
@@ -9102,7 +9123,7 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
       previewUrl = URL.createObjectURL(normalizedFile);
 
       ownerMediaSetStatus(translatedOrFallback('media.upload.uploading', 'Uploading image...'));
-      const directRes = await fetch(API('/api/media/direct-upload'), {
+      const directRes = await fetch('/api/media/direct-upload', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -9138,7 +9159,7 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
         ownerMediaSetStatus(`${translatedOrFallback('media.upload.uploading', 'Uploading image...')} ${pct}%`);
       });
 
-      const completeRes = await fetch(API('/api/media/complete'), {
+      const completeRes = await fetch('/api/media/complete', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -9196,7 +9217,7 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
     ownerMediaSetStatus('');
 
     try {
-      const res = await fetch(API('/api/media/delete'), {
+      const res = await fetch('/api/media/delete', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -9239,7 +9260,7 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
     ownerMediaSetStatus('');
 
     try {
-      const res = await fetch(API('/api/media/reorder'), {
+      const res = await fetch('/api/media/reorder', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -9306,6 +9327,11 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
     if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = true;
 
     const website = String(websiteEl?.value || '').trim();
+    const instagram = String(instagramEl?.value || '').trim();
+    const facebook = String(facebookEl?.value || '').trim();
+    const tiktok = String(tiktokEl?.value || '').trim();
+    const youtube = String(youtubeEl?.value || '').trim();
+
     const patch = {
       descriptions: {
         en: String(descriptionEl?.value || '').trim()
@@ -9316,12 +9342,17 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
         website
       },
       links: {
+        official: website,
         website,
+        instagram,
+        facebook,
+        tiktok,
+        youtube,
         social: {
-          instagram: String(instagramEl?.value || '').trim(),
-          facebook: String(facebookEl?.value || '').trim(),
-          tiktok: String(tiktokEl?.value || '').trim(),
-          youtube: String(youtubeEl?.value || '').trim()
+          instagram,
+          facebook,
+          tiktok,
+          youtube
         }
       }
     };
@@ -9347,6 +9378,10 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
             : _ownerText('owner.edit.error.failed', 'Could not save profile changes.'));
         showToast(message, 2600);
         return;
+      }
+
+      if (payload?.profile && typeof payload.profile === 'object') {
+        item = payload.profile;
       }
 
       showToast(_ownerText('owner.edit.saved', 'Profile changes saved.'), 1800);

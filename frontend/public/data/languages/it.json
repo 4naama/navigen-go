@@ -1218,5 +1218,6 @@
   "owner.edit.media.title": "Foto",
   "owner.edit.media.desc": "Modifica le foto pubbliche di copertina e galleria per questo profilo. La prima immagine è la copertina.",
   "owner.edit.media.empty": "Nessuna foto profilo gestita al momento.",
-  "owner.edit.media.authFailed": "Ripristina l’accesso proprietario prima di modificare le foto."
+  "owner.edit.media.authFailed": "Ripristina l’accesso proprietario prima di modificare le foto.",
+  "owner.edit.prefillHint": "I valori pubblici correnti sono precompilati qui sotto. Modifica i campi che vuoi sovrascrivere, poi salva."
 }
