@@ -7146,3 +7146,14 @@ body.high-contrast .modal-menu-item.is-active {
   background:#eaf2ff;
   border-color:#8fb2ff;
 }
+
+#owner-profile-edit-modal .owner-edit-identity input[readonly]{
+  cursor:not-allowed;
+  background:#f8fafc;
+  color:#64748b;
+}
+
+#owner-profile-edit-modal .owner-edit-form textarea{
+  min-height:140px;
+  resize:vertical;
+}

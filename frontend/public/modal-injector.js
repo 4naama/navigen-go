@@ -8718,6 +8718,244 @@ export function showCampaignFundingModal({ locationID, campaignKey }) {
   showModal(id);
 }
 
+async function showOwnerProfileEditModal(targetIdOrSlug) {
+  const id = 'owner-profile-edit-modal';
+  document.getElementById(id)?.remove();
+
+  const target = String(targetIdOrSlug || '').trim();
+  if (!target) {
+    showToast(_ownerText('owner.edit.error.noTarget', 'No profile selected.'), 1800);
+    return;
+  }
+
+  let item = null;
+  try {
+    const res = await fetch(API(`/api/data/item?id=${encodeURIComponent(target)}`), {
+      cache: 'no-store',
+      credentials: 'omit'
+    });
+    item = res.ok ? await res.json().catch(() => null) : null;
+  } catch {
+    item = null;
+  }
+
+  if (!item) {
+    showToast(_ownerText('owner.settings.signedin.visitProfile.unpublished', 'This profile is not published yet.'), 2200);
+    return;
+  }
+
+  const profileUlid = String(item?.id || item?.ID || item?.ulid || target).trim();
+  const profileSlug = String(item?.locationID || item?.slug || '').trim();
+  const nameValue = (() => {
+    const ln = item?.locationName;
+    if (ln && typeof ln === 'object') return String(ln.en || Object.values(ln)[0] || '').trim();
+    return String(ln || item?.displayName || item?.name || '').trim();
+  })();
+  const addressValue = String(item?.address || item?.listedAddress || item?.formattedAddress || '').trim();
+  const contextValue = Array.isArray(item?.contexts) ? item.contexts.join(', ') : String(item?.context || '').trim();
+  const descriptionValue = String(item?.descriptions?.en || item?.description || '').trim();
+  const contact = (item?.contactInformation && typeof item.contactInformation === 'object') ? item.contactInformation : {};
+  const links = (item?.links && typeof item.links === 'object') ? item.links : {};
+  const social = (links?.social && typeof links.social === 'object') ? links.social : {};
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal hidden';
+  wrap.id = id;
+
+  const card = document.createElement('div');
+  card.className = 'modal-content modal-menu';
+
+  const top = document.createElement('div');
+  top.className = 'modal-top-bar';
+  top.innerHTML = `
+    <h2 class="modal-title">${_ownerText('owner.edit.title', 'Edit public profile')}</h2>
+    <button class="modal-close" aria-label="Close">&times;</button>
+  `;
+  top.querySelector('.modal-close')?.addEventListener('click', () => hideModal(id));
+
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  const inner = document.createElement('div');
+  inner.className = 'modal-body-inner';
+
+  const lockedCard = document.createElement('div');
+  lockedCard.className = 'modal-menu-item modal-static-card';
+  lockedCard.innerHTML = `
+    <span class="icon-img" aria-hidden="true">🔒</span>
+    <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
+      <strong>${_ownerText('owner.edit.locked.title', 'Locked location identity')}</strong><br>
+      <small>${_ownerText('owner.edit.locked.desc', 'Name, address, category, slug, and coordinates are not self-serve edits.')}</small>
+    </span>
+  `;
+  inner.appendChild(lockedCard);
+
+  const identity = document.createElement('div');
+  identity.className = 'modal-form-stack owner-edit-identity';
+  identity.innerHTML = `
+    <div class="modal-field">
+      <label>${_ownerText('owner.edit.field.name', 'Business name')}</label>
+      <input class="input" type="text" value="" readonly />
+    </div>
+    <div class="modal-field">
+      <label>${_ownerText('owner.edit.field.address', 'Address')}</label>
+      <input class="input" type="text" value="" readonly />
+    </div>
+    <div class="modal-field">
+      <label>${_ownerText('owner.edit.field.category', 'Category / context')}</label>
+      <input class="input" type="text" value="" readonly />
+    </div>
+    <div class="modal-field">
+      <label>${_ownerText('owner.edit.field.publicUrl', 'NaviGen profile')}</label>
+      <input class="input" type="text" value="" readonly />
+    </div>
+  `;
+  const identityInputs = identity.querySelectorAll('input');
+  if (identityInputs[0]) identityInputs[0].value = nameValue;
+  if (identityInputs[1]) identityInputs[1].value = addressValue;
+  if (identityInputs[2]) identityInputs[2].value = contextValue;
+  if (identityInputs[3]) identityInputs[3].value = profileSlug ? `${location.origin}/?lp=${profileSlug}` : profileUlid;
+  inner.appendChild(identity);
+
+  const form = document.createElement('form');
+  form.className = 'modal-form-stack owner-edit-form';
+  form.innerHTML = `
+    <div class="modal-field">
+      <label for="owner-edit-description">${_ownerText('owner.edit.field.description', 'Description')}</label>
+      <textarea id="owner-edit-description" class="input" rows="7" maxlength="5000"></textarea>
+    </div>
+
+    <div class="modal-field">
+      <label for="owner-edit-phone">${_ownerText('owner.edit.field.phone', 'Phone')}</label>
+      <input id="owner-edit-phone" class="input" type="text" maxlength="160" />
+    </div>
+
+    <div class="modal-field">
+      <label for="owner-edit-email">${_ownerText('owner.edit.field.email', 'Email')}</label>
+      <input id="owner-edit-email" class="input" type="email" maxlength="160" />
+    </div>
+
+    <div class="modal-field">
+      <label for="owner-edit-website">${_ownerText('owner.edit.field.website', 'Website')}</label>
+      <input id="owner-edit-website" class="input" type="url" maxlength="500" placeholder="https://..." />
+    </div>
+
+    <div class="modal-field">
+      <label for="owner-edit-instagram">${_ownerText('owner.edit.field.instagram', 'Instagram')}</label>
+      <input id="owner-edit-instagram" class="input" type="url" maxlength="500" placeholder="https://..." />
+    </div>
+
+    <div class="modal-field">
+      <label for="owner-edit-facebook">${_ownerText('owner.edit.field.facebook', 'Facebook')}</label>
+      <input id="owner-edit-facebook" class="input" type="url" maxlength="500" placeholder="https://..." />
+    </div>
+
+    <div class="modal-field">
+      <label for="owner-edit-tiktok">${_ownerText('owner.edit.field.tiktok', 'TikTok')}</label>
+      <input id="owner-edit-tiktok" class="input" type="url" maxlength="500" placeholder="https://..." />
+    </div>
+
+    <div class="modal-field">
+      <label for="owner-edit-youtube">${_ownerText('owner.edit.field.youtube', 'YouTube')}</label>
+      <input id="owner-edit-youtube" class="input" type="url" maxlength="500" placeholder="https://..." />
+    </div>
+  `;
+
+  const descriptionEl = form.querySelector('#owner-edit-description');
+  const phoneEl = form.querySelector('#owner-edit-phone');
+  const emailEl = form.querySelector('#owner-edit-email');
+  const websiteEl = form.querySelector('#owner-edit-website');
+  const instagramEl = form.querySelector('#owner-edit-instagram');
+  const facebookEl = form.querySelector('#owner-edit-facebook');
+  const tiktokEl = form.querySelector('#owner-edit-tiktok');
+  const youtubeEl = form.querySelector('#owner-edit-youtube');
+
+  if (descriptionEl) descriptionEl.value = descriptionValue;
+  if (phoneEl) phoneEl.value = String(contact.phone || '').trim();
+  if (emailEl) emailEl.value = String(contact.email || '').trim();
+  if (websiteEl) websiteEl.value = String(contact.website || links.website || '').trim();
+  if (instagramEl) instagramEl.value = String(social.instagram || links.instagram || '').trim();
+  if (facebookEl) facebookEl.value = String(social.facebook || links.facebook || '').trim();
+  if (tiktokEl) tiktokEl.value = String(social.tiktok || links.tiktok || '').trim();
+  if (youtubeEl) youtubeEl.value = String(social.youtube || links.youtube || '').trim();
+
+  inner.appendChild(form);
+
+  const actionRow = document.createElement('div');
+  actionRow.className = 'modal-form-stack';
+  actionRow.innerHTML = `
+    <button type="button" class="modal-body-button" id="owner-edit-save">${_ownerText('owner.edit.action.save', 'Save profile changes')}</button>
+    <button type="button" class="modal-body-button secondary" id="owner-edit-cancel">${_ownerText('common.cancel', 'Cancel')}</button>
+  `;
+  inner.appendChild(actionRow);
+
+  body.appendChild(inner);
+  card.appendChild(top);
+  card.appendChild(body);
+  wrap.appendChild(card);
+  document.body.appendChild(wrap);
+
+  actionRow.querySelector('#owner-edit-cancel')?.addEventListener('click', () => hideModal(id));
+
+  actionRow.querySelector('#owner-edit-save')?.addEventListener('click', async () => {
+    const saveBtn = actionRow.querySelector('#owner-edit-save');
+    if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = true;
+
+    const website = String(websiteEl?.value || '').trim();
+    const patch = {
+      descriptions: {
+        en: String(descriptionEl?.value || '').trim()
+      },
+      contactInformation: {
+        phone: String(phoneEl?.value || '').trim(),
+        email: String(emailEl?.value || '').trim(),
+        website
+      },
+      links: {
+        website,
+        social: {
+          instagram: String(instagramEl?.value || '').trim(),
+          facebook: String(facebookEl?.value || '').trim(),
+          tiktok: String(tiktokEl?.value || '').trim(),
+          youtube: String(youtubeEl?.value || '').trim()
+        }
+      }
+    };
+
+    try {
+      const res = await fetch('/api/profile/update', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          target: { targetId: profileUlid },
+          patch
+        }),
+        cache: 'no-store',
+        credentials: 'include'
+      });
+
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        const code = String(payload?.error?.code || '').trim();
+        const message = String(payload?.error?.message || '').trim() ||
+          (code === 'unauthorized'
+            ? _ownerText('owner.edit.error.unauthorized', 'Restore owner access before editing this profile.')
+            : _ownerText('owner.edit.error.failed', 'Could not save profile changes.'));
+        showToast(message, 2600);
+        return;
+      }
+
+      showToast(_ownerText('owner.edit.saved', 'Profile changes saved.'), 1800);
+      hideModal(id);
+    } catch {
+      showToast(_ownerText('owner.edit.error.failed', 'Could not save profile changes.'), 2600);
+    } finally {
+      if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = false;
+    }
+  });
+
+  showModal(id);
+}
+
 export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationName, noSelection }) {
   const id = 'owner-settings-modal';
   document.getElementById(id)?.remove();
@@ -9151,6 +9389,23 @@ export function createOwnerSettingsModal({ variant, locationIdOrSlug, locationNa
         } catch {
           showToast(_ownerText('owner.settings.signedin.visitProfile.unpublished', 'This profile is not published yet.'), 2400);
         }
+      }
+    });
+
+    addItem({
+      id: 'owner-edit-profile',
+      icon: '✏️',
+      title: _ownerText('owner.settings.signedin.editProfile.title', 'Edit public profile'),
+      desc: _ownerText('owner.settings.signedin.editProfile.desc', 'Update description, contact details, links, and public profile information.'),
+      onClick: async () => {
+        const target = String(locId || selectedKey || '').trim();
+        if (!target) {
+          showToast(_ownerText('owner.edit.error.noTarget', 'No profile selected.'), 1800);
+          return;
+        }
+
+        hideModal(id);
+        await showOwnerProfileEditModal(target);
       }
     });
     

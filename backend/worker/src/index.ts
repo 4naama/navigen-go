@@ -5283,6 +5283,11 @@ export default {
         });
       }
 
+      // --- OWN-EDIT v1: paid owner public profile presentation update
+      if (normPath === "/api/profile/update" && req.method === "POST") {
+        return await handleProfileUpdate(req, env);
+      }
+
       // --- IMG v1 media direct upload reservation: Create Location Media upload foundation
       if (normPath === "/api/media/direct-upload" && req.method === "POST") {
         return await handleMediaDirectUpload(req, env);
@@ -8840,6 +8845,581 @@ async function promoteDraftMediaManifestToPublishedLocation(env: Env, draftULID:
     ok: promoted.payload?.ok === true,
     promotedCount: activeImages.length
   };
+}
+
+// --- OWN-EDIT v1: paid owner public profile editing foundation ---
+type OwnerProfileUpdatePatchResult =
+  | { ok: true; patch: Record<string, any>; changedFields: string[] }
+  | { ok: false; code: string; message: string; fields?: string[] };
+
+function ownerProfileEditError(code: string, message: string, status = 400, extra: Record<string, unknown> = {}): Response {
+  return json(
+    { error: { code, message, ...extra } },
+    status,
+    { "cache-control": "no-store" }
+  );
+}
+
+function ownerEditIsObject(value: unknown): value is Record<string, any> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function ownerEditString(value: unknown, maxLen: number): string {
+  return String(value ?? "").trim().slice(0, maxLen);
+}
+
+function ownerEditHasOwn(source: Record<string, any>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(source, key);
+}
+
+function ownerEditPatchSource(body: any): Record<string, any> {
+  const direct = body?.patch ?? body?.updates ?? body?.profileUpdate;
+  if (ownerEditIsObject(direct)) return direct;
+
+  const out: Record<string, any> = {};
+  for (const key of ["description", "descriptions", "contactInformation", "links", "openingHours"]) {
+    if (ownerEditIsObject(body) && ownerEditHasOwn(body, key)) out[key] = body[key];
+  }
+  return out;
+}
+
+function collectOwnerEditLockedFields(value: unknown, prefix = ""): string[] {
+  if (!ownerEditIsObject(value) && !Array.isArray(value)) return [];
+
+  const locked = new Set([
+    "id",
+    "ID",
+    "ulid",
+    "locationUID",
+    "locationID",
+    "alias",
+    "slug",
+    "locationName",
+    "listedName",
+    "name",
+    "address",
+    "listedAddress",
+    "city",
+    "country",
+    "countryCode",
+    "postalCode",
+    "adminArea",
+    "coord",
+    "coordinates",
+    "lat",
+    "lng",
+    "latitude",
+    "longitude",
+    "sectorKey",
+    "groupKey",
+    "subgroupKey",
+    "context",
+    "contexts",
+    "tags",
+    "rating",
+    "ratings",
+    "googleRating",
+    "popular",
+    "ranking",
+    "rank",
+    "pricing",
+    "finance",
+    "plan",
+    "planRecord",
+    "campaign",
+    "campaigns",
+    "campaignHistory",
+    "campaignStats",
+    "qr",
+    "redeem",
+    "redemptions",
+    "stats",
+    "analytics",
+    "media",
+    "mediaManifest",
+    "sources",
+    "provenance",
+    "qa",
+    "diagnostics"
+  ]);
+
+  const out: string[] = [];
+  const entries = Array.isArray(value)
+    ? value.map((v, index) => [String(index), v] as [string, unknown])
+    : Object.entries(value);
+
+  for (const [key, child] of entries) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (locked.has(key)) out.push(path);
+    out.push(...collectOwnerEditLockedFields(child, path));
+  }
+
+  return Array.from(new Set(out));
+}
+
+function ownerEditValidateUrl(value: string, field: string): OwnerProfileUpdatePatchResult | null {
+  if (!value) return null;
+  try {
+    const u = new URL(value);
+    if (u.protocol === "http:" || u.protocol === "https:") return null;
+  } catch {}
+
+  return {
+    ok: false,
+    code: "invalid_url",
+    message: `${field} must be a valid http(s) URL.`,
+    fields: [field]
+  };
+}
+
+function ownerEditValidateEmail(value: string): OwnerProfileUpdatePatchResult | null {
+  if (!value) return null;
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return null;
+
+  return {
+    ok: false,
+    code: "invalid_email",
+    message: "contactInformation.email must be a valid email address.",
+    fields: ["contactInformation.email"]
+  };
+}
+
+function ownerEditDescriptionKeyAllowed(key: string): boolean {
+  return /^[a-z]{2,10}$/i.test(key) || key === "default";
+}
+
+function ownerEditAllowedDirectLinkKey(key: string): boolean {
+  return new Set([
+    "website",
+    "official",
+    "facebook",
+    "instagram",
+    "tiktok",
+    "youtube",
+    "spotify",
+    "linkedin",
+    "x",
+    "twitter",
+    "whatsapp",
+    "telegram",
+    "messenger"
+  ]).has(key);
+}
+
+function ownerEditAllowedSocialLinkKey(key: string): boolean {
+  return new Set([
+    "facebook",
+    "instagram",
+    "tiktok",
+    "youtube",
+    "spotify",
+    "linkedin",
+    "x",
+    "twitter",
+    "whatsapp",
+    "telegram",
+    "messenger"
+  ]).has(key);
+}
+
+function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult {
+  const source = ownerEditPatchSource(body);
+
+  if (!ownerEditIsObject(source)) {
+    return {
+      ok: false,
+      code: "invalid_patch",
+      message: "patch must be an object."
+    };
+  }
+
+  const lockedFields = collectOwnerEditLockedFields(source);
+  if (lockedFields.length) {
+    return {
+      ok: false,
+      code: "locked_field",
+      message: "One or more fields are not owner-editable.",
+      fields: lockedFields
+    };
+  }
+
+  const allowedTop = new Set(["description", "descriptions", "contactInformation", "links", "openingHours"]);
+  const unknownTop = Object.keys(source).filter((key) => !allowedTop.has(key));
+  if (unknownTop.length) {
+    return {
+      ok: false,
+      code: "unknown_field",
+      message: "One or more fields are not supported by OWN-EDIT v1.",
+      fields: unknownTop
+    };
+  }
+
+  const patch: Record<string, any> = {};
+  const changedFields: string[] = [];
+
+  if (ownerEditHasOwn(source, "description")) {
+    const value = ownerEditString(source.description, 5000);
+    patch.descriptions = { ...(patch.descriptions || {}), en: value };
+    changedFields.push("descriptions.en");
+  }
+
+  if (ownerEditHasOwn(source, "descriptions")) {
+    const descriptions = source.descriptions;
+    if (typeof descriptions === "string") {
+      patch.descriptions = { ...(patch.descriptions || {}), en: ownerEditString(descriptions, 5000) };
+      changedFields.push("descriptions.en");
+    } else if (ownerEditIsObject(descriptions)) {
+      const out: Record<string, string> = { ...(patch.descriptions || {}) };
+      for (const [key, value] of Object.entries(descriptions)) {
+        if (!ownerEditDescriptionKeyAllowed(key)) {
+          return {
+            ok: false,
+            code: "invalid_description_key",
+            message: "Description language keys must be short language codes.",
+            fields: [`descriptions.${key}`]
+          };
+        }
+
+        out[key] = ownerEditString(value, 5000);
+        changedFields.push(`descriptions.${key}`);
+      }
+      patch.descriptions = out;
+    } else {
+      return {
+        ok: false,
+        code: "invalid_descriptions",
+        message: "descriptions must be a string or object.",
+        fields: ["descriptions"]
+      };
+    }
+  }
+
+  if (ownerEditHasOwn(source, "contactInformation")) {
+    if (!ownerEditIsObject(source.contactInformation)) {
+      return {
+        ok: false,
+        code: "invalid_contact",
+        message: "contactInformation must be an object.",
+        fields: ["contactInformation"]
+      };
+    }
+
+    const allowedContact = new Set(["phone", "email", "website", "whatsapp", "telegram", "messenger"]);
+    const unknownContact = Object.keys(source.contactInformation).filter((key) => !allowedContact.has(key));
+    if (unknownContact.length) {
+      return {
+        ok: false,
+        code: "unknown_contact_field",
+        message: "One or more contact fields are not owner-editable.",
+        fields: unknownContact.map((key) => `contactInformation.${key}`)
+      };
+    }
+
+    const out: Record<string, string> = {};
+    for (const key of allowedContact) {
+      if (!ownerEditHasOwn(source.contactInformation, key)) continue;
+      const value = ownerEditString(source.contactInformation[key], key === "email" || key === "phone" ? 160 : 500);
+
+      if (key === "email") {
+        const badEmail = ownerEditValidateEmail(value);
+        if (badEmail) return badEmail;
+      }
+
+      if (key === "website") {
+        const badUrl = ownerEditValidateUrl(value, "contactInformation.website");
+        if (badUrl) return badUrl;
+      }
+
+      out[key] = value;
+      changedFields.push(`contactInformation.${key}`);
+    }
+
+    if (Object.keys(out).length) {
+      patch.contactInformation = out;
+    }
+  }
+
+  if (ownerEditHasOwn(source, "links")) {
+    if (!ownerEditIsObject(source.links)) {
+      return {
+        ok: false,
+        code: "invalid_links",
+        message: "links must be an object.",
+        fields: ["links"]
+      };
+    }
+
+    const out: Record<string, any> = {};
+    for (const [key, value] of Object.entries(source.links)) {
+      if (key === "social") {
+        if (!ownerEditIsObject(value)) {
+          return {
+            ok: false,
+            code: "invalid_social_links",
+            message: "links.social must be an object.",
+            fields: ["links.social"]
+          };
+        }
+
+        const socialOut: Record<string, string> = {};
+        for (const [socialKey, socialValue] of Object.entries(value)) {
+          if (!ownerEditAllowedSocialLinkKey(socialKey)) {
+            return {
+              ok: false,
+              code: "unknown_social_link",
+              message: "One or more social links are not supported by OWN-EDIT v1.",
+              fields: [`links.social.${socialKey}`]
+            };
+          }
+
+          const clean = ownerEditString(socialValue, 500);
+          const badUrl = ownerEditValidateUrl(clean, `links.social.${socialKey}`);
+          if (badUrl) return badUrl;
+
+          socialOut[socialKey] = clean;
+          changedFields.push(`links.social.${socialKey}`);
+        }
+
+        out.social = socialOut;
+        continue;
+      }
+
+      if (!ownerEditAllowedDirectLinkKey(key)) {
+        return {
+          ok: false,
+          code: "unknown_link",
+          message: "One or more links are not supported by OWN-EDIT v1.",
+          fields: [`links.${key}`]
+        };
+      }
+
+      const clean = ownerEditString(value, 500);
+      const badUrl = ownerEditValidateUrl(clean, `links.${key}`);
+      if (badUrl) return badUrl;
+
+      out[key] = clean;
+      changedFields.push(`links.${key}`);
+    }
+
+    if (Object.keys(out).length) {
+      patch.links = out;
+    }
+  }
+
+  if (ownerEditHasOwn(source, "openingHours")) {
+    const hours = source.openingHours;
+    if (!ownerEditIsObject(hours) && !Array.isArray(hours) && typeof hours !== "string") {
+      return {
+        ok: false,
+        code: "invalid_opening_hours",
+        message: "openingHours must be a string, array, or object.",
+        fields: ["openingHours"]
+      };
+    }
+
+    const encoded = JSON.stringify(hours);
+    if (encoded.length > 6000) {
+      return {
+        ok: false,
+        code: "opening_hours_too_large",
+        message: "openingHours payload is too large.",
+        fields: ["openingHours"]
+      };
+    }
+
+    patch.openingHours = hours;
+    changedFields.push("openingHours");
+  }
+
+  const uniqueChanged = Array.from(new Set(changedFields));
+  if (!uniqueChanged.length) {
+    return {
+      ok: false,
+      code: "no_editable_fields",
+      message: "No editable profile fields were provided."
+    };
+  }
+
+  return {
+    ok: true,
+    patch,
+    changedFields: uniqueChanged
+  };
+}
+
+function extractOwnerProfileUpdateTarget(body: any): string {
+  const target = ownerEditIsObject(body?.target) ? body.target : {};
+  return String(
+    target.targetId ||
+    target.ulid ||
+    target.locationID ||
+    body?.targetId ||
+    body?.ulid ||
+    body?.locationID ||
+    ""
+  ).trim();
+}
+
+async function resolveOwnerProfileUpdateAccess(
+  req: Request,
+  env: Env,
+  body: any
+): Promise<
+  | { ok: true; ulid: string; locationID: string; effective: any; entitlement: PlanEntitlementState }
+  | { ok: false; response: Response }
+> {
+  const rawTarget = extractOwnerProfileUpdateTarget(body);
+  if (!rawTarget) {
+    return {
+      ok: false,
+      response: ownerProfileEditError("invalid_target", "targetId, ulid, or locationID is required.", 400)
+    };
+  }
+
+  const resolved = (await resolveUid(rawTarget, env)) || rawTarget;
+  const ulid = ULID_RE.test(resolved) ? resolved : "";
+  if (!ulid) {
+    return {
+      ok: false,
+      response: ownerProfileEditError("invalid_target", "Target must resolve to a published location ULID.", 400)
+    };
+  }
+
+  const published = await readPublishedEffectiveProfileByUlid(ulid, env);
+  if (!published) {
+    return {
+      ok: false,
+      response: ownerProfileEditError("not_found", "Published location was not found.", 404)
+    };
+  }
+
+  const auth = await requireOwnerSession(req, env);
+  if (auth instanceof Response) {
+    return {
+      ok: false,
+      response: ownerProfileEditError("unauthorized", "Owner session is required.", auth.status || 401)
+    };
+  }
+
+  const ownerUlid = String(auth.ulid || "").trim();
+  if (ownerUlid !== ulid) {
+    return {
+      ok: false,
+      response: ownerProfileEditError(
+        "owner_session_mismatch",
+        "Owner session does not match profile update target.",
+        403,
+        { ownerUlid, targetUlid: ulid }
+      )
+    };
+  }
+
+  const entitlement = await readPlanEntitlementForUlid(env, ulid);
+  if (!entitlement.planEntitled) {
+    return {
+      ok: false,
+      response: ownerProfileEditError(
+        "plan_required",
+        "Active Plan coverage is required to edit this public profile.",
+        403,
+        { reason: entitlement.reason }
+      )
+    };
+  }
+
+  return {
+    ok: true,
+    ulid,
+    locationID: published.locationID,
+    effective: published.effective,
+    entitlement
+  };
+}
+
+async function handleProfileUpdate(req: Request, env: Env): Promise<Response> {
+  const noStore = { "cache-control": "no-store" };
+
+  const body = await req.json().catch(() => null) as any;
+  if (!body || typeof body !== "object") {
+    return ownerProfileEditError("invalid_request", "valid JSON body required", 400);
+  }
+
+  const patchCheck = buildOwnerProfileUpdatePatch(body);
+  if (!patchCheck.ok) {
+    return ownerProfileEditError(
+      patchCheck.code,
+      patchCheck.message,
+      patchCheck.code === "locked_field" ? 403 : 400,
+      patchCheck.fields ? { fields: patchCheck.fields } : {}
+    );
+  }
+
+  const access = await resolveOwnerProfileUpdateAccess(req, env, body);
+  if (!access.ok) return access.response;
+
+  const base = await env.KV_STATUS.get(`profile_base:${access.ulid}`, { type: "json" }) as any;
+  if (!base || typeof base !== "object") {
+    return ownerProfileEditError("not_found", "Published profile base was not found.", 404);
+  }
+
+  const currentOverride = (await env.KV_STATUS.get(`override:${access.ulid}`, { type: "json" }) as any) || {};
+  const nextOverride = deepMergeProfile(currentOverride || {}, patchCheck.patch);
+  const nextEffective = deepMergeProfile(base, nextOverride);
+  const nowIso = doNowIso();
+
+  await env.KV_STATUS.put(`override:${access.ulid}`, JSON.stringify(nextOverride));
+
+  await env.KV_STATUS.put(
+    `override_log:${access.ulid}:${Date.now()}`,
+    JSON.stringify({
+      ts: nowIso,
+      source: "OWN_EDIT_V1",
+      ulid: access.ulid,
+      locationID: access.locationID,
+      changedFields: patchCheck.changedFields,
+      patch: patchCheck.patch,
+      plan: {
+        paymentIntentId: access.entitlement.paymentIntentId,
+        tier: access.entitlement.tier,
+        exclusiveUntil: access.entitlement.exclusiveUntil
+      }
+    })
+  );
+
+  let indexSynced = false;
+  try {
+    await syncPublishedDoIndex(env, {
+      ulid: access.ulid,
+      slug: access.locationID,
+      prevProfile: access.effective,
+      nextProfile: nextEffective,
+      visibilityState: "promoted"
+    });
+    indexSynced = true;
+  } catch (e: any) {
+    console.error("owner_profile_update_index_sync_failed", {
+      ulid: access.ulid,
+      locationID: access.locationID,
+      err: String(e?.message || e || "")
+    });
+  }
+
+  return json(
+    {
+      ok: true,
+      ulid: access.ulid,
+      locationID: access.locationID,
+      changedFields: patchCheck.changedFields,
+      indexSynced,
+      profile: buildPublicItemPayload({
+        ulid: access.ulid,
+        locationID: access.locationID,
+        effective: nextEffective
+      })
+    },
+    200,
+    noStore
+  );
 }
 
 async function handleLocationPublish(req: Request, env: Env): Promise<Response> {
