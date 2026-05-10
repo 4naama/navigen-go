@@ -7224,6 +7224,7 @@ async function publicLocationMediaProjection(env: Env, ulid: string, fallbackMed
 
   const cover = publicMediaVariantUrl(activeImages[0], "lpm") || fallback.cover;
   const images = activeImages
+    .slice(1)
     .map((img: any) => publicMediaVariantUrl(img, "gallery"))
     .filter(Boolean);
 

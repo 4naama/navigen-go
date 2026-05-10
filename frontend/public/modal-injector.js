@@ -8751,7 +8751,35 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
     if (ln && typeof ln === 'object') return String(ln.en || Object.values(ln)[0] || '').trim();
     return String(ln || item?.displayName || item?.name || '').trim();
   })();
-  const addressValue = String(item?.address || item?.listedAddress || item?.formattedAddress || '').trim();
+  const addressValue = (() => {
+    const readText = (value) => {
+      if (!value) return '';
+      if (typeof value === 'string') return value.trim();
+      if (value && typeof value === 'object') {
+        return String(value.en || value.default || value.formatted || value.full || value.text || '').trim();
+      }
+      return String(value || '').trim();
+    };
+
+    const direct = [
+      item?.address,
+      item?.listedAddress,
+      item?.formattedAddress,
+      item?.locationAddress,
+      item?.addressLine,
+      item?.contactInformation?.address
+    ].map(readText).find(Boolean);
+
+    if (direct) return direct;
+
+    return [
+      item?.streetAddress,
+      item?.city,
+      item?.postalCode,
+      item?.country
+    ].map(readText).filter(Boolean).join(', ');
+  })();
+  
   const contextValue = Array.isArray(item?.contexts) ? item.contexts.join(', ') : String(item?.context || '').trim();
   const descriptionValue = String(item?.descriptions?.en || item?.description || '').trim();
   const contact = (item?.contactInformation && typeof item.contactInformation === 'object') ? item.contactInformation : {};
@@ -8899,6 +8927,34 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
   if (tiktokEl) tiktokEl.value = currentSocialLink('tiktok');
   if (youtubeEl) youtubeEl.value = currentSocialLink('youtube');
 
+  [
+    descriptionEl,
+    phoneEl,
+    emailEl,
+    websiteEl,
+    instagramEl,
+    facebookEl,
+    tiktokEl,
+    youtubeEl
+  ].forEach((el) => {
+    if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) return;
+
+    el.dataset.initialValue = String(el.value || '');
+
+    const refreshPrefillState = () => {
+      const initial = String(el.dataset.initialValue || '');
+      const current = String(el.value || '');
+      el.classList.toggle('is-prefilled', !!initial && current === initial);
+    };
+
+    refreshPrefillState();
+    el.addEventListener('input', refreshPrefillState);
+    el.addEventListener('blur', () => {
+      el.classList.add('is-touched');
+      refreshPrefillState();
+    });
+  });
+  
   inner.appendChild(form);
 
   const ownerMediaWrap = document.createElement('div');
@@ -9323,6 +9379,22 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
   actionRow.querySelector('#owner-edit-cancel')?.addEventListener('click', () => hideModal(id));
 
   actionRow.querySelector('#owner-edit-save')?.addEventListener('click', async () => {
+    [
+      phoneEl,
+      emailEl,
+      websiteEl,
+      instagramEl,
+      facebookEl,
+      tiktokEl,
+      youtubeEl
+    ].forEach((el) => {
+      if (el instanceof HTMLInputElement) el.classList.add('is-touched');
+    });
+
+    if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
+      return;
+    }
+    
     const saveBtn = actionRow.querySelector('#owner-edit-save');
     if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = true;
 
