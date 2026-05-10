@@ -245,7 +245,10 @@
           "home-blood-draw",
           "home-phlebotomy",
           "mobile-blood-draw",
-          "home-testing"
+          "home-testing",          
+          "diagnostic-lab",
+          "medical-lab",
+          "sample-analysis"        
         ]
       },
       {
@@ -277,7 +280,18 @@
         ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "medical",
+      "healthcare",
+      "health",
+      "clinic",
+      "doctor",
+      "hospital",
+      "pharmacy",
+      "diagnostics",
+      "therapy",
+      "care"
+    ],
     "fallbackSubgroupKey": ""
   },
   {
@@ -287,42 +301,107 @@
       {
         "key": "sub.squares",
         "name": "⛲ Squares",
-        "keywords": []
+        "keywords": [
+          "square",
+          "plaza",
+          "public-square",
+          "town-square",
+          "central-square",
+          "meeting-square"
+        ]
       },
       {
         "key": "sub.main-areas",
         "name": "🎯 Central Area",
-        "keywords": []
+        "keywords": [
+          "central-area",
+          "main-area",
+          "hub",
+          "main-zone",
+          "festival-center",
+          "core-area"
+        ]
       },
       {
         "key": "sub.contests-voting",
         "name": "🏆 Contests & Voting",
-        "keywords": []
+        "keywords": [
+          "contest",
+          "competition",
+          "voting",
+          "poll",
+          "audience-vote",
+          "prize",
+          "challenge"
+        ]
       },
       {
         "key": "sub.camping-zones",
         "name": "🏕️ Camping Zones",
-        "keywords": []
+        "keywords": [
+          "camping-zone",
+          "campground",
+          "campsite",
+          "tent-area",
+          "festival-camping",
+          "camp"
+        ]
       },
       {
         "key": "sub.restricted-areas",
         "name": "🚧 Restricted Areas",
-        "keywords": []
+        "keywords": [
+          "restricted-area",
+          "staff-only",
+          "backstage",
+          "no-entry",
+          "controlled-access",
+          "private-area"
+        ]
       },
       {
         "key": "sub.markets",
         "name": "🛍️ Markets",
-        "keywords": []
+        "keywords": [
+          "market",
+          "marketplace",
+          "bazaar",
+          "vendor-area",
+          "stalls",
+          "local-market",
+          "craft-market",
+          "farmers-market",
+          "farmersmarket",
+          "fresh-produce"
+        ]
       },
       {
         "key": "sub.streets",
         "name": "🛣️ Streets",
-        "keywords": []
+        "keywords": [
+          "street",
+          "road",
+          "avenue",
+          "lane",
+          "walkway",
+          "route",
+          "promenade"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "spot",
+      "main-spot",
+      "area",
+      "square",
+      "central-area",
+      "camping-zone",
+      "market",
+      "street",
+      "restricted-area"
+    ],
     "fallbackSubgroupKey": ""
-  },
+  }
   {
     "groupKey": "group.parks-nature",
     "groupName": "🌳 Parks & Nature",
@@ -404,160 +483,525 @@
       {
         "key": "sub.cafes",
         "name": "☕ Cafés",
-        "keywords": []
+        "keywords": [
+          "cafe",
+          "café",
+          "coffee-shop",
+          "coffee",
+          "espresso",
+          "tea",
+          "pastry",
+          "brunch-cafe",
+          "matcha",
+          "matcha-tea"
+        ]
       },
       {
         "key": "sub.cuisine-mexican",
         "name": "🌮 Mexican",
-        "keywords": []
+        "keywords": [
+          "mexican",
+          "mexican-food",
+          "tacos",
+          "burritos",
+          "quesadilla",
+          "nachos",
+          "tex-mex"
+        ]
       },
       {
         "key": "sub.cuisine-hungarian",
         "name": "🌶️ Hungarian",
-        "keywords": []
+        "keywords": [
+          "hungarian",
+          "hungarian-food",
+          "goulash",
+          "paprika",
+          "langos",
+          "traditional-hungarian",
+          "hungarian-cuisine"
+        ]
       },
       {
         "key": "sub.cuisine-american",
         "name": "🍔 American",
-        "keywords": []
+        "keywords": [
+          "american",
+          "american-food",
+          "burgers",
+          "diner",
+          "hot-dog",
+          "american-cuisine"
+        ]
       },
       {
         "key": "sub.cuisine-bbq",
         "name": "🍖 BBQ",
-        "keywords": []
+        "keywords": [
+          "bbq",
+          "barbecue",
+          "barbeque",
+          "grill",
+          "smoked-meat",
+          "ribs",
+          "pitmaster"
+        ]
       },
       {
         "key": "sub.cuisine-indian",
         "name": "🍛 Indian",
-        "keywords": []
+        "keywords": [
+          "indian",
+          "indian-food",
+          "curry",
+          "tandoori",
+          "naan",
+          "masala",
+          "indian-cuisine"
+        ]
       },
       {
         "key": "sub.cuisine-thai",
-        "name": "🍜 Thai",
-        "keywords": []
+        "name": "🍲 Thai",
+        "keywords": [
+          "thai",
+          "thai-food",
+          "pad-thai",
+          "tom-yum",
+          "green-curry",
+          "thai-cuisine"
+        ]
       },
       {
         "key": "sub.cuisine-vietnamese",
         "name": "🍜 Vietnamese",
-        "keywords": []
+        "keywords": [
+          "vietnamese",
+          "vietnamese-food",
+          "pho",
+          "banh-mi",
+          "bun",
+          "vietnamese-cuisine"
+        ]
       },
       {
         "key": "sub.cuisine-italian",
         "name": "🍝 Italian",
-        "keywords": []
+        "keywords": [
+          "italian",
+          "italian-food",
+          "pizza",
+          "pasta",
+          "trattoria",
+          "gelato",
+          "italian-cuisine",
+          "tiramisu",
+          "profiterole"
+        ]
       },
       {
         "key": "sub.cuisine-japanese",
         "name": "🍣 Japanese",
-        "keywords": []
+        "keywords": [
+          "japanese",
+          "japanese-food",
+          "sushi",
+          "ramen",
+          "izakaya",
+          "sashimi",
+          "japanese-cuisine",
+          "asahi",
+          "kirin-ichiban"
+        ]
       },
       {
         "key": "sub.ice-cream",
         "name": "🍦 Ice Cream",
-        "keywords": []
+        "keywords": [
+          "ice-cream",
+          "gelato",
+          "sorbet",
+          "frozen-yogurt",
+          "soft-serve",
+          "dessert-shop"
+        ]
       },
       {
         "key": "sub.desserts",
         "name": "🍰 Desserts",
-        "keywords": []
+        "keywords": [
+          "dessert",
+          "desserts",
+          "cakes",
+          "pastry",
+          "sweets",
+          "confectionery",
+          "patisserie"
+        ]
       },
       {
         "key": "sub.food-courts",
         "name": "🍱 Food Courts",
-        "keywords": []
+        "keywords": [
+          "food-court",
+          "food-hall",
+          "dining-hall",
+          "multiple-vendors",
+          "shared-dining",
+          "eatery"
+        ]
       },
       {
         "key": "sub.wine-bars",
         "name": "🍷 Wine Bars",
-        "keywords": []
+        "keywords": [
+          "wine-bar",
+          "wine",
+          "vinoteca",
+          "wine-tasting",
+          "by-the-glass",
+          "white-wine",
+          "red-wine",
+          "rose-wine"
+        ]
       },
       {
         "key": "sub.bars",
         "name": "🍸 Bars",
-        "keywords": []
+        "keywords": [
+          "bar",
+          "cocktail-bar",
+          "drinks",
+          "cocktails",
+          "lounge",
+          "nightlife",
+          "mixed-drinks"
+        ]
       },
       {
         "key": "sub.pubs",
         "name": "🍺 Pubs",
-        "keywords": []
+        "keywords": [
+          "pub",
+          "public-house",
+          "beer",
+          "ale",
+          "tavern",
+          "pub-food",
+          "gastropub"
+        ]
       },
       {
         "key": "sub.breweries",
         "name": "🍻 Breweries",
-        "keywords": []
+        "keywords": [
+          "brewery",
+          "brewhouse",
+          "craft-beer",
+          "taproom",
+          "microbrewery",
+          "beer-tasting"
+        ]
       },
       {
         "key": "sub.restaurants",
         "name": "🍽️ Restaurants",
-        "keywords": []
+        "keywords": [
+          "restaurant",
+          "dining",
+          "eatery",
+          "bistro",
+          "brasserie",
+          "dinner",
+          "breakfast",
+          "brunch",
+          "breakfast-brunch",
+          "lunch"
+        ]
       },
       {
         "key": "sub.cuisine-seafood",
         "name": "🐟 Seafood",
-        "keywords": []
+        "keywords": [
+          "seafood",
+          "fish",
+          "shellfish",
+          "oysters",
+          "shrimp",
+          "prawns",
+          "fish-restaurant"
+        ]
       },
       {
         "key": "sub.bakeries",
         "name": "🥐 Bakeries",
-        "keywords": []
+        "keywords": [
+          "bakery",
+          "bakeries",
+          "bread",
+          "pastry",
+          "croissant",
+          "baked-goods",
+          "patisserie"
+        ]
       },
       {
         "key": "sub.cuisine-french",
         "name": "🥖 French",
-        "keywords": []
+        "keywords": [
+          "french",
+          "french-food",
+          "bistro",
+          "brasserie",
+          "crepes",
+          "patisserie",
+          "croissant",
+          "french-cuisine"
+        ]
       },
       {
         "key": "sub.cuisine-spanish",
         "name": "🥘 Spanish",
-        "keywords": []
+        "keywords": [
+          "spanish",
+          "spanish-food",
+          "tapas",
+          "paella",
+          "pinchos",
+          "spanish-cuisine"
+        ]
       },
       {
         "key": "sub.cuisine-mediterranean",
-        "name": "🥙 Mediterranean",
-        "keywords": []
+        "name": "🌊 Mediterranean",
+        "keywords": [
+          "mediterranean",
+          "mediterranean-food",
+          "olive-oil",
+          "mezze",
+          "seafood",
+          "levantine",
+          "mediterranean-cuisine"
+        ]
       },
       {
         "key": "sub.street-food",
-        "name": "🥙 Street Food",
-        "keywords": []
+        "name": "🚚 Street Food",
+        "keywords": [
+          "street-food",
+          "food-truck",
+          "vendor-food",
+          "quick-bites",
+          "market-food",
+          "takeaway",
+          "grab-and-go"
+        ]
       },
       {
         "key": "sub.cuisine-turkish",
         "name": "🥙 Turkish",
-        "keywords": []
+        "keywords": [
+          "turkish",
+          "turkish-food",
+          "kebab",
+          "doner",
+          "baklava",
+          "pide",
+          "turkish-cuisine",
+          "ayran"
+        ]
       },
       {
         "key": "sub.breakfast-brunch",
         "name": "🥞 Breakfast/Brunch",
-        "keywords": []
+        "keywords": [
+          "breakfast",
+          "breakfast-brunch",
+          "brunch",
+          "morning-food",
+          "eggs",
+          "pancakes",
+          "breakfast-restaurant",
+          "brunch-cafe"
+        ]
+      },
+      {
+        "key": "sub.vegan-vegetarian",
+        "name": "🥗 Vegan & Vegetarian",
+        "keywords": [
+          "vegan",
+          "vegetarian",
+          "plant-based",
+          "veggie",
+          "vegan-restaurant",
+          "vegetarian-restaurant",
+          "healthy-food"
+        ]
       },
       {
         "key": "sub.cuisine-chinese",
         "name": "🥟 Chinese",
-        "keywords": []
+        "keywords": [
+          "chinese",
+          "chinese-food",
+          "dumplings",
+          "noodles",
+          "hot-pot",
+          "wok",
+          "chinese-cuisine"
+        ]
       },
       {
         "key": "sub.cuisine-korean",
         "name": "🥢 Korean",
-        "keywords": []
+        "keywords": [
+          "korean",
+          "korean-food",
+          "kimchi",
+          "bibimbap",
+          "korean-bbq",
+          "tteokbokki",
+          "korean-cuisine"
+        ]
       },
       {
         "key": "sub.fast-food",
         "name": "🥪 Fast-food",
-        "keywords": []
+        "keywords": [
+          "fast-food",
+          "quick-service",
+          "burger",
+          "fries",
+          "takeaway",
+          "drive-through",
+          "quick-bites"
+        ]
       },
       {
         "key": "sub.cuisine-middle-eastern",
         "name": "🧆 Middle Eastern",
-        "keywords": []
+        "keywords": [
+          "middle-eastern",
+          "middle-eastern-food",
+          "falafel",
+          "hummus",
+          "shawarma",
+          "mezze",
+          "levantine"
+        ]
       },
       {
         "key": "sub.cuisine-greek",
         "name": "🫒 Greek",
-        "keywords": []
+        "keywords": [
+          "greek",
+          "greek-food",
+          "gyros",
+          "souvlaki",
+          "feta",
+          "taverna",
+          "greek-cuisine"
+        ]
+      },
+    ],
+    "groupKeywords": [
+      "food",
+      "drink",
+      "restaurant",
+      "cafe",
+      "coffee",
+      "bar",
+      "pub",
+      "bakery",
+      "dessert",
+      "street-food",
+      "fast-food",
+      "brunch",
+      "cuisine"
+    ],
+    "fallbackSubgroupKey": ""
+  },
+  {
+    "groupKey": "group.accommodation",
+    "groupName": "🏨 Accommodation",
+    "subgroups": [
+      {
+        "key": "sub.hotels",
+        "name": "🏨 Hotels",
+        "keywords": [
+          "hotel",
+          "hotels",
+          "resort",
+          "boutique-hotel",
+          "business-hotel",
+          "luxury-hotel",
+          "accommodation",
+          "lodging"
+        ]
+      },
+      {
+        "key": "sub.hostels",
+        "name": "🛏️ Hostels",
+        "keywords": [
+          "hostel",
+          "hostels",
+          "youth-hostel",
+          "dormitory",
+          "dorm-bed",
+          "backpacker",
+          "budget-lodging"
+        ]
+      },
+      {
+        "key": "sub.guesthouses-bbs",
+        "name": "🏡 Guesthouses & B&Bs",
+        "keywords": [
+          "guesthouse",
+          "guest-house",
+          "bed-and-breakfast",
+          "b&b",
+          "pension",
+          "inn",
+          "private-room"
+        ]
+      },
+      {
+        "key": "sub.apartments-short-stays",
+        "name": "🏢 Apartments & Short Stays",
+        "keywords": [
+          "apartment",
+          "serviced-apartment",
+          "aparthotel",
+          "short-stay",
+          "vacation-rental",
+          "holiday-rental",
+          "rental-apartment"
+        ]
+      },
+      {
+        "key": "sub.campgrounds-rv-parks",
+        "name": "🏕️ Campgrounds & RV Parks",
+        "keywords": [
+          "campground",
+          "campsite",
+          "camping",
+          "rv-park",
+          "caravan-park",
+          "motorhome",
+          "glamping"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "accommodation",
+      "lodging",
+      "hotel",
+      "hostel",
+      "guesthouse",
+      "apartment",
+      "resort",
+      "camping"
+    ],
     "fallbackSubgroupKey": ""
   },
   {
@@ -567,67 +1011,166 @@
       {
         "key": "sub.music-workshops",
         "name": "🍀 Music Workshops",
-        "keywords": []
+        "keywords": [
+          "music-workshop",
+          "music-class",
+          "instrument-workshop",
+          "songwriting",
+          "jam-session",
+          "learning-stage"
+        ]
       },
       {
         "key": "sub.karaoke-nights",
         "name": "🎤 Karaoke Nights",
-        "keywords": []
+        "keywords": [
+          "karaoke",
+          "karaoke-night",
+          "singalong",
+          "open-mic",
+          "singing",
+          "karaoke-stage"
+        ]
       },
       {
         "key": "sub.dj-dance",
         "name": "🎧 DJ & Dance",
-        "keywords": []
+        "keywords": [
+          "dj",
+          "dance",
+          "dancefloor",
+          "electronic-music",
+          "club-night",
+          "dj-set",
+          "dance-party"
+        ]
       },
       {
         "key": "sub.pop-stage",
         "name": "🎵 Pop Stage",
-        "keywords": []
+        "keywords": [
+          "pop-stage",
+          "pop-music",
+          "pop-concert",
+          "mainstream-music",
+          "chart-music",
+          "pop-performance"
+        ]
       },
       {
         "key": "sub.live-music",
         "name": "🎷 Live Music",
-        "keywords": []
+        "keywords": [
+          "live-music",
+          "concert",
+          "band",
+          "gig",
+          "live-performance",
+          "music-stage",
+          "show"
+        ]
       },
       {
         "key": "sub.rock-stage",
         "name": "🎸 Rock Stage",
-        "keywords": []
+        "keywords": [
+          "rock-stage",
+          "rock-music",
+          "rock-band",
+          "guitar",
+          "metal",
+          "punk",
+          "rock-concert"
+        ]
       },
       {
         "key": "sub.piano-keys-lounge",
         "name": "🎹 Piano & Keys Lounge",
-        "keywords": []
+        "keywords": [
+          "piano",
+          "keyboard",
+          "keys",
+          "piano-lounge",
+          "jazz-piano",
+          "pianist"
+        ]
       },
       {
         "key": "sub.classical-performance",
         "name": "🎼 Classical Performances",
-        "keywords": []
+        "keywords": [
+          "classical",
+          "classical-music",
+          "orchestra",
+          "chamber-music",
+          "opera",
+          "symphony",
+          "recital"
+        ]
       },
       {
         "key": "sub.vinyl-retro-beats",
         "name": "📀 Vinyl & Retro Beats",
-        "keywords": []
+        "keywords": [
+          "vinyl",
+          "retro",
+          "records",
+          "dj-vinyl",
+          "oldies",
+          "retro-beats",
+          "record-set"
+        ]
       },
       {
         "key": "sub.silent-disco",
         "name": "🔇 Silent Disco",
-        "keywords": []
+        "keywords": [
+          "silent-disco",
+          "headphone-party",
+          "wireless-headphones",
+          "silent-party",
+          "multi-channel-dance"
+        ]
       },
       {
         "key": "sub.drumming-circles",
         "name": "🥁 Drumming Circles",
-        "keywords": []
+        "keywords": [
+          "drumming",
+          "drum-circle",
+          "percussion",
+          "rhythm",
+          "hand-drums",
+          "community-drumming"
+        ]
       },
       {
         "key": "sub.acoustic-sessions",
         "name": "🪕 Acoustic Sessions",
-        "keywords": []
+        "keywords": [
+          "acoustic",
+          "acoustic-session",
+          "unplugged",
+          "singer-songwriter",
+          "folk",
+          "acoustic-guitar"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "stage",
+      "music",
+      "performance",
+      "concert",
+      "live-music",
+      "dj",
+      "karaoke",
+      "dance",
+      "acoustic",
+      "workshop"
+    ],
     "fallbackSubgroupKey": ""
-  },
+  }
   {
     "groupKey": "group.activities",
     "groupName": "🎪 Activities & Experiences",
@@ -635,27 +1178,67 @@
       {
         "key": "sub.art-creative-zones",
         "name": "🎨 Art & Creative Zones",
-        "keywords": []
+        "keywords": [
+          "art",
+          "creative-zone",
+          "crafts",
+          "painting",
+          "drawing",
+          "making",
+          "creative-workshop"
+        ]
       },
       {
         "key": "sub.games-fun",
         "name": "🎯 Games & Fun",
-        "keywords": []
+        "keywords": [
+          "games",
+          "fun",
+          "play",
+          "interactive-games",
+          "competition",
+          "challenge",
+          "family-games"
+        ]
       },
       {
         "key": "sub.music-rhythm",
         "name": "🎶 Music & Rhythm",
-        "keywords": []
+        "keywords": [
+          "music",
+          "rhythm",
+          "percussion",
+          "dance",
+          "sound",
+          "music-activity",
+          "rhythm-workshop"
+        ]
       },
       {
         "key": "sub.photo-spots",
         "name": "📸 Photo Spots",
-        "keywords": []
+        "keywords": [
+          "photo-spot",
+          "photo-op",
+          "selfie-spot",
+          "instagram-spot",
+          "picture-point",
+          "photography"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "activity",
+      "experience",
+      "creative-zone",
+      "games",
+      "music",
+      "photo-spot",
+      "interactive",
+      "festival-activity"
+    ],
     "fallbackSubgroupKey": ""
-  },
+  }
   {
     "groupKey": "group.experiences",
     "groupName": "🎯 Experiences",
@@ -663,27 +1246,68 @@
       {
         "key": "sub.tastings",
         "name": "🍷 Tastings",
-        "keywords": []
+        "keywords": [
+          "tasting",
+          "wine-tasting",
+          "food-tasting",
+          "sampling",
+          "flight",
+          "degustation",
+          "tasting-experience"
+        ]
       },
       {
         "key": "sub.games",
         "name": "🎲 Games",
-        "keywords": []
+        "keywords": [
+          "game",
+          "games",
+          "board-games",
+          "interactive-games",
+          "challenge",
+          "play",
+          "competition"
+        ]
       },
       {
         "key": "sub.kids",
         "name": "👧 Kids",
-        "keywords": []
+        "keywords": [
+          "kids",
+          "children",
+          "family",
+          "child-friendly",
+          "kids-zone",
+          "play-area",
+          "children-activity"
+        ]
       },
       {
         "key": "sub.workshops",
         "name": "🧪 Workshops",
-        "keywords": []
+        "keywords": [
+          "workshop",
+          "class",
+          "hands-on",
+          "learning",
+          "maker-session",
+          "creative-workshop",
+          "training"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "experience",
+      "tasting",
+      "game",
+      "kids",
+      "workshop",
+      "interactive",
+      "hands-on",
+      "family"
+    ],
     "fallbackSubgroupKey": ""
-  },
+  }
   {
     "groupKey": "group.landmarks",
     "groupName": "🏛️ Landmarks",
@@ -783,7 +1407,7 @@
       },
       {
         "key": "sub.sacred-sites",
-        "name": "🕍 Sacred Sites",
+        "name": "🛐 Sacred Sites",
         "keywords": [
           "sacred",
           "holy site",
@@ -877,7 +1501,6 @@
           "pagoda",
           "mandir",
           "stupa",
-          "shrine",
           "gurdwara",
           "vihara",
           "wat",
@@ -915,42 +1538,101 @@
       {
         "key": "sub.chill-spots",
         "name": "🌴 Chill Spots",
-        "keywords": []
+        "keywords": [
+          "chill-spot",
+          "relaxation-area",
+          "lounge",
+          "hangout",
+          "rest-area",
+          "calm-zone"
+        ]
       },
       {
         "key": "sub.cultural-corner",
         "name": "🎭 Cultural Corner",
-        "keywords": []
+        "keywords": [
+          "cultural-corner",
+          "culture",
+          "local-culture",
+          "heritage",
+          "traditions",
+          "community-culture"
+        ]
       },
       {
         "key": "sub.massage",
         "name": "👐 Massage",
-        "keywords": []
+        "keywords": [
+          "massage",
+          "relaxation",
+          "bodywork",
+          "therapeutic-massage",
+          "wellness",
+          "back-massage"
+        ]
       },
       {
         "key": "sub.charity-point",
         "name": "💖 Charity Point",
-        "keywords": []
+        "keywords": [
+          "charity",
+          "donation",
+          "fundraiser",
+          "nonprofit",
+          "ngo",
+          "cause",
+          "support-point"
+        ]
       },
       {
         "key": "sub.group-photo-area",
         "name": "📸 Group Photo Area",
-        "keywords": []
+        "keywords": [
+          "group-photo",
+          "photo-area",
+          "photo-spot",
+          "team-photo",
+          "selfie",
+          "picture-area"
+        ]
       },
       {
         "key": "sub.meeting-points",
         "name": "🤝 Meeting Points",
-        "keywords": []
+        "keywords": [
+          "meeting-point",
+          "meetup",
+          "rendezvous",
+          "gathering-point",
+          "assembly-point",
+          "meeting-area"
+        ]
       },
       {
         "key": "sub.picnic-area",
         "name": "🧺 Picnic Area",
-        "keywords": []
+        "keywords": [
+          "picnic",
+          "picnic-area",
+          "outdoor-dining",
+          "blanket-area",
+          "lawn",
+          "family-picnic"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "social-point",
+      "meeting-point",
+      "chill-spot",
+      "picnic-area",
+      "charity",
+      "photo-area",
+      "community",
+      "relaxation"
+    ],
     "fallbackSubgroupKey": ""
-  },
+  }
   {
     "groupKey": "group.museums",
     "groupName": "🖼️ Museums & Galleries",
@@ -987,7 +1669,7 @@
       },
       {
         "key": "sub.industry",
-        "name": "⚙️ Industry & Technology",
+        "name": "⚙️ Industry & Engineering",
         "keywords": [
           "industry",
           "industrial",
@@ -1111,7 +1793,9 @@
           "traditions",
           "anthropology",
           "ethnography",
-          "heritage"
+          "heritage",
+          "cultural-history",
+          "local-traditions",
         ]
       },
       {
@@ -1234,11 +1918,18 @@
       {
         "key": "sub.specialty",
         "name": "🧩 Specialty",
-        "keywords": []
+        "keywords": [
+          "specialty",
+          "special-interest",
+          "themed-museum",
+          "unique-collection",
+          "niche-museum",
+          "special-exhibit"
+        ]
       },
       {
         "key": "sub.science-medicine",
-        "name": "🧬 Science",
+        "name": "🧬 Life Sciences & Medicine",
         "keywords": [
           "life science",
           "genetics",
@@ -1327,38 +2018,169 @@
     "fallbackSubgroupKey": ""
   },
   {
+    "groupKey": "group.arts-entertainment",
+    "groupName": "🎭 Arts & Entertainment",
+    "subgroups": [
+      {
+        "key": "sub.theaters",
+        "name": "🎭 Theaters",
+        "keywords": [
+          "theater",
+          "theatre",
+          "playhouse",
+          "performing-arts",
+          "stage-show",
+          "drama",
+          "comedy-show"
+        ]
+      },
+      {
+        "key": "sub.cinemas",
+        "name": "🎬 Cinemas",
+        "keywords": [
+          "cinema",
+          "movie-theater",
+          "movie-theatre",
+          "film",
+          "screening",
+          "multiplex"
+        ]
+      },
+      {
+        "key": "sub.event-venues",
+        "name": "🏟️ Event Venues",
+        "keywords": [
+          "event-venue",
+          "venue",
+          "concert-hall",
+          "arena",
+          "auditorium",
+          "conference-venue",
+          "exhibition-hall"
+        ]
+      },
+      {
+        "key": "sub.nightclubs",
+        "name": "🪩 Nightclubs",
+        "keywords": [
+          "nightclub",
+          "club",
+          "dance-club",
+          "disco",
+          "dj-night",
+          "late-night",
+          "dancefloor"
+        ]
+      },
+      {
+        "key": "sub.leisure-attractions",
+        "name": "🎡 Leisure Attractions",
+        "keywords": [
+          "attraction",
+          "amusement",
+          "theme-park",
+          "escape-room",
+          "arcade",
+          "bowling",
+          "family-entertainment"
+        ]
+      }
+    ],
+    "groupKeywords": [
+      "entertainment",
+      "arts",
+      "theater",
+      "cinema",
+      "venue",
+      "nightclub",
+      "attraction",
+      "performance"
+    ],
+    "fallbackSubgroupKey": ""
+  },
+  {
     "groupKey": "group.event-food",
     "groupName": "🥂 Event Food & Drink",
     "subgroups": [
       {
         "key": "sub.coffee-snacks",
         "name": "☕ Coffee & Snacks",
-        "keywords": []
+        "keywords": [
+          "coffee",
+          "snacks",
+          "espresso",
+          "tea",
+          "pastries",
+          "quick-bites",
+          "light-food"
+        ]
       },
       {
         "key": "sub.food-stalls",
         "name": "🍔 Food Stalls",
-        "keywords": []
+        "keywords": [
+          "food-stall",
+          "food-stand",
+          "vendor-food",
+          "festival-food",
+          "stall",
+          "quick-service",
+          "takeaway"
+        ]
       },
       {
         "key": "sub.bars-beverages",
         "name": "🍻 Bars & Beverages",
-        "keywords": []
+        "keywords": [
+          "bar",
+          "beverages",
+          "drinks",
+          "beer",
+          "wine",
+          "cocktails",
+          "soft-drinks"
+        ]
       },
       {
         "key": "sub.vegan-healthy",
         "name": "🥗 Vegan & Healthy",
-        "keywords": []
+        "keywords": [
+          "vegan",
+          "vegetarian",
+          "healthy-food",
+          "plant-based",
+          "salad",
+          "fresh-food",
+          "wellness-food"
+        ]
       },
       {
         "key": "sub.street-food",
         "name": "🥙 Street Food",
-        "keywords": []
+        "keywords": [
+          "street-food",
+          "food-truck",
+          "vendor-food",
+          "quick-bites",
+          "market-food",
+          "takeaway",
+          "grab-and-go"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "event-food",
+      "food-stall",
+      "coffee",
+      "snacks",
+      "bar",
+      "beverages",
+      "street-food",
+      "vegan",
+      "festival-food"
+    ],
     "fallbackSubgroupKey": ""
-  },
+  }
   {
     "groupKey": "group.guests",
     "groupName": "🧰 Guest Services",
@@ -1366,55 +2188,294 @@
       {
         "key": "sub.weather-info",
         "name": "☀️ Weather Info",
-        "keywords": []
+        "keywords": [
+          "weather-info",
+          "forecast",
+          "weather",
+          "rain-alert",
+          "heat-alert",
+          "event-weather",
+          "conditions"
+        ]
       },
       {
         "key": "sub.recycling",
         "name": "♻️ Recycling & Waste Points",
-        "keywords": []
+        "keywords": [
+          "recycling",
+          "waste",
+          "trash",
+          "bins",
+          "waste-point",
+          "sustainability",
+          "garbage"
+        ]
       },
       {
         "key": "sub.event-payment",
         "name": "🎟️ Event Payment Services",
-        "keywords": []
+        "keywords": [
+          "event-payment",
+          "cashless-payment",
+          "top-up",
+          "wristband-payment",
+          "payment-card",
+          "festival-credit"
+        ]
       },
       {
         "key": "sub.tickets-passes",
         "name": "🎫 Tickets & Passes",
-        "keywords": []
+        "keywords": [
+          "tickets",
+          "passes",
+          "ticketing",
+          "wristband",
+          "entry-pass",
+          "box-office",
+          "admission"
+        ]
       },
       {
         "key": "sub.atm",
         "name": "🏧 ATM / Cashpoint",
-        "keywords": []
+        "keywords": [
+          "atm",
+          "cashpoint",
+          "cash-machine",
+          "cash-withdrawal",
+          "bank-machine",
+          "money"
+        ]
       },
       {
         "key": "sub.info-booths",
         "name": "💬 Info Booths",
-        "keywords": []
+        "keywords": [
+          "info-booth",
+          "information",
+          "visitor-info",
+          "help-point",
+          "information-desk",
+          "questions"
+        ]
       },
       {
         "key": "sub.lockers-storage",
         "name": "🔒 Lockers & Storage",
-        "keywords": []
+        "keywords": [
+          "lockers",
+          "storage",
+          "bag-storage",
+          "cloakroom",
+          "luggage-storage",
+          "secure-storage"
+        ]
       },
       {
         "key": "sub.lost-found",
         "name": "🧳 Lost & Found",
-        "keywords": []
+        "keywords": [
+          "lost-and-found",
+          "lost-found",
+          "lost-property",
+          "found-items",
+          "missing-items",
+          "claim-desk"
+        ]
       },
       {
         "key": "sub.health-services",
         "name": "🩺 Health Services",
-        "keywords": []
+        "keywords": [
+          "health-service",
+          "medical-help",
+          "first-aid",
+          "wellbeing",
+          "nurse",
+          "health-point"
+        ]
       },
       {
         "key": "sub.help-desk",
         "name": "🛎️ Help Desk",
-        "keywords": []
+        "keywords": [
+          "help-desk",
+          "support-desk",
+          "visitor-support",
+          "assistance",
+          "questions",
+          "service-desk"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "guest-service",
+      "visitor-service",
+      "information",
+      "tickets",
+      "payment",
+      "atm",
+      "lockers",
+      "lost-found",
+      "recycling",
+      "help-desk"
+    ],
+    "fallbackSubgroupKey": ""
+  }
+  {
+    "groupKey": "group.public-civic",
+    "groupName": "🏢 Public & Civic Services",
+    "subgroups": [
+      {
+        "key": "sub.government-offices",
+        "name": "🏛️ Government Offices",
+        "keywords": [
+          "government-office",
+          "city-hall",
+          "municipality",
+          "council-office",
+          "public-office",
+          "administration",
+          "registry-office"
+        ]
+      },
+      {
+        "key": "sub.post-offices",
+        "name": "📮 Post Offices",
+        "keywords": [
+          "post-office",
+          "postal-service",
+          "mail",
+          "parcel",
+          "shipping",
+          "courier-counter"
+        ]
+      },
+      {
+        "key": "sub.libraries",
+        "name": "📚 Libraries",
+        "keywords": [
+          "library",
+          "public-library",
+          "reading-room",
+          "book-lending",
+          "media-library"
+        ]
+      },
+      {
+        "key": "sub.community-centers",
+        "name": "🏘️ Community Centers",
+        "keywords": [
+          "community-center",
+          "community-centre",
+          "civic-center",
+          "neighborhood-center",
+          "youth-center",
+          "public-hall"
+        ]
+      },
+      {
+        "key": "sub.embassies-consulates",
+        "name": "🛂 Embassies & Consulates",
+        "keywords": [
+          "embassy",
+          "consulate",
+          "visa-office",
+          "diplomatic-mission",
+          "passport-service"
+        ]
+      }
+    ],
+    "groupKeywords": [
+      "public-service",
+      "civic",
+      "government",
+      "library",
+      "post-office",
+      "community-center",
+      "embassy"
+    ],
+    "fallbackSubgroupKey": ""
+  },
+  {
+    "groupKey": "group.education-childcare",
+    "groupName": "🎓 Education & Childcare",
+    "subgroups": [
+      {
+        "key": "sub.schools",
+        "name": "🏫 Schools",
+        "keywords": [
+          "school",
+          "primary-school",
+          "secondary-school",
+          "high-school",
+          "academy",
+          "private-school",
+          "public-school"
+        ]
+      },
+      {
+        "key": "sub.universities-colleges",
+        "name": "🎓 Universities & Colleges",
+        "keywords": [
+          "university",
+          "college",
+          "campus",
+          "faculty",
+          "higher-education",
+          "institute"
+        ]
+      },
+      {
+        "key": "sub.childcare-preschool",
+        "name": "🧸 Childcare & Preschool",
+        "keywords": [
+          "childcare",
+          "daycare",
+          "nursery",
+          "preschool",
+          "kindergarten",
+          "creche",
+          "early-learning"
+        ]
+      },
+      {
+        "key": "sub.tutoring-training",
+        "name": "📘 Tutoring & Training",
+        "keywords": [
+          "tutoring",
+          "tutor",
+          "training-center",
+          "course",
+          "lesson",
+          "adult-education",
+          "test-prep"
+        ]
+      },
+      {
+        "key": "sub.vocational-schools",
+        "name": "🛠️ Vocational Schools",
+        "keywords": [
+          "vocational-school",
+          "trade-school",
+          "skills-training",
+          "professional-training",
+          "certification",
+          "apprenticeship"
+        ]
+      }
+    ],
+    "groupKeywords": [
+      "education",
+      "school",
+      "university",
+      "college",
+      "childcare",
+      "training",
+      "tutoring",
+      "learning"
+    ],
     "fallbackSubgroupKey": ""
   },
   {
@@ -1424,147 +2485,349 @@
       {
         "key": "sub.ferry",
         "name": "⛴️ Ferry",
-        "keywords": []
+        "keywords": [
+          "ferry",
+          "ferry-terminal",
+          "ferry-service",
+          "water-transport",
+          "crossing",
+          "boat-ferry"
+        ]
       },
       {
         "key": "sub.sailboat",
         "name": "⛵ Sailboat",
-        "keywords": []
+        "keywords": [
+          "sailboat",
+          "sailing",
+          "yacht",
+          "sail",
+          "boat-tour",
+          "sailing-trip"
+        ]
       },
       {
         "key": "sub.fuel-station",
         "name": "⛽ Fuel Station",
-        "keywords": []
+        "keywords": [
+          "fuel-station",
+          "gas-station",
+          "petrol-station",
+          "fuel",
+          "gasoline",
+          "diesel"
+        ]
       },
       {
         "key": "sub.airport",
         "name": "✈️ Airport",
-        "keywords": []
+        "keywords": [
+          "airport",
+          "air-terminal",
+          "flights",
+          "departure",
+          "arrival",
+          "air-travel"
+        ]
       },
       {
         "key": "sub.ticketing",
         "name": "🎟️ Tickets & Payment",
-        "keywords": []
+        "keywords": [
+          "ticketing",
+          "transport-ticket",
+          "fare",
+          "payment",
+          "pass",
+          "travel-card"
+        ]
       },
       {
         "key": "sub.horse-riding",
         "name": "🐎 Horse Riding",
-        "keywords": []
+        "keywords": [
+          "horse-riding",
+          "horseback-riding",
+          "equestrian",
+          "riding",
+          "trail-ride",
+          "horse-tour"
+        ]
       },
       {
         "key": "sub.electric-charging",
         "name": "🔋 Electric Charging",
-        "keywords": []
+        "keywords": [
+          "electric-charging",
+          "ev-charging",
+          "charging-station",
+          "ev-station",
+          "car-charger",
+          "electric-vehicle"
+        ]
       },
       {
         "key": "sub.scenic-flight-heli",
         "name": "🚁 Helicopter Tour",
-        "keywords": []
+        "keywords": [
+          "helicopter-tour",
+          "helicopter",
+          "heli-tour",
+          "scenic-flight",
+          "air-tour",
+          "flightseeing"
+        ]
       },
       {
         "key": "sub.train",
         "name": "🚄 Train",
-        "keywords": []
+        "keywords": [
+          "train",
+          "rail",
+          "railway",
+          "train-station",
+          "intercity-train",
+          "rail-service"
+        ]
       },
       {
         "key": "sub.metro",
         "name": "🚇 Metro / Underground",
-        "keywords": []
+        "keywords": [
+          "metro",
+          "underground",
+          "subway",
+          "u-bahn",
+          "tube",
+          "rapid-transit"
+        ]
       },
       {
         "key": "sub.local-train",
         "name": "🚊 Local Train",
-        "keywords": []
+        "keywords": [
+          "local-train",
+          "commuter-rail",
+          "suburban-train",
+          "regional-train",
+          "s-bahn",
+          "rail-stop"
+        ]
       },
       {
         "key": "sub.tram",
         "name": "🚋 Tram",
-        "keywords": []
+        "keywords": [
+          "tram",
+          "streetcar",
+          "light-rail",
+          "tramway",
+          "tram-stop",
+          "trolley"
+        ]
       },
       {
         "key": "sub.local-bus",
         "name": "🚌 Local Bus",
-        "keywords": []
+        "keywords": [
+          "local-bus",
+          "bus",
+          "bus-stop",
+          "city-bus",
+          "public-bus",
+          "bus-route"
+        ]
       },
       {
         "key": "sub.coach",
         "name": "🚍 Coach",
-        "keywords": []
+        "keywords": [
+          "coach",
+          "intercity-bus",
+          "long-distance-bus",
+          "bus-coach",
+          "tour-coach"
+        ]
       },
       {
         "key": "sub.tourist-bus",
-        "name": "🚍 Sightseeing Bus",
-        "keywords": []
+        "name": "🗺️ Sightseeing Bus",
+        "keywords": [
+          "sightseeing-bus",
+          "tourist-bus",
+          "hop-on-hop-off",
+          "city-tour",
+          "tour-bus"
+        ]
       },
       {
         "key": "sub.trolleybus",
         "name": "🚎 Trolleybus",
-        "keywords": []
+        "keywords": [
+          "trolleybus",
+          "electric-bus",
+          "trolley-bus",
+          "overhead-wire-bus",
+          "public-transport"
+        ]
       },
       {
         "key": "sub.shuttle",
         "name": "🚐 Shuttle",
-        "keywords": []
+        "keywords": [
+          "shuttle",
+          "shuttle-bus",
+          "transfer",
+          "airport-shuttle",
+          "event-shuttle",
+          "minibus"
+        ]
       },
       {
         "key": "sub.taxi",
         "name": "🚕 Taxi",
-        "keywords": []
+        "keywords": [
+          "taxi",
+          "cab",
+          "taxicab",
+          "ride",
+          "taxi-stand",
+          "private-hire"
+        ]
       },
       {
         "key": "sub.car-rental",
         "name": "🚗 Car Rental",
-        "keywords": []
+        "keywords": [
+          "car-rental",
+          "rent-a-car",
+          "vehicle-rental",
+          "car-hire",
+          "rental-car"
+        ]
       },
       {
         "key": "sub.cruise-ship",
         "name": "🚢 Cruise Ship",
-        "keywords": []
+        "keywords": [
+          "cruise-ship",
+          "cruise",
+          "cruise-terminal",
+          "ocean-liner",
+          "cruise-port"
+        ]
       },
       {
         "key": "sub.boat",
         "name": "🚤 Boat",
-        "keywords": []
+        "keywords": [
+          "boat",
+          "motorboat",
+          "water-taxi",
+          "boat-service",
+          "boat-ride",
+          "vessel"
+        ]
       },
       {
         "key": "sub.bicycle",
         "name": "🚲 Bicycle Rental",
-        "keywords": []
+        "keywords": [
+          "bicycle-rental",
+          "bike-rental",
+          "bike-share",
+          "cycling",
+          "bicycle",
+          "bike"
+        ]
       },
       {
         "key": "sub.tourist-boat",
         "name": "🛥️ Sightseeing Boat",
-        "keywords": []
+        "keywords": [
+          "sightseeing-boat",
+          "tourist-boat",
+          "boat-tour",
+          "river-cruise",
+          "harbor-tour",
+          "water-tour"
+        ]
       },
       {
         "key": "sub.scenic-flight-plane",
         "name": "🛩️ Flightseeing",
-        "keywords": []
+        "keywords": [
+          "flightseeing",
+          "scenic-flight",
+          "airplane-tour",
+          "plane-tour",
+          "aerial-tour",
+          "small-aircraft"
+        ]
       },
       {
         "key": "sub.passenger-ship",
         "name": "🛳️ Passenger Ship",
-        "keywords": []
+        "keywords": [
+          "passenger-ship",
+          "passenger-ferry",
+          "ship",
+          "liner",
+          "sea-transport",
+          "boat-terminal"
+        ]
       },
       {
         "key": "sub.e-scooter",
         "name": "🛴 E-Scooter",
-        "keywords": []
+        "keywords": [
+          "e-scooter",
+          "electric-scooter",
+          "scooter-rental",
+          "micromobility",
+          "scooter-share"
+        ]
       },
       {
         "key": "sub.auto-rickshaw",
         "name": "🛺 Auto Rickshaw",
-        "keywords": []
+        "keywords": [
+          "auto-rickshaw",
+          "tuk-tuk",
+          "rickshaw",
+          "three-wheeler",
+          "auto",
+          "motor-rickshaw"
+        ]
       },
       {
         "key": "sub.parking",
         "name": "🅿️ Parking",
-        "keywords": []
+        "keywords": [
+          "parking",
+          "car-park",
+          "parking-lot",
+          "garage",
+          "parking-garage",
+          "park-and-ride"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "transport",
+      "transit",
+      "public-transport",
+      "mobility",
+      "airport",
+      "train",
+      "bus",
+      "tram",
+      "taxi",
+      "rental",
+      "parking"
+    ],
     "fallbackSubgroupKey": ""
-  },
+  }
   {
     "groupKey": "group.gates",
     "groupName": "🚪 Exit / Entry Gates",
@@ -1572,22 +2835,50 @@
       {
         "key": "sub.other-gates",
         "name": "↔️ Other Gates",
-        "keywords": []
+        "keywords": [
+          "gate",
+          "entry-gate",
+          "exit-gate",
+          "access-gate",
+          "other-gate",
+          "secondary-gate"
+        ]
       },
       {
         "key": "sub.northern-gates",
         "name": "⬆️ Northern Gates",
-        "keywords": []
+        "keywords": [
+          "north-gate",
+          "northern-gate",
+          "north-entry",
+          "north-exit",
+          "north-access"
+        ]
       },
       {
         "key": "sub.southern-gates",
         "name": "⬇️ Southern Gates",
-        "keywords": []
+        "keywords": [
+          "south-gate",
+          "southern-gate",
+          "south-entry",
+          "south-exit",
+          "south-access"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "gate",
+      "entry",
+      "exit",
+      "entrance",
+      "access-point",
+      "north-gate",
+      "south-gate",
+      "festival-gate"
+    ],
     "fallbackSubgroupKey": ""
-  },
+  }
   {
     "groupKey": "group.facilities",
     "groupName": "🚻 Facilities",
@@ -1595,37 +2886,88 @@
       {
         "key": "sub.baby-changing",
         "name": "👶 Baby Changing Facilities",
-        "keywords": []
+        "keywords": [
+          "baby-changing",
+          "changing-table",
+          "family-room",
+          "diaper-changing",
+          "parent-room",
+          "nursery-room"
+        ]
       },
       {
         "key": "sub.water-refill-points",
         "name": "💧 Water & Refill Points",
-        "keywords": []
+        "keywords": [
+          "water-refill",
+          "water-station",
+          "drinking-water",
+          "refill-point",
+          "hydration",
+          "water-fountain"
+        ]
       },
       {
         "key": "sub.seating-area",
         "name": "💺 Seating Area",
-        "keywords": []
+        "keywords": [
+          "seating",
+          "seating-area",
+          "benches",
+          "rest-area",
+          "chairs",
+          "lounge-seating"
+        ]
       },
       {
         "key": "sub.smoking-area",
         "name": "🚬 Smoking Area",
-        "keywords": []
+        "keywords": [
+          "smoking-area",
+          "smoking-zone",
+          "designated-smoking",
+          "cigarette-area",
+          "smoking-point"
+        ]
       },
       {
         "key": "sub.toilet-zone",
         "name": "🚾 Toilet Zone",
-        "keywords": []
+        "keywords": [
+          "toilet",
+          "restroom",
+          "wc",
+          "bathroom",
+          "lavatory",
+          "toilet-zone"
+        ]
       },
       {
         "key": "sub.showers",
         "name": "🚿 Showers",
-        "keywords": []
+        "keywords": [
+          "showers",
+          "shower",
+          "washing-area",
+          "bathroom-shower",
+          "rinse-off",
+          "shower-facility"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "facility",
+      "facilities",
+      "toilet",
+      "water",
+      "seating",
+      "showers",
+      "baby-changing",
+      "smoking-area",
+      "amenities"
+    ],
     "fallbackSubgroupKey": ""
-  },
+  }
   {
     "groupKey": "group.spas",
     "groupName": "🛁 Spas",
@@ -1633,25 +2975,145 @@
       {
         "key": "sub.thermal-bath",
         "name": "♨️ Thermal Bath",
-        "keywords": []
+        "keywords": [
+          "thermal-bath",
+          "hot-spring",
+          "thermal-spa",
+          "mineral-bath",
+          "bathhouse",
+          "thermal-water"
+        ]
       },
       {
         "key": "sub.wellness-relaxation",
         "name": "🌿 Wellness & Relaxation",
-        "keywords": []
+        "keywords": [
+          "wellness",
+          "relaxation",
+          "spa",
+          "sauna",
+          "massage",
+          "wellness-center",
+          "retreat"
+        ]
       },
       {
         "key": "sub.aquatic-center",
         "name": "🏊 Aquatic Center",
-        "keywords": []
+        "keywords": [
+          "aquatic-center",
+          "swimming-pool",
+          "pool",
+          "water-center",
+          "aquatics",
+          "leisure-pool"
+        ]
       },
       {
         "key": "sub.showers-bathing",
         "name": "🚿 Showers / Bathing",
-        "keywords": []
+        "keywords": [
+          "showers",
+          "bathing",
+          "bathhouse",
+          "washing",
+          "public-bath",
+          "shower-facility"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "spa",
+      "thermal-bath",
+      "wellness",
+      "relaxation",
+      "aquatic-center",
+      "bathing",
+      "showers",
+      "sauna"
+    ],
+    "fallbackSubgroupKey": ""
+  }
+  {
+    "groupKey": "group.sports-fitness",
+    "groupName": "🏃 Sports & Fitness",
+    "subgroups": [
+      {
+        "key": "sub.gyms-fitness-centers",
+        "name": "🏋️ Gyms & Fitness Centers",
+        "keywords": [
+          "gym",
+          "fitness-center",
+          "fitness-club",
+          "workout",
+          "training",
+          "personal-training",
+          "health-club"
+        ]
+      },
+      {
+        "key": "sub.sports-venues",
+        "name": "🏟️ Sports Venues",
+        "keywords": [
+          "sports-venue",
+          "stadium",
+          "arena",
+          "sports-field",
+          "pitch",
+          "court",
+          "track",
+          "ice-rink"
+        ]
+      },
+      {
+        "key": "sub.sports-clubs-classes",
+        "name": "🤾 Sports Clubs & Classes",
+        "keywords": [
+          "sports-club",
+          "sports-class",
+          "martial-arts",
+          "dance-class",
+          "tennis-club",
+          "running-club",
+          "training-class"
+        ]
+      },
+      {
+        "key": "sub.swimming-pools",
+        "name": "🏊 Swimming Pools",
+        "keywords": [
+          "swimming-pool",
+          "pool",
+          "public-pool",
+          "lap-pool",
+          "swim-school",
+          "aquatics"
+        ]
+      },
+      {
+        "key": "sub.outdoor-recreation",
+        "name": "🧗 Outdoor Recreation",
+        "keywords": [
+          "outdoor-recreation",
+          "climbing",
+          "adventure-park",
+          "hiking",
+          "bike-park",
+          "water-sports",
+          "outdoor-activity"
+        ]
+      }
+    ],
+    "groupKeywords": [
+      "sports",
+      "fitness",
+      "gym",
+      "stadium",
+      "pool",
+      "training",
+      "recreation",
+      "outdoor"
+    ],
     "fallbackSubgroupKey": ""
   },
   {
@@ -1661,45 +3123,287 @@
       {
         "key": "sub.translation-services",
         "name": "🌐 Translation Services",
-        "keywords": []
+        "keywords": [
+          "translation",
+          "translator",
+          "interpretation",
+          "interpreter",
+          "language-service",
+          "document-translation",
+          "localization"
+        ]
       },
+      {
+        "key": "sub.professional-services",
+        "name": "💼 Professional Services",
+        "keywords": [
+          "professional-service",
+          "consulting",
+          "legal-service",
+          "lawyer",
+          "accountant",
+          "bookkeeping",
+          "insurance",
+          "real-estate"
+        ]
+      },
+      {
+        "key": "sub.banks-financial-services",
+        "name": "🏦 Banks & Financial Services",
+        "keywords": [
+          "bank",
+          "credit-union",
+          "financial-service",
+          "currency-exchange",
+          "money-transfer",
+          "payment-service",
+          "loan",
+          "atm"
+        ]
+      },
+      {
+        "key": "sub.coworking-offices",
+        "name": "🖥️ Coworking & Offices",
+        "keywords": [
+          "coworking",
+          "coworking-space",
+          "shared-office",
+          "office-space",
+          "business-center",
+          "meeting-room"
+        ]
+      },
+      {
+        "key": "sub.cleaning-laundry",
+        "name": "🧺 Cleaning & Laundry",
+        "keywords": [
+          "laundry",
+          "laundromat",
+          "dry-cleaning",
+          "cleaning-service",
+          "wash-and-fold",
+          "alterations"
+        ]
+      },
+      {
+        "key": "sub.beauty-personal-care",
+        "name": "💇 Beauty & Personal Care",
+        "keywords": [
+          "beauty-salon",
+          "hair-salon",
+          "barber",
+          "nail-salon",
+          "cosmetics",
+          "makeup",
+          "personal-care"
+        ]
+      },
+      {
+        "key": "sub.pet-veterinary-services",
+        "name": "🐾 Pet & Veterinary Services",
+        "keywords": [
+          "veterinary",
+          "vet",
+          "animal-hospital",
+          "pet-grooming",
+          "pet-care",
+          "dog-walking",
+          "pet-service"
+        ]
+      },      
       {
         "key": "sub.language-schools",
         "name": "🏫 Language Schools",
-        "keywords": []
+        "keywords": [
+          "language-school",
+          "language-class",
+          "language-course",
+          "foreign-language",
+          "language-learning",
+          "language-lessons"
+        ]
       },
       {
         "key": "sub.treatments",
         "name": "💆 Treatments",
-        "keywords": []
+        "keywords": [
+          "treatment",
+          "therapy",
+          "wellness-treatment",
+          "spa-treatment",
+          "massage-treatment",
+          "body-treatment",
+          "care-service"
+        ]
       },
       {
         "key": "sub.photo-video",
         "name": "📸 Photo/Video",
-        "keywords": []
+        "keywords": [
+          "photo-video",
+          "photography",
+          "videography",
+          "photo-service",
+          "video-service",
+          "photographer",
+          "videographer",
+          "rendering",
+          "cgi"
+        ]
       },
       {
         "key": "sub.yoga",
         "name": "🧘 Yoga",
-        "keywords": []
+        "keywords": [
+          "yoga",
+          "yoga-class",
+          "yoga-studio",
+          "meditation",
+          "mindfulness",
+          "stretching",
+          "wellness-class",
+          "bikram-yoga",
+          "hatha-yoga"
+        ]
       },
       {
         "key": "sub.tours",
         "name": "🧭 Tours",
-        "keywords": []
+        "keywords": [
+          "tour",
+          "guided-tour",
+          "sightseeing",
+          "walking-tour",
+          "city-tour",
+          "local-tour",
+          "excursion"
+        ]
       },
       {
         "key": "sub.rentals",
         "name": "🚲 Rentals",
-        "keywords": []
+        "keywords": [
+          "rental",
+          "rentals",
+          "equipment-rental",
+          "bike-rental",
+          "car-rental",
+          "bicycle-rental",
+          "roller-rental",
+          "gear-rental",
+          "hire"
+        ]
       },
       {
         "key": "sub.repair-maintenance",
         "name": "🛠️ Repair & Maintenance",
-        "keywords": []
+        "keywords": [
+          "repair",
+          "maintenance",
+          "fixing",
+          "service-repair",
+          "technical-service",
+          "mechanic",
+          "handyman"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "service",
+      "services",
+      "repair",
+      "rental",
+      "tour",
+      "translation",
+      "photo",
+      "professional-service",
+      "bank",
+      "laundry",
+      "beauty",
+      "pet-service"
+    ],
+    "fallbackSubgroupKey": ""
+  },
+  {
+    "groupKey": "group.creators-talent",
+    "groupName": "🌟 Creators & Talent",
+    "subgroups": [
+      {
+        "key": "sub.musicians-performers",
+        "name": "🎤 Musicians & Performers",
+        "keywords": [
+          "musician",
+          "performer",
+          "singer",
+          "band",
+          "dj",
+          "actor",
+          "dancer",
+          "comedian",
+          "entertainer"
+        ]
+      },
+      {
+        "key": "sub.visual-artists",
+        "name": "🎨 Visual Artists",
+        "keywords": [
+          "artist",
+          "visual-artist",
+          "illustrator",
+          "painter",
+          "sculptor",
+          "designer",
+          "street-artist"
+        ]
+      },
+      {
+        "key": "sub.content-creators",
+        "name": "📱 Content Creators",
+        "keywords": [
+          "content-creator",
+          "influencer",
+          "blogger",
+          "vlogger",
+          "streamer",
+          "podcaster",
+          "creator"
+        ]
+      },
+      {
+        "key": "sub.guides-hosts",
+        "name": "🧭 Guides & Hosts",
+        "keywords": [
+          "guide",
+          "tour-guide",
+          "host",
+          "experience-host",
+          "local-guide",
+          "facilitator"
+        ]
+      },
+      {
+        "key": "sub.instructors-coaches",
+        "name": "🏅 Instructors & Coaches",
+        "keywords": [
+          "instructor",
+          "coach",
+          "teacher",
+          "trainer",
+          "mentor",
+          "workshop-leader"
+        ]
+      }
+    ],
+    "groupKeywords": [
+      "creator",
+      "talent",
+      "artist",
+      "performer",
+      "guide",
+      "host",
+      "instructor",
+      "coach"
+    ],
     "fallbackSubgroupKey": ""
   },
   {
@@ -1709,23 +3413,79 @@
       {
         "key": "sub.food-groceries",
         "name": "🍎 Food & Groceries",
-        "keywords": []
+        "keywords": [
+          "food-groceries",
+          "grocery",
+          "groceries",
+          "supermarket",
+          "food-store",
+          "produce",
+          "market"
+        ]
       },
       {
         "key": "sub.merchandise",
-        "name": "🎁 Merchandise",
-        "keywords": []
+        "name": "🏷️ Branded Merchandise",
+        "keywords": [
+          "merchandise",
+          "merch",
+          "branded-merchandise",
+          "fan-merch",
+          "licensed-products",
+          "collectibles"
+        ]
       },
       {
         "key": "sub.souvenirs",
-        "name": "🎁 Souvenirs",
-        "keywords": []
+        "name": "🎁 Souvenirs & Gifts",
+        "keywords": [
+          "souvenir",
+          "souvenirs",
+          "gifts",
+          "local-gifts",
+          "keepsakes",
+          "tourist-gifts"
+        ]
       },
       {
         "key": "sub.apparel",
         "name": "👕 Apparel",
-        "keywords": []
+        "keywords": [
+          "apparel",
+          "clothing",
+          "fashion",
+          "clothes",
+          "shoes",
+          "accessories",
+          "boutique"
+        ]
       },
+      {
+        "key": "sub.electronics",
+        "name": "🔌 Electronics",
+        "keywords": [
+          "electronics",
+          "phone-shop",
+          "mobile-phone",
+          "computer",
+          "camera",
+          "accessories",
+          "gadget"
+        ]
+      },
+      {
+        "key": "sub.books-stationery",
+        "name": "📚 Books & Stationery",
+        "keywords": [
+          "bookstore",
+          "bookshop",
+          "books",
+          "stationery",
+          "paper-goods",
+          "cards",
+          "office-supplies"
+        ]
+      },      
       {
         "key": "sub.pharmacy",
         "name": "💊 Pharmacy",
@@ -1744,30 +3504,79 @@
       {
         "key": "sub.tobacco-shop",
         "name": "💨 Tobacco Shop",
-        "keywords": []
+        "keywords": [
+          "tobacco-shop",
+          "tobacco",
+          "cigarettes",
+          "cigars",
+          "smoking-products",
+          "newsagent"
+        ]
       },
       {
         "key": "sub.convenience-store",
-        "name": "🥤 Convenience Store",
-        "keywords": []
+        "name": "🏪 Convenience Store",
+        "keywords": [
+          "convenience-store",
+          "corner-shop",
+          "mini-market",
+          "bodega",
+          "late-night-store",
+          "neighborhood-store"
+        ]
       },
       {
         "key": "sub.convenience",
-        "name": "🧃 Convenience",
-        "keywords": []
+        "name": "🧃 Drinks & Essentials",
+        "keywords": [
+          "drinks",
+          "soft-drinks",
+          "snacks",
+          "grab-and-go",
+          "basic-essentials",
+          "toiletries",
+          "festival-essentials"
+        ]
       },
       {
         "key": "sub.official-festival-shop",
         "name": "🧢 Official Festival Shop",
-        "keywords": []
+        "keywords": [
+          "official-festival-shop",
+          "festival-shop",
+          "official-merchandise",
+          "event-shop",
+          "branded-merch",
+          "festival-merch"
+        ]
       },
       {
         "key": "sub.crafts",
         "name": "🧶 Crafts",
-        "keywords": []
+        "keywords": [
+          "crafts",
+          "handmade",
+          "artisan",
+          "craft-shop",
+          "handicrafts",
+          "local-crafts",
+          "maker-products"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "shop",
+      "store",
+      "retail",
+      "market",
+      "groceries",
+      "souvenir",
+      "apparel",
+      "pharmacy",
+      "convenience-store",
+      "electronics",
+      "bookstore"
+    ],
     "fallbackSubgroupKey": ""
   },
   {
@@ -1777,40 +3586,99 @@
       {
         "key": "sub.incident-response",
         "name": "⚠️ Incident Response",
-        "keywords": []
+        "keywords": [
+          "incident-response",
+          "incident",
+          "safety-incident",
+          "accident",
+          "response-team",
+          "report-incident"
+        ]
       },
       {
         "key": "sub.medical-first-aid",
         "name": "🏥 Medical / First Aid",
-        "keywords": []
+        "keywords": [
+          "first-aid",
+          "medical-aid",
+          "medical-help",
+          "first-aid-station",
+          "emergency-medical",
+          "paramedic"
+        ]
       },
       {
         "key": "sub.security",
         "name": "👮 Security",
-        "keywords": []
+        "keywords": [
+          "security",
+          "security-team",
+          "guard",
+          "crowd-control",
+          "safety",
+          "security-point"
+        ]
       },
       {
         "key": "sub.personal-crisis",
         "name": "💚 Personal Crisis Response",
-        "keywords": []
+        "keywords": [
+          "personal-crisis",
+          "crisis-response",
+          "mental-health-crisis",
+          "wellbeing-support",
+          "safe-space",
+          "emotional-support"
+        ]
       },
       {
         "key": "sub.emergency-response",
         "name": "📢 Emergency Response",
-        "keywords": []
+        "keywords": [
+          "emergency-response",
+          "emergency",
+          "alert",
+          "evacuation",
+          "urgent-help",
+          "response-point"
+        ]
       },
       {
         "key": "sub.fire-safety",
         "name": "🔥 Fire Safety",
-        "keywords": []
+        "keywords": [
+          "fire-safety",
+          "fire",
+          "fire-brigade",
+          "fire-extinguisher",
+          "fire-response",
+          "fire-marshal"
+        ]
       },
       {
         "key": "sub.police-assistance",
         "name": "🚓 Police Assistance",
-        "keywords": []
+        "keywords": [
+          "police",
+          "police-assistance",
+          "law-enforcement",
+          "police-point",
+          "public-safety",
+          "officer"
+        ]
       }
     ],
-    "groupKeywords": [],
+    "groupKeywords": [
+      "emergency",
+      "safety",
+      "security",
+      "first-aid",
+      "medical-aid",
+      "incident-response",
+      "fire-safety",
+      "police",
+      "crisis-response"
+    ],
     "fallbackSubgroupKey": ""
   }
 ]

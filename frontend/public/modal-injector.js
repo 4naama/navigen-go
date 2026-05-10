@@ -1467,14 +1467,16 @@ const descs = resolveDescriptionMapForLocation(payload, [
         <section class="lpm-rating-panel-section lpm-navigen-rating-panel">
           <p><strong>${translatedOrFallback('lpm.rating.navigenVisitor', 'NaviGen visitor rating')}</strong></p>
           <p class="lpm-rating-average-line" id="lpm-ng-rating-average">${ratingSeedSummary}</p>
-          <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate on NaviGen')}">
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
-            <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
+          <div class="lpm-navigen-rate-chip">
+            <div id="lpm-rate-group" class="rate-row" role="radiogroup" aria-label="${translatedOrFallback('lpm.rating.ariaGroup', 'Rate on NaviGen')}">
+              <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="1 of 5">😕</button>
+              <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="2 of 5">😐</button>
+              <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="3 of 5">🙂</button>
+              <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="4 of 5">😄</button>
+              <button class="rate-btn" type="button" role="radio" aria-checked="false" aria-label="5 of 5">🤩</button>
+            </div>
+            <p class="lpm-rating-action-line">${translatedOrFallback('lpm.rating.rateOnNavigen', 'Rate on NaviGen')}</p>
           </div>
-          <p class="lpm-rating-action-line">${translatedOrFallback('lpm.rating.rateOnNavigen', 'Rate on NaviGen')}</p>
         </section>
       </div>
     `;

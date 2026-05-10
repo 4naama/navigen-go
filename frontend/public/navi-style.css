@@ -5854,11 +5854,31 @@ body.high-contrast .modal-menu-item.is-active {
   text-align:left;
 }
 
-.lpm-rating-action-line{
-  margin:.45rem 0 0;
-  color:var(--muted, #666);
-  font-size:.9rem;
+#location-profile-modal .lpm-rating-chip .lpm-navigen-rate-chip{
+  margin:10px auto 0;
+  padding:12px 14px;
+  border:1px solid var(--line, #d9d9d9);
+  border-radius:14px;
+  background:var(--card, #fff);
+  max-width:320px;
+}
+
+#location-profile-modal .lpm-rating-chip .lpm-navigen-rate-chip .rate-row{
+  position:relative;
+  z-index:1;
+}
+
+#location-profile-modal .lpm-rating-chip .lpm-navigen-rate-chip .rate-btn{
+  position:relative;
+  z-index:2;
+}
+
+#location-profile-modal .lpm-rating-chip .lpm-rating-action-line{
+  margin:10px 0 0;
+  color:var(--text, #222);
+  font-size:.95rem;
   line-height:1.35;
+  text-align:center;
 }
 
 #location-profile-modal .lpm-google-rating-chip .lpm-chip-face-icons{
