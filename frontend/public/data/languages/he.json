@@ -1190,5 +1190,7 @@
   "owner.settings.signedin.visitProfile.title": "בקר בפרופיל הציבורי",
   "owner.settings.signedin.visitProfile.desc": "פתח את דף הרישום הציבורי של העסק.",
   "owner.settings.signedin.visitProfile.unpublished": "הפרופיל הזה עדיין לא פורסם.",
-  "business.card.platformProfile": "פרופיל NaviGen"
+  "business.card.platformProfile": "פרופיל NaviGen",
+  "business.card.copyProfile": "העתק קישור פרופיל NaviGen",
+  "business.card.copyProfileDone": "קישור פרופיל NaviGen הועתק."
 }

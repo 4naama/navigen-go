@@ -2371,29 +2371,22 @@ async function initLpmImageSlider(modal, data) {
             infoInner.appendChild(p); // no labels
           }
 
-          if (platformProfileUrl) {
-            const p = document.createElement('p');
-            p.className = 'business-card-platform-url';
-            const a = document.createElement('a');
-            a.href = platformProfileUrl;
-            a.textContent = platformProfileUrl;
-            p.appendChild(a);
-            infoInner.appendChild(p);
-          }
-
           const qrRow = document.createElement('div');
           qrRow.className = 'modal-menu-list';
           qrRow.innerHTML = `
-            <button type="button" class="modal-menu-item" id="som-info-profile">
-              <span class="icon-img">👀</span><span class="label">${translatedOrFallback('business.card.platformProfile', 'NaviGen profile')}</span>
-            </button>
+            <div class="modal-menu-item business-card-platform-chip">
+              <button type="button" class="business-card-platform-main" id="som-info-profile-open">
+                <span class="icon-img">👀</span><span class="label">${translatedOrFallback('business.card.platformProfile', 'NaviGen profile')}</span>
+              </button>
+              <button type="button" class="business-card-platform-copy" id="som-info-profile-copy" aria-label="${translatedOrFallback('business.card.copyProfile', 'Copy NaviGen profile link')}">⧉</button>
+            </div>
             <button type="button" class="modal-menu-item" id="som-info-qr">
               <span class="icon-img">🔳</span><span class="label">QR code</span>
             </button>
           `;
           infoInner.appendChild(qrRow);
           
-          qrRow.querySelector('#som-info-profile')?.addEventListener('click', (ev) => {
+          qrRow.querySelector('#som-info-profile-open')?.addEventListener('click', (ev) => {
             ev.preventDefault();
 
             if (!platformProfileUrl) {
@@ -2402,7 +2395,34 @@ async function initLpmImageSlider(modal, data) {
             }
 
             window.location.href = platformProfileUrl;
-          });        
+          });
+
+          qrRow.querySelector('#som-info-profile-copy')?.addEventListener('click', async (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+
+            if (!platformProfileUrl) {
+              showToast('Missing profile URL', 1600);
+              return;
+            }
+
+            try {
+              await navigator.clipboard.writeText(platformProfileUrl);
+            } catch {
+              const ta = document.createElement('textarea');
+              ta.value = platformProfileUrl;
+              ta.setAttribute('readonly', '');
+              ta.style.position = 'fixed';
+              ta.style.left = '-9999px';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              ta.remove();
+            }
+
+            showToast(translatedOrFallback('business.card.copyProfileDone', 'NaviGen profile link copied.'), 1600);
+          });
+      
 
           qrRow.querySelector('#som-info-qr')?.addEventListener('click', (ev) => {
             ev.preventDefault();

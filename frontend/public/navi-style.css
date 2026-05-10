@@ -7104,14 +7104,45 @@ body.high-contrast .modal-menu-item.is-active {
   margin-top:2px;
 }
 
-#bizcard-modal .business-card-platform-url{
-  overflow-wrap:anywhere;
-  word-break:break-word;
-  font-size:.86rem;
-  line-height:1.35;
+#bizcard-modal .business-card-platform-chip{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:0;
 }
 
-#bizcard-modal .business-card-platform-url a{
+#bizcard-modal .business-card-platform-main{
+  display:flex;
+  flex:1 1 auto;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  padding:12px 14px;
+  border:0;
+  background:transparent;
   color:inherit;
-  text-decoration:underline;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+
+#bizcard-modal .business-card-platform-copy{
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  width:40px;
+  height:40px;
+  margin-right:8px;
+  border:1px solid #d9e4ee;
+  border-radius:10px;
+  background:#f8fbff;
+  color:#1f2937;
+  font-size:1rem;
+  cursor:pointer;
+}
+
+#bizcard-modal .business-card-platform-copy:hover{
+  background:#eaf2ff;
+  border-color:#8fb2ff;
 }

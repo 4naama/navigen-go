@@ -1190,5 +1190,7 @@
   "owner.settings.signedin.visitProfile.title": "Visit public profile",
   "owner.settings.signedin.visitProfile.desc": "Open the public listing page for this business.",
   "owner.settings.signedin.visitProfile.unpublished": "This profile is not published yet.",
-  "business.card.platformProfile": "NaviGen profile"
+  "business.card.platformProfile": "NaviGen profile",
+  "business.card.copyProfile": "Copy NaviGen profile link",
+  "business.card.copyProfileDone": "NaviGen profile link copied."
 }
