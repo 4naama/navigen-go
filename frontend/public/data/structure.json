@@ -401,7 +401,7 @@
       "restricted-area"
     ],
     "fallbackSubgroupKey": ""
-  }
+  },
   {
     "groupKey": "group.parks-nature",
     "groupName": "🌳 Parks & Nature",
@@ -1738,7 +1738,7 @@
         ]
       },
       {
-        "key": "group.nature",
+        "key": "sub.nature",
         "name": "🌳 Nature & Environment",
         "keywords": [
           "nature",
@@ -1783,7 +1783,7 @@
         ]
       },
       {
-        "key": "group.culture",
+        "key": "sub.culture",
         "name": "🎭 Culture & Society",
         "keywords": [
           "culture",
@@ -1823,7 +1823,7 @@
         ]
       },
       {
-        "key": "group.heritage",
+        "key": "sub.heritage",
         "name": "🏯 Built Heritage",
         "keywords": [
           "built heritage",
@@ -2019,7 +2019,7 @@
   },
   {
     "groupKey": "group.arts-entertainment",
-    "groupName": "🎭 Arts & Entertainment",
+    "groupName": "🩰 Arts & Entertainment",
     "subgroups": [
       {
         "key": "sub.theaters",
@@ -2061,7 +2061,7 @@
       },
       {
         "key": "sub.nightclubs",
-        "name": "🪩 Nightclubs",
+        "name": "✨ Nightclubs",
         "keywords": [
           "nightclub",
           "club",

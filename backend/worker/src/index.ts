@@ -3962,6 +3962,11 @@ export default {
         return await handleStructureBusinessCategoriesRead(env);
       }
 
+      // --- Structure taxonomy: public BO-facing business tag/facet read projection
+      if (normPath === "/api/structure/business-tags" && req.method === "GET") {
+        return await handleStructureBusinessTagsRead(env);
+      }
+      
       // --- Structure taxonomy admin manifest: active business category version metadata
       if (normPath === "/api/admin/structure/manifest" && req.method === "GET") {
         if (!isAdminPreseedAuthorized(req, env)) {
@@ -3986,6 +3991,18 @@ export default {
         return await handleStructurePublish(req, env);
       }
 
+      // --- Structure taxonomy admin publish: validate and publish active business tags/facets
+      if (normPath === "/api/admin/structure/publish-tags" && req.method === "POST") {
+        if (!isAdminPreseedAuthorized(req, env)) {
+          return json(
+            { error: { code: "forbidden", message: "admin authorization required" } },
+            403,
+            { "cache-control": "no-store" }
+          );
+        }
+        return await handleStructureTagsPublish(req, env);
+      }
+      
       // --- Structure taxonomy admin rollback: activate an existing historical business category version
       if (normPath === "/api/admin/structure/activate-version" && req.method === "POST") {
         if (!isAdminPreseedAuthorized(req, env)) {
@@ -7795,6 +7812,25 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
     );
   }
 
+  if (Object.prototype.hasOwnProperty.call(normalizedPatch, "tags")) {
+    const tagValidation = await validateBusinessTagKeys(env, normalizedPatch.tags);
+    if (!tagValidation.ok) {
+      return json(
+        {
+          error: {
+            code: "invalid_tags",
+            message: "One or more tags are not in the published tag taxonomy.",
+            unknown: tagValidation.unknown
+          }
+        },
+        400,
+        noStore
+      );
+    }
+
+    normalizedPatch.tags = tagValidation.tags;
+  }
+
   // A) existing location route
   if (locationID) {
     const ulid = await resolveUid(locationID, env);
@@ -10037,8 +10073,12 @@ const STRUCTURE_ACTIVE_KEY = "structure:active";
 const STRUCTURE_VERSION_PREFIX = "structure:version:";
 const STRUCTURE_MANIFEST_KEY = "structure:manifest";
 const STRUCTURE_BUSINESS_CATEGORIES_KEY = "structure:business-categories";
+const STRUCTURE_BUSINESS_TAGS_KEY = "business-tags:v1";
+const STRUCTURE_BUSINESS_TAGS_MANIFEST_KEY = "business-tags:manifest";
 const STRUCTURE_GROUP_KEY_RE = /^group\.[a-z0-9][a-z0-9-]*$/i;
 const STRUCTURE_SUBGROUP_KEY_RE = /^(sub|group)\.[a-z0-9][a-z0-9-]*$/i;
+const STRUCTURE_TAG_GROUP_KEY_RE = /^tagGroup\.[a-z0-9][a-z0-9-]*$/i;
+const STRUCTURE_TAG_KEY_RE = /^tag\.[a-z0-9][a-z0-9-]*$/i;
 const STRUCTURE_VERSION_RE = /^\d{4}-?\d{2}-?\d{2}T\d{6}Z-[a-f0-9]{6,64}$/i;
 
 type StructureManifest = {
@@ -10068,6 +10108,26 @@ type NormalizedStructureGroup = {
 
 type PreparedStructurePayload = {
   rows: NormalizedStructureGroup[];
+  errors: string[];
+};
+
+type NormalizedBusinessTag = {
+  key: string;
+  name: string;
+  keywords: string[];
+  order: number;
+};
+
+type NormalizedBusinessTagGroup = {
+  tagGroupKey: string;
+  tagGroupName: string;
+  order: number;
+  keywords: string[];
+  tags: NormalizedBusinessTag[];
+};
+
+type PreparedBusinessTagsPayload = {
+  tagGroups: NormalizedBusinessTagGroup[];
   errors: string[];
 };
 
@@ -10172,6 +10232,225 @@ async function handleStructureBusinessCategoriesRead(env: Env): Promise<Response
     200,
     { "cache-control": "no-store" }
   );
+}
+
+function structureTagInputGroups(payload: any): any[] | null {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return null;
+  if (Array.isArray(payload.tagGroups)) return payload.tagGroups;
+  if (Array.isArray(payload.groups)) return payload.groups;
+  if (Array.isArray(payload.tags)) {
+    return [{
+      tagGroupKey: "tagGroup.general",
+      tagGroupName: "General",
+      tags: payload.tags
+    }];
+  }
+  return null;
+}
+
+function sanitizeStructureBusinessTagsProjection(raw: any): Record<string, unknown> {
+  const src = (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw : {};
+  const tagGroups = Array.isArray((src as any).tagGroups)
+    ? (src as any).tagGroups.map((group: any) => {
+        const tagGroupKey = structureString(group?.tagGroupKey || group?.key);
+        if (!STRUCTURE_TAG_GROUP_KEY_RE.test(tagGroupKey)) return null;
+
+        const tags = (Array.isArray(group?.tags) ? group.tags : [])
+          .map((tag: any) => {
+            const key = structureString(tag?.key);
+            if (!STRUCTURE_TAG_KEY_RE.test(key)) return null;
+            return {
+              key,
+              name: structureString(tag?.name || tag?.label) || key,
+              order: structureOrder(tag?.order ?? tag?.sortOrder, 0),
+              keywords: structureStringArray(tag?.keywords)
+            };
+          })
+          .filter(Boolean);
+
+        return {
+          tagGroupKey,
+          tagGroupName: structureString(group?.tagGroupName || group?.name || group?.label) || tagGroupKey,
+          order: structureOrder(group?.order ?? group?.sortOrder, 0),
+          keywords: structureStringArray(group?.keywords),
+          tags
+        };
+      })
+      .filter(Boolean)
+    : [];
+
+  return {
+    version: structureString((src as any).version) || "v1",
+    publishedAt: structureString((src as any).publishedAt),
+    tagGroups
+  };
+}
+
+function prepareBusinessTagsPayload(payload: any): PreparedBusinessTagsPayload {
+  const inputGroups = structureTagInputGroups(payload);
+  if (!inputGroups) return { tagGroups: [], errors: ["tags payload must contain tagGroups array"] };
+
+  const errors: string[] = [];
+  const tagGroups: NormalizedBusinessTagGroup[] = [];
+  const seenGroups = new Set<string>();
+  const seenTags = new Set<string>();
+
+  inputGroups.forEach((group: any, index: number) => {
+    const rowId = `tag group ${index + 1}`;
+    if (!group || typeof group !== "object" || Array.isArray(group)) {
+      errors.push(`${rowId}: tag group must be an object`);
+      return;
+    }
+
+    const tagGroupKey = structureString(group.tagGroupKey || group.key);
+    if (!STRUCTURE_TAG_GROUP_KEY_RE.test(tagGroupKey)) {
+      errors.push(`${rowId}: invalid tagGroupKey "${tagGroupKey}"`);
+      return;
+    }
+
+    if (seenGroups.has(tagGroupKey)) errors.push(`${rowId}: duplicate tagGroupKey "${tagGroupKey}"`);
+    seenGroups.add(tagGroupKey);
+
+    const tagGroupName = structureString(group.tagGroupName || group.name || group.label);
+    if (!tagGroupName) errors.push(`${rowId}: tagGroupName is required`);
+
+    const tagRows = Array.isArray(group.tags) ? group.tags : [];
+    if (!tagRows.length) errors.push(`${rowId}: tags must contain at least one tag`);
+
+    const tags: NormalizedBusinessTag[] = tagRows.map((tag: any, tagIndex: number) => {
+      const tagId = `${rowId} tag ${tagIndex + 1}`;
+      const key = structureString(tag?.key);
+      const name = structureString(tag?.name || tag?.label);
+
+      if (!STRUCTURE_TAG_KEY_RE.test(key)) errors.push(`${tagId}: invalid key "${key}"`);
+      if (!name) errors.push(`${tagId}: name is required`);
+      if (seenTags.has(key)) errors.push(`${tagId}: duplicate tag key "${key}"`);
+      seenTags.add(key);
+
+      return {
+        key,
+        name: name || key,
+        keywords: structureStringArray(tag?.keywords),
+        order: structureOrder(tag?.order ?? tag?.sortOrder, (tagIndex + 1) * 10)
+      };
+    });
+
+    tagGroups.push({
+      tagGroupKey,
+      tagGroupName: tagGroupName || tagGroupKey,
+      order: structureOrder(group.order ?? group.sortOrder, (index + 1) * 10),
+      keywords: structureStringArray(group.keywords),
+      tags
+    });
+  });
+
+  if (!tagGroups.length) errors.push("tags payload must contain at least one tag group");
+  return { tagGroups, errors };
+}
+
+function deriveBusinessTagsProjection(prepared: PreparedBusinessTagsPayload): Record<string, unknown> {
+  return {
+    version: "v1",
+    publishedAt: doNowIso(),
+    tagGroups: prepared.tagGroups
+      .slice()
+      .sort((a, b) => a.order - b.order || a.tagGroupKey.localeCompare(b.tagGroupKey))
+      .map((group) => ({
+        tagGroupKey: group.tagGroupKey,
+        tagGroupName: group.tagGroupName,
+        order: group.order,
+        keywords: group.keywords,
+        tags: group.tags
+          .slice()
+          .sort((a, b) => a.order - b.order || a.key.localeCompare(b.key))
+          .map((tag) => ({
+            key: tag.key,
+            name: tag.name,
+            order: tag.order,
+            keywords: tag.keywords
+          }))
+      }))
+  };
+}
+
+async function handleStructureBusinessTagsRead(env: Env): Promise<Response> {
+  const rawProjection = await env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_TAGS_KEY, { type: "json" }) as any;
+
+  return json(
+    sanitizeStructureBusinessTagsProjection(rawProjection),
+    200,
+    { "cache-control": "no-store" }
+  );
+}
+
+async function handleStructureTagsPublish(req: Request, env: Env): Promise<Response> {
+  const parsed = await parseTaxonomyJsonBody(req);
+  if (parsed.ok === false) return parsed.response;
+
+  const prepared = prepareBusinessTagsPayload(parsed.payload);
+  if (prepared.errors.length) {
+    return json(
+      { error: { code: "validation_failed", message: "tags validation failed", details: prepared.errors } },
+      400,
+      { "cache-control": "no-store" }
+    );
+  }
+
+  const projection = sanitizeStructureBusinessTagsProjection(deriveBusinessTagsProjection(prepared));
+  const manifest = {
+    activeVersion: "business-tags:v1",
+    publishedAt: doNowIso(),
+    publishedBy: "admin",
+    source: structureString(parsed.payload?.source || parsed.payload?.metadata?.source) || "repo-tags-json",
+    count: prepared.tagGroups.reduce((sum, group) => sum + group.tags.length, 0)
+  };
+
+  await env.KV_STRUCTURE.put(STRUCTURE_BUSINESS_TAGS_KEY, JSON.stringify(projection));
+  await env.KV_STRUCTURE.put(STRUCTURE_BUSINESS_TAGS_MANIFEST_KEY, JSON.stringify(manifest));
+
+  return json(
+    {
+      ok: true,
+      key: STRUCTURE_BUSINESS_TAGS_KEY,
+      manifest,
+      tagGroupCount: prepared.tagGroups.length,
+      tagCount: manifest.count
+    },
+    200,
+    { "cache-control": "no-store" }
+  );
+}
+
+async function readBusinessTagKeySet(env: Env): Promise<Set<string>> {
+  const rawProjection = await env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_TAGS_KEY, { type: "json" }) as any;
+  const projection = sanitizeStructureBusinessTagsProjection(rawProjection);
+  const keys = new Set<string>();
+
+  for (const group of Array.isArray((projection as any).tagGroups) ? (projection as any).tagGroups : []) {
+    for (const tag of Array.isArray(group?.tags) ? group.tags : []) {
+      const key = structureString(tag?.key);
+      if (STRUCTURE_TAG_KEY_RE.test(key)) keys.add(key);
+    }
+  }
+
+  return keys;
+}
+
+async function validateBusinessTagKeys(env: Env, rawTags: unknown): Promise<{ ok: true; tags: string[] } | { ok: false; unknown: string[] }> {
+  if (rawTags === undefined || rawTags === null) return { ok: true, tags: [] };
+
+  const tags = Array.isArray(rawTags)
+    ? uniqueTrimmedStrings(rawTags)
+    : uniqueTrimmedStrings(String(rawTags || "").split(/[;,]/));
+
+  if (!tags.length) return { ok: true, tags: [] };
+
+  const allowed = await readBusinessTagKeySet(env);
+  const unknown = tags.filter((key) => !allowed.has(key));
+
+  if (unknown.length) return { ok: false, unknown };
+  return { ok: true, tags };
 }
 
 async function handleStructureManifestRead(env: Env): Promise<Response> {

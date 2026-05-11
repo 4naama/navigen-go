@@ -1388,6 +1388,8 @@ const descs = resolveDescriptionMapForLocation(payload, [
     return raw;
   })();
 
+  const lpmTagItems = p8TagItems(payload?.tags);
+  
   body.innerHTML = `
     <div class="modal-body-inner">
       <figure class="location-media" aria-label="Location image" style="position:relative;">
@@ -1410,13 +1412,19 @@ const descs = resolveDescriptionMapForLocation(payload, [
       </details>
 
       ${
-        (Array.isArray(payload?.tags) && payload.tags.length)
-          ? (() => {
-              const chips = payload.tags
-                .map(tag => `<span class="tag-chip" data-tag="${String(tag).trim()}">${String(tag).trim()}</span>`)
-                .join('');
-              return `<section class="location-tags"><div class="tag-chips">${chips}</div></section>`;
-            })()
+        lpmTagItems.length
+          ? `
+            <details class="lpm-chip lpm-tags-chip">
+              <summary class="modal-menu-item lpm-chip-face" aria-label="${p8TagAriaLabel(lpmTagItems)}">
+                <span class="lpm-chip-face-label">${translatedOrFallback('lpm.tags.label', 'Tags')}</span>
+                <span class="lpm-chip-face-icons" aria-hidden="true">${lpmTagItems.map((tag) => tag.emoji).join(' ')}</span>
+                <span class="lpm-chip-face-chevron" aria-hidden="true"></span>
+              </summary>
+              <div class="lpm-chip-body lpm-tags-body">
+                ${p8TagDetailsHtml(lpmTagItems)}
+              </div>
+            </details>
+          `
           : ''
       }
 
@@ -1484,12 +1492,8 @@ const descs = resolveDescriptionMapForLocation(payload, [
 
     const statusChip = inner.querySelector('.lpm-status-chip');
     const introChip = inner.querySelector('.lpm-introduction-chip');
-    const tagsSection = inner.querySelector('.location-tags');
-
     if (statusChip) inner.insertBefore(rate, statusChip);
-    else inner.appendChild(rate);
-
-    if (tagsSection && introChip) inner.insertBefore(tagsSection, introChip.nextSibling);    
+    else inner.appendChild(rate);  
   }
 
   // ▸ Footer (pinned): primary (🎁️ 📅 ⭐ 🔳 ⋮) + secondary (🎯 ℹ️ 📡 🌍 📣 📤)  // define footer first
@@ -5603,12 +5607,16 @@ export async function hydrateLocationDraftForCompletion(draftMeta = {}) {
 }
 
 let p8StructureCatalogPromise;
+let p8TagCatalogPromise;
+let p8TagCatalogCache = null;
 let p8ContextCatalogPromise;
 let p8ContextCatalogRowsCache = null;
 let p8ContextLocationRowsCache = [];
 
 function resetP8CatalogPromises() {
   p8StructureCatalogPromise = null;
+  p8TagCatalogPromise = null;
+  p8TagCatalogCache = null;
   p8ContextCatalogPromise = null;
   p8ContextCatalogRowsCache = null;
   p8ContextLocationRowsCache = [];
@@ -5634,6 +5642,135 @@ function loadP8StructureCatalog(force = false) {
       });
   }
   return p8StructureCatalogPromise;
+}
+
+function normalizeP8TagCatalog(payload) {
+  const src = (payload && typeof payload === 'object' && !Array.isArray(payload)) ? payload : {};
+  return {
+    version: String(src.version || 'v1').trim() || 'v1',
+    publishedAt: String(src.publishedAt || '').trim(),
+    tagGroups: Array.isArray(src.tagGroups) ? src.tagGroups : []
+  };
+}
+
+function loadP8TagCatalog(force = false) {
+  if (force) {
+    p8TagCatalogPromise = null;
+    p8TagCatalogCache = null;
+  }
+
+  if (p8TagCatalogCache && !force) return Promise.resolve(p8TagCatalogCache);
+
+  if (!p8TagCatalogPromise) {
+    p8TagCatalogPromise = fetch('/api/structure/business-tags', {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { accept: 'application/json' }
+    })
+      .then((r) => (r.ok ? r.json().catch(() => null) : null))
+      .then((j) => {
+        const catalog = normalizeP8TagCatalog(j);
+        if (catalog.tagGroups.length) p8TagCatalogCache = catalog;
+        else p8TagCatalogPromise = null;
+        return p8TagCatalogCache || catalog;
+      })
+      .catch(() => {
+        p8TagCatalogPromise = null;
+        return p8TagCatalogCache || normalizeP8TagCatalog(null);
+      });
+  }
+
+  return p8TagCatalogPromise;
+}
+
+function p8TagRowsFromCatalog(catalog) {
+  const rows = [];
+
+  (Array.isArray(catalog?.tagGroups) ? catalog.tagGroups : []).forEach((group) => {
+    const tagGroupKey = String(group?.tagGroupKey || '').trim();
+    const tagGroupName = String(group?.tagGroupName || tagGroupKey).trim();
+
+    (Array.isArray(group?.tags) ? group.tags : []).forEach((tag) => {
+      const key = String(tag?.key || '').trim();
+      if (!key) return;
+
+      const label = translatedOrFallback(key, String(tag?.name || key).trim());
+      const desc = translatedOrFallback(`${key}.desc`, '');
+      const search = translatedOrFallback(`${key}.search`, Array.isArray(tag?.keywords) ? tag.keywords.join(', ') : '');
+
+      rows.push({
+        ...tag,
+        key,
+        label,
+        desc,
+        search,
+        tagGroupKey,
+        tagGroupName,
+        emoji: p8TagEmojiFromLabel(label)
+      });
+    });
+  });
+
+  return rows;
+}
+
+function p8TagEmojiFromLabel(label) {
+  const first = String(label || '').trim().split(/\s+/)[0] || '';
+  return first || '🏷️';
+}
+
+function p8TagLabel(key, fallback = '') {
+  const clean = String(key || '').trim();
+  return clean ? translatedOrFallback(clean, fallback || clean) : '';
+}
+
+function p8TagDesc(key) {
+  const clean = String(key || '').trim();
+  return clean ? translatedOrFallback(`${clean}.desc`, '') : '';
+}
+
+function p8TagEmoji(key) {
+  return p8TagEmojiFromLabel(p8TagLabel(key, key));
+}
+
+function p8TagItems(keys) {
+  return (Array.isArray(keys) ? keys : [])
+    .map((key) => String(key || '').trim())
+    .filter((key) => /^tag\.[a-z0-9][a-z0-9-]*$/i.test(key))
+    .map((key) => {
+      const label = p8TagLabel(key, key);
+      return {
+        key,
+        label,
+        emoji: p8TagEmojiFromLabel(label),
+        desc: p8TagDesc(key)
+      };
+    });
+}
+
+function p8TagAriaLabel(tagItems) {
+  const labels = (Array.isArray(tagItems) ? tagItems : [])
+    .map((tag) => String(tag?.label || tag?.key || '').replace(/^[^\s]+\s+/, '').trim())
+    .filter(Boolean);
+
+  return labels.length
+    ? `${translatedOrFallback('lpm.tags.ariaPrefix', 'Tags')}: ${labels.join(', ')}`
+    : translatedOrFallback('lpm.tags.label', 'Tags');
+}
+
+function p8TagDetailsHtml(tagItems) {
+  return (Array.isArray(tagItems) ? tagItems : [])
+    .map((tag) => {
+      const label = formatDescriptionHtml(String(tag?.label || tag?.key || '').trim());
+      const desc = formatDescriptionHtml(String(tag?.desc || '').trim());
+      return `
+        <div class="lpm-tag-detail-item" data-tag="${String(tag?.key || '').trim()}">
+          <div class="lpm-tag-detail-label">${label}</div>
+          ${desc ? `<div class="lpm-tag-detail-desc">${desc}</div>` : ''}
+        </div>
+      `;
+    })
+    .join('');
 }
 
 function normalizeP8BusinessTaxonomyCatalog(payload) {
@@ -7640,10 +7777,13 @@ export function createRequestListingModal(opts = {}) {
   });
 
   (async () => {
-    const [structureRows, contextRows] = await Promise.all([
+    const [structureRows, contextRows, tagCatalog] = await Promise.all([
       loadP8StructureCatalog(),
-      loadP8ContextCatalog()
+      loadP8ContextCatalog(),
+      loadP8TagCatalog()
     ]);
+
+    const tagRows = p8TagRowsFromCatalog(tagCatalog);
 
     const groupsOk = Array.isArray(structureRows) && structureRows.length > 0;
     const contextsOk = Array.isArray(contextRows) && contextRows.length > 0;
@@ -7672,17 +7812,8 @@ export function createRequestListingModal(opts = {}) {
       if (!rlTagSuggestions) return;
       rlTagSuggestions.innerHTML = '';
 
-      const groupKey = String(rlGroup?.value || '').trim();
-      const subgroupKey = String(rlSubgroup?.value || '').trim();
-      const subs = p8SubgroupsForGroup(structureRows, groupKey);
-      const activeSub = subs.find((sg) => String(sg?.key || '').trim() === subgroupKey);
-      const keywords = Array.isArray(activeSub?.keywords) ? activeSub.keywords : [];
-      const activeTags = Array.from(new Set(
-        keywords
-          .map((kw) => String(kw || '').trim())
-          .filter(Boolean)
-      ));
-      const activeTagSet = new Set(activeTags);
+      const activeTags = Array.isArray(tagRows) ? tagRows : [];
+      const activeTagSet = new Set(activeTags.map((tag) => String(tag?.key || '').trim()).filter(Boolean));
 
       Array.from(selectedTagSet).forEach((tag) => {
         if (!activeTagSet.has(tag)) selectedTagSet.delete(tag);
@@ -7693,15 +7824,19 @@ export function createRequestListingModal(opts = {}) {
       if (!activeTags.length) return;
 
       activeTags.forEach((tag) => {
-        const selected = selectedTagSet.has(tag);
+        const key = String(tag?.key || '').trim();
+        if (!key) return;
+
+        const selected = selectedTagSet.has(key);
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `request-chip${selected ? ' is-selected' : ''}`;
         btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
-        btn.textContent = tag;
+        btn.title = String(tag?.desc || tag?.search || '').trim();
+        btn.textContent = String(tag?.label || key).trim();
         btn.addEventListener('click', () => {
-          if (selectedTagSet.has(tag)) selectedTagSet.delete(tag);
-          else selectedTagSet.add(tag);
+          if (selectedTagSet.has(key)) selectedTagSet.delete(key);
+          else selectedTagSet.add(key);
           syncRequestListingTags();
           renderTagSuggestions();
         });

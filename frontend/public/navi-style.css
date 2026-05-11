@@ -7371,3 +7371,38 @@ body.high-contrast .modal-menu-item.is-active {
   border-color:#b42318;
   box-shadow:0 0 0 3px rgba(180, 35, 24, .12);
 }
+
+#location-profile-modal .lpm-tags-chip .lpm-chip-face-icons{
+  white-space:nowrap;
+}
+
+#location-profile-modal .lpm-tags-body{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+#location-profile-modal .lpm-tag-detail-item{
+  padding:10px 12px;
+  border:1px solid var(--line, #d9d9d9);
+  border-radius:12px;
+  background:var(--card, #fff);
+  text-align:left;
+}
+
+#location-profile-modal .lpm-tag-detail-label{
+  font-weight:700;
+  line-height:1.35;
+}
+
+#location-profile-modal .lpm-tag-detail-label p,
+#location-profile-modal .lpm-tag-detail-desc p{
+  margin:0;
+}
+
+#location-profile-modal .lpm-tag-detail-desc{
+  margin-top:4px;
+  color:var(--muted, #666);
+  font-size:.9rem;
+  line-height:1.35;
+}

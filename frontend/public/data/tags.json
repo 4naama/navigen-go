@@ -1,0 +1,514 @@
+{
+  "tagGroups": [
+    {
+      "tagGroupKey": "tagGroup.food-dietary-menu",
+      "tagGroupName": "Food, dietary, and menu",
+      "tags": [
+        {
+          "key": "tag.kosher",
+          "name": "🕎 Kosher",
+          "keywords": ["kosher", "kosher restaurant", "kosher food", "kosher dining", "jewish dietary", "kosher meals"]
+        },
+        {
+          "key": "tag.halal",
+          "name": "☪️ Halal",
+          "keywords": ["halal", "halal restaurant", "halal food", "halal dining", "muslim dietary", "halal meals"]
+        },
+        {
+          "key": "tag.vegan",
+          "name": "🌱 Vegan",
+          "keywords": ["vegan", "vegan food", "vegan restaurant", "plant based", "plant-based", "no animal products"]
+        },
+        {
+          "key": "tag.vegetarian",
+          "name": "🥗 Vegetarian",
+          "keywords": ["vegetarian", "vegetarian food", "vegetarian restaurant", "meat-free", "meatless", "veggie options", "meat free"]
+        },
+        {
+          "key": "tag.gluten-free",
+          "name": "🚫 Gluten-free",
+          "keywords": ["gluten free", "gluten-free", "celiac friendly", "coeliac friendly", "gluten-free food", "gluten-free options"]
+        },
+        {
+          "key": "tag.dairy-free",
+          "name": "🥛 Dairy-free",
+          "keywords": ["dairy free", "dairy-free", "milk free", "milk-free", "no dairy", "dairy-free options"]
+        },
+        {
+          "key": "tag.lactose-free",
+          "name": "🧀 Lactose-free",
+          "keywords": ["lactose free", "lactose-free", "lactose intolerance", "lactose-free options", "milk sugar free", "no lactose"]
+        },
+        {
+          "key": "tag.nut-free-options",
+          "name": "🥜 Nut-free options",
+          "keywords": ["nut free", "nut-free", "peanut free", "peanut-free", "tree nut free", "nut allergy", "nut-free options", "nut free options", "allergy friendly", "allergen aware"]
+        },
+        {
+          "key": "tag.allergen-info",
+          "name": "📋 Allergen info available",
+          "keywords": ["allergen info", "allergen information", "allergy information", "food allergy", "allergen menu", "allergen list"]
+        },
+        {
+          "key": "tag.organic",
+          "name": "🌿 Organic",
+          "keywords": ["organic", "organic food", "organic products", "organic ingredients", "bio food", "bio", "natural products"]
+        },
+        {
+          "key": "tag.local-products",
+          "name": "🧺 Local products",
+          "keywords": ["local products", "local ingredients", "local produce", "locally sourced", "regional products"]
+        },
+        {
+          "key": "tag.healthy-options",
+          "name": "🥙 Healthy options",
+          "keywords": ["healthy options", "healthy food", "lighter options", "wellness food", "nutritious options", "light meals", "nutritious"]
+        },
+        {
+          "key": "tag.kids-menu",
+          "name": "🧒 Kids menu",
+          "keywords": ["kids menu", "children's menu", "child menu", "family menu", "meals for kids", "children menu", "child friendly food"]
+        },
+        {
+          "key": "tag.takeaway",
+          "name": "🥡 Takeaway",
+          "keywords": ["takeaway", "take out", "take-out", "to go", "food to go", "carryout", "take away", "pickup food"]
+        },
+        {
+          "key": "tag.delivery",
+          "name": "🛵 Delivery",
+          "keywords": ["delivery", "food delivery", "home delivery", "delivered food", "courier delivery", "delivers"]
+        },
+        {
+          "key": "tag.alcohol-free",
+          "name": "🚱 Alcohol-free",
+          "keywords": ["alcohol free", "alcohol-free", "no alcohol", "non alcoholic", "non-alcoholic", "dry venue"]
+        }
+      ]
+    },
+    {
+      "tagGroupKey": "tagGroup.accessibility-inclusion",
+      "tagGroupName": "Accessibility and inclusion",
+      "tags": [
+        {
+          "key": "tag.wheelchair",
+          "name": "♿ Wheelchair access",
+          "keywords": ["wheelchair access", "wheelchair accessible", "wheelchair friendly", "disabled access", "mobility access", "accessible entrance"]
+        },
+        {
+          "key": "tag.step-free-access",
+          "name": "🚶 Step-free access",
+          "keywords": ["step free access", "step-free access", "no steps", "barrier free", "barrier-free", "level access"]
+        },
+        {
+          "key": "tag.accessible-restroom",
+          "name": "🚻 Accessible restroom",
+          "keywords": ["accessible restroom", "accessible toilet", "disabled toilet", "wheelchair restroom", "accessible bathroom"]
+        },
+        {
+          "key": "tag.accessible-parking",
+          "name": "🅿️ Accessible parking",
+          "keywords": ["accessible parking", "disabled parking", "wheelchair parking", "blue badge parking", "mobility parking", "reserved accessible parking"]
+        },
+        {
+          "key": "tag.elevator",
+          "name": "🔼 Elevator",
+          "keywords": ["elevator", "lift", "accessible lift", "wheelchair lift", "building lift"]
+        },
+        {
+          "key": "tag.hearing-loop",
+          "name": "🦻 Hearing loop",
+          "keywords": ["hearing loop", "induction loop", "assistive listening", "hearing assistance"]
+        },
+        {
+          "key": "tag.sign-language",
+          "name": "🤟 Sign language support",
+          "keywords": ["sign language", "sign language support", "signing support", "interpreter support", "deaf support"]
+        },
+        {
+          "key": "tag.braille-info",
+          "name": "⠿ Braille info",
+          "keywords": ["braille", "braille information", "tactile information", "braille materials", "braille signs"]
+        },
+        {
+          "key": "tag.sensory-friendly",
+          "name": "🧩 Sensory-friendly",
+          "keywords": ["sensory friendly", "sensory-friendly", "autism friendly", "neurodivergent friendly", "low stimulation", "low sensory", "sensory support"]
+        },
+        {
+          "key": "tag.quiet-space",
+          "name": "🤫 Quiet space",
+          "keywords": ["quiet space", "calm room", "quiet room", "low noise area", "sensory break space", "calm space"]
+        }
+      ]
+    },
+    {
+      "tagGroupKey": "tagGroup.family-kids-pets",
+      "tagGroupName": "Family, kids, and pets",
+      "tags": [
+        {
+          "key": "tag.pet-friendly",
+          "name": "🐾 Pet-friendly",
+          "keywords": ["pet friendly", "pet-friendly", "dog friendly", "dogs allowed", "pets allowed", "animal friendly"]
+        },
+        {
+          "key": "tag.family-friendly",
+          "name": "👨‍👩‍👧 Family-friendly",
+          "keywords": ["family friendly", "family-friendly", "suitable for families", "family venue", "child friendly", "good for families", "families welcome"]
+        },
+        {
+          "key": "tag.kids-zone",
+          "name": "🤹 Kids zone",
+          "keywords": ["kids zone", "children area", "children's area", "kids corner", "child area", "kids area", "child friendly", "children friendly"]
+        },
+        {
+          "key": "tag.play-area",
+          "name": "🎈 Play area",
+          "keywords": ["play area", "playground", "kids play area", "children's play area", "play corner", "children play area", "kids play"]
+        },
+        {
+          "key": "tag.stroller-friendly",
+          "name": "🍼 Stroller-friendly",
+          "keywords": ["stroller friendly", "buggy friendly", "pram friendly", "pushchair friendly", "stroller access"]
+        },
+        {
+          "key": "tag.baby-changing",
+          "name": "👶 Baby changing",
+          "keywords": ["baby changing", "changing table", "baby changing room", "diaper changing", "nappy changing"]
+        },
+        {
+          "key": "tag.nursing-room",
+          "name": "🤱 Nursing room",
+          "keywords": ["nursing room", "breastfeeding room", "lactation room", "baby feeding room", "feeding room", "baby feeding"]
+        }
+      ]
+    },
+    {
+      "tagGroupKey": "tagGroup.amenities-facilities",
+      "tagGroupName": "Amenities and facilities",
+      "tags": [
+        {
+          "key": "tag.wifi",
+          "name": "📶 Wi-Fi",
+          "keywords": ["wifi", "wi-fi", "wireless internet", "free wifi", "internet access"]
+        },
+        {
+          "key": "tag.charging-stations",
+          "name": "🔌 Device charging",
+          "keywords": ["device charging", "charging station", "phone charging", "laptop charging", "power outlet", "charging points", "charging stations", "power outlets", "plug sockets"]
+        },
+        {
+          "key": "tag.ev-charging",
+          "name": "🔋 EV charging",
+          "keywords": ["ev charging", "electric vehicle charging", "car charging", "charging station", "electric car charging", "charging point"]
+        },
+        {
+          "key": "tag.water-refill",
+          "name": "💧 Water refill",
+          "keywords": ["water refill", "refill water", "drinking water refill", "bottle refill", "water station"]
+        },
+        {
+          "key": "tag.public-restroom",
+          "name": "🚻 Public restroom",
+          "keywords": ["public restroom", "public toilet", "bathroom", "toilets", "restroom available", "restroom", "toilet"]
+        },
+        {
+          "key": "tag.lockers",
+          "name": "🔒 Lockers",
+          "keywords": ["lockers", "storage lockers", "secure storage", "bag lockers", "bag storage"]
+        },
+        {
+          "key": "tag.cloakroom",
+          "name": "🧥 Cloakroom",
+          "keywords": ["cloakroom", "coat check", "coat room", "wardrobe", "luggage cloakroom", "coat storage"]
+        },
+        {
+          "key": "tag.parking",
+          "name": "🅿️ Parking",
+          "keywords": ["parking", "car parking", "parking available", "onsite parking", "on-site parking", "car park", "parking lot"]
+        },
+        {
+          "key": "tag.bike-parking",
+          "name": "🚲 Bike parking",
+          "keywords": ["bike parking", "bicycle parking", "cycle parking", "bike rack", "bicycle rack"]
+        },
+        {
+          "key": "tag.seating",
+          "name": "💺 Seating",
+          "keywords": ["seating", "seats available", "sitting area", "seating area", "sit down"]
+        },
+        {
+          "key": "tag.smoking-area",
+          "name": "🚬 Smoking area",
+          "keywords": ["smoking area", "smoking zone", "designated smoking", "smoking allowed area", "smoking allowed", "smoker friendly"]
+        },
+        {
+          "key": "tag.shaded-area",
+          "name": "🌳 Shaded area",
+          "keywords": ["shaded area", "shade", "shaded seating", "shade available", "trees", "covered shade", "sun shade"]
+        },
+        {
+          "key": "tag.covered-area",
+          "name": "☔ Covered area",
+          "keywords": ["covered area", "roofed area", "covered seating", "shelter", "sheltered area", "under cover", "covered space"]
+        }
+      ]
+    },
+    {
+      "tagGroupKey": "tagGroup.place-setting-comfort",
+      "tagGroupName": "Place setting and comfort",
+      "tags": [
+        {
+          "key": "tag.indoor",
+          "name": "🏠 Indoor",
+          "keywords": ["indoor", "indoors", "inside", "indoor venue", "indoor area", "indoor space", "interior"]
+        },
+        {
+          "key": "tag.outdoor",
+          "name": "🌤️ Outdoor",
+          "keywords": ["outdoor", "outdoors", "outside", "open air", "outdoor venue", "outdoor space"]
+        },
+        {
+          "key": "tag.outdoor-seating",
+          "name": "🪑 Outdoor seating",
+          "keywords": ["outdoor seating", "outside seating", "terrace seating", "patio seating", "al fresco", "alfresco"]
+        },
+        {
+          "key": "tag.terrace",
+          "name": "🌿 Terrace",
+          "keywords": ["terrace", "patio", "garden terrace", "terrace seating"]
+        },
+        {
+          "key": "tag.rooftop",
+          "name": "🏙️ Rooftop",
+          "keywords": ["rooftop", "roof terrace", "rooftop bar", "rooftop view"]
+        },
+        {
+          "key": "tag.scenic-view",
+          "name": "🌄 Scenic view",
+          "keywords": ["scenic view", "view", "panorama", "panoramic view", "nice view"]
+        },
+        {
+          "key": "tag.photo-spot",
+          "name": "📸 Photo spot",
+          "keywords": ["photo spot", "instagrammable", "photo opportunity", "picture spot", "selfie spot"]
+        },
+        {
+          "key": "tag.rain-friendly",
+          "name": "☔ Rain-friendly",
+          "keywords": ["rain friendly", "rain-friendly", "good in rain", "rainy day", "weather protected", "covered in rain"]
+        },
+        {
+          "key": "tag.weather-dependent",
+          "name": "🌦️ Weather-dependent",
+          "keywords": ["weather dependent", "weather-dependent", "depends on weather", "outdoor weather", "seasonal weather"]
+        }
+      ]
+    },
+    {
+      "tagGroupKey": "tagGroup.booking-access-payment",
+      "tagGroupName": "Booking, access, and payment",
+      "tags": [
+        {
+          "key": "tag.reservations-required",
+          "name": "📅 Reservations required",
+          "keywords": ["reservations required", "reservation required", "booking required", "must book", "advance booking"]
+        },
+        {
+          "key": "tag.reservations-recommended",
+          "name": "🗓️ Reservations recommended",
+          "keywords": ["reservations recommended", "reservation recommended", "booking recommended", "book ahead", "reserve ahead"]
+        },
+        {
+          "key": "tag.walk-ins-welcome",
+          "name": "🚶 Walk-ins welcome",
+          "keywords": ["walk ins welcome", "walk-ins welcome", "no reservation needed", "walk in", "walk-in"]
+        },
+        {
+          "key": "tag.appointment-only",
+          "name": "⏰ Appointment only",
+          "keywords": ["appointment only", "by appointment", "appointment required", "scheduled visit", "scheduled appointment"]
+        },
+        {
+          "key": "tag.online-booking",
+          "name": "💻 Online booking",
+          "keywords": ["online booking", "book online", "online reservation", "online appointment", "web booking"]
+        },
+        {
+          "key": "tag.ticketed-entry",
+          "name": "🎟️ Ticketed entry",
+          "keywords": ["ticketed entry", "tickets required", "admission ticket", "ticket entry", "ticket required", "entry ticket", "paid ticket"]
+        },
+        {
+          "key": "tag.free-entry",
+          "name": "🆓 Free entry",
+          "keywords": ["free entry", "free admission", "no entry fee", "no ticket required", "free to enter"]
+        },
+        {
+          "key": "tag.contactless-payment",
+          "name": "💳 Contactless payment",
+          "keywords": ["contactless payment", "tap to pay", "nfc payment", "contactless card"]
+        },
+        {
+          "key": "tag.card-accepted",
+          "name": "💳 Card accepted",
+          "keywords": ["card accepted", "credit card", "debit card", "card payment", "cards accepted", "credit card accepted", "debit card accepted"]
+        },
+        {
+          "key": "tag.cash-only",
+          "name": "💵 Cash only",
+          "keywords": ["cash only", "cash payment only", "no card", "cash required"]
+        },
+        {
+          "key": "tag.cashless-only",
+          "name": "📲 Cashless only",
+          "keywords": ["cashless only", "card only", "no cash", "digital payment only"]
+        }
+      ]
+    },
+    {
+      "tagGroupKey": "tagGroup.time-operation",
+      "tagGroupName": "Time and operation",
+      "tags": [
+        {
+          "key": "tag.open-24h",
+          "name": "🌙 Open 24h",
+          "keywords": ["open 24h", "open 24 hours", "24/7", "always open", "all day", "24 hours"]
+        },
+        {
+          "key": "tag.late-night",
+          "name": "🌃 Late-night",
+          "keywords": ["late night", "late-night", "open late", "night venue", "night service", "night hours"]
+        },
+        {
+          "key": "tag.seasonal",
+          "name": "🍂 Seasonal",
+          "keywords": ["seasonal", "seasonal opening", "seasonal business", "seasonal venue", "season only"]
+        },
+        {
+          "key": "tag.temporary-pop-up",
+          "name": "⛺ Temporary / pop-up",
+          "keywords": ["temporary", "pop-up", "popup", "temporary venue", "pop up event", "temporary location", "pop up"]
+        },
+        {
+          "key": "tag.weekend-only",
+          "name": "📆 Weekend only",
+          "keywords": ["weekend only", "open weekends", "weekends only", "saturday sunday", "weekend business"]
+        }
+      ]
+    },
+    {
+      "tagGroupKey": "tagGroup.experience-atmosphere",
+      "tagGroupName": "Experience and atmosphere",
+      "tags": [
+        {
+          "key": "tag.live-music",
+          "name": "🎶 Live music",
+          "keywords": ["live music", "live band", "concert", "music performance"]
+        },
+        {
+          "key": "tag.dj",
+          "name": "🎧 DJ",
+          "keywords": ["dj", "disk jockey", "dance music", "club dj", "dj set", "disc jockey", "club music"]
+        },
+        {
+          "key": "tag.dance-floor",
+          "name": "💃 Dance floor",
+          "keywords": ["dance floor", "dancing", "dance area", "club floor"]
+        },
+        {
+          "key": "tag.guided-tours",
+          "name": "🧭 Guided tours",
+          "keywords": ["guided tours", "tour guide", "guided visit", "guided experience", "guided tour"]
+        },
+        {
+          "key": "tag.self-guided",
+          "name": "🗺️ Self-guided",
+          "keywords": ["self guided", "self-guided", "self guided tour", "explore yourself", "independent visit"]
+        },
+        {
+          "key": "tag.workshops",
+          "name": "🛠️ Workshops",
+          "keywords": ["workshops", "workshop", "classes", "hands on", "hands-on activity", "hands-on"]
+        },
+        {
+          "key": "tag.group-friendly",
+          "name": "👥 Group-friendly",
+          "keywords": ["group friendly", "group-friendly", "good for groups", "group visits", "group booking", "groups welcome"]
+        },
+        {
+          "key": "tag.work-friendly",
+          "name": "💻 Work-friendly",
+          "keywords": ["work friendly", "work-friendly", "laptop friendly", "remote work", "coworking friendly"]
+        },
+        {
+          "key": "tag.quiet",
+          "name": "🤫 Quiet",
+          "keywords": ["quiet", "calm", "peaceful", "low noise", "quiet atmosphere"]
+        },
+        {
+          "key": "tag.lively",
+          "name": "🎉 Lively",
+          "keywords": ["lively", "vibrant", "energetic", "busy atmosphere", "party atmosphere", "busy", "vibrant atmosphere"]
+        }
+      ]
+    },
+    {
+      "tagGroupKey": "tagGroup.safety-support",
+      "tagGroupName": "Safety and support",
+      "tags": [
+        {
+          "key": "tag.first-aid",
+          "name": "🩹 First aid",
+          "keywords": ["first aid", "first-aid", "medical aid", "emergency aid", "first aid available", "medical help", "emergency help"]
+        },
+        {
+          "key": "tag.security-on-site",
+          "name": "🛡️ Security on-site",
+          "keywords": ["security on site", "security", "onsite security", "guards", "security staff", "guarded"]
+        },
+        {
+          "key": "tag.well-lit",
+          "name": "💡 Well-lit",
+          "keywords": ["well lit", "well-lit", "good lighting", "lit area", "safe lighting"]
+        },
+        {
+          "key": "tag.staffed",
+          "name": "👋 Staffed",
+          "keywords": ["staffed", "staff available", "attended", "staffed location", "help available", "staff on site", "personnel available"]
+        },
+        {
+          "key": "tag.info-point",
+          "name": "ℹ️ Info point",
+          "keywords": ["info point", "information point", "help desk", "information desk", "visitor information"]
+        }
+      ]
+    },
+    {
+      "tagGroupKey": "tagGroup.sustainability",
+      "tagGroupName": "Sustainability",
+      "tags": [
+        {
+          "key": "tag.recycling",
+          "name": "♻️ Recycling",
+          "keywords": ["recycling", "recycle", "recycling point", "recycling available", "recycling bins", "waste sorting"]
+        },
+        {
+          "key": "tag.bike-friendly",
+          "name": "🚲 Bike-friendly",
+          "keywords": ["bike friendly", "bike-friendly", "bicycle friendly", "cyclist friendly", "good for cyclists", "cycling friendly"]
+        },
+        {
+          "key": "tag.low-waste",
+          "name": "🌍 Low-waste",
+          "keywords": ["low waste", "low-waste", "reduced waste", "minimal waste", "waste conscious", "less waste", "sustainable waste"]
+        },
+        {
+          "key": "tag.plastic-free-options",
+          "name": "🍃 Plastic-free options",
+          "keywords": ["plastic free", "plastic-free", "plastic-free options", "reduced plastic", "no plastic options", "plastic free options", "less plastic"]
+        }
+      ]
+    }
+  ]
+}
