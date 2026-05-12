@@ -7295,27 +7295,20 @@ export function createRequestListingModal(opts = {}) {
   }  
   
   function requestListingHasLocationSeed() {
-    const countryValue = String(rlCountry?.value || '').trim().toUpperCase();
-    const countryReady = (typeof isValidRequestListingCountryCode === 'function')
-      ? isValidRequestListingCountryCode(countryValue)
-      : /^[A-Z]{2}$/.test(countryValue);
-    return !!String(rlCity?.value || '').trim() || countryReady;
+    return true;
   }
 
   function syncRequestListingContextAvailability() {
-    const ready = requestListingHasLocationSeed();
-    const lockedText = t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.';
     const readyText = t('modal.requestListing.contexts.summary.empty') || 'Required. Search and choose up to 3 contexts.';
     const selectedText = t('modal.requestListing.contexts.summary.selected') || 'Tap to review or change your selected contexts.';
     const contextSectionState = modal.querySelector('#rl-context-section-state');
     const contextSummaryText = modal.querySelector('#rl-context-summary-text');
-    const stateText = !ready ? lockedText : (selectedContextSet.size ? selectedText : readyText);
+    const stateText = selectedContextSet.size ? selectedText : readyText;
 
     if (rlContextSection) {
-      rlContextSection.setAttribute('aria-disabled', ready ? 'false' : 'true');
-      if (!ready) rlContextSection.removeAttribute('open');
-      rlContextSection.classList.toggle('is-complete', ready && selectedContextSet.size > 0);
-      rlContextSection.classList.toggle('has-value', ready && selectedContextSet.size > 0);
+      rlContextSection.setAttribute('aria-disabled', 'false');
+      rlContextSection.classList.toggle('is-complete', selectedContextSet.size > 0);
+      rlContextSection.classList.toggle('has-value', selectedContextSet.size > 0);
     }
 
     if (contextSectionState) {
@@ -7323,9 +7316,9 @@ export function createRequestListingModal(opts = {}) {
     }
 
     if (rlOpenContexts) {
-      rlOpenContexts.disabled = !ready;
-      rlOpenContexts.setAttribute('aria-disabled', ready ? 'false' : 'true');
-      rlOpenContexts.title = ready ? '' : lockedText;
+      rlOpenContexts.disabled = false;
+      rlOpenContexts.setAttribute('aria-disabled', 'false');
+      rlOpenContexts.title = '';
     }
 
     if (contextSummaryText) {
@@ -7333,13 +7326,7 @@ export function createRequestListingModal(opts = {}) {
     }
   }
   
-  rlContextSection?.querySelector('summary')?.addEventListener('click', (ev) => {
-    if (requestListingHasLocationSeed()) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    rlContextSection.removeAttribute('open');
-    if (rlBusinessSection) rlBusinessSection.open = true;
-    (rlCity || rlCountry)?.focus?.();
+  rlContextSection?.querySelector('summary')?.addEventListener('click', () => {
     syncRequestListingContextAvailability();
   });
   
@@ -7484,13 +7471,7 @@ export function createRequestListingModal(opts = {}) {
   syncRequestListingLocationDependentState();
 
   function openRequestListingContextsModal() {
-    if (!requestListingHasLocationSeed()) {
-      rlContextSection?.removeAttribute('open');
-      if (rlBusinessSection) rlBusinessSection.open = true;
-      (rlCity || rlCountry)?.focus?.();
-      syncRequestListingContextAvailability();
-      return;
-    }
+    syncRequestListingContextAvailability();    
     
     if (!requestListingContextRows.length) {
       showToast(t('modal.requestListing.contexts.unavailable') || 'Context options are still loading.', 2200);
@@ -7599,8 +7580,13 @@ export function createRequestListingModal(opts = {}) {
     locationInput.spellcheck = false;
     locationInput.autocapitalize = 'off';
     locationInput.autocomplete = 'off';
-    locationInput.removeAttribute('list');
-    locationInput.value = '';
+    locationInput.setAttribute('list', 'request-context-location-options');
+
+    const initialContextCountry = String(rlCountry?.value || '').trim().toUpperCase();
+    const initialContextCountryLabel = isValidRequestListingCountryCode(initialContextCountry) ? requestListingCountryName(initialContextCountry) : '';
+    const initialContextCity = String(rlCity?.value || '').trim();
+    locationInput.value = [initialContextCountryLabel || initialContextCountry, initialContextCity].filter(Boolean).join(' · ');
+
     const locationPlaceholder = (t('modal.requestListing.contexts.location.placeholder') || 'Country / city').trim();
     locationInput.placeholder = locationPlaceholder.startsWith('🔍') ? locationPlaceholder : `🔍 ${locationPlaceholder}`;
     
@@ -7639,22 +7625,18 @@ export function createRequestListingModal(opts = {}) {
     const tokensOf = (q) => norm(q).split(/\s+/).filter(Boolean);
     
     const renderLocationOptions = () => {
-      const locationTokens = tokensOf(locationInput.value);
       locationOptions.innerHTML = '';
-      if (!locationTokens.length) return;
 
-      requestListingContextLocationRows
-        .filter((row) => {
-          const hay = norm([row?.key, row?.label, row?.countryLabel, row?.cityLabel, row?.countryKey, row?.cityKey].join(' '));
-          return locationTokens.every((token) => hay.includes(token));
-        })
-        .slice(0, REQUEST_LISTING_CONTEXT_RESULT_LIMIT)
-        .forEach((row) => {
-          const option = document.createElement('option');
-          option.value = String(row?.label || '').trim();
-          if (option.value) locationOptions.appendChild(option);
-        });
-    };    
+      REQUEST_LISTING_COUNTRY_CODES.forEach((code) => {
+        const option = document.createElement('option');
+        const name = requestListingCountryName(code);
+        option.value = name ? `${name} · ${code}` : code;
+        option.label = code;
+        locationOptions.appendChild(option);
+      });
+    };     
+
+    renderLocationOptions();    
 
     const syncClear = () => {
       const hasValue = !!String(searchInput.value || '').trim();
@@ -7747,13 +7729,10 @@ export function createRequestListingModal(opts = {}) {
       }
 
       const tokens = tokensOf(searchInput.value);
-      const locationTokens = tokensOf(locationInput.value);
-      const rows = (tokens.length || locationTokens.length)
+      const rows = tokens.length
         ? sortContextRows(requestListingContextRows.filter((row) => {
             const hay = searchableContextText(row);
-            const locationHay = searchableContextLocationText(row);
-            return (!tokens.length || tokens.every((token) => hay.includes(token)))
-              && (!locationTokens.length || locationTokens.every((token) => locationHay.includes(token)));
+            return tokens.every((token) => hay.includes(token));
           }), [])
         : [];
       const visibleRows = rows.slice(0, REQUEST_LISTING_CONTEXT_RESULT_LIMIT);
@@ -7829,14 +7808,12 @@ export function createRequestListingModal(opts = {}) {
     locationInput.addEventListener('input', () => {
       locationClearBtn.style.display = String(locationInput.value || '').trim() ? 'inline-flex' : 'none';
       renderLocationOptions();
-      renderContextPicker();
     });
 
     locationClearBtn.addEventListener('click', () => {
       locationInput.value = '';
       locationClearBtn.style.display = 'none';
       renderLocationOptions();
-      renderContextPicker();
       locationInput.focus();
     });
     
