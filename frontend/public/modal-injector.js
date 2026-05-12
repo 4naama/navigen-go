@@ -6149,6 +6149,7 @@ function googleDraftAddressPartsForRequestListing(draft) {
     : {};
 
   const rawAddress = String(draft?.address || contact.address || '').trim();
+  const postalCode = String(draft?.postalCode || contact.postalCode || '').trim();
   const city = String(draft?.city || contact.city || '').trim();
   const country = String(draft?.country || contact.countryCode || '').trim().toUpperCase();
 
@@ -6190,6 +6191,7 @@ function googleDraftAddressPartsForRequestListing(draft) {
 
   return {
     address: streetAddress,
+    postalCode,
     city,
     country
   };
@@ -6337,32 +6339,19 @@ export function createRequestListingModal(opts = {}) {
 
               <div class="modal-form-grid">
                 <div class="modal-field">
+                  <label for="rl-postal">${translatedOrFallback('modal.requestListing.postal.label', 'Postal code')}</label>
+                  <input id="rl-postal" class="input" type="text" maxlength="24" autocomplete="postal-code" />
+                </div>
+                <div class="modal-field">
                   <label for="rl-city">${t('modal.requestListing.city.label') || 'City'} <span class="required-star">*</span></label>
                   <input id="rl-city" class="input" type="text" maxlength="80" />
-                </div>
-                <div class="modal-field">
-                  <label for="rl-country">${t('modal.requestListing.country.label') || 'Country code'} <span class="required-star">*</span></label>
-                  <input id="rl-country" class="input" type="text" maxlength="2" list="rl-country-options" autocomplete="off" autocapitalize="characters" spellcheck="false" />
-                  <datalist id="rl-country-options"></datalist>
-                </div>
-              </div>
-
-              <div class="modal-form-grid">
-                <div class="modal-field">
-                  <label for="rl-group">${t('modal.requestListing.group.label') || 'Group'} <span class="required-star">*</span></label>
-                  <select id="rl-group" class="input"></select>
-                </div>
-                <div class="modal-field">
-                  <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup'} <span class="required-star">*</span></label>
-                  <select id="rl-subgroup" class="input"></select>
                 </div>
               </div>
 
               <div class="modal-field">
-                <label>${t('modal.requestListing.tags.label') || 'Search tags'}</label>
-                <input id="rl-tags" type="hidden" />
-                <div id="rl-tag-suggestions" class="request-chip-row" aria-label="${t('modal.requestListing.tags.label') || 'Search tags'}"></div>
-                <small class="modal-help-text">${t('modal.requestListing.tags.help') || 'Optional search terms that match how customers look for this business.'}</small>
+                <label for="rl-country">${t('modal.requestListing.country.label') || 'Country code'} <span class="required-star">*</span></label>
+                <input id="rl-country" class="input" type="text" maxlength="2" list="rl-country-options" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+                <datalist id="rl-country-options"></datalist>
               </div>
 
               <div id="rl-google-provider-rating-card" class="google-provider-rating hidden" aria-live="polite"></div>
@@ -6378,6 +6367,43 @@ export function createRequestListingModal(opts = {}) {
                   <input id="rl-coord" class="input" type="text" placeholder="${t('modal.requestListing.coord.placeholder') || '52.527900,13.440200'}" />
                   <small class="modal-help-text">${t('modal.requestListing.coord.help') || 'Tip: you can copy this from Google Maps.'}</small>
                 </div>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details id="rl-discovery-section" class="cm-chip request-section-chip">
+          <summary class="modal-menu-item cm-chip-face request-section-chip-face">
+            <span class="label cm-chip-face-label request-section-chip-label">
+              <strong class="request-section-chip-title">${translatedOrFallback('modal.requestListing.sections.discovery.title', 'SEO & discovery')}</strong>
+              <small id="rl-discovery-chip-state" class="request-section-chip-summary">${translatedOrFallback('modal.requestListing.discovery.desc', 'Help customers find this profile. Choose what the business is, then add up to 5 useful tags.')}</small>
+            </span>
+            <span class="request-section-badge-stack">
+              <span class="request-section-badge is-required">${t('modal.requestListing.section.required') || 'Required'}</span>
+              <span class="request-section-complete-check" aria-hidden="true">✓</span>
+            </span>
+            <span class="cm-chip-face-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="cm-chip-body">
+            <div class="modal-form-stack">
+              <p class="modal-help-text request-discovery-help">${translatedOrFallback('modal.requestListing.discovery.help', 'Good choices improve NaviGen search, filters, category pages, and structured profile signals. Search-engine ranking is never guaranteed.')}</p>
+
+              <div class="modal-form-grid">
+                <div class="modal-field">
+                  <label for="rl-group">${t('modal.requestListing.group.label') || 'Group'} <span class="required-star">*</span></label>
+                  <select id="rl-group" class="input"></select>
+                </div>
+                <div class="modal-field">
+                  <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup'} <span class="required-star">*</span></label>
+                  <select id="rl-subgroup" class="input"></select>
+                </div>
+              </div>
+
+              <div class="modal-field">
+                <label>${translatedOrFallback('modal.requestListing.tags.label', 'Helpful tags')}</label>
+                <input id="rl-tags" type="hidden" />
+                <small id="rl-tags-summary" class="modal-help-text">${translatedOrFallback('modal.requestListing.tags.help', 'Choose up to 5 useful tags. Tags are business-declared attributes, not NaviGen certifications.')}</small>
+                <div id="rl-tag-suggestions" class="request-tag-groups" aria-label="${translatedOrFallback('modal.requestListing.tags.label', 'Helpful tags')}"></div>
               </div>
             </div>
           </div>
@@ -6522,6 +6548,7 @@ export function createRequestListingModal(opts = {}) {
 
   const rlName = modal.querySelector('#rl-name');
   const rlAddress = modal.querySelector('#rl-address');
+  const rlPostal = modal.querySelector('#rl-postal');
   const rlCity = modal.querySelector('#rl-city');
   const rlCountry = modal.querySelector('#rl-country');
   renderRequestListingCountryOptions(modal.querySelector('#rl-country-options'));
@@ -6535,6 +6562,9 @@ export function createRequestListingModal(opts = {}) {
   const rlDescriptionCount = modal.querySelector('#rl-description-count');
   
   const rlBusinessSection = modal.querySelector('#rl-business-section');
+  const rlDiscoverySection = modal.querySelector('#rl-discovery-section');
+  const rlDiscoveryChipState = modal.querySelector('#rl-discovery-chip-state');
+  const rlTagsSummary = modal.querySelector('#rl-tags-summary');
   const rlContextSection = modal.querySelector('#rl-context-section');
   const rlDescriptionSection = modal.querySelector('#rl-description-section');
   
@@ -6608,6 +6638,7 @@ export function createRequestListingModal(opts = {}) {
   const prefillName = p8DraftLocationName(prefill);
   const prefillAddressParts = googleDraftAddressPartsForRequestListing(prefill);
   const prefillAddress = prefillAddressParts.address;
+  const prefillPostalCode = prefillAddressParts.postalCode;
   const prefillCity = prefillAddressParts.city;
   const prefillCountry = prefillAddressParts.country;
   
@@ -7107,21 +7138,53 @@ export function createRequestListingModal(opts = {}) {
 
   const REQUEST_LISTING_CONTEXT_LIMIT = 3;
   const REQUEST_LISTING_CONTEXT_RESULT_LIMIT = 5;
+  const REQUEST_LISTING_TAG_LIMIT = 5;
   const selectedTagSet = new Set(prefillTags);
   const selectedContextSet = new Set();
   let requestListingContextRows = [];
   let requestListingContextLocationRows = [];
   let requestListingContextIndex = new Map();
 
+  function requestListingSelectedTagItems() {
+    return p8TagItems(Array.from(selectedTagSet));
+  }
+
+  function syncRequestListingDiscoverySummary() {
+    const groupText = String(rlGroup?.selectedOptions?.[0]?.textContent || '').trim();
+    const subgroupText = String(rlSubgroup?.selectedOptions?.[0]?.textContent || '').trim();
+    const tagItems = requestListingSelectedTagItems();
+    const emojiSummary = tagItems.map((tag) => tag.emoji).join(' ');
+    const tagCountText = tagItems.length ? `${tagItems.length}/${REQUEST_LISTING_TAG_LIMIT}` : '';
+
+    if (rlTagsSummary) {
+      rlTagsSummary.textContent = tagItems.length
+        ? `${emojiSummary} · ${tagCountText}`
+        : translatedOrFallback('modal.requestListing.tags.help', 'Choose up to 5 useful tags. Tags are business-declared attributes, not NaviGen certifications.');
+    }
+
+    if (rlDiscoveryChipState) {
+      if (groupText && subgroupText) {
+        rlDiscoveryChipState.textContent = tagItems.length
+          ? `${groupText} / ${subgroupText} · ${emojiSummary} · ${tagCountText}`
+          : `${groupText} / ${subgroupText} · ${translatedOrFallback('modal.requestListing.tags.summary.empty', 'No tags selected')}`;
+      } else {
+        rlDiscoveryChipState.textContent = translatedOrFallback('modal.requestListing.discovery.desc', 'Help customers find this profile. Choose what the business is, then add up to 5 useful tags.');
+      }
+    }
+
+    rlDiscoverySection?.classList.toggle('has-value', !!groupText || !!subgroupText || tagItems.length > 0);
+  }
+
   function syncRequestListingTags() {
     if (rlTags) rlTags.value = formatTagValues(Array.from(selectedTagSet));
+    syncRequestListingDiscoverySummary();
   }
 
   function setRequestListingTags(values) {
     selectedTagSet.clear();
     (Array.isArray(values) ? values : []).forEach((value) => {
       const tag = String(value || '').trim();
-      if (tag) selectedTagSet.add(tag);
+      if (tag && selectedTagSet.size < REQUEST_LISTING_TAG_LIMIT) selectedTagSet.add(tag);
     });
     syncRequestListingTags();
   }
@@ -7295,7 +7358,10 @@ export function createRequestListingModal(opts = {}) {
       rlName,
       rlAddress,
       rlCity,
-      rlCountry,
+      rlCountry
+    ];
+
+    const requiredDiscoveryFields = [
       rlGroup,
       rlSubgroup
     ];
@@ -7304,11 +7370,18 @@ export function createRequestListingModal(opts = {}) {
       el?.classList.toggle('is-required-empty', !String(el?.value || '').trim());
     });
 
+    requiredDiscoveryFields.forEach((el) => {
+      el?.classList.toggle('is-required-empty', !String(el?.value || '').trim());
+    });
+
     const businessComplete = requiredBusinessFields.every((el) => String(el?.value || '').trim()) && isValidRequestListingCountryCode(rlCountry?.value);
+    const discoveryComplete = requiredDiscoveryFields.every((el) => String(el?.value || '').trim());
     const contextComplete = selectedContextSet.size > 0;
 
     rlOpenContexts?.classList.toggle('is-required-empty', !contextComplete);
     rlBusinessSection?.classList.toggle('is-complete', businessComplete);
+    rlDiscoverySection?.classList.toggle('is-complete', discoveryComplete);
+    syncRequestListingDiscoverySummary();
   }
   
   syncRequestListingTags();
@@ -7318,6 +7391,7 @@ export function createRequestListingModal(opts = {}) {
   if (prefill) {
     if (rlName) rlName.value = prefillName;
     if (rlAddress) rlAddress.value = prefillAddress;
+    if (rlPostal) rlPostal.value = prefillPostalCode;
     if (rlCity) rlCity.value = prefillCity;
     if (rlCountry) rlCountry.value = prefillCountry;
     if (!prefillCountry && rlCountry) rlCountry.value = deriveRequestListingCountryCode();
@@ -7376,6 +7450,7 @@ export function createRequestListingModal(opts = {}) {
   [
     rlName,
     rlAddress,
+    rlPostal,
     rlGroup,
     rlSubgroup
   ].forEach((el) => {
@@ -7823,24 +7898,56 @@ export function createRequestListingModal(opts = {}) {
       rlTagSuggestions.classList.toggle('hidden', !activeTags.length);
       if (!activeTags.length) return;
 
+      const grouped = new Map();
       activeTags.forEach((tag) => {
-        const key = String(tag?.key || '').trim();
-        if (!key) return;
+        const groupName = String(tag?.tagGroupName || tag?.tagGroupKey || translatedOrFallback('modal.requestListing.tags.group.other', 'Other tags')).trim();
+        if (!grouped.has(groupName)) grouped.set(groupName, []);
+        grouped.get(groupName).push(tag);
+      });
 
-        const selected = selectedTagSet.has(key);
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `request-chip${selected ? ' is-selected' : ''}`;
-        btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
-        btn.title = String(tag?.desc || tag?.search || '').trim();
-        btn.textContent = String(tag?.label || key).trim();
-        btn.addEventListener('click', () => {
-          if (selectedTagSet.has(key)) selectedTagSet.delete(key);
-          else selectedTagSet.add(key);
-          syncRequestListingTags();
-          renderTagSuggestions();
+      grouped.forEach((tags, groupName) => {
+        const groupWrap = document.createElement('div');
+        groupWrap.className = 'request-tag-group';
+
+        const heading = document.createElement('div');
+        heading.className = 'request-tag-group-title';
+        heading.textContent = groupName;
+        groupWrap.appendChild(heading);
+
+        const row = document.createElement('div');
+        row.className = 'request-chip-row request-tag-group-row';
+
+        tags.forEach((tag) => {
+          const key = String(tag?.key || '').trim();
+          if (!key) return;
+
+          const selected = selectedTagSet.has(key);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `request-chip${selected ? ' is-selected' : ''}`;
+          btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+          btn.title = String(tag?.desc || tag?.search || '').trim();
+          btn.textContent = String(tag?.label || key).trim();
+          btn.addEventListener('click', () => {
+            if (selectedTagSet.has(key)) {
+              selectedTagSet.delete(key);
+            } else {
+              if (selectedTagSet.size >= REQUEST_LISTING_TAG_LIMIT) {
+                showToast(translatedOrFallback('modal.requestListing.tags.limit', 'Choose up to 5 useful tags.'), 2200);
+                return;
+              }
+              selectedTagSet.add(key);
+            }
+
+            syncRequestListingTags();
+            renderTagSuggestions();
+          });
+
+          row.appendChild(btn);
         });
-        rlTagSuggestions.appendChild(btn);
+
+        groupWrap.appendChild(row);
+        rlTagSuggestions.appendChild(groupWrap);
       });
     };
 
@@ -7867,11 +7974,13 @@ export function createRequestListingModal(opts = {}) {
     rlGroup?.addEventListener('change', () => {
       if (rlSubgroup) rlSubgroup.value = '';
       renderSubgroups();
+      syncRequestListingRequiredChecks();
     });
 
     rlSubgroup?.addEventListener('change', () => {
       renderTagSuggestions();
       renderRequestListingContextSuggestions();
+      syncRequestListingRequiredChecks();
     });
 
     requestListingContextRows = contextRows.slice();
@@ -7902,6 +8011,7 @@ export function createRequestListingModal(opts = {}) {
 
     const name = String(modal.querySelector('#rl-name')?.value || '').trim();
     const address = String(modal.querySelector('#rl-address')?.value || '').trim();
+    const postalCode = String(modal.querySelector('#rl-postal')?.value || '').trim();
     const city = String(modal.querySelector('#rl-city')?.value || '').trim();
     const country = String(modal.querySelector('#rl-country')?.value || '').trim().toUpperCase();
     const link = String(modal.querySelector('#rl-link')?.value || '').trim();
@@ -7934,13 +8044,16 @@ export function createRequestListingModal(opts = {}) {
     setRequestListingContextError(!contextVals.length);
     setInputErrorState(rlCoord, wantsCoord && !coord);
 
-    const hasBusinessError = !name || !address || !city || !isValidRequestListingCountryCode(country) || !groupKey || !subgroupKey;
+    const hasBusinessError = !name || !address || !city || !isValidRequestListingCountryCode(country);
+    const hasDiscoveryError = !groupKey || !subgroupKey;
     const hasContextError = !contextVals.length;
     const hasCoordError = wantsCoord && !coord;
 
-    if (hasBusinessError || hasContextError || hasCoordError) {
+    if (hasBusinessError || hasDiscoveryError || hasContextError || hasCoordError) {
       if (hasBusinessError) {
         rlBusinessSection?.setAttribute('open', '');
+      } else if (hasDiscoveryError) {
+        rlDiscoverySection?.setAttribute('open', '');
       } else if (hasContextError) {
         rlContextSection?.setAttribute('open', '');
       } else if (hasCoordError) {
@@ -8010,6 +8123,7 @@ export function createRequestListingModal(opts = {}) {
         tags: tagVals,
         contactInformation: {
           address,
+          ...(postalCode ? { postalCode } : {}),
           city,
           countryCode: country
         },
@@ -8060,6 +8174,7 @@ export function createRequestListingModal(opts = {}) {
       name,
       nameNorm,
       address,
+      postalCode,
       city,
       country,
       link,

@@ -717,9 +717,9 @@
   "modal.requestListing.subgroup.placeholder": "Seleziona sottogruppo",
   "modal.requestListing.contexts.label": "Contesti",
   "modal.requestListing.contexts.help": "Seleziona fino a 3 percorsi di contesto esistenti.",
-  "modal.requestListing.tags.label": "Cerca tag",
+  "modal.requestListing.tags.label": "Tag utili",
   "modal.requestListing.tags.placeholder": "tag separati da virgola",
-  "modal.requestListing.tags.help": "Termini di ricerca opzionali in base a come i clienti cercano questa attività.",
+  "modal.requestListing.tags.help": "Scegli fino a 5 tag utili. I tag sono attributi dichiarati dall’attività, non certificazioni NaviGen.",
   "modal.requestListing.cover.label": "URL immagine di copertina",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Un URL per riga",
@@ -1816,5 +1816,13 @@
   "sub.fire-safety": "🔥 Sicurezza antincendio",
   "sub.fire-safety.search": "sicurezza antincendio, incendio, vigili del fuoco, estintore, risposta antincendio, fire marshal",
   "sub.police-assistance": "🚓 Assistenza della polizia",
-  "sub.police-assistance.search": "assistenza della polizia, polizia, forze dell’ordine, punto di polizia, sicurezza pubblica, agente"
+  "sub.police-assistance.search": "assistenza della polizia, polizia, forze dell’ordine, punto di polizia, sicurezza pubblica, agente",
+  "group.popular": "💥 Popolare",
+  "modal.requestListing.postal.label": "CAP",
+  "modal.requestListing.sections.discovery.title": "SEO e scoperta",
+  "modal.requestListing.discovery.desc": "Aiuta i clienti a trovare questo profilo. Scegli il tipo di attività, quindi aggiungi fino a 5 tag utili.",
+  "modal.requestListing.discovery.help": "Le scelte corrette migliorano la ricerca NaviGen, i filtri, le pagine categoria e i segnali strutturati del profilo. Il posizionamento nei motori di ricerca non è mai garantito.",
+  "modal.requestListing.tags.limit": "Scegli fino a 5 tag utili.",
+  "modal.requestListing.tags.summary.empty": "Nessun tag selezionato",
+  "modal.requestListing.tags.group.other": "Altri tag"
 }

@@ -717,9 +717,9 @@
   "modal.requestListing.subgroup.placeholder": "Alcsoport kiválasztása",
   "modal.requestListing.contexts.label": "Kontextusok",
   "modal.requestListing.contexts.help": "Válassz legfeljebb 3 meglévő kontextus útvonalat.",
-  "modal.requestListing.tags.label": "Címkék keresése",
+  "modal.requestListing.tags.label": "Hasznos címkék",
   "modal.requestListing.tags.placeholder": "címkék, vesszővel elválasztva",
-  "modal.requestListing.tags.help": "Opcionális keresési kifejezések, amelyek megfelelnek annak, ahogyan az ügyfelek keresnek.",
+  "modal.requestListing.tags.help": "Válasszon legfeljebb 5 hasznos címkét. A címkék a vállalkozás által megadott jellemzők, nem NaviGen tanúsítványok.",
   "modal.requestListing.cover.label": "Borítókép URL",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Egy URL soronként",
@@ -1816,5 +1816,13 @@
   "sub.fire-safety": "🔥 Tűzbiztonság",
   "sub.fire-safety.search": "tűzbiztonság, tűz, tűzoltóság, tűzoltó készülék, tűzvédelmi reagálás, tűzvédelmi felelős",
   "sub.police-assistance": "🚓 Rendőrségi segítség",
-  "sub.police-assistance.search": "rendőrségi segítség, rendőrség, bűnüldözés, rendőrségi pont, közbiztonság, rendőr"
+  "sub.police-assistance.search": "rendőrségi segítség, rendőrség, bűnüldözés, rendőrségi pont, közbiztonság, rendőr",
+  "group.popular": "💥 Népszerű",
+  "modal.requestListing.postal.label": "Irányítószám",
+  "modal.requestListing.sections.discovery.title": "SEO és felfedezés",
+  "modal.requestListing.discovery.desc": "Segítsen az ügyfeleknek megtalálni ezt a profilt. Válassza ki, milyen vállalkozásról van szó, majd adjon hozzá legfeljebb 5 hasznos címkét.",
+  "modal.requestListing.discovery.help": "A jó választások javítják a NaviGen keresést, a szűrőket, a kategóriaoldalakat és a strukturált profiljeleket. A keresőmotoros rangsorolás soha nem garantált.",
+  "modal.requestListing.tags.limit": "Válasszon legfeljebb 5 hasznos címkét.",
+  "modal.requestListing.tags.summary.empty": "Nincs kiválasztott címke",
+  "modal.requestListing.tags.group.other": "További címkék"
 }

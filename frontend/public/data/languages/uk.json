@@ -717,9 +717,9 @@
   "modal.requestListing.subgroup.placeholder": "Виберіть підгрупу",
   "modal.requestListing.contexts.label": "Контексти",
   "modal.requestListing.contexts.help": "Виберіть до 3 існуючих шляхів контексту.",
-  "modal.requestListing.tags.label": "Пошук тегів",
+  "modal.requestListing.tags.label": "Корисні теги",
   "modal.requestListing.tags.placeholder": "теги, розділені комами",
-  "modal.requestListing.tags.help": "Додаткові пошукові терміни відповідно до того, як клієнти шукають цей бізнес.",
+  "modal.requestListing.tags.help": "Виберіть до 5 корисних тегів. Теги — це атрибути, заявлені бізнесом, а не сертифікації NaviGen.",
   "modal.requestListing.cover.label": "URL зображення обкладинки",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Один URL на рядок",
@@ -1816,5 +1816,13 @@
   "sub.fire-safety": "🔥 Пожежна безпека",
   "sub.fire-safety.search": "пожежна безпека, пожежа, пожежна бригада, вогнегасник, реагування на пожежу, пожежний маршал",
   "sub.police-assistance": "🚓 Поліцейська допомога",
-  "sub.police-assistance.search": "поліцейська допомога, поліція, правоохоронні органи, поліцейський пункт, громадська безпека, офіцер"
+  "sub.police-assistance.search": "поліцейська допомога, поліція, правоохоронні органи, поліцейський пункт, громадська безпека, офіцер",
+  "group.popular": "💥 Популярне",
+  "modal.requestListing.postal.label": "Поштовий індекс",
+  "modal.requestListing.sections.discovery.title": "SEO та видимість",
+  "modal.requestListing.discovery.desc": "Допоможіть клієнтам знайти цей профіль. Виберіть тип бізнесу, а потім додайте до 5 корисних тегів.",
+  "modal.requestListing.discovery.help": "Правильний вибір покращує пошук NaviGen, фільтри, сторінки категорій і структуровані сигнали профілю. Позиції в пошукових системах ніколи не гарантуються.",
+  "modal.requestListing.tags.limit": "Виберіть до 5 корисних тегів.",
+  "modal.requestListing.tags.summary.empty": "Теги не вибрано",
+  "modal.requestListing.tags.group.other": "Інші теги"
 }

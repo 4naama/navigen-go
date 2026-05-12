@@ -717,9 +717,9 @@
   "modal.requestListing.subgroup.placeholder": "Sélectionner un sous-groupe",
   "modal.requestListing.contexts.label": "Contextes",
   "modal.requestListing.contexts.help": "Sélectionnez jusqu’à 3 chemins de contexte existants.",
-  "modal.requestListing.tags.label": "Rechercher des tags",
+  "modal.requestListing.tags.label": "Tags utiles",
   "modal.requestListing.tags.placeholder": "étiquettes, séparées par des virgules",
-  "modal.requestListing.tags.help": "Termes de recherche facultatifs correspondant à la façon dont les clients recherchent cet établissement.",
+  "modal.requestListing.tags.help": "Choisissez jusqu’à 5 tags utiles. Les tags sont des attributs déclarés par l’entreprise, pas des certifications NaviGen.",
   "modal.requestListing.cover.label": "URL de l’image de couverture",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Une URL par ligne",
@@ -1816,5 +1816,13 @@
   "sub.fire-safety": "🔥 Sécurité incendie",
   "sub.fire-safety.search": "sécurité incendie, incendie, brigade des pompiers, extincteur, intervention incendie, chef de sécurité incendie",
   "sub.police-assistance": "🚓 Assistance policière",
-  "sub.police-assistance.search": "assistance policière, police, forces de l’ordre, poste de police, sécurité publique, agent"
+  "sub.police-assistance.search": "assistance policière, police, forces de l’ordre, poste de police, sécurité publique, agent",
+  "group.popular": "💥 Populaire",
+  "modal.requestListing.postal.label": "Code postal",
+  "modal.requestListing.sections.discovery.title": "SEO & découverte",
+  "modal.requestListing.discovery.desc": "Aidez les clients à trouver ce profil. Choisissez l’activité de l’entreprise, puis ajoutez jusqu’à 5 tags utiles.",
+  "modal.requestListing.discovery.help": "De bons choix améliorent la recherche NaviGen, les filtres, les pages de catégories et les signaux structurés du profil. Le classement dans les moteurs de recherche n’est jamais garanti.",
+  "modal.requestListing.tags.limit": "Choisissez jusqu’à 5 tags utiles.",
+  "modal.requestListing.tags.summary.empty": "Aucun tag sélectionné",
+  "modal.requestListing.tags.group.other": "Autres tags"
 }

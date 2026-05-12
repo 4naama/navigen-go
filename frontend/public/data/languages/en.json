@@ -717,9 +717,9 @@
   "modal.requestListing.subgroup.placeholder": "Select subgroup",
   "modal.requestListing.contexts.label": "Contexts",
   "modal.requestListing.contexts.help": "Select up to 3 existing context paths.",
-  "modal.requestListing.tags.label": "Search tags",
+  "modal.requestListing.tags.label": "Helpful tags",
   "modal.requestListing.tags.placeholder": "comma, separated, tags",
-  "modal.requestListing.tags.help": "Optional search terms that match how customers look for this business.",
+  "modal.requestListing.tags.help": "Choose up to 5 useful tags. Tags are business-declared attributes, not NaviGen certifications.",
   "modal.requestListing.cover.label": "Cover image URL",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "One URL per line",
@@ -1816,5 +1816,13 @@
   "sub.fire-safety": "🔥 Fire Safety",
   "sub.fire-safety.search": "fire safety, fire, fire brigade, fire extinguisher, fire response, fire marshal",
   "sub.police-assistance": "🚓 Police Assistance",
-  "sub.police-assistance.search": "police assistance, police, law enforcement, police point, public safety, officer"
+  "sub.police-assistance.search": "police assistance, police, law enforcement, police point, public safety, officer",
+  "group.popular": "💥 Popular",
+  "modal.requestListing.postal.label": "Postal code",
+  "modal.requestListing.sections.discovery.title": "SEO & discovery",
+  "modal.requestListing.discovery.desc": "Help customers find this profile. Choose what the business is, then add up to 5 useful tags.",
+  "modal.requestListing.discovery.help": "Good choices improve NaviGen search, filters, category pages, and structured profile signals. Search-engine ranking is never guaranteed.",
+  "modal.requestListing.tags.limit": "Choose up to 5 useful tags.",
+  "modal.requestListing.tags.summary.empty": "No tags selected",
+  "modal.requestListing.tags.group.other": "Other tags"
 }

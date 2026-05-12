@@ -717,9 +717,9 @@
   "modal.requestListing.subgroup.placeholder": "Seleccionar subgrupo",
   "modal.requestListing.contexts.label": "Contextos",
   "modal.requestListing.contexts.help": "Selecciona hasta 3 rutas de contexto existentes.",
-  "modal.requestListing.tags.label": "Buscar etiquetas",
+  "modal.requestListing.tags.label": "Etiquetas útiles",
   "modal.requestListing.tags.placeholder": "etiquetas separadas por comas",
-  "modal.requestListing.tags.help": "Términos de búsqueda opcionales según cómo los clientes buscan este negocio.",
+  "modal.requestListing.tags.help": "Elige hasta 5 etiquetas útiles. Las etiquetas son atributos declarados por la empresa, no certificaciones NaviGen.",
   "modal.requestListing.cover.label": "URL de la imagen de portada",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Una URL por línea",
@@ -1816,5 +1816,13 @@
   "sub.fire-safety": "🔥 Seguridad contra incendios",
   "sub.fire-safety.search": "seguridad contra incendios, incendio, brigada de bomberos, extintor, respuesta contra incendios, jefe de seguridad contra incendios",
   "sub.police-assistance": "🚓 Asistencia policial",
-  "sub.police-assistance.search": "asistencia policial, policía, fuerzas del orden, punto policial, seguridad pública, oficial"
+  "sub.police-assistance.search": "asistencia policial, policía, fuerzas del orden, punto policial, seguridad pública, oficial",
+  "group.popular": "💥 Popular",
+  "modal.requestListing.postal.label": "Código postal",
+  "modal.requestListing.sections.discovery.title": "SEO y descubrimiento",
+  "modal.requestListing.discovery.desc": "Ayuda a los clientes a encontrar este perfil. Elige qué tipo de negocio es y añade hasta 5 etiquetas útiles.",
+  "modal.requestListing.discovery.help": "Las buenas elecciones mejoran la búsqueda en NaviGen, los filtros, las páginas de categorías y las señales estructuradas del perfil. El posicionamiento en motores de búsqueda nunca está garantizado.",
+  "modal.requestListing.tags.limit": "Elige hasta 5 etiquetas útiles.",
+  "modal.requestListing.tags.summary.empty": "No hay etiquetas seleccionadas",
+  "modal.requestListing.tags.group.other": "Otras etiquetas"
 }

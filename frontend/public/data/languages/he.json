@@ -717,9 +717,9 @@
   "modal.requestListing.subgroup.placeholder": "בחר תת-קבוצה",
   "modal.requestListing.contexts.label": "הקשרים",
   "modal.requestListing.contexts.help": "בחר עד 3 נתיבי הקשר קיימים.",
-  "modal.requestListing.tags.label": "חפש תגיות",
+  "modal.requestListing.tags.label": "תגיות שימושיות",
   "modal.requestListing.tags.placeholder": "תגיות מופרדות בפסיקים",
-  "modal.requestListing.tags.help": "מונחי חיפוש אופציונליים לפי איך שלקוחות מחפשים את העסק.",
+  "modal.requestListing.tags.help": "בחרו עד 5 תגיות שימושיות. תגיות הן מאפיינים שהעסק מצהיר עליהם, ולא אישורי NaviGen.",
   "modal.requestListing.cover.label": "כתובת URL של תמונת כיסוי",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "כתובת URL אחת לשורה",
@@ -1816,5 +1816,13 @@
   "sub.fire-safety": "🔥 בטיחות אש",
   "sub.fire-safety.search": "בטיחות אש, אש, מכבי אש, מטף כיבוי, תגובת אש, ממונה בטיחות אש",
   "sub.police-assistance": "🚓 סיוע משטרתי",
-  "sub.police-assistance.search": "סיוע משטרתי, משטרה, אכיפת חוק, נקודת משטרה, ביטחון הציבור, שוטר"
+  "sub.police-assistance.search": "סיוע משטרתי, משטרה, אכיפת חוק, נקודת משטרה, ביטחון הציבור, שוטר",
+  "group.popular": "💥 פופולרי",
+  "modal.requestListing.postal.label": "מיקוד",
+  "modal.requestListing.sections.discovery.title": "SEO וגילוי",
+  "modal.requestListing.discovery.desc": "עזרו ללקוחות למצוא את הפרופיל הזה. בחרו מה סוג העסק ולאחר מכן הוסיפו עד 5 תגיות שימושיות.",
+  "modal.requestListing.discovery.help": "בחירות נכונות משפרות את החיפוש ב-NaviGen, את המסננים, את דפי הקטגוריות ואת אותות הפרופיל המובנים. דירוג במנועי חיפוש לעולם אינו מובטח.",
+  "modal.requestListing.tags.limit": "בחרו עד 5 תגיות שימושיות.",
+  "modal.requestListing.tags.summary.empty": "לא נבחרו תגיות",
+  "modal.requestListing.tags.group.other": "תגיות נוספות"
 }
