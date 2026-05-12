@@ -4472,7 +4472,7 @@ export async function showSelectLocationModal() {
 
     modal.querySelector('#select-location-create-route')?.addEventListener('click', (ev) => {
       ev.preventDefault();
-      openNonPickingChild(() => showRequestListingModal({ returnTo: 'syb' }));
+      openNonPickingChild(() => showRequestListingModal({ returnTo: 'syb', fresh: true }));
     });
 
     modal.querySelector('#select-location-google-route')?.addEventListener('click', (ev) => {
@@ -6550,7 +6550,7 @@ export function createRequestListingModal(opts = {}) {
 
   const prefill = (opts && opts.prefill && typeof opts.prefill === 'object')
     ? opts.prefill
-    : (readPendingLocationDraft() || null);
+    : null;
 
   const rlName = modal.querySelector('#rl-name');
   const rlAddress = modal.querySelector('#rl-address');
@@ -7306,16 +7306,20 @@ export function createRequestListingModal(opts = {}) {
     const ready = requestListingHasLocationSeed();
     const lockedText = t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.';
     const readyText = t('modal.requestListing.contexts.summary.empty') || 'Required. Search and choose up to 3 contexts.';
+    const selectedText = t('modal.requestListing.contexts.summary.selected') || 'Tap to review or change your selected contexts.';
     const contextSectionState = modal.querySelector('#rl-context-section-state');
     const contextSummaryText = modal.querySelector('#rl-context-summary-text');
+    const stateText = !ready ? lockedText : (selectedContextSet.size ? selectedText : readyText);
 
     if (rlContextSection) {
       rlContextSection.setAttribute('aria-disabled', ready ? 'false' : 'true');
       if (!ready) rlContextSection.removeAttribute('open');
+      rlContextSection.classList.toggle('is-complete', ready && selectedContextSet.size > 0);
+      rlContextSection.classList.toggle('has-value', ready && selectedContextSet.size > 0);
     }
 
     if (contextSectionState) {
-      contextSectionState.textContent = ready ? readyText : lockedText;
+      contextSectionState.textContent = stateText;
     }
 
     if (rlOpenContexts) {
@@ -7324,8 +7328,8 @@ export function createRequestListingModal(opts = {}) {
       rlOpenContexts.title = ready ? '' : lockedText;
     }
 
-    if (!ready && contextSummaryText) {
-      contextSummaryText.textContent = lockedText;
+    if (contextSummaryText) {
+      contextSummaryText.textContent = stateText;
     }
   }
   
@@ -7389,6 +7393,8 @@ export function createRequestListingModal(opts = {}) {
     rlOpenContexts?.classList.toggle('is-required-empty', !contextComplete);
     rlBusinessSection?.classList.toggle('is-complete', businessComplete);
     rlDiscoverySection?.classList.toggle('is-complete', discoveryComplete);
+    rlContextSection?.classList.toggle('is-complete', contextComplete);
+    rlContextSection?.classList.toggle('has-value', contextComplete);
     syncRequestListingDiscoverySummary();
   }
   
@@ -7500,6 +7506,7 @@ export function createRequestListingModal(opts = {}) {
       removeModal(contextModalId);
       showModal(id);
       syncRequestListingContexts();
+      syncRequestListingContextAvailability();
       setRequestListingContextError(!selectedContextSet.size);
       rlOpenContexts?.focus?.();
     };
