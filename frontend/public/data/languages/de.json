@@ -962,7 +962,7 @@
   "owner.settings.signedin.editProfile.desc": "Aktualisieren Sie Beschreibung, Kontaktdaten, Links und öffentliche Profilinformationen.",
   "owner.edit.title": "Öffentliches Profil bearbeiten",
   "owner.edit.locked.title": "Gesperrte Standortidentität",
-  "owner.edit.locked.desc": "Name, Adresse, Kategorie, Slug und Koordinaten können nicht selbst bearbeitet werden.",
+  "owner.edit.locked.desc": "Name, Adresse, Kategorie, Slug und Identitätskoordinaten können nicht selbst bearbeitet werden. Der öffentliche Navigationspunkt kann unten angepasst werden.",
   "owner.edit.field.name": "Unternehmensname",
   "owner.edit.field.address": "Adresse",
   "owner.edit.field.category": "Kategorie / Kontext",
@@ -1828,5 +1828,9 @@
   "modal.requestListing.tags.open": "Liste der Tags",
   "modal.requestListing.tags.openDesc": "Wählen Sie bis zu 5 nützliche Tags.",
   "modal.requestListing.tags.modal.title": "Nützliche Tags",
-  "modal.requestListing.tags.empty": "Keine Tags verfügbar."
+  "modal.requestListing.tags.empty": "Keine Tags verfügbar.",
+  "owner.edit.field.navigationPin": "Öffentlicher Navigationspunkt",
+  "owner.edit.field.navigationPin.help": "Wird für LPM-Routen und die Kartenanzeige verwendet. Dies ändert weder die öffentliche URL noch die Standortidentität.",
+  "owner.edit.navigationPin.invalid": "Verwenden Sie ein gültiges Breiten-/Längenpaar.",
+  "owner.edit.navigationPin.kept": "Wir haben die letzte gültige Kartenposition beibehalten. Sie können den öffentlichen Navigationspunkt nach der Veröffentlichung anpassen."
 }

@@ -921,8 +921,10 @@ function normalizeDraftPatch(raw: any, providerRef = ""): Record<string, any> {
     if (v !== undefined) out[k] = v;
   }
 
+  const hasCoordInput = Object.prototype.hasOwnProperty.call(src, "coord") || Object.prototype.hasOwnProperty.call(src, "coordinates");
   const coord = normalizeDraftCoord((src as any).coord ?? (src as any).coordinates);
   if (coord) out.coord = coord;
+  else if (hasCoordInput) delete out.coord;
   delete out.coordinates;
 
   if (Object.prototype.hasOwnProperty.call(src, "context")) {
@@ -7300,6 +7302,9 @@ function buildPublicProfilePayload(rec: { ulid: string; locationID: string; effe
     locationUID: rec.ulid,
     locationID: rec.locationID,
     contexts: profileContextMemberships(effective),
+    coord: effective.navigationCoord || effective.coord || effective["Coordinate Compound"] || "",
+    identityCoord: effective.coord || effective["Coordinate Compound"] || "",
+    navigationCoord: effective.navigationCoord || "",
     ratings: ratingsFromGoogleProvider(effective)    
   };
 }
@@ -7314,7 +7319,9 @@ function buildPublicItemPayload(rec: { ulid: string; locationID: string; effecti
     contexts: profileContextMemberships(effective),
     locationName: effective.locationName || effective.name,
     media: effective.media || {},
-    coord: effective.coord || effective["Coordinate Compound"] || "",
+    coord: effective.navigationCoord || effective.coord || effective["Coordinate Compound"] || "",
+    identityCoord: effective.coord || effective["Coordinate Compound"] || "",
+    navigationCoord: effective.navigationCoord || "",
     links: effective.links || {},
     contactInformation: effective.contactInformation || effective.contact || {},
     descriptions: effective.descriptions || {},
@@ -7371,7 +7378,9 @@ function buildPublicListPayload(rec: { ulid: string; locationID: string; effecti
     locationID: rec.locationID,
     alias: rec.locationID,
     contexts: profileContextMemberships(effective),
-    coord: effective?.coord || effective?.["Coordinate Compound"] || "",
+    coord: effective?.navigationCoord || effective?.coord || effective?.["Coordinate Compound"] || "",
+    identityCoord: effective?.coord || effective?.["Coordinate Compound"] || "",
+    navigationCoord: effective?.navigationCoord || "",
     media: {
       ...media,
       cover: String(media?.cover || "").trim(),
@@ -9080,7 +9089,7 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
     };
   }
 
-  const allowedTop = new Set(["description", "descriptions", "contactInformation", "links", "openingHours"]);
+  const allowedTop = new Set(["description", "descriptions", "contactInformation", "links", "openingHours", "navigationCoord"]);
   const unknownTop = Object.keys(source).filter((key) => !allowedTop.has(key));
   if (unknownTop.length) {
     return {
@@ -9268,6 +9277,32 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
     changedFields.push("openingHours");
   }
 
+  if (ownerEditHasOwn(source, "navigationCoord")) {
+    const rawNavigationCoord = source.navigationCoord;
+    const hasNavigationValue = rawNavigationCoord !== null && rawNavigationCoord !== undefined && String(rawNavigationCoord).trim() !== "";
+
+    if (hasNavigationValue) {
+      let navigationCoord: { lat: number; lng: number } | undefined;
+      try {
+        navigationCoord = normalizeDraftCoord(rawNavigationCoord);
+      } catch {
+        navigationCoord = undefined;
+      }
+
+      if (!navigationCoord) {
+        return {
+          ok: false,
+          code: "invalid_navigation_coord",
+          message: "navigationCoord must be a valid latitude, longitude pair.",
+          fields: ["navigationCoord"]
+        };
+      }
+
+      patch.navigationCoord = navigationCoord;
+      changedFields.push("navigationCoord");
+    }
+  }
+  
   const uniqueChanged = Array.from(new Set(changedFields));
   if (!uniqueChanged.length) {
     return {

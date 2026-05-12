@@ -962,7 +962,7 @@
   "owner.settings.signedin.editProfile.desc": "Mettez à jour la description, les coordonnées, les liens et les informations du profil public.",
   "owner.edit.title": "Modifier le profil public",
   "owner.edit.locked.title": "Identité de localisation verrouillée",
-  "owner.edit.locked.desc": "Le nom, l’adresse, la catégorie, le slug et les coordonnées ne peuvent pas être modifiés directement.",
+  "owner.edit.locked.desc": "Le nom, l’adresse, la catégorie, le slug et les coordonnées d’identité ne peuvent pas être modifiés directement. Le point de navigation public peut être ajusté ci-dessous.",
   "owner.edit.field.name": "Nom de l’établissement",
   "owner.edit.field.address": "Adresse",
   "owner.edit.field.category": "Catégorie / contexte",
@@ -1828,5 +1828,9 @@
   "modal.requestListing.tags.open": "Liste des tags",
   "modal.requestListing.tags.openDesc": "Choisissez jusqu’à 5 tags utiles.",
   "modal.requestListing.tags.modal.title": "Tags utiles",
-  "modal.requestListing.tags.empty": "Aucun tag disponible."
+  "modal.requestListing.tags.empty": "Aucun tag disponible.",
+  "owner.edit.field.navigationPin": "Point de navigation public",
+  "owner.edit.field.navigationPin.help": "Utilisé pour les directions LPM et l’affichage sur la carte. Cela ne modifie pas l’URL publique ni l’identité de l’emplacement.",
+  "owner.edit.navigationPin.invalid": "Utilisez une paire latitude, longitude valide.",
+  "owner.edit.navigationPin.kept": "Nous avons conservé la dernière position valide sur la carte. Vous pourrez ajuster le point de navigation public après publication."
 }

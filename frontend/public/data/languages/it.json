@@ -962,7 +962,7 @@
   "owner.settings.signedin.editProfile.desc": "Aggiorna descrizione, contatti, link e informazioni del profilo pubblico.",
   "owner.edit.title": "Modifica profilo pubblico",
   "owner.edit.locked.title": "Identità sede bloccata",
-  "owner.edit.locked.desc": "Nome, indirizzo, categoria, slug e coordinate non sono modificabili autonomamente.",
+  "owner.edit.locked.desc": "Il nome, l’indirizzo, la categoria, lo slug e le coordinate identificative non sono modificabili autonomamente. Il pin di navigazione pubblico può essere regolato qui sotto.",
   "owner.edit.field.name": "Nome attività",
   "owner.edit.field.address": "Indirizzo",
   "owner.edit.field.category": "Categoria / contesto",
@@ -1828,5 +1828,9 @@
   "modal.requestListing.tags.open": "Elenco tag",
   "modal.requestListing.tags.openDesc": "Scegli fino a 5 tag utili.",
   "modal.requestListing.tags.modal.title": "Tag utili",
-  "modal.requestListing.tags.empty": "Nessun tag disponibile."
+  "modal.requestListing.tags.empty": "Nessun tag disponibile.",
+  "owner.edit.field.navigationPin": "Pin di navigazione pubblico",
+  "owner.edit.field.navigationPin.help": "Utilizzato per indicazioni LPM e visualizzazione sulla mappa. Non modifica l’URL pubblico né l’identità della posizione.",
+  "owner.edit.navigationPin.invalid": "Usa una coppia valida di latitudine e longitudine.",
+  "owner.edit.navigationPin.kept": "Abbiamo mantenuto l’ultima posizione valida sulla mappa. Puoi modificare il pin di navigazione pubblico dopo la pubblicazione."
 }

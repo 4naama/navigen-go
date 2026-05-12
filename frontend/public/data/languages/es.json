@@ -962,7 +962,7 @@
   "owner.settings.signedin.editProfile.desc": "Actualiza la descripción, los datos de contacto, enlaces e información del perfil público.",
   "owner.edit.title": "Editar perfil público",
   "owner.edit.locked.title": "Identidad de ubicación bloqueada",
-  "owner.edit.locked.desc": "El nombre, dirección, categoría, slug y coordenadas no son editables directamente.",
+  "owner.edit.locked.desc": "El nombre, la dirección, la categoría, el slug y las coordenadas de identidad no se pueden editar manualmente. El pin público de navegación puede ajustarse abajo.",
   "owner.edit.field.name": "Nombre del negocio",
   "owner.edit.field.address": "Dirección",
   "owner.edit.field.category": "Categoría / contexto",
@@ -1828,5 +1828,9 @@
   "modal.requestListing.tags.open": "Lista de etiquetas",
   "modal.requestListing.tags.openDesc": "Elige hasta 5 etiquetas útiles.",
   "modal.requestListing.tags.modal.title": "Etiquetas útiles",
-  "modal.requestListing.tags.empty": "No hay etiquetas disponibles."
+  "modal.requestListing.tags.empty": "No hay etiquetas disponibles.",
+  "owner.edit.field.navigationPin": "Pin público de navegación",
+  "owner.edit.field.navigationPin.help": "Se utiliza para direcciones LPM y visualización en el mapa. No cambia la URL pública ni la identidad de la ubicación.",
+  "owner.edit.navigationPin.invalid": "Utiliza un par válido de latitud y longitud.",
+  "owner.edit.navigationPin.kept": "Hemos conservado la última posición válida en el mapa. Puedes ajustar el pin público de navegación después de publicar."
 }

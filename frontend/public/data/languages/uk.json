@@ -962,7 +962,7 @@
   "owner.settings.signedin.editProfile.desc": "Оновіть опис, контактні дані, посилання та інформацію публічного профілю.",
   "owner.edit.title": "Редагувати публічний профіль",
   "owner.edit.locked.title": "Ідентичність локації заблокована",
-  "owner.edit.locked.desc": "Назва, адреса, категорія, slug і координати не редагуються самостійно.",
+  "owner.edit.locked.desc": "Назва, адреса, категорія, slug і координати ідентичності не редагуються самостійно. Публічну навігаційну точку можна змінити нижче.",
   "owner.edit.field.name": "Назва бізнесу",
   "owner.edit.field.address": "Адреса",
   "owner.edit.field.category": "Категорія / контекст",
@@ -1828,5 +1828,9 @@
   "modal.requestListing.tags.open": "Список тегів",
   "modal.requestListing.tags.openDesc": "Виберіть до 5 корисних тегів.",
   "modal.requestListing.tags.modal.title": "Корисні теги",
-  "modal.requestListing.tags.empty": "Немає доступних тегів."
+  "modal.requestListing.tags.empty": "Немає доступних тегів.",
+  "owner.edit.field.navigationPin": "Публічна навігаційна точка",
+  "owner.edit.field.navigationPin.help": "Використовується для маршрутів LPM і відображення на карті. Це не змінює публічний URL або ідентичність локації.",
+  "owner.edit.navigationPin.invalid": "Використовуйте дійсну пару широти та довготи.",
+  "owner.edit.navigationPin.kept": "Ми зберегли останню дійсну позицію на карті. Ви зможете змінити публічну навігаційну точку після публікації."
 }

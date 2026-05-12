@@ -962,7 +962,7 @@
   "owner.settings.signedin.editProfile.desc": "עדכן תיאור, פרטי קשר, קישורים ומידע בפרופיל הציבורי.",
   "owner.edit.title": "ערוך פרופיל ציבורי",
   "owner.edit.locked.title": "זהות מיקום נעולה",
-  "owner.edit.locked.desc": "שם, כתובת, קטגוריה, slug וקואורדינטות אינם ניתנים לעריכה עצמית.",
+  "owner.edit.locked.desc": "שם, כתובת, קטגוריה, slug וקואורדינטות זהות אינם ניתנים לעריכה עצמית. ניתן לעדכן את נקודת הניווט הציבורית למטה.",
   "owner.edit.field.name": "שם העסק",
   "owner.edit.field.address": "כתובת",
   "owner.edit.field.category": "קטגוריה / הקשר",
@@ -1828,5 +1828,9 @@
   "modal.requestListing.tags.open": "רשימת תגיות",
   "modal.requestListing.tags.openDesc": "בחרו עד 5 תגיות שימושיות.",
   "modal.requestListing.tags.modal.title": "תגיות שימושיות",
-  "modal.requestListing.tags.empty": "אין תגיות זמינות."
+  "modal.requestListing.tags.empty": "אין תגיות זמינות.",
+  "owner.edit.field.navigationPin": "נקודת ניווט ציבורית",
+  "owner.edit.field.navigationPin.help": "משמש לניווט LPM ולהצגה במפה. זה לא משנה את כתובת ה-URL הציבורית או את זהות המיקום.",
+  "owner.edit.navigationPin.invalid": "השתמשו בזוג קואורדינטות תקין של קו רוחב וקו אורך.",
+  "owner.edit.navigationPin.kept": "שמרנו את מיקום המפה התקין האחרון. תוכלו לעדכן את נקודת הניווט הציבורית לאחר הפרסום."
 }

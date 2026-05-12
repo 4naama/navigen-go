@@ -962,7 +962,7 @@
   "owner.settings.signedin.editProfile.desc": "Frissítsd a leírást, kapcsolati adatokat, linkeket és a nyilvános profil információit.",
   "owner.edit.title": "Nyilvános profil szerkesztése",
   "owner.edit.locked.title": "Zárolt helyszínazonosság",
-  "owner.edit.locked.desc": "A név, cím, kategória, slug és koordináták nem szerkeszthetők önállóan.",
+  "owner.edit.locked.desc": "A név, cím, kategória, slug és azonosító koordináták nem módosíthatók önállóan. A nyilvános navigációs pont lent módosítható.",
   "owner.edit.field.name": "Vállalkozás neve",
   "owner.edit.field.address": "Cím",
   "owner.edit.field.category": "Kategória / kontextus",
@@ -1828,5 +1828,9 @@
   "modal.requestListing.tags.open": "Címkelista",
   "modal.requestListing.tags.openDesc": "Válasszon legfeljebb 5 hasznos címkét.",
   "modal.requestListing.tags.modal.title": "Hasznos címkék",
-  "modal.requestListing.tags.empty": "Nincsenek elérhető címkék."
+  "modal.requestListing.tags.empty": "Nincsenek elérhető címkék.",
+  "owner.edit.field.navigationPin": "Nyilvános navigációs pont",
+  "owner.edit.field.navigationPin.help": "LPM útvonalakhoz és térképes megjelenítéshez használatos. Nem változtatja meg a nyilvános URL-t vagy a helyazonosságot.",
+  "owner.edit.navigationPin.invalid": "Használjon érvényes szélesség/hosszúság koordinátapárt.",
+  "owner.edit.navigationPin.kept": "Megtartottuk az utolsó érvényes térképpozíciót. A nyilvános navigációs pontot közzététel után módosíthatja."
 }

@@ -9115,6 +9115,21 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
   const links = (item?.links && typeof item.links === 'object') ? item.links : {};
   const social = (links?.social && typeof links.social === 'object') ? links.social : {};
 
+  const navigationCoordValue = (() => {
+    const readCoord = (value) => {
+      if (!value) return '';
+      if (typeof value === 'string') return value.trim();
+      if (value && typeof value === 'object') {
+        const lat = Number(value.lat ?? value.latitude);
+        const lng = Number(value.lng ?? value.lon ?? value.longitude);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) return `${lat.toFixed(6)},${lng.toFixed(6)}`;
+      }
+      return '';
+    };
+
+    return readCoord(item?.navigationCoord) || readCoord(item?.coord) || readCoord(item?.identityCoord);
+  })();
+  
   const currentWebsite = String(
     contact.website ||
     contact.officialUrl ||
@@ -9157,7 +9172,7 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
     <span class="icon-img" aria-hidden="true">🔒</span>
     <span class="label" style="flex:1 1 auto; min-width:0; text-align:left;">
       <strong>${_ownerText('owner.edit.locked.title', 'Locked location identity')}</strong><br>
-      <small>${_ownerText('owner.edit.locked.desc', 'Name, address, category, slug, and coordinates are not self-serve edits.')}</small>
+      <small>${_ownerText('owner.edit.locked.desc', 'Name, address, category, slug, and identity coordinates are not self-serve edits. The public navigation pin can be adjusted below.')}</small>
     </span>
   `;
   inner.appendChild(lockedCard);
@@ -9213,8 +9228,9 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
     </div>
 
     <div class="modal-field">
-      <label for="owner-edit-website">${_ownerText('owner.edit.field.website', 'Website')}</label>
-      <input id="owner-edit-website" class="input" type="url" maxlength="500" placeholder="https://..." />
+      <label for="owner-edit-navigation-coord">${_ownerText('owner.edit.field.navigationPin', 'Public navigation pin')}</label>
+      <input id="owner-edit-navigation-coord" class="input" type="text" maxlength="80" placeholder="52.527900,13.440200" />
+      <small class="modal-help-text">${_ownerText('owner.edit.field.navigationPin.help', 'Used for LPM directions and map display. It does not change the public URL or location identity.')}</small>
     </div>
 
     <div class="modal-field">
@@ -9242,6 +9258,7 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
   const phoneEl = form.querySelector('#owner-edit-phone');
   const emailEl = form.querySelector('#owner-edit-email');
   const websiteEl = form.querySelector('#owner-edit-website');
+  const navigationCoordEl = form.querySelector('#owner-edit-navigation-coord');
   const instagramEl = form.querySelector('#owner-edit-instagram');
   const facebookEl = form.querySelector('#owner-edit-facebook');
   const tiktokEl = form.querySelector('#owner-edit-tiktok');
@@ -9251,6 +9268,7 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
   if (phoneEl) phoneEl.value = String(contact.phone || '').trim();
   if (emailEl) emailEl.value = String(contact.email || '').trim();
   if (websiteEl) websiteEl.value = currentWebsite;
+  if (navigationCoordEl) navigationCoordEl.value = navigationCoordValue;
   if (instagramEl) instagramEl.value = currentSocialLink('instagram');
   if (facebookEl) facebookEl.value = currentSocialLink('facebook');
   if (tiktokEl) tiktokEl.value = currentSocialLink('tiktok');
@@ -9261,6 +9279,7 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
     phoneEl,
     emailEl,
     websiteEl,
+    navigationCoordEl,
     instagramEl,
     facebookEl,
     tiktokEl,
@@ -9705,6 +9724,22 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
   wrap.appendChild(card);
   document.body.appendChild(wrap);
 
+  function parseOwnerNavigationCoord(value) {
+    const text = String(value || '').trim();
+    if (!text) return null;
+
+    const parts = text.split(/[,\s;]+/).map((part) => part.trim()).filter(Boolean);
+    if (parts.length < 2) return null;
+
+    const lat = Number(parts[0]);
+    const lng = Number(parts[1]);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
+    return `${lat.toFixed(6)},${lng.toFixed(6)}`;
+  }
+  
   actionRow.querySelector('#owner-edit-cancel')?.addEventListener('click', () => hideModal(id));
 
   actionRow.querySelector('#owner-edit-save')?.addEventListener('click', async () => {
@@ -9712,6 +9747,7 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
       phoneEl,
       emailEl,
       websiteEl,
+      navigationCoordEl,
       instagramEl,
       facebookEl,
       tiktokEl,
@@ -9728,6 +9764,17 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
     if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = true;
 
     const website = String(websiteEl?.value || '').trim();
+    const rawNavigationCoord = String(navigationCoordEl?.value || '').trim();
+    const navigationCoord = rawNavigationCoord ? parseOwnerNavigationCoord(rawNavigationCoord) : '';
+    const navigationCoordWasCleared = !rawNavigationCoord && !!String(navigationCoordEl?.dataset.initialValue || '').trim();
+
+    if (rawNavigationCoord && !navigationCoord) {
+      navigationCoordEl?.classList?.add('is-touched');
+      showToast(_ownerText('owner.edit.navigationPin.invalid', 'Use a valid latitude, longitude pair.'), 2200);
+      return;
+    }
+
+    
     const instagram = String(instagramEl?.value || '').trim();
     const facebook = String(facebookEl?.value || '').trim();
     const tiktok = String(tiktokEl?.value || '').trim();
@@ -9756,7 +9803,11 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
           youtube
         }
       }
-    };
+    };    
+    
+    if (navigationCoord) {
+      patch.navigationCoord = navigationCoord;
+    }    
 
     try {
       const res = await fetch('/api/profile/update', {
@@ -9785,7 +9836,13 @@ async function showOwnerProfileEditModal(targetIdOrSlug) {
         item = payload.profile;
       }
 
-      showToast(_ownerText('owner.edit.saved', 'Profile changes saved.'), 1800);
+      showToast(
+        navigationCoordWasCleared
+          ? _ownerText('owner.edit.navigationPin.kept', 'We kept the last valid map position. You can adjust the public navigation pin after publishing.')
+          : _ownerText('owner.edit.saved', 'Profile changes saved.'),
+        2200
+      );
+      
       hideModal(id);
     } catch {
       showToast(_ownerText('owner.edit.error.failed', 'Could not save profile changes.'), 2600);
