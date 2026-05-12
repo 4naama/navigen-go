@@ -719,7 +719,7 @@
   "modal.requestListing.contexts.help": "Wählen Sie bis zu 3 bestehende Kontextpfade aus.",
   "modal.requestListing.tags.label": "Nützliche Tags",
   "modal.requestListing.tags.placeholder": "Tags, durch Kommas getrennt",
-  "modal.requestListing.tags.help": "Wählen Sie bis zu 5 nützliche Tags. Tags sind vom Unternehmen angegebene Attribute und keine NaviGen-Zertifizierungen.",
+  "modal.requestListing.tags.help": "Wählen Sie bis zu 5 nützliche Tags, die die Sichtbarkeit Ihres Unternehmens verbessern können. Tags sind vom Unternehmen angegebene Attribute und keine NaviGen-Zertifizierungen.",
   "modal.requestListing.cover.label": "URL des Titelbilds",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Eine URL pro Zeile",
@@ -1824,5 +1824,9 @@
   "modal.requestListing.discovery.help": "Gute Auswahlmöglichkeiten verbessern die NaviGen-Suche, Filter, Kategorieseiten und strukturierte Profilsignale. Ein Ranking in Suchmaschinen kann niemals garantiert werden.",
   "modal.requestListing.tags.limit": "Wählen Sie bis zu 5 nützliche Tags.",
   "modal.requestListing.tags.summary.empty": "Keine Tags ausgewählt",
-  "modal.requestListing.tags.group.other": "Weitere Tags"
+  "modal.requestListing.tags.group.other": "Weitere Tags",
+  "modal.requestListing.tags.open": "Liste der Tags",
+  "modal.requestListing.tags.openDesc": "Wählen Sie bis zu 5 nützliche Tags.",
+  "modal.requestListing.tags.modal.title": "Nützliche Tags",
+  "modal.requestListing.tags.empty": "Keine Tags verfügbar."
 }

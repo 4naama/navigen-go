@@ -719,7 +719,7 @@
   "modal.requestListing.contexts.help": "Seleziona fino a 3 percorsi di contesto esistenti.",
   "modal.requestListing.tags.label": "Tag utili",
   "modal.requestListing.tags.placeholder": "tag separati da virgola",
-  "modal.requestListing.tags.help": "Scegli fino a 5 tag utili. I tag sono attributi dichiarati dall’attività, non certificazioni NaviGen.",
+  "modal.requestListing.tags.help": "Scegli fino a 5 tag utili che possono migliorare la visibilità della tua attività. I tag sono attributi dichiarati dall’attività, non certificazioni NaviGen.",
   "modal.requestListing.cover.label": "URL immagine di copertina",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Un URL per riga",
@@ -1824,5 +1824,9 @@
   "modal.requestListing.discovery.help": "Le scelte corrette migliorano la ricerca NaviGen, i filtri, le pagine categoria e i segnali strutturati del profilo. Il posizionamento nei motori di ricerca non è mai garantito.",
   "modal.requestListing.tags.limit": "Scegli fino a 5 tag utili.",
   "modal.requestListing.tags.summary.empty": "Nessun tag selezionato",
-  "modal.requestListing.tags.group.other": "Altri tag"
+  "modal.requestListing.tags.group.other": "Altri tag",
+  "modal.requestListing.tags.open": "Elenco tag",
+  "modal.requestListing.tags.openDesc": "Scegli fino a 5 tag utili.",
+  "modal.requestListing.tags.modal.title": "Tag utili",
+  "modal.requestListing.tags.empty": "Nessun tag disponibile."
 }

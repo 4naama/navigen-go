@@ -719,7 +719,7 @@
   "modal.requestListing.contexts.help": "בחר עד 3 נתיבי הקשר קיימים.",
   "modal.requestListing.tags.label": "תגיות שימושיות",
   "modal.requestListing.tags.placeholder": "תגיות מופרדות בפסיקים",
-  "modal.requestListing.tags.help": "בחרו עד 5 תגיות שימושיות. תגיות הן מאפיינים שהעסק מצהיר עליהם, ולא אישורי NaviGen.",
+  "modal.requestListing.tags.help": "בחרו עד 5 תגיות שימושיות שיכולות לשפר את הנראות של העסק שלכם. תגיות הן מאפיינים שהעסק מצהיר עליהם, ולא אישורי NaviGen.",
   "modal.requestListing.cover.label": "כתובת URL של תמונת כיסוי",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "כתובת URL אחת לשורה",
@@ -1824,5 +1824,9 @@
   "modal.requestListing.discovery.help": "בחירות נכונות משפרות את החיפוש ב-NaviGen, את המסננים, את דפי הקטגוריות ואת אותות הפרופיל המובנים. דירוג במנועי חיפוש לעולם אינו מובטח.",
   "modal.requestListing.tags.limit": "בחרו עד 5 תגיות שימושיות.",
   "modal.requestListing.tags.summary.empty": "לא נבחרו תגיות",
-  "modal.requestListing.tags.group.other": "תגיות נוספות"
+  "modal.requestListing.tags.group.other": "תגיות נוספות",
+  "modal.requestListing.tags.open": "רשימת תגיות",
+  "modal.requestListing.tags.openDesc": "בחרו עד 5 תגיות שימושיות.",
+  "modal.requestListing.tags.modal.title": "תגיות שימושיות",
+  "modal.requestListing.tags.empty": "אין תגיות זמינות."
 }

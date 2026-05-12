@@ -719,7 +719,7 @@
   "modal.requestListing.contexts.help": "Válassz legfeljebb 3 meglévő kontextus útvonalat.",
   "modal.requestListing.tags.label": "Hasznos címkék",
   "modal.requestListing.tags.placeholder": "címkék, vesszővel elválasztva",
-  "modal.requestListing.tags.help": "Válasszon legfeljebb 5 hasznos címkét. A címkék a vállalkozás által megadott jellemzők, nem NaviGen tanúsítványok.",
+  "modal.requestListing.tags.help": "Válasszon legfeljebb 5 hasznos címkét, amelyek javíthatják vállalkozása láthatóságát. A címkék a vállalkozás által megadott jellemzők, nem NaviGen tanúsítványok.",
   "modal.requestListing.cover.label": "Borítókép URL",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Egy URL soronként",
@@ -1824,5 +1824,9 @@
   "modal.requestListing.discovery.help": "A jó választások javítják a NaviGen keresést, a szűrőket, a kategóriaoldalakat és a strukturált profiljeleket. A keresőmotoros rangsorolás soha nem garantált.",
   "modal.requestListing.tags.limit": "Válasszon legfeljebb 5 hasznos címkét.",
   "modal.requestListing.tags.summary.empty": "Nincs kiválasztott címke",
-  "modal.requestListing.tags.group.other": "További címkék"
+  "modal.requestListing.tags.group.other": "További címkék",
+  "modal.requestListing.tags.open": "Címkelista",
+  "modal.requestListing.tags.openDesc": "Válasszon legfeljebb 5 hasznos címkét.",
+  "modal.requestListing.tags.modal.title": "Hasznos címkék",
+  "modal.requestListing.tags.empty": "Nincsenek elérhető címkék."
 }

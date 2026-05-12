@@ -719,7 +719,7 @@
   "modal.requestListing.contexts.help": "Selecciona hasta 3 rutas de contexto existentes.",
   "modal.requestListing.tags.label": "Etiquetas útiles",
   "modal.requestListing.tags.placeholder": "etiquetas separadas por comas",
-  "modal.requestListing.tags.help": "Elige hasta 5 etiquetas útiles. Las etiquetas son atributos declarados por la empresa, no certificaciones NaviGen.",
+  "modal.requestListing.tags.help": "Elige hasta 5 etiquetas útiles que puedan mejorar la visibilidad de tu negocio. Las etiquetas son atributos declarados por la empresa, no certificaciones NaviGen.",
   "modal.requestListing.cover.label": "URL de la imagen de portada",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Una URL por línea",
@@ -1824,5 +1824,9 @@
   "modal.requestListing.discovery.help": "Las buenas elecciones mejoran la búsqueda en NaviGen, los filtros, las páginas de categorías y las señales estructuradas del perfil. El posicionamiento en motores de búsqueda nunca está garantizado.",
   "modal.requestListing.tags.limit": "Elige hasta 5 etiquetas útiles.",
   "modal.requestListing.tags.summary.empty": "No hay etiquetas seleccionadas",
-  "modal.requestListing.tags.group.other": "Otras etiquetas"
+  "modal.requestListing.tags.group.other": "Otras etiquetas",
+  "modal.requestListing.tags.open": "Lista de etiquetas",
+  "modal.requestListing.tags.openDesc": "Elige hasta 5 etiquetas útiles.",
+  "modal.requestListing.tags.modal.title": "Etiquetas útiles",
+  "modal.requestListing.tags.empty": "No hay etiquetas disponibles."
 }

@@ -719,7 +719,7 @@
   "modal.requestListing.contexts.help": "Sélectionnez jusqu’à 3 chemins de contexte existants.",
   "modal.requestListing.tags.label": "Tags utiles",
   "modal.requestListing.tags.placeholder": "étiquettes, séparées par des virgules",
-  "modal.requestListing.tags.help": "Choisissez jusqu’à 5 tags utiles. Les tags sont des attributs déclarés par l’entreprise, pas des certifications NaviGen.",
+  "modal.requestListing.tags.help": "Choisissez jusqu’à 5 tags utiles qui peuvent améliorer la visibilité de votre entreprise. Les tags sont des attributs déclarés par l’entreprise, pas des certifications NaviGen.",
   "modal.requestListing.cover.label": "URL de l’image de couverture",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Une URL par ligne",
@@ -1824,5 +1824,9 @@
   "modal.requestListing.discovery.help": "De bons choix améliorent la recherche NaviGen, les filtres, les pages de catégories et les signaux structurés du profil. Le classement dans les moteurs de recherche n’est jamais garanti.",
   "modal.requestListing.tags.limit": "Choisissez jusqu’à 5 tags utiles.",
   "modal.requestListing.tags.summary.empty": "Aucun tag sélectionné",
-  "modal.requestListing.tags.group.other": "Autres tags"
+  "modal.requestListing.tags.group.other": "Autres tags",
+  "modal.requestListing.tags.open": "Liste des tags",
+  "modal.requestListing.tags.openDesc": "Choisissez jusqu’à 5 tags utiles.",
+  "modal.requestListing.tags.modal.title": "Tags utiles",
+  "modal.requestListing.tags.empty": "Aucun tag disponible."
 }

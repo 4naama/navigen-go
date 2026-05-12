@@ -719,7 +719,7 @@
   "modal.requestListing.contexts.help": "Виберіть до 3 існуючих шляхів контексту.",
   "modal.requestListing.tags.label": "Корисні теги",
   "modal.requestListing.tags.placeholder": "теги, розділені комами",
-  "modal.requestListing.tags.help": "Виберіть до 5 корисних тегів. Теги — це атрибути, заявлені бізнесом, а не сертифікації NaviGen.",
+  "modal.requestListing.tags.help": "Виберіть до 5 корисних тегів, які можуть покращити видимість вашого бізнесу. Теги — це атрибути, заявлені бізнесом, а не сертифікації NaviGen.",
   "modal.requestListing.cover.label": "URL зображення обкладинки",
   "modal.requestListing.cover.placeholder": "https://...",
   "modal.requestListing.images.placeholder": "Один URL на рядок",
@@ -1824,5 +1824,9 @@
   "modal.requestListing.discovery.help": "Правильний вибір покращує пошук NaviGen, фільтри, сторінки категорій і структуровані сигнали профілю. Позиції в пошукових системах ніколи не гарантуються.",
   "modal.requestListing.tags.limit": "Виберіть до 5 корисних тегів.",
   "modal.requestListing.tags.summary.empty": "Теги не вибрано",
-  "modal.requestListing.tags.group.other": "Інші теги"
+  "modal.requestListing.tags.group.other": "Інші теги",
+  "modal.requestListing.tags.open": "Список тегів",
+  "modal.requestListing.tags.openDesc": "Виберіть до 5 корисних тегів.",
+  "modal.requestListing.tags.modal.title": "Корисні теги",
+  "modal.requestListing.tags.empty": "Немає доступних тегів."
 }

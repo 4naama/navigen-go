@@ -6402,8 +6402,14 @@ export function createRequestListingModal(opts = {}) {
               <div class="modal-field">
                 <label>${translatedOrFallback('modal.requestListing.tags.label', 'Helpful tags')}</label>
                 <input id="rl-tags" type="hidden" />
-                <small id="rl-tags-summary" class="modal-help-text">${translatedOrFallback('modal.requestListing.tags.help', 'Choose up to 5 useful tags. Tags are business-declared attributes, not NaviGen certifications.')}</small>
-                <div id="rl-tag-suggestions" class="request-tag-groups" aria-label="${translatedOrFallback('modal.requestListing.tags.label', 'Helpful tags')}"></div>
+                <small id="rl-tags-summary" class="modal-help-text">${translatedOrFallback('modal.requestListing.tags.help', 'Choose up to 5 useful tags that can enhance the visibility of your business. Tags are business-declared attributes, not NaviGen certifications.')}</small>
+                <button id="rl-open-tags" type="button" class="modal-menu-item request-tags-open">
+                  <span class="icon-img" aria-hidden="true">🏷️</span>
+                  <span class="label">
+                    <strong>${translatedOrFallback('modal.requestListing.tags.open', 'Tags list')}</strong><br>
+                    <small>${translatedOrFallback('modal.requestListing.tags.openDesc', 'Choose up to 5 useful tags.')}</small>
+                  </span>
+                </button>
               </div>
             </div>
           </div>
@@ -6589,7 +6595,7 @@ export function createRequestListingModal(opts = {}) {
   const rlContextCount = modal.querySelector('#rl-context-count');
   const rlContextSelected = modal.querySelector('#rl-context-selected');
   const rlTags = modal.querySelector('#rl-tags');
-  const rlTagSuggestions = modal.querySelector('#rl-tag-suggestions');
+  const rlOpenTags = modal.querySelector('#rl-open-tags');
   const rlCover = modal.querySelector('#rl-cover');
   const rlImage1 = modal.querySelector('#rl-image-1');
   const rlImage2 = modal.querySelector('#rl-image-2');
@@ -7883,20 +7889,45 @@ export function createRequestListingModal(opts = {}) {
       if (prefill?.groupKey) rlGroup.value = String(prefill.groupKey || '').trim();
     }
 
-    const renderTagSuggestions = () => {
-      if (!rlTagSuggestions) return;
-      rlTagSuggestions.innerHTML = '';
+    const updateRequestListingTagsModalState = (tagsModal) => {
+      if (!tagsModal) return;
 
+      const countEl = tagsModal.querySelector('#request-listing-tags-count');
+      const selectedEl = tagsModal.querySelector('#request-listing-tags-selected');
+      const tagItems = requestListingSelectedTagItems();
+      const emojiSummary = tagItems.map((tag) => tag.emoji).join(' ');
+
+      if (countEl) countEl.textContent = `${tagItems.length}/${REQUEST_LISTING_TAG_LIMIT}`;
+      if (selectedEl) {
+        selectedEl.textContent = tagItems.length
+          ? emojiSummary
+          : translatedOrFallback('modal.requestListing.tags.summary.empty', 'No tags selected');
+      }
+    };
+
+    const renderTagSuggestions = (container = null, tagsModal = null) => {
       const activeTags = Array.isArray(tagRows) ? tagRows : [];
       const activeTagSet = new Set(activeTags.map((tag) => String(tag?.key || '').trim()).filter(Boolean));
 
       Array.from(selectedTagSet).forEach((tag) => {
         if (!activeTagSet.has(tag)) selectedTagSet.delete(tag);
       });
-      syncRequestListingTags();
 
-      rlTagSuggestions.classList.toggle('hidden', !activeTags.length);
-      if (!activeTags.length) return;
+      syncRequestListingTags();
+      updateRequestListingTagsModalState(tagsModal);
+
+      const target = container || tagsModal?.querySelector('#request-listing-tags-modal-list');
+      if (!target) return;
+
+      target.innerHTML = '';
+
+      if (!activeTags.length) {
+        const empty = document.createElement('div');
+        empty.className = 'request-tags-modal-empty';
+        empty.textContent = translatedOrFallback('modal.requestListing.tags.empty', 'No tags available.');
+        target.appendChild(empty);
+        return;
+      }
 
       const grouped = new Map();
       activeTags.forEach((tag) => {
@@ -7940,15 +7971,53 @@ export function createRequestListingModal(opts = {}) {
             }
 
             syncRequestListingTags();
-            renderTagSuggestions();
+            renderTagSuggestions(target, tagsModal);
           });
 
           row.appendChild(btn);
         });
 
         groupWrap.appendChild(row);
-        rlTagSuggestions.appendChild(groupWrap);
+        target.appendChild(groupWrap);
       });
+    };
+
+    const openRequestListingTagsModal = () => {
+      const tagsModalId = 'request-listing-tags-modal';
+      document.getElementById(tagsModalId)?.remove();
+
+      const tagsModal = document.createElement('div');
+      tagsModal.id = tagsModalId;
+      tagsModal.className = 'modal hidden';
+      tagsModal.innerHTML = `
+        <div class="modal-content modal-menu request-tags-modal-content">
+          <div class="modal-top-bar request-tags-modal-top">
+            <h2 class="modal-title">${translatedOrFallback('modal.requestListing.tags.modal.title', 'Helpful tags')}</h2>
+            <button class="modal-close" aria-label="Close">&times;</button>
+          </div>
+          <div class="request-tags-modal-status">
+            <strong id="request-listing-tags-count">0/${REQUEST_LISTING_TAG_LIMIT}</strong>
+            <span id="request-listing-tags-selected">${translatedOrFallback('modal.requestListing.tags.summary.empty', 'No tags selected')}</span>
+          </div>
+          <p class="modal-help-text request-tags-modal-help">${translatedOrFallback('modal.requestListing.tags.help', 'Choose up to 5 useful tags that can enhance the visibility of your business. Tags are business-declared attributes, not NaviGen certifications.')}</p>
+          <div id="request-listing-tags-modal-list" class="request-tags-modal-list"></div>
+        </div>
+      `;
+
+      document.body.appendChild(tagsModal);
+
+      tagsModal.querySelector('.modal-close')?.addEventListener('click', () => {
+        hideModal(tagsModalId);
+        removeModal(tagsModalId);
+      });
+
+      setupTapOutClose(tagsModalId, () => {
+        hideModal(tagsModalId);
+        removeModal(tagsModalId);
+      });
+
+      renderTagSuggestions(tagsModal.querySelector('#request-listing-tags-modal-list'), tagsModal);
+      showModal(tagsModalId);
     };
 
     const renderSubgroups = () => {
@@ -7983,6 +8052,10 @@ export function createRequestListingModal(opts = {}) {
       syncRequestListingRequiredChecks();
     });
 
+    rlOpenTags?.addEventListener('click', () => {
+      openRequestListingTagsModal();
+    });
+    
     requestListingContextRows = contextRows.slice();
     requestListingContextLocationRows = Array.isArray(p8ContextLocationRowsCache) ? p8ContextLocationRowsCache.slice() : [];
     requestListingContextIndex = new Map(
