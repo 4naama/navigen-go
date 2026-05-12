@@ -7741,7 +7741,7 @@ export function createRequestListingModal(opts = {}) {
       if (!visibleRows.length) {
         const empty = document.createElement('div');
         empty.className = 'modal-menu-item modal-static-card request-context-empty';
-        const hasAnySearch = tokens.length || locationTokens.length;
+        const hasAnySearch = tokens.length > 0;
         empty.innerHTML = `
           <span class="label">
             <strong>${hasAnySearch ? (t('modal.requestListing.contexts.empty.title') || 'No matching contexts') : (t('modal.requestListing.contexts.search.title') || 'Search where this business belongs')}</strong>
