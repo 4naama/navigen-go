@@ -7519,3 +7519,57 @@ body.high-contrast .modal-menu-item.is-active {
   background:#f8fafc;
   color:#64748b;
 }
+
+#request-listing-tags-modal .request-tag-group + .request-tag-group{
+  margin-top:4px;
+}
+
+#request-listing-tags-modal .request-chip-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:flex-start;
+  overflow:visible;
+  touch-action:pan-y;
+}
+
+#request-listing-tags-modal .request-chip-row:empty{
+  display:none;
+}
+
+#request-listing-tags-modal .request-chip{
+  appearance:none;
+  border:1px solid #c7d8ff;
+  background:#eef4ff;
+  color:#2457d6;
+  border-radius:999px;
+  padding:.35rem .75rem;
+  font:inherit;
+  font-size:.85rem;
+  line-height:1.2;
+  cursor:pointer;
+  touch-action:pan-y;
+  transition:background .2s ease, border-color .2s ease, box-shadow .2s ease, color .2s ease;
+}
+
+#request-listing-tags-modal .request-chip:hover{
+  background:#e3efff;
+  border-color:#8fb2ff;
+}
+
+#request-listing-tags-modal .request-chip:focus-visible{
+  outline:0;
+  box-shadow:0 0 0 2px rgba(59,130,246,.18);
+}
+
+#request-listing-tags-modal .request-chip.is-selected{
+  background:#dbeafe;
+  border-color:#8fb2ff;
+  color:#1d4ed8;
+  font-weight:600;
+}
+
+body.high-contrast #request-listing-tags-modal .request-chip.is-selected{
+  border-color:currentColor;
+  box-shadow:inset 0 0 0 1px currentColor;
+}

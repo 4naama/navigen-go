@@ -7156,8 +7156,10 @@ export function createRequestListingModal(opts = {}) {
   }
 
   function syncRequestListingDiscoverySummary() {
-    const groupText = String(rlGroup?.selectedOptions?.[0]?.textContent || '').trim();
-    const subgroupText = String(rlSubgroup?.selectedOptions?.[0]?.textContent || '').trim();
+    const groupValue = String(rlGroup?.value || '').trim();
+    const subgroupValue = String(rlSubgroup?.value || '').trim();
+    const groupText = groupValue ? String(rlGroup?.selectedOptions?.[0]?.textContent || '').trim() : '';
+    const subgroupText = subgroupValue ? String(rlSubgroup?.selectedOptions?.[0]?.textContent || '').trim() : '';
     const tagItems = requestListingSelectedTagItems();
     const emojiSummary = tagItems.map((tag) => tag.emoji).join(' ');
     const tagCountText = tagItems.length ? `${tagItems.length}/${REQUEST_LISTING_TAG_LIMIT}` : '';
@@ -7165,7 +7167,7 @@ export function createRequestListingModal(opts = {}) {
     if (rlTagsSummary) {
       rlTagsSummary.textContent = tagItems.length
         ? `${emojiSummary} · ${tagCountText}`
-        : translatedOrFallback('modal.requestListing.tags.help', 'Choose up to 5 useful tags. Tags are business-declared attributes, not NaviGen certifications.');
+        : translatedOrFallback('modal.requestListing.tags.help', 'Choose up to 5 useful tags that can enhance the visibility of your business. Tags are business-declared attributes, not NaviGen certifications.');
     }
 
     if (rlDiscoveryChipState) {
@@ -7178,7 +7180,7 @@ export function createRequestListingModal(opts = {}) {
       }
     }
 
-    rlDiscoverySection?.classList.toggle('has-value', !!groupText || !!subgroupText || tagItems.length > 0);
+    rlDiscoverySection?.classList.toggle('has-value', !!groupValue || !!subgroupValue || tagItems.length > 0);
   }
 
   function syncRequestListingTags() {
