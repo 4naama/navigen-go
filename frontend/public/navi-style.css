@@ -7657,3 +7657,17 @@ body.high-contrast #request-listing-tags-modal .request-chip.is-selected{
 #request-listing-contexts-modal .request-context-option{
   border-radius:12px;
 }
+
+#request-listing-modal #rl-discovery-section .modal-form-grid{
+  background:#f8fafc;
+}
+
+#request-listing-modal #rl-discovery-section .modal-form-grid select.input{
+  background:#fffbeb;
+  border-color:#fbbf24;
+}
+
+#request-listing-modal #rl-discovery-section .modal-form-grid select.input:has(option:checked:not([value=""])){
+  background:#fff;
+  border-color:#d9e4ee;
+}

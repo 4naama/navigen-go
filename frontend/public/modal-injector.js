@@ -6376,7 +6376,7 @@ export function createRequestListingModal(opts = {}) {
           <summary class="modal-menu-item cm-chip-face request-section-chip-face">
             <span class="label cm-chip-face-label request-section-chip-label">
               <strong class="request-section-chip-title">${translatedOrFallback('modal.requestListing.sections.discovery.title', 'SEO & discovery')}</strong>
-              <small id="rl-discovery-chip-state" class="request-section-chip-summary">${translatedOrFallback('modal.requestListing.discovery.desc', 'Help customers find this profile. Choose what the business is, then add up to 5 useful tags.')}</small>
+              <small id="rl-discovery-chip-state" class="request-section-chip-summary"></small>
             </span>
             <span class="request-section-badge-stack">
               <span class="request-section-badge is-required">${t('modal.requestListing.section.required') || 'Required'}</span>
@@ -6386,7 +6386,7 @@ export function createRequestListingModal(opts = {}) {
           </summary>
           <div class="cm-chip-body">
             <div class="modal-form-stack">
-              <p class="modal-help-text request-discovery-help">${translatedOrFallback('modal.requestListing.discovery.help', 'Good choices improve NaviGen search, filters, category pages, and structured profile signals. Search-engine ranking is never guaranteed.')}</p>
+              <p class="modal-help-text request-discovery-help">${translatedOrFallback('modal.requestListing.discovery.help', 'Help customers find this profile. Choose what the business is, then add up to 5 useful tags.')}</p>
 
               <p class="modal-help-text">${translatedOrFallback('modal.requestListing.discovery.comboHelp', 'Choose up to 3 ways customers may look for this business. One is enough to start.')}</p>
 
@@ -6468,7 +6468,7 @@ export function createRequestListingModal(opts = {}) {
           <div class="cm-chip-body">
             <div class="request-description-editor">
               <div class="request-description-editor-head">
-                <span class="request-description-editor-prompt">${t('modal.requestListing.description.placeholder') || '🔍 Describe the business'}</span>
+                <span class="request-description-editor-prompt">${t('modal.requestListing.description.placeholder') || '📝 Describe the business'}</span>
               </div>
               <div class="modal-field" style="margin:0;">
                 <textarea id="rl-description" class="input request-description-textarea" rows="5" maxlength="3000" placeholder=""></textarea>
@@ -7198,7 +7198,7 @@ export function createRequestListingModal(opts = {}) {
           ? `${groupText} / ${subgroupText} · ${emojiSummary} · ${tagCountText}`
           : `${groupText} / ${subgroupText} · ${translatedOrFallback('modal.requestListing.tags.summary.empty', 'No tags selected')}`;
       } else {
-        rlDiscoveryChipState.textContent = translatedOrFallback('modal.requestListing.discovery.desc', 'Help customers find this profile. Choose what the business is, then add up to 5 useful tags.');
+        rlDiscoveryChipState.textContent = '';
       }
     }
 
@@ -7542,10 +7542,10 @@ export function createRequestListingModal(opts = {}) {
     const cards = requestListingGeneratedContextCards();
     const totalCount = cards.length || REQUEST_LISTING_CONTEXT_LIMIT;
     const selectedCount = selectedContextSet.size;
-    const readyText = translatedOrFallback('modal.requestListing.contexts.generated.empty', 'Generated from country, city, and SEO & discovery choices.');
+    const readyText = '';
     const selectedText = `${selectedCount}/${totalCount} ${translatedOrFallback('modal.requestListing.contexts.generated.selectedCount', 'generated routes selected. Tap to review or remove.')}`;
     const contextSectionState = modal.querySelector('#rl-context-section-state');
-    const stateText = selectedCount ? selectedText : readyText;
+    const stateText = selectedCount ? selectedText : '';
 
     if (rlContextSection) {
       rlContextSection.setAttribute('aria-disabled', 'false');
@@ -8031,7 +8031,7 @@ export function createRequestListingModal(opts = {}) {
           <div class="request-tags-modal-status">
             <strong id="request-listing-tags-count">0/${REQUEST_LISTING_TAG_LIMIT}</strong>
             <span id="request-listing-tags-selected">${translatedOrFallback('modal.requestListing.tags.summary.empty', 'No tags selected')}</span>
-            <span id="request-listing-tags-check" class="request-context-done" aria-hidden="true">✓</span>
+            <button id="request-listing-tags-check" type="button" class="request-context-done" aria-label="${translatedOrFallback('common.done', 'Done')}" title="${translatedOrFallback('common.done', 'Done')}">✓</button>
           </div>
           <p class="modal-help-text request-tags-modal-help">${translatedOrFallback('modal.requestListing.tags.help', 'Choose up to 5 useful tags that can enhance the visibility of your business. Tags are business-declared attributes, not NaviGen certifications.')}</p>
           <div id="request-listing-tags-modal-list" class="request-tags-modal-list"></div>
@@ -8040,7 +8040,8 @@ export function createRequestListingModal(opts = {}) {
 
       document.body.appendChild(tagsModal);
 
-      tagsModal.querySelector('.modal-close')?.addEventListener('click', () => {
+      tagsModal.querySelector('#request-listing-tags-check')?.addEventListener('click', (ev) => {
+        ev.preventDefault();
         hideModal(tagsModalId);
         removeModal(tagsModalId);
       });
@@ -8528,8 +8529,9 @@ function getModalHeaderHelpSpec(target) {
     return {
       title: _ownerText('modal.help.title', 'How it works'),
       bodyLines: [
-        _ownerText('modal.requestListing.help.line2', 'Complete the required business information first.'),
-        _ownerText('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts. A context is a ready-made path such as Restaurants · Germany · Berlin.'),
+        _ownerText('modal.requestListing.help.line2', 'Complete the required business information first. Or let Google import populate it for you.'),
+        _ownerText('modal.requestListing.contexts.help.line2', 'Good choices improve NaviGen search, filters, category pages, and structured profile signals. You can select up to 3 contexts. A context is a ready-made path such as Restaurants · Germany · Berlin.'),
+        _ownerText('modal.requestListing.help.line3', 'Search-engine ranking is never guaranteed.'),
         _ownerText('modal.requestListing.help.line4', 'Description, links, and media improve quality and publish readiness.')
       ].map((line) => String(line || '').trim()).filter(Boolean)
     };
