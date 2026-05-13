@@ -3940,6 +3940,7 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   let shouldResume = false;
   let draftULID = '';
   let draftSessionId = '';
+  let resumeDraft = null;
 
   try {
     shouldResume =
@@ -3949,10 +3950,20 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
     draftULID = String(sessionStorage.getItem('navigen.resumeSybDraftULID') || '').trim();
     draftSessionId = String(sessionStorage.getItem('navigen.resumeSybDraftSessionId') || '').trim();
 
+    const resumeDraftRaw = String(sessionStorage.getItem('navigen.publishSetupResumeDraft') || '').trim();
+    if (resumeDraftRaw) {
+      const parsed = JSON.parse(resumeDraftRaw);
+      if (parsed && typeof parsed === 'object') resumeDraft = parsed;
+    }
+
+    if (!draftULID && resumeDraft) draftULID = String(resumeDraft.draftULID || '').trim();
+    if (!draftSessionId && resumeDraft) draftSessionId = String(resumeDraft.draftSessionId || '').trim();
+
     sessionStorage.removeItem('navigen.resumePublishSetupAfterCheckoutCancel');
     sessionStorage.removeItem('navigen.resumeSybAfterCampaignCancel');
     sessionStorage.removeItem('navigen.resumeSybDraftULID');
     sessionStorage.removeItem('navigen.resumeSybDraftSessionId');
+    sessionStorage.removeItem('navigen.publishSetupResumeDraft');
   } catch {}
 
   if (!shouldResume) return;
@@ -3961,15 +3972,22 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
     await ensureReturnFlowTranslations();
     showToast(returnFlowText('campaign.payment.cancelSavedDraft', 'Payment canceled. Your profile draft is still saved.'), 2600);
 
-    let pending = null;
+    let pending = (resumeDraft && typeof resumeDraft === 'object') ? resumeDraft : null;
 
     try {
       const drafts = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDrafts') || '[]');
       if (Array.isArray(drafts)) {
-        pending = drafts.find((draft) =>
+        const matchedDraft = drafts.find((draft) =>
           String(draft?.draftULID || '').trim() === draftULID &&
           String(draft?.draftSessionId || '').trim() === draftSessionId
         ) || null;
+
+        if (matchedDraft) {
+          pending = {
+            ...(matchedDraft && typeof matchedDraft === 'object' ? matchedDraft : {}),
+            ...(pending && typeof pending === 'object' ? pending : {})
+          };
+        }
       }
     } catch {}
 
@@ -3982,7 +4000,10 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
           String(legacy?.draftULID || '').trim() === draftULID &&
           String(legacy?.draftSessionId || '').trim() === draftSessionId
         ) {
-          pending = legacy;
+          pending = {
+            ...(legacy && typeof legacy === 'object' ? legacy : {}),
+            ...(pending && typeof pending === 'object' ? pending : {})
+          };
         }
       }
     } catch {}
@@ -3996,19 +4017,17 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
       return;
     }
 
-    let guest = true;
-    try {
-      const rr = await fetch('/api/owner/campaigns', {
-        cache: 'no-store',
-        credentials: 'include'
-      });
-      guest = !rr.ok;
-    } catch {
-      guest = true;
-    }
-
-    const hydrated = await hydrateLocationDraftForCompletion(pending).catch(() => null);
-    const nextDraft = (hydrated?.draft && typeof hydrated.draft === 'object') ? hydrated.draft : pending;
+    const guest = true;
+    const shouldHydrate = !(resumeDraft && typeof resumeDraft === 'object');
+    const hydrated = shouldHydrate ? await hydrateLocationDraftForCompletion(pending).catch(() => null) : null;
+    const hydratedDraft = (hydrated?.draft && typeof hydrated.draft === 'object') ? hydrated.draft : null;
+    const nextDraft = {
+      ...(hydratedDraft || {}),
+      ...(pending && typeof pending === 'object' ? pending : {}),
+      ...(resumeDraft && typeof resumeDraft === 'object' ? resumeDraft : {}),
+      draftULID: String(hydratedDraft?.draftULID || pending?.draftULID || resumeDraft?.draftULID || draftULID || '').trim(),
+      draftSessionId: String(hydratedDraft?.draftSessionId || pending?.draftSessionId || resumeDraft?.draftSessionId || draftSessionId || '').trim()
+    };
 
     await showCampaignManagementModal(String(nextDraft.draftULID || draftULID).trim(), {
       guest,

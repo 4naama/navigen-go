@@ -11217,7 +11217,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
       : ((typeof t === 'function' && t('campaign.ui.title')) || 'Campaign management');
   }
   syncModalHeaderHelp(modal);
-  const draft = (opts && opts.preferEmptyDraft === true) ? (prefillFrom || null) : (listJ?.draft || prefillFrom || null);  
+  const draft = (opts && opts.preferEmptyDraft === true) ? (p8Draft || prefillFrom || null) : (listJ?.draft || p8Draft || prefillFrom || null);  
   const historyArr = Array.isArray(listJ?.history) ? listJ.history : [];
   const ulid = String(listJ?.ulid || '').trim(); // empty in guest mode; that's OK
   const eligibleLocations = Array.isArray(listJ?.eligibleLocations) ? listJ.eligibleLocations : [];
@@ -12879,12 +12879,16 @@ function campaignPlanModeRequiresPromoQr(planMode) {
         }
 
         if (p8Draft && p8Draft.draftULID && p8Draft.draftSessionId) {
-          const existingDraft = findPendingLocationDraftMatch(p8Draft) || readPendingLocationDraft() || p8Draft;
-          savePendingLocationDraft({
+          const draftULID = String(p8Draft.draftULID || '').trim();
+          const draftSessionId = String(p8Draft.draftSessionId || '').trim();
+          const existingDraft = findPendingLocationDraftMatch(p8Draft) || readPendingLocationDraft() || {};
+
+          const checkoutResumeDraft = {
             ...(existingDraft && typeof existingDraft === 'object' ? existingDraft : {}),
             ...(p8Draft && typeof p8Draft === 'object' ? p8Draft : {}),
-            draftULID: String(p8Draft.draftULID || '').trim(),
-            draftSessionId: String(p8Draft.draftSessionId || '').trim(),
+            ...d,
+            draftULID,
+            draftSessionId,
             planCode: selectedPlanCode,
             planMode: d.planMode,
             campaignPreset: legacyCampaignPresetFromPlanMode(d.planMode),
@@ -12892,9 +12896,18 @@ function campaignPlanModeRequiresPromoQr(planMode) {
             selectedLocationULIDs: Array.isArray(d.selectedLocationULIDs) ? d.selectedLocationULIDs : [],
             campaignDraft: requiresPromoQr ? d : ((existingDraft && typeof existingDraft === 'object') ? existingDraft.campaignDraft : null),
             updatedAt: Date.now()
-          });
+          };
+
+          savePendingLocationDraft(checkoutResumeDraft);
+
+          try {
+            sessionStorage.setItem('navigen.resumePublishSetupAfterCheckoutCancel', '1');
+            sessionStorage.setItem('navigen.resumeSybDraftULID', draftULID);
+            sessionStorage.setItem('navigen.resumeSybDraftSessionId', draftSessionId);
+            sessionStorage.setItem('navigen.publishSetupResumeDraft', JSON.stringify(checkoutResumeDraft));
+          } catch {}
         }
-        
+
         location.href = String(chkJ.url);
       } finally {
         btnCheckout.classList.remove('is-busy');
