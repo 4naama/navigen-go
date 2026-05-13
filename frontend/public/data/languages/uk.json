@@ -1832,5 +1832,22 @@
   "owner.edit.field.navigationPin": "Публічна навігаційна точка",
   "owner.edit.field.navigationPin.help": "Використовується для маршрутів LPM і відображення на карті. Це не змінює публічний URL або ідентичність локації.",
   "owner.edit.navigationPin.invalid": "Використовуйте дійсну пару широти та довготи.",
-  "owner.edit.navigationPin.kept": "Ми зберегли останню дійсну позицію на карті. Ви зможете змінити публічну навігаційну точку після публікації."
+  "owner.edit.navigationPin.kept": "Ми зберегли останню дійсну позицію на карті. Ви зможете змінити публічну навігаційну точку після публікації.",
+  "modal.requestListing.discovery.comboHelp": "Виберіть до 3 способів, якими клієнти можуть шукати цей бізнес.",
+  "modal.requestListing.discovery.combo1.group": "Комбо-група 1",
+  "modal.requestListing.discovery.combo1.subgroup": "Комбо-підгрупа 1",
+  "modal.requestListing.discovery.combo2.group": "Комбо-група 2",
+  "modal.requestListing.discovery.combo2.subgroup": "Комбо-підгрупа 2",
+  "modal.requestListing.discovery.combo3.group": "Комбо-група 3",
+  "modal.requestListing.discovery.combo3.subgroup": "Комбо-підгрупа 3",
+  "modal.requestListing.contexts.generated.empty": "Згенеровано з країни, міста та вибору SEO і видимості.",
+  "modal.requestListing.contexts.generated.selected": "Вибрано згенеровані маршрути відкриття. Натисніть, щоб переглянути або видалити.",
+  "modal.requestListing.contexts.generated.title": "Згенеровані маршрути відкриття",
+  "modal.requestListing.contexts.generated.help": "Маршрути генеруються з Інформації про бізнес та вибору SEO і видимості. Зніміть позначку з маршрутів, які не підходять.",
+  "modal.requestListing.contexts.generated.selectedHelp": "Натисніть на вибраний маршрут, щоб видалити його.",
+  "modal.requestListing.contexts.generated.noneSelected": "Виберіть принаймні один маршрут.",
+  "modal.requestListing.contexts.generated.none.title": "Поки що немає згенерованих маршрутів",
+  "modal.requestListing.contexts.generated.none.desc": "Спочатку заповніть Інформацію про бізнес і принаймні одну SEO-комбінацію.",
+  "modal.requestListing.contexts.scope.country": "Рівень країни",
+  "modal.requestListing.contexts.scope.city": "Рівень міста"
 }

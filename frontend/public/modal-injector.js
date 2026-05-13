@@ -6388,14 +6388,38 @@ export function createRequestListingModal(opts = {}) {
             <div class="modal-form-stack">
               <p class="modal-help-text request-discovery-help">${translatedOrFallback('modal.requestListing.discovery.help', 'Good choices improve NaviGen search, filters, category pages, and structured profile signals. Search-engine ranking is never guaranteed.')}</p>
 
+              <p class="modal-help-text">${translatedOrFallback('modal.requestListing.discovery.comboHelp', 'Choose up to 3 ways customers may look for this business.')}</p>
+
               <div class="modal-form-grid">
                 <div class="modal-field">
-                  <label for="rl-group">${t('modal.requestListing.group.label') || 'Group'} <span class="required-star">*</span></label>
+                  <label for="rl-group">${translatedOrFallback('modal.requestListing.discovery.combo1.group', 'Combo 1 group')} <span class="required-star">*</span></label>
                   <select id="rl-group" class="input"></select>
                 </div>
                 <div class="modal-field">
-                  <label for="rl-subgroup">${t('modal.requestListing.subgroup.label') || 'Subgroup'} <span class="required-star">*</span></label>
+                  <label for="rl-subgroup">${translatedOrFallback('modal.requestListing.discovery.combo1.subgroup', 'Combo 1 subgroup')} <span class="required-star">*</span></label>
                   <select id="rl-subgroup" class="input"></select>
+                </div>
+              </div>
+
+              <div class="modal-form-grid">
+                <div class="modal-field">
+                  <label for="rl-group-2">${translatedOrFallback('modal.requestListing.discovery.combo2.group', 'Combo 2 group')}</label>
+                  <select id="rl-group-2" class="input"></select>
+                </div>
+                <div class="modal-field">
+                  <label for="rl-subgroup-2">${translatedOrFallback('modal.requestListing.discovery.combo2.subgroup', 'Combo 2 subgroup')}</label>
+                  <select id="rl-subgroup-2" class="input"></select>
+                </div>
+              </div>
+
+              <div class="modal-form-grid">
+                <div class="modal-field">
+                  <label for="rl-group-3">${translatedOrFallback('modal.requestListing.discovery.combo3.group', 'Combo 3 group')}</label>
+                  <select id="rl-group-3" class="input"></select>
+                </div>
+                <div class="modal-field">
+                  <label for="rl-subgroup-3">${translatedOrFallback('modal.requestListing.discovery.combo3.subgroup', 'Combo 3 subgroup')}</label>
+                  <select id="rl-subgroup-3" class="input"></select>
                 </div>
               </div>
 
@@ -6586,6 +6610,15 @@ export function createRequestListingModal(opts = {}) {
   
   const rlGroup = modal.querySelector('#rl-group');
   const rlSubgroup = modal.querySelector('#rl-subgroup');
+  const rlGroup2 = modal.querySelector('#rl-group-2');
+  const rlSubgroup2 = modal.querySelector('#rl-subgroup-2');
+  const rlGroup3 = modal.querySelector('#rl-group-3');
+  const rlSubgroup3 = modal.querySelector('#rl-subgroup-3');
+  const rlDiscoveryPairs = [
+    { group: rlGroup, subgroup: rlSubgroup, index: 1 },
+    { group: rlGroup2, subgroup: rlSubgroup2, index: 2 },
+    { group: rlGroup3, subgroup: rlSubgroup3, index: 3 }
+  ];
   const rlContexts = modal.querySelector('#rl-contexts');
   const rlContextSummaryText = modal.querySelector('#rl-context-summary-text');
   const rlOpenContexts = modal.querySelector('#rl-open-contexts');
@@ -7142,11 +7175,13 @@ export function createRequestListingModal(opts = {}) {
 
   renderGoogleProviderRatingCard(rlGoogleProviderRatingCard, prefill || {});
 
-  const REQUEST_LISTING_CONTEXT_LIMIT = 3;
+  const REQUEST_LISTING_CONTEXT_LIMIT = 6;
+  const REQUEST_LISTING_CONTEXT_COMBO_LIMIT = 3;
   const REQUEST_LISTING_CONTEXT_RESULT_LIMIT = 5;
   const REQUEST_LISTING_TAG_LIMIT = 5;
   const selectedTagSet = new Set(prefillTags);
   const selectedContextSet = new Set();
+  const removedGeneratedContextSet = new Set();
   let requestListingContextRows = [];
   let requestListingContextLocationRows = [];
   let requestListingContextIndex = new Map();
@@ -7203,6 +7238,188 @@ export function createRequestListingModal(opts = {}) {
     return p8ContextLabel(requestListingContextIndex.get(cleanKey) || { key: cleanKey, titles: { en: cleanKey } });
   }
 
+  function requestListingSlugPart(value) {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .trim();
+  }
+
+  function requestListingSelectText(el) {
+    return String(el?.selectedOptions?.[0]?.textContent || '').trim();
+  }
+
+  function requestListingDiscoveryCombos() {
+    return rlDiscoveryPairs
+      .slice(0, REQUEST_LISTING_CONTEXT_COMBO_LIMIT)
+      .map((pair) => {
+        const groupKey = String(pair.group?.value || '').trim();
+        const subgroupKey = String(pair.subgroup?.value || '').trim();
+        return {
+          index: pair.index,
+          groupKey,
+          subgroupKey,
+          groupText: groupKey ? requestListingSelectText(pair.group) : '',
+          subgroupText: subgroupKey ? requestListingSelectText(pair.subgroup) : ''
+        };
+      });
+  }
+
+  function requestListingCompletedDiscoveryCombos() {
+    const seen = new Set();
+    return requestListingDiscoveryCombos()
+      .filter((combo) => combo.groupKey && combo.subgroupKey)
+      .filter((combo) => {
+        const id = `${combo.groupKey}\u0000${combo.subgroupKey}`;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+  }
+
+  function requestListingDiscoveryHasIncompleteOptionalCombo() {
+    return requestListingDiscoveryCombos()
+      .slice(1)
+      .some((combo) => (!!combo.groupKey && !combo.subgroupKey) || (!combo.groupKey && !!combo.subgroupKey));
+  }
+
+  function requestListingCurrentGeo() {
+    const countryCode = String(rlCountry?.value || '').trim().toUpperCase();
+    const countryName = isValidRequestListingCountryCode(countryCode) ? requestListingCountryName(countryCode) : '';
+    const city = String(rlCity?.value || '').trim();
+
+    return {
+      countryCode,
+      countryName,
+      countrySlug: requestListingSlugPart(countryName || countryCode),
+      countryCodeSlug: requestListingSlugPart(countryCode),
+      city,
+      citySlug: requestListingSlugPart(city)
+    };
+  }
+
+  function requestListingContextRowGeo(row) {
+    const parts = String(row?.key || '').split('/').map((part) => part.trim()).filter(Boolean);
+    return {
+      countryKey: String(parts[1] || '').trim(),
+      cityKey: String(parts[2] || '').trim()
+    };
+  }
+
+  function requestListingContextRowMatchesGeo(row, geo, scope) {
+    const rowGeo = requestListingContextRowGeo(row);
+    const countryMatches = !!rowGeo.countryKey && (
+      rowGeo.countryKey === geo.countrySlug ||
+      rowGeo.countryKey === geo.countryCodeSlug ||
+      rowGeo.countryKey === String(geo.countryCode || '').toLowerCase()
+    );
+
+    if (!countryMatches) return false;
+    if (scope === 'country') return !rowGeo.cityKey;
+    if (scope === 'city') return !!geo.citySlug && rowGeo.cityKey === geo.citySlug;
+    return false;
+  }
+
+  function requestListingContextComboScore(row, combo) {
+    const rowGroupKey = String(row?.groupKey || '').trim();
+    const rowSubgroupKey = String(row?.subgroupKey || '').trim();
+    let score = 0;
+
+    if (rowGroupKey && rowGroupKey === combo.groupKey) score += 100;
+    if (rowSubgroupKey && rowSubgroupKey === combo.subgroupKey) score += 180;
+
+    const hay = requestListingSlugPart([
+      row?.key,
+      row?.label,
+      row?.title,
+      row?.pageKey,
+      row?.namespace,
+      row?.theme,
+      rowGroupKey,
+      rowSubgroupKey,
+      p8ContextLabel(row)
+    ].join(' ')).replace(/-/g, ' ');
+
+    [
+      combo.groupText,
+      combo.subgroupText,
+      combo.groupKey.replace(/^group\./, ''),
+      combo.subgroupKey.replace(/^sub\./, '')
+    ].map(requestListingSlugPart).filter(Boolean).forEach((token) => {
+      if (hay.includes(token.replace(/-/g, ' '))) score += 20;
+    });
+
+    return score;
+  }
+
+  function requestListingGeneratedContextCards() {
+    const geo = requestListingCurrentGeo();
+    const combos = requestListingCompletedDiscoveryCombos();
+    const cards = [];
+    const seen = new Set();
+
+    combos.forEach((combo) => {
+      [
+        {
+          scope: 'country',
+          label: geo.countryName || geo.countryCode,
+          scopeText: translatedOrFallback('modal.requestListing.contexts.scope.country', 'Country-level')
+        },
+        {
+          scope: 'city',
+          label: [geo.countryName || geo.countryCode, geo.city].filter(Boolean).join(' · '),
+          scopeText: translatedOrFallback('modal.requestListing.contexts.scope.city', 'City-level')
+        }
+      ].forEach((scope) => {
+        if (!scope.label) return;
+        if (scope.scope === 'city' && !geo.citySlug) return;
+
+        const match = requestListingContextRows
+          .map((row) => ({
+            row,
+            score: requestListingContextRowMatchesGeo(row, geo, scope.scope)
+              ? requestListingContextComboScore(row, combo)
+              : 0
+          }))
+          .filter((entry) => entry.score > 0)
+          .sort((a, b) => b.score - a.score || getRequestListingContextLabel(a.row?.key).localeCompare(getRequestListingContextLabel(b.row?.key), undefined, { sensitivity: 'base' }))[0]?.row;
+
+        const key = String(match?.key || '').trim();
+        if (!key || seen.has(key)) return;
+
+        seen.add(key);
+        cards.push({
+          key,
+          label: getRequestListingContextLabel(key),
+          comboLabel: `${combo.groupText} / ${combo.subgroupText}`,
+          scopeLabel: scope.scopeText,
+          geoLabel: scope.label
+        });
+      });
+    });
+
+    return cards;
+  }
+
+  function syncGeneratedRequestListingContexts() {
+    const cards = requestListingGeneratedContextCards();
+    const generatedKeys = new Set(cards.map((card) => card.key));
+
+    Array.from(selectedContextSet).forEach((key) => {
+      if (!generatedKeys.has(key)) selectedContextSet.delete(key);
+    });
+
+    cards.forEach((card) => {
+      if (!removedGeneratedContextSet.has(card.key)) selectedContextSet.add(card.key);
+    });
+
+    syncRequestListingContexts();
+    return cards;
+  }
+  
   function setRequestListingContexts(values) {
     selectedContextSet.clear();
     (Array.isArray(values) ? values : []).forEach((value) => {
@@ -7299,8 +7516,8 @@ export function createRequestListingModal(opts = {}) {
   }
 
   function syncRequestListingContextAvailability() {
-    const readyText = t('modal.requestListing.contexts.summary.empty') || 'Required. Search and choose up to 3 contexts.';
-    const selectedText = t('modal.requestListing.contexts.summary.selected') || 'Tap to review or change your selected contexts.';
+    const readyText = translatedOrFallback('modal.requestListing.contexts.generated.empty', 'Generated from country, city, and SEO & discovery choices.');
+    const selectedText = translatedOrFallback('modal.requestListing.contexts.generated.selected', 'Generated routes selected. Tap to review or remove.');
     const contextSectionState = modal.querySelector('#rl-context-section-state');
     const contextSummaryText = modal.querySelector('#rl-context-summary-text');
     const stateText = selectedContextSet.size ? selectedText : readyText;
@@ -7311,9 +7528,7 @@ export function createRequestListingModal(opts = {}) {
       rlContextSection.classList.toggle('has-value', selectedContextSet.size > 0);
     }
 
-    if (contextSectionState) {
-      contextSectionState.textContent = stateText;
-    }
+    if (contextSectionState) contextSectionState.textContent = stateText;
 
     if (rlOpenContexts) {
       rlOpenContexts.disabled = false;
@@ -7321,9 +7536,7 @@ export function createRequestListingModal(opts = {}) {
       rlOpenContexts.title = '';
     }
 
-    if (contextSummaryText) {
-      contextSummaryText.textContent = stateText;
-    }
+    if (contextSummaryText) contextSummaryText.textContent = stateText;
   }
   
   rlContextSection?.querySelector('summary')?.addEventListener('click', () => {
@@ -7460,6 +7673,8 @@ export function createRequestListingModal(opts = {}) {
   });
 
   const syncRequestListingLocationDependentState = () => {
+    removedGeneratedContextSet.clear();
+    syncGeneratedRequestListingContexts();
     syncRequestListingRequiredChecks();
     syncRequestListingContextAvailability();
   };
@@ -7471,12 +7686,12 @@ export function createRequestListingModal(opts = {}) {
   syncRequestListingLocationDependentState();
 
   function openRequestListingContextsModal() {
-    syncRequestListingContextAvailability();    
-    
     if (!requestListingContextRows.length) {
       showToast(t('modal.requestListing.contexts.unavailable') || 'Context options are still loading.', 2200);
       return;
     }
+
+    syncGeneratedRequestListingContexts();
 
     document.getElementById(contextModalId)?.remove();
 
@@ -7502,8 +7717,8 @@ export function createRequestListingModal(opts = {}) {
           <div id="request-context-selected-card" class="modal-menu-item modal-static-card request-context-selected-card">
             <div class="request-context-selected-head">
               <span class="label">
-                <strong>${t('modal.requestListing.contexts.selected.title') || 'Selected contexts'}</strong>
-                <small id="request-context-selected-help">${t('modal.requestListing.contexts.selected.empty') || 'Choose up to 3.'}</small>
+                <strong>${translatedOrFallback('modal.requestListing.contexts.generated.title', 'Generated discovery routes')}</strong>
+                <small id="request-context-selected-help">${translatedOrFallback('modal.requestListing.contexts.generated.help', 'Routes are generated from Business Information and SEO & discovery. Uncheck any route that does not fit.')}</small>
               </span>
               <button
                 id="request-context-done"
@@ -7523,186 +7738,17 @@ export function createRequestListingModal(opts = {}) {
       `
     });
 
-    const ctxTopBar = ctxModal.querySelector('.modal-top-bar');
     const ctxSelectedCard = ctxModal.querySelector('#request-context-selected-card');
     const ctxSelectedHelp = ctxModal.querySelector('#request-context-selected-help');
     const ctxSelectedChips = ctxModal.querySelector('#request-context-selected-chips');
     const ctxDoneBtn = ctxModal.querySelector('#request-context-done');
     const ctxResults = ctxModal.querySelector('#request-context-results');
 
-    if (!ctxTopBar || !ctxResults) {
-      closeContextPicker();
-      return;
-    }
-
-    const searchRow = document.createElement('div');
-    searchRow.className = 'select-location-search-row';
-
-    const searchLeft = document.createElement('div');
-    searchLeft.className = 'select-location-search-left';
-
-    const searchInput = document.createElement('input');
-    searchInput.type = 'search';
-    searchInput.id = 'request-context-search';
-    searchInput.spellcheck = false;
-    searchInput.autocapitalize = 'off';
-    searchInput.autocomplete = 'off';
-    searchInput.value = '';
-    const contextPlaceholder = (t('modal.requestListing.contexts.search.placeholder') || 'Search contexts…').trim();
-    searchInput.placeholder = contextPlaceholder.startsWith('🔍') ? contextPlaceholder : `🔍 ${contextPlaceholder}`;
-
-    const clearBtn = document.createElement('button');
-    clearBtn.type = 'button';
-    clearBtn.className = 'clear-x';
-    clearBtn.id = 'request-context-clear-search';
-    clearBtn.textContent = 'x';
-    clearBtn.style.display = 'none';
-    clearBtn.setAttribute('aria-label', t('common.search.clear') || 'Clear search');
-
-    searchLeft.appendChild(searchInput);
-    searchLeft.appendChild(clearBtn);
-    searchRow.appendChild(searchLeft);
-    ctxTopBar.appendChild(searchRow);
-
-    const locationRow = document.createElement('div');
-    locationRow.style.width = '100%';
-    locationRow.style.display = 'block';
-    locationRow.style.flex = '1 1 100%';
-    locationRow.className = 'select-location-search-row';
-
-    const locationLeft = document.createElement('div');
-    locationLeft.style.width = '100%';
-    locationLeft.className = 'select-location-search-left';
-
-    const locationInput = document.createElement('input');
-    locationInput.type = 'search';
-    locationInput.id = 'request-context-location-search';
-    locationInput.spellcheck = false;
-    locationInput.autocapitalize = 'off';
-    locationInput.autocomplete = 'off';
-    locationInput.setAttribute('list', 'request-context-location-options');
-
-    const initialContextCountry = String(rlCountry?.value || '').trim().toUpperCase();
-    const initialContextCountryLabel = isValidRequestListingCountryCode(initialContextCountry) ? requestListingCountryName(initialContextCountry) : '';
-    const initialContextCity = String(rlCity?.value || '').trim();
-    locationInput.value = [initialContextCountryLabel || initialContextCountry, initialContextCity].filter(Boolean).join(' · ');
-
-    const locationPlaceholder = (t('modal.requestListing.contexts.location.placeholder') || 'Country / city').trim();
-    locationInput.placeholder = locationPlaceholder.startsWith('🔍') ? locationPlaceholder : `🔍 ${locationPlaceholder}`;
-    
-    const locationClearBtn = document.createElement('button');
-    locationClearBtn.type = 'button';
-    locationClearBtn.className = 'clear-x';
-    locationClearBtn.id = 'request-context-location-clear-search';
-    locationClearBtn.textContent = 'x';
-    locationClearBtn.style.display = 'none';
-    locationClearBtn.setAttribute('aria-label', t('common.search.clear') || 'Clear search');
-
-    const locationOptions = document.createElement('datalist');
-    locationOptions.id = 'request-context-location-options';
-    locationOptions.innerHTML = '';
-
-    locationLeft.appendChild(locationInput);
-    locationLeft.appendChild(locationClearBtn);
-    locationRow.appendChild(locationLeft);
-    ctxTopBar.appendChild(locationRow);
-    ctxTopBar.appendChild(locationOptions);
-    
-    const searchHelp = document.createElement('small');
-    searchHelp.className = 'modal-help-text request-context-search-help';
-    searchHelp.textContent = t('modal.requestListing.contexts.selected.empty') || 'Choose up to 3.';
-    ctxTopBar.appendChild(searchHelp);
-
-    const norm = (s) =>
-      String(s || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[-_.\/]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-    const tokensOf = (q) => norm(q).split(/\s+/).filter(Boolean);
-    
-    const renderLocationOptions = () => {
-      locationOptions.innerHTML = '';
-
-      REQUEST_LISTING_COUNTRY_CODES.forEach((code) => {
-        const option = document.createElement('option');
-        const name = requestListingCountryName(code);
-        option.value = name ? `${name} · ${code}` : code;
-        option.label = code;
-        locationOptions.appendChild(option);
-      });
-    };     
-
-    renderLocationOptions();    
-
-    const syncClear = () => {
-      const hasValue = !!String(searchInput.value || '').trim();
-      clearBtn.style.display = hasValue ? 'inline-flex' : 'none';
-    };
-
-    const searchableContextText = (row) => norm([
-      row?.key,
-      row?.pageKey,
-      row?.namespace,
-      row?.theme,
-      p8ContextLabel(row),
-      ...Object.values((row && typeof row.titles === 'object') ? row.titles : {})
-    ].join(' '));
-    
-    const searchableContextLocationText = (row) => {
-      const parts = String(row?.key || '').split('/').map((part) => part.trim()).filter(Boolean);
-      const countryKey = parts[1] || '';
-      const cityKey = parts[2] || '';
-      const location = requestListingContextLocationRows.find((item) => {
-        const itemKey = String(item?.key || '').trim();
-        return itemKey && (itemKey === countryKey || itemKey === `${countryKey}/${cityKey}`);
-      });
-
-      return norm([
-        countryKey,
-        cityKey,
-        location?.label,
-        location?.countryLabel,
-        location?.cityLabel
-      ].join(' '));
-    };
-
-    const requestListingContextSeedTokens = () => tokensOf([
-      String(rlSubgroup?.selectedOptions?.[0]?.textContent || '').trim(),
-      String(rlGroup?.selectedOptions?.[0]?.textContent || '').trim(),
-      ...Array.from(selectedTagSet).map((tag) => String(tag || '').trim()),
-      String(rlCity?.value || '').trim()
-    ].join(' '));
-
-    const requestListingContextSeedScore = (row, tokens) => {
-      if (!tokens.length) return 0;
-      const hay = searchableContextText(row);
-      return tokens.reduce((score, token) => score + (hay.includes(token) ? Math.max(10 - Math.min(token.length, 9), 1) : 0), 0);
-    };
-
-    const sortContextRows = (rows, boostTokens = []) => rows.slice().sort((a, b) => {
-      const aKey = String(a?.key || '').trim();
-      const bKey = String(b?.key || '').trim();
-      const aSelected = selectedContextSet.has(aKey) ? 1 : 0;
-      const bSelected = selectedContextSet.has(bKey) ? 1 : 0;
-      if (aSelected !== bSelected) return bSelected - aSelected;
-
-      const aBoost = requestListingContextSeedScore(a, boostTokens);
-      const bBoost = requestListingContextSeedScore(b, boostTokens);
-      if (aBoost !== bBoost) return bBoost - aBoost;
-
-      return getRequestListingContextLabel(aKey).localeCompare(getRequestListingContextLabel(bKey), undefined, { sensitivity: 'base' });
-    });
-    
-    // Country/city clear visibility is updated from the location input handler.
-
     const renderContextPicker = () => {
+      const cards = requestListingGeneratedContextCards();
       const selectedKeys = Array.from(selectedContextSet);
+
       ctxDoneBtn?.classList.toggle('is-active', selectedKeys.length > 0);
-      ctxSelectedCard?.classList.toggle('hidden', !selectedKeys.length);
 
       if (ctxSelectedCard && ctxSelectedChips) {
         ctxSelectedChips.innerHTML = '';
@@ -7710,8 +7756,8 @@ export function createRequestListingModal(opts = {}) {
 
         if (ctxSelectedHelp) {
           ctxSelectedHelp.textContent = selectedKeys.length
-            ? (t('modal.requestListing.contexts.selected.help') || 'Tap a selected chip to remove it.')
-            : (t('modal.requestListing.contexts.selected.empty') || 'Choose up to 3.');
+            ? (translatedOrFallback('modal.requestListing.contexts.generated.selectedHelp', 'Tap a selected route to remove it.'))
+            : (translatedOrFallback('modal.requestListing.contexts.generated.noneSelected', 'Select at least one route.'));
         }
 
         selectedKeys.forEach((key) => {
@@ -7721,6 +7767,7 @@ export function createRequestListingModal(opts = {}) {
           chip.textContent = getRequestListingContextLabel(key);
           chip.addEventListener('click', () => {
             selectedContextSet.delete(key);
+            removedGeneratedContextSet.add(key);
             syncRequestListingContexts();
             renderContextPicker();
           });
@@ -7728,35 +7775,24 @@ export function createRequestListingModal(opts = {}) {
         });
       }
 
-      const tokens = tokensOf(searchInput.value);
-      const rows = tokens.length
-        ? sortContextRows(requestListingContextRows.filter((row) => {
-            const hay = searchableContextText(row);
-            return tokens.every((token) => hay.includes(token));
-          }), [])
-        : [];
-      const visibleRows = rows.slice(0, REQUEST_LISTING_CONTEXT_RESULT_LIMIT);
-
+      if (!ctxResults) return;
       ctxResults.innerHTML = '';
-      if (!visibleRows.length) {
+
+      if (!cards.length) {
         const empty = document.createElement('div');
         empty.className = 'modal-menu-item modal-static-card request-context-empty';
-        const hasAnySearch = tokens.length > 0;
         empty.innerHTML = `
           <span class="label">
-            <strong>${hasAnySearch ? (t('modal.requestListing.contexts.empty.title') || 'No matching contexts') : (t('modal.requestListing.contexts.search.title') || 'Search where this business belongs')}</strong>
-            <small>${hasAnySearch ? (t('modal.requestListing.contexts.empty.desc') || 'Try another search term.') : (t('modal.requestListing.contexts.search.desc') || 'Contexts are ready-made category and location paths, for example Restaurants · Germany · Berlin.')}</small>
+            <strong>${translatedOrFallback('modal.requestListing.contexts.generated.none.title', 'No generated routes yet')}</strong>
+            <small>${translatedOrFallback('modal.requestListing.contexts.generated.none.desc', 'Complete Business Information and at least one SEO & discovery combo first.')}</small>
           </span>
         `;
         ctxResults.appendChild(empty);
         return;
       }
 
-      visibleRows.forEach((row) => {
-        const key = String(row?.key || '').trim();
-        if (!key) return;
-
-        const isSelected = selectedContextSet.has(key);
+      cards.forEach((card) => {
+        const isSelected = selectedContextSet.has(card.key);
         const button = document.createElement('button');
         button.type = 'button';
         button.className = `modal-menu-item request-context-option${isSelected ? ' is-selected' : ''}`;
@@ -7765,10 +7801,10 @@ export function createRequestListingModal(opts = {}) {
         labelWrap.className = 'label';
 
         const title = document.createElement('strong');
-        title.textContent = getRequestListingContextLabel(key);
+        title.textContent = card.label;
 
         const meta = document.createElement('small');
-        meta.textContent = key;
+        meta.textContent = `${card.scopeLabel} · ${card.geoLabel} · ${card.comboLabel}`;
 
         labelWrap.appendChild(title);
         labelWrap.appendChild(meta);
@@ -7782,14 +7818,12 @@ export function createRequestListingModal(opts = {}) {
         button.appendChild(check);
 
         button.addEventListener('click', () => {
-          if (selectedContextSet.has(key)) {
-            selectedContextSet.delete(key);
+          if (selectedContextSet.has(card.key)) {
+            selectedContextSet.delete(card.key);
+            removedGeneratedContextSet.add(card.key);
           } else {
-            if (selectedContextSet.size >= REQUEST_LISTING_CONTEXT_LIMIT) {
-              showToast(t('modal.requestListing.contexts.limit') || 'You can select up to 3 contexts.', 2200);
-              return;
-            }
-            selectedContextSet.add(key);
+            selectedContextSet.add(card.key);
+            removedGeneratedContextSet.delete(card.key);
           }
 
           syncRequestListingContexts();
@@ -7800,40 +7834,14 @@ export function createRequestListingModal(opts = {}) {
       });
     };
 
-    searchInput.addEventListener('input', () => {
-      syncClear();
-      renderContextPicker();
-    });
-
-    locationInput.addEventListener('input', () => {
-      locationClearBtn.style.display = String(locationInput.value || '').trim() ? 'inline-flex' : 'none';
-      renderLocationOptions();
-    });
-
-    locationClearBtn.addEventListener('click', () => {
-      locationInput.value = '';
-      locationClearBtn.style.display = 'none';
-      renderLocationOptions();
-      locationInput.focus();
-    });
-    
-    clearBtn.addEventListener('click', () => {
-      searchInput.value = '';
-      syncClear();
-      renderContextPicker();
-      searchInput.focus();
-    });
-
     ctxDoneBtn?.addEventListener('click', (ev) => {
       closeContextPicker(ev);
     });
 
-    syncClear();
     renderContextPicker();
 
     hideModal(id);
     showModal(contextModalId);
-    searchInput.focus();
     setupTapOutClose(contextModalId, closeContextPicker);
   }
 
@@ -7861,7 +7869,13 @@ export function createRequestListingModal(opts = {}) {
       return;
     }
 
-    if (rlGroup) {
+    const prefillCombos = Array.isArray(prefill?.classificationCombos)
+      ? prefill.classificationCombos
+      : [{ groupKey: prefill?.groupKey, subgroupKey: prefill?.subgroupKey }];
+
+    const renderGroupsForPair = (pair, selectedGroupKey = '') => {
+      if (!pair?.group) return;
+
       const options = [`<option value="">${t('modal.requestListing.group.placeholder') || 'Select group'}</option>`]
         .concat(
           structureRows.map((row) => {
@@ -7871,9 +7885,15 @@ export function createRequestListingModal(opts = {}) {
           }).filter(Boolean)
         )
         .join('');
-      rlGroup.innerHTML = options;
-      if (prefill?.groupKey) rlGroup.value = String(prefill.groupKey || '').trim();
-    }
+
+      pair.group.innerHTML = options;
+      if (selectedGroupKey) pair.group.value = selectedGroupKey;
+    };
+
+    rlDiscoveryPairs.forEach((pair) => {
+      const prefillCombo = prefillCombos[pair.index - 1] || {};
+      renderGroupsForPair(pair, String(prefillCombo?.groupKey || '').trim());
+    });
 
     const updateRequestListingTagsModalState = (tagsModal) => {
       if (!tagsModal) return;
@@ -8006,11 +8026,13 @@ export function createRequestListingModal(opts = {}) {
       showModal(tagsModalId);
     };
 
-    const renderSubgroups = () => {
-      if (!rlSubgroup) return;
-      const groupKey = String(rlGroup?.value || prefill?.groupKey || '').trim();
+    const renderSubgroupsForPair = (pair, selectedSubgroupKey = '') => {
+      if (!pair?.subgroup) return;
+
+      const groupKey = String(pair.group?.value || '').trim();
       const subs = p8SubgroupsForGroup(structureRows, groupKey);
-      rlSubgroup.innerHTML = [`<option value="">${t('modal.requestListing.subgroup.placeholder') || 'Select subgroup'}</option>`]
+
+      pair.subgroup.innerHTML = [`<option value="">${t('modal.requestListing.subgroup.placeholder') || 'Select subgroup'}</option>`]
         .concat(
           subs.map((sg) => {
             const key = String(sg?.key || '').trim();
@@ -8019,23 +8041,41 @@ export function createRequestListingModal(opts = {}) {
           }).filter(Boolean)
         )
         .join('');
-      if (prefill?.subgroupKey) rlSubgroup.value = String(prefill.subgroupKey || '').trim();
+
+      if (selectedSubgroupKey) pair.subgroup.value = selectedSubgroupKey;
+    };
+
+    const renderSubgroups = () => {
+      rlDiscoveryPairs.forEach((pair) => {
+        const prefillCombo = prefillCombos[pair.index - 1] || {};
+        renderSubgroupsForPair(pair, String(prefillCombo?.subgroupKey || '').trim());
+      });
+
       renderTagSuggestions();
-      renderRequestListingContextSuggestions();
+      syncGeneratedRequestListingContexts();
+      syncRequestListingContextAvailability();
     };
 
     renderSubgroups();
 
-    rlGroup?.addEventListener('change', () => {
-      if (rlSubgroup) rlSubgroup.value = '';
-      renderSubgroups();
-      syncRequestListingRequiredChecks();
-    });
+    rlDiscoveryPairs.forEach((pair) => {
+      pair.group?.addEventListener('change', () => {
+        if (pair.subgroup) pair.subgroup.value = '';
+        removedGeneratedContextSet.clear();
+        renderSubgroupsForPair(pair);
+        renderTagSuggestions();
+        syncGeneratedRequestListingContexts();
+        syncRequestListingRequiredChecks();
+        syncRequestListingContextAvailability();
+      });
 
-    rlSubgroup?.addEventListener('change', () => {
-      renderTagSuggestions();
-      renderRequestListingContextSuggestions();
-      syncRequestListingRequiredChecks();
+      pair.subgroup?.addEventListener('change', () => {
+        removedGeneratedContextSet.clear();
+        renderTagSuggestions();
+        syncGeneratedRequestListingContexts();
+        syncRequestListingRequiredChecks();
+        syncRequestListingContextAvailability();
+      });
     });
 
     rlOpenTags?.addEventListener('click', () => {
@@ -8048,6 +8088,7 @@ export function createRequestListingModal(opts = {}) {
       requestListingContextRows.map((row) => [String(row?.key || '').trim(), row])
     );
     setRequestListingContexts(Array.from(selectedContextSet).filter((key) => requestListingContextIndex.has(key)));
+    syncGeneratedRequestListingContexts();
 
     if (rlContexts) {
       rlContexts.innerHTML = requestListingContextRows.map((row) => {
@@ -8078,8 +8119,13 @@ export function createRequestListingModal(opts = {}) {
     const instagram = String(modal.querySelector('#rl-instagram')?.value || '').trim();
     const booking = String(modal.querySelector('#rl-booking')?.value || '').trim();
     const description = String(modal.querySelector('#rl-description')?.value || '').trim();
-    const groupKey = String(modal.querySelector('#rl-group')?.value || '').trim();
-    const subgroupKey = String(modal.querySelector('#rl-subgroup')?.value || '').trim();
+    const discoveryCombos = requestListingCompletedDiscoveryCombos();
+    const primaryCombo = discoveryCombos[0] || {};
+    const groupKey = String(primaryCombo.groupKey || '').trim();
+    const subgroupKey = String(primaryCombo.subgroupKey || '').trim();
+
+    syncGeneratedRequestListingContexts();
+
     const contextVals = Array.from(selectedContextSet)
       .map((value) => String(value || '').trim())
       .filter((value) => value && requestListingContextIndex.has(value));
@@ -8098,13 +8144,19 @@ export function createRequestListingModal(opts = {}) {
     setInputErrorState(rlAddress, !address);
     setInputErrorState(rlCity, !city);
     setInputErrorState(rlCountry, !isValidRequestListingCountryCode(country));
-    setInputErrorState(rlGroup, !groupKey);
-    setInputErrorState(rlSubgroup, !subgroupKey);
+    rlDiscoveryPairs.forEach((pair) => {
+      const groupVal = String(pair.group?.value || '').trim();
+      const subgroupVal = String(pair.subgroup?.value || '').trim();
+      const primary = pair.index === 1;
+
+      setInputErrorState(pair.group, primary ? !groupVal : (!!subgroupVal && !groupVal));
+      setInputErrorState(pair.subgroup, primary ? !subgroupVal : (!!groupVal && !subgroupVal));
+    });
     setRequestListingContextError(!contextVals.length);
     setInputErrorState(rlCoord, wantsCoord && !coord);
 
     const hasBusinessError = !name || !address || !city || !isValidRequestListingCountryCode(country);
-    const hasDiscoveryError = !groupKey || !subgroupKey;
+    const hasDiscoveryError = !groupKey || !subgroupKey || requestListingDiscoveryHasIncompleteOptionalCombo();
     const hasContextError = !contextVals.length;
     const hasCoordError = wantsCoord && !coord;
 
@@ -8178,6 +8230,7 @@ export function createRequestListingModal(opts = {}) {
         locationName: { en: name },
         groupKey,
         subgroupKey,
+        classificationCombos: discoveryCombos,
         context: contextVals,
         tags: tagVals,
         contactInformation: {
@@ -8248,6 +8301,7 @@ export function createRequestListingModal(opts = {}) {
       coord: coordNorm,
       groupKey,
       subgroupKey,
+      classificationCombos: discoveryCombos,
       contexts: contextVals,
       context: contextVals.join(';'),
       tags: tagVals,
@@ -8436,7 +8490,7 @@ function getModalHeaderHelpSpec(target) {
       title: translatedOrFallback('modal.requestListing.contexts.modal.title', 'Available contexts'),
       bodyLines: [
         translatedOrFallback('modal.requestListing.contexts.help.line1', 'Choose the published category/location paths where this business should appear.'),
-        translatedOrFallback('modal.requestListing.contexts.help.line2', 'You can select up to 3 contexts. A context is a ready-made path such as Restaurants · Germany · Berlin.'),
+        translatedOrFallback('modal.requestListing.contexts.help.line2', 'NaviGen generates discovery routes from country, city, and up to 3 SEO & discovery combos. You can uncheck routes that do not fit.'),
         translatedOrFallback('modal.requestListing.contexts.help.line3', 'Use the green check to return to Request Listing.')
       ]
     };

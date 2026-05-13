@@ -1832,5 +1832,22 @@
   "owner.edit.field.navigationPin": "Pin di navigazione pubblico",
   "owner.edit.field.navigationPin.help": "Utilizzato per indicazioni LPM e visualizzazione sulla mappa. Non modifica l’URL pubblico né l’identità della posizione.",
   "owner.edit.navigationPin.invalid": "Usa una coppia valida di latitudine e longitudine.",
-  "owner.edit.navigationPin.kept": "Abbiamo mantenuto l’ultima posizione valida sulla mappa. Puoi modificare il pin di navigazione pubblico dopo la pubblicazione."
+  "owner.edit.navigationPin.kept": "Abbiamo mantenuto l’ultima posizione valida sulla mappa. Puoi modificare il pin di navigazione pubblico dopo la pubblicazione.",
+  "modal.requestListing.discovery.comboHelp": "Scegli fino a 3 modi in cui i clienti potrebbero cercare questa attività.",
+  "modal.requestListing.discovery.combo1.group": "Gruppo combo 1",
+  "modal.requestListing.discovery.combo1.subgroup": "Sottogruppo combo 1",
+  "modal.requestListing.discovery.combo2.group": "Gruppo combo 2",
+  "modal.requestListing.discovery.combo2.subgroup": "Sottogruppo combo 2",
+  "modal.requestListing.discovery.combo3.group": "Gruppo combo 3",
+  "modal.requestListing.discovery.combo3.subgroup": "Sottogruppo combo 3",
+  "modal.requestListing.contexts.generated.empty": "Generato da paese, città e scelte SEO e scoperta.",
+  "modal.requestListing.contexts.generated.selected": "Percorsi di scoperta generati selezionati. Tocca per controllare o rimuovere.",
+  "modal.requestListing.contexts.generated.title": "Percorsi di scoperta generati",
+  "modal.requestListing.contexts.generated.help": "I percorsi vengono generati dalle Informazioni aziendali e dalle scelte SEO e scoperta. Deseleziona qualsiasi percorso non adatto.",
+  "modal.requestListing.contexts.generated.selectedHelp": "Tocca un percorso selezionato per rimuoverlo.",
+  "modal.requestListing.contexts.generated.noneSelected": "Seleziona almeno un percorso.",
+  "modal.requestListing.contexts.generated.none.title": "Nessun percorso generato al momento",
+  "modal.requestListing.contexts.generated.none.desc": "Completa prima le Informazioni aziendali e almeno una combinazione SEO e scoperta.",
+  "modal.requestListing.contexts.scope.country": "Livello paese",
+  "modal.requestListing.contexts.scope.city": "Livello città"
 }

@@ -1832,5 +1832,22 @@
   "owner.edit.field.navigationPin": "Nyilvános navigációs pont",
   "owner.edit.field.navigationPin.help": "LPM útvonalakhoz és térképes megjelenítéshez használatos. Nem változtatja meg a nyilvános URL-t vagy a helyazonosságot.",
   "owner.edit.navigationPin.invalid": "Használjon érvényes szélesség/hosszúság koordinátapárt.",
-  "owner.edit.navigationPin.kept": "Megtartottuk az utolsó érvényes térképpozíciót. A nyilvános navigációs pontot közzététel után módosíthatja."
+  "owner.edit.navigationPin.kept": "Megtartottuk az utolsó érvényes térképpozíciót. A nyilvános navigációs pontot közzététel után módosíthatja.",
+  "modal.requestListing.discovery.comboHelp": "Válasszon legfeljebb 3 módot, ahogyan az ügyfelek kereshetnek erre a vállalkozásra.",
+  "modal.requestListing.discovery.combo1.group": "1. kombinációs csoport",
+  "modal.requestListing.discovery.combo1.subgroup": "1. kombinációs alcsoport",
+  "modal.requestListing.discovery.combo2.group": "2. kombinációs csoport",
+  "modal.requestListing.discovery.combo2.subgroup": "2. kombinációs alcsoport",
+  "modal.requestListing.discovery.combo3.group": "3. kombinációs csoport",
+  "modal.requestListing.discovery.combo3.subgroup": "3. kombinációs alcsoport",
+  "modal.requestListing.contexts.generated.empty": "Az ország, város és a SEO és felfedezés választások alapján generálva.",
+  "modal.requestListing.contexts.generated.selected": "Kiválasztott generált felfedezési útvonalak. Érintse meg az ellenőrzéshez vagy eltávolításhoz.",
+  "modal.requestListing.contexts.generated.title": "Generált felfedezési útvonalak",
+  "modal.requestListing.contexts.generated.help": "Az útvonalak az üzleti információk és a SEO és felfedezés választások alapján készülnek. Távolítsa el a jelölést azokról az útvonalakról, amelyek nem illenek.",
+  "modal.requestListing.contexts.generated.selectedHelp": "Érintsen meg egy kiválasztott útvonalat az eltávolításhoz.",
+  "modal.requestListing.contexts.generated.noneSelected": "Válasszon legalább egy útvonalat.",
+  "modal.requestListing.contexts.generated.none.title": "Nincsenek még generált útvonalak",
+  "modal.requestListing.contexts.generated.none.desc": "Először töltse ki az üzleti információkat és legalább egy SEO és felfedezés kombinációt.",
+  "modal.requestListing.contexts.scope.country": "Országszint",
+  "modal.requestListing.contexts.scope.city": "Városszint"
 }

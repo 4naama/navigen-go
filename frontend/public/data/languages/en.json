@@ -1832,5 +1832,22 @@
   "owner.edit.field.navigationPin": "Public navigation pin",
   "owner.edit.field.navigationPin.help": "Used for LPM directions and map display. It does not change the public URL or location identity.",
   "owner.edit.navigationPin.invalid": "Use a valid latitude, longitude pair.",
-  "owner.edit.navigationPin.kept": "We kept the last valid map position. You can adjust the public navigation pin after publishing."
+  "owner.edit.navigationPin.kept": "We kept the last valid map position. You can adjust the public navigation pin after publishing.",
+  "modal.requestListing.discovery.comboHelp": "Choose up to 3 ways customers may look for this business.",
+  "modal.requestListing.discovery.combo1.group": "Combo 1 group",
+  "modal.requestListing.discovery.combo1.subgroup": "Combo 1 subgroup",
+  "modal.requestListing.discovery.combo2.group": "Combo 2 group",
+  "modal.requestListing.discovery.combo2.subgroup": "Combo 2 subgroup",
+  "modal.requestListing.discovery.combo3.group": "Combo 3 group",
+  "modal.requestListing.discovery.combo3.subgroup": "Combo 3 subgroup",
+  "modal.requestListing.contexts.generated.empty": "Generated from country, city, and SEO & discovery choices.",
+  "modal.requestListing.contexts.generated.selected": "Generated routes selected. Tap to review or remove.",
+  "modal.requestListing.contexts.generated.title": "Generated discovery routes",
+  "modal.requestListing.contexts.generated.help": "Routes are generated from Business Information and SEO & discovery. Uncheck any route that does not fit.",
+  "modal.requestListing.contexts.generated.selectedHelp": "Tap a selected route to remove it.",
+  "modal.requestListing.contexts.generated.noneSelected": "Select at least one route.",
+  "modal.requestListing.contexts.generated.none.title": "No generated routes yet",
+  "modal.requestListing.contexts.generated.none.desc": "Complete Business Information and at least one SEO & discovery combo first.",
+  "modal.requestListing.contexts.scope.country": "Country-level",
+  "modal.requestListing.contexts.scope.city": "City-level"
 }

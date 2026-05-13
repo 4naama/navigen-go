@@ -1832,5 +1832,22 @@
   "owner.edit.field.navigationPin": "Point de navigation public",
   "owner.edit.field.navigationPin.help": "Utilisé pour les directions LPM et l’affichage sur la carte. Cela ne modifie pas l’URL publique ni l’identité de l’emplacement.",
   "owner.edit.navigationPin.invalid": "Utilisez une paire latitude, longitude valide.",
-  "owner.edit.navigationPin.kept": "Nous avons conservé la dernière position valide sur la carte. Vous pourrez ajuster le point de navigation public après publication."
+  "owner.edit.navigationPin.kept": "Nous avons conservé la dernière position valide sur la carte. Vous pourrez ajuster le point de navigation public après publication.",
+  "modal.requestListing.discovery.comboHelp": "Choisissez jusqu’à 3 façons dont les clients pourraient rechercher cette entreprise.",
+  "modal.requestListing.discovery.combo1.group": "Combo groupe 1",
+  "modal.requestListing.discovery.combo1.subgroup": "Combo sous-groupe 1",
+  "modal.requestListing.discovery.combo2.group": "Combo groupe 2",
+  "modal.requestListing.discovery.combo2.subgroup": "Combo sous-groupe 2",
+  "modal.requestListing.discovery.combo3.group": "Combo groupe 3",
+  "modal.requestListing.discovery.combo3.subgroup": "Combo sous-groupe 3",
+  "modal.requestListing.contexts.generated.empty": "Généré à partir du pays, de la ville et des choix SEO & découverte.",
+  "modal.requestListing.contexts.generated.selected": "Routes de découverte générées sélectionnées. Touchez pour vérifier ou supprimer.",
+  "modal.requestListing.contexts.generated.title": "Routes de découverte générées",
+  "modal.requestListing.contexts.generated.help": "Les routes sont générées à partir des Informations de l’entreprise et des choix SEO & découverte. Décochez toute route qui ne convient pas.",
+  "modal.requestListing.contexts.generated.selectedHelp": "Touchez une route sélectionnée pour la supprimer.",
+  "modal.requestListing.contexts.generated.noneSelected": "Sélectionnez au moins une route.",
+  "modal.requestListing.contexts.generated.none.title": "Aucune route générée pour le moment",
+  "modal.requestListing.contexts.generated.none.desc": "Complétez les Informations de l’entreprise et au moins un combo SEO & découverte d’abord.",
+  "modal.requestListing.contexts.scope.country": "Niveau pays",
+  "modal.requestListing.contexts.scope.city": "Niveau ville"
 }

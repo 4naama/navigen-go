@@ -1832,5 +1832,22 @@
   "owner.edit.field.navigationPin": "נקודת ניווט ציבורית",
   "owner.edit.field.navigationPin.help": "משמש לניווט LPM ולהצגה במפה. זה לא משנה את כתובת ה-URL הציבורית או את זהות המיקום.",
   "owner.edit.navigationPin.invalid": "השתמשו בזוג קואורדינטות תקין של קו רוחב וקו אורך.",
-  "owner.edit.navigationPin.kept": "שמרנו את מיקום המפה התקין האחרון. תוכלו לעדכן את נקודת הניווט הציבורית לאחר הפרסום."
+  "owner.edit.navigationPin.kept": "שמרנו את מיקום המפה התקין האחרון. תוכלו לעדכן את נקודת הניווט הציבורית לאחר הפרסום.",
+  "modal.requestListing.discovery.comboHelp": "בחרו עד 3 דרכים שבהן לקוחות עשויים לחפש את העסק הזה.",
+  "modal.requestListing.discovery.combo1.group": "קבוצת קומבו 1",
+  "modal.requestListing.discovery.combo1.subgroup": "תת-קבוצת קומבו 1",
+  "modal.requestListing.discovery.combo2.group": "קבוצת קומבו 2",
+  "modal.requestListing.discovery.combo2.subgroup": "תת-קבוצת קומבו 2",
+  "modal.requestListing.discovery.combo3.group": "קבוצת קומבו 3",
+  "modal.requestListing.discovery.combo3.subgroup": "תת-קבוצת קומבו 3",
+  "modal.requestListing.contexts.generated.empty": "נוצר לפי מדינה, עיר ובחירות SEO וגילוי.",
+  "modal.requestListing.contexts.generated.selected": "נבחרו מסלולי גילוי שנוצרו. לחצו לבדיקה או להסרה.",
+  "modal.requestListing.contexts.generated.title": "מסלולי גילוי שנוצרו",
+  "modal.requestListing.contexts.generated.help": "המסלולים נוצרים מתוך פרטי העסק ובחירות SEO וגילוי. בטלו סימון של מסלולים שאינם מתאימים.",
+  "modal.requestListing.contexts.generated.selectedHelp": "לחצו על מסלול שנבחר כדי להסיר אותו.",
+  "modal.requestListing.contexts.generated.noneSelected": "בחרו לפחות מסלול אחד.",
+  "modal.requestListing.contexts.generated.none.title": "עדיין אין מסלולים שנוצרו",
+  "modal.requestListing.contexts.generated.none.desc": "השלימו קודם את פרטי העסק ולפחות קומבו אחד של SEO וגילוי.",
+  "modal.requestListing.contexts.scope.country": "רמת מדינה",
+  "modal.requestListing.contexts.scope.city": "רמת עיר"
 }
