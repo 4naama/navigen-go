@@ -762,14 +762,6 @@ function renderBusinessOwnersGroup() {
     defaultTitleKey: "root.bo.title",
     cards: [
       {
-        icon: "ℹ️",
-        titleKey: "root.bo.howItWorks.title",
-        descKey: "root.bo.howItWorks.desc",
-        onClick: async () => {
-          showHowItWorksModal();
-        }
-      },      
-      {
         icon: "🧭",
         titleKey: "root.bo.manageBusiness.title",
         descKey: "root.bo.manageBusiness.desc",
@@ -784,7 +776,7 @@ function renderBusinessOwnersGroup() {
           await openOwnerSettingsForLocation(slug, String(picked?.name || picked?.displayName || '').trim());
         }
       },
-            {
+      {
         icon: "🧩",
         titleKey: "root.bo.ownerCenter.title",
         descKey: "root.bo.ownerCenter.desc",
@@ -793,10 +785,12 @@ function renderBusinessOwnersGroup() {
         }
       },
       {
-        icon: "📈",
-        titleKey: "root.bo.examples.title",
-        descKey: "root.bo.examples.desc",
-        onClick: () => showExampleDashboardsModal()
+        icon: "ℹ️",
+        titleKey: "root.bo.howItWorks.title",
+        descKey: "root.bo.howItWorks.desc",
+        onClick: async () => {
+          showHowItWorksModal();
+        }
       }
     ]
   });
@@ -3713,7 +3707,7 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
       try {
         const draftULID = String(url.searchParams.get('draftULID') || '').trim();
         const draftSessionId = String(url.searchParams.get('draftSessionId') || '').trim();
-        sessionStorage.setItem('navigen.resumeSybAfterCampaignCancel', '1');
+        sessionStorage.setItem('navigen.resumePublishSetupAfterCheckoutCancel', '1');
         if (draftULID && draftSessionId) {
           sessionStorage.setItem('navigen.resumeSybDraftULID', draftULID);
           sessionStorage.setItem('navigen.resumeSybDraftSessionId', draftSessionId);
@@ -3942,29 +3936,91 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   });
 })();
 
-(function resumeSybAfterCampaignCancel() {
+(function resumePublishSetupAfterCheckoutCancel() {
   let shouldResume = false;
-  try {
-    shouldResume = sessionStorage.getItem('navigen.resumeSybAfterCampaignCancel') === '1';
-    sessionStorage.removeItem('navigen.resumeSybAfterCampaignCancel');
-  } catch {}
-  if (!shouldResume) return;
+  let draftULID = '';
+  let draftSessionId = '';
 
   try {
+    shouldResume =
+      sessionStorage.getItem('navigen.resumePublishSetupAfterCheckoutCancel') === '1' ||
+      sessionStorage.getItem('navigen.resumeSybAfterCampaignCancel') === '1';
+
+    draftULID = String(sessionStorage.getItem('navigen.resumeSybDraftULID') || '').trim();
+    draftSessionId = String(sessionStorage.getItem('navigen.resumeSybDraftSessionId') || '').trim();
+
+    sessionStorage.removeItem('navigen.resumePublishSetupAfterCheckoutCancel');
+    sessionStorage.removeItem('navigen.resumeSybAfterCampaignCancel');
     sessionStorage.removeItem('navigen.resumeSybDraftULID');
     sessionStorage.removeItem('navigen.resumeSybDraftSessionId');
   } catch {}
 
-  const openSyb = async () => {
+  if (!shouldResume) return;
+
+  const openPublishSetup = async () => {
     await ensureReturnFlowTranslations();
-    showToast(returnFlowText('campaign.payment.cancelSavedDraft', 'Payment canceled. Your local draft is still saved.'), 2600);
-    await showSelectLocationModal();
+    showToast(returnFlowText('campaign.payment.cancelSavedDraft', 'Payment canceled. Your profile draft is still saved.'), 2600);
+
+    let pending = null;
+
+    try {
+      const drafts = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDrafts') || '[]');
+      if (Array.isArray(drafts)) {
+        pending = drafts.find((draft) =>
+          String(draft?.draftULID || '').trim() === draftULID &&
+          String(draft?.draftSessionId || '').trim() === draftSessionId
+        ) || null;
+      }
+    } catch {}
+
+    try {
+      if (!pending) {
+        const legacy = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDraft') || 'null');
+        if (
+          legacy &&
+          typeof legacy === 'object' &&
+          String(legacy?.draftULID || '').trim() === draftULID &&
+          String(legacy?.draftSessionId || '').trim() === draftSessionId
+        ) {
+          pending = legacy;
+        }
+      }
+    } catch {}
+
+    if (!pending && draftULID && draftSessionId) {
+      pending = { draftULID, draftSessionId, mode: 'return' };
+    }
+
+    if (!pending?.draftULID || !pending?.draftSessionId) {
+      await showSelectLocationModal();
+      return;
+    }
+
+    let guest = true;
+    try {
+      const rr = await fetch('/api/owner/campaigns', {
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      guest = !rr.ok;
+    } catch {
+      guest = true;
+    }
+
+    const hydrated = await hydrateLocationDraftForCompletion(pending).catch(() => null);
+    const nextDraft = (hydrated?.draft && typeof hydrated.draft === 'object') ? hydrated.draft : pending;
+
+    await showCampaignManagementModal(String(nextDraft.draftULID || draftULID).trim(), {
+      guest,
+      p8Draft: nextDraft,
+      preferEmptyDraft: true
+    });
   };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', openSyb, { once: true });
+    document.addEventListener('DOMContentLoaded', openPublishSetup, { once: true });
   } else {
-    openSyb();
+    openPublishSetup();
   }
 })();
 

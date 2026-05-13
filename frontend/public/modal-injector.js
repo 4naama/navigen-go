@@ -3313,6 +3313,14 @@ export function createSelectLocationModal() {
     translatedOrFallback('root.bo.recent.desc', 'View places you opened recently.')
   ));
 
+
+  entryStack.appendChild(makeRouteCard(
+    'select-location-examples-route',
+    '📈',
+    translatedOrFallback('root.bo.examples.title', 'See example dashboards'),
+    translatedOrFallback('root.bo.examples.desc', 'View real analytics for designated examples.')
+  ));
+
   inner.appendChild(entryStack);
 
   if (!modal.querySelector('.modal-footer')) {
@@ -4513,6 +4521,12 @@ export async function showSelectLocationModal() {
       }
 
       finish(null);
+    });
+
+
+    modal.querySelector('#select-location-examples-route')?.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      openNonPickingChild(() => showExampleDashboardsModal());
     });
 
     interval = setInterval(() => {
@@ -7586,7 +7600,9 @@ export function createRequestListingModal(opts = {}) {
       rlDescriptionCount.textContent = `${count}/200`;
       rlDescriptionCount.classList.toggle('is-good', count >= 200);
     }
+    
     rlDescriptionSection?.classList.toggle('has-value', !!value);
+    rlDescriptionSection?.classList.toggle('is-complete', count >= 200);
   }
 
   function syncRequestListingLinksChip() {
@@ -12862,6 +12878,23 @@ function campaignPlanModeRequiresPromoQr(planMode) {
           return;
         }
 
+        if (p8Draft && p8Draft.draftULID && p8Draft.draftSessionId) {
+          const existingDraft = findPendingLocationDraftMatch(p8Draft) || readPendingLocationDraft() || p8Draft;
+          savePendingLocationDraft({
+            ...(existingDraft && typeof existingDraft === 'object' ? existingDraft : {}),
+            ...(p8Draft && typeof p8Draft === 'object' ? p8Draft : {}),
+            draftULID: String(p8Draft.draftULID || '').trim(),
+            draftSessionId: String(p8Draft.draftSessionId || '').trim(),
+            planCode: selectedPlanCode,
+            planMode: d.planMode,
+            campaignPreset: legacyCampaignPresetFromPlanMode(d.planMode),
+            campaignScope: d.campaignScope,
+            selectedLocationULIDs: Array.isArray(d.selectedLocationULIDs) ? d.selectedLocationULIDs : [],
+            campaignDraft: requiresPromoQr ? d : ((existingDraft && typeof existingDraft === 'object') ? existingDraft.campaignDraft : null),
+            updatedAt: Date.now()
+          });
+        }
+        
         location.href = String(chkJ.url);
       } finally {
         btnCheckout.classList.remove('is-busy');

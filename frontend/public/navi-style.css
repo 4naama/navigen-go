@@ -7745,3 +7745,9 @@ body.high-contrast #request-listing-tags-modal .request-chip.is-selected{
   flex:1 1 auto;
   min-width:0;
 }
+
+#request-listing-modal .request-section-chip.is-complete .request-section-badge.is-suggested{
+  background:#dcfce7;
+  border-color:#86efac;
+  color:#166534;
+}
