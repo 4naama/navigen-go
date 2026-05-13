@@ -762,7 +762,7 @@
   "modal.requestListing.contexts.help.line1": "Choisissez les chemins publiés de catégorie/localisation où cet établissement doit apparaître.",
   "modal.requestListing.contexts.help.line2": "Vous pouvez sélectionner jusqu’à 3 contextes. Un contexte est un chemin prédéfini comme Restaurants · Allemagne · Berlin.",
   "modal.requestListing.contexts.help.line3": "Utilisez la coche verte pour revenir à Demander un établissement.",
-  "modal.requestListing.help.line2": "Complétez d’abord les informations obligatoires sur l’établissement.",
+  "modal.requestListing.help.line2": "Complétez d’abord les informations obligatoires de l’entreprise. Ou laissez l’import Google les renseigner pour vous.",
   "modal.requestListing.help.line4": "La description, les liens et les médias améliorent la qualité et la préparation à la publication.",
   "modal.requestListing.description.summary.empty": "Optionnel. Ouvrir pour ajouter des détails.",
   "modal.requestListing.section.required": "Obligatoire",
@@ -788,7 +788,7 @@
   "locationDraft.commercial.title": "Configuration de publication",
   "locationDraft.commercial.cta": "Continuer vers le paiement",
   "modal.requestListing.contexts.done": "Terminé",
-  "modal.requestListing.description.placeholder": "🔍 Décrivez l’établissement",
+  "modal.requestListing.description.placeholder": "📝 Décrivez l’établissement",
   "modal.requestListing.contexts.selected.empty": "Choisissez jusqu’à 3.",
   "root.bo.googleImport.title": "Importer depuis Google",
   "root.bo.googleImport.desc": "Importez les informations de votre établissement.",
@@ -1850,5 +1850,9 @@
   "modal.requestListing.contexts.generated.none.desc": "Complétez les Informations de l’entreprise et au moins un combo SEO & découverte d’abord.",
   "modal.requestListing.contexts.scope.country": "Niveau pays",
   "modal.requestListing.contexts.scope.city": "Niveau ville",
-  "modal.requestListing.contexts.generated.selectedCount": "Routes générées sélectionnées. Touchez pour vérifier ou supprimer."
+  "modal.requestListing.contexts.generated.selectedCount": "Routes générées sélectionnées. Touchez pour vérifier ou supprimer.",
+  "modal.requestListing.contextRoutes.help.line1": "NaviGen génère des routes de découverte à partir des Informations de l’entreprise et des choix SEO & découverte.",
+  "modal.requestListing.contextRoutes.help.line2": "Le pays et la ville proviennent des Informations de l’entreprise. Le groupe et le sous-groupe proviennent de SEO & découverte.",
+  "modal.requestListing.contextRoutes.help.line3": "Les routes générées commencent sélectionnées. Décochez les routes qui ne conviennent pas, puis utilisez la coche verte pour revenir.",
+  "modal.requestListing.help.discovery": "De bons choix améliorent la recherche NaviGen, les filtres, les pages de catégories et les signaux structurés du profil. Vous pouvez sélectionner jusqu’à 3 contextes. Un contexte est un chemin prédéfini tel que Restaurants · Allemagne · Berlin."
 }

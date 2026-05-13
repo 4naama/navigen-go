@@ -762,7 +762,7 @@
   "modal.requestListing.contexts.help.line1": "בחר את נתיבי הקטגוריה/מיקום שפורסמו שבהם העסק הזה צריך להופיע.",
   "modal.requestListing.contexts.help.line2": "ניתן לבחור עד 3 הקשרים. הקשר הוא נתיב מוכן מראש כמו מסעדות · גרמניה · ברלין.",
   "modal.requestListing.contexts.help.line3": "השתמש בסימון הירוק כדי לחזור לבקש רישום.",
-  "modal.requestListing.help.line2": "השלם תחילה את פרטי העסק הנדרשים.",
+  "modal.requestListing.help.line2": "השלימו קודם את פרטי העסק הנדרשים. או תנו לייבוא של Google למלא אותם עבורכם.",
   "modal.requestListing.help.line4": "תיאור, קישורים ומדיה משפרים את האיכות והמוכנות לפרסום.",
   "modal.requestListing.description.summary.empty": "אופציונלי. פתח כדי להוסיף פרטים.",
   "modal.requestListing.section.required": "חובה",
@@ -788,7 +788,7 @@
   "locationDraft.commercial.title": "הגדרת פרסום",
   "locationDraft.commercial.cta": "המשך לתשלום",
   "modal.requestListing.contexts.done": "סיום",
-  "modal.requestListing.description.placeholder": "🔍 תאר את העסק",
+  "modal.requestListing.description.placeholder": "📝 תאר את העסק",
   "modal.requestListing.contexts.selected.empty": "בחר עד 3.",
   "root.bo.googleImport.title": "ייבוא מ-Google",
   "root.bo.googleImport.desc": "הבא את פרטי העסק שלך.",
@@ -1850,5 +1850,9 @@
   "modal.requestListing.contexts.generated.none.desc": "השלימו קודם את פרטי העסק ולפחות קומבו אחד של SEO וגילוי.",
   "modal.requestListing.contexts.scope.country": "רמת מדינה",
   "modal.requestListing.contexts.scope.city": "רמת עיר",
-  "modal.requestListing.contexts.generated.selectedCount": "נבחרו מסלולים שנוצרו. לחצו לבדיקה או להסרה."
+  "modal.requestListing.contexts.generated.selectedCount": "נבחרו מסלולים שנוצרו. לחצו לבדיקה או להסרה.",
+  "modal.requestListing.contextRoutes.help.line1": "NaviGen יוצר מסלולי גילוי מתוך פרטי העסק ובחירות SEO וגילוי.",
+  "modal.requestListing.contextRoutes.help.line2": "המדינה והעיר מגיעות מפרטי העסק. הקבוצה ותת-הקבוצה מגיעות מ-SEO וגילוי.",
+  "modal.requestListing.contextRoutes.help.line3": "המסלולים שנוצרו מסומנים כברירת מחדל. בטלו סימון של מסלולים שאינם מתאימים ולאחר מכן השתמשו בסימון הירוק כדי לחזור.",
+  "modal.requestListing.help.discovery": "בחירות נכונות משפרות את החיפוש ב-NaviGen, את המסננים, את דפי הקטגוריות ואת אותות הפרופיל המובנים. ניתן לבחור עד 3 הקשרים. הקשר הוא נתיב מוכן מראש כמו מסעדות · גרמניה · ברלין."
 }

@@ -762,7 +762,7 @@
   "modal.requestListing.contexts.help.line1": "Choose the published category/location paths where this business should appear.",
   "modal.requestListing.contexts.help.line2": "You can select up to 3 contexts. A context is a ready-made path such as Restaurants · Germany· Berlin.",
   "modal.requestListing.contexts.help.line3": "Use the green check to return to Request Listing.",
-  "modal.requestListing.help.line2": "Complete the required business information first.",
+  "modal.requestListing.help.line2": "Complete the required business information first. Or let Google import populate it for you.",
   "modal.requestListing.help.line4": "Description, links, and media improve quality and publish readiness.",
   "modal.requestListing.description.summary.empty": "Optional. Open to add details.",
   "modal.requestListing.section.required": "Required",
@@ -788,7 +788,7 @@
   "locationDraft.commercial.title": "Publish setup",
   "locationDraft.commercial.cta": "Continue to payment",
   "modal.requestListing.contexts.done": "Done",
-  "modal.requestListing.description.placeholder": "🔍 Describe the business",
+  "modal.requestListing.description.placeholder": "📝 Describe the business",
   "modal.requestListing.contexts.selected.empty": "Choose up to 3.",
   "root.bo.googleImport.title": "Import from Google",
   "root.bo.googleImport.desc": "Bring in your business details.",
@@ -1850,5 +1850,9 @@
   "modal.requestListing.contexts.generated.none.desc": "Complete Business Information and at least one SEO & discovery combo first.",
   "modal.requestListing.contexts.scope.country": "Country-level",
   "modal.requestListing.contexts.scope.city": "City-level",
-  "modal.requestListing.contexts.generated.selectedCount": "generated routes selected. Tap to review or remove."
+  "modal.requestListing.contexts.generated.selectedCount": "generated routes selected. Tap to review or remove.",
+  "modal.requestListing.contextRoutes.help.line1": "NaviGen generates discovery routes from Business Information and SEO & discovery choices.",
+  "modal.requestListing.contextRoutes.help.line2": "Country and city come from Business Information. Group and subgroup come from SEO & discovery.",
+  "modal.requestListing.contextRoutes.help.line3": "Generated routes start selected. Uncheck routes that do not fit, then use the green check to return.",
+  "modal.requestListing.help.discovery": "Good choices improve NaviGen search, filters, category pages, and structured profile signals. You can select up to 3 contexts. A context is a ready-made path such as Restaurants · Germany · Berlin."
 }

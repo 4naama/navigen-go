@@ -762,7 +762,7 @@
   "modal.requestListing.contexts.help.line1": "Wählen Sie die veröffentlichten Kategorie-/Standortpfade aus, in denen dieses Unternehmen erscheinen soll.",
   "modal.requestListing.contexts.help.line2": "Sie können bis zu 3 Kontexte auswählen. Ein Kontext ist ein vordefinierter Pfad wie Restaurants · Deutschland · Berlin.",
   "modal.requestListing.contexts.help.line3": "Verwenden Sie das grüne Häkchen, um zu „Eintrag anfordern“ zurückzukehren.",
-  "modal.requestListing.help.line2": "Bitte füllen Sie zuerst die erforderlichen Unternehmensinformationen aus.",
+  "modal.requestListing.help.line2": "Vervollständigen Sie zuerst die erforderlichen Unternehmensinformationen. Oder lassen Sie sie durch den Google-Import ausfüllen.",
   "modal.requestListing.help.line4": "Beschreibung, Links und Medien verbessern Qualität und Veröffentlichungsbereitschaft.",
   "modal.requestListing.description.summary.empty": "Optional. Öffnen, um Details hinzuzufügen.",
   "modal.requestListing.section.required": "Erforderlich",
@@ -788,7 +788,7 @@
   "locationDraft.commercial.title": "Veröffentlichung einrichten",
   "locationDraft.commercial.cta": "Weiter zur Zahlung",
   "modal.requestListing.contexts.done": "Fertig",
-  "modal.requestListing.description.placeholder": "🔍 Beschreiben Sie das Unternehmen",
+  "modal.requestListing.description.placeholder": "📝 Beschreiben Sie das Unternehmen",
   "modal.requestListing.contexts.selected.empty": "Wählen Sie bis zu 3.",
   "root.bo.googleImport.title": "Aus Google importieren",
   "root.bo.googleImport.desc": "Übernehmen Sie Ihre Unternehmensdaten.",
@@ -1850,5 +1850,9 @@
   "modal.requestListing.contexts.generated.none.desc": "Vervollständigen Sie zuerst die Unternehmensinformationen und mindestens eine SEO-&-Entdeckungs-Kombination.",
   "modal.requestListing.contexts.scope.country": "Länderebene",
   "modal.requestListing.contexts.scope.city": "Stadtebene",
-  "modal.requestListing.contexts.generated.selectedCount": "Generierte Routen ausgewählt. Tippen zum Prüfen oder Entfernen."
+  "modal.requestListing.contexts.generated.selectedCount": "Generierte Routen ausgewählt. Tippen zum Prüfen oder Entfernen.",
+  "modal.requestListing.contextRoutes.help.line1": "NaviGen generiert Entdeckungsrouten aus Unternehmensinformationen und SEO-&-Entdeckungs-Auswahl.",
+  "modal.requestListing.contextRoutes.help.line2": "Land und Stadt stammen aus den Unternehmensinformationen. Gruppe und Untergruppe stammen aus SEO & Entdeckung.",
+  "modal.requestListing.contextRoutes.help.line3": "Generierte Routen sind standardmäßig ausgewählt. Entfernen Sie die Auswahl bei unpassenden Routen und verwenden Sie dann das grüne Häkchen zum Zurückkehren.",
+  "modal.requestListing.help.discovery": "Gute Auswahlmöglichkeiten verbessern die NaviGen-Suche, Filter, Kategorieseiten und strukturierte Profilsignale. Sie können bis zu 3 Kontexte auswählen. Ein Kontext ist ein vordefinierter Pfad wie Restaurants · Deutschland · Berlin."
 }

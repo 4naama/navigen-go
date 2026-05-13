@@ -762,7 +762,7 @@
   "modal.requestListing.contexts.help.line1": "Elige las rutas publicadas de categoría/ubicación donde este negocio debe aparecer.",
   "modal.requestListing.contexts.help.line2": "Puedes seleccionar hasta 3 contextos. Un contexto es una ruta predefinida como Restaurantes · Alemania · Berlín.",
   "modal.requestListing.contexts.help.line3": "Usa la marca verde para volver a Solicitar listado.",
-  "modal.requestListing.help.line2": "Completa primero la información obligatoria del negocio.",
+  "modal.requestListing.help.line2": "Completa primero la información obligatoria del negocio. O deja que la importación de Google la complete por ti.",
   "modal.requestListing.help.line4": "La descripción, los enlaces y los medios mejoran la calidad y la preparación para publicar.",
   "modal.requestListing.description.summary.empty": "Opcional. Abre para añadir detalles.",
   "modal.requestListing.section.required": "Obligatorio",
@@ -788,7 +788,7 @@
   "locationDraft.commercial.title": "Configuración de publicación",
   "locationDraft.commercial.cta": "Continuar al pago",
   "modal.requestListing.contexts.done": "Listo",
-  "modal.requestListing.description.placeholder": "🔍 Describe el negocio",
+  "modal.requestListing.description.placeholder": "📝 Describe el negocio",
   "modal.requestListing.contexts.selected.empty": "Elige hasta 3.",
   "root.bo.googleImport.title": "Importar desde Google",
   "root.bo.googleImport.desc": "Importa los datos de tu negocio.",
@@ -1850,5 +1850,9 @@
   "modal.requestListing.contexts.generated.none.desc": "Completa primero la Información del negocio y al menos una combinación de SEO y descubrimiento.",
   "modal.requestListing.contexts.scope.country": "Nivel país",
   "modal.requestListing.contexts.scope.city": "Nivel ciudad",
-  "modal.requestListing.contexts.generated.selectedCount": "Rutas generadas seleccionadas. Toca para revisar o eliminar."
+  "modal.requestListing.contexts.generated.selectedCount": "Rutas generadas seleccionadas. Toca para revisar o eliminar.",
+  "modal.requestListing.contextRoutes.help.line1": "NaviGen genera rutas de descubrimiento a partir de la Información del negocio y las elecciones de SEO y descubrimiento.",
+  "modal.requestListing.contextRoutes.help.line2": "El país y la ciudad provienen de la Información del negocio. El grupo y el subgrupo provienen de SEO y descubrimiento.",
+  "modal.requestListing.contextRoutes.help.line3": "Las rutas generadas comienzan seleccionadas. Desmarca las rutas que no encajen y luego usa la marca verde para volver.",
+  "modal.requestListing.help.discovery": "Las buenas elecciones mejoran la búsqueda en NaviGen, los filtros, las páginas de categorías y las señales estructuradas del perfil. Puedes seleccionar hasta 3 contextos. Un contexto es una ruta predefinida como Restaurantes · Alemania · Berlín."
 }

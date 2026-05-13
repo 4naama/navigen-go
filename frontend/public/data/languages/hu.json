@@ -762,7 +762,7 @@
   "modal.requestListing.contexts.help.line1": "Válaszd ki a közzétett kategória/helyszín útvonalakat, ahol ennek a vállalkozásnak meg kell jelennie.",
   "modal.requestListing.contexts.help.line2": "Legfeljebb 3 kontextust választhatsz. A kontextus egy kész útvonal, például Éttermek · Németország · Berlin.",
   "modal.requestListing.contexts.help.line3": "A zöld pipával térhetsz vissza a Listing igénylése oldalra.",
-  "modal.requestListing.help.line2": "Töltsd ki először a kötelező vállalkozási adatokat.",
+  "modal.requestListing.help.line2": "Először töltse ki a kötelező üzleti információkat. Vagy hagyja, hogy a Google import kitöltse azokat Ön helyett.",
   "modal.requestListing.help.line4": "A leírás, linkek és média javítják a minőséget és a közzétételi készültséget.",
   "modal.requestListing.description.summary.empty": "Opcionális. Nyisd meg a részletek hozzáadásához.",
   "modal.requestListing.section.required": "Kötelező",
@@ -788,7 +788,7 @@
   "locationDraft.commercial.title": "Közzététel beállítása",
   "locationDraft.commercial.cta": "Tovább a fizetéshez",
   "modal.requestListing.contexts.done": "Kész",
-  "modal.requestListing.description.placeholder": "🔍 Írd le a vállalkozást",
+  "modal.requestListing.description.placeholder": "📝 Írd le a vállalkozást",
   "modal.requestListing.contexts.selected.empty": "Válassz legfeljebb 3-at.",
   "root.bo.googleImport.title": "Importálás Google-ből",
   "root.bo.googleImport.desc": "Hozd be a vállalkozás adatait.",
@@ -1850,5 +1850,9 @@
   "modal.requestListing.contexts.generated.none.desc": "Először töltse ki az üzleti információkat és legalább egy SEO és felfedezés kombinációt.",
   "modal.requestListing.contexts.scope.country": "Országszint",
   "modal.requestListing.contexts.scope.city": "Városszint",
-  "modal.requestListing.contexts.generated.selectedCount": "Kiválasztott generált útvonalak. Érintse meg az ellenőrzéshez vagy eltávolításhoz."
+  "modal.requestListing.contexts.generated.selectedCount": "Kiválasztott generált útvonalak. Érintse meg az ellenőrzéshez vagy eltávolításhoz.",
+  "modal.requestListing.contextRoutes.help.line1": "A NaviGen az üzleti információk és a SEO és felfedezés választások alapján generál felfedezési útvonalakat.",
+  "modal.requestListing.contextRoutes.help.line2": "Az ország és a város az üzleti információkból származik. A csoport és alcsoport a SEO és felfedezés részből származik.",
+  "modal.requestListing.contextRoutes.help.line3": "A generált útvonalak kezdetben ki vannak választva. Távolítsa el a jelölést a nem megfelelő útvonalakról, majd használja a zöld pipát a visszatéréshez.",
+  "modal.requestListing.help.discovery": "A jó választások javítják a NaviGen keresést, a szűrőket, a kategóriaoldalakat és a strukturált profiljeleket. Legfeljebb 3 kontextust választhat. A kontextus egy előre elkészített útvonal, például Éttermek · Németország · Berlin."
 }

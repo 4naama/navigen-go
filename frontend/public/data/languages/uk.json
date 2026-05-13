@@ -762,7 +762,7 @@
   "modal.requestListing.contexts.help.line1": "Виберіть опубліковані шляхи категорій/локацій, де має з’являтися цей бізнес.",
   "modal.requestListing.contexts.help.line2": "Ви можете вибрати до 3 контекстів. Контекст — це готовий шлях, наприклад Ресторани · Німеччина · Берлін.",
   "modal.requestListing.contexts.help.line3": "Скористайтеся зеленою позначкою, щоб повернутися до «Запросити лістинг».",
-  "modal.requestListing.help.line2": "Спочатку заповніть обов’язкову інформацію про бізнес.",
+  "modal.requestListing.help.line2": "Спочатку заповніть обов’язкову інформацію про бізнес. Або дозвольте імпорту Google заповнити її за вас.",
   "modal.requestListing.help.line4": "Опис, посилання та медіа покращують якість і готовність до публікації.",
   "modal.requestListing.description.summary.empty": "Необов’язково. Відкрийте, щоб додати деталі.",
   "modal.requestListing.section.required": "Обов’язково",
@@ -788,7 +788,7 @@
   "locationDraft.commercial.title": "Налаштування публікації",
   "locationDraft.commercial.cta": "Продовжити до оплати",
   "modal.requestListing.contexts.done": "Готово",
-  "modal.requestListing.description.placeholder": "🔍 Опишіть бізнес",
+  "modal.requestListing.description.placeholder": "📝 Опишіть бізнес",
   "modal.requestListing.contexts.selected.empty": "Виберіть до 3.",
   "root.bo.googleImport.title": "Імпортувати з Google",
   "root.bo.googleImport.desc": "Імпортуйте дані вашого бізнесу.",
@@ -1850,5 +1850,9 @@
   "modal.requestListing.contexts.generated.none.desc": "Спочатку заповніть Інформацію про бізнес і принаймні одну SEO-комбінацію.",
   "modal.requestListing.contexts.scope.country": "Рівень країни",
   "modal.requestListing.contexts.scope.city": "Рівень міста",
-  "modal.requestListing.contexts.generated.selectedCount": "Вибрано згенеровані маршрути. Натисніть, щоб переглянути або видалити."
+  "modal.requestListing.contexts.generated.selectedCount": "Вибрано згенеровані маршрути. Натисніть, щоб переглянути або видалити.",
+  "modal.requestListing.contextRoutes.help.line1": "NaviGen генерує маршрути відкриття з Інформації про бізнес та вибору SEO і видимості.",
+  "modal.requestListing.contextRoutes.help.line2": "Країна та місто беруться з Інформації про бізнес. Група та підгрупа — з SEO і видимості.",
+  "modal.requestListing.contextRoutes.help.line3": "Згенеровані маршрути спочатку вибрані. Зніміть позначку з невідповідних маршрутів, а потім використайте зелену галочку для повернення.",
+  "modal.requestListing.help.discovery": "Правильний вибір покращує пошук NaviGen, фільтри, сторінки категорій і структуровані сигнали профілю. Ви можете вибрати до 3 контекстів. Контекст — це готовий шлях, наприклад Ресторани · Німеччина · Берлін."
 }

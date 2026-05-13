@@ -762,7 +762,7 @@
   "modal.requestListing.contexts.help.line1": "Scegli i percorsi pubblicati di categoria/località in cui questa attività deve apparire.",
   "modal.requestListing.contexts.help.line2": "Puoi selezionare fino a 3 contesti. Un contesto è un percorso predefinito come Ristoranti · Germania · Berlino.",
   "modal.requestListing.contexts.help.line3": "Usa il segno di spunta verde per tornare a Richiedi scheda.",
-  "modal.requestListing.help.line2": "Completa prima le informazioni obbligatorie sull’attività.",
+  "modal.requestListing.help.line2": "Completa prima le informazioni aziendali obbligatorie. Oppure lascia che l’importazione Google le compili per te.",
   "modal.requestListing.help.line4": "Descrizione, link e media migliorano qualità e prontezza alla pubblicazione.",
   "modal.requestListing.description.summary.empty": "Opzionale. Apri per aggiungere dettagli.",
   "modal.requestListing.section.required": "Obbligatorio",
@@ -788,7 +788,7 @@
   "locationDraft.commercial.title": "Configurazione pubblicazione",
   "locationDraft.commercial.cta": "Continua al pagamento",
   "modal.requestListing.contexts.done": "Fatto",
-  "modal.requestListing.description.placeholder": "🔍 Descrivi l’attività",
+  "modal.requestListing.description.placeholder": "📝 Descrivi l’attività",
   "modal.requestListing.contexts.selected.empty": "Scegli fino a 3.",
   "root.bo.googleImport.title": "Importa da Google",
   "root.bo.googleImport.desc": "Importa i dettagli della tua attività.",
@@ -1850,5 +1850,9 @@
   "modal.requestListing.contexts.generated.none.desc": "Completa prima le Informazioni aziendali e almeno una combinazione SEO e scoperta.",
   "modal.requestListing.contexts.scope.country": "Livello paese",
   "modal.requestListing.contexts.scope.city": "Livello città",
-  "modal.requestListing.contexts.generated.selectedCount": "Percorsi generati selezionati. Tocca per controllare o rimuovere."
+  "modal.requestListing.contexts.generated.selectedCount": "Percorsi generati selezionati. Tocca per controllare o rimuovere.",
+  "modal.requestListing.contextRoutes.help.line1": "NaviGen genera percorsi di scoperta dalle Informazioni aziendali e dalle scelte SEO e scoperta.",
+  "modal.requestListing.contextRoutes.help.line2": "Il paese e la città provengono dalle Informazioni aziendali. Gruppo e sottogruppo provengono da SEO e scoperta.",
+  "modal.requestListing.contextRoutes.help.line3": "I percorsi generati sono selezionati automaticamente. Deseleziona quelli non adatti, quindi usa il segno di spunta verde per tornare.",
+  "modal.requestListing.help.discovery": "Le scelte corrette migliorano la ricerca NaviGen, i filtri, le pagine categoria e i segnali strutturati del profilo. Puoi selezionare fino a 3 contesti. Un contesto è un percorso predefinito come Ristoranti · Germania · Berlino."
 }

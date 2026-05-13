@@ -6340,7 +6340,7 @@ export function createRequestListingModal(opts = {}) {
               <div class="modal-form-grid">
                 <div class="modal-field">
                   <label for="rl-postal">${translatedOrFallback('modal.requestListing.postal.label', 'Postal code')}</label>
-                  <input id="rl-postal" class="input" type="text" maxlength="24" autocomplete="postal-code" />
+                  <input id="rl-postal" class="input" type="text" maxlength="24" autocomplete="postal-code" placeholder=" " />
                 </div>
                 <div class="modal-field">
                   <label for="rl-city">${t('modal.requestListing.city.label') || 'City'} <span class="required-star">*</span></label>
@@ -6443,7 +6443,7 @@ export function createRequestListingModal(opts = {}) {
           <summary class="modal-menu-item cm-chip-face request-section-chip-face">
             <span class="label cm-chip-face-label request-section-chip-label">
               <strong class="request-section-chip-title">${t('modal.requestListing.sections.context.title') || 'Context information'}</strong>
-              <small id="rl-context-section-state" class="request-section-chip-summary">${t('modal.requestListing.contexts.locationRequired') || 'Add City or Country code in Business information first.'}</small>
+              <small id="rl-context-section-state" class="request-section-chip-summary"></small>
             </span>
             <span class="request-section-badge-stack">
               <span class="request-section-badge is-required">${t('modal.requestListing.section.required') || 'Required'}</span>
@@ -6460,7 +6460,7 @@ export function createRequestListingModal(opts = {}) {
           <summary class="modal-menu-item cm-chip-face request-section-chip-face">
             <span class="label cm-chip-face-label request-section-chip-label">
               <strong class="request-section-chip-title">${t('modal.requestListing.description.label') || 'Business description'}</strong>
-              <small id="rl-description-chip-state" class="request-section-chip-summary">${translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional.')}</small>
+              <small id="rl-description-chip-state" class="request-section-chip-summary"></small>
             </span>
             <span class="request-section-badge is-suggested">${t('modal.requestListing.section.suggested') || 'Suggested'}</span>
             <span class="cm-chip-face-chevron" aria-hidden="true"></span>
@@ -6471,7 +6471,7 @@ export function createRequestListingModal(opts = {}) {
                 <span class="request-description-editor-prompt">${t('modal.requestListing.description.placeholder') || '📝 Describe the business'}</span>
               </div>
               <div class="modal-field" style="margin:0;">
-                <textarea id="rl-description" class="input request-description-textarea" rows="5" maxlength="3000" placeholder=""></textarea>
+                <textarea id="rl-description" class="input request-description-textarea" rows="5" maxlength="3000" placeholder=" "></textarea>
                 <div class="modal-help-split">
                   <small class="modal-help-text">${t('modal.requestListing.description.help') || 'Publish-ready target is at least 200 characters.'}</small>
                   <small id="rl-description-count" class="modal-help-counter">0/200</small>
@@ -6519,7 +6519,7 @@ export function createRequestListingModal(opts = {}) {
           <summary class="modal-menu-item cm-chip-face request-section-chip-face">
             <span class="label cm-chip-face-label request-section-chip-label">
               <strong class="request-section-chip-title">${translatedOrFallback('media.section.title', 'Media')}</strong>
-              <small id="rl-media-chip-state" class="request-section-chip-summary">${translatedOrFallback('media.section.desc', 'Upload up to 3 real business/location photos. First image is the cover.')}</small>
+              <small id="rl-media-chip-state" class="request-section-chip-summary"></small>
             </span>
             <span class="request-section-badge is-optional">${t('modal.requestListing.section.optional') || 'Optional'}</span>
             <span class="cm-chip-face-chevron" aria-hidden="true"></span>
@@ -6583,7 +6583,7 @@ export function createRequestListingModal(opts = {}) {
   const rlDiscoveryChipState = modal.querySelector('#rl-discovery-chip-state');
   const rlTagsSummary = modal.querySelector('#rl-tags-summary');
   const rlContextSection = modal.querySelector('#rl-context-section');
-  const rlDescriptionSection = modal.querySelector('#rl-description-section');
+  const rlLinksSection = modal.querySelector('#rl-links-section');
   
   const requestListingSectionChips = Array.from(modal.querySelectorAll('.request-section-chip'));
   requestListingSectionChips.forEach((section) => {
@@ -6787,9 +6787,7 @@ export function createRequestListingModal(opts = {}) {
     const count = urls.length;
     rlMediaSection?.classList.toggle('has-value', count > 0);
     if (rlMediaChipState) {
-      rlMediaChipState.textContent = count
-        ? `${count}/${REQUEST_LISTING_MEDIA_MAX_IMAGES} · ${translatedOrFallback('media.cover.label', 'Cover')}: 1, ${translatedOrFallback('media.gallery.label', 'Gallery')}: ${Math.max(0, count - 1)}`
-        : translatedOrFallback('media.section.desc', 'Upload up to 3 real business/location photos. First image is the cover.');
+      rlMediaChipState.textContent = '';
     }
   }
 
@@ -7579,10 +7577,9 @@ export function createRequestListingModal(opts = {}) {
   function updateRequestListingDescriptionChip() {
     const rawValue = String(rlDescription?.value || '');
     const value = rawValue.replace(/\s+/g, ' ').trim();
-    const summary = value || translatedOrFallback('modal.requestListing.description.summary.empty', 'Optional.');
     const count = rawValue.trim().length;
 
-    if (rlDescriptionChipState) rlDescriptionChipState.textContent = summary;
+    if (rlDescriptionChipState) rlDescriptionChipState.textContent = '';
     if (rlDescriptionCount) {
       rlDescriptionCount.textContent = `${count}/200`;
       rlDescriptionCount.classList.toggle('is-good', count >= 200);
@@ -7590,6 +7587,18 @@ export function createRequestListingModal(opts = {}) {
     rlDescriptionSection?.classList.toggle('has-value', !!value);
   }
 
+  function syncRequestListingLinksChip() {
+    const hasLink = [
+      rlLink,
+      rlFacebook,
+      rlInstagram,
+      rlBooking
+    ].some((el) => String(el?.value || '').trim());
+
+    rlLinksSection?.classList.toggle('has-value', hasLink);
+    rlLinksSection?.classList.toggle('is-complete', hasLink);
+  }
+  
   function syncRequestListingRequiredChecks() {
     const requiredBusinessFields = [
       rlName,
@@ -7653,11 +7662,22 @@ export function createRequestListingModal(opts = {}) {
   }
 
   updateRequestListingDescriptionChip();
+  syncRequestListingLinksChip();
   resizeRequestListingDescriptionInput();
   rlDescription?.addEventListener('input', () => {
     resizeRequestListingDescriptionInput();
     updateRequestListingDescriptionChip();
   });
+  
+  [
+    rlLink,
+    rlFacebook,
+    rlInstagram,
+    rlBooking
+  ].forEach((el) => {
+    el?.addEventListener('input', syncRequestListingLinksChip);
+    el?.addEventListener('change', syncRequestListingLinksChip);
+  });  
 
   requestListingMediaRender();
   requestListingMediaLoadManifest();
@@ -7935,6 +7955,7 @@ export function createRequestListingModal(opts = {}) {
           ? emojiSummary
           : translatedOrFallback('modal.requestListing.tags.summary.empty', 'No tags selected');
       }
+      
       checkEl?.classList.toggle('is-active', tagItems.length > 0);
     };
 
@@ -8518,9 +8539,9 @@ function getModalHeaderHelpSpec(target) {
     return {
       title: translatedOrFallback('modal.requestListing.contexts.modal.title', 'Available contexts'),
       bodyLines: [
-        translatedOrFallback('modal.requestListing.contexts.help.line1', 'Choose the published category/location paths where this business should appear.'),
-        translatedOrFallback('modal.requestListing.contexts.help.line2', 'NaviGen generates discovery routes from country, city, and up to 3 SEO & discovery combos. You can uncheck routes that do not fit.'),
-        translatedOrFallback('modal.requestListing.contexts.help.line3', 'Use the green check to return to Request Listing.')
+        translatedOrFallback('modal.requestListing.contextRoutes.help.line1', 'NaviGen generates discovery routes from Business Information and SEO & discovery choices.'),
+        translatedOrFallback('modal.requestListing.contextRoutes.help.line2', 'Country and city come from Business Information. Group and subgroup come from SEO & discovery.'),
+        translatedOrFallback('modal.requestListing.contextRoutes.help.line3', 'Generated routes start selected. Uncheck routes that do not fit, then use the green check to return.')
       ]
     };
   }
@@ -8530,7 +8551,7 @@ function getModalHeaderHelpSpec(target) {
       title: _ownerText('modal.help.title', 'How it works'),
       bodyLines: [
         _ownerText('modal.requestListing.help.line2', 'Complete the required business information first. Or let Google import populate it for you.'),
-        _ownerText('modal.requestListing.contexts.help.line2', 'Good choices improve NaviGen search, filters, category pages, and structured profile signals. You can select up to 3 contexts. A context is a ready-made path such as Restaurants · Germany · Berlin.'),
+        _ownerText('modal.requestListing.help.discovery', 'Good choices improve NaviGen search, filters, category pages, and structured profile signals. You can select up to 3 contexts. A context is a ready-made path such as Restaurants · Germany · Berlin.'),
         _ownerText('modal.requestListing.help.line3', 'Search-engine ranking is never guaranteed.'),
         _ownerText('modal.requestListing.help.line4', 'Description, links, and media improve quality and publish readiness.')
       ].map((line) => String(line || '').trim()).filter(Boolean)
