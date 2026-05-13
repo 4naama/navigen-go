@@ -6583,6 +6583,7 @@ export function createRequestListingModal(opts = {}) {
   const rlDiscoveryChipState = modal.querySelector('#rl-discovery-chip-state');
   const rlTagsSummary = modal.querySelector('#rl-tags-summary');
   const rlContextSection = modal.querySelector('#rl-context-section');
+  const rlDescriptionSection = modal.querySelector('#rl-description-section');
   const rlLinksSection = modal.querySelector('#rl-links-section');
   
   const requestListingSectionChips = Array.from(modal.querySelectorAll('.request-section-chip'));
