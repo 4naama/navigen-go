@@ -1833,7 +1833,7 @@
   "owner.edit.field.navigationPin.help": "Wird für LPM-Routen und die Kartenanzeige verwendet. Dies ändert weder die öffentliche URL noch die Standortidentität.",
   "owner.edit.navigationPin.invalid": "Verwenden Sie ein gültiges Breiten-/Längenpaar.",
   "owner.edit.navigationPin.kept": "Wir haben die letzte gültige Kartenposition beibehalten. Sie können den öffentlichen Navigationspunkt nach der Veröffentlichung anpassen.",
-  "modal.requestListing.discovery.comboHelp": "Wählen Sie bis zu 3 Arten aus, wie Kunden nach diesem Unternehmen suchen könnten.",
+  "modal.requestListing.discovery.comboHelp": "Wählen Sie bis zu 3 Arten aus, wie Kunden nach diesem Unternehmen suchen könnten. Eine reicht aus, um zu beginnen.",
   "modal.requestListing.discovery.combo1.group": "Combo Gruppe 1",
   "modal.requestListing.discovery.combo1.subgroup": "Combo Untergruppe 1",
   "modal.requestListing.discovery.combo2.group": "Combo Gruppe 2",
@@ -1849,5 +1849,6 @@
   "modal.requestListing.contexts.generated.none.title": "Noch keine generierten Routen",
   "modal.requestListing.contexts.generated.none.desc": "Vervollständigen Sie zuerst die Unternehmensinformationen und mindestens eine SEO-&-Entdeckungs-Kombination.",
   "modal.requestListing.contexts.scope.country": "Länderebene",
-  "modal.requestListing.contexts.scope.city": "Stadtebene"
+  "modal.requestListing.contexts.scope.city": "Stadtebene",
+  "modal.requestListing.contexts.generated.selectedCount": "Generierte Routen ausgewählt. Tippen zum Prüfen oder Entfernen."
 }

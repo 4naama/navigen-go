@@ -1833,7 +1833,7 @@
   "owner.edit.field.navigationPin.help": "LPM útvonalakhoz és térképes megjelenítéshez használatos. Nem változtatja meg a nyilvános URL-t vagy a helyazonosságot.",
   "owner.edit.navigationPin.invalid": "Használjon érvényes szélesség/hosszúság koordinátapárt.",
   "owner.edit.navigationPin.kept": "Megtartottuk az utolsó érvényes térképpozíciót. A nyilvános navigációs pontot közzététel után módosíthatja.",
-  "modal.requestListing.discovery.comboHelp": "Válasszon legfeljebb 3 módot, ahogyan az ügyfelek kereshetnek erre a vállalkozásra.",
+  "modal.requestListing.discovery.comboHelp": "Válasszon legfeljebb 3 módot, ahogyan az ügyfelek kereshetnek erre a vállalkozásra. Egy is elég a kezdéshez.",
   "modal.requestListing.discovery.combo1.group": "1. kombinációs csoport",
   "modal.requestListing.discovery.combo1.subgroup": "1. kombinációs alcsoport",
   "modal.requestListing.discovery.combo2.group": "2. kombinációs csoport",
@@ -1849,5 +1849,6 @@
   "modal.requestListing.contexts.generated.none.title": "Nincsenek még generált útvonalak",
   "modal.requestListing.contexts.generated.none.desc": "Először töltse ki az üzleti információkat és legalább egy SEO és felfedezés kombinációt.",
   "modal.requestListing.contexts.scope.country": "Országszint",
-  "modal.requestListing.contexts.scope.city": "Városszint"
+  "modal.requestListing.contexts.scope.city": "Városszint",
+  "modal.requestListing.contexts.generated.selectedCount": "Kiválasztott generált útvonalak. Érintse meg az ellenőrzéshez vagy eltávolításhoz."
 }

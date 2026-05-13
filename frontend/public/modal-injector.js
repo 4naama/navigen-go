@@ -6388,7 +6388,7 @@ export function createRequestListingModal(opts = {}) {
             <div class="modal-form-stack">
               <p class="modal-help-text request-discovery-help">${translatedOrFallback('modal.requestListing.discovery.help', 'Good choices improve NaviGen search, filters, category pages, and structured profile signals. Search-engine ranking is never guaranteed.')}</p>
 
-              <p class="modal-help-text">${translatedOrFallback('modal.requestListing.discovery.comboHelp', 'Choose up to 3 ways customers may look for this business.')}</p>
+              <p class="modal-help-text">${translatedOrFallback('modal.requestListing.discovery.comboHelp', 'Choose up to 3 ways customers may look for this business. One is enough to start.')}</p>
 
               <div class="modal-form-grid">
                 <div class="modal-field">
@@ -6451,21 +6451,8 @@ export function createRequestListingModal(opts = {}) {
             </span>            
             <span class="cm-chip-face-chevron" aria-hidden="true"></span>
           </summary>
-          <div class="cm-chip-body">
-            <div class="modal-form-stack">
-              <div class="modal-field">
-                <label for="rl-open-contexts">${t('modal.requestListing.contexts.label') || 'Contexts'} <span class="required-star">*</span></label>
-                <select id="rl-contexts" class="input hidden" multiple size="6" aria-hidden="true" tabindex="-1"></select>
-                <button id="rl-open-contexts" type="button" class="modal-menu-item request-context-launch">
-                  <span class="label">
-                    <strong>${t('modal.requestListing.contexts.cta') || 'Choose contexts'}</strong>
-                    <small id="rl-context-summary-text">${t('modal.requestListing.contexts.summary.empty') || 'Required. Search and choose up to 3 contexts.'}</small>
-                  </span>
-                  <span id="rl-context-count" class="request-context-count">0/3</span>
-                </button>
-                <div id="rl-context-selected" class="request-chip-row request-context-selected" aria-live="polite"></div>
-              </div>
-            </div>
+          <div class="cm-chip-body" hidden>
+            <select id="rl-contexts" class="input hidden" multiple size="6" aria-hidden="true" tabindex="-1"></select>
           </div>
         </details>
 
@@ -7552,16 +7539,18 @@ export function createRequestListingModal(opts = {}) {
   }
 
   function syncRequestListingContextAvailability() {
+    const cards = requestListingGeneratedContextCards();
+    const totalCount = cards.length || REQUEST_LISTING_CONTEXT_LIMIT;
+    const selectedCount = selectedContextSet.size;
     const readyText = translatedOrFallback('modal.requestListing.contexts.generated.empty', 'Generated from country, city, and SEO & discovery choices.');
-    const selectedText = translatedOrFallback('modal.requestListing.contexts.generated.selected', 'Generated routes selected. Tap to review or remove.');
+    const selectedText = `${selectedCount}/${totalCount} ${translatedOrFallback('modal.requestListing.contexts.generated.selectedCount', 'generated routes selected. Tap to review or remove.')}`;
     const contextSectionState = modal.querySelector('#rl-context-section-state');
-    const contextSummaryText = modal.querySelector('#rl-context-summary-text');
-    const stateText = selectedContextSet.size ? selectedText : readyText;
+    const stateText = selectedCount ? selectedText : readyText;
 
     if (rlContextSection) {
       rlContextSection.setAttribute('aria-disabled', 'false');
-      rlContextSection.classList.toggle('is-complete', selectedContextSet.size > 0);
-      rlContextSection.classList.toggle('has-value', selectedContextSet.size > 0);
+      rlContextSection.classList.toggle('is-complete', selectedCount > 0);
+      rlContextSection.classList.toggle('has-value', selectedCount > 0);
     }
 
     if (contextSectionState) contextSectionState.textContent = stateText;
@@ -7571,12 +7560,12 @@ export function createRequestListingModal(opts = {}) {
       rlOpenContexts.setAttribute('aria-disabled', 'false');
       rlOpenContexts.title = '';
     }
-
-    if (contextSummaryText) contextSummaryText.textContent = stateText;
   }
   
-  rlContextSection?.querySelector('summary')?.addEventListener('click', () => {
-    syncRequestListingContextAvailability();
+  rlContextSection?.querySelector('summary')?.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    openRequestListingContextsModal();
   });
   
   // Context availability helpers are scoped inside createRequestListingModal().
@@ -7936,6 +7925,7 @@ export function createRequestListingModal(opts = {}) {
 
       const countEl = tagsModal.querySelector('#request-listing-tags-count');
       const selectedEl = tagsModal.querySelector('#request-listing-tags-selected');
+      const checkEl = tagsModal.querySelector('#request-listing-tags-check');
       const tagItems = requestListingSelectedTagItems();
       const emojiSummary = tagItems.map((tag) => tag.emoji).join(' ');
 
@@ -7945,6 +7935,7 @@ export function createRequestListingModal(opts = {}) {
           ? emojiSummary
           : translatedOrFallback('modal.requestListing.tags.summary.empty', 'No tags selected');
       }
+      checkEl?.classList.toggle('is-active', tagItems.length > 0);
     };
 
     const renderTagSuggestions = (container = null, tagsModal = null) => {
@@ -8040,6 +8031,7 @@ export function createRequestListingModal(opts = {}) {
           <div class="request-tags-modal-status">
             <strong id="request-listing-tags-count">0/${REQUEST_LISTING_TAG_LIMIT}</strong>
             <span id="request-listing-tags-selected">${translatedOrFallback('modal.requestListing.tags.summary.empty', 'No tags selected')}</span>
+            <span id="request-listing-tags-check" class="request-context-done" aria-hidden="true">✓</span>
           </div>
           <p class="modal-help-text request-tags-modal-help">${translatedOrFallback('modal.requestListing.tags.help', 'Choose up to 5 useful tags that can enhance the visibility of your business. Tags are business-declared attributes, not NaviGen certifications.')}</p>
           <div id="request-listing-tags-modal-list" class="request-tags-modal-list"></div>

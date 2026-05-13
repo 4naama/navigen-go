@@ -1833,7 +1833,7 @@
   "owner.edit.field.navigationPin.help": "Used for LPM directions and map display. It does not change the public URL or location identity.",
   "owner.edit.navigationPin.invalid": "Use a valid latitude, longitude pair.",
   "owner.edit.navigationPin.kept": "We kept the last valid map position. You can adjust the public navigation pin after publishing.",
-  "modal.requestListing.discovery.comboHelp": "Choose up to 3 ways customers may look for this business.",
+  "modal.requestListing.discovery.comboHelp": "Choose up to 3 ways customers may look for this business. One is enough to start.",
   "modal.requestListing.discovery.combo1.group": "Combo 1 group",
   "modal.requestListing.discovery.combo1.subgroup": "Combo 1 subgroup",
   "modal.requestListing.discovery.combo2.group": "Combo 2 group",
@@ -1849,5 +1849,6 @@
   "modal.requestListing.contexts.generated.none.title": "No generated routes yet",
   "modal.requestListing.contexts.generated.none.desc": "Complete Business Information and at least one SEO & discovery combo first.",
   "modal.requestListing.contexts.scope.country": "Country-level",
-  "modal.requestListing.contexts.scope.city": "City-level"
+  "modal.requestListing.contexts.scope.city": "City-level",
+  "modal.requestListing.contexts.generated.selectedCount": "generated routes selected. Tap to review or remove."
 }

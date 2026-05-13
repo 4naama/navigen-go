@@ -1833,7 +1833,7 @@
   "owner.edit.field.navigationPin.help": "Utilizzato per indicazioni LPM e visualizzazione sulla mappa. Non modifica l’URL pubblico né l’identità della posizione.",
   "owner.edit.navigationPin.invalid": "Usa una coppia valida di latitudine e longitudine.",
   "owner.edit.navigationPin.kept": "Abbiamo mantenuto l’ultima posizione valida sulla mappa. Puoi modificare il pin di navigazione pubblico dopo la pubblicazione.",
-  "modal.requestListing.discovery.comboHelp": "Scegli fino a 3 modi in cui i clienti potrebbero cercare questa attività.",
+  "modal.requestListing.discovery.comboHelp": "Scegli fino a 3 modi in cui i clienti potrebbero cercare questa attività. Uno è sufficiente per iniziare.",
   "modal.requestListing.discovery.combo1.group": "Gruppo combo 1",
   "modal.requestListing.discovery.combo1.subgroup": "Sottogruppo combo 1",
   "modal.requestListing.discovery.combo2.group": "Gruppo combo 2",
@@ -1849,5 +1849,6 @@
   "modal.requestListing.contexts.generated.none.title": "Nessun percorso generato al momento",
   "modal.requestListing.contexts.generated.none.desc": "Completa prima le Informazioni aziendali e almeno una combinazione SEO e scoperta.",
   "modal.requestListing.contexts.scope.country": "Livello paese",
-  "modal.requestListing.contexts.scope.city": "Livello città"
+  "modal.requestListing.contexts.scope.city": "Livello città",
+  "modal.requestListing.contexts.generated.selectedCount": "Percorsi generati selezionati. Tocca per controllare o rimuovere."
 }
