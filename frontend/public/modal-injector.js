@@ -7235,6 +7235,10 @@ export function createRequestListingModal(opts = {}) {
   function getRequestListingContextLabel(key) {
     const cleanKey = String(key || '').trim();
     if (!cleanKey) return '';
+
+    const generatedLabel = requestListingGeneratedContextLabel(cleanKey);
+    if (generatedLabel) return generatedLabel;
+
     return p8ContextLabel(requestListingContextIndex.get(cleanKey) || { key: cleanKey, titles: { en: cleanKey } });
   }
 
@@ -7248,6 +7252,48 @@ export function createRequestListingModal(opts = {}) {
       .trim();
   }
 
+  function requestListingGeneratedContextKey(scope, geo, combo) {
+    const cleanScope = String(scope || '').trim();
+    const country = requestListingSlugPart(geo?.countryName || geo?.countryCode);
+    const city = requestListingSlugPart(geo?.city);
+    const group = requestListingSlugPart(String(combo?.groupKey || '').replace(/^group\./, 'group-'));
+    const subgroup = requestListingSlugPart(String(combo?.subgroupKey || '').replace(/^sub\./, 'sub-'));
+
+    if (!country || !group || !subgroup) return '';
+    if (cleanScope === 'country') return `ctx.country.${country}.${group}.${subgroup}`;
+    if (cleanScope === 'city' && city) return `ctx.city.${country}.${city}.${group}.${subgroup}`;
+    return '';
+  }
+
+  function isGeneratedRequestListingContextKey(value) {
+    const key = String(value || '').trim();
+    return /^ctx\.country\.[a-z0-9-]+\.group-[a-z0-9-]+\.sub-[a-z0-9-]+$/i.test(key)
+      || /^ctx\.city\.[a-z0-9-]+\.[a-z0-9-]+\.group-[a-z0-9-]+\.sub-[a-z0-9-]+$/i.test(key);
+  }
+
+  function requestListingGeneratedContextLabel(key) {
+    const parts = String(key || '').trim().split('.').filter(Boolean);
+    if (parts[0] !== 'ctx') return '';
+
+    const scope = parts[1] || '';
+    const country = parts[2] || '';
+    const city = scope === 'city' ? (parts[3] || '') : '';
+    const group = scope === 'city' ? (parts[4] || '') : (parts[3] || '');
+    const subgroup = scope === 'city' ? (parts[5] || '') : (parts[4] || '');
+
+    if (!country || !group || !subgroup) return '';
+
+    const geoLabel = [
+      country.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' '),
+      city ? city.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ') : ''
+    ].filter(Boolean).join(' · ');
+
+    const groupLabel = group.replace(/^group-/, '').split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+    const subgroupLabel = subgroup.replace(/^sub-/, '').split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+
+    return `${geoLabel} · ${groupLabel} / ${subgroupLabel}`;
+  }
+  
   function requestListingSelectText(el) {
     return String(el?.selectedOptions?.[0]?.textContent || '').trim();
   }
@@ -7377,23 +7423,13 @@ export function createRequestListingModal(opts = {}) {
         if (!scope.label) return;
         if (scope.scope === 'city' && !geo.citySlug) return;
 
-        const match = requestListingContextRows
-          .map((row) => ({
-            row,
-            score: requestListingContextRowMatchesGeo(row, geo, scope.scope)
-              ? requestListingContextComboScore(row, combo)
-              : 0
-          }))
-          .filter((entry) => entry.score > 0)
-          .sort((a, b) => b.score - a.score || getRequestListingContextLabel(a.row?.key).localeCompare(getRequestListingContextLabel(b.row?.key), undefined, { sensitivity: 'base' }))[0]?.row;
-
-        const key = String(match?.key || '').trim();
+        const key = requestListingGeneratedContextKey(scope.scope, geo, combo);
         if (!key || seen.has(key)) return;
 
         seen.add(key);
         cards.push({
           key,
-          label: getRequestListingContextLabel(key),
+          label: requestListingGeneratedContextLabel(key),
           comboLabel: `${combo.groupText} / ${combo.subgroupText}`,
           scopeLabel: scope.scopeText,
           geoLabel: scope.label
@@ -8087,7 +8123,7 @@ export function createRequestListingModal(opts = {}) {
     requestListingContextIndex = new Map(
       requestListingContextRows.map((row) => [String(row?.key || '').trim(), row])
     );
-    setRequestListingContexts(Array.from(selectedContextSet).filter((key) => requestListingContextIndex.has(key)));
+    setRequestListingContexts(Array.from(selectedContextSet).filter((key) => requestListingContextIndex.has(key) || isGeneratedRequestListingContextKey(key)));
     syncGeneratedRequestListingContexts();
 
     if (rlContexts) {
@@ -8128,7 +8164,7 @@ export function createRequestListingModal(opts = {}) {
 
     const contextVals = Array.from(selectedContextSet)
       .map((value) => String(value || '').trim())
-      .filter((value) => value && requestListingContextIndex.has(value));
+      .filter((value) => value && (requestListingContextIndex.has(value) || isGeneratedRequestListingContextKey(value)));
     const tagVals = parseTagValues(modal.querySelector('#rl-tags')?.value || '');
     requestListingMediaSyncHiddenInputs();
     const cover = String(modal.querySelector('#rl-cover')?.value || '').trim();

@@ -1470,6 +1470,66 @@ function allowedContextKeysFromBusinessTaxonomy(projection: any): Set<string> {
   return out;
 }
 
+type GeneratedContextParts = {
+  scope: "country" | "city";
+  countrySlug: string;
+  citySlug: string;
+  groupKey: string;
+  subgroupKey: string;
+};
+
+function parseGeneratedContextKey(key: string): GeneratedContextParts | null {
+  const parts = String(key || "").trim().split(".").filter(Boolean);
+  if (parts[0] !== "ctx") return null;
+
+  const scope = parts[1];
+  if (scope !== "country" && scope !== "city") return null;
+
+  const countrySlug = parts[2] || "";
+  const citySlug = scope === "city" ? (parts[3] || "") : "";
+  const groupPart = scope === "city" ? (parts[4] || "") : (parts[3] || "");
+  const subgroupPart = scope === "city" ? (parts[5] || "") : (parts[4] || "");
+
+  if (!/^[a-z0-9-]+$/.test(countrySlug)) return null;
+  if (scope === "city" && !/^[a-z0-9-]+$/.test(citySlug)) return null;
+  if (!/^group-[a-z0-9-]+$/.test(groupPart)) return null;
+  if (!/^sub-[a-z0-9-]+$/.test(subgroupPart)) return null;
+
+  return {
+    scope,
+    countrySlug,
+    citySlug,
+    groupKey: `group.${groupPart.slice("group-".length)}`,
+    subgroupKey: `sub.${subgroupPart.slice("sub-".length)}`
+  };
+}
+
+function generatedContextAllowedCombos(profile: any): Set<string> {
+  const out = new Set<string>();
+  const primaryGroup = String(profile?.groupKey || "").trim();
+  const primarySubgroup = String(profile?.subgroupKey || "").trim();
+
+  if (primaryGroup && primarySubgroup) {
+    out.add(`${primaryGroup}\u0000${primarySubgroup}`);
+  }
+
+  for (const combo of Array.isArray(profile?.classificationCombos) ? profile.classificationCombos : []) {
+    const groupKey = String(combo?.groupKey || "").trim();
+    const subgroupKey = String(combo?.subgroupKey || "").trim();
+    if (groupKey && subgroupKey) out.add(`${groupKey}\u0000${subgroupKey}`);
+  }
+
+  return out;
+}
+
+function isGeneratedContextAllowedForProfile(key: string, profile: any): boolean {
+  const parsed = parseGeneratedContextKey(key);
+  if (!parsed) return false;
+
+  const allowedCombos = generatedContextAllowedCombos(profile);
+  return allowedCombos.has(`${parsed.groupKey}\u0000${parsed.subgroupKey}`);
+}
+
 async function validateClassificationSelection(env: Env, profile: any): Promise<string | null> {
   const groupKey = String(profile?.groupKey || "").trim();
   const subgroupKey = String(profile?.subgroupKey || "").trim();
@@ -1491,7 +1551,9 @@ async function validateClassificationSelection(env: Env, profile: any): Promise<
 
   const contexts = allowedContextKeysFromBusinessTaxonomy(taxonomy);
   for (const ctx of contextVals) {
-    if (!contexts.has(ctx)) return "invalid_context";
+    if (contexts.has(ctx)) continue;
+    if (isGeneratedContextAllowedForProfile(ctx, profile)) continue;
+    return "invalid_context";
   }
 
   return null;
