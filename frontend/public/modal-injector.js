@@ -3348,7 +3348,7 @@ function createLocationDraftPublishSetupModal(draftMeta = {}, opts = {}) {
       <div class="modal-form-stack">
         <div style="text-align:left; line-height:1.35;">
           <strong>${(typeof t === 'function' && t('locationDraft.publishSetup.publishTitle')) || 'Continue when you are ready to publish'}</strong><br>
-          <small>${(typeof t === 'function' && t('locationDraft.publishSetup.publishDesc')) || 'The paid step sets up publish entitlement. Promotion remains optional after that.'}</small>
+          <small>${(typeof t === 'function' && t('locationDraft.publishSetup.savedDesc')) || 'The next step is publish and requires payment.'}</small>
         </div>
 
         <div class="modal-actions">
@@ -6787,6 +6787,7 @@ export function createRequestListingModal(opts = {}) {
 
     const count = urls.length;
     rlMediaSection?.classList.toggle('has-value', count > 0);
+    rlMediaSection?.classList.toggle('is-complete', count > 0);
     if (rlMediaChipState) {
       rlMediaChipState.textContent = '';
     }
@@ -8614,10 +8615,9 @@ function getModalHeaderHelpSpec(target) {
       return {
         title: _ownerText('modal.help.title', 'How it works'),
         bodyLines: [
-          _ownerText('locationDraft.publishSetup.savedTitle', 'Your profile draft is private and saved.'),          
-          _ownerText('locationDraft.publishSetup.savedDesc', 'The next step is publish and requires payment.'),
-          _ownerText('locationDraft.publishSetup.publishDesc', 'The paid step sets up publish entitlement. Promotion remains optional after that.'),
-          'Changes are saved automatically while you work.'
+          _ownerText('locationDraft.publishSetup.savedTitle', 'Your profile draft is private and saved.'),
+          _ownerText('locationDraft.publishSetup.planUpgradeDesc', 'If adding locations requires a larger plan, NaviGen will show the change before checkout so you can decide.'),
+          _ownerText('locationDraft.publishSetup.savedDesc', 'The next step is publish and requires payment.')
         ].map(s => String(s || '').trim()).filter(Boolean)
       };
     }
@@ -11269,6 +11269,31 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   if (!locName && p8Draft) locName = String(p8Draft.name || p8Draft.displayName || '').trim();
   if (!locName) locName = p8Draft ? 'Profile draft' : String(displaySlug || '').trim(); // last-resort fallback
 
+  const publicLocationId = (() => {
+    const direct = String(p8Draft?.locationID || p8Draft?.slug || '').trim();
+    if (direct && !isUlid(direct)) return direct;
+    if (displaySlug && !isUlid(displaySlug)) return displaySlug;
+
+    const namePart = String(locName || p8DraftLocationName(p8Draft || draft || {}) || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 48);
+
+    const coordText = p8DraftCoordString(p8Draft?.coord || draft?.coord || prefillFrom?.coord);
+    const coordParts = coordText.split(/[,\s;]+/).map((part) => part.trim()).filter(Boolean);
+    const lat = Number(coordParts[0]);
+    const lng = Number(coordParts[1]);
+
+    if (!namePart || !Number.isFinite(lat) || !Number.isFinite(lng)) return '';
+
+    const composite = `${Math.round(Math.abs(lat) * 1e6)}${Math.round(Math.abs(lng) * 1e6)}`;
+    const suffix = composite.slice(-4).padStart(4, '0');
+    return `${namePart}-${suffix}`;
+  })();
+  
   let requestedUlid = '';
   try {
     const st = new URL('/api/status', location.origin);
@@ -11411,9 +11436,9 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
             </span>
           </div>
           <div class="cm-chip-row">
-            <span class="cm-chip-k">${translatedOrFallback('campaign.ui.locationId', 'Location ID')}</span>            
-            <span class="cm-chip-v" title="${displaySlug}">
-              ${displaySlug}
+            <span class="cm-chip-k">${translatedOrFallback('campaign.ui.locationId', 'Location ID')}</span>
+            <span class="cm-chip-v" title="${publicLocationId || translatedOrFallback('locationDraft.locationId.pending', 'Created at publish')}">
+              ${publicLocationId || translatedOrFallback('locationDraft.locationId.pending', 'Created at publish')}
             </span>
           </div>
         </div>
@@ -12116,7 +12141,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
     if (!multiScopeEnabled()) scopeSelect.disabled = true;
 
     const labels = {
-      plan: tSafe('campaign.plan.choose.title', 'Choose a plan which covers your needs.'),
+      plan: tSafe('campaign.plan.payment.title', 'Payment plan'),
       planMode: tSafe('campaign.plan.mode.label', 'Plan mode'),
       campaignKey: 'Campaign key',
       campaignName: 'Campaign name',
@@ -12213,7 +12238,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
     planStateNote.style.display = planStateNote.textContent ? '' : 'none';
 
     planSummaryLabel.innerHTML = `
-      <strong class="cm-section-chip-title">${tSafe('campaign.plan.choose.title', 'Choose a plan which covers your needs.')}</strong>
+      <strong class="cm-section-chip-title">${labels.plan}</strong>
     `;
 
     const suggestedUpgradeTitle = currentPlanTier === 'standard'
@@ -12240,7 +12265,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
 
       planSummaryLabel.innerHTML = selectedPlan
         ? `<strong class="cm-section-chip-title">${selectedPlan.title} · €${selectedPlan.priceEur} · ${selectedPlan.capacityText}</strong>`
-        : `<strong class="cm-section-chip-title">${tSafe('campaign.plan.choose.title', 'Choose a plan which covers your needs.')}</strong>`;
+        : `<strong class="cm-section-chip-title">${labels.plan}</strong>`;
 
       planChips.querySelectorAll('.campaign-funding-chip').forEach((node) => {
         const code = String(node.getAttribute('data-plan-code') || '').trim();
@@ -12314,6 +12339,13 @@ function campaignPlanModeRequiresPromoQr(planMode) {
     refreshScopeUi();
 
     const planModeField = field(labels.planMode, planModeSelect, { required: true });
+    const planModeHelp = document.createElement('div');
+    planModeHelp.className = 'campaign-inline-note';
+    planModeHelp.textContent = tSafe(
+      'campaign.plan.setup.help',
+      'Select Campaign with Promo QR if you are running a promo campaign with QR redemption, or Managed presence if you only want to publish and manage the profile.'
+    );    
+    
     const startDateField = field(labels.startDate, startDate, { required: true });
     const endDateField = field(labels.endDate, endDate, { required: true });
     const campaignNameField = field(labels.campaignName, campaignName);
@@ -12327,7 +12359,8 @@ function campaignPlanModeRequiresPromoQr(planMode) {
     const utmMediumField = field(labels.utmMedium, utmMedium);
     const utmCampaignField = field(labels.utmCampaign, utmCampaign);
 
-    form.appendChild(planModeField);
+    form.appendChild(planModeHelp);
+    form.appendChild(planModeField);    
     form.appendChild(scopeField);
     form.appendChild(startDateField);
     form.appendChild(endDateField);
@@ -12400,7 +12433,6 @@ function campaignPlanModeRequiresPromoQr(planMode) {
     setupSummaryLabel.className = 'cm-chip-face-label cm-section-chip-label';
     setupSummaryLabel.innerHTML = `
       <strong class="cm-section-chip-title">${tSafe('campaign.ui.setupChip.title', 'Plan setup')}</strong>
-      <small class="cm-section-chip-summary">${tSafe('campaign.ui.setupChip.desc', 'Select Plan mode and coverage. Promo QR fields are required only for Campaign with Promo QR.')}</small>
     `;
 
     const setupSummaryBadge = document.createElement('span');

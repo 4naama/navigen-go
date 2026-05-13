@@ -7606,8 +7606,8 @@ body.high-contrast #request-listing-tags-modal .request-chip.is-selected{
 }
 
 #request-listing-modal #rl-discovery-section.has-value .request-section-chip-face{
-  background:#f8f8f8;
-  border-color:#d6e1ec;
+  background:#e3efff;
+  border-bottom-color:#bfd3f6;
 }
 
 #request-listing-modal .request-tags-open{
@@ -7731,4 +7731,17 @@ body.high-contrast #request-listing-tags-modal .request-chip.is-selected{
 #request-listing-modal #rl-description-section textarea.input:not(:placeholder-shown){
   background:#fff;
   border-color:#d9e4ee;
+}
+
+.cm-location-chip .cm-chip-row{
+  flex-wrap:nowrap;
+}
+
+.cm-location-chip .cm-chip-k{
+  flex:0 0 auto;
+}
+
+.cm-location-chip .cm-chip-v{
+  flex:1 1 auto;
+  min-width:0;
 }
