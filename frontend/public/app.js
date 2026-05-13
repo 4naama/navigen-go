@@ -3824,7 +3824,7 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
 
   if (!shouldResume) return;
 
-  let pending = null;
+  let pending = (resumeDraft && typeof resumeDraft === 'object') ? resumeDraft : null;
   try {
     const raw = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDraft') || 'null');
     if (raw && typeof raw === 'object') pending = raw;
@@ -4029,6 +4029,29 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
       draftSessionId: String(hydratedDraft?.draftSessionId || pending?.draftSessionId || resumeDraft?.draftSessionId || draftSessionId || '').trim()
     };
 
+    try {
+      const key = 'navigen.p8.pendingLocationDrafts';
+      const drafts = JSON.parse(localStorage.getItem(key) || '[]');
+      const list = Array.isArray(drafts) ? drafts : [];
+      const idx = list.findIndex((draft) =>
+        String(draft?.draftULID || '').trim() === String(nextDraft.draftULID || '').trim() &&
+        String(draft?.draftSessionId || '').trim() === String(nextDraft.draftSessionId || '').trim()
+      );
+
+      const savedDraft = {
+        ...(idx >= 0 && list[idx] && typeof list[idx] === 'object' ? list[idx] : {}),
+        ...nextDraft,
+        createdAt: Number((idx >= 0 ? list[idx]?.createdAt : nextDraft?.createdAt) || Date.now()),
+        updatedAt: Date.now()
+      };
+
+      if (idx >= 0) list[idx] = savedDraft;
+      else list.unshift(savedDraft);
+
+      localStorage.setItem(key, JSON.stringify(list.slice(0, 3)));
+      localStorage.removeItem('navigen.p8.pendingLocationDraft');
+    } catch {}
+    
     await showCampaignManagementModal(String(nextDraft.draftULID || draftULID).trim(), {
       guest,
       p8Draft: nextDraft,
