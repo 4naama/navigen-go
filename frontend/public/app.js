@@ -3824,7 +3824,7 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
 
   if (!shouldResume) return;
 
-  let pending = (resumeDraft && typeof resumeDraft === 'object') ? resumeDraft : null;
+  let pending = null;
   try {
     const raw = JSON.parse(localStorage.getItem('navigen.p8.pendingLocationDraft') || 'null');
     if (raw && typeof raw === 'object') pending = raw;

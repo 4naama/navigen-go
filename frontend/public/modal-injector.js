@@ -4407,10 +4407,22 @@ function showProfileDraftsModal(opts = {}) {
       discardBtn.title = translatedOrFallback('root.bo.drafts.discard', 'Discard draft');
       discardBtn.textContent = '🗑️';
 
-      const openDraft = (ev = null) => {
+      const openDraft = async (ev = null) => {
         ev?.preventDefault?.();
         ev?.stopPropagation?.();
         hideModal(id);
+
+        const draftULID = String(draft?.draftULID || '').trim();
+        const draftSessionId = String(draft?.draftSessionId || '').trim();
+        if (draftULID && draftSessionId && p8DraftHasPublishSetupState(draft)) {
+          await showCampaignManagementModal(draftULID, {
+            guest: true,
+            p8Draft: draft,
+            preferEmptyDraft: true
+          });
+          return;
+        }
+
         showRequestListingModal({ prefill: draft, returnTo: opts?.returnTo });
       };
 
@@ -5534,13 +5546,17 @@ function p8DraftTitle(draft) {
     translatedOrFallback('root.bo.drafts.card.title', 'Continue draft');
 }
 
-function p8DraftSubtitle(draft) {
-  const parts = [p8DraftModeLabel(draft), p8DraftUpdatedLabel(draft)]
-    .map((value) => String(value || '').trim())
-    .filter(Boolean);
-  const placeId = String(draft?.googlePlaceId || '').trim();
-  if (placeId && !p8DraftLocationName(draft)) parts.unshift(`place_id: ${placeId}`);
-  return parts.join(' · ') || translatedOrFallback('root.bo.drafts.card.desc', 'Resume recent work on this device.');
+function p8DraftHasPublishSetupState(draft) {
+  const planCode = String(draft?.planCode || '').trim();
+  const planMode = String(draft?.planMode || '').trim();
+  const campaignPreset = String(draft?.campaignPreset || '').trim();
+  const campaignScope = String(draft?.campaignScope || '').trim();
+  const selectedLocationULIDs = Array.isArray(draft?.selectedLocationULIDs)
+    ? draft.selectedLocationULIDs.map((value) => String(value || '').trim()).filter(Boolean)
+    : [];
+  const campaignDraft = draft?.campaignDraft && typeof draft.campaignDraft === 'object';
+
+  return !!(planCode || planMode || campaignPreset || campaignScope || selectedLocationULIDs.length || campaignDraft);
 }
 
 function p8LocalDraftMetaFromServer(serverDraft = {}, baseMeta = {}) {
@@ -8347,6 +8363,7 @@ export function createRequestListingModal(opts = {}) {
     }
 
     const savedDraft = {
+      ...(prefill && typeof prefill === 'object' ? prefill : {}),
       draftULID,
       draftSessionId,
       mode: String(prefill?.mode || '').trim() || (String(prefill?.googlePlaceId || '').trim() ? 'google' : 'manual'),
@@ -8425,22 +8442,22 @@ export function showLocationDraftNextStepsModal(draftMeta = {}, opts = {}) {
 
   const modal = injectModal({
     id,
-    title: t('modal.requestListing.success') || 'Draft saved',
+    title: translatedOrFallback('modal.requestListing.success', 'Draft saved'),
     layout: 'menu',
     onClose: (ev) => { closeNextSteps(ev); },
     bodyHTML: `
       <div class="modal-form-stack">
         <div style="text-align:left; line-height:1.35;">
-          <strong>${t('modal.requestListing.next.publishTitle') || 'Continue when you are ready to publish business location'}</strong>
+          <strong>${translatedOrFallback('modal.requestListing.next.publishTitle', 'Continue when you are ready to publish business location')}</strong>
         </div>
 
         <div class="modal-actions">
           <button id="request-draft-next-publish" type="button" class="modal-body-button">
-            ${t('modal.requestListing.next.publishCta') || 'Continue to publish'}
+            ${translatedOrFallback('modal.requestListing.next.publishCta', 'Continue to publish')}
           </button>
 
           <button id="request-draft-next-later" type="button" class="modal-body-button">
-            ${t('modal.requestListing.next.resumeCta') || 'Resume later'}
+            ${translatedOrFallback('modal.requestListing.next.resumeCta', 'Resume later')}
           </button>
         </div>
       </div>
@@ -8457,25 +8474,16 @@ export function showLocationDraftNextStepsModal(draftMeta = {}, opts = {}) {
     hideModal(id);
 
     if (!draftULID || !draftSessionId) {
-      showToast(t('modal.requestListing.error') || 'Could not create draft.', 2400);
+      showToast(translatedOrFallback('modal.requestListing.error', 'Could not create draft.'), 2400);
       if (shouldReturnToSelectLocation) showSelectLocationModal();
       return;
     }
 
-    let guest = true;
-    try {
-      const rr = await fetch('/api/owner/campaigns', {
-        cache: 'no-store',
-        credentials: 'include'
-      });
-      guest = !rr.ok;
-    } catch {
-      guest = true;
-    }
+    const latestDraft = findPendingLocationDraftMatch(draftMeta) || draftMeta;
 
     await showCampaignManagementModal(draftULID, {
-      guest,
-      p8Draft: draftMeta,
+      guest: true,
+      p8Draft: latestDraft,
       preferEmptyDraft: true
     });
   });
@@ -12307,6 +12315,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
         syncPresetUi();
         syncLocationRoster();
         updateActivateState();
+        persistPublishSetupDraftState();
       });
       planChips.appendChild(btn);
     });
@@ -12335,6 +12344,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
       selectedPlanMode = campaignPlanModeFromLegacy(planModeSelect.value);
       syncPresetUi();
       updateActivateState();
+      persistPublishSetupDraftState();
     });
 
     const promoFieldsWrap = document.createElement('div');
@@ -12554,6 +12564,7 @@ function campaignPlanModeRequiresPromoQr(planMode) {
           if (cb.checked) selectedSet.add(id);
           else selectedSet.delete(id);
           updateActivateState();
+          persistPublishSetupDraftState();
         });
 
         const text = document.createElement('span');
@@ -12663,10 +12674,60 @@ function campaignPlanModeRequiresPromoQr(planMode) {
       btnCheckout.disabled = !(planComplete && setupComplete) || btnCheckout.classList.contains('is-busy');
     }
 
+    const persistPublishSetupDraftState = () => {
+      if (!(p8Draft && p8Draft.draftULID && p8Draft.draftSessionId)) return null;
+
+      const d = buildDraft();
+      const draftULID = String(p8Draft.draftULID || '').trim();
+      const draftSessionId = String(p8Draft.draftSessionId || '').trim();
+      const existingDraft = findPendingLocationDraftMatch(p8Draft) || readPendingLocationDraft() || {};
+      const requiresPromoQr = campaignPlanModeRequiresPromoQr(d.planMode);
+
+      const nextDraft = {
+        ...(existingDraft && typeof existingDraft === 'object' ? existingDraft : {}),
+        ...(p8Draft && typeof p8Draft === 'object' ? p8Draft : {}),
+        ...d,
+        draftULID,
+        draftSessionId,
+        planCode: selectedPlanCode,
+        planMode: d.planMode,
+        campaignPreset: legacyCampaignPresetFromPlanMode(d.planMode),
+        campaignScope: d.campaignScope,
+        selectedLocationULIDs: Array.isArray(d.selectedLocationULIDs) ? d.selectedLocationULIDs : [],
+        campaignDraft: requiresPromoQr ? d : ((existingDraft && typeof existingDraft === 'object') ? existingDraft.campaignDraft : null),
+        updatedAt: Date.now()
+      };
+
+      savePendingLocationDraft(nextDraft);
+      return nextDraft;
+    };
+
+    [
+      campaignKey,
+      startDate,
+      endDate,
+      campaignName,
+      productName,
+      campaignType,
+      targetChannels,
+      offerType,
+      discountKind,
+      discountValue,
+      eligibilityType,
+      eligibilityNotes,
+      utmSource,
+      utmMedium,
+      utmCampaign
+    ].forEach((control) => {
+      control.addEventListener('input', persistPublishSetupDraftState);
+      control.addEventListener('change', persistPublishSetupDraftState);
+    });
+    
     search.addEventListener('input', syncLocationRoster);
     scopeSelect.addEventListener('change', () => {
       syncLocationRoster();
       updateActivateState();
+      persistPublishSetupDraftState();
     });
     campaignKey.addEventListener('input', updateActivateState);
     startDate.addEventListener('input', updateActivateState);
