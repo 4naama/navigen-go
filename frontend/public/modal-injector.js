@@ -4345,6 +4345,34 @@ function showProfileDraftsModal(opts = {}) {
   const list = modal.querySelector('#profile-drafts-list');
   const limitNote = modal.querySelector('#profile-drafts-limit-note');
 
+  const draftSubtitle = (draft) => {
+    const mode = String(draft?.mode || '').trim().toLowerCase();
+    const placeId = String(draft?.googlePlaceId || '').trim();
+    const rawName = draft?.name || draft?.displayName || draft?.locationName || draft?.listedName || '';
+    const locationName = typeof rawName === 'string'
+      ? String(rawName || '').trim()
+      : (rawName && typeof rawName === 'object' ? String(rawName.en || rawName.hu || Object.values(rawName)[0] || '').trim() : '');
+
+    const modeLabel = (mode === 'google' || placeId)
+      ? translatedOrFallback('root.bo.drafts.google', 'Google path')
+      : translatedOrFallback('root.bo.drafts.manual', 'Manual path');
+
+    let updatedLabel = '';
+    const updatedAt = Number(draft?.updatedAt || draft?.createdAt || 0);
+    if (Number.isFinite(updatedAt) && updatedAt > 0) {
+      try {
+        updatedLabel = `${translatedOrFallback('root.bo.drafts.updated', 'Updated')} ${new Date(updatedAt).toLocaleDateString()}`;
+      } catch {}
+    }
+
+    const parts = [modeLabel, updatedLabel]
+      .map((value) => String(value || '').trim())
+      .filter(Boolean);
+
+    if (placeId && !locationName) parts.unshift(`place_id: ${placeId}`);
+    return parts.join(' · ') || translatedOrFallback('root.bo.drafts.card.desc', 'Resume recent work on this device.');
+  };
+  
   function renderDrafts() {
     const drafts = readPendingLocationDrafts();
     if (limitNote) limitNote.classList.toggle('hidden', opts?.limitReached !== true);
@@ -4382,7 +4410,7 @@ function showProfileDraftsModal(opts = {}) {
       strong.textContent = p8DraftTitle(draft);
 
       const small = document.createElement('small');
-      small.textContent = p8DraftSubtitle(draft);
+      small.textContent = draftSubtitle(draft);
 
       label.appendChild(strong);
       label.appendChild(document.createElement('br'));
