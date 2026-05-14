@@ -11196,7 +11196,7 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   if (!modal) {
     modal = injectModal({
       id,
-      title: (typeof t==='function' && t('campaign.ui.title')) || 'Campaign management',
+      title: translatedOrFallback('campaign.ui.title', 'Campaign management'),
       bodyHTML: `<div class="campaign-mgmt"></div>`,
       layout: 'menu'
     });
@@ -11249,8 +11249,8 @@ export async function showCampaignManagementModal(locationSlug, opts = {}) {
   const modalTitleNode = modal.querySelector('.modal-top-bar .modal-title, .modal-top-bar h1, .modal-top-bar h2');
   if (modalTitleNode) {
     modalTitleNode.textContent = p8Draft
-      ? ((typeof t === 'function' && t('locationDraft.commercial.title')) || 'Publish setup')
-      : ((typeof t === 'function' && t('campaign.ui.title')) || 'Campaign management');
+      ? translatedOrFallback('locationDraft.commercial.title', 'Publish setup')
+      : translatedOrFallback('campaign.ui.title', 'Campaign management');
   }
   syncModalHeaderHelp(modal);
   const draft = (opts && opts.preferEmptyDraft === true) ? (p8Draft || prefillFrom || null) : (listJ?.draft || p8Draft || prefillFrom || null);  
