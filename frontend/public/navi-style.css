@@ -7601,8 +7601,9 @@ body.high-contrast #request-listing-tags-modal .request-chip.is-selected{
 
 #request-listing-modal #rl-discovery-section .modal-form-grid{
   padding:10px;
+  border:1px solid #d9e4ee;
   border-radius:12px;
-  background:#fff8e6;
+  background:#fff;
 }
 
 #request-listing-modal #rl-discovery-section.has-value .request-section-chip-face{
@@ -7661,8 +7662,9 @@ body.high-contrast #request-listing-tags-modal .request-chip.is-selected{
   border-radius:12px;
 }
 
-#request-listing-modal #rl-discovery-section .modal-form-grid{
-  background:#f8fafc;
+#request-listing-modal #rl-discovery-section .modal-form-grid:focus-within{
+  border-color:#7aa7ff;
+  box-shadow:0 0 0 2px rgba(59,130,246,.12);
 }
 
 #request-listing-modal #rl-discovery-section .modal-form-grid select.input{
