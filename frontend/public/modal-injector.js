@@ -6653,6 +6653,27 @@ export function createRequestListingModal(opts = {}) {
       });
     });
   });
+
+  const requestListingCompletedBadgeText = () => translatedOrFallback('modal.requestListing.section.completed', 'Completed');
+
+  function syncRequestListingSectionBadgeTexts() {
+    requestListingSectionChips.forEach((section) => {
+      if (!(section instanceof HTMLElement)) return;
+
+      const badge = section.querySelector('.request-section-badge');
+      if (!(badge instanceof HTMLElement)) return;
+
+      if (!badge.dataset.defaultText) {
+        badge.dataset.defaultText = String(badge.textContent || '').trim();
+      }
+
+      badge.textContent = section.classList.contains('is-complete')
+        ? requestListingCompletedBadgeText()
+        : badge.dataset.defaultText;
+    });
+  }
+
+  syncRequestListingSectionBadgeTexts();
   
   const rlGroup = modal.querySelector('#rl-group');
   const rlSubgroup = modal.querySelector('#rl-subgroup');
@@ -6849,6 +6870,7 @@ export function createRequestListingModal(opts = {}) {
     if (rlMediaChipState) {
       rlMediaChipState.textContent = '';
     }
+    syncRequestListingSectionBadgeTexts();
   }
 
   function requestListingMediaRememberDraft(payload) {
@@ -7612,6 +7634,7 @@ export function createRequestListingModal(opts = {}) {
     }
 
     if (contextSectionState) contextSectionState.textContent = stateText;
+    syncRequestListingSectionBadgeTexts();
 
     if (rlOpenContexts) {
       rlOpenContexts.disabled = false;
@@ -7647,6 +7670,7 @@ export function createRequestListingModal(opts = {}) {
     
     rlDescriptionSection?.classList.toggle('has-value', !!value);
     rlDescriptionSection?.classList.toggle('is-complete', count >= 200);
+    syncRequestListingSectionBadgeTexts();
   }
 
   function syncRequestListingLinksChip() {
@@ -7659,6 +7683,7 @@ export function createRequestListingModal(opts = {}) {
 
     rlLinksSection?.classList.toggle('has-value', hasLink);
     rlLinksSection?.classList.toggle('is-complete', hasLink);
+    syncRequestListingSectionBadgeTexts();
   }
   
   function syncRequestListingRequiredChecks() {
@@ -7692,6 +7717,7 @@ export function createRequestListingModal(opts = {}) {
     rlContextSection?.classList.toggle('is-complete', contextComplete);
     rlContextSection?.classList.toggle('has-value', contextComplete);
     syncRequestListingDiscoverySummary();
+    syncRequestListingSectionBadgeTexts();
   }
   
   syncRequestListingTags();
