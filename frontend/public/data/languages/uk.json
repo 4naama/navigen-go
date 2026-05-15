@@ -1955,5 +1955,11 @@
   "partner.connect.refresh": "Оновити платіжну ідентичність",
   "partner.connect.start": "Розпочати підключення виплат",
   "partner.connect.statusRefreshed": "Статус платіжної ідентичності оновлено.",
-  "partner.connect.noUrl": "Stripe Connect не повернув URL для онбордингу."
+  "partner.connect.noUrl": "Stripe Connect не повернув URL для онбордингу.",
+  "partner.admin.payrunDry": "Тестовий запуск виплат",
+  "partner.admin.payrunExecute": "Виконати допустимі виплати",
+  "partner.admin.payrunDryDone": "Тестовий запуск виплат завершено.",
+  "partner.admin.payrunExecuteDone": "Виконання виплат завершено.",
+  "partner.admin.payrunConfirmPrompt": "Введіть PAY_ELIGIBLE_PARTNER_COMMISSIONS для запуску допустимих виплат",
+  "partner.admin.payrunCanceled": "Виконання виплат скасовано."
 }

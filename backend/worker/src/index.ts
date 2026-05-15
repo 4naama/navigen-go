@@ -4552,6 +4552,337 @@ async function handlePartnerConnectReturn(req: Request, env: Env): Promise<Respo
 
 // --- End Partner-10 Stripe Connect Express helpers
 
+// --- Partner-11 automated payout run helpers: admin-triggered transfer run, dry-run by default
+type PartnerPayRunItem = {
+  commissionId: string;
+  partnerId: string;
+  partnerLeadId: string;
+  status: PartnerCommissionStatus;
+  amountCents: number;
+  currency: string;
+  destination: string;
+  action: "eligible" | "paid" | "skipped";
+  reason: string;
+  transferId: string;
+};
+
+const PARTNER_PAYOUT_RUN_LIMIT = 100;
+
+function publicPartnerPayRunItem(item: PartnerPayRunItem): Record<string, unknown> {
+  return {
+    commissionId: item.commissionId,
+    partnerId: item.partnerId,
+    partnerLeadId: item.partnerLeadId,
+    status: item.status,
+    amountCents: item.amountCents,
+    currency: item.currency,
+    destination: item.destination ? `${item.destination.slice(0, 8)}…${item.destination.slice(-4)}` : "",
+    action: item.action,
+    reason: item.reason,
+    transferId: item.transferId
+  };
+}
+
+async function readAdminPayRunCommissions(env: Env, partnerId: string, limit: number): Promise<PartnerCommissionRecord[]> {
+  const cappedLimit = Math.max(1, Math.min(PARTNER_PAYOUT_RUN_LIMIT, Math.trunc(Number(limit || 50) || 50)));
+
+  if (partnerId) {
+    return (await listPartnerCommissions(env, partnerId)).slice(0, cappedLimit);
+  }
+
+  const page = await env.KV_STATUS.list({
+    prefix: "partner_commission:",
+    limit: Math.max(cappedLimit, 100)
+  });
+
+  const out: PartnerCommissionRecord[] = [];
+
+  for (const key of page.keys) {
+    const commissionId = String(key.name || "").replace(/^partner_commission:/, "").trim();
+    if (!commissionId.startsWith("pc_")) continue;
+
+    const commission = await readPartnerCommission(env, commissionId);
+    if (!commission) continue;
+
+    out.push(commission);
+    if (out.length >= cappedLimit) break;
+  }
+
+  return out;
+}
+
+async function refreshPartnerCommissionPayoutEligibility(
+  env: Env,
+  commission: PartnerCommissionRecord,
+  nowMs = Date.now()
+): Promise<{ commission: PartnerCommissionRecord; profile: PartnerProfileRecord | null; ready: boolean; reason: string }> {
+  if (commission.status === "paid") {
+    return { commission, profile: null, ready: false, reason: "already_paid" };
+  }
+
+  if (commission.status === "void" || commission.status === "adjusted") {
+    return { commission, profile: null, ready: false, reason: "not_payable_status" };
+  }
+
+  const profile = await readPartnerProfile(env, commission.partnerId);
+  if (!profile) {
+    return { commission, profile: null, ready: false, reason: "partner_not_found" };
+  }
+
+  const destination = String(profile.stripeConnectedAccountId || commission.stripeConnectedAccountId || "").trim();
+  const connectReady = profile.connectStatus === "complete" && !!destination;
+  const eligibleMs = Date.parse(String(commission.eligibleAt || ""));
+  const matured = Number.isFinite(eligibleMs) && eligibleMs <= nowMs;
+
+  let nextStatus: PartnerCommissionStatus = commission.status;
+
+  if (!connectReady) {
+    if (nextStatus === "pending" || nextStatus === "eligible") {
+      nextStatus = "pending_requires_connect";
+    }
+  } else {
+    if (nextStatus === "pending_requires_connect") {
+      nextStatus = "pending";
+    }
+
+    if (nextStatus === "pending" && matured) {
+      nextStatus = "eligible";
+    }
+  }
+
+  let nextCommission = commission;
+
+  if (
+    nextStatus !== commission.status ||
+    String(commission.stripeConnectedAccountId || "").trim() !== destination ||
+    commission.connectStatusAtCreation !== profile.connectStatus
+  ) {
+    nextCommission = {
+      ...commission,
+      status: nextStatus,
+      stripeConnectedAccountId: destination,
+      connectStatusAtCreation: profile.connectStatus,
+      updatedAt: new Date(nowMs).toISOString()
+    };
+
+    await writePartnerCommission(env, nextCommission);
+  }
+
+  if (!connectReady) {
+    return { commission: nextCommission, profile, ready: false, reason: "connect_not_complete" };
+  }
+
+  if (!matured) {
+    return { commission: nextCommission, profile, ready: false, reason: "not_eligible_yet" };
+  }
+
+  if (nextCommission.status !== "eligible") {
+    return { commission: nextCommission, profile, ready: false, reason: "not_eligible_status" };
+  }
+
+  if (String(nextCommission.transferId || "").trim()) {
+    return { commission: nextCommission, profile, ready: false, reason: "transfer_already_recorded" };
+  }
+
+  if (Math.trunc(Number(nextCommission.commissionAmountCents || 0)) <= 0) {
+    return { commission: nextCommission, profile, ready: false, reason: "non_positive_amount" };
+  }
+
+  return { commission: nextCommission, profile, ready: true, reason: "eligible" };
+}
+
+async function createPartnerCommissionStripeTransfer(
+  env: Env,
+  commission: PartnerCommissionRecord,
+  profile: PartnerProfileRecord
+): Promise<any> {
+  const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+  if (!sk) {
+    throw new Error("STRIPE_SECRET_KEY not set");
+  }
+
+  const destination = String(profile.stripeConnectedAccountId || commission.stripeConnectedAccountId || "").trim();
+  if (!destination) {
+    throw new Error("missing_connect_destination");
+  }
+
+  const amount = Math.trunc(Number(commission.commissionAmountCents || 0));
+  if (amount <= 0) {
+    throw new Error("invalid_transfer_amount");
+  }
+
+  const currency = String(commission.currency || "EUR").trim().toLowerCase() || "eur";
+  const form = new URLSearchParams();
+
+  form.set("amount", String(amount));
+  form.set("currency", currency);
+  form.set("destination", destination);
+  form.set("description", `NaviGen Partner commission ${commission.commissionId}`);
+
+  form.set("metadata[flow]", "partner_commission_payout");
+  form.set("metadata[partnerId]", commission.partnerId);
+  form.set("metadata[partnerLeadId]", commission.partnerLeadId);
+  form.set("metadata[partnerHandoffId]", commission.partnerHandoffId);
+  form.set("metadata[commissionId]", commission.commissionId);
+  form.set("metadata[paymentIntentId]", commission.paymentIntentId);
+  form.set("metadata[planSelectionId]", commission.planSelectionId);
+
+  const resp = await fetch("https://api.stripe.com/v1/transfers", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${sk}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Idempotency-Key": `partner_commission_${commission.commissionId}`
+    },
+    body: form.toString()
+  });
+
+  const text = await resp.text();
+  let out: any = null;
+  try { out = JSON.parse(text); } catch { out = null; }
+
+  if (!resp.ok || !out?.id) {
+    throw new Error(String(out?.error?.message || "Stripe transfer creation failed"));
+  }
+
+  return out;
+}
+
+async function handleAdminPartnerCommissionPayRun(req: Request, env: Env): Promise<Response> {
+  const authError = adminAuthError(req, env);
+  if (authError) return authError;
+
+  const body = await req.json().catch(() => ({})) as any;
+  const partnerId = sanitizePartnerLeadString(body?.partnerId, 100);
+  const limit = Math.max(1, Math.min(PARTNER_PAYOUT_RUN_LIMIT, Math.trunc(Number(body?.limit || 50) || 50)));
+  const executeRequested = body?.execute === true || body?.dryRun === false;
+  const dryRun = !executeRequested;
+  const confirm = String(body?.confirm || "").trim();
+
+  if (executeRequested && confirm !== "PAY_ELIGIBLE_PARTNER_COMMISSIONS") {
+    return json(
+      {
+        error: {
+          code: "partner_payout_confirmation_required",
+          message: "Explicit payout confirmation is required."
+        },
+        requiredConfirm: "PAY_ELIGIBLE_PARTNER_COMMISSIONS"
+      },
+      400,
+      adminNoStoreHeaders()
+    );
+  }
+
+  const commissions = await readAdminPayRunCommissions(env, partnerId, limit);
+  const items: PartnerPayRunItem[] = [];
+  let eligibleCount = 0;
+  let paidCount = 0;
+  let skippedCount = 0;
+
+  for (const commission of commissions) {
+    const refreshed = await refreshPartnerCommissionPayoutEligibility(env, commission);
+
+    if (!refreshed.ready || !refreshed.profile) {
+      skippedCount += 1;
+      items.push({
+        commissionId: refreshed.commission.commissionId,
+        partnerId: refreshed.commission.partnerId,
+        partnerLeadId: refreshed.commission.partnerLeadId,
+        status: refreshed.commission.status,
+        amountCents: refreshed.commission.commissionAmountCents,
+        currency: refreshed.commission.currency,
+        destination: "",
+        action: "skipped",
+        reason: refreshed.reason,
+        transferId: refreshed.commission.transferId
+      });
+      continue;
+    }
+
+    eligibleCount += 1;
+
+    const destination = String(refreshed.profile.stripeConnectedAccountId || refreshed.commission.stripeConnectedAccountId || "").trim();
+
+    if (dryRun) {
+      items.push({
+        commissionId: refreshed.commission.commissionId,
+        partnerId: refreshed.commission.partnerId,
+        partnerLeadId: refreshed.commission.partnerLeadId,
+        status: refreshed.commission.status,
+        amountCents: refreshed.commission.commissionAmountCents,
+        currency: refreshed.commission.currency,
+        destination,
+        action: "eligible",
+        reason: "dry_run",
+        transferId: refreshed.commission.transferId
+      });
+      continue;
+    }
+
+    try {
+      const transfer = await createPartnerCommissionStripeTransfer(env, refreshed.commission, refreshed.profile);
+      const nowIso = new Date().toISOString();
+      const paidCommission: PartnerCommissionRecord = {
+        ...refreshed.commission,
+        status: "paid",
+        paidAt: nowIso,
+        transferId: String(transfer?.id || "").trim(),
+        stripeConnectedAccountId: destination,
+        connectStatusAtCreation: refreshed.profile.connectStatus,
+        updatedAt: nowIso
+      };
+
+      await writePartnerCommission(env, paidCommission);
+      paidCount += 1;
+
+      items.push({
+        commissionId: paidCommission.commissionId,
+        partnerId: paidCommission.partnerId,
+        partnerLeadId: paidCommission.partnerLeadId,
+        status: paidCommission.status,
+        amountCents: paidCommission.commissionAmountCents,
+        currency: paidCommission.currency,
+        destination,
+        action: "paid",
+        reason: "transfer_created",
+        transferId: paidCommission.transferId
+      });
+    } catch (err: any) {
+      skippedCount += 1;
+      items.push({
+        commissionId: refreshed.commission.commissionId,
+        partnerId: refreshed.commission.partnerId,
+        partnerLeadId: refreshed.commission.partnerLeadId,
+        status: refreshed.commission.status,
+        amountCents: refreshed.commission.commissionAmountCents,
+        currency: refreshed.commission.currency,
+        destination,
+        action: "skipped",
+        reason: String(err?.message || err || "transfer_failed"),
+        transferId: refreshed.commission.transferId
+      });
+    }
+  }
+
+  return json(
+    {
+      ok: true,
+      dryRun,
+      executeRequested,
+      partnerId,
+      scanned: commissions.length,
+      eligible: eligibleCount,
+      paid: paidCount,
+      skipped: skippedCount,
+      items: items.map(publicPartnerPayRunItem)
+    },
+    200,
+    adminNoStoreHeaders()
+  );
+}
+
+// --- End Partner-11 automated payout run helpers
+
 function googleDraftIndexKey(dev: string, googlePlaceId: string): string {
   return `google_draft:${dev}:${googlePlaceId}`;
 }
@@ -8245,6 +8576,13 @@ export default {
       }
       
       // --- End Partner Stripe Connect Express routes
+
+      // --- Partner automated payout run: Partner-11 backend route
+      if (normPath === "/api/admin/partner-commissions/pay-run" && req.method === "POST") {
+        return await handleAdminPartnerCommissionPayRun(req, env);
+      }
+      
+      // --- End Partner automated payout run route
       
       // --- Owner location selector: query-first, capped, status-enriched BO search
       // GET /api/owner/location-options?q=...&limit=5

@@ -530,6 +530,8 @@ function renderPartnerAdminPlatform() {
 
       <div class="partner-actions-row">
         <button type="button" class="modal-body-button" data-partner-admin-action="refresh">${escapeHtml(text('partner.admin.refresh', 'Refresh partners'))}</button>
+        <button type="button" class="modal-body-button" data-partner-admin-action="payrun-dry">${escapeHtml(text('partner.admin.payrunDry', 'Dry-run payouts'))}</button>
+        <button type="button" class="modal-body-button" data-partner-admin-action="payrun-execute">${escapeHtml(text('partner.admin.payrunExecute', 'Run eligible payouts'))}</button>
         <button type="button" class="modal-body-button" data-partner-admin-action="reset-token">${escapeHtml(text('partner.admin.resetToken', 'Change admin token'))}</button>
       </div>
 
@@ -681,6 +683,44 @@ async function handlePartnerAdminAction(action) {
       adminState.token = '';
       ensureAdminToken();
       await loadPartnerAdminPlatform();
+      return;
+    }
+
+    if (type === 'payrun-dry') {
+      const run = await adminApi('/api/admin/partner-commissions/pay-run', {
+        method: 'POST',
+        body: {
+          dryRun: true,
+          limit: 50
+        }
+      });
+
+      adminState.message = text('partner.admin.payrunDryDone', 'Payout dry-run completed.') + ` eligible=${Number(run.eligible || 0)} skipped=${Number(run.skipped || 0)}`;
+      renderPartnerAdminPlatform();
+      return;
+    }
+
+    if (type === 'payrun-execute') {
+      const phrase = 'PAY_ELIGIBLE_PARTNER_COMMISSIONS';
+      const confirmed = String(window.prompt(text('partner.admin.payrunConfirmPrompt', 'Type PAY_ELIGIBLE_PARTNER_COMMISSIONS to run eligible payouts'), '') || '').trim();
+      if (confirmed !== phrase) {
+        adminState.message = text('partner.admin.payrunCanceled', 'Payout run canceled.');
+        renderPartnerAdminPlatform();
+        return;
+      }
+
+      const run = await adminApi('/api/admin/partner-commissions/pay-run', {
+        method: 'POST',
+        body: {
+          dryRun: false,
+          execute: true,
+          confirm: phrase,
+          limit: 50
+        }
+      });
+
+      adminState.message = text('partner.admin.payrunExecuteDone', 'Payout run completed.') + ` paid=${Number(run.paid || 0)} skipped=${Number(run.skipped || 0)}`;
+      renderPartnerAdminPlatform();
       return;
     }
 

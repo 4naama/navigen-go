@@ -1955,5 +1955,11 @@
   "partner.connect.refresh": "Kifizetési azonosító frissítése",
   "partner.connect.start": "Kifizetési onboarding indítása",
   "partner.connect.statusRefreshed": "A kifizetési azonosító állapota frissítve.",
-  "partner.connect.noUrl": "A Stripe Connect nem adott vissza onboarding URL-t."
+  "partner.connect.noUrl": "A Stripe Connect nem adott vissza onboarding URL-t.",
+  "partner.admin.payrunDry": "Száraz futtatású kifizetések",
+  "partner.admin.payrunExecute": "Jogosult kifizetések futtatása",
+  "partner.admin.payrunDryDone": "A száraz futtatású kifizetések befejeződtek.",
+  "partner.admin.payrunExecuteDone": "A kifizetési futtatás befejeződött.",
+  "partner.admin.payrunConfirmPrompt": "A jogosult kifizetések futtatásához írja be: PAY_ELIGIBLE_PARTNER_COMMISSIONS",
+  "partner.admin.payrunCanceled": "A kifizetési futtatás megszakítva."
 }

@@ -1955,5 +1955,11 @@
   "partner.connect.refresh": "רענון זהות תשלום",
   "partner.connect.start": "התחלת תהליך קליטת תשלומים",
   "partner.connect.statusRefreshed": "סטטוס זהות התשלום עודכן.",
-  "partner.connect.noUrl": "Stripe Connect לא החזיר כתובת URL לאונבורדינג."
+  "partner.connect.noUrl": "Stripe Connect לא החזיר כתובת URL לאונבורדינג.",
+  "partner.admin.payrunDry": "סימולציית תשלומים",
+  "partner.admin.payrunExecute": "הרצת תשלומים זכאים",
+  "partner.admin.payrunDryDone": "סימולציית התשלומים הושלמה.",
+  "partner.admin.payrunExecuteDone": "הרצת התשלומים הושלמה.",
+  "partner.admin.payrunConfirmPrompt": "הקלידו PAY_ELIGIBLE_PARTNER_COMMISSIONS כדי להריץ תשלומים זכאים",
+  "partner.admin.payrunCanceled": "הרצת התשלומים בוטלה."
 }

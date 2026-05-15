@@ -1955,5 +1955,11 @@
   "partner.connect.refresh": "Auszahlungsidentität aktualisieren",
   "partner.connect.start": "Auszahlungs-Onboarding starten",
   "partner.connect.statusRefreshed": "Status der Auszahlungsidentität aktualisiert.",
-  "partner.connect.noUrl": "Stripe Connect hat keine Onboarding-URL zurückgegeben."
+  "partner.connect.noUrl": "Stripe Connect hat keine Onboarding-URL zurückgegeben.",
+  "partner.admin.payrunDry": "Trockendurchlauf der Auszahlungen",
+  "partner.admin.payrunExecute": "Berechtigte Auszahlungen ausführen",
+  "partner.admin.payrunDryDone": "Trockendurchlauf der Auszahlungen abgeschlossen.",
+  "partner.admin.payrunExecuteDone": "Auszahlungslauf abgeschlossen.",
+  "partner.admin.payrunConfirmPrompt": "Geben Sie PAY_ELIGIBLE_PARTNER_COMMISSIONS ein, um berechtigte Auszahlungen auszuführen",
+  "partner.admin.payrunCanceled": "Auszahlungslauf abgebrochen."
 }

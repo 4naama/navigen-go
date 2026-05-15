@@ -1955,5 +1955,11 @@
   "partner.connect.refresh": "Aggiorna identità pagamento",
   "partner.connect.start": "Avvia onboarding pagamenti",
   "partner.connect.statusRefreshed": "Stato identità pagamento aggiornato.",
-  "partner.connect.noUrl": "Stripe Connect non ha restituito un URL di onboarding."
+  "partner.connect.noUrl": "Stripe Connect non ha restituito un URL di onboarding.",
+  "partner.admin.payrunDry": "Simulazione pagamenti",
+  "partner.admin.payrunExecute": "Esegui pagamenti idonei",
+  "partner.admin.payrunDryDone": "Simulazione pagamenti completata.",
+  "partner.admin.payrunExecuteDone": "Esecuzione pagamenti completata.",
+  "partner.admin.payrunConfirmPrompt": "Digita PAY_ELIGIBLE_PARTNER_COMMISSIONS per eseguire i pagamenti idonei",
+  "partner.admin.payrunCanceled": "Esecuzione pagamenti annullata."
 }

@@ -1955,5 +1955,11 @@
   "partner.connect.refresh": "Actualiser l’identité de paiement",
   "partner.connect.start": "Démarrer l’intégration des paiements",
   "partner.connect.statusRefreshed": "Statut de l’identité de paiement actualisé.",
-  "partner.connect.noUrl": "Stripe Connect n’a pas renvoyé d’URL d’intégration."
+  "partner.connect.noUrl": "Stripe Connect n’a pas renvoyé d’URL d’intégration.",
+  "partner.admin.payrunDry": "Simulation des paiements",
+  "partner.admin.payrunExecute": "Exécuter les paiements éligibles",
+  "partner.admin.payrunDryDone": "Simulation des paiements terminée.",
+  "partner.admin.payrunExecuteDone": "Exécution des paiements terminée.",
+  "partner.admin.payrunConfirmPrompt": "Tapez PAY_ELIGIBLE_PARTNER_COMMISSIONS pour exécuter les paiements éligibles",
+  "partner.admin.payrunCanceled": "Exécution des paiements annulée."
 }
