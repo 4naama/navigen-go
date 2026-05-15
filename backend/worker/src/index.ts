@@ -1170,6 +1170,598 @@ async function handlePartnerLogout(req: Request, env: Env): Promise<Response> {
   );
 }
 
+// --- Partner-2 lead reservation helpers: no payment, owner-session, or public-state authority
+type PartnerLeadStatus = "reserved" | "converted" | "expired" | "archived" | "rejected";
+
+type PartnerLeadRecord = {
+  ver: number;
+  leadId: string;
+  partnerId: string;
+  status: PartnerLeadStatus;
+  businessName: string;
+  website: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  groupKey: string;
+  subgroupKey: string;
+  contexts: string[];
+  fingerprint: string;
+  draftULID: string;
+  locationULID: string;
+  reservationStakePaymentIntentId: string;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+};
+
+const PARTNER_LEAD_RESERVATION_DAYS = 30;
+const PARTNER_LEAD_INDEX_LIMIT = 200;
+const PARTNER_LEAD_CONTEXT_LIMIT = 24;
+
+function partnerLeadKey(leadId: string): string {
+  return `partner_lead:${leadId}`;
+}
+
+function partnerLeadsByPartnerKey(partnerId: string): string {
+  return `partner_leads_by_partner:${partnerId}`;
+}
+
+function partnerLeadByFingerprintKey(fingerprint: string): string {
+  return `partner_lead_by_fingerprint:${fingerprint}`;
+}
+
+function mintPartnerLeadId(): string {
+  const bytes = new Uint8Array(18);
+  crypto.getRandomValues(bytes);
+  return `plead_${bytesToB64url(bytes)}`;
+}
+
+function sanitizePartnerLeadString(value: unknown, maxLength = 240): string {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, Math.max(0, maxLength));
+}
+
+function normalizePartnerLeadText(value: unknown, maxLength = 400): string {
+  return sanitizePartnerLeadString(value, maxLength)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizePartnerLeadPhone(value: unknown): string {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  const cleaned = raw.replace(/[^\d+]/g, "");
+  if (cleaned.startsWith("+")) {
+    return `+${cleaned.slice(1).replace(/\+/g, "")}`.slice(0, 40);
+  }
+
+  return cleaned.replace(/\+/g, "").slice(0, 40);
+}
+
+function normalizePartnerLeadWebsite(value: unknown): string {
+  let raw = sanitizePartnerLeadString(value, 220).toLowerCase();
+  if (!raw) return "";
+
+  if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`;
+
+  try {
+    const u = new URL(raw);
+    const host = String(u.hostname || "").replace(/^www\./, "").trim();
+    const path = String(u.pathname || "").replace(/\/+$/, "");
+    return `${host}${path && path !== "/" ? path : ""}`.slice(0, 220);
+  } catch {
+    return raw.replace(/^https?:\/\//i, "").replace(/^www\./, "").replace(/\/+$/, "").slice(0, 220);
+  }
+}
+
+function uniquePartnerLeadContexts(value: unknown): string[] {
+  const src = Array.isArray(value)
+    ? value
+    : String(value || "").split(",");
+
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  for (const item of src) {
+    const v = sanitizePartnerLeadString(item, 80);
+    if (!v || seen.has(v)) continue;
+
+    seen.add(v);
+    out.push(v);
+
+    if (out.length >= PARTNER_LEAD_CONTEXT_LIMIT) break;
+  }
+
+  return out;
+}
+
+function normalizePartnerLeadStatus(value: unknown): PartnerLeadStatus | "" {
+  const s = String(value || "").trim().toLowerCase();
+  if (s === "reserved" || s === "converted" || s === "expired" || s === "archived" || s === "rejected") return s;
+  return "";
+}
+
+function partnerLeadIsOpen(lead: PartnerLeadRecord): boolean {
+  const expMs = Date.parse(String(lead?.expiresAt || ""));
+  return lead.status === "reserved" && Number.isFinite(expMs) && expMs > Date.now();
+}
+
+function publicPartnerLead(lead: PartnerLeadRecord): Record<string, unknown> {
+  return {
+    leadId: lead.leadId,
+    partnerId: lead.partnerId,
+    status: lead.status,
+    businessName: lead.businessName,
+    website: lead.website,
+    phone: lead.phone,
+    address: lead.address,
+    city: lead.city,
+    country: lead.country,
+    groupKey: lead.groupKey,
+    subgroupKey: lead.subgroupKey,
+    contexts: lead.contexts,
+    draftULID: lead.draftULID,
+    locationULID: lead.locationULID,
+    source: lead.source,
+    createdAt: lead.createdAt,
+    updatedAt: lead.updatedAt,
+    expiresAt: lead.expiresAt
+  };
+}
+
+async function buildPartnerLeadFingerprint(input: {
+  businessName: string;
+  website: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+}): Promise<string> {
+  const material = [
+    normalizePartnerLeadText(input.businessName, 180),
+    normalizePartnerLeadWebsite(input.website),
+    normalizePartnerLeadPhone(input.phone),
+    normalizePartnerLeadText([input.address, input.city, input.country].filter(Boolean).join(" "), 500)
+  ].join("|");
+
+  const enc = new TextEncoder();
+  const digest = await crypto.subtle.digest("SHA-256", enc.encode(material));
+  return bytesToB64url(new Uint8Array(digest)).slice(0, 43);
+}
+
+async function readPartnerLeadRecord(env: Env, leadId: string): Promise<PartnerLeadRecord | null> {
+  const id = String(leadId || "").trim();
+  if (!id) return null;
+
+  const lead = await env.KV_STATUS.get(partnerLeadKey(id), { type: "json" }) as PartnerLeadRecord | null;
+  if (!lead || typeof lead !== "object" || String(lead.leadId || "").trim() !== id) return null;
+
+  return lead;
+}
+
+async function writePartnerLeadRecord(env: Env, lead: PartnerLeadRecord): Promise<void> {
+  await env.KV_STATUS.put(partnerLeadKey(lead.leadId), JSON.stringify(lead));
+}
+
+async function readPartnerLeadIndex(env: Env, partnerId: string): Promise<string[]> {
+  const raw = await env.KV_STATUS.get(partnerLeadsByPartnerKey(partnerId), "text");
+  let ids: string[] = [];
+
+  try {
+    ids = raw ? JSON.parse(raw) : [];
+  } catch {
+    ids = [];
+  }
+
+  if (!Array.isArray(ids)) ids = [];
+
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  for (const id of ids) {
+    const leadId = String(id || "").trim();
+    if (!leadId || seen.has(leadId)) continue;
+
+    seen.add(leadId);
+    out.push(leadId);
+
+    if (out.length >= PARTNER_LEAD_INDEX_LIMIT) break;
+  }
+
+  return out;
+}
+
+async function writePartnerLeadIndex(env: Env, partnerId: string, ids: string[]): Promise<void> {
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  for (const id of ids) {
+    const leadId = String(id || "").trim();
+    if (!leadId || seen.has(leadId)) continue;
+
+    seen.add(leadId);
+    out.push(leadId);
+
+    if (out.length >= PARTNER_LEAD_INDEX_LIMIT) break;
+  }
+
+  await env.KV_STATUS.put(partnerLeadsByPartnerKey(partnerId), JSON.stringify(out));
+}
+
+async function appendPartnerLeadIndex(env: Env, partnerId: string, leadId: string): Promise<void> {
+  const existing = await readPartnerLeadIndex(env, partnerId);
+  await writePartnerLeadIndex(env, partnerId, [leadId, ...existing.filter((id) => id !== leadId)]);
+}
+
+async function deletePartnerLeadFingerprintIfOwned(env: Env, lead: PartnerLeadRecord): Promise<void> {
+  const fingerprint = String(lead?.fingerprint || "").trim();
+  if (!fingerprint) return;
+
+  const key = partnerLeadByFingerprintKey(fingerprint);
+  const currentLeadId = await env.KV_STATUS.get(key, "text");
+  if (String(currentLeadId || "").trim() === lead.leadId) {
+    await env.KV_STATUS.delete(key);
+  }
+}
+
+async function expirePartnerLeadIfNeeded(env: Env, lead: PartnerLeadRecord, nowMs = Date.now()): Promise<PartnerLeadRecord> {
+  const expMs = Date.parse(String(lead?.expiresAt || ""));
+  if (lead.status !== "reserved" || !Number.isFinite(expMs) || expMs > nowMs) {
+    return lead;
+  }
+
+  const next: PartnerLeadRecord = {
+    ...lead,
+    status: "expired",
+    updatedAt: new Date(nowMs).toISOString()
+  };
+
+  await writePartnerLeadRecord(env, next);
+  await deletePartnerLeadFingerprintIfOwned(env, next);
+  return next;
+}
+
+async function listPartnerLeadRecords(env: Env, partnerId: string): Promise<PartnerLeadRecord[]> {
+  const ids = await readPartnerLeadIndex(env, partnerId);
+  const out: PartnerLeadRecord[] = [];
+
+  for (const leadId of ids) {
+    const lead = await readPartnerLeadRecord(env, leadId);
+    if (!lead || lead.partnerId !== partnerId) continue;
+
+    out.push(await expirePartnerLeadIfNeeded(env, lead));
+  }
+
+  return out;
+}
+
+async function syncPartnerOpenLeadCount(
+  env: Env,
+  profile: PartnerProfileRecord,
+  leads: PartnerLeadRecord[]
+): Promise<PartnerProfileRecord> {
+  const openLeadCount = leads.filter(partnerLeadIsOpen).length;
+
+  if (Number(profile.openLeadCount || 0) === openLeadCount) {
+    return profile;
+  }
+
+  const next: PartnerProfileRecord = {
+    ...profile,
+    openLeadCount,
+    updatedAt: new Date().toISOString()
+  };
+
+  await writePartnerProfile(env, next);
+  return next;
+}
+
+async function requirePartnerSession(req: Request, env: Env): Promise<PartnerSessionResolution | Response> {
+  if (!partnerRoutesEnabled(env)) return partnerDisabledResponse(env);
+
+  const existingSessionId = readPartnerSessionId(req);
+  const resolved = await resolvePartnerSession(req, env);
+
+  if (!resolved) {
+    const headers = partnerNoStoreHeaders();
+    if (existingSessionId) headers["Set-Cookie"] = expirePartnerSessionCookie();
+
+    return json(
+      {
+        error: {
+          code: "partner_session_required",
+          message: "Partner session required."
+        },
+        authenticated: false,
+        partner: null,
+        launch: partnerLaunchState(env)
+      },
+      401,
+      headers
+    );
+  }
+
+  return resolved;
+}
+
+async function handlePartnerLeadList(req: Request, env: Env): Promise<Response> {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+
+  const url = new URL(req.url);
+  const statusFilter = normalizePartnerLeadStatus(url.searchParams.get("status"));
+  let leads = await listPartnerLeadRecords(env, auth.profile.partnerId);
+  const profile = await syncPartnerOpenLeadCount(env, auth.profile, leads);
+
+  if (statusFilter) {
+    leads = leads.filter((lead) => lead.status === statusFilter);
+  }
+
+  return json(
+    {
+      ok: true,
+      partner: publicPartnerProfile(profile),
+      items: leads.map(publicPartnerLead),
+      total: leads.length,
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+
+async function handlePartnerLeadCreate(req: Request, env: Env): Promise<Response> {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+
+  if (auth.profile.status === "suspended") {
+    return json(
+      {
+        error: {
+          code: "partner_suspended",
+          message: "Partner is suspended."
+        },
+        partner: publicPartnerProfile(auth.profile)
+      },
+      403,
+      partnerNoStoreHeaders()
+    );
+  }
+
+  const body = await req.json().catch(() => ({})) as any;
+
+  const businessName = sanitizePartnerLeadString(body?.businessName || body?.name || body?.locationName, 180);
+  const website = sanitizePartnerLeadString(body?.website || body?.officialWebsite || body?.url, 220);
+  const phone = sanitizePartnerLeadString(body?.phone || body?.telephone, 80);
+  const address = sanitizePartnerLeadString(body?.address || body?.streetAddress || body?.formattedAddress, 300);
+  const city = sanitizePartnerLeadString(body?.city, 120);
+  const country = sanitizePartnerLeadString(body?.country, 80);
+  const groupKey = sanitizePartnerLeadString(body?.groupKey, 120);
+  const subgroupKey = sanitizePartnerLeadString(body?.subgroupKey, 120);
+  const contexts = uniquePartnerLeadContexts(body?.contexts);
+
+  const hasLeadContactSignal = !!(
+    normalizePartnerLeadWebsite(website) ||
+    normalizePartnerLeadPhone(phone) ||
+    normalizePartnerLeadText([address, city, country].filter(Boolean).join(" "), 500)
+  );
+
+  if (!businessName || !hasLeadContactSignal) {
+    return json(
+      {
+        error: {
+          code: "invalid_partner_lead",
+          message: "businessName and at least one of website, phone, or address are required."
+        }
+      },
+      400,
+      partnerNoStoreHeaders()
+    );
+  }
+
+  let existingLeads = await listPartnerLeadRecords(env, auth.profile.partnerId);
+  let profile = await syncPartnerOpenLeadCount(env, auth.profile, existingLeads);
+  const leadCapacity = Math.max(0, Math.trunc(Number(profile.leadCapacity || 0)));
+
+  if (profile.openLeadCount >= leadCapacity) {
+    return json(
+      {
+        error: {
+          code: "partner_lead_capacity_exceeded",
+          message: "Partner lead capacity reached."
+        },
+        requiresReservationStake: true,
+        partner: publicPartnerProfile(profile),
+        launch: partnerLaunchState(env)
+      },
+      409,
+      partnerNoStoreHeaders()
+    );
+  }
+
+  const fingerprint = await buildPartnerLeadFingerprint({
+    businessName,
+    website,
+    phone,
+    address,
+    city,
+    country
+  });
+
+  const duplicateLeadId = await env.KV_STATUS.get(partnerLeadByFingerprintKey(fingerprint), "text");
+  if (duplicateLeadId) {
+    const duplicate = await readPartnerLeadRecord(env, duplicateLeadId);
+    const currentDuplicate = duplicate ? await expirePartnerLeadIfNeeded(env, duplicate) : null;
+
+    if (currentDuplicate && (partnerLeadIsOpen(currentDuplicate) || currentDuplicate.status === "converted")) {
+      return json(
+        {
+          error: {
+            code: "duplicate_partner_lead",
+            message: "A matching Partner lead already exists."
+          },
+          duplicateLeadId: currentDuplicate.partnerId === profile.partnerId ? currentDuplicate.leadId : "",
+          duplicateStatus: currentDuplicate.status
+        },
+        409,
+        partnerNoStoreHeaders()
+      );
+    }
+
+    await env.KV_STATUS.delete(partnerLeadByFingerprintKey(fingerprint));
+  }
+
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const leadId = mintPartnerLeadId();
+
+  const lead: PartnerLeadRecord = {
+    ver: 1,
+    leadId,
+    partnerId: profile.partnerId,
+    status: "reserved",
+    businessName,
+    website,
+    phone,
+    address,
+    city,
+    country,
+    groupKey,
+    subgroupKey,
+    contexts,
+    fingerprint,
+    draftULID: "",
+    locationULID: "",
+    reservationStakePaymentIntentId: "",
+    source: "partner_center",
+    createdAt: nowIso,
+    updatedAt: nowIso,
+    expiresAt: new Date(nowMs + PARTNER_LEAD_RESERVATION_DAYS * 24 * 60 * 60 * 1000).toISOString()
+  };
+
+  await writePartnerLeadRecord(env, lead);
+  await env.KV_STATUS.put(partnerLeadByFingerprintKey(fingerprint), leadId);
+  await appendPartnerLeadIndex(env, profile.partnerId, leadId);
+
+  existingLeads = [lead, ...existingLeads];
+  profile = await syncPartnerOpenLeadCount(env, profile, existingLeads);
+
+  return json(
+    {
+      ok: true,
+      lead: publicPartnerLead(lead),
+      partner: publicPartnerProfile(profile),
+      launch: partnerLaunchState(env)
+    },
+    201,
+    partnerNoStoreHeaders()
+  );
+}
+
+async function handlePartnerLeadRead(req: Request, env: Env, leadId: string): Promise<Response> {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+
+  const lead = await readPartnerLeadRecord(env, leadId);
+  if (!lead || lead.partnerId !== auth.profile.partnerId) {
+    return json(
+      {
+        error: {
+          code: "partner_lead_not_found",
+          message: "Partner lead not found."
+        }
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+
+  const currentLead = await expirePartnerLeadIfNeeded(env, lead);
+  const leads = await listPartnerLeadRecords(env, auth.profile.partnerId);
+  const profile = await syncPartnerOpenLeadCount(env, auth.profile, leads);
+
+  return json(
+    {
+      ok: true,
+      lead: publicPartnerLead(currentLead),
+      partner: publicPartnerProfile(profile),
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+
+async function handlePartnerLeadArchive(req: Request, env: Env, leadId: string): Promise<Response> {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+
+  const lead = await readPartnerLeadRecord(env, leadId);
+  if (!lead || lead.partnerId !== auth.profile.partnerId) {
+    return json(
+      {
+        error: {
+          code: "partner_lead_not_found",
+          message: "Partner lead not found."
+        }
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+
+  const currentLead = await expirePartnerLeadIfNeeded(env, lead);
+
+  if (currentLead.status === "converted") {
+    return json(
+      {
+        error: {
+          code: "partner_lead_converted",
+          message: "Converted Partner leads cannot be archived."
+        },
+        lead: publicPartnerLead(currentLead)
+      },
+      409,
+      partnerNoStoreHeaders()
+    );
+  }
+
+  const next: PartnerLeadRecord = {
+    ...currentLead,
+    status: "archived",
+    updatedAt: new Date().toISOString()
+  };
+
+  await writePartnerLeadRecord(env, next);
+  await deletePartnerLeadFingerprintIfOwned(env, next);
+
+  const leads = await listPartnerLeadRecords(env, auth.profile.partnerId);
+  const profile = await syncPartnerOpenLeadCount(env, auth.profile, leads);
+
+  return json(
+    {
+      ok: true,
+      lead: publicPartnerLead(next),
+      partner: publicPartnerProfile(profile),
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+
+// --- End Partner-2 lead reservation helpers
+
 function googleDraftIndexKey(dev: string, googlePlaceId: string): string {
   return `google_draft:${dev}:${googlePlaceId}`;
 }
@@ -4717,6 +5309,27 @@ export default {
       if (normPath === "/api/partner/session/logout" && req.method === "POST") {
         return await handlePartnerLogout(req, env);
       }
+
+      // --- Partner lead reservation: limited Partner-2 lead routes
+      if (normPath === "/api/partner/leads" && req.method === "GET") {
+        return await handlePartnerLeadList(req, env);
+      }
+
+      if (normPath === "/api/partner/leads" && req.method === "POST") {
+        return await handlePartnerLeadCreate(req, env);
+      }
+
+      const partnerLeadArchiveMatch = normPath.match(/^\/api\/partner\/leads\/([^/]+)\/archive$/);
+      if (partnerLeadArchiveMatch && req.method === "POST") {
+        return await handlePartnerLeadArchive(req, env, decodeURIComponent(partnerLeadArchiveMatch[1] || ""));
+      }
+
+      const partnerLeadDetailMatch = normPath.match(/^\/api\/partner\/leads\/([^/]+)$/);
+      if (partnerLeadDetailMatch && req.method === "GET") {
+        return await handlePartnerLeadRead(req, env, decodeURIComponent(partnerLeadDetailMatch[1] || ""));
+      }
+      
+      // --- End Partner lead reservation routes
 
       // --- Owner location selector: query-first, capped, status-enriched BO search
       // GET /api/owner/location-options?q=...&limit=5

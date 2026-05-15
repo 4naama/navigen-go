@@ -5,6 +5,9 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -25,9 +28,24 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// wrangler-modules-watch:wrangler:modules-watch
+var init_wrangler_modules_watch = __esm({
+  "wrangler-modules-watch:wrangler:modules-watch"() {
+    init_modules_watch_stub();
+  }
+});
+
+// ../../../../../AppData/Roaming/npm/node_modules/wrangler/templates/modules-watch-stub.js
+var init_modules_watch_stub = __esm({
+  "../../../../../AppData/Roaming/npm/node_modules/wrangler/templates/modules-watch-stub.js"() {
+    init_wrangler_modules_watch();
+  }
+});
+
 // node_modules/qrcode/lib/can-promise.js
 var require_can_promise = __commonJS({
   "node_modules/qrcode/lib/can-promise.js"(exports, module) {
+    init_modules_watch_stub();
     module.exports = function() {
       return typeof Promise === "function" && Promise.prototype && Promise.prototype.then;
     };
@@ -37,6 +55,7 @@ var require_can_promise = __commonJS({
 // node_modules/qrcode/lib/core/utils.js
 var require_utils = __commonJS({
   "node_modules/qrcode/lib/core/utils.js"(exports) {
+    init_modules_watch_stub();
     var toSJISFunction;
     var CODEWORDS_COUNT = [
       0,
@@ -116,6 +135,7 @@ var require_utils = __commonJS({
 // node_modules/qrcode/lib/core/error-correction-level.js
 var require_error_correction_level = __commonJS({
   "node_modules/qrcode/lib/core/error-correction-level.js"(exports) {
+    init_modules_watch_stub();
     exports.L = { bit: 1 };
     exports.M = { bit: 0 };
     exports.Q = { bit: 3 };
@@ -162,6 +182,7 @@ var require_error_correction_level = __commonJS({
 // node_modules/qrcode/lib/core/bit-buffer.js
 var require_bit_buffer = __commonJS({
   "node_modules/qrcode/lib/core/bit-buffer.js"(exports, module) {
+    init_modules_watch_stub();
     function BitBuffer() {
       this.buffer = [];
       this.length = 0;
@@ -198,6 +219,7 @@ var require_bit_buffer = __commonJS({
 // node_modules/qrcode/lib/core/bit-matrix.js
 var require_bit_matrix = __commonJS({
   "node_modules/qrcode/lib/core/bit-matrix.js"(exports, module) {
+    init_modules_watch_stub();
     function BitMatrix(size) {
       if (!size || size < 1) {
         throw new Error("BitMatrix size must be defined and greater than 0");
@@ -228,6 +250,7 @@ var require_bit_matrix = __commonJS({
 // node_modules/qrcode/lib/core/alignment-pattern.js
 var require_alignment_pattern = __commonJS({
   "node_modules/qrcode/lib/core/alignment-pattern.js"(exports) {
+    init_modules_watch_stub();
     var getSymbolSize = require_utils().getSymbolSize;
     exports.getRowColCoords = /* @__PURE__ */ __name(function getRowColCoords(version) {
       if (version === 1) return [];
@@ -263,6 +286,7 @@ var require_alignment_pattern = __commonJS({
 // node_modules/qrcode/lib/core/finder-pattern.js
 var require_finder_pattern = __commonJS({
   "node_modules/qrcode/lib/core/finder-pattern.js"(exports) {
+    init_modules_watch_stub();
     var getSymbolSize = require_utils().getSymbolSize;
     var FINDER_PATTERN_SIZE = 7;
     exports.getPositions = /* @__PURE__ */ __name(function getPositions(version) {
@@ -282,6 +306,7 @@ var require_finder_pattern = __commonJS({
 // node_modules/qrcode/lib/core/mask-pattern.js
 var require_mask_pattern = __commonJS({
   "node_modules/qrcode/lib/core/mask-pattern.js"(exports) {
+    init_modules_watch_stub();
     exports.Patterns = {
       PATTERN000: 0,
       PATTERN001: 1,
@@ -425,6 +450,7 @@ var require_mask_pattern = __commonJS({
 // node_modules/qrcode/lib/core/error-correction-code.js
 var require_error_correction_code = __commonJS({
   "node_modules/qrcode/lib/core/error-correction-code.js"(exports) {
+    init_modules_watch_stub();
     var ECLevel = require_error_correction_level();
     var EC_BLOCKS_TABLE = [
       // L  M  Q  H
@@ -786,6 +812,7 @@ var require_error_correction_code = __commonJS({
 // node_modules/qrcode/lib/core/galois-field.js
 var require_galois_field = __commonJS({
   "node_modules/qrcode/lib/core/galois-field.js"(exports) {
+    init_modules_watch_stub();
     var EXP_TABLE = new Uint8Array(512);
     var LOG_TABLE = new Uint8Array(256);
     (/* @__PURE__ */ __name(function initTables() {
@@ -819,6 +846,7 @@ var require_galois_field = __commonJS({
 // node_modules/qrcode/lib/core/polynomial.js
 var require_polynomial = __commonJS({
   "node_modules/qrcode/lib/core/polynomial.js"(exports) {
+    init_modules_watch_stub();
     var GF = require_galois_field();
     exports.mul = /* @__PURE__ */ __name(function mul(p1, p2) {
       const coeff = new Uint8Array(p1.length + p2.length - 1);
@@ -855,6 +883,7 @@ var require_polynomial = __commonJS({
 // node_modules/qrcode/lib/core/reed-solomon-encoder.js
 var require_reed_solomon_encoder = __commonJS({
   "node_modules/qrcode/lib/core/reed-solomon-encoder.js"(exports, module) {
+    init_modules_watch_stub();
     var Polynomial = require_polynomial();
     function ReedSolomonEncoder(degree) {
       this.genPoly = void 0;
@@ -888,6 +917,7 @@ var require_reed_solomon_encoder = __commonJS({
 // node_modules/qrcode/lib/core/version-check.js
 var require_version_check = __commonJS({
   "node_modules/qrcode/lib/core/version-check.js"(exports) {
+    init_modules_watch_stub();
     exports.isValid = /* @__PURE__ */ __name(function isValid(version) {
       return !isNaN(version) && version >= 1 && version <= 40;
     }, "isValid");
@@ -897,6 +927,7 @@ var require_version_check = __commonJS({
 // node_modules/qrcode/lib/core/regex.js
 var require_regex = __commonJS({
   "node_modules/qrcode/lib/core/regex.js"(exports) {
+    init_modules_watch_stub();
     var numeric = "[0-9]+";
     var alphanumeric = "[A-Z $%*+\\-./:]+";
     var kanji = "(?:[u3000-u303F]|[u3040-u309F]|[u30A0-u30FF]|[uFF00-uFFEF]|[u4E00-u9FAF]|[u2605-u2606]|[u2190-u2195]|u203B|[u2010u2015u2018u2019u2025u2026u201Cu201Du2225u2260]|[u0391-u0451]|[u00A7u00A8u00B1u00B4u00D7u00F7])+";
@@ -925,6 +956,7 @@ var require_regex = __commonJS({
 // node_modules/qrcode/lib/core/mode.js
 var require_mode = __commonJS({
   "node_modules/qrcode/lib/core/mode.js"(exports) {
+    init_modules_watch_stub();
     var VersionCheck = require_version_check();
     var Regex = require_regex();
     exports.NUMERIC = {
@@ -1007,6 +1039,7 @@ var require_mode = __commonJS({
 // node_modules/qrcode/lib/core/version.js
 var require_version = __commonJS({
   "node_modules/qrcode/lib/core/version.js"(exports) {
+    init_modules_watch_stub();
     var Utils = require_utils();
     var ECCode = require_error_correction_code();
     var ECLevel = require_error_correction_level();
@@ -1106,6 +1139,7 @@ var require_version = __commonJS({
 // node_modules/qrcode/lib/core/format-info.js
 var require_format_info = __commonJS({
   "node_modules/qrcode/lib/core/format-info.js"(exports) {
+    init_modules_watch_stub();
     var Utils = require_utils();
     var G15 = 1 << 10 | 1 << 8 | 1 << 5 | 1 << 4 | 1 << 2 | 1 << 1 | 1 << 0;
     var G15_MASK = 1 << 14 | 1 << 12 | 1 << 10 | 1 << 4 | 1 << 1;
@@ -1124,6 +1158,7 @@ var require_format_info = __commonJS({
 // node_modules/qrcode/lib/core/numeric-data.js
 var require_numeric_data = __commonJS({
   "node_modules/qrcode/lib/core/numeric-data.js"(exports, module) {
+    init_modules_watch_stub();
     var Mode = require_mode();
     function NumericData(data) {
       this.mode = Mode.NUMERIC;
@@ -1160,6 +1195,7 @@ var require_numeric_data = __commonJS({
 // node_modules/qrcode/lib/core/alphanumeric-data.js
 var require_alphanumeric_data = __commonJS({
   "node_modules/qrcode/lib/core/alphanumeric-data.js"(exports, module) {
+    init_modules_watch_stub();
     var Mode = require_mode();
     var ALPHA_NUM_CHARS = [
       "0",
@@ -1240,6 +1276,7 @@ var require_alphanumeric_data = __commonJS({
 // node_modules/qrcode/lib/core/byte-data.js
 var require_byte_data = __commonJS({
   "node_modules/qrcode/lib/core/byte-data.js"(exports, module) {
+    init_modules_watch_stub();
     var Mode = require_mode();
     function ByteData(data) {
       this.mode = Mode.BYTE;
@@ -1271,6 +1308,7 @@ var require_byte_data = __commonJS({
 // node_modules/qrcode/lib/core/kanji-data.js
 var require_kanji_data = __commonJS({
   "node_modules/qrcode/lib/core/kanji-data.js"(exports, module) {
+    init_modules_watch_stub();
     var Mode = require_mode();
     var Utils = require_utils();
     function KanjiData(data) {
@@ -1312,6 +1350,7 @@ var require_kanji_data = __commonJS({
 var require_dijkstra = __commonJS({
   "node_modules/dijkstrajs/dijkstra.js"(exports, module) {
     "use strict";
+    init_modules_watch_stub();
     var dijkstra = {
       single_source_shortest_paths: /* @__PURE__ */ __name(function(graph, s, d) {
         var predecessors = {};
@@ -1412,6 +1451,7 @@ var require_dijkstra = __commonJS({
 // node_modules/qrcode/lib/core/segments.js
 var require_segments = __commonJS({
   "node_modules/qrcode/lib/core/segments.js"(exports) {
+    init_modules_watch_stub();
     var Mode = require_mode();
     var NumericData = require_numeric_data();
     var AlphanumericData = require_alphanumeric_data();
@@ -1606,6 +1646,7 @@ var require_segments = __commonJS({
 // node_modules/qrcode/lib/core/qrcode.js
 var require_qrcode = __commonJS({
   "node_modules/qrcode/lib/core/qrcode.js"(exports) {
+    init_modules_watch_stub();
     var Utils = require_utils();
     var ECLevel = require_error_correction_level();
     var BitBuffer = require_bit_buffer();
@@ -1876,6 +1917,7 @@ var require_qrcode = __commonJS({
 // node_modules/qrcode/lib/renderer/utils.js
 var require_utils2 = __commonJS({
   "node_modules/qrcode/lib/renderer/utils.js"(exports) {
+    init_modules_watch_stub();
     function hex2rgba(hex) {
       if (typeof hex === "number") {
         hex = hex.toString();
@@ -1957,6 +1999,7 @@ var require_utils2 = __commonJS({
 // node_modules/qrcode/lib/renderer/canvas.js
 var require_canvas = __commonJS({
   "node_modules/qrcode/lib/renderer/canvas.js"(exports) {
+    init_modules_watch_stub();
     var Utils = require_utils2();
     function clearCanvas(ctx, canvas, size) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2012,6 +2055,7 @@ var require_canvas = __commonJS({
 // node_modules/qrcode/lib/renderer/svg-tag.js
 var require_svg_tag = __commonJS({
   "node_modules/qrcode/lib/renderer/svg-tag.js"(exports) {
+    init_modules_watch_stub();
     var Utils = require_utils2();
     function getColorAttrib(color, attrib) {
       const alpha = color.a / 255;
@@ -2073,6 +2117,7 @@ var require_svg_tag = __commonJS({
 // node_modules/qrcode/lib/browser.js
 var require_browser = __commonJS({
   "node_modules/qrcode/lib/browser.js"(exports) {
+    init_modules_watch_stub();
     var canPromise = require_can_promise();
     var QRCode2 = require_qrcode();
     var CanvasRenderer = require_canvas();
@@ -2141,7 +2186,14 @@ var require_browser = __commonJS({
   }
 });
 
+// .wrangler/tmp/bundle-EMmsd3/middleware-loader.entry.ts
+init_modules_watch_stub();
+
+// .wrangler/tmp/bundle-EMmsd3/middleware-insertion-facade.js
+init_modules_watch_stub();
+
 // src/index.ts
+init_modules_watch_stub();
 var import_qrcode = __toESM(require_browser(), 1);
 var EVENT_ORDER = [
   "lpm-open",
@@ -6083,7 +6135,7 @@ var ContextShardDO = class {
     return doError("unsupported_op", 400, { op });
   }
 };
-var index_default = {
+var src_default = {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     const pathname = url.pathname;
@@ -12747,11 +12799,185 @@ async function consumeRedeemToken(kv, token, locationID, campaignKey) {
   return "ok";
 }
 __name(consumeRedeemToken, "consumeRedeemToken");
+
+// ../../../../../AppData/Roaming/npm/node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
+init_modules_watch_stub();
+var drainBody = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx) => {
+  try {
+    return await middlewareCtx.next(request, env);
+  } finally {
+    try {
+      if (request.body !== null && !request.bodyUsed) {
+        const reader = request.body.getReader();
+        while (!(await reader.read()).done) {
+        }
+      }
+    } catch (e) {
+      console.error("Failed to drain the unused request body.", e);
+    }
+  }
+}, "drainBody");
+var middleware_ensure_req_body_drained_default = drainBody;
+
+// ../../../../../AppData/Roaming/npm/node_modules/wrangler/templates/middleware/middleware-miniflare3-json-error.ts
+init_modules_watch_stub();
+function reduceError(e) {
+  return {
+    name: e?.name,
+    message: e?.message ?? String(e),
+    stack: e?.stack,
+    cause: e?.cause === void 0 ? void 0 : reduceError(e.cause)
+  };
+}
+__name(reduceError, "reduceError");
+var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx) => {
+  try {
+    return await middlewareCtx.next(request, env);
+  } catch (e) {
+    const error = reduceError(e);
+    return Response.json(error, {
+      status: 500,
+      headers: { "MF-Experimental-Error-Stack": "true" }
+    });
+  }
+}, "jsonError");
+var middleware_miniflare3_json_error_default = jsonError;
+
+// .wrangler/tmp/bundle-EMmsd3/middleware-insertion-facade.js
+var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
+  middleware_ensure_req_body_drained_default,
+  middleware_miniflare3_json_error_default
+];
+var middleware_insertion_facade_default = src_default;
+
+// ../../../../../AppData/Roaming/npm/node_modules/wrangler/templates/middleware/common.ts
+init_modules_watch_stub();
+var __facade_middleware__ = [];
+function __facade_register__(...args) {
+  __facade_middleware__.push(...args.flat());
+}
+__name(__facade_register__, "__facade_register__");
+function __facade_invokeChain__(request, env, ctx, dispatch, middlewareChain) {
+  const [head, ...tail] = middlewareChain;
+  const middlewareCtx = {
+    dispatch,
+    next(newRequest, newEnv) {
+      return __facade_invokeChain__(newRequest, newEnv, ctx, dispatch, tail);
+    }
+  };
+  return head(request, env, ctx, middlewareCtx);
+}
+__name(__facade_invokeChain__, "__facade_invokeChain__");
+function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
+  return __facade_invokeChain__(request, env, ctx, dispatch, [
+    ...__facade_middleware__,
+    finalMiddleware
+  ]);
+}
+__name(__facade_invoke__, "__facade_invoke__");
+
+// .wrangler/tmp/bundle-EMmsd3/middleware-loader.entry.ts
+var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
+  constructor(scheduledTime, cron, noRetry) {
+    this.scheduledTime = scheduledTime;
+    this.cron = cron;
+    this.#noRetry = noRetry;
+  }
+  static {
+    __name(this, "__Facade_ScheduledController__");
+  }
+  #noRetry;
+  noRetry() {
+    if (!(this instanceof ___Facade_ScheduledController__)) {
+      throw new TypeError("Illegal invocation");
+    }
+    this.#noRetry();
+  }
+};
+function wrapExportedHandler(worker) {
+  if (__INTERNAL_WRANGLER_MIDDLEWARE__ === void 0 || __INTERNAL_WRANGLER_MIDDLEWARE__.length === 0) {
+    return worker;
+  }
+  for (const middleware of __INTERNAL_WRANGLER_MIDDLEWARE__) {
+    __facade_register__(middleware);
+  }
+  const fetchDispatcher = /* @__PURE__ */ __name(function(request, env, ctx) {
+    if (worker.fetch === void 0) {
+      throw new Error("Handler does not export a fetch() function.");
+    }
+    return worker.fetch(request, env, ctx);
+  }, "fetchDispatcher");
+  return {
+    ...worker,
+    fetch(request, env, ctx) {
+      const dispatcher = /* @__PURE__ */ __name(function(type, init) {
+        if (type === "scheduled" && worker.scheduled !== void 0) {
+          const controller = new __Facade_ScheduledController__(
+            Date.now(),
+            init.cron ?? "",
+            () => {
+            }
+          );
+          return worker.scheduled(controller, env, ctx);
+        }
+      }, "dispatcher");
+      return __facade_invoke__(request, env, ctx, dispatcher, fetchDispatcher);
+    }
+  };
+}
+__name(wrapExportedHandler, "wrapExportedHandler");
+function wrapWorkerEntrypoint(klass) {
+  if (__INTERNAL_WRANGLER_MIDDLEWARE__ === void 0 || __INTERNAL_WRANGLER_MIDDLEWARE__.length === 0) {
+    return klass;
+  }
+  for (const middleware of __INTERNAL_WRANGLER_MIDDLEWARE__) {
+    __facade_register__(middleware);
+  }
+  return class extends klass {
+    #fetchDispatcher = /* @__PURE__ */ __name((request, env, ctx) => {
+      this.env = env;
+      this.ctx = ctx;
+      if (super.fetch === void 0) {
+        throw new Error("Entrypoint class does not define a fetch() function.");
+      }
+      return super.fetch(request);
+    }, "#fetchDispatcher");
+    #dispatcher = /* @__PURE__ */ __name((type, init) => {
+      if (type === "scheduled" && super.scheduled !== void 0) {
+        const controller = new __Facade_ScheduledController__(
+          Date.now(),
+          init.cron ?? "",
+          () => {
+          }
+        );
+        return super.scheduled(controller);
+      }
+    }, "#dispatcher");
+    fetch(request) {
+      return __facade_invoke__(
+        request,
+        this.env,
+        this.ctx,
+        this.#dispatcher,
+        this.#fetchDispatcher
+      );
+    }
+  };
+}
+__name(wrapWorkerEntrypoint, "wrapWorkerEntrypoint");
+var WRAPPED_ENTRY;
+if (typeof middleware_insertion_facade_default === "object") {
+  WRAPPED_ENTRY = wrapExportedHandler(middleware_insertion_facade_default);
+} else if (typeof middleware_insertion_facade_default === "function") {
+  WRAPPED_ENTRY = wrapWorkerEntrypoint(middleware_insertion_facade_default);
+}
+var middleware_loader_entry_default = WRAPPED_ENTRY;
 export {
   ContextShardDO,
   MediaTargetDO,
   PlanAllocDO,
   SearchShardDO,
-  index_default as default
+  __INTERNAL_WRANGLER_MIDDLEWARE__,
+  middleware_loader_entry_default as default
 };
 //# sourceMappingURL=index.js.map
