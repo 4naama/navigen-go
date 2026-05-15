@@ -24,7 +24,7 @@ routes = [
 # Partner channel flags.
 # PARTNER_ENABLED allows internal Partner route development.
 # PARTNER_PUBLIC_LAUNCH_ENABLED must remain false until Standard/Multi production prices are restored.
-PARTNER_ENABLED = "false"
+PARTNER_ENABLED = "true"
 PARTNER_PUBLIC_LAUNCH_ENABLED = "false"
 
 # --- KV bindings (PROD) ---
