@@ -1,145 +1,2208 @@
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+
+// node_modules/qrcode/lib/can-promise.js
+var require_can_promise = __commonJS({
+  "node_modules/qrcode/lib/can-promise.js"(exports, module) {
+    module.exports = function() {
+      return typeof Promise === "function" && Promise.prototype && Promise.prototype.then;
+    };
+  }
+});
+
+// node_modules/qrcode/lib/core/utils.js
+var require_utils = __commonJS({
+  "node_modules/qrcode/lib/core/utils.js"(exports) {
+    var toSJISFunction;
+    var CODEWORDS_COUNT = [
+      0,
+      // Not used
+      26,
+      44,
+      70,
+      100,
+      134,
+      172,
+      196,
+      242,
+      292,
+      346,
+      404,
+      466,
+      532,
+      581,
+      655,
+      733,
+      815,
+      901,
+      991,
+      1085,
+      1156,
+      1258,
+      1364,
+      1474,
+      1588,
+      1706,
+      1828,
+      1921,
+      2051,
+      2185,
+      2323,
+      2465,
+      2611,
+      2761,
+      2876,
+      3034,
+      3196,
+      3362,
+      3532,
+      3706
+    ];
+    exports.getSymbolSize = /* @__PURE__ */ __name(function getSymbolSize(version) {
+      if (!version) throw new Error('"version" cannot be null or undefined');
+      if (version < 1 || version > 40) throw new Error('"version" should be in range from 1 to 40');
+      return version * 4 + 17;
+    }, "getSymbolSize");
+    exports.getSymbolTotalCodewords = /* @__PURE__ */ __name(function getSymbolTotalCodewords(version) {
+      return CODEWORDS_COUNT[version];
+    }, "getSymbolTotalCodewords");
+    exports.getBCHDigit = function(data) {
+      let digit = 0;
+      while (data !== 0) {
+        digit++;
+        data >>>= 1;
+      }
+      return digit;
+    };
+    exports.setToSJISFunction = /* @__PURE__ */ __name(function setToSJISFunction(f) {
+      if (typeof f !== "function") {
+        throw new Error('"toSJISFunc" is not a valid function.');
+      }
+      toSJISFunction = f;
+    }, "setToSJISFunction");
+    exports.isKanjiModeEnabled = function() {
+      return typeof toSJISFunction !== "undefined";
+    };
+    exports.toSJIS = /* @__PURE__ */ __name(function toSJIS(kanji) {
+      return toSJISFunction(kanji);
+    }, "toSJIS");
+  }
+});
+
+// node_modules/qrcode/lib/core/error-correction-level.js
+var require_error_correction_level = __commonJS({
+  "node_modules/qrcode/lib/core/error-correction-level.js"(exports) {
+    exports.L = { bit: 1 };
+    exports.M = { bit: 0 };
+    exports.Q = { bit: 3 };
+    exports.H = { bit: 2 };
+    function fromString(string) {
+      if (typeof string !== "string") {
+        throw new Error("Param is not a string");
+      }
+      const lcStr = string.toLowerCase();
+      switch (lcStr) {
+        case "l":
+        case "low":
+          return exports.L;
+        case "m":
+        case "medium":
+          return exports.M;
+        case "q":
+        case "quartile":
+          return exports.Q;
+        case "h":
+        case "high":
+          return exports.H;
+        default:
+          throw new Error("Unknown EC Level: " + string);
+      }
+    }
+    __name(fromString, "fromString");
+    exports.isValid = /* @__PURE__ */ __name(function isValid(level) {
+      return level && typeof level.bit !== "undefined" && level.bit >= 0 && level.bit < 4;
+    }, "isValid");
+    exports.from = /* @__PURE__ */ __name(function from(value, defaultValue) {
+      if (exports.isValid(value)) {
+        return value;
+      }
+      try {
+        return fromString(value);
+      } catch (e) {
+        return defaultValue;
+      }
+    }, "from");
+  }
+});
+
+// node_modules/qrcode/lib/core/bit-buffer.js
+var require_bit_buffer = __commonJS({
+  "node_modules/qrcode/lib/core/bit-buffer.js"(exports, module) {
+    function BitBuffer() {
+      this.buffer = [];
+      this.length = 0;
+    }
+    __name(BitBuffer, "BitBuffer");
+    BitBuffer.prototype = {
+      get: /* @__PURE__ */ __name(function(index) {
+        const bufIndex = Math.floor(index / 8);
+        return (this.buffer[bufIndex] >>> 7 - index % 8 & 1) === 1;
+      }, "get"),
+      put: /* @__PURE__ */ __name(function(num, length) {
+        for (let i = 0; i < length; i++) {
+          this.putBit((num >>> length - i - 1 & 1) === 1);
+        }
+      }, "put"),
+      getLengthInBits: /* @__PURE__ */ __name(function() {
+        return this.length;
+      }, "getLengthInBits"),
+      putBit: /* @__PURE__ */ __name(function(bit) {
+        const bufIndex = Math.floor(this.length / 8);
+        if (this.buffer.length <= bufIndex) {
+          this.buffer.push(0);
+        }
+        if (bit) {
+          this.buffer[bufIndex] |= 128 >>> this.length % 8;
+        }
+        this.length++;
+      }, "putBit")
+    };
+    module.exports = BitBuffer;
+  }
+});
+
+// node_modules/qrcode/lib/core/bit-matrix.js
+var require_bit_matrix = __commonJS({
+  "node_modules/qrcode/lib/core/bit-matrix.js"(exports, module) {
+    function BitMatrix(size) {
+      if (!size || size < 1) {
+        throw new Error("BitMatrix size must be defined and greater than 0");
+      }
+      this.size = size;
+      this.data = new Uint8Array(size * size);
+      this.reservedBit = new Uint8Array(size * size);
+    }
+    __name(BitMatrix, "BitMatrix");
+    BitMatrix.prototype.set = function(row, col, value, reserved) {
+      const index = row * this.size + col;
+      this.data[index] = value;
+      if (reserved) this.reservedBit[index] = true;
+    };
+    BitMatrix.prototype.get = function(row, col) {
+      return this.data[row * this.size + col];
+    };
+    BitMatrix.prototype.xor = function(row, col, value) {
+      this.data[row * this.size + col] ^= value;
+    };
+    BitMatrix.prototype.isReserved = function(row, col) {
+      return this.reservedBit[row * this.size + col];
+    };
+    module.exports = BitMatrix;
+  }
+});
+
+// node_modules/qrcode/lib/core/alignment-pattern.js
+var require_alignment_pattern = __commonJS({
+  "node_modules/qrcode/lib/core/alignment-pattern.js"(exports) {
+    var getSymbolSize = require_utils().getSymbolSize;
+    exports.getRowColCoords = /* @__PURE__ */ __name(function getRowColCoords(version) {
+      if (version === 1) return [];
+      const posCount = Math.floor(version / 7) + 2;
+      const size = getSymbolSize(version);
+      const intervals = size === 145 ? 26 : Math.ceil((size - 13) / (2 * posCount - 2)) * 2;
+      const positions = [size - 7];
+      for (let i = 1; i < posCount - 1; i++) {
+        positions[i] = positions[i - 1] - intervals;
+      }
+      positions.push(6);
+      return positions.reverse();
+    }, "getRowColCoords");
+    exports.getPositions = /* @__PURE__ */ __name(function getPositions(version) {
+      const coords = [];
+      const pos = exports.getRowColCoords(version);
+      const posLength = pos.length;
+      for (let i = 0; i < posLength; i++) {
+        for (let j = 0; j < posLength; j++) {
+          if (i === 0 && j === 0 || // top-left
+          i === 0 && j === posLength - 1 || // bottom-left
+          i === posLength - 1 && j === 0) {
+            continue;
+          }
+          coords.push([pos[i], pos[j]]);
+        }
+      }
+      return coords;
+    }, "getPositions");
+  }
+});
+
+// node_modules/qrcode/lib/core/finder-pattern.js
+var require_finder_pattern = __commonJS({
+  "node_modules/qrcode/lib/core/finder-pattern.js"(exports) {
+    var getSymbolSize = require_utils().getSymbolSize;
+    var FINDER_PATTERN_SIZE = 7;
+    exports.getPositions = /* @__PURE__ */ __name(function getPositions(version) {
+      const size = getSymbolSize(version);
+      return [
+        // top-left
+        [0, 0],
+        // top-right
+        [size - FINDER_PATTERN_SIZE, 0],
+        // bottom-left
+        [0, size - FINDER_PATTERN_SIZE]
+      ];
+    }, "getPositions");
+  }
+});
+
+// node_modules/qrcode/lib/core/mask-pattern.js
+var require_mask_pattern = __commonJS({
+  "node_modules/qrcode/lib/core/mask-pattern.js"(exports) {
+    exports.Patterns = {
+      PATTERN000: 0,
+      PATTERN001: 1,
+      PATTERN010: 2,
+      PATTERN011: 3,
+      PATTERN100: 4,
+      PATTERN101: 5,
+      PATTERN110: 6,
+      PATTERN111: 7
+    };
+    var PenaltyScores = {
+      N1: 3,
+      N2: 3,
+      N3: 40,
+      N4: 10
+    };
+    exports.isValid = /* @__PURE__ */ __name(function isValid(mask) {
+      return mask != null && mask !== "" && !isNaN(mask) && mask >= 0 && mask <= 7;
+    }, "isValid");
+    exports.from = /* @__PURE__ */ __name(function from(value) {
+      return exports.isValid(value) ? parseInt(value, 10) : void 0;
+    }, "from");
+    exports.getPenaltyN1 = /* @__PURE__ */ __name(function getPenaltyN1(data) {
+      const size = data.size;
+      let points = 0;
+      let sameCountCol = 0;
+      let sameCountRow = 0;
+      let lastCol = null;
+      let lastRow = null;
+      for (let row = 0; row < size; row++) {
+        sameCountCol = sameCountRow = 0;
+        lastCol = lastRow = null;
+        for (let col = 0; col < size; col++) {
+          let module2 = data.get(row, col);
+          if (module2 === lastCol) {
+            sameCountCol++;
+          } else {
+            if (sameCountCol >= 5) points += PenaltyScores.N1 + (sameCountCol - 5);
+            lastCol = module2;
+            sameCountCol = 1;
+          }
+          module2 = data.get(col, row);
+          if (module2 === lastRow) {
+            sameCountRow++;
+          } else {
+            if (sameCountRow >= 5) points += PenaltyScores.N1 + (sameCountRow - 5);
+            lastRow = module2;
+            sameCountRow = 1;
+          }
+        }
+        if (sameCountCol >= 5) points += PenaltyScores.N1 + (sameCountCol - 5);
+        if (sameCountRow >= 5) points += PenaltyScores.N1 + (sameCountRow - 5);
+      }
+      return points;
+    }, "getPenaltyN1");
+    exports.getPenaltyN2 = /* @__PURE__ */ __name(function getPenaltyN2(data) {
+      const size = data.size;
+      let points = 0;
+      for (let row = 0; row < size - 1; row++) {
+        for (let col = 0; col < size - 1; col++) {
+          const last = data.get(row, col) + data.get(row, col + 1) + data.get(row + 1, col) + data.get(row + 1, col + 1);
+          if (last === 4 || last === 0) points++;
+        }
+      }
+      return points * PenaltyScores.N2;
+    }, "getPenaltyN2");
+    exports.getPenaltyN3 = /* @__PURE__ */ __name(function getPenaltyN3(data) {
+      const size = data.size;
+      let points = 0;
+      let bitsCol = 0;
+      let bitsRow = 0;
+      for (let row = 0; row < size; row++) {
+        bitsCol = bitsRow = 0;
+        for (let col = 0; col < size; col++) {
+          bitsCol = bitsCol << 1 & 2047 | data.get(row, col);
+          if (col >= 10 && (bitsCol === 1488 || bitsCol === 93)) points++;
+          bitsRow = bitsRow << 1 & 2047 | data.get(col, row);
+          if (col >= 10 && (bitsRow === 1488 || bitsRow === 93)) points++;
+        }
+      }
+      return points * PenaltyScores.N3;
+    }, "getPenaltyN3");
+    exports.getPenaltyN4 = /* @__PURE__ */ __name(function getPenaltyN4(data) {
+      let darkCount = 0;
+      const modulesCount = data.data.length;
+      for (let i = 0; i < modulesCount; i++) darkCount += data.data[i];
+      const k = Math.abs(Math.ceil(darkCount * 100 / modulesCount / 5) - 10);
+      return k * PenaltyScores.N4;
+    }, "getPenaltyN4");
+    function getMaskAt(maskPattern, i, j) {
+      switch (maskPattern) {
+        case exports.Patterns.PATTERN000:
+          return (i + j) % 2 === 0;
+        case exports.Patterns.PATTERN001:
+          return i % 2 === 0;
+        case exports.Patterns.PATTERN010:
+          return j % 3 === 0;
+        case exports.Patterns.PATTERN011:
+          return (i + j) % 3 === 0;
+        case exports.Patterns.PATTERN100:
+          return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 === 0;
+        case exports.Patterns.PATTERN101:
+          return i * j % 2 + i * j % 3 === 0;
+        case exports.Patterns.PATTERN110:
+          return (i * j % 2 + i * j % 3) % 2 === 0;
+        case exports.Patterns.PATTERN111:
+          return (i * j % 3 + (i + j) % 2) % 2 === 0;
+        default:
+          throw new Error("bad maskPattern:" + maskPattern);
+      }
+    }
+    __name(getMaskAt, "getMaskAt");
+    exports.applyMask = /* @__PURE__ */ __name(function applyMask(pattern, data) {
+      const size = data.size;
+      for (let col = 0; col < size; col++) {
+        for (let row = 0; row < size; row++) {
+          if (data.isReserved(row, col)) continue;
+          data.xor(row, col, getMaskAt(pattern, row, col));
+        }
+      }
+    }, "applyMask");
+    exports.getBestMask = /* @__PURE__ */ __name(function getBestMask(data, setupFormatFunc) {
+      const numPatterns = Object.keys(exports.Patterns).length;
+      let bestPattern = 0;
+      let lowerPenalty = Infinity;
+      for (let p = 0; p < numPatterns; p++) {
+        setupFormatFunc(p);
+        exports.applyMask(p, data);
+        const penalty = exports.getPenaltyN1(data) + exports.getPenaltyN2(data) + exports.getPenaltyN3(data) + exports.getPenaltyN4(data);
+        exports.applyMask(p, data);
+        if (penalty < lowerPenalty) {
+          lowerPenalty = penalty;
+          bestPattern = p;
+        }
+      }
+      return bestPattern;
+    }, "getBestMask");
+  }
+});
+
+// node_modules/qrcode/lib/core/error-correction-code.js
+var require_error_correction_code = __commonJS({
+  "node_modules/qrcode/lib/core/error-correction-code.js"(exports) {
+    var ECLevel = require_error_correction_level();
+    var EC_BLOCKS_TABLE = [
+      // L  M  Q  H
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      2,
+      2,
+      1,
+      2,
+      2,
+      4,
+      1,
+      2,
+      4,
+      4,
+      2,
+      4,
+      4,
+      4,
+      2,
+      4,
+      6,
+      5,
+      2,
+      4,
+      6,
+      6,
+      2,
+      5,
+      8,
+      8,
+      4,
+      5,
+      8,
+      8,
+      4,
+      5,
+      8,
+      11,
+      4,
+      8,
+      10,
+      11,
+      4,
+      9,
+      12,
+      16,
+      4,
+      9,
+      16,
+      16,
+      6,
+      10,
+      12,
+      18,
+      6,
+      10,
+      17,
+      16,
+      6,
+      11,
+      16,
+      19,
+      6,
+      13,
+      18,
+      21,
+      7,
+      14,
+      21,
+      25,
+      8,
+      16,
+      20,
+      25,
+      8,
+      17,
+      23,
+      25,
+      9,
+      17,
+      23,
+      34,
+      9,
+      18,
+      25,
+      30,
+      10,
+      20,
+      27,
+      32,
+      12,
+      21,
+      29,
+      35,
+      12,
+      23,
+      34,
+      37,
+      12,
+      25,
+      34,
+      40,
+      13,
+      26,
+      35,
+      42,
+      14,
+      28,
+      38,
+      45,
+      15,
+      29,
+      40,
+      48,
+      16,
+      31,
+      43,
+      51,
+      17,
+      33,
+      45,
+      54,
+      18,
+      35,
+      48,
+      57,
+      19,
+      37,
+      51,
+      60,
+      19,
+      38,
+      53,
+      63,
+      20,
+      40,
+      56,
+      66,
+      21,
+      43,
+      59,
+      70,
+      22,
+      45,
+      62,
+      74,
+      24,
+      47,
+      65,
+      77,
+      25,
+      49,
+      68,
+      81
+    ];
+    var EC_CODEWORDS_TABLE = [
+      // L  M  Q  H
+      7,
+      10,
+      13,
+      17,
+      10,
+      16,
+      22,
+      28,
+      15,
+      26,
+      36,
+      44,
+      20,
+      36,
+      52,
+      64,
+      26,
+      48,
+      72,
+      88,
+      36,
+      64,
+      96,
+      112,
+      40,
+      72,
+      108,
+      130,
+      48,
+      88,
+      132,
+      156,
+      60,
+      110,
+      160,
+      192,
+      72,
+      130,
+      192,
+      224,
+      80,
+      150,
+      224,
+      264,
+      96,
+      176,
+      260,
+      308,
+      104,
+      198,
+      288,
+      352,
+      120,
+      216,
+      320,
+      384,
+      132,
+      240,
+      360,
+      432,
+      144,
+      280,
+      408,
+      480,
+      168,
+      308,
+      448,
+      532,
+      180,
+      338,
+      504,
+      588,
+      196,
+      364,
+      546,
+      650,
+      224,
+      416,
+      600,
+      700,
+      224,
+      442,
+      644,
+      750,
+      252,
+      476,
+      690,
+      816,
+      270,
+      504,
+      750,
+      900,
+      300,
+      560,
+      810,
+      960,
+      312,
+      588,
+      870,
+      1050,
+      336,
+      644,
+      952,
+      1110,
+      360,
+      700,
+      1020,
+      1200,
+      390,
+      728,
+      1050,
+      1260,
+      420,
+      784,
+      1140,
+      1350,
+      450,
+      812,
+      1200,
+      1440,
+      480,
+      868,
+      1290,
+      1530,
+      510,
+      924,
+      1350,
+      1620,
+      540,
+      980,
+      1440,
+      1710,
+      570,
+      1036,
+      1530,
+      1800,
+      570,
+      1064,
+      1590,
+      1890,
+      600,
+      1120,
+      1680,
+      1980,
+      630,
+      1204,
+      1770,
+      2100,
+      660,
+      1260,
+      1860,
+      2220,
+      720,
+      1316,
+      1950,
+      2310,
+      750,
+      1372,
+      2040,
+      2430
+    ];
+    exports.getBlocksCount = /* @__PURE__ */ __name(function getBlocksCount(version, errorCorrectionLevel) {
+      switch (errorCorrectionLevel) {
+        case ECLevel.L:
+          return EC_BLOCKS_TABLE[(version - 1) * 4 + 0];
+        case ECLevel.M:
+          return EC_BLOCKS_TABLE[(version - 1) * 4 + 1];
+        case ECLevel.Q:
+          return EC_BLOCKS_TABLE[(version - 1) * 4 + 2];
+        case ECLevel.H:
+          return EC_BLOCKS_TABLE[(version - 1) * 4 + 3];
+        default:
+          return void 0;
+      }
+    }, "getBlocksCount");
+    exports.getTotalCodewordsCount = /* @__PURE__ */ __name(function getTotalCodewordsCount(version, errorCorrectionLevel) {
+      switch (errorCorrectionLevel) {
+        case ECLevel.L:
+          return EC_CODEWORDS_TABLE[(version - 1) * 4 + 0];
+        case ECLevel.M:
+          return EC_CODEWORDS_TABLE[(version - 1) * 4 + 1];
+        case ECLevel.Q:
+          return EC_CODEWORDS_TABLE[(version - 1) * 4 + 2];
+        case ECLevel.H:
+          return EC_CODEWORDS_TABLE[(version - 1) * 4 + 3];
+        default:
+          return void 0;
+      }
+    }, "getTotalCodewordsCount");
+  }
+});
+
+// node_modules/qrcode/lib/core/galois-field.js
+var require_galois_field = __commonJS({
+  "node_modules/qrcode/lib/core/galois-field.js"(exports) {
+    var EXP_TABLE = new Uint8Array(512);
+    var LOG_TABLE = new Uint8Array(256);
+    (/* @__PURE__ */ __name(function initTables() {
+      let x = 1;
+      for (let i = 0; i < 255; i++) {
+        EXP_TABLE[i] = x;
+        LOG_TABLE[x] = i;
+        x <<= 1;
+        if (x & 256) {
+          x ^= 285;
+        }
+      }
+      for (let i = 255; i < 512; i++) {
+        EXP_TABLE[i] = EXP_TABLE[i - 255];
+      }
+    }, "initTables"))();
+    exports.log = /* @__PURE__ */ __name(function log(n) {
+      if (n < 1) throw new Error("log(" + n + ")");
+      return LOG_TABLE[n];
+    }, "log");
+    exports.exp = /* @__PURE__ */ __name(function exp(n) {
+      return EXP_TABLE[n];
+    }, "exp");
+    exports.mul = /* @__PURE__ */ __name(function mul(x, y) {
+      if (x === 0 || y === 0) return 0;
+      return EXP_TABLE[LOG_TABLE[x] + LOG_TABLE[y]];
+    }, "mul");
+  }
+});
+
+// node_modules/qrcode/lib/core/polynomial.js
+var require_polynomial = __commonJS({
+  "node_modules/qrcode/lib/core/polynomial.js"(exports) {
+    var GF = require_galois_field();
+    exports.mul = /* @__PURE__ */ __name(function mul(p1, p2) {
+      const coeff = new Uint8Array(p1.length + p2.length - 1);
+      for (let i = 0; i < p1.length; i++) {
+        for (let j = 0; j < p2.length; j++) {
+          coeff[i + j] ^= GF.mul(p1[i], p2[j]);
+        }
+      }
+      return coeff;
+    }, "mul");
+    exports.mod = /* @__PURE__ */ __name(function mod(divident, divisor) {
+      let result = new Uint8Array(divident);
+      while (result.length - divisor.length >= 0) {
+        const coeff = result[0];
+        for (let i = 0; i < divisor.length; i++) {
+          result[i] ^= GF.mul(divisor[i], coeff);
+        }
+        let offset = 0;
+        while (offset < result.length && result[offset] === 0) offset++;
+        result = result.slice(offset);
+      }
+      return result;
+    }, "mod");
+    exports.generateECPolynomial = /* @__PURE__ */ __name(function generateECPolynomial(degree) {
+      let poly = new Uint8Array([1]);
+      for (let i = 0; i < degree; i++) {
+        poly = exports.mul(poly, new Uint8Array([1, GF.exp(i)]));
+      }
+      return poly;
+    }, "generateECPolynomial");
+  }
+});
+
+// node_modules/qrcode/lib/core/reed-solomon-encoder.js
+var require_reed_solomon_encoder = __commonJS({
+  "node_modules/qrcode/lib/core/reed-solomon-encoder.js"(exports, module) {
+    var Polynomial = require_polynomial();
+    function ReedSolomonEncoder(degree) {
+      this.genPoly = void 0;
+      this.degree = degree;
+      if (this.degree) this.initialize(this.degree);
+    }
+    __name(ReedSolomonEncoder, "ReedSolomonEncoder");
+    ReedSolomonEncoder.prototype.initialize = /* @__PURE__ */ __name(function initialize(degree) {
+      this.degree = degree;
+      this.genPoly = Polynomial.generateECPolynomial(this.degree);
+    }, "initialize");
+    ReedSolomonEncoder.prototype.encode = /* @__PURE__ */ __name(function encode(data) {
+      if (!this.genPoly) {
+        throw new Error("Encoder not initialized");
+      }
+      const paddedData = new Uint8Array(data.length + this.degree);
+      paddedData.set(data);
+      const remainder = Polynomial.mod(paddedData, this.genPoly);
+      const start = this.degree - remainder.length;
+      if (start > 0) {
+        const buff = new Uint8Array(this.degree);
+        buff.set(remainder, start);
+        return buff;
+      }
+      return remainder;
+    }, "encode");
+    module.exports = ReedSolomonEncoder;
+  }
+});
+
+// node_modules/qrcode/lib/core/version-check.js
+var require_version_check = __commonJS({
+  "node_modules/qrcode/lib/core/version-check.js"(exports) {
+    exports.isValid = /* @__PURE__ */ __name(function isValid(version) {
+      return !isNaN(version) && version >= 1 && version <= 40;
+    }, "isValid");
+  }
+});
+
+// node_modules/qrcode/lib/core/regex.js
+var require_regex = __commonJS({
+  "node_modules/qrcode/lib/core/regex.js"(exports) {
+    var numeric = "[0-9]+";
+    var alphanumeric = "[A-Z $%*+\\-./:]+";
+    var kanji = "(?:[u3000-u303F]|[u3040-u309F]|[u30A0-u30FF]|[uFF00-uFFEF]|[u4E00-u9FAF]|[u2605-u2606]|[u2190-u2195]|u203B|[u2010u2015u2018u2019u2025u2026u201Cu201Du2225u2260]|[u0391-u0451]|[u00A7u00A8u00B1u00B4u00D7u00F7])+";
+    kanji = kanji.replace(/u/g, "\\u");
+    var byte = "(?:(?![A-Z0-9 $%*+\\-./:]|" + kanji + ")(?:.|[\r\n]))+";
+    exports.KANJI = new RegExp(kanji, "g");
+    exports.BYTE_KANJI = new RegExp("[^A-Z0-9 $%*+\\-./:]+", "g");
+    exports.BYTE = new RegExp(byte, "g");
+    exports.NUMERIC = new RegExp(numeric, "g");
+    exports.ALPHANUMERIC = new RegExp(alphanumeric, "g");
+    var TEST_KANJI = new RegExp("^" + kanji + "$");
+    var TEST_NUMERIC = new RegExp("^" + numeric + "$");
+    var TEST_ALPHANUMERIC = new RegExp("^[A-Z0-9 $%*+\\-./:]+$");
+    exports.testKanji = /* @__PURE__ */ __name(function testKanji(str) {
+      return TEST_KANJI.test(str);
+    }, "testKanji");
+    exports.testNumeric = /* @__PURE__ */ __name(function testNumeric(str) {
+      return TEST_NUMERIC.test(str);
+    }, "testNumeric");
+    exports.testAlphanumeric = /* @__PURE__ */ __name(function testAlphanumeric(str) {
+      return TEST_ALPHANUMERIC.test(str);
+    }, "testAlphanumeric");
+  }
+});
+
+// node_modules/qrcode/lib/core/mode.js
+var require_mode = __commonJS({
+  "node_modules/qrcode/lib/core/mode.js"(exports) {
+    var VersionCheck = require_version_check();
+    var Regex = require_regex();
+    exports.NUMERIC = {
+      id: "Numeric",
+      bit: 1 << 0,
+      ccBits: [10, 12, 14]
+    };
+    exports.ALPHANUMERIC = {
+      id: "Alphanumeric",
+      bit: 1 << 1,
+      ccBits: [9, 11, 13]
+    };
+    exports.BYTE = {
+      id: "Byte",
+      bit: 1 << 2,
+      ccBits: [8, 16, 16]
+    };
+    exports.KANJI = {
+      id: "Kanji",
+      bit: 1 << 3,
+      ccBits: [8, 10, 12]
+    };
+    exports.MIXED = {
+      bit: -1
+    };
+    exports.getCharCountIndicator = /* @__PURE__ */ __name(function getCharCountIndicator(mode, version) {
+      if (!mode.ccBits) throw new Error("Invalid mode: " + mode);
+      if (!VersionCheck.isValid(version)) {
+        throw new Error("Invalid version: " + version);
+      }
+      if (version >= 1 && version < 10) return mode.ccBits[0];
+      else if (version < 27) return mode.ccBits[1];
+      return mode.ccBits[2];
+    }, "getCharCountIndicator");
+    exports.getBestModeForData = /* @__PURE__ */ __name(function getBestModeForData(dataStr) {
+      if (Regex.testNumeric(dataStr)) return exports.NUMERIC;
+      else if (Regex.testAlphanumeric(dataStr)) return exports.ALPHANUMERIC;
+      else if (Regex.testKanji(dataStr)) return exports.KANJI;
+      else return exports.BYTE;
+    }, "getBestModeForData");
+    exports.toString = /* @__PURE__ */ __name(function toString(mode) {
+      if (mode && mode.id) return mode.id;
+      throw new Error("Invalid mode");
+    }, "toString");
+    exports.isValid = /* @__PURE__ */ __name(function isValid(mode) {
+      return mode && mode.bit && mode.ccBits;
+    }, "isValid");
+    function fromString(string) {
+      if (typeof string !== "string") {
+        throw new Error("Param is not a string");
+      }
+      const lcStr = string.toLowerCase();
+      switch (lcStr) {
+        case "numeric":
+          return exports.NUMERIC;
+        case "alphanumeric":
+          return exports.ALPHANUMERIC;
+        case "kanji":
+          return exports.KANJI;
+        case "byte":
+          return exports.BYTE;
+        default:
+          throw new Error("Unknown mode: " + string);
+      }
+    }
+    __name(fromString, "fromString");
+    exports.from = /* @__PURE__ */ __name(function from(value, defaultValue) {
+      if (exports.isValid(value)) {
+        return value;
+      }
+      try {
+        return fromString(value);
+      } catch (e) {
+        return defaultValue;
+      }
+    }, "from");
+  }
+});
+
+// node_modules/qrcode/lib/core/version.js
+var require_version = __commonJS({
+  "node_modules/qrcode/lib/core/version.js"(exports) {
+    var Utils = require_utils();
+    var ECCode = require_error_correction_code();
+    var ECLevel = require_error_correction_level();
+    var Mode = require_mode();
+    var VersionCheck = require_version_check();
+    var G18 = 1 << 12 | 1 << 11 | 1 << 10 | 1 << 9 | 1 << 8 | 1 << 5 | 1 << 2 | 1 << 0;
+    var G18_BCH = Utils.getBCHDigit(G18);
+    function getBestVersionForDataLength(mode, length, errorCorrectionLevel) {
+      for (let currentVersion = 1; currentVersion <= 40; currentVersion++) {
+        if (length <= exports.getCapacity(currentVersion, errorCorrectionLevel, mode)) {
+          return currentVersion;
+        }
+      }
+      return void 0;
+    }
+    __name(getBestVersionForDataLength, "getBestVersionForDataLength");
+    function getReservedBitsCount(mode, version) {
+      return Mode.getCharCountIndicator(mode, version) + 4;
+    }
+    __name(getReservedBitsCount, "getReservedBitsCount");
+    function getTotalBitsFromDataArray(segments, version) {
+      let totalBits = 0;
+      segments.forEach(function(data) {
+        const reservedBits = getReservedBitsCount(data.mode, version);
+        totalBits += reservedBits + data.getBitsLength();
+      });
+      return totalBits;
+    }
+    __name(getTotalBitsFromDataArray, "getTotalBitsFromDataArray");
+    function getBestVersionForMixedData(segments, errorCorrectionLevel) {
+      for (let currentVersion = 1; currentVersion <= 40; currentVersion++) {
+        const length = getTotalBitsFromDataArray(segments, currentVersion);
+        if (length <= exports.getCapacity(currentVersion, errorCorrectionLevel, Mode.MIXED)) {
+          return currentVersion;
+        }
+      }
+      return void 0;
+    }
+    __name(getBestVersionForMixedData, "getBestVersionForMixedData");
+    exports.from = /* @__PURE__ */ __name(function from(value, defaultValue) {
+      if (VersionCheck.isValid(value)) {
+        return parseInt(value, 10);
+      }
+      return defaultValue;
+    }, "from");
+    exports.getCapacity = /* @__PURE__ */ __name(function getCapacity(version, errorCorrectionLevel, mode) {
+      if (!VersionCheck.isValid(version)) {
+        throw new Error("Invalid QR Code version");
+      }
+      if (typeof mode === "undefined") mode = Mode.BYTE;
+      const totalCodewords = Utils.getSymbolTotalCodewords(version);
+      const ecTotalCodewords = ECCode.getTotalCodewordsCount(version, errorCorrectionLevel);
+      const dataTotalCodewordsBits = (totalCodewords - ecTotalCodewords) * 8;
+      if (mode === Mode.MIXED) return dataTotalCodewordsBits;
+      const usableBits = dataTotalCodewordsBits - getReservedBitsCount(mode, version);
+      switch (mode) {
+        case Mode.NUMERIC:
+          return Math.floor(usableBits / 10 * 3);
+        case Mode.ALPHANUMERIC:
+          return Math.floor(usableBits / 11 * 2);
+        case Mode.KANJI:
+          return Math.floor(usableBits / 13);
+        case Mode.BYTE:
+        default:
+          return Math.floor(usableBits / 8);
+      }
+    }, "getCapacity");
+    exports.getBestVersionForData = /* @__PURE__ */ __name(function getBestVersionForData(data, errorCorrectionLevel) {
+      let seg;
+      const ecl = ECLevel.from(errorCorrectionLevel, ECLevel.M);
+      if (Array.isArray(data)) {
+        if (data.length > 1) {
+          return getBestVersionForMixedData(data, ecl);
+        }
+        if (data.length === 0) {
+          return 1;
+        }
+        seg = data[0];
+      } else {
+        seg = data;
+      }
+      return getBestVersionForDataLength(seg.mode, seg.getLength(), ecl);
+    }, "getBestVersionForData");
+    exports.getEncodedBits = /* @__PURE__ */ __name(function getEncodedBits(version) {
+      if (!VersionCheck.isValid(version) || version < 7) {
+        throw new Error("Invalid QR Code version");
+      }
+      let d = version << 12;
+      while (Utils.getBCHDigit(d) - G18_BCH >= 0) {
+        d ^= G18 << Utils.getBCHDigit(d) - G18_BCH;
+      }
+      return version << 12 | d;
+    }, "getEncodedBits");
+  }
+});
+
+// node_modules/qrcode/lib/core/format-info.js
+var require_format_info = __commonJS({
+  "node_modules/qrcode/lib/core/format-info.js"(exports) {
+    var Utils = require_utils();
+    var G15 = 1 << 10 | 1 << 8 | 1 << 5 | 1 << 4 | 1 << 2 | 1 << 1 | 1 << 0;
+    var G15_MASK = 1 << 14 | 1 << 12 | 1 << 10 | 1 << 4 | 1 << 1;
+    var G15_BCH = Utils.getBCHDigit(G15);
+    exports.getEncodedBits = /* @__PURE__ */ __name(function getEncodedBits(errorCorrectionLevel, mask) {
+      const data = errorCorrectionLevel.bit << 3 | mask;
+      let d = data << 10;
+      while (Utils.getBCHDigit(d) - G15_BCH >= 0) {
+        d ^= G15 << Utils.getBCHDigit(d) - G15_BCH;
+      }
+      return (data << 10 | d) ^ G15_MASK;
+    }, "getEncodedBits");
+  }
+});
+
+// node_modules/qrcode/lib/core/numeric-data.js
+var require_numeric_data = __commonJS({
+  "node_modules/qrcode/lib/core/numeric-data.js"(exports, module) {
+    var Mode = require_mode();
+    function NumericData(data) {
+      this.mode = Mode.NUMERIC;
+      this.data = data.toString();
+    }
+    __name(NumericData, "NumericData");
+    NumericData.getBitsLength = /* @__PURE__ */ __name(function getBitsLength(length) {
+      return 10 * Math.floor(length / 3) + (length % 3 ? length % 3 * 3 + 1 : 0);
+    }, "getBitsLength");
+    NumericData.prototype.getLength = /* @__PURE__ */ __name(function getLength() {
+      return this.data.length;
+    }, "getLength");
+    NumericData.prototype.getBitsLength = /* @__PURE__ */ __name(function getBitsLength() {
+      return NumericData.getBitsLength(this.data.length);
+    }, "getBitsLength");
+    NumericData.prototype.write = /* @__PURE__ */ __name(function write(bitBuffer) {
+      let i, group, value;
+      for (i = 0; i + 3 <= this.data.length; i += 3) {
+        group = this.data.substr(i, 3);
+        value = parseInt(group, 10);
+        bitBuffer.put(value, 10);
+      }
+      const remainingNum = this.data.length - i;
+      if (remainingNum > 0) {
+        group = this.data.substr(i);
+        value = parseInt(group, 10);
+        bitBuffer.put(value, remainingNum * 3 + 1);
+      }
+    }, "write");
+    module.exports = NumericData;
+  }
+});
+
+// node_modules/qrcode/lib/core/alphanumeric-data.js
+var require_alphanumeric_data = __commonJS({
+  "node_modules/qrcode/lib/core/alphanumeric-data.js"(exports, module) {
+    var Mode = require_mode();
+    var ALPHA_NUM_CHARS = [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z",
+      " ",
+      "$",
+      "%",
+      "*",
+      "+",
+      "-",
+      ".",
+      "/",
+      ":"
+    ];
+    function AlphanumericData(data) {
+      this.mode = Mode.ALPHANUMERIC;
+      this.data = data;
+    }
+    __name(AlphanumericData, "AlphanumericData");
+    AlphanumericData.getBitsLength = /* @__PURE__ */ __name(function getBitsLength(length) {
+      return 11 * Math.floor(length / 2) + 6 * (length % 2);
+    }, "getBitsLength");
+    AlphanumericData.prototype.getLength = /* @__PURE__ */ __name(function getLength() {
+      return this.data.length;
+    }, "getLength");
+    AlphanumericData.prototype.getBitsLength = /* @__PURE__ */ __name(function getBitsLength() {
+      return AlphanumericData.getBitsLength(this.data.length);
+    }, "getBitsLength");
+    AlphanumericData.prototype.write = /* @__PURE__ */ __name(function write(bitBuffer) {
+      let i;
+      for (i = 0; i + 2 <= this.data.length; i += 2) {
+        let value = ALPHA_NUM_CHARS.indexOf(this.data[i]) * 45;
+        value += ALPHA_NUM_CHARS.indexOf(this.data[i + 1]);
+        bitBuffer.put(value, 11);
+      }
+      if (this.data.length % 2) {
+        bitBuffer.put(ALPHA_NUM_CHARS.indexOf(this.data[i]), 6);
+      }
+    }, "write");
+    module.exports = AlphanumericData;
+  }
+});
+
+// node_modules/qrcode/lib/core/byte-data.js
+var require_byte_data = __commonJS({
+  "node_modules/qrcode/lib/core/byte-data.js"(exports, module) {
+    var Mode = require_mode();
+    function ByteData(data) {
+      this.mode = Mode.BYTE;
+      if (typeof data === "string") {
+        this.data = new TextEncoder().encode(data);
+      } else {
+        this.data = new Uint8Array(data);
+      }
+    }
+    __name(ByteData, "ByteData");
+    ByteData.getBitsLength = /* @__PURE__ */ __name(function getBitsLength(length) {
+      return length * 8;
+    }, "getBitsLength");
+    ByteData.prototype.getLength = /* @__PURE__ */ __name(function getLength() {
+      return this.data.length;
+    }, "getLength");
+    ByteData.prototype.getBitsLength = /* @__PURE__ */ __name(function getBitsLength() {
+      return ByteData.getBitsLength(this.data.length);
+    }, "getBitsLength");
+    ByteData.prototype.write = function(bitBuffer) {
+      for (let i = 0, l = this.data.length; i < l; i++) {
+        bitBuffer.put(this.data[i], 8);
+      }
+    };
+    module.exports = ByteData;
+  }
+});
+
+// node_modules/qrcode/lib/core/kanji-data.js
+var require_kanji_data = __commonJS({
+  "node_modules/qrcode/lib/core/kanji-data.js"(exports, module) {
+    var Mode = require_mode();
+    var Utils = require_utils();
+    function KanjiData(data) {
+      this.mode = Mode.KANJI;
+      this.data = data;
+    }
+    __name(KanjiData, "KanjiData");
+    KanjiData.getBitsLength = /* @__PURE__ */ __name(function getBitsLength(length) {
+      return length * 13;
+    }, "getBitsLength");
+    KanjiData.prototype.getLength = /* @__PURE__ */ __name(function getLength() {
+      return this.data.length;
+    }, "getLength");
+    KanjiData.prototype.getBitsLength = /* @__PURE__ */ __name(function getBitsLength() {
+      return KanjiData.getBitsLength(this.data.length);
+    }, "getBitsLength");
+    KanjiData.prototype.write = function(bitBuffer) {
+      let i;
+      for (i = 0; i < this.data.length; i++) {
+        let value = Utils.toSJIS(this.data[i]);
+        if (value >= 33088 && value <= 40956) {
+          value -= 33088;
+        } else if (value >= 57408 && value <= 60351) {
+          value -= 49472;
+        } else {
+          throw new Error(
+            "Invalid SJIS character: " + this.data[i] + "\nMake sure your charset is UTF-8"
+          );
+        }
+        value = (value >>> 8 & 255) * 192 + (value & 255);
+        bitBuffer.put(value, 13);
+      }
+    };
+    module.exports = KanjiData;
+  }
+});
+
+// node_modules/dijkstrajs/dijkstra.js
+var require_dijkstra = __commonJS({
+  "node_modules/dijkstrajs/dijkstra.js"(exports, module) {
+    "use strict";
+    var dijkstra = {
+      single_source_shortest_paths: /* @__PURE__ */ __name(function(graph, s, d) {
+        var predecessors = {};
+        var costs = {};
+        costs[s] = 0;
+        var open = dijkstra.PriorityQueue.make();
+        open.push(s, 0);
+        var closest, u, v, cost_of_s_to_u, adjacent_nodes, cost_of_e, cost_of_s_to_u_plus_cost_of_e, cost_of_s_to_v, first_visit;
+        while (!open.empty()) {
+          closest = open.pop();
+          u = closest.value;
+          cost_of_s_to_u = closest.cost;
+          adjacent_nodes = graph[u] || {};
+          for (v in adjacent_nodes) {
+            if (adjacent_nodes.hasOwnProperty(v)) {
+              cost_of_e = adjacent_nodes[v];
+              cost_of_s_to_u_plus_cost_of_e = cost_of_s_to_u + cost_of_e;
+              cost_of_s_to_v = costs[v];
+              first_visit = typeof costs[v] === "undefined";
+              if (first_visit || cost_of_s_to_v > cost_of_s_to_u_plus_cost_of_e) {
+                costs[v] = cost_of_s_to_u_plus_cost_of_e;
+                open.push(v, cost_of_s_to_u_plus_cost_of_e);
+                predecessors[v] = u;
+              }
+            }
+          }
+        }
+        if (typeof d !== "undefined" && typeof costs[d] === "undefined") {
+          var msg = ["Could not find a path from ", s, " to ", d, "."].join("");
+          throw new Error(msg);
+        }
+        return predecessors;
+      }, "single_source_shortest_paths"),
+      extract_shortest_path_from_predecessor_list: /* @__PURE__ */ __name(function(predecessors, d) {
+        var nodes = [];
+        var u = d;
+        var predecessor;
+        while (u) {
+          nodes.push(u);
+          predecessor = predecessors[u];
+          u = predecessors[u];
+        }
+        nodes.reverse();
+        return nodes;
+      }, "extract_shortest_path_from_predecessor_list"),
+      find_path: /* @__PURE__ */ __name(function(graph, s, d) {
+        var predecessors = dijkstra.single_source_shortest_paths(graph, s, d);
+        return dijkstra.extract_shortest_path_from_predecessor_list(
+          predecessors,
+          d
+        );
+      }, "find_path"),
+      /**
+       * A very naive priority queue implementation.
+       */
+      PriorityQueue: {
+        make: /* @__PURE__ */ __name(function(opts) {
+          var T = dijkstra.PriorityQueue, t = {}, key;
+          opts = opts || {};
+          for (key in T) {
+            if (T.hasOwnProperty(key)) {
+              t[key] = T[key];
+            }
+          }
+          t.queue = [];
+          t.sorter = opts.sorter || T.default_sorter;
+          return t;
+        }, "make"),
+        default_sorter: /* @__PURE__ */ __name(function(a, b) {
+          return a.cost - b.cost;
+        }, "default_sorter"),
+        /**
+         * Add a new item to the queue and ensure the highest priority element
+         * is at the front of the queue.
+         */
+        push: /* @__PURE__ */ __name(function(value, cost) {
+          var item = { value, cost };
+          this.queue.push(item);
+          this.queue.sort(this.sorter);
+        }, "push"),
+        /**
+         * Return the highest priority element in the queue.
+         */
+        pop: /* @__PURE__ */ __name(function() {
+          return this.queue.shift();
+        }, "pop"),
+        empty: /* @__PURE__ */ __name(function() {
+          return this.queue.length === 0;
+        }, "empty")
+      }
+    };
+    if (typeof module !== "undefined") {
+      module.exports = dijkstra;
+    }
+  }
+});
+
+// node_modules/qrcode/lib/core/segments.js
+var require_segments = __commonJS({
+  "node_modules/qrcode/lib/core/segments.js"(exports) {
+    var Mode = require_mode();
+    var NumericData = require_numeric_data();
+    var AlphanumericData = require_alphanumeric_data();
+    var ByteData = require_byte_data();
+    var KanjiData = require_kanji_data();
+    var Regex = require_regex();
+    var Utils = require_utils();
+    var dijkstra = require_dijkstra();
+    function getStringByteLength(str) {
+      return unescape(encodeURIComponent(str)).length;
+    }
+    __name(getStringByteLength, "getStringByteLength");
+    function getSegments(regex, mode, str) {
+      const segments = [];
+      let result;
+      while ((result = regex.exec(str)) !== null) {
+        segments.push({
+          data: result[0],
+          index: result.index,
+          mode,
+          length: result[0].length
+        });
+      }
+      return segments;
+    }
+    __name(getSegments, "getSegments");
+    function getSegmentsFromString(dataStr) {
+      const numSegs = getSegments(Regex.NUMERIC, Mode.NUMERIC, dataStr);
+      const alphaNumSegs = getSegments(Regex.ALPHANUMERIC, Mode.ALPHANUMERIC, dataStr);
+      let byteSegs;
+      let kanjiSegs;
+      if (Utils.isKanjiModeEnabled()) {
+        byteSegs = getSegments(Regex.BYTE, Mode.BYTE, dataStr);
+        kanjiSegs = getSegments(Regex.KANJI, Mode.KANJI, dataStr);
+      } else {
+        byteSegs = getSegments(Regex.BYTE_KANJI, Mode.BYTE, dataStr);
+        kanjiSegs = [];
+      }
+      const segs = numSegs.concat(alphaNumSegs, byteSegs, kanjiSegs);
+      return segs.sort(function(s1, s2) {
+        return s1.index - s2.index;
+      }).map(function(obj) {
+        return {
+          data: obj.data,
+          mode: obj.mode,
+          length: obj.length
+        };
+      });
+    }
+    __name(getSegmentsFromString, "getSegmentsFromString");
+    function getSegmentBitsLength(length, mode) {
+      switch (mode) {
+        case Mode.NUMERIC:
+          return NumericData.getBitsLength(length);
+        case Mode.ALPHANUMERIC:
+          return AlphanumericData.getBitsLength(length);
+        case Mode.KANJI:
+          return KanjiData.getBitsLength(length);
+        case Mode.BYTE:
+          return ByteData.getBitsLength(length);
+      }
+    }
+    __name(getSegmentBitsLength, "getSegmentBitsLength");
+    function mergeSegments(segs) {
+      return segs.reduce(function(acc, curr) {
+        const prevSeg = acc.length - 1 >= 0 ? acc[acc.length - 1] : null;
+        if (prevSeg && prevSeg.mode === curr.mode) {
+          acc[acc.length - 1].data += curr.data;
+          return acc;
+        }
+        acc.push(curr);
+        return acc;
+      }, []);
+    }
+    __name(mergeSegments, "mergeSegments");
+    function buildNodes(segs) {
+      const nodes = [];
+      for (let i = 0; i < segs.length; i++) {
+        const seg = segs[i];
+        switch (seg.mode) {
+          case Mode.NUMERIC:
+            nodes.push([
+              seg,
+              { data: seg.data, mode: Mode.ALPHANUMERIC, length: seg.length },
+              { data: seg.data, mode: Mode.BYTE, length: seg.length }
+            ]);
+            break;
+          case Mode.ALPHANUMERIC:
+            nodes.push([
+              seg,
+              { data: seg.data, mode: Mode.BYTE, length: seg.length }
+            ]);
+            break;
+          case Mode.KANJI:
+            nodes.push([
+              seg,
+              { data: seg.data, mode: Mode.BYTE, length: getStringByteLength(seg.data) }
+            ]);
+            break;
+          case Mode.BYTE:
+            nodes.push([
+              { data: seg.data, mode: Mode.BYTE, length: getStringByteLength(seg.data) }
+            ]);
+        }
+      }
+      return nodes;
+    }
+    __name(buildNodes, "buildNodes");
+    function buildGraph(nodes, version) {
+      const table = {};
+      const graph = { start: {} };
+      let prevNodeIds = ["start"];
+      for (let i = 0; i < nodes.length; i++) {
+        const nodeGroup = nodes[i];
+        const currentNodeIds = [];
+        for (let j = 0; j < nodeGroup.length; j++) {
+          const node = nodeGroup[j];
+          const key = "" + i + j;
+          currentNodeIds.push(key);
+          table[key] = { node, lastCount: 0 };
+          graph[key] = {};
+          for (let n = 0; n < prevNodeIds.length; n++) {
+            const prevNodeId = prevNodeIds[n];
+            if (table[prevNodeId] && table[prevNodeId].node.mode === node.mode) {
+              graph[prevNodeId][key] = getSegmentBitsLength(table[prevNodeId].lastCount + node.length, node.mode) - getSegmentBitsLength(table[prevNodeId].lastCount, node.mode);
+              table[prevNodeId].lastCount += node.length;
+            } else {
+              if (table[prevNodeId]) table[prevNodeId].lastCount = node.length;
+              graph[prevNodeId][key] = getSegmentBitsLength(node.length, node.mode) + 4 + Mode.getCharCountIndicator(node.mode, version);
+            }
+          }
+        }
+        prevNodeIds = currentNodeIds;
+      }
+      for (let n = 0; n < prevNodeIds.length; n++) {
+        graph[prevNodeIds[n]].end = 0;
+      }
+      return { map: graph, table };
+    }
+    __name(buildGraph, "buildGraph");
+    function buildSingleSegment(data, modesHint) {
+      let mode;
+      const bestMode = Mode.getBestModeForData(data);
+      mode = Mode.from(modesHint, bestMode);
+      if (mode !== Mode.BYTE && mode.bit < bestMode.bit) {
+        throw new Error('"' + data + '" cannot be encoded with mode ' + Mode.toString(mode) + ".\n Suggested mode is: " + Mode.toString(bestMode));
+      }
+      if (mode === Mode.KANJI && !Utils.isKanjiModeEnabled()) {
+        mode = Mode.BYTE;
+      }
+      switch (mode) {
+        case Mode.NUMERIC:
+          return new NumericData(data);
+        case Mode.ALPHANUMERIC:
+          return new AlphanumericData(data);
+        case Mode.KANJI:
+          return new KanjiData(data);
+        case Mode.BYTE:
+          return new ByteData(data);
+      }
+    }
+    __name(buildSingleSegment, "buildSingleSegment");
+    exports.fromArray = /* @__PURE__ */ __name(function fromArray(array) {
+      return array.reduce(function(acc, seg) {
+        if (typeof seg === "string") {
+          acc.push(buildSingleSegment(seg, null));
+        } else if (seg.data) {
+          acc.push(buildSingleSegment(seg.data, seg.mode));
+        }
+        return acc;
+      }, []);
+    }, "fromArray");
+    exports.fromString = /* @__PURE__ */ __name(function fromString(data, version) {
+      const segs = getSegmentsFromString(data, Utils.isKanjiModeEnabled());
+      const nodes = buildNodes(segs);
+      const graph = buildGraph(nodes, version);
+      const path = dijkstra.find_path(graph.map, "start", "end");
+      const optimizedSegs = [];
+      for (let i = 1; i < path.length - 1; i++) {
+        optimizedSegs.push(graph.table[path[i]].node);
+      }
+      return exports.fromArray(mergeSegments(optimizedSegs));
+    }, "fromString");
+    exports.rawSplit = /* @__PURE__ */ __name(function rawSplit(data) {
+      return exports.fromArray(
+        getSegmentsFromString(data, Utils.isKanjiModeEnabled())
+      );
+    }, "rawSplit");
+  }
+});
+
+// node_modules/qrcode/lib/core/qrcode.js
+var require_qrcode = __commonJS({
+  "node_modules/qrcode/lib/core/qrcode.js"(exports) {
+    var Utils = require_utils();
+    var ECLevel = require_error_correction_level();
+    var BitBuffer = require_bit_buffer();
+    var BitMatrix = require_bit_matrix();
+    var AlignmentPattern = require_alignment_pattern();
+    var FinderPattern = require_finder_pattern();
+    var MaskPattern = require_mask_pattern();
+    var ECCode = require_error_correction_code();
+    var ReedSolomonEncoder = require_reed_solomon_encoder();
+    var Version = require_version();
+    var FormatInfo = require_format_info();
+    var Mode = require_mode();
+    var Segments = require_segments();
+    function setupFinderPattern(matrix, version) {
+      const size = matrix.size;
+      const pos = FinderPattern.getPositions(version);
+      for (let i = 0; i < pos.length; i++) {
+        const row = pos[i][0];
+        const col = pos[i][1];
+        for (let r = -1; r <= 7; r++) {
+          if (row + r <= -1 || size <= row + r) continue;
+          for (let c = -1; c <= 7; c++) {
+            if (col + c <= -1 || size <= col + c) continue;
+            if (r >= 0 && r <= 6 && (c === 0 || c === 6) || c >= 0 && c <= 6 && (r === 0 || r === 6) || r >= 2 && r <= 4 && c >= 2 && c <= 4) {
+              matrix.set(row + r, col + c, true, true);
+            } else {
+              matrix.set(row + r, col + c, false, true);
+            }
+          }
+        }
+      }
+    }
+    __name(setupFinderPattern, "setupFinderPattern");
+    function setupTimingPattern(matrix) {
+      const size = matrix.size;
+      for (let r = 8; r < size - 8; r++) {
+        const value = r % 2 === 0;
+        matrix.set(r, 6, value, true);
+        matrix.set(6, r, value, true);
+      }
+    }
+    __name(setupTimingPattern, "setupTimingPattern");
+    function setupAlignmentPattern(matrix, version) {
+      const pos = AlignmentPattern.getPositions(version);
+      for (let i = 0; i < pos.length; i++) {
+        const row = pos[i][0];
+        const col = pos[i][1];
+        for (let r = -2; r <= 2; r++) {
+          for (let c = -2; c <= 2; c++) {
+            if (r === -2 || r === 2 || c === -2 || c === 2 || r === 0 && c === 0) {
+              matrix.set(row + r, col + c, true, true);
+            } else {
+              matrix.set(row + r, col + c, false, true);
+            }
+          }
+        }
+      }
+    }
+    __name(setupAlignmentPattern, "setupAlignmentPattern");
+    function setupVersionInfo(matrix, version) {
+      const size = matrix.size;
+      const bits = Version.getEncodedBits(version);
+      let row, col, mod;
+      for (let i = 0; i < 18; i++) {
+        row = Math.floor(i / 3);
+        col = i % 3 + size - 8 - 3;
+        mod = (bits >> i & 1) === 1;
+        matrix.set(row, col, mod, true);
+        matrix.set(col, row, mod, true);
+      }
+    }
+    __name(setupVersionInfo, "setupVersionInfo");
+    function setupFormatInfo(matrix, errorCorrectionLevel, maskPattern) {
+      const size = matrix.size;
+      const bits = FormatInfo.getEncodedBits(errorCorrectionLevel, maskPattern);
+      let i, mod;
+      for (i = 0; i < 15; i++) {
+        mod = (bits >> i & 1) === 1;
+        if (i < 6) {
+          matrix.set(i, 8, mod, true);
+        } else if (i < 8) {
+          matrix.set(i + 1, 8, mod, true);
+        } else {
+          matrix.set(size - 15 + i, 8, mod, true);
+        }
+        if (i < 8) {
+          matrix.set(8, size - i - 1, mod, true);
+        } else if (i < 9) {
+          matrix.set(8, 15 - i - 1 + 1, mod, true);
+        } else {
+          matrix.set(8, 15 - i - 1, mod, true);
+        }
+      }
+      matrix.set(size - 8, 8, 1, true);
+    }
+    __name(setupFormatInfo, "setupFormatInfo");
+    function setupData(matrix, data) {
+      const size = matrix.size;
+      let inc = -1;
+      let row = size - 1;
+      let bitIndex = 7;
+      let byteIndex = 0;
+      for (let col = size - 1; col > 0; col -= 2) {
+        if (col === 6) col--;
+        while (true) {
+          for (let c = 0; c < 2; c++) {
+            if (!matrix.isReserved(row, col - c)) {
+              let dark = false;
+              if (byteIndex < data.length) {
+                dark = (data[byteIndex] >>> bitIndex & 1) === 1;
+              }
+              matrix.set(row, col - c, dark);
+              bitIndex--;
+              if (bitIndex === -1) {
+                byteIndex++;
+                bitIndex = 7;
+              }
+            }
+          }
+          row += inc;
+          if (row < 0 || size <= row) {
+            row -= inc;
+            inc = -inc;
+            break;
+          }
+        }
+      }
+    }
+    __name(setupData, "setupData");
+    function createData(version, errorCorrectionLevel, segments) {
+      const buffer = new BitBuffer();
+      segments.forEach(function(data) {
+        buffer.put(data.mode.bit, 4);
+        buffer.put(data.getLength(), Mode.getCharCountIndicator(data.mode, version));
+        data.write(buffer);
+      });
+      const totalCodewords = Utils.getSymbolTotalCodewords(version);
+      const ecTotalCodewords = ECCode.getTotalCodewordsCount(version, errorCorrectionLevel);
+      const dataTotalCodewordsBits = (totalCodewords - ecTotalCodewords) * 8;
+      if (buffer.getLengthInBits() + 4 <= dataTotalCodewordsBits) {
+        buffer.put(0, 4);
+      }
+      while (buffer.getLengthInBits() % 8 !== 0) {
+        buffer.putBit(0);
+      }
+      const remainingByte = (dataTotalCodewordsBits - buffer.getLengthInBits()) / 8;
+      for (let i = 0; i < remainingByte; i++) {
+        buffer.put(i % 2 ? 17 : 236, 8);
+      }
+      return createCodewords(buffer, version, errorCorrectionLevel);
+    }
+    __name(createData, "createData");
+    function createCodewords(bitBuffer, version, errorCorrectionLevel) {
+      const totalCodewords = Utils.getSymbolTotalCodewords(version);
+      const ecTotalCodewords = ECCode.getTotalCodewordsCount(version, errorCorrectionLevel);
+      const dataTotalCodewords = totalCodewords - ecTotalCodewords;
+      const ecTotalBlocks = ECCode.getBlocksCount(version, errorCorrectionLevel);
+      const blocksInGroup2 = totalCodewords % ecTotalBlocks;
+      const blocksInGroup1 = ecTotalBlocks - blocksInGroup2;
+      const totalCodewordsInGroup1 = Math.floor(totalCodewords / ecTotalBlocks);
+      const dataCodewordsInGroup1 = Math.floor(dataTotalCodewords / ecTotalBlocks);
+      const dataCodewordsInGroup2 = dataCodewordsInGroup1 + 1;
+      const ecCount = totalCodewordsInGroup1 - dataCodewordsInGroup1;
+      const rs = new ReedSolomonEncoder(ecCount);
+      let offset = 0;
+      const dcData = new Array(ecTotalBlocks);
+      const ecData = new Array(ecTotalBlocks);
+      let maxDataSize = 0;
+      const buffer = new Uint8Array(bitBuffer.buffer);
+      for (let b = 0; b < ecTotalBlocks; b++) {
+        const dataSize = b < blocksInGroup1 ? dataCodewordsInGroup1 : dataCodewordsInGroup2;
+        dcData[b] = buffer.slice(offset, offset + dataSize);
+        ecData[b] = rs.encode(dcData[b]);
+        offset += dataSize;
+        maxDataSize = Math.max(maxDataSize, dataSize);
+      }
+      const data = new Uint8Array(totalCodewords);
+      let index = 0;
+      let i, r;
+      for (i = 0; i < maxDataSize; i++) {
+        for (r = 0; r < ecTotalBlocks; r++) {
+          if (i < dcData[r].length) {
+            data[index++] = dcData[r][i];
+          }
+        }
+      }
+      for (i = 0; i < ecCount; i++) {
+        for (r = 0; r < ecTotalBlocks; r++) {
+          data[index++] = ecData[r][i];
+        }
+      }
+      return data;
+    }
+    __name(createCodewords, "createCodewords");
+    function createSymbol(data, version, errorCorrectionLevel, maskPattern) {
+      let segments;
+      if (Array.isArray(data)) {
+        segments = Segments.fromArray(data);
+      } else if (typeof data === "string") {
+        let estimatedVersion = version;
+        if (!estimatedVersion) {
+          const rawSegments = Segments.rawSplit(data);
+          estimatedVersion = Version.getBestVersionForData(rawSegments, errorCorrectionLevel);
+        }
+        segments = Segments.fromString(data, estimatedVersion || 40);
+      } else {
+        throw new Error("Invalid data");
+      }
+      const bestVersion = Version.getBestVersionForData(segments, errorCorrectionLevel);
+      if (!bestVersion) {
+        throw new Error("The amount of data is too big to be stored in a QR Code");
+      }
+      if (!version) {
+        version = bestVersion;
+      } else if (version < bestVersion) {
+        throw new Error(
+          "\nThe chosen QR Code version cannot contain this amount of data.\nMinimum version required to store current data is: " + bestVersion + ".\n"
+        );
+      }
+      const dataBits = createData(version, errorCorrectionLevel, segments);
+      const moduleCount = Utils.getSymbolSize(version);
+      const modules = new BitMatrix(moduleCount);
+      setupFinderPattern(modules, version);
+      setupTimingPattern(modules);
+      setupAlignmentPattern(modules, version);
+      setupFormatInfo(modules, errorCorrectionLevel, 0);
+      if (version >= 7) {
+        setupVersionInfo(modules, version);
+      }
+      setupData(modules, dataBits);
+      if (isNaN(maskPattern)) {
+        maskPattern = MaskPattern.getBestMask(
+          modules,
+          setupFormatInfo.bind(null, modules, errorCorrectionLevel)
+        );
+      }
+      MaskPattern.applyMask(maskPattern, modules);
+      setupFormatInfo(modules, errorCorrectionLevel, maskPattern);
+      return {
+        modules,
+        version,
+        errorCorrectionLevel,
+        maskPattern,
+        segments
+      };
+    }
+    __name(createSymbol, "createSymbol");
+    exports.create = /* @__PURE__ */ __name(function create(data, options) {
+      if (typeof data === "undefined" || data === "") {
+        throw new Error("No input text");
+      }
+      let errorCorrectionLevel = ECLevel.M;
+      let version;
+      let mask;
+      if (typeof options !== "undefined") {
+        errorCorrectionLevel = ECLevel.from(options.errorCorrectionLevel, ECLevel.M);
+        version = Version.from(options.version);
+        mask = MaskPattern.from(options.maskPattern);
+        if (options.toSJISFunc) {
+          Utils.setToSJISFunction(options.toSJISFunc);
+        }
+      }
+      return createSymbol(data, version, errorCorrectionLevel, mask);
+    }, "create");
+  }
+});
+
+// node_modules/qrcode/lib/renderer/utils.js
+var require_utils2 = __commonJS({
+  "node_modules/qrcode/lib/renderer/utils.js"(exports) {
+    function hex2rgba(hex) {
+      if (typeof hex === "number") {
+        hex = hex.toString();
+      }
+      if (typeof hex !== "string") {
+        throw new Error("Color should be defined as hex string");
+      }
+      let hexCode = hex.slice().replace("#", "").split("");
+      if (hexCode.length < 3 || hexCode.length === 5 || hexCode.length > 8) {
+        throw new Error("Invalid hex color: " + hex);
+      }
+      if (hexCode.length === 3 || hexCode.length === 4) {
+        hexCode = Array.prototype.concat.apply([], hexCode.map(function(c) {
+          return [c, c];
+        }));
+      }
+      if (hexCode.length === 6) hexCode.push("F", "F");
+      const hexValue = parseInt(hexCode.join(""), 16);
+      return {
+        r: hexValue >> 24 & 255,
+        g: hexValue >> 16 & 255,
+        b: hexValue >> 8 & 255,
+        a: hexValue & 255,
+        hex: "#" + hexCode.slice(0, 6).join("")
+      };
+    }
+    __name(hex2rgba, "hex2rgba");
+    exports.getOptions = /* @__PURE__ */ __name(function getOptions(options) {
+      if (!options) options = {};
+      if (!options.color) options.color = {};
+      const margin = typeof options.margin === "undefined" || options.margin === null || options.margin < 0 ? 4 : options.margin;
+      const width = options.width && options.width >= 21 ? options.width : void 0;
+      const scale = options.scale || 4;
+      return {
+        width,
+        scale: width ? 4 : scale,
+        margin,
+        color: {
+          dark: hex2rgba(options.color.dark || "#000000ff"),
+          light: hex2rgba(options.color.light || "#ffffffff")
+        },
+        type: options.type,
+        rendererOpts: options.rendererOpts || {}
+      };
+    }, "getOptions");
+    exports.getScale = /* @__PURE__ */ __name(function getScale(qrSize, opts) {
+      return opts.width && opts.width >= qrSize + opts.margin * 2 ? opts.width / (qrSize + opts.margin * 2) : opts.scale;
+    }, "getScale");
+    exports.getImageWidth = /* @__PURE__ */ __name(function getImageWidth(qrSize, opts) {
+      const scale = exports.getScale(qrSize, opts);
+      return Math.floor((qrSize + opts.margin * 2) * scale);
+    }, "getImageWidth");
+    exports.qrToImageData = /* @__PURE__ */ __name(function qrToImageData(imgData, qr, opts) {
+      const size = qr.modules.size;
+      const data = qr.modules.data;
+      const scale = exports.getScale(size, opts);
+      const symbolSize = Math.floor((size + opts.margin * 2) * scale);
+      const scaledMargin = opts.margin * scale;
+      const palette = [opts.color.light, opts.color.dark];
+      for (let i = 0; i < symbolSize; i++) {
+        for (let j = 0; j < symbolSize; j++) {
+          let posDst = (i * symbolSize + j) * 4;
+          let pxColor = opts.color.light;
+          if (i >= scaledMargin && j >= scaledMargin && i < symbolSize - scaledMargin && j < symbolSize - scaledMargin) {
+            const iSrc = Math.floor((i - scaledMargin) / scale);
+            const jSrc = Math.floor((j - scaledMargin) / scale);
+            pxColor = palette[data[iSrc * size + jSrc] ? 1 : 0];
+          }
+          imgData[posDst++] = pxColor.r;
+          imgData[posDst++] = pxColor.g;
+          imgData[posDst++] = pxColor.b;
+          imgData[posDst] = pxColor.a;
+        }
+      }
+    }, "qrToImageData");
+  }
+});
+
+// node_modules/qrcode/lib/renderer/canvas.js
+var require_canvas = __commonJS({
+  "node_modules/qrcode/lib/renderer/canvas.js"(exports) {
+    var Utils = require_utils2();
+    function clearCanvas(ctx, canvas, size) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!canvas.style) canvas.style = {};
+      canvas.height = size;
+      canvas.width = size;
+      canvas.style.height = size + "px";
+      canvas.style.width = size + "px";
+    }
+    __name(clearCanvas, "clearCanvas");
+    function getCanvasElement() {
+      try {
+        return document.createElement("canvas");
+      } catch (e) {
+        throw new Error("You need to specify a canvas element");
+      }
+    }
+    __name(getCanvasElement, "getCanvasElement");
+    exports.render = /* @__PURE__ */ __name(function render(qrData, canvas, options) {
+      let opts = options;
+      let canvasEl = canvas;
+      if (typeof opts === "undefined" && (!canvas || !canvas.getContext)) {
+        opts = canvas;
+        canvas = void 0;
+      }
+      if (!canvas) {
+        canvasEl = getCanvasElement();
+      }
+      opts = Utils.getOptions(opts);
+      const size = Utils.getImageWidth(qrData.modules.size, opts);
+      const ctx = canvasEl.getContext("2d");
+      const image = ctx.createImageData(size, size);
+      Utils.qrToImageData(image.data, qrData, opts);
+      clearCanvas(ctx, canvasEl, size);
+      ctx.putImageData(image, 0, 0);
+      return canvasEl;
+    }, "render");
+    exports.renderToDataURL = /* @__PURE__ */ __name(function renderToDataURL(qrData, canvas, options) {
+      let opts = options;
+      if (typeof opts === "undefined" && (!canvas || !canvas.getContext)) {
+        opts = canvas;
+        canvas = void 0;
+      }
+      if (!opts) opts = {};
+      const canvasEl = exports.render(qrData, canvas, opts);
+      const type = opts.type || "image/png";
+      const rendererOpts = opts.rendererOpts || {};
+      return canvasEl.toDataURL(type, rendererOpts.quality);
+    }, "renderToDataURL");
+  }
+});
+
+// node_modules/qrcode/lib/renderer/svg-tag.js
+var require_svg_tag = __commonJS({
+  "node_modules/qrcode/lib/renderer/svg-tag.js"(exports) {
+    var Utils = require_utils2();
+    function getColorAttrib(color, attrib) {
+      const alpha = color.a / 255;
+      const str = attrib + '="' + color.hex + '"';
+      return alpha < 1 ? str + " " + attrib + '-opacity="' + alpha.toFixed(2).slice(1) + '"' : str;
+    }
+    __name(getColorAttrib, "getColorAttrib");
+    function svgCmd(cmd, x, y) {
+      let str = cmd + x;
+      if (typeof y !== "undefined") str += " " + y;
+      return str;
+    }
+    __name(svgCmd, "svgCmd");
+    function qrToPath(data, size, margin) {
+      let path = "";
+      let moveBy = 0;
+      let newRow = false;
+      let lineLength = 0;
+      for (let i = 0; i < data.length; i++) {
+        const col = Math.floor(i % size);
+        const row = Math.floor(i / size);
+        if (!col && !newRow) newRow = true;
+        if (data[i]) {
+          lineLength++;
+          if (!(i > 0 && col > 0 && data[i - 1])) {
+            path += newRow ? svgCmd("M", col + margin, 0.5 + row + margin) : svgCmd("m", moveBy, 0);
+            moveBy = 0;
+            newRow = false;
+          }
+          if (!(col + 1 < size && data[i + 1])) {
+            path += svgCmd("h", lineLength);
+            lineLength = 0;
+          }
+        } else {
+          moveBy++;
+        }
+      }
+      return path;
+    }
+    __name(qrToPath, "qrToPath");
+    exports.render = /* @__PURE__ */ __name(function render(qrData, options, cb) {
+      const opts = Utils.getOptions(options);
+      const size = qrData.modules.size;
+      const data = qrData.modules.data;
+      const qrcodesize = size + opts.margin * 2;
+      const bg = !opts.color.light.a ? "" : "<path " + getColorAttrib(opts.color.light, "fill") + ' d="M0 0h' + qrcodesize + "v" + qrcodesize + 'H0z"/>';
+      const path = "<path " + getColorAttrib(opts.color.dark, "stroke") + ' d="' + qrToPath(data, size, opts.margin) + '"/>';
+      const viewBox = 'viewBox="0 0 ' + qrcodesize + " " + qrcodesize + '"';
+      const width = !opts.width ? "" : 'width="' + opts.width + '" height="' + opts.width + '" ';
+      const svgTag = '<svg xmlns="http://www.w3.org/2000/svg" ' + width + viewBox + ' shape-rendering="crispEdges">' + bg + path + "</svg>\n";
+      if (typeof cb === "function") {
+        cb(null, svgTag);
+      }
+      return svgTag;
+    }, "render");
+  }
+});
+
+// node_modules/qrcode/lib/browser.js
+var require_browser = __commonJS({
+  "node_modules/qrcode/lib/browser.js"(exports) {
+    var canPromise = require_can_promise();
+    var QRCode2 = require_qrcode();
+    var CanvasRenderer = require_canvas();
+    var SvgRenderer = require_svg_tag();
+    function renderCanvas(renderFunc, canvas, text, opts, cb) {
+      const args = [].slice.call(arguments, 1);
+      const argsNum = args.length;
+      const isLastArgCb = typeof args[argsNum - 1] === "function";
+      if (!isLastArgCb && !canPromise()) {
+        throw new Error("Callback required as last argument");
+      }
+      if (isLastArgCb) {
+        if (argsNum < 2) {
+          throw new Error("Too few arguments provided");
+        }
+        if (argsNum === 2) {
+          cb = text;
+          text = canvas;
+          canvas = opts = void 0;
+        } else if (argsNum === 3) {
+          if (canvas.getContext && typeof cb === "undefined") {
+            cb = opts;
+            opts = void 0;
+          } else {
+            cb = opts;
+            opts = text;
+            text = canvas;
+            canvas = void 0;
+          }
+        }
+      } else {
+        if (argsNum < 1) {
+          throw new Error("Too few arguments provided");
+        }
+        if (argsNum === 1) {
+          text = canvas;
+          canvas = opts = void 0;
+        } else if (argsNum === 2 && !canvas.getContext) {
+          opts = text;
+          text = canvas;
+          canvas = void 0;
+        }
+        return new Promise(function(resolve, reject) {
+          try {
+            const data = QRCode2.create(text, opts);
+            resolve(renderFunc(data, canvas, opts));
+          } catch (e) {
+            reject(e);
+          }
+        });
+      }
+      try {
+        const data = QRCode2.create(text, opts);
+        cb(null, renderFunc(data, canvas, opts));
+      } catch (e) {
+        cb(e);
+      }
+    }
+    __name(renderCanvas, "renderCanvas");
+    exports.create = QRCode2.create;
+    exports.toCanvas = renderCanvas.bind(null, CanvasRenderer.render);
+    exports.toDataURL = renderCanvas.bind(null, CanvasRenderer.renderToDataURL);
+    exports.toString = renderCanvas.bind(null, function(data, _, opts) {
+      return SvgRenderer.render(data, opts);
+    });
+  }
+});
+
 // src/index.ts
-// ES module Worker: QR (/s/*, /api/qr), Analytics (/api/track), Status (/api/status)
-
-import QRCode from "qrcode";
-
-// Fixed event order used by API + UI
-const EVENT_ORDER = [
-  "lpm-open","call","email","whatsapp","telegram","messenger",
-  "official","booking","newsletter",
-  "facebook","instagram","pinterest","spotify","tiktok","youtube",
-  "share","rating","save","unsave","map","qr-print","qr-scan","qr-view","qr-redeem",
-  "redeem-confirmation-cashier",    // cashier confirmed that a redeem event completed
-  "redeem-confirmation-customer"    // customer confirmed that a redeem event completed
-] as const;
-
-type EventKey = typeof EVENT_ORDER[number];
-
-// tz: payload.tz → country → fallback Berlin → UTC
-const TZ_FALLBACK = "Europe/Berlin";
-const TZ_BY_COUNTRY: Record<string,string> = {
-  HU:"Europe/Budapest", DE:"Europe/Berlin", AT:"Europe/Vienna", CH:"Europe/Zurich",
-  GB:"Europe/London",  IE:"Europe/Dublin",  // extend as needed
+var import_qrcode = __toESM(require_browser(), 1);
+var EVENT_ORDER = [
+  "lpm-open",
+  "call",
+  "email",
+  "whatsapp",
+  "telegram",
+  "messenger",
+  "official",
+  "booking",
+  "newsletter",
+  "facebook",
+  "instagram",
+  "pinterest",
+  "spotify",
+  "tiktok",
+  "youtube",
+  "share",
+  "rating",
+  "save",
+  "unsave",
+  "map",
+  "qr-print",
+  "qr-scan",
+  "qr-view",
+  "qr-redeem",
+  "redeem-confirmation-cashier",
+  // cashier confirmed that a redeem event completed
+  "redeem-confirmation-customer"
+  // customer confirmed that a redeem event completed
+];
+var TZ_FALLBACK = "Europe/Berlin";
+var TZ_BY_COUNTRY = {
+  HU: "Europe/Budapest",
+  DE: "Europe/Berlin",
+  AT: "Europe/Vienna",
+  CH: "Europe/Zurich",
+  GB: "Europe/London",
+  IE: "Europe/Dublin"
+  // extend as needed
 };
-function dayKeyFor(dateUTC: Date, tz?: string, countryCode?: string) {
-  const pick = tz || (countryCode && TZ_BY_COUNTRY[countryCode.toUpperCase()]) || TZ_FALLBACK;
-  try { return new Intl.DateTimeFormat('en-CA',{ timeZone: pick, year:'numeric',month:'2-digit',day:'2-digit'}).format(dateUTC); }
-  catch { return dateUTC.toISOString().slice(0,10); } // UTC fallback
+function dayKeyFor(dateUTC, tz, countryCode) {
+  const pick = tz || countryCode && TZ_BY_COUNTRY[countryCode.toUpperCase()] || TZ_FALLBACK;
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: pick, year: "numeric", month: "2-digit", day: "2-digit" }).format(dateUTC);
+  } catch {
+    return dateUTC.toISOString().slice(0, 10);
+  }
 }
-async function kvIncr(kv: KVNamespace, key: string) {
-  const cur = parseInt((await kv.get(key))||"0",10) || 0;
-  await kv.put(key, String(cur+1), { expirationTtl: 60*60*24*366 });
+__name(dayKeyFor, "dayKeyFor");
+async function kvIncr(kv, key) {
+  const cur = parseInt(await kv.get(key) || "0", 10) || 0;
+  await kv.put(key, String(cur + 1), { expirationTtl: 60 * 60 * 24 * 366 });
 }
-
-export interface Env {
-  KV_STATUS: KVNamespace;
-  KV_ALIASES: KVNamespace;
-  KV_OVERRIDES: KVNamespace;
-  KV_STATS: KVNamespace;
-  KV_CONTEXTS: KVNamespace;
-  KV_STRUCTURE: KVNamespace;
-  KV_MEDIA: KVNamespace;
-  DO_MEDIA_TARGET: DurableObjectNamespace;
-  JWT_SECRET: string; // set via wrangler secret
-  STRIPE_SECRET_KEY: string; // Stripe secret key for creating Checkout Sessions (server-only)
-  STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
-  GOOGLE_PLACES_API_KEY?: string; // Places API New server key; do not expose in frontend JS
-  CF_IMAGES_ACCOUNT_ID: string; // Cloudflare Images account id; not exposed to frontend
-  CF_IMAGES_API_TOKEN: string; // Worker secret for Cloudflare Images API; never exposed to frontend
-  CF_IMAGES_ACCOUNT_HASH?: string; // Cloudflare Images delivery account hash used to build backend-owned variant URLs
-  PARTNER_ENABLED?: string; // Partner route development flag; keep false in production until intentionally enabled
-  PARTNER_PUBLIC_LAUNCH_ENABLED?: string; // Partner public launch flag; blocked until production Plan pricing is restored
-}
-
-// --- Plan persistence and reconciliation (Plan Entitlement authority) ---
-// Authoritative source: Stripe Checkout Session line items (price.id) at reconciliation time.
-// Publish MUST NOT call Stripe; publish reads plan:<payment_intent.id> from KV_STATUS.
-// Active Plan coverage, not campaign state, is the authority for Dash/BO access.
-
-type PlanTier = "standard" | "multi" | "large" | "network" | "unknown";
-type PlanMode = "managed_presence" | "campaign_with_promo_qr";
-
-type PlanDefinition = {
-  tier: PlanTier;
-  grossAmount: number;
-  currency: string;
-  maxPublishedLocations: number;
-  maxConcurrentPromoQrCampaignsPerLocation: number;
-  activeDurationDays: number;
-  allowedPlanModes: PlanMode[];
-};
-
-type PlanRecord = {
-  priceId: string;
-  tier: PlanTier;
-  grossAmount: number;
-  currency: string;
-  maxPublishedLocations: number;
-  maxConcurrentPromoQrCampaignsPerLocation: number;
-  activeDurationDays: number;
-  purchasedAt: string; // ISO
-  expiresAt: string;   // ISO (must equal ownership.exclusiveUntil for same payment)
-  initiationType: string;
-  planMode: PlanMode;
-};
-
-type PlanSelectionRecord = {
-  ver: number;
-  selectionId: string;
-  route: TargetIdentityRoute | string;
-  locationIDs: string[];
-  coveredUlids: string[];
-  draftULID: string;
-  draftSessionId: string;
-  planCode: string;
-  priceId: string;
-  planMode: PlanMode;
-  initiationType: string;
-  campaignKey: string;
-  navigenVersion: string;
-  createdAt: string;
-  expiresAt: string;
-  deviceId: string;
-  source: string;
-};
-
-type PlanAllocationRecord = {
-  ver: number;
-  paymentIntentId: string;
-  checkoutSessionId: string;
-  planSelectionId: string;
-  ulids: string[];
-  priceId: string;
-  tier: PlanTier;
-  planMode: PlanMode;
-  initiationType: string;
-  purchasedAt: string;
-  expiresAt: string;
-  route: string;
-  campaignKey: string;
-  navigenVersion: string;
-};
-
-type PlanReconciliationResult = {
-  paymentIntentId: string;
-  checkoutSessionId: string;
-  planSelectionId: string;
-  primaryUlid: string;
-  locationID: string;
-  coveredUlids: string[];
-  plan: PlanRecord;
-  allocation: PlanAllocationRecord;
-  alreadyProcessed: boolean;
-};
-
-const PLAN_SELECTION_TTL_SECONDS = 60 * 60;
-
-// Stripe price.id values from the Dashboard.
-// Fail-closed behavior is enforced by rejecting unknown price ids during reconciliation.
-const PRICE_ID_TO_PLAN: Record<string, PlanDefinition> = {
+__name(kvIncr, "kvIncr");
+var PLAN_SELECTION_TTL_SECONDS = 60 * 60;
+var PRICE_ID_TO_PLAN = {
   "price_1TDfBIFf2RZOYEdOobudnFRW": {
     tier: "standard",
-    grossAmount: 1, // TESTING until launch; launch amount is documented as 79 EUR.
+    grossAmount: 1,
+    // TESTING until launch; launch amount is documented as 79 EUR.
     currency: "EUR",
     maxPublishedLocations: 1,
     maxConcurrentPromoQrCampaignsPerLocation: 3,
@@ -148,7 +2211,8 @@ const PRICE_ID_TO_PLAN: Record<string, PlanDefinition> = {
   },
   "price_1TDfBtFf2RZOYEdOGIfPn6uu": {
     tier: "multi",
-    grossAmount: 2, // TESTING until launch; launch amount is documented as 179 EUR.
+    grossAmount: 2,
+    // TESTING until launch; launch amount is documented as 179 EUR.
     currency: "EUR",
     maxPublishedLocations: 3,
     maxConcurrentPromoQrCampaignsPerLocation: 5,
@@ -168,54 +2232,50 @@ const PRICE_ID_TO_PLAN: Record<string, PlanDefinition> = {
     tier: "network",
     grossAmount: 749,
     currency: "EUR",
-    maxPublishedLocations: 10000,
+    maxPublishedLocations: 1e4,
     maxConcurrentPromoQrCampaignsPerLocation: 20,
     activeDurationDays: 30,
     allowedPlanModes: ["managed_presence", "campaign_with_promo_qr"]
   }
 };
-
-// Plan chooser codes are BO-facing; price ids are Worker-authoritative.
-// Keep this mapping centralized so checkout, restore, and enforcement resolve the same tier contract.
-const PLAN_CODE_TO_PRICE_ID: Record<string, string> = {
-  standard: "price_1TDfBIFf2RZOYEdOobudnFRW", // TESTING: real Stripe price id for €1
-  multi: "price_1TDfBtFf2RZOYEdOGIfPn6uu",   // TESTING: real Stripe price id for €2
-  large: "price_1TDfDfFf2RZOYEdOFicVRcQ8",   // Stripe Dashboard price id for Large
-  network: "price_1TDfFaFf2RZOYEdOXzIMBxbO"  // Stripe Dashboard price id for Network
+var PLAN_CODE_TO_PRICE_ID = {
+  standard: "price_1TDfBIFf2RZOYEdOobudnFRW",
+  // TESTING: real Stripe price id for €1
+  multi: "price_1TDfBtFf2RZOYEdOGIfPn6uu",
+  // TESTING: real Stripe price id for €2
+  large: "price_1TDfDfFf2RZOYEdOFicVRcQ8",
+  // Stripe Dashboard price id for Large
+  network: "price_1TDfFaFf2RZOYEdOXzIMBxbO"
+  // Stripe Dashboard price id for Network
 };
-
-function normalizePlanTier(v: unknown): PlanTier {
+function normalizePlanTier(v) {
   const s = String(v || "").trim().toLowerCase();
   if (s === "standard" || s === "multi" || s === "large" || s === "network") return s;
   return "unknown";
 }
-
-function normalizePlanMode(v: unknown, legacyPreset?: unknown): PlanMode {
+__name(normalizePlanTier, "normalizePlanTier");
+function normalizePlanMode(v, legacyPreset) {
   const s = String(v || "").trim().toLowerCase();
   if (s === "managed_presence") return "managed_presence";
   if (s === "campaign_with_promo_qr") return "campaign_with_promo_qr";
-
   const legacy = String(legacyPreset || "").trim().toLowerCase();
   if (legacy === "visibility") return "managed_presence";
   if (legacy === "promotion") return "campaign_with_promo_qr";
-
   return "campaign_with_promo_qr";
 }
-
-function normalizeInitiationType(v: unknown): string {
+__name(normalizePlanMode, "normalizePlanMode");
+function normalizeInitiationType(v) {
   const s = String(v || "").trim().toLowerCase();
   if (s === "partner_assisted" || s === "agent") return "partner_assisted";
   if (s === "platform") return "platform";
-  // Legacy public checkout is still an owner-originated Plan activation.
   if (s === "public" || s === "owner" || !s) return "owner";
   return s;
 }
-
-function planDefinitionForPriceId(priceId: unknown): (PlanDefinition & { priceId: string }) | null {
+__name(normalizeInitiationType, "normalizeInitiationType");
+function planDefinitionForPriceId(priceId) {
   const id = String(priceId || "").trim();
   const mapped = PRICE_ID_TO_PLAN[id];
   if (!id || !mapped || normalizePlanTier(mapped.tier) === "unknown") return null;
-
   return {
     priceId: id,
     tier: normalizePlanTier(mapped.tier),
@@ -224,65 +2284,55 @@ function planDefinitionForPriceId(priceId: unknown): (PlanDefinition & { priceId
     maxPublishedLocations: Math.max(0, Number(mapped.maxPublishedLocations || 0) || 0),
     maxConcurrentPromoQrCampaignsPerLocation: Math.max(0, Number(mapped.maxConcurrentPromoQrCampaignsPerLocation || 0) || 0),
     activeDurationDays: Math.max(1, Number(mapped.activeDurationDays || 30) || 30),
-    allowedPlanModes: Array.isArray(mapped.allowedPlanModes) && mapped.allowedPlanModes.length
-      ? mapped.allowedPlanModes
-      : ["managed_presence", "campaign_with_promo_qr"]
+    allowedPlanModes: Array.isArray(mapped.allowedPlanModes) && mapped.allowedPlanModes.length ? mapped.allowedPlanModes : ["managed_presence", "campaign_with_promo_qr"]
   };
 }
-
-function planDefinitionForCode(planCode: unknown): ((PlanDefinition & { code: string; priceId: string }) | null) {
+__name(planDefinitionForPriceId, "planDefinitionForPriceId");
+function planDefinitionForCode(planCode) {
   const code = String(planCode || "").trim().toLowerCase();
   const priceId = String(PLAN_CODE_TO_PRICE_ID[code] || "").trim();
   if (!priceId) return null;
-
   const mapped = planDefinitionForPriceId(priceId);
   if (!mapped) return null;
-
   return { code, ...mapped };
 }
-
-function planSelectionKey(selectionId: string): string {
+__name(planDefinitionForCode, "planDefinitionForCode");
+function planSelectionKey(selectionId) {
   return `plan_selection:${selectionId}`;
 }
-
-function planAllocKey(paymentIntentId: string): string {
+__name(planSelectionKey, "planSelectionKey");
+function planAllocKey(paymentIntentId) {
   return `plan_alloc:${paymentIntentId}`;
 }
-
-function planPurchaseLedgerKey(paymentIntentId: string): string {
+__name(planAllocKey, "planAllocKey");
+function planPurchaseLedgerKey(paymentIntentId) {
   return `ledger:PlanPurchase:${paymentIntentId}`;
 }
-
-function stripeProcessedKey(paymentIntentId: string): string {
+__name(planPurchaseLedgerKey, "planPurchaseLedgerKey");
+function stripeProcessedKey(paymentIntentId) {
   return `stripe_processed:${paymentIntentId}`;
 }
-
-function stripeCheckoutSessionPurchasedAtMs(session: any): number {
+__name(stripeProcessedKey, "stripeProcessedKey");
+function stripeCheckoutSessionPurchasedAtMs(session) {
   const createdSeconds = Number(session?.created || 0);
   if (Number.isFinite(createdSeconds) && createdSeconds > 0) {
-    return Math.floor(createdSeconds * 1000);
+    return Math.floor(createdSeconds * 1e3);
   }
   return Date.now();
 }
-
-function parseIsoMsSafe(value: unknown): number {
+__name(stripeCheckoutSessionPurchasedAtMs, "stripeCheckoutSessionPurchasedAtMs");
+function parseIsoMsSafe(value) {
   const ms = Date.parse(String(value || "").trim());
   return Number.isFinite(ms) ? ms : NaN;
 }
-
-function mintPlanSelectionId(): string {
+__name(parseIsoMsSafe, "parseIsoMsSafe");
+function mintPlanSelectionId() {
   const bytes = new Uint8Array(18);
-  (crypto as any).getRandomValues(bytes);
+  crypto.getRandomValues(bytes);
   return `ps_${bytesToB64url(bytes)}`;
 }
-
-function planRecordFromDefinition(
-  def: PlanDefinition & { priceId: string },
-  purchasedAt: string,
-  expiresAt: string,
-  initiationType: string,
-  planMode: PlanMode
-): PlanRecord {
+__name(mintPlanSelectionId, "mintPlanSelectionId");
+function planRecordFromDefinition(def, purchasedAt, expiresAt, initiationType, planMode) {
   return {
     priceId: def.priceId,
     tier: normalizePlanTier(def.tier),
@@ -297,20 +2347,16 @@ function planRecordFromDefinition(
     planMode
   };
 }
-
-function normalizePersistedPlanRecord(plan: any, ownershipExpiresAtIso = ""): PlanRecord | null {
+__name(planRecordFromDefinition, "planRecordFromDefinition");
+function normalizePersistedPlanRecord(plan, ownershipExpiresAtIso = "") {
   if (!plan || typeof plan !== "object") return null;
-
   const priceId = String(plan?.priceId || "").trim();
   const def = planDefinitionForPriceId(priceId);
   if (!def) return null;
-
   const planMode = normalizePlanMode(plan?.planMode, plan?.campaignPreset);
   const expiresAt = String(plan?.expiresAt || ownershipExpiresAtIso || "").trim();
   const purchasedAt = String(plan?.purchasedAt || "").trim();
-
   if (!expiresAt) return null;
-
   return planRecordFromDefinition(
     def,
     purchasedAt,
@@ -319,81 +2365,73 @@ function normalizePersistedPlanRecord(plan: any, ownershipExpiresAtIso = ""): Pl
     planMode
   );
 }
-
-async function fetchStripeCheckoutSession(sk: string, checkoutSessionId: string): Promise<any> {
+__name(normalizePersistedPlanRecord, "normalizePersistedPlanRecord");
+async function fetchStripeCheckoutSession(sk, checkoutSessionId) {
   const url = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(checkoutSessionId)}`;
   const r = await fetch(url, { method: "GET", headers: { Authorization: `Bearer ${sk}` } });
   const txt = await r.text();
-  let sess: any = null;
-  try { sess = JSON.parse(txt); } catch { sess = null; }
+  let sess = null;
+  try {
+    sess = JSON.parse(txt);
+  } catch {
+    sess = null;
+  }
   if (!r.ok || !sess) throw new Error(`stripe_checkout_session_fetch_failed:${r.status}`);
   return sess;
 }
-
-async function fetchStripeCheckoutSessionByPaymentIntent(sk: string, paymentIntentId: string): Promise<any> {
+__name(fetchStripeCheckoutSession, "fetchStripeCheckoutSession");
+async function fetchStripeCheckoutSessionByPaymentIntent(sk, paymentIntentId) {
   const listUrl = `https://api.stripe.com/v1/checkout/sessions?payment_intent=${encodeURIComponent(paymentIntentId)}&limit=1`;
   const r = await fetch(listUrl, { method: "GET", headers: { Authorization: `Bearer ${sk}` } });
   const txt = await r.text();
-  let out: any = null;
-  try { out = JSON.parse(txt); } catch { out = null; }
+  let out = null;
+  try {
+    out = JSON.parse(txt);
+  } catch {
+    out = null;
+  }
   const sess = out?.data && Array.isArray(out.data) && out.data.length ? out.data[0] : null;
   if (!r.ok || !sess) throw new Error(`stripe_checkout_session_lookup_failed:${r.status}`);
   return sess;
 }
-
-async function fetchStripeCheckoutLineItemPriceId(sk: string, checkoutSessionId: string): Promise<string> {
+__name(fetchStripeCheckoutSessionByPaymentIntent, "fetchStripeCheckoutSessionByPaymentIntent");
+async function fetchStripeCheckoutLineItemPriceId(sk, checkoutSessionId) {
   const url = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(checkoutSessionId)}/line_items?limit=1`;
   const r = await fetch(url, { method: "GET", headers: { Authorization: `Bearer ${sk}` } });
   const txt = await r.text();
-  let j: any = null;
-  try { j = JSON.parse(txt); } catch { j = null; }
-
+  let j = null;
+  try {
+    j = JSON.parse(txt);
+  } catch {
+    j = null;
+  }
   if (!r.ok) throw new Error(`stripe_line_items_fetch_failed:${r.status}`);
   const item = j?.data && Array.isArray(j.data) && j.data.length ? j.data[0] : null;
-
-  // Stripe line item structure: item.price.id OR item.price (string) depending on API version
   const priceId = String(item?.price?.id || item?.price || "").trim();
   if (!priceId) throw new Error("stripe_line_items_missing_price_id");
   return priceId;
 }
-
-async function readExistingPlanReconciliation(
-  env: Env,
-  paymentIntentId: string,
-  checkoutSessionId: string,
-  nowMs = Date.now()
-): Promise<PlanReconciliationResult | null> {
-  const planRaw = await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" }) as any;
+__name(fetchStripeCheckoutLineItemPriceId, "fetchStripeCheckoutLineItemPriceId");
+async function readExistingPlanReconciliation(env, paymentIntentId, checkoutSessionId, nowMs = Date.now()) {
+  const planRaw = await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" });
   const plan = normalizePersistedPlanRecord(planRaw);
   if (!plan) return null;
-
   const planExp = new Date(plan.expiresAt);
   if (Number.isNaN(planExp.getTime()) || planExp.getTime() <= nowMs) return null;
-
-  const allocRaw = await env.KV_STATUS.get(planAllocKey(paymentIntentId), { type: "json" }) as any;
-  const allocUlids = uniqueTrimmedStrings(Array.isArray(allocRaw?.ulids) ? allocRaw.ulids : Array.isArray(allocRaw?.coveredUlids) ? allocRaw.coveredUlids : [])
-    .filter((id) => ULID_RE.test(id));
+  const allocRaw = await env.KV_STATUS.get(planAllocKey(paymentIntentId), { type: "json" });
+  const allocUlids = uniqueTrimmedStrings(Array.isArray(allocRaw?.ulids) ? allocRaw.ulids : Array.isArray(allocRaw?.coveredUlids) ? allocRaw.coveredUlids : []).filter((id) => ULID_RE.test(id));
   if (!allocUlids.length) return null;
-
-  const activeUlids: string[] = [];
+  const activeUlids = [];
   for (const ulid of allocUlids) {
-    const own = await env.KV_STATUS.get(`ownership:${ulid}`, { type: "json" }) as any;
+    const own = await env.KV_STATUS.get(`ownership:${ulid}`, { type: "json" });
     const ownExpIso = String(own?.exclusiveUntil || "").trim();
     const ownExp = ownExpIso ? new Date(ownExpIso) : null;
-    if (
-      String(own?.lastEventId || "").trim() === paymentIntentId &&
-      ownExp &&
-      !Number.isNaN(ownExp.getTime()) &&
-      ownExp.getTime() > nowMs &&
-      ownExp.getTime() === planExp.getTime()
-    ) {
+    if (String(own?.lastEventId || "").trim() === paymentIntentId && ownExp && !Number.isNaN(ownExp.getTime()) && ownExp.getTime() > nowMs && ownExp.getTime() === planExp.getTime()) {
       activeUlids.push(ulid);
     }
   }
-
   if (!activeUlids.length) return null;
-
-  const allocation: PlanAllocationRecord = {
+  const allocation = {
     ver: 1,
     paymentIntentId,
     checkoutSessionId,
@@ -409,7 +2447,6 @@ async function readExistingPlanReconciliation(
     campaignKey: String(allocRaw?.campaignKey || "").trim(),
     navigenVersion: String(allocRaw?.navigenVersion || "").trim()
   };
-
   return {
     paymentIntentId,
     checkoutSessionId,
@@ -422,57 +2459,33 @@ async function readExistingPlanReconciliation(
     alreadyProcessed: true
   };
 }
-
-async function resolveCoveredTargetsForPaidSession(
-  env: Env,
-  session: any,
-  meta: any,
-  nowMs: number,
-  alreadyProcessed: boolean
-): Promise<{
-  planSelectionId: string;
-  selection: any | null;
-  coveredUlids: string[];
-  primaryUlid: string;
-  locationID: string;
-  route: string;
-  planMode: PlanMode;
-  initiationType: string;
-  campaignKey: string;
-  navigenVersion: string;
-}> {
+__name(readExistingPlanReconciliation, "readExistingPlanReconciliation");
+async function resolveCoveredTargetsForPaidSession(env, session, meta, nowMs, alreadyProcessed) {
   const planSelectionId = String(meta?.planSelectionId || "").trim();
-  let selection: any | null = null;
-
+  let selection = null;
   if (planSelectionId) {
-    selection = await env.KV_STATUS.get(planSelectionKey(planSelectionId), { type: "json" }) as any;
+    selection = await env.KV_STATUS.get(planSelectionKey(planSelectionId), { type: "json" });
     if (!selection || typeof selection !== "object") throw new Error("plan_selection_missing");
-
     const expIso = String(selection?.expiresAt || "").trim();
     const exp = expIso ? new Date(expIso) : null;
     if (!alreadyProcessed && (!exp || Number.isNaN(exp.getTime()) || exp.getTime() <= nowMs)) {
       throw new Error("plan_selection_expired");
     }
   }
-
   const planMode = normalizePlanMode(selection?.planMode || meta?.planMode, meta?.campaignPreset);
   const initiationType = normalizeInitiationType(selection?.initiationType || meta?.initiationType);
   const campaignKey = String(selection?.campaignKey || meta?.campaignKey || "").trim();
   const navigenVersion = String(selection?.navigenVersion || meta?.navigenVersion || "").trim();
-
   if (selection) {
-    let coveredUlids = uniqueTrimmedStrings(Array.isArray(selection?.coveredUlids) ? selection.coveredUlids : Array.isArray(selection?.coveredULIDs) ? selection.coveredULIDs : [])
-      .filter((id) => ULID_RE.test(id));
-
+    let coveredUlids = uniqueTrimmedStrings(Array.isArray(selection?.coveredUlids) ? selection.coveredUlids : Array.isArray(selection?.coveredULIDs) ? selection.coveredULIDs : []).filter((id) => ULID_RE.test(id));
     if (!coveredUlids.length) {
-      const locationIDs = uniqueTrimmedStrings(Array.isArray(selection?.locationIDs) ? selection.locationIDs : []);
-      for (const slug of locationIDs) {
+      const locationIDs2 = uniqueTrimmedStrings(Array.isArray(selection?.locationIDs) ? selection.locationIDs : []);
+      for (const slug of locationIDs2) {
         if (ULID_RE.test(slug)) throw new Error("plan_selection_location_id_must_be_slug");
         const resolved = await resolveUid(slug, env).catch(() => null);
         if (resolved && ULID_RE.test(resolved)) coveredUlids.push(resolved);
       }
     }
-
     if (!coveredUlids.length) {
       const draftULID = String(selection?.draftULID || "").trim();
       const draftSessionId = String(selection?.draftSessionId || "").trim();
@@ -482,10 +2495,8 @@ async function resolveCoveredTargetsForPaidSession(
         coveredUlids = [draftULID];
       }
     }
-
     coveredUlids = uniqueTrimmedStrings(coveredUlids).filter((id) => ULID_RE.test(id));
     if (!coveredUlids.length) throw new Error("plan_selection_no_covered_ulids");
-
     const locationIDs = uniqueTrimmedStrings(Array.isArray(selection?.locationIDs) ? selection.locationIDs : []);
     return {
       planSelectionId,
@@ -500,18 +2511,14 @@ async function resolveCoveredTargetsForPaidSession(
       navigenVersion
     };
   }
-
-  // Legacy single-location transition path: accept target metadata only when no planSelectionId exists.
   const hasLegacyTarget = !!String(meta?.locationID || meta?.draftULID || meta?.draftSessionId || "").trim();
   if (!hasLegacyTarget) throw new Error("ignored_no_plan_metadata");
-
   const target = await resolveTargetIdentity(env, {
     locationID: meta?.locationID,
     draftULID: meta?.draftULID,
     draftSessionId: meta?.draftSessionId
   }, { validateDraft: true });
   if (!target || !ULID_RE.test(target.ulid)) throw new Error("legacy_target_unresolved");
-
   return {
     planSelectionId: "",
     selection: null,
@@ -525,97 +2532,66 @@ async function resolveCoveredTargetsForPaidSession(
     navigenVersion
   };
 }
-
-async function reconcilePaidCheckoutSessionPlan(
-  env: Env,
-  sk: string,
-  session: any,
-  opts: { logTag?: string } = {}
-): Promise<PlanReconciliationResult> {
+__name(resolveCoveredTargetsForPaidSession, "resolveCoveredTargetsForPaidSession");
+async function reconcilePaidCheckoutSessionPlan(env, sk, session, opts = {}) {
   const checkoutSessionId = String(session?.id || "").trim();
   if (!checkoutSessionId) throw new Error("checkout_session_id_missing");
-
   const paymentStatus = String(session?.payment_status || "").toLowerCase();
   const status = String(session?.status || "").toLowerCase();
   if (paymentStatus !== "paid" || status !== "complete") throw new Error("checkout_session_not_paid_complete");
-
   const paymentIntentId = String(session?.payment_intent || "").trim();
   if (!paymentIntentId || !/^pi_/i.test(paymentIntentId)) throw new Error("payment_intent_missing");
-
-  const processedAt = new Date();
+  const processedAt = /* @__PURE__ */ new Date();
   const nowMs = processedAt.getTime();
   const purchaseMs = stripeCheckoutSessionPurchasedAtMs(session);
   const purchasedAtDate = new Date(purchaseMs);
   const idemKey = stripeProcessedKey(paymentIntentId);
   const alreadyProcessedMarker = await env.KV_STATUS.get(idemKey, "text");
-
-  const existing = alreadyProcessedMarker
-    ? await readExistingPlanReconciliation(env, paymentIntentId, checkoutSessionId, nowMs).catch(() => null)
-    : null;
+  const existing = alreadyProcessedMarker ? await readExistingPlanReconciliation(env, paymentIntentId, checkoutSessionId, nowMs).catch(() => null) : null;
   if (existing) return existing;
-
-  const meta = (session?.metadata && typeof session.metadata === "object") ? session.metadata : {};
+  const meta = session?.metadata && typeof session.metadata === "object" ? session.metadata : {};
   const target = await resolveCoveredTargetsForPaidSession(env, session, meta, nowMs, !!alreadyProcessedMarker);
-
   const priceId = await fetchStripeCheckoutLineItemPriceId(sk, checkoutSessionId);
   const def = planDefinitionForPriceId(priceId);
   if (!def) throw new Error("plan_price_unknown");
-
   if (!def.allowedPlanModes.includes(target.planMode)) throw new Error("plan_mode_not_allowed_for_price");
   if (def.maxPublishedLocations <= 0) throw new Error("plan_capacity_zero");
   if (target.coveredUlids.length > def.maxPublishedLocations) throw new Error("plan_capacity_exceeded");
-
   let alreadyAppliedExpMs = 0;
-  const previousOwnershipRows: any[] = [];
+  const previousOwnershipRows = [];
   for (const ulid of target.coveredUlids) {
-    const own = await env.KV_STATUS.get(`ownership:${ulid}`, { type: "json" }) as any;
+    const own = await env.KV_STATUS.get(`ownership:${ulid}`, { type: "json" });
     previousOwnershipRows.push(own || null);
     const ownExpIso = String(own?.exclusiveUntil || "").trim();
     const ownExp = ownExpIso ? new Date(ownExpIso) : null;
-    if (
-      String(own?.lastEventId || "").trim() === paymentIntentId &&
-      ownExp &&
-      !Number.isNaN(ownExp.getTime()) &&
-      ownExp.getTime() > nowMs
-    ) {
+    if (String(own?.lastEventId || "").trim() === paymentIntentId && ownExp && !Number.isNaN(ownExp.getTime()) && ownExp.getTime() > nowMs) {
       alreadyAppliedExpMs = Math.max(alreadyAppliedExpMs, ownExp.getTime());
     }
   }
-
-  let expiresAt: Date;
+  let expiresAt;
   if (alreadyAppliedExpMs > 0) {
     expiresAt = new Date(alreadyAppliedExpMs);
   } else {
     let baseMs = purchaseMs;
-    const stackingToleranceMs = 5 * 60 * 1000;
-
+    const stackingToleranceMs = 5 * 60 * 1e3;
     for (const own of previousOwnershipRows) {
       const prevExMs = parseIsoMsSafe(own?.exclusiveUntil);
       const prevUpdatedAtMs = parseIsoMsSafe(own?.updatedAt || own?.createdAt);
       const prevLastEventId = String(own?.lastEventId || "").trim();
-
-      const canStackFromPreviousCoverage =
-        prevLastEventId !== paymentIntentId &&
-        Number.isFinite(prevUpdatedAtMs) &&
-        prevUpdatedAtMs <= (purchaseMs + stackingToleranceMs);
-
+      const canStackFromPreviousCoverage = prevLastEventId !== paymentIntentId && Number.isFinite(prevUpdatedAtMs) && prevUpdatedAtMs <= purchaseMs + stackingToleranceMs;
       if (canStackFromPreviousCoverage && Number.isFinite(prevExMs) && prevExMs > baseMs) {
         baseMs = prevExMs;
       }
     }
-
-    expiresAt = new Date(baseMs + def.activeDurationDays * 24 * 60 * 60 * 1000);
+    expiresAt = new Date(baseMs + def.activeDurationDays * 24 * 60 * 60 * 1e3);
   }
-
   if (expiresAt.getTime() <= nowMs) {
     throw new Error("plan_coverage_already_expired");
   }
-
   const purchasedAt = purchasedAtDate.toISOString();
   const processedAtIso = processedAt.toISOString();
   const plan = planRecordFromDefinition(def, purchasedAt, expiresAt.toISOString(), target.initiationType, target.planMode);
-
-  const allocation: PlanAllocationRecord = {
+  const allocation = {
     ver: 1,
     paymentIntentId,
     checkoutSessionId,
@@ -631,7 +2607,6 @@ async function reconcilePaidCheckoutSessionPlan(
     campaignKey: target.planMode === "campaign_with_promo_qr" ? target.campaignKey : "",
     navigenVersion: target.navigenVersion
   };
-
   await env.KV_STATUS.put(`plan:${paymentIntentId}`, JSON.stringify(plan));
   await env.KV_STATUS.put(planAllocKey(paymentIntentId), JSON.stringify(allocation));
   await env.KV_STATUS.put(planPurchaseLedgerKey(paymentIntentId), JSON.stringify({
@@ -650,7 +2625,6 @@ async function reconcilePaidCheckoutSessionPlan(
     navigenVersion: target.navigenVersion,
     source: opts.logTag || "plan_reconcile"
   }));
-
   for (const ulid of target.coveredUlids) {
     await env.KV_STATUS.put(`ownership:${ulid}`, JSON.stringify({
       uid: ulid,
@@ -661,8 +2635,6 @@ async function reconcilePaidCheckoutSessionPlan(
       updatedAt: purchasedAt
     }));
   }
-
-  // Write idempotency marker last. Replays must not extend coverage again.
   await env.KV_STATUS.put(idemKey, JSON.stringify({
     paymentIntentId,
     checkoutSessionId,
@@ -671,7 +2643,6 @@ async function reconcilePaidCheckoutSessionPlan(
     planMode: plan.planMode,
     processedAt: processedAtIso
   }));
-
   return {
     paymentIntentId,
     checkoutSessionId,
@@ -684,122 +2655,101 @@ async function reconcilePaidCheckoutSessionPlan(
     alreadyProcessed: false
   };
 }
-
-// --- Stripe webhook verification (HMAC SHA-256) ---
-// Lead: keep verification server-side only; never expose secrets to clients.
-function parseStripeSigHeader(h: string): { t: string; v1: string[] } | null {
-  const parts = String(h || '').split(',').map(s => s.trim()).filter(Boolean);
-  const out: { t: string; v1: string[] } = { t: '', v1: [] };
+__name(reconcilePaidCheckoutSessionPlan, "reconcilePaidCheckoutSessionPlan");
+function parseStripeSigHeader(h) {
+  const parts = String(h || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const out = { t: "", v1: [] };
   for (const p of parts) {
-    const [k, v] = p.split('=').map(s => s.trim());
+    const [k, v] = p.split("=").map((s) => s.trim());
     if (!k || !v) continue;
-    if (k === 't') out.t = v;
-    if (k === 'v1') out.v1.push(v);
+    if (k === "t") out.t = v;
+    if (k === "v1") out.v1.push(v);
   }
   if (!out.t || !out.v1.length) return null;
   return out;
 }
-
-function bytesToHex(b: Uint8Array): string {
-  return Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('');
+__name(parseStripeSigHeader, "parseStripeSigHeader");
+function bytesToHex(b) {
+  return Array.from(b).map((x) => x.toString(16).padStart(2, "0")).join("");
 }
-
-async function hmacSha256Hex(secret: string, msg: string): Promise<string> {
+__name(bytesToHex, "bytesToHex");
+async function hmacSha256Hex(secret, msg) {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
+    { name: "HMAC", hash: "SHA-256" },
     false,
-    ['sign']
+    ["sign"]
   );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(msg));
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(msg));
   return bytesToHex(new Uint8Array(sig));
 }
-
-// Lead: Stripe tolerates minor clock skew; keep tolerance conservative.
-async function verifyStripeSignature(rawBody: string, sigHeader: string, secret: string, toleranceSec = 300): Promise<boolean> {
+__name(hmacSha256Hex, "hmacSha256Hex");
+async function verifyStripeSignature(rawBody, sigHeader, secret, toleranceSec = 300) {
   const parsed = parseStripeSigHeader(sigHeader);
   if (!parsed) return false;
-
   const ts = Number(parsed.t);
   if (!Number.isFinite(ts)) return false;
-
-  const nowSec = Math.floor(Date.now() / 1000);
+  const nowSec = Math.floor(Date.now() / 1e3);
   if (Math.abs(nowSec - ts) > toleranceSec) return false;
-
   const signedPayload = `${parsed.t}.${rawBody}`;
   const expected = await hmacSha256Hex(secret, signedPayload);
-
-  // accept if any v1 matches (Stripe may send multiple)
-  return parsed.v1.some(v => v.toLowerCase() === expected.toLowerCase());
+  return parsed.v1.some((v) => v.toLowerCase() === expected.toLowerCase());
 }
-
-// Stripe signs the exact raw request bytes: HMAC_SHA256(secret, `${t}.${rawBody}`).
-// This verifier avoids decode/re-encode mismatches and must be used for webhook authenticity checks.a
-async function verifyStripeSignatureBytes(rawBody: Uint8Array, sigHeader: string, secret: string, toleranceSec = 300): Promise<boolean> {
+__name(verifyStripeSignature, "verifyStripeSignature");
+async function verifyStripeSignatureBytes(rawBody, sigHeader, secret, toleranceSec = 300) {
   const parsed = parseStripeSigHeader(sigHeader);
   if (!parsed) return false;
-
   const ts = Number(parsed.t);
   if (!Number.isFinite(ts)) return false;
-
-  const nowSec = Math.floor(Date.now() / 1000);
+  const nowSec = Math.floor(Date.now() / 1e3);
   if (Math.abs(nowSec - ts) > toleranceSec) return false;
-
   const enc = new TextEncoder();
   const prefix = enc.encode(`${parsed.t}.`);
   const signed = new Uint8Array(prefix.length + rawBody.length);
   signed.set(prefix, 0);
   signed.set(rawBody, prefix.length);
-
   const expected = await (async () => {
     const key = await crypto.subtle.importKey(
-      'raw',
+      "raw",
       enc.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
+      { name: "HMAC", hash: "SHA-256" },
       false,
-      ['sign']
+      ["sign"]
     );
-    const sig = await crypto.subtle.sign('HMAC', key, signed);
+    const sig = await crypto.subtle.sign("HMAC", key, signed);
     return bytesToHex(new Uint8Array(sig));
   })();
-
-  return parsed.v1.some(v => v.toLowerCase() === expected.toLowerCase());
+  return parsed.v1.some((v) => v.toLowerCase() === expected.toLowerCase());
 }
-
-function hexPrefix(buf: ArrayBuffer, nBytes = 4): string {
+__name(verifyStripeSignatureBytes, "verifyStripeSignatureBytes");
+function hexPrefix(buf, nBytes = 4) {
   const bytes = new Uint8Array(buf);
   const take = Math.min(bytes.length, nBytes);
-  let out = '';
-  for (let i = 0; i < take; i++) out += bytes[i].toString(16).padStart(2, '0');
+  let out = "";
+  for (let i = 0; i < take; i++) out += bytes[i].toString(16).padStart(2, "0");
   return out;
 }
-
-// --- Owner access session (Phase 2) ---
-// Real-time owner access uses /owner/stripe-exchange.
-// Cross-device or later recovery uses /owner/restore with PaymentIntent id (pi_*).
-// Both flows mint the same HttpOnly op_sess cookie and bind one ULID per device session.
-
-const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-
-function bytesToB64url(bytes: Uint8Array): string {
+__name(hexPrefix, "hexPrefix");
+var ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+function bytesToB64url(bytes) {
   let bin = "";
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
-
-function cookieSerialize(name: string, value: string, attrs: Record<string, string | boolean | number | undefined>): string {
-  const parts: string[] = [`${name}=${value}`];
+__name(bytesToB64url, "bytesToB64url");
+function cookieSerialize(name, value, attrs) {
+  const parts = [`${name}=${value}`];
   for (const [k, v] of Object.entries(attrs)) {
-    if (v === undefined) continue;
+    if (v === void 0) continue;
     if (v === true) parts.push(k);
     else parts.push(`${k}=${String(v)}`);
   }
   return parts.join("; ");
 }
-
-function readCookie(header: string, name: string): string {
+__name(cookieSerialize, "cookieSerialize");
+function readCookie(header, name) {
   const h = String(header || "");
   const parts = h.split(";");
   for (const p of parts) {
@@ -809,89 +2759,51 @@ function readCookie(header: string, name: string): string {
   }
   return "";
 }
-
-function readDeviceId(req: Request): string {
+__name(readCookie, "readCookie");
+function readDeviceId(req) {
   const dev = readCookie(req.headers.get("Cookie") || "", "ng_dev");
   return String(dev || "").trim();
 }
-
-function mintDeviceId(): { dev: string; cookie: string } {
-  // 18 bytes → URL-safe base64; unguessable; stable per device cookie lifetime
+__name(readDeviceId, "readDeviceId");
+function mintDeviceId() {
   const bytes = new Uint8Array(18);
-  (crypto as any).getRandomValues(bytes);
+  crypto.getRandomValues(bytes);
   const dev = bytesToB64url(bytes);
-
   const cookie = cookieSerialize("ng_dev", dev, {
     Path: "/",
     Secure: true,
     SameSite: "Lax",
-    "Max-Age": 60 * 60 * 24 * 366 // ~12 months
+    "Max-Age": 60 * 60 * 24 * 366
+    // ~12 months
     // Not HttpOnly: client can read, but Worker is authoritative on binding.
   });
-
   return { dev, cookie };
 }
-
-function devSessKey(dev: string, ulid: string): string {
+__name(mintDeviceId, "mintDeviceId");
+function devSessKey(dev, ulid) {
   return `devsess:${dev}:${ulid}`;
 }
-
-function devIndexKey(dev: string): string {
+__name(devSessKey, "devSessKey");
+function devIndexKey(dev) {
   return `devsess:${dev}:index`;
 }
-
-type PartnerStatus = "applicant" | "verified" | "trusted" | "regional_partner" | "suspended";
-type PartnerConnectStatus = "not_started" | "pending" | "complete" | "restricted";
-
-type PartnerProfileRecord = {
-  ver: number;
-  partnerId: string;
-  status: PartnerStatus;
-  stripeConnectedAccountId: string;
-  connectStatus: PartnerConnectStatus;
-  leadCapacity: number;
-  freeLeadQuota: number;
-  openLeadCount: number;
-  commissionPolicyVersion: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type PartnerSessionRecord = {
-  ver: number;
-  partnerId: string;
-  createdAt: string;
-  expiresAt: string;
-};
-
-type PartnerSessionResolution = {
-  sessionId: string;
-  session: PartnerSessionRecord;
-  profile: PartnerProfileRecord;
-};
-
-const PARTNER_SESSION_TTL_SECONDS = 60 * 60 * 24 * 90;
-
-function envFlagTrue(value: unknown): boolean {
+__name(devIndexKey, "devIndexKey");
+var PARTNER_SESSION_TTL_SECONDS = 60 * 60 * 24 * 90;
+function envFlagTrue(value) {
   const s = String(value || "").trim().toLowerCase();
   return s === "1" || s === "true" || s === "yes" || s === "on";
 }
-
-function standardMultiProductionPlanPricesRestored(): boolean {
+__name(envFlagTrue, "envFlagTrue");
+function standardMultiProductionPlanPricesRestored() {
   const standard = planDefinitionForCode("standard");
   const multi = planDefinitionForCode("multi");
-
-  return (
-    Number(standard?.grossAmount || 0) >= 79 &&
-    Number(multi?.grossAmount || 0) >= 179
-  );
+  return Number(standard?.grossAmount || 0) >= 79 && Number(multi?.grossAmount || 0) >= 179;
 }
-
-function partnerLaunchState(env: Env): Record<string, unknown> {
+__name(standardMultiProductionPlanPricesRestored, "standardMultiProductionPlanPricesRestored");
+function partnerLaunchState(env) {
   const partnerEnabled = envFlagTrue(env.PARTNER_ENABLED);
   const publicLaunchRequested = envFlagTrue(env.PARTNER_PUBLIC_LAUNCH_ENABLED);
   const productionPlanPricesRestored = standardMultiProductionPlanPricesRestored();
-
   return {
     partnerEnabled,
     publicLaunchRequested,
@@ -899,24 +2811,19 @@ function partnerLaunchState(env: Env): Record<string, unknown> {
     publicLaunchAllowed: partnerEnabled && publicLaunchRequested && productionPlanPricesRestored
   };
 }
-
-function partnerRoutesEnabled(env: Env): boolean {
+__name(partnerLaunchState, "partnerLaunchState");
+function partnerRoutesEnabled(env) {
   return envFlagTrue(env.PARTNER_ENABLED);
 }
-
-function partnerPublicLaunchAllowed(env: Env): boolean {
-  const launch = partnerLaunchState(env);
-  return !!launch.publicLaunchAllowed;
-}
-
-function partnerNoStoreHeaders(): Record<string, string> {
+__name(partnerRoutesEnabled, "partnerRoutesEnabled");
+function partnerNoStoreHeaders() {
   return {
     "cache-control": "no-store",
     "Referrer-Policy": "no-referrer"
   };
 }
-
-function partnerDisabledResponse(env: Env): Response {
+__name(partnerNoStoreHeaders, "partnerNoStoreHeaders");
+function partnerDisabledResponse(env) {
   return json(
     {
       error: {
@@ -929,36 +2836,36 @@ function partnerDisabledResponse(env: Env): Response {
     partnerNoStoreHeaders()
   );
 }
-
-function partnerProfileKey(partnerId: string): string {
+__name(partnerDisabledResponse, "partnerDisabledResponse");
+function partnerProfileKey(partnerId) {
   return `partner:${partnerId}`;
 }
-
-function partnerSessionKey(sessionId: string): string {
+__name(partnerProfileKey, "partnerProfileKey");
+function partnerSessionKey(sessionId) {
   return `partnersess:${sessionId}`;
 }
-
-function partnerSessionsByPartnerKey(partnerId: string): string {
+__name(partnerSessionKey, "partnerSessionKey");
+function partnerSessionsByPartnerKey(partnerId) {
   return `partner_sessions_by_partner:${partnerId}`;
 }
-
-function mintPartnerId(): string {
+__name(partnerSessionsByPartnerKey, "partnerSessionsByPartnerKey");
+function mintPartnerId() {
   const bytes = new Uint8Array(18);
   crypto.getRandomValues(bytes);
   return `prt_${bytesToB64url(bytes)}`;
 }
-
-function mintPartnerSessionId(): string {
+__name(mintPartnerId, "mintPartnerId");
+function mintPartnerSessionId() {
   const bytes = new Uint8Array(24);
   crypto.getRandomValues(bytes);
   return `psess_${bytesToB64url(bytes)}`;
 }
-
-function readPartnerSessionId(req: Request): string {
+__name(mintPartnerSessionId, "mintPartnerSessionId");
+function readPartnerSessionId(req) {
   return readCookie(req.headers.get("Cookie") || "", "partner_sess");
 }
-
-function partnerSessionCookie(sessionId: string, maxAgeSeconds = PARTNER_SESSION_TTL_SECONDS): string {
+__name(readPartnerSessionId, "readPartnerSessionId");
+function partnerSessionCookie(sessionId, maxAgeSeconds = PARTNER_SESSION_TTL_SECONDS) {
   return cookieSerialize("partner_sess", sessionId, {
     Path: "/",
     Secure: true,
@@ -967,8 +2874,8 @@ function partnerSessionCookie(sessionId: string, maxAgeSeconds = PARTNER_SESSION
     "Max-Age": Math.max(0, Math.trunc(maxAgeSeconds))
   });
 }
-
-function expirePartnerSessionCookie(): string {
+__name(partnerSessionCookie, "partnerSessionCookie");
+function expirePartnerSessionCookie() {
   return cookieSerialize("partner_sess", "", {
     Path: "/",
     Secure: true,
@@ -977,8 +2884,8 @@ function expirePartnerSessionCookie(): string {
     "Max-Age": 0
   });
 }
-
-function defaultPartnerProfile(partnerId: string, nowIso: string): PartnerProfileRecord {
+__name(expirePartnerSessionCookie, "expirePartnerSessionCookie");
+function defaultPartnerProfile(partnerId, nowIso) {
   return {
     ver: 1,
     partnerId,
@@ -993,8 +2900,8 @@ function defaultPartnerProfile(partnerId: string, nowIso: string): PartnerProfil
     updatedAt: nowIso
   };
 }
-
-function publicPartnerProfile(profile: PartnerProfileRecord): Record<string, unknown> {
+__name(defaultPartnerProfile, "defaultPartnerProfile");
+function publicPartnerProfile(profile) {
   return {
     partnerId: profile.partnerId,
     status: profile.status,
@@ -1007,83 +2914,73 @@ function publicPartnerProfile(profile: PartnerProfileRecord): Record<string, unk
     updatedAt: profile.updatedAt
   };
 }
-
-async function readPartnerProfile(env: Env, partnerId: string): Promise<PartnerProfileRecord | null> {
+__name(publicPartnerProfile, "publicPartnerProfile");
+async function readPartnerProfile(env, partnerId) {
   const id = String(partnerId || "").trim();
   if (!id) return null;
-
-  const profile = await env.KV_STATUS.get(partnerProfileKey(id), { type: "json" }) as PartnerProfileRecord | null;
+  const profile = await env.KV_STATUS.get(partnerProfileKey(id), { type: "json" });
   if (!profile || typeof profile !== "object" || String(profile.partnerId || "").trim() !== id) return null;
-
   return profile;
 }
-
-async function writePartnerProfile(env: Env, profile: PartnerProfileRecord): Promise<void> {
+__name(readPartnerProfile, "readPartnerProfile");
+async function writePartnerProfile(env, profile) {
   await env.KV_STATUS.put(partnerProfileKey(profile.partnerId), JSON.stringify(profile));
 }
-
-async function writePartnerSessionIndex(env: Env, partnerId: string, sessionId: string): Promise<void> {
+__name(writePartnerProfile, "writePartnerProfile");
+async function writePartnerSessionIndex(env, partnerId, sessionId) {
   const key = partnerSessionsByPartnerKey(partnerId);
   const raw = await env.KV_STATUS.get(key, "text");
-  let sessions: string[] = [];
-
+  let sessions = [];
   try {
     sessions = raw ? JSON.parse(raw) : [];
   } catch {
     sessions = [];
   }
-
   if (!Array.isArray(sessions)) sessions = [];
-
   sessions = [
     sessionId,
     ...sessions.map((value) => String(value || "").trim()).filter((value) => value && value !== sessionId)
   ].slice(0, 10);
-
   await env.KV_STATUS.put(key, JSON.stringify(sessions), { expirationTtl: PARTNER_SESSION_TTL_SECONDS });
 }
-
-async function writePartnerSession(env: Env, sessionId: string, session: PartnerSessionRecord): Promise<void> {
+__name(writePartnerSessionIndex, "writePartnerSessionIndex");
+async function writePartnerSession(env, sessionId, session) {
   await env.KV_STATUS.put(
     partnerSessionKey(sessionId),
     JSON.stringify(session),
     { expirationTtl: PARTNER_SESSION_TTL_SECONDS }
   );
-
   await writePartnerSessionIndex(env, session.partnerId, sessionId);
 }
-
-async function resolvePartnerSession(req: Request, env: Env): Promise<PartnerSessionResolution | null> {
+__name(writePartnerSession, "writePartnerSession");
+async function resolvePartnerSession(req, env) {
   const sessionId = readPartnerSessionId(req);
   if (!sessionId) return null;
-
-  const session = await env.KV_STATUS.get(partnerSessionKey(sessionId), { type: "json" }) as PartnerSessionRecord | null;
+  const session = await env.KV_STATUS.get(partnerSessionKey(sessionId), { type: "json" });
   if (!session || typeof session !== "object" || !session.partnerId) return null;
-
   const expMs = Date.parse(String(session.expiresAt || ""));
   if (!Number.isFinite(expMs) || expMs <= Date.now()) {
-    try { await env.KV_STATUS.delete(partnerSessionKey(sessionId)); } catch {}
+    try {
+      await env.KV_STATUS.delete(partnerSessionKey(sessionId));
+    } catch {
+    }
     return null;
   }
-
   const profile = await readPartnerProfile(env, String(session.partnerId || "").trim());
   if (!profile) return null;
-
   return { sessionId, session, profile };
 }
-
-async function createPartnerSessionResponse(env: Env, profile: PartnerProfileRecord, status = 200): Promise<Response> {
-  const nowIso = new Date().toISOString();
-  const expiresAt = new Date(Date.now() + PARTNER_SESSION_TTL_SECONDS * 1000).toISOString();
+__name(resolvePartnerSession, "resolvePartnerSession");
+async function createPartnerSessionResponse(env, profile, status = 200) {
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+  const expiresAt = new Date(Date.now() + PARTNER_SESSION_TTL_SECONDS * 1e3).toISOString();
   const sessionId = mintPartnerSessionId();
-
   await writePartnerSession(env, sessionId, {
     ver: 1,
     partnerId: profile.partnerId,
     createdAt: nowIso,
     expiresAt
   });
-
   return json(
     {
       ok: true,
@@ -1098,32 +2995,26 @@ async function createPartnerSessionResponse(env: Env, profile: PartnerProfileRec
     }
   );
 }
-
-async function handlePartnerStart(req: Request, env: Env): Promise<Response> {
+__name(createPartnerSessionResponse, "createPartnerSessionResponse");
+async function handlePartnerStart(req, env) {
   if (!partnerRoutesEnabled(env)) return partnerDisabledResponse(env);
-
   const existing = await resolvePartnerSession(req, env);
   if (existing) {
     return await createPartnerSessionResponse(env, existing.profile);
   }
-
-  const nowIso = new Date().toISOString();
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
   const profile = defaultPartnerProfile(mintPartnerId(), nowIso);
-
   await writePartnerProfile(env, profile);
   return await createPartnerSessionResponse(env, profile, 201);
 }
-
-async function handlePartnerSessionRead(req: Request, env: Env, renew = false): Promise<Response> {
+__name(handlePartnerStart, "handlePartnerStart");
+async function handlePartnerSessionRead(req, env, renew = false) {
   if (!partnerRoutesEnabled(env)) return partnerDisabledResponse(env);
-
   const existingSessionId = readPartnerSessionId(req);
   const existing = await resolvePartnerSession(req, env);
-
   if (!existing) {
     const headers = partnerNoStoreHeaders();
     if (existingSessionId) headers["Set-Cookie"] = expirePartnerSessionCookie();
-
     return json(
       {
         ok: false,
@@ -1135,11 +3026,9 @@ async function handlePartnerSessionRead(req: Request, env: Env, renew = false): 
       headers
     );
   }
-
   if (renew) {
     return await createPartnerSessionResponse(env, existing.profile);
   }
-
   return json(
     {
       ok: true,
@@ -1151,15 +3040,16 @@ async function handlePartnerSessionRead(req: Request, env: Env, renew = false): 
     partnerNoStoreHeaders()
   );
 }
-
-async function handlePartnerLogout(req: Request, env: Env): Promise<Response> {
+__name(handlePartnerSessionRead, "handlePartnerSessionRead");
+async function handlePartnerLogout(req, env) {
   if (!partnerRoutesEnabled(env)) return partnerDisabledResponse(env);
-
   const sessionId = readPartnerSessionId(req);
   if (sessionId) {
-    try { await env.KV_STATUS.delete(partnerSessionKey(sessionId)); } catch {}
+    try {
+      await env.KV_STATUS.delete(partnerSessionKey(sessionId));
+    } catch {
+    }
   }
-
   return json(
     { ok: true, authenticated: false },
     200,
@@ -1169,24 +3059,21 @@ async function handlePartnerLogout(req: Request, env: Env): Promise<Response> {
     }
   );
 }
-
-function googleDraftIndexKey(dev: string, googlePlaceId: string): string {
+__name(handlePartnerLogout, "handlePartnerLogout");
+function googleDraftIndexKey(dev, googlePlaceId) {
   return `google_draft:${dev}:${googlePlaceId}`;
 }
-
-const ULID_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-
-function uniqueTrimmedStrings(values: unknown[]): string[] {
+__name(googleDraftIndexKey, "googleDraftIndexKey");
+var ULID_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+function uniqueTrimmedStrings(values) {
   return Array.from(
     new Set(
-      values
-        .map(v => String(v || "").trim())
-        .filter(Boolean)
+      values.map((v) => String(v || "").trim()).filter(Boolean)
     )
   );
 }
-
-function encodeUlidTimePart(ms: number): string {
+__name(uniqueTrimmedStrings, "uniqueTrimmedStrings");
+function encodeUlidTimePart(ms) {
   let n = Math.max(0, Math.floor(ms));
   let out = "";
   for (let i = 0; i < 10; i++) {
@@ -1195,41 +3082,39 @@ function encodeUlidTimePart(ms: number): string {
   }
   return out;
 }
-
-function encodeUlidRandomPart(len: number): string {
+__name(encodeUlidTimePart, "encodeUlidTimePart");
+function encodeUlidRandomPart(len) {
   const bytes = new Uint8Array(len);
   crypto.getRandomValues(bytes);
   let out = "";
   for (let i = 0; i < bytes.length; i++) out += ULID_ALPHABET[bytes[i] % 32];
   return out;
 }
-
-function mintDraftUlid(): string {
+__name(encodeUlidRandomPart, "encodeUlidRandomPart");
+function mintDraftUlid() {
   return `${encodeUlidTimePart(Date.now())}${encodeUlidRandomPart(16)}`;
 }
-
-function mintDraftSessionId(): string {
+__name(mintDraftUlid, "mintDraftUlid");
+function mintDraftSessionId() {
   const bytes = new Uint8Array(18);
   crypto.getRandomValues(bytes);
   return bytesToB64url(bytes);
 }
-
-function isValidGooglePlaceId(v: string): boolean {
+__name(mintDraftSessionId, "mintDraftSessionId");
+function isValidGooglePlaceId(v) {
   return /^[A-Za-z0-9._:-]{6,255}$/.test(String(v || "").trim());
 }
-
-function round6(n: number): number {
+__name(isValidGooglePlaceId, "isValidGooglePlaceId");
+function round6(n) {
   return Number(n.toFixed(6));
 }
-
-function normalizeDraftCoord(raw: any): { lat: number; lng: number } | undefined {
-  if (raw == null || raw === "") return undefined;
-
-  let lat: number;
-  let lng: number;
-
+__name(round6, "round6");
+function normalizeDraftCoord(raw) {
+  if (raw == null || raw === "") return void 0;
+  let lat;
+  let lng;
   if (typeof raw === "string") {
-    const parts = raw.split(/[,\s;]+/).map(s => s.trim()).filter(Boolean);
+    const parts = raw.split(/[,\s;]+/).map((s) => s.trim()).filter(Boolean);
     if (parts.length < 2) throw new Error("invalid_coordinates");
     lat = Number(parts[0]);
     lng = Number(parts[1]);
@@ -1239,193 +3124,161 @@ function normalizeDraftCoord(raw: any): { lat: number; lng: number } | undefined
   } else {
     throw new Error("invalid_coordinates");
   }
-
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error("invalid_coordinates");
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) throw new Error("invalid_coordinates");
-
   return { lat: round6(lat), lng: round6(lng) };
 }
-
-function normalizeDraftPatch(raw: any, providerRef = ""): Record<string, any> {
-  const src = (raw && typeof raw === "object") ? raw : {};
-  const out: Record<string, any> = {};
-
+__name(normalizeDraftCoord, "normalizeDraftCoord");
+function normalizeDraftPatch(raw, providerRef = "") {
+  const src = raw && typeof raw === "object" ? raw : {};
+  const out = {};
   for (const [k, v] of Object.entries(src)) {
-    if (v !== undefined) out[k] = v;
+    if (v !== void 0) out[k] = v;
   }
-
   const hasCoordInput = Object.prototype.hasOwnProperty.call(src, "coord") || Object.prototype.hasOwnProperty.call(src, "coordinates");
-  const coord = normalizeDraftCoord((src as any).coord ?? (src as any).coordinates);
+  const coord = normalizeDraftCoord(src.coord ?? src.coordinates);
   if (coord) out.coord = coord;
   else if (hasCoordInput) delete out.coord;
   delete out.coordinates;
-
   if (Object.prototype.hasOwnProperty.call(src, "context")) {
-    const ctxVals = Array.isArray((src as any).context)
-      ? (src as any).context
-      : String((src as any).context || "").split(";");
+    const ctxVals = Array.isArray(src.context) ? src.context : String(src.context || "").split(";");
     out.context = uniqueTrimmedStrings(ctxVals).join(";");
   }
-
   if (Object.prototype.hasOwnProperty.call(src, "tags")) {
-    const tagVals = Array.isArray((src as any).tags)
-      ? (src as any).tags
-      : String((src as any).tags || "").split(";");
+    const tagVals = Array.isArray(src.tags) ? src.tags : String(src.tags || "").split(";");
     out.tags = uniqueTrimmedStrings(tagVals);
   }
-
   if (providerRef && !String(out.googlePlaceId || "").trim()) {
     out.googlePlaceId = providerRef;
   }
-
   return out;
 }
-
-function mergeDraftPatch(base: any, patch: any): any {
-  const out: any = (base && typeof base === "object") ? { ...base } : {};
-  for (const [k, v] of Object.entries((patch && typeof patch === "object") ? patch : {})) {
-    if (v !== undefined) out[k] = v;
+__name(normalizeDraftPatch, "normalizeDraftPatch");
+function mergeDraftPatch(base, patch) {
+  const out = base && typeof base === "object" ? { ...base } : {};
+  for (const [k, v] of Object.entries(patch && typeof patch === "object" ? patch : {})) {
+    if (v !== void 0) out[k] = v;
   }
   return out;
 }
-
-function googlePlacesApiKey(env: Env): string {
+__name(mergeDraftPatch, "mergeDraftPatch");
+function googlePlacesApiKey(env) {
   return String(env.GOOGLE_PLACES_API_KEY || "").trim();
 }
-
-const GOOGLE_IMPORT_FIELD_MASK_VERSION = "google-full-v1";
-const GOOGLE_IMPORT_CACHE_TTL_SECONDS = 60 * 60 * 24 * 28;
-const GOOGLE_IMPORT_QUOTA_TTL_SECONDS = 60 * 60 * 24;
-const GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT = 3;
-const GOOGLE_IMPORT_IP_DAILY_LIMIT = 10;
-
-function googlePlaceCacheKey(googlePlaceId: string): string {
+__name(googlePlacesApiKey, "googlePlacesApiKey");
+var GOOGLE_IMPORT_FIELD_MASK_VERSION = "google-full-v1";
+var GOOGLE_IMPORT_CACHE_TTL_SECONDS = 60 * 60 * 24 * 28;
+var GOOGLE_IMPORT_QUOTA_TTL_SECONDS = 60 * 60 * 24;
+var GOOGLE_IMPORT_DEVICE_UNPAID_LIMIT = 3;
+var GOOGLE_IMPORT_IP_DAILY_LIMIT = 10;
+function googlePlaceCacheKey(googlePlaceId) {
   return `google_place_cache:${googlePlaceId}`;
 }
-
-function googleImportDeviceQuotaKey(deviceId: string): string {
+__name(googlePlaceCacheKey, "googlePlaceCacheKey");
+function googleImportDeviceQuotaKey(deviceId) {
   return `google_import_quota:device:${deviceId}`;
 }
-
-function googleImportIpQuotaKey(ipHash: string): string {
+__name(googleImportDeviceQuotaKey, "googleImportDeviceQuotaKey");
+function googleImportIpQuotaKey(ipHash) {
   return `google_import_quota:ip:${ipHash}`;
 }
-
-function googleImportLedgerKey(): string {
+__name(googleImportIpQuotaKey, "googleImportIpQuotaKey");
+function googleImportLedgerKey() {
   return `google_import_ledger:${Date.now()}:${mintDraftSessionId()}`;
 }
-
-function googleImportQuotaPlaceIds(record: any): string[] {
+__name(googleImportLedgerKey, "googleImportLedgerKey");
+function googleImportQuotaPlaceIds(record) {
   const rows = Array.isArray(record?.placeIds) ? record.placeIds : [];
   return uniqueTrimmedStrings(rows).filter(isValidGooglePlaceId);
 }
-
-async function sha256Hex(value: string): Promise<string> {
+__name(googleImportQuotaPlaceIds, "googleImportQuotaPlaceIds");
+async function sha256Hex(value) {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
-
-async function googleImportIpHash(req: Request, env: Env): Promise<string> {
+__name(sha256Hex, "sha256Hex");
+async function googleImportIpHash(req, env) {
   const ip = String(
-    req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0] ||
-    "unknown"
+    req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown"
   ).trim();
   const salt = String(env.JWT_SECRET || "navigen-google-import").trim();
   return await sha256Hex(`${salt}:${ip || "unknown"}`);
 }
-
-async function readGoogleImportQuotaIds(env: Env, key: string): Promise<string[]> {
-  const rec = await env.KV_STATUS.get(key, { type: "json" }) as any;
+__name(googleImportIpHash, "googleImportIpHash");
+async function readGoogleImportQuotaIds(env, key) {
+  const rec = await env.KV_STATUS.get(key, { type: "json" });
   return googleImportQuotaPlaceIds(rec);
 }
-
-async function writeGoogleImportQuotaIds(env: Env, key: string, placeIds: string[]): Promise<void> {
+__name(readGoogleImportQuotaIds, "readGoogleImportQuotaIds");
+async function writeGoogleImportQuotaIds(env, key, placeIds) {
   await env.KV_STATUS.put(
     key,
     JSON.stringify({
       placeIds: uniqueTrimmedStrings(placeIds).filter(isValidGooglePlaceId),
-      updatedAt: new Date().toISOString()
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
     }),
     { expirationTtl: GOOGLE_IMPORT_QUOTA_TTL_SECONDS }
   );
 }
-
-async function checkGoogleImportPolicy(
-  req: Request,
-  env: Env,
-  deviceId: string,
-  googlePlaceId: string,
-  sameDeviceReopen: boolean
-): Promise<{ allowed: boolean; quotaCounted: boolean; ipHash: string; error: any | null }> {
+__name(writeGoogleImportQuotaIds, "writeGoogleImportQuotaIds");
+async function checkGoogleImportPolicy(req, env, deviceId, googlePlaceId, sameDeviceReopen) {
   const ipHash = await googleImportIpHash(req, env);
   if (sameDeviceReopen) {
     return { allowed: true, quotaCounted: false, ipHash, error: null };
   }
-
   const deviceKey = googleImportDeviceQuotaKey(deviceId);
   const ipKey = googleImportIpQuotaKey(ipHash);
   const [devicePlaceIds, ipPlaceIds] = await Promise.all([
     readGoogleImportQuotaIds(env, deviceKey),
     readGoogleImportQuotaIds(env, ipKey)
   ]);
-
   const deviceSeen = devicePlaceIds.includes(googlePlaceId);
   const ipSeen = ipPlaceIds.includes(googlePlaceId);
-
-  // Draft capacity is enforced by the device-local Profile drafts manager.
-  // These backend records are retained for telemetry / abuse observation only.
-  // They must not hard-block the BO after a local draft was discarded.
   return { allowed: true, quotaCounted: !deviceSeen || !ipSeen, ipHash, error: null };
 }
-
-async function recordGoogleImportQuota(env: Env, deviceId: string, ipHash: string, googlePlaceId: string): Promise<void> {
+__name(checkGoogleImportPolicy, "checkGoogleImportPolicy");
+async function recordGoogleImportQuota(env, deviceId, ipHash, googlePlaceId) {
   const deviceKey = googleImportDeviceQuotaKey(deviceId);
   const ipKey = googleImportIpQuotaKey(ipHash);
   const [devicePlaceIds, ipPlaceIds] = await Promise.all([
     readGoogleImportQuotaIds(env, deviceKey),
     readGoogleImportQuotaIds(env, ipKey)
   ]);
-
   await Promise.all([
     writeGoogleImportQuotaIds(env, deviceKey, [...devicePlaceIds, googlePlaceId]),
     writeGoogleImportQuotaIds(env, ipKey, [...ipPlaceIds, googlePlaceId])
   ]);
 }
-
-async function readGooglePlaceCache(env: Env, googlePlaceId: string): Promise<any | null> {
-  const cached = await env.KV_STATUS.get(googlePlaceCacheKey(googlePlaceId), { type: "json" }) as any;
-  const draft = (cached?.draft && typeof cached.draft === "object") ? cached.draft : null;
+__name(recordGoogleImportQuota, "recordGoogleImportQuota");
+async function readGooglePlaceCache(env, googlePlaceId) {
+  const cached = await env.KV_STATUS.get(googlePlaceCacheKey(googlePlaceId), { type: "json" });
+  const draft = cached?.draft && typeof cached.draft === "object" ? cached.draft : null;
   return draft;
 }
-
-async function writeGooglePlaceCache(env: Env, googlePlaceId: string, draft: any): Promise<void> {
+__name(readGooglePlaceCache, "readGooglePlaceCache");
+async function writeGooglePlaceCache(env, googlePlaceId, draft) {
   if (!draft || typeof draft !== "object") return;
   await env.KV_STATUS.put(
     googlePlaceCacheKey(googlePlaceId),
     JSON.stringify({
       draft,
       fieldMaskVersion: GOOGLE_IMPORT_FIELD_MASK_VERSION,
-      cachedAt: new Date().toISOString()
+      cachedAt: (/* @__PURE__ */ new Date()).toISOString()
     }),
     { expirationTtl: GOOGLE_IMPORT_CACHE_TTL_SECONDS }
   );
 }
-
-async function resolveGoogleImportPayload(env: Env, googlePlaceId: string): Promise<{ hydrated: boolean; draft: any; cacheHit: boolean; error: any | null }> {
+__name(writeGooglePlaceCache, "writeGooglePlaceCache");
+async function resolveGoogleImportPayload(env, googlePlaceId) {
   const cachedDraft = await readGooglePlaceCache(env, googlePlaceId);
   if (cachedDraft) {
     return { hydrated: true, draft: cachedDraft, cacheHit: true, error: null };
   }
-
   const result = await hydrateDraftWithGoogleDetails(env, { googlePlaceId });
   if (result.hydrated) {
     await writeGooglePlaceCache(env, googlePlaceId, result.draft);
   }
-
   return {
     hydrated: result.hydrated,
     draft: result.draft,
@@ -1433,65 +3286,51 @@ async function resolveGoogleImportPayload(env: Env, googlePlaceId: string): Prom
     error: result.error
   };
 }
-
-async function writeGoogleImportLedger(env: Env, entry: Record<string, any>): Promise<void> {
+__name(resolveGoogleImportPayload, "resolveGoogleImportPayload");
+async function writeGoogleImportLedger(env, entry) {
   await env.KV_STATUS.put(
     googleImportLedgerKey(),
     JSON.stringify({
       ...entry,
       fieldMaskVersion: GOOGLE_IMPORT_FIELD_MASK_VERSION,
-      createdAt: new Date().toISOString()
+      createdAt: (/* @__PURE__ */ new Date()).toISOString()
     }),
     { expirationTtl: 60 * 60 * 24 * 366 }
   );
 }
-
-function ratingsFromGoogleProvider(effective: any): Record<string, any> {
-  const base = (effective?.ratings && typeof effective.ratings === "object") ? { ...effective.ratings } : {};
-  const google = (effective?.google && typeof effective.google === "object") ? effective.google : {};
+__name(writeGoogleImportLedger, "writeGoogleImportLedger");
+function ratingsFromGoogleProvider(effective) {
+  const base = effective?.ratings && typeof effective.ratings === "object" ? { ...effective.ratings } : {};
+  const google = effective?.google && typeof effective.google === "object" ? effective.google : {};
   const rating = Number(google?.rating ?? base?.google?.rating);
   const count = Number(google?.userRatingCount ?? google?.userRatingsTotal ?? base?.google?.count ?? 0);
-
   if (Number.isFinite(rating) && rating > 0) {
     base.google = {
-      ...(base.google && typeof base.google === "object" ? base.google : {}),
+      ...base.google && typeof base.google === "object" ? base.google : {},
       rating,
       count: Number.isFinite(count) && count > 0 ? count : 0,
       provider: "google",
       source: "places_api_new"
     };
   }
-
   return base;
 }
-
-function googleAddressComponent(
-  components: any,
-  wantedType: string,
-  field: "longText" | "shortText" | "long_name" | "short_name" = "longText"
-): string {
+__name(ratingsFromGoogleProvider, "ratingsFromGoogleProvider");
+function googleAddressComponent(components, wantedType, field = "longText") {
   const rows = Array.isArray(components) ? components : [];
-  const hit = rows.find((row: any) => Array.isArray(row?.types) && row.types.includes(wantedType));
+  const hit = rows.find((row) => Array.isArray(row?.types) && row.types.includes(wantedType));
   if (!hit) return "";
-
   const wantsShort = field === "shortText" || field === "short_name";
   return String(
-    wantsShort
-      ? hit.shortText || hit.short_name || hit.longText || hit.long_name || ""
-      : hit.longText || hit.long_name || hit.shortText || hit.short_name || ""
+    wantsShort ? hit.shortText || hit.short_name || hit.longText || hit.long_name || "" : hit.longText || hit.long_name || hit.shortText || hit.short_name || ""
   ).trim();
 }
-
-function normalizeGoogleAddressToken(value: string): string {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
+__name(googleAddressComponent, "googleAddressComponent");
+function normalizeGoogleAddressToken(value) {
+  return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 }
-
-function googleStreetAddressFromComponents(components: any, formattedAddress: string): string {
+__name(normalizeGoogleAddressToken, "normalizeGoogleAddressToken");
+function googleStreetAddressFromComponents(components, formattedAddress) {
   const route = googleAddressComponent(components, "route");
   const streetNumber = googleAddressComponent(components, "street_number");
   const premise = googleAddressComponent(components, "premise");
@@ -1499,99 +3338,76 @@ function googleStreetAddressFromComponents(components: any, formattedAddress: st
   const postalCode = googleAddressComponent(components, "postal_code");
   const countryLong = googleAddressComponent(components, "country");
   const countryShort = googleAddressComponent(components, "country", "shortText");
-
   if (route && streetNumber) {
     const formattedLower = String(formattedAddress || "").toLowerCase();
     const routeIndex = formattedLower.indexOf(route.toLowerCase());
     const numberIndex = formattedLower.indexOf(streetNumber.toLowerCase());
-    const streetBase = routeIndex >= 0 && numberIndex >= 0 && routeIndex < numberIndex
-      ? `${route} ${streetNumber}`
-      : `${streetNumber} ${route}`;
-
+    const streetBase = routeIndex >= 0 && numberIndex >= 0 && routeIndex < numberIndex ? `${route} ${streetNumber}` : `${streetNumber} ${route}`;
     return [streetBase, subpremise].map((part) => String(part || "").trim()).filter(Boolean).join(", ");
   }
-
   const componentStreet = [streetNumber, route].map((part) => String(part || "").trim()).filter(Boolean).join(" ");
   if (componentStreet) return componentStreet;
   if (premise) return [premise, subpremise].map((part) => String(part || "").trim()).filter(Boolean).join(", ");
   if (subpremise) return subpremise;
-
   const cityTokens = [
     googleAddressComponent(components, "locality"),
     googleAddressComponent(components, "postal_town"),
     googleAddressComponent(components, "administrative_area_level_2"),
     googleAddressComponent(components, "administrative_area_level_1")
   ].map(normalizeGoogleAddressToken).filter(Boolean);
-
   const nonStreetTokens = [
     ...cityTokens,
     normalizeGoogleAddressToken(postalCode),
     normalizeGoogleAddressToken(countryLong),
     normalizeGoogleAddressToken(countryShort)
   ].filter(Boolean);
-
-  const addressParts = String(formattedAddress || "")
-    .split(",")
-    .map((part) => String(part || "").trim())
-    .filter(Boolean)
-    .filter((part) => {
-      const normalizedPart = normalizeGoogleAddressToken(part);
-      if (!normalizedPart) return false;
-      return !nonStreetTokens.some((token) => normalizedPart === token || normalizedPart.includes(token));
-    });
-
+  const addressParts = String(formattedAddress || "").split(",").map((part) => String(part || "").trim()).filter(Boolean).filter((part) => {
+    const normalizedPart = normalizeGoogleAddressToken(part);
+    if (!normalizedPart) return false;
+    return !nonStreetTokens.some((token) => normalizedPart === token || normalizedPart.includes(token));
+  });
   return String(addressParts[0] || "").trim();
 }
-
-function mapGooglePlaceDetailsToDraft(googlePlaceId: string, place: any): Record<string, any> {
-  const nowIso = new Date().toISOString();
+__name(googleStreetAddressFromComponents, "googleStreetAddressFromComponents");
+function mapGooglePlaceDetailsToDraft(googlePlaceId, place) {
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
   const resolvedGooglePlaceId = String(place?.id || googlePlaceId || "").trim();
-  const out: Record<string, any> = {
+  const out = {
     googlePlaceId: resolvedGooglePlaceId,
     googleHydrationStatus: "hydrated",
     googleHydratedAt: nowIso,
     updatedAt: nowIso
   };
-
   const name = String(place?.displayName?.text || "").trim();
   if (name) {
     out.locationName = { en: name };
     out.listedName = name;
   }
-
   const formattedAddress = String(place?.formattedAddress || "").trim();
   const structuredStreetAddress = googleStreetAddressFromComponents(place?.addressComponents, formattedAddress);
   const city = String(
-    googleAddressComponent(place?.addressComponents, "locality") ||
-    googleAddressComponent(place?.addressComponents, "postal_town") ||
-    googleAddressComponent(place?.addressComponents, "administrative_area_level_2") ||
-    googleAddressComponent(place?.addressComponents, "administrative_area_level_1") ||
-    ""
+    googleAddressComponent(place?.addressComponents, "locality") || googleAddressComponent(place?.addressComponents, "postal_town") || googleAddressComponent(place?.addressComponents, "administrative_area_level_2") || googleAddressComponent(place?.addressComponents, "administrative_area_level_1") || ""
   ).trim();
   const countryCode = googleAddressComponent(place?.addressComponents, "country", "shortText").toUpperCase();
   const phone = String(place?.internationalPhoneNumber || place?.nationalPhoneNumber || "").trim();
-
-  const contactInformation: Record<string, any> = {};
+  const contactInformation = {};
   if (structuredStreetAddress) contactInformation.address = structuredStreetAddress;
   if (city) contactInformation.city = city;
   if (countryCode) contactInformation.countryCode = countryCode;
   if (phone) contactInformation.phone = phone;
   if (Object.keys(contactInformation).length) out.contactInformation = contactInformation;
-
-  const links: Record<string, any> = {};
+  const links = {};
   const website = String(place?.websiteUri || "").trim();
   const mapsUrl = String(place?.googleMapsUri || "").trim();
   if (website) links.official = website;
   if (mapsUrl) links.googleMaps = mapsUrl;
   if (Object.keys(links).length) out.links = links;
-
   const lat = Number(place?.location?.latitude);
   const lng = Number(place?.location?.longitude);
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
     out.coord = { lat: round6(lat), lng: round6(lng) };
   }
-
-  const googleMeta: Record<string, any> = { placeId: resolvedGooglePlaceId, provider: "places_api_new" };
+  const googleMeta = { placeId: resolvedGooglePlaceId, provider: "places_api_new" };
   if (Number.isFinite(Number(place?.rating))) googleMeta.rating = Number(place.rating);
   if (Number.isFinite(Number(place?.userRatingCount))) {
     googleMeta.userRatingCount = Number(place.userRatingCount);
@@ -1603,54 +3419,47 @@ function mapGooglePlaceDetailsToDraft(googlePlaceId: string, place: any): Record
   if (String(place?.businessStatus || "").trim()) googleMeta.businessStatus = String(place.businessStatus).trim();
   if (Array.isArray(place?.types)) googleMeta.types = uniqueTrimmedStrings(place.types);
   out.google = googleMeta;
-
   return out;
 }
-
-function isDraftFieldEmpty(value: any): boolean {
+__name(mapGooglePlaceDetailsToDraft, "mapGooglePlaceDetailsToDraft");
+function isDraftFieldEmpty(value) {
   if (value == null) return true;
   if (typeof value === "string") return !value.trim();
   if (Array.isArray(value)) return value.length === 0;
   if (typeof value === "object") return Object.keys(value).length === 0;
   return false;
 }
-
-function mergeMissingDraftFields(base: any, imported: any): any {
-  const out: any = (base && typeof base === "object") ? { ...base } : {};
-  for (const [key, value] of Object.entries((imported && typeof imported === "object") ? imported : {})) {
+__name(isDraftFieldEmpty, "isDraftFieldEmpty");
+function mergeMissingDraftFields(base, imported) {
+  const out = base && typeof base === "object" ? { ...base } : {};
+  for (const [key, value] of Object.entries(imported && typeof imported === "object" ? imported : {})) {
     const current = out[key];
     if (isDraftFieldEmpty(current)) {
       out[key] = value;
       continue;
     }
-
-    if (
-      current && typeof current === "object" && !Array.isArray(current) &&
-      value && typeof value === "object" && !Array.isArray(value)
-    ) {
+    if (current && typeof current === "object" && !Array.isArray(current) && value && typeof value === "object" && !Array.isArray(value)) {
       out[key] = mergeMissingDraftFields(current, value);
     }
   }
   return out;
 }
-
-function mergeGoogleImportIntoDraft(base: any, imported: any): any {
+__name(mergeMissingDraftFields, "mergeMissingDraftFields");
+function mergeGoogleImportIntoDraft(base, imported) {
   const out = mergeMissingDraftFields(base, imported);
   out.googlePlaceId = String(out.googlePlaceId || imported?.googlePlaceId || "").trim();
   out.googleHydrationStatus = String(imported?.googleHydrationStatus || out.googleHydrationStatus || "").trim();
   out.googleHydratedAt = String(imported?.googleHydratedAt || out.googleHydratedAt || "").trim();
-  out.updatedAt = String(imported?.updatedAt || new Date().toISOString()).trim();
+  out.updatedAt = String(imported?.updatedAt || (/* @__PURE__ */ new Date()).toISOString()).trim();
   return out;
 }
-
-async function hydrateDraftWithGoogleDetails(env: Env, draft: any): Promise<{ hydrated: boolean; draft: any; error: any | null }> {
+__name(mergeGoogleImportIntoDraft, "mergeGoogleImportIntoDraft");
+async function hydrateDraftWithGoogleDetails(env, draft) {
   const googlePlaceId = String(draft?.googlePlaceId || "").trim();
   if (!googlePlaceId) return { hydrated: false, draft, error: { code: "google_place_id_missing" } };
   if (!isValidGooglePlaceId(googlePlaceId)) return { hydrated: false, draft, error: { code: "invalid_google_place_id" } };
-
   const key = googlePlacesApiKey(env);
   if (!key) return { hydrated: false, draft, error: { code: "google_api_key_missing" } };
-
   const fieldMask = [
     "id",
     "displayName",
@@ -1666,9 +3475,7 @@ async function hydrateDraftWithGoogleDetails(env: Env, draft: any): Promise<{ hy
     "types",
     "googleMapsUri"
   ].join(",");
-
   const u = new URL(`https://places.googleapis.com/v1/places/${encodeURIComponent(googlePlaceId)}`);
-
   try {
     const r = await fetch(u.toString(), {
       method: "GET",
@@ -1678,36 +3485,30 @@ async function hydrateDraftWithGoogleDetails(env: Env, draft: any): Promise<{ hy
         "X-Goog-FieldMask": fieldMask
       }
     });
-
     const responseText = await r.text();
-    let j: any = null;
-
+    let j = null;
     try {
       j = responseText ? JSON.parse(responseText) : null;
     } catch {
       j = null;
     }
-
     if (!r.ok) {
       const googleStatus = String(j?.error?.status || j?.status || "").trim();
       const googleMessage = String(j?.error?.message || j?.error_message || j?.message || "").trim();
-
       return {
         hydrated: false,
         draft,
         error: {
           code: "google_details_http_error",
           status: r.status,
-          googleStatus: googleStatus || undefined,
-          googleMessage: googleMessage ? googleMessage.slice(0, 700) : undefined
+          googleStatus: googleStatus || void 0,
+          googleMessage: googleMessage ? googleMessage.slice(0, 700) : void 0
         }
       };
     }
-
     if (!j || typeof j !== "object" || !String(j?.id || "").trim()) {
       return { hydrated: false, draft, error: { code: "google_details_failed", status: "MISSING_PLACE" } };
     }
-
     const imported = mapGooglePlaceDetailsToDraft(googlePlaceId, j);
     const nextDraft = mergeGoogleImportIntoDraft(draft, imported);
     return { hydrated: true, draft: nextDraft, error: null };
@@ -1715,8 +3516,8 @@ async function hydrateDraftWithGoogleDetails(env: Env, draft: any): Promise<{ hy
     return { hydrated: false, draft, error: { code: "google_details_unreachable" } };
   }
 }
-
-async function assertPaidDraftHydrationEntitlement(req: Request, env: Env, target: TargetIdentity): Promise<Response | null> {
+__name(hydrateDraftWithGoogleDetails, "hydrateDraftWithGoogleDetails");
+async function assertPaidDraftHydrationEntitlement(req, env, target) {
   const auth = await requireOwnerSession(req, env);
   if (auth instanceof Response) return auth;
   if (String(auth.ulid || "").trim() !== target.ulid) {
@@ -1725,8 +3526,7 @@ async function assertPaidDraftHydrationEntitlement(req: Request, env: Env, targe
       headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
     });
   }
-
-  const ownership = await env.KV_STATUS.get(`ownership:${target.ulid}`, { type: "json" }) as any;
+  const ownership = await env.KV_STATUS.get(`ownership:${target.ulid}`, { type: "json" });
   const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
   const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
   if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
@@ -1736,7 +3536,6 @@ async function assertPaidDraftHydrationEntitlement(req: Request, env: Env, targe
       { "cache-control": "no-store" }
     );
   }
-
   const paymentIntentId = String(ownership?.lastEventId || "").trim();
   if (!paymentIntentId) {
     return json(
@@ -1745,7 +3544,6 @@ async function assertPaidDraftHydrationEntitlement(req: Request, env: Env, targe
       { "cache-control": "no-store" }
     );
   }
-
   const plan = await currentPlanForUlid(env, target.ulid);
   if (!plan) {
     return json(
@@ -1754,37 +3552,33 @@ async function assertPaidDraftHydrationEntitlement(req: Request, env: Env, targe
       noStore
     );
   }
-
   return null;
 }
-
-// Structure validation reads from KV_STRUCTURE; public structure.json is a seed/audit artifact only.
-
-async function loadStructureBusinessCategoriesForValidation(env: Env): Promise<Record<string, unknown>> {
+__name(assertPaidDraftHydrationEntitlement, "assertPaidDraftHydrationEntitlement");
+async function loadStructureBusinessCategoriesForValidation(env) {
   const [rawProjection, manifest] = await Promise.all([
-    env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_CATEGORIES_KEY, { type: "json" }) as Promise<any>,
+    env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_CATEGORIES_KEY, { type: "json" }),
     readStructureManifest(env)
   ]);
   if (!rawProjection || manifest.activeVersion === "unpublished") throw new Error("structure_catalog_unavailable");
   return sanitizeStructureBusinessCategoriesProjection(rawProjection, manifest);
 }
-
-async function loadBusinessTaxonomyForValidation(env: Env): Promise<Record<string, unknown>> {
+__name(loadStructureBusinessCategoriesForValidation, "loadStructureBusinessCategoriesForValidation");
+async function loadBusinessTaxonomyForValidation(env) {
   const [rawProjection, manifest] = await Promise.all([
-    env.KV_CONTEXTS.get(CONTEXTS_BUSINESS_TAXONOMY_KEY, { type: "json" }) as Promise<any>,
+    env.KV_CONTEXTS.get(CONTEXTS_BUSINESS_TAXONOMY_KEY, { type: "json" }),
     readContextsManifest(env)
   ]);
   if (!rawProjection || manifest.activeVersion === "unpublished") throw new Error("taxonomy_catalog_unavailable");
   return sanitizeBusinessTaxonomyProjection(rawProjection, manifest);
 }
-
-function allowedSubgroupsByStructureProjection(projection: any): Map<string, Set<string>> {
-  const out = new Map<string, Set<string>>();
+__name(loadBusinessTaxonomyForValidation, "loadBusinessTaxonomyForValidation");
+function allowedSubgroupsByStructureProjection(projection) {
+  const out = /* @__PURE__ */ new Map();
   for (const group of Array.isArray(projection?.groups) ? projection.groups : []) {
     const groupKey = structureString(group?.groupKey);
     if (!groupKey) continue;
-
-    const set = out.get(groupKey) || new Set<string>();
+    const set = out.get(groupKey) || /* @__PURE__ */ new Set();
     for (const subgroup of Array.isArray(group?.subgroups) ? group.subgroups : []) {
       const key = structureString(subgroup?.key);
       if (key) set.add(key);
@@ -1793,41 +3587,29 @@ function allowedSubgroupsByStructureProjection(projection: any): Map<string, Set
   }
   return out;
 }
-
-function allowedContextKeysFromBusinessTaxonomy(projection: any): Set<string> {
-  const out = new Set<string>();
+__name(allowedSubgroupsByStructureProjection, "allowedSubgroupsByStructureProjection");
+function allowedContextKeysFromBusinessTaxonomy(projection) {
+  const out = /* @__PURE__ */ new Set();
   for (const row of Array.isArray(projection?.contexts) ? projection.contexts : []) {
     const key = taxonomyString(row?.key);
     if (key) out.add(key);
   }
   return out;
 }
-
-type GeneratedContextParts = {
-  scope: "country" | "city";
-  countrySlug: string;
-  citySlug: string;
-  groupKey: string;
-  subgroupKey: string;
-};
-
-function parseGeneratedContextKey(key: string): GeneratedContextParts | null {
+__name(allowedContextKeysFromBusinessTaxonomy, "allowedContextKeysFromBusinessTaxonomy");
+function parseGeneratedContextKey(key) {
   const parts = String(key || "").trim().split(".").filter(Boolean);
   if (parts[0] !== "ctx") return null;
-
   const scope = parts[1];
   if (scope !== "country" && scope !== "city") return null;
-
   const countrySlug = parts[2] || "";
-  const citySlug = scope === "city" ? (parts[3] || "") : "";
-  const groupPart = scope === "city" ? (parts[4] || "") : (parts[3] || "");
-  const subgroupPart = scope === "city" ? (parts[5] || "") : (parts[4] || "");
-
+  const citySlug = scope === "city" ? parts[3] || "" : "";
+  const groupPart = scope === "city" ? parts[4] || "" : parts[3] || "";
+  const subgroupPart = scope === "city" ? parts[5] || "" : parts[4] || "";
   if (!/^[a-z0-9-]+$/.test(countrySlug)) return null;
   if (scope === "city" && !/^[a-z0-9-]+$/.test(citySlug)) return null;
   if (!/^group-[a-z0-9-]+$/.test(groupPart)) return null;
   if (!/^sub-[a-z0-9-]+$/.test(subgroupPart)) return null;
-
   return {
     scope,
     countrySlug,
@@ -1836,70 +3618,56 @@ function parseGeneratedContextKey(key: string): GeneratedContextParts | null {
     subgroupKey: `sub.${subgroupPart.slice("sub-".length)}`
   };
 }
-
-function generatedContextAllowedCombos(profile: any): Set<string> {
-  const out = new Set<string>();
+__name(parseGeneratedContextKey, "parseGeneratedContextKey");
+function generatedContextAllowedCombos(profile) {
+  const out = /* @__PURE__ */ new Set();
   const primaryGroup = String(profile?.groupKey || "").trim();
   const primarySubgroup = String(profile?.subgroupKey || "").trim();
-
   if (primaryGroup && primarySubgroup) {
-    out.add(`${primaryGroup}\u0000${primarySubgroup}`);
+    out.add(`${primaryGroup}\0${primarySubgroup}`);
   }
-
   for (const combo of Array.isArray(profile?.classificationCombos) ? profile.classificationCombos : []) {
     const groupKey = String(combo?.groupKey || "").trim();
     const subgroupKey = String(combo?.subgroupKey || "").trim();
-    if (groupKey && subgroupKey) out.add(`${groupKey}\u0000${subgroupKey}`);
+    if (groupKey && subgroupKey) out.add(`${groupKey}\0${subgroupKey}`);
   }
-
   return out;
 }
-
-function isGeneratedContextAllowedForProfile(key: string, profile: any): boolean {
+__name(generatedContextAllowedCombos, "generatedContextAllowedCombos");
+function isGeneratedContextAllowedForProfile(key, profile) {
   const parsed = parseGeneratedContextKey(key);
   if (!parsed) return false;
-
   const allowedCombos = generatedContextAllowedCombos(profile);
-  return allowedCombos.has(`${parsed.groupKey}\u0000${parsed.subgroupKey}`);
+  return allowedCombos.has(`${parsed.groupKey}\0${parsed.subgroupKey}`);
 }
-
-async function validateClassificationSelection(env: Env, profile: any): Promise<string | null> {
+__name(isGeneratedContextAllowedForProfile, "isGeneratedContextAllowedForProfile");
+async function validateClassificationSelection(env, profile) {
   const groupKey = String(profile?.groupKey || "").trim();
   const subgroupKey = String(profile?.subgroupKey || "").trim();
   const contextVals = splitContextMemberships(profile?.context);
-
-  // Drafts may still be partial; only validate when the classification block is present.
   if (!groupKey && !subgroupKey && !contextVals.length) return null;
   if (!groupKey || !subgroupKey || !contextVals.length) return "classification_required";
-
   const [structure, taxonomy] = await Promise.all([
     loadStructureBusinessCategoriesForValidation(env),
     loadBusinessTaxonomyForValidation(env)
   ]);
-
   const subgroups = allowedSubgroupsByStructureProjection(structure);
   const groupSubs = subgroups.get(groupKey);
   if (!groupSubs) return "invalid_groupKey";
   if (!groupSubs.has(subgroupKey)) return "invalid_subgroupKey";
-
   const contexts = allowedContextKeysFromBusinessTaxonomy(taxonomy);
   for (const ctx of contextVals) {
     if (contexts.has(ctx)) continue;
     if (isGeneratedContextAllowedForProfile(ctx, profile)) continue;
     return "invalid_context";
   }
-
   return null;
 }
-
-async function safeValidateClassificationSelection(
-  env: Env,
-  profile: any,
-  opts: { failClosedOnCatalogError?: boolean } = {}
-): Promise<string | null> {
+__name(validateClassificationSelection, "validateClassificationSelection");
+async function safeValidateClassificationSelection(env, profile, opts = {}) {
   try {
     return await validateClassificationSelection(env, profile);
-  } catch (e: any) {
+  } catch (e) {
     const msg = String(e?.message || "").trim();
     if (msg === "taxonomy_catalog_unavailable" || msg === "structure_catalog_unavailable") {
       return opts.failClosedOnCatalogError ? "catalog_unavailable" : null;
@@ -1907,106 +3675,83 @@ async function safeValidateClassificationSelection(
     throw e;
   }
 }
-
-const RATING_WINDOW_MS = 30 * 60 * 1000;
-
-function ratingSummaryKey(locationID: string): string {
+__name(safeValidateClassificationSelection, "safeValidateClassificationSelection");
+var RATING_WINDOW_MS = 30 * 60 * 1e3;
+function ratingSummaryKey(locationID) {
   return `rating_summary:${locationID}`;
 }
-
-function ratingVoteKey(locationID: string, deviceKey: string): string {
+__name(ratingSummaryKey, "ratingSummaryKey");
+function ratingVoteKey(locationID, deviceKey) {
   return `rating_vote:${locationID}:${deviceKey}`;
 }
-
-function readRatingDeviceKey(req: Request): string {
+__name(ratingVoteKey, "ratingVoteKey");
+function readRatingDeviceKey(req) {
   const explicit = String(req.headers.get("X-NG-Device") || "").trim();
   if (explicit) return explicit;
-
   const cookieDev = readDeviceId(req);
   if (cookieDev) return cookieDev;
-
   const ip = String(req.headers.get("CF-Connecting-IP") || "").trim();
   const ua = String(req.headers.get("User-Agent") || "").trim().slice(0, 120);
   return encodeURIComponent(`${ip}|${ua}`.trim());
 }
-
-async function kvAdd(kv: KVNamespace, key: string, delta: number, ttlSec = 60 * 60 * 24 * 366): Promise<number> {
-  const cur = parseInt((await kv.get(key)) || "0", 10) || 0;
+__name(readRatingDeviceKey, "readRatingDeviceKey");
+async function kvAdd(kv, key, delta, ttlSec = 60 * 60 * 24 * 366) {
+  const cur = parseInt(await kv.get(key) || "0", 10) || 0;
   const next = Math.max(0, cur + (Number.isFinite(delta) ? delta : 0));
-
   if (next <= 0) {
-    try { await kv.delete(key); } catch {}
+    try {
+      await kv.delete(key);
+    } catch {
+    }
     return 0;
   }
-
   await kv.put(key, String(next), { expirationTtl: ttlSec });
   return next;
 }
-
-type RatingSummary = {
-  count: number;
-  sum: number;
-  avg: number;
-};
-
-async function readRatingSummary(env: Env, locationID: string): Promise<RatingSummary> {
-  const cached = await env.KV_STATUS.get(ratingSummaryKey(locationID), { type: "json" }) as any;
+__name(kvAdd, "kvAdd");
+async function readRatingSummary(env, locationID) {
+  const cached = await env.KV_STATUS.get(ratingSummaryKey(locationID), { type: "json" });
   const cachedCount = Number(cached?.count);
   const cachedSum = Number(cached?.sum);
-
   if (Number.isFinite(cachedCount) && cachedCount >= 0 && Number.isFinite(cachedSum) && cachedSum >= 0) {
     return {
       count: cachedCount,
       sum: cachedSum,
-      avg: cachedCount > 0 ? (cachedSum / cachedCount) : 0
+      avg: cachedCount > 0 ? cachedSum / cachedCount : 0
     };
   }
-
   let count = 0;
   let sum = 0;
-  let cursor: string | undefined = undefined;
-
+  let cursor = void 0;
   do {
     const page = await env.KV_STATS.list({ prefix: `stats:${locationID}:`, cursor });
     for (const key of page.keys) {
       const name = String(key.name || "");
       const parts = name.split(":");
       if (parts.length !== 4) continue;
-
       const bucket = String(parts[3] || "").trim();
       if (bucket !== "rating" && bucket !== "rating-score") continue;
-
-      const value = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
+      const value = parseInt(await env.KV_STATS.get(name) || "0", 10) || 0;
       if (bucket === "rating") count += value;
       else sum += value;
     }
-    cursor = page.cursor || undefined;
+    cursor = page.cursor || void 0;
   } while (cursor);
-
   try {
     await env.KV_STATUS.put(
       ratingSummaryKey(locationID),
-      JSON.stringify({ count, sum, updatedAt: new Date().toISOString() })
+      JSON.stringify({ count, sum, updatedAt: (/* @__PURE__ */ new Date()).toISOString() })
     );
   } catch {
-    // summary cache must never block reads
   }
-
   return {
     count,
     sum,
-    avg: count > 0 ? (sum / count) : 0
+    avg: count > 0 ? sum / count : 0
   };
 }
-
-type OwnerSession = {
-  ver: number;
-  ulid: string;
-  createdAt: string;
-  expiresAt: string;
-};
-
-async function requireOwnerSession(req: Request, env: Env): Promise<{ ulid: string } | Response> {
+__name(readRatingSummary, "readRatingSummary");
+async function requireOwnerSession(req, env) {
   const sid = readCookie(req.headers.get("Cookie") || "", "op_sess");
   if (!sid) {
     return new Response("Denied", {
@@ -2014,51 +3759,33 @@ async function requireOwnerSession(req: Request, env: Env): Promise<{ ulid: stri
       headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
     });
   }
-
   const sessKey = `opsess:${sid}`;
-  const sess = await env.KV_STATUS.get(sessKey, { type: "json" }) as OwnerSession | null;
+  const sess = await env.KV_STATUS.get(sessKey, { type: "json" });
   if (!sess || !sess.ulid) {
     return new Response("Denied", {
       status: 401,
       headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
     });
   }
-
   const exp = new Date(String(sess.expiresAt || ""));
   if (Number.isNaN(exp.getTime()) || exp.getTime() <= Date.now()) {
-    // Session expired; fail closed. (We do not rely on cookie expiry alone.)
     return new Response("Denied", {
       status: 401,
       headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
     });
   }
-
-  // Authentication only: session validity + ULID binding.
-  // Active Plan entitlement is enforced by the endpoint itself, not here.
   return { ulid: String(sess.ulid).trim() };
 }
-
-async function promoteCampaignDraftAndBuildRedirectHint(
-  req: Request,
-  sess: any,
-  ulid: string,
-  env: Env,
-  logTag: string
-): Promise<string> {
-  // Build a deterministic hint for the landing UI (not a source of truth; just prevents sticky wrong paint).
-  // If this checkout session funded a campaign, promote draft now and enrich redirect with campaign hint.
+__name(requireOwnerSession, "requireOwnerSession");
+async function promoteCampaignDraftAndBuildRedirectHint(req, sess, ulid, env, logTag) {
   try {
-    const md = (sess?.metadata && typeof sess.metadata === "object") ? sess.metadata : {};
+    const md = sess?.metadata && typeof sess.metadata === "object" ? sess.metadata : {};
     const planMode = normalizePlanMode(md?.planMode, md?.campaignPreset);
     const campaignKey = String(md?.campaignKey || "").trim();
-
     if (planMode !== "campaign_with_promo_qr" || !campaignKey) return "";
-
     const draftKey = `campaigns:draft:${ulid}`;
-    const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
-
+    const draft = await env.KV_STATUS.get(draftKey, { type: "json" });
     if (!draft || String(draft?.campaignKey || "").trim() !== campaignKey) return "";
-
     const currentPlan = await currentPlanForUlid(env, ulid);
     const promoted = await promoteCampaignDraftToActiveRows({
       req,
@@ -2071,68 +3798,51 @@ async function promoteCampaignDraftAndBuildRedirectHint(
       paidPlan: currentPlan,
       logTag
     });
-
     if (!promoted.ok) return "";
-
     await env.KV_STATUS.delete(draftKey);
-
     const end = String(promoted.endDate || "").trim();
     if (/^\d{4}-\d{2}-\d{2}$/.test(end)) {
       return `ce=1&ced=${encodeURIComponent(end)}&cak=${encodeURIComponent(campaignKey)}`;
     }
     return `ce=1&cak=${encodeURIComponent(campaignKey)}`;
-  } catch (e: any) {
+  } catch (e) {
     console.error(`${logTag}: promote_failed`, {
       ulid,
       err: String(e?.message || e || "")
     });
-    // Do not block exchange/restore on hint/promotion failure.
     return "";
   }
 }
-
-async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Response> {
+__name(promoteCampaignDraftAndBuildRedirectHint, "promoteCampaignDraftAndBuildRedirectHint");
+async function handleOwnerStripeExchange(req, env) {
   const u = new URL(req.url);
   const sid = String(u.searchParams.get("sid") || "").trim();
   const nextRaw = String(u.searchParams.get("next") || "").trim();
-
   const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
-
   if (!sid) return new Response("Denied", { status: 400, headers: noStoreHeaders });
-
-  // Prevent open redirects: allow only same-origin relative paths.
-  const isSafeNext = (p: string) =>
-    p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
-  const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "";
-  let redirectHint = ""; // ensure local scope for redirect logic used later in /owner/restore
-
-  const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+  const isSafeNext = /* @__PURE__ */ __name((p) => p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\"), "isSafeNext");
+  const next = nextRaw && isSafeNext(nextRaw) ? nextRaw : "";
+  let redirectHint = "";
+  const sk = String(env.STRIPE_SECRET_KEY || "").trim();
   if (!sk) return new Response("Misconfigured", { status: 500, headers: noStoreHeaders });
-
-  let sess: any = null;
-  let reconciled: PlanReconciliationResult | null = null;
+  let sess = null;
+  let reconciled = null;
   try {
-    // Fetch Stripe Checkout Session, verify payment, and reconcile Plan coverage idempotently.
     sess = await fetchStripeCheckoutSession(sk, sid);
     reconciled = await reconcilePaidCheckoutSessionPlan(env, sk, sess, { logTag: "owner_stripe_exchange" });
-  } catch (e: any) {
+  } catch (e) {
     console.error("owner_stripe_exchange: plan_reconcile_failed", { sid, err: String(e?.message || e || "") });
     return new Response("Denied", { status: 403, headers: noStoreHeaders });
   }
-
   const ulid = String(reconciled.primaryUlid || "").trim();
   const expiresAt = new Date(String(reconciled.plan.expiresAt || ""));
   if (!ULID_RE.test(ulid) || Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
     return new Response("Denied", { status: 403, headers: noStoreHeaders });
   }
-
-  // Create sessionId (unguessable) and store opsess:<sid> (same as /owner/exchange).
   const sidBytes = new Uint8Array(18);
-  (crypto as any).getRandomValues(sidBytes);
+  crypto.getRandomValues(sidBytes);
   const sessionId = bytesToB64url(sidBytes);
-
-  const createdAt = new Date();
-
+  const createdAt = /* @__PURE__ */ new Date();
   const sessKey = `opsess:${sessionId}`;
   const sessVal = {
     ver: 1,
@@ -2140,15 +3850,12 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
     createdAt: createdAt.toISOString(),
     expiresAt: expiresAt.toISOString()
   };
-
-  const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - createdAt.getTime()) / 1000));
+  const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - createdAt.getTime()) / 1e3));
   try {
     await env.KV_STATUS.put(sessKey, JSON.stringify(sessVal), { expirationTtl: Math.max(60, maxAge) });
   } catch {
     return new Response("Denied", { status: 500, headers: noStoreHeaders });
   }
-
-  // Register this session to the current device so Owner Center can switch without email receipts (ng_dev cookie).
   let devSetCookie = "";
   try {
     let dev = readDeviceId(req);
@@ -2157,29 +3864,25 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
       dev = minted.dev;
       devSetCookie = minted.cookie;
     }
-
     if (dev) {
       const mapKey = devSessKey(dev, ulid);
       await env.KV_STATUS.put(mapKey, sessionId, { expirationTtl: Math.max(60, maxAge) });
-
       const idxKey = devIndexKey(dev);
       const rawIdx = await env.KV_STATUS.get(idxKey, "text");
-      let arr: string[] = [];
-      try { arr = rawIdx ? (JSON.parse(rawIdx) as any) : []; } catch { arr = []; }
+      let arr = [];
+      try {
+        arr = rawIdx ? JSON.parse(rawIdx) : [];
+      } catch {
+        arr = [];
+      }
       if (!Array.isArray(arr)) arr = [];
       if (!arr.includes(ulid)) arr.unshift(ulid);
-      // keep small, deterministic list (most recent first)
       arr = arr.slice(0, 24);
       await env.KV_STATUS.put(idxKey, JSON.stringify(arr), { expirationTtl: 60 * 60 * 24 * 366 });
     }
   } catch {
-    // device registry must never block owner exchange
   }
-
-  // If this checkout session funded a Campaign with Promo QR, promote draft now and enrich redirect with campaign hint.
-  // This avoids "sticky wrong" LPM badge rendering after redirect.
   redirectHint = await promoteCampaignDraftAndBuildRedirectHint(req, sess, ulid, env, "owner_stripe_exchange");
-
   const cookie = cookieSerialize("op_sess", sessionId, {
     Path: "/",
     HttpOnly: true,
@@ -2187,109 +3890,80 @@ async function handleOwnerStripeExchange(req: Request, env: Env): Promise<Respon
     SameSite: "Lax",
     "Max-Age": maxAge
   });
-
   const headers = new Headers({ ...noStoreHeaders });
-
   headers.append("Set-Cookie", cookie);
   if (devSetCookie) headers.append("Set-Cookie", devSetCookie);
-
   headers.set("Location", (() => {
     const base = next || `/dash/${encodeURIComponent(ulid)}`;
     if (!redirectHint) return base;
-
-    const u = new URL(base, "https://navigen.io");
-    if (!u.searchParams.get("ce")) {
+    const u2 = new URL(base, "https://navigen.io");
+    if (!u2.searchParams.get("ce")) {
       const parts = redirectHint.split("&");
-      parts.forEach(kv => {
+      parts.forEach((kv) => {
         const [k, v] = kv.split("=");
-        if (k && v && !u.searchParams.get(k)) u.searchParams.set(k, decodeURIComponent(v));
-        else if (k && !u.searchParams.get(k)) u.searchParams.set(k, "1");
+        if (k && v && !u2.searchParams.get(k)) u2.searchParams.set(k, decodeURIComponent(v));
+        else if (k && !u2.searchParams.get(k)) u2.searchParams.set(k, "1");
       });
     }
-    return u.pathname + u.search + u.hash;
+    return u2.pathname + u2.search + u2.hash;
   })());
-
   console.info("owner_exchange_success", { ulid, stripeSessionId: sess?.id, paymentIntentId: reconciled.paymentIntentId, sessionId });
   return new Response(null, { status: 302, headers });
 }
-
-// --- Ownership writer (Phase 1): KV_STATUS keys ---
-// - ownership:<ULID>
-// - stripe_processed:<payment_intent.id>
-async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
-  const sig = req.headers.get('Stripe-Signature') || '';
+__name(handleOwnerStripeExchange, "handleOwnerStripeExchange");
+async function handleStripeWebhook(req, env) {
+  const sig = req.headers.get("Stripe-Signature") || "";
   if (!sig) {
     const u = new URL(req.url);
-    console.warn('stripe_webhook: missing_signature_header', { host: u.host, path: u.pathname });
-    return new Response('Missing Stripe-Signature header', { status: 400 });
+    console.warn("stripe_webhook: missing_signature_header", { host: u.host, path: u.pathname });
+    return new Response("Missing Stripe-Signature header", { status: 400 });
   }
-
-  // Raw body is required for signature verification
   const rawBuf = await req.arrayBuffer();
   const rawBytes = new Uint8Array(rawBuf);
-  // Decode once for optional text-based verification fallback (do NOT parse until verified).
   const rawText = new TextDecoder().decode(rawBytes);
-
-  // Verify against raw bytes (Stripe signs exact bytes)
   let secretRaw = String(env.STRIPE_WEBHOOK_SECRET || "").trim();
-  // Guard against accidental surrounding quotes (common when pasting secrets via shells/UIs).
-  if (
-    (secretRaw.startsWith('"') && secretRaw.endsWith('"')) ||
-    (secretRaw.startsWith("'") && secretRaw.endsWith("'")) ||
-    (secretRaw.startsWith("`") && secretRaw.endsWith("`"))
-  ) {
+  if (secretRaw.startsWith('"') && secretRaw.endsWith('"') || secretRaw.startsWith("'") && secretRaw.endsWith("'") || secretRaw.startsWith("`") && secretRaw.endsWith("`")) {
     secretRaw = secretRaw.slice(1, -1).trim();
   }
-
-  // Safe fingerprint: lets us confirm which secret is deployed without exposing it.
   const enc = new TextEncoder();
-  const secretFpBuf = await crypto.subtle.digest('SHA-256', enc.encode(secretRaw));
-  const secretFp = hexPrefix(secretFpBuf, 6); // 12 hex chars
-
-  // Reject obviously invalid/misconfigured secrets early.
-  // Stripe webhook signing secrets are "whsec_..." and are long; anything else is a config error.
+  const secretFpBuf = await crypto.subtle.digest("SHA-256", enc.encode(secretRaw));
+  const secretFp = hexPrefix(secretFpBuf, 6);
   if (secretRaw.length < 20 || !secretRaw.startsWith("whsec_")) {
     console.error("stripe_webhook: secret_invalid", { secretLen: secretRaw.length, secretFp });
     return new Response("Stripe webhook secret invalid/misconfigured", { status: 500 });
   }
-
-  // Allow a comma/whitespace-separated list to support safe multi-env deployments (test+live).
-  const secrets = secretRaw.split(/[\s,]+/g).map(s => s.trim()).filter(Boolean);
-
-  // Per-secret fingerprinting (safe): helps identify which candidate secrets are present.
-  const secretFps: string[] = [];
+  const secrets = secretRaw.split(/[\s,]+/g).map((s) => s.trim()).filter(Boolean);
+  const secretFps = [];
   for (const s of secrets) {
-    const b = await crypto.subtle.digest('SHA-256', enc.encode(s));
-    secretFps.push(hexPrefix(b, 6)); // 12 hex chars each
+    const b = await crypto.subtle.digest("SHA-256", enc.encode(s));
+    secretFps.push(hexPrefix(b, 6));
   }
-
-  // Fail loudly if the secret is not configured. (A silent 400 looks like a bad Stripe delivery.)
   if (!secrets.length) {
     const u = new URL(req.url);
-    console.error('stripe_webhook: secret_not_configured', { host: u.host, path: u.pathname });
-    return new Response('Stripe webhook secret not configured', { status: 500 });
+    console.error("stripe_webhook: secret_not_configured", { host: u.host, path: u.pathname });
+    return new Response("Stripe webhook secret not configured", { status: 500 });
   }
-
   let ok = false;
-  let verifyMode: 'bytes' | 'text' | null = null;
+  let verifyMode = null;
   let bytesOk = false;
   let textOk = false;
-
   for (const s of secrets) {
-    // Try bytes first (canonical)
     bytesOk = await verifyStripeSignatureBytes(rawBytes, sig, s);
-    if (bytesOk) { ok = true; verifyMode = 'bytes'; break; }
-
-    // Then try text fallback (diagnostic)
+    if (bytesOk) {
+      ok = true;
+      verifyMode = "bytes";
+      break;
+    }
     textOk = await verifyStripeSignature(rawText, sig, s);
-    if (textOk) { ok = true; verifyMode = 'text'; break; }
+    if (textOk) {
+      ok = true;
+      verifyMode = "text";
+      break;
+    }
   }
-
   if (!ok) {
     const u = new URL(req.url);
-
-    // Parse Stripe timestamp to detect tolerance/skew issues (without trusting clocks blindly).
-    let ts: number | null = null;
+    let ts = null;
     try {
       const parsed = parseStripeSigHeader(sig);
       ts = parsed ? Number(parsed.t) : null;
@@ -2297,190 +3971,154 @@ async function handleStripeWebhook(req: Request, env: Env): Promise<Response> {
     } catch {
       ts = null;
     }
-
-    const nowSec = Math.floor(Date.now() / 1000);
-
+    const nowSec = Math.floor(Date.now() / 1e3);
     const parsedForLog = parseStripeSigHeader(sig);
-    console.warn('stripe_webhook: sig_invalid', {
+    console.warn("stripe_webhook: sig_invalid", {
       host: u.host,
       path: u.pathname,
-      skewSec: ts === null ? null : (nowSec - ts),
-      contentEncoding: req.headers.get('content-encoding') || null,
-      contentType: req.headers.get('content-type') || null,
+      skewSec: ts === null ? null : nowSec - ts,
+      contentEncoding: req.headers.get("content-encoding") || null,
+      contentType: req.headers.get("content-type") || null,
       bodyLen: rawBytes.length,
-
       // Header parse diagnostics
       sigParsed: !!parsedForLog,
       v1Count: parsedForLog?.v1?.length || 0,
       stripeAccount: req.headers.get("Stripe-Account") || "",
-
       // Secret diagnostics
       secretsCount: secrets.length,
-      secretFp,          // keep legacy combined fingerprint
-      secretFps,         // per-candidate fingerprints (safe)
+      secretFp,
+      // keep legacy combined fingerprint
+      secretFps,
+      // per-candidate fingerprints (safe)
       bytesOk,
       textOk
     });
-
-    return new Response('Invalid Stripe signature', {
+    return new Response("Invalid Stripe signature", {
       status: 400,
       headers: {
         // Safe diagnostics: helps prove which secret is deployed and whether header parse looks sane.
         "x-ng-secretfp": secretFp,
-        "x-ng-secretfps": secretFps.join(","),      // per-candidate fingerprints
+        "x-ng-secretfps": secretFps.join(","),
+        // per-candidate fingerprints
         "x-ng-secrets": String(secrets.length),
         "x-ng-worker": "navigen-api",
         "x-ng-sigparsed": String(!!parsedForLog),
         "x-ng-v1count": String(parsedForLog?.v1?.length || 0),
-
         "x-ng-verify": verifyMode || "",
-        "x-ng-skewsec": String(ts === null ? "" : (nowSec - ts)),
+        "x-ng-skewsec": String(ts === null ? "" : nowSec - ts),
         "x-ng-encoding": req.headers.get("content-encoding") || "",
         "x-ng-bodylen": String(rawBytes.length)
       }
     });
   }
-
-  const rawBody = new TextDecoder().decode(rawBytes); // decode only after signature verification
-  let evt: any = null;
-  try { evt = JSON.parse(rawBody); } catch { return new Response('Invalid JSON', { status: 400 }); }
-
-  const type = String(evt?.type || '').trim();
-  // Phase 1: only accept checkout.session.completed as ownership-confirming
-  if (type !== 'checkout.session.completed') return new Response('Ignored', { status: 200 });
-
-  const session = evt?.data?.object || {};
-
+  const rawBody = new TextDecoder().decode(rawBytes);
+  let evt = null;
   try {
-    await reconcilePaidCheckoutSessionPlan(env, String((env as any).STRIPE_SECRET_KEY || "").trim(), session, { logTag: "stripe_webhook" });
-  } catch (e: any) {
+    evt = JSON.parse(rawBody);
+  } catch {
+    return new Response("Invalid JSON", { status: 400 });
+  }
+  const type = String(evt?.type || "").trim();
+  if (type !== "checkout.session.completed") return new Response("Ignored", { status: 200 });
+  const session = evt?.data?.object || {};
+  try {
+    await reconcilePaidCheckoutSessionPlan(env, String(env.STRIPE_SECRET_KEY || "").trim(), session, { logTag: "stripe_webhook" });
+  } catch (e) {
     const msg = String(e?.message || e || "");
     if (msg === "ignored_no_plan_metadata") {
-      return new Response('Ignored (no plan metadata)', { status: 200 });
+      return new Response("Ignored (no plan metadata)", { status: 200 });
     }
-
     console.error("stripe_webhook: plan_reconcile_failed", { err: msg, checkoutSessionId: String(session?.id || "").trim() });
-    return new Response('Plan reconciliation failed', { status: 400, headers: { "x-ng-verify": verifyMode || "" } });
+    return new Response("Plan reconciliation failed", { status: 400, headers: { "x-ng-verify": verifyMode || "" } });
   }
-
-  return new Response('OK', { status: 200, headers: { "x-ng-verify": verifyMode || "" } });
+  return new Response("OK", { status: 200, headers: { "x-ng-verify": verifyMode || "" } });
 }
-
-async function createCampaignCheckoutSession(env: Env, req: Request, body: any, noStore: Record<string, string>) {
-  // Fail closed if not configured
-  const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
-  if (!sk) return json({ error: { code: "misconfigured", message: "STRIPE_SECRET_KEY not set" } }, 500, noStore);
-
-  const locationID = String(body?.locationID || "").trim();           // MUST be slug when provided
+__name(handleStripeWebhook, "handleStripeWebhook");
+async function createCampaignCheckoutSession(env, req, body, noStore2) {
+  const sk = String(env.STRIPE_SECRET_KEY || "").trim();
+  if (!sk) return json({ error: { code: "misconfigured", message: "STRIPE_SECRET_KEY not set" } }, 500, noStore2);
+  const locationID = String(body?.locationID || "").trim();
   const draftULID = String(body?.draftULID || "").trim();
   const draftSessionId = String(body?.draftSessionId || "").trim();
   const campaignKey = String(body?.campaignKey || "").trim();
-  const initiationType = normalizeInitiationType(body?.initiationType); // owner | partner_assisted | platform; legacy public maps to owner
-  const ownershipSource = String(body?.ownershipSource || "plan").trim(); // transition metadata only; authority comes from Plan
+  const initiationType = normalizeInitiationType(body?.initiationType);
+  const ownershipSource = String(body?.ownershipSource || "plan").trim();
   const navigenVersion = String(body?.navigenVersion || "").trim() || "phase5";
   const planCode = String(body?.planCode || "").trim().toLowerCase();
   const requestedPlan = planDefinitionForCode(planCode);
   const planMode = normalizePlanMode(body?.planMode, body?.campaignPreset);
-
-  // Partner-assisted BO checkout must use the dedicated Partner handoff path added later.
-  // The generic Plan checkout route remains owner/platform only.
   if (initiationType === "partner_assisted") {
     return json(
       { error: { code: "partner_assisted_route_required", message: "Partner-assisted checkout must use the Partner handoff path." } },
       403,
-      noStore
+      noStore2
     );
   }
-
-  // Allow owner-initiated and platform initiation types; persistence normalizes public to owner.
-  // Canonical product: Plan payment is the state transition; session is minted on return.
-  const okInitiation = (initiationType === "owner" || initiationType === "platform");
+  const okInitiation = initiationType === "owner" || initiationType === "platform";
   const hasLocationRoute = !!locationID;
   const hasDraftRoute = !!draftULID || !!draftSessionId;
   const requiresCampaignDraft = planMode === "campaign_with_promo_qr";
-
-  if ((!hasLocationRoute && !hasDraftRoute) || (hasLocationRoute && hasDraftRoute) || !okInitiation || !requestedPlan || (requiresCampaignDraft && !campaignKey)) {
+  if (!hasLocationRoute && !hasDraftRoute || hasLocationRoute && hasDraftRoute || !okInitiation || !requestedPlan || requiresCampaignDraft && !campaignKey) {
     return json(
       { error: { code: "invalid_request", message: "exactly one target identity route (locationID OR draftULID + draftSessionId), valid planCode, planMode, and initiationType required; campaignKey required only for Campaign with Promo QR" } },
       400,
-      noStore
+      noStore2
     );
   }
-
-  // Reject generic billing keys; campaignKey must bind to the specific saved draft.
-  // Prevents "paid but no campaign row" when promotion expects a draft-bound campaignKey.
   if (requiresCampaignDraft && campaignKey === "campaign-30d") {
     return json(
       { error: { code: "invalid_request", message: "campaignKey must be the draft campaignKey (not 'campaign-30d')" } },
       400,
-      noStore
+      noStore2
     );
   }
-
-  // Enforce the spec invariant: clients must never supply ULIDs as locationID
   if (locationID && /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationID)) {
-    return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore);
+    return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore2);
   }
-
   const target = await resolveTargetIdentity(env, { locationID, draftULID, draftSessionId }, { validateDraft: hasDraftRoute }).catch(() => null);
   if (!target) {
-    return json({ error: { code: "not_found", message: hasLocationRoute ? "unknown locationID" : "unknown private shell target" } }, 404, noStore);
+    return json({ error: { code: "not_found", message: hasLocationRoute ? "unknown locationID" : "unknown private shell target" } }, 404, noStore2);
   }
-
   const ulid = target.ulid;
-
-  let draft: any = null;
+  let draft = null;
   if (requiresCampaignDraft) {
-    // Validate the authoritative saved draft against the requested Plan tier before payment.
-    // This keeps Stripe checkout aligned with scope/capacity rules and produces upgrade-safe failures.
     const draftKey = `campaigns:draft:${ulid}`;
-    draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+    draft = await env.KV_STATUS.get(draftKey, { type: "json" });
     if (!draft || String(draft?.campaignKey || "").trim() !== campaignKey) {
-      return json({ error: { code: "invalid_state", message: "draft not found for the requested campaignKey" } }, 409, noStore);
+      return json({ error: { code: "invalid_state", message: "draft not found for the requested campaignKey" } }, 409, noStore2);
     }
   }
-
   const requestedScopeSource = requiresCampaignDraft ? draft : body;
   const scope = normCampaignScope(requestedScopeSource?.campaignScope);
   const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
   const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
   const eligibleUlids = eligibleLocations.map((x) => x.ulid);
-
   if (scope !== "single" && requestedPlan.maxPublishedLocations <= 1) {
-    return json(buildPlanUpgradeErrorBody(requestedPlan, scope, 2), 409, noStore);
+    return json(buildPlanUpgradeErrorBody(requestedPlan, scope, 2), 409, noStore2);
   }
-
-  let includedUlids: string[] = [ulid];
+  let includedUlids = [ulid];
   if (scope === "selected") {
-    includedUlids = Array.from(new Set((Array.isArray(requestedScopeSource?.selectedLocationULIDs) ? requestedScopeSource.selectedLocationULIDs : []).map((x: any) => String(x || "").trim()).filter(Boolean)));
+    includedUlids = Array.from(new Set((Array.isArray(requestedScopeSource?.selectedLocationULIDs) ? requestedScopeSource.selectedLocationULIDs : []).map((x) => String(x || "").trim()).filter(Boolean)));
     includedUlids = includedUlids.filter((id) => eligibleByUlid.has(id));
     if (!includedUlids.length) {
-      return json({ error: { code: "invalid_state", message: "selected scope has no eligible locations" } }, 409, noStore);
+      return json({ error: { code: "invalid_state", message: "selected scope has no eligible locations" } }, 409, noStore2);
     }
   } else if (scope === "all") {
     includedUlids = eligibleUlids.length ? eligibleUlids : [ulid];
   }
-
   includedUlids = uniqueTrimmedStrings(includedUlids).filter((id) => ULID_RE.test(id));
   if (!includedUlids.length) {
-    return json({ error: { code: "invalid_state", message: "no covered locations resolved for Plan selection" } }, 409, noStore);
+    return json({ error: { code: "invalid_state", message: "no covered locations resolved for Plan selection" } }, 409, noStore2);
   }
-
   if (requestedPlan.maxPublishedLocations > 0 && includedUlids.length > requestedPlan.maxPublishedLocations) {
-    return json(buildPlanUpgradeErrorBody(requestedPlan, scope, includedUlids.length), 409, noStore);
+    return json(buildPlanUpgradeErrorBody(requestedPlan, scope, includedUlids.length), 409, noStore2);
   }
-
   const selectionId = mintPlanSelectionId();
-  const createdAt = new Date();
-  const selectionExpiresAt = new Date(createdAt.getTime() + PLAN_SELECTION_TTL_SECONDS * 1000);
+  const createdAt = /* @__PURE__ */ new Date();
+  const selectionExpiresAt = new Date(createdAt.getTime() + PLAN_SELECTION_TTL_SECONDS * 1e3);
   const deviceId = readDeviceId(req);
-  const includedLocationIDs = target.route === "existing-location"
-    ? includedUlids
-        .map((id) => String(eligibleByUlid.get(id)?.slug || (id === ulid ? target.locationID : "")).trim())
-        .filter(Boolean)
-    : [];
-
-  const planSelection: PlanSelectionRecord = {
+  const includedLocationIDs = target.route === "existing-location" ? includedUlids.map((id) => String(eligibleByUlid.get(id)?.slug || (id === ulid ? target.locationID : "")).trim()).filter(Boolean) : [];
+  const planSelection = {
     ver: 1,
     selectionId,
     route: target.route,
@@ -2499,12 +4137,8 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
     deviceId,
     source: "checkout"
   };
-
   await env.KV_STATUS.put(planSelectionKey(selectionId), JSON.stringify(planSelection), { expirationTtl: PLAN_SELECTION_TTL_SECONDS });
-
-  // Build redirect URLs on the web app origin (not the API Worker origin)
   const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
-  // IMPORTANT: keep {CHECKOUT_SESSION_ID} unencoded or Stripe will not substitute it.
   const successUrlObj = new URL("/", siteOrigin);
   successUrlObj.searchParams.set("flow", planMode === "campaign_with_promo_qr" ? "campaign" : "plan");
   if (target.route === "existing-location") {
@@ -2515,7 +4149,6 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
   }
   successUrlObj.searchParams.set("sid", "{CHECKOUT_SESSION_ID}");
   const successUrl = successUrlObj.toString().replace("%7BCHECKOUT_SESSION_ID%7D", "{CHECKOUT_SESSION_ID}");
-
   const cancelUrl = new URL("/", siteOrigin);
   cancelUrl.searchParams.set("flow", planMode === "campaign_with_promo_qr" ? "campaign" : "plan");
   if (target.route === "existing-location") {
@@ -2525,18 +4158,14 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
     cancelUrl.searchParams.set("draftSessionId", target.draftSessionId);
   }
   cancelUrl.searchParams.set("canceled", "1");
-
   const form = new URLSearchParams();
   form.set("mode", "payment");
   form.set("customer_creation", "if_required");
   form.set("billing_address_collection", "auto");
   form.set("success_url", successUrl);
   form.set("cancel_url", cancelUrl.toString());
-
   form.set("line_items[0][quantity]", "1");
   form.set("line_items[0][price]", requestedPlan.priceId);
-
-  // Metadata contract (MUST be copied to PaymentIntent)
   form.set("metadata[planSelectionId]", selectionId);
   form.set("metadata[planMode]", planMode);
   form.set("metadata[initiationType]", initiationType);
@@ -2549,8 +4178,6 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
     form.set("metadata[draftULID]", target.draftULID);
     form.set("metadata[draftSessionId]", target.draftSessionId);
   }
-
-  // Ensure metadata is also on PaymentIntent (spec requirement)
   form.set("payment_intent_data[metadata][planSelectionId]", selectionId);
   form.set("payment_intent_data[metadata][planMode]", planMode);
   form.set("payment_intent_data[metadata][initiationType]", initiationType);
@@ -2563,7 +4190,6 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
     form.set("payment_intent_data[metadata][draftULID]", target.draftULID);
     form.set("payment_intent_data[metadata][draftSessionId]", target.draftSessionId);
   }
-
   const r = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
     headers: {
@@ -2572,24 +4198,22 @@ async function createCampaignCheckoutSession(env: Env, req: Request, body: any, 
     },
     body: form.toString()
   });
-
   const txt = await r.text();
-  let out: any = null;
-  try { out = JSON.parse(txt); } catch { out = null; }
-
-  if (!r.ok || !out?.id) {
-    return json({ error: { code: "stripe_error", message: String(out?.error?.message || "Stripe create session failed") } }, 502, noStore);
+  let out = null;
+  try {
+    out = JSON.parse(txt);
+  } catch {
+    out = null;
   }
-
-  return json({ sessionId: out.id, url: String(out.url || ""), planSelectionId: selectionId }, 200, noStore);
+  if (!r.ok || !out?.id) {
+    return json({ error: { code: "stripe_error", message: String(out?.error?.message || "Stripe create session failed") } }, 502, noStore2);
+  }
+  return json({ sessionId: out.id, url: String(out.url || ""), planSelectionId: selectionId }, 200, noStore2);
 }
-
-// Internal helper: resolve an item by canonical ULID (same semantics as /api/data/item?id=...).
-// Returns null if not found. Keeps logic centralized for future “locations project”.
-async function getItemById(ulid: string, env: Env): Promise<any | null> {
+__name(createCampaignCheckoutSession, "createCampaignCheckoutSession");
+async function getItemById(ulid, env) {
   const id = String(ulid || "").trim();
   if (!id) return null;
-
   try {
     const src = new URL("/data/profiles.json", "https://navigen.io").toString();
     const resp = await fetch(src, {
@@ -2597,65 +4221,49 @@ async function getItemById(ulid: string, env: Env): Promise<any | null> {
       headers: { "Accept": "application/json" }
     });
     if (!resp.ok) return null;
-
-    const data: any = await resp.json().catch(() => ({ locations: [] }));
-    const arr: any[] = Array.isArray(data?.locations)
-      ? data.locations
-      : (data?.locations && typeof data.locations === "object")
-        ? Object.values(data.locations)
-        : [];
-
+    const data = await resp.json().catch(() => ({ locations: [] }));
+    const arr = Array.isArray(data?.locations) ? data.locations : data?.locations && typeof data.locations === "object" ? Object.values(data.locations) : [];
     if (!Array.isArray(arr)) return null;
-
-    // 1) direct ULID match from profiles.json when present
-    let hit = arr.find((r: any) => String(r?.ID || r?.id || "").trim() === id);
+    let hit = arr.find((r) => String(r?.ID || r?.id || "").trim() === id);
     if (hit) return hit;
-
-    // 2) fallback: reverse alias lookup ULID -> slug via KV_ALIASES, then slug -> profiles.json
     if (env.KV_ALIASES) {
       let aliasSlug = "";
-      let cursor: string | undefined = undefined;
-
+      let cursor = void 0;
       do {
         const page = await env.KV_ALIASES.list({ prefix: "alias:", cursor });
         for (const k of page.keys) {
-          const name = k.name; // "alias:<slug>"
+          const name = k.name;
           const raw = await env.KV_ALIASES.get(name, "text");
           if (!raw) continue;
-
           let val = raw.trim();
           if (val.startsWith("{")) {
             try {
-              const j = JSON.parse(val) as any;
+              const j = JSON.parse(val);
               val = String(j?.locationID || "").trim();
             } catch {
               val = "";
             }
           }
-
           if (val && val === id) {
             aliasSlug = name.replace(/^alias:/, "");
             break;
           }
         }
         if (aliasSlug) break;
-        cursor = page.cursor || undefined;
+        cursor = page.cursor || void 0;
       } while (cursor);
-
       if (aliasSlug) {
-        hit = arr.find((r: any) => String(r?.locationID || "").trim() === aliasSlug);
+        hit = arr.find((r) => String(r?.locationID || "").trim() === aliasSlug);
         if (hit) return hit;
       }
     }
-
     return null;
   } catch {
     return null;
   }
 }
-
-// Normalize a multilingual name field to a short display string.
-function pickName(name: any): string {
+__name(getItemById, "getItemById");
+function pickName(name) {
   if (!name) return "";
   if (typeof name === "string") return name;
   if (typeof name === "object") {
@@ -2663,10 +4271,9 @@ function pickName(name: any): string {
   }
   return "";
 }
-
-const DO_ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
-
-function doJson(body: unknown, status = 200): Response {
+__name(pickName, "pickName");
+var DO_ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+function doJson(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -2675,160 +4282,95 @@ function doJson(body: unknown, status = 200): Response {
     }
   });
 }
-
-function doError(reason: string, status = 400, extra: Record<string, unknown> = {}): Response {
+__name(doJson, "doJson");
+function doError(reason, status = 400, extra = {}) {
   return doJson({ ok: false, reason, ...extra }, status);
 }
-
-async function doReadJson(req: Request): Promise<any | null> {
-  try { return await req.json(); } catch { return null; }
+__name(doError, "doError");
+async function doReadJson(req) {
+  try {
+    return await req.json();
+  } catch {
+    return null;
+  }
 }
-
-function doNowIso(): string {
-  return new Date().toISOString();
+__name(doReadJson, "doReadJson");
+function doNowIso() {
+  return (/* @__PURE__ */ new Date()).toISOString();
 }
-
-function doUniqueStrings(values: unknown[]): string[] {
-  return Array.from(
-    new Set(
-      values
-        .map(v => String(v || "").trim())
-        .filter(Boolean)
-    )
-  );
-}
-
-function doNormalizeSlug(slug: unknown): string {
+__name(doNowIso, "doNowIso");
+function doNormalizeSlug(slug) {
   return String(slug || "").trim().toLowerCase();
 }
-
-function doNormalizeToken(value: unknown): string {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\p{L}\p{N}\s-]+/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 32);
+__name(doNormalizeSlug, "doNormalizeSlug");
+function doNormalizeToken(value) {
+  return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}\s-]+/gu, " ").replace(/\s+/g, " ").trim().slice(0, 32);
 }
-
-function doNormalizeTokens(values: unknown[]): string[] {
-  const out = values
-    .map(doNormalizeToken)
-    .filter(Boolean)
-    .sort();
+__name(doNormalizeToken, "doNormalizeToken");
+function doNormalizeTokens(values) {
+  const out = values.map(doNormalizeToken).filter(Boolean).sort();
   return Array.from(new Set(out)).slice(0, 64);
 }
-
-// --- IMG v1 media upload manifest foundation ---
-// Cloudflare Images stores binaries; this Worker/DO pair stores only target manifests and reservations.
-type MediaTargetType = "draft" | "location";
-type MediaImageStatus = "reserved" | "uploaded" | "active" | "deleted" | "expired" | "deletePending";
-type MediaVariantName = "thumb" | "card" | "lpm" | "gallery";
-
-type MediaImageRecord = {
-  mediaId: string;
-  cfImageId: string;
-  uploadSessionId: string;
-  status: MediaImageStatus;
-  slot: number;
-  createdAt: string;
-  updatedAt: string;
-  expiresAt: string;
-  createdBy: string;
-  mimeType: string;
-  sizeBytes: number;
-  filename: string;
-  variants: Partial<Record<MediaVariantName, string>>;
-};
-
-type MediaManifest = {
-  version: 1;
-  targetType: MediaTargetType;
-  targetId: string;
-  coverImageId: string;
-  images: MediaImageRecord[];
-  updatedAt: string;
-};
-
-type MediaAccessTarget = {
-  targetType: MediaTargetType;
-  targetId: string;
-  draftULID: string;
-  draftSessionId: string;
-  createdDraft: boolean;
-  actor: string;
-};
-
-type MediaUploadMetadata = {
-  mimeType: string;
-  sizeBytes: number;
-  filename: string;
-};
-
-const MEDIA_MAX_ACTIVE_IMAGES = 3;
-const MEDIA_MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-const MEDIA_RESERVATION_TTL_MS = 30 * 60 * 1000;
-const MEDIA_VARIANT_NAMES: MediaVariantName[] = ["thumb", "card", "lpm", "gallery"];
-const MEDIA_ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
-function mediaError(code: string, message: string, status = 400, extra: Record<string, unknown> = {}): Response {
+__name(doNormalizeTokens, "doNormalizeTokens");
+var MEDIA_MAX_ACTIVE_IMAGES = 3;
+var MEDIA_MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+var MEDIA_RESERVATION_TTL_MS = 30 * 60 * 1e3;
+var MEDIA_VARIANT_NAMES = ["thumb", "card", "lpm", "gallery"];
+var MEDIA_ALLOWED_MIME_TYPES = /* @__PURE__ */ new Set(["image/jpeg", "image/png", "image/webp"]);
+function mediaError(code, message, status = 400, extra = {}) {
   return json({ error: { code, message, ...extra } }, status, { "cache-control": "no-store" });
 }
-
-function normalizeMediaTargetType(value: unknown): MediaTargetType | "" {
+__name(mediaError, "mediaError");
+function normalizeMediaTargetType(value) {
   const s = String(value || "").trim().toLowerCase();
   return s === "draft" || s === "location" ? s : "";
 }
-
-function mediaManifestKey(targetType: MediaTargetType, targetId: string): string {
+__name(normalizeMediaTargetType, "normalizeMediaTargetType");
+function mediaManifestKey(targetType, targetId) {
   return `media:${targetType}:${targetId}`;
 }
-
-function mintMediaToken(prefix: string): string {
+__name(mediaManifestKey, "mediaManifestKey");
+function mintMediaToken(prefix) {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return `${prefix}_${bytesToB64url(bytes)}`;
 }
-
-function mediaEmptyManifest(targetType: MediaTargetType, targetId: string): MediaManifest {
+__name(mintMediaToken, "mintMediaToken");
+function mediaEmptyManifest(targetType, targetId) {
   return {
     version: 1,
     targetType,
     targetId,
     coverImageId: "",
     images: [],
-    updatedAt: new Date().toISOString()
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
 }
-
-function normalizeMediaStatus(value: unknown): MediaImageStatus {
+__name(mediaEmptyManifest, "mediaEmptyManifest");
+function normalizeMediaStatus(value) {
   const s = String(value || "").trim();
   if (s === "reserved" || s === "uploaded" || s === "active" || s === "deleted" || s === "expired" || s === "deletePending") return s;
   return "reserved";
 }
-
-function normalizeMediaImageRecord(raw: any): MediaImageRecord | null {
+__name(normalizeMediaStatus, "normalizeMediaStatus");
+function normalizeMediaImageRecord(raw) {
   const mediaId = String(raw?.mediaId || "").trim();
   const uploadSessionId = String(raw?.uploadSessionId || "").trim();
   if (!mediaId || !uploadSessionId) return null;
-
-  const variants = (raw?.variants && typeof raw.variants === "object") ? raw.variants : {};
-  const normalizedVariants: Partial<Record<MediaVariantName, string>> = {};
+  const variants = raw?.variants && typeof raw.variants === "object" ? raw.variants : {};
+  const normalizedVariants = {};
   for (const name of MEDIA_VARIANT_NAMES) {
     const url = String(variants?.[name] || "").trim();
     if (url) normalizedVariants[name] = url;
   }
-
   return {
     mediaId,
     cfImageId: String(raw?.cfImageId || "").trim(),
     uploadSessionId,
     status: normalizeMediaStatus(raw?.status),
     slot: Math.max(1, Math.min(MEDIA_MAX_ACTIVE_IMAGES, Math.floor(Number(raw?.slot || 0) || 0) || 1)),
-    createdAt: String(raw?.createdAt || new Date().toISOString()).trim(),
-    updatedAt: String(raw?.updatedAt || raw?.createdAt || new Date().toISOString()).trim(),
+    createdAt: String(raw?.createdAt || (/* @__PURE__ */ new Date()).toISOString()).trim(),
+    updatedAt: String(raw?.updatedAt || raw?.createdAt || (/* @__PURE__ */ new Date()).toISOString()).trim(),
     expiresAt: String(raw?.expiresAt || "").trim(),
     createdBy: String(raw?.createdBy || "").trim(),
     mimeType: String(raw?.mimeType || "").trim().toLowerCase(),
@@ -2837,35 +4379,31 @@ function normalizeMediaImageRecord(raw: any): MediaImageRecord | null {
     variants: normalizedVariants
   };
 }
-
-function normalizeMediaManifest(raw: any, targetType: MediaTargetType, targetId: string): MediaManifest {
+__name(normalizeMediaImageRecord, "normalizeMediaImageRecord");
+function normalizeMediaManifest(raw, targetType, targetId) {
   const base = mediaEmptyManifest(targetType, targetId);
-  const images = Array.isArray(raw?.images)
-    ? raw.images.map(normalizeMediaImageRecord).filter(Boolean) as MediaImageRecord[]
-    : [];
-
+  const images = Array.isArray(raw?.images) ? raw.images.map(normalizeMediaImageRecord).filter(Boolean) : [];
   images.sort((a, b) => {
     if (a.slot !== b.slot) return a.slot - b.slot;
     return a.createdAt.localeCompare(b.createdAt);
   });
-
   const activeCover = images.find((img) => img.status === "active");
   return {
     ...base,
     coverImageId: String(activeCover?.mediaId || ""),
     images,
-    updatedAt: String(raw?.updatedAt || new Date().toISOString()).trim()
+    updatedAt: String(raw?.updatedAt || (/* @__PURE__ */ new Date()).toISOString()).trim()
   };
 }
-
-function mediaCapacityStatus(status: MediaImageStatus, expiresAt: string, nowMs: number): boolean {
+__name(normalizeMediaManifest, "normalizeMediaManifest");
+function mediaCapacityStatus(status, expiresAt, nowMs) {
   if (status === "active" || status === "uploaded") return true;
   if (status !== "reserved") return false;
   const expMs = Date.parse(String(expiresAt || ""));
   return Number.isFinite(expMs) && expMs > nowMs;
 }
-
-function mediaManifestForClient(raw: MediaManifest, includeReserved: boolean): MediaManifest & { activeCount: number; maxActiveImages: number } {
+__name(mediaCapacityStatus, "mediaCapacityStatus");
+function mediaManifestForClient(raw, includeReserved) {
   const nowMs = Date.now();
   const manifest = normalizeMediaManifest(raw, raw.targetType, raw.targetId);
   const images = manifest.images.filter((img) => {
@@ -2876,12 +4414,10 @@ function mediaManifestForClient(raw: MediaManifest, includeReserved: boolean): M
     const expMs = Date.parse(String(img.expiresAt || ""));
     return Number.isFinite(expMs) && expMs > nowMs;
   });
-
   images.sort((a, b) => {
     if (a.slot !== b.slot) return a.slot - b.slot;
     return a.createdAt.localeCompare(b.createdAt);
   });
-
   const activeImages = images.filter((img) => img.status === "active");
   return {
     ...manifest,
@@ -2891,26 +4427,22 @@ function mediaManifestForClient(raw: MediaManifest, includeReserved: boolean): M
     maxActiveImages: MEDIA_MAX_ACTIVE_IMAGES
   };
 }
-
-function validateMediaUploadMetadata(body: any): { ok: true; upload: MediaUploadMetadata } | { ok: false; response: Response } {
-  const file = (body?.file && typeof body.file === "object") ? body.file : {};
+__name(mediaManifestForClient, "mediaManifestForClient");
+function validateMediaUploadMetadata(body) {
+  const file = body?.file && typeof body.file === "object" ? body.file : {};
   const mimeType = String(body?.mimeType || body?.contentType || file?.mimeType || file?.type || "").trim().toLowerCase();
   const sizeBytes = Math.floor(Number(body?.sizeBytes ?? body?.fileSize ?? file?.size ?? 0));
   const filename = String(body?.filename || body?.fileName || file?.name || "upload").trim().slice(0, 160) || "upload";
   const animated = body?.animated === true || body?.hasAnimation === true || file?.animated === true || file?.hasAnimation === true;
-
   if (!MEDIA_ALLOWED_MIME_TYPES.has(mimeType)) {
     return { ok: false, response: mediaError("unsupported_mime", "Only JPEG, PNG, and WebP image uploads are supported.", 415) };
   }
-
   if (animated) {
     return { ok: false, response: mediaError("animated_unsupported", "Animated images are not supported for location media.", 415) };
   }
-
   if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
     return { ok: false, response: mediaError("invalid_size", "A positive normalized image size is required.", 400) };
   }
-
   if (sizeBytes > MEDIA_MAX_UPLOAD_BYTES) {
     return {
       ok: false,
@@ -2919,40 +4451,35 @@ function validateMediaUploadMetadata(body: any): { ok: true; upload: MediaUpload
       })
     };
   }
-
   return { ok: true, upload: { mimeType, sizeBytes, filename } };
 }
-
-function extractMediaTargetInput(body: any): { targetType: MediaTargetType | ""; targetId: string; draftSessionId: string } {
-  const target = (body?.target && typeof body.target === "object") ? body.target : body;
+__name(validateMediaUploadMetadata, "validateMediaUploadMetadata");
+function extractMediaTargetInput(body) {
+  const target = body?.target && typeof body.target === "object" ? body.target : body;
   return {
     targetType: normalizeMediaTargetType(target?.targetType || body?.targetType),
     targetId: String(target?.targetId || body?.targetId || body?.draftULID || "").trim(),
     draftSessionId: String(target?.draftSessionId || body?.draftSessionId || "").trim()
   };
 }
-
-async function resolveMediaWriteTarget(req: Request, env: Env, body: any): Promise<{ ok: true; target: MediaAccessTarget } | { ok: false; response: Response }> {
+__name(extractMediaTargetInput, "extractMediaTargetInput");
+async function resolveMediaWriteTarget(req, env, body) {
   const input = extractMediaTargetInput(body);
-
   if (!input.targetType) {
     return { ok: false, response: mediaError("invalid_target", "targetType must be draft or location.", 400) };
   }
-
   if (input.targetType === "draft") {
     if (!input.targetId) {
       if (input.draftSessionId) {
         return { ok: false, response: mediaError("invalid_target", "draftSessionId cannot be supplied without draft targetId.", 400) };
       }
-
       const draftULID = mintDraftUlid();
       const draftSessionId = mintDraftSessionId();
-      const nowIso = new Date().toISOString();
+      const nowIso = (/* @__PURE__ */ new Date()).toISOString();
       await env.KV_STATUS.put(
         `override_draft:${draftULID}:${draftSessionId}`,
         JSON.stringify({ createdAt: nowIso, updatedAt: nowIso, mediaUploadDraft: true })
       );
-
       return {
         ok: true,
         target: {
@@ -2965,16 +4492,13 @@ async function resolveMediaWriteTarget(req: Request, env: Env, body: any): Promi
         }
       };
     }
-
     if (!ULID_RE.test(input.targetId) || !input.draftSessionId) {
       return { ok: false, response: mediaError("invalid_target", "draft targetId and draftSessionId are required.", 400) };
     }
-
     const draft = await readPrivateShellDraft(env, input.targetId, input.draftSessionId);
     if (!draft) {
       return { ok: false, response: mediaError("forbidden", "Draft media access is not allowed for this session.", 403) };
     }
-
     return {
       ok: true,
       target: {
@@ -2987,33 +4511,24 @@ async function resolveMediaWriteTarget(req: Request, env: Env, body: any): Promi
       }
     };
   }
-
   if (!input.targetId) {
     return { ok: false, response: mediaError("invalid_target", "location targetId is required.", 400) };
   }
-
-  const targetId = ULID_RE.test(input.targetId)
-    ? input.targetId
-    : String(await resolveUid(input.targetId, env) || "").trim();
-
+  const targetId = ULID_RE.test(input.targetId) ? input.targetId : String(await resolveUid(input.targetId, env) || "").trim();
   if (!ULID_RE.test(targetId)) {
     return { ok: false, response: mediaError("invalid_target", "location targetId must resolve to a known ULID.", 400) };
   }
-
   const auth = await requireOwnerSession(req, env);
   if (auth instanceof Response) {
     return { ok: false, response: mediaError("unauthorized", "Owner session is required for location media uploads.", auth.status || 401) };
   }
-
   if (String(auth.ulid || "").trim() !== targetId) {
     return { ok: false, response: mediaError("forbidden", "Owner session is not authorized for this location.", 403) };
   }
-
   const entitlement = await readPlanEntitlementForUlid(env, targetId);
   if (!entitlement.planEntitled) {
     return { ok: false, response: mediaError("plan_required", "Active Plan coverage is required for location media uploads.", 403) };
   }
-
   return {
     ok: true,
     target: {
@@ -3026,11 +4541,10 @@ async function resolveMediaWriteTarget(req: Request, env: Env, body: any): Promi
     }
   };
 }
-
-function buildCloudflareImageVariantUrls(env: Env, cfImageId: string): Record<MediaVariantName, string> {
+__name(resolveMediaWriteTarget, "resolveMediaWriteTarget");
+function buildCloudflareImageVariantUrls(env, cfImageId) {
   const hash = String(env.CF_IMAGES_ACCOUNT_HASH || "").trim();
   if (!hash) throw new Error("cf_images_account_hash_missing");
-
   const id = encodeURIComponent(cfImageId);
   return {
     thumb: `https://imagedelivery.net/${hash}/${id}/thumb`,
@@ -3039,20 +4553,17 @@ function buildCloudflareImageVariantUrls(env: Env, cfImageId: string): Record<Me
     gallery: `https://imagedelivery.net/${hash}/${id}/gallery`
   };
 }
-
-async function createCloudflareDirectUpload(env: Env, target: MediaAccessTarget, upload: MediaUploadMetadata, reservation: any): Promise<{ cfImageId: string; uploadURL: string; variants: Record<MediaVariantName, string> }> {
+__name(buildCloudflareImageVariantUrls, "buildCloudflareImageVariantUrls");
+async function createCloudflareDirectUpload(env, target, upload, reservation) {
   const accountId = String(env.CF_IMAGES_ACCOUNT_ID || "").trim();
   const token = String(env.CF_IMAGES_API_TOKEN || "").trim();
   const accountHash = String(env.CF_IMAGES_ACCOUNT_HASH || "").trim();
-
   if (!accountId || !token) {
     throw new Error("cf_images_config_missing");
   }
-
   if (!accountHash) {
     throw new Error("cf_images_account_hash_missing");
   }
-
   const form = new FormData();
   form.set("metadata", JSON.stringify({
     source: "navigen-img-v1",
@@ -3063,37 +4574,32 @@ async function createCloudflareDirectUpload(env: Env, target: MediaAccessTarget,
     mimeType: upload.mimeType,
     sizeBytes: upload.sizeBytes
   }));
-
   const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/images/v2/direct_upload`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: form
   });
-
-  const payload = await cfRes.json().catch(() => null) as any;
+  const payload = await cfRes.json().catch(() => null);
   if (!cfRes.ok || !payload?.success) {
     const message = String(payload?.errors?.[0]?.message || payload?.error || "Cloudflare Images direct upload request failed.").trim();
     throw new Error(`cf_images_direct_upload_failed:${message}`);
   }
-
   const cfImageId = String(payload?.result?.id || "").trim();
   const uploadURL = String(payload?.result?.uploadURL || "").trim();
   if (!cfImageId || !uploadURL) {
     throw new Error("cf_images_direct_upload_incomplete");
   }
-
   return {
     cfImageId,
     uploadURL,
     variants: buildCloudflareImageVariantUrls(env, cfImageId)
   };
 }
-
-async function readCloudflareImageUploadState(env: Env, cfImageId: string): Promise<{ ok: true; uploaded: boolean } | { ok: false; status: number; code: string; message: string }> {
+__name(createCloudflareDirectUpload, "createCloudflareDirectUpload");
+async function readCloudflareImageUploadState(env, cfImageId) {
   const accountId = String(env.CF_IMAGES_ACCOUNT_ID || "").trim();
   const token = String(env.CF_IMAGES_API_TOKEN || "").trim();
   const imageId = String(cfImageId || "").trim();
-
   if (!accountId || !token) {
     return {
       ok: false,
@@ -3102,7 +4608,6 @@ async function readCloudflareImageUploadState(env: Env, cfImageId: string): Prom
       message: "Cloudflare Images configuration is missing."
     };
   }
-
   if (!imageId) {
     return {
       ok: false,
@@ -3111,13 +4616,11 @@ async function readCloudflareImageUploadState(env: Env, cfImageId: string): Prom
       message: "Cloudflare image id is required."
     };
   }
-
   const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/images/v1/${encodeURIComponent(imageId)}`, {
     method: "GET",
     headers: { Authorization: `Bearer ${token}` }
   });
-
-  const payload = await cfRes.json().catch(() => null) as any;
+  const payload = await cfRes.json().catch(() => null);
   if (!cfRes.ok || !payload?.success) {
     return {
       ok: false,
@@ -3126,8 +4629,7 @@ async function readCloudflareImageUploadState(env: Env, cfImageId: string): Prom
       message: String(payload?.errors?.[0]?.message || "Cloudflare Images upload status could not be verified.")
     };
   }
-
-  const result = (payload?.result && typeof payload.result === "object") ? payload.result : {};
+  const result = payload?.result && typeof payload.result === "object" ? payload.result : {};
   if (String(result?.id || "").trim() !== imageId) {
     return {
       ok: false,
@@ -3136,18 +4638,16 @@ async function readCloudflareImageUploadState(env: Env, cfImageId: string): Prom
       message: "Cloudflare Images returned an unexpected image record."
     };
   }
-
   return {
     ok: true,
     uploaded: result?.draft !== true && Boolean(String(result?.uploaded || "").trim())
   };
 }
-
-async function deleteCloudflareImage(env: Env, cfImageId: string): Promise<{ ok: true } | { ok: false; code: string; message: string }> {
+__name(readCloudflareImageUploadState, "readCloudflareImageUploadState");
+async function deleteCloudflareImage(env, cfImageId) {
   const accountId = String(env.CF_IMAGES_ACCOUNT_ID || "").trim();
   const token = String(env.CF_IMAGES_API_TOKEN || "").trim();
   const imageId = String(cfImageId || "").trim();
-
   if (!accountId || !token) {
     return {
       ok: false,
@@ -3155,23 +4655,19 @@ async function deleteCloudflareImage(env: Env, cfImageId: string): Promise<{ ok:
       message: "Cloudflare Images configuration is missing."
     };
   }
-
   if (!imageId) {
     return {
       ok: true
     };
   }
-
   const cfRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/images/v1/${encodeURIComponent(imageId)}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` }
   });
-
   if (cfRes.status === 404) {
     return { ok: true };
   }
-
-  const payload = await cfRes.json().catch(() => null) as any;
+  const payload = await cfRes.json().catch(() => null);
   if (!cfRes.ok || payload?.success === false) {
     return {
       ok: false,
@@ -3179,11 +4675,10 @@ async function deleteCloudflareImage(env: Env, cfImageId: string): Promise<{ ok:
       message: String(payload?.errors?.[0]?.message || "Cloudflare Images delete failed.")
     };
   }
-
   return { ok: true };
 }
-
-async function mediaTargetDoFetch(env: Env, targetType: MediaTargetType, targetId: string, body: Record<string, unknown>): Promise<{ status: number; payload: any }> {
+__name(deleteCloudflareImage, "deleteCloudflareImage");
+async function mediaTargetDoFetch(env, targetType, targetId, body) {
   const id = env.DO_MEDIA_TARGET.idFromName(mediaManifestKey(targetType, targetId));
   const stub = env.DO_MEDIA_TARGET.get(id);
   const res = await stub.fetch("https://media-target.internal/", {
@@ -3191,38 +4686,35 @@ async function mediaTargetDoFetch(env: Env, targetType: MediaTargetType, targetI
     headers: { "content-type": "application/json; charset=utf-8" },
     body: JSON.stringify({ targetType, targetId, ...body })
   });
-  const payload = await res.json().catch(() => null) as any;
+  const payload = await res.json().catch(() => null);
   return { status: res.status, payload };
 }
-
-async function cancelMediaReservation(env: Env, target: MediaAccessTarget, uploadSessionId: string): Promise<void> {
+__name(mediaTargetDoFetch, "mediaTargetDoFetch");
+async function cancelMediaReservation(env, target, uploadSessionId) {
   try {
     await mediaTargetDoFetch(env, target.targetType, target.targetId, {
       op: "cancel-reservation",
       uploadSessionId
     });
-  } catch {}
+  } catch {
+  }
 }
-
-async function handleMediaDirectUpload(req: Request, env: Env): Promise<Response> {
-  const body = await req.json().catch(() => null) as any;
+__name(cancelMediaReservation, "cancelMediaReservation");
+async function handleMediaDirectUpload(req, env) {
+  const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return mediaError("invalid_request", "valid JSON body required", 400);
   }
-
   const uploadCheck = validateMediaUploadMetadata(body);
   if ("response" in uploadCheck) return uploadCheck.response;
-
   const targetCheck = await resolveMediaWriteTarget(req, env, body);
   if ("response" in targetCheck) return targetCheck.response;
-
   const target = targetCheck.target;
   const reserve = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
     op: "reserve",
     actor: target.actor,
     upload: uploadCheck.upload
   });
-
   if (!reserve.payload?.ok) {
     return mediaError(
       String(reserve.payload?.reason || "media_reservation_failed"),
@@ -3234,29 +4726,25 @@ async function handleMediaDirectUpload(req: Request, env: Env): Promise<Response
       }
     );
   }
-
   const uploadSessionId = String(reserve.payload?.reservation?.uploadSessionId || "").trim();
   if (!uploadSessionId) {
     return mediaError("media_reservation_incomplete", "Media upload reservation did not return a session id.", 500);
   }
-
-  let cf: { cfImageId: string; uploadURL: string; variants: Record<MediaVariantName, string> };
+  let cf;
   try {
     cf = await createCloudflareDirectUpload(env, target, uploadCheck.upload, reserve.payload.reservation);
-  } catch (e: any) {
+  } catch (e) {
     await cancelMediaReservation(env, target, uploadSessionId);
     const raw = String(e?.message || "").trim();
     const code = raw.startsWith("cf_images_direct_upload_failed") ? "cf_images_direct_upload_failed" : raw || "cf_images_direct_upload_failed";
     return mediaError(code, raw || "Cloudflare Images direct upload could not be created.", code === "cf_images_config_missing" || code === "cf_images_account_hash_missing" ? 503 : 502);
   }
-
   const attached = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
     op: "attach-cloudflare-id",
     uploadSessionId,
     cfImageId: cf.cfImageId,
     variants: cf.variants
   });
-
   if (!attached.payload?.ok) {
     await cancelMediaReservation(env, target, uploadSessionId);
     return mediaError(
@@ -3265,7 +4753,6 @@ async function handleMediaDirectUpload(req: Request, env: Env): Promise<Response
       attached.status || 409
     );
   }
-
   return json(
     {
       ok: true,
@@ -3285,45 +4772,36 @@ async function handleMediaDirectUpload(req: Request, env: Env): Promise<Response
     { "cache-control": "no-store" }
   );
 }
-
-async function resolveExistingMediaWriteTarget(req: Request, env: Env, body: any): Promise<{ ok: true; target: MediaAccessTarget } | { ok: false; response: Response }> {
+__name(handleMediaDirectUpload, "handleMediaDirectUpload");
+async function resolveExistingMediaWriteTarget(req, env, body) {
   const input = extractMediaTargetInput(body);
-
   if (!input.targetType) {
     return { ok: false, response: mediaError("invalid_target", "targetType must be draft or location.", 400) };
   }
-
   if (!input.targetId) {
     return { ok: false, response: mediaError("invalid_target", "Existing media mutation requires targetId.", 400) };
   }
-
   return await resolveMediaWriteTarget(req, env, body);
 }
-
-async function handleMediaComplete(req: Request, env: Env): Promise<Response> {
-  const body = await req.json().catch(() => null) as any;
+__name(resolveExistingMediaWriteTarget, "resolveExistingMediaWriteTarget");
+async function handleMediaComplete(req, env) {
+  const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return mediaError("invalid_request", "valid JSON body required", 400);
   }
-
   const uploadSessionId = String(body?.uploadSessionId || "").trim();
   const cfImageId = String(body?.cfImageId || "").trim();
-
   if (!uploadSessionId || !cfImageId) {
     return mediaError("invalid_upload_session", "uploadSessionId and cfImageId are required.", 400);
   }
-
   const targetCheck = await resolveExistingMediaWriteTarget(req, env, body);
   if ("response" in targetCheck) return targetCheck.response;
-
   const target = targetCheck.target;
-
   const inspected = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
     op: "inspect-complete",
     uploadSessionId,
     cfImageId
   });
-
   if (!inspected.payload?.ok) {
     return mediaError(
       String(inspected.payload?.reason || "media_complete_failed"),
@@ -3331,23 +4809,19 @@ async function handleMediaComplete(req: Request, env: Env): Promise<Response> {
       inspected.status || 409
     );
   }
-
   const uploadState = await readCloudflareImageUploadState(env, cfImageId);
   if (!uploadState.ok) {
     return mediaError(uploadState.code, uploadState.message, uploadState.status);
   }
-
   if (!uploadState.uploaded) {
     return mediaError("upload_not_finished", "Cloudflare Images has not received the uploaded image yet.", 409);
   }
-
   const completed = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
     op: "complete",
     uploadSessionId,
     cfImageId,
     providerUploaded: true
   });
-
   if (!completed.payload?.ok) {
     return mediaError(
       String(completed.payload?.reason || "media_complete_failed"),
@@ -3355,7 +4829,6 @@ async function handleMediaComplete(req: Request, env: Env): Promise<Response> {
       completed.status || 409
     );
   }
-
   return json(
     {
       ok: true,
@@ -3368,28 +4841,23 @@ async function handleMediaComplete(req: Request, env: Env): Promise<Response> {
     { "cache-control": "no-store" }
   );
 }
-
-async function handleMediaDelete(req: Request, env: Env): Promise<Response> {
-  const body = await req.json().catch(() => null) as any;
+__name(handleMediaComplete, "handleMediaComplete");
+async function handleMediaDelete(req, env) {
+  const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return mediaError("invalid_request", "valid JSON body required", 400);
   }
-
   const mediaId = String(body?.mediaId || "").trim();
   if (!mediaId) {
     return mediaError("invalid_media", "mediaId is required.", 400);
   }
-
   const targetCheck = await resolveExistingMediaWriteTarget(req, env, body);
   if ("response" in targetCheck) return targetCheck.response;
-
   const target = targetCheck.target;
-
   const deleted = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
     op: "delete",
     mediaId
   });
-
   if (!deleted.payload?.ok) {
     return mediaError(
       String(deleted.payload?.reason || "media_delete_failed"),
@@ -3397,13 +4865,11 @@ async function handleMediaDelete(req: Request, env: Env): Promise<Response> {
       deleted.status || 409
     );
   }
-
-  const deletedImage = (deleted.payload?.image && typeof deleted.payload.image === "object") ? deleted.payload.image : {};
+  const deletedImage = deleted.payload?.image && typeof deleted.payload.image === "object" ? deleted.payload.image : {};
   const cfImageId = String(deletedImage?.cfImageId || "").trim();
   let manifest = deleted.payload.manifest;
   let deletePending = false;
-  let providerDelete: Record<string, unknown> = { attempted: Boolean(cfImageId), ok: true };
-
+  let providerDelete = { attempted: Boolean(cfImageId), ok: true };
   if (cfImageId) {
     const providerResult = await deleteCloudflareImage(env, cfImageId);
     providerDelete = {
@@ -3411,7 +4877,6 @@ async function handleMediaDelete(req: Request, env: Env): Promise<Response> {
       ok: providerResult.ok,
       code: providerResult.ok ? "" : providerResult.code
     };
-
     if (!providerResult.ok) {
       deletePending = true;
       const pending = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
@@ -3420,13 +4885,11 @@ async function handleMediaDelete(req: Request, env: Env): Promise<Response> {
         cfImageId,
         reason: providerResult.code
       });
-
       if (pending.payload?.ok) {
         manifest = pending.payload.manifest;
       }
     }
   }
-
   return json(
     {
       ok: true,
@@ -3441,36 +4904,25 @@ async function handleMediaDelete(req: Request, env: Env): Promise<Response> {
     { "cache-control": "no-store" }
   );
 }
-
-async function handleMediaReorder(req: Request, env: Env): Promise<Response> {
-  const body = await req.json().catch(() => null) as any;
+__name(handleMediaDelete, "handleMediaDelete");
+async function handleMediaReorder(req, env) {
+  const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return mediaError("invalid_request", "valid JSON body required", 400);
   }
-
-  const rawOrder = Array.isArray(body?.mediaIds)
-    ? body.mediaIds
-    : Array.isArray(body?.order)
-      ? body.order
-      : [];
-
-  const mediaIds = rawOrder.map((id: unknown) => String(id || "").trim()).filter(Boolean);
+  const rawOrder = Array.isArray(body?.mediaIds) ? body.mediaIds : Array.isArray(body?.order) ? body.order : [];
+  const mediaIds = rawOrder.map((id) => String(id || "").trim()).filter(Boolean);
   const uniqueCount = new Set(mediaIds).size;
-
   if (!mediaIds.length || uniqueCount !== mediaIds.length) {
     return mediaError("invalid_order", "mediaIds must contain each active media id exactly once.", 400);
   }
-
   const targetCheck = await resolveExistingMediaWriteTarget(req, env, body);
   if ("response" in targetCheck) return targetCheck.response;
-
   const target = targetCheck.target;
-
   const reordered = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
     op: "reorder",
     mediaIds
   });
-
   if (!reordered.payload?.ok) {
     return mediaError(
       String(reordered.payload?.reason || "media_reorder_failed"),
@@ -3478,7 +4930,6 @@ async function handleMediaReorder(req: Request, env: Env): Promise<Response> {
       reordered.status || 409
     );
   }
-
   return json(
     {
       ok: true,
@@ -3490,31 +4941,26 @@ async function handleMediaReorder(req: Request, env: Env): Promise<Response> {
     { "cache-control": "no-store" }
   );
 }
-
-async function handleMediaAbandonDraft(req: Request, env: Env): Promise<Response> {
-  const body = await req.json().catch(() => null) as any;
+__name(handleMediaReorder, "handleMediaReorder");
+async function handleMediaAbandonDraft(req, env) {
+  const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return mediaError("invalid_request", "valid JSON body required", 400);
   }
-
   const input = extractMediaTargetInput(body);
   if (input.targetType !== "draft") {
     return mediaError("invalid_target", "Only draft media can be abandoned.", 400);
   }
-
   const targetCheck = await resolveExistingMediaWriteTarget(req, env, body);
   if ("response" in targetCheck) return targetCheck.response;
-
   const target = targetCheck.target;
   if (target.targetType !== "draft") {
     return mediaError("invalid_target", "Only draft media can be abandoned.", 400);
   }
-
   const abandoned = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
     op: "abandon-draft",
     reason: String(body?.reason || "cancel").trim().slice(0, 80)
   });
-
   if (!abandoned.payload?.ok) {
     return mediaError(
       String(abandoned.payload?.reason || "media_abandon_failed"),
@@ -3522,23 +4968,19 @@ async function handleMediaAbandonDraft(req: Request, env: Env): Promise<Response
       abandoned.status || 409
     );
   }
-
   const images = Array.isArray(abandoned.payload?.images) ? abandoned.payload.images : [];
   let manifest = abandoned.payload.manifest;
   let providerDeletedCount = 0;
   let deletePendingCount = 0;
-
   for (const image of images) {
     const mediaId = String(image?.mediaId || "").trim();
     const cfImageId = String(image?.cfImageId || "").trim();
     if (!mediaId || !cfImageId) continue;
-
     const providerResult = await deleteCloudflareImage(env, cfImageId);
     if (providerResult.ok) {
       providerDeletedCount += 1;
       continue;
     }
-
     deletePendingCount += 1;
     const pending = await mediaTargetDoFetch(env, target.targetType, target.targetId, {
       op: "mark-delete-pending",
@@ -3546,12 +4988,10 @@ async function handleMediaAbandonDraft(req: Request, env: Env): Promise<Response
       cfImageId,
       reason: providerResult.code
     });
-
     if (pending.payload?.ok) {
       manifest = pending.payload.manifest;
     }
   }
-
   return json(
     {
       ok: true,
@@ -3566,50 +5006,39 @@ async function handleMediaAbandonDraft(req: Request, env: Env): Promise<Response
     { "cache-control": "no-store" }
   );
 }
-
-async function handleMediaManifestRead(req: Request, env: Env): Promise<Response> {
+__name(handleMediaAbandonDraft, "handleMediaAbandonDraft");
+async function handleMediaManifestRead(req, env) {
   const url = new URL(req.url);
   const targetType = normalizeMediaTargetType(url.searchParams.get("targetType"));
   const rawTargetId = String(url.searchParams.get("targetId") || "").trim();
-
   if (!targetType || !rawTargetId) {
     return mediaError("invalid_target", "targetType and targetId are required.", 400);
   }
-
   let targetId = rawTargetId;
   let includeReserved = false;
-
   if (targetType === "draft") {
     const draftSessionId = String(url.searchParams.get("draftSessionId") || "").trim();
     const admin = isAdminPreseedAuthorized(req, env);
-    if (!ULID_RE.test(targetId) || (!draftSessionId && !admin)) {
+    if (!ULID_RE.test(targetId) || !draftSessionId && !admin) {
       return mediaError("forbidden", "Draft media manifest access requires the draft session.", 403);
     }
-
     if (!admin) {
       const draft = await readPrivateShellDraft(env, targetId, draftSessionId);
       if (!draft) return mediaError("forbidden", "Draft media manifest access is not allowed for this session.", 403);
     }
-
     includeReserved = true;
   } else {
-    targetId = ULID_RE.test(rawTargetId)
-      ? rawTargetId
-      : String(await resolveUid(rawTargetId, env) || "").trim();
-
+    targetId = ULID_RE.test(rawTargetId) ? rawTargetId : String(await resolveUid(rawTargetId, env) || "").trim();
     if (!ULID_RE.test(targetId)) {
       return mediaError("not_found", "Published location target was not found.", 404);
     }
-
     const published = await readPublishedEffectiveProfileByUlid(targetId, env);
     if (!published) {
       return mediaError("not_found", "Published location target was not found.", 404);
     }
   }
-
-  const raw = await env.KV_MEDIA.get(mediaManifestKey(targetType, targetId), { type: "json" }) as any;
+  const raw = await env.KV_MEDIA.get(mediaManifestKey(targetType, targetId), { type: "json" });
   const manifest = normalizeMediaManifest(raw || {}, targetType, targetId);
-
   return json(
     {
       ok: true,
@@ -3619,22 +5048,22 @@ async function handleMediaManifestRead(req: Request, env: Env): Promise<Response
     { "cache-control": "no-store" }
   );
 }
-
-export class MediaTargetDO {
-  state: DurableObjectState;
-  env: any;
-
-  constructor(state: DurableObjectState, env: any) {
+__name(handleMediaManifestRead, "handleMediaManifestRead");
+var MediaTargetDO = class {
+  static {
+    __name(this, "MediaTargetDO");
+  }
+  state;
+  env;
+  constructor(state, env) {
     this.state = state;
     this.env = env;
   }
-
-  private async readState(targetType: MediaTargetType, targetId: string): Promise<MediaManifest> {
-    const hit = await this.state.storage.get<MediaManifest>("manifest");
+  async readState(targetType, targetId) {
+    const hit = await this.state.storage.get("manifest");
     return normalizeMediaManifest(hit || {}, targetType, targetId);
   }
-
-  private expireReservations(manifest: MediaManifest, nowMs: number): boolean {
+  expireReservations(manifest, nowMs) {
     let changed = false;
     for (const img of manifest.images) {
       if (img.status !== "reserved") continue;
@@ -3646,55 +5075,42 @@ export class MediaTargetDO {
     }
     return changed;
   }
-
-  private compactActiveSlots(manifest: MediaManifest): void {
-    const activeImages = manifest.images
-      .filter((img) => img.status === "active")
-      .sort((a, b) => {
-        if (a.slot !== b.slot) return a.slot - b.slot;
-        return a.createdAt.localeCompare(b.createdAt);
-      });
-
+  compactActiveSlots(manifest) {
+    const activeImages = manifest.images.filter((img) => img.status === "active").sort((a, b) => {
+      if (a.slot !== b.slot) return a.slot - b.slot;
+      return a.createdAt.localeCompare(b.createdAt);
+    });
     activeImages.forEach((img, index) => {
       img.slot = index + 1;
     });
   }
-
-
-  private async writeState(manifest: MediaManifest): Promise<MediaManifest> {
-    const normalized = normalizeMediaManifest({ ...manifest, updatedAt: new Date().toISOString() }, manifest.targetType, manifest.targetId);
+  async writeState(manifest) {
+    const normalized = normalizeMediaManifest({ ...manifest, updatedAt: (/* @__PURE__ */ new Date()).toISOString() }, manifest.targetType, manifest.targetId);
     await this.state.storage.put("manifest", normalized);
     await this.env.KV_MEDIA.put(mediaManifestKey(normalized.targetType, normalized.targetId), JSON.stringify(normalized));
     return normalized;
   }
-
-  async fetch(req: Request): Promise<Response> {
+  async fetch(req) {
     const body = await doReadJson(req);
     const op = String(body?.op || "snapshot").trim().toLowerCase();
     const targetType = normalizeMediaTargetType(body?.targetType);
     const targetId = String(body?.targetId || "").trim();
-
     if (!targetType || !DO_ULID_RE.test(targetId)) return doError("invalid_target", 400);
-
     const nowMs = Date.now();
     let manifest = await this.readState(targetType, targetId);
     const expired = this.expireReservations(manifest, nowMs);
     if (expired) manifest = await this.writeState(manifest);
-
     if (op === "snapshot") {
       return doJson({ ok: true, manifest });
     }
-
     if (op === "reserve") {
-      const upload = (body?.upload && typeof body.upload === "object") ? body.upload : {};
+      const upload = body?.upload && typeof body.upload === "object" ? body.upload : {};
       const mimeType = String(upload?.mimeType || "").trim().toLowerCase();
       const sizeBytes = Math.floor(Number(upload?.sizeBytes || 0) || 0);
       const filename = String(upload?.filename || "upload").trim().slice(0, 160) || "upload";
-
       if (!MEDIA_ALLOWED_MIME_TYPES.has(mimeType)) return doError("unsupported_mime", 415);
       if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) return doError("invalid_size", 400);
       if (sizeBytes > MEDIA_MAX_UPLOAD_BYTES) return doError("too_large", 413, { maxBytes: MEDIA_MAX_UPLOAD_BYTES });
-
       const capacityCount = manifest.images.filter((img) => mediaCapacityStatus(img.status, img.expiresAt, nowMs)).length;
       if (capacityCount >= MEDIA_MAX_ACTIVE_IMAGES) {
         return doError("too_many_images", 409, {
@@ -3703,9 +5119,8 @@ export class MediaTargetDO {
           manifest
         });
       }
-
       const nowIso = new Date(nowMs).toISOString();
-      const image: MediaImageRecord = {
+      const image = {
         mediaId: mintMediaToken("ngm"),
         cfImageId: "",
         uploadSessionId: mintMediaToken("ngu"),
@@ -3720,50 +5135,40 @@ export class MediaTargetDO {
         filename,
         variants: {}
       };
-
       manifest.images.push(image);
       manifest = await this.writeState(manifest);
       return doJson({ ok: true, reservation: image, manifest });
     }
-
     if (op === "attach-cloudflare-id") {
       const uploadSessionId = String(body?.uploadSessionId || "").trim();
       const cfImageId = String(body?.cfImageId || "").trim();
-      const variants = (body?.variants && typeof body.variants === "object") ? body.variants : {};
+      const variants = body?.variants && typeof body.variants === "object" ? body.variants : {};
       if (!uploadSessionId || !cfImageId) return doError("invalid_upload_session", 400);
-
       const image = manifest.images.find((img) => img.uploadSessionId === uploadSessionId);
       if (!image || image.status !== "reserved") return doError("unknown_upload_session", 404);
       if (!mediaCapacityStatus(image.status, image.expiresAt, nowMs)) return doError("reservation_expired", 409);
       if (image.cfImageId && image.cfImageId !== cfImageId) return doError("cf_image_mismatch", 409);
-
-      const normalizedVariants: Partial<Record<MediaVariantName, string>> = {};
+      const normalizedVariants = {};
       for (const name of MEDIA_VARIANT_NAMES) {
-        const variantUrl = String((variants as any)?.[name] || "").trim();
+        const variantUrl = String(variants?.[name] || "").trim();
         if (variantUrl) normalizedVariants[name] = variantUrl;
       }
-
       image.cfImageId = cfImageId;
       image.variants = normalizedVariants;
       image.updatedAt = new Date(nowMs).toISOString();
       manifest = await this.writeState(manifest);
       return doJson({ ok: true, manifest });
     }
-
     if (op === "inspect-complete") {
       const uploadSessionId = String(body?.uploadSessionId || "").trim();
       const cfImageId = String(body?.cfImageId || "").trim();
       if (!uploadSessionId || !cfImageId) return doError("invalid_upload_session", 400);
-
       const image = manifest.images.find((img) => img.uploadSessionId === uploadSessionId);
       if (!image) return doError("unknown_upload_session", 404);
-
       if (image.cfImageId !== cfImageId) return doError("cf_image_mismatch", 409);
-
       if (image.status === "expired" || image.status === "deleted" || image.status === "deletePending") {
         return doError("invalid_media_status", 409, { status: image.status });
       }
-
       if (image.status !== "active") {
         const expMs = Date.parse(String(image.expiresAt || ""));
         if (!Number.isFinite(expMs) || expMs <= nowMs) {
@@ -3773,12 +5178,10 @@ export class MediaTargetDO {
           return doError("reservation_expired", 409, { manifest });
         }
       }
-
       const capacityCount = manifest.images.filter((img) => {
         if (img.mediaId === image.mediaId) return false;
         return mediaCapacityStatus(img.status, img.expiresAt, nowMs);
       }).length;
-
       if (capacityCount >= MEDIA_MAX_ACTIVE_IMAGES) {
         return doError("too_many_images", 409, {
           message: "Delete an image before completing another upload.",
@@ -3786,31 +5189,24 @@ export class MediaTargetDO {
           manifest
         });
       }
-
       return doJson({ ok: true, image, manifest });
     }
-
     if (op === "complete") {
       const uploadSessionId = String(body?.uploadSessionId || "").trim();
       const cfImageId = String(body?.cfImageId || "").trim();
       const providerUploaded = body?.providerUploaded === true;
       if (!uploadSessionId || !cfImageId) return doError("invalid_upload_session", 400);
-
       const image = manifest.images.find((img) => img.uploadSessionId === uploadSessionId);
       if (!image) return doError("unknown_upload_session", 404);
-
       if (image.cfImageId !== cfImageId) return doError("cf_image_mismatch", 409);
-
       if (image.status === "active") {
         this.compactActiveSlots(manifest);
         manifest = await this.writeState(manifest);
         return doJson({ ok: true, mediaId: image.mediaId, manifest });
       }
-
       if (image.status !== "reserved" && image.status !== "uploaded") {
         return doError("invalid_media_status", 409, { status: image.status });
       }
-
       const expMs = Date.parse(String(image.expiresAt || ""));
       if (!Number.isFinite(expMs) || expMs <= nowMs) {
         image.status = "expired";
@@ -3818,16 +5214,13 @@ export class MediaTargetDO {
         manifest = await this.writeState(manifest);
         return doError("reservation_expired", 409, { manifest });
       }
-
       if (!providerUploaded) {
         return doError("upload_not_finished", 409);
       }
-
       const capacityCount = manifest.images.filter((img) => {
         if (img.mediaId === image.mediaId) return false;
         return mediaCapacityStatus(img.status, img.expiresAt, nowMs);
       }).length;
-
       if (capacityCount >= MEDIA_MAX_ACTIVE_IMAGES) {
         return doError("too_many_images", 409, {
           message: "Delete an image before completing another upload.",
@@ -3835,122 +5228,94 @@ export class MediaTargetDO {
           manifest
         });
       }
-
       image.status = "active";
       image.updatedAt = new Date(nowMs).toISOString();
       this.compactActiveSlots(manifest);
       manifest = await this.writeState(manifest);
       return doJson({ ok: true, mediaId: image.mediaId, manifest });
     }
-
     if (op === "delete") {
       const mediaId = String(body?.mediaId || "").trim();
       if (!mediaId) return doError("invalid_media", 400);
-
       const image = manifest.images.find((img) => img.mediaId === mediaId);
       if (!image) return doError("media_not_found", 404);
-
       if (image.status !== "deleted") {
         image.status = "deleted";
         image.updatedAt = new Date(nowMs).toISOString();
         this.compactActiveSlots(manifest);
         manifest = await this.writeState(manifest);
       }
-
       return doJson({ ok: true, image, manifest });
     }
-
     if (op === "mark-delete-pending") {
       const mediaId = String(body?.mediaId || "").trim();
       const cfImageId = String(body?.cfImageId || "").trim();
       if (!mediaId) return doError("invalid_media", 400);
-
       const image = manifest.images.find((img) => img.mediaId === mediaId);
       if (!image) return doError("media_not_found", 404);
-
       if (!cfImageId || image.cfImageId === cfImageId) {
         image.status = "deletePending";
         image.updatedAt = new Date(nowMs).toISOString();
         this.compactActiveSlots(manifest);
         manifest = await this.writeState(manifest);
       }
-
       return doJson({ ok: true, image, manifest });
     }
-
     if (op === "reorder") {
-      const mediaIds = Array.isArray(body?.mediaIds)
-        ? body.mediaIds.map((id: unknown) => String(id || "").trim()).filter(Boolean)
-        : [];
-
+      const mediaIds = Array.isArray(body?.mediaIds) ? body.mediaIds.map((id) => String(id || "").trim()).filter(Boolean) : [];
       if (!mediaIds.length || new Set(mediaIds).size !== mediaIds.length) {
         return doError("invalid_order", 400);
       }
-
       const activeImages = manifest.images.filter((img) => img.status === "active");
       const activeIds = new Set(activeImages.map((img) => img.mediaId));
-
       if (mediaIds.length !== activeImages.length) {
         return doError("invalid_order", 409, {
           message: "Reorder must include each active media id exactly once.",
           activeCount: activeImages.length
         });
       }
-
       for (const mediaId of mediaIds) {
         if (!activeIds.has(mediaId)) {
           return doError("unknown_media_id", 400, { mediaId });
         }
       }
-
       for (const image of activeImages) {
         image.slot = mediaIds.indexOf(image.mediaId) + 1;
         image.updatedAt = new Date(nowMs).toISOString();
       }
-
       this.compactActiveSlots(manifest);
       manifest = await this.writeState(manifest);
       return doJson({ ok: true, manifest });
     }
-
     if (op === "abandon-draft") {
       if (targetType !== "draft") return doError("invalid_target", 400);
-
       const imagesToDelete = manifest.images.filter((img) => img.status !== "deleted");
       if (!imagesToDelete.length) {
         return doJson({ ok: true, images: [], manifest });
       }
-
       for (const image of imagesToDelete) {
         image.status = "deleted";
         image.updatedAt = new Date(nowMs).toISOString();
       }
-
       this.compactActiveSlots(manifest);
       manifest = await this.writeState(manifest);
       return doJson({ ok: true, images: imagesToDelete, manifest });
     }
-
     if (op === "replace-manifest") {
       const incoming = normalizeMediaManifest(body?.manifest || {}, targetType, targetId);
       incoming.targetType = targetType;
       incoming.targetId = targetId;
-      incoming.images = incoming.images
-        .filter((img) => img.status === "active")
-        .slice(0, MEDIA_MAX_ACTIVE_IMAGES)
-        .map((img, index) => ({
-          ...img,
-          status: "active",
-          slot: index + 1,
-          expiresAt: "",
-          updatedAt: new Date(nowMs).toISOString()
-        }));
-
+      incoming.images = incoming.images.filter((img) => img.status === "active").slice(0, MEDIA_MAX_ACTIVE_IMAGES).map((img, index) => ({
+        ...img,
+        status: "active",
+        slot: index + 1,
+        expiresAt: "",
+        updatedAt: new Date(nowMs).toISOString()
+      }));
       incoming.coverImageId = incoming.images[0]?.mediaId || "";
       manifest = await this.writeState(incoming);
       return doJson({ ok: true, manifest });
     }
-
     if (op === "cancel-reservation") {
       const uploadSessionId = String(body?.uploadSessionId || "").trim();
       const image = manifest.images.find((img) => img.uploadSessionId === uploadSessionId && img.status === "reserved");
@@ -3961,70 +5326,49 @@ export class MediaTargetDO {
       }
       return doJson({ ok: true, manifest });
     }
-
     return doError("unsupported_op", 400, { op });
   }
-}
-
-// --- Phase 8 Durable Objects ---
-// Replaces the old deploy-unblock stubs with the real authoritative objects used by:
-// - publish-capacity enforcement (PlanAllocDO)
-// - search indexing (SearchShardDO)
-// - context membership indexing (ContextShardDO)
-
-type PlanAllocState = {
-  heldUlids: string[];
-  committedUlids: string[];
-  updatedAt: string;
 };
-
-export class PlanAllocDO {
-  state: DurableObjectState;
-  env: any;
-
-  constructor(state: DurableObjectState, env: any) {
+var PlanAllocDO = class {
+  static {
+    __name(this, "PlanAllocDO");
+  }
+  state;
+  env;
+  constructor(state, env) {
     this.state = state;
     this.env = env;
   }
-
-  private async readState(): Promise<PlanAllocState> {
-    const hit = await this.state.storage.get<PlanAllocState>("state");
+  async readState() {
+    const hit = await this.state.storage.get("state");
     return hit || { heldUlids: [], committedUlids: [], updatedAt: doNowIso() };
   }
-
-  private async writeState(next: PlanAllocState): Promise<void> {
+  async writeState(next) {
     next.updatedAt = doNowIso();
     await this.state.storage.put("state", next);
   }
-
-  async fetch(req: Request): Promise<Response> {
+  async fetch(req) {
     const method = req.method.toUpperCase();
     const body = method === "GET" ? null : await doReadJson(req);
     const op = String(body?.op || new URL(req.url).searchParams.get("op") || "snapshot").trim().toLowerCase();
-
     if (op === "snapshot") {
-      const state = await this.readState();
+      const state2 = await this.readState();
       return doJson({
         ok: true,
-        heldUlids: state.heldUlids,
-        committedUlids: state.committedUlids,
-        heldCount: state.heldUlids.length,
-        allocatedCount: state.committedUlids.length
+        heldUlids: state2.heldUlids,
+        committedUlids: state2.committedUlids,
+        heldCount: state2.heldUlids.length,
+        allocatedCount: state2.committedUlids.length
       });
     }
-
     const ulid = String(body?.ulid || "").trim();
     const max = Math.max(0, Number(body?.max || 0) || 0);
-
     if (!DO_ULID_RE.test(ulid)) return doError("invalid_ulid", 400);
-
     const state = await this.readState();
     const held = new Set(state.heldUlids);
     const committed = new Set(state.committedUlids);
-
     if (op === "reserve") {
       if (!Number.isFinite(max) || max <= 0) return doError("invalid_max", 400, { max });
-
       if (committed.has(ulid)) {
         return doJson({
           ok: true,
@@ -4034,7 +5378,6 @@ export class PlanAllocDO {
           reservationState: "committed"
         });
       }
-
       if (held.has(ulid)) {
         return doJson({
           ok: true,
@@ -4044,7 +5387,6 @@ export class PlanAllocDO {
           reservationState: "held"
         });
       }
-
       const used = committed.size + held.size;
       if (used >= max) {
         return doJson({
@@ -4055,14 +5397,12 @@ export class PlanAllocDO {
           max
         }, 409);
       }
-
       held.add(ulid);
       await this.writeState({
         heldUlids: Array.from(held),
         committedUlids: Array.from(committed),
         updatedAt: doNowIso()
       });
-
       return doJson({
         ok: true,
         alreadyAllocated: false,
@@ -4072,7 +5412,6 @@ export class PlanAllocDO {
         reservationState: "held"
       });
     }
-
     if (op === "commit") {
       if (committed.has(ulid)) {
         return doJson({
@@ -4082,20 +5421,16 @@ export class PlanAllocDO {
           reservationState: "committed"
         });
       }
-
       if (!held.has(ulid)) {
         return doError("missing_hold", 409);
       }
-
       held.delete(ulid);
       committed.add(ulid);
-
       await this.writeState({
         heldUlids: Array.from(held),
         committedUlids: Array.from(committed),
         updatedAt: doNowIso()
       });
-
       return doJson({
         ok: true,
         alreadyAllocated: false,
@@ -4103,16 +5438,13 @@ export class PlanAllocDO {
         reservationState: "committed"
       });
     }
-
     if (op === "release") {
       const existed = held.delete(ulid);
-
       await this.writeState({
         heldUlids: Array.from(held),
         committedUlids: Array.from(committed),
         updatedAt: doNowIso()
       });
-
       return doJson({
         ok: true,
         released: existed,
@@ -4120,32 +5452,21 @@ export class PlanAllocDO {
         heldCount: held.size
       });
     }
-
     return doError("unsupported_op", 400, { op });
   }
-}
-
-type SearchShardState = {
-  slugToUlid: Record<string, string>;
-  slugByUlid: Record<string, string>;
-  tokensByUlid: Record<string, string[]>;
-  tokenToUlids: Record<string, string[]>;
-  metaByUlid: Record<string, { city?: string; postalCode?: string; name?: string }>;
-  hashByUlid: Record<string, string>;
-  updatedAt: string;
 };
-
-export class SearchShardDO {
-  state: DurableObjectState;
-  env: any;
-
-  constructor(state: DurableObjectState, env: any) {
+var SearchShardDO = class {
+  static {
+    __name(this, "SearchShardDO");
+  }
+  state;
+  env;
+  constructor(state, env) {
     this.state = state;
     this.env = env;
   }
-
-  private async readState(): Promise<SearchShardState> {
-    const hit = await this.state.storage.get<SearchShardState>("state");
+  async readState() {
+    const hit = await this.state.storage.get("state");
     return hit || {
       slugToUlid: {},
       slugByUlid: {},
@@ -4156,21 +5477,18 @@ export class SearchShardDO {
       updatedAt: doNowIso()
     };
   }
-
-  private async writeState(next: SearchShardState): Promise<void> {
+  async writeState(next) {
     next.updatedAt = doNowIso();
     await this.state.storage.put("state", next);
   }
-
-  private removeExisting(state: SearchShardState, ulid: string): void {
+  removeExisting(state, ulid) {
     const prevSlug = String(state.slugByUlid[ulid] || "").trim();
     if (prevSlug) delete state.slugToUlid[prevSlug];
     delete state.slugByUlid[ulid];
-
     const prevTokens = Array.isArray(state.tokensByUlid[ulid]) ? state.tokensByUlid[ulid] : [];
     for (const tok of prevTokens) {
       const current = Array.isArray(state.tokenToUlids[tok]) ? state.tokenToUlids[tok] : [];
-      const next = current.filter(v => v !== ulid);
+      const next = current.filter((v) => v !== ulid);
       if (next.length) state.tokenToUlids[tok] = next;
       else delete state.tokenToUlids[tok];
     }
@@ -4178,177 +5496,138 @@ export class SearchShardDO {
     delete state.metaByUlid[ulid];
     delete state.hashByUlid[ulid];
   }
-
-  async fetch(req: Request): Promise<Response> {
+  async fetch(req) {
     const method = req.method.toUpperCase();
     const body = method === "GET" ? null : await doReadJson(req);
     const url = new URL(req.url);
     const op = String(body?.op || url.searchParams.get("op") || "snapshot").trim().toLowerCase();
-
     if (op === "snapshot") {
-      const state = await this.readState();
+      const state2 = await this.readState();
       return doJson({
         ok: true,
-        slugs: Object.keys(state.slugToUlid).length,
-        tokens: Object.keys(state.tokenToUlids).length,
-        ulids: Object.keys(state.slugByUlid).length
+        slugs: Object.keys(state2.slugToUlid).length,
+        tokens: Object.keys(state2.tokenToUlids).length,
+        ulids: Object.keys(state2.slugByUlid).length
       });
     }
-
     if (op === "lookup_slug") {
       const slug = doNormalizeSlug(body?.slug || url.searchParams.get("slug") || "");
       if (!slug) return doError("invalid_slug", 400);
-      const state = await this.readState();
-      return doJson({ ok: true, ulid: String(state.slugToUlid[slug] || "") });
+      const state2 = await this.readState();
+      return doJson({ ok: true, ulid: String(state2.slugToUlid[slug] || "") });
     }
-
     if (op === "search") {
-      const rawTokens = Array.isArray(body?.tokens)
-        ? body.tokens
-        : String(url.searchParams.get("tokens") || "").split(",");
+      const rawTokens = Array.isArray(body?.tokens) ? body.tokens : String(url.searchParams.get("tokens") || "").split(",");
       const tokens = doNormalizeTokens(rawTokens);
-      const state = await this.readState();
-
+      const state2 = await this.readState();
       if (!tokens.length) return doJson({ ok: true, ulids: [] });
-
-      let result: string[] | null = null;
+      let result = null;
       for (const tok of tokens) {
-        const hits = Array.isArray(state.tokenToUlids[tok]) ? state.tokenToUlids[tok] : [];
-        result = result === null ? [...hits] : result.filter(v => hits.includes(v));
+        const hits = Array.isArray(state2.tokenToUlids[tok]) ? state2.tokenToUlids[tok] : [];
+        result = result === null ? [...hits] : result.filter((v) => hits.includes(v));
         if (!result.length) break;
       }
-
       return doJson({ ok: true, ulids: result || [] });
     }
-
     const ulid = String(body?.ulid || "").trim();
     if (!DO_ULID_RE.test(ulid)) return doError("invalid_ulid", 400);
-
     const state = await this.readState();
-
     if (op === "delete") {
       this.removeExisting(state, ulid);
       await this.writeState(state);
       return doJson({ ok: true, deleted: true });
     }
-
     if (op === "upsert") {
       const slug = doNormalizeSlug(body?.slug);
       if (!slug) return doError("invalid_slug", 400);
-
       const tokens = doNormalizeTokens(Array.isArray(body?.tokens) ? body.tokens : []);
       const indexedFieldsHash = String(body?.indexedFieldsHash || "").trim();
       const prevHash = String(state.hashByUlid[ulid] || "").trim();
       const prevSlug = String(state.slugByUlid[ulid] || "").trim();
-
       if (indexedFieldsHash && prevHash && indexedFieldsHash === prevHash && prevSlug === slug) {
         return doJson({ ok: true, noChange: true });
       }
-
       this.removeExisting(state, ulid);
-
       state.slugToUlid[slug] = ulid;
       state.slugByUlid[ulid] = slug;
       state.tokensByUlid[ulid] = tokens;
       state.hashByUlid[ulid] = indexedFieldsHash;
-
       const meta = body?.meta && typeof body.meta === "object" ? body.meta : {};
       state.metaByUlid[ulid] = {
         city: String(meta?.city || "").trim(),
         postalCode: String(meta?.postalCode || "").trim(),
         name: String(meta?.name || "").trim()
       };
-
       for (const tok of tokens) {
         const current = Array.isArray(state.tokenToUlids[tok]) ? state.tokenToUlids[tok] : [];
         if (!current.includes(ulid)) current.push(ulid);
         state.tokenToUlids[tok] = current;
       }
-
       await this.writeState(state);
       return doJson({ ok: true, upserted: true, tokenCount: tokens.length });
     }
-
     return doError("unsupported_op", 400, { op });
   }
-}
-
-type ContextShardState = {
-  ulids: string[];
-  updatedAt: string;
 };
-
-export class ContextShardDO {
-  state: DurableObjectState;
-  env: any;
-
-  constructor(state: DurableObjectState, env: any) {
+var ContextShardDO = class {
+  static {
+    __name(this, "ContextShardDO");
+  }
+  state;
+  env;
+  constructor(state, env) {
     this.state = state;
     this.env = env;
   }
-
-  private async readState(): Promise<ContextShardState> {
-    const hit = await this.state.storage.get<ContextShardState>("state");
+  async readState() {
+    const hit = await this.state.storage.get("state");
     return hit || { ulids: [], updatedAt: doNowIso() };
   }
-
-  private async writeState(next: ContextShardState): Promise<void> {
+  async writeState(next) {
     next.updatedAt = doNowIso();
     await this.state.storage.put("state", next);
   }
-
-  async fetch(req: Request): Promise<Response> {
+  async fetch(req) {
     const method = req.method.toUpperCase();
     const body = method === "GET" ? null : await doReadJson(req);
     const op = String(body?.op || new URL(req.url).searchParams.get("op") || "snapshot").trim().toLowerCase();
-
     if (op === "snapshot" || op === "list") {
-      const state = await this.readState();
-      return doJson({ ok: true, ulids: state.ulids, count: state.ulids.length });
+      const state2 = await this.readState();
+      return doJson({ ok: true, ulids: state2.ulids, count: state2.ulids.length });
     }
-
     const ulid = String(body?.ulid || "").trim();
     if (!DO_ULID_RE.test(ulid)) return doError("invalid_ulid", 400);
-
     const state = await this.readState();
     const set = new Set(state.ulids);
-
     if (op === "upsert") {
       set.add(ulid);
       await this.writeState({ ulids: Array.from(set), updatedAt: doNowIso() });
       return doJson({ ok: true, upserted: true, count: set.size });
     }
-
     if (op === "delete") {
       const existed = set.delete(ulid);
       await this.writeState({ ulids: Array.from(set), updatedAt: doNowIso() });
       return doJson({ ok: true, deleted: existed, count: set.size });
     }
-
     return doError("unsupported_op", 400, { op });
   }
-}
-
-export default {
-  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+};
+var index_default = {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
-    // normalize once: collapse repeats; strip one trailing slash (not root)
     const pathname = url.pathname;
     const normPath = pathname.replace(/\/{2,}/g, "/").replace(/(.+)\/$/, "$1");
-
-    // --- CORS preflight: allow credentialed requests from allowed web origins
-    // GLOBAL CORS PREFLIGHT — must run before all routing
     if (req.method === "OPTIONS") {
-      const origin  = req.headers.get("Origin") || "";
+      const origin = req.headers.get("Origin") || "";
       const reqHdrs = req.headers.get("Access-Control-Request-Headers") || "";
-      const allow = new Set(["https://navigen.io","https://navigen-go.pages.dev"]);
+      const allow = /* @__PURE__ */ new Set(["https://navigen.io", "https://navigen-go.pages.dev"]);
       const allowOrigin = allow.has(origin) ? origin : "https://navigen.io";
-
       return new Response(null, {
         status: 204,
         headers: {
           "Access-Control-Allow-Origin": allowOrigin,
-          "Access-Control-Allow-Credentials": "true", // REQUIRED for credentials
+          "Access-Control-Allow-Credentials": "true",
+          // REQUIRED for credentials
           "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
           "Access-Control-Allow-Headers": reqHdrs || "content-type, authorization, cache-control, pragma",
           "Access-Control-Max-Age": "600",
@@ -4356,25 +5635,16 @@ export default {
         }
       });
     }
-
     try {
-      // --- Context taxonomy: public BO-facing read projection
       if (normPath === "/api/contexts/business-taxonomy" && req.method === "GET") {
         return await handleBusinessTaxonomyRead(env);
       }
-
-
-      // --- Structure taxonomy: public BO-facing business category read projection
       if (normPath === "/api/structure/business-categories" && req.method === "GET") {
         return await handleStructureBusinessCategoriesRead(env);
       }
-
-      // --- Structure taxonomy: public BO-facing business tag/facet read projection
       if (normPath === "/api/structure/business-tags" && req.method === "GET") {
         return await handleStructureBusinessTagsRead(env);
       }
-      
-      // --- Structure taxonomy admin manifest: active business category version metadata
       if (normPath === "/api/admin/structure/manifest" && req.method === "GET") {
         if (!isAdminPreseedAuthorized(req, env)) {
           return json(
@@ -4385,8 +5655,6 @@ export default {
         }
         return await handleStructureManifestRead(env);
       }
-
-      // --- Structure taxonomy admin publish: validate, version, and publish active business categories
       if (normPath === "/api/admin/structure/publish" && req.method === "POST") {
         if (!isAdminPreseedAuthorized(req, env)) {
           return json(
@@ -4397,8 +5665,6 @@ export default {
         }
         return await handleStructurePublish(req, env);
       }
-
-      // --- Structure taxonomy admin publish: validate and publish active business tags/facets
       if (normPath === "/api/admin/structure/publish-tags" && req.method === "POST") {
         if (!isAdminPreseedAuthorized(req, env)) {
           return json(
@@ -4409,8 +5675,6 @@ export default {
         }
         return await handleStructureTagsPublish(req, env);
       }
-      
-      // --- Structure taxonomy admin rollback: activate an existing historical business category version
       if (normPath === "/api/admin/structure/activate-version" && req.method === "POST") {
         if (!isAdminPreseedAuthorized(req, env)) {
           return json(
@@ -4421,8 +5685,6 @@ export default {
         }
         return await handleStructureActivateVersion(req, env);
       }
-
-      // --- Context taxonomy admin manifest: active taxonomy version metadata
       if (normPath === "/api/admin/contexts/manifest" && req.method === "GET") {
         if (!isAdminPreseedAuthorized(req, env)) {
           return json(
@@ -4433,8 +5695,6 @@ export default {
         }
         return await handleContextsManifestRead(env);
       }
-
-      // --- Context taxonomy admin publish: validate, version, and publish active taxonomy
       if (normPath === "/api/admin/contexts/publish" && req.method === "POST") {
         if (!isAdminPreseedAuthorized(req, env)) {
           return json(
@@ -4445,8 +5705,6 @@ export default {
         }
         return await handleContextsPublish(req, env);
       }
-
-      // --- Context taxonomy admin rollback: activate an existing historical taxonomy version
       if (normPath === "/api/admin/contexts/activate-version" && req.method === "POST") {
         if (!isAdminPreseedAuthorized(req, env)) {
           return json(
@@ -4457,14 +5715,6 @@ export default {
         }
         return await handleContextsActivateVersion(req, env);
       }
-
-      // --- Phase 8 one-time legacy preseed (admin-only, temporary; remove after preseed + KV read cutover ship)
-      // POST /api/_admin/p8/preseed
-      // Auth: Authorization: Bearer <JWT_SECRET>
-      // Body:
-      //   { "all": true }
-      //   OR
-      //   { "locationID": "<slug>" }
       if (normPath === "/api/_admin/p8/preseed" && req.method === "POST") {
         if (!isAdminPreseedAuthorized(req, env)) {
           return json(
@@ -4473,15 +5723,11 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
-        const body = await req.json().catch(() => ({})) as any;
+        const body = await req.json().catch(() => ({}));
         const targetSlug = String(body?.locationID || "").trim();
         const doAll = !!body?.all;
         const force = !!body?.force;
-        const purgeContexts = Array.isArray(body?.purgeContexts)
-          ? body.purgeContexts.map((v: any) => String(v || "").trim()).filter(Boolean)
-          : [];
-
+        const purgeContexts = Array.isArray(body?.purgeContexts) ? body.purgeContexts.map((v) => String(v || "").trim()).filter(Boolean) : [];
         if (!targetSlug && !doAll) {
           return json(
             { error: { code: "invalid_request", message: "set { all:true } or provide locationID" } },
@@ -4489,23 +5735,18 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
-        let profiles: any;
+        let profiles;
         try {
           profiles = await fetchLegacyProfilesJson(req);
-        } catch (e: any) {
+        } catch (e) {
           return json(
             { error: { code: "upstream", message: String(e?.message || "profiles.json not reachable") } },
             502,
             { "cache-control": "no-store" }
           );
         }
-
         const rows = legacyLocationsArray(profiles);
-        const picked = targetSlug
-          ? rows.filter((r: any) => legacyLocationSlug(r) === targetSlug)
-          : rows;
-
+        const picked = targetSlug ? rows.filter((r) => legacyLocationSlug(r) === targetSlug) : rows;
         if (!picked.length) {
           return json(
             { error: { code: "not_found", message: "no matching legacy locations" } },
@@ -4513,12 +5754,10 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
-        const out: Array<Record<string, any>> = [];
+        const out = [];
         let created = 0;
         let skipped = 0;
         let failed = 0;
-
         for (const rec of picked) {
           try {
             const result = await preseedLegacyLocationRecord(env, rec, { force });
@@ -4526,7 +5765,7 @@ export default {
             if (result.created || result.overwritten) created++;
             else if (result.skipped) skipped++;
             else failed++;
-          } catch (e: any) {
+          } catch (e) {
             failed++;
             out.push({
               ok: false,
@@ -4536,7 +5775,6 @@ export default {
             });
           }
         }
-
         return json(
           {
             ok: true,
@@ -4551,9 +5789,6 @@ export default {
           { "cache-control": "no-store" }
         );
       }
-      
-      // --- Phase 8 preseed sanity check (admin-only, temporary)
-      // GET /api/_admin/p8/preseed-check?locationID=<slug>
       if (normPath === "/api/_admin/p8/preseed-check" && req.method === "GET") {
         if (!isAdminPreseedAuthorized(req, env)) {
           return json(
@@ -4562,7 +5797,6 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
         const slug = String(url.searchParams.get("locationID") || "").trim();
         if (!slug) {
           return json(
@@ -4571,10 +5805,8 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
         const ulid = await resolveUid(slug, env);
-        const hasBase = ulid ? !!(await env.KV_STATUS.get(`profile_base:${ulid}`, "text")) : false;
-
+        const hasBase = ulid ? !!await env.KV_STATUS.get(`profile_base:${ulid}`, "text") : false;
         return json(
           {
             ok: true,
@@ -4587,14 +5819,6 @@ export default {
           { "cache-control": "no-store" }
         );
       }
-      
-      // --- Phase 8 DO backfill for preseeded published rows (admin-only, temporary)
-      // POST /api/_admin/p8/backfill-do
-      // Auth: Authorization: Bearer <JWT_SECRET>
-      // Body:
-      //   { "all": true }
-      //   OR
-      //   { "locationID": "<slug>" }
       if (normPath === "/api/_admin/p8/backfill-do" && req.method === "POST") {
         if (!isAdminPreseedAuthorized(req, env)) {
           return json(
@@ -4603,15 +5827,11 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
-        const body = await req.json().catch(() => ({})) as any;
+        const body = await req.json().catch(() => ({}));
         const targetSlug = String(body?.locationID || "").trim();
         const doAll = !!body?.all;
         const force = !!body?.force;
-        const purgeContexts = Array.isArray(body?.purgeContexts)
-          ? body.purgeContexts.map((v: any) => String(v || "").trim()).filter(Boolean)
-          : [];
-
+        const purgeContexts = Array.isArray(body?.purgeContexts) ? body.purgeContexts.map((v) => String(v || "").trim()).filter(Boolean) : [];
         if (!targetSlug && !doAll) {
           return json(
             { error: { code: "invalid_request", message: "set { all:true } or provide locationID" } },
@@ -4619,9 +5839,7 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
-        const targets: Array<{ ulid: string; slug: string }> = [];
-
+        const targets = [];
         if (targetSlug) {
           const ulid = await resolveUid(targetSlug, env);
           if (!ulid) {
@@ -4633,28 +5851,24 @@ export default {
           }
           targets.push({ ulid, slug: targetSlug });
         } else {
-          let cursor: string | undefined = undefined;
+          let cursor = void 0;
           do {
             const page = await env.KV_STATUS.list({ prefix: "profile_base:", cursor });
             for (const key of page.keys) {
               const name = String(key.name || "");
               const ulid = name.replace(/^profile_base:/, "").trim();
               if (!ULID_RE.test(ulid)) continue;
-
               const rec = await readPublishedEffectiveProfileByUlid(ulid, env);
               if (!rec) continue;
-
               targets.push({ ulid, slug: rec.locationID });
             }
-            cursor = page.cursor || undefined;
+            cursor = page.cursor || void 0;
           } while (cursor);
         }
-
-        const out: Array<Record<string, any>> = [];
+        const out = [];
         let indexed = 0;
         let hidden = 0;
         let failed = 0;
-
         for (const t of targets) {
           try {
             const result = await backfillPublishedLocationDoState(env, t.ulid, { purgeContexts });
@@ -4662,7 +5876,7 @@ export default {
             if (result.ok && result.indexed) indexed++;
             else if (result.ok && result.visibilityState === "hidden") hidden++;
             else failed++;
-          } catch (e: any) {
+          } catch (e) {
             failed++;
             out.push({
               ok: false,
@@ -4672,7 +5886,6 @@ export default {
             });
           }
         }
-
         return json(
           {
             ok: true,
@@ -4687,8 +5900,6 @@ export default {
           { "cache-control": "no-store" }
         );
       }
-      
-      // --- Stripe diag: /api/_diag/stripe-secret (safe fingerprint only)
       if (normPath === "/api/_diag/stripe-secret" && req.method === "GET") {
         const secretRaw = (env.STRIPE_WEBHOOK_SECRET || "").trim();
         const enc = new TextEncoder();
@@ -4700,62 +5911,50 @@ export default {
           secretFp: fp
         }), { status: 200, headers: { "content-type": "application/json", "x-ng-worker": "navigen-api" } });
       }
-
-      // --- Partner foundation: isolated assisted acquisition session routes
       if (normPath === "/api/partner/start" && req.method === "POST") {
         return await handlePartnerStart(req, env);
       }
-
       if (normPath === "/api/partner/session" && req.method === "GET") {
         return await handlePartnerSessionRead(req, env);
       }
-
       if (normPath === "/api/partner/session/restore" && req.method === "POST") {
         return await handlePartnerSessionRead(req, env, true);
       }
-
       if (normPath === "/api/partner/session/logout" && req.method === "POST") {
         return await handlePartnerLogout(req, env);
       }
-
-      // --- Owner location selector: query-first, capped, status-enriched BO search
-      // GET /api/owner/location-options?q=...&limit=5
       if (normPath === "/api/owner/location-options" && req.method === "GET") {
-        const url = new URL(req.url);
-        const q = String(url.searchParams.get("q") || "").trim();
-        const limitRaw = Number(url.searchParams.get("limit") || 5);
+        const url2 = new URL(req.url);
+        const q = String(url2.searchParams.get("q") || "").trim();
+        const limitRaw = Number(url2.searchParams.get("limit") || 5);
         const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(Math.trunc(limitRaw), 5)) : 5;
-
         if (ownerSelectorNormalizeText(q).replace(/\s+/g, "").length < 3) {
           return json({ items: [], q, limit, threshold: 3 }, 200, { "cache-control": "no-store" });
         }
-
         const items = await listPublishedLocationSelectorItems(env, { query: q, limit }).catch(() => []);
         return json({ items, q, limit }, 200, { "cache-control": "no-store" });
       }
-      
-      // --- Owner Center / SYB Recently used: list device-bound locations (no secrets)
       if (normPath === "/api/owner/sessions" && req.method === "GET") {
         const dev = readDeviceId(req);
         if (!dev) {
-          // No device id cookie set on this browser. Owner Center is device-bound, so we can’t list sessions yet.
           return json({ items: [], rows: [], reason: "no_device_id" }, 200, { "cache-control": "no-store" });
         }
-
         const idxKey = devIndexKey(dev);
         const rawIdx = await env.KV_STATUS.get(idxKey, "text");
-        let ulids: string[] = [];
-        try { ulids = rawIdx ? JSON.parse(rawIdx) : []; } catch { ulids = []; }
+        let ulids = [];
+        try {
+          ulids = rawIdx ? JSON.parse(rawIdx) : [];
+        } catch {
+          ulids = [];
+        }
         if (!Array.isArray(ulids)) ulids = [];
-
-        const out: string[] = [];
+        const out = [];
         for (const u of ulids) {
           const ulid = String(u || "").trim();
           if (!ULID_RE.test(ulid)) continue;
           const sid = await env.KV_STATUS.get(devSessKey(dev, ulid), "text");
           if (sid) out.push(ulid);
         }
-
         const rows = (await Promise.all(
           out.map(async (ulid) => {
             const rec = await readPublishedEffectiveProfileByUlid(ulid, env);
@@ -4763,69 +5962,57 @@ export default {
             return await buildOwnerLocationSelectorItem(env, rec);
           })
         )).filter(Boolean);
-
         return json({ items: out, rows }, 200, { "cache-control": "no-store" });
       }
-
-      // --- Owner Center: remove a device-bound location from this device registry
-      // POST /api/owner/sessions/remove   body: { ulid: "<ULID>" }
-      // Removes:
-      // - devsess:<ng_dev>:<ULID>
-      // - ULID from devsess:<ng_dev>:index
       if (normPath === "/api/owner/sessions/remove" && req.method === "POST") {
         const dev = readDeviceId(req);
         if (!dev) {
           return json({ error: { code: "no_device_id", message: "ng_dev missing" } }, 401, { "cache-control": "no-store" });
         }
-
-        const body = await req.json().catch(() => ({})) as any;
+        const body = await req.json().catch(() => ({}));
         const ulid = String(body?.ulid || "").trim();
         if (!ULID_RE.test(ulid)) {
           return json({ error: { code: "invalid_request", message: "ulid required" } }, 400, { "cache-control": "no-store" });
         }
-
-        // 1) delete mapping devsess:<dev>:<ulid>
-        try { await env.KV_STATUS.delete(devSessKey(dev, ulid)); } catch {}
-
-        // 2) remove from devsess:<dev>:index
+        try {
+          await env.KV_STATUS.delete(devSessKey(dev, ulid));
+        } catch {
+        }
         try {
           const idxKey = devIndexKey(dev);
           const rawIdx = await env.KV_STATUS.get(idxKey, "text");
-          let arr: string[] = [];
-          try { arr = rawIdx ? JSON.parse(rawIdx) : []; } catch { arr = []; }
+          let arr = [];
+          try {
+            arr = rawIdx ? JSON.parse(rawIdx) : [];
+          } catch {
+            arr = [];
+          }
           if (!Array.isArray(arr)) arr = [];
-          arr = arr.filter(x => String(x || "").trim() !== ulid);
+          arr = arr.filter((x) => String(x || "").trim() !== ulid);
           await env.KV_STATUS.put(idxKey, JSON.stringify(arr), { expirationTtl: 60 * 60 * 24 * 366 });
-        } catch {}
-
+        } catch {
+        }
         return json({ ok: true, ulid }, 200, { "cache-control": "no-store" });
       }
-
-      // --- Owner Campaigns: list active/history + current draft for this session-bound ULID
-      // GET /api/owner/campaigns
       if (normPath === "/api/owner/campaigns" && req.method === "GET") {
         const sess = await requireOwnerSession(req, env);
         if (sess instanceof Response) return sess;
         const ulid = String(sess.ulid || "").trim();
-
         const draftKey = `campaigns:draft:${ulid}`;
         const histKey = campaignsByUlidKey(ulid);
-
-        let draft: any = null;
-        let history: any[] = [];
-
+        let draft = null;
+        let history = [];
         try {
-          const rawDraft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+          const rawDraft = await env.KV_STATUS.get(draftKey, { type: "json" });
           if (rawDraft && typeof rawDraft === "object") draft = rawDraft;
-        } catch {}
-
+        } catch {
+        }
         try {
-          const rawHist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
+          const rawHist = await env.KV_STATUS.get(histKey, { type: "json" });
           history = Array.isArray(rawHist) ? rawHist : [];
         } catch {
           history = [];
         }
-
         const inherited = await materializeInheritedAllScopeForCurrentUlid(req, env, ulid).catch(() => ({
           addedRows: 0,
           addedGroups: 0,
@@ -4833,37 +6020,32 @@ export default {
           blockedGroups: 0,
           blockedPlanTier: "",
           blockedMaxPublishedLocations: 0
-        }));        
+        }));
         if (inherited.addedRows > 0) {
           try {
-            const refreshed = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
+            const refreshed = await env.KV_STATUS.get(histKey, { type: "json" });
             history = Array.isArray(refreshed) ? refreshed : history;
-          } catch {}
+          } catch {
+          }
         }
-
         const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
-
         const currentPlan = await currentPlanForUlid(env, ulid);
         const currentGroupPlan = await currentGroupPlanForUlid(env, ulid);
-
         const effectivePlanTier = normalizePlanTier(currentPlan?.tier || currentGroupPlan?.tier);
         const effectivePlanCapacity = Math.max(
           0,
           Number(currentPlan?.maxPublishedLocations || currentGroupPlan?.maxPublishedLocations || 0) || 0
         );
         const multiLocationEnabled = effectivePlanCapacity > 1;
-
-        // Provide a shallow "active" view for convenience (no resolver duplication).
         const nowMs = Date.now();
-        const active = history.filter((r: any) => {
+        const active = history.filter((r) => {
           const st = effectiveCampaignStatus(r);
           if (st !== "active") return false;
           const sMs = parseYmdUtcMs(String(r?.startDate || ""));
           const eMs = parseYmdUtcMs(String(r?.endDate || ""));
           if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
-          return nowMs >= sMs && nowMs <= (eMs + 24 * 60 * 60 * 1000 - 1);
+          return nowMs >= sMs && nowMs <= eMs + 24 * 60 * 60 * 1e3 - 1;
         });
-
         return json(
           {
             ulid,
@@ -4876,7 +6058,7 @@ export default {
               multiLocationEnabled
             },
             eligibleLocations,
-            inheritedNotice: (inherited.addedRows > 0 || inherited.blockedRows > 0) ? {
+            inheritedNotice: inherited.addedRows > 0 || inherited.blockedRows > 0 ? {
               addedRows: inherited.addedRows,
               addedGroups: inherited.addedGroups,
               blockedRows: inherited.blockedRows,
@@ -4889,30 +6071,22 @@ export default {
           { "cache-control": "no-store" }
         );
       }
-
-      // --- Owner Campaign Group: flat roster for one campaignGroupKey on this device
-      // GET /api/owner/campaigns/group?campaignGroupKey=<key>
       if (normPath === "/api/owner/campaigns/group" && req.method === "GET") {
         const sess = await requireOwnerSession(req, env);
         if (sess instanceof Response) return sess;
-
         const ulid = String(sess.ulid || "").trim();
         const campaignGroupKey = String(url.searchParams.get("campaignGroupKey") || "").trim();
         if (!campaignGroupKey) {
           return json({ error: { code: "invalid_request", message: "campaignGroupKey required" } }, 400, { "cache-control": "no-store" });
         }
-
         const eligible = await eligibleLocationsForRequest(req, env, ulid);
         const items = [];
-
         for (const loc of eligible) {
-          const histRaw = await env.KV_STATUS.get(campaignsByUlidKey(loc.ulid), { type: "json" }) as any;
-          const rows: any[] = Array.isArray(histRaw) ? histRaw : [];
-
-          const row = [...rows].reverse().find((r: any) =>
-            String(r?.campaignGroupKey || "").trim() === campaignGroupKey
+          const histRaw = await env.KV_STATUS.get(campaignsByUlidKey(loc.ulid), { type: "json" });
+          const rows = Array.isArray(histRaw) ? histRaw : [];
+          const row = [...rows].reverse().find(
+            (r) => String(r?.campaignGroupKey || "").trim() === campaignGroupKey
           );
-
           if (row) {
             items.push({
               ulid: loc.ulid,
@@ -4935,24 +6109,17 @@ export default {
             });
           }
         }
-
         return json(
           { campaignGroupKey, items },
           200,
           { "cache-control": "no-store" }
         );
       }
-      
-      // --- Owner Campaigns: upsert draft for this session-bound ULID
-      // POST /api/owner/campaigns/draft  body: CampaignRow-like (slug + dates + rules)
-      // Stores: campaigns:draft:<ULID>
       if (normPath === "/api/owner/campaigns/draft" && req.method === "POST") {
         const sess = await requireOwnerSession(req, env);
         if (sess instanceof Response) return sess;
         const ulid = String(sess.ulid || "").trim();
-
-        const body = await req.json().catch(() => ({})) as any;
-
+        const body = await req.json().catch(() => ({}));
         const campaignKey = String(body?.campaignKey || "").trim();
         const startDate = String(body?.startDate || "").trim();
         const endDate = String(body?.endDate || "").trim();
@@ -4960,26 +6127,19 @@ export default {
         const planMode = normalizePlanMode(body?.planMode, body?.campaignPreset);
         const campaignPreset = planMode === "managed_presence" ? "visibility" : "promotion";
         const requestedPlan = planDefinitionForCode(body?.planCode) || await currentPlanForUlid(env, ulid);
-
         if (!campaignKey) {
           return json({ error: { code: "invalid_request", message: "campaignKey required" } }, 400, { "cache-control": "no-store" });
         }
         if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
           return json({ error: { code: "invalid_request", message: "startDate/endDate must be YYYY-MM-DD" } }, 400, { "cache-control": "no-store" });
         }
-
         const eligibleLocations = await eligibleLocationsForRequest(req, env, ulid);
         const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
         const eligibleUlids = eligibleLocations.map((x) => x.ulid);
-
         if (scope !== "single" && Number(requestedPlan?.maxPublishedLocations || 0) <= 1) {
           return json(buildPlanUpgradeErrorBody(requestedPlan, scope, 2), 409, { "cache-control": "no-store" });
         }
-
-        const selectedLocationULIDs: string[] = Array.isArray(body?.selectedLocationULIDs)
-          ? Array.from(new Set(body.selectedLocationULIDs.map((x: any) => String(x || "").trim()).filter(Boolean))) as string[]
-          : [];
-
+        const selectedLocationULIDs = Array.isArray(body?.selectedLocationULIDs) ? Array.from(new Set(body.selectedLocationULIDs.map((x) => String(x || "").trim()).filter(Boolean))) : [];
         if (scope === "selected") {
           if (!selectedLocationULIDs.length) {
             return json({ error: { code: "invalid_request", message: "selected scope requires at least one location" } }, 400, { "cache-control": "no-store" });
@@ -4990,17 +6150,10 @@ export default {
             }
           }
         }
-
-        const requestedLocations = scope === "selected"
-          ? selectedLocationULIDs.length
-          : scope === "all"
-            ? (eligibleUlids.length || 1)
-            : 1;
-
+        const requestedLocations = scope === "selected" ? selectedLocationULIDs.length : scope === "all" ? eligibleUlids.length || 1 : 1;
         if (Number(requestedPlan?.maxPublishedLocations || 0) > 0 && requestedLocations > Number(requestedPlan?.maxPublishedLocations || 0)) {
           return json(buildPlanUpgradeErrorBody(requestedPlan, scope, requestedLocations), 409, { "cache-control": "no-store" });
         }
-
         const draft = {
           ...body,
           locationID: ulid,
@@ -5013,60 +6166,44 @@ export default {
           startDate,
           endDate,
           status: "Draft",
-          updatedAt: new Date().toISOString()
+          updatedAt: (/* @__PURE__ */ new Date()).toISOString()
         };
-
         const draftKey = `campaigns:draft:${ulid}`;
         await env.KV_STATUS.put(draftKey, JSON.stringify(draft));
-
         return json({ ok: true, ulid, draftKey: `campaigns:draft:<ULID>` }, 200, { "cache-control": "no-store" });
       }
-
-      // --- Public Campaigns: create checkout session and persist draft without requiring owner session
-      // POST /api/campaigns/checkout
-      //   existing route: { locationID:"<slug>", draft:{...}, planCode?:string }
-      //   brand-new route: { draftULID:"<ULID>", draftSessionId:"<opaque>", draft:{...}, planCode?:string }
       if (normPath === "/api/campaigns/checkout" && req.method === "POST") {
-        const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
-
-        const body = await req.json().catch(() => ({})) as any;
+        const noStore2 = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
+        const body = await req.json().catch(() => ({}));
         const locationSlug = String(body?.locationID || "").trim();
         const draftULID = String(body?.draftULID || "").trim();
         const draftSessionId = String(body?.draftSessionId || "").trim();
-        const draftIn = (body?.draft && typeof body.draft === "object") ? body.draft : {};
+        const draftIn = body?.draft && typeof body.draft === "object" ? body.draft : {};
         const planMode = normalizePlanMode(body?.planMode, body?.campaignPreset);
         const requiresCampaignDraft = planMode === "campaign_with_promo_qr";
-
         const target = await resolveTargetIdentity(
           env,
           { locationID: locationSlug, draftULID, draftSessionId },
           { validateDraft: !!draftULID || !!draftSessionId }
         ).catch(() => null);
-
         if (!target) {
           return json(
             { error: { code: "invalid_request", message: "valid locationID or draftULID + draftSessionId required" } },
             400,
-            noStore
+            noStore2
           );
         }
-
         let campaignKey = "";
         let startDate = "";
         let endDate = "";
-
         if (requiresCampaignDraft) {
-          // Validate campaign draft minimally only for Campaign with Promo QR.
           campaignKey = String(draftIn?.campaignKey || "").trim();
           startDate = String(draftIn?.startDate || "").trim();
           endDate = String(draftIn?.endDate || "").trim();
-
-          if (!campaignKey) return json({ error:{ code:"invalid_request", message:"draft.campaignKey required for Campaign with Promo QR" } }, 400, noStore);
+          if (!campaignKey) return json({ error: { code: "invalid_request", message: "draft.campaignKey required for Campaign with Promo QR" } }, 400, noStore2);
           if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
-            return json({ error:{ code:"invalid_request", message:"draft.startDate/endDate must be YYYY-MM-DD for Campaign with Promo QR" } }, 400, noStore);
+            return json({ error: { code: "invalid_request", message: "draft.startDate/endDate must be YYYY-MM-DD for Campaign with Promo QR" } }, 400, noStore2);
           }
-
-          // Persist campaign draft server-side, keyed by authoritative ULID.
           const draft = {
             ...draftIn,
             locationID: target.ulid,
@@ -5075,17 +6212,12 @@ export default {
             endDate,
             planMode,
             status: "Draft",
-            updatedAt: new Date().toISOString()
+            updatedAt: (/* @__PURE__ */ new Date()).toISOString()
           };
-
           await env.KV_STATUS.put(`campaigns:draft:${target.ulid}`, JSON.stringify(draft));
         }
-
-        const selectedLocationULIDs: string[] = Array.isArray(body?.selectedLocationULIDs)
-          ? Array.from(new Set(body.selectedLocationULIDs.map((x: any) => String(x || "").trim()).filter(Boolean))) as string[]
-          : [];
-
-        const stripeReq: any = {
+        const selectedLocationULIDs = Array.isArray(body?.selectedLocationULIDs) ? Array.from(new Set(body.selectedLocationULIDs.map((x) => String(x || "").trim()).filter(Boolean))) : [];
+        const stripeReq = {
           initiationType: "public",
           ownershipSource: "plan",
           navigenVersion: "phase5",
@@ -5094,72 +6226,50 @@ export default {
           campaignScope: normCampaignScope(body?.campaignScope),
           selectedLocationULIDs
         };
-
         if (requiresCampaignDraft) {
           stripeReq.campaignKey = campaignKey;
         }
-
         if (target.route === "existing-location") {
           stripeReq.locationID = locationSlug;
         } else {
           stripeReq.draftULID = target.draftULID;
           stripeReq.draftSessionId = target.draftSessionId;
         }
-
-        return await createCampaignCheckoutSession(env, req, stripeReq, noStore);
+        return await createCampaignCheckoutSession(env, req, stripeReq, noStore2);
       }
-
-      // --- Owner Campaigns: create checkout session from the current draft (session-bound)
-      // POST /api/owner/campaigns/checkout  body: { locationID: "<slug>", planCode?: string }      
       if (normPath === "/api/owner/campaigns/checkout" && req.method === "POST") {
-        const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
-
+        const noStore2 = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
         const sess = await requireOwnerSession(req, env);
         if (sess instanceof Response) return sess;
         const ulid = String(sess.ulid || "").trim();
-
-        const body = await req.json().catch(() => ({})) as any;
+        const body = await req.json().catch(() => ({}));
         const locationSlug = String(body?.locationID || "").trim();
         const planMode = normalizePlanMode(body?.planMode, body?.campaignPreset);
         const requiresCampaignDraft = planMode === "campaign_with_promo_qr";
-
         if (!locationSlug) {
-          return json({ error: { code: "invalid_request", message: "locationID (slug) required" } }, 400, noStore);
+          return json({ error: { code: "invalid_request", message: "locationID (slug) required" } }, 400, noStore2);
         }
-
-        // Zero-trust: verify slug resolves to THIS session ULID.
         if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(locationSlug)) {
-          return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore);
+          return json({ error: { code: "invalid_request", message: "locationID must be a slug, not a ULID" } }, 400, noStore2);
         }
-
         const resolved = await resolveUid(locationSlug, env).catch(() => null);
         if (!resolved || String(resolved).trim() !== ulid) {
-          return new Response("Denied", { status: 401, headers: noStore });
+          return new Response("Denied", { status: 401, headers: noStore2 });
         }
-
         let campaignKey = "";
         let campaignScope = normCampaignScope(body?.campaignScope);
-        let selectedLocationULIDs: string[] = Array.isArray(body?.selectedLocationULIDs)
-          ? Array.from(new Set(body.selectedLocationULIDs.map((x: any) => String(x || "").trim()).filter(Boolean))) as string[]
-          : [];
-
+        let selectedLocationULIDs = Array.isArray(body?.selectedLocationULIDs) ? Array.from(new Set(body.selectedLocationULIDs.map((x) => String(x || "").trim()).filter(Boolean))) : [];
         if (requiresCampaignDraft) {
           const draftKey = `campaigns:draft:${ulid}`;
-          const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+          const draft = await env.KV_STATUS.get(draftKey, { type: "json" });
           campaignKey = String(draft?.campaignKey || "").trim();
-
           if (!campaignKey) {
-            return json({ error: { code: "invalid_request", message: "no draft Campaign with Promo QR found for this location" } }, 400, noStore);
+            return json({ error: { code: "invalid_request", message: "no draft Campaign with Promo QR found for this location" } }, 400, noStore2);
           }
-
           campaignScope = normCampaignScope(draft?.campaignScope);
-          selectedLocationULIDs = Array.isArray(draft?.selectedLocationULIDs)
-            ? Array.from(new Set(draft.selectedLocationULIDs.map((x: any) => String(x || "").trim()).filter(Boolean))) as string[]
-            : [];
+          selectedLocationULIDs = Array.isArray(draft?.selectedLocationULIDs) ? Array.from(new Set(draft.selectedLocationULIDs.map((x) => String(x || "").trim()).filter(Boolean))) : [];
         }
-
-        // Delegate to the same Stripe session creator used by /api/stripe/create-checkout-session.
-        const stripeReq: any = {
+        const stripeReq = {
           locationID: locationSlug,
           initiationType: "owner",
           ownershipSource: "plan",
@@ -5169,79 +6279,64 @@ export default {
           campaignScope,
           selectedLocationULIDs
         };
-
         if (requiresCampaignDraft) {
           stripeReq.campaignKey = campaignKey;
         }
-
         return await createCampaignCheckoutSession(env, req, stripeReq, { "cache-control": "no-store" });
       }
-
-      // --- Owner Campaigns: promote draft → active after Stripe checkout
-      // POST /api/owner/campaigns/promote  body: { sessionId: "cs_..." }
-      // Requires owner session; also verifies Stripe session is paid/complete.
       if (normPath === "/api/owner/campaigns/promote" && req.method === "POST") {
-        const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
-
+        const noStore2 = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
         const sess = await requireOwnerSession(req, env);
         if (sess instanceof Response) return sess;
         const ulid = String(sess.ulid || "").trim();
-
-        const body = await req.json().catch(() => ({})) as any;
+        const body = await req.json().catch(() => ({}));
         const cs = String(body?.sessionId || "").trim();
         if (!/^cs_(live|test)_/i.test(cs)) {
-          return json({ error: { code: "invalid_request", message: "sessionId (cs_...) required" } }, 400, noStore);
+          return json({ error: { code: "invalid_request", message: "sessionId (cs_...) required" } }, 400, noStore2);
         }
-
-        const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
-        if (!sk) return json({ error: { code: "misconfigured", message: "STRIPE_SECRET_KEY not set" } }, 500, noStore);
-
+        const sk = String(env.STRIPE_SECRET_KEY || "").trim();
+        if (!sk) return json({ error: { code: "misconfigured", message: "STRIPE_SECRET_KEY not set" } }, 500, noStore2);
         const stripeUrl = `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(cs)}?expand[]=payment_intent`;
         const r = await fetch(stripeUrl, { headers: { "Authorization": `Bearer ${sk}` } });
         const txt = await r.text();
-        let out: any = null;
-        try { out = JSON.parse(txt); } catch { out = null; }
-
-        if (!r.ok || !out) {
-          return json({ error: { code: "stripe_error", message: String(out?.error?.message || "Stripe session fetch failed") } }, 502, noStore);
+        let out = null;
+        try {
+          out = JSON.parse(txt);
+        } catch {
+          out = null;
         }
-
+        if (!r.ok || !out) {
+          return json({ error: { code: "stripe_error", message: String(out?.error?.message || "Stripe session fetch failed") } }, 502, noStore2);
+        }
         const status = String(out?.status || "").toLowerCase();
         const payStatus = String(out?.payment_status || "").toLowerCase();
         if (status !== "complete" || payStatus !== "paid") {
-          return json({ error: { code: "not_paid", message: "checkout not complete/paid" } }, 409, noStore);
+          return json({ error: { code: "not_paid", message: "checkout not complete/paid" } }, 409, noStore2);
         }
-
         const pi = out?.payment_intent;
-        const meta = (pi && pi.metadata) ? pi.metadata : (out.metadata || {});
+        const meta = pi && pi.metadata ? pi.metadata : out.metadata || {};
         const locationSlug = String(meta?.locationID || "").trim();
         const campaignKey = String(meta?.campaignKey || "").trim();
-
         if (!locationSlug || !campaignKey) {
-          return json({ error: { code: "invalid_state", message: "missing metadata.locationID/campaignKey" } }, 500, noStore);
+          return json({ error: { code: "invalid_state", message: "missing metadata.locationID/campaignKey" } }, 500, noStore2);
         }
-
         const resolved = await resolveUid(locationSlug, env).catch(() => null);
         if (!resolved || String(resolved).trim() !== ulid) {
-          return new Response("Denied", { status: 401, headers: noStore });
+          return new Response("Denied", { status: 401, headers: noStore2 });
         }
-
         const draftKey = `campaigns:draft:${ulid}`;
-        const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+        const draft = await env.KV_STATUS.get(draftKey, { type: "json" });
         if (!draft) {
-          return json({ error: { code: "not_found", message: "draft not found" } }, 404, noStore);
+          return json({ error: { code: "not_found", message: "draft not found" } }, 404, noStore2);
         }
-
         if (String(draft?.campaignKey || "").trim() !== campaignKey) {
-          return json({ error: { code: "invalid_state", message: "draft campaignKey mismatch" } }, 409, noStore);
+          return json({ error: { code: "invalid_state", message: "draft campaignKey mismatch" } }, 409, noStore2);
         }
-
         const paidPriceId = await fetchStripeCheckoutLineItemPriceId(sk, cs).catch(() => "");
         const paidPlan = paidPriceId ? PRICE_ID_TO_PLAN[paidPriceId] : null;
         if (!paidPlan) {
-          return json({ error: { code: "invalid_state", message: "paid checkout session has no recognized Plan tier" } }, 409, noStore);
+          return json({ error: { code: "invalid_state", message: "paid checkout session has no recognized Plan tier" } }, 409, noStore2);
         }
-
         const promoted = await promoteCampaignDraftToActiveRows({
           req,
           env,
@@ -5253,13 +6348,10 @@ export default {
           paidPlan,
           logTag: "owner_campaigns_promote"
         });
-
         if ("body" in promoted) {
-          return json(promoted.body, promoted.status, noStore);
+          return json(promoted.body, promoted.status, noStore2);
         }
-
         await env.KV_STATUS.delete(draftKey);
-
         return json({
           ok: true,
           ulid,
@@ -5268,152 +6360,116 @@ export default {
           includedCount: promoted.includedTargets.length
         }, 200, { "cache-control": "no-store" });
       }
-
-      // --- Owner Campaigns: suspend/resume a campaign row or campaign group (KV-authoritative)
-      // POST /api/owner/campaigns/suspend body: { campaignKey?: "<key>", campaignGroupKey?: "<group>", action: "suspend"|"resume" }
       if (normPath === "/api/owner/campaigns/suspend" && req.method === "POST") {
-        const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
-
+        const noStore2 = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
         const sess = await requireOwnerSession(req, env);
         if (sess instanceof Response) return sess;
         const ulid = String(sess.ulid || "").trim();
-
-        const body = await req.json().catch(() => ({})) as any;
+        const body = await req.json().catch(() => ({}));
         const campaignKey = String(body?.campaignKey || "").trim();
         const campaignGroupKey = String(body?.campaignGroupKey || "").trim();
         const action = String(body?.action || "suspend").trim().toLowerCase();
-
         if (!campaignKey && !campaignGroupKey) {
-          return json({ error: { code: "invalid_request", message: "campaignKey or campaignGroupKey required" } }, 400, noStore);
+          return json({ error: { code: "invalid_request", message: "campaignKey or campaignGroupKey required" } }, 400, noStore2);
         }
         if (action !== "suspend" && action !== "resume") {
-          return json({ error: { code: "invalid_request", message: "action must be suspend|resume" } }, 400, noStore);
+          return json({ error: { code: "invalid_request", message: "action must be suspend|resume" } }, 400, noStore2);
         }
-
-        const applyToRows = async (targetUlid: string): Promise<boolean> => {
+        const applyToRows = /* @__PURE__ */ __name(async (targetUlid) => {
           const histKey = campaignsByUlidKey(targetUlid);
-          const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
-          const arr: any[] = Array.isArray(hist) ? hist : [];
-          let changed = false;
-
-          const next = arr.map((row: any) => {
+          const hist = await env.KV_STATUS.get(histKey, { type: "json" });
+          const arr = Array.isArray(hist) ? hist : [];
+          let changed2 = false;
+          const next = arr.map((row) => {
             const sameKey = campaignKey && String(row?.campaignKey || "").trim() === campaignKey;
             const sameGroup = campaignGroupKey && String(row?.campaignGroupKey || "").trim() === campaignGroupKey;
             if (!sameKey && !sameGroup) return row;
-
-            changed = true;
+            changed2 = true;
             const out = { ...row };
             if (action === "suspend") {
               out.statusOverride = "Suspended";
-              out.suspendedAt = new Date().toISOString();
+              out.suspendedAt = (/* @__PURE__ */ new Date()).toISOString();
             } else {
               out.statusOverride = "";
               delete out.suspendedAt;
             }
             return out;
           });
-
-          if (changed) {
+          if (changed2) {
             await env.KV_STATUS.put(histKey, JSON.stringify(next));
           }
-          return changed;
-        };
-
+          return changed2;
+        }, "applyToRows");
         if (campaignGroupKey) {
           const eligible = await eligibleLocationsForRequest(req, env, ulid);
           let affected = 0;
           for (const loc of eligible) {
             if (await applyToRows(loc.ulid)) affected += 1;
           }
-          return json({ ok: true, ulid, campaignGroupKey, action, affected }, 200, noStore);
+          return json({ ok: true, ulid, campaignGroupKey, action, affected }, 200, noStore2);
         }
-
         const changed = await applyToRows(ulid);
         if (!changed) {
-          return json({ error: { code: "not_found", message: "campaign not found for this location" } }, 404, noStore);
+          return json({ error: { code: "not_found", message: "campaign not found for this location" } }, 404, noStore2);
         }
-
-        return json({ ok: true, ulid, campaignKey, action }, 200, noStore);
+        return json({ ok: true, ulid, campaignKey, action }, 200, noStore2);
       }
-
-      // --- Owner Campaign Group: suspend/resume selected included locations only
-      // POST /api/owner/campaigns/suspend-selected
-      // body: { campaignGroupKey: "<group>", action: "suspend"|"resume", ulids: ["<ULID>", ...] }
       if (normPath === "/api/owner/campaigns/suspend-selected" && req.method === "POST") {
-        const noStore = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
-
+        const noStore2 = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
         const sess = await requireOwnerSession(req, env);
         if (sess instanceof Response) return sess;
-
         const currentUlid = String(sess.ulid || "").trim();
-        const body = await req.json().catch(() => ({})) as any;
-
+        const body = await req.json().catch(() => ({}));
         const campaignGroupKey = String(body?.campaignGroupKey || "").trim();
         const action = String(body?.action || "").trim().toLowerCase();
         const rawUlids = Array.isArray(body?.ulids) ? body.ulids : [];
-
         if (!campaignGroupKey) {
-          return json({ error: { code: "invalid_request", message: "campaignGroupKey required" } }, 400, noStore);
+          return json({ error: { code: "invalid_request", message: "campaignGroupKey required" } }, 400, noStore2);
         }
         if (action !== "suspend" && action !== "resume") {
-          return json({ error: { code: "invalid_request", message: "action must be suspend|resume" } }, 400, noStore);
+          return json({ error: { code: "invalid_request", message: "action must be suspend|resume" } }, 400, noStore2);
         }
-
         const eligible = await eligibleLocationsForRequest(req, env, currentUlid);
         const eligibleSet = new Set(eligible.map((x) => String(x.ulid || "").trim()));
-        const targetUlids = Array.from(new Set(rawUlids.map((x: any) => String(x || "").trim()).filter(Boolean)))
-          .filter((id) => eligibleSet.has(id));
-
+        const targetUlids = Array.from(new Set(rawUlids.map((x) => String(x || "").trim()).filter(Boolean))).filter((id) => eligibleSet.has(id));
         if (!targetUlids.length) {
-          return json({ error: { code: "invalid_request", message: "no eligible selected locations" } }, 400, noStore);
+          return json({ error: { code: "invalid_request", message: "no eligible selected locations" } }, 400, noStore2);
         }
-
         let affected = 0;
-
         for (const targetUlid of targetUlids) {
           const histKey = campaignsByUlidKey(targetUlid);
-          const histRaw = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
-          const arr: any[] = Array.isArray(histRaw) ? histRaw : [];
-
+          const histRaw = await env.KV_STATUS.get(histKey, { type: "json" });
+          const arr = Array.isArray(histRaw) ? histRaw : [];
           let changed = false;
-          const next = arr.map((row: any) => {
+          const next = arr.map((row) => {
             if (String(row?.campaignGroupKey || "").trim() !== campaignGroupKey) return row;
-
             changed = true;
             const out = { ...row };
             if (action === "suspend") {
               out.statusOverride = "Suspended";
-              out.suspendedAt = new Date().toISOString();
+              out.suspendedAt = (/* @__PURE__ */ new Date()).toISOString();
             } else {
               out.statusOverride = "";
               delete out.suspendedAt;
             }
             return out;
           });
-
           if (changed) {
             await env.KV_STATUS.put(histKey, JSON.stringify(next));
             affected += 1;
           }
         }
-
         return json(
           { ok: true, campaignGroupKey, action, affected, ulids: targetUlids },
           200,
-          noStore
+          noStore2
         );
       }
-      
-      // --- Owner session diag: /api/_diag/opsess (safe; no secrets)
       if (normPath === "/api/_diag/opsess" && req.method === "GET") {
         const cookieHdr = req.headers.get("Cookie") || "";
         const sid = readCookie(cookieHdr, "op_sess");
-
         const sessKey = sid ? `opsess:${sid}` : "";
-        const sess = sid
-          ? await env.KV_STATUS.get(sessKey, { type: "json" })
-          : null;
-
+        const sess = sid ? await env.KV_STATUS.get(sessKey, { type: "json" }) : null;
         return json(
           {
             hasCookieHeader: !!cookieHdr,
@@ -5422,50 +6478,29 @@ export default {
             opSessLen: sid ? String(sid).length : 0,
             kvHit: !!sess,
             kvKey: sessKey ? `opsess:<redacted>` : "",
-            ulid: (sess && typeof sess === "object") ? String((sess as any).ulid || "") : ""
+            ulid: sess && typeof sess === "object" ? String(sess.ulid || "") : ""
           },
           200,
           { "cache-control": "no-store", "x-ng-worker": "navigen-api" }
         );
       }
-
-      // --- Owner exchange from Stripe Checkout (Phase 5: sid → cookie session)
       if (normPath === "/owner/stripe-exchange" && req.method === "GET") {
         return await handleOwnerStripeExchange(req, env);
       }
-
-      // --- Restore by PaymentIntent id (pi_...) for cross-device recovery
       if (normPath === "/owner/restore" && req.method === "GET") {
         const u = new URL(req.url);
-        const normalizeRestoreId = (value: unknown) =>
-          String(value || "")
-            .trim()
-            .replace(/^["'<]+/, "")
-            .replace(/[>"']+$/, "");
-
+        const normalizeRestoreId = /* @__PURE__ */ __name((value) => String(value || "").trim().replace(/^["'<]+/, "").replace(/[>"']+$/, ""), "normalizeRestoreId");
         const pi = normalizeRestoreId(
-          u.searchParams.get("pi") ||
-          u.searchParams.get("payment_intent") ||
-          u.searchParams.get("paymentIntent") ||
-          u.searchParams.get("payment_intent_id")
+          u.searchParams.get("pi") || u.searchParams.get("payment_intent") || u.searchParams.get("paymentIntent") || u.searchParams.get("payment_intent_id")
         );
-
         const sidParam = normalizeRestoreId(
-          u.searchParams.get("sid") ||
-          u.searchParams.get("session_id") ||
-          u.searchParams.get("sessionId") ||
-          u.searchParams.get("checkout_session") ||
-          u.searchParams.get("checkoutSession")
+          u.searchParams.get("sid") || u.searchParams.get("session_id") || u.searchParams.get("sessionId") || u.searchParams.get("checkout_session") || u.searchParams.get("checkoutSession")
         );
-
         const nextRaw = String(u.searchParams.get("next") || "").trim();
-
         const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
         const jsonMode = u.searchParams.get("json") === "1" || /\bapplication\/json\b/i.test(String(req.headers.get("Accept") || ""));
-
         const restoreByPi = /^pi_/i.test(pi);
         const restoreBySid = /^cs_/i.test(sidParam);
-
         if (!restoreByPi && !restoreBySid) {
           if (jsonMode) {
             return json(
@@ -5486,38 +6521,26 @@ export default {
               noStoreHeaders
             );
           }
-
           return new Response("Denied", { status: 400, headers: noStoreHeaders });
         }
-
-        const isSafeNext = (p: string) =>
-          p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
-
-        const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "";
+        const isSafeNext = /* @__PURE__ */ __name((p) => p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\"), "isSafeNext");
+        const next = nextRaw && isSafeNext(nextRaw) ? nextRaw : "";
         let redirectHint = "";
-
-        const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+        const sk = String(env.STRIPE_SECRET_KEY || "").trim();
         if (!sk) return new Response("Misconfigured", { status: 500, headers: noStoreHeaders });
-
-        // Find the Checkout Session by payment_intent, then reconcile Plan coverage idempotently.
-        let sess: any = null;
+        let sess = null;
         let ulid = "";
         let locationID = "";
-        let exclusiveUntil = new Date(0);
-
+        let exclusiveUntil = /* @__PURE__ */ new Date(0);
         try {
-          sess = restoreBySid
-            ? await fetchStripeCheckoutSession(sk, sidParam)
-            : await fetchStripeCheckoutSessionByPaymentIntent(sk, pi);
-
+          sess = restoreBySid ? await fetchStripeCheckoutSession(sk, sidParam) : await fetchStripeCheckoutSessionByPaymentIntent(sk, pi);
           const reconciled = await reconcilePaidCheckoutSessionPlan(env, sk, sess, { logTag: "owner_restore" });
           ulid = String(reconciled.primaryUlid || "").trim();
           locationID = String(reconciled.locationID || "").trim();
           exclusiveUntil = new Date(String(reconciled.plan.expiresAt || ""));
-        } catch (e: any) {
+        } catch (e) {
           const err = String(e?.message || e || "");
           console.error("owner_restore: plan_reconcile_failed", { pi, sid: sidParam, err });
-
           if (jsonMode) {
             return json(
               {
@@ -5532,10 +6555,8 @@ export default {
               noStoreHeaders
             );
           }
-
           return new Response("Denied", { status: 403, headers: noStoreHeaders });
         }
-
         if (!ULID_RE.test(ulid) || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
           if (jsonMode) {
             return json(
@@ -5552,25 +6573,17 @@ export default {
               noStoreHeaders
             );
           }
-
           return new Response("Denied", { status: 403, headers: noStoreHeaders });
-        }           
-
-        // Mint op_sess exactly like handleOwnerStripeExchange
+        }
         const sidBytes = new Uint8Array(18);
-        (crypto as any).getRandomValues(sidBytes);
+        crypto.getRandomValues(sidBytes);
         const sessionId = bytesToB64url(sidBytes);
-
-        const createdAt = new Date();
+        const createdAt = /* @__PURE__ */ new Date();
         const expiresAt = exclusiveUntil;
-        const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - createdAt.getTime()) / 1000));
-
+        const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - createdAt.getTime()) / 1e3));
         const sessKey = `opsess:${sessionId}`;
         const sessVal = { ver: 1, ulid, createdAt: createdAt.toISOString(), expiresAt: expiresAt.toISOString() };
-
         await env.KV_STATUS.put(sessKey, JSON.stringify(sessVal), { expirationTtl: Math.max(60, maxAge) });
-
-        // Register to device (mint ng_dev if missing) so Owner Center works on this device
         let devSetCookie = "";
         try {
           let dev = readDeviceId(req);
@@ -5579,24 +6592,24 @@ export default {
             dev = minted.dev;
             devSetCookie = minted.cookie;
           }
-
           if (dev) {
             await env.KV_STATUS.put(devSessKey(dev, ulid), sessionId, { expirationTtl: Math.max(60, maxAge) });
             const idxKey = devIndexKey(dev);
             const rawIdx = await env.KV_STATUS.get(idxKey, "text");
-            let arr: string[] = [];
-            try { arr = rawIdx ? JSON.parse(rawIdx) : []; } catch { arr = []; }
+            let arr = [];
+            try {
+              arr = rawIdx ? JSON.parse(rawIdx) : [];
+            } catch {
+              arr = [];
+            }
             if (!Array.isArray(arr)) arr = [];
             if (!arr.includes(ulid)) arr.unshift(ulid);
             arr = arr.slice(0, 24);
             await env.KV_STATUS.put(idxKey, JSON.stringify(arr), { expirationTtl: 60 * 60 * 24 * 366 });
           }
-        } catch {}
-
-        // If this checkout session funded a campaign, promote draft now and enrich redirect with campaign hint.
-        // This avoids "sticky wrong" LPM badge rendering after redirect.
-        redirectHint = await promoteCampaignDraftAndBuildRedirectHint(req, sess, ulid, env, "owner_restore");        
-        
+        } catch {
+        }
+        redirectHint = await promoteCampaignDraftAndBuildRedirectHint(req, sess, ulid, env, "owner_restore");
         const cookie = cookieSerialize("op_sess", sessionId, {
           Path: "/",
           HttpOnly: true,
@@ -5604,29 +6617,24 @@ export default {
           SameSite: "Lax",
           "Max-Age": maxAge
         });
-
         const redirectTarget = (() => {
           const base = next || `/dash/${encodeURIComponent(ulid)}`;
           if (!redirectHint) return base;
-
-          const u = new URL(base, "https://navigen.io");
-          if (!u.searchParams.get("ce")) {
+          const u2 = new URL(base, "https://navigen.io");
+          if (!u2.searchParams.get("ce")) {
             const parts = redirectHint.split("&");
-            parts.forEach(kv => {
+            parts.forEach((kv) => {
               const [k, v] = kv.split("=");
-              if (k && v && !u.searchParams.get(k)) u.searchParams.set(k, decodeURIComponent(v));
-              else if (k && !u.searchParams.get(k)) u.searchParams.set(k, "1");
+              if (k && v && !u2.searchParams.get(k)) u2.searchParams.set(k, decodeURIComponent(v));
+              else if (k && !u2.searchParams.get(k)) u2.searchParams.set(k, "1");
             });
           }
-          return u.pathname + u.search + u.hash;
+          return u2.pathname + u2.search + u2.hash;
         })();
-
         const headers = new Headers({ ...noStoreHeaders });
         headers.append("Set-Cookie", cookie);
         if (devSetCookie) headers.append("Set-Cookie", devSetCookie);
-
         console.info("owner_restore_success", { ulid, locationID, pi, sid: sidParam, sessionId });
-
         if (jsonMode) {
           headers.set("Content-Type", "application/json; charset=utf-8");
           return new Response(JSON.stringify({
@@ -5636,25 +6644,15 @@ export default {
             redirectTo: redirectTarget
           }), { status: 200, headers });
         }
-
         headers.set("Location", redirectTarget);
         return new Response(null, { status: 302, headers });
       }
-
-      // --- Owner session clear: /owner/clear-session
-      // Clears the active op_sess cookie on this device (HttpOnly, so JS can't delete it).
       if (normPath === "/owner/clear-session" && req.method === "GET") {
         const u = new URL(req.url);
         const nextRaw = String(u.searchParams.get("next") || "").trim();
-
-        const isSafeNext = (p: string) =>
-          p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
-
-        const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : "/";
-
+        const isSafeNext = /* @__PURE__ */ __name((p) => p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\"), "isSafeNext");
+        const next = nextRaw && isSafeNext(nextRaw) ? nextRaw : "/";
         const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
-
-        // Expire cookie. We do not need to delete opsess:<id> in KV; it expires naturally.
         const cookie = cookieSerialize("op_sess", "", {
           Path: "/",
           HttpOnly: true,
@@ -5662,7 +6660,6 @@ export default {
           SameSite: "Lax",
           "Max-Age": 0
         });
-
         return new Response(null, {
           status: 302,
           headers: {
@@ -5672,40 +6669,26 @@ export default {
           }
         });
       }
-
-      // --- Owner Center: switch active op_sess to a device-bound location
       if (normPath === "/owner/switch" && req.method === "GET") {
         const u = new URL(req.url);
         const ulid = String(u.searchParams.get("ulid") || "").trim();
         const nextRaw = String(u.searchParams.get("next") || "").trim();
-
         const noStoreHeaders = { "cache-control": "no-store", "Referrer-Policy": "no-referrer" };
-
         if (!ULID_RE.test(ulid)) return new Response("Denied", { status: 400, headers: noStoreHeaders });
-
-        const isSafeNext = (p: string) =>
-          p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\");
-
-        const next = (nextRaw && isSafeNext(nextRaw)) ? nextRaw : `/dash/${encodeURIComponent(ulid)}`;
-
+        const isSafeNext = /* @__PURE__ */ __name((p) => p.startsWith("/") && !p.startsWith("//") && !p.includes("://") && !p.includes("\\"), "isSafeNext");
+        const next = nextRaw && isSafeNext(nextRaw) ? nextRaw : `/dash/${encodeURIComponent(ulid)}`;
         const dev = readDeviceId(req);
         if (!dev) return new Response("Denied", { status: 401, headers: noStoreHeaders });
-
         const sid = await env.KV_STATUS.get(devSessKey(dev, ulid), "text");
         if (!sid) return new Response("Denied", { status: 403, headers: noStoreHeaders });
-
-        // Validate session still exists and is not expired
         const sessKey = `opsess:${sid}`;
-        const sess = await env.KV_STATUS.get(sessKey, { type: "json" }) as OwnerSession | null;
+        const sess = await env.KV_STATUS.get(sessKey, { type: "json" });
         if (!sess || !sess.ulid) return new Response("Denied", { status: 403, headers: noStoreHeaders });
-
         const exp = new Date(String(sess.expiresAt || ""));
         if (Number.isNaN(exp.getTime()) || exp.getTime() <= Date.now()) {
           return new Response("Denied", { status: 401, headers: noStoreHeaders });
         }
-
-        // Set cookie to the mapped session id
-        const maxAge = Math.max(0, Math.floor((exp.getTime() - Date.now()) / 1000));
+        const maxAge = Math.max(0, Math.floor((exp.getTime() - Date.now()) / 1e3));
         const cookie = cookieSerialize("op_sess", sid, {
           Path: "/",
           HttpOnly: true,
@@ -5713,7 +6696,6 @@ export default {
           SameSite: "Lax",
           "Max-Age": maxAge
         });
-
         return new Response(null, {
           status: 302,
           headers: {
@@ -5723,88 +6705,55 @@ export default {
           }
         });
       }
-
-      // --- OWN-EDIT v1: paid owner public profile presentation update
       if (normPath === "/api/profile/update" && req.method === "POST") {
         return await handleProfileUpdate(req, env);
       }
-
-      // --- IMG v1 media direct upload reservation: Create Location Media upload foundation
       if (normPath === "/api/media/direct-upload" && req.method === "POST") {
         return await handleMediaDirectUpload(req, env);
       }
-
-      // --- IMG v1 media completion: verify provider upload before activating manifest image
       if (normPath === "/api/media/complete" && req.method === "POST") {
         return await handleMediaComplete(req, env);
       }
-
-      // --- IMG v1 draft media abandon: clean up uploaded draft media on cancel/discard
       if (normPath === "/api/media/abandon-draft" && req.method === "POST") {
         return await handleMediaAbandonDraft(req, env);
       }
-
-      // --- IMG v1 media manifest read: manifest-first rendering foundation
       if (normPath === "/api/media/manifest" && req.method === "GET") {
         return await handleMediaManifestRead(req, env);
       }
-
-      // --- IMG v1 media delete: soft-delete manifest first, then attempt provider cleanup
       if (normPath === "/api/media/delete" && req.method === "POST") {
         return await handleMediaDelete(req, env);
       }
-
-      // --- IMG v1 media reorder: slot order determines cover/gallery roles
       if (normPath === "/api/media/reorder" && req.method === "POST") {
         return await handleMediaReorder(req, env);
       }
-      
-      // --- Location Google import autocomplete: server-side Places API New predictions
       if (normPath === "/api/location/google-import/autocomplete" && req.method === "POST") {
         return await handleGoogleImportAutocomplete(req, env);
       }
-
-      // --- Location draft read: private unpublished draft recovery by draft session
       if (normPath === "/api/location/draft" && req.method === "GET") {
         return await handleLocationDraftRead(req, env);
       }
-
-      // --- Location draft: /api/location/draft (Phase 8 private shell)
       if (normPath === "/api/location/draft" && req.method === "POST") {
         return await handleLocationDraft(req, env);
       }
-
-      // --- Location draft discard: /api/location/draft (private unpublished draft only)
       if (normPath === "/api/location/draft" && req.method === "DELETE") {
         return await handleLocationDraftDelete(req, env);
       }
-
-      // --- Location hydrate: /api/location/hydrate (Phase 8 paid replay + Phase 9 upfront Google import)
       if (normPath === "/api/location/hydrate" && req.method === "POST") {
         return await handleLocationHydrate(req, env);
       }
-
-      // --- Location publish: /api/location/publish (Phase 8 authoritative publish)
       if (normPath === "/api/location/publish" && req.method === "POST") {
         return await handleLocationPublish(req, env);
       }
-
-      // --- Stripe webhook: /api/stripe/webhook (Phase 1: ownership writer)
       if (normPath === "/api/stripe/webhook" && req.method === "POST") {
         return await handleStripeWebhook(req, env);
       }
-
-      // --- QR image: /api/qr?locationID=...&c=...&fmt=svg|png&size=512
       if (pathname === "/api/qr" && req.method === "GET") {
         return await handleQr(req, env);
       }
-
-      // --- Campaign summary (read-only): GET /api/campaign-summary?locationID=...&campaignKey=...
       if (pathname === "/api/campaign-summary" && req.method === "GET") {
         const u = new URL(req.url);
         const locationRaw = (u.searchParams.get("locationID") || "").trim();
         const campaignKeyRaw = (u.searchParams.get("campaignKey") || "").trim();
-
         if (!locationRaw || !campaignKeyRaw) {
           return json(
             { error: { code: "invalid_request", message: "locationID and campaignKey required" } },
@@ -5812,8 +6761,7 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
-        const locULID = (await resolveUid(locationRaw, env)) || locationRaw;
+        const locULID = await resolveUid(locationRaw, env) || locationRaw;
         if (!locULID) {
           return json(
             { error: { code: "invalid_request", message: "unknown location" } },
@@ -5821,7 +6769,6 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
         const plan = await readPlanEntitlementForUlid(env, locULID);
         if (!plan.planEntitled) {
           return json(
@@ -5830,32 +6777,24 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
-        const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(locULID), { type: "json" }) as any;
-        const rows: any[] = Array.isArray(rawRows) ? rawRows : [];
-
+        const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(locULID), { type: "json" });
+        const rows = Array.isArray(rawRows) ? rawRows : [];
         const nowMs = Date.now();
         const row = rows.find((r) => {
           if (!r) return false;
           if (String(r?.locationID || "").trim() !== locULID) return false;
           if (String(r?.campaignKey || "").trim() !== campaignKeyRaw) return false;
-
           const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
           if (st !== "active") return false;
-
           const rowPlanMode = normalizePlanMode(r?.planMode, r?.campaignPreset);
           if (rowPlanMode !== "campaign_with_promo_qr") return false;
-
           const sMs = parseYmdUtcMs(String(r?.startDate || ""));
           const eMs = parseYmdUtcMs(String(r?.endDate || ""));
           if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
-
           if (nowMs < sMs) return false;
-          if (nowMs > (eMs + 24 * 60 * 60 * 1000 - 1)) return false;
-
+          if (nowMs > eMs + 24 * 60 * 60 * 1e3 - 1) return false;
           return true;
         });
-
         if (!row) {
           return json(
             { error: { code: "forbidden", message: "campaign not active" } },
@@ -5863,16 +6802,10 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
         const item = await getItemById(locULID, env).catch(() => null);
         const locationName = pickName(item?.locationName) || "";
-
-        const dvRaw = (row?.campaignDiscountValue != null) ? row.campaignDiscountValue : null;
-        const discountValue =
-          (typeof dvRaw === "number") ? dvRaw :
-          (typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw))) ? Number(dvRaw) :
-          null;
-
+        const dvRaw = row?.campaignDiscountValue != null ? row.campaignDiscountValue : null;
+        const discountValue = typeof dvRaw === "number" ? dvRaw : typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw)) ? Number(dvRaw) : null;
         return json(
           {
             locationID: locationRaw,
@@ -5893,28 +6826,23 @@ export default {
           { "cache-control": "no-store" }
         );
       }
-
-      // --- Promotion QR URL: GET /api/promo-qr?locationID=... [&campaignKey=...]
-      if (pathname === "/api/promo-qr" && req.method === "GET") {        const u = new URL(req.url);
+      if (pathname === "/api/promo-qr" && req.method === "GET") {
+        const u = new URL(req.url);
         const locationRaw = (u.searchParams.get("locationID") || "").trim();
-        const campaignKeyRaw = (u.searchParams.get("campaignKey") || "").trim(); // optional
-
+        const campaignKeyRaw = (u.searchParams.get("campaignKey") || "").trim();
         if (!locationRaw) {
           return json(
             { error: { code: "invalid_request", message: "locationID required" } },
             400
           );
         }
-
-        // Resolve slug → canonical ULID (or accept ULID as-is)
-        const locULID = (await resolveUid(locationRaw, env)) || locationRaw;
+        const locULID = await resolveUid(locationRaw, env) || locationRaw;
         if (!locULID) {
           return json(
             { error: { code: "invalid_request", message: "unknown location" } },
             400
           );
         }
-        
         const plan = await readPlanEntitlementForUlid(env, locULID);
         if (!plan.planEntitled) {
           return json(
@@ -5922,65 +6850,41 @@ export default {
             403,
             { "cache-control": "no-store" }
           );
-        }        
-
+        }
         const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
-
-        // Resolve active campaign from KV (authoritative)
         const requestedKey = String(campaignKeyRaw || "").trim();
-
-        // Load all active rows (effective status === active, in-window)
-        const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(locULID), { type: "json" }) as any;
-        const rows: any[] = Array.isArray(rawRows) ? rawRows : [];
-
+        const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(locULID), { type: "json" });
+        const rows = Array.isArray(rawRows) ? rawRows : [];
         const nowMs = Date.now();
-
-        const isActiveRow = (r: any) => {
+        const isActiveRow = /* @__PURE__ */ __name((r) => {
           if (!r) return false;
           if (String(r?.locationID || "").trim() !== locULID) return false;
-
           const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
           if (st !== "active") return false;
-
           const rowPlanMode = normalizePlanMode(r?.planMode, r?.campaignPreset);
           if (rowPlanMode !== "campaign_with_promo_qr") return false;
-
           const sMs = parseYmdUtcMs(String(r?.startDate || ""));
           const eMs = parseYmdUtcMs(String(r?.endDate || ""));
           if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
-
           if (nowMs < sMs) return false;
-          if (nowMs > (eMs + 24 * 60 * 60 * 1000 - 1)) return false;
-
+          if (nowMs > eMs + 24 * 60 * 60 * 1e3 - 1) return false;
           return true;
-        };
-
+        }, "isActiveRow");
         const actives = rows.filter(isActiveRow);
-
         if (!actives.length) {
           return json({ error: { code: "campaign_with_promo_qr_required", message: "Active Campaign with Promo QR required." } }, 403);
         }
-
-        // If caller specified campaignKey, use it only if it's active.
         if (requestedKey) {
-          const hit = actives.find(r => String(r?.campaignKey || "").trim() === requestedKey);
+          const hit = actives.find((r) => String(r?.campaignKey || "").trim() === requestedKey);
           if (!hit) {
             return json({ error: { code: "forbidden", message: "campaign not active" } }, 403);
           }
-          // continue with activeRow = hit
           var activeRow = hit;
         } else {
-          // No campaignKey specified:
-          // - if exactly one active, proceed
-          // - if multiple, force selection
           if (actives.length !== 1) {
-            const items = actives.map(r => {
-              const dvRaw = (r?.campaignDiscountValue != null) ? r.campaignDiscountValue : null;
-              const discountValue =
-                (typeof dvRaw === "number") ? dvRaw :
-                (typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw))) ? Number(dvRaw) :
-                null;
-
+            const items = actives.map((r) => {
+              const dvRaw2 = r?.campaignDiscountValue != null ? r.campaignDiscountValue : null;
+              const discountValue2 = typeof dvRaw2 === "number" ? dvRaw2 : typeof dvRaw2 === "string" && dvRaw2.trim() && Number.isFinite(Number(dvRaw2)) ? Number(dvRaw2) : null;
               return {
                 campaignKey: String(r?.campaignKey || "").trim(),
                 campaignName: String(r?.campaignName || "").trim(),
@@ -5990,7 +6894,7 @@ export default {
                 eligibilityType: String(r?.eligibilityType || "").trim(),
                 eligibilityNotes: String(r?.eligibilityNotes || "").trim(),
                 discountKind: String(r?.discountKind || "").trim(),
-                discountValue
+                discountValue: discountValue2
               };
             });
             return json({ error: { code: "multiple_active", message: "multiple active campaigns" }, items }, 409, { "cache-control": "no-store" });
@@ -6003,7 +6907,6 @@ export default {
             403
           );
         }
-
         const activeRowPlanMode = normalizePlanMode(activeRow?.planMode, activeRow?.campaignPreset);
         if (activeRowPlanMode !== "campaign_with_promo_qr") {
           return json(
@@ -6012,7 +6915,6 @@ export default {
             { "cache-control": "no-store" }
           );
         }
-
         const chosenKey = String(activeRow.campaignKey || "").trim();
         if (!chosenKey) {
           return json(
@@ -6020,25 +6922,14 @@ export default {
             403
           );
         }
-
-        // Create redeem token for this location + campaign
         const token = await createRedeemToken(env.KV_STATS, locULID, chosenKey);
-
-        // Record that a promotion QR was shown (ARMED) for this campaign/location
         await logQrArmed(env.KV_STATS, env, locULID, req, chosenKey);
-
-        // Build Promotion QR URL using the original locationRaw (slug), not ULID
-        const qrBase = "https://navigen-api.4naama.workers.dev"; // temporary hotfix: bypass the site redeem entry until /out/qr-redeem serves pending-v2 live
+        const qrBase = "https://navigen-api.4naama.workers.dev";
         const qrUrlObj = new URL(`/out/qr-redeem/${encodeURIComponent(locationRaw)}`, qrBase);
         qrUrlObj.searchParams.set("camp", chosenKey);
         qrUrlObj.searchParams.set("rt", token);
-
-        const dvRaw = (activeRow.campaignDiscountValue != null) ? activeRow.campaignDiscountValue : null;
-        const discountValue =
-          (typeof dvRaw === "number") ? dvRaw :
-          (typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw))) ? Number(dvRaw) :
-          null;
-
+        const dvRaw = activeRow.campaignDiscountValue != null ? activeRow.campaignDiscountValue : null;
+        const discountValue = typeof dvRaw === "number" ? dvRaw : typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw)) ? Number(dvRaw) : null;
         return json({
           qrUrl: qrUrlObj.toString(),
           campaignName: String(activeRow.campaignName || "").trim(),
@@ -6052,226 +6943,189 @@ export default {
           discountValue
         }, 200);
       }
-
-      // --- Admin purge (one-off): POST /api/admin/purge-legacy
-      // Merges stats:<loc>:<day>:<event_with_underscores> → hyphen, or burns legacy keys entirely.
       if (pathname === "/api/admin/purge-legacy" && req.method === "POST") {
         const auth = req.headers.get("Authorization") || "";
         if (!auth.startsWith("Bearer ")) {
-          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
+          return json({ error: { code: "unauthorized", message: "Bearer token required" } }, 401);
         }
         const token = auth.slice(7).trim();
         const expected = String(env.JWT_SECRET || "").trim();
         if (!expected) {
-          // Misconfiguration must be explicit; otherwise you chase ghosts.
-          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
+          return json({ error: { code: "misconfigured", message: "JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
         }
         if (!token || token.trim() !== expected) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control": "no-store" });
+          return json({ error: { code: "forbidden", message: "Bad token" } }, 403, { "cache-control": "no-store" });
         }
-
         const body = await req.json().catch(() => ({}));
-        const mode = (body?.mode || "merge").toString(); // 'merge' or 'burn'
-
-        let cursor: string|undefined = undefined;
+        const mode = (body?.mode || "merge").toString();
+        let cursor = void 0;
         let migrated = 0, removed = 0;
-
         do {
           const page = await env.KV_STATS.list({ prefix: "stats:", cursor });
           for (const k of page.keys) {
-            // keys look like: stats:<loc>:YYYY-MM-DD:<event>
             const name = k.name;
             const parts = name.split(":");
             if (parts.length !== 4) continue;
-
             const ev = parts[3];
-            if (!ev.includes("_")) continue; // only legacy
-
+            if (!ev.includes("_")) continue;
             if (mode === "merge") {
-              const n = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
-              if (!n) { await env.KV_STATS.delete(name); removed++; continue; } // drop empty
-              const hyphen = ev.replaceAll("_","-");
+              const n = parseInt(await env.KV_STATS.get(name) || "0", 10) || 0;
+              if (!n) {
+                await env.KV_STATS.delete(name);
+                removed++;
+                continue;
+              }
+              const hyphen = ev.replaceAll("_", "-");
               const target = `stats:${parts[1]}:${parts[2]}:${hyphen}`;
-              const cur = parseInt((await env.KV_STATS.get(target)) || "0", 10) || 0;
-              await env.KV_STATS.put(target, String(cur + n), { expirationTtl: 60*60*24*366 });
+              const cur = parseInt(await env.KV_STATS.get(target) || "0", 10) || 0;
+              await env.KV_STATS.put(target, String(cur + n), { expirationTtl: 60 * 60 * 24 * 366 });
               migrated++;
             }
-            // 'burn' deletes legacy without merging
             await env.KV_STATS.delete(name);
             removed++;
           }
-          cursor = page.cursor || undefined;
+          cursor = page.cursor || void 0;
         } while (cursor);
-
-        return json({ ok:true, mode, migrated, removed }, 200);
+        return json({ ok: true, mode, migrated, removed }, 200);
       }
-
-      // --- Admin backfill: POST /api/admin/backfill-slug-stats
-      // Moves stats:<slug>:YYYY-MM-DD:<event> → stats:<ULID>:YYYY-MM-DD:<event> using KV_ALIASES.
       if (pathname === "/api/admin/backfill-slug-stats" && req.method === "POST") {
         const auth = req.headers.get("Authorization") || "";
         if (!auth.startsWith("Bearer ")) {
-          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
+          return json({ error: { code: "unauthorized", message: "Bearer token required" } }, 401);
         }
         const token = auth.slice(7).trim();
         const expected = String(env.JWT_SECRET || "").trim();
         if (!expected) {
-          // Misconfiguration must be explicit; otherwise you chase ghosts.
-          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
+          return json({ error: { code: "misconfigured", message: "JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
         }
         if (!token || token.trim() !== expected) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control": "no-store" });
+          return json({ error: { code: "forbidden", message: "Bad token" } }, 403, { "cache-control": "no-store" });
         }
-
-        let cursor: string|undefined = undefined;
+        let cursor = void 0;
         let moved = 0, removed = 0, skipped = 0;
-
         do {
           const page = await env.KV_STATS.list({ prefix: "stats:", cursor });
           for (const k of page.keys) {
-            // shape: stats:<id>:YYYY-MM-DD:<event>
             const parts = k.name.split(":");
             if (parts.length !== 4) continue;
-
             const id = parts[1];
             const day = parts[2];
-            const ev  = parts[3];
-
-            // skip if already ULID
-            if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(id)) { skipped++; continue; }
-
-            // try alias → ULID
+            const ev = parts[3];
+            if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(id)) {
+              skipped++;
+              continue;
+            }
             const mapped = await env.KV_ALIASES.get(aliasKey(id), "json");
             const ulid = (typeof mapped === "string" ? mapped : mapped?.locationID) || "";
-            if (!ulid || !/^[0-9A-HJKMNP-TV-Z]{26}$/.test(ulid)) { skipped++; continue; }
-
-            const srcVal = parseInt((await env.KV_STATS.get(k.name)) || "0", 10) || 0;
-            if (!srcVal) { await env.KV_STATS.delete(k.name); removed++; continue; }
-
-            const dstKey = `stats:${ulid}:${day}:${ev.replaceAll("_","-")}`; // normalize event
-            const cur = parseInt((await env.KV_STATS.get(dstKey)) || "0", 10) || 0;
-            await env.KV_STATS.put(dstKey, String(cur + srcVal), { expirationTtl: 60*60*24*366 });
+            if (!ulid || !/^[0-9A-HJKMNP-TV-Z]{26}$/.test(ulid)) {
+              skipped++;
+              continue;
+            }
+            const srcVal = parseInt(await env.KV_STATS.get(k.name) || "0", 10) || 0;
+            if (!srcVal) {
+              await env.KV_STATS.delete(k.name);
+              removed++;
+              continue;
+            }
+            const dstKey = `stats:${ulid}:${day}:${ev.replaceAll("_", "-")}`;
+            const cur = parseInt(await env.KV_STATS.get(dstKey) || "0", 10) || 0;
+            await env.KV_STATS.put(dstKey, String(cur + srcVal), { expirationTtl: 60 * 60 * 24 * 366 });
             await env.KV_STATS.delete(k.name);
             moved++;
           }
-          cursor = page.cursor || undefined;
+          cursor = page.cursor || void 0;
         } while (cursor);
-
-        return json({ ok:true, moved, removed, skipped }, 200);
+        return json({ ok: true, moved, removed, skipped }, 200);
       }
-                
-      // --- Admin seed: POST /api/admin/seed-alias-ulids
-      // Generate deterministic ULIDs for all aliases in profiles.json and write KV_ALIASES.
       if (pathname === "/api/admin/seed-alias-ulids" && req.method === "POST") {
         const auth = req.headers.get("Authorization") || "";
         if (!auth.startsWith("Bearer ")) {
-          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
+          return json({ error: { code: "unauthorized", message: "Bearer token required" } }, 401);
         }
         const token = auth.slice(7).trim();
         const expected = String(env.JWT_SECRET || "").trim();
         if (!expected) {
-          // Misconfiguration must be explicit; otherwise you chase ghosts.
-          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
+          return json({ error: { code: "misconfigured", message: "JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
         }
         if (!token || token.trim() !== expected) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control": "no-store" });
+          return json({ error: { code: "forbidden", message: "Bad token" } }, 403, { "cache-control": "no-store" });
         }
-
-        // Load profiles.json from caller origin (keeps staging/prod safe)
         const base = req.headers.get("Origin") || "https://navigen.io";
-        const src  = new URL("/data/profiles.json", base).toString();
+        const src = new URL("/data/profiles.json", base).toString();
         const resp = await fetch(src, { cf: { cacheTtl: 60, cacheEverything: true }, headers: { "Accept": "application/json" } });
-        if (!resp.ok) return json({ error:{ code:"upstream", message:"profiles.json not reachable" } }, 502);
-        const data: any = await resp.json();
-
-        // Normalize locations list: supports array or object map
-        const list: Array<{locationID:string}> =
-          Array.isArray(data?.locations) ? data.locations :
-          (data?.locations && typeof data.locations === "object")
-            ? Object.values(data.locations) as any[] : [];
-
-        // Collect aliases (anything not already a 26-char ULID)
-        const aliases: string[] = list
-          .map(x => String(x?.locationID || "").trim())
-          .filter(id => id && !/^[0-9A-HJKMNP-TV-Z]{26}$/.test(id));
-
-        // Small helpers local to this request (no globals)
+        if (!resp.ok) return json({ error: { code: "upstream", message: "profiles.json not reachable" } }, 502);
+        const data = await resp.json();
+        const list = Array.isArray(data?.locations) ? data.locations : data?.locations && typeof data.locations === "object" ? Object.values(data.locations) : [];
+        const aliases = list.map((x) => String(x?.locationID || "").trim()).filter((id) => id && !/^[0-9A-HJKMNP-TV-Z]{26}$/.test(id));
         const B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-        const toBase32 = (bytes: Uint8Array) => {
+        const toBase32 = /* @__PURE__ */ __name((bytes) => {
           let bits = 0, val = 0, out = "";
           for (const b of bytes) {
-            val = (val << 8) | b; bits += 8;
-            while (bits >= 5) { bits -= 5; out += B32[(val >>> bits) & 31]; val &= (1 << bits) - 1; }
+            val = val << 8 | b;
+            bits += 8;
+            while (bits >= 5) {
+              bits -= 5;
+              out += B32[val >>> bits & 31];
+              val &= (1 << bits) - 1;
+            }
           }
-          if (bits > 0) out += B32[(val << (5 - bits)) & 31];
+          if (bits > 0) out += B32[val << 5 - bits & 31];
           return out;
-        };
-        const deterministicUlid = async (alias: string) => {
-          // Fixed timestamp keeps outputs stable across runs.
+        }, "toBase32");
+        const deterministicUlid = /* @__PURE__ */ __name(async (alias) => {
           const t = new Uint8Array(8);
-          new DataView(t.buffer).setBigUint64(0, 1735689600000n); // 2025-01-01T00:00:00.000Z
-          const time48 = t.slice(2); // last 6 bytes
-
+          new DataView(t.buffer).setBigUint64(0, 1735689600000n);
+          const time48 = t.slice(2);
           const enc = new TextEncoder().encode(alias);
-          const hashBuf = await crypto.subtle.digest("SHA-256", enc); // Web Crypto at edge
-          const h = new Uint8Array(hashBuf).slice(0, 10); // 80 bits
-
+          const hashBuf = await crypto.subtle.digest("SHA-256", enc);
+          const h = new Uint8Array(hashBuf).slice(0, 10);
           const bytes = new Uint8Array(16);
-          bytes.set(time48, 0); bytes.set(h, 6);
-
+          bytes.set(time48, 0);
+          bytes.set(h, 6);
           let b32 = toBase32(bytes);
           if (b32.length < 26) b32 = b32.padEnd(26, "0");
           if (b32.length > 26) b32 = b32.slice(0, 26);
           return b32;
-        };
-
+        }, "deterministicUlid");
         let wrote = 0, skipped = 0;
         for (const alias of aliases) {
           try {
             const ulid = await deterministicUlid(alias);
             await env.KV_ALIASES.put(`alias:${alias}`, JSON.stringify({ locationID: ulid }));
             wrote++;
-          } catch { skipped++; }
+          } catch {
+            skipped++;
+          }
         }
-
-        return json({ ok:true, wrote, skipped, total: aliases.length }, 200);
+        return json({ ok: true, wrote, skipped, total: aliases.length }, 200);
       }
-
-      // --- Admin read (one-off): GET /api/admin/ownership?locationID=.
-      // Returns raw ownership:<ULID> record + computed ownedNow/exclusiveUntil.
-      // Auth: Bearer <JWT_SECRET> (same pattern as other admin endpoints).
       if (pathname === "/api/admin/ownership" && req.method === "GET") {
         const auth = req.headers.get("Authorization") || "";
         if (!auth.startsWith("Bearer ")) {
-          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401, { "cache-control":"no-store" });
+          return json({ error: { code: "unauthorized", message: "Bearer token required" } }, 401, { "cache-control": "no-store" });
         }
         const token = auth.slice(7).trim();
         const expected = String(env.JWT_SECRET || "").trim();
         if (!expected) {
-          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control":"no-store" });
+          return json({ error: { code: "misconfigured", message: "JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
         }
         if (!token || token !== expected) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control":"no-store" });
+          return json({ error: { code: "forbidden", message: "Bad token" } }, 403, { "cache-control": "no-store" });
         }
-
         const u = new URL(req.url);
         const idRaw = String(u.searchParams.get("locationID") || "").trim();
         if (!idRaw) {
-          return json({ error:{ code:"invalid_request", message:"locationID required" } }, 400, { "cache-control":"no-store" });
+          return json({ error: { code: "invalid_request", message: "locationID required" } }, 400, { "cache-control": "no-store" });
         }
-
-        const ulid = ULID_RE.test(idRaw) ? idRaw : ((await resolveUid(idRaw, env)) || "");
+        const ulid = ULID_RE.test(idRaw) ? idRaw : await resolveUid(idRaw, env) || "";
         if (!ulid) {
-          return json({ error:{ code:"invalid_request", message:"unknown locationID" } }, 404, { "cache-control":"no-store" });
+          return json({ error: { code: "invalid_request", message: "unknown locationID" } }, 404, { "cache-control": "no-store" });
         }
-
         const ownKey = `ownership:${ulid}`;
-        const rec = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
-
+        const rec = await env.KV_STATUS.get(ownKey, { type: "json" });
         const exclusiveUntilIso = String(rec?.exclusiveUntil || "").trim();
         const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
         const ownedNow = !!exclusiveUntil && !Number.isNaN(exclusiveUntil.getTime()) && exclusiveUntil.getTime() > Date.now();
-
         return json({
           ulid,
           key: ownKey,
@@ -6283,189 +7137,140 @@ export default {
           state: String(rec?.state || "").trim(),
           uid: String(rec?.uid || "").trim(),
           raw: rec || null
-        }, 200, { "cache-control":"no-store" });
+        }, 200, { "cache-control": "no-store" });
       }
-
-      // --- Admin seed: POST /api/admin/seed-campaigns
-      // Seeds KV_STATUS campaigns:byUlid:<ULID> from a batch of campaign rows (preseed step).
-      // Auth: Bearer <JWT_SECRET> (same pattern as other admin endpoints).
       if (pathname === "/api/admin/seed-campaigns" && req.method === "POST") {
         const auth = req.headers.get("Authorization") || "";
         if (!auth.startsWith("Bearer ")) {
-          return json({ error:{ code:"unauthorized", message:"Bearer token required" } }, 401);
+          return json({ error: { code: "unauthorized", message: "Bearer token required" } }, 401);
         }
         const token = auth.slice(7).trim();
         const expected = String(env.JWT_SECRET || "").trim();
         if (!expected) {
-          return json({ error:{ code:"misconfigured", message:"JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
+          return json({ error: { code: "misconfigured", message: "JWT_SECRET not set in runtime env" } }, 500, { "cache-control": "no-store" });
         }
         if (!token || token.trim() !== expected) {
-          return json({ error:{ code:"forbidden", message:"Bad token" } }, 403, { "cache-control": "no-store" });
+          return json({ error: { code: "forbidden", message: "Bad token" } }, 403, { "cache-control": "no-store" });
         }
-
-        const body = await req.json().catch(() => null) as any;
-        const rowsRaw: any[] =
-          Array.isArray(body) ? body :
-          Array.isArray(body?.rows) ? body.rows :
-          Array.isArray(body?.campaigns) ? body.campaigns : [];
-
+        const body = await req.json().catch(() => null);
+        const rowsRaw = Array.isArray(body) ? body : Array.isArray(body?.rows) ? body.rows : Array.isArray(body?.campaigns) ? body.campaigns : [];
         if (!Array.isArray(rowsRaw) || !rowsRaw.length) {
-          return json({ error:{ code:"invalid_request", message:"rows[] required" } }, 400);
+          return json({ error: { code: "invalid_request", message: "rows[] required" } }, 400);
         }
-
-        // Group by ULID after resolving slug/alias where needed.
-        const byUlid = new Map<string, CampaignRow[]>();
+        const byUlid = /* @__PURE__ */ new Map();
         let total = 0, wrote = 0, skipped = 0, unresolved = 0;
-
         for (const r of rowsRaw) {
           total++;
           try {
             const locIn = String(r?.locationID || "").trim();
-            if (!locIn) { skipped++; continue; }
-
-            const locResolved = ULID_RE.test(locIn) ? locIn : ((await resolveUid(locIn, env)) || "");
-            if (!locResolved || !ULID_RE.test(locResolved)) { unresolved++; continue; }
-
+            if (!locIn) {
+              skipped++;
+              continue;
+            }
+            const locResolved = ULID_RE.test(locIn) ? locIn : await resolveUid(locIn, env) || "";
+            if (!locResolved || !ULID_RE.test(locResolved)) {
+              unresolved++;
+              continue;
+            }
             const ulid = locResolved;
-
-            // Normalize campaign dates to YYYY-MM-DD.
-            // campaigns.json may store Date strings (e.g. "Sun Nov 30 2025 ..."); KV requires YYYY-MM-DD.
-            const normYmd = (v: any): string => {
+            const normYmd = /* @__PURE__ */ __name((v) => {
               const s = String(v || "").trim();
               if (!s) return "";
               if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-
               const d = new Date(s);
               if (Number.isNaN(d.getTime())) return "";
-
-              // Shift forward 12h to avoid off-by-one when local midnight is parsed across timezones.
               d.setHours(d.getHours() + 12);
               return d.toISOString().slice(0, 10);
-            };
-
+            }, "normYmd");
             const startDate = normYmd(r?.startDate);
-            const endDate   = normYmd(r?.endDate);
-
-            if (!startDate || !endDate) { skipped++; continue; }
-
-            const row: any = {
-              locationID: ulid, // canonical ULID (existing contract)
+            const endDate = normYmd(r?.endDate);
+            if (!startDate || !endDate) {
+              skipped++;
+              continue;
+            }
+            const row = {
+              locationID: ulid,
+              // canonical ULID (existing contract)
               locationULID: ulid,
-              locationSlug: locIn, // original input (slug) from campaigns.json
+              locationSlug: locIn,
+              // original input (slug) from campaigns.json
               campaignKey: String(r?.campaignKey || "").trim(),
-              campaignName: typeof r?.campaignName === "string" ? r.campaignName : undefined,
-              sectorKey: typeof r?.sectorKey === "string" ? r.sectorKey : undefined,
-              brandKey: typeof r?.brandKey === "string" ? r.brandKey : undefined,
-              context: typeof r?.context === "string" ? r.context : undefined,
-
+              campaignName: typeof r?.campaignName === "string" ? r.campaignName : void 0,
+              sectorKey: typeof r?.sectorKey === "string" ? r.sectorKey : void 0,
+              brandKey: typeof r?.brandKey === "string" ? r.brandKey : void 0,
+              context: typeof r?.context === "string" ? r.context : void 0,
               startDate,
               endDate,
               status: String(r?.status || "").trim() || "Draft",
-              statusOverride: (r?.statusOverride != null) ? String(r.statusOverride).trim() : undefined,
-
-              campaignType: (r?.campaignType != null) ? String(r.campaignType).trim() : undefined,
+              statusOverride: r?.statusOverride != null ? String(r.statusOverride).trim() : void 0,
+              campaignType: r?.campaignType != null ? String(r.campaignType).trim() : void 0,
               targetChannels: r?.targetChannels,
-              offerType: (r?.offerType != null) ? String(r.offerType).trim() : undefined,
-              productName: (r?.productName != null) ? String(r.productName).trim() : undefined,
-              discountKind: (r?.discountKind != null) ? String(r.discountKind).trim() : undefined,
-              campaignDiscountValue: (r?.campaignDiscountValue != null) ? r.campaignDiscountValue : undefined,
-              eligibilityType: (r?.eligibilityType != null) ? String(r.eligibilityType).trim() : undefined,
-              eligibilityNotes: (r?.eligibilityNotes != null) ? String(r.eligibilityNotes).trim() : undefined,
-
-              utmSource: (r?.utmSource != null) ? String(r.utmSource).trim() : undefined,
-              utmMedium: (r?.utmMedium != null) ? String(r.utmMedium).trim() : undefined,
-              utmCampaign: (r?.utmCampaign != null) ? String(r.utmCampaign).trim() : undefined,
-
-              notes: (r?.notes != null) ? String(r.notes).trim() : undefined
+              offerType: r?.offerType != null ? String(r.offerType).trim() : void 0,
+              productName: r?.productName != null ? String(r.productName).trim() : void 0,
+              discountKind: r?.discountKind != null ? String(r.discountKind).trim() : void 0,
+              campaignDiscountValue: r?.campaignDiscountValue != null ? r.campaignDiscountValue : void 0,
+              eligibilityType: r?.eligibilityType != null ? String(r.eligibilityType).trim() : void 0,
+              eligibilityNotes: r?.eligibilityNotes != null ? String(r.eligibilityNotes).trim() : void 0,
+              utmSource: r?.utmSource != null ? String(r.utmSource).trim() : void 0,
+              utmMedium: r?.utmMedium != null ? String(r.utmMedium).trim() : void 0,
+              utmCampaign: r?.utmCampaign != null ? String(r.utmCampaign).trim() : void 0,
+              notes: r?.notes != null ? String(r.notes).trim() : void 0
             };
-
-            if (!row.campaignKey) { skipped++; continue; }
-
+            if (!row.campaignKey) {
+              skipped++;
+              continue;
+            }
             const arr = byUlid.get(ulid) || [];
             arr.push(row);
             byUlid.set(ulid, arr);
-
           } catch {
             skipped++;
           }
         }
-
         for (const [ulid, arr] of byUlid.entries()) {
           try {
             await env.KV_STATUS.put(campaignsByUlidKey(ulid), JSON.stringify(arr));
             wrote++;
           } catch {
-            // keep going; seed should be best-effort
           }
         }
-
         return json({ ok: true, total, wrote, skipped, unresolved }, 200);
-        }
-
-      // (removed) /api/admin/mint-owner-link — temporary Phase 2 test endpoint
-
-        // (removed) leftover mint-owner-link body (fully deleted)
-
-      // GET /api/stats?locationID=.
-      // Phase 3: owner session required; requested location must match the session ULID.
+      }
       if (url.pathname === "/api/stats" && req.method === "GET") {
-        // Allow Example Locations without a session (real stats; no synthetic data).
-        // For all non-example locations, require an owner session (fail closed).
-        let auth: { ulid: string } | null = null;
-
+        let auth = null;
         const locRaw = (url.searchParams.get("locationID") || "").trim();
-        const locResolved = (await resolveUid(locRaw, env)) || locRaw;
+        const locResolved = await resolveUid(locRaw, env) || locRaw;
         const loc = String(locResolved || "").trim();
-
         let isExample = false;
         try {
-          // Load profiles.json once and check the example flag for this location.
           const base = req.headers.get("Origin") || "https://navigen.io";
           const src = new URL("/data/profiles.json", base).toString();
           const resp = await fetch(src, { cf: { cacheTtl: 60, cacheEverything: true }, headers: { "Accept": "application/json" } });
           if (resp.ok) {
-            const data: any = await resp.json().catch(() => null);
-            const locs: any[] = Array.isArray(data?.locations)
-              ? data.locations
-              : (data?.locations && typeof data.locations === "object")
-                ? Object.values(data.locations)
-                : [];
-
-            const rec = locs.find(r => String(r?.locationID || "").trim() === locRaw || String(r?.ID || r?.id || "").trim() === locRaw || String(r?.ID || r?.id || "").trim() === loc);
+            const data = await resp.json().catch(() => null);
+            const locs = Array.isArray(data?.locations) ? data.locations : data?.locations && typeof data.locations === "object" ? Object.values(data.locations) : [];
+            const rec = locs.find((r) => String(r?.locationID || "").trim() === locRaw || String(r?.ID || r?.id || "").trim() === locRaw || String(r?.ID || r?.id || "").trim() === loc);
             const v = rec?.exampleLocation ?? rec?.isExample ?? rec?.example ?? rec?.exampleDash ?? rec?.flags?.example;
-            isExample = (v === true || v === 1 || String(v || "").toLowerCase() === "true" || String(v || "").toLowerCase() === "yes");
+            isExample = v === true || v === 1 || String(v || "").toLowerCase() === "true" || String(v || "").toLowerCase() === "yes";
           }
         } catch {
-          isExample = false; // fail closed
+          isExample = false;
         }
-
         if (!isExample) {
           const a = await requireOwnerSession(req, env);
           if (a instanceof Response) return a;
           auth = a;
         }
         if (auth instanceof Response) return auth;
-
-        // locRaw resolved above
-
-        // locResolved resolved above
-
-        // loc resolved above
-
         if (!loc || !/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(loc)) {
           return json({ error: { code: "invalid_request", message: "locationID, from, to required (YYYY-MM-DD)" } }, 400);
         }
-
-        // Enforce single-ULID session binding
         if (auth && loc !== auth.ulid) {
           return new Response("Denied", {
             status: 403,
             headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
           });
         }
-
-        // Enforce Active Plan entitlement (Dash access gate).
-        // Example locations must bypass Plan entitlement so Example Dashboards always load.
         if (!isExample) {
           const plan = await readPlanEntitlementForUlid(env, loc);
           if (!plan.planEntitled) {
@@ -6475,115 +7280,72 @@ export default {
             });
           }
         }
-
         const from = (url.searchParams.get("from") || "").trim();
         const to = (url.searchParams.get("to") || "").trim();
-        const tz = (url.searchParams.get("tz") || "").trim() || undefined;
-
+        const tz = (url.searchParams.get("tz") || "").trim() || void 0;
         if (!loc || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
           return json({ error: { code: "invalid_request", message: "locationID, from, to required (YYYY-MM-DD)" } }, 400);
         }
-
         const prefix = `stats:${loc}:`;
-        const days: Record<string, Partial<Record<EventKey, number>>> = {};
-        let cursor: string | undefined = undefined;
-
+        const days = {};
+        let cursor = void 0;
         let ratedSum = 0;
         let ratingScoreSum = 0;
-
-        const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
-
+        const allowed = new Set(EVENT_ORDER);
         do {
           const page = await env.KV_STATS.list({ prefix, cursor });
           for (const k of page.keys) {
             const name = k.name;
             const parts = name.split(":");
             if (parts.length !== 4) continue;
-
             const day = parts[2];
             if (day < from || day > to) continue;
-
-            const rawEv = (parts[3] as string).replaceAll("_", "-");
-
+            const rawEv = parts[3].replaceAll("_", "-");
             if (rawEv === "rating-score") {
-              const sv = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
+              const sv = parseInt(await env.KV_STATS.get(name) || "0", 10) || 0;
               ratingScoreSum += sv;
               continue;
             }
-
             if (!allowed.has(rawEv)) continue;
-            const ev = rawEv as EventKey;
-
-            const n = parseInt((await env.KV_STATS.get(name)) || "0", 10) || 0;
+            const ev = rawEv;
+            const n = parseInt(await env.KV_STATS.get(name) || "0", 10) || 0;
             if (!days[day]) days[day] = {};
             days[day][ev] = (days[day][ev] || 0) + n;
-
             if (ev === "rating") ratedSum += n;
           }
-          cursor = page.cursor || undefined;
+          cursor = page.cursor || void 0;
         } while (cursor);
-
         const ratingAvg = ratedSum > 0 ? ratingScoreSum / ratedSum : 0;
-
-        const siteOrigin =
-          req.headers.get("Origin") || "https://navigen.io";
-
-        // --- Build QR Info (per-scan logs) and Campaign aggregates --- //
-        const qrInfo: any[] = [];
-        const campaignsAgg: Record<string, {
-          campaignKey: string;
-          scans: number;
-          redemptions: number;
-          invalids: number;
-          armed: number;                 // how many times a promotion QR was shown (ARMED)
-          uniqueVisitors: Set<string>;
-          repeatVisitors: Set<string>;
-          uniqueRedeemers: Set<string>;
-          repeatRedeemers: Set<string>;
-          langs: Set<string>;
-          countries: Set<string>;
-        }> = {};
-
-        // load campaigns once per stats call
-        const allCampaigns = await env.KV_STATUS.get(campaignsByUlidKey(loc), { type: "json" }) as any;
-        const allCampaignRows: CampaignRow[] = Array.isArray(allCampaigns) ? allCampaigns : [];
-
-        // QR logs live under qrlog:<loc>:<day>:<scanId>
+        const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
+        const qrInfo = [];
+        const campaignsAgg = {};
+        const allCampaigns = await env.KV_STATUS.get(campaignsByUlidKey(loc), { type: "json" });
+        const allCampaignRows = Array.isArray(allCampaigns) ? allCampaigns : [];
         const qrPrefix = `qrlog:${loc}:`;
-        let qrCursor: string | undefined = undefined;
-
+        let qrCursor = void 0;
         do {
           const page = await env.KV_STATS.list({ prefix: qrPrefix, cursor: qrCursor });
           for (const k of page.keys) {
             const name = k.name;
-            const parts = name.split(":"); // ['qrlog', '<loc>', '<day>', '<scanId>']
+            const parts = name.split(":");
             if (parts.length !== 4) continue;
-
             const dayKey = parts[2];
             if (dayKey < from || dayKey > to) continue;
-
             const raw = await env.KV_STATS.get(name, "text");
             if (!raw) continue;
-
-            let entry: QrLogEntry | null = null;
+            let entry = null;
             try {
-              entry = JSON.parse(raw) as QrLogEntry;
+              entry = JSON.parse(raw);
             } catch {
               entry = null;
             }
             if (!entry || entry.locationID !== loc) continue;
-
             const scanId = parts[3];
-
-            // Push into qrInfo array (shape aligned with dash expectations)
-            // Build QR Info row
             qrInfo.push({
               time: entry.time,
               source: entry.source || "",
               // Location: use physical scanner country code (CF country), not the location ULID
-              location: entry.city
-                ? `${entry.city}, ${entry.country || ''}`.trim().replace(/,\s*$/, '')
-                : (entry.country || ""),
+              location: entry.city ? `${entry.city}, ${entry.country || ""}`.trim().replace(/,\s*$/, "") : entry.country || "",
               // Device/Browser: keep UA here; frontend will bucketize into Device + Browser
               device: entry.ua || "",
               browser: entry.ua || "",
@@ -6593,63 +7355,44 @@ export default {
               campaign: entry.campaignKey || "",
               signal: entry.signal || "scan"
             });
-
-            // Aggregate by campaignKey for Campaigns view
             const cKey = entry.campaignKey || "";
             const bucketKey = cKey || "_no_campaign";
-
             if (!campaignsAgg[bucketKey]) {
               campaignsAgg[bucketKey] = {
                 campaignKey: cKey,
                 scans: 0,
                 redemptions: 0,
                 invalids: 0,
-                armed: 0,                         // promo QR shown counter
-                uniqueVisitors: new Set<string>(),
-                repeatVisitors: new Set<string>(),
-                uniqueRedeemers: new Set<string>(),
-                repeatRedeemers: new Set<string>(),
-                langs: new Set<string>(),
-                countries: new Set<string>()
+                armed: 0,
+                // promo QR shown counter
+                uniqueVisitors: /* @__PURE__ */ new Set(),
+                repeatVisitors: /* @__PURE__ */ new Set(),
+                uniqueRedeemers: /* @__PURE__ */ new Set(),
+                repeatRedeemers: /* @__PURE__ */ new Set(),
+                langs: /* @__PURE__ */ new Set(),
+                countries: /* @__PURE__ */ new Set()
               };
             }
-
             const agg = campaignsAgg[bucketKey];
-
-            // Scans: only count entries with signal="scan"
             if (entry.signal === "scan") {
               agg.scans += 1;
             }
-
-            // Redemptions: only explicit "redeem" signals count as true redemptions.
             if (entry.signal === "redeem") {
               agg.redemptions += 1;
             }
-
-            // Invalid attempts (expired/used/invalid tokens)
             if (entry.signal === "invalid") {
               agg.invalids += 1;
             }
-
-            // Promo QR shown (ARMED): track how many times a promotion QR was displayed
             if (entry.signal === "armed") {
               agg.armed += 1;
             }
-
-            // Visitor identity (for now): derive from UA + country if visitor field is empty
-            const visitorKey = entry.visitor && entry.visitor.trim()
-              ? entry.visitor.trim()
-              : `${entry.ua || ""}|${entry.country || ""}`;
-
+            const visitorKey = entry.visitor && entry.visitor.trim() ? entry.visitor.trim() : `${entry.ua || ""}|${entry.country || ""}`;
             if (visitorKey) {
-              // All visitors (scan + redeem + invalid)
               if (agg.uniqueVisitors.has(visitorKey)) {
                 agg.repeatVisitors.add(visitorKey);
               } else {
                 agg.uniqueVisitors.add(visitorKey);
               }
-
-              // Redeemers: only consider entries with signal="redeem"
               if (entry.signal === "redeem") {
                 if (agg.uniqueRedeemers.has(visitorKey)) {
                   agg.repeatRedeemers.add(visitorKey);
@@ -6658,8 +7401,6 @@ export default {
                 }
               }
             }
-
-            // Aggregate primary language and scanner country
             if (entry.lang) {
               const primaryLang = String(entry.lang).split(",")[0].trim();
               if (primaryLang) agg.langs.add(primaryLang);
@@ -6667,99 +7408,77 @@ export default {
             if (entry.country) {
               agg.countries.add(entry.country);
             }
-
           }
-          qrCursor = page.cursor || undefined;
+          qrCursor = page.cursor || void 0;
         } while (qrCursor);
-
-        // Sort QR Info rows by time (newest first)
         qrInfo.sort((a, b) => {
-          const ta = String(a.time || '');
-          const tb = String(b.time || '');
-          if (ta < tb) return 1;   // reverse comparison for newest-first
+          const ta = String(a.time || "");
+          const tb = String(b.time || "");
+          if (ta < tb) return 1;
           if (ta > tb) return -1;
           return 0;
         });
-
-        // Serialize campaignsAgg into a simple array
         const campaignAggValues = Object.values(campaignsAgg);
-
-        // Aggregate promo QR + redeem metrics across all campaigns for QA tagging.
         let totalArmed = 0;
         let totalRedeems = 0;
         let totalInvalid = 0;
         for (const agg of campaignAggValues) {
-          if ((agg.campaignKey || "").trim() === "") continue; // ignore "_no_campaign"
+          if ((agg.campaignKey || "").trim() === "") continue;
           totalArmed += agg.armed;
           totalRedeems += agg.redemptions;
           totalInvalid += agg.invalids;
         }
-
-        const campaigns = campaignAggValues
-          // hide "_no_campaign" bucket (scans without a campaignKey)
-          .filter(agg => (agg.campaignKey || "").trim() !== "")
-          .map((agg) => {
-            const key = agg.campaignKey;
-            const meta = allCampaignRows.find(c => String(c.locationID || "").trim() === loc && String(c.campaignKey || "").trim() === key) || null;
-
-            const uniqueCount = agg.uniqueVisitors.size;
-            const repeatCount = agg.repeatVisitors.size;
-            const uniqueRedeemerCount = agg.uniqueRedeemers.size;
-            const repeatRedeemerCount = agg.repeatRedeemers.size;
-
-            // Period: prefer campaign start/end if available, otherwise stats window
-            const campaignStart = meta ? String((meta as any).startDate || "").trim() : "";
-            const campaignEnd   = meta ? String((meta as any).endDate || "").trim() : "";
-            const periodLabel = (campaignStart && campaignEnd)
-              ? `${campaignStart} → ${campaignEnd}`
-              : `${from} → ${to}`;
-
-            return {
-              // Campaign ID + Name + Brand for dashboard
-              campaign: key || "",
-              campaignName: meta ? (String((meta as any).campaignName || "").trim()) : "",
-              brand: meta ? (String((meta as any).brandKey || "").trim()) : "",
-              target: meta ? (String((meta as any).context || "").trim()) : "",
-              period: periodLabel,
-              armed: agg.armed,                     // Promo QR shown (ARMED)
-              scans: agg.scans,
-              redemptions: agg.redemptions,
-              invalids: agg.invalids,
-              uniqueVisitors: uniqueCount,
-              repeatVisitors: repeatCount,
-              uniqueRedeemers: uniqueRedeemerCount,
-              repeatRedeemers: repeatRedeemerCount,
-              locations: agg.countries.size
-            };
-          });
-
-        // Silent QA auto-tagging per location (internal only: admin dashboards, monitoring).
+        const campaigns = campaignAggValues.filter((agg) => (agg.campaignKey || "").trim() !== "").map((agg) => {
+          const key = agg.campaignKey;
+          const meta = allCampaignRows.find((c) => String(c.locationID || "").trim() === loc && String(c.campaignKey || "").trim() === key) || null;
+          const uniqueCount = agg.uniqueVisitors.size;
+          const repeatCount = agg.repeatVisitors.size;
+          const uniqueRedeemerCount = agg.uniqueRedeemers.size;
+          const repeatRedeemerCount = agg.repeatRedeemers.size;
+          const campaignStart = meta ? String(meta.startDate || "").trim() : "";
+          const campaignEnd = meta ? String(meta.endDate || "").trim() : "";
+          const periodLabel = campaignStart && campaignEnd ? `${campaignStart} \u2192 ${campaignEnd}` : `${from} \u2192 ${to}`;
+          return {
+            // Campaign ID + Name + Brand for dashboard
+            campaign: key || "",
+            campaignName: meta ? String(meta.campaignName || "").trim() : "",
+            brand: meta ? String(meta.brandKey || "").trim() : "",
+            target: meta ? String(meta.context || "").trim() : "",
+            period: periodLabel,
+            armed: agg.armed,
+            // Promo QR shown (ARMED)
+            scans: agg.scans,
+            redemptions: agg.redemptions,
+            invalids: agg.invalids,
+            uniqueVisitors: uniqueCount,
+            repeatVisitors: repeatCount,
+            uniqueRedeemers: uniqueRedeemerCount,
+            repeatRedeemers: repeatRedeemerCount,
+            locations: agg.countries.size
+          };
+        });
         try {
           const hasPromoActivity = totalArmed > 0 || totalRedeems > 0 || totalInvalid > 0;
           if (hasPromoActivity) {
-            // Sum confirmation metrics from daily buckets
             let cashierConfs = 0;
             let customerConfs = 0;
             for (const dayKey of Object.keys(days)) {
-              const bucket: any = (days as any)[dayKey] || {};
+              const bucket = days[dayKey] || {};
               const cashierVal = Number(bucket["redeem-confirmation-cashier"] ?? bucket["redeem_confirmation_cashier"] ?? 0);
               const customerVal = Number(bucket["redeem-confirmation-customer"] ?? bucket["redeem_confirmation_customer"] ?? 0);
               if (cashierVal) cashierConfs += cashierVal;
               if (customerVal) customerConfs += customerVal;
             }
-
             const totalRedeemAttempts = totalRedeems + totalInvalid;
-            const complianceRatio = totalArmed > 0 ? (totalRedeems / totalArmed) : null;
-            const invalidRatio = totalRedeemAttempts > 0 ? (totalInvalid / totalRedeemAttempts) : 0;
-            const cashierCoverage = totalRedeems > 0 ? (cashierConfs / totalRedeems) : null;
-            const customerCoverage = totalArmed > 0 ? (customerConfs / totalArmed) : null;
-
-            const flags: string[] = [];
-
+            const complianceRatio = totalArmed > 0 ? totalRedeems / totalArmed : null;
+            const invalidRatio = totalRedeemAttempts > 0 ? totalInvalid / totalRedeemAttempts : 0;
+            const cashierCoverage = totalRedeems > 0 ? cashierConfs / totalRedeems : null;
+            const customerCoverage = totalArmed > 0 ? customerConfs / totalArmed : null;
+            const flags = [];
             if (complianceRatio !== null && complianceRatio < 0.7) {
               flags.push("low-scan-discipline");
             }
-            if (invalidRatio > 0.10 && totalInvalid >= 3) {
+            if (invalidRatio > 0.1 && totalInvalid >= 3) {
               flags.push("high-invalid-attempts");
             }
             if (cashierCoverage !== null && cashierCoverage < 0.8) {
@@ -6768,18 +7487,13 @@ export default {
             if (customerCoverage !== null && totalArmed >= 10 && customerCoverage < 0.5) {
               flags.push("low-customer-confirmation");
             }
-
             if (!flags.length) {
               flags.push("qa-ok");
             }
-
-            // Fire-and-forget: do not delay the stats response.
             ctx.waitUntil(writeQaFlags(env, loc, flags));
           }
         } catch {
-          // tagging errors must never break stats
         }
-
         return json(
           {
             locationID: loc,
@@ -6797,91 +7511,66 @@ export default {
           200
         );
       }
-
-      // GET /api/stats/entity?entityID=...&from=YYYY-MM-DD&to=YYYY-MM-DD[&tz=Europe/Berlin]
-      // Phase 3: owner session required; entity access allowed only if the session ULID is in entity:<id>:locations.
       if (url.pathname === "/api/stats/entity" && req.method === "GET") {
         const auth = await requireOwnerSession(req, env);
         if (auth instanceof Response) return auth;
-
-        const ent  = (url.searchParams.get("entityID")||"").trim();
-
-        const from = (url.searchParams.get("from")||"").trim();
-        const to   = (url.searchParams.get("to")  ||"").trim();
-        const tz   = (url.searchParams.get("tz")  ||"").trim() || undefined;
+        const ent = (url.searchParams.get("entityID") || "").trim();
+        const from = (url.searchParams.get("from") || "").trim();
+        const to = (url.searchParams.get("to") || "").trim();
+        const tz = (url.searchParams.get("tz") || "").trim() || void 0;
         if (!ent || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-          return json({ error:{code:"invalid_request", message:"entityID, from, to required (YYYY-MM-DD)"} }, 400);
+          return json({ error: { code: "invalid_request", message: "entityID, from, to required (YYYY-MM-DD)" } }, 400);
         }
-
-        // Resolve the entity's locations. To start, read a KV list (write it when you approve the entity).
-        // Format: KV key entity:<entityID>:locations => JSON array of locationIDs
         const raw = await env.KV_STATUS.get(`entity:${ent}:locations`);
-        const locs: string[] = raw ? JSON.parse(raw) : [];
-
-        // Single-ULID session binding: entity sums are allowed only if the session ULID is explicitly part of the entity.
+        const locs = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(locs) || !locs.includes(auth.ulid)) {
           return new Response("Denied", {
             status: 403,
             headers: { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
           });
         }
-
-        const days: Record<string, Partial<Record<EventKey, number>>> = {};
-
+        const days = {};
         for (const loc of locs) {
           const prefix = `stats:${loc}:`;
-          let cursor: string|undefined = undefined;
+          let cursor = void 0;
           do {
             const page = await env.KV_STATS.list({ prefix, cursor });
             for (const k of page.keys) {
               const parts = k.name.split(":");
               if (parts.length !== 4) continue;
               const day = parts[2];
-              const ev = (parts[3] as string).replaceAll("_", "-") as EventKey;
+              const ev = parts[3].replaceAll("_", "-");
               if (day < from || day > to) continue;
-              const n = parseInt((await env.KV_STATS.get(k.name))||"0",10) || 0;
+              const n = parseInt(await env.KV_STATS.get(k.name) || "0", 10) || 0;
               if (!days[day]) days[day] = {};
-              days[day][ev] = (days[day][ev] || 0) + n; // keep additive; now normalized
+              days[day][ev] = (days[day][ev] || 0) + n;
             }
-            cursor = page.cursor || undefined;
+            cursor = page.cursor || void 0;
           } while (cursor);
         }
-
         return json({ entityID: ent, entityName: await nameForEntity(ent), from, to, tz: tz || TZ_FALLBACK, order: EVENT_ORDER, days }, 200);
       }
-
-      // --- Analytics track: POST /api/track
       if (pathname === "/api/track" && req.method === "POST") {
         return await handleTrack(req, env);
       }
-
-      // --- Status: GET /api/status?locationID=...
       if (pathname === "/api/status" && req.method === "GET") {
         return await handleStatus(req, env);
       }
-
-      // --- Redeem token status: GET /api/redeem-status?token=... (or &rt=...)
-      // Used by the customer device to detect when a promo QR token was actually redeemed.
       if (pathname === "/api/redeem-status" && req.method === "GET") {
         const u = new URL(req.url);
-        const token =
-          (u.searchParams.get("token") || "").trim() ||
-          (u.searchParams.get("rt") || "").trim();
-
+        const token = (u.searchParams.get("token") || "").trim() || (u.searchParams.get("rt") || "").trim();
         if (!token) {
           return json(
             { error: { code: "invalid_request", message: "token required" } },
             400
           );
         }
-
         const key = `redeem:${token}`;
         const raw = await env.KV_STATS.get(key, "text");
-
-        let status: "pending" | "redeemed" | "invalid" = "invalid";
+        let status = "invalid";
         if (raw) {
           try {
-            const rec = JSON.parse(raw) as RedeemTokenRecord;
+            const rec = JSON.parse(raw);
             if (rec && rec.status === "fresh") status = "pending";
             else if (rec && rec.status === "redeemed") status = "redeemed";
             else status = "invalid";
@@ -6889,32 +7578,23 @@ export default {
             status = "invalid";
           }
         }
-
         return json({ token, status }, 200);
       }
-
-      // --- Promo redeem landing: /out/qr-redeem/<slug>?camp=...&rt=...
-      // Redirect only with pending state; the landing page must ask the backend for the real redeem outcome.
       if (pathname.startsWith("/out/qr-redeem/") && req.method === "GET") {
-        const parts = pathname.split("/").filter(Boolean); // ['out','qr-redeem','id']
+        const parts = pathname.split("/").filter(Boolean);
         const idRaw = parts[2] || "";
         const loc = await resolveUid(idRaw, env);
         if (!loc) {
-          return json({ error:{ code:"invalid_request", message:"bad id" } }, 400);
+          return json({ error: { code: "invalid_request", message: "bad id" } }, 400);
         }
-
         const u = new URL(req.url);
-        const token =
-          (u.searchParams.get("rt") || "").trim() ||
-          (u.searchParams.get("token") || "").trim();
+        const token = (u.searchParams.get("rt") || "").trim() || (u.searchParams.get("token") || "").trim();
         const camp = (u.searchParams.get("camp") || "").trim();
-
-        const landing = new URL("/", "https://navigen.io"); // redeem landing must always return to the site shell, even when QR entry uses the API worker
+        const landing = new URL("/", "https://navigen.io");
         landing.searchParams.set("lp", idRaw);
         landing.searchParams.set("redeem", "pending");
         if (camp) landing.searchParams.set("camp", camp);
         if (token) landing.searchParams.set("rt", token);
-
         return new Response(null, {
           status: 302,
           headers: {
@@ -6932,47 +7612,35 @@ export default {
           }
         });
       }
-      
-      // --- Outbound tracked redirect: /out/{event}/{id}?to=<url>
       if (pathname.startsWith("/out/") && req.method === "GET") {
-        const parts = pathname.split("/").filter(Boolean); // ['out','event','id']
-        const ev = (parts[1] || "").toLowerCase().replaceAll("_","-");
+        const parts = pathname.split("/").filter(Boolean);
+        const ev = (parts[1] || "").toLowerCase().replaceAll("_", "-");
         const idRaw = parts[2] || "";
-        const to = (new URL(req.url)).searchParams.get("to") || "";
-
-        const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
+        const to = new URL(req.url).searchParams.get("to") || "";
+        const allowed = new Set(EVENT_ORDER);
         if (!allowed.has(ev)) {
-          return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
+          return json({ error: { code: "invalid_request", message: "unsupported event" } }, 400);
         }
-
         const loc = await resolveUid(idRaw, env);
         if (!loc) {
-          return json({ error:{ code:"invalid_request", message:"bad id" } }, 400);
+          return json({ error: { code: "invalid_request", message: "bad id" } }, 400);
         }
-
-        // basic redirect safety: https only
         if (!/^https:\/\/[^ ]+/i.test(to)) {
-          return json({ error:{ code:"invalid_request", message:"https to= required" } }, 400);
+          return json({ error: { code: "invalid_request", message: "https to= required" } }, 400);
         }
-
-        // lightweight human-navigation guard (skip obvious bots/previews)
         const method = req.method || "GET";
         const sfm = req.headers.get("Sec-Fetch-Mode") || "";
         const ua = req.headers.get("User-Agent") || "";
-        const isHumanNav =
-          method === "GET" &&
-          (!sfm || /navigate|same-origin/i.test(sfm)) &&
-          !/(bot|crawler|spider|facebookexternalhit|twitterbot|slackbot)/i.test(ua);
-
+        const isHumanNav = method === "GET" && (!sfm || /navigate|same-origin/i.test(sfm)) && !/(bot|crawler|spider|facebookexternalhit|twitterbot|slackbot)/i.test(ua);
         if (isHumanNav) {
           try {
-            const now = new Date();
-            const country = (req as any).cf?.country || "";
-            const day = dayKeyFor(now, undefined, country);
+            const now = /* @__PURE__ */ new Date();
+            const country = req.cf?.country || "";
+            const day = dayKeyFor(now, void 0, country);
             await kvIncr(env.KV_STATS, `stats:${loc}:${day}:${ev}`);
-          } catch {}
+          } catch {
+          }
         }
-
         return new Response(null, {
           status: 302,
           headers: {
@@ -6984,34 +7652,25 @@ export default {
           }
         });
       }
-      
-      // --- Non-redirect hit: POST /hit/{event}/{id}
       if (pathname.startsWith("/hit/") && req.method === "POST") {
-        const parts = pathname.split("/").filter(Boolean); // ['hit','event','id']
-        const ev = (parts[1] || "").toLowerCase().replaceAll("_","-");
+        const parts = pathname.split("/").filter(Boolean);
+        const ev = (parts[1] || "").toLowerCase().replaceAll("_", "-");
         const idRaw = parts[2] || "";
-
-        const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
+        const allowed = new Set(EVENT_ORDER);
         if (!allowed.has(ev)) {
-          return json({ error:{ code:"invalid_request", message:"unsupported event" } }, 400);
+          return json({ error: { code: "invalid_request", message: "unsupported event" } }, 400);
         }
-
-        // QR-redeem must be accepted broadly; token + KV record enforce validity.
-
         const loc = await resolveUid(idRaw, env);
         if (!loc) {
-          return json({ error:{ code:"invalid_request", message:"bad id" } }, 400);
+          return json({ error: { code: "invalid_request", message: "bad id" } }, 400);
         }
-
-        const now = new Date();
-        const country = (req as any).cf?.country || "";
-        const day = dayKeyFor(now, undefined, country);
-
+        const now = /* @__PURE__ */ new Date();
+        const country = req.cf?.country || "";
+        const day = dayKeyFor(now, void 0, country);
         if (ev === "rating") {
-          const url = new URL(req.url);
-          const scoreRaw = (url.searchParams.get("score") || "").trim();
+          const url2 = new URL(req.url);
+          const scoreRaw = (url2.searchParams.get("score") || "").trim();
           const score = parseInt(scoreRaw, 10);
-
           if (!Number.isFinite(score) || score < 1 || score > 5) {
             return json(
               { error: { code: "invalid_request", message: "score must be 1-5" } },
@@ -7019,7 +7678,6 @@ export default {
               { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
             );
           }
-
           const deviceKey = readRatingDeviceKey(req);
           if (!deviceKey) {
             return json(
@@ -7028,30 +7686,18 @@ export default {
               { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
             );
           }
-
           const voteKey = ratingVoteKey(loc, deviceKey);
-          const prev = await env.KV_STATUS.get(voteKey, { type: "json" }) as any;
-
+          const prev = await env.KV_STATUS.get(voteKey, { type: "json" });
           const prevScore = Number(prev?.score);
           const prevDay = String(prev?.day || "").trim();
           const prevVotedAtMs = Date.parse(String(prev?.votedAt || ""));
-
-          const isLocked =
-            Number.isFinite(prevScore) &&
-            prevScore >= 1 &&
-            prevScore <= 5 &&
-            Number.isFinite(prevVotedAtMs) &&
-            (now.getTime() - prevVotedAtMs) < RATING_WINDOW_MS;
-
+          const isLocked = Number.isFinite(prevScore) && prevScore >= 1 && prevScore <= 5 && Number.isFinite(prevVotedAtMs) && now.getTime() - prevVotedAtMs < RATING_WINDOW_MS;
           const summary = await readRatingSummary(env, loc);
-
           let nextCount = summary.count;
           let nextSum = summary.sum;
-          let applied: "new" | "updated" | "noop" = "new";
-
+          let applied = "new";
           if (isLocked) {
             const delta = score - prevScore;
-
             if (delta !== 0) {
               if (prevDay && prevDay !== day) {
                 await kvAdd(env.KV_STATS, `stats:${loc}:${prevDay}:rating`, -1);
@@ -7061,7 +7707,6 @@ export default {
               } else {
                 await kvAdd(env.KV_STATS, `stats:${loc}:${day}:rating-score`, delta);
               }
-
               nextSum = Math.max(0, nextSum + delta);
               applied = "updated";
             } else {
@@ -7074,7 +7719,6 @@ export default {
             nextSum += score;
             applied = "new";
           }
-
           await env.KV_STATUS.put(
             ratingSummaryKey(loc),
             JSON.stringify({
@@ -7083,9 +7727,7 @@ export default {
               updatedAt: now.toISOString()
             })
           );
-
           const lockedUntil = new Date(now.getTime() + RATING_WINDOW_MS).toISOString();
-
           await env.KV_STATUS.put(
             voteKey,
             JSON.stringify({
@@ -7095,13 +7737,12 @@ export default {
             }),
             { expirationTtl: 60 * 60 * 24 * 31 }
           );
-
           return json(
             {
               ok: true,
               locationID: loc,
               applied,
-              ratingAvg: nextCount > 0 ? (nextSum / nextCount) : 0,
+              ratingAvg: nextCount > 0 ? nextSum / nextCount : 0,
               ratedSum: nextCount,
               userScore: score,
               ratingLockedUntil: lockedUntil,
@@ -7111,36 +7752,20 @@ export default {
             { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
           );
         }
-
-        // always increment the base event counter (e.g., 'share' → how many times the action was used)
         await kvIncr(env.KV_STATS, `stats:${loc}:${day}:${ev}`);
-
-        // For QR scan events, also log a per-scan record (powers QR Info / Campaigns in the dash).
         if (ev === "qr-scan") {
           await logQrScan(env.KV_STATS, env, loc, req);
         }
-
-        // For QR redeem events, validate token and return a truthful outcome for the landing page.
         if (ev === "qr-redeem") {
-          // Accept token from header OR query string.
-          // Reason: real QR scans open a URL and cannot send custom headers.
           const u = new URL(req.url);
-          const token =
-            (req.headers.get("X-NG-QR-Token") || "").trim() ||
-            (u.searchParams.get("rt") || "").trim() ||
-            (u.searchParams.get("token") || "").trim();
+          const token = (req.headers.get("X-NG-QR-Token") || "").trim() || (u.searchParams.get("rt") || "").trim() || (u.searchParams.get("token") || "").trim();
           const wantsJson = (u.searchParams.get("json") || "").trim() === "1";
-
-          const finish = async (
-            outcome: "ok" | "used" | "inactive" | "invalid",
-            campaignKey = ""
-          ) => {
+          const finish = /* @__PURE__ */ __name(async (outcome, campaignKey = "") => {
             if (outcome === "ok") {
               await logQrRedeem(env.KV_STATS, env, loc, req, campaignKey);
             } else {
               await logQrRedeemInvalid(env.KV_STATS, env, loc, req, campaignKey);
             }
-
             if (wantsJson) {
               return json(
                 { ok: outcome === "ok", outcome, campaignKey },
@@ -7148,7 +7773,6 @@ export default {
                 { "cache-control": "no-store", "Referrer-Policy": "no-referrer" }
               );
             }
-
             return new Response(null, {
               status: 204,
               headers: {
@@ -7157,20 +7781,16 @@ export default {
                 "Vary": "Origin"
               }
             });
-          };
-
-          // Promo redeem is campaign-paid: campaign entitlement is enforced below via tokenCampaignKey.
+          }, "finish");
           if (!token) {
             return await finish("invalid");
           }
-
           const recRaw = await env.KV_STATS.get(`redeem:${token}`, "text");
           let tokenCampaignKey = "";
           let tokenLocationID = "";
           let tokenStatus = "";
-
           try {
-            const rec = recRaw ? (JSON.parse(recRaw) as RedeemTokenRecord) : null;
+            const rec = recRaw ? JSON.parse(recRaw) : null;
             tokenCampaignKey = String(rec?.campaignKey || "").trim();
             tokenLocationID = String(rec?.locationID || "").trim();
             tokenStatus = String(rec?.status || "").trim();
@@ -7179,22 +7799,17 @@ export default {
             tokenLocationID = "";
             tokenStatus = "";
           }
-
           if (!tokenCampaignKey || !tokenLocationID || tokenLocationID !== loc) {
             return await finish("invalid", tokenCampaignKey);
           }
-
           const plan = await readPlanEntitlementForUlid(env, loc);
           if (!plan.planEntitled) {
             return await finish("inactive", tokenCampaignKey);
           }
-
-          // Validate: the token's campaignKey must still be active as Campaign with Promo QR for this ULID.
-          const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(loc), { type: "json" }) as any;
-          const rows: any[] = Array.isArray(rawRows) ? rawRows : [];
-
+          const rawRows = await env.KV_STATUS.get(campaignsByUlidKey(loc), { type: "json" });
+          const rows = Array.isArray(rawRows) ? rawRows : [];
           const nowMs = Date.now();
-          const tokenCampaignIsActive = rows.some((r: any) => {
+          const tokenCampaignIsActive = rows.some((r) => {
             if (!r || String(r.locationID || "").trim() !== loc) return false;
             const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
             if (st !== "active") return false;
@@ -7204,20 +7819,16 @@ export default {
             const eMs = parseYmdUtcMs(String(r?.endDate || ""));
             if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return false;
             if (nowMs < sMs) return false;
-            if (nowMs > (eMs + 24 * 60 * 60 * 1000 - 1)) return false;
+            if (nowMs > eMs + 24 * 60 * 60 * 1e3 - 1) return false;
             return String(r?.campaignKey || "").trim() === tokenCampaignKey;
           });
-
           if (!tokenCampaignIsActive) {
             return await finish("inactive", tokenCampaignKey);
           }
-
           if (tokenStatus === "redeemed") {
             return await finish("used", tokenCampaignKey);
           }
-
           const result = await consumeRedeemToken(env.KV_STATS, token, loc, tokenCampaignKey);
-
           if (result === "ok") {
             return await finish("ok", tokenCampaignKey);
           }
@@ -7226,7 +7837,6 @@ export default {
           }
           return await finish("invalid", tokenCampaignKey);
         }
-        
         return new Response(null, {
           status: 204,
           headers: {
@@ -7236,79 +7846,54 @@ export default {
           }
         });
       }
-
-      // --- Stripe: create Checkout Session for campaign purchase (Phase 5)
-      // Server-only: uses STRIPE_SECRET_KEY; client never sees Stripe secret.
       if (normPath === "/api/stripe/create-checkout-session" && req.method === "POST") {
-        const noStore = { "cache-control": "no-store" };
-        const body = await req.json().catch(() => null) as any;
-        return await createCampaignCheckoutSession(env, req, body, noStore);
+        const noStore2 = { "cache-control": "no-store" };
+        const body = await req.json().catch(() => null);
+        return await createCampaignCheckoutSession(env, req, body, noStore2);
       }
-
-      // (Stubs for later)
-      // if (pathname === "/api/checkout") { ... }
-      // if (pathname === "/api/webhook")  { ... }
-      // if (pathname === "/m/edit")       { ... }
-      // if (pathname === "/api/location/update") { ... }
-
-      // use normPath declared earlier; do not redeclare here
-
-      // GET /api/campaigns/active?context=<pageKey?>
-      // KV-authoritative list of active campaigns, used by Promotions modal.
       if (pathname === "/api/campaigns/active" && req.method === "GET") {
         const u = new URL(req.url);
-        const ctx = String(u.searchParams.get("context") || "").trim().toLowerCase();
-
+        const ctx2 = String(u.searchParams.get("context") || "").trim().toLowerCase();
         const todayISO = (() => {
-          const now = new Date();
-          // normalize to YYYY-MM-DD in UTC for window comparisons
-          return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+          const now = /* @__PURE__ */ new Date();
+          return new Date(now.getTime() - now.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
         })();
-
-        const isActiveRow = (r: any) => {
+        const isActiveRow = /* @__PURE__ */ __name((r) => {
           const st = String(r?.statusOverride || r?.status || "").trim().toLowerCase();
           if (st !== "active") return false;
           const sd = String(r?.startDate || "").trim();
           const ed = String(r?.endDate || "").trim();
           if (!/^\d{4}-\d{2}-\d{2}$/.test(sd) || !/^\d{4}-\d{2}-\d{2}$/.test(ed)) return false;
           return todayISO >= sd && todayISO <= ed;
-        };
-
-        const matchesContext = (r: any) => {
-          if (!ctx) return true;
+        }, "isActiveRow");
+        const matchesContext = /* @__PURE__ */ __name((r) => {
+          if (!ctx2) return true;
           const raw = String(r?.context || "").trim().toLowerCase();
-          if (!raw) return true; // empty ctx means global
-          const arr = raw.split(";").map(s => s.trim()).filter(Boolean);
-          return arr.includes(ctx);
-        };
-
-        // Walk KV campaigns:byUlid:* (small set; safe for now)
-        const out: any[] = [];
-        let cursor: string | undefined = undefined;
-
-        for (let guard = 0; guard < 25; guard++) { // hard guard against accidental infinite paging
+          if (!raw) return true;
+          const arr = raw.split(";").map((s) => s.trim()).filter(Boolean);
+          return arr.includes(ctx2);
+        }, "matchesContext");
+        const out = [];
+        let cursor = void 0;
+        for (let guard = 0; guard < 25; guard++) {
           const page = await env.KV_STATUS.list({ prefix: "campaigns:byUlid:", cursor });
-          for (const k of (page.keys || [])) {
+          for (const k of page.keys || []) {
             const raw = await env.KV_STATUS.get(k.name, "text");
             if (!raw) continue;
-            let rows: any[] = [];
-            try { rows = JSON.parse(raw); } catch { rows = []; }
+            let rows = [];
+            try {
+              rows = JSON.parse(raw);
+            } catch {
+              rows = [];
+            }
             if (!Array.isArray(rows)) continue;
-
-            const actives = rows.filter(r => isActiveRow(r) && matchesContext(r));
+            const actives = rows.filter((r) => isActiveRow(r) && matchesContext(r));
             for (const r of actives) {
               const locationULID = String(r?.locationULID || r?.locationID || "").trim();
               const locationSlug = String(r?.locationSlug || "").trim();
-
-              // Resolve human name by slug (profiles.json is keyed by locationID=slug)
-              const locationName = (await nameForLocation(locationSlug, env)) || "";
-
-              const dvRaw = (r?.campaignDiscountValue != null) ? r.campaignDiscountValue : null;
-              const discountValue =
-                (typeof dvRaw === "number") ? dvRaw :
-                (typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw))) ? Number(dvRaw) :
-                null;
-
+              const locationName = await nameForLocation(locationSlug, env) || "";
+              const dvRaw = r?.campaignDiscountValue != null ? r.campaignDiscountValue : null;
+              const discountValue = typeof dvRaw === "number" ? dvRaw : typeof dvRaw === "string" && dvRaw.trim() && Number.isFinite(Number(dvRaw)) ? Number(dvRaw) : null;
               out.push({
                 campaignKey: String(r?.campaignKey || "").trim(),
                 campaignName: String(r?.campaignName || "").trim(),
@@ -7329,28 +7914,18 @@ export default {
               });
             }
           }
-
           cursor = page.cursor;
           if (!page.list_complete) break;
           if (!cursor) break;
         }
-
         return json({ items: out }, 200, { "cache-control": "no-store" });
       }
-
-      // GET /api/data/list?context=...&limit=...&cursor=...
-      // Authoritative Phase 8 context list:
-      // - membership from ContextShardDO
-      // - rows hydrated from KV effective published profiles
-      // - visibility ordering applied here: promoted → visible → hidden excluded
       if (normPath === "/api/data/list" && req.method === "GET") {
         const contextKey = String(url.searchParams.get("context") || "").trim().toLowerCase();
         const limitRaw = Number(url.searchParams.get("limit") || "99");
         const limit = Math.max(1, Math.min(250, Number.isFinite(limitRaw) ? Math.floor(limitRaw) : 99));
-
         const cursorStr = String(url.searchParams.get("cursor") || "").trim();
         const start = /^[0-9]+$/.test(cursorStr) ? Math.max(0, parseInt(cursorStr, 10)) : 0;
-
         if (!contextKey) {
           return json(
             { items: [], nextCursor: null, totalApprox: 0 },
@@ -7358,24 +7933,16 @@ export default {
             { "x-navigen-route": "/api/data/list", "Cache-Control": "no-store" }
           );
         }
-
         try {
           const contextUlids = await listContextShardUlids(env, contextKey);
-
-          const ranked: Array<{ ulid: string; payload: any; rank: number; idx: number }> = [];
-
+          const ranked = [];
           for (let idx = 0; idx < contextUlids.length; idx++) {
             const ulid = contextUlids[idx];
             const rec = await readPublishedEffectiveProfileByUlid(ulid, env);
             if (!rec) continue;
-
             const vis = await computeVisibilityState(env, ulid);
             if (vis.visibilityState === "hidden") continue;
-
-            const rank =
-              vis.visibilityState === "promoted" ? 2 :
-              vis.visibilityState === "visible" ? 1 : 0;
-
+            const rank = vis.visibilityState === "promoted" ? 2 : vis.visibilityState === "visible" ? 1 : 0;
             ranked.push({
               ulid,
               payload: await buildPublicListPayloadWithManifestMedia(env, rec),
@@ -7383,38 +7950,24 @@ export default {
               idx
             });
           }
-
           ranked.sort((a, b) => {
             if (b.rank !== a.rank) return b.rank - a.rank;
-            return a.idx - b.idx; // stable within same visibility class
+            return a.idx - b.idx;
           });
-
           const totalApprox = ranked.length;
           const popularLimit = totalApprox > 0 ? Math.min(5, Math.max(1, Math.ceil(totalApprox * 0.15))) : 0;
-          const popularComputedAt = new Date().toISOString();
+          const popularComputedAt = (/* @__PURE__ */ new Date()).toISOString();
           const popularContextKey = contextKey;
-
-          const popularByUlid = new Map<string, {
-            rank: number;
-            score: number;
-            reason: string;
-            computedAt: string;
-            contextKey: string;
-          }>();
-
-          [...ranked]
-            .sort((a, b) => a.idx - b.idx)
-            .slice(0, popularLimit)
-            .forEach((x, i) => {
-              popularByUlid.set(x.ulid, {
-                rank: i + 1,
-                score: 0,
-                reason: totalApprox === 1 ? "single_candidate" : "seed_order_fallback",
-                computedAt: popularComputedAt,
-                contextKey: popularContextKey
-              });
+          const popularByUlid = /* @__PURE__ */ new Map();
+          [...ranked].sort((a, b) => a.idx - b.idx).slice(0, popularLimit).forEach((x, i) => {
+            popularByUlid.set(x.ulid, {
+              rank: i + 1,
+              score: 0,
+              reason: totalApprox === 1 ? "single_candidate" : "seed_order_fallback",
+              computedAt: popularComputedAt,
+              contextKey: popularContextKey
             });
-
+          });
           const items = ranked.slice(start, start + limit).map((x) => {
             const popularMeta = popularByUlid.get(x.ulid);
             return {
@@ -7432,12 +7985,10 @@ export default {
                 share: 0,
                 save: 0,
                 distinctActors: 0
-              } : undefined
+              } : void 0
             };
           });
-
-          const nextCursor = (start + limit) < totalApprox ? String(start + limit) : null;
-
+          const nextCursor = start + limit < totalApprox ? String(start + limit) : null;
           return json(
             { items, nextCursor, totalApprox },
             200,
@@ -7447,7 +7998,7 @@ export default {
               "Cache-Control": "no-store"
             }
           );
-        } catch (e: any) {
+        } catch (e) {
           return json(
             {
               error: {
@@ -7463,9 +8014,6 @@ export default {
           );
         }
       }
-
-      // GET /api/data/profile?id=...
-      // profile: accept alias or ULID; return merged effective published profile from KV authority
       if (normPath === "/api/data/profile" && req.method === "GET") {
         const raw = (url.searchParams.get("id") || "").trim();
         if (!raw) {
@@ -7475,7 +8023,6 @@ export default {
             { "x-navigen-route": "/api/data/profile" }
           );
         }
-
         const rec = await readPublishedEffectiveProfileByAnyId(raw, env);
         if (!rec) {
           return json(
@@ -7484,16 +8031,12 @@ export default {
             { "x-navigen-route": "/api/data/profile" }
           );
         }
-
         return json(
           await buildPublicProfilePayloadWithManifestMedia(env, rec),
           200,
           { "x-navigen-route": "/api/data/profile", "Cache-Control": "no-store" }
         );
       }
-
-      // GET /api/data/item?id=...
-      // item: accept alias or ULID; return single item + contexts[] from KV authority
       if (normPath === "/api/data/item" && req.method === "GET") {
         const idParam = (url.searchParams.get("id") || "").trim();
         if (!idParam) {
@@ -7503,7 +8046,6 @@ export default {
             { "x-navigen-route": "/api/data/item" }
           );
         }
-
         const rec = await readPublishedEffectiveProfileByAnyId(idParam, env);
         if (!rec) {
           return json(
@@ -7512,16 +8054,12 @@ export default {
             { "x-navigen-route": "/api/data/item" }
           );
         }
-
         return json(
           await buildPublicItemPayloadWithManifestMedia(env, rec),
           200,
           { "x-navigen-route": "/api/data/item", "Cache-Control": "no-store" }
         );
       }
-      
-      // GET /api/data/contact?id=...
-      // contact: accept alias or ULID; return contact payload from KV authority
       if (normPath === "/api/data/contact" && req.method === "GET") {
         const idParam = (url.searchParams.get("id") || url.searchParams.get("locationID") || "").trim();
         if (!idParam) {
@@ -7531,7 +8069,6 @@ export default {
             { "x-navigen-route": "/api/data/contact" }
           );
         }
-
         const rec = await readPublishedEffectiveProfileByAnyId(idParam, env);
         if (!rec) {
           return json(
@@ -7540,135 +8077,97 @@ export default {
             { "x-navigen-route": "/api/data/contact" }
           );
         }
-
         return json(
           buildPublicContactPayload(rec),
           200,
           { "x-navigen-route": "/api/data/contact", "Cache-Control": "no-store" }
         );
       }
-
-      // Fallback 404 — include the evaluated path for live verification
       return json(
-        { error: { code: "not_found", message: "No such route", path: (new URL(req.url)).pathname } },
+        { error: { code: "not_found", message: "No such route", path: new URL(req.url).pathname } },
         404,
-        { "x-navigen-route": (new URL(req.url)).pathname }
+        { "x-navigen-route": new URL(req.url).pathname }
       );
-
-    } catch (err: any) {
+    } catch (err) {
       return json({ error: { code: "server_error", message: err?.message || "Unexpected" } }, 500);
     }
-  },
+  }
 };
-
-// build per-request; base comes from Origin header (staging/prod safe)
-
-async function nameForLocation(id: string, env: Env): Promise<string | undefined> {
+async function nameForLocation(id, env) {
   try {
-    const mapped = (await resolveUid(id, env)) || String(id || "").trim();
+    const mapped = await resolveUid(id, env) || String(id || "").trim();
     const ulid = ULID_RE.test(mapped) ? mapped : "";
-    if (!ulid) return undefined;
-
-    const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" }) as any;
-    if (!base || typeof base !== "object") return undefined;
-
-    const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
+    if (!ulid) return void 0;
+    const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" });
+    if (!base || typeof base !== "object") return void 0;
+    const override = await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) || {};
     const effective = deepMergeProfile(base, override);
-
     const ln = effective?.locationName || effective?.name || effective?.listedName;
-    const name =
-      typeof ln === "string"
-        ? ln.trim()
-        : String(ln?.en || ln?.hu || Object.values(ln || {})[0] || "").trim();
-
-    return name || undefined;
+    const name = typeof ln === "string" ? ln.trim() : String(ln?.en || ln?.hu || Object.values(ln || {})[0] || "").trim();
+    return name || void 0;
   } catch {
-    return undefined;
+    return void 0;
   }
 }
-
-async function nameForEntity(_id: string): Promise<string | undefined> {
-  return undefined; // entities don't have names in profiles.json
+__name(nameForLocation, "nameForLocation");
+async function nameForEntity(_id) {
+  return void 0;
 }
-
-async function readPublishedEffectiveProfileByAnyId(
-  idOrAlias: string,
-  env: Env
-): Promise<{ ulid: string; locationID: string; effective: any } | null> {
+__name(nameForEntity, "nameForEntity");
+async function readPublishedEffectiveProfileByAnyId(idOrAlias, env) {
   const raw = String(idOrAlias || "").trim();
   if (!raw) return null;
-
-  const mapped = (await resolveUid(raw, env)) || raw;
+  const mapped = await resolveUid(raw, env) || raw;
   const ulid = ULID_RE.test(mapped) ? mapped : "";
   if (!ulid) return null;
-
-  const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" }) as any;
+  const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" });
   if (!base || typeof base !== "object") return null;
-
-  const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
+  const override = await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) || {};
   const effective = deepMergeProfile(base, override);
   const locationID = String(effective?.locationID || base?.locationID || "").trim();
-
   if (!locationID) return null;
-
   return { ulid, locationID, effective };
 }
-
-function publicMediaFallback(media: any): { cover: string; images: string[] } & Record<string, unknown> {
-  const src = (media && typeof media === "object") ? media : {};
+__name(readPublishedEffectiveProfileByAnyId, "readPublishedEffectiveProfileByAnyId");
+function publicMediaFallback(media) {
+  const src = media && typeof media === "object" ? media : {};
   const rawImages = Array.isArray(src.images) ? src.images : [];
-
   return {
     ...src,
     cover: String(src.cover || "").trim(),
-    images: rawImages
-      .map((v: any) => String(typeof v === "string" ? v : v?.src || "").trim())
-      .filter(Boolean)
+    images: rawImages.map((v) => String(typeof v === "string" ? v : v?.src || "").trim()).filter(Boolean)
   };
 }
-
-function publicMediaVariantUrl(image: any, preferred: MediaVariantName): string {
-  const variants = (image?.variants && typeof image.variants === "object") ? image.variants : {};
+__name(publicMediaFallback, "publicMediaFallback");
+function publicMediaVariantUrl(image, preferred) {
+  const variants = image?.variants && typeof image.variants === "object" ? image.variants : {};
   const preferredUrl = String(variants?.[preferred] || "").trim();
   if (preferredUrl) return preferredUrl;
-
-  for (const name of ["gallery", "lpm", "card", "thumb"] as MediaVariantName[]) {
+  for (const name of ["gallery", "lpm", "card", "thumb"]) {
     const url = String(variants?.[name] || "").trim();
     if (url) return url;
   }
-
   return "";
 }
-
-async function publicLocationMediaProjection(env: Env, ulid: string, fallbackMedia: any): Promise<{ media: any; manifest: any | null; manifestHit: boolean }> {
+__name(publicMediaVariantUrl, "publicMediaVariantUrl");
+async function publicLocationMediaProjection(env, ulid, fallbackMedia) {
   const fallback = publicMediaFallback(fallbackMedia);
   const id = String(ulid || "").trim();
-
   if (!ULID_RE.test(id)) {
     return { media: fallback, manifest: null, manifestHit: false };
   }
-
-  const raw = await env.KV_MEDIA.get(mediaManifestKey("location", id), { type: "json" }) as any;
+  const raw = await env.KV_MEDIA.get(mediaManifestKey("location", id), { type: "json" });
   if (!raw) {
     return { media: fallback, manifest: null, manifestHit: false };
   }
-
   const manifest = normalizeMediaManifest(raw, "location", id);
   const clientManifest = mediaManifestForClient(manifest, false);
-  const activeImages = Array.isArray(clientManifest.images)
-    ? clientManifest.images.filter((img: any) => String(img?.status || "") === "active")
-    : [];
-
+  const activeImages = Array.isArray(clientManifest.images) ? clientManifest.images.filter((img) => String(img?.status || "") === "active") : [];
   if (!activeImages.length) {
     return { media: fallback, manifest: clientManifest, manifestHit: false };
   }
-
   const cover = publicMediaVariantUrl(activeImages[0], "lpm") || fallback.cover;
-  const images = activeImages
-    .slice(1)
-    .map((img: any) => publicMediaVariantUrl(img, "gallery"))
-    .filter(Boolean);
-
+  const images = activeImages.slice(1).map((img) => publicMediaVariantUrl(img, "gallery")).filter(Boolean);
   return {
     media: {
       ...fallback,
@@ -7680,43 +8179,39 @@ async function publicLocationMediaProjection(env: Env, ulid: string, fallbackMed
     manifestHit: true
   };
 }
-
-async function buildPublicProfilePayloadWithManifestMedia(env: Env, rec: { ulid: string; locationID: string; effective: any }): Promise<any> {
+__name(publicLocationMediaProjection, "publicLocationMediaProjection");
+async function buildPublicProfilePayloadWithManifestMedia(env, rec) {
   const payload = buildPublicProfilePayload(rec);
   const projection = await publicLocationMediaProjection(env, rec.ulid, payload.media || rec.effective?.media || {});
-
   return {
     ...payload,
     media: projection.media,
-    ...(projection.manifest ? { mediaManifest: projection.manifest } : {})
+    ...projection.manifest ? { mediaManifest: projection.manifest } : {}
   };
 }
-
-async function buildPublicItemPayloadWithManifestMedia(env: Env, rec: { ulid: string; locationID: string; effective: any }): Promise<any> {
+__name(buildPublicProfilePayloadWithManifestMedia, "buildPublicProfilePayloadWithManifestMedia");
+async function buildPublicItemPayloadWithManifestMedia(env, rec) {
   const payload = buildPublicItemPayload(rec);
   const projection = await publicLocationMediaProjection(env, rec.ulid, payload.media || rec.effective?.media || {});
-
   return {
     ...payload,
     media: projection.media,
-    ...(projection.manifest ? { mediaManifest: projection.manifest } : {})
+    ...projection.manifest ? { mediaManifest: projection.manifest } : {}
   };
 }
-
-async function buildPublicListPayloadWithManifestMedia(env: Env, rec: { ulid: string; locationID: string; effective: any }): Promise<any> {
+__name(buildPublicItemPayloadWithManifestMedia, "buildPublicItemPayloadWithManifestMedia");
+async function buildPublicListPayloadWithManifestMedia(env, rec) {
   const payload = buildPublicListPayload(rec);
   const projection = await publicLocationMediaProjection(env, rec.ulid, payload.media || rec.effective?.media || {});
-
   return {
     ...payload,
     media: projection.media,
-    ...(projection.manifest ? { mediaManifest: projection.manifest } : {})
+    ...projection.manifest ? { mediaManifest: projection.manifest } : {}
   };
 }
-
-
-function buildPublicProfilePayload(rec: { ulid: string; locationID: string; effective: any }): any {
-  const effective = (rec?.effective && typeof rec.effective === "object") ? rec.effective : {};
+__name(buildPublicListPayloadWithManifestMedia, "buildPublicListPayloadWithManifestMedia");
+function buildPublicProfilePayload(rec) {
+  const effective = rec?.effective && typeof rec.effective === "object" ? rec.effective : {};
   return {
     ...effective,
     id: rec.ulid,
@@ -7727,12 +8222,12 @@ function buildPublicProfilePayload(rec: { ulid: string; locationID: string; effe
     coord: effective.navigationCoord || effective.coord || effective["Coordinate Compound"] || "",
     identityCoord: effective.coord || effective["Coordinate Compound"] || "",
     navigationCoord: effective.navigationCoord || "",
-    ratings: ratingsFromGoogleProvider(effective)    
+    ratings: ratingsFromGoogleProvider(effective)
   };
 }
-
-function buildPublicItemPayload(rec: { ulid: string; locationID: string; effective: any }): any {
-  const effective = (rec?.effective && typeof rec.effective === "object") ? rec.effective : {};
+__name(buildPublicProfilePayload, "buildPublicProfilePayload");
+function buildPublicItemPayload(rec) {
+  const effective = rec?.effective && typeof rec.effective === "object" ? rec.effective : {};
   return {
     id: rec.ulid,
     ID: rec.ulid,
@@ -7748,15 +8243,15 @@ function buildPublicItemPayload(rec: { ulid: string; locationID: string; effecti
     contactInformation: effective.contactInformation || effective.contact || {},
     descriptions: effective.descriptions || {},
     tags: Array.isArray(effective.tags) ? effective.tags : [],
-    ratings: ratingsFromGoogleProvider(effective),    
+    ratings: ratingsFromGoogleProvider(effective),
     pricing: effective.pricing || {},
     groupKey: effective.groupKey || "",
     subgroupKey: effective.subgroupKey || ""
   };
 }
-
-function buildPublicContactPayload(rec: { ulid: string; locationID: string; effective: any }): any {
-  const effective = (rec?.effective && typeof rec.effective === "object") ? rec.effective : {};
+__name(buildPublicItemPayload, "buildPublicItemPayload");
+function buildPublicContactPayload(rec) {
+  const effective = rec?.effective && typeof rec.effective === "object" ? rec.effective : {};
   return {
     id: rec.ulid,
     ID: rec.ulid,
@@ -7768,30 +8263,23 @@ function buildPublicContactPayload(rec: { ulid: string; locationID: string; effe
     links: effective.links || {}
   };
 }
-
-async function readPublishedEffectiveProfileByUlid(
-  ulid: string,
-  env: Env
-): Promise<{ ulid: string; locationID: string; effective: any } | null> {
+__name(buildPublicContactPayload, "buildPublicContactPayload");
+async function readPublishedEffectiveProfileByUlid(ulid, env) {
   const id = String(ulid || "").trim();
   if (!ULID_RE.test(id)) return null;
-
-  const base = await env.KV_STATUS.get(`profile_base:${id}`, { type: "json" }) as any;
+  const base = await env.KV_STATUS.get(`profile_base:${id}`, { type: "json" });
   if (!base || typeof base !== "object") return null;
-
-  const override = (await env.KV_STATUS.get(`override:${id}`, { type: "json" }) as any) || {};
+  const override = await env.KV_STATUS.get(`override:${id}`, { type: "json" }) || {};
   const effective = deepMergeProfile(base, override);
   const locationID = String(effective?.locationID || base?.locationID || "").trim();
   if (!locationID) return null;
-
   return { ulid: id, locationID, effective };
 }
-
-function buildPublicListPayload(rec: { ulid: string; locationID: string; effective: any }): any {
-  const effective = (rec?.effective && typeof rec.effective === "object") ? rec.effective : {};
-  const media = (effective?.media && typeof effective.media === "object") ? effective.media : {};
+__name(readPublishedEffectiveProfileByUlid, "readPublishedEffectiveProfileByUlid");
+function buildPublicListPayload(rec) {
+  const effective = rec?.effective && typeof rec.effective === "object" ? rec.effective : {};
+  const media = effective?.media && typeof effective.media === "object" ? effective.media : {};
   const images = Array.isArray(media.images) ? media.images : [];
-
   return {
     ...effective,
     id: rec.ulid,
@@ -7806,264 +8294,89 @@ function buildPublicListPayload(rec: { ulid: string; locationID: string; effecti
     media: {
       ...media,
       cover: String(media?.cover || "").trim(),
-      images: images.map((v: any) => (typeof v === "string" ? v : v?.src)).filter(Boolean)
+      images: images.map((v) => typeof v === "string" ? v : v?.src).filter(Boolean)
     },
     contactInformation: effective?.contactInformation || effective?.contact || {},
     links: effective?.links || {},
     descriptions: effective?.descriptions || {},
     tags: Array.isArray(effective?.tags) ? effective.tags : [],
-    ratings: ratingsFromGoogleProvider(effective),    
+    ratings: ratingsFromGoogleProvider(effective),
     pricing: effective?.pricing || {}
   };
 }
-
-async function listContextShardUlids(env: Env, contextKey: string): Promise<string[]> {
+__name(buildPublicListPayload, "buildPublicListPayload");
+async function listContextShardUlids(env, contextKey) {
   const key = String(contextKey || "").trim();
   if (!key) return [];
-
   const j = await contextShardCall(env, key, { ver: 1, op: "list" });
   const arr = Array.isArray(j?.ulids) ? j.ulids : [];
-
-  return arr
-    .map((v: any) => String(v || "").trim())
-    .filter((v: string) => ULID_RE.test(v));
+  return arr.map((v) => String(v || "").trim()).filter((v) => ULID_RE.test(v));
 }
-
-function selectorNormalizeText(value: unknown): string {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[-_.\/]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+__name(listContextShardUlids, "listContextShardUlids");
+function ownerSelectorNormalizeText(value) {
+  return String(value || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-_.\/]/g, " ").replace(/\s+/g, " ").trim();
 }
-
-function selectorTokens(value: unknown): string[] {
-  return selectorNormalizeText(value).split(/\s+/).filter(Boolean);
-}
-
-function selectorDisplayName(profile: any): string {
-  const raw = profile?.locationName ?? profile?.listedName ?? profile?.name ?? "";
-  if (typeof raw === "string") return String(raw || "").trim();
-  if (raw && typeof raw === "object") {
-    return String((raw as any).en || Object.values(raw)[0] || "").trim();
-  }
-  return "";
-}
-
-function selectorAddressLine(profile: any): string {
-  const c =
-    profile?.contactInformation && typeof profile.contactInformation === "object"
-      ? profile.contactInformation
-      : (profile?.contact && typeof profile.contact === "object" ? profile.contact : {});
-
-  return [c.address, c.city]
-    .map((v: any) => String(v || "").trim())
-    .filter(Boolean)
-    .join(", ");
-}
-
-function selectorSearchHay(profile: any, slug: string): string {
-  const c =
-    profile?.contactInformation && typeof profile.contactInformation === "object"
-      ? profile.contactInformation
-      : (profile?.contact && typeof profile.contact === "object" ? profile.contact : {});
-
-  const tags = Array.isArray(profile?.tags)
-    ? profile.tags.map((k: any) => String(k || "").replace(/^tag\./, "")).join(" ")
-    : "";
-
-  const person = String(c.contactPerson || "").trim();
-  const contact = [c.phone, c.email, c.whatsapp, c.telegram, c.messenger]
-    .map((v: any) => String(v || "").trim())
-    .filter(Boolean)
-    .join(" ");
-
-  const addressSearch = [c.address, c.city, c.adminArea, c.postalCode, c.countryCode]
-    .map((v: any) => String(v || "").trim())
-    .filter(Boolean)
-    .join(" ");
-
-  const names = (() => {
-    const ln = profile?.locationName;
-    if (typeof ln === "string") return ln;
-    if (ln && typeof ln === "object") return Object.values(ln).map(v => String(v || "").trim()).filter(Boolean).join(" ");
-    return "";
-  })();
-
-  return selectorNormalizeText([names, slug, addressSearch, tags, person, contact].filter(Boolean).join(" "));
-}
-
-function selectorScore(profile: any, slug: string, query: string): number {
-  const qNorm = selectorNormalizeText(query);
-  const tokens = selectorTokens(query);
-  if (!tokens.length) return 0;
-
-  const nameNorm = selectorNormalizeText(selectorDisplayName(profile));
-  const slugNorm = selectorNormalizeText(slug);
-  const hay = selectorSearchHay(profile, slug);
-
-  if (!tokens.every((tok) => hay.includes(tok))) return 0;
-
-  let score = 0;
-
-  if (slugNorm === qNorm) score += 520;
-  if (nameNorm === qNorm) score += 480;
-  if (slugNorm.startsWith(qNorm)) score += 260;
-  if (nameNorm.startsWith(qNorm)) score += 220;
-  if (hay.includes(qNorm)) score += 40;
-
-  for (const tok of tokens) {
-    if (nameNorm.includes(tok)) score += 32;
-    if (slugNorm.includes(tok)) score += 28;
-    if (hay.includes(tok)) score += 8;
-  }
-
-  return score;
-}
-
-async function readPublishedEffectiveProfile(env: Env, ulid: string): Promise<any | null> {
-  const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" }) as any;
-  if (!base || typeof base !== "object") return null;
-
-  const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
-  return deepMergeProfile(base, override);
-}
-
-async function buildLocationSelectorItem(env: Env, ulid: string, effective: any): Promise<any | null> {
-  const slug = String(effective?.locationID || "").trim();
-  if (!slug) return null;
-
-  const vis = await computeVisibilityState(env, ulid);
-  const camp = await campaignEntitlementForUlid(env, ulid);
-
-  return {
-    ...effective,
-    id: ulid,
-    ID: ulid,
-    locationUID: ulid,
-    locationID: slug,
-    sybAddressLine: selectorAddressLine(effective),
-    sybStatus: {
-      planEntitled: vis.planEntitled,
-      activePaidPlan: vis.activePaidPlan,
-      publicRecordMode: vis.publicRecordMode,
-      externallyIndexable: vis.externallyIndexable,
-      ownedNow: vis.ownedNow,
-      visibilityState: vis.visibilityState,
-      courtesyUntil: "",
-      campaignEntitled: vis.planEntitled && camp.entitled,
-      promoQrCampaignActive: vis.planEntitled && camp.entitled,
-      campaignEndsAt: (vis.planEntitled && camp.entitled) ? camp.endDate : "",
-      activeCampaignKey: (vis.planEntitled && camp.entitled) ? camp.campaignKey : ""
-    }
-  };
-}
-
-function ownerSelectorNormalizeText(value: unknown): string {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[-_.\/]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function ownerSelectorTokens(value: unknown): string[] {
+__name(ownerSelectorNormalizeText, "ownerSelectorNormalizeText");
+function ownerSelectorTokens(value) {
   return ownerSelectorNormalizeText(value).split(/\s+/).filter(Boolean);
 }
-
-function ownerSelectorDisplayName(profile: any): string {
+__name(ownerSelectorTokens, "ownerSelectorTokens");
+function ownerSelectorDisplayName(profile) {
   const raw = profile?.locationName ?? profile?.listedName ?? profile?.name ?? "";
   if (typeof raw === "string") return String(raw || "").trim();
   if (raw && typeof raw === "object") {
-    return String((raw as any).en || Object.values(raw)[0] || "").trim();
+    return String(raw.en || Object.values(raw)[0] || "").trim();
   }
   return "";
 }
-
-function ownerSelectorAddressLine(profile: any): string {
-  const c =
-    profile?.contactInformation && typeof profile.contactInformation === "object"
-      ? profile.contactInformation
-      : ((profile?.contact && typeof profile.contact === "object") ? profile.contact : {});
-
-  return [c.address, c.city]
-    .map((v: any) => String(v || "").trim())
-    .filter(Boolean)
-    .join(", ");
+__name(ownerSelectorDisplayName, "ownerSelectorDisplayName");
+function ownerSelectorAddressLine(profile) {
+  const c = profile?.contactInformation && typeof profile.contactInformation === "object" ? profile.contactInformation : profile?.contact && typeof profile.contact === "object" ? profile.contact : {};
+  return [c.address, c.city].map((v) => String(v || "").trim()).filter(Boolean).join(", ");
 }
-
-function ownerSelectorSearchHay(profile: any, slug: string): string {
-  const c =
-    profile?.contactInformation && typeof profile.contactInformation === "object"
-      ? profile.contactInformation
-      : ((profile?.contact && typeof profile.contact === "object") ? profile.contact : {});
-
-  const tags = Array.isArray(profile?.tags)
-    ? profile.tags.map((k: any) => String(k || "").replace(/^tag\./, "")).join(" ")
-    : "";
-
+__name(ownerSelectorAddressLine, "ownerSelectorAddressLine");
+function ownerSelectorSearchHay(profile, slug) {
+  const c = profile?.contactInformation && typeof profile.contactInformation === "object" ? profile.contactInformation : profile?.contact && typeof profile.contact === "object" ? profile.contact : {};
+  const tags = Array.isArray(profile?.tags) ? profile.tags.map((k) => String(k || "").replace(/^tag\./, "")).join(" ") : "";
   const person = String(c.contactPerson || "").trim();
-  const contact = [c.phone, c.email, c.whatsapp, c.telegram, c.messenger]
-    .map((v: any) => String(v || "").trim())
-    .filter(Boolean)
-    .join(" ");
-
-  const addressSearch = [c.address, c.city, c.adminArea, c.postalCode, c.countryCode]
-    .map((v: any) => String(v || "").trim())
-    .filter(Boolean)
-    .join(" ");
-
+  const contact = [c.phone, c.email, c.whatsapp, c.telegram, c.messenger].map((v) => String(v || "").trim()).filter(Boolean).join(" ");
+  const addressSearch = [c.address, c.city, c.adminArea, c.postalCode, c.countryCode].map((v) => String(v || "").trim()).filter(Boolean).join(" ");
   const names = (() => {
     const ln = profile?.locationName;
     if (typeof ln === "string") return ln;
-    if (ln && typeof ln === "object") return Object.values(ln).map(v => String(v || "").trim()).filter(Boolean).join(" ");
+    if (ln && typeof ln === "object") return Object.values(ln).map((v) => String(v || "").trim()).filter(Boolean).join(" ");
     return "";
   })();
-
   return ownerSelectorNormalizeText([names, slug, addressSearch, tags, person, contact].filter(Boolean).join(" "));
 }
-
-function ownerSelectorScore(profile: any, slug: string, query: string): number {
+__name(ownerSelectorSearchHay, "ownerSelectorSearchHay");
+function ownerSelectorScore(profile, slug, query) {
   const qNorm = ownerSelectorNormalizeText(query);
   const tokens = ownerSelectorTokens(query);
   if (!tokens.length) return 0;
-
   const nameNorm = ownerSelectorNormalizeText(ownerSelectorDisplayName(profile));
   const slugNorm = ownerSelectorNormalizeText(slug);
   const hay = ownerSelectorSearchHay(profile, slug);
-
   if (!tokens.every((tok) => hay.includes(tok))) return 0;
-
   let score = 0;
-
   if (slugNorm === qNorm) score += 520;
   if (nameNorm === qNorm) score += 480;
   if (slugNorm.startsWith(qNorm)) score += 260;
   if (nameNorm.startsWith(qNorm)) score += 220;
   if (hay.includes(qNorm)) score += 40;
-
   for (const tok of tokens) {
     if (nameNorm.includes(tok)) score += 32;
     if (slugNorm.includes(tok)) score += 28;
     if (hay.includes(tok)) score += 8;
   }
-
   return score;
 }
-
-async function buildOwnerLocationSelectorItem(
-  env: Env,
-  rec: { ulid: string; locationID: string; effective: any }
-): Promise<any | null> {
+__name(ownerSelectorScore, "ownerSelectorScore");
+async function buildOwnerLocationSelectorItem(env, rec) {
   const vis = await computeVisibilityState(env, rec.ulid);
   const camp = await campaignEntitlementForUlid(env, rec.ulid);
-
   return {
-    ...(await buildPublicListPayloadWithManifestMedia(env, rec)),
+    ...await buildPublicListPayloadWithManifestMedia(env, rec),
     sybAddressLine: ownerSelectorAddressLine(rec.effective),
     sybStatus: {
       planEntitled: vis.planEntitled,
@@ -8075,25 +8388,19 @@ async function buildOwnerLocationSelectorItem(
       courtesyUntil: "",
       campaignEntitled: vis.planEntitled && camp.entitled,
       promoQrCampaignActive: vis.planEntitled && camp.entitled,
-      campaignEndsAt: (vis.planEntitled && camp.entitled) ? camp.endDate : "",
-      activeCampaignKey: (vis.planEntitled && camp.entitled) ? camp.campaignKey : ""
+      campaignEndsAt: vis.planEntitled && camp.entitled ? camp.endDate : "",
+      activeCampaignKey: vis.planEntitled && camp.entitled ? camp.campaignKey : ""
     }
   };
 }
-
-async function listPublishedLocationSelectorItems(
-  env: Env,
-  opts: { query?: string; limit?: number } = {}
-): Promise<any[]> {
+__name(buildOwnerLocationSelectorItem, "buildOwnerLocationSelectorItem");
+async function listPublishedLocationSelectorItems(env, opts = {}) {
   const query = String(opts?.query || "").trim();
   const limitRaw = Number(opts?.limit || 5);
   const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(Math.trunc(limitRaw), 10)) : 5;
-
   if (ownerSelectorNormalizeText(query).replace(/\s+/g, "").length < 3) return [];
-
-  const candidates: Array<{ ulid: string; locationID: string; score: number; displayName: string }> = [];
-  let cursor: string | undefined = undefined;
-
+  const candidates = [];
+  let cursor = void 0;
   do {
     const page = await env.KV_STATUS.list({ prefix: "profile_base:", cursor });
     const pageHits = await Promise.all(
@@ -8101,16 +8408,12 @@ async function listPublishedLocationSelectorItems(
         const name = String(key.name || "");
         const ulid = name.replace(/^profile_base:/, "").trim();
         if (!ULID_RE.test(ulid)) return null;
-
-        const base = await env.KV_STATUS.get(name, { type: "json" }) as any;
+        const base = await env.KV_STATUS.get(name, { type: "json" });
         if (!base || typeof base !== "object") return null;
-
         const slug = String(base?.locationID || "").trim();
         if (!slug) return null;
-
         const score = ownerSelectorScore(base, slug, query);
         if (score <= 0) return null;
-
         return {
           ulid,
           locationID: slug,
@@ -8119,23 +8422,17 @@ async function listPublishedLocationSelectorItems(
         };
       })
     );
-
     pageHits.forEach((hit) => {
       if (hit) candidates.push(hit);
     });
-
-    cursor = page.cursor || undefined;
+    cursor = page.cursor || void 0;
   } while (cursor);
-
   if (!candidates.length) return [];
-
   candidates.sort((a, b) => {
     if (a.score !== b.score) return b.score - a.score;
-    return a.displayName.localeCompare(b.displayName, undefined, { sensitivity: "base" });
+    return a.displayName.localeCompare(b.displayName, void 0, { sensitivity: "base" });
   });
-
   const top = candidates.slice(0, limit);
-
   const items = await Promise.all(
     top.map(async (row) => {
       const rec = await readPublishedEffectiveProfileByUlid(row.ulid, env);
@@ -8143,106 +8440,92 @@ async function listPublishedLocationSelectorItems(
       return await buildOwnerLocationSelectorItem(env, rec);
     })
   );
-
   return items.filter(Boolean);
 }
-
-// ---------- handlers ----------
-
-async function handleLocationDraftRead(req: Request, env: Env): Promise<Response> {
-  const noStore = { "cache-control": "no-store" };
+__name(listPublishedLocationSelectorItems, "listPublishedLocationSelectorItems");
+async function handleLocationDraftRead(req, env) {
+  const noStore2 = { "cache-control": "no-store" };
   const url = new URL(req.url);
   const draftULID = String(url.searchParams.get("draftULID") || "").trim();
   const draftSessionId = String(url.searchParams.get("draftSessionId") || "").trim();
-
   if (!ULID_RE.test(draftULID) || !draftSessionId) {
     return json(
       { error: { code: "invalid_request", message: "draftULID and draftSessionId required" } },
       400,
-      noStore
+      noStore2
     );
   }
-
   const draft = await readPrivateShellDraft(env, draftULID, draftSessionId);
   if (!draft) {
     return json(
       { error: { code: "not_found", message: "draft not found" } },
       404,
-      noStore
+      noStore2
     );
   }
-
   return json(
     {
       ok: true,
       draftULID,
       draftSessionId,
       draft: {
-        ...(draft && typeof draft === "object" ? draft : {}),
+        ...draft && typeof draft === "object" ? draft : {},
         draftULID,
         draftSessionId
       }
     },
     200,
-    noStore
+    noStore2
   );
 }
-
-async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
-  const noStore = { "cache-control": "no-store" };
-
+__name(handleLocationDraftRead, "handleLocationDraftRead");
+async function handleLocationDraft(req, env) {
+  const noStore2 = { "cache-control": "no-store" };
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return json(
       { error: { code: "invalid_request", message: "valid JSON body required" } },
       400,
-      noStore
+      noStore2
     );
   }
-
-  const locationID = String((body as any)?.locationID || "").trim();
-  const draftULID = String((body as any)?.draftULID || "").trim();
-  const googlePlaceId = String((body as any)?.googlePlaceId || (body as any)?.place_id || "").trim();
-  let draftSessionId = String((body as any)?.draftSessionId || "").trim();
-  const rawDraft = ((body as any)?.draft && typeof (body as any).draft === "object")
-    ? (body as any).draft
-    : {};
-
+  const locationID = String(body?.locationID || "").trim();
+  const draftULID = String(body?.draftULID || "").trim();
+  const googlePlaceId = String(body?.googlePlaceId || body?.place_id || "").trim();
+  let draftSessionId = String(body?.draftSessionId || "").trim();
+  const rawDraft = body?.draft && typeof body.draft === "object" ? body.draft : {};
   if (locationID && draftULID) {
     return json(
       { error: { code: "invalid_request", message: "locationID and draftULID cannot be combined" } },
       400,
-      noStore
+      noStore2
     );
   }
-
   if (googlePlaceId && !isValidGooglePlaceId(googlePlaceId)) {
     return json(
       { error: { code: "invalid_request", message: "invalid googlePlaceId" } },
       400,
-      noStore
+      noStore2
     );
   }
-
-  let normalizedPatch: Record<string, any>;
+  let normalizedPatch;
   try {
     normalizedPatch = normalizeDraftPatch(rawDraft, googlePlaceId);
-  } catch (e: any) {
+  } catch (e) {
     const msg = String(e?.message || "");
     if (msg === "invalid_coordinates") {
       return json(
         { error: { code: "invalid_request", message: "invalid coordinates" } },
         400,
-        noStore
+        noStore2
       );
     }
     return json(
       { error: { code: "invalid_request", message: msg || "invalid draft payload" } },
       400,
-      noStore
+      noStore2
     );
   }
-
   if (Object.prototype.hasOwnProperty.call(normalizedPatch, "tags")) {
     const tagValidation = await validateBusinessTagKeys(env, normalizedPatch.tags);
     if (!tagValidation.ok) {
@@ -8255,132 +8538,102 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
           }
         },
         400,
-        noStore
+        noStore2
       );
     }
-
     normalizedPatch.tags = tagValidation.tags;
   }
-
-  // A) existing location route
   if (locationID) {
     const ulid = await resolveUid(locationID, env);
     if (!ulid) {
       return json(
         { error: { code: "not_found", message: "unknown locationID" } },
         404,
-        noStore
+        noStore2
       );
     }
-
     if (!draftSessionId) draftSessionId = mintDraftSessionId();
-
-    const key = `override_draft:${ulid}:${draftSessionId}`;
-    const prev = await env.KV_STATUS.get(key, { type: "json" }) as any;
-    const nextDraft = mergeDraftPatch(prev, normalizedPatch);
-
-    const classificationError = null;
-    if (classificationError) {
+    const key2 = `override_draft:${ulid}:${draftSessionId}`;
+    const prev = await env.KV_STATUS.get(key2, { type: "json" });
+    const nextDraft2 = mergeDraftPatch(prev, normalizedPatch);
+    const classificationError2 = null;
+    if (classificationError2) {
       return json(
-        { error: { code: "invalid_request", message: classificationError } },
+        { error: { code: "invalid_request", message: classificationError2 } },
         400,
-        noStore
+        noStore2
       );
     }
-
-    nextDraft.updatedAt = new Date().toISOString();
-
-    await env.KV_STATUS.put(key, JSON.stringify(nextDraft));
-
+    nextDraft2.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    await env.KV_STATUS.put(key2, JSON.stringify(nextDraft2));
     return json(
       { ok: true, locationID, draftSessionId },
       200,
-      noStore
+      noStore2
     );
   }
-
-  // B) existing brand-new draft update
   if (draftULID) {
     if (!ULID_RE.test(draftULID) || !draftSessionId) {
       return json(
         { error: { code: "invalid_request", message: "draftULID and draftSessionId required" } },
         400,
-        noStore
+        noStore2
       );
     }
-
-    const key = `override_draft:${draftULID}:${draftSessionId}`;
-    const prev = await env.KV_STATUS.get(key, { type: "json" }) as any;
+    const key2 = `override_draft:${draftULID}:${draftSessionId}`;
+    const prev = await env.KV_STATUS.get(key2, { type: "json" });
     if (!prev) {
       return json(
         { error: { code: "not_found", message: "draft not found" } },
         404,
-        noStore
+        noStore2
       );
     }
-
-    const nextDraft = mergeDraftPatch(prev, normalizedPatch);
-
-    const classificationError = null;
-    if (classificationError) {
+    const nextDraft2 = mergeDraftPatch(prev, normalizedPatch);
+    const classificationError2 = null;
+    if (classificationError2) {
       return json(
-        { error: { code: "invalid_request", message: classificationError } },
+        { error: { code: "invalid_request", message: classificationError2 } },
         400,
-        noStore
+        noStore2
       );
     }
-
-    nextDraft.updatedAt = new Date().toISOString();
-
-    await env.KV_STATUS.put(key, JSON.stringify(nextDraft));
-
+    nextDraft2.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    await env.KV_STATUS.put(key2, JSON.stringify(nextDraft2));
     return json(
       { ok: true, draftULID, draftSessionId },
       200,
-      noStore
+      noStore2
     );
   }
-  
-  // C0) same-device Google-reference draft reopen/update
   let deviceId = readDeviceId(req);
   let deviceSetCookie = "";
-
   if (googlePlaceId && !deviceId) {
     const minted = mintDeviceId();
     deviceId = minted.dev;
     deviceSetCookie = minted.cookie;
   }
-
   const googleIndexKey = googlePlaceId && deviceId ? googleDraftIndexKey(deviceId, googlePlaceId) : "";
-  const draftResponseHeaders: Record<string, string> = deviceSetCookie
-    ? { ...noStore, "Set-Cookie": deviceSetCookie }
-    : noStore;
-
+  const draftResponseHeaders = deviceSetCookie ? { ...noStore2, "Set-Cookie": deviceSetCookie } : noStore2;
   if (googleIndexKey) {
-    const indexed = await env.KV_STATUS.get(googleIndexKey, { type: "json" }) as any;
+    const indexed = await env.KV_STATUS.get(googleIndexKey, { type: "json" });
     const indexedDraftULID = String(indexed?.draftULID || "").trim();
     const indexedDraftSessionId = String(indexed?.draftSessionId || "").trim();
-
     if (ULID_RE.test(indexedDraftULID) && indexedDraftSessionId) {
       const existingKey = `override_draft:${indexedDraftULID}:${indexedDraftSessionId}`;
-      const prev = await env.KV_STATUS.get(existingKey, { type: "json" }) as any;
-
+      const prev = await env.KV_STATUS.get(existingKey, { type: "json" });
       if (prev && typeof prev === "object") {
-        const nextDraft = mergeDraftPatch(prev, normalizedPatch);
-
-        const classificationError = null;
-        if (classificationError) {
+        const nextDraft2 = mergeDraftPatch(prev, normalizedPatch);
+        const classificationError2 = null;
+        if (classificationError2) {
           return json(
-            { error: { code: "invalid_request", message: classificationError } },
+            { error: { code: "invalid_request", message: classificationError2 } },
             400,
-            noStore
+            noStore2
           );
         }
-
-        nextDraft.updatedAt = new Date().toISOString();
-
-        await env.KV_STATUS.put(existingKey, JSON.stringify(nextDraft));
-
+        nextDraft2.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+        await env.KV_STATUS.put(existingKey, JSON.stringify(nextDraft2));
         return json(
           { ok: true, draftULID: indexedDraftULID, draftSessionId: indexedDraftSessionId, reopened: true },
           200,
@@ -8389,27 +8642,20 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
       }
     }
   }
-
-  // C / D) new manual shell or new Google-reference shell
   const newDraftULID = mintDraftUlid();
   const newDraftSessionId = mintDraftSessionId();
   const key = `override_draft:${newDraftULID}:${newDraftSessionId}`;
-
   const nextDraft = mergeDraftPatch({}, normalizedPatch);
-
   const classificationError = null;
   if (classificationError) {
     return json(
       { error: { code: "invalid_request", message: classificationError } },
       400,
-      noStore
+      noStore2
     );
   }
-
-  nextDraft.updatedAt = new Date().toISOString();
-
+  nextDraft.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   await env.KV_STATUS.put(key, JSON.stringify(nextDraft));
-  
   if (googleIndexKey) {
     await env.KV_STATUS.put(
       googleIndexKey,
@@ -8422,91 +8668,78 @@ async function handleLocationDraft(req: Request, env: Env): Promise<Response> {
       { expirationTtl: 60 * 60 * 24 * 30 }
     );
   }
-
   return json(
     { ok: true, draftULID: newDraftULID, draftSessionId: newDraftSessionId },
     200,
     draftResponseHeaders
   );
 }
-
-async function handleLocationDraftDelete(req: Request, env: Env): Promise<Response> {
-  const noStore = { "cache-control": "no-store" };
-
-  const body = await req.json().catch(() => null) as any;
+__name(handleLocationDraft, "handleLocationDraft");
+async function handleLocationDraftDelete(req, env) {
+  const noStore2 = { "cache-control": "no-store" };
+  const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return json(
       { error: { code: "invalid_request", message: "valid JSON body required" } },
       400,
-      noStore
+      noStore2
     );
   }
-
   const draftULID = String(body?.draftULID || "").trim();
   const draftSessionId = String(body?.draftSessionId || "").trim();
   const googlePlaceId = String(body?.googlePlaceId || body?.place_id || "").trim();
-
   if (!ULID_RE.test(draftULID) || !draftSessionId) {
     return json(
       { error: { code: "invalid_request", message: "draftULID and draftSessionId required" } },
       400,
-      noStore
+      noStore2
     );
   }
-
   await env.KV_STATUS.delete(`override_draft:${draftULID}:${draftSessionId}`);
-
   const deviceId = readDeviceId(req);
   if (deviceId && googlePlaceId && isValidGooglePlaceId(googlePlaceId)) {
     const indexKey = googleDraftIndexKey(deviceId, googlePlaceId);
-    const indexed = await env.KV_STATUS.get(indexKey, { type: "json" }) as any;
+    const indexed = await env.KV_STATUS.get(indexKey, { type: "json" });
     const indexedDraftULID = String(indexed?.draftULID || "").trim();
     const indexedDraftSessionId = String(indexed?.draftSessionId || "").trim();
-
     if (indexedDraftULID === draftULID && indexedDraftSessionId === draftSessionId) {
       await env.KV_STATUS.delete(indexKey);
     }
   }
-
   return json(
     { ok: true, draftULID, draftSessionId },
     200,
-    noStore
+    noStore2
   );
 }
-
-async function handleGoogleImportAutocomplete(req: Request, env: Env): Promise<Response> {
-  const noStore = { "cache-control": "no-store" };
+__name(handleLocationDraftDelete, "handleLocationDraftDelete");
+async function handleGoogleImportAutocomplete(req, env) {
+  const noStore2 = { "cache-control": "no-store" };
   const apiKey = googlePlacesApiKey(env);
-
   if (!apiKey) {
     return json(
       { error: { code: "google_places_key_missing", message: "Google Places server key is not configured." } },
       503,
-      noStore
+      noStore2
     );
   }
-
-  const body = await req.json().catch(() => null) as any;
+  const body = await req.json().catch(() => null);
   const input = String(body?.input || "").trim();
   const languageCode = String(body?.languageCode || "en").trim().slice(0, 12) || "en";
-
   if (input.length < 3) {
     return json(
       { ok: true, predictions: [] },
       200,
-      noStore
+      noStore2
     );
   }
-
   if (input.length > 160) {
     return json(
       { error: { code: "invalid_request", message: "Search input is too long." } },
       400,
-      noStore
+      noStore2
     );
   }
-
   const googleRes = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
     method: "POST",
     headers: {
@@ -8525,16 +8758,11 @@ async function handleGoogleImportAutocomplete(req: Request, env: Env): Promise<R
       includeQueryPredictions: false
     })
   });
-
-  const googlePayload = await googleRes.json().catch(() => null) as any;
-
+  const googlePayload = await googleRes.json().catch(() => null);
   if (!googleRes.ok) {
     const message = String(
-      googlePayload?.error?.message ||
-      googlePayload?.error ||
-      "Google autocomplete request failed."
+      googlePayload?.error?.message || googlePayload?.error || "Google autocomplete request failed."
     ).trim();
-
     return json(
       {
         error: {
@@ -8544,93 +8772,72 @@ async function handleGoogleImportAutocomplete(req: Request, env: Env): Promise<R
         }
       },
       502,
-      noStore
+      noStore2
     );
   }
-
   const suggestions = Array.isArray(googlePayload?.suggestions) ? googlePayload.suggestions : [];
-  const predictions = suggestions
-    .map((row: any) => {
-      const prediction = row?.placePrediction || {};
-      const placeId = String(prediction?.placeId || "").trim();
-      const mainText = String(prediction?.structuredFormat?.mainText?.text || "").trim();
-      const secondaryText = String(prediction?.structuredFormat?.secondaryText?.text || "").trim();
-      const text = String(prediction?.text?.text || [mainText, secondaryText].filter(Boolean).join(", ")).trim();
-
-      return {
-        placeId,
-        mainText: mainText || text,
-        secondaryText,
-        text
-      };
-    })
-    .filter((row: any) => isValidGooglePlaceId(row.placeId));
-
+  const predictions = suggestions.map((row) => {
+    const prediction = row?.placePrediction || {};
+    const placeId = String(prediction?.placeId || "").trim();
+    const mainText = String(prediction?.structuredFormat?.mainText?.text || "").trim();
+    const secondaryText = String(prediction?.structuredFormat?.secondaryText?.text || "").trim();
+    const text = String(prediction?.text?.text || [mainText, secondaryText].filter(Boolean).join(", ")).trim();
+    return {
+      placeId,
+      mainText: mainText || text,
+      secondaryText,
+      text
+    };
+  }).filter((row) => isValidGooglePlaceId(row.placeId));
   return json(
     {
       ok: true,
       predictions
     },
     200,
-    noStore
+    noStore2
   );
 }
-
-async function handleUpfrontGoogleImportHydrate(
-  req: Request,
-  env: Env,
-  body: any,
-  googlePlaceId: string
-): Promise<Response> {
-  const noStore = { "cache-control": "no-store" };
-
+__name(handleGoogleImportAutocomplete, "handleGoogleImportAutocomplete");
+async function handleUpfrontGoogleImportHydrate(req, env, body, googlePlaceId) {
+  const noStore2 = { "cache-control": "no-store" };
   if (!isValidGooglePlaceId(googlePlaceId)) {
     return json(
       { error: { code: "invalid_request", message: "invalid googlePlaceId" } },
       400,
-      noStore
+      noStore2
     );
   }
-
-  const rawDraft = (body?.draft && typeof body.draft === "object") ? body.draft : {};
-  let normalizedPatch: Record<string, any>;
-
+  const rawDraft = body?.draft && typeof body.draft === "object" ? body.draft : {};
+  let normalizedPatch;
   try {
     normalizedPatch = normalizeDraftPatch(rawDraft, googlePlaceId);
-  } catch (e: any) {
+  } catch (e) {
     const msg = String(e?.message || "");
     return json(
-      { error: { code: "invalid_request", message: msg === "invalid_coordinates" ? "invalid coordinates" : (msg || "invalid draft payload") } },
+      { error: { code: "invalid_request", message: msg === "invalid_coordinates" ? "invalid coordinates" : msg || "invalid draft payload" } },
       400,
-      noStore
+      noStore2
     );
   }
-
   let deviceId = readDeviceId(req);
   let deviceSetCookie = "";
-
   if (!deviceId) {
     const minted = mintDeviceId();
     deviceId = minted.dev;
     deviceSetCookie = minted.cookie;
   }
-
-  const responseHeaders: Record<string, string> = deviceSetCookie
-    ? { ...noStore, "Set-Cookie": deviceSetCookie }
-    : noStore;
-
+  const responseHeaders = deviceSetCookie ? { ...noStore2, "Set-Cookie": deviceSetCookie } : noStore2;
   const requestedDraftULID = String(body?.draftULID || "").trim();
   const requestedDraftSessionId = String(body?.draftSessionId || "").trim();
   const googleIndexKey = googleDraftIndexKey(deviceId, googlePlaceId);
-
   let draftULID = "";
   let draftSessionId = "";
-  let existingDraft: any = null;
+  let existingDraft = null;
   let reopened = false;
-
   if (ULID_RE.test(requestedDraftULID) && requestedDraftSessionId) {
     const requestedKey = `override_draft:${requestedDraftULID}:${requestedDraftSessionId}`;
-    const requestedDraft = await env.KV_STATUS.get(requestedKey, { type: "json" }) as any;
+    const requestedDraft = await env.KV_STATUS.get(requestedKey, { type: "json" });
     if (requestedDraft && typeof requestedDraft === "object") {
       draftULID = requestedDraftULID;
       draftSessionId = requestedDraftSessionId;
@@ -8638,15 +8845,13 @@ async function handleUpfrontGoogleImportHydrate(
       reopened = true;
     }
   }
-
   if (!draftULID) {
-    const indexed = await env.KV_STATUS.get(googleIndexKey, { type: "json" }) as any;
+    const indexed = await env.KV_STATUS.get(googleIndexKey, { type: "json" });
     const indexedDraftULID = String(indexed?.draftULID || "").trim();
     const indexedDraftSessionId = String(indexed?.draftSessionId || "").trim();
-
     if (ULID_RE.test(indexedDraftULID) && indexedDraftSessionId) {
       const indexedKey = `override_draft:${indexedDraftULID}:${indexedDraftSessionId}`;
-      const indexedDraft = await env.KV_STATUS.get(indexedKey, { type: "json" }) as any;
+      const indexedDraft = await env.KV_STATUS.get(indexedKey, { type: "json" });
       if (indexedDraft && typeof indexedDraft === "object") {
         draftULID = indexedDraftULID;
         draftSessionId = indexedDraftSessionId;
@@ -8655,10 +8860,8 @@ async function handleUpfrontGoogleImportHydrate(
       }
     }
   }
-
   const sameDeviceReopen = reopened && String(existingDraft?.googlePlaceId || "").trim() === googlePlaceId;
   const importPolicy = await checkGoogleImportPolicy(req, env, deviceId, googlePlaceId, sameDeviceReopen);
-
   if (!importPolicy.allowed) {
     await writeGoogleImportLedger(env, {
       placeId: googlePlaceId,
@@ -8670,7 +8873,6 @@ async function handleUpfrontGoogleImportHydrate(
       quotaCounted: false,
       estimatedCostCents: 0
     });
-
     return json(
       {
         ok: false,
@@ -8685,7 +8887,6 @@ async function handleUpfrontGoogleImportHydrate(
       responseHeaders
     );
   }
-
   const provider = await resolveGoogleImportPayload(env, googlePlaceId);
   if (!provider.hydrated) {
     return json(
@@ -8700,19 +8901,15 @@ async function handleUpfrontGoogleImportHydrate(
       responseHeaders
     );
   }
-
   if (!draftULID) {
     draftULID = mintDraftUlid();
     draftSessionId = mintDraftSessionId();
   }
-
   const baseDraft = mergeDraftPatch(existingDraft || {}, normalizedPatch);
   const nextDraft = mergeGoogleImportIntoDraft(baseDraft, provider.draft);
-  nextDraft.updatedAt = new Date().toISOString();
-
+  nextDraft.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
   const draftKey = `override_draft:${draftULID}:${draftSessionId}`;
   await env.KV_STATUS.put(draftKey, JSON.stringify(nextDraft));
-
   await env.KV_STATUS.put(
     googleIndexKey,
     JSON.stringify({
@@ -8723,11 +8920,9 @@ async function handleUpfrontGoogleImportHydrate(
     }),
     { expirationTtl: 60 * 60 * 24 * 30 }
   );
-
   if (importPolicy.quotaCounted) {
     await recordGoogleImportQuota(env, deviceId, importPolicy.ipHash, googlePlaceId);
   }
-
   await writeGoogleImportLedger(env, {
     placeId: googlePlaceId,
     deviceId,
@@ -8738,7 +8933,6 @@ async function handleUpfrontGoogleImportHydrate(
     quotaCounted: importPolicy.quotaCounted,
     estimatedCostCents: provider.cacheHit ? 0 : 2
   });
-
   return json(
     {
       ok: true,
@@ -8763,75 +8957,68 @@ async function handleUpfrontGoogleImportHydrate(
     responseHeaders
   );
 }
-
-async function handleLocationHydrate(req: Request, env: Env): Promise<Response> {
-  const noStore = { "cache-control": "no-store" };
-
+__name(handleUpfrontGoogleImportHydrate, "handleUpfrontGoogleImportHydrate");
+async function handleLocationHydrate(req, env) {
+  const noStore2 = { "cache-control": "no-store" };
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return json(
       { error: { code: "invalid_request", message: "valid JSON body required" } },
       400,
-      noStore
+      noStore2
     );
   }
-  
-  const googlePlaceId = String((body as any)?.googlePlaceId || (body as any)?.place_id || "").trim();
+  const googlePlaceId = String(body?.googlePlaceId || body?.place_id || "").trim();
   if (googlePlaceId) {
     return await handleUpfrontGoogleImportHydrate(req, env, body, googlePlaceId);
   }
-
-  const draftULID = String((body as any)?.draftULID || "").trim();
-  const draftSessionId = String((body as any)?.draftSessionId || "").trim();
+  const draftULID = String(body?.draftULID || "").trim();
+  const draftSessionId = String(body?.draftSessionId || "").trim();
   const target = await resolveTargetIdentity(env, { draftULID, draftSessionId }, { validateDraft: true });
   if (!target) {
     return json(
       { error: { code: "not_found", message: "draft not found" } },
       404,
-      noStore
+      noStore2
     );
   }
-
   const entitlementError = await assertPaidDraftHydrationEntitlement(req, env, target);
   if (entitlementError) return entitlementError;
-
   const draftKey = `override_draft:${target.ulid}:${draftSessionId}`;
-  const draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+  const draft = await env.KV_STATUS.get(draftKey, { type: "json" });
   if (!draft) {
     return json(
       { error: { code: "not_found", message: "draft not found" } },
       404,
-      noStore
+      noStore2
     );
   }
-
   const result = await hydrateDraftWithGoogleDetails(env, draft);
   if (result.hydrated) {
     await env.KV_STATUS.put(draftKey, JSON.stringify(result.draft));
   }
-
   return json(
     {
       ok: true,
       hydrated: result.hydrated,
       error: result.error,
       draft: {
-        ...(result.draft && typeof result.draft === "object" ? result.draft : {}),
+        ...result.draft && typeof result.draft === "object" ? result.draft : {},
         draftULID: target.ulid,
         draftSessionId
       },
       hydratedAt: result.hydrated ? String(result.draft?.googleHydratedAt || "").trim() : ""
     },
     200,
-    noStore
+    noStore2
   );
 }
-
-function deepMergeProfile(base: any, patch: any): any {
-  if (patch === undefined) return base;
+__name(handleLocationHydrate, "handleLocationHydrate");
+function deepMergeProfile(base, patch) {
+  if (patch === void 0) return base;
   if (Array.isArray(base) || Array.isArray(patch)) return patch;
   if (base && typeof base === "object" && patch && typeof patch === "object") {
-    const out: any = { ...base };
+    const out = { ...base };
     for (const [k, v] of Object.entries(patch)) {
       out[k] = deepMergeProfile(out[k], v);
     }
@@ -8839,8 +9026,8 @@ function deepMergeProfile(base: any, patch: any): any {
   }
   return patch;
 }
-
-function pickCanonicalName(raw: any): string {
+__name(deepMergeProfile, "deepMergeProfile");
+function pickCanonicalName(raw) {
   if (!raw) return "";
   if (typeof raw === "string") return raw.trim();
   if (typeof raw === "object") {
@@ -8848,8 +9035,8 @@ function pickCanonicalName(raw: any): string {
   }
   return "";
 }
-
-function extractCoord(profile: any): { lat: number; lng: number } | null {
+__name(pickCanonicalName, "pickCanonicalName");
+function extractCoord(profile) {
   const c = profile?.coord;
   if (!c || typeof c !== "object") return null;
   const lat = Number(c?.lat);
@@ -8858,97 +9045,76 @@ function extractCoord(profile: any): { lat: number; lng: number } | null {
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
   return { lat, lng };
 }
-
-function slugifyNamePart(name: string): string {
-  return String(name || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48);
+__name(extractCoord, "extractCoord");
+function slugifyNamePart(name) {
+  return String(name || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48);
 }
-
-function geoSuffixFromCoord(coord: { lat: number; lng: number }): string {
+__name(slugifyNamePart, "slugifyNamePart");
+function geoSuffixFromCoord(coord) {
   const lat = Math.round(Math.abs(coord.lat) * 1e6);
   const lng = Math.round(Math.abs(coord.lng) * 1e6);
   const composite = `${lat}${lng}`;
   return composite.slice(-4).padStart(4, "0");
 }
-
-async function findAvailableSlug(env: Env, baseSlug: string, currentUlid = ""): Promise<string> {
+__name(geoSuffixFromCoord, "geoSuffixFromCoord");
+async function findAvailableSlug(env, baseSlug, currentUlid = "") {
   let candidate = baseSlug;
-  for (let i = 0; i < 1000; i++) {
-    const mapped = await env.KV_ALIASES.get(aliasKey(candidate), "json") as any;
+  for (let i = 0; i < 1e3; i++) {
+    const mapped = await env.KV_ALIASES.get(aliasKey(candidate), "json");
     const hit = String(typeof mapped === "string" ? mapped : mapped?.locationID || "").trim();
-    if (!hit || (currentUlid && hit === currentUlid)) return candidate;
+    if (!hit || currentUlid && hit === currentUlid) return candidate;
     candidate = `${baseSlug}-${i + 2}`;
   }
   throw new Error("slug_collision_exhausted");
 }
-
-async function loadLegacyProfileBySlug(req: Request, locationID: string): Promise<any | null> {
+__name(findAvailableSlug, "findAvailableSlug");
+async function loadLegacyProfileBySlug(req, locationID) {
   const slug = String(locationID || "").trim();
   if (!slug) return null;
-
   const origin = req.headers.get("Origin") || "https://navigen.io";
   const u = new URL("/api/data/profile", origin);
   u.searchParams.set("id", slug);
-
   const r = await fetch(u.toString(), {
     method: "GET",
     headers: { accept: "application/json" },
     cache: "no-store"
   });
-
   if (!r.ok) return null;
   return await r.json().catch(() => null);
 }
-
-async function readEffectivePublishedProfile(
-  req: Request,
-  env: Env,
-  ulid: string,
-  locationID: string
-): Promise<{ base: any; override: any; effective: any }> {
-  let base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" }) as any;
-  const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
-
+__name(loadLegacyProfileBySlug, "loadLegacyProfileBySlug");
+async function readEffectivePublishedProfile(req, env, ulid, locationID) {
+  let base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" });
+  const override = await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) || {};
   if (!base && locationID) {
     base = await loadLegacyProfileBySlug(req, locationID);
   }
-
   const effective = deepMergeProfile(base || {}, override || {});
   return { base: base || {}, override: override || {}, effective };
 }
-
-function collectPublishImages(profile: any): string[] {
-  const media = (profile?.media && typeof profile.media === "object") ? profile.media : {};
-  const out: string[] = [];
-
+__name(readEffectivePublishedProfile, "readEffectivePublishedProfile");
+function collectPublishImages(profile) {
+  const media = profile?.media && typeof profile.media === "object" ? profile.media : {};
+  const out = [];
   const cover = String(media.cover || "").trim();
   if (cover) out.push(cover);
-
   if (Array.isArray(media.images)) {
     for (const img of media.images) {
       const s = String(img || "").trim();
       if (s) out.push(s);
     }
   }
-
   return Array.from(new Set(out));
 }
-
-function extractDescriptionText(profile: any): string {
+__name(collectPublishImages, "collectPublishImages");
+function extractDescriptionText(profile) {
   const d = profile?.descriptions;
   if (typeof d === "string") return d.trim();
   if (d && typeof d === "object") return String(d.en || d.hu || Object.values(d)[0] || "").trim();
   return String(profile?.description || "").trim();
 }
-
-function isHttpUrl(v: any): boolean {
+__name(extractDescriptionText, "extractDescriptionText");
+function isHttpUrl(v) {
   try {
     const u = new URL(String(v || "").trim());
     return u.protocol === "http:" || u.protocol === "https:";
@@ -8956,52 +9122,39 @@ function isHttpUrl(v: any): boolean {
     return false;
   }
 }
-
-function hasWebsiteOrSocialLink(profile: any): boolean {
-  const links = (profile?.links && typeof profile.links === "object") ? profile.links : {};
+__name(isHttpUrl, "isHttpUrl");
+function hasWebsiteOrSocialLink(profile) {
+  const links = profile?.links && typeof profile.links === "object" ? profile.links : {};
   for (const v of Object.values(links)) {
     if (isHttpUrl(v)) return true;
   }
-
-  const ci = (profile?.contactInformation && typeof profile.contactInformation === "object") ? profile.contactInformation : {};
+  const ci = profile?.contactInformation && typeof profile.contactInformation === "object" ? profile.contactInformation : {};
   if (isHttpUrl(ci?.website)) return true;
-
   return false;
 }
-
-function validatePublishCandidate(profile: any): string | null {
+__name(hasWebsiteOrSocialLink, "hasWebsiteOrSocialLink");
+function validatePublishCandidate(profile) {
   const name = pickCanonicalName(profile?.locationName ?? profile?.listedName);
   if (!name) return "missing_name";
-
   const coord = extractCoord(profile);
   if (!coord) return "missing_coordinates";
-
   if (collectPublishImages(profile).length < 3) return "images_min_3";
   if (extractDescriptionText(profile).length < 200) return "description_min_200";
   if (!hasWebsiteOrSocialLink(profile)) return "website_or_social_required";
-
   const groupKey = String(profile?.groupKey || "").trim();
   const subgroupKey = String(profile?.subgroupKey || "").trim();
   const context = String(profile?.context || "").trim();
   if (!groupKey || !subgroupKey || !context) return "classification_required";
-
   return null;
 }
-
-async function planAllocCall(env: Env, pi: string, op: string, payload: Record<string, unknown>): Promise<any> {
-  const ns =
-    (env as any).PLAN_ALLOC ||
-    (env as any).PLANALLOC ||
-    (env as any).PLAN_ALLOC_DO ||
-    (env as any).DO_PLAN_ALLOC;
-
+__name(validatePublishCandidate, "validatePublishCandidate");
+async function planAllocCall(env, pi, op, payload) {
+  const ns = env.PLAN_ALLOC || env.PLANALLOC || env.PLAN_ALLOC_DO || env.DO_PLAN_ALLOC;
   if (!ns || typeof ns.idFromName !== "function") {
     throw new Error("planalloc_binding_missing");
   }
-
   const id = ns.idFromName(`planalloc:${pi}`);
   const stub = ns.get(id);
-
   const r = await stub.fetch("https://do.internal/planalloc", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -9013,48 +9166,45 @@ async function planAllocCall(env: Env, pi: string, op: string, payload: Record<s
       ...payload
     })
   });
-
   const txt = await r.text();
-  let j: any = null;
-  try { j = JSON.parse(txt); } catch {}
-
+  let j = null;
+  try {
+    j = JSON.parse(txt);
+  } catch {
+  }
   if (!r.ok && !j) throw new Error(`planalloc_${op}_failed:${r.status}`);
   return j || { ok: r.ok };
 }
-
-function splitContextMemberships(raw: unknown): string[] {
+__name(planAllocCall, "planAllocCall");
+function splitContextMemberships(raw) {
   if (Array.isArray(raw)) return uniqueTrimmedStrings(raw);
   return uniqueTrimmedStrings(String(raw || "").split(/[;,]/));
 }
-
-function profileContextMemberships(profile: any): string[] {
-  const src = (profile && typeof profile === "object") ? profile : {};
+__name(splitContextMemberships, "splitContextMemberships");
+function profileContextMemberships(profile) {
+  const src = profile && typeof profile === "object" ? profile : {};
   return uniqueTrimmedStrings([
     ...splitContextMemberships(src.context),
     ...splitContextMemberships(src.contexts)
   ]);
 }
-
-function publishedCountryCode(profile: any): string {
+__name(profileContextMemberships, "profileContextMemberships");
+function publishedCountryCode(profile) {
   const cc = String(
-    profile?.contactInformation?.countryCode ||
-    profile?.contact?.countryCode ||
-    ""
+    profile?.contactInformation?.countryCode || profile?.contact?.countryCode || ""
   ).trim().toUpperCase();
-
   return /^[A-Z]{2}$/.test(cc) ? cc : "XX";
 }
-
-function searchBucketForSlug(slug: string): string {
+__name(publishedCountryCode, "publishedCountryCode");
+function searchBucketForSlug(slug) {
   const s = doNormalizeSlug(slug);
   const ch = s.slice(0, 1);
   return /^[a-z0-9]$/.test(ch) ? ch : "_";
 }
-
-function extractIndexNameValues(profile: any): string[] {
-  const out: string[] = [];
+__name(searchBucketForSlug, "searchBucketForSlug");
+function extractIndexNameValues(profile) {
+  const out = [];
   const ln = profile?.locationName;
-
   if (typeof ln === "string") out.push(ln);
   else if (ln && typeof ln === "object") {
     for (const v of Object.values(ln)) {
@@ -9062,18 +9212,13 @@ function extractIndexNameValues(profile: any): string[] {
       if (s) out.push(s);
     }
   }
-
   const listed = String(profile?.listedName || "").trim();
   if (listed) out.push(listed);
-
   return uniqueTrimmedStrings(out);
 }
-
-function extractIndexAddressValues(profile: any): string[] {
-  const ci = (profile?.contactInformation && typeof profile.contactInformation === "object")
-    ? profile.contactInformation
-    : ((profile?.contact && typeof profile.contact === "object") ? profile.contact : {});
-
+__name(extractIndexNameValues, "extractIndexNameValues");
+function extractIndexAddressValues(profile) {
+  const ci = profile?.contactInformation && typeof profile.contactInformation === "object" ? profile.contactInformation : profile?.contact && typeof profile.contact === "object" ? profile.contact : {};
   return uniqueTrimmedStrings([
     ci?.address,
     profile?.listedAddress,
@@ -9085,100 +9230,68 @@ function extractIndexAddressValues(profile: any): string[] {
     profile?.adminArea
   ]);
 }
-
-function extractIndexTagValues(profile: any): string[] {
-  const rawTags = Array.isArray(profile?.tags)
-    ? profile.tags
-    : String(profile?.tags || "").split(";");
-
+__name(extractIndexAddressValues, "extractIndexAddressValues");
+function extractIndexTagValues(profile) {
+  const rawTags = Array.isArray(profile?.tags) ? profile.tags : String(profile?.tags || "").split(";");
   return uniqueTrimmedStrings(rawTags);
 }
-
-async function computeIndexedFieldsHash(bundle: unknown): Promise<string> {
+__name(extractIndexTagValues, "extractIndexTagValues");
+async function computeIndexedFieldsHash(bundle) {
   const enc = new TextEncoder();
   const dig = await crypto.subtle.digest("SHA-256", enc.encode(JSON.stringify(bundle)));
   return `sha256:${bytesToHex(new Uint8Array(dig))}`;
 }
-
-async function searchShardCall(
-  env: Env,
-  countryCode: string,
-  bucket: string,
-  payload: Record<string, unknown>
-): Promise<any> {
-  const ns =
-    (env as any).SEARCH_SHARD ||
-    (env as any).SEARCH ||
-    (env as any).SEARCH_DO ||
-    (env as any).DO_SEARCH_SHARD;
-
+__name(computeIndexedFieldsHash, "computeIndexedFieldsHash");
+async function searchShardCall(env, countryCode, bucket, payload) {
+  const ns = env.SEARCH_SHARD || env.SEARCH || env.SEARCH_DO || env.DO_SEARCH_SHARD;
   if (!ns || typeof ns.idFromName !== "function") {
     throw new Error("searchshard_binding_missing");
   }
-
   const id = ns.idFromName(`search:${countryCode}:${bucket}`);
   const stub = ns.get(id);
-
   const r = await stub.fetch("https://do.internal/search", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload)
   });
-
   const txt = await r.text();
-  try { return JSON.parse(txt); } catch { return { ok: r.ok, raw: txt }; }
+  try {
+    return JSON.parse(txt);
+  } catch {
+    return { ok: r.ok, raw: txt };
+  }
 }
-
-async function contextShardCall(
-  env: Env,
-  contextKey: string,
-  payload: Record<string, unknown>
-): Promise<any> {
-  const ns =
-    (env as any).CONTEXT_SHARD ||
-    (env as any).CONTEXT ||
-    (env as any).CONTEXT_DO ||
-    (env as any).DO_CTX_SHARD;
-
+__name(searchShardCall, "searchShardCall");
+async function contextShardCall(env, contextKey, payload) {
+  const ns = env.CONTEXT_SHARD || env.CONTEXT || env.CONTEXT_DO || env.DO_CTX_SHARD;
   if (!ns || typeof ns.idFromName !== "function") {
     throw new Error("contextshard_binding_missing");
   }
-
   const id = ns.idFromName(`ctx:${contextKey}`);
   const stub = ns.get(id);
-
   const r = await stub.fetch("https://do.internal/context", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(payload)
   });
-
   const txt = await r.text();
-  try { return JSON.parse(txt); } catch { return { ok: r.ok, raw: txt }; }
-}
-
-async function syncPublishedDoIndex(
-  env: Env,
-  args: {
-    ulid: string;
-    slug: string;
-    prevProfile: any;
-    nextProfile: any;
-    visibilityState: VisibilityState;
+  try {
+    return JSON.parse(txt);
+  } catch {
+    return { ok: r.ok, raw: txt };
   }
-): Promise<void> {
+}
+__name(contextShardCall, "contextShardCall");
+async function syncPublishedDoIndex(env, args) {
   const ulid = String(args.ulid || "").trim();
   const slug = String(args.slug || "").trim();
   if (!DO_ULID_RE.test(ulid) || !slug) throw new Error("invalid_index_target");
-
   const prevContexts = profileContextMemberships(args.prevProfile);
   const nextContexts = profileContextMemberships(args.nextProfile);
   const allContexts = uniqueTrimmedStrings([...prevContexts, ...nextContexts]);
-
   const countryCode = publishedCountryCode(args.nextProfile);
   const bucket = searchBucketForSlug(slug);
   const ts = doNowIso();
-
   if (args.visibilityState === "hidden") {
     await searchShardCall(env, countryCode, bucket, {
       ver: 1,
@@ -9189,7 +9302,6 @@ async function syncPublishedDoIndex(
       contexts: allContexts,
       ts
     });
-
     for (const ctx of allContexts) {
       await contextShardCall(env, ctx, {
         ver: 1,
@@ -9200,21 +9312,18 @@ async function syncPublishedDoIndex(
     }
     return;
   }
-
   const tokens = doNormalizeTokens([
     ...extractIndexNameValues(args.nextProfile),
     ...extractIndexAddressValues(args.nextProfile),
     ...extractIndexTagValues(args.nextProfile),
     slug
   ]);
-
   const indexedFieldsHash = await computeIndexedFieldsHash({
     slug,
     countryCode,
     contexts: nextContexts,
     tokens
   });
-
   await searchShardCall(env, countryCode, bucket, {
     ver: 1,
     op: "upsert",
@@ -9226,23 +9335,16 @@ async function syncPublishedDoIndex(
     indexedFieldsHash,
     meta: {
       city: String(
-        args.nextProfile?.contactInformation?.city ||
-        args.nextProfile?.contact?.city ||
-        args.nextProfile?.city ||
-        ""
+        args.nextProfile?.contactInformation?.city || args.nextProfile?.contact?.city || args.nextProfile?.city || ""
       ).trim(),
       postalCode: String(
-        args.nextProfile?.contactInformation?.postalCode ||
-        args.nextProfile?.contact?.postalCode ||
-        args.nextProfile?.postalCode ||
-        ""
+        args.nextProfile?.contactInformation?.postalCode || args.nextProfile?.contact?.postalCode || args.nextProfile?.postalCode || ""
       ).trim(),
       name: pickCanonicalName(args.nextProfile?.locationName ?? args.nextProfile?.listedName)
     },
     ts
   });
-
-  const staleContexts = prevContexts.filter(ctx => !nextContexts.includes(ctx));
+  const staleContexts = prevContexts.filter((ctx) => !nextContexts.includes(ctx));
   for (const ctx of staleContexts) {
     await contextShardCall(env, ctx, {
       ver: 1,
@@ -9251,7 +9353,6 @@ async function syncPublishedDoIndex(
       ts
     });
   }
-
   for (const ctx of nextContexts) {
     await contextShardCall(env, ctx, {
       ver: 1,
@@ -9261,35 +9362,27 @@ async function syncPublishedDoIndex(
     });
   }
 }
-
-async function promoteDraftMediaManifestToPublishedLocation(env: Env, draftULID: string, locationULID: string): Promise<{ ok: boolean; promotedCount: number }> {
+__name(syncPublishedDoIndex, "syncPublishedDoIndex");
+async function promoteDraftMediaManifestToPublishedLocation(env, draftULID, locationULID) {
   const draftId = String(draftULID || "").trim();
   const locationId = String(locationULID || "").trim();
-
   if (!ULID_RE.test(draftId) || !ULID_RE.test(locationId)) {
     return { ok: false, promotedCount: 0 };
   }
-
-  const raw = await env.KV_MEDIA.get(mediaManifestKey("draft", draftId), { type: "json" }) as any;
+  const raw = await env.KV_MEDIA.get(mediaManifestKey("draft", draftId), { type: "json" });
   if (!raw) {
     return { ok: true, promotedCount: 0 };
   }
-
   const draftManifest = normalizeMediaManifest(raw, "draft", draftId);
-  const activeImages = draftManifest.images
-    .filter((img) => img.status === "active")
-    .sort((a, b) => {
-      if (a.slot !== b.slot) return a.slot - b.slot;
-      return a.createdAt.localeCompare(b.createdAt);
-    })
-    .slice(0, MEDIA_MAX_ACTIVE_IMAGES);
-
+  const activeImages = draftManifest.images.filter((img) => img.status === "active").sort((a, b) => {
+    if (a.slot !== b.slot) return a.slot - b.slot;
+    return a.createdAt.localeCompare(b.createdAt);
+  }).slice(0, MEDIA_MAX_ACTIVE_IMAGES);
   if (!activeImages.length) {
     return { ok: true, promotedCount: 0 };
   }
-
-  const nowIso = new Date().toISOString();
-  const locationManifest: MediaManifest = {
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+  const locationManifest = {
     version: 1,
     targetType: "location",
     targetId: locationId,
@@ -9303,58 +9396,49 @@ async function promoteDraftMediaManifestToPublishedLocation(env: Env, draftULID:
     })),
     updatedAt: nowIso
   };
-
   const promoted = await mediaTargetDoFetch(env, "location", locationId, {
     op: "replace-manifest",
     manifest: locationManifest
   });
-
   return {
     ok: promoted.payload?.ok === true,
     promotedCount: activeImages.length
   };
 }
-
-// --- OWN-EDIT v1: paid owner public profile editing foundation ---
-type OwnerProfileUpdatePatchResult =
-  | { ok: true; patch: Record<string, any>; changedFields: string[] }
-  | { ok: false; code: string; message: string; fields?: string[] };
-
-function ownerProfileEditError(code: string, message: string, status = 400, extra: Record<string, unknown> = {}): Response {
+__name(promoteDraftMediaManifestToPublishedLocation, "promoteDraftMediaManifestToPublishedLocation");
+function ownerProfileEditError(code, message, status = 400, extra = {}) {
   return json(
     { error: { code, message, ...extra } },
     status,
     { "cache-control": "no-store" }
   );
 }
-
-function ownerEditIsObject(value: unknown): value is Record<string, any> {
+__name(ownerProfileEditError, "ownerProfileEditError");
+function ownerEditIsObject(value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
-
-function ownerEditString(value: unknown, maxLen: number): string {
+__name(ownerEditIsObject, "ownerEditIsObject");
+function ownerEditString(value, maxLen) {
   return String(value ?? "").trim().slice(0, maxLen);
 }
-
-function ownerEditHasOwn(source: Record<string, any>, key: string): boolean {
+__name(ownerEditString, "ownerEditString");
+function ownerEditHasOwn(source, key) {
   return Object.prototype.hasOwnProperty.call(source, key);
 }
-
-function ownerEditPatchSource(body: any): Record<string, any> {
+__name(ownerEditHasOwn, "ownerEditHasOwn");
+function ownerEditPatchSource(body) {
   const direct = body?.patch ?? body?.updates ?? body?.profileUpdate;
   if (ownerEditIsObject(direct)) return direct;
-
-  const out: Record<string, any> = {};
+  const out = {};
   for (const key of ["description", "descriptions", "contactInformation", "links", "openingHours"]) {
     if (ownerEditIsObject(body) && ownerEditHasOwn(body, key)) out[key] = body[key];
   }
   return out;
 }
-
-function collectOwnerEditLockedFields(value: unknown, prefix = ""): string[] {
+__name(ownerEditPatchSource, "ownerEditPatchSource");
+function collectOwnerEditLockedFields(value, prefix = "") {
   if (!ownerEditIsObject(value) && !Array.isArray(value)) return [];
-
-  const locked = new Set([
+  const locked = /* @__PURE__ */ new Set([
     "id",
     "ID",
     "ulid",
@@ -9410,28 +9494,23 @@ function collectOwnerEditLockedFields(value: unknown, prefix = ""): string[] {
     "qa",
     "diagnostics"
   ]);
-
-  const out: string[] = [];
-  const entries = Array.isArray(value)
-    ? value.map((v, index) => [String(index), v] as [string, unknown])
-    : Object.entries(value);
-
+  const out = [];
+  const entries = Array.isArray(value) ? value.map((v, index) => [String(index), v]) : Object.entries(value);
   for (const [key, child] of entries) {
     const path = prefix ? `${prefix}.${key}` : key;
     if (locked.has(key)) out.push(path);
     out.push(...collectOwnerEditLockedFields(child, path));
   }
-
   return Array.from(new Set(out));
 }
-
-function ownerEditValidateUrl(value: string, field: string): OwnerProfileUpdatePatchResult | null {
+__name(collectOwnerEditLockedFields, "collectOwnerEditLockedFields");
+function ownerEditValidateUrl(value, field) {
   if (!value) return null;
   try {
     const u = new URL(value);
     if (u.protocol === "http:" || u.protocol === "https:") return null;
-  } catch {}
-
+  } catch {
+  }
   return {
     ok: false,
     code: "invalid_url",
@@ -9439,11 +9518,10 @@ function ownerEditValidateUrl(value: string, field: string): OwnerProfileUpdateP
     fields: [field]
   };
 }
-
-function ownerEditValidateEmail(value: string): OwnerProfileUpdatePatchResult | null {
+__name(ownerEditValidateUrl, "ownerEditValidateUrl");
+function ownerEditValidateEmail(value) {
   if (!value) return null;
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return null;
-
   return {
     ok: false,
     code: "invalid_email",
@@ -9451,13 +9529,13 @@ function ownerEditValidateEmail(value: string): OwnerProfileUpdatePatchResult | 
     fields: ["contactInformation.email"]
   };
 }
-
-function ownerEditDescriptionKeyAllowed(key: string): boolean {
+__name(ownerEditValidateEmail, "ownerEditValidateEmail");
+function ownerEditDescriptionKeyAllowed(key) {
   return /^[a-z]{2,10}$/i.test(key) || key === "default";
 }
-
-function ownerEditAllowedDirectLinkKey(key: string): boolean {
-  return new Set([
+__name(ownerEditDescriptionKeyAllowed, "ownerEditDescriptionKeyAllowed");
+function ownerEditAllowedDirectLinkKey(key) {
+  return (/* @__PURE__ */ new Set([
     "website",
     "official",
     "facebook",
@@ -9471,11 +9549,11 @@ function ownerEditAllowedDirectLinkKey(key: string): boolean {
     "whatsapp",
     "telegram",
     "messenger"
-  ]).has(key);
+  ])).has(key);
 }
-
-function ownerEditAllowedSocialLinkKey(key: string): boolean {
-  return new Set([
+__name(ownerEditAllowedDirectLinkKey, "ownerEditAllowedDirectLinkKey");
+function ownerEditAllowedSocialLinkKey(key) {
+  return (/* @__PURE__ */ new Set([
     "facebook",
     "instagram",
     "tiktok",
@@ -9487,12 +9565,11 @@ function ownerEditAllowedSocialLinkKey(key: string): boolean {
     "whatsapp",
     "telegram",
     "messenger"
-  ]).has(key);
+  ])).has(key);
 }
-
-function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult {
+__name(ownerEditAllowedSocialLinkKey, "ownerEditAllowedSocialLinkKey");
+function buildOwnerProfileUpdatePatch(body) {
   const source = ownerEditPatchSource(body);
-
   if (!ownerEditIsObject(source)) {
     return {
       ok: false,
@@ -9500,7 +9577,6 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
       message: "patch must be an object."
     };
   }
-
   const lockedFields = collectOwnerEditLockedFields(source);
   if (lockedFields.length) {
     return {
@@ -9510,8 +9586,7 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
       fields: lockedFields
     };
   }
-
-  const allowedTop = new Set(["description", "descriptions", "contactInformation", "links", "openingHours", "navigationCoord"]);
+  const allowedTop = /* @__PURE__ */ new Set(["description", "descriptions", "contactInformation", "links", "openingHours", "navigationCoord"]);
   const unknownTop = Object.keys(source).filter((key) => !allowedTop.has(key));
   if (unknownTop.length) {
     return {
@@ -9521,23 +9596,20 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
       fields: unknownTop
     };
   }
-
-  const patch: Record<string, any> = {};
-  const changedFields: string[] = [];
-
+  const patch = {};
+  const changedFields = [];
   if (ownerEditHasOwn(source, "description")) {
-    const value = ownerEditString(source.description, 5000);
-    patch.descriptions = { ...(patch.descriptions || {}), en: value };
+    const value = ownerEditString(source.description, 5e3);
+    patch.descriptions = { ...patch.descriptions || {}, en: value };
     changedFields.push("descriptions.en");
   }
-
   if (ownerEditHasOwn(source, "descriptions")) {
     const descriptions = source.descriptions;
     if (typeof descriptions === "string") {
-      patch.descriptions = { ...(patch.descriptions || {}), en: ownerEditString(descriptions, 5000) };
+      patch.descriptions = { ...patch.descriptions || {}, en: ownerEditString(descriptions, 5e3) };
       changedFields.push("descriptions.en");
     } else if (ownerEditIsObject(descriptions)) {
-      const out: Record<string, string> = { ...(patch.descriptions || {}) };
+      const out = { ...patch.descriptions || {} };
       for (const [key, value] of Object.entries(descriptions)) {
         if (!ownerEditDescriptionKeyAllowed(key)) {
           return {
@@ -9547,8 +9619,7 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
             fields: [`descriptions.${key}`]
           };
         }
-
-        out[key] = ownerEditString(value, 5000);
+        out[key] = ownerEditString(value, 5e3);
         changedFields.push(`descriptions.${key}`);
       }
       patch.descriptions = out;
@@ -9561,7 +9632,6 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
       };
     }
   }
-
   if (ownerEditHasOwn(source, "contactInformation")) {
     if (!ownerEditIsObject(source.contactInformation)) {
       return {
@@ -9571,8 +9641,7 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
         fields: ["contactInformation"]
       };
     }
-
-    const allowedContact = new Set(["phone", "email", "website", "whatsapp", "telegram", "messenger"]);
+    const allowedContact = /* @__PURE__ */ new Set(["phone", "email", "website", "whatsapp", "telegram", "messenger"]);
     const unknownContact = Object.keys(source.contactInformation).filter((key) => !allowedContact.has(key));
     if (unknownContact.length) {
       return {
@@ -9582,31 +9651,25 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
         fields: unknownContact.map((key) => `contactInformation.${key}`)
       };
     }
-
-    const out: Record<string, string> = {};
+    const out = {};
     for (const key of allowedContact) {
       if (!ownerEditHasOwn(source.contactInformation, key)) continue;
       const value = ownerEditString(source.contactInformation[key], key === "email" || key === "phone" ? 160 : 500);
-
       if (key === "email") {
         const badEmail = ownerEditValidateEmail(value);
         if (badEmail) return badEmail;
       }
-
       if (key === "website") {
         const badUrl = ownerEditValidateUrl(value, "contactInformation.website");
         if (badUrl) return badUrl;
       }
-
       out[key] = value;
       changedFields.push(`contactInformation.${key}`);
     }
-
     if (Object.keys(out).length) {
       patch.contactInformation = out;
     }
   }
-
   if (ownerEditHasOwn(source, "links")) {
     if (!ownerEditIsObject(source.links)) {
       return {
@@ -9616,8 +9679,7 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
         fields: ["links"]
       };
     }
-
-    const out: Record<string, any> = {};
+    const out = {};
     for (const [key, value] of Object.entries(source.links)) {
       if (key === "social") {
         if (!ownerEditIsObject(value)) {
@@ -9628,8 +9690,7 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
             fields: ["links.social"]
           };
         }
-
-        const socialOut: Record<string, string> = {};
+        const socialOut = {};
         for (const [socialKey, socialValue] of Object.entries(value)) {
           if (!ownerEditAllowedSocialLinkKey(socialKey)) {
             return {
@@ -9639,19 +9700,15 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
               fields: [`links.social.${socialKey}`]
             };
           }
-
-          const clean = ownerEditString(socialValue, 500);
-          const badUrl = ownerEditValidateUrl(clean, `links.social.${socialKey}`);
-          if (badUrl) return badUrl;
-
-          socialOut[socialKey] = clean;
+          const clean2 = ownerEditString(socialValue, 500);
+          const badUrl2 = ownerEditValidateUrl(clean2, `links.social.${socialKey}`);
+          if (badUrl2) return badUrl2;
+          socialOut[socialKey] = clean2;
           changedFields.push(`links.social.${socialKey}`);
         }
-
         out.social = socialOut;
         continue;
       }
-
       if (!ownerEditAllowedDirectLinkKey(key)) {
         return {
           ok: false,
@@ -9660,20 +9717,16 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
           fields: [`links.${key}`]
         };
       }
-
       const clean = ownerEditString(value, 500);
       const badUrl = ownerEditValidateUrl(clean, `links.${key}`);
       if (badUrl) return badUrl;
-
       out[key] = clean;
       changedFields.push(`links.${key}`);
     }
-
     if (Object.keys(out).length) {
       patch.links = out;
     }
   }
-
   if (ownerEditHasOwn(source, "openingHours")) {
     const hours = source.openingHours;
     if (!ownerEditIsObject(hours) && !Array.isArray(hours) && typeof hours !== "string") {
@@ -9684,9 +9737,8 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
         fields: ["openingHours"]
       };
     }
-
     const encoded = JSON.stringify(hours);
-    if (encoded.length > 6000) {
+    if (encoded.length > 6e3) {
       return {
         ok: false,
         code: "opening_hours_too_large",
@@ -9694,23 +9746,19 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
         fields: ["openingHours"]
       };
     }
-
     patch.openingHours = hours;
     changedFields.push("openingHours");
   }
-
   if (ownerEditHasOwn(source, "navigationCoord")) {
     const rawNavigationCoord = source.navigationCoord;
-    const hasNavigationValue = rawNavigationCoord !== null && rawNavigationCoord !== undefined && String(rawNavigationCoord).trim() !== "";
-
+    const hasNavigationValue = rawNavigationCoord !== null && rawNavigationCoord !== void 0 && String(rawNavigationCoord).trim() !== "";
     if (hasNavigationValue) {
-      let navigationCoord: { lat: number; lng: number } | undefined;
+      let navigationCoord;
       try {
         navigationCoord = normalizeDraftCoord(rawNavigationCoord);
       } catch {
-        navigationCoord = undefined;
+        navigationCoord = void 0;
       }
-
       if (!navigationCoord) {
         return {
           ok: false,
@@ -9719,12 +9767,10 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
           fields: ["navigationCoord"]
         };
       }
-
       patch.navigationCoord = navigationCoord;
       changedFields.push("navigationCoord");
     }
   }
-  
   const uniqueChanged = Array.from(new Set(changedFields));
   if (!uniqueChanged.length) {
     return {
@@ -9733,35 +9779,21 @@ function buildOwnerProfileUpdatePatch(body: any): OwnerProfileUpdatePatchResult 
       message: "No editable profile fields were provided."
     };
   }
-
   return {
     ok: true,
     patch,
     changedFields: uniqueChanged
   };
 }
-
-function extractOwnerProfileUpdateTarget(body: any): string {
+__name(buildOwnerProfileUpdatePatch, "buildOwnerProfileUpdatePatch");
+function extractOwnerProfileUpdateTarget(body) {
   const target = ownerEditIsObject(body?.target) ? body.target : {};
   return String(
-    target.targetId ||
-    target.ulid ||
-    target.locationID ||
-    body?.targetId ||
-    body?.ulid ||
-    body?.locationID ||
-    ""
+    target.targetId || target.ulid || target.locationID || body?.targetId || body?.ulid || body?.locationID || ""
   ).trim();
 }
-
-async function resolveOwnerProfileUpdateAccess(
-  req: Request,
-  env: Env,
-  body: any
-): Promise<
-  | { ok: true; ulid: string; locationID: string; effective: any; entitlement: PlanEntitlementState }
-  | { ok: false; response: Response }
-> {
+__name(extractOwnerProfileUpdateTarget, "extractOwnerProfileUpdateTarget");
+async function resolveOwnerProfileUpdateAccess(req, env, body) {
   const rawTarget = extractOwnerProfileUpdateTarget(body);
   if (!rawTarget) {
     return {
@@ -9769,8 +9801,7 @@ async function resolveOwnerProfileUpdateAccess(
       response: ownerProfileEditError("invalid_target", "targetId, ulid, or locationID is required.", 400)
     };
   }
-
-  const resolved = (await resolveUid(rawTarget, env)) || rawTarget;
+  const resolved = await resolveUid(rawTarget, env) || rawTarget;
   const ulid = ULID_RE.test(resolved) ? resolved : "";
   if (!ulid) {
     return {
@@ -9778,7 +9809,6 @@ async function resolveOwnerProfileUpdateAccess(
       response: ownerProfileEditError("invalid_target", "Target must resolve to a published location ULID.", 400)
     };
   }
-
   const published = await readPublishedEffectiveProfileByUlid(ulid, env);
   if (!published) {
     return {
@@ -9786,7 +9816,6 @@ async function resolveOwnerProfileUpdateAccess(
       response: ownerProfileEditError("not_found", "Published location was not found.", 404)
     };
   }
-
   const auth = await requireOwnerSession(req, env);
   if (auth instanceof Response) {
     return {
@@ -9794,7 +9823,6 @@ async function resolveOwnerProfileUpdateAccess(
       response: ownerProfileEditError("unauthorized", "Owner session is required.", auth.status || 401)
     };
   }
-
   const ownerUlid = String(auth.ulid || "").trim();
   if (ownerUlid !== ulid) {
     return {
@@ -9807,7 +9835,6 @@ async function resolveOwnerProfileUpdateAccess(
       )
     };
   }
-
   const entitlement = await readPlanEntitlementForUlid(env, ulid);
   if (!entitlement.planEntitled) {
     return {
@@ -9820,7 +9847,6 @@ async function resolveOwnerProfileUpdateAccess(
       )
     };
   }
-
   return {
     ok: true,
     ulid,
@@ -9829,15 +9855,13 @@ async function resolveOwnerProfileUpdateAccess(
     entitlement
   };
 }
-
-async function handleProfileUpdate(req: Request, env: Env): Promise<Response> {
-  const noStore = { "cache-control": "no-store" };
-
-  const body = await req.json().catch(() => null) as any;
+__name(resolveOwnerProfileUpdateAccess, "resolveOwnerProfileUpdateAccess");
+async function handleProfileUpdate(req, env) {
+  const noStore2 = { "cache-control": "no-store" };
+  const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return ownerProfileEditError("invalid_request", "valid JSON body required", 400);
   }
-
   const patchCheck = buildOwnerProfileUpdatePatch(body);
   if (!patchCheck.ok) {
     return ownerProfileEditError(
@@ -9847,22 +9871,17 @@ async function handleProfileUpdate(req: Request, env: Env): Promise<Response> {
       patchCheck.fields ? { fields: patchCheck.fields } : {}
     );
   }
-
   const access = await resolveOwnerProfileUpdateAccess(req, env, body);
   if (!access.ok) return access.response;
-
-  const base = await env.KV_STATUS.get(`profile_base:${access.ulid}`, { type: "json" }) as any;
+  const base = await env.KV_STATUS.get(`profile_base:${access.ulid}`, { type: "json" });
   if (!base || typeof base !== "object") {
     return ownerProfileEditError("not_found", "Published profile base was not found.", 404);
   }
-
-  const currentOverride = (await env.KV_STATUS.get(`override:${access.ulid}`, { type: "json" }) as any) || {};
+  const currentOverride = await env.KV_STATUS.get(`override:${access.ulid}`, { type: "json" }) || {};
   const nextOverride = deepMergeProfile(currentOverride || {}, patchCheck.patch);
   const nextEffective = deepMergeProfile(base, nextOverride);
   const nowIso = doNowIso();
-
   await env.KV_STATUS.put(`override:${access.ulid}`, JSON.stringify(nextOverride));
-
   await env.KV_STATUS.put(
     `override_log:${access.ulid}:${Date.now()}`,
     JSON.stringify({
@@ -9879,7 +9898,6 @@ async function handleProfileUpdate(req: Request, env: Env): Promise<Response> {
       }
     })
   );
-
   let indexSynced = false;
   try {
     await syncPublishedDoIndex(env, {
@@ -9890,14 +9908,13 @@ async function handleProfileUpdate(req: Request, env: Env): Promise<Response> {
       visibilityState: "promoted"
     });
     indexSynced = true;
-  } catch (e: any) {
+  } catch (e) {
     console.error("owner_profile_update_index_sync_failed", {
       ulid: access.ulid,
       locationID: access.locationID,
       err: String(e?.message || e || "")
     });
   }
-
   return json(
     {
       ok: true,
@@ -9912,46 +9929,38 @@ async function handleProfileUpdate(req: Request, env: Env): Promise<Response> {
       })
     },
     200,
-    noStore
+    noStore2
   );
 }
-
-async function handleLocationPublish(req: Request, env: Env): Promise<Response> {
-  const noStore = { "cache-control": "no-store" };
-
+__name(handleProfileUpdate, "handleProfileUpdate");
+async function handleLocationPublish(req, env) {
+  const noStore2 = { "cache-control": "no-store" };
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return json(
       { error: { code: "invalid_request", message: "valid JSON body required" } },
       400,
-      noStore
+      noStore2
     );
   }
-
-  const locationID = String((body as any)?.locationID || "").trim();
-  const draftULID = String((body as any)?.draftULID || "").trim();
-  const sourceDraftActorKey = String((body as any)?.sourceDraftActorKey || (body as any)?.draftSessionId || "").trim();
-
+  const locationID = String(body?.locationID || "").trim();
+  const draftULID = String(body?.draftULID || "").trim();
+  const sourceDraftActorKey = String(body?.sourceDraftActorKey || body?.draftSessionId || "").trim();
   if (!sourceDraftActorKey) {
     return json(
       { error: { code: "invalid_request", message: "draftSessionId required" } },
       400,
-      noStore
+      noStore2
     );
   }
-
-  const target = locationID
-    ? await resolveTargetIdentity(env, { locationID }, {})
-    : await resolveTargetIdentity(env, { draftULID, draftSessionId: sourceDraftActorKey }, { validateDraft: true });
-
+  const target = locationID ? await resolveTargetIdentity(env, { locationID }, {}) : await resolveTargetIdentity(env, { draftULID, draftSessionId: sourceDraftActorKey }, { validateDraft: true });
   if (!target) {
     return json(
       { error: { code: "not_found", message: "publish target not found" } },
       404,
-      noStore
+      noStore2
     );
   }
-
   const auth = await requireOwnerSession(req, env);
   if (auth instanceof Response) return auth;
   if (String(auth.ulid || "").trim() !== target.ulid) {
@@ -9965,62 +9974,54 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
         }
       },
       403,
-      noStore
+      noStore2
     );
   }
-
   const ownKey = `ownership:${target.ulid}`;
-  const ownership = await env.KV_STATUS.get(ownKey, { type: "json" }) as any;
+  const ownership = await env.KV_STATUS.get(ownKey, { type: "json" });
   const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
   const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
-
   if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime()) || exclusiveUntil.getTime() <= Date.now()) {
     return json(
       { error: { code: "ownership_inactive", message: "active ownership required" } },
       403,
-      noStore
+      noStore2
     );
   }
-
   const paymentIntentId = String(ownership?.lastEventId || "").trim();
   if (!paymentIntentId) {
     return json(
       { error: { code: "plan_missing", message: "ownership has no plan anchor" } },
       403,
-      noStore
+      noStore2
     );
   }
-
-  const plan = await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" }) as any;
+  const plan = await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" });
   const planExpIso = String(plan?.expiresAt || "").trim();
   const planExp = planExpIso ? new Date(planExpIso) : null;
-
   if (!plan || !planExp || Number.isNaN(planExp.getTime()) || planExp.getTime() <= Date.now()) {
     return json(
       { error: { code: "plan_inactive", message: "active plan required" } },
       403,
-      noStore
+      noStore2
     );
   }
-
   if (planExp.toISOString() !== exclusiveUntil.toISOString()) {
     return json(
       { error: { code: "plan_invariant_failed", message: "plan/ownership expiry mismatch" } },
       403,
-      noStore
+      noStore2
     );
   }
-
   const draftKey = `override_draft:${target.ulid}:${sourceDraftActorKey}`;
-  let draft = await env.KV_STATUS.get(draftKey, { type: "json" }) as any;
+  let draft = await env.KV_STATUS.get(draftKey, { type: "json" });
   if (!draft) {
     return json(
       { error: { code: "not_found", message: "draft not found" } },
       404,
-      noStore
+      noStore2
     );
   }
-  
   if (String(draft?.googlePlaceId || "").trim()) {
     const hydration = await hydrateDraftWithGoogleDetails(env, draft);
     if (hydration.hydrated) {
@@ -10028,67 +10029,53 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
       await env.KV_STATUS.put(draftKey, JSON.stringify(draft));
     }
   }
-
   const current = await readEffectivePublishedProfile(req, env, target.ulid, target.locationID);
-  const candidate = target.route === "existing-location"
-    ? deepMergeProfile(current.effective || {}, draft)
-    : deepMergeProfile({}, draft);
-
+  const candidate = target.route === "existing-location" ? deepMergeProfile(current.effective || {}, draft) : deepMergeProfile({}, draft);
   if (target.route === "existing-location" && target.locationID) {
     candidate.locationID = target.locationID;
   }
-
   const classificationError = await safeValidateClassificationSelection(env, candidate, { failClosedOnCatalogError: true });
   if (classificationError) {
     return json(
       { error: { code: "validation_failed", message: classificationError } },
       403,
-      noStore
+      noStore2
     );
   }
-
   const validationError = validatePublishCandidate(candidate);
   if (validationError) {
     return json(
       { error: { code: "validation_failed", message: validationError } },
       403,
-      noStore
+      noStore2
     );
   }
-
   let slug = "";
   let aliasWritten = false;
   let capacityHeld = false;
   let kvCommitted = false;
-
   try {
     const reserve = await planAllocCall(env, paymentIntentId, "reserve", {
       ulid: target.ulid,
       max: Math.max(0, Number(plan?.maxPublishedLocations || 0) || 0)
     });
-
     if (!reserve?.ok) {
       return json(
         { error: { code: "capacity_exceeded", message: "publish capacity exceeded" } },
         403,
-        noStore
+        noStore2
       );
     }
-
     capacityHeld = String(reserve?.reservationState || "").toLowerCase() === "held";
-
-    let baseWrite: any = null;
-    let overrideWrite: any = null;
-
+    let baseWrite = null;
+    let overrideWrite = null;
     if (target.route === "existing-location") {
       slug = String(target.locationID || current.base?.locationID || current.effective?.locationID || "").trim();
       if (!slug) throw new Error("missing_existing_slug");
-
       if (!current.base || !Object.keys(current.base).length) {
         baseWrite = deepMergeProfile({}, current.effective || {});
         baseWrite.locationID = slug;
       }
-
       overrideWrite = deepMergeProfile(current.override || {}, draft);
       if (overrideWrite && typeof overrideWrite === "object") {
         delete overrideWrite.locationID;
@@ -10097,26 +10084,20 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
       const name = pickCanonicalName(candidate?.locationName ?? candidate?.listedName);
       const coord = extractCoord(candidate);
       if (!name || !coord) throw new Error("invalid_brand_new_identity");
-
       const baseSlug = `${slugifyNamePart(name)}-${geoSuffixFromCoord(coord)}`.replace(/^-+|-+$/g, "").slice(0, 64);
       slug = await findAvailableSlug(env, baseSlug, target.ulid);
-
       baseWrite = deepMergeProfile({}, candidate);
       baseWrite.locationID = slug;
       overrideWrite = {};
     }
-
     if (target.route === "brand-new-private-shell") {
       await env.KV_ALIASES.put(aliasKey(slug), JSON.stringify({ locationID: target.ulid }));
       aliasWritten = true;
     }
-
     if (baseWrite) {
       await env.KV_STATUS.put(`profile_base:${target.ulid}`, JSON.stringify(baseWrite));
     }
-
     await env.KV_STATUS.put(`override:${target.ulid}`, JSON.stringify(overrideWrite || {}));
-
     await env.KV_STATUS.put(
       `override_log:${target.ulid}:${Date.now()}`,
       JSON.stringify({
@@ -10129,19 +10110,16 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
         draftSessionId: sourceDraftActorKey
       })
     );
-
     kvCommitted = true;
-
     if (capacityHeld) {
       try {
         const commit = await planAllocCall(env, paymentIntentId, "commit", { ulid: target.ulid });
         if (commit?.ok) {
           try {
-            const existingAlloc = await env.KV_STATUS.get(planAllocKey(paymentIntentId), { type: "json" }) as any;
-            const allocBase = (existingAlloc && typeof existingAlloc === "object") ? existingAlloc : {};
+            const existingAlloc = await env.KV_STATUS.get(planAllocKey(paymentIntentId), { type: "json" });
+            const allocBase = existingAlloc && typeof existingAlloc === "object" ? existingAlloc : {};
             const allocUlids = uniqueTrimmedStrings(Array.isArray(allocBase?.ulids) ? allocBase.ulids : []);
             if (!allocUlids.includes(target.ulid)) allocUlids.push(target.ulid);
-
             await env.KV_STATUS.put(
               planAllocKey(paymentIntentId),
               JSON.stringify({
@@ -10152,12 +10130,11 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
               })
             );
           } catch {
-            // mirror only; never block publish
           }
         } else {
           console.error("planalloc_commit_failed", { ulid: target.ulid, paymentIntentId, commit });
         }
-      } catch (e: any) {
+      } catch (e) {
         console.error("planalloc_commit_failed", {
           ulid: target.ulid,
           paymentIntentId,
@@ -10165,15 +10142,9 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
         });
       }
     }
-
-    const effectiveAfterCommit = target.route === "existing-location"
-      ? deepMergeProfile(baseWrite || current.base || current.effective || {}, overrideWrite || {})
-      : deepMergeProfile(baseWrite || {}, overrideWrite || {});
-
+    const effectiveAfterCommit = target.route === "existing-location" ? deepMergeProfile(baseWrite || current.base || current.effective || {}, overrideWrite || {}) : deepMergeProfile(baseWrite || {}, overrideWrite || {});
     effectiveAfterCommit.locationID = slug;
-
     const visibility = await computeVisibilityState(env, target.ulid);
-
     try {
       await syncPublishedDoIndex(env, {
         ulid: target.ulid,
@@ -10182,15 +10153,13 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
         nextProfile: effectiveAfterCommit,
         visibilityState: visibility.visibilityState
       });
-    } catch (e: any) {
+    } catch (e) {
       console.error("publish_index_sync_failed", {
         ulid: target.ulid,
         slug,
         err: String(e?.message || e || "")
       });
-      // DO best-effort only; never block or rollback committed publish
     }
-
     try {
       const mediaPromotion = await promoteDraftMediaManifestToPublishedLocation(env, target.ulid, target.ulid);
       if (!mediaPromotion.ok) {
@@ -10200,53 +10169,52 @@ async function handleLocationPublish(req: Request, env: Env): Promise<Response> 
           promotedCount: mediaPromotion.promotedCount
         });
       }
-    } catch (e: any) {
+    } catch (e) {
       console.error("publish_media_manifest_promotion_failed", {
         ulid: target.ulid,
         locationID: slug,
         err: String(e?.message || e || "")
       });
     }
-
     return json(
       { ok: true, locationID: slug },
       200,
-      noStore
+      noStore2
     );
-  } catch (e: any) {
+  } catch (e) {
     if (!kvCommitted && capacityHeld) {
       try {
         await planAllocCall(env, paymentIntentId, "release", { ulid: target.ulid });
-      } catch {}
+      } catch {
+      }
     }
-
     if (!kvCommitted && aliasWritten && slug) {
-      try { await env.KV_ALIASES.delete(aliasKey(slug)); } catch {}
+      try {
+        await env.KV_ALIASES.delete(aliasKey(slug));
+      } catch {
+      }
     }
-
     if (kvCommitted) {
       console.error("publish_postcommit_error", {
         ulid: target.ulid,
         slug,
         err: String(e?.message || e || "")
       });
-
       return json(
         { ok: true, locationID: slug },
         200,
-        noStore
+        noStore2
       );
     }
-
     return json(
       { error: { code: "publish_failed", message: String(e?.message || "publish failed") } },
       500,
-      noStore
+      noStore2
     );
   }
 }
-
-async function handleQr(req: Request, env: Env): Promise<Response> {
+__name(handleLocationPublish, "handleLocationPublish");
+async function handleQr(req, env) {
   const url = new URL(req.url);
   const raw = (url.searchParams.get("locationID") || "").trim();
   if (!raw) {
@@ -10255,11 +10223,9 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
       400
     );
   }
-
   const fmt = (url.searchParams.get("fmt") || "svg").toLowerCase();
   const size = clamp(parseInt(url.searchParams.get("size") || "512", 10), 128, 1024);
-
-  const mapped = (await resolveUid(raw, env)) || raw;
+  const mapped = await resolveUid(raw, env) || raw;
   const ulid = ULID_RE.test(mapped) ? mapped : "";
   if (!ulid) {
     return json(
@@ -10267,33 +10233,27 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
       404
     );
   }
-
-  const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" }) as any;
+  const base = await env.KV_STATUS.get(`profile_base:${ulid}`, { type: "json" });
   if (!base || typeof base !== "object") {
     return json(
       { error: { code: "not_found", message: "published profile not found" } },
       404
     );
   }
-
-  const override = (await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) as any) || {};
+  const override = await env.KV_STATUS.get(`override:${ulid}`, { type: "json" }) || {};
   const effective = deepMergeProfile(base, override);
-
   const canonicalSlug = String(effective?.locationID || base?.locationID || raw).trim();
   let targetUrl = String(effective?.qrUrl || "").trim();
-
   if (!targetUrl) {
     const dest = new URL("/", "https://navigen.io");
     dest.searchParams.set("lp", canonicalSlug);
     targetUrl = dest.toString();
   }
-
   const scanUrl = new URL(`/out/qr-scan/${encodeURIComponent(canonicalSlug)}`, "https://navigen.io");
   scanUrl.searchParams.set("to", targetUrl);
   const dataUrl = scanUrl.toString();
-
   if (fmt === "svg") {
-    const svg = await QRCode.toString(dataUrl, { type: "svg", width: size, margin: 0 });
+    const svg = await import_qrcode.default.toString(dataUrl, { type: "svg", width: size, margin: 0 });
     return new Response(svg, {
       headers: {
         "Content-Type": "image/svg+xml",
@@ -10304,7 +10264,7 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
       }
     });
   } else {
-    const bytes = await QRCode.toBuffer(dataUrl, { type: "png", width: size, margin: 0 });
+    const bytes = await import_qrcode.default.toBuffer(dataUrl, { type: "png", width: size, margin: 0 });
     return new Response(bytes, {
       headers: {
         "content-type": "image/png",
@@ -10314,175 +10274,122 @@ async function handleQr(req: Request, env: Env): Promise<Response> {
     });
   }
 }
-
-async function handleTrack(req: Request, env: Env): Promise<Response> {
-  // Expected small JSON from navigator.sendBeacon
-  let payload: any = {};
+__name(handleQr, "handleQr");
+async function handleTrack(req, env) {
+  let payload = {};
   try {
     payload = await req.json();
   } catch {
     return json({ error: { code: "invalid_request", message: "JSON body required" } }, 400);
   }
-
-  const locRaw = (typeof payload.locationID === "string" && payload.locationID.trim()) ? payload.locationID.trim() : ""; // accept slug or ULID
-  const loc = await resolveUid(locRaw, env); if (!loc) { // require canonical id
-    // unknown id: no-op (do not leak); keep CORS consistent with allowlist
+  const locRaw = typeof payload.locationID === "string" && payload.locationID.trim() ? payload.locationID.trim() : "";
+  const loc = await resolveUid(locRaw, env);
+  if (!loc) {
     return new Response(null, {
       status: 204,
       headers: {
-        "access-control-allow-origin": "https://navigen.io", // or your allowOrigin variable
+        "access-control-allow-origin": "https://navigen.io",
+        // or your allowOrigin variable
         "access-control-allow-credentials": "true",
         "vary": "Origin"
       }
     });
   }
-
-  // canonicalize: _→- and trim; clients send hyphen metrics
-  const event = (payload.event || "").toString().toLowerCase().replaceAll("_","-").trim();
-  // normalize action into canonical dashboard keys
-  let action = (payload.action || "").toString().toLowerCase().replaceAll("_","-").trim(); // normalize legacy
-  // normalize action into canonical keys (keeps daily stats consistent)
-  if (action.startsWith("nav.")) action = "map";                  // nav.google/nav.apple → map
-  if (action === "route") action = "map";                         // older client emitted "route"
-  if (action.startsWith("social.")) action = action.slice(7) || "other"; // social.instagram → instagram
-  if (action === "share-contact" || action === "share_contact") action = "share"; // Business Card share → share
-
-  if (action.startsWith("share")) action = "share";               // share_contact / share-qr → share
-  // optional: fold anything not in EVENT_ORDER into "other" (keeps data consolidated)
-
-  // accept locationID (primary)
+  const event = (payload.event || "").toString().toLowerCase().replaceAll("_", "-").trim();
+  let action = (payload.action || "").toString().toLowerCase().replaceAll("_", "-").trim();
+  if (action.startsWith("nav.")) action = "map";
+  if (action === "route") action = "map";
+  if (action.startsWith("social.")) action = action.slice(7) || "other";
+  if (action === "share-contact" || action === "share_contact") action = "share";
+  if (action.startsWith("share")) action = "share";
   if (!loc || !event) {
     return json({ error: { code: "invalid_request", message: "locationID and event required" } }, 400);
   }
-  
-  // accept any metric listed in EVENT_ORDER (hyphen canonical)
-  const allowed = new Set<string>(EVENT_ORDER as readonly string[]);
+  const allowed = new Set(EVENT_ORDER);
   if (!allowed.has(event)) {
     return json({ error: { code: "invalid_request", message: "unsupported event" } }, 400);
   }
-
-  // A) daily counter
-  const now = new Date();
-  const country = (req as any).cf?.country || "";      // CF edge country
-  const tz = (payload?.tz || "").trim() || undefined;  // optional client tz
-  // direct metric counting (event itself is the metric key)
+  const now = /* @__PURE__ */ new Date();
+  const country = req.cf?.country || "";
+  const tz = (payload?.tz || "").trim() || void 0;
   const evKey = event;
-  if ((EVENT_ORDER as readonly string[]).includes(evKey)) {
+  if (EVENT_ORDER.includes(evKey)) {
     const day = dayKeyFor(now, tz, country);
     const key = `stats:${loc}:${day}:${evKey}`;
-    await kvIncr(env.KV_STATS, key); // base counter (e.g. "rating" → how many rating events)
-
-    // For rating events, also accumulate the 1–5 score so /api/stats can compute an average.
+    await kvIncr(env.KV_STATS, key);
     if (evKey === "rating") {
-      const scoreRaw = (
-        payload?.score ??
-        payload?.rating ??
-        payload?.value ??
-        ""
-      ).toString().trim();
+      const scoreRaw = (payload?.score ?? payload?.rating ?? payload?.value ?? "").toString().trim();
       const score = parseInt(scoreRaw, 10);
-
       if (Number.isFinite(score) && score >= 1 && score <= 5) {
         const scoreKey = `stats:${loc}:${day}:rating-score`;
-        const cur = parseInt((await env.KV_STATS.get(scoreKey)) || "0", 10) || 0;
+        const cur = parseInt(await env.KV_STATS.get(scoreKey) || "0", 10) || 0;
         await env.KV_STATS.put(scoreKey, String(cur + score), {
-          expirationTtl: 60 * 60 * 24 * 366 // keep stats ~1 year like kvIncr()
+          expirationTtl: 60 * 60 * 24 * 366
+          // keep stats ~1 year like kvIncr()
         });
       }
     }
   }
-  
-  // count by the metric key directly (event is canonical)
   const bucket = event;
   await increment(env.KV_STATS, keyForStat(loc, bucket));
-
-  // keep response as before (e.g., return 204)
-  // daily counters above + legacy YYYYMMDD bucket for older readers
-
   const origin = req.headers.get("Origin") || "";
   const allowOrigin = origin || "*";
-
   return new Response(null, {
     status: 204,
     headers: {
-      "access-control-allow-origin": "https://navigen.io", // same as above (or allowOrigin variable)
+      "access-control-allow-origin": "https://navigen.io",
+      // same as above (or allowOrigin variable)
       "access-control-allow-credentials": "true",
       "vary": "Origin"
     }
   });
 }
-
-async function handleStatus(req: Request, env: Env): Promise<Response> {
+__name(handleTrack, "handleTrack");
+async function handleStatus(req, env) {
   const url = new URL(req.url);
   const idParam = url.searchParams.get("locationID") || "";
   const idRaw = String(idParam || "").trim();
-  const locID = ULID_RE.test(idRaw) ? idRaw : ((await resolveUid(idRaw, env)) || "");
+  const locID = ULID_RE.test(idRaw) ? idRaw : await resolveUid(idRaw, env) || "";
   if (!locID) return json({ error: { code: "invalid_request", message: "locationID required" } }, 400);
-
   const raw = await env.KV_STATUS.get(statusKey(locID), "json");
   const status = raw?.status || "free";
   const tier = raw?.tier || "free";
-
-  // Return minimal status payload for the app (no caching to reflect live changes).
   const plan = await readPlanEntitlementForUlid(env, locID);
   const vis = await computeVisibilityState(env, locID);
-
-  // Campaign with Promo QR state is authoritative, KV-backed, and subordinate to Active Plan.
   const camp = await campaignEntitlementForUlid(env, locID);
   const promoQrCampaignActive = plan.planEntitled && camp.entitled;
   const managedPresence = plan.planEntitled && !promoQrCampaignActive;
-
-  // Expose the full active set so the LPM can distinguish single vs multiple Promo QR campaigns.
-  const rawCampaignRows = await env.KV_STATUS.get(campaignsByUlidKey(locID), { type: "json" }) as any;
-  const campaignRows: any[] = Array.isArray(rawCampaignRows) ? rawCampaignRows : [];
+  const rawCampaignRows = await env.KV_STATUS.get(campaignsByUlidKey(locID), { type: "json" });
+  const campaignRows = Array.isArray(rawCampaignRows) ? rawCampaignRows : [];
   const nowMs = Date.now();
-
-  const activeCampaignKeys = plan.planEntitled
-    ? campaignRows
-        .filter((row: any) => {
-          if (!row || String(row?.locationID || "").trim() !== locID) return false;
-
-          const st = String(row?.statusOverride || row?.status || "").trim().toLowerCase();
-          if (st !== "active") return false;
-
-          const rowPlanMode = normalizePlanMode(row?.planMode, row?.campaignPreset);
-          if (rowPlanMode !== "campaign_with_promo_qr") return false;
-
-          const startMs = parseYmdUtcMs(String(row?.startDate || ""));
-          const endMs = parseYmdUtcMs(String(row?.endDate || ""));
-          if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return false;
-
-          if (nowMs < startMs) return false;
-          if (nowMs > (endMs + 24 * 60 * 60 * 1000 - 1)) return false;
-
-          return true;
-        })
-        .map((row: any) => String(row?.campaignKey || "").trim())
-        .filter(Boolean)
-        .filter((value: string, index: number, arr: string[]) => arr.indexOf(value) === index)
-    : [];
-
+  const activeCampaignKeys = plan.planEntitled ? campaignRows.filter((row) => {
+    if (!row || String(row?.locationID || "").trim() !== locID) return false;
+    const st = String(row?.statusOverride || row?.status || "").trim().toLowerCase();
+    if (st !== "active") return false;
+    const rowPlanMode = normalizePlanMode(row?.planMode, row?.campaignPreset);
+    if (rowPlanMode !== "campaign_with_promo_qr") return false;
+    const startMs = parseYmdUtcMs(String(row?.startDate || ""));
+    const endMs = parseYmdUtcMs(String(row?.endDate || ""));
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return false;
+    if (nowMs < startMs) return false;
+    if (nowMs > endMs + 24 * 60 * 60 * 1e3 - 1) return false;
+    return true;
+  }).map((row) => String(row?.campaignKey || "").trim()).filter(Boolean).filter((value, index, arr) => arr.indexOf(value) === index) : [];
   const ratingSummary = await readRatingSummary(env, locID);
   const ratingDeviceKey = readRatingDeviceKey(req);
-  const rawRatingVote = ratingDeviceKey
-    ? await env.KV_STATUS.get(ratingVoteKey(locID, ratingDeviceKey), { type: "json" }) as any
-    : null;
-
+  const rawRatingVote = ratingDeviceKey ? await env.KV_STATUS.get(ratingVoteKey(locID, ratingDeviceKey), { type: "json" }) : null;
   const userScoreRaw = Number(rawRatingVote?.score);
   const ratingLockedUntil = (() => {
     const votedAtMs = Date.parse(String(rawRatingVote?.votedAt || ""));
     if (!Number.isFinite(votedAtMs)) return "";
-
     const untilMs = votedAtMs + RATING_WINDOW_MS;
     return untilMs > Date.now() ? new Date(untilMs).toISOString() : "";
   })();
-
   return json(
     {
       locationID: locID,
       status,
       tier,
-
       // Active Plan entitlement spine
       planEntitled: plan.planEntitled,
       activePaidPlan: plan.activePaidPlan,
@@ -10501,23 +10408,20 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
       planActiveDurationDays: plan.activeDurationDays,
       planExpiresAt: plan.planExpiresAt,
       paymentIntentId: plan.paymentIntentId,
-
       // Legacy compatibility fields; do not use these for new business logic.
       ownedNow: vis.ownedNow,
       visibilityState: vis.visibilityState,
       exclusiveUntil: vis.exclusiveUntil,
       courtesyUntil: "",
-
       // Campaign with Promo QR spine
       campaignEntitled: promoQrCampaignActive,
       campaignEndsAt: promoQrCampaignActive ? camp.endDate : "",
       activeCampaignKey: promoQrCampaignActive ? camp.campaignKey : "",
       activeCampaignKeys: promoQrCampaignActive ? activeCampaignKeys : [],
-
       // Rating spine (authoritative, cross-device read model for the LPM)
       ratingAvg: ratingSummary.avg,
       ratedSum: ratingSummary.count,
-      userScore: (Number.isFinite(userScoreRaw) && userScoreRaw >= 1 && userScoreRaw <= 5) ? userScoreRaw : 0,
+      userScore: Number.isFinite(userScoreRaw) && userScoreRaw >= 1 && userScoreRaw <= 5 ? userScoreRaw : 0,
       ratingLockedUntil,
       ratingCooldownMinutes: 30
     },
@@ -10525,70 +10429,19 @@ async function handleStatus(req: Request, env: Env): Promise<Response> {
     { "cache-control": "no-store" }
   );
 }
-
-const STRUCTURE_ACTIVE_KEY = "structure:active";
-const STRUCTURE_VERSION_PREFIX = "structure:version:";
-const STRUCTURE_MANIFEST_KEY = "structure:manifest";
-const STRUCTURE_BUSINESS_CATEGORIES_KEY = "structure:business-categories";
-const STRUCTURE_BUSINESS_TAGS_KEY = "business-tags:v1";
-const STRUCTURE_BUSINESS_TAGS_MANIFEST_KEY = "business-tags:manifest";
-const STRUCTURE_GROUP_KEY_RE = /^group\.[a-z0-9][a-z0-9-]*$/i;
-const STRUCTURE_SUBGROUP_KEY_RE = /^(sub|group)\.[a-z0-9][a-z0-9-]*$/i;
-const STRUCTURE_TAG_GROUP_KEY_RE = /^tagGroup\.[a-z0-9][a-z0-9-]*$/i;
-const STRUCTURE_TAG_KEY_RE = /^tag\.[a-z0-9][a-z0-9-]*$/i;
-const STRUCTURE_VERSION_RE = /^\d{4}-?\d{2}-?\d{2}T\d{6}Z-[a-f0-9]{6,64}$/i;
-
-type StructureManifest = {
-  activeVersion: string;
-  publishedAt: string;
-  publishedBy: string;
-  source: string;
-  checksum: string;
-  count: number;
-};
-
-type NormalizedStructureSubgroup = {
-  key: string;
-  name: string;
-  keywords: string[];
-  order: number;
-};
-
-type NormalizedStructureGroup = {
-  groupKey: string;
-  groupName: string;
-  groupKeywords: string[];
-  fallbackSubgroupKey: string;
-  order: number;
-  subgroups: NormalizedStructureSubgroup[];
-};
-
-type PreparedStructurePayload = {
-  rows: NormalizedStructureGroup[];
-  errors: string[];
-};
-
-type NormalizedBusinessTag = {
-  key: string;
-  name: string;
-  keywords: string[];
-  order: number;
-};
-
-type NormalizedBusinessTagGroup = {
-  tagGroupKey: string;
-  tagGroupName: string;
-  order: number;
-  keywords: string[];
-  tags: NormalizedBusinessTag[];
-};
-
-type PreparedBusinessTagsPayload = {
-  tagGroups: NormalizedBusinessTagGroup[];
-  errors: string[];
-};
-
-function emptyStructureManifest(): StructureManifest {
+__name(handleStatus, "handleStatus");
+var STRUCTURE_ACTIVE_KEY = "structure:active";
+var STRUCTURE_VERSION_PREFIX = "structure:version:";
+var STRUCTURE_MANIFEST_KEY = "structure:manifest";
+var STRUCTURE_BUSINESS_CATEGORIES_KEY = "structure:business-categories";
+var STRUCTURE_BUSINESS_TAGS_KEY = "business-tags:v1";
+var STRUCTURE_BUSINESS_TAGS_MANIFEST_KEY = "business-tags:manifest";
+var STRUCTURE_GROUP_KEY_RE = /^group\.[a-z0-9][a-z0-9-]*$/i;
+var STRUCTURE_SUBGROUP_KEY_RE = /^(sub|group)\.[a-z0-9][a-z0-9-]*$/i;
+var STRUCTURE_TAG_GROUP_KEY_RE = /^tagGroup\.[a-z0-9][a-z0-9-]*$/i;
+var STRUCTURE_TAG_KEY_RE = /^tag\.[a-z0-9][a-z0-9-]*$/i;
+var STRUCTURE_VERSION_RE = /^\d{4}-?\d{2}-?\d{2}T\d{6}Z-[a-f0-9]{6,64}$/i;
+function emptyStructureManifest() {
   return {
     activeVersion: "unpublished",
     publishedAt: "",
@@ -10598,22 +10451,22 @@ function emptyStructureManifest(): StructureManifest {
     count: 0
   };
 }
-
-function structureString(value: unknown): string {
+__name(emptyStructureManifest, "emptyStructureManifest");
+function structureString(value) {
   return String(value || "").trim();
 }
-
-function structureStringArray(value: unknown): string[] {
+__name(structureString, "structureString");
+function structureStringArray(value) {
   const vals = Array.isArray(value) ? value : String(value || "").split(";");
   return uniqueTrimmedStrings(vals);
 }
-
-function structureOrder(value: unknown, fallback: number): number {
+__name(structureStringArray, "structureStringArray");
+function structureOrder(value, fallback) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
-
-function structureInputRows(payload: any): any[] | null {
+__name(structureOrder, "structureOrder");
+function structureInputRows(payload) {
   if (Array.isArray(payload)) return payload;
   if (!payload || typeof payload !== "object") return null;
   if (Array.isArray(payload.rows)) return payload.rows;
@@ -10621,8 +10474,8 @@ function structureInputRows(payload: any): any[] | null {
   if (Array.isArray(payload.structure)) return payload.structure;
   return null;
 }
-
-function sanitizeStructureManifest(raw: any): StructureManifest {
+__name(structureInputRows, "structureInputRows");
+function sanitizeStructureManifest(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return emptyStructureManifest();
   return {
     activeVersion: structureString(raw.activeVersion) || "unpublished",
@@ -10633,65 +10486,56 @@ function sanitizeStructureManifest(raw: any): StructureManifest {
     count: Number.isFinite(Number(raw.count)) ? Number(raw.count) : 0
   };
 }
-
-function sanitizeStructureBusinessCategoriesProjection(raw: any, manifest: StructureManifest): Record<string, unknown> {
-  const src = (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw : {};
-  const groups = Array.isArray((src as any).groups)
-    ? (src as any).groups.map((group: any) => {
-        const groupKey = structureString(group?.groupKey);
-        if (!STRUCTURE_GROUP_KEY_RE.test(groupKey)) return null;
-
-        const subgroups = (Array.isArray(group?.subgroups) ? group.subgroups : [])
-          .map((subgroup: any) => {
-            const key = structureString(subgroup?.key);
-            if (!STRUCTURE_SUBGROUP_KEY_RE.test(key)) return null;
-            return {
-              key,
-              name: structureString(subgroup?.name) || key,
-              order: structureOrder(subgroup?.order, 0),
-              keywords: structureStringArray(subgroup?.keywords)
-            };
-          })
-          .filter(Boolean);
-
-        return {
-          groupKey,
-          groupName: structureString(group?.groupName) || groupKey,
-          order: structureOrder(group?.order, 0),
-          groupKeywords: structureStringArray(group?.groupKeywords),
-          fallbackSubgroupKey: structureString(group?.fallbackSubgroupKey),
-          subgroups
-        };
-      })
-      .filter(Boolean)
-    : [];
-
+__name(sanitizeStructureManifest, "sanitizeStructureManifest");
+function sanitizeStructureBusinessCategoriesProjection(raw, manifest) {
+  const src = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const groups = Array.isArray(src.groups) ? src.groups.map((group) => {
+    const groupKey = structureString(group?.groupKey);
+    if (!STRUCTURE_GROUP_KEY_RE.test(groupKey)) return null;
+    const subgroups = (Array.isArray(group?.subgroups) ? group.subgroups : []).map((subgroup) => {
+      const key = structureString(subgroup?.key);
+      if (!STRUCTURE_SUBGROUP_KEY_RE.test(key)) return null;
+      return {
+        key,
+        name: structureString(subgroup?.name) || key,
+        order: structureOrder(subgroup?.order, 0),
+        keywords: structureStringArray(subgroup?.keywords)
+      };
+    }).filter(Boolean);
+    return {
+      groupKey,
+      groupName: structureString(group?.groupName) || groupKey,
+      order: structureOrder(group?.order, 0),
+      groupKeywords: structureStringArray(group?.groupKeywords),
+      fallbackSubgroupKey: structureString(group?.fallbackSubgroupKey),
+      subgroups
+    };
+  }).filter(Boolean) : [];
   return {
-    version: structureString((src as any).version) || manifest.activeVersion || "unpublished",
-    publishedAt: structureString((src as any).publishedAt) || manifest.publishedAt || "",
+    version: structureString(src.version) || manifest.activeVersion || "unpublished",
+    publishedAt: structureString(src.publishedAt) || manifest.publishedAt || "",
     groups
   };
 }
-
-async function readStructureManifest(env: Env): Promise<StructureManifest> {
-  const raw = await env.KV_STRUCTURE.get(STRUCTURE_MANIFEST_KEY, { type: "json" }) as any;
+__name(sanitizeStructureBusinessCategoriesProjection, "sanitizeStructureBusinessCategoriesProjection");
+async function readStructureManifest(env) {
+  const raw = await env.KV_STRUCTURE.get(STRUCTURE_MANIFEST_KEY, { type: "json" });
   return sanitizeStructureManifest(raw);
 }
-
-async function handleStructureBusinessCategoriesRead(env: Env): Promise<Response> {
+__name(readStructureManifest, "readStructureManifest");
+async function handleStructureBusinessCategoriesRead(env) {
   const [rawProjection, manifest] = await Promise.all([
-    env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_CATEGORIES_KEY, { type: "json" }) as Promise<any>,
+    env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_CATEGORIES_KEY, { type: "json" }),
     readStructureManifest(env)
   ]);
-
   return json(
     sanitizeStructureBusinessCategoriesProjection(rawProjection, manifest),
     200,
     { "cache-control": "no-store" }
   );
 }
-
-function structureTagInputGroups(payload: any): any[] | null {
+__name(handleStructureBusinessCategoriesRead, "handleStructureBusinessCategoriesRead");
+function structureTagInputGroups(payload) {
   if (Array.isArray(payload)) return payload;
   if (!payload || typeof payload !== "object") return null;
   if (Array.isArray(payload.tagGroups)) return payload.tagGroups;
@@ -10705,86 +10549,69 @@ function structureTagInputGroups(payload: any): any[] | null {
   }
   return null;
 }
-
-function sanitizeStructureBusinessTagsProjection(raw: any): Record<string, unknown> {
-  const src = (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw : {};
-  const tagGroups = Array.isArray((src as any).tagGroups)
-    ? (src as any).tagGroups.map((group: any) => {
-        const tagGroupKey = structureString(group?.tagGroupKey || group?.key);
-        if (!STRUCTURE_TAG_GROUP_KEY_RE.test(tagGroupKey)) return null;
-
-        const tags = (Array.isArray(group?.tags) ? group.tags : [])
-          .map((tag: any) => {
-            const key = structureString(tag?.key);
-            if (!STRUCTURE_TAG_KEY_RE.test(key)) return null;
-            return {
-              key,
-              name: structureString(tag?.name || tag?.label) || key,
-              order: structureOrder(tag?.order ?? tag?.sortOrder, 0),
-              keywords: structureStringArray(tag?.keywords)
-            };
-          })
-          .filter(Boolean);
-
-        return {
-          tagGroupKey,
-          tagGroupName: structureString(group?.tagGroupName || group?.name || group?.label) || tagGroupKey,
-          order: structureOrder(group?.order ?? group?.sortOrder, 0),
-          keywords: structureStringArray(group?.keywords),
-          tags
-        };
-      })
-      .filter(Boolean)
-    : [];
-
+__name(structureTagInputGroups, "structureTagInputGroups");
+function sanitizeStructureBusinessTagsProjection(raw) {
+  const src = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const tagGroups = Array.isArray(src.tagGroups) ? src.tagGroups.map((group) => {
+    const tagGroupKey = structureString(group?.tagGroupKey || group?.key);
+    if (!STRUCTURE_TAG_GROUP_KEY_RE.test(tagGroupKey)) return null;
+    const tags = (Array.isArray(group?.tags) ? group.tags : []).map((tag) => {
+      const key = structureString(tag?.key);
+      if (!STRUCTURE_TAG_KEY_RE.test(key)) return null;
+      return {
+        key,
+        name: structureString(tag?.name || tag?.label) || key,
+        order: structureOrder(tag?.order ?? tag?.sortOrder, 0),
+        keywords: structureStringArray(tag?.keywords)
+      };
+    }).filter(Boolean);
+    return {
+      tagGroupKey,
+      tagGroupName: structureString(group?.tagGroupName || group?.name || group?.label) || tagGroupKey,
+      order: structureOrder(group?.order ?? group?.sortOrder, 0),
+      keywords: structureStringArray(group?.keywords),
+      tags
+    };
+  }).filter(Boolean) : [];
   return {
-    version: structureString((src as any).version) || "v1",
-    publishedAt: structureString((src as any).publishedAt),
+    version: structureString(src.version) || "v1",
+    publishedAt: structureString(src.publishedAt),
     tagGroups
   };
 }
-
-function prepareBusinessTagsPayload(payload: any): PreparedBusinessTagsPayload {
+__name(sanitizeStructureBusinessTagsProjection, "sanitizeStructureBusinessTagsProjection");
+function prepareBusinessTagsPayload(payload) {
   const inputGroups = structureTagInputGroups(payload);
   if (!inputGroups) return { tagGroups: [], errors: ["tags payload must contain tagGroups array"] };
-
-  const errors: string[] = [];
-  const tagGroups: NormalizedBusinessTagGroup[] = [];
-  const seenGroups = new Set<string>();
-  const seenTags = new Set<string>();
-
-  inputGroups.forEach((group: any, index: number) => {
+  const errors = [];
+  const tagGroups = [];
+  const seenGroups = /* @__PURE__ */ new Set();
+  const seenTags = /* @__PURE__ */ new Set();
+  inputGroups.forEach((group, index) => {
     const rowId = `tag group ${index + 1}`;
     if (!group || typeof group !== "object" || Array.isArray(group)) {
       errors.push(`${rowId}: tag group must be an object`);
       return;
     }
-
     const tagGroupKey = structureString(group.tagGroupKey || group.key);
     if (!STRUCTURE_TAG_GROUP_KEY_RE.test(tagGroupKey)) {
       errors.push(`${rowId}: invalid tagGroupKey "${tagGroupKey}"`);
       return;
     }
-
     if (seenGroups.has(tagGroupKey)) errors.push(`${rowId}: duplicate tagGroupKey "${tagGroupKey}"`);
     seenGroups.add(tagGroupKey);
-
     const tagGroupName = structureString(group.tagGroupName || group.name || group.label);
     if (!tagGroupName) errors.push(`${rowId}: tagGroupName is required`);
-
     const tagRows = Array.isArray(group.tags) ? group.tags : [];
     if (!tagRows.length) errors.push(`${rowId}: tags must contain at least one tag`);
-
-    const tags: NormalizedBusinessTag[] = tagRows.map((tag: any, tagIndex: number) => {
+    const tags = tagRows.map((tag, tagIndex) => {
       const tagId = `${rowId} tag ${tagIndex + 1}`;
       const key = structureString(tag?.key);
       const name = structureString(tag?.name || tag?.label);
-
       if (!STRUCTURE_TAG_KEY_RE.test(key)) errors.push(`${tagId}: invalid key "${key}"`);
       if (!name) errors.push(`${tagId}: name is required`);
       if (seenTags.has(key)) errors.push(`${tagId}: duplicate tag key "${key}"`);
       seenTags.add(key);
-
       return {
         key,
         name: name || key,
@@ -10792,7 +10619,6 @@ function prepareBusinessTagsPayload(payload: any): PreparedBusinessTagsPayload {
         order: structureOrder(tag?.order ?? tag?.sortOrder, (tagIndex + 1) * 10)
       };
     });
-
     tagGroups.push({
       tagGroupKey,
       tagGroupName: tagGroupName || tagGroupKey,
@@ -10801,50 +10627,41 @@ function prepareBusinessTagsPayload(payload: any): PreparedBusinessTagsPayload {
       tags
     });
   });
-
   if (!tagGroups.length) errors.push("tags payload must contain at least one tag group");
   return { tagGroups, errors };
 }
-
-function deriveBusinessTagsProjection(prepared: PreparedBusinessTagsPayload): Record<string, unknown> {
+__name(prepareBusinessTagsPayload, "prepareBusinessTagsPayload");
+function deriveBusinessTagsProjection(prepared) {
   return {
     version: "v1",
     publishedAt: doNowIso(),
-    tagGroups: prepared.tagGroups
-      .slice()
-      .sort((a, b) => a.order - b.order || a.tagGroupKey.localeCompare(b.tagGroupKey))
-      .map((group) => ({
-        tagGroupKey: group.tagGroupKey,
-        tagGroupName: group.tagGroupName,
-        order: group.order,
-        keywords: group.keywords,
-        tags: group.tags
-          .slice()
-          .sort((a, b) => a.order - b.order || a.key.localeCompare(b.key))
-          .map((tag) => ({
-            key: tag.key,
-            name: tag.name,
-            order: tag.order,
-            keywords: tag.keywords
-          }))
+    tagGroups: prepared.tagGroups.slice().sort((a, b) => a.order - b.order || a.tagGroupKey.localeCompare(b.tagGroupKey)).map((group) => ({
+      tagGroupKey: group.tagGroupKey,
+      tagGroupName: group.tagGroupName,
+      order: group.order,
+      keywords: group.keywords,
+      tags: group.tags.slice().sort((a, b) => a.order - b.order || a.key.localeCompare(b.key)).map((tag) => ({
+        key: tag.key,
+        name: tag.name,
+        order: tag.order,
+        keywords: tag.keywords
       }))
+    }))
   };
 }
-
-async function handleStructureBusinessTagsRead(env: Env): Promise<Response> {
-  const rawProjection = await env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_TAGS_KEY, { type: "json" }) as any;
-
+__name(deriveBusinessTagsProjection, "deriveBusinessTagsProjection");
+async function handleStructureBusinessTagsRead(env) {
+  const rawProjection = await env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_TAGS_KEY, { type: "json" });
   return json(
     sanitizeStructureBusinessTagsProjection(rawProjection),
     200,
     { "cache-control": "no-store" }
   );
 }
-
-async function handleStructureTagsPublish(req: Request, env: Env): Promise<Response> {
+__name(handleStructureBusinessTagsRead, "handleStructureBusinessTagsRead");
+async function handleStructureTagsPublish(req, env) {
   const parsed = await parseTaxonomyJsonBody(req);
   if (parsed.ok === false) return parsed.response;
-
   const prepared = prepareBusinessTagsPayload(parsed.payload);
   if (prepared.errors.length) {
     return json(
@@ -10853,7 +10670,6 @@ async function handleStructureTagsPublish(req: Request, env: Env): Promise<Respo
       { "cache-control": "no-store" }
     );
   }
-
   const projection = sanitizeStructureBusinessTagsProjection(deriveBusinessTagsProjection(prepared));
   const manifest = {
     activeVersion: "business-tags:v1",
@@ -10862,10 +10678,8 @@ async function handleStructureTagsPublish(req: Request, env: Env): Promise<Respo
     source: structureString(parsed.payload?.source || parsed.payload?.metadata?.source) || "repo-tags-json",
     count: prepared.tagGroups.reduce((sum, group) => sum + group.tags.length, 0)
   };
-
   await env.KV_STRUCTURE.put(STRUCTURE_BUSINESS_TAGS_KEY, JSON.stringify(projection));
   await env.KV_STRUCTURE.put(STRUCTURE_BUSINESS_TAGS_MANIFEST_KEY, JSON.stringify(manifest));
-
   return json(
     {
       ok: true,
@@ -10878,83 +10692,66 @@ async function handleStructureTagsPublish(req: Request, env: Env): Promise<Respo
     { "cache-control": "no-store" }
   );
 }
-
-async function readBusinessTagKeySet(env: Env): Promise<Set<string>> {
-  const rawProjection = await env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_TAGS_KEY, { type: "json" }) as any;
+__name(handleStructureTagsPublish, "handleStructureTagsPublish");
+async function readBusinessTagKeySet(env) {
+  const rawProjection = await env.KV_STRUCTURE.get(STRUCTURE_BUSINESS_TAGS_KEY, { type: "json" });
   const projection = sanitizeStructureBusinessTagsProjection(rawProjection);
-  const keys = new Set<string>();
-
-  for (const group of Array.isArray((projection as any).tagGroups) ? (projection as any).tagGroups : []) {
+  const keys = /* @__PURE__ */ new Set();
+  for (const group of Array.isArray(projection.tagGroups) ? projection.tagGroups : []) {
     for (const tag of Array.isArray(group?.tags) ? group.tags : []) {
       const key = structureString(tag?.key);
       if (STRUCTURE_TAG_KEY_RE.test(key)) keys.add(key);
     }
   }
-
   return keys;
 }
-
-async function validateBusinessTagKeys(env: Env, rawTags: unknown): Promise<{ ok: true; tags: string[] } | { ok: false; unknown: string[] }> {
-  if (rawTags === undefined || rawTags === null) return { ok: true, tags: [] };
-
-  const tags = Array.isArray(rawTags)
-    ? uniqueTrimmedStrings(rawTags)
-    : uniqueTrimmedStrings(String(rawTags || "").split(/[;,]/));
-
+__name(readBusinessTagKeySet, "readBusinessTagKeySet");
+async function validateBusinessTagKeys(env, rawTags) {
+  if (rawTags === void 0 || rawTags === null) return { ok: true, tags: [] };
+  const tags = Array.isArray(rawTags) ? uniqueTrimmedStrings(rawTags) : uniqueTrimmedStrings(String(rawTags || "").split(/[;,]/));
   if (!tags.length) return { ok: true, tags: [] };
-
   const allowed = await readBusinessTagKeySet(env);
   const unknown = tags.filter((key) => !allowed.has(key));
-
   if (unknown.length) return { ok: false, unknown };
   return { ok: true, tags };
 }
-
-async function handleStructureManifestRead(env: Env): Promise<Response> {
+__name(validateBusinessTagKeys, "validateBusinessTagKeys");
+async function handleStructureManifestRead(env) {
   return json(await readStructureManifest(env), 200, { "cache-control": "no-store" });
 }
-
-function prepareStructurePayload(payload: any): PreparedStructurePayload {
+__name(handleStructureManifestRead, "handleStructureManifestRead");
+function prepareStructurePayload(payload) {
   const inputRows = structureInputRows(payload);
   if (!inputRows) return { rows: [], errors: ["structure payload must be an array or contain rows/groups/structure array"] };
-
-  const errors: string[] = [];
-  const rows: NormalizedStructureGroup[] = [];
-  const seenGroups = new Set<string>();
-
-  inputRows.forEach((row: any, index: number) => {
+  const errors = [];
+  const rows = [];
+  const seenGroups = /* @__PURE__ */ new Set();
+  inputRows.forEach((row, index) => {
     const rowId = `row ${index + 1}`;
     if (!row || typeof row !== "object" || Array.isArray(row)) {
       errors.push(`${rowId}: row must be an object`);
       return;
     }
-
     const groupKey = structureString(row.groupKey);
     if (!STRUCTURE_GROUP_KEY_RE.test(groupKey)) {
       errors.push(`${rowId}: invalid groupKey "${groupKey}"`);
       return;
     }
-
     if (seenGroups.has(groupKey)) errors.push(`${rowId}: duplicate groupKey "${groupKey}"`);
     seenGroups.add(groupKey);
-
     const groupName = structureString(row.groupName || row.label || row.name);
     if (!groupName) errors.push(`${rowId}: groupName is required`);
-
     const subgroupRows = Array.isArray(row.subgroups) ? row.subgroups : [];
     if (!subgroupRows.length) errors.push(`${rowId}: subgroups must contain at least one subgroup`);
-
-    const seenSubgroupsInGroup = new Set<string>();
-    const subgroups: NormalizedStructureSubgroup[] = subgroupRows.map((subgroup: any, subgroupIndex: number) => {
+    const seenSubgroupsInGroup = /* @__PURE__ */ new Set();
+    const subgroups = subgroupRows.map((subgroup, subgroupIndex) => {
       const subgroupId = `${rowId} subgroup ${subgroupIndex + 1}`;
       const key = structureString(subgroup?.key);
       const name = structureString(subgroup?.name || subgroup?.label);
-
       if (!STRUCTURE_SUBGROUP_KEY_RE.test(key)) errors.push(`${subgroupId}: invalid key "${key}"`);
       if (!name) errors.push(`${subgroupId}: name is required`);
       if (seenSubgroupsInGroup.has(key)) errors.push(`${subgroupId}: duplicate subgroup key "${key}" inside "${groupKey}"`);
       seenSubgroupsInGroup.add(key);
-
       return {
         key,
         name: name || key,
@@ -10962,12 +10759,10 @@ function prepareStructurePayload(payload: any): PreparedStructurePayload {
         order: structureOrder(subgroup?.order ?? subgroup?.sortOrder, (subgroupIndex + 1) * 10)
       };
     });
-
     const fallbackSubgroupKey = structureString(row.fallbackSubgroupKey);
     if (fallbackSubgroupKey && !seenSubgroupsInGroup.has(fallbackSubgroupKey)) {
       errors.push(`${rowId}: fallbackSubgroupKey "${fallbackSubgroupKey}" is not a subgroup in "${groupKey}"`);
     }
-
     rows.push({
       groupKey,
       groupName: groupName || groupKey,
@@ -10977,47 +10772,34 @@ function prepareStructurePayload(payload: any): PreparedStructurePayload {
       subgroups
     });
   });
-
   if (!rows.length) errors.push("structure must contain at least one group");
   return { rows, errors };
 }
-
-function deriveStructureBusinessCategoriesProjection(rows: NormalizedStructureGroup[], manifest: StructureManifest): Record<string, unknown> {
+__name(prepareStructurePayload, "prepareStructurePayload");
+function deriveStructureBusinessCategoriesProjection(rows, manifest) {
   return {
     version: manifest.activeVersion,
     publishedAt: manifest.publishedAt,
-    groups: rows
-      .slice()
-      .sort((a, b) => a.order - b.order || a.groupKey.localeCompare(b.groupKey))
-      .map((group) => ({
-        groupKey: group.groupKey,
-        groupName: group.groupName,
-        order: group.order,
-        groupKeywords: group.groupKeywords,
-        fallbackSubgroupKey: group.fallbackSubgroupKey,
-        subgroups: group.subgroups
-          .slice()
-          .sort((a, b) => a.order - b.order || a.key.localeCompare(b.key))
-          .map((subgroup) => ({
-            key: subgroup.key,
-            name: subgroup.name,
-            order: subgroup.order,
-            keywords: subgroup.keywords
-          }))
+    groups: rows.slice().sort((a, b) => a.order - b.order || a.groupKey.localeCompare(b.groupKey)).map((group) => ({
+      groupKey: group.groupKey,
+      groupName: group.groupName,
+      order: group.order,
+      groupKeywords: group.groupKeywords,
+      fallbackSubgroupKey: group.fallbackSubgroupKey,
+      subgroups: group.subgroups.slice().sort((a, b) => a.order - b.order || a.key.localeCompare(b.key)).map((subgroup) => ({
+        key: subgroup.key,
+        name: subgroup.name,
+        order: subgroup.order,
+        keywords: subgroup.keywords
       }))
+    }))
   };
 }
-
-async function writePreparedStructureVersion(
-  env: Env,
-  prepared: PreparedStructurePayload,
-  manifest: StructureManifest,
-  opts: { persistVersion?: boolean } = {}
-): Promise<void> {
+__name(deriveStructureBusinessCategoriesProjection, "deriveStructureBusinessCategoriesProjection");
+async function writePreparedStructureVersion(env, prepared, manifest, opts = {}) {
   const activePayload = { version: manifest.activeVersion, publishedAt: manifest.publishedAt, source: manifest.source, rows: prepared.rows };
   const projection = sanitizeStructureBusinessCategoriesProjection(deriveStructureBusinessCategoriesProjection(prepared.rows, manifest), manifest);
   const versionPayload = { manifest, rows: prepared.rows };
-
   if (opts.persistVersion !== false) {
     await env.KV_STRUCTURE.put(`${STRUCTURE_VERSION_PREFIX}${manifest.activeVersion}`, JSON.stringify(versionPayload));
   }
@@ -11025,19 +10807,17 @@ async function writePreparedStructureVersion(
   await env.KV_STRUCTURE.put(STRUCTURE_BUSINESS_CATEGORIES_KEY, JSON.stringify(projection));
   await env.KV_STRUCTURE.put(STRUCTURE_MANIFEST_KEY, JSON.stringify(manifest));
 }
-
-async function handleStructurePublish(req: Request, env: Env): Promise<Response> {
+__name(writePreparedStructureVersion, "writePreparedStructureVersion");
+async function handleStructurePublish(req, env) {
   const parsed = await parseTaxonomyJsonBody(req);
   if (parsed.ok === false) return parsed.response;
-
   const prepared = prepareStructurePayload(parsed.payload);
   if (prepared.errors.length) {
     return json({ error: { code: "validation_failed", message: "structure validation failed", details: prepared.errors } }, 400, { "cache-control": "no-store" });
   }
-
   const checksum = await taxonomyChecksumHex(stableTaxonomyJson({ rows: prepared.rows }));
-  const now = new Date();
-  const manifest: StructureManifest = {
+  const now = /* @__PURE__ */ new Date();
+  const manifest = {
     activeVersion: `${taxonomyVersionStamp(now)}-${checksum.slice(0, 6)}`,
     publishedAt: now.toISOString(),
     publishedBy: readAdminPublisher(req),
@@ -11045,33 +10825,28 @@ async function handleStructurePublish(req: Request, env: Env): Promise<Response>
     checksum,
     count: prepared.rows.length
   };
-
   await writePreparedStructureVersion(env, prepared, manifest);
   return json(manifest, 200, { "cache-control": "no-store" });
 }
-
-async function handleStructureActivateVersion(req: Request, env: Env): Promise<Response> {
+__name(handleStructurePublish, "handleStructurePublish");
+async function handleStructureActivateVersion(req, env) {
   const parsed = await parseTaxonomyJsonBody(req);
   if (parsed.ok === false) return parsed.response;
-
   const versionId = structureString(parsed.payload?.versionId);
   if (!versionId || !STRUCTURE_VERSION_RE.test(versionId)) {
     return json({ error: { code: "invalid_version", message: "versionId is required" } }, 400, { "cache-control": "no-store" });
   }
-
-  const versionRecord = await env.KV_STRUCTURE.get(`${STRUCTURE_VERSION_PREFIX}${versionId}`, { type: "json" }) as any;
+  const versionRecord = await env.KV_STRUCTURE.get(`${STRUCTURE_VERSION_PREFIX}${versionId}`, { type: "json" });
   if (!versionRecord) {
     return json({ error: { code: "not_found", message: "structure version not found" } }, 404, { "cache-control": "no-store" });
   }
-
   const prepared = prepareStructurePayload({ rows: versionRecord.rows });
   if (prepared.errors.length) {
     return json({ error: { code: "validation_failed", message: "stored structure version is invalid", details: prepared.errors } }, 409, { "cache-control": "no-store" });
   }
-
-  const now = new Date();
+  const now = /* @__PURE__ */ new Date();
   const checksum = structureString(versionRecord?.manifest?.checksum) || await taxonomyChecksumHex(stableTaxonomyJson({ rows: prepared.rows }));
-  const manifest: StructureManifest = {
+  const manifest = {
     activeVersion: versionId,
     publishedAt: now.toISOString(),
     publishedBy: readAdminPublisher(req),
@@ -11079,28 +10854,17 @@ async function handleStructureActivateVersion(req: Request, env: Env): Promise<R
     checksum,
     count: prepared.rows.length
   };
-
   await writePreparedStructureVersion(env, prepared, manifest, { persistVersion: false });
   return json(manifest, 200, { "cache-control": "no-store" });
 }
-
-const CONTEXTS_ACTIVE_KEY = "contexts:active";
-const CONTEXTS_VERSION_PREFIX = "contexts:version:";
-const CONTEXTS_MANIFEST_KEY = "contexts:manifest";
-const CONTEXTS_ALIASES_KEY = "contexts:aliases";
-const CONTEXTS_BUSINESS_TAXONOMY_KEY = "contexts:business-taxonomy";
-const CONTEXT_TAXONOMY_KEY_RE = /^[a-z0-9][a-z0-9-]*(?:\/[a-z0-9][a-z0-9-]*)*$/;
-
-type ContextsManifest = {
-  activeVersion: string;
-  publishedAt: string;
-  publishedBy: string;
-  source: string;
-  checksum: string;
-  count: number;
-};
-
-function emptyContextsManifest(): ContextsManifest {
+__name(handleStructureActivateVersion, "handleStructureActivateVersion");
+var CONTEXTS_ACTIVE_KEY = "contexts:active";
+var CONTEXTS_VERSION_PREFIX = "contexts:version:";
+var CONTEXTS_MANIFEST_KEY = "contexts:manifest";
+var CONTEXTS_ALIASES_KEY = "contexts:aliases";
+var CONTEXTS_BUSINESS_TAXONOMY_KEY = "contexts:business-taxonomy";
+var CONTEXT_TAXONOMY_KEY_RE = /^[a-z0-9][a-z0-9-]*(?:\/[a-z0-9][a-z0-9-]*)*$/;
+function emptyContextsManifest() {
   return {
     activeVersion: "unpublished",
     publishedAt: "",
@@ -11110,174 +10874,115 @@ function emptyContextsManifest(): ContextsManifest {
     count: 0
   };
 }
-
-function taxonomyString(value: unknown): string {
+__name(emptyContextsManifest, "emptyContextsManifest");
+function taxonomyString(value) {
   return String(value || "").trim();
 }
-
-function taxonomyLabel(value: unknown, fallback = ""): string {
+__name(taxonomyString, "taxonomyString");
+function taxonomyLabel(value, fallback = "") {
   if (typeof value === "string") return value.trim() || fallback;
   if (value && typeof value === "object") {
-    const obj = value as Record<string, unknown>;
+    const obj = value;
     const picked = taxonomyString(obj.en || obj.hu || Object.values(obj)[0]);
     return picked || fallback;
   }
   return fallback;
 }
-
-function taxonomyOrder(value: unknown): number {
+__name(taxonomyLabel, "taxonomyLabel");
+function taxonomyOrder(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
 }
-
-function taxonomyStringArray(value: unknown): string[] {
+__name(taxonomyOrder, "taxonomyOrder");
+function taxonomyStringArray(value) {
   const vals = Array.isArray(value) ? value : String(value || "").split(";");
   return uniqueTrimmedStrings(vals);
 }
-
-function isExplicitTaxonomyFalse(value: unknown): boolean {
+__name(taxonomyStringArray, "taxonomyStringArray");
+function isExplicitTaxonomyFalse(value) {
   return value === false || String(value || "").trim().toLowerCase() === "false";
 }
-
-function isValidTaxonomyKey(value: string): boolean {
+__name(isExplicitTaxonomyFalse, "isExplicitTaxonomyFalse");
+function isValidTaxonomyKey(value) {
   return CONTEXT_TAXONOMY_KEY_RE.test(value);
 }
-
-function sanitizeBusinessTaxonomyContextRow(row: any): Record<string, unknown> | null {
+__name(isValidTaxonomyKey, "isValidTaxonomyKey");
+function sanitizeBusinessTaxonomyContextRow(row) {
   if (!row || typeof row !== "object" || Array.isArray(row)) return null;
   if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext) || isExplicitTaxonomyFalse(row.published)) return null;
-
   const key = taxonomyString(row.key);
   if (!key || !isValidTaxonomyKey(key)) return null;
-
-  const out: Record<string, unknown> = {
+  const out = {
     key,
     label: taxonomyLabel(row.label, key),
     order: taxonomyOrder(row.order)
   };
-
   const groupKey = taxonomyString(row.groupKey);
   if (groupKey && isValidTaxonomyKey(groupKey)) out.groupKey = groupKey;
-
   const subgroupKey = taxonomyString(row.subgroupKey);
   if (subgroupKey && isValidTaxonomyKey(subgroupKey)) out.subgroupKey = subgroupKey;
-
   const pageKey = taxonomyString(row.pageKey);
   if (pageKey) out.pageKey = pageKey;
-
   const defaultView = taxonomyString(row.defaultView);
   if (defaultView) out.defaultView = defaultView;
-
   const subgroupMode = taxonomyString(row.subgroupMode);
   if (subgroupMode) out.subgroupMode = subgroupMode;
-
   const viewOptions = taxonomyString(row.viewOptions);
   if (viewOptions) out.viewOptions = viewOptions;
-
   const keywords = taxonomyStringArray(row.keywords);
   if (keywords.length) out.keywords = keywords;
-
   return out;
 }
-
-function taxonomySlugLabel(value: string): string {
-  return taxonomyString(value)
-    .split("-")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+__name(sanitizeBusinessTaxonomyContextRow, "sanitizeBusinessTaxonomyContextRow");
+function taxonomySlugLabel(value) {
+  return taxonomyString(value).split("-").filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 }
-
-function businessTaxonomyLocationKeyFromContextKey(key: string): { key: string; countryKey: string; countryLabel: string; cityKey: string; cityLabel: string; label: string } | null {
+__name(taxonomySlugLabel, "taxonomySlugLabel");
+function businessTaxonomyLocationKeyFromContextKey(key) {
   const parts = taxonomyString(key).split("/").filter(Boolean);
   if (parts.length < 2) return null;
-
   const countryKey = parts[1] || "";
   const cityKey = parts[2] || "";
   if (!countryKey) return null;
-
   const countryLabel = taxonomySlugLabel(countryKey);
   const cityLabel = cityKey ? taxonomySlugLabel(cityKey) : "";
   const locationKey = cityKey ? `${countryKey}/${cityKey}` : countryKey;
-
   return {
     key: locationKey,
     countryKey,
     countryLabel,
     cityKey,
     cityLabel,
-    label: cityLabel ? `${countryLabel} · ${cityLabel}` : countryLabel
+    label: cityLabel ? `${countryLabel} \xB7 ${cityLabel}` : countryLabel
   };
 }
-
-function businessTaxonomyLocationsFromContexts(contexts: any[]): Record<string, unknown>[] {
-  const seen = new Set<string>();
-  const out: Record<string, unknown>[] = [];
-
+__name(businessTaxonomyLocationKeyFromContextKey, "businessTaxonomyLocationKeyFromContextKey");
+function businessTaxonomyLocationsFromContexts(contexts) {
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
   for (const row of Array.isArray(contexts) ? contexts : []) {
     const loc = businessTaxonomyLocationKeyFromContextKey(taxonomyString(row?.key));
     if (!loc || seen.has(loc.key)) continue;
     seen.add(loc.key);
     out.push(loc);
   }
-
-  return out.sort((a, b) => taxonomyString(a.label).localeCompare(taxonomyString(b.label), undefined, { sensitivity: "base" }));
+  return out.sort((a, b) => taxonomyString(a.label).localeCompare(taxonomyString(b.label), void 0, { sensitivity: "base" }));
 }
-
-function sanitizeBusinessTaxonomyLocationRow(row: any): Record<string, unknown> | null {
+__name(businessTaxonomyLocationsFromContexts, "businessTaxonomyLocationsFromContexts");
+function sanitizeBusinessTaxonomyLocationRow(row) {
   if (!row || typeof row !== "object" || Array.isArray(row)) return null;
-
   const key = taxonomyString(row.key);
   const countryKey = taxonomyString(row.countryKey);
   const cityKey = taxonomyString(row.cityKey);
-
   if (!key || !countryKey || !isValidTaxonomyKey(key) || !isValidTaxonomyKey(countryKey)) return null;
   if (cityKey && !isValidTaxonomyKey(cityKey)) return null;
-
   const countryLabel = taxonomyLabel(row.countryLabel, taxonomySlugLabel(countryKey));
   const cityLabel = cityKey ? taxonomyLabel(row.cityLabel, taxonomySlugLabel(cityKey)) : "";
-  const label = taxonomyLabel(row.label, cityLabel ? `${countryLabel} · ${cityLabel}` : countryLabel);
-
+  const label = taxonomyLabel(row.label, cityLabel ? `${countryLabel} \xB7 ${cityLabel}` : countryLabel);
   return { key, countryKey, countryLabel, cityKey, cityLabel, label };
 }
-
-function sanitizeBusinessTaxonomySubgroup(row: any): Record<string, unknown> | null {
-  if (!row || typeof row !== "object" || Array.isArray(row)) return null;
-  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext) || isExplicitTaxonomyFalse(row.published)) return null;
-
-  const key = taxonomyString(row.key || row.subgroupKey);
-  if (!key || !isValidTaxonomyKey(key)) return null;
-
-  const contexts = taxonomyStringArray(row.contexts).filter(isValidTaxonomyKey);
-
-  return {
-    key,
-    label: taxonomyLabel(row.label, key),
-    order: taxonomyOrder(row.order),
-    contexts
-  };
-}
-
-function sanitizeBusinessTaxonomyGroup(row: any): Record<string, unknown> | null {
-  if (!row || typeof row !== "object" || Array.isArray(row)) return null;
-  if (isExplicitTaxonomyFalse(row.boSelectable) || isExplicitTaxonomyFalse(row.publicContext) || isExplicitTaxonomyFalse(row.published)) return null;
-
-  const key = taxonomyString(row.key || row.groupKey);
-  if (!key || !isValidTaxonomyKey(key)) return null;
-
-  const subgroups = Array.isArray(row.subgroups)
-    ? row.subgroups.map(sanitizeBusinessTaxonomySubgroup).filter(Boolean)
-    : [];
-
-  return {
-    key,
-    label: taxonomyLabel(row.label, key),
-    order: taxonomyOrder(row.order),
-    subgroups
-  };
-}
-
-function sanitizeContextsManifest(raw: any): ContextsManifest {
+__name(sanitizeBusinessTaxonomyLocationRow, "sanitizeBusinessTaxonomyLocationRow");
+function sanitizeContextsManifest(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return emptyContextsManifest();
   return {
     activeVersion: taxonomyString(raw.activeVersion) || "unpublished",
@@ -11288,85 +10993,52 @@ function sanitizeContextsManifest(raw: any): ContextsManifest {
     count: Number.isFinite(Number(raw.count)) ? Number(raw.count) : 0
   };
 }
-
-function sanitizeBusinessTaxonomyProjection(raw: any, manifest: ContextsManifest): Record<string, unknown> {
-  const src = (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw : {};
-  const contexts = Array.isArray((src as any).contexts)
-    ? (src as any).contexts.map(sanitizeBusinessTaxonomyContextRow).filter(Boolean)
-    : [];
-  const locations = Array.isArray((src as any).locations)
-    ? (src as any).locations.map(sanitizeBusinessTaxonomyLocationRow).filter(Boolean)
-    : businessTaxonomyLocationsFromContexts(contexts);
-
+__name(sanitizeContextsManifest, "sanitizeContextsManifest");
+function sanitizeBusinessTaxonomyProjection(raw, manifest) {
+  const src = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const contexts = Array.isArray(src.contexts) ? src.contexts.map(sanitizeBusinessTaxonomyContextRow).filter(Boolean) : [];
+  const locations = Array.isArray(src.locations) ? src.locations.map(sanitizeBusinessTaxonomyLocationRow).filter(Boolean) : businessTaxonomyLocationsFromContexts(contexts);
   return {
-    version: taxonomyString((src as any).version) || manifest.activeVersion || "unpublished",
-    publishedAt: taxonomyString((src as any).publishedAt) || manifest.publishedAt || "",
+    version: taxonomyString(src.version) || manifest.activeVersion || "unpublished",
+    publishedAt: taxonomyString(src.publishedAt) || manifest.publishedAt || "",
     groups: [],
     contexts,
     locations
   };
 }
-
-async function readContextsManifest(env: Env): Promise<ContextsManifest> {
-  const raw = await env.KV_CONTEXTS.get(CONTEXTS_MANIFEST_KEY, { type: "json" }) as any;
+__name(sanitizeBusinessTaxonomyProjection, "sanitizeBusinessTaxonomyProjection");
+async function readContextsManifest(env) {
+  const raw = await env.KV_CONTEXTS.get(CONTEXTS_MANIFEST_KEY, { type: "json" });
   return sanitizeContextsManifest(raw);
 }
-
-async function handleBusinessTaxonomyRead(env: Env): Promise<Response> {
+__name(readContextsManifest, "readContextsManifest");
+async function handleBusinessTaxonomyRead(env) {
   const [rawProjection, manifest] = await Promise.all([
-    env.KV_CONTEXTS.get(CONTEXTS_BUSINESS_TAXONOMY_KEY, { type: "json" }) as Promise<any>,
+    env.KV_CONTEXTS.get(CONTEXTS_BUSINESS_TAXONOMY_KEY, { type: "json" }),
     readContextsManifest(env)
   ]);
-
   return json(
     sanitizeBusinessTaxonomyProjection(rawProjection, manifest),
     200,
     { "cache-control": "no-store" }
   );
 }
-
-async function handleContextsManifestRead(env: Env): Promise<Response> {
+__name(handleBusinessTaxonomyRead, "handleBusinessTaxonomyRead");
+async function handleContextsManifestRead(env) {
   return json(await readContextsManifest(env), 200, { "cache-control": "no-store" });
 }
-
-
-type NormalizedContextTaxonomyRow = {
-  key: string;
-  label: string;
-  labels: Record<string, string>;
-  parentKey: string;
-  groupKey: string;
-  subgroupKey: string;
-  boSelectable: boolean;
-  publicContext: boolean;
-  published: boolean;
-  order: number;
-  keywords: string[];
-  aliases: string[];
-  pageKey: string;
-  defaultView: string;
-  subgroupMode: string;
-  viewOptions: string;
-};
-
-type PreparedContextTaxonomy = {
-  rows: NormalizedContextTaxonomyRow[];
-  aliases: Record<string, string>;
-  errors: string[];
-};
-
-const CONTEXT_TAXONOMY_VERSION_RE = /^\d{4}-?\d{2}-?\d{2}T\d{6}Z-[a-f0-9]{6,64}$/i;
-
-function parseTaxonomyBoolean(value: unknown, fallback: boolean): { value: boolean; ok: boolean } {
-  if (value === undefined || value === null || value === "") return { value: fallback, ok: true };
+__name(handleContextsManifestRead, "handleContextsManifestRead");
+var CONTEXT_TAXONOMY_VERSION_RE = /^\d{4}-?\d{2}-?\d{2}T\d{6}Z-[a-f0-9]{6,64}$/i;
+function parseTaxonomyBoolean(value, fallback) {
+  if (value === void 0 || value === null || value === "") return { value: fallback, ok: true };
   if (typeof value === "boolean") return { value, ok: true };
   const s = String(value || "").trim().toLowerCase();
   if (["true", "yes", "y", "1"].includes(s)) return { value: true, ok: true };
   if (["false", "no", "n", "0"].includes(s)) return { value: false, ok: true };
   return { value: fallback, ok: false };
 }
-
-function taxonomyInputRows(payload: any): any[] | null {
+__name(parseTaxonomyBoolean, "parseTaxonomyBoolean");
+function taxonomyInputRows(payload) {
   if (Array.isArray(payload)) return payload;
   if (!payload || typeof payload !== "object") return null;
   if (Array.isArray(payload.rows)) return payload.rows;
@@ -11374,24 +11046,24 @@ function taxonomyInputRows(payload: any): any[] | null {
   if (Array.isArray(payload.contexts)) return payload.contexts;
   return null;
 }
-
-function derivedParentKey(key: string): string {
+__name(taxonomyInputRows, "taxonomyInputRows");
+function derivedParentKey(key) {
   const idx = key.lastIndexOf("/");
   return idx > 0 ? key.slice(0, idx) : "";
 }
-
-function firstContextSegment(key: string): string {
+__name(derivedParentKey, "derivedParentKey");
+function firstContextSegment(key) {
   return taxonomyString(key).split("/")[0] || "";
 }
-
-function taxonomyLabelsObject(raw: unknown, errors: string[], rowId: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  if (raw === undefined || raw === null || raw === "") return out;
+__name(firstContextSegment, "firstContextSegment");
+function taxonomyLabelsObject(raw, errors, rowId) {
+  const out = {};
+  if (raw === void 0 || raw === null || raw === "") return out;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     errors.push(`${rowId}: labels/titles must be an object when provided`);
     return out;
   }
-  for (const [langRaw, labelRaw] of Object.entries(raw as Record<string, unknown>)) {
+  for (const [langRaw, labelRaw] of Object.entries(raw)) {
     const lang = taxonomyString(langRaw).toLowerCase();
     const label = taxonomyString(labelRaw);
     if (!/^[a-z]{2,8}(?:-[a-z0-9]{2,8})?$/i.test(lang)) errors.push(`${rowId}: invalid label language "${langRaw}"`);
@@ -11400,26 +11072,23 @@ function taxonomyLabelsObject(raw: unknown, errors: string[], rowId: string): Re
   }
   return out;
 }
-
-function isPublicTaxonomyRow(row: NormalizedContextTaxonomyRow): boolean {
+__name(taxonomyLabelsObject, "taxonomyLabelsObject");
+function isPublicTaxonomyRow(row) {
   return row.published && row.boSelectable && row.publicContext;
 }
-
-function prepareContextTaxonomyPayload(payload: any): PreparedContextTaxonomy {
+__name(isPublicTaxonomyRow, "isPublicTaxonomyRow");
+function prepareContextTaxonomyPayload(payload) {
   const inputRows = taxonomyInputRows(payload);
   if (!inputRows) return { rows: [], aliases: {}, errors: ["taxonomy payload must be an array or contain rows/taxonomy/contexts array"] };
-
-  const errors: string[] = [];
-  const rows: NormalizedContextTaxonomyRow[] = [];
-  const seenKeys = new Set<string>();
-
-  inputRows.forEach((row: any, index: number) => {
+  const errors = [];
+  const rows = [];
+  const seenKeys = /* @__PURE__ */ new Set();
+  inputRows.forEach((row, index) => {
     const rowId = `row ${index + 1}`;
     if (!row || typeof row !== "object" || Array.isArray(row)) {
       errors.push(`${rowId}: row must be an object`);
       return;
     }
-
     const key = taxonomyString(row.key);
     if (!key || !isValidTaxonomyKey(key)) {
       errors.push(`${rowId}: invalid key`);
@@ -11427,14 +11096,12 @@ function prepareContextTaxonomyPayload(payload: any): PreparedContextTaxonomy {
     }
     if (seenKeys.has(key)) errors.push(`${rowId}: duplicate key "${key}"`);
     seenKeys.add(key);
-
     const inferredParent = derivedParentKey(key);
     const parentKey = taxonomyString(row.parentKey) || inferredParent;
     if (parentKey && !isValidTaxonomyKey(parentKey)) errors.push(`${rowId}: invalid parentKey "${parentKey}"`);
     if (row.parentKey && inferredParent && taxonomyString(row.parentKey) !== inferredParent) {
       errors.push(`${rowId}: parentKey must be "${inferredParent}" for key "${key}"`);
     }
-
     const groupKey = taxonomyString(row.groupKey) || firstContextSegment(key);
     const subgroupKey = taxonomyString(row.subgroupKey) || key;
     if (!groupKey || !isValidTaxonomyKey(groupKey)) errors.push(`${rowId}: invalid groupKey "${groupKey}"`);
@@ -11442,13 +11109,10 @@ function prepareContextTaxonomyPayload(payload: any): PreparedContextTaxonomy {
     if (groupKey && subgroupKey && subgroupKey !== groupKey && !subgroupKey.startsWith(`${groupKey}/`)) {
       errors.push(`${rowId}: subgroupKey "${subgroupKey}" is not under groupKey "${groupKey}"`);
     }
-
     const labels = taxonomyLabelsObject(row.labels ?? row.localizedLabels ?? row.titles, errors, rowId);
     const label = taxonomyLabel(row.label, "") || taxonomyString(labels.en) || taxonomyString(Object.values(labels)[0]) || taxonomyLabel(row.title, "") || key;
-
     const order = Number(row.order ?? row.sortOrder ?? row.displayOrder ?? (index + 1) * 10);
     if (!Number.isFinite(order)) errors.push(`${rowId}: order must be numeric`);
-
     const boSelectable = parseTaxonomyBoolean(row.boSelectable, true);
     const publicContext = parseTaxonomyBoolean(row.publicContext, true);
     const publishedFlag = parseTaxonomyBoolean(row.published ?? row.isPublished, true);
@@ -11457,10 +11121,8 @@ function prepareContextTaxonomyPayload(payload: any): PreparedContextTaxonomy {
     if (!publicContext.ok) errors.push(`${rowId}: publicContext must be boolean`);
     if (!publishedFlag.ok) errors.push(`${rowId}: published must be boolean when provided`);
     if (!unpublishedFlag.ok) errors.push(`${rowId}: unpublished must be boolean when provided`);
-
     const status = taxonomyString(row.status).toLowerCase();
     const statusPublished = ["draft", "unpublished", "disabled", "archived"].includes(status) ? false : publishedFlag.value;
-
     rows.push({
       key,
       label,
@@ -11480,32 +11142,27 @@ function prepareContextTaxonomyPayload(payload: any): PreparedContextTaxonomy {
       viewOptions: taxonomyString(row.viewOptions)
     });
   });
-
-  const byKey = new Map<string, NormalizedContextTaxonomyRow>();
+  const byKey = /* @__PURE__ */ new Map();
   for (const row of rows) byKey.set(row.key, row);
-
-  const aliases: Record<string, string> = {};
-  const seenAliases = new Map<string, string>();
-  const seenGroupSubgroups = new Map<string, string>();
+  const aliases = {};
+  const seenAliases = /* @__PURE__ */ new Map();
+  const seenGroupSubgroups = /* @__PURE__ */ new Map();
   let publicRowCount = 0;
-
   for (const row of rows) {
     if (row.parentKey && !byKey.has(row.parentKey)) errors.push(`${row.key}: parentKey "${row.parentKey}" does not exist`);
     if (!byKey.has(row.groupKey)) errors.push(`${row.key}: groupKey "${row.groupKey}" does not exist`);
     if (!byKey.has(row.subgroupKey)) errors.push(`${row.key}: subgroupKey "${row.subgroupKey}" does not exist`);
-
     if (isPublicTaxonomyRow(row)) {
       publicRowCount += 1;
       const groupRow = byKey.get(row.groupKey);
       const subgroupRow = byKey.get(row.subgroupKey);
       if (!groupRow || !isPublicTaxonomyRow(groupRow)) errors.push(`${row.key}: public row uses non-public groupKey "${row.groupKey}"`);
       if (!subgroupRow || !isPublicTaxonomyRow(subgroupRow)) errors.push(`${row.key}: public row uses non-public subgroupKey "${row.subgroupKey}"`);
-      const combo = `${row.groupKey}\u0000${row.subgroupKey}`;
+      const combo = `${row.groupKey}\0${row.subgroupKey}`;
       const previous = seenGroupSubgroups.get(combo);
       if (previous && previous !== row.key) errors.push(`${row.key}: duplicate group/subgroup combination already used by "${previous}"`);
       else seenGroupSubgroups.set(combo, row.key);
     }
-
     for (const alias of row.aliases) {
       const normalizedAlias = alias.toLowerCase();
       const previous = seenAliases.get(normalizedAlias);
@@ -11516,53 +11173,49 @@ function prepareContextTaxonomyPayload(payload: any): PreparedContextTaxonomy {
       }
     }
   }
-
   if (!publicRowCount) errors.push("taxonomy must contain at least one published BO-selectable public context");
   return { rows, aliases, errors };
 }
-
-function taxonomyTitleFromKey(key: string): string {
+__name(prepareContextTaxonomyPayload, "prepareContextTaxonomyPayload");
+function taxonomyTitleFromKey(key) {
   const tail = taxonomyString(key).split("/").filter(Boolean).pop() || key;
   return tail.split("-").filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 }
-
-function contextChainForSubgroup(subgroupKey: string, publicKeys: Set<string>): string[] {
+__name(taxonomyTitleFromKey, "taxonomyTitleFromKey");
+function contextChainForSubgroup(subgroupKey, publicKeys) {
   const parts = taxonomyString(subgroupKey).split("/").filter(Boolean);
-  const chain: string[] = [];
+  const chain = [];
   for (let i = 0; i < parts.length; i++) {
     const candidate = parts.slice(0, i + 1).join("/");
     if (publicKeys.has(candidate)) chain.push(candidate);
   }
   return uniqueTrimmedStrings(chain);
 }
-
-function deriveBusinessTaxonomyProjection(rows: NormalizedContextTaxonomyRow[], manifest: ContextsManifest): Record<string, unknown> {
+__name(contextChainForSubgroup, "contextChainForSubgroup");
+function deriveBusinessTaxonomyProjection(rows, manifest) {
   const publicRows = rows.filter(isPublicTaxonomyRow).sort((a, b) => a.order - b.order || a.key.localeCompare(b.key));
   const byKey = new Map(publicRows.map((row) => [row.key, row]));
   const publicKeys = new Set(publicRows.map((row) => row.key));
-  const groupMap = new Map<string, { key: string; label: string; order: number; subgroups: Map<string, { key: string; label: string; order: number; contexts: string[] }> }>();
-
+  const groupMap = /* @__PURE__ */ new Map();
   for (const row of publicRows) {
     const groupRow = byKey.get(row.groupKey);
     const groupLabel = groupRow?.label || taxonomyTitleFromKey(row.groupKey);
     const groupOrder = Number.isFinite(groupRow?.order) ? Number(groupRow?.order) : row.order;
     let group = groupMap.get(row.groupKey);
     if (!group) {
-      group = { key: row.groupKey, label: groupLabel, order: groupOrder, subgroups: new Map() };
+      group = { key: row.groupKey, label: groupLabel, order: groupOrder, subgroups: /* @__PURE__ */ new Map() };
       groupMap.set(row.groupKey, group);
     }
-
     const subgroupRow = byKey.get(row.subgroupKey);
     if (!group.subgroups.has(row.subgroupKey)) {
       group.subgroups.set(row.subgroupKey, {
         key: row.subgroupKey,
-        label: subgroupRow?.label || row.label || `${group.label} · ${taxonomyTitleFromKey(row.subgroupKey)}`,
+        label: subgroupRow?.label || row.label || `${group.label} \xB7 ${taxonomyTitleFromKey(row.subgroupKey)}`,
         order: Number.isFinite(subgroupRow?.order) ? Number(subgroupRow?.order) : row.order,
         contexts: contextChainForSubgroup(row.subgroupKey, publicKeys)
       });
     }
   }
-
   return {
     version: manifest.activeVersion,
     publishedAt: manifest.publishedAt,
@@ -11573,7 +11226,7 @@ function deriveBusinessTaxonomyProjection(rows: NormalizedContextTaxonomyRow[], 
       subgroups: Array.from(group.subgroups.values()).sort((a, b) => a.order - b.order || a.key.localeCompare(b.key))
     })),
     contexts: publicRows.map((row) => {
-      const out: Record<string, unknown> = { key: row.key, label: row.label, groupKey: row.groupKey, subgroupKey: row.subgroupKey, order: row.order };
+      const out = { key: row.key, label: row.label, groupKey: row.groupKey, subgroupKey: row.subgroupKey, order: row.order };
       if (row.pageKey) out.pageKey = row.pageKey;
       if (row.defaultView) out.defaultView = row.defaultView;
       if (row.subgroupMode) out.subgroupMode = row.subgroupMode;
@@ -11583,31 +11236,31 @@ function deriveBusinessTaxonomyProjection(rows: NormalizedContextTaxonomyRow[], 
     })
   };
 }
-
-function stableTaxonomyJson(value: unknown): string {
+__name(deriveBusinessTaxonomyProjection, "deriveBusinessTaxonomyProjection");
+function stableTaxonomyJson(value) {
   if (value === null || typeof value !== "object") {
     const scalar = JSON.stringify(value);
     return typeof scalar === "string" ? scalar : "null";
   }
   if (Array.isArray(value)) return `[${value.map(stableTaxonomyJson).join(",")}]`;
-  const obj = value as Record<string, unknown>;
+  const obj = value;
   return `{${Object.keys(obj).sort().map((key) => `${JSON.stringify(key)}:${stableTaxonomyJson(obj[key])}`).join(",")}}`;
 }
-
-async function taxonomyChecksumHex(text: string): Promise<string> {
+__name(stableTaxonomyJson, "stableTaxonomyJson");
+async function taxonomyChecksumHex(text) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
-
-function taxonomyVersionStamp(date: Date): string {
+__name(taxonomyChecksumHex, "taxonomyChecksumHex");
+function taxonomyVersionStamp(date) {
   return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
 }
-
-function readAdminPublisher(req: Request): string {
+__name(taxonomyVersionStamp, "taxonomyVersionStamp");
+function readAdminPublisher(req) {
   return taxonomyString(req.headers.get("X-NG-Admin") || req.headers.get("X-Admin-User")) || "admin";
 }
-
-async function parseTaxonomyJsonBody(req: Request): Promise<{ ok: true; payload: any } | { ok: false; response: Response }> {
+__name(readAdminPublisher, "readAdminPublisher");
+async function parseTaxonomyJsonBody(req) {
   try {
     return { ok: true, payload: await req.json() };
   } catch {
@@ -11617,17 +11270,11 @@ async function parseTaxonomyJsonBody(req: Request): Promise<{ ok: true; payload:
     };
   }
 }
-
-async function writePreparedTaxonomyVersion(
-  env: Env,
-  prepared: PreparedContextTaxonomy,
-  manifest: ContextsManifest,
-  opts: { persistVersion?: boolean } = {}
-): Promise<void> {
+__name(parseTaxonomyJsonBody, "parseTaxonomyJsonBody");
+async function writePreparedTaxonomyVersion(env, prepared, manifest, opts = {}) {
   const activePayload = { version: manifest.activeVersion, publishedAt: manifest.publishedAt, source: manifest.source, rows: prepared.rows };
   const projection = sanitizeBusinessTaxonomyProjection(deriveBusinessTaxonomyProjection(prepared.rows, manifest), manifest);
   const versionPayload = { manifest, rows: prepared.rows };
-
   if (opts.persistVersion !== false) {
     await env.KV_CONTEXTS.put(`${CONTEXTS_VERSION_PREFIX}${manifest.activeVersion}`, JSON.stringify(versionPayload));
   }
@@ -11636,19 +11283,17 @@ async function writePreparedTaxonomyVersion(
   await env.KV_CONTEXTS.put(CONTEXTS_BUSINESS_TAXONOMY_KEY, JSON.stringify(projection));
   await env.KV_CONTEXTS.put(CONTEXTS_MANIFEST_KEY, JSON.stringify(manifest));
 }
-
-async function handleContextsPublish(req: Request, env: Env): Promise<Response> {
+__name(writePreparedTaxonomyVersion, "writePreparedTaxonomyVersion");
+async function handleContextsPublish(req, env) {
   const parsed = await parseTaxonomyJsonBody(req);
   if (parsed.ok === false) return parsed.response;
-
   const prepared = prepareContextTaxonomyPayload(parsed.payload);
   if (prepared.errors.length) {
     return json({ error: { code: "validation_failed", message: "taxonomy validation failed", details: prepared.errors } }, 400, { "cache-control": "no-store" });
   }
-
   const checksum = await taxonomyChecksumHex(stableTaxonomyJson({ rows: prepared.rows }));
-  const now = new Date();
-  const manifest: ContextsManifest = {
+  const now = /* @__PURE__ */ new Date();
+  const manifest = {
     activeVersion: `${taxonomyVersionStamp(now)}-${checksum.slice(0, 6)}`,
     publishedAt: now.toISOString(),
     publishedBy: readAdminPublisher(req),
@@ -11656,33 +11301,28 @@ async function handleContextsPublish(req: Request, env: Env): Promise<Response> 
     checksum,
     count: prepared.rows.length
   };
-
   await writePreparedTaxonomyVersion(env, prepared, manifest);
   return json(manifest, 200, { "cache-control": "no-store" });
 }
-
-async function handleContextsActivateVersion(req: Request, env: Env): Promise<Response> {
+__name(handleContextsPublish, "handleContextsPublish");
+async function handleContextsActivateVersion(req, env) {
   const parsed = await parseTaxonomyJsonBody(req);
   if (parsed.ok === false) return parsed.response;
-
   const versionId = taxonomyString(parsed.payload?.versionId);
   if (!versionId || !CONTEXT_TAXONOMY_VERSION_RE.test(versionId)) {
     return json({ error: { code: "invalid_version", message: "versionId is required" } }, 400, { "cache-control": "no-store" });
   }
-
-  const versionRecord = await env.KV_CONTEXTS.get(`${CONTEXTS_VERSION_PREFIX}${versionId}`, { type: "json" }) as any;
+  const versionRecord = await env.KV_CONTEXTS.get(`${CONTEXTS_VERSION_PREFIX}${versionId}`, { type: "json" });
   if (!versionRecord) {
     return json({ error: { code: "not_found", message: "taxonomy version not found" } }, 404, { "cache-control": "no-store" });
   }
-
   const prepared = prepareContextTaxonomyPayload({ rows: versionRecord.rows });
   if (prepared.errors.length) {
     return json({ error: { code: "validation_failed", message: "stored taxonomy version is invalid", details: prepared.errors } }, 409, { "cache-control": "no-store" });
   }
-
-  const now = new Date();
+  const now = /* @__PURE__ */ new Date();
   const checksum = taxonomyString(versionRecord?.manifest?.checksum) || await taxonomyChecksumHex(stableTaxonomyJson({ rows: prepared.rows }));
-  const manifest: ContextsManifest = {
+  const manifest = {
     activeVersion: versionId,
     publishedAt: now.toISOString(),
     publishedBy: readAdminPublisher(req),
@@ -11690,16 +11330,12 @@ async function handleContextsActivateVersion(req: Request, env: Env): Promise<Re
     checksum,
     count: prepared.rows.length
   };
-
   await writePreparedTaxonomyVersion(env, prepared, manifest, { persistVersion: false });
   return json(manifest, 200, { "cache-control": "no-store" });
 }
-
-// ---------- helpers ----------
-
-// JSON: must be compatible with credentialed fetches from the app
-function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
-  const allowOrigin = "https://navigen.io"; // keep in sync with ALLOW set above
+__name(handleContextsActivateVersion, "handleContextsActivateVersion");
+function json(body, status = 200, headers = {}) {
+  const allowOrigin = "https://navigen.io";
   return new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -11707,57 +11343,47 @@ function json(body: unknown, status = 200, headers: Record<string, string> = {})
       "Access-Control-Allow-Origin": allowOrigin,
       "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-      "Access-Control-Allow-Headers": "content-type, authorization, x-ng-device",      
+      "Access-Control-Allow-Headers": "content-type, authorization, x-ng-device",
       "Vary": "Origin",
       ...headers
     }
   });
 }
-
-function clamp(n: number, min: number, max: number): number {
+__name(json, "json");
+function clamp(n, min, max) {
   if (isNaN(n)) return min;
   return Math.max(min, Math.min(max, n));
 }
-
-function todayKey(): string {
-  const now = new Date();
+__name(clamp, "clamp");
+function todayKey() {
+  const now = /* @__PURE__ */ new Date();
   const y = now.getUTCFullYear();
   const m = String(now.getUTCMonth() + 1).padStart(2, "0");
   const d = String(now.getUTCDate()).padStart(2, "0");
   return `${y}${m}${d}`;
 }
-
-function keyForStat(locationID: string, bucket: string): string {
+__name(todayKey, "todayKey");
+function keyForStat(locationID, bucket) {
   return `stats:${locationID}:${todayKey()}:${bucket}`;
 }
-
-function statusKey(locationID: string): string {
+__name(keyForStat, "keyForStat");
+function statusKey(locationID) {
   return `status:${locationID}`;
 }
-
-function aliasKey(legacy: string): string {
+__name(statusKey, "statusKey");
+function aliasKey(legacy) {
   return `alias:${legacy}`;
 }
-
-async function resolveUid(idOrAlias: string, env: Env): Promise<string | null> {
+__name(aliasKey, "aliasKey");
+async function resolveUid(idOrAlias, env) {
   if (!idOrAlias) return null;
-
-  // If it already looks like a ULID, accept directly.
   if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(idOrAlias)) return idOrAlias;
-
   const key = aliasKey(idOrAlias);
   const raw = await env.KV_ALIASES.get(key, "text");
   if (!raw) return null;
-
   const txt = String(raw || "").trim();
   if (!txt) return null;
-
-  // Legacy compatibility:
-  // - plain ULID string
-  // - JSON string
-  // - JSON object { locationID: "<ULID>" }
   if (/^[0-9A-HJKMNP-TV-Z]{26}$/i.test(txt)) return txt;
-
   try {
     const parsed = JSON.parse(txt);
     return (typeof parsed === "string" ? parsed : parsed?.locationID) || null;
@@ -11765,174 +11391,118 @@ async function resolveUid(idOrAlias: string, env: Env): Promise<string | null> {
     return null;
   }
 }
-
-// Silent QA auto-tagging: store per-location QA flags alongside status/tier in KV_STATUS.
-// Flags are internal-only (admin dashboards, monitoring); merchants never see them.
-async function writeQaFlags(env: Env, locationID: string, flags: string[]): Promise<void> {
+__name(resolveUid, "resolveUid");
+async function writeQaFlags(env, locationID, flags) {
   try {
     const key = statusKey(locationID);
     const raw = await env.KV_STATUS.get(key, "json");
-    const base: any = raw && typeof raw === "object" ? raw : {};
-
+    const base = raw && typeof raw === "object" ? raw : {};
     const next = {
       ...base,
       qaFlags: Array.isArray(flags) ? flags : [],
-      qaUpdatedAt: new Date().toISOString()
+      qaUpdatedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
-
     await env.KV_STATUS.put(key, JSON.stringify(next));
   } catch {
-    // never throw from QA tagging; stats endpoint must not fail because of tagging
   }
 }
-
-// -------- Campaign KV model + entitlement resolver (authoritative) --------
-
-// Storage keys (KV_STATUS):
-// - campaigns:byUlid:<ULID> -> CampaignRow[] (rules/rich model)
-// - campaigns:activeIndex:<ULID> -> { entitled:boolean, campaignKey:string, endDate:string } (optional fast path)
-function campaignsByUlidKey(ulid: string): string {
+__name(writeQaFlags, "writeQaFlags");
+function campaignsByUlidKey(ulid) {
   return `campaigns:byUlid:${ulid}`;
 }
-
-function campaignGroupKeyKey(campaignGroupKey: string): string {
+__name(campaignsByUlidKey, "campaignsByUlidKey");
+function campaignGroupKeyKey(campaignGroupKey) {
   return `campaign_group:${campaignGroupKey}`;
 }
-
-function normCampaignScope(v: unknown): "single" | "selected" | "all" {
+__name(campaignGroupKeyKey, "campaignGroupKeyKey");
+function normCampaignScope(v) {
   const s = String(v || "").trim().toLowerCase();
   if (s === "selected") return "selected";
   if (s === "all") return "all";
   return "single";
 }
-
-function normCampaignPreset(v: unknown): "visibility" | "promotion" {
+__name(normCampaignScope, "normCampaignScope");
+function normCampaignPreset(v) {
   const s = String(v || "").trim().toLowerCase();
   return s === "visibility" ? "visibility" : "promotion";
 }
-
-function deriveCampaignGroupKey(seedSlug: string, campaignKey: string): string {
+__name(normCampaignPreset, "normCampaignPreset");
+function deriveCampaignGroupKey(seedSlug, campaignKey) {
   const seed = String(seedSlug || "").trim() || "location";
   const key = String(campaignKey || "").trim() || "campaign";
   return `${seed}::${key}`;
 }
-
-interface EligibleLocation {
-  ulid: string;
-  slug: string;
-  locationName: string;
-}
-
-async function eligibleLocationsForRequest(req: Request, env: Env, activeUlid = ""): Promise<EligibleLocation[]> {
+__name(deriveCampaignGroupKey, "deriveCampaignGroupKey");
+async function eligibleLocationsForRequest(req, env, activeUlid = "") {
   const dev = readDeviceId(req);
   if (!dev) return [];
-
   const idxKey = devIndexKey(dev);
   const rawIdx = await env.KV_STATUS.get(idxKey, "text");
-  let arr: string[] = [];
-  try { arr = rawIdx ? JSON.parse(rawIdx) : []; } catch { arr = []; }
+  let arr = [];
+  try {
+    arr = rawIdx ? JSON.parse(rawIdx) : [];
+  } catch {
+    arr = [];
+  }
   if (!Array.isArray(arr)) arr = [];
-
-  const out: EligibleLocation[] = [];
-  const seen = new Set<string>();
-
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
   const ordered = [
-    ...arr.map(v => String(v || "").trim()).filter(Boolean),
+    ...arr.map((v) => String(v || "").trim()).filter(Boolean),
     String(activeUlid || "").trim()
   ].filter(Boolean);
-
   for (const ulid of ordered) {
     if (!ulid || seen.has(ulid)) continue;
     seen.add(ulid);
-
     const sid = await env.KV_STATUS.get(devSessKey(dev, ulid), "text");
     if (!sid) continue;
-
-    const sess = await env.KV_STATUS.get(`opsess:${sid}`, { type: "json" }) as any;
+    const sess = await env.KV_STATUS.get(`opsess:${sid}`, { type: "json" });
     if (!sess || String(sess?.ulid || "").trim() !== ulid) continue;
-
     let slug = ulid;
     let locationName = ulid;
     try {
       const item = await getItemById(ulid, env).catch(() => null);
       slug = String(item?.locationID || ulid).trim() || ulid;
-
       const ln = item?.locationName;
-      const nm = (ln && typeof ln === "object")
-        ? String(ln.en || Object.values(ln)[0] || "").trim()
-        : String(ln || "").trim();
-
+      const nm = ln && typeof ln === "object" ? String(ln.en || Object.values(ln)[0] || "").trim() : String(ln || "").trim();
       if (nm) locationName = nm;
       else if (slug) locationName = slug;
-    } catch {}
-
+    } catch {
+    }
     out.push({ ulid, slug, locationName });
   }
-
   return out;
 }
-
-async function currentPlanForUlid(env: Env, ulid: string, nowMs = Date.now()): Promise<PlanRecord | null> {
+__name(eligibleLocationsForRequest, "eligibleLocationsForRequest");
+async function currentPlanForUlid(env, ulid, nowMs = Date.now()) {
   try {
     const id = String(ulid || "").trim();
     if (!ULID_RE.test(id)) return null;
-
-    const own = await env.KV_STATUS.get(`ownership:${id}`, { type: "json" }) as any;
+    const own = await env.KV_STATUS.get(`ownership:${id}`, { type: "json" });
     const ownershipExpIso = String(own?.exclusiveUntil || "").trim();
     const ownershipExp = ownershipExpIso ? new Date(ownershipExpIso) : null;
     if (!ownershipExp || Number.isNaN(ownershipExp.getTime()) || ownershipExp.getTime() <= nowMs) return null;
-
     const paymentIntentId = String(own?.lastEventId || "").trim();
     if (!paymentIntentId || !/^pi_/i.test(paymentIntentId)) return null;
-
-    const planRaw = await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" }) as any;
+    const planRaw = await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" });
     const plan = normalizePersistedPlanRecord(planRaw, ownershipExp.toISOString());
     if (!plan) return null;
-
     const planExp = new Date(plan.expiresAt);
     if (!planExp || Number.isNaN(planExp.getTime()) || planExp.getTime() <= nowMs) return null;
-
-    // Active Plan coverage must match this LPM's ownership window.
     if (planExp.getTime() !== ownershipExp.getTime()) return null;
-
-    // plan_alloc is a mirror. When present, it must include this ULID; missing legacy mirrors are tolerated.
-    const alloc = await env.KV_STATUS.get(planAllocKey(paymentIntentId), { type: "json" }) as any;
+    const alloc = await env.KV_STATUS.get(planAllocKey(paymentIntentId), { type: "json" });
     if (alloc && typeof alloc === "object") {
       const ulids = uniqueTrimmedStrings(Array.isArray(alloc?.ulids) ? alloc.ulids : Array.isArray(alloc?.coveredUlids) ? alloc.coveredUlids : []);
       if (ulids.length && !ulids.includes(id)) return null;
     }
-
     return plan;
   } catch {
     return null;
   }
 }
-
-type PlanEntitlementState = {
-  planEntitled: boolean;
-  activePaidPlan: boolean;
-  publicRecordMode: boolean;
-  externallyIndexable: boolean;
-  lpmNotSuppressed: boolean;
-  ownedNow: boolean;
-  visibilityState: VisibilityState;
-  exclusiveUntil: string;
-  courtesyUntil: string;
-  paymentIntentId: string;
-  priceId: string;
-  tier: PlanTier;
-  grossAmount: number;
-  currency: string;
-  maxPublishedLocations: number;
-  maxConcurrentPromoQrCampaignsPerLocation: number;
-  activeDurationDays: number;
-  planMode: PlanMode;
-  planExpiresAt: string;
-  reason: string;
-};
-
-async function readPlanEntitlementForUlid(env: Env, ulid: string, nowMs = Date.now()): Promise<PlanEntitlementState> {
-  const empty = (reason: string): PlanEntitlementState => ({
+__name(currentPlanForUlid, "currentPlanForUlid");
+async function readPlanEntitlementForUlid(env, ulid, nowMs = Date.now()) {
+  const empty = /* @__PURE__ */ __name((reason) => ({
     planEntitled: false,
     activePaidPlan: false,
     publicRecordMode: true,
@@ -11953,26 +11523,18 @@ async function readPlanEntitlementForUlid(env: Env, ulid: string, nowMs = Date.n
     planMode: "managed_presence",
     planExpiresAt: "",
     reason
-  });
-
+  }), "empty");
   const id = String(ulid || "").trim();
   if (!ULID_RE.test(id)) return empty("invalid_ulid");
-
-  const ownership = await env.KV_STATUS.get(`ownership:${id}`, { type: "json" }) as any;
+  const ownership = await env.KV_STATUS.get(`ownership:${id}`, { type: "json" });
   const exclusiveUntilIso = String(ownership?.exclusiveUntil || "").trim();
   const exclusiveUntil = exclusiveUntilIso ? new Date(exclusiveUntilIso) : null;
-
-  const statusRaw = await env.KV_STATUS.get(statusKey(id), { type: "json" }) as any;
+  const statusRaw = await env.KV_STATUS.get(statusKey(id), { type: "json" });
   const suppressedState = String(statusRaw?.status || statusRaw?.state || "").trim().toLowerCase();
-  const lpmNotSuppressed =
-    statusRaw?.suppressed !== true &&
-    statusRaw?.isSuppressed !== true &&
-    suppressedState !== "suppressed";
-
+  const lpmNotSuppressed = statusRaw?.suppressed !== true && statusRaw?.isSuppressed !== true && suppressedState !== "suppressed";
   if (!exclusiveUntil || Number.isNaN(exclusiveUntil.getTime())) {
     return { ...empty("no_active_plan"), lpmNotSuppressed };
   }
-
   if (exclusiveUntil.getTime() <= nowMs) {
     return {
       ...empty("public_record_mode"),
@@ -11981,7 +11543,6 @@ async function readPlanEntitlementForUlid(env: Env, ulid: string, nowMs = Date.n
       paymentIntentId: String(ownership?.lastEventId || "").trim()
     };
   }
-
   const paymentIntentId = String(ownership?.lastEventId || "").trim();
   if (!paymentIntentId || !/^pi_/i.test(paymentIntentId)) {
     return {
@@ -11991,7 +11552,6 @@ async function readPlanEntitlementForUlid(env: Env, ulid: string, nowMs = Date.n
       paymentIntentId
     };
   }
-
   const plan = await currentPlanForUlid(env, id, nowMs);
   if (!plan) {
     return {
@@ -12001,7 +11561,6 @@ async function readPlanEntitlementForUlid(env: Env, ulid: string, nowMs = Date.n
       paymentIntentId
     };
   }
-
   return {
     planEntitled: true,
     activePaidPlan: true,
@@ -12025,55 +11584,38 @@ async function readPlanEntitlementForUlid(env: Env, ulid: string, nowMs = Date.n
     reason: "active_plan"
   };
 }
-
-async function currentGroupPlanForUlid(env: Env, ulid: string): Promise<{ tier: PlanTier; maxPublishedLocations: number } | null> {
+__name(readPlanEntitlementForUlid, "readPlanEntitlementForUlid");
+async function currentGroupPlanForUlid(env, ulid) {
   try {
-    const hist = await env.KV_STATUS.get(campaignsByUlidKey(ulid), { type: "json" }) as any;
-    const rows: any[] = Array.isArray(hist) ? hist : [];
+    const hist = await env.KV_STATUS.get(campaignsByUlidKey(ulid), { type: "json" });
+    const rows = Array.isArray(hist) ? hist : [];
     const nowMs = Date.now();
-
     for (const row of [...rows].reverse()) {
       const groupKey = String(row?.campaignGroupKey || "").trim();
       if (!groupKey) continue;
-
-      const st = effectiveCampaignStatus(row as any);
+      const st = effectiveCampaignStatus(row);
       if (st !== "active" && st !== "suspended") continue;
-
       const endMs = parseYmdUtcMs(String(row?.endDate || ""));
-      if (Number.isFinite(endMs) && nowMs > (endMs + 24 * 60 * 60 * 1000 - 1)) continue;
-
-      const parent = await env.KV_STATUS.get(campaignGroupKeyKey(groupKey), { type: "json" }) as any;
+      if (Number.isFinite(endMs) && nowMs > endMs + 24 * 60 * 60 * 1e3 - 1) continue;
+      const parent = await env.KV_STATUS.get(campaignGroupKeyKey(groupKey), { type: "json" });
       const tier = normalizePlanTier(parent?.planTier || row?.planTier);
       const maxPublishedLocations = Math.max(
         0,
         Number(parent?.maxPublishedLocations || row?.maxPublishedLocations || 0) || 0
       );
-
       if (tier !== "unknown" || maxPublishedLocations > 0) {
         return { tier, maxPublishedLocations };
       }
     }
-  } catch {}
-
+  } catch {
+  }
   return null;
 }
-
-async function multiLocationEnabledForUlid(env: Env, ulid: string): Promise<boolean> {
-  try {
-    const plan = await currentPlanForUlid(env, ulid);
-    return Number(plan?.maxPublishedLocations || 0) > 1;
-  } catch {
-    return false;
-  }
-}
-
-function buildPlanUpgradeErrorBody(plan: { tier?: PlanTier; maxPublishedLocations?: number } | null, scope: "single" | "selected" | "all", requestedLocations: number) {
+__name(currentGroupPlanForUlid, "currentGroupPlanForUlid");
+function buildPlanUpgradeErrorBody(plan, scope, requestedLocations) {
   const currentTier = normalizePlanTier(plan?.tier);
   const currentCapacity = Math.max(0, Number(plan?.maxPublishedLocations || 0) || 0);
-  const message = currentCapacity > 0
-    ? `This selection needs ${requestedLocations} locations, but the current Plan allows ${currentCapacity}.`
-    : "This selection is not available for the current Plan.";
-
+  const message = currentCapacity > 0 ? `This selection needs ${requestedLocations} locations, but the current Plan allows ${currentCapacity}.` : "This selection is not available for the current Plan.";
   return {
     error: {
       code: "plan_upgrade_required",
@@ -12087,87 +11629,39 @@ function buildPlanUpgradeErrorBody(plan: { tier?: PlanTier; maxPublishedLocation
     }
   };
 }
-
-interface CampaignGroupRow {
-  campaignGroupKey: string;
-  campaignKey: string;
-  campaignScope: "single" | "selected" | "all";
-  campaignPreset?: "visibility" | "promotion";
-  planMode?: PlanMode;
-  seedLocationULID: string;
-  seedLocationSlug: string;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-  stripeSessionId?: string;
-  planTier?: PlanTier;
-  maxPublishedLocations?: number;
-}
-
-type PromoteCampaignDraftResult =
-  | {
-      ok: true;
-      campaignGroupKey: string;
-      includedTargets: EligibleLocation[];
-      endDate: string;
-    }
-  | {
-      ok: false;
-      status: number;
-      body: any;
-    };
-
-async function describeLocationForMaterialization(env: Env, ulid: string, fallbackSlug = ""): Promise<EligibleLocation> {
+__name(buildPlanUpgradeErrorBody, "buildPlanUpgradeErrorBody");
+async function describeLocationForMaterialization(env, ulid, fallbackSlug = "") {
   let slug = String(fallbackSlug || ulid).trim() || ulid;
   let locationName = slug || ulid;
-
   try {
     const item = await getItemById(ulid, env).catch(() => null);
     const resolvedSlug = String(item?.locationID || "").trim();
     const resolvedName = pickName(item?.locationName);
-
     if (resolvedSlug) slug = resolvedSlug;
     if (resolvedName) locationName = resolvedName;
     else if (slug) locationName = slug;
-  } catch {}
-
+  } catch {
+  }
   return { ulid, slug, locationName };
 }
-
-async function promoteCampaignDraftToActiveRows(params: {
-  req: Request;
-  env: Env;
-  ownerUlid: string;
-  draft: any;
-  locationSlug: string;
-  campaignKey: string;
-  stripeSessionId: string;
-  paidPlan: { tier?: PlanTier; maxPublishedLocations?: number } | null;
-  logTag: string;
-}): Promise<PromoteCampaignDraftResult> {
+__name(describeLocationForMaterialization, "describeLocationForMaterialization");
+async function promoteCampaignDraftToActiveRows(params) {
   const { req, env, ownerUlid, draft, locationSlug, campaignKey, stripeSessionId, paidPlan, logTag } = params;
-
   const scope = normCampaignScope(draft?.campaignScope);
   const campaignPreset = normCampaignPreset(draft?.campaignPreset);
   const planMode = normalizePlanMode(draft?.planMode, campaignPreset);
   const eligibleLocations = await eligibleLocationsForRequest(req, env, ownerUlid);
   const eligibleByUlid = new Map(eligibleLocations.map((x) => [x.ulid, x]));
-
   if (scope !== "single" && Number(paidPlan?.maxPublishedLocations || 0) <= 1) {
     return { ok: false, status: 409, body: buildPlanUpgradeErrorBody(paidPlan, scope, 2) };
   }
-
-  let includedTargets: EligibleLocation[] = [];
-
+  let includedTargets = [];
   if (scope === "selected") {
-    const storedSelectedUlids: string[] = Array.from(
+    const storedSelectedUlids = Array.from(
       new Set(
-        (Array.isArray(draft?.selectedLocationULIDs) ? draft.selectedLocationULIDs : [])
-          .map((x: any) => String(x || "").trim())
-          .filter(Boolean)
+        (Array.isArray(draft?.selectedLocationULIDs) ? draft.selectedLocationULIDs : []).map((x) => String(x || "").trim()).filter(Boolean)
       )
     );
-
     if (!storedSelectedUlids.length) {
       return {
         ok: false,
@@ -12175,14 +11669,12 @@ async function promoteCampaignDraftToActiveRows(params: {
         body: { error: { code: "invalid_state", message: "selected scope has no stored locations" } }
       };
     }
-
     for (const targetUlid of storedSelectedUlids) {
       const eligibleLoc = eligibleByUlid.get(targetUlid);
       if (eligibleLoc) {
         includedTargets.push({ ...eligibleLoc });
         continue;
       }
-
       if (!ULID_RE.test(targetUlid)) {
         return {
           ok: false,
@@ -12190,7 +11682,6 @@ async function promoteCampaignDraftToActiveRows(params: {
           body: { error: { code: "invalid_state", message: "selected scope contains an invalid location id" } }
         };
       }
-
       console.warn(`${logTag}: selected_target_rehydrated_from_draft`, {
         ownerUlid,
         targetUlid,
@@ -12202,20 +11693,16 @@ async function promoteCampaignDraftToActiveRows(params: {
     if (eligibleLocations.length) includedTargets = eligibleLocations.map((loc) => ({ ...loc }));
     else includedTargets = [await describeLocationForMaterialization(env, ownerUlid, locationSlug)];
   } else {
-    const currentLoc = eligibleByUlid.get(ownerUlid)
-      ? { ...eligibleByUlid.get(ownerUlid)! }
-      : await describeLocationForMaterialization(env, ownerUlid, locationSlug);
+    const currentLoc = eligibleByUlid.get(ownerUlid) ? { ...eligibleByUlid.get(ownerUlid) } : await describeLocationForMaterialization(env, ownerUlid, locationSlug);
     includedTargets = [currentLoc];
   }
-
-  const seenTargets = new Set<string>();
+  const seenTargets = /* @__PURE__ */ new Set();
   includedTargets = includedTargets.filter((loc) => {
     const id = String(loc?.ulid || "").trim();
     if (!id || seenTargets.has(id)) return false;
     seenTargets.add(id);
     return true;
   });
-
   if (!includedTargets.length) {
     return {
       ok: false,
@@ -12223,17 +11710,12 @@ async function promoteCampaignDraftToActiveRows(params: {
       body: { error: { code: "invalid_state", message: "campaign materialization resolved zero locations" } }
     };
   }
-
   if (Number(paidPlan?.maxPublishedLocations || 0) > 0 && includedTargets.length > Number(paidPlan?.maxPublishedLocations || 0)) {
     return { ok: false, status: 409, body: buildPlanUpgradeErrorBody(paidPlan, scope, includedTargets.length) };
   }
-
-  const campaignGroupKey = scope === "single"
-    ? ""
-    : String((draft as any)?.campaignGroupKey || deriveCampaignGroupKey(locationSlug, campaignKey)).trim();
-
+  const campaignGroupKey = scope === "single" ? "" : String(draft?.campaignGroupKey || deriveCampaignGroupKey(locationSlug, campaignKey)).trim();
   if (campaignGroupKey) {
-    const parent: CampaignGroupRow = {
+    const parent = {
       campaignGroupKey,
       campaignKey,
       campaignScope: scope,
@@ -12242,14 +11724,13 @@ async function promoteCampaignDraftToActiveRows(params: {
       seedLocationSlug: locationSlug,
       startDate: String(draft?.startDate || "").trim(),
       endDate: String(draft?.endDate || "").trim(),
-      createdAt: new Date().toISOString(),
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
       stripeSessionId,
       planTier: normalizePlanTier(paidPlan?.tier),
       maxPublishedLocations: Math.max(0, Number(paidPlan?.maxPublishedLocations || 0) || 0)
     };
     await env.KV_STATUS.put(campaignGroupKeyKey(campaignGroupKey), JSON.stringify(parent));
   }
-
   for (const target of includedTargets) {
     await writeCampaignChildRow({
       env,
@@ -12261,7 +11742,6 @@ async function promoteCampaignDraftToActiveRows(params: {
       inherited: false
     });
   }
-
   return {
     ok: true,
     campaignGroupKey,
@@ -12269,22 +11749,12 @@ async function promoteCampaignDraftToActiveRows(params: {
     endDate: String(draft?.endDate || "").trim()
   };
 }
-
-async function writeCampaignChildRow(params: {
-  env: Env;
-  targetUlid: string;
-  targetSlug: string;
-  draft: any;
-  campaignGroupKey: string;
-  stripeSessionId: string;
-  inherited: boolean;
-}): Promise<void> {
+__name(promoteCampaignDraftToActiveRows, "promoteCampaignDraftToActiveRows");
+async function writeCampaignChildRow(params) {
   const { env, targetUlid, targetSlug, draft, campaignGroupKey, stripeSessionId, inherited } = params;
-
   const histKey = campaignsByUlidKey(targetUlid);
-  const hist = await env.KV_STATUS.get(histKey, { type: "json" }) as any;
-  const arr: any[] = Array.isArray(hist) ? hist : [];
-
+  const hist = await env.KV_STATUS.get(histKey, { type: "json" });
+  const arr = Array.isArray(hist) ? hist : [];
   const row = {
     ...draft,
     locationID: targetUlid,
@@ -12293,97 +11763,68 @@ async function writeCampaignChildRow(params: {
     campaignGroupKey,
     campaignScope: normCampaignScope(draft?.campaignScope),
     status: "Active",
-    promotedAt: new Date().toISOString(),
+    promotedAt: (/* @__PURE__ */ new Date()).toISOString(),
     stripeSessionId
-  } as any;
-
-  if (inherited) row.inheritedAt = new Date().toISOString();
-
+  };
+  if (inherited) row.inheritedAt = (/* @__PURE__ */ new Date()).toISOString();
   const next = arr.filter((x) => {
     const sameKey = String(x?.campaignKey || "").trim() === String(row?.campaignKey || "").trim();
     const sameGroup = String(x?.campaignGroupKey || "").trim() === String(row?.campaignGroupKey || "").trim();
     return !(sameKey && sameGroup);
   });
-
   next.push(row);
   await env.KV_STATUS.put(histKey, JSON.stringify(next));
 }
-
-async function materializeInheritedAllScopeForCurrentUlid(
-  req: Request,
-  env: Env,
-  currentUlid: string
-): Promise<{
-  addedRows: number;
-  addedGroups: number;
-  blockedRows: number;
-  blockedGroups: number;
-  blockedPlanTier: PlanTier | "";
-  blockedMaxPublishedLocations: number;
-}> {  
+__name(writeCampaignChildRow, "writeCampaignChildRow");
+async function materializeInheritedAllScopeForCurrentUlid(req, env, currentUlid) {
   const eligible = await eligibleLocationsForRequest(req, env, currentUlid);
   const eligibleByUlid = new Map(eligible.map((x) => [x.ulid, x]));
   const currentLoc = eligibleByUlid.get(currentUlid);
-  if (!currentLoc) return { addedRows: 0, addedGroups: 0, blockedRows: 0, blockedGroups: 0, blockedPlanTier: "", blockedMaxPublishedLocations: 0 };  
-
+  if (!currentLoc) return { addedRows: 0, addedGroups: 0, blockedRows: 0, blockedGroups: 0, blockedPlanTier: "", blockedMaxPublishedLocations: 0 };
   const currentHistKey = campaignsByUlidKey(currentUlid);
-  const currentHistRaw = await env.KV_STATUS.get(currentHistKey, { type: "json" }) as any;
-  const currentRows: any[] = Array.isArray(currentHistRaw) ? currentHistRaw : [];
-
+  const currentHistRaw = await env.KV_STATUS.get(currentHistKey, { type: "json" });
+  const currentRows = Array.isArray(currentHistRaw) ? currentHistRaw : [];
   const existing = new Set(
-    currentRows
-      .map((r: any) => `${String(r?.campaignGroupKey || "").trim()}::${String(r?.campaignKey || "").trim()}`)
-      .filter(Boolean)
+    currentRows.map((r) => `${String(r?.campaignGroupKey || "").trim()}::${String(r?.campaignKey || "").trim()}`).filter(Boolean)
   );
-
-  const countIncludedForGroup = async (groupKey: string, campaignKey: string): Promise<number> => {
+  const countIncludedForGroup = /* @__PURE__ */ __name(async (groupKey, campaignKey) => {
     let count = 0;
     for (const checkLoc of eligible) {
-      const histRaw = await env.KV_STATUS.get(campaignsByUlidKey(checkLoc.ulid), { type: "json" }) as any;
-      const rows: any[] = Array.isArray(histRaw) ? histRaw : [];
-      const hit = rows.some((r: any) =>
-        String(r?.campaignGroupKey || "").trim() === groupKey &&
-        String(r?.campaignKey || "").trim() === campaignKey &&
-        effectiveCampaignStatus(r) !== "finished"
+      const histRaw = await env.KV_STATUS.get(campaignsByUlidKey(checkLoc.ulid), { type: "json" });
+      const rows = Array.isArray(histRaw) ? histRaw : [];
+      const hit = rows.some(
+        (r) => String(r?.campaignGroupKey || "").trim() === groupKey && String(r?.campaignKey || "").trim() === campaignKey && effectiveCampaignStatus(r) !== "finished"
       );
       if (hit) count += 1;
     }
     return count;
-  };
-
+  }, "countIncludedForGroup");
   let addedRows = 0;
   let blockedRows = 0;
-  const touchedGroups = new Set<string>();
-  const blockedGroups = new Set<string>();
-  let blockedPlanTier: PlanTier | "" = "";
-  let blockedMaxPublishedLocations = 0;  
+  const touchedGroups = /* @__PURE__ */ new Set();
+  const blockedGroups = /* @__PURE__ */ new Set();
+  let blockedPlanTier = "";
+  let blockedMaxPublishedLocations = 0;
   const nowMs = Date.now();
-
   for (const loc of eligible) {
-    const histRaw = await env.KV_STATUS.get(campaignsByUlidKey(loc.ulid), { type: "json" }) as any;
-    const rows: any[] = Array.isArray(histRaw) ? histRaw : [];
-
+    const histRaw = await env.KV_STATUS.get(campaignsByUlidKey(loc.ulid), { type: "json" });
+    const rows = Array.isArray(histRaw) ? histRaw : [];
     for (const row of rows) {
       const groupKey = String(row?.campaignGroupKey || "").trim();
       const campaignKey = String(row?.campaignKey || "").trim();
       if (!groupKey || !campaignKey) continue;
       if (normCampaignScope(row?.campaignScope) !== "all") continue;
-
       const st = effectiveCampaignStatus(row);
       if (st !== "active" && st !== "suspended") continue;
-
       const endMs = parseYmdUtcMs(String(row?.endDate || ""));
-      if (Number.isFinite(endMs) && nowMs > (endMs + 24 * 60 * 60 * 1000 - 1)) continue;
-
+      if (Number.isFinite(endMs) && nowMs > endMs + 24 * 60 * 60 * 1e3 - 1) continue;
       const sig = `${groupKey}::${campaignKey}`;
       if (existing.has(sig)) continue;
-
-      const parent = await env.KV_STATUS.get(campaignGroupKeyKey(groupKey), { type: "json" }) as any;
+      const parent = await env.KV_STATUS.get(campaignGroupKeyKey(groupKey), { type: "json" });
       const maxAllowed = Math.max(
         0,
         Number(parent?.maxPublishedLocations || row?.maxPublishedLocations || 0) || 0
       );
-
       if (maxAllowed > 0) {
         const includedCount = await countIncludedForGroup(groupKey, campaignKey);
         if (includedCount >= maxAllowed) {
@@ -12394,7 +11835,6 @@ async function materializeInheritedAllScopeForCurrentUlid(
           continue;
         }
       }
-
       await writeCampaignChildRow({
         env,
         targetUlid: currentUlid,
@@ -12404,214 +11844,80 @@ async function materializeInheritedAllScopeForCurrentUlid(
         stripeSessionId: String(row?.stripeSessionId || "").trim(),
         inherited: true
       });
-
       existing.add(sig);
       addedRows += 1;
       touchedGroups.add(groupKey);
     }
   }
-
-  return { addedRows, addedGroups: touchedGroups.size, blockedRows, blockedGroups: blockedGroups.size, blockedPlanTier, blockedMaxPublishedLocations };  
+  return { addedRows, addedGroups: touchedGroups.size, blockedRows, blockedGroups: blockedGroups.size, blockedPlanTier, blockedMaxPublishedLocations };
 }
-
-type CampaignStatus =
-  | "Active"
-  | "Paused"
-  | "Finished"
-  | "Suspended"
-  | "Draft";
-
-interface CampaignRow {
-  // Identity
-  locationID: string;              // canonical ULID (required in KV representation)
-  campaignKey: string;
-  campaignGroupKey?: string;
-  campaignScope?: string;          // single | selected | all
-  campaignName?: string;
-  sectorKey?: string;
-  brandKey?: string;
-  context?: string;
-
-  // Core lifecycle
-  startDate: string;               // YYYY-MM-DD
-  endDate: string;                 // YYYY-MM-DD
-  status: CampaignStatus | string; // tolerate legacy capitalization
-  statusOverride?: CampaignStatus | string;
-
-  // Rules (rich model; validated/used progressively)
-  campaignType?: string;
-  targetChannels?: string[] | string;
-  offerType?: string;
-  discountKind?: string;           // Percent | Amount | None
-  campaignDiscountValue?: number | string;
-  eligibilityType?: string;
-  eligibilityNotes?: string;
-  selectedLocationULIDs?: string[];
-
-  // Attribution
-  utmSource?: string;
-  utmMedium?: string;
-  utmCampaign?: string;
-
-  // Misc
-  inheritedAt?: string;
-  promotedAt?: string;
-  stripeSessionId?: string;
-  notes?: string;
-}
-
-// Safe date parsing: accept only YYYY-MM-DD; return ms at UTC midnight
-function parseYmdUtcMs(s: string): number {
+__name(materializeInheritedAllScopeForCurrentUlid, "materializeInheritedAllScopeForCurrentUlid");
+function parseYmdUtcMs(s) {
   const v = String(s || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return NaN;
   const t = Date.parse(`${v}T00:00:00Z`);
   return Number.isFinite(t) ? t : NaN;
 }
-
-function normStatus(v: unknown): string {
+__name(parseYmdUtcMs, "parseYmdUtcMs");
+function normStatus(v) {
   return String(v || "").trim().toLowerCase();
 }
-
-function effectiveCampaignStatus(row: CampaignRow): string {
+__name(normStatus, "normStatus");
+function effectiveCampaignStatus(row) {
   const ov = normStatus(row.statusOverride);
   if (ov) return ov;
   return normStatus(row.status);
 }
-
-async function campaignEntitlementForUlid(
-  env: Env,
-  ulid: string,
-  nowMs = Date.now()
-): Promise<{ entitled: boolean; campaignKey: string; endDate: string }> {
-  
-  // Campaign with Promo QR is subordinate to Active Plan entitlement.
-  // Active campaign rows alone must not enable Promo QR, redeem flow, or gift-box UI.
+__name(effectiveCampaignStatus, "effectiveCampaignStatus");
+async function campaignEntitlementForUlid(env, ulid, nowMs = Date.now()) {
   const plan = await readPlanEntitlementForUlid(env, ulid, nowMs);
   if (!plan.planEntitled) return { entitled: false, campaignKey: "", endDate: "" };
-  // Optional fast path (can be written later during seed / updates)
   try {
-    const fast = await env.KV_STATUS.get(`campaigns:activeIndex:${ulid}`, { type: "json" }) as any;
+    const fast = await env.KV_STATUS.get(`campaigns:activeIndex:${ulid}`, { type: "json" });
     if (fast && typeof fast === "object") {
       const entitled = fast.entitled === true;
-      const campaignKey = String(fast.campaignKey || "").trim();
-      const endDate = String(fast.endDate || "").trim();
+      const campaignKey2 = String(fast.campaignKey || "").trim();
+      const endDate2 = String(fast.endDate || "").trim();
       const fastPlanMode = normalizePlanMode(fast?.planMode, fast?.campaignPreset);
-      if (entitled && fastPlanMode === "campaign_with_promo_qr" && campaignKey && /^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
-        const endMs = parseYmdUtcMs(endDate);
+      if (entitled && fastPlanMode === "campaign_with_promo_qr" && campaignKey2 && /^\d{4}-\d{2}-\d{2}$/.test(endDate2)) {
+        const endMs = parseYmdUtcMs(endDate2);
         if (Number.isFinite(endMs) && endMs >= nowMs) {
-          return { entitled: true, campaignKey, endDate };
+          return { entitled: true, campaignKey: campaignKey2, endDate: endDate2 };
         }
       }
-      // If fast says not entitled, we still fall through (fast index may be stale)
     }
   } catch {
-    // fall through to full evaluation
   }
-
-  const raw = await env.KV_STATUS.get(campaignsByUlidKey(ulid), { type: "json" }) as any;
-  const rows: CampaignRow[] = Array.isArray(raw) ? raw : [];
-
+  const raw = await env.KV_STATUS.get(campaignsByUlidKey(ulid), { type: "json" });
+  const rows = Array.isArray(raw) ? raw : [];
   if (!rows.length) return { entitled: false, campaignKey: "", endDate: "" };
-
-  // Entitling rule:
-  // - effective status is "active"
-  // - today within [startDate, endDate] inclusive (UTC dates)
-  const active: Array<{ row: CampaignRow; startMs: number; endMs: number }> = [];
-
+  const active = [];
   for (const row of rows) {
     if (!row || String(row.locationID || "").trim() !== ulid) continue;
-
     const st = effectiveCampaignStatus(row);
     if (st !== "active") continue;
-
-    const rowPlanMode = normalizePlanMode((row as any)?.planMode, (row as any)?.campaignPreset);
+    const rowPlanMode = normalizePlanMode(row?.planMode, row?.campaignPreset);
     if (rowPlanMode !== "campaign_with_promo_qr") continue;
-
     const startMs = parseYmdUtcMs(String(row.startDate || ""));
     const endMs = parseYmdUtcMs(String(row.endDate || ""));
     if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
-
-    // inclusive window: start <= now <= end+24h-1ms; easier: compare date-midnights
     if (nowMs < startMs) continue;
-    if (nowMs > (endMs + 24 * 60 * 60 * 1000 - 1)) continue;
-
+    if (nowMs > endMs + 24 * 60 * 60 * 1e3 - 1) continue;
     active.push({ row, startMs, endMs });
   }
-
   if (!active.length) return { entitled: false, campaignKey: "", endDate: "" };
-
-  // Deterministic "primary" selection:
-  // 1) earliest endDate wins (soonest to expire)
-  // 2) if tie, latest startDate wins
   active.sort((a, b) => {
     if (a.endMs !== b.endMs) return a.endMs - b.endMs;
     return b.startMs - a.startMs;
   });
-
   const winner = active[0].row;
   const campaignKey = String(winner.campaignKey || "").trim();
   const endDate = String(winner.endDate || "").trim();
-
   return { entitled: true, campaignKey, endDate };
 }
-
-async function activeCampaignRowForUlid(
-  env: Env,
-  ulid: string,
-  nowMs = Date.now()
-): Promise<CampaignRow | null> {
-  const raw = await env.KV_STATUS.get(campaignsByUlidKey(ulid), { type: "json" }) as any;
-  const rows: CampaignRow[] = Array.isArray(raw) ? raw : [];
-  if (!rows.length) return null;
-
-  const active: Array<{ row: CampaignRow; startMs: number; endMs: number }> = [];
-
-  for (const row of rows) {
-    if (!row || String(row.locationID || "").trim() !== ulid) continue;
-
-    const st = effectiveCampaignStatus(row);
-    if (st !== "active") continue;
-
-    const startMs = parseYmdUtcMs(String(row.startDate || ""));
-    const endMs = parseYmdUtcMs(String(row.endDate || ""));
-    if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) continue;
-
-    if (nowMs < startMs) continue;
-    if (nowMs > (endMs + 24 * 60 * 60 * 1000 - 1)) continue;
-
-    active.push({ row, startMs, endMs });
-  }
-
-  if (!active.length) return null;
-
-  active.sort((a, b) => {
-    if (a.endMs !== b.endMs) return a.endMs - b.endMs;
-    return b.startMs - a.startMs;
-  });
-
-  return active[0].row || null;
-}
-
-// Visibility policy (legacy compatibility):
-// - "promoted": Active Plan / managed business layer is active.
-// - "visible": LPM remains reachable/searchable inside NaviGen, including Public Record Mode.
-// - "hidden": retained only for compatibility; Plan expiry no longer returns hidden.
-// This is a NaviGen-internal compatibility field, not web indexing.
-type VisibilityState = "promoted" | "visible" | "hidden";
-
-async function computeVisibilityState(env: Env, ulid: string, nowMs = Date.now()): Promise<{
-  visibilityState: VisibilityState;
-  ownedNow: boolean;
-  exclusiveUntil: string;   // ISO or ""
-  courtesyUntil: string;    // legacy compatibility; always ""
-  planEntitled: boolean;
-  activePaidPlan: boolean;
-  publicRecordMode: boolean;
-  externallyIndexable: boolean;
-  lpmNotSuppressed: boolean;
-}> {
+__name(campaignEntitlementForUlid, "campaignEntitlementForUlid");
+async function computeVisibilityState(env, ulid, nowMs = Date.now()) {
   const entitlement = await readPlanEntitlementForUlid(env, ulid, nowMs);
-
   return {
     visibilityState: entitlement.visibilityState,
     ownedNow: entitlement.ownedNow,
@@ -12624,39 +11930,27 @@ async function computeVisibilityState(env: Env, ulid: string, nowMs = Date.now()
     lpmNotSuppressed: entitlement.lpmNotSuppressed
   };
 }
-
-type TargetIdentityRoute = "existing-location" | "brand-new-private-shell";
-
-type TargetIdentity = {
-  route: TargetIdentityRoute;
-  ulid: string;
-  locationID: string;
-  draftULID: string;
-  draftSessionId: string;
-};
-
-async function readPrivateShellDraft(env: Env, draftULID: string, draftSessionId: string): Promise<any | null> {
+__name(computeVisibilityState, "computeVisibilityState");
+async function readPrivateShellDraft(env, draftULID, draftSessionId) {
   const key = `override_draft:${draftULID}:${draftSessionId}`;
-  const hitJson = await env.KV_STATUS.get(key, { type: "json" }) as any;
+  const hitJson = await env.KV_STATUS.get(key, { type: "json" });
   if (hitJson) return hitJson;
   const hitText = await env.KV_STATUS.get(key, "text");
   if (!hitText) return null;
-  try { return JSON.parse(hitText); } catch { return { raw: hitText }; }
+  try {
+    return JSON.parse(hitText);
+  } catch {
+    return { raw: hitText };
+  }
 }
-
-async function resolveTargetIdentity(
-  env: Env,
-  input: { locationID?: unknown; draftULID?: unknown; draftSessionId?: unknown },
-  opts: { validateDraft?: boolean } = {}
-): Promise<TargetIdentity | null> {
+__name(readPrivateShellDraft, "readPrivateShellDraft");
+async function resolveTargetIdentity(env, input, opts = {}) {
   const locationID = String(input?.locationID || "").trim();
   const draftULID = String(input?.draftULID || "").trim();
   const draftSessionId = String(input?.draftSessionId || "").trim();
-
   const hasLocation = !!locationID;
   const hasDraft = !!draftULID || !!draftSessionId;
-  if ((hasLocation && hasDraft) || (!hasLocation && !hasDraft)) return null;
-
+  if (hasLocation && hasDraft || !hasLocation && !hasDraft) return null;
   if (hasLocation) {
     const ulid = await resolveUid(locationID, env);
     if (!ulid) return null;
@@ -12668,13 +11962,11 @@ async function resolveTargetIdentity(
       draftSessionId: ""
     };
   }
-
   if (!ULID_RE.test(draftULID) || !draftSessionId) return null;
   if (opts.validateDraft) {
     const draft = await readPrivateShellDraft(env, draftULID, draftSessionId);
     if (!draft) return null;
   }
-
   return {
     route: "brand-new-private-shell",
     ulid: draftULID,
@@ -12683,8 +11975,8 @@ async function resolveTargetIdentity(
     draftSessionId
   };
 }
-
-async function fetchLegacyProfilesJson(req: Request): Promise<any> {
+__name(resolveTargetIdentity, "resolveTargetIdentity");
+async function fetchLegacyProfilesJson(req) {
   const origin = req.headers.get("Origin") || "https://navigen.io";
   const src = new URL("/data/profiles.json", origin).toString();
   const resp = await fetch(src, {
@@ -12694,25 +11986,21 @@ async function fetchLegacyProfilesJson(req: Request): Promise<any> {
   if (!resp.ok) throw new Error("profiles_json_not_reachable");
   return await resp.json();
 }
-
-function legacyLocationsArray(data: any): any[] {
-  return Array.isArray(data?.locations)
-    ? data.locations
-    : (data?.locations && typeof data.locations === "object")
-      ? Object.values(data.locations)
-      : [];
+__name(fetchLegacyProfilesJson, "fetchLegacyProfilesJson");
+function legacyLocationsArray(data) {
+  return Array.isArray(data?.locations) ? data.locations : data?.locations && typeof data.locations === "object" ? Object.values(data.locations) : [];
 }
-
-function legacyLocationSlug(rec: any): string {
+__name(legacyLocationsArray, "legacyLocationsArray");
+function legacyLocationSlug(rec) {
   return String(rec?.locationID || "").trim();
 }
-
-function legacyLocationEmbeddedUlid(rec: any): string {
+__name(legacyLocationSlug, "legacyLocationSlug");
+function legacyLocationEmbeddedUlid(rec) {
   const raw = String(rec?.ID || rec?.id || "").trim();
   return ULID_RE.test(raw) ? raw : "";
 }
-
-async function resolveLegacyLocationUlid(rec: any, env: Env): Promise<string> {
+__name(legacyLocationEmbeddedUlid, "legacyLocationEmbeddedUlid");
+async function resolveLegacyLocationUlid(rec, env) {
   const slug = legacyLocationSlug(rec);
   const embedded = legacyLocationEmbeddedUlid(rec);
   if (embedded) return embedded;
@@ -12722,69 +12010,46 @@ async function resolveLegacyLocationUlid(rec: any, env: Env): Promise<string> {
   }
   return "";
 }
-
-function buildLegacyProfileBase(rec: any, ulid: string): any {
-  const out = (rec && typeof rec === "object")
-    ? JSON.parse(JSON.stringify(rec))
-    : {};
-
+__name(resolveLegacyLocationUlid, "resolveLegacyLocationUlid");
+function buildLegacyProfileBase(rec, ulid) {
+  const out = rec && typeof rec === "object" ? JSON.parse(JSON.stringify(rec)) : {};
   const slug = legacyLocationSlug(rec);
   if (slug) out.locationID = slug;
   out.locationUID = ulid;
-
   return out;
 }
-
-async function preseedLegacyLocationRecord(
-  env: Env,
-  rec: any,
-  opts: { force?: boolean } = {}
-): Promise<{ ok: boolean; slug: string; ulid: string; reason?: string; created?: boolean; skipped?: boolean; overwritten?: boolean }> {
+__name(buildLegacyProfileBase, "buildLegacyProfileBase");
+async function preseedLegacyLocationRecord(env, rec, opts = {}) {
   const slug = legacyLocationSlug(rec);
   const ulid = await resolveLegacyLocationUlid(rec, env);
-
   if (!slug) return { ok: false, slug: "", ulid: "", reason: "missing_slug" };
   if (!ulid) return { ok: false, slug, ulid: "", reason: "missing_ulid" };
-
   const baseKey = `profile_base:${ulid}`;
   const existing = await env.KV_STATUS.get(baseKey, "text");
   const force = !!opts.force;
-
-  // Keep alias continuity authoritative even if base already exists
   await env.KV_ALIASES.put(aliasKey(slug), JSON.stringify({ locationID: ulid }));
-
   if (existing && !force) {
     return { ok: true, slug, ulid, skipped: true };
   }
-
   const base = buildLegacyProfileBase(rec, ulid);
   await env.KV_STATUS.put(baseKey, JSON.stringify(base));
-
   if (existing && force) {
     return { ok: true, slug, ulid, overwritten: true };
   }
-
   return { ok: true, slug, ulid, created: true };
 }
-
-async function backfillPublishedLocationDoState(
-  env: Env,
-  ulid: string,
-  opts: { purgeContexts?: string[] } = {}
-): Promise<{ ok: boolean; ulid: string; slug: string; visibilityState?: string; indexed?: boolean; reason?: string }> {
+__name(preseedLegacyLocationRecord, "preseedLegacyLocationRecord");
+async function backfillPublishedLocationDoState(env, ulid, opts = {}) {
   const id = String(ulid || "").trim();
   if (!ULID_RE.test(id)) {
     return { ok: false, ulid: id, slug: "", reason: "invalid_ulid" };
   }
-
   const rec = await readPublishedEffectiveProfileByUlid(id, env);
   if (!rec) {
     return { ok: false, ulid: id, slug: "", reason: "missing_profile_base" };
   }
-
   const vis = await computeVisibilityState(env, id);
   const purgeContexts = uniqueTrimmedStrings(Array.isArray(opts.purgeContexts) ? opts.purgeContexts : []);
-
   await syncPublishedDoIndex(env, {
     ulid: id,
     slug: rec.locationID,
@@ -12792,7 +12057,6 @@ async function backfillPublishedLocationDoState(
     nextProfile: rec.effective,
     visibilityState: vis.visibilityState
   });
-
   return {
     ok: true,
     ulid: id,
@@ -12801,213 +12065,36 @@ async function backfillPublishedLocationDoState(
     indexed: vis.visibilityState !== "hidden"
   };
 }
-
-function isAdminPreseedAuthorized(req: Request, env: Env): boolean {
+__name(backfillPublishedLocationDoState, "backfillPublishedLocationDoState");
+function isAdminPreseedAuthorized(req, env) {
   const auth = String(req.headers.get("Authorization") || "").trim();
   const secret = String(env.JWT_SECRET || "").trim();
   if (!secret) return false;
   return auth === `Bearer ${secret}`;
 }
-
-async function increment(kv: KVNamespace, key: string): Promise<void> {
-  // Simple read-modify-write; good enough for MVP. Upgrade to Durable Object later.
-  const current = parseInt((await kv.get(key)) || "0", 10) || 0;
+__name(isAdminPreseedAuthorized, "isAdminPreseedAuthorized");
+async function increment(kv, key) {
+  const current = parseInt(await kv.get(key) || "0", 10) || 0;
   await kv.put(key, String(current + 1));
 }
-
-// -------- QR log helpers (per-scan metadata for QR Info / Campaigns) --------
-
-interface QrLogEntry {
-  time: string;          // ISO timestamp (UTC)
-  locationID: string;    // canonical ULID (location that owns this QR)
-  day: string;           // YYYY-MM-DD (for quick filtering)
-  ua: string;            // User-Agent
-  lang: string;          // Accept-Language
-  country: string;       // Cloudflare country code (scanner location, best-effort)
-  city: string;          // Cloudflare city (scanner location, best-effort)
-  source: string;        // logical source (for now: "qr-scan")
-  signal: string;        // "scan" | "redeem" | other
-  visitor: string;       // provisional visitor fingerprint (e.g. UA+country)
-  campaignKey: string;   // resolved from campaign.json when possible, else empty
-}
-
-interface CampaignDef {
-  locationID: string;
-  campaignKey: string;
-  campaignName?: string;
-  brandKey?: string;
-  context?: string;
-  startDate?: string;
-  endDate?: string;
-  status?: string;
-  sectorKey?: string;
-  eligibilityType?: string;
-  discountKind?: string;
-  discountValue?: number | null;
-}
-
-/**
- * Fetch campaign definitions once per request.
- * Reads /data/campaign.json from the main site origin.
- */
-async function loadCampaigns(baseOrigin: string, env: Env): Promise<CampaignDef[]> {
-  const normalizeDate = (v: any): string | undefined => {
-    if (!v) return undefined;
-    const s = String(v).trim();
-    if (!s) return undefined;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-
-    const d = new Date(s);
-    if (isNaN(d.getTime())) return undefined;
-
-    // SHIFT: add 12 hours before converting to ISO date to avoid
-    // off-by-one for midnight local times in campaign_data.
-    d.setHours(d.getHours() + 12);
-
-    return d.toISOString().slice(0, 10); // YYYY-MM-DD
-  };
-
+__name(increment, "increment");
+async function logQrScan(kv, env, loc, req) {
   try {
-    const src = new URL("/data/campaigns.json", baseOrigin || "https://navigen.io").toString();
-    const resp = await fetch(src, {
-      cf: { cacheTtl: 60, cacheEverything: true },
-      headers: { "Accept": "application/json" }
-    });
-    if (!resp.ok) return [];
-    const data: any = await resp.json();
-    const rows: any[] = Array.isArray(data) ? data : (Array.isArray(data?.campaigns) ? data.campaigns : []);
-
-    // First map raw rows
-    const rawDefs = rows.map((r) => ({
-      locationID: String(r.locationID || "").trim(),
-      campaignKey: String(r.campaignKey || "").trim(),
-      campaignName: typeof r.campaignName === "string" ? r.campaignName : undefined,
-      brandKey: typeof r.brandKey === "string" ? r.brandKey : undefined,
-      context: typeof r.context === "string" ? r.context : undefined,
-      startDate: normalizeDate(r.startDate),
-      endDate: normalizeDate(r.endDate),
-      status: typeof r.status === "string" ? r.status : undefined,
-      sectorKey: typeof r.sectorKey === "string" ? r.sectorKey : undefined,
-      eligibilityType: typeof r.eligibilityType === "string" ? r.eligibilityType : undefined,
-      discountKind: typeof r.discountKind === "string" ? r.discountKind : undefined,
-      discountValue: typeof r.discountValue === "number" ? r.discountValue : null
-    })).filter(r => r.locationID && r.campaignKey);
-
-    // Now canonicalize locationID to ULID when possible
-    const normalized: CampaignDef[] = [];
-    for (const def of rawDefs) {
-      const ulid = await resolveUid(def.locationID, env);
-      normalized.push({
-        ...def,
-        locationID: ulid || def.locationID
-      });
-    }
-
-    return normalized;
-  } catch {
-    return [];
-  }
-}
-
-interface FinanceRow {
-  sectorKey: string;
-  countryCode: string;
-  currency: string;
-  campFee: number | null;
-  campFeeRate: number | null;
-}
-
-/**
- * Load finance (sector-based fee) definitions from /data/finance.json.
- */
-async function loadFinance(baseOrigin: string, env: Env): Promise<FinanceRow[]> {
-  try {
-    const src = new URL("/data/finance.json", baseOrigin || "https://navigen.io").toString();
-    const resp = await fetch(src, {
-      cf: { cacheTtl: 60, cacheEverything: true },
-      headers: { "Accept": "application/json" }
-    });
-    if (!resp.ok) return [];
-    const data: any = await resp.json();
-    const rows: any[] = Array.isArray(data) ? data : (Array.isArray(data?.finance) ? data.finance : []);
-    return rows.map((r) => ({
-      sectorKey: String(r.sectorKey || "").trim(),
-      countryCode: String(r.countryCode || "").trim(),
-      currency: String(r.currency || "").trim(),
-      campFee: typeof r.campFee === "number" ? r.campFee : null,
-      campFeeRate: typeof r.campFeeRate === "number" ? r.campFeeRate : null
-    })).filter(r => r.sectorKey && r.countryCode);
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Given a locationID + day, find the best matching campaignKey.
- * For now: pick any campaign for that location where:
- *   - status is not "ended"
- *   - and the scan day is between startDate and endDate (if those exist)
- * If none match, return "".
- */
-function pickCampaignForScan(
-  campaigns: CampaignDef[],
-  locationID: string,
-  day: string
-): string {
-  const candidates = campaigns.filter(c => c.locationID === locationID);
-  if (!candidates.length) return "";
-
-  const d = day;
-  let best: CampaignDef | null = null;
-
-  for (const c of candidates) {
-    const startOK = !c.startDate || d >= c.startDate;
-    const endOK = !c.endDate || d <= c.endDate;
-    const statusOK = !c.status || c.status.toLowerCase() !== "ended";
-    if (!startOK || !endOK || !statusOK) continue;
-    // Pick first matching; later we can add priority if needed.
-    best = c;
-    break;
-  }
-  return best?.campaignKey || "";
-}
-
-/**
- * Log a QR scan into KV_STATS under qrlog:<loc>:<day>:<scanId>.
- * This powers the QR Info and Campaigns views in the dashboard.
- */
-async function logQrScan(
-  kv: KVNamespace,
-  env: Env,
-  loc: string,
-  req: Request
-): Promise<void> {
-  try {
-    const now = new Date();
-    const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
+    const now = /* @__PURE__ */ new Date();
+    const day = dayKeyFor(now, void 0, req.cf?.country || "");
     const timeISO = now.toISOString();
-
-    // For scans coming directly from the app, we use the browser UA/lang.
     const ua = req.headers.get("User-Agent") || "";
     const lang = req.headers.get("Accept-Language") || "";
-
-    const country = ((req as any).cf?.country || "").toString();
-    const city = ((req as any).cf?.city || "").toString();
-    const source = "qr-scan"; // logical source for Business/Promotion QR views
-    const signal = "scan";    // distinguishes scan events from redeems/invalids
-
-    // provisional visitor identity (UA + country); no IP stored
+    const country = (req.cf?.country || "").toString();
+    const city = (req.cf?.city || "").toString();
+    const source = "qr-scan";
+    const signal = "scan";
     const visitor = `${ua}|${country}`;
-
-    // Info QR scans must remain detached from campaigns
-    const campaignKey = ""; // Info QR scans must never attach to campaigns
-
-    // Generate a short random scan ID (hex string)
+    const campaignKey = "";
     const bytes = new Uint8Array(6);
-    (crypto as any).getRandomValues(bytes);
-    const scanId = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
-
-    const entry: QrLogEntry = {
+    crypto.getRandomValues(bytes);
+    const scanId = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const entry = {
       time: timeISO,
       locationID: loc,
       day,
@@ -13020,48 +12107,29 @@ async function logQrScan(
       visitor,
       campaignKey
     };
-
     const key = `qrlog:${loc}:${day}:${scanId}`;
-    // TTL: 56 days for QR logs (~8 weeks)
     const ttlSeconds = 56 * 24 * 60 * 60;
     await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
   } catch {
-    // never throw from logging; stats must not break the main flow
   }
 }
-
-/**
- * Log that a promotion QR was shown (ARMED) for a given campaign.
- * This is called when /api/promo-qr is used to generate a promo QR code.
- */
-async function logQrArmed(
-  kv: KVNamespace,
-  _env: Env,
-  loc: string,
-  req: Request,
-  campaignKey: string
-): Promise<void> {
+__name(logQrScan, "logQrScan");
+async function logQrArmed(kv, _env, loc, req, campaignKey) {
   try {
-    const now = new Date();
-    const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
+    const now = /* @__PURE__ */ new Date();
+    const day = dayKeyFor(now, void 0, req.cf?.country || "");
     const timeISO = now.toISOString();
-
     const ua = req.headers.get("User-Agent") || "";
     const lang = req.headers.get("Accept-Language") || "";
-
-    const country = ((req as any).cf?.country || "").toString();
-    const city = ((req as any).cf?.city || "").toString();
-    const source = "qr-redeem"; // same logical family as promotion QR
-    const signal = "armed";     // distinguishes promo QR shown from scans/redeems
-
+    const country = (req.cf?.country || "").toString();
+    const city = (req.cf?.city || "").toString();
+    const source = "qr-redeem";
+    const signal = "armed";
     const visitor = `${ua}|${country}`;
-
-    // explicit campaignKey: promo QR is always tied to a campaign
     const keyBytes = new Uint8Array(6);
-    (crypto as any).getRandomValues(keyBytes);
-    const scanId = Array.from(keyBytes).map(b => b.toString(16).padStart(2, "0")).join("");
-
-    const entry: QrLogEntry = {
+    crypto.getRandomValues(keyBytes);
+    const scanId = Array.from(keyBytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const entry = {
       time: timeISO,
       locationID: loc,
       day,
@@ -13074,50 +12142,30 @@ async function logQrArmed(
       visitor,
       campaignKey
     };
-
     const key = `qrlog:${loc}:${day}:${scanId}`;
-    const ttlSeconds = 56 * 24 * 60 * 60; // align with other QR logs (~8 weeks)
+    const ttlSeconds = 56 * 24 * 60 * 60;
     await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
   } catch {
-    // never throw from logging; stats must not break the main flow
   }
 }
-
-/**
- * Log a QR redeem into KV_STATS under qrlog:<loc>:<day>:<scanId>.
- * This powers the QR Info and Campaigns views in the dashboard.
- */
-async function logQrRedeem(
-  kv: KVNamespace,
-  env: Env,
-  loc: string,
-  req: Request,
-  campaignKey: string = ""
-): Promise<void> {
+__name(logQrArmed, "logQrArmed");
+async function logQrRedeem(kv, env, loc, req, campaignKey = "") {
   try {
-    const now = new Date();
-    const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
+    const now = /* @__PURE__ */ new Date();
+    const day = dayKeyFor(now, void 0, req.cf?.country || "");
     const timeISO = now.toISOString();
-
     const ua = req.headers.get("X-NG-UA") || req.headers.get("User-Agent") || "";
     const lang = req.headers.get("X-NG-Lang") || req.headers.get("Accept-Language") || "";
-
-    const country = ((req as any).cf?.country || "").toString();
-    const city = ((req as any).cf?.city || "").toString();
-    const source = "qr-redeem"; // logical source for Promotion QR redemptions
-    const signal = "redeem";    // distinguishes redeem events from scans
-
-    // provisional visitor identity (UA + country); no IP stored
+    const country = (req.cf?.country || "").toString();
+    const city = (req.cf?.city || "").toString();
+    const source = "qr-redeem";
+    const signal = "redeem";
     const visitor = `${ua}|${country}`;
-
     const ck = String(campaignKey || "").trim();
-
-    // Generate a short random scan ID (hex string)
     const bytes = new Uint8Array(6);
-    (crypto as any).getRandomValues(bytes);
-    const scanId = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
-
-    const entry: QrLogEntry = {
+    crypto.getRandomValues(bytes);
+    const scanId = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const entry = {
       time: timeISO,
       locationID: loc,
       day,
@@ -13130,49 +12178,30 @@ async function logQrRedeem(
       visitor,
       campaignKey: ck
     };
-
     const key = `qrlog:${loc}:${day}:${scanId}`;
-    // TTL: 56 days for QR logs (~8 weeks)
     const ttlSeconds = 56 * 24 * 60 * 60;
     await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
   } catch {
-    // never throw from logging; stats must not break the main flow
   }
 }
-
-/**
- * Log an invalid QR redeem attempt into KV_STATS (signal="invalid").
- */
-async function logQrRedeemInvalid(
-  kv: KVNamespace,
-  env: Env,
-  loc: string,
-  req: Request,
-  campaignKey: string = ""
-): Promise<void> {
+__name(logQrRedeem, "logQrRedeem");
+async function logQrRedeemInvalid(kv, env, loc, req, campaignKey = "") {
   try {
-    const now = new Date();
-    const day = dayKeyFor(now, undefined, (req as any).cf?.country || "");
+    const now = /* @__PURE__ */ new Date();
+    const day = dayKeyFor(now, void 0, req.cf?.country || "");
     const timeISO = now.toISOString();
-
     const ua = req.headers.get("X-NG-UA") || req.headers.get("User-Agent") || "";
     const lang = req.headers.get("X-NG-Lang") || req.headers.get("Accept-Language") || "";
-
-    const country = ((req as any).cf?.country || "").toString();
-    const city = ((req as any).cf?.city || "").toString();
-    const source = "qr-redeem"; // same logical source
-    const signal = "invalid";   // distinguishes invalid attempts
-
-    // provisional visitor identity (UA + country); no IP stored
+    const country = (req.cf?.country || "").toString();
+    const city = (req.cf?.city || "").toString();
+    const source = "qr-redeem";
+    const signal = "invalid";
     const visitor = `${ua}|${country}`;
-
     const ck = String(campaignKey || "").trim();
-
     const bytes = new Uint8Array(6);
-    (crypto as any).getRandomValues(bytes);
-    const scanId = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
-
-    const entry: QrLogEntry = {
+    crypto.getRandomValues(bytes);
+    const scanId = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const entry = {
       time: timeISO,
       locationID: loc,
       day,
@@ -13185,115 +12214,59 @@ async function logQrRedeemInvalid(
       visitor,
       campaignKey: ck
     };
-
     const key = `qrlog:${loc}:${day}:${scanId}`;
     const ttlSeconds = 56 * 24 * 60 * 60;
     await kv.put(key, JSON.stringify(entry), { expirationTtl: ttlSeconds });
   } catch {
-    // never throw from logging; stats must not break the main flow
   }
 }
-
-// -------- Redeem token helpers (one-time Promotion QR tokens) --------
-
-interface RedeemTokenRecord {
-  locationID: string;
-  campaignKey: string;
-  status: "fresh" | "redeemed" | "invalid";
-  createdAt: string;
-}
-
-/**
- * Create a fresh redeem token for a given location + campaignKey.
- * Token is a short random hex string, stored under redeem:<token>.
- */
-async function createRedeemToken(
-  kv: KVNamespace,
-  locationID: string,
-  campaignKey: string
-): Promise<string> {
-  // Generate 8-byte random token (16 hex chars)
+__name(logQrRedeemInvalid, "logQrRedeemInvalid");
+async function createRedeemToken(kv, locationID, campaignKey) {
   const bytes = new Uint8Array(8);
-  (crypto as any).getRandomValues(bytes);
-  const token = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
-
-  const record: RedeemTokenRecord = {
+  crypto.getRandomValues(bytes);
+  const token = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const record = {
     locationID,
     campaignKey,
     status: "fresh",
-    createdAt: new Date().toISOString()
+    createdAt: (/* @__PURE__ */ new Date()).toISOString()
   };
-
   const key = `redeem:${token}`;
-  const ttlSeconds = 56 * 24 * 60 * 60; // align with QR logs (~8 weeks)
+  const ttlSeconds = 56 * 24 * 60 * 60;
   await kv.put(key, JSON.stringify(record), { expirationTtl: ttlSeconds });
-
   return token;
 }
-
-/**
- * Try to consume a redeem token for a given location + campaignKey.
- * Returns "ok" if token is valid and now marked redeemed, otherwise "invalid".
- */
-async function consumeRedeemToken(
-  kv: KVNamespace,
-  token: string,
-  locationID: string,
-  campaignKey: string
-): Promise<"ok" | "used" | "invalid"> {
+__name(createRedeemToken, "createRedeemToken");
+async function consumeRedeemToken(kv, token, locationID, campaignKey) {
   if (!token) return "invalid";
   const key = `redeem:${token}`;
   const raw = await kv.get(key, "text");
   if (!raw) return "invalid";
-
-  let rec: RedeemTokenRecord;
+  let rec;
   try {
-    rec = JSON.parse(raw) as RedeemTokenRecord;
+    rec = JSON.parse(raw);
   } catch {
     return "invalid";
   }
-
   if (rec.locationID !== locationID || rec.campaignKey !== campaignKey) {
     return "invalid";
   }
-
   if (rec.status === "redeemed") {
     return "used";
   }
-
   if (rec.status !== "fresh") {
     return "invalid";
   }
-
-  // Mark as redeemed
   rec.status = "redeemed";
   await kv.put(key, JSON.stringify(rec));
   return "ok";
 }
-
-interface BillingRecord {
-  locationID: string;
-  campaignKey: string;
-  sectorKey: string;
-  countryCode: string;
-  currency: string;
-  timestamp: string;
-  campFee: number;
-  campFeeRate: number | null;
-}
-
-/**
- * Write a billing ledger record into KV_STATS under billing:YYYY-MM:<loc>:<id>.
- * For now we reuse KV_STATS as storage; later this can be moved to its own namespace.
- */
-async function writeBillingRecord(kv: KVNamespace, rec: BillingRecord): Promise<void> {
-  const d = new Date(rec.timestamp || new Date().toISOString());
-  const ym = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-  // random 6-byte id
-  const bytes = new Uint8Array(6);
-  (crypto as any).getRandomValues(bytes);
-  const rid = Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
-
-  const key = `billing:${ym}:${rec.locationID}:${rid}`;
-  await kv.put(key, JSON.stringify(rec), { expirationTtl: 60 * 60 * 24 * 366 });
-}
+__name(consumeRedeemToken, "consumeRedeemToken");
+export {
+  ContextShardDO,
+  MediaTargetDO,
+  PlanAllocDO,
+  SearchShardDO,
+  index_default as default
+};
+//# sourceMappingURL=index.js.map

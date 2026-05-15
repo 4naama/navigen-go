@@ -21,6 +21,12 @@ routes = [
 # STRIPE_WEBHOOK_SECRET = ""
 # OWNER_LINK_HMAC_SECRET = ""
 
+# Partner channel flags.
+# PARTNER_ENABLED allows internal Partner route development.
+# PARTNER_PUBLIC_LAUNCH_ENABLED must remain false until Standard/Multi production prices are restored.
+PARTNER_ENABLED = "false"
+PARTNER_PUBLIC_LAUNCH_ENABLED = "false"
+
 # --- KV bindings (PROD) ---
 [[kv_namespaces]]
 binding = "KV_STATUS"
