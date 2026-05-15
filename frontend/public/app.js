@@ -660,7 +660,14 @@ function renderPopularGroup(list = geoPoints) {
 // - Uses BO card styles (bo-menu-list / bo-menu-item)
 // - Collapsed by default
 // - All text via t(keys)
-function renderRootActionGroup({ groupKey, defaultTitleKey, cards }) {
+function renderRootActionGroup({ groupKey, defaultTitleKey, defaultTitleFallback = '', cards }) {
+  const safeRootText = (key, fallback = '') => {
+    if (typeof t !== 'function') return fallback;
+    const raw = String(t(key) || '').trim();
+    if (!raw || raw === key || raw === `[${key}]`) return fallback;
+    return raw;
+  };
+
   const container = document.querySelector("#locations");
   if (!container) { console.warn(`⚠️ #locations not found; skipping ${groupKey}`); return; }
 
@@ -675,7 +682,7 @@ function renderRootActionGroup({ groupKey, defaultTitleKey, cards }) {
   header.setAttribute("data-group", groupKey);
   header.style.backgroundColor = 'var(--group-color)';
 
-  const groupLabel = (typeof t === 'function' ? t(groupKey) : '') || (typeof t === 'function' ? t(defaultTitleKey) : '') || groupKey;
+  const groupLabel = safeRootText(groupKey, '') || safeRootText(defaultTitleKey, '') || defaultTitleFallback || groupKey;
 
   header.innerHTML = `
     <span class="header-title">${groupLabel}</span>
@@ -691,9 +698,9 @@ function renderRootActionGroup({ groupKey, defaultTitleKey, cards }) {
   list.className = "bo-menu-list";
   content.appendChild(list);
 
-  const addCard = ({ icon, titleKey, descKey, onClick }) => {
-    const title = (typeof t === 'function' ? t(titleKey) : '') || titleKey;
-    const desc  = (typeof t === 'function' ? t(descKey)  : '') || descKey;
+  const addCard = ({ icon, titleKey, descKey, titleFallback = '', descFallback = '', onClick }) => {
+    const title = safeRootText(titleKey, titleFallback || titleKey);
+    const desc  = safeRootText(descKey, descFallback || descKey);
 
     const btn = document.createElement("button");
     btn.type = "button";
@@ -853,9 +860,94 @@ function renderIndividualUsersGroup() {
   });
 }
 
-function navigate(name, lat, lon) {
-  const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-  window.open(url, '_blank');
+async function openPartnerUiModule() {
+  return await import('./partner-ui.js');
+}
+
+async function openPartnerCenterFromShell() {
+  try {
+    const { openPartnerCenter } = await openPartnerUiModule();
+    await openPartnerCenter();
+  } catch (err) {
+    console.error('Partner Center failed:', err);
+    showToast(returnFlowText('partner.center.error', 'Could not open Partner Center.'), 3200);
+  }
+}
+
+async function openPartnerAdminPlatformFromShell() {
+  try {
+    const { openPartnerAdminPlatform } = await openPartnerUiModule();
+    await openPartnerAdminPlatform();
+  } catch (err) {
+    console.error('Partner Admin Platform failed:', err);
+    showToast(returnFlowText('partner.admin.error', 'Could not open Partner Admin Platform.'), 3200);
+  }
+}
+
+async function openPartnerHandoffRoute(token) {
+  const cleanToken = String(token || '').trim();
+  if (!cleanToken) return false;
+
+  try {
+    const { openPartnerHandoffPreview } = await openPartnerUiModule();
+    await openPartnerHandoffPreview(cleanToken);
+    return true;
+  } catch (err) {
+    console.error('Partner handoff failed:', err);
+    showToast(returnFlowText('partner.handoff.error', 'Could not load Partner handoff.'), 3200);
+    return false;
+  }
+}
+
+async function handlePartnerRouteIntentOnce() {
+  const segs = location.pathname.split('/').filter(Boolean);
+  if (/^[a-z]{2}$/i.test(segs[0] || '')) segs.shift();
+
+  if (String(segs[0] || '').toLowerCase() !== 'partner') return false;
+
+  const sub = String(segs[1] || '').toLowerCase();
+  if (sub === 'handoff' && segs[2]) {
+    const token = decodeURIComponent(segs.slice(2).join('/'));
+    return await openPartnerHandoffRoute(token);
+  }
+
+  if (sub === 'admin' || sub === 'admin-platform') {
+    await openPartnerAdminPlatformFromShell();
+    return true;
+  }
+
+  if (!sub || sub === 'center') {
+    await openPartnerCenterFromShell();
+    return true;
+  }
+
+  return false;
+}
+
+function renderNaviGenPartnersGroup() {
+  renderRootActionGroup({
+    groupKey: "root.partner.title",
+    defaultTitleKey: "root.partner.title",
+    defaultTitleFallback: "NaviGen Partners",
+    cards: [
+      {
+        icon: "🤝",
+        titleKey: "root.partner.center.title",
+        descKey: "root.partner.center.desc",
+        titleFallback: "Partner Center",
+        descFallback: "Prepare leads, drafts, handoffs, and commission state.",
+        onClick: openPartnerCenterFromShell
+      },
+      {
+        icon: "🛠️",
+        titleKey: "root.partner.admin.title",
+        descKey: "root.partner.admin.desc",
+        titleFallback: "NaviGen Admin Platform",
+        descFallback: "Inspect Partner status, capacity, attribution, and commission ledger state.",
+        onClick: openPartnerAdminPlatformFromShell
+      }
+    ]
+  });
 }
 
 // showActionModal: opens a modal with title, message, and action buttons; closes on backdrop tap.
@@ -1521,6 +1613,8 @@ async function initEmergencyBlock(countryOverride) {
     handleIncomingAtParamOnce();
 
     // Dash → Main shell intents handled EARLY above (avoid visible paint/flash).
+
+    await handlePartnerRouteIntentOnce();
 
     // measure bottom band; update CSS var
     const setBottomBandH = () => {
@@ -2310,6 +2404,7 @@ async function initEmergencyBlock(countryOverride) {
     if (!ACTIVE_PAGE || (Array.isArray(apiItems) && apiItems.length === 0)) {
       renderIndividualUsersGroup();
       renderBusinessOwnersGroup();
+      renderNaviGenPartnersGroup();
     } else {
       renderPopularGroup(popularCtx);
     }

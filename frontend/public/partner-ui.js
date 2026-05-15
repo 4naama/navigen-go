@@ -1,0 +1,847 @@
+import { injectModal, showModal, hideModal, showToast } from './modal-injector.js';
+import { t } from './scripts/i18n.js';
+
+const PARTNER_CENTER_MODAL_ID = 'partner-center-modal';
+const PARTNER_HANDOFF_MODAL_ID = 'partner-handoff-modal';
+
+const state = {
+  partner: null,
+  leads: [],
+  commissions: [],
+  activeTab: 'overview',
+  loading: false,
+  message: '',
+  handoffUrlByLeadId: new Map()
+};
+
+function text(key, fallback = '') {
+  if (typeof t !== 'function') return fallback;
+  const raw = String(t(key) || '').trim();
+  if (!raw || raw === key || raw === `[${key}]`) return fallback;
+  return raw;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function formatDate(value) {
+  const ms = Date.parse(String(value || ''));
+  if (!Number.isFinite(ms)) return '';
+  try { return new Date(ms).toLocaleDateString(); } catch { return ''; }
+}
+
+async function api(path, opts = {}) {
+  const method = String(opts.method || 'GET').toUpperCase();
+  const hasBody = Object.prototype.hasOwnProperty.call(opts, 'body');
+  const res = await fetch(path, {
+    method,
+    cache: 'no-store',
+    credentials: 'include',
+    headers: {
+      accept: 'application/json',
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {})
+    },
+    body: hasBody ? JSON.stringify(opts.body || {}) : undefined
+  });
+
+  const json = await res.json().catch(() => null);
+  if (!res.ok) {
+    const err = new Error(String(json?.error?.message || json?.error?.code || `HTTP ${res.status}`));
+    err.status = res.status;
+    err.payload = json;
+    throw err;
+  }
+  return json || {};
+}
+
+function ensurePartnerCenterModal() {
+  const modal = injectModal({
+    id: PARTNER_CENTER_MODAL_ID,
+    title: text('partner.center.title', 'NaviGen Partner Center'),
+    layout: 'menu',
+    bodyHTML: '<div id="partner-center-root" class="partner-center"></div>'
+  });
+
+  if (!modal.dataset.partnerUiBound) {
+    modal.dataset.partnerUiBound = '1';
+
+    modal.addEventListener('click', async (ev) => {
+      const target = ev.target instanceof Element ? ev.target : null;
+      const action = target?.closest?.('[data-partner-action]');
+      if (!(action instanceof HTMLElement)) return;
+
+      ev.preventDefault();
+      await handlePartnerCenterAction(action);
+    });
+
+    modal.addEventListener('submit', async (ev) => {
+      const form = ev.target instanceof HTMLFormElement ? ev.target : null;
+      if (!form || !form.matches('[data-partner-form="lead"]')) return;
+
+      ev.preventDefault();
+      await submitPartnerLeadForm(form);
+    });
+  }
+
+  return modal;
+}
+
+function renderPartnerCenter() {
+  const root = document.getElementById('partner-center-root');
+  if (!root) return;
+
+  if (state.loading) {
+    root.innerHTML = `
+      <div class="partner-status-card">
+        <strong>${escapeHtml(text('partner.center.loading.title', 'Loading Partner Center...'))}</strong><br>
+        <small>${escapeHtml(text('partner.center.loading.desc', 'Reading your Partner session and lead workspace.'))}</small>
+      </div>
+    `;
+    return;
+  }
+
+  const partner = state.partner || {};
+  const tabs = [
+    ['overview', text('partner.center.tab.overview', 'Overview')],
+    ['leads', text('partner.center.tab.leads', 'Leads')],
+    ['commissions', text('partner.center.tab.commissions', 'Commissions')]
+  ];
+
+  root.innerHTML = `
+    <div class="partner-center-shell">
+      ${state.message ? `<div class="partner-status-card partner-status-card-info">${escapeHtml(state.message)}</div>` : ''}
+
+      <div class="partner-summary-grid">
+        <div class="partner-summary-card">
+          <small>${escapeHtml(text('partner.center.partnerId', 'Partner ID'))}</small>
+          <strong>${escapeHtml(partner.partnerId || '—')}</strong>
+        </div>
+        <div class="partner-summary-card">
+          <small>${escapeHtml(text('partner.center.status', 'Status'))}</small>
+          <strong>${escapeHtml(partner.status || '—')}</strong>
+        </div>
+        <div class="partner-summary-card">
+          <small>${escapeHtml(text('partner.center.capacity', 'Open leads'))}</small>
+          <strong>${Number(partner.openLeadCount || 0)} / ${Number(partner.leadCapacity || 0)}</strong>
+        </div>
+        <div class="partner-summary-card">
+          <small>${escapeHtml(text('partner.center.connect', 'Payout identity'))}</small>
+          <strong>${escapeHtml(partner.connectStatus || 'not_started')}</strong>
+        </div>
+      </div>
+
+      <div class="partner-tabbar" role="tablist">
+        ${tabs.map(([id, label]) => `
+          <button type="button" class="partner-tab ${state.activeTab === id ? 'is-active' : ''}" data-partner-action="tab" data-tab="${escapeHtml(id)}">${escapeHtml(label)}</button>
+        `).join('')}
+      </div>
+
+      <div class="partner-tabpanel">
+        ${state.activeTab === 'overview' ? renderOverviewPanel() : ''}
+        ${state.activeTab === 'leads' ? renderLeadsPanel() : ''}
+        ${state.activeTab === 'commissions' ? renderCommissionsPanel() : ''}
+      </div>
+    </div>
+  `;
+}
+
+function renderOverviewPanel() {
+  const publicLaunch = state.partner?.launch?.publicLaunchAllowed === true;
+  return `
+    <div class="partner-status-card">
+      <strong>${escapeHtml(text('partner.center.overview.title', 'Assisted acquisition workspace'))}</strong><br>
+      <small>${escapeHtml(text('partner.center.overview.desc', 'Create Partner leads, prepare drafts, create BO handoff links, and track commission ledger state.'))}</small>
+    </div>
+    <div class="partner-status-card ${publicLaunch ? 'partner-status-card-success' : 'partner-status-card-warn'}">
+      <strong>${escapeHtml(publicLaunch ? text('partner.center.launch.open', 'Partner public launch enabled') : text('partner.center.launch.blocked', 'Partner public launch blocked'))}</strong><br>
+      <small>${escapeHtml(text('partner.center.launch.desc', 'Partner-assisted BO payment remains blocked until production launch gates are open.'))}</small>
+    </div>
+    <div class="partner-actions-row">
+      <button type="button" class="modal-body-button" data-partner-action="refresh">${escapeHtml(text('partner.center.refresh', 'Refresh'))}</button>
+      <button type="button" class="modal-body-button" data-partner-action="tab" data-tab="leads">${escapeHtml(text('partner.center.createLead', 'Create lead'))}</button>
+    </div>
+  `;
+}
+
+function renderLeadsPanel() {
+  const leads = asArray(state.leads);
+
+  return `
+    <form class="partner-lead-form" data-partner-form="lead">
+      <div class="modal-form-grid">
+        <div class="modal-field">
+          <label>${escapeHtml(text('partner.lead.businessName', 'Business name'))}</label>
+          <input class="input" name="businessName" required autocomplete="organization">
+        </div>
+        <div class="modal-field">
+          <label>${escapeHtml(text('partner.lead.website', 'Website'))}</label>
+          <input class="input" name="website" autocomplete="url">
+        </div>
+        <div class="modal-field">
+          <label>${escapeHtml(text('partner.lead.phone', 'Phone'))}</label>
+          <input class="input" name="phone" autocomplete="tel">
+        </div>
+        <div class="modal-field">
+          <label>${escapeHtml(text('partner.lead.address', 'Address'))}</label>
+          <input class="input" name="address" autocomplete="street-address">
+        </div>
+        <div class="modal-field">
+          <label>${escapeHtml(text('partner.lead.city', 'City'))}</label>
+          <input class="input" name="city" autocomplete="address-level2">
+        </div>
+        <div class="modal-field">
+          <label>${escapeHtml(text('partner.lead.country', 'Country'))}</label>
+          <input class="input" name="country" autocomplete="country-name" value="HU">
+        </div>
+        <div class="modal-field">
+          <label>${escapeHtml(text('partner.lead.groupKey', 'Group key'))}</label>
+          <input class="input" name="groupKey" placeholder="food">
+        </div>
+        <div class="modal-field">
+          <label>${escapeHtml(text('partner.lead.subgroupKey', 'Subgroup key'))}</label>
+          <input class="input" name="subgroupKey" placeholder="restaurant">
+        </div>
+      </div>
+      <div class="modal-field">
+        <label>${escapeHtml(text('partner.lead.contexts', 'Contexts'))}</label>
+        <input class="input" name="contexts" placeholder="lunch, qr, local">
+      </div>
+      <div class="partner-actions-row">
+        <button type="submit" class="modal-body-button">${escapeHtml(text('partner.lead.create', 'Create lead'))}</button>
+      </div>
+    </form>
+
+    <div class="partner-list">
+      ${leads.length ? leads.map(renderLeadCard).join('') : `
+        <div class="partner-empty">${escapeHtml(text('partner.lead.empty', 'No Partner leads yet.'))}</div>
+      `}
+    </div>
+  `;
+}
+
+function renderLeadCard(lead) {
+  const leadId = String(lead?.leadId || '').trim();
+  const handoffUrl = state.handoffUrlByLeadId.get(leadId) || '';
+  const hasDraft = lead?.hasDraft === true || !!lead?.draftULID;
+
+  return `
+    <article class="partner-lead-card">
+      <div class="partner-card-head">
+        <div>
+          <strong>${escapeHtml(lead?.businessName || leadId || 'Lead')}</strong><br>
+          <small>${escapeHtml([lead?.city, lead?.country].filter(Boolean).join(', ') || lead?.website || '')}</small>
+        </div>
+        <span class="partner-pill partner-pill-${escapeHtml(lead?.status || 'reserved')}">${escapeHtml(lead?.status || 'reserved')}</span>
+      </div>
+      <div class="partner-card-meta">
+        <span>${escapeHtml(text('partner.lead.expires', 'Expires'))}: ${escapeHtml(formatDate(lead?.expiresAt) || '—')}</span>
+        <span>${escapeHtml(hasDraft ? text('partner.lead.draftReady', 'Draft ready') : text('partner.lead.noDraft', 'No draft'))}</span>
+      </div>
+      ${handoffUrl ? `<div class="partner-handoff-box"><span>${escapeHtml(handoffUrl)}</span></div>` : ''}
+      <div class="partner-actions-row">
+        <button type="button" class="modal-body-button" data-partner-action="prepare-draft" data-lead-id="${escapeHtml(leadId)}">${escapeHtml(hasDraft ? text('partner.lead.refreshDraft', 'Refresh draft') : text('partner.lead.prepareDraft', 'Prepare draft'))}</button>
+        <button type="button" class="modal-body-button" data-partner-action="create-handoff" data-lead-id="${escapeHtml(leadId)}" ${hasDraft ? '' : 'disabled'}>${escapeHtml(text('partner.lead.createHandoff', 'Create handoff'))}</button>
+        <button type="button" class="modal-body-button" data-partner-action="archive-lead" data-lead-id="${escapeHtml(leadId)}">${escapeHtml(text('partner.lead.archive', 'Archive'))}</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderCommissionsPanel() {
+  const commissions = asArray(state.commissions);
+  return `
+    <div class="partner-list">
+      ${commissions.length ? commissions.map((commission) => `
+        <article class="partner-lead-card">
+          <div class="partner-card-head">
+            <div>
+              <strong>${escapeHtml(commission.commissionAmount || '0')} ${escapeHtml(commission.currency || 'EUR')}</strong><br>
+              <small>${escapeHtml(commission.planTier || '')} · ${escapeHtml(commission.planMode || '')}</small>
+            </div>
+            <span class="partner-pill">${escapeHtml(commission.status || '')}</span>
+          </div>
+          <div class="partner-card-meta">
+            <span>${escapeHtml(text('partner.commission.eligibleAt', 'Eligible'))}: ${escapeHtml(formatDate(commission.eligibleAt) || '—')}</span>
+            <span>${escapeHtml(commission.commissionPolicyVersion || '')}</span>
+          </div>
+        </article>
+      `).join('') : `
+        <div class="partner-empty">${escapeHtml(text('partner.commission.empty', 'No commission ledger entries yet.'))}</div>
+      `}
+    </div>
+  `;
+}
+
+async function loadPartnerWorkspace() {
+  state.loading = true;
+  state.message = '';
+  renderPartnerCenter();
+
+  const started = await api('/api/partner/start', { method: 'POST', body: {} });
+  state.partner = { ...(started.partner || {}), launch: started.launch || {} };
+
+  await refreshPartnerLists();
+  state.loading = false;
+  renderPartnerCenter();
+}
+
+async function refreshPartnerLists() {
+  const [leads, commissions] = await Promise.all([
+    api('/api/partner/leads'),
+    api('/api/partner/commissions')
+  ]);
+
+  state.partner = { ...(state.partner || {}), ...(leads.partner || {}), launch: leads.launch || state.partner?.launch || {} };
+  state.leads = asArray(leads.items);
+  state.commissions = asArray(commissions.items);
+}
+
+async function handlePartnerCenterAction(action) {
+  const type = String(action.dataset.partnerAction || '').trim();
+  const leadId = String(action.dataset.leadId || '').trim();
+
+  try {
+    if (type === 'tab') {
+      state.activeTab = String(action.dataset.tab || 'overview');
+      renderPartnerCenter();
+      return;
+    }
+
+    if (type === 'refresh') {
+      await refreshPartnerLists();
+      state.message = text('partner.center.refreshed', 'Partner Center refreshed.');
+      renderPartnerCenter();
+      return;
+    }
+
+    if (type === 'prepare-draft' && leadId) {
+      await api(`/api/partner/leads/${encodeURIComponent(leadId)}/draft`, { method: 'POST', body: { draft: {} } });
+      await refreshPartnerLists();
+      state.message = text('partner.lead.draftPrepared', 'Partner draft prepared.');
+      renderPartnerCenter();
+      return;
+    }
+
+    if (type === 'create-handoff' && leadId) {
+      const handoff = await api(`/api/partner/handoff/${encodeURIComponent(leadId)}/create`, { method: 'POST', body: {} });
+      const url = String(handoff.handoffUrl || '').trim();
+      if (url) {
+        state.handoffUrlByLeadId.set(leadId, url);
+        try { await navigator.clipboard?.writeText?.(url); } catch {}
+      }
+      await refreshPartnerLists();
+      state.message = url
+        ? text('partner.lead.handoffCopied', 'Handoff link created and copied when clipboard is available.')
+        : text('partner.lead.handoffCreated', 'Handoff link created.');
+      renderPartnerCenter();
+      return;
+    }
+
+    if (type === 'archive-lead' && leadId) {
+      await api(`/api/partner/leads/${encodeURIComponent(leadId)}/archive`, { method: 'POST', body: {} });
+      await refreshPartnerLists();
+      state.message = text('partner.lead.archived', 'Lead archived.');
+      renderPartnerCenter();
+    }
+  } catch (err) {
+    showToast(String(err?.message || text('partner.center.error', 'Partner action failed.')), 3200);
+  }
+}
+
+async function submitPartnerLeadForm(form) {
+  const data = new FormData(form);
+  const contexts = String(data.get('contexts') || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const payload = {
+    businessName: String(data.get('businessName') || '').trim(),
+    website: String(data.get('website') || '').trim(),
+    phone: String(data.get('phone') || '').trim(),
+    address: String(data.get('address') || '').trim(),
+    city: String(data.get('city') || '').trim(),
+    country: String(data.get('country') || '').trim(),
+    groupKey: String(data.get('groupKey') || '').trim(),
+    subgroupKey: String(data.get('subgroupKey') || '').trim(),
+    contexts
+  };
+
+  try {
+    await api('/api/partner/leads', { method: 'POST', body: payload });
+    form.reset();
+    await refreshPartnerLists();
+    state.message = text('partner.lead.created', 'Partner lead created.');
+    renderPartnerCenter();
+  } catch (err) {
+    showToast(String(err?.message || text('partner.lead.createError', 'Could not create Partner lead.')), 3600);
+  }
+}
+
+export async function openPartnerCenter() {
+  ensurePartnerCenterModal();
+  showModal(PARTNER_CENTER_MODAL_ID);
+  await loadPartnerWorkspace().catch((err) => {
+    state.loading = false;
+    state.message = String(err?.message || text('partner.center.error', 'Could not open Partner Center.'));
+    renderPartnerCenter();
+  });
+}
+
+const PARTNER_ADMIN_MODAL_ID = 'partner-admin-modal';
+
+const adminState = {
+  token: '',
+  partners: [],
+  selectedPartner: null,
+  message: '',
+  loading: false
+};
+
+function ensureAdminToken() {
+  if (adminState.token) return adminState.token;
+
+  const entered = window.prompt(text('partner.admin.tokenPrompt', 'Enter NaviGen admin bearer token'));
+  const token = String(entered || '').replace(/^Bearer\s+/i, '').trim();
+
+  if (!token) {
+    throw new Error(text('partner.admin.tokenRequired', 'Admin bearer token is required.'));
+  }
+
+  adminState.token = token;
+  return token;
+}
+
+async function adminApi(path, opts = {}) {
+  const token = ensureAdminToken();
+  const method = String(opts.method || 'GET').toUpperCase();
+  const hasBody = Object.prototype.hasOwnProperty.call(opts, 'body');
+
+  const res = await fetch(path, {
+    method,
+    cache: 'no-store',
+    credentials: 'include',
+    headers: {
+      accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {})
+    },
+    body: hasBody ? JSON.stringify(opts.body || {}) : undefined
+  });
+
+  const json = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) adminState.token = '';
+    const err = new Error(String(json?.error?.message || json?.error?.code || `HTTP ${res.status}`));
+    err.status = res.status;
+    err.payload = json;
+    throw err;
+  }
+
+  return json || {};
+}
+
+function ensurePartnerAdminModal() {
+  const modal = injectModal({
+    id: PARTNER_ADMIN_MODAL_ID,
+    title: text('partner.admin.title', 'NaviGen Admin Platform'),
+    layout: 'menu',
+    bodyHTML: '<div id="partner-admin-root" class="partner-center"></div>'
+  });
+
+  if (!modal.dataset.partnerAdminBound) {
+    modal.dataset.partnerAdminBound = '1';
+
+    modal.addEventListener('click', async (ev) => {
+      const target = ev.target instanceof Element ? ev.target : null;
+      const action = target?.closest?.('[data-partner-admin-action]');
+      if (!(action instanceof HTMLElement)) return;
+
+      ev.preventDefault();
+      await handlePartnerAdminAction(action);
+    });
+  }
+
+  return modal;
+}
+
+function renderPartnerAdminPlatform() {
+  const root = document.getElementById('partner-admin-root');
+  if (!root) return;
+
+  if (adminState.loading) {
+    root.innerHTML = `
+      <div class="partner-status-card">
+        <strong>${escapeHtml(text('partner.admin.loading.title', 'Loading Admin Platform...'))}</strong><br>
+        <small>${escapeHtml(text('partner.admin.loading.desc', 'Reading Partner operational state.'))}</small>
+      </div>
+    `;
+    return;
+  }
+
+  const partners = asArray(adminState.partners);
+  const selected = adminState.selectedPartner || null;
+
+  root.innerHTML = `
+    <div class="partner-center-shell">
+      ${adminState.message ? `<div class="partner-status-card partner-status-card-info">${escapeHtml(adminState.message)}</div>` : ''}
+
+      <div class="partner-status-card">
+        <strong>${escapeHtml(text('partner.admin.overview.title', 'Partner operations'))}</strong><br>
+        <small>${escapeHtml(text('partner.admin.overview.desc', 'Inspect Partner status, capacity, leads, attribution, and commission ledger state.'))}</small>
+      </div>
+
+      <div class="partner-actions-row">
+        <button type="button" class="modal-body-button" data-partner-admin-action="refresh">${escapeHtml(text('partner.admin.refresh', 'Refresh partners'))}</button>
+        <button type="button" class="modal-body-button" data-partner-admin-action="reset-token">${escapeHtml(text('partner.admin.resetToken', 'Change admin token'))}</button>
+      </div>
+
+      <div class="partner-summary-grid">
+        <div class="partner-summary-card">
+          <small>${escapeHtml(text('partner.admin.totalPartners', 'Loaded partners'))}</small>
+          <strong>${partners.length}</strong>
+        </div>
+        <div class="partner-summary-card">
+          <small>${escapeHtml(text('partner.admin.selectedPartner', 'Selected Partner'))}</small>
+          <strong>${escapeHtml(selected?.partner?.partnerId || '—')}</strong>
+        </div>
+      </div>
+
+      <div class="partner-list">
+        ${partners.length ? partners.map(renderAdminPartnerCard).join('') : `
+          <div class="partner-empty">${escapeHtml(text('partner.admin.empty', 'No Partner profiles loaded.'))}</div>
+        `}
+      </div>
+
+      ${selected ? renderAdminPartnerDetail(selected) : ''}
+    </div>
+  `;
+}
+
+function renderAdminPartnerCard(partner) {
+  const partnerId = String(partner?.partnerId || '').trim();
+
+  return `
+    <article class="partner-lead-card">
+      <div class="partner-card-head">
+        <div>
+          <strong>${escapeHtml(partnerId || 'Partner')}</strong><br>
+          <small>${escapeHtml(partner?.connectStatus || 'not_started')} · ${escapeHtml(partner?.commissionPolicyVersion || '')}</small>
+        </div>
+        <span class="partner-pill partner-pill-${escapeHtml(partner?.status || 'applicant')}">${escapeHtml(partner?.status || 'applicant')}</span>
+      </div>
+      <div class="partner-card-meta">
+        <span>${escapeHtml(text('partner.admin.openLeads', 'Open leads'))}: ${Number(partner?.openLeadCount || 0)} / ${Number(partner?.leadCapacity || 0)}</span>
+        <span>${escapeHtml(text('partner.admin.freeQuota', 'Free quota'))}: ${Number(partner?.freeLeadQuota || 0)}</span>
+        <span>${escapeHtml(text('partner.admin.updated', 'Updated'))}: ${escapeHtml(formatDate(partner?.updatedAt) || '—')}</span>
+      </div>
+      <div class="partner-actions-row">
+        <button type="button" class="modal-body-button" data-partner-admin-action="view-partner" data-partner-id="${escapeHtml(partnerId)}">${escapeHtml(text('partner.admin.view', 'View'))}</button>
+        <button type="button" class="modal-body-button" data-partner-admin-action="set-status" data-partner-id="${escapeHtml(partnerId)}">${escapeHtml(text('partner.admin.setStatus', 'Set status'))}</button>
+        <button type="button" class="modal-body-button" data-partner-admin-action="set-capacity" data-partner-id="${escapeHtml(partnerId)}">${escapeHtml(text('partner.admin.setCapacity', 'Set capacity'))}</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderAdminPartnerDetail(detail) {
+  const partner = detail.partner || {};
+  const leads = asArray(detail.leads);
+  const commissions = asArray(detail.commissions);
+
+  return `
+    <div class="partner-status-card">
+      <strong>${escapeHtml(text('partner.admin.detail.title', 'Partner detail'))}</strong><br>
+      <small>${escapeHtml(partner.partnerId || '')}</small>
+    </div>
+
+    <div class="partner-summary-grid">
+      <div class="partner-summary-card">
+        <small>${escapeHtml(text('partner.admin.leads', 'Leads'))}</small>
+        <strong>${leads.length}</strong>
+      </div>
+      <div class="partner-summary-card">
+        <small>${escapeHtml(text('partner.admin.commissions', 'Commissions'))}</small>
+        <strong>${commissions.length}</strong>
+      </div>
+    </div>
+
+    <div class="partner-list">
+      ${leads.length ? leads.map((lead) => `
+        <article class="partner-lead-card">
+          <div class="partner-card-head">
+            <div>
+              <strong>${escapeHtml(lead.businessName || lead.leadId || 'Lead')}</strong><br>
+              <small>${escapeHtml(lead.leadId || '')}</small>
+            </div>
+            <span class="partner-pill partner-pill-${escapeHtml(lead.status || 'reserved')}">${escapeHtml(lead.status || '')}</span>
+          </div>
+          <div class="partner-card-meta">
+            <span>${escapeHtml(lead.city || '')} ${escapeHtml(lead.country || '')}</span>
+            <span>${escapeHtml(lead.hasDraft ? text('partner.lead.draftReady', 'Draft ready') : text('partner.lead.noDraft', 'No draft'))}</span>
+          </div>
+          <div class="partner-actions-row">
+            <button type="button" class="modal-body-button" data-partner-admin-action="revoke-attribution" data-partner-id="${escapeHtml(partner.partnerId || '')}" data-lead-id="${escapeHtml(lead.leadId || '')}">${escapeHtml(text('partner.admin.revokeAttribution', 'Revoke attribution'))}</button>
+          </div>
+        </article>
+      `).join('') : `
+        <div class="partner-empty">${escapeHtml(text('partner.admin.noLeads', 'No leads for this Partner.'))}</div>
+      `}
+    </div>
+
+    <div class="partner-list">
+      ${commissions.length ? commissions.map((commission) => `
+        <article class="partner-lead-card">
+          <div class="partner-card-head">
+            <div>
+              <strong>${escapeHtml(commission.commissionAmount || '0')} ${escapeHtml(commission.currency || 'EUR')}</strong><br>
+              <small>${escapeHtml(commission.partnerLeadId || '')}</small>
+            </div>
+            <span class="partner-pill">${escapeHtml(commission.status || '')}</span>
+          </div>
+          <div class="partner-card-meta">
+            <span>${escapeHtml(commission.planTier || '')} · ${escapeHtml(commission.planMode || '')}</span>
+            <span>${escapeHtml(text('partner.commission.eligibleAt', 'Eligible'))}: ${escapeHtml(formatDate(commission.eligibleAt) || '—')}</span>
+          </div>
+        </article>
+      `).join('') : `
+        <div class="partner-empty">${escapeHtml(text('partner.admin.noCommissions', 'No commission entries for this Partner.'))}</div>
+      `}
+    </div>
+  `;
+}
+
+async function loadPartnerAdminPlatform() {
+  adminState.loading = true;
+  adminState.message = '';
+  renderPartnerAdminPlatform();
+
+  const partners = await adminApi('/api/admin/partners?limit=50');
+  adminState.partners = asArray(partners.items);
+  adminState.loading = false;
+  renderPartnerAdminPlatform();
+}
+
+async function refreshAdminSelectedPartner(partnerId) {
+  const detail = await adminApi(`/api/admin/partners/${encodeURIComponent(partnerId)}`);
+  adminState.selectedPartner = detail;
+}
+
+async function handlePartnerAdminAction(action) {
+  const type = String(action.dataset.partnerAdminAction || '').trim();
+  const partnerId = String(action.dataset.partnerId || '').trim();
+  const leadId = String(action.dataset.leadId || '').trim();
+
+  try {
+    if (type === 'refresh') {
+      await loadPartnerAdminPlatform();
+      adminState.message = text('partner.admin.refreshed', 'Partner Admin Platform refreshed.');
+      renderPartnerAdminPlatform();
+      return;
+    }
+
+    if (type === 'reset-token') {
+      adminState.token = '';
+      ensureAdminToken();
+      await loadPartnerAdminPlatform();
+      return;
+    }
+
+    if (type === 'view-partner' && partnerId) {
+      await refreshAdminSelectedPartner(partnerId);
+      adminState.message = text('partner.admin.detailLoaded', 'Partner detail loaded.');
+      renderPartnerAdminPlatform();
+      return;
+    }
+
+    if (type === 'set-status' && partnerId) {
+      const current = adminState.partners.find((partner) => partner.partnerId === partnerId)?.status || 'applicant';
+      const status = String(window.prompt(text('partner.admin.statusPrompt', 'Enter Partner status'), current) || '').trim();
+      if (!status) return;
+
+      await adminApi(`/api/admin/partners/${encodeURIComponent(partnerId)}/status`, {
+        method: 'POST',
+        body: { status }
+      });
+
+      await loadPartnerAdminPlatform();
+      await refreshAdminSelectedPartner(partnerId).catch(() => {});
+      adminState.message = text('partner.admin.statusUpdated', 'Partner status updated.');
+      renderPartnerAdminPlatform();
+      return;
+    }
+
+    if (type === 'set-capacity' && partnerId) {
+      const current = adminState.partners.find((partner) => partner.partnerId === partnerId);
+      const leadCapacity = Number(window.prompt(text('partner.admin.capacityPrompt', 'Enter lead capacity'), String(current?.leadCapacity ?? 5)) || current?.leadCapacity || 5);
+      const freeLeadQuota = Number(window.prompt(text('partner.admin.freeQuotaPrompt', 'Enter free lead quota'), String(current?.freeLeadQuota ?? 5)) || current?.freeLeadQuota || 5);
+
+      await adminApi(`/api/admin/partners/${encodeURIComponent(partnerId)}/capacity`, {
+        method: 'POST',
+        body: { leadCapacity, freeLeadQuota }
+      });
+
+      await loadPartnerAdminPlatform();
+      await refreshAdminSelectedPartner(partnerId).catch(() => {});
+      adminState.message = text('partner.admin.capacityUpdated', 'Partner capacity updated.');
+      renderPartnerAdminPlatform();
+      return;
+    }
+
+    if (type === 'revoke-attribution' && partnerId && leadId) {
+      const reason = String(window.prompt(text('partner.admin.revokeReasonPrompt', 'Enter revoke reason'), 'admin_attribution_revoked') || 'admin_attribution_revoked').trim();
+
+      await adminApi(`/api/admin/partners/${encodeURIComponent(partnerId)}/revoke-attribution`, {
+        method: 'POST',
+        body: {
+          partnerLeadId: leadId,
+          reason
+        }
+      });
+
+      await loadPartnerAdminPlatform();
+      await refreshAdminSelectedPartner(partnerId).catch(() => {});
+      adminState.message = text('partner.admin.attributionRevoked', 'Partner attribution revoked.');
+      renderPartnerAdminPlatform();
+    }
+  } catch (err) {
+    showToast(String(err?.message || text('partner.admin.error', 'Admin action failed.')), 3600);
+  }
+}
+
+export async function openPartnerAdminPlatform() {
+  ensurePartnerAdminModal();
+  showModal(PARTNER_ADMIN_MODAL_ID);
+
+  try {
+    ensureAdminToken();
+    await loadPartnerAdminPlatform();
+  } catch (err) {
+    adminState.loading = false;
+    adminState.message = String(err?.message || text('partner.admin.error', 'Could not open Partner Admin Platform.'));
+    renderPartnerAdminPlatform();
+  }
+}
+
+function ensurePartnerHandoffModal() {
+  const modal = injectModal({
+    id: PARTNER_HANDOFF_MODAL_ID,
+    title: text('partner.handoff.title', 'Partner handoff preview'),
+    layout: 'menu',
+    bodyHTML: '<div id="partner-handoff-root" class="partner-center"></div>'
+  });
+
+  if (!modal.dataset.partnerHandoffBound) {
+    modal.dataset.partnerHandoffBound = '1';
+    modal.addEventListener('click', async (ev) => {
+      const target = ev.target instanceof Element ? ev.target : null;
+      const action = target?.closest?.('[data-partner-handoff-action]');
+      if (!(action instanceof HTMLElement)) return;
+
+      ev.preventDefault();
+      await handleHandoffAction(action);
+    });
+  }
+
+  return modal;
+}
+
+const handoffState = {
+  token: '',
+  preview: null,
+  message: ''
+};
+
+function renderHandoffPreview() {
+  const root = document.getElementById('partner-handoff-root');
+  if (!root) return;
+
+  const preview = handoffState.preview;
+  if (!preview) {
+    root.innerHTML = `<div class="partner-status-card">${escapeHtml(handoffState.message || text('partner.handoff.loading', 'Loading handoff preview...'))}</div>`;
+    return;
+  }
+
+  root.innerHTML = `
+    <div class="partner-status-card">
+      <strong>${escapeHtml(preview.lead?.businessName || text('partner.handoff.business', 'Business preview'))}</strong><br>
+      <small>${escapeHtml([preview.lead?.address, preview.lead?.city, preview.lead?.country].filter(Boolean).join(', '))}</small>
+    </div>
+    <div class="partner-status-card">
+      <strong>${escapeHtml(text('partner.handoff.draft.title', 'Prepared NaviGen profile'))}</strong><br>
+      <small>${escapeHtml(preview.draft?.description || text('partner.handoff.draft.desc', 'Review the prepared profile details before continuing.'))}</small>
+    </div>
+    ${handoffState.message ? `<div class="partner-status-card partner-status-card-info">${escapeHtml(handoffState.message)}</div>` : ''}
+    <div class="partner-actions-row">
+      <button type="button" class="modal-body-button" data-partner-handoff-action="accept">${escapeHtml(text('partner.handoff.accept', 'Accept handoff'))}</button>
+      <button type="button" class="modal-body-button" data-partner-handoff-action="checkout">${escapeHtml(text('partner.handoff.checkout', 'Continue to Plan payment'))}</button>
+      <button type="button" class="modal-body-button" data-partner-handoff-action="close">${escapeHtml(text('common.close', 'Close'))}</button>
+    </div>
+  `;
+}
+
+async function handleHandoffAction(action) {
+  const type = String(action.dataset.partnerHandoffAction || '').trim();
+
+  try {
+    if (type === 'close') {
+      hideModal(PARTNER_HANDOFF_MODAL_ID);
+      return;
+    }
+
+    if (type === 'accept') {
+      const accepted = await api(`/api/partner/handoff/${encodeURIComponent(handoffState.token)}/accept`, {
+        method: 'POST',
+        body: { accepted: true }
+      });
+      handoffState.preview = accepted;
+      handoffState.message = text('partner.handoff.accepted', 'Handoff accepted.');
+      renderHandoffPreview();
+      return;
+    }
+
+    if (type === 'checkout') {
+      const checkout = await api(`/api/partner/handoff/${encodeURIComponent(handoffState.token)}/plan-checkout`, {
+        method: 'POST',
+        body: { planCode: 'standard', planMode: 'managed_presence' }
+      });
+      const checkoutUrl = String(checkout?.url || '').trim();
+      if (checkoutUrl) window.location.href = checkoutUrl;
+      return;
+    }
+  } catch (err) {
+    handoffState.message = String(err?.message || text('partner.handoff.error', 'Handoff action failed.'));
+    renderHandoffPreview();
+  }
+}
+
+export async function openPartnerHandoffPreview(token) {
+  const cleanToken = String(token || '').trim();
+  handoffState.token = cleanToken;
+  handoffState.preview = null;
+  handoffState.message = '';
+
+  ensurePartnerHandoffModal();
+  showModal(PARTNER_HANDOFF_MODAL_ID);
+  renderHandoffPreview();
+
+  try {
+    handoffState.preview = await api(`/api/partner/handoff/${encodeURIComponent(cleanToken)}`);
+    handoffState.message = '';
+  } catch (err) {
+    handoffState.message = String(err?.message || text('partner.handoff.error', 'Could not load handoff preview.'));
+  }
+
+  renderHandoffPreview();
+}

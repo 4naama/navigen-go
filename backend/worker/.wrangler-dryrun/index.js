@@ -2445,7 +2445,11 @@ async function readExistingPlanReconciliation(env, paymentIntentId, checkoutSess
     expiresAt: plan.expiresAt,
     route: String(allocRaw?.route || "").trim(),
     campaignKey: String(allocRaw?.campaignKey || "").trim(),
-    navigenVersion: String(allocRaw?.navigenVersion || "").trim()
+    navigenVersion: String(allocRaw?.navigenVersion || "").trim(),
+    partnerId: String(allocRaw?.partnerId || "").trim(),
+    partnerLeadId: String(allocRaw?.partnerLeadId || "").trim(),
+    partnerHandoffId: String(allocRaw?.partnerHandoffId || "").trim(),
+    commissionPolicyVersion: String(allocRaw?.commissionPolicyVersion || "").trim()
   };
   return {
     paymentIntentId,
@@ -2476,6 +2480,10 @@ async function resolveCoveredTargetsForPaidSession(env, session, meta, nowMs, al
   const initiationType = normalizeInitiationType(selection?.initiationType || meta?.initiationType);
   const campaignKey = String(selection?.campaignKey || meta?.campaignKey || "").trim();
   const navigenVersion = String(selection?.navigenVersion || meta?.navigenVersion || "").trim();
+  const partnerId = String(selection?.partnerId || meta?.partnerId || "").trim();
+  const partnerLeadId = String(selection?.partnerLeadId || meta?.partnerLeadId || "").trim();
+  const partnerHandoffId = String(selection?.partnerHandoffId || meta?.partnerHandoffId || "").trim();
+  const commissionPolicyVersion = String(selection?.commissionPolicyVersion || meta?.commissionPolicyVersion || "").trim();
   if (selection) {
     let coveredUlids = uniqueTrimmedStrings(Array.isArray(selection?.coveredUlids) ? selection.coveredUlids : Array.isArray(selection?.coveredULIDs) ? selection.coveredULIDs : []).filter((id) => ULID_RE.test(id));
     if (!coveredUlids.length) {
@@ -2508,7 +2516,11 @@ async function resolveCoveredTargetsForPaidSession(env, session, meta, nowMs, al
       planMode,
       initiationType,
       campaignKey,
-      navigenVersion
+      navigenVersion,
+      partnerId,
+      partnerLeadId,
+      partnerHandoffId,
+      commissionPolicyVersion
     };
   }
   const hasLegacyTarget = !!String(meta?.locationID || meta?.draftULID || meta?.draftSessionId || "").trim();
@@ -2529,7 +2541,11 @@ async function resolveCoveredTargetsForPaidSession(env, session, meta, nowMs, al
     planMode,
     initiationType,
     campaignKey,
-    navigenVersion
+    navigenVersion,
+    partnerId,
+    partnerLeadId,
+    partnerHandoffId,
+    commissionPolicyVersion
   };
 }
 __name(resolveCoveredTargetsForPaidSession, "resolveCoveredTargetsForPaidSession");
@@ -2605,7 +2621,11 @@ async function reconcilePaidCheckoutSessionPlan(env, sk, session, opts = {}) {
     expiresAt: plan.expiresAt,
     route: target.route,
     campaignKey: target.planMode === "campaign_with_promo_qr" ? target.campaignKey : "",
-    navigenVersion: target.navigenVersion
+    navigenVersion: target.navigenVersion,
+    partnerId: target.partnerId,
+    partnerLeadId: target.partnerLeadId,
+    partnerHandoffId: target.partnerHandoffId,
+    commissionPolicyVersion: target.commissionPolicyVersion
   };
   await env.KV_STATUS.put(`plan:${paymentIntentId}`, JSON.stringify(plan));
   await env.KV_STATUS.put(planAllocKey(paymentIntentId), JSON.stringify(allocation));
@@ -2623,6 +2643,10 @@ async function reconcilePaidCheckoutSessionPlan(env, sk, session, opts = {}) {
     ulids: target.coveredUlids,
     initiationType: plan.initiationType,
     navigenVersion: target.navigenVersion,
+    partnerId: target.partnerId,
+    partnerLeadId: target.partnerLeadId,
+    partnerHandoffId: target.partnerHandoffId,
+    commissionPolicyVersion: target.commissionPolicyVersion,
     source: opts.logTag || "plan_reconcile"
   }));
   for (const ulid of target.coveredUlids) {
@@ -2816,6 +2840,11 @@ function partnerRoutesEnabled(env) {
   return envFlagTrue(env.PARTNER_ENABLED);
 }
 __name(partnerRoutesEnabled, "partnerRoutesEnabled");
+function partnerPublicLaunchAllowed(env) {
+  const launch = partnerLaunchState(env);
+  return !!launch.publicLaunchAllowed;
+}
+__name(partnerPublicLaunchAllowed, "partnerPublicLaunchAllowed");
 function partnerNoStoreHeaders() {
   return {
     "cache-control": "no-store",
@@ -3153,6 +3182,7 @@ function publicPartnerLead(lead) {
     subgroupKey: lead.subgroupKey,
     contexts: lead.contexts,
     draftULID: lead.draftULID,
+    hasDraft: !!(lead.draftULID && lead.draftSessionId),
     locationULID: lead.locationULID,
     source: lead.source,
     createdAt: lead.createdAt,
@@ -3425,6 +3455,7 @@ async function handlePartnerLeadCreate(req, env) {
     contexts,
     fingerprint,
     draftULID: "",
+    draftSessionId: "",
     locationULID: "",
     reservationStakePaymentIntentId: "",
     source: "partner_center",
@@ -3531,6 +3562,1656 @@ async function handlePartnerLeadArchive(req, env, leadId) {
   );
 }
 __name(handlePartnerLeadArchive, "handlePartnerLeadArchive");
+var PARTNER_RESERVATION_STAKE_AMOUNT_CENTS = 100;
+var PARTNER_RESERVATION_STAKE_CURRENCY = "eur";
+var PARTNER_RESERVATION_CHECKOUT_TTL_SECONDS = 60 * 60 * 24;
+function partnerLeadReservationKey(reservationId) {
+  return `partner_lead_reservation:${reservationId}`;
+}
+__name(partnerLeadReservationKey, "partnerLeadReservationKey");
+function partnerLeadReservationBySessionKey(checkoutSessionId) {
+  return `partner_lead_reservation_by_session:${checkoutSessionId}`;
+}
+__name(partnerLeadReservationBySessionKey, "partnerLeadReservationBySessionKey");
+function mintPartnerLeadReservationId() {
+  const bytes = new Uint8Array(18);
+  crypto.getRandomValues(bytes);
+  return `plres_${bytesToB64url(bytes)}`;
+}
+__name(mintPartnerLeadReservationId, "mintPartnerLeadReservationId");
+function publicPartnerLeadReservation(reservation) {
+  return {
+    reservationId: reservation.reservationId,
+    partnerId: reservation.partnerId,
+    status: reservation.status,
+    businessName: reservation.businessName,
+    website: reservation.website,
+    phone: reservation.phone,
+    address: reservation.address,
+    city: reservation.city,
+    country: reservation.country,
+    groupKey: reservation.groupKey,
+    subgroupKey: reservation.subgroupKey,
+    contexts: reservation.contexts,
+    amountCents: reservation.amountCents,
+    currency: reservation.currency,
+    checkoutSessionId: reservation.checkoutSessionId,
+    leadId: reservation.leadId,
+    createdAt: reservation.createdAt,
+    updatedAt: reservation.updatedAt,
+    expiresAt: reservation.expiresAt
+  };
+}
+__name(publicPartnerLeadReservation, "publicPartnerLeadReservation");
+async function readPartnerLeadReservation(env, reservationId) {
+  const id = String(reservationId || "").trim();
+  if (!id) return null;
+  const reservation = await env.KV_STATUS.get(partnerLeadReservationKey(id), { type: "json" });
+  if (!reservation || typeof reservation !== "object" || String(reservation.reservationId || "").trim() !== id) return null;
+  return reservation;
+}
+__name(readPartnerLeadReservation, "readPartnerLeadReservation");
+async function writePartnerLeadReservation(env, reservation) {
+  await env.KV_STATUS.put(
+    partnerLeadReservationKey(reservation.reservationId),
+    JSON.stringify(reservation),
+    { expirationTtl: PARTNER_RESERVATION_CHECKOUT_TTL_SECONDS }
+  );
+  if (reservation.checkoutSessionId) {
+    await env.KV_STATUS.put(
+      partnerLeadReservationBySessionKey(reservation.checkoutSessionId),
+      reservation.reservationId,
+      { expirationTtl: PARTNER_RESERVATION_CHECKOUT_TTL_SECONDS }
+    );
+  }
+}
+__name(writePartnerLeadReservation, "writePartnerLeadReservation");
+async function readPartnerLeadReservationBySession(env, checkoutSessionId) {
+  const sid = String(checkoutSessionId || "").trim();
+  if (!sid) return null;
+  const reservationId = await env.KV_STATUS.get(partnerLeadReservationBySessionKey(sid), "text");
+  return await readPartnerLeadReservation(env, String(reservationId || "").trim());
+}
+__name(readPartnerLeadReservationBySession, "readPartnerLeadReservationBySession");
+function partnerLeadReservationPayloadFromBody(body) {
+  return {
+    businessName: sanitizePartnerLeadString(body?.businessName || body?.name || body?.locationName, 180),
+    website: sanitizePartnerLeadString(body?.website || body?.officialWebsite || body?.url, 220),
+    phone: sanitizePartnerLeadString(body?.phone || body?.telephone, 80),
+    address: sanitizePartnerLeadString(body?.address || body?.streetAddress || body?.formattedAddress, 300),
+    city: sanitizePartnerLeadString(body?.city, 120),
+    country: sanitizePartnerLeadString(body?.country, 80),
+    groupKey: sanitizePartnerLeadString(body?.groupKey, 120),
+    subgroupKey: sanitizePartnerLeadString(body?.subgroupKey, 120),
+    contexts: uniquePartnerLeadContexts(body?.contexts)
+  };
+}
+__name(partnerLeadReservationPayloadFromBody, "partnerLeadReservationPayloadFromBody");
+function partnerLeadReservationPayloadHasContactSignal(payload) {
+  return !!(normalizePartnerLeadWebsite(payload.website) || normalizePartnerLeadPhone(payload.phone) || normalizePartnerLeadText([payload.address, payload.city, payload.country].filter(Boolean).join(" "), 500));
+}
+__name(partnerLeadReservationPayloadHasContactSignal, "partnerLeadReservationPayloadHasContactSignal");
+async function finalizePaidPartnerLeadReservationFromSession(env, session) {
+  const checkoutSessionId = String(session?.id || "").trim();
+  const metadata = session?.metadata || {};
+  const flow = String(metadata?.flow || "").trim();
+  const reservationType = String(metadata?.reservationType || "").trim();
+  const reservationId = String(metadata?.partnerLeadReservationId || "").trim();
+  const partnerId = String(metadata?.partnerId || "").trim();
+  if (flow !== "partner_lead_reservation" || reservationType !== "lead_stake") {
+    throw new Error("not_partner_lead_reservation");
+  }
+  const paymentStatus = String(session?.payment_status || "").trim();
+  const checkoutStatus = String(session?.status || "").trim();
+  if (paymentStatus !== "paid" || checkoutStatus !== "complete") {
+    throw new Error("partner_reservation_not_paid_complete");
+  }
+  const reservation = reservationId ? await readPartnerLeadReservation(env, reservationId) : await readPartnerLeadReservationBySession(env, checkoutSessionId);
+  if (!reservation) {
+    throw new Error("partner_reservation_not_found");
+  }
+  if (partnerId && reservation.partnerId !== partnerId) {
+    throw new Error("partner_reservation_partner_mismatch");
+  }
+  if (reservation.leadId) {
+    const existingLead = await readPartnerLeadRecord(env, reservation.leadId);
+    if (existingLead) {
+      return { reservation, lead: existingLead };
+    }
+  }
+  const paymentIntentId = String(session?.payment_intent?.id || session?.payment_intent || "").trim();
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+  const duplicateLeadId = await env.KV_STATUS.get(partnerLeadByFingerprintKey(reservation.fingerprint), "text");
+  if (duplicateLeadId) {
+    const duplicate = await readPartnerLeadRecord(env, duplicateLeadId);
+    const currentDuplicate = duplicate ? await expirePartnerLeadIfNeeded(env, duplicate) : null;
+    if (currentDuplicate && (partnerLeadIsOpen(currentDuplicate) || currentDuplicate.status === "converted")) {
+      const voided = {
+        ...reservation,
+        status: "void",
+        checkoutSessionId,
+        paymentIntentId,
+        updatedAt: nowIso
+      };
+      await writePartnerLeadReservation(env, voided);
+      return { reservation: voided, lead: null };
+    }
+  }
+  const leadId = mintPartnerLeadId();
+  const lead = {
+    ver: 1,
+    leadId,
+    partnerId: reservation.partnerId,
+    status: "reserved",
+    businessName: reservation.businessName,
+    website: reservation.website,
+    phone: reservation.phone,
+    address: reservation.address,
+    city: reservation.city,
+    country: reservation.country,
+    groupKey: reservation.groupKey,
+    subgroupKey: reservation.subgroupKey,
+    contexts: reservation.contexts,
+    fingerprint: reservation.fingerprint,
+    draftULID: "",
+    locationULID: "",
+    reservationStakePaymentIntentId: paymentIntentId,
+    source: "partner_reservation_stake",
+    createdAt: nowIso,
+    updatedAt: nowIso,
+    expiresAt: new Date(Date.now() + PARTNER_LEAD_RESERVATION_DAYS * 24 * 60 * 60 * 1e3).toISOString()
+  };
+  await writePartnerLeadRecord(env, lead);
+  await env.KV_STATUS.put(partnerLeadByFingerprintKey(reservation.fingerprint), leadId);
+  await appendPartnerLeadIndex(env, reservation.partnerId, leadId);
+  const converted = {
+    ...reservation,
+    status: "converted_to_lead",
+    checkoutSessionId,
+    paymentIntentId,
+    leadId,
+    updatedAt: nowIso
+  };
+  await writePartnerLeadReservation(env, converted);
+  const profile = await readPartnerProfile(env, reservation.partnerId);
+  if (profile) {
+    const leads = await listPartnerLeadRecords(env, reservation.partnerId);
+    await syncPartnerOpenLeadCount(env, profile, leads);
+  }
+  return { reservation: converted, lead };
+}
+__name(finalizePaidPartnerLeadReservationFromSession, "finalizePaidPartnerLeadReservationFromSession");
+async function handlePartnerReservationCheckoutCreate(req, env) {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+  if (auth.profile.status === "suspended") {
+    return json(
+      {
+        error: {
+          code: "partner_suspended",
+          message: "Partner is suspended."
+        },
+        partner: publicPartnerProfile(auth.profile)
+      },
+      403,
+      partnerNoStoreHeaders()
+    );
+  }
+  const sk = String(env.STRIPE_SECRET_KEY || "").trim();
+  if (!sk) {
+    return json(
+      {
+        error: {
+          code: "misconfigured",
+          message: "STRIPE_SECRET_KEY not set"
+        }
+      },
+      500,
+      partnerNoStoreHeaders()
+    );
+  }
+  const body = await req.json().catch(() => ({}));
+  const payload = partnerLeadReservationPayloadFromBody(body);
+  if (!payload.businessName || !partnerLeadReservationPayloadHasContactSignal(payload)) {
+    return json(
+      {
+        error: {
+          code: "invalid_partner_lead",
+          message: "businessName and at least one of website, phone, or address are required."
+        }
+      },
+      400,
+      partnerNoStoreHeaders()
+    );
+  }
+  const existingLeads = await listPartnerLeadRecords(env, auth.profile.partnerId);
+  const profile = await syncPartnerOpenLeadCount(env, auth.profile, existingLeads);
+  const leadCapacity = Math.max(0, Math.trunc(Number(profile.leadCapacity || 0)));
+  if (profile.openLeadCount < leadCapacity) {
+    return json(
+      {
+        error: {
+          code: "partner_reservation_stake_not_required",
+          message: "Partner still has free lead capacity. Create the lead directly."
+        },
+        partner: publicPartnerProfile(profile)
+      },
+      409,
+      partnerNoStoreHeaders()
+    );
+  }
+  const fingerprint = await buildPartnerLeadFingerprint(payload);
+  const duplicateLeadId = await env.KV_STATUS.get(partnerLeadByFingerprintKey(fingerprint), "text");
+  if (duplicateLeadId) {
+    const duplicate = await readPartnerLeadRecord(env, duplicateLeadId);
+    const currentDuplicate = duplicate ? await expirePartnerLeadIfNeeded(env, duplicate) : null;
+    if (currentDuplicate && (partnerLeadIsOpen(currentDuplicate) || currentDuplicate.status === "converted")) {
+      return json(
+        {
+          error: {
+            code: "duplicate_partner_lead",
+            message: "A matching Partner lead already exists."
+          },
+          duplicateLeadId: currentDuplicate.partnerId === profile.partnerId ? currentDuplicate.leadId : "",
+          duplicateStatus: currentDuplicate.status
+        },
+        409,
+        partnerNoStoreHeaders()
+      );
+    }
+    await env.KV_STATUS.delete(partnerLeadByFingerprintKey(fingerprint));
+  }
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const reservationId = mintPartnerLeadReservationId();
+  const reservationDraft = {
+    ver: 1,
+    reservationId,
+    partnerId: profile.partnerId,
+    status: "draft",
+    ...payload,
+    fingerprint,
+    amountCents: PARTNER_RESERVATION_STAKE_AMOUNT_CENTS,
+    currency: PARTNER_RESERVATION_STAKE_CURRENCY.toUpperCase(),
+    checkoutSessionId: "",
+    paymentIntentId: "",
+    leadId: "",
+    createdAt: nowIso,
+    updatedAt: nowIso,
+    expiresAt: new Date(nowMs + PARTNER_RESERVATION_CHECKOUT_TTL_SECONDS * 1e3).toISOString()
+  };
+  await writePartnerLeadReservation(env, reservationDraft);
+  const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
+  const successUrlObj = new URL("/", siteOrigin);
+  successUrlObj.searchParams.set("flow", "partner_reservation");
+  successUrlObj.searchParams.set("reservationId", reservationId);
+  successUrlObj.searchParams.set("sid", "{CHECKOUT_SESSION_ID}");
+  const successUrl = successUrlObj.toString().replace("%7BCHECKOUT_SESSION_ID%7D", "{CHECKOUT_SESSION_ID}");
+  const cancelUrl = new URL("/", siteOrigin);
+  cancelUrl.searchParams.set("flow", "partner_reservation");
+  cancelUrl.searchParams.set("reservationId", reservationId);
+  cancelUrl.searchParams.set("canceled", "1");
+  const form = new URLSearchParams();
+  form.set("mode", "payment");
+  form.set("customer_creation", "if_required");
+  form.set("billing_address_collection", "auto");
+  form.set("success_url", successUrl);
+  form.set("cancel_url", cancelUrl.toString());
+  form.set("line_items[0][quantity]", "1");
+  form.set("line_items[0][price_data][currency]", PARTNER_RESERVATION_STAKE_CURRENCY);
+  form.set("line_items[0][price_data][unit_amount]", String(PARTNER_RESERVATION_STAKE_AMOUNT_CENTS));
+  form.set("line_items[0][price_data][product_data][name]", "NaviGen Partner lead reservation stake");
+  form.set("metadata[flow]", "partner_lead_reservation");
+  form.set("metadata[reservationType]", "lead_stake");
+  form.set("metadata[partnerId]", profile.partnerId);
+  form.set("metadata[partnerLeadReservationId]", reservationId);
+  form.set("payment_intent_data[metadata][flow]", "partner_lead_reservation");
+  form.set("payment_intent_data[metadata][reservationType]", "lead_stake");
+  form.set("payment_intent_data[metadata][partnerId]", profile.partnerId);
+  form.set("payment_intent_data[metadata][partnerLeadReservationId]", reservationId);
+  const stripeResp = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${sk}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: form.toString()
+  });
+  const stripeText = await stripeResp.text();
+  let stripeOut = null;
+  try {
+    stripeOut = JSON.parse(stripeText);
+  } catch {
+    stripeOut = null;
+  }
+  if (!stripeResp.ok || !stripeOut?.id) {
+    const voided = {
+      ...reservationDraft,
+      status: "void",
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    await writePartnerLeadReservation(env, voided);
+    return json(
+      {
+        error: {
+          code: "stripe_error",
+          message: String(stripeOut?.error?.message || "Stripe create session failed")
+        }
+      },
+      502,
+      partnerNoStoreHeaders()
+    );
+  }
+  const reservation = {
+    ...reservationDraft,
+    status: "checkout_created",
+    checkoutSessionId: String(stripeOut.id || "").trim(),
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  await writePartnerLeadReservation(env, reservation);
+  return json(
+    {
+      ok: true,
+      flow: "partner_lead_reservation",
+      reservation: publicPartnerLeadReservation(reservation),
+      sessionId: reservation.checkoutSessionId,
+      url: String(stripeOut.url || ""),
+      amountCents: reservation.amountCents,
+      currency: reservation.currency,
+      partner: publicPartnerProfile(profile),
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerReservationCheckoutCreate, "handlePartnerReservationCheckoutCreate");
+async function handlePartnerReservationCheckoutReturn(req, env) {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+  const sk = String(env.STRIPE_SECRET_KEY || "").trim();
+  if (!sk) {
+    return json(
+      {
+        error: {
+          code: "misconfigured",
+          message: "STRIPE_SECRET_KEY not set"
+        }
+      },
+      500,
+      partnerNoStoreHeaders()
+    );
+  }
+  const url = new URL(req.url);
+  const checkoutSessionId = String(url.searchParams.get("session_id") || url.searchParams.get("sid") || "").trim();
+  if (!checkoutSessionId) {
+    return json(
+      {
+        error: {
+          code: "missing_checkout_session",
+          message: "session_id is required."
+        }
+      },
+      400,
+      partnerNoStoreHeaders()
+    );
+  }
+  let session = null;
+  try {
+    session = await fetchStripeCheckoutSession(sk, checkoutSessionId);
+  } catch (err) {
+    return json(
+      {
+        error: {
+          code: "stripe_error",
+          message: String(err?.message || err || "Stripe session fetch failed")
+        }
+      },
+      502,
+      partnerNoStoreHeaders()
+    );
+  }
+  const metadata = session?.metadata || {};
+  if (String(metadata?.flow || "").trim() !== "partner_lead_reservation" || String(metadata?.reservationType || "").trim() !== "lead_stake") {
+    return json(
+      {
+        error: {
+          code: "invalid_partner_reservation_session",
+          message: "Checkout session is not a Partner reservation stake session."
+        }
+      },
+      400,
+      partnerNoStoreHeaders()
+    );
+  }
+  if (String(metadata?.partnerId || "").trim() !== auth.profile.partnerId) {
+    return json(
+      {
+        error: {
+          code: "partner_reservation_forbidden",
+          message: "Reservation does not belong to this Partner."
+        }
+      },
+      403,
+      partnerNoStoreHeaders()
+    );
+  }
+  let finalized = null;
+  try {
+    finalized = await finalizePaidPartnerLeadReservationFromSession(env, session);
+  } catch (err) {
+    return json(
+      {
+        error: {
+          code: "partner_reservation_not_ready",
+          message: String(err?.message || err || "Partner reservation is not ready.")
+        }
+      },
+      409,
+      partnerNoStoreHeaders()
+    );
+  }
+  const profile = await readPartnerProfile(env, auth.profile.partnerId) || auth.profile;
+  return json(
+    {
+      ok: true,
+      reservation: publicPartnerLeadReservation(finalized.reservation),
+      lead: finalized.lead ? publicPartnerLead(finalized.lead) : null,
+      partner: publicPartnerProfile(profile),
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerReservationCheckoutReturn, "handlePartnerReservationCheckoutReturn");
+function partnerLeadDraftBaseFromLead(lead) {
+  return {
+    name: lead.businessName,
+    displayName: lead.businessName,
+    address: lead.address,
+    city: lead.city,
+    country: lead.country,
+    website: lead.website,
+    officialWebsite: lead.website,
+    phone: lead.phone,
+    groupKey: lead.groupKey,
+    subgroupKey: lead.subgroupKey,
+    context: Array.isArray(lead.contexts) ? lead.contexts.join(";") : ""
+  };
+}
+__name(partnerLeadDraftBaseFromLead, "partnerLeadDraftBaseFromLead");
+function publicPartnerLeadDraft(draft, draftULID) {
+  const src = draft && typeof draft === "object" ? draft : {};
+  const out = {
+    ...src,
+    draftULID
+  };
+  delete out.draftSessionId;
+  delete out.partnerId;
+  delete out.partnerSessionId;
+  return out;
+}
+__name(publicPartnerLeadDraft, "publicPartnerLeadDraft");
+async function readPartnerOwnedLeadForDraft(req, env, leadId, opts = {}) {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+  const lead = await readPartnerLeadRecord(env, leadId);
+  if (!lead || lead.partnerId !== auth.profile.partnerId) {
+    return json(
+      {
+        error: {
+          code: "partner_lead_not_found",
+          message: "Partner lead not found."
+        }
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const currentLead = await expirePartnerLeadIfNeeded(env, lead);
+  if (opts.requireReserved && currentLead.status !== "reserved") {
+    return json(
+      {
+        error: {
+          code: "partner_lead_not_editable",
+          message: "Only reserved Partner leads can prepare or update drafts."
+        },
+        lead: publicPartnerLead(currentLead)
+      },
+      409,
+      partnerNoStoreHeaders()
+    );
+  }
+  return { auth, lead: currentLead };
+}
+__name(readPartnerOwnedLeadForDraft, "readPartnerOwnedLeadForDraft");
+async function buildPartnerDraftPatch(env, body, base = {}) {
+  const rawDraft = body?.draft && typeof body.draft === "object" ? body.draft : body && typeof body === "object" ? body : {};
+  let normalizedPatch;
+  try {
+    normalizedPatch = normalizeDraftPatch({ ...base, ...rawDraft });
+  } catch (e) {
+    const msg = String(e?.message || "");
+    return json(
+      {
+        error: {
+          code: "invalid_partner_draft",
+          message: msg === "invalid_coordinates" ? "invalid coordinates" : msg || "invalid draft payload"
+        }
+      },
+      400,
+      partnerNoStoreHeaders()
+    );
+  }
+  if (Object.prototype.hasOwnProperty.call(normalizedPatch, "tags")) {
+    const tagValidation = await validateBusinessTagKeys(env, normalizedPatch.tags);
+    if (!tagValidation.ok) {
+      return json(
+        {
+          error: {
+            code: "invalid_tags",
+            message: "One or more tags are not in the published tag taxonomy.",
+            unknown: tagValidation.unknown
+          }
+        },
+        400,
+        partnerNoStoreHeaders()
+      );
+    }
+    normalizedPatch.tags = tagValidation.tags;
+  }
+  return normalizedPatch;
+}
+__name(buildPartnerDraftPatch, "buildPartnerDraftPatch");
+async function handlePartnerLeadDraftCreate(req, env, leadId) {
+  const resolved = await readPartnerOwnedLeadForDraft(req, env, leadId, { requireReserved: true });
+  if (resolved instanceof Response) return resolved;
+  const body = await req.json().catch(() => ({}));
+  const lead = resolved.lead;
+  const existingDraftULID = String(lead.draftULID || "").trim();
+  const existingDraftSessionId = String(lead.draftSessionId || "").trim();
+  if (existingDraftULID && existingDraftSessionId) {
+    const existing = await readPrivateShellDraft(env, existingDraftULID, existingDraftSessionId);
+    if (existing) {
+      return json(
+        {
+          ok: true,
+          created: false,
+          lead: publicPartnerLead(lead),
+          draft: publicPartnerLeadDraft(existing, existingDraftULID),
+          launch: partnerLaunchState(env)
+        },
+        200,
+        partnerNoStoreHeaders()
+      );
+    }
+  }
+  const base = partnerLeadDraftBaseFromLead(lead);
+  const normalizedPatch = await buildPartnerDraftPatch(env, body, base);
+  if (normalizedPatch instanceof Response) return normalizedPatch;
+  const draftULID = mintDraftUlid();
+  const draftSessionId = mintDraftSessionId();
+  const draftKey = `override_draft:${draftULID}:${draftSessionId}`;
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+  const draft = mergeDraftPatch({}, normalizedPatch);
+  draft.updatedAt = nowIso;
+  await env.KV_STATUS.put(draftKey, JSON.stringify(draft));
+  const nextLead = {
+    ...lead,
+    draftULID,
+    draftSessionId,
+    updatedAt: nowIso
+  };
+  await writePartnerLeadRecord(env, nextLead);
+  return json(
+    {
+      ok: true,
+      created: true,
+      lead: publicPartnerLead(nextLead),
+      draft: publicPartnerLeadDraft(draft, draftULID),
+      launch: partnerLaunchState(env)
+    },
+    201,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerLeadDraftCreate, "handlePartnerLeadDraftCreate");
+async function handlePartnerLeadDraftRead(req, env, leadId) {
+  const resolved = await readPartnerOwnedLeadForDraft(req, env, leadId);
+  if (resolved instanceof Response) return resolved;
+  const lead = resolved.lead;
+  const draftULID = String(lead.draftULID || "").trim();
+  const draftSessionId = String(lead.draftSessionId || "").trim();
+  if (!ULID_RE.test(draftULID) || !draftSessionId) {
+    return json(
+      {
+        error: {
+          code: "partner_lead_draft_not_found",
+          message: "Partner lead draft not found."
+        },
+        lead: publicPartnerLead(lead)
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const draft = await readPrivateShellDraft(env, draftULID, draftSessionId);
+  if (!draft) {
+    return json(
+      {
+        error: {
+          code: "partner_lead_draft_not_found",
+          message: "Partner lead draft not found."
+        },
+        lead: publicPartnerLead(lead)
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  return json(
+    {
+      ok: true,
+      lead: publicPartnerLead(lead),
+      draft: publicPartnerLeadDraft(draft, draftULID),
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerLeadDraftRead, "handlePartnerLeadDraftRead");
+async function handlePartnerLeadDraftUpdate(req, env, leadId) {
+  const resolved = await readPartnerOwnedLeadForDraft(req, env, leadId, { requireReserved: true });
+  if (resolved instanceof Response) return resolved;
+  const body = await req.json().catch(() => ({}));
+  const lead = resolved.lead;
+  const draftULID = String(lead.draftULID || "").trim();
+  const draftSessionId = String(lead.draftSessionId || "").trim();
+  if (!ULID_RE.test(draftULID) || !draftSessionId) {
+    return json(
+      {
+        error: {
+          code: "partner_lead_draft_not_found",
+          message: "Create the Partner lead draft before updating it."
+        },
+        lead: publicPartnerLead(lead)
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const draftKey = `override_draft:${draftULID}:${draftSessionId}`;
+  const prev = await env.KV_STATUS.get(draftKey, { type: "json" });
+  if (!prev || typeof prev !== "object") {
+    return json(
+      {
+        error: {
+          code: "partner_lead_draft_not_found",
+          message: "Partner lead draft not found."
+        },
+        lead: publicPartnerLead(lead)
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const normalizedPatch = await buildPartnerDraftPatch(env, body);
+  if (normalizedPatch instanceof Response) return normalizedPatch;
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+  const draft = mergeDraftPatch(prev, normalizedPatch);
+  draft.updatedAt = nowIso;
+  await env.KV_STATUS.put(draftKey, JSON.stringify(draft));
+  const nextLead = {
+    ...lead,
+    updatedAt: nowIso
+  };
+  await writePartnerLeadRecord(env, nextLead);
+  return json(
+    {
+      ok: true,
+      lead: publicPartnerLead(nextLead),
+      draft: publicPartnerLeadDraft(draft, draftULID),
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerLeadDraftUpdate, "handlePartnerLeadDraftUpdate");
+var PARTNER_HANDOFF_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 14;
+function partnerHandoffKey(tokenHash) {
+  return `partner_handoff:${tokenHash}`;
+}
+__name(partnerHandoffKey, "partnerHandoffKey");
+function partnerHandoffsByLeadKey(leadId) {
+  return `partner_handoffs_by_lead:${leadId}`;
+}
+__name(partnerHandoffsByLeadKey, "partnerHandoffsByLeadKey");
+function mintPartnerHandoffId() {
+  const bytes = new Uint8Array(18);
+  crypto.getRandomValues(bytes);
+  return `phand_${bytesToB64url(bytes)}`;
+}
+__name(mintPartnerHandoffId, "mintPartnerHandoffId");
+function mintPartnerHandoffToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return `ph_${bytesToB64url(bytes)}`;
+}
+__name(mintPartnerHandoffToken, "mintPartnerHandoffToken");
+function isValidPartnerHandoffToken(token) {
+  return /^ph_[A-Za-z0-9_-]{32,120}$/.test(String(token || "").trim());
+}
+__name(isValidPartnerHandoffToken, "isValidPartnerHandoffToken");
+function publicPartnerHandoff(handoff) {
+  return {
+    handoffId: handoff.handoffId,
+    partnerId: handoff.partnerId,
+    leadId: handoff.leadId,
+    draftULID: handoff.draftULID,
+    status: handoff.status,
+    createdAt: handoff.createdAt,
+    updatedAt: handoff.updatedAt,
+    expiresAt: handoff.expiresAt,
+    viewedAt: handoff.viewedAt,
+    acceptedAt: handoff.acceptedAt
+  };
+}
+__name(publicPartnerHandoff, "publicPartnerHandoff");
+async function partnerHandoffTokenHash(token) {
+  return await sha256Hex(String(token || "").trim());
+}
+__name(partnerHandoffTokenHash, "partnerHandoffTokenHash");
+async function readPartnerHandoffByToken(env, token) {
+  const rawToken = String(token || "").trim();
+  if (!isValidPartnerHandoffToken(rawToken)) return null;
+  const tokenHash = await partnerHandoffTokenHash(rawToken);
+  const handoff = await env.KV_STATUS.get(partnerHandoffKey(tokenHash), { type: "json" });
+  if (!handoff || typeof handoff !== "object" || String(handoff.tokenHash || "") !== tokenHash) {
+    return null;
+  }
+  return handoff;
+}
+__name(readPartnerHandoffByToken, "readPartnerHandoffByToken");
+async function writePartnerHandoff(env, handoff) {
+  await env.KV_STATUS.put(
+    partnerHandoffKey(handoff.tokenHash),
+    JSON.stringify(handoff),
+    { expirationTtl: PARTNER_HANDOFF_TOKEN_TTL_SECONDS }
+  );
+}
+__name(writePartnerHandoff, "writePartnerHandoff");
+async function readPartnerHandoffIndex(env, leadId) {
+  const raw = await env.KV_STATUS.get(partnerHandoffsByLeadKey(leadId), "text");
+  let rows = [];
+  try {
+    rows = raw ? JSON.parse(raw) : [];
+  } catch {
+    rows = [];
+  }
+  if (!Array.isArray(rows)) rows = [];
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const row of rows) {
+    const tokenHash = String(row || "").trim();
+    if (!tokenHash || seen.has(tokenHash)) continue;
+    seen.add(tokenHash);
+    out.push(tokenHash);
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+__name(readPartnerHandoffIndex, "readPartnerHandoffIndex");
+async function appendPartnerHandoffIndex(env, leadId, tokenHash) {
+  const current = await readPartnerHandoffIndex(env, leadId);
+  const next = [
+    tokenHash,
+    ...current.filter((value) => value !== tokenHash)
+  ].slice(0, 20);
+  await env.KV_STATUS.put(
+    partnerHandoffsByLeadKey(leadId),
+    JSON.stringify(next),
+    { expirationTtl: PARTNER_HANDOFF_TOKEN_TTL_SECONDS }
+  );
+}
+__name(appendPartnerHandoffIndex, "appendPartnerHandoffIndex");
+async function expirePartnerHandoffIfNeeded(env, handoff) {
+  const expMs = Date.parse(String(handoff.expiresAt || ""));
+  if (handoff.status === "expired" || handoff.status === "revoked" || handoff.status === "accepted") {
+    return handoff;
+  }
+  if (Number.isFinite(expMs) && expMs > Date.now()) {
+    return handoff;
+  }
+  const next = {
+    ...handoff,
+    status: "expired",
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  await writePartnerHandoff(env, next);
+  return next;
+}
+__name(expirePartnerHandoffIfNeeded, "expirePartnerHandoffIfNeeded");
+async function buildPartnerHandoffPreview(env, handoff) {
+  const currentHandoff = await expirePartnerHandoffIfNeeded(env, handoff);
+  if (currentHandoff.status === "expired") {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_expired",
+          message: "Partner handoff token has expired."
+        },
+        handoff: publicPartnerHandoff(currentHandoff)
+      },
+      410,
+      partnerNoStoreHeaders()
+    );
+  }
+  if (currentHandoff.status === "revoked") {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_revoked",
+          message: "Partner handoff token has been revoked."
+        },
+        handoff: publicPartnerHandoff(currentHandoff)
+      },
+      410,
+      partnerNoStoreHeaders()
+    );
+  }
+  const lead = await readPartnerLeadRecord(env, currentHandoff.leadId);
+  if (!lead || lead.partnerId !== currentHandoff.partnerId) {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_lead_not_found",
+          message: "Partner handoff lead not found."
+        }
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const currentLead = await expirePartnerLeadIfNeeded(env, lead);
+  if (currentLead.status !== "reserved") {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_lead_not_available",
+          message: "Partner handoff lead is no longer available."
+        },
+        lead: publicPartnerLead(currentLead),
+        handoff: publicPartnerHandoff(currentHandoff)
+      },
+      409,
+      partnerNoStoreHeaders()
+    );
+  }
+  const draftULID = String(currentLead.draftULID || "").trim();
+  const draftSessionId = String(currentLead.draftSessionId || "").trim();
+  if (!ULID_RE.test(draftULID) || !draftSessionId || draftULID !== currentHandoff.draftULID) {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_draft_not_found",
+          message: "Partner handoff draft not found."
+        },
+        lead: publicPartnerLead(currentLead),
+        handoff: publicPartnerHandoff(currentHandoff)
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const draft = await readPrivateShellDraft(env, draftULID, draftSessionId);
+  if (!draft) {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_draft_not_found",
+          message: "Partner handoff draft not found."
+        },
+        lead: publicPartnerLead(currentLead),
+        handoff: publicPartnerHandoff(currentHandoff)
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  return {
+    handoff: currentHandoff,
+    lead: currentLead,
+    draft: publicPartnerLeadDraft(draft, draftULID)
+  };
+}
+__name(buildPartnerHandoffPreview, "buildPartnerHandoffPreview");
+async function handlePartnerHandoffCreate(req, env, leadId) {
+  const resolved = await readPartnerOwnedLeadForDraft(req, env, leadId, { requireReserved: true });
+  if (resolved instanceof Response) return resolved;
+  const lead = resolved.lead;
+  const draftULID = String(lead.draftULID || "").trim();
+  const draftSessionId = String(lead.draftSessionId || "").trim();
+  if (!ULID_RE.test(draftULID) || !draftSessionId) {
+    return json(
+      {
+        error: {
+          code: "partner_lead_draft_required",
+          message: "Create the Partner lead draft before creating a handoff token."
+        },
+        lead: publicPartnerLead(lead)
+      },
+      409,
+      partnerNoStoreHeaders()
+    );
+  }
+  const draft = await readPrivateShellDraft(env, draftULID, draftSessionId);
+  if (!draft) {
+    return json(
+      {
+        error: {
+          code: "partner_lead_draft_not_found",
+          message: "Partner lead draft not found."
+        },
+        lead: publicPartnerLead(lead)
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const token = mintPartnerHandoffToken();
+  const tokenHash = await partnerHandoffTokenHash(token);
+  const handoff = {
+    ver: 1,
+    handoffId: mintPartnerHandoffId(),
+    tokenHash,
+    tokenHint: token.slice(-8),
+    partnerId: resolved.auth.profile.partnerId,
+    leadId: lead.leadId,
+    draftULID,
+    status: "created",
+    createdAt: nowIso,
+    updatedAt: nowIso,
+    expiresAt: new Date(nowMs + PARTNER_HANDOFF_TOKEN_TTL_SECONDS * 1e3).toISOString(),
+    viewedAt: "",
+    acceptedAt: "",
+    acceptedEmail: ""
+  };
+  await writePartnerHandoff(env, handoff);
+  await appendPartnerHandoffIndex(env, lead.leadId, tokenHash);
+  const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
+  const handoffUrl = `${siteOrigin.replace(/\/+$/, "")}/partner/handoff/${encodeURIComponent(token)}`;
+  return json(
+    {
+      ok: true,
+      token,
+      handoffUrl,
+      handoff: publicPartnerHandoff(handoff),
+      lead: publicPartnerLead(lead),
+      draft: publicPartnerLeadDraft(draft, draftULID),
+      launch: partnerLaunchState(env)
+    },
+    201,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerHandoffCreate, "handlePartnerHandoffCreate");
+async function handlePartnerHandoffPreview(req, env, token) {
+  if (!partnerRoutesEnabled(env)) return partnerDisabledResponse(env);
+  const handoff = await readPartnerHandoffByToken(env, token);
+  if (!handoff) {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_not_found",
+          message: "Partner handoff token not found."
+        }
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const preview = await buildPartnerHandoffPreview(env, handoff);
+  if (preview instanceof Response) return preview;
+  let currentHandoff = preview.handoff;
+  if (currentHandoff.status === "created") {
+    currentHandoff = {
+      ...currentHandoff,
+      status: "viewed",
+      viewedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    await writePartnerHandoff(env, currentHandoff);
+  }
+  return json(
+    {
+      ok: true,
+      handoff: publicPartnerHandoff(currentHandoff),
+      lead: publicPartnerLead(preview.lead),
+      draft: preview.draft,
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerHandoffPreview, "handlePartnerHandoffPreview");
+async function handlePartnerHandoffAccept(req, env, token) {
+  if (!partnerRoutesEnabled(env)) return partnerDisabledResponse(env);
+  const handoff = await readPartnerHandoffByToken(env, token);
+  if (!handoff) {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_not_found",
+          message: "Partner handoff token not found."
+        }
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const preview = await buildPartnerHandoffPreview(env, handoff);
+  if (preview instanceof Response) return preview;
+  const body = await req.json().catch(() => ({}));
+  const accepted = body?.accepted === true || body?.acceptTerms === true || body?.boAccepted === true;
+  if (!accepted) {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_acceptance_required",
+          message: "BO acceptance is required."
+        },
+        handoff: publicPartnerHandoff(preview.handoff)
+      },
+      400,
+      partnerNoStoreHeaders()
+    );
+  }
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+  const acceptedEmail = sanitizePartnerLeadString(body?.boEmail || body?.email || "", 180);
+  const next = {
+    ...preview.handoff,
+    status: "accepted",
+    acceptedAt: preview.handoff.acceptedAt || nowIso,
+    acceptedEmail,
+    updatedAt: nowIso
+  };
+  await writePartnerHandoff(env, next);
+  return json(
+    {
+      ok: true,
+      handoff: publicPartnerHandoff(next),
+      lead: publicPartnerLead(preview.lead),
+      draft: preview.draft,
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerHandoffAccept, "handlePartnerHandoffAccept");
+async function markPartnerLeadConvertedAfterPlanReconciliation(env, session, reconciled, logTag) {
+  try {
+    const meta = session?.metadata && typeof session.metadata === "object" ? session.metadata : {};
+    const initiationType = normalizeInitiationType(meta?.initiationType || reconciled?.plan?.initiationType);
+    if (initiationType !== "partner_assisted") return;
+    let selection = null;
+    const selectionId = String(reconciled?.planSelectionId || meta?.planSelectionId || "").trim();
+    if (selectionId) {
+      selection = await env.KV_STATUS.get(planSelectionKey(selectionId), { type: "json" });
+    }
+    const partnerId = String(selection?.partnerId || meta?.partnerId || "").trim();
+    const partnerLeadId = String(selection?.partnerLeadId || meta?.partnerLeadId || "").trim();
+    if (!partnerId || !partnerLeadId) return;
+    const lead = await readPartnerLeadRecord(env, partnerLeadId);
+    if (!lead || lead.partnerId !== partnerId) return;
+    if (lead.status !== "converted") {
+      const nextLead = {
+        ...lead,
+        status: "converted",
+        locationULID: String(reconciled?.primaryUlid || lead.locationULID || "").trim(),
+        updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      await writePartnerLeadRecord(env, nextLead);
+    }
+    const profile = await readPartnerProfile(env, partnerId);
+    if (profile) {
+      const leads = await listPartnerLeadRecords(env, partnerId);
+      await syncPartnerOpenLeadCount(env, profile, leads);
+    }
+  } catch (err) {
+    console.error(`${logTag}: partner_lead_conversion_mark_failed`, {
+      err: String(err?.message || err || ""),
+      checkoutSessionId: String(session?.id || "").trim(),
+      paymentIntentId: String(reconciled?.paymentIntentId || "").trim()
+    });
+  }
+}
+__name(markPartnerLeadConvertedAfterPlanReconciliation, "markPartnerLeadConvertedAfterPlanReconciliation");
+function partnerPlanCheckoutBlockedResponse(env) {
+  return json(
+    {
+      error: {
+        code: "partner_public_launch_blocked",
+        message: "Partner-assisted BO Plan payment is not publicly enabled."
+      },
+      launch: partnerLaunchState(env)
+    },
+    403,
+    partnerNoStoreHeaders()
+  );
+}
+__name(partnerPlanCheckoutBlockedResponse, "partnerPlanCheckoutBlockedResponse");
+function partnerCheckoutSuccessUrl(siteOrigin, checkoutSessionPlaceholder) {
+  const successUrlObj = new URL("/owner/stripe-exchange", siteOrigin);
+  successUrlObj.searchParams.set("sid", checkoutSessionPlaceholder);
+  const successUrl = successUrlObj.toString().replace("%7BCHECKOUT_SESSION_ID%7D", "{CHECKOUT_SESSION_ID}");
+  return successUrl;
+}
+__name(partnerCheckoutSuccessUrl, "partnerCheckoutSuccessUrl");
+function partnerCheckoutCancelUrl(siteOrigin, token) {
+  const cancelUrl = new URL(`/partner/handoff/${encodeURIComponent(token)}`, siteOrigin);
+  cancelUrl.searchParams.set("canceled", "1");
+  return cancelUrl.toString();
+}
+__name(partnerCheckoutCancelUrl, "partnerCheckoutCancelUrl");
+function partnerCampaignDraftFromCheckoutBody(body, draftULID, requestedPlan, planMode) {
+  const src = body?.campaignDraft && typeof body.campaignDraft === "object" ? body.campaignDraft : body;
+  const campaignKey = sanitizePartnerLeadString(src?.campaignKey || body?.campaignKey, 120);
+  const startDate = sanitizePartnerLeadString(src?.startDate, 20);
+  const endDate = sanitizePartnerLeadString(src?.endDate, 20);
+  return {
+    ...src,
+    campaignKey,
+    startDate,
+    endDate,
+    campaignScope: "single",
+    selectedLocationULIDs: [],
+    planCode: requestedPlan.code,
+    planMode,
+    campaignPreset: "promotion",
+    locationID: draftULID,
+    locationULID: draftULID,
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+}
+__name(partnerCampaignDraftFromCheckoutBody, "partnerCampaignDraftFromCheckoutBody");
+async function handlePartnerHandoffPlanCheckout(req, env, token) {
+  if (!partnerRoutesEnabled(env)) return partnerDisabledResponse(env);
+  if (!partnerPublicLaunchAllowed(env)) {
+    return partnerPlanCheckoutBlockedResponse(env);
+  }
+  const sk = String(env.STRIPE_SECRET_KEY || "").trim();
+  if (!sk) {
+    return json(
+      {
+        error: {
+          code: "misconfigured",
+          message: "STRIPE_SECRET_KEY not set"
+        }
+      },
+      500,
+      partnerNoStoreHeaders()
+    );
+  }
+  const handoff = await readPartnerHandoffByToken(env, token);
+  if (!handoff) {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_not_found",
+          message: "Partner handoff token not found."
+        }
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const preview = await buildPartnerHandoffPreview(env, handoff);
+  if (preview instanceof Response) return preview;
+  if (preview.handoff.status !== "accepted") {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_acceptance_required",
+          message: "BO acceptance is required before Partner-assisted Plan checkout."
+        },
+        handoff: publicPartnerHandoff(preview.handoff)
+      },
+      409,
+      partnerNoStoreHeaders()
+    );
+  }
+  const body = await req.json().catch(() => ({}));
+  const planCode = String(body?.planCode || "").trim().toLowerCase();
+  const requestedPlan = planDefinitionForCode(planCode);
+  const planMode = normalizePlanMode(body?.planMode, body?.campaignPreset);
+  const requiresCampaignDraft = planMode === "campaign_with_promo_qr";
+  if (!requestedPlan || !requestedPlan.allowedPlanModes.includes(planMode)) {
+    return json(
+      {
+        error: {
+          code: "invalid_partner_plan_checkout",
+          message: "Valid planCode and planMode are required."
+        }
+      },
+      400,
+      partnerNoStoreHeaders()
+    );
+  }
+  const draftULID = String(preview.lead.draftULID || "").trim();
+  const draftSessionId = String(preview.lead.draftSessionId || "").trim();
+  if (!ULID_RE.test(draftULID) || !draftSessionId) {
+    return json(
+      {
+        error: {
+          code: "partner_handoff_draft_not_found",
+          message: "Partner handoff draft not found."
+        },
+        handoff: publicPartnerHandoff(preview.handoff),
+        lead: publicPartnerLead(preview.lead)
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  let campaignKey = "";
+  if (requiresCampaignDraft) {
+    const campaignDraft = partnerCampaignDraftFromCheckoutBody(body, draftULID, requestedPlan, planMode);
+    campaignKey = String(campaignDraft?.campaignKey || "").trim();
+    if (!campaignKey || !/^\d{4}-\d{2}-\d{2}$/.test(String(campaignDraft?.startDate || "")) || !/^\d{4}-\d{2}-\d{2}$/.test(String(campaignDraft?.endDate || ""))) {
+      return json(
+        {
+          error: {
+            code: "invalid_partner_campaign_draft",
+            message: "Campaign with Promo QR checkout requires campaignKey, startDate, and endDate."
+          }
+        },
+        400,
+        partnerNoStoreHeaders()
+      );
+    }
+    await env.KV_STATUS.put(`campaigns:draft:${draftULID}`, JSON.stringify(campaignDraft));
+  }
+  const selectionId = mintPlanSelectionId();
+  const createdAt = /* @__PURE__ */ new Date();
+  const selectionExpiresAt = new Date(createdAt.getTime() + PLAN_SELECTION_TTL_SECONDS * 1e3);
+  const commissionPolicyVersion = String(preview.lead.partnerId ? (await readPartnerProfile(env, preview.lead.partnerId))?.commissionPolicyVersion || "partner-v1" : "partner-v1").trim() || "partner-v1";
+  const planSelection = {
+    ver: 1,
+    selectionId,
+    route: "brand-new-private-shell",
+    locationIDs: [],
+    coveredUlids: [draftULID],
+    draftULID,
+    draftSessionId,
+    planCode: requestedPlan.code,
+    priceId: requestedPlan.priceId,
+    planMode,
+    initiationType: "partner_assisted",
+    campaignKey: requiresCampaignDraft ? campaignKey : "",
+    navigenVersion: "partner-v1",
+    createdAt: createdAt.toISOString(),
+    expiresAt: selectionExpiresAt.toISOString(),
+    deviceId: readDeviceId(req),
+    source: "partner_handoff",
+    partnerId: preview.lead.partnerId,
+    partnerLeadId: preview.lead.leadId,
+    partnerHandoffId: preview.handoff.handoffId,
+    commissionPolicyVersion
+  };
+  await env.KV_STATUS.put(planSelectionKey(selectionId), JSON.stringify(planSelection), { expirationTtl: PLAN_SELECTION_TTL_SECONDS });
+  const siteOrigin = req.headers.get("Origin") || "https://navigen.io";
+  const successUrl = partnerCheckoutSuccessUrl(siteOrigin, "{CHECKOUT_SESSION_ID}");
+  const cancelUrl = partnerCheckoutCancelUrl(siteOrigin, token);
+  const form = new URLSearchParams();
+  form.set("mode", "payment");
+  form.set("customer_creation", "if_required");
+  form.set("billing_address_collection", "auto");
+  form.set("success_url", successUrl);
+  form.set("cancel_url", cancelUrl);
+  form.set("line_items[0][quantity]", "1");
+  form.set("line_items[0][price]", requestedPlan.priceId);
+  form.set("metadata[planSelectionId]", selectionId);
+  form.set("metadata[planMode]", planMode);
+  form.set("metadata[initiationType]", "partner_assisted");
+  form.set("metadata[ownershipSource]", "plan");
+  form.set("metadata[navigenVersion]", "partner-v1");
+  form.set("metadata[draftULID]", draftULID);
+  form.set("metadata[draftSessionId]", draftSessionId);
+  form.set("metadata[partnerId]", preview.lead.partnerId);
+  form.set("metadata[partnerLeadId]", preview.lead.leadId);
+  form.set("metadata[partnerHandoffId]", preview.handoff.handoffId);
+  form.set("metadata[commissionPolicyVersion]", commissionPolicyVersion);
+  if (requiresCampaignDraft) form.set("metadata[campaignKey]", campaignKey);
+  form.set("payment_intent_data[metadata][planSelectionId]", selectionId);
+  form.set("payment_intent_data[metadata][planMode]", planMode);
+  form.set("payment_intent_data[metadata][initiationType]", "partner_assisted");
+  form.set("payment_intent_data[metadata][ownershipSource]", "plan");
+  form.set("payment_intent_data[metadata][navigenVersion]", "partner-v1");
+  form.set("payment_intent_data[metadata][draftULID]", draftULID);
+  form.set("payment_intent_data[metadata][draftSessionId]", draftSessionId);
+  form.set("payment_intent_data[metadata][partnerId]", preview.lead.partnerId);
+  form.set("payment_intent_data[metadata][partnerLeadId]", preview.lead.leadId);
+  form.set("payment_intent_data[metadata][partnerHandoffId]", preview.handoff.handoffId);
+  form.set("payment_intent_data[metadata][commissionPolicyVersion]", commissionPolicyVersion);
+  if (requiresCampaignDraft) form.set("payment_intent_data[metadata][campaignKey]", campaignKey);
+  const stripeResp = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${sk}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: form.toString()
+  });
+  const stripeText = await stripeResp.text();
+  let stripeOut = null;
+  try {
+    stripeOut = JSON.parse(stripeText);
+  } catch {
+    stripeOut = null;
+  }
+  if (!stripeResp.ok || !stripeOut?.id) {
+    return json(
+      {
+        error: {
+          code: "stripe_error",
+          message: String(stripeOut?.error?.message || "Stripe create session failed")
+        }
+      },
+      502,
+      partnerNoStoreHeaders()
+    );
+  }
+  return json(
+    {
+      ok: true,
+      flow: "partner_assisted_plan_checkout",
+      sessionId: String(stripeOut.id || ""),
+      url: String(stripeOut.url || ""),
+      planSelectionId: selectionId,
+      handoff: publicPartnerHandoff(preview.handoff),
+      lead: publicPartnerLead(preview.lead),
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerHandoffPlanCheckout, "handlePartnerHandoffPlanCheckout");
+var PARTNER_COMMISSION_ELIGIBILITY_DAYS = 14;
+var PARTNER_COMMISSION_INDEX_LIMIT = 500;
+function partnerCommissionKey(commissionId) {
+  return `partner_commission:${commissionId}`;
+}
+__name(partnerCommissionKey, "partnerCommissionKey");
+function partnerCommissionByPaymentKey(paymentIntentId) {
+  return `partner_commission_by_payment:${paymentIntentId}`;
+}
+__name(partnerCommissionByPaymentKey, "partnerCommissionByPaymentKey");
+function partnerCommissionsByPartnerKey(partnerId) {
+  return `partner_commissions_by_partner:${partnerId}`;
+}
+__name(partnerCommissionsByPartnerKey, "partnerCommissionsByPartnerKey");
+function partnerCommissionsByLeadKey(partnerLeadId) {
+  return `partner_commissions_by_lead:${partnerLeadId}`;
+}
+__name(partnerCommissionsByLeadKey, "partnerCommissionsByLeadKey");
+function mintPartnerCommissionId() {
+  const bytes = new Uint8Array(18);
+  crypto.getRandomValues(bytes);
+  return `pc_${bytesToB64url(bytes)}`;
+}
+__name(mintPartnerCommissionId, "mintPartnerCommissionId");
+function normalizePartnerCommissionStatus(value) {
+  const s = String(value || "").trim().toLowerCase();
+  if (s === "pending_requires_connect" || s === "pending" || s === "eligible" || s === "paid" || s === "void" || s === "adjusted") {
+    return s;
+  }
+  return "";
+}
+__name(normalizePartnerCommissionStatus, "normalizePartnerCommissionStatus");
+function partnerCommissionPolicyFor(tier, policyVersion) {
+  const version = String(policyVersion || "partner-v1").trim() || "partner-v1";
+  if (tier === "standard") {
+    return {
+      commissionPolicyVersion: version,
+      activationBountyAmount: 40,
+      activationBountyAmountCents: 4e3,
+      renewalSharePercent: 20,
+      renewalTailMonths: 5,
+      totalCapAmount: 120,
+      totalCapAmountCents: 12e3
+    };
+  }
+  if (tier === "multi") {
+    return {
+      commissionPolicyVersion: version,
+      activationBountyAmount: 90,
+      activationBountyAmountCents: 9e3,
+      renewalSharePercent: 20,
+      renewalTailMonths: 5,
+      totalCapAmount: 270,
+      totalCapAmountCents: 27e3
+    };
+  }
+  if (tier === "large") {
+    return {
+      commissionPolicyVersion: version,
+      activationBountyAmount: 175,
+      activationBountyAmountCents: 17500,
+      renewalSharePercent: 15,
+      renewalTailMonths: 5,
+      totalCapAmount: 525,
+      totalCapAmountCents: 52500
+    };
+  }
+  return null;
+}
+__name(partnerCommissionPolicyFor, "partnerCommissionPolicyFor");
+function publicPartnerCommission(commission) {
+  return {
+    commissionId: commission.commissionId,
+    partnerId: commission.partnerId,
+    partnerLeadId: commission.partnerLeadId,
+    partnerHandoffId: commission.partnerHandoffId,
+    planSelectionId: commission.planSelectionId,
+    paymentIntentId: commission.paymentIntentId,
+    checkoutSessionId: commission.checkoutSessionId,
+    locationULID: commission.locationULID,
+    planTier: commission.planTier,
+    planMode: commission.planMode,
+    grossAmount: commission.grossAmount,
+    grossAmountCents: commission.grossAmountCents,
+    currency: commission.currency,
+    commissionPolicyVersion: commission.commissionPolicyVersion,
+    commissionAmount: commission.commissionAmount,
+    commissionAmountCents: commission.commissionAmountCents,
+    renewalSharePercent: commission.renewalSharePercent,
+    renewalTailMonths: commission.renewalTailMonths,
+    totalCapAmount: commission.totalCapAmount,
+    totalCapAmountCents: commission.totalCapAmountCents,
+    status: commission.status,
+    connectStatusAtCreation: commission.connectStatusAtCreation,
+    source: commission.source,
+    createdAt: commission.createdAt,
+    updatedAt: commission.updatedAt,
+    eligibleAt: commission.eligibleAt,
+    paidAt: commission.paidAt,
+    transferId: commission.transferId,
+    adjustmentReason: commission.adjustmentReason
+  };
+}
+__name(publicPartnerCommission, "publicPartnerCommission");
+async function readPartnerCommission(env, commissionId) {
+  const id = String(commissionId || "").trim();
+  if (!id) return null;
+  const commission = await env.KV_STATUS.get(partnerCommissionKey(id), { type: "json" });
+  if (!commission || typeof commission !== "object" || String(commission.commissionId || "").trim() !== id) return null;
+  return commission;
+}
+__name(readPartnerCommission, "readPartnerCommission");
+async function writePartnerCommission(env, commission) {
+  await env.KV_STATUS.put(partnerCommissionKey(commission.commissionId), JSON.stringify(commission));
+  await env.KV_STATUS.put(partnerCommissionByPaymentKey(commission.paymentIntentId), commission.commissionId);
+}
+__name(writePartnerCommission, "writePartnerCommission");
+async function readPartnerCommissionIndex(env, key) {
+  const raw = await env.KV_STATUS.get(key, "text");
+  let rows = [];
+  try {
+    rows = raw ? JSON.parse(raw) : [];
+  } catch {
+    rows = [];
+  }
+  if (!Array.isArray(rows)) rows = [];
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const row of rows) {
+    const id = String(row || "").trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+    if (out.length >= PARTNER_COMMISSION_INDEX_LIMIT) break;
+  }
+  return out;
+}
+__name(readPartnerCommissionIndex, "readPartnerCommissionIndex");
+async function appendPartnerCommissionIndex(env, key, commissionId) {
+  const current = await readPartnerCommissionIndex(env, key);
+  const next = [
+    commissionId,
+    ...current.filter((value) => value !== commissionId)
+  ].slice(0, PARTNER_COMMISSION_INDEX_LIMIT);
+  await env.KV_STATUS.put(key, JSON.stringify(next));
+}
+__name(appendPartnerCommissionIndex, "appendPartnerCommissionIndex");
+async function listPartnerCommissions(env, partnerId) {
+  const ids = await readPartnerCommissionIndex(env, partnerCommissionsByPartnerKey(partnerId));
+  const out = [];
+  for (const commissionId of ids) {
+    const commission = await readPartnerCommission(env, commissionId);
+    if (!commission || commission.partnerId !== partnerId) continue;
+    out.push(commission);
+  }
+  return out;
+}
+__name(listPartnerCommissions, "listPartnerCommissions");
+async function ensurePartnerCommissionAfterPlanReconciliation(env, session, reconciled, logTag) {
+  try {
+    const meta = session?.metadata && typeof session.metadata === "object" ? session.metadata : {};
+    const initiationType = normalizeInitiationType(meta?.initiationType || reconciled?.plan?.initiationType);
+    if (initiationType !== "partner_assisted") return null;
+    const paymentIntentId = String(
+      reconciled?.paymentIntentId || session?.payment_intent?.id || session?.payment_intent || ""
+    ).trim();
+    if (!paymentIntentId) return null;
+    const existingCommissionId = await env.KV_STATUS.get(partnerCommissionByPaymentKey(paymentIntentId), "text");
+    if (existingCommissionId) {
+      return await readPartnerCommission(env, existingCommissionId);
+    }
+    let selection = null;
+    const selectionId = String(reconciled?.planSelectionId || meta?.planSelectionId || "").trim();
+    if (selectionId) {
+      selection = await env.KV_STATUS.get(planSelectionKey(selectionId), { type: "json" });
+    }
+    const allocation = reconciled?.allocation && typeof reconciled.allocation === "object" ? reconciled.allocation : {};
+    const partnerId = String(selection?.partnerId || allocation?.partnerId || meta?.partnerId || "").trim();
+    const partnerLeadId = String(selection?.partnerLeadId || allocation?.partnerLeadId || meta?.partnerLeadId || "").trim();
+    const partnerHandoffId = String(selection?.partnerHandoffId || allocation?.partnerHandoffId || meta?.partnerHandoffId || "").trim();
+    const commissionPolicyVersion = String(selection?.commissionPolicyVersion || allocation?.commissionPolicyVersion || meta?.commissionPolicyVersion || "partner-v1").trim() || "partner-v1";
+    if (!partnerId || !partnerLeadId) return null;
+    const profile = await readPartnerProfile(env, partnerId);
+    if (!profile) return null;
+    const lead = await readPartnerLeadRecord(env, partnerLeadId);
+    if (!lead || lead.partnerId !== partnerId) return null;
+    const tier = reconciled?.plan?.tier || "unknown";
+    const policy = partnerCommissionPolicyFor(tier, commissionPolicyVersion);
+    if (!policy || policy.activationBountyAmountCents <= 0) {
+      return null;
+    }
+    const nowMs = Date.now();
+    const nowIso = new Date(nowMs).toISOString();
+    const eligibleAt = new Date(nowMs + PARTNER_COMMISSION_ELIGIBILITY_DAYS * 24 * 60 * 60 * 1e3).toISOString();
+    const grossAmount = Number(reconciled?.plan?.grossAmount || 0);
+    const grossAmountCents = Math.max(0, Math.round(grossAmount * 100));
+    const connectReady = profile.connectStatus === "complete" && !!String(profile.stripeConnectedAccountId || "").trim();
+    const commissionId = mintPartnerCommissionId();
+    const commission = {
+      ver: 1,
+      commissionId,
+      partnerId,
+      partnerLeadId,
+      partnerHandoffId,
+      planSelectionId: selectionId,
+      paymentIntentId,
+      checkoutSessionId: String(reconciled?.checkoutSessionId || session?.id || "").trim(),
+      locationULID: String(reconciled?.primaryUlid || lead.locationULID || "").trim(),
+      planTier: tier,
+      planMode: reconciled?.plan?.planMode || "managed_presence",
+      priceId: String(reconciled?.plan?.priceId || "").trim(),
+      grossAmount,
+      grossAmountCents,
+      currency: String(reconciled?.plan?.currency || "EUR").trim().toUpperCase() || "EUR",
+      commissionPolicyVersion: policy.commissionPolicyVersion,
+      commissionAmount: policy.activationBountyAmount,
+      commissionAmountCents: policy.activationBountyAmountCents,
+      renewalSharePercent: policy.renewalSharePercent,
+      renewalTailMonths: policy.renewalTailMonths,
+      totalCapAmount: policy.totalCapAmount,
+      totalCapAmountCents: policy.totalCapAmountCents,
+      status: connectReady ? "pending" : "pending_requires_connect",
+      stripeConnectedAccountId: String(profile.stripeConnectedAccountId || "").trim(),
+      connectStatusAtCreation: profile.connectStatus,
+      source: logTag || "plan_reconcile",
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      eligibleAt,
+      paidAt: "",
+      transferId: "",
+      adjustmentReason: ""
+    };
+    await writePartnerCommission(env, commission);
+    await appendPartnerCommissionIndex(env, partnerCommissionsByPartnerKey(partnerId), commissionId);
+    await appendPartnerCommissionIndex(env, partnerCommissionsByLeadKey(partnerLeadId), commissionId);
+    return commission;
+  } catch (err) {
+    console.error(`${logTag}: partner_commission_create_failed`, {
+      err: String(err?.message || err || ""),
+      checkoutSessionId: String(session?.id || "").trim(),
+      paymentIntentId: String(reconciled?.paymentIntentId || "").trim()
+    });
+    return null;
+  }
+}
+__name(ensurePartnerCommissionAfterPlanReconciliation, "ensurePartnerCommissionAfterPlanReconciliation");
+async function handlePartnerCommissionList(req, env) {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+  const url = new URL(req.url);
+  const statusFilter = normalizePartnerCommissionStatus(url.searchParams.get("status"));
+  let commissions = await listPartnerCommissions(env, auth.profile.partnerId);
+  if (statusFilter) {
+    commissions = commissions.filter((commission) => commission.status === statusFilter);
+  }
+  return json(
+    {
+      ok: true,
+      partner: publicPartnerProfile(auth.profile),
+      items: commissions.map(publicPartnerCommission),
+      total: commissions.length,
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerCommissionList, "handlePartnerCommissionList");
 function googleDraftIndexKey(dev, googlePlaceId) {
   return `google_draft:${dev}:${googlePlaceId}`;
 }
@@ -4301,6 +5982,8 @@ async function handleOwnerStripeExchange(req, env) {
   try {
     sess = await fetchStripeCheckoutSession(sk, sid);
     reconciled = await reconcilePaidCheckoutSessionPlan(env, sk, sess, { logTag: "owner_stripe_exchange" });
+    await markPartnerLeadConvertedAfterPlanReconciliation(env, sess, reconciled, "owner_stripe_exchange");
+    await ensurePartnerCommissionAfterPlanReconciliation(env, sess, reconciled, "owner_stripe_exchange");
   } catch (e) {
     console.error("owner_stripe_exchange: plan_reconcile_failed", { sid, err: String(e?.message || e || "") });
     return new Response("Denied", { status: 403, headers: noStoreHeaders });
@@ -4492,8 +6175,23 @@ async function handleStripeWebhook(req, env) {
   const type = String(evt?.type || "").trim();
   if (type !== "checkout.session.completed") return new Response("Ignored", { status: 200 });
   const session = evt?.data?.object || {};
+  const sessionFlow = String(session?.metadata?.flow || "").trim();
+  if (sessionFlow === "partner_lead_reservation") {
+    try {
+      await finalizePaidPartnerLeadReservationFromSession(env, session);
+      return new Response("OK", { status: 200, headers: { "x-ng-verify": verifyMode || "" } });
+    } catch (e) {
+      console.error("stripe_webhook: partner_reservation_finalize_failed", {
+        err: String(e?.message || e || ""),
+        checkoutSessionId: String(session?.id || "").trim()
+      });
+      return new Response("Partner reservation finalization failed", { status: 400, headers: { "x-ng-verify": verifyMode || "" } });
+    }
+  }
   try {
-    await reconcilePaidCheckoutSessionPlan(env, String(env.STRIPE_SECRET_KEY || "").trim(), session, { logTag: "stripe_webhook" });
+    const reconciled = await reconcilePaidCheckoutSessionPlan(env, String(env.STRIPE_SECRET_KEY || "").trim(), session, { logTag: "stripe_webhook" });
+    await markPartnerLeadConvertedAfterPlanReconciliation(env, session, reconciled, "stripe_webhook");
+    await ensurePartnerCommissionAfterPlanReconciliation(env, session, reconciled, "stripe_webhook");
   } catch (e) {
     const msg = String(e?.message || e || "");
     if (msg === "ignored_no_plan_metadata") {
@@ -6408,6 +8106,42 @@ var index_default = {
       if (partnerLeadDetailMatch && req.method === "GET") {
         return await handlePartnerLeadRead(req, env, decodeURIComponent(partnerLeadDetailMatch[1] || ""));
       }
+      if (normPath === "/api/partner/reservation-checkout" && req.method === "POST") {
+        return await handlePartnerReservationCheckoutCreate(req, env);
+      }
+      if (normPath === "/api/partner/reservation-checkout/return" && req.method === "GET") {
+        return await handlePartnerReservationCheckoutReturn(req, env);
+      }
+      const partnerLeadDraftUpdateMatch = normPath.match(/^\/api\/partner\/leads\/([^/]+)\/draft\/update$/);
+      if (partnerLeadDraftUpdateMatch && req.method === "POST") {
+        return await handlePartnerLeadDraftUpdate(req, env, decodeURIComponent(partnerLeadDraftUpdateMatch[1] || ""));
+      }
+      const partnerLeadDraftMatch = normPath.match(/^\/api\/partner\/leads\/([^/]+)\/draft$/);
+      if (partnerLeadDraftMatch && req.method === "POST") {
+        return await handlePartnerLeadDraftCreate(req, env, decodeURIComponent(partnerLeadDraftMatch[1] || ""));
+      }
+      if (partnerLeadDraftMatch && req.method === "GET") {
+        return await handlePartnerLeadDraftRead(req, env, decodeURIComponent(partnerLeadDraftMatch[1] || ""));
+      }
+      const partnerHandoffCreateMatch = normPath.match(/^\/api\/partner\/handoff\/([^/]+)\/create$/);
+      if (partnerHandoffCreateMatch && req.method === "POST") {
+        return await handlePartnerHandoffCreate(req, env, decodeURIComponent(partnerHandoffCreateMatch[1] || ""));
+      }
+      const partnerHandoffAcceptMatch = normPath.match(/^\/api\/partner\/handoff\/([^/]+)\/accept$/);
+      if (partnerHandoffAcceptMatch && req.method === "POST") {
+        return await handlePartnerHandoffAccept(req, env, decodeURIComponent(partnerHandoffAcceptMatch[1] || ""));
+      }
+      const partnerHandoffPreviewMatch = normPath.match(/^\/api\/partner\/handoff\/([^/]+)$/);
+      if (partnerHandoffPreviewMatch && req.method === "GET") {
+        return await handlePartnerHandoffPreview(req, env, decodeURIComponent(partnerHandoffPreviewMatch[1] || ""));
+      }
+      const partnerHandoffPlanCheckoutMatch = normPath.match(/^\/api\/partner\/handoff\/([^/]+)\/plan-checkout$/);
+      if (partnerHandoffPlanCheckoutMatch && req.method === "POST") {
+        return await handlePartnerHandoffPlanCheckout(req, env, decodeURIComponent(partnerHandoffPlanCheckoutMatch[1] || ""));
+      }
+      if (normPath === "/api/partner/commissions" && req.method === "GET") {
+        return await handlePartnerCommissionList(req, env);
+      }
       if (normPath === "/api/owner/location-options" && req.method === "GET") {
         const url2 = new URL(req.url);
         const q = String(url2.searchParams.get("q") || "").trim();
@@ -7020,6 +8754,8 @@ var index_default = {
         try {
           sess = restoreBySid ? await fetchStripeCheckoutSession(sk, sidParam) : await fetchStripeCheckoutSessionByPaymentIntent(sk, pi);
           const reconciled = await reconcilePaidCheckoutSessionPlan(env, sk, sess, { logTag: "owner_restore" });
+          await markPartnerLeadConvertedAfterPlanReconciliation(env, sess, reconciled, "owner_restore");
+          await ensurePartnerCommissionAfterPlanReconciliation(env, sess, reconciled, "owner_restore");
           ulid = String(reconciled.primaryUlid || "").trim();
           locationID = String(reconciled.locationID || "").trim();
           exclusiveUntil = new Date(String(reconciled.plan.expiresAt || ""));
