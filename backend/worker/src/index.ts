@@ -4227,6 +4227,331 @@ async function handleAdminPartnerCommissionList(req: Request, env: Env): Promise
 
 // --- End Partner-9 NaviGen Admin Platform Partner module helpers
 
+// --- Partner-10 Stripe Connect Express helpers: onboarding/status only, no transfers or payout run
+type PartnerConnectStatusResult = {
+  profile: PartnerProfileRecord;
+  account: any | null;
+};
+
+function normalizePartnerConnectCountry(value: unknown): string {
+  const raw = String(value || "").trim().toUpperCase();
+  if (/^[A-Z]{2}$/.test(raw)) return raw;
+  return "HU";
+}
+
+function normalizePartnerEmail(value: unknown): string {
+  const email = sanitizePartnerLeadString(value, 180);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
+}
+
+function partnerConnectReturnUrl(req: Request, body: any, key: "returnUrl" | "refreshUrl"): string {
+  const raw = sanitizePartnerLeadString(body?.[key], 600);
+
+  if (raw) {
+    try {
+      const u = new URL(raw);
+      if (u.protocol === "https:") return u.toString();
+    } catch {}
+  }
+
+  const origin = req.headers.get("Origin") || "https://navigen.io";
+  const url = new URL("/partner/center", origin);
+  url.searchParams.set("connect", key === "returnUrl" ? "return" : "refresh");
+  return url.toString();
+}
+
+async function partnerStripeFormRequest(sk: string, path: string, form: URLSearchParams): Promise<any> {
+  const resp = await fetch(`https://api.stripe.com${path}`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${sk}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: form.toString()
+  });
+
+  const text = await resp.text();
+  let out: any = null;
+  try { out = JSON.parse(text); } catch { out = null; }
+
+  if (!resp.ok) {
+    throw new Error(String(out?.error?.message || `Stripe ${path} failed`));
+  }
+
+  return out || {};
+}
+
+async function partnerStripeGetRequest(sk: string, path: string): Promise<any> {
+  const resp = await fetch(`https://api.stripe.com${path}`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${sk}`
+    }
+  });
+
+  const text = await resp.text();
+  let out: any = null;
+  try { out = JSON.parse(text); } catch { out = null; }
+
+  if (!resp.ok) {
+    throw new Error(String(out?.error?.message || `Stripe ${path} failed`));
+  }
+
+  return out || {};
+}
+
+function partnerConnectStatusFromStripeAccount(account: any): PartnerConnectStatus {
+  if (!account || typeof account !== "object") return "not_started";
+
+  const requirements = account.requirements || {};
+  const currentDue = Array.isArray(requirements.currently_due) ? requirements.currently_due : [];
+  const pastDue = Array.isArray(requirements.past_due) ? requirements.past_due : [];
+  const disabledReason = String(requirements.disabled_reason || "").trim();
+  const payoutsEnabled = account.payouts_enabled === true;
+
+  if (payoutsEnabled && !disabledReason && currentDue.length === 0 && pastDue.length === 0) {
+    return "complete";
+  }
+
+  if (disabledReason && String(account.details_submitted || "") === "true") {
+    return "restricted";
+  }
+
+  return "pending";
+}
+
+async function promotePartnerCommissionsAfterConnect(env: Env, profile: PartnerProfileRecord): Promise<void> {
+  if (profile.connectStatus !== "complete") return;
+
+  const commissions = await listPartnerCommissions(env, profile.partnerId);
+  const nowIso = new Date().toISOString();
+
+  for (const commission of commissions) {
+    if (commission.status !== "pending_requires_connect") continue;
+
+    const next: PartnerCommissionRecord = {
+      ...commission,
+      status: "pending",
+      stripeConnectedAccountId: profile.stripeConnectedAccountId,
+      connectStatusAtCreation: "complete",
+      updatedAt: nowIso
+    };
+
+    await writePartnerCommission(env, next);
+  }
+}
+
+async function refreshPartnerConnectStatus(env: Env, profile: PartnerProfileRecord): Promise<PartnerConnectStatusResult> {
+  const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+  if (!sk) {
+    throw new Error("STRIPE_SECRET_KEY not set");
+  }
+
+  const accountId = String(profile.stripeConnectedAccountId || "").trim();
+
+  if (!accountId) {
+    if (profile.connectStatus !== "not_started") {
+      const next: PartnerProfileRecord = {
+        ...profile,
+        connectStatus: "not_started",
+        updatedAt: new Date().toISOString()
+      };
+
+      await writePartnerProfile(env, next);
+      return { profile: next, account: null };
+    }
+
+    return { profile, account: null };
+  }
+
+  const account = await partnerStripeGetRequest(sk, `/v1/accounts/${encodeURIComponent(accountId)}`);
+  const connectStatus = partnerConnectStatusFromStripeAccount(account);
+
+  const next: PartnerProfileRecord = {
+    ...profile,
+    connectStatus,
+    updatedAt: new Date().toISOString()
+  };
+
+  await writePartnerProfile(env, next);
+  await promotePartnerCommissionsAfterConnect(env, next);
+
+  return { profile: next, account };
+}
+
+async function handlePartnerConnectStart(req: Request, env: Env): Promise<Response> {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+
+  if (auth.profile.status === "suspended") {
+    return json(
+      {
+        error: {
+          code: "partner_suspended",
+          message: "Partner is suspended."
+        },
+        partner: publicPartnerProfile(auth.profile)
+      },
+      403,
+      partnerNoStoreHeaders()
+    );
+  }
+
+  const sk = String((env as any).STRIPE_SECRET_KEY || "").trim();
+  if (!sk) {
+    return json(
+      {
+        error: {
+          code: "misconfigured",
+          message: "STRIPE_SECRET_KEY not set"
+        }
+      },
+      500,
+      partnerNoStoreHeaders()
+    );
+  }
+
+  const body = await req.json().catch(() => ({})) as any;
+  const country = normalizePartnerConnectCountry(body?.country);
+  const email = normalizePartnerEmail(body?.email);
+  let profile = auth.profile;
+  let accountId = String(profile.stripeConnectedAccountId || "").trim();
+
+  if (!accountId) {
+    const form = new URLSearchParams();
+    form.set("type", "express");
+    form.set("country", country);
+    form.set("capabilities[transfers][requested]", "true");
+    form.set("metadata[flow]", "partner_connect");
+    form.set("metadata[partnerId]", profile.partnerId);
+    if (email) form.set("email", email);
+
+    let account: any = null;
+    try {
+      account = await partnerStripeFormRequest(sk, "/v1/accounts", form);
+    } catch (err: any) {
+      return json(
+        {
+          error: {
+            code: "stripe_connect_account_error",
+            message: String(err?.message || err || "Stripe Connect account creation failed.")
+          }
+        },
+        502,
+        partnerNoStoreHeaders()
+      );
+    }
+
+    accountId = String(account?.id || "").trim();
+    if (!accountId) {
+      return json(
+        {
+          error: {
+            code: "stripe_connect_account_error",
+            message: "Stripe Connect account creation did not return an account id."
+          }
+        },
+        502,
+        partnerNoStoreHeaders()
+      );
+    }
+
+    profile = {
+      ...profile,
+      stripeConnectedAccountId: accountId,
+      connectStatus: "pending",
+      updatedAt: new Date().toISOString()
+    };
+
+    await writePartnerProfile(env, profile);
+  }
+
+  const linkForm = new URLSearchParams();
+  linkForm.set("account", accountId);
+  linkForm.set("type", "account_onboarding");
+  linkForm.set("return_url", partnerConnectReturnUrl(req, body, "returnUrl"));
+  linkForm.set("refresh_url", partnerConnectReturnUrl(req, body, "refreshUrl"));
+
+  let accountLink: any = null;
+  try {
+    accountLink = await partnerStripeFormRequest(sk, "/v1/account_links", linkForm);
+  } catch (err: any) {
+    return json(
+      {
+        error: {
+          code: "stripe_connect_link_error",
+          message: String(err?.message || err || "Stripe Connect account link creation failed.")
+        },
+        partner: publicPartnerProfile(profile)
+      },
+      502,
+      partnerNoStoreHeaders()
+    );
+  }
+
+  return json(
+    {
+      ok: true,
+      flow: "partner_connect_onboarding",
+      url: String(accountLink?.url || ""),
+      expiresAt: accountLink?.expires_at || null,
+      partner: publicPartnerProfile(profile),
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+
+async function handlePartnerConnectStatus(req: Request, env: Env): Promise<Response> {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+
+  let result: PartnerConnectStatusResult;
+  try {
+    result = await refreshPartnerConnectStatus(env, auth.profile);
+  } catch (err: any) {
+    return json(
+      {
+        error: {
+          code: "stripe_connect_status_error",
+          message: String(err?.message || err || "Stripe Connect status refresh failed.")
+        },
+        partner: publicPartnerProfile(auth.profile)
+      },
+      502,
+      partnerNoStoreHeaders()
+    );
+  }
+
+  const requirements = result.account?.requirements || {};
+
+  return json(
+    {
+      ok: true,
+      partner: publicPartnerProfile(result.profile),
+      connect: {
+        status: result.profile.connectStatus,
+        hasAccount: !!String(result.profile.stripeConnectedAccountId || "").trim(),
+        payoutsEnabled: result.account?.payouts_enabled === true,
+        detailsSubmitted: result.account?.details_submitted === true,
+        currentlyDue: Array.isArray(requirements.currently_due) ? requirements.currently_due : [],
+        pastDue: Array.isArray(requirements.past_due) ? requirements.past_due : [],
+        disabledReason: String(requirements.disabled_reason || "")
+      },
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+
+async function handlePartnerConnectReturn(req: Request, env: Env): Promise<Response> {
+  return await handlePartnerConnectStatus(req, env);
+}
+
+// --- End Partner-10 Stripe Connect Express helpers
+
 function googleDraftIndexKey(dev: string, googlePlaceId: string): string {
   return `google_draft:${dev}:${googlePlaceId}`;
 }
@@ -7905,6 +8230,21 @@ export default {
       }
       
       // --- End NaviGen Admin Platform Partner module routes
+
+      // --- Partner Stripe Connect Express: Partner-10 backend routes
+      if (normPath === "/api/partner/connect/start" && req.method === "POST") {
+        return await handlePartnerConnectStart(req, env);
+      }
+
+      if (normPath === "/api/partner/connect/status" && req.method === "GET") {
+        return await handlePartnerConnectStatus(req, env);
+      }
+
+      if (normPath === "/api/partner/connect/return" && req.method === "GET") {
+        return await handlePartnerConnectReturn(req, env);
+      }
+      
+      // --- End Partner Stripe Connect Express routes
       
       // --- Owner location selector: query-first, capped, status-enriched BO search
       // GET /api/owner/location-options?q=...&limit=5

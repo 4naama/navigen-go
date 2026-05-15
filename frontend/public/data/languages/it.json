@@ -1951,5 +1951,9 @@
   "partner.admin.freeQuotaPrompt": "Inserisci la quota gratuita",
   "partner.admin.capacityUpdated": "Capacità partner aggiornata.",
   "partner.admin.revokeReasonPrompt": "Inserisci il motivo della revoca",
-  "partner.admin.attributionRevoked": "Attribuzione partner revocata."
+  "partner.admin.attributionRevoked": "Attribuzione partner revocata.",
+  "partner.connect.refresh": "Aggiorna identità pagamento",
+  "partner.connect.start": "Avvia onboarding pagamenti",
+  "partner.connect.statusRefreshed": "Stato identità pagamento aggiornato.",
+  "partner.connect.noUrl": "Stripe Connect non ha restituito un URL di onboarding."
 }

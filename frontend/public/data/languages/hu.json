@@ -1951,5 +1951,9 @@
   "partner.admin.freeQuotaPrompt": "Adja meg az ingyenes kvótát",
   "partner.admin.capacityUpdated": "Partner kapacitás frissítve.",
   "partner.admin.revokeReasonPrompt": "Adja meg a visszavonás okát",
-  "partner.admin.attributionRevoked": "Partner hozzárendelés visszavonva."
+  "partner.admin.attributionRevoked": "Partner hozzárendelés visszavonva.",
+  "partner.connect.refresh": "Kifizetési azonosító frissítése",
+  "partner.connect.start": "Kifizetési onboarding indítása",
+  "partner.connect.statusRefreshed": "A kifizetési azonosító állapota frissítve.",
+  "partner.connect.noUrl": "A Stripe Connect nem adott vissza onboarding URL-t."
 }

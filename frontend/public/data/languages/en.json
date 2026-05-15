@@ -1951,5 +1951,9 @@
   "partner.admin.freeQuotaPrompt": "Enter free lead quota",
   "partner.admin.capacityUpdated": "Partner capacity updated.",
   "partner.admin.revokeReasonPrompt": "Enter revoke reason",
-  "partner.admin.attributionRevoked": "Partner attribution revoked."
+  "partner.admin.attributionRevoked": "Partner attribution revoked.",
+  "partner.connect.refresh": "Refresh payout identity",
+  "partner.connect.start": "Start payout onboarding",
+  "partner.connect.statusRefreshed": "Payout identity status refreshed.",
+  "partner.connect.noUrl": "Stripe Connect did not return an onboarding URL."
 }

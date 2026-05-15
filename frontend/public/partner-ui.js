@@ -168,6 +168,8 @@ function renderOverviewPanel() {
     </div>
     <div class="partner-actions-row">
       <button type="button" class="modal-body-button" data-partner-action="refresh">${escapeHtml(text('partner.center.refresh', 'Refresh'))}</button>
+      <button type="button" class="modal-body-button" data-partner-action="connect-status">${escapeHtml(text('partner.connect.refresh', 'Refresh payout identity'))}</button>
+      <button type="button" class="modal-body-button" data-partner-action="connect-start">${escapeHtml(text('partner.connect.start', 'Start payout onboarding'))}</button>
       <button type="button" class="modal-body-button" data-partner-action="tab" data-tab="leads">${escapeHtml(text('partner.center.createLead', 'Create lead'))}</button>
     </div>
   `;
@@ -324,6 +326,30 @@ async function handlePartnerCenterAction(action) {
       return;
     }
 
+    if (type === 'connect-status') {
+      const status = await api('/api/partner/connect/status');
+      state.partner = { ...(state.partner || {}), ...(status.partner || {}), launch: status.launch || state.partner?.launch || {} };
+      state.message = text('partner.connect.statusRefreshed', 'Payout identity status refreshed.');
+      renderPartnerCenter();
+      return;
+    }
+
+    if (type === 'connect-start') {
+      const connect = await api('/api/partner/connect/start', {
+        method: 'POST',
+        body: {
+          returnUrl: `${location.origin}/partner/center?connect=return`,
+          refreshUrl: `${location.origin}/partner/center?connect=refresh`
+        }
+      });
+
+      const url = String(connect?.url || '').trim();
+      if (!url) throw new Error(text('partner.connect.noUrl', 'Stripe Connect did not return an onboarding URL.'));
+
+      location.href = url;
+      return;
+    }
+    
     if (type === 'prepare-draft' && leadId) {
       await api(`/api/partner/leads/${encodeURIComponent(leadId)}/draft`, { method: 'POST', body: { draft: {} } });
       await refreshPartnerLists();

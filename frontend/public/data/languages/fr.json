@@ -1951,5 +1951,9 @@
   "partner.admin.freeQuotaPrompt": "Entrez le quota gratuit",
   "partner.admin.capacityUpdated": "Capacité partenaire mise à jour.",
   "partner.admin.revokeReasonPrompt": "Entrez le motif de révocation",
-  "partner.admin.attributionRevoked": "Attribution partenaire révoquée."
+  "partner.admin.attributionRevoked": "Attribution partenaire révoquée.",
+  "partner.connect.refresh": "Actualiser l’identité de paiement",
+  "partner.connect.start": "Démarrer l’intégration des paiements",
+  "partner.connect.statusRefreshed": "Statut de l’identité de paiement actualisé.",
+  "partner.connect.noUrl": "Stripe Connect n’a pas renvoyé d’URL d’intégration."
 }

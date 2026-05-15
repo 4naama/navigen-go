@@ -1951,5 +1951,9 @@
   "partner.admin.freeQuotaPrompt": "Введіть безкоштовну квоту",
   "partner.admin.capacityUpdated": "Місткість партнера оновлена.",
   "partner.admin.revokeReasonPrompt": "Введіть причину скасування",
-  "partner.admin.attributionRevoked": "Атрибуцію партнера скасовано."
+  "partner.admin.attributionRevoked": "Атрибуцію партнера скасовано.",
+  "partner.connect.refresh": "Оновити платіжну ідентичність",
+  "partner.connect.start": "Розпочати підключення виплат",
+  "partner.connect.statusRefreshed": "Статус платіжної ідентичності оновлено.",
+  "partner.connect.noUrl": "Stripe Connect не повернув URL для онбордингу."
 }

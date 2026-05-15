@@ -1951,5 +1951,9 @@
   "partner.admin.freeQuotaPrompt": "הזינו את המכסה החינמית",
   "partner.admin.capacityUpdated": "קיבולת השותף עודכנה.",
   "partner.admin.revokeReasonPrompt": "הזינו את סיבת הביטול",
-  "partner.admin.attributionRevoked": "שיוך השותף בוטל."
+  "partner.admin.attributionRevoked": "שיוך השותף בוטל.",
+  "partner.connect.refresh": "רענון זהות תשלום",
+  "partner.connect.start": "התחלת תהליך קליטת תשלומים",
+  "partner.connect.statusRefreshed": "סטטוס זהות התשלום עודכן.",
+  "partner.connect.noUrl": "Stripe Connect לא החזיר כתובת URL לאונבורדינג."
 }

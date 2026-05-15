@@ -1951,5 +1951,9 @@
   "partner.admin.freeQuotaPrompt": "Geben Sie das Freikontingent ein",
   "partner.admin.capacityUpdated": "Partnerkapazität aktualisiert.",
   "partner.admin.revokeReasonPrompt": "Geben Sie den Widerrufsgrund ein",
-  "partner.admin.attributionRevoked": "Partnerzuordnung widerrufen."
+  "partner.admin.attributionRevoked": "Partnerzuordnung widerrufen.",
+  "partner.connect.refresh": "Auszahlungsidentität aktualisieren",
+  "partner.connect.start": "Auszahlungs-Onboarding starten",
+  "partner.connect.statusRefreshed": "Status der Auszahlungsidentität aktualisiert.",
+  "partner.connect.noUrl": "Stripe Connect hat keine Onboarding-URL zurückgegeben."
 }
