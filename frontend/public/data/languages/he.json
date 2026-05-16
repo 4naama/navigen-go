@@ -1961,5 +1961,17 @@
   "partner.admin.payrunDryDone": "סימולציית התשלומים הושלמה.",
   "partner.admin.payrunExecuteDone": "הרצת התשלומים הושלמה.",
   "partner.admin.payrunConfirmPrompt": "הקלידו PAY_ELIGIBLE_PARTNER_COMMISSIONS כדי להריץ תשלומים זכאים",
-  "partner.admin.payrunCanceled": "הרצת התשלומים בוטלה."
+  "partner.admin.payrunCanceled": "הרצת התשלומים בוטלה.",
+  "partner.center.tab.renewals": "חידושים",
+  "partner.renewal.title": "הזדמנויות לחידוש",
+  "partner.renewal.desc": "עקבו אחר לידים של שותפים שהומרו עם תוכניות NaviGen שפגות או פגו.",
+  "partner.renewal.expires": "התוכנית פגה",
+  "partner.renewal.priority": "עדיפות",
+  "partner.renewal.complete": "השלם",
+  "partner.renewal.dismiss": "התעלם",
+  "partner.renewal.empty": "אין כרגע הזדמנויות לחידוש.",
+  "partner.renewal.completed": "משימת החידוש הושלמה.",
+  "partner.renewal.dismissed": "משימת החידוש נדחתה.",
+  "partner.admin.renewalRun": "רענון משימות חידוש",
+  "partner.admin.renewalRunDone": "רענון משימות החידוש הושלם."
 }

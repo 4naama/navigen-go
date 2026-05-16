@@ -1961,5 +1961,17 @@
   "partner.admin.payrunDryDone": "A száraz futtatású kifizetések befejeződtek.",
   "partner.admin.payrunExecuteDone": "A kifizetési futtatás befejeződött.",
   "partner.admin.payrunConfirmPrompt": "A jogosult kifizetések futtatásához írja be: PAY_ELIGIBLE_PARTNER_COMMISSIONS",
-  "partner.admin.payrunCanceled": "A kifizetési futtatás megszakítva."
+  "partner.admin.payrunCanceled": "A kifizetési futtatás megszakítva.",
+  "partner.center.tab.renewals": "Megújítások",
+  "partner.renewal.title": "Megújítási lehetőségek",
+  "partner.renewal.desc": "Kövesse a konvertált partner leadeket lejáró vagy lejárt NaviGen csomagokkal.",
+  "partner.renewal.expires": "A csomag lejár",
+  "partner.renewal.priority": "Prioritás",
+  "partner.renewal.complete": "Befejezés",
+  "partner.renewal.dismiss": "Elutasítás",
+  "partner.renewal.empty": "Jelenleg nincsenek megújítási lehetőségek.",
+  "partner.renewal.completed": "A megújítási feladat befejezve.",
+  "partner.renewal.dismissed": "A megújítási feladat elutasítva.",
+  "partner.admin.renewalRun": "Megújítási feladatok frissítése",
+  "partner.admin.renewalRunDone": "A megújítási feladatok frissítése befejeződött."
 }

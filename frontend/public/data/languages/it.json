@@ -1961,5 +1961,17 @@
   "partner.admin.payrunDryDone": "Simulazione pagamenti completata.",
   "partner.admin.payrunExecuteDone": "Esecuzione pagamenti completata.",
   "partner.admin.payrunConfirmPrompt": "Digita PAY_ELIGIBLE_PARTNER_COMMISSIONS per eseguire i pagamenti idonei",
-  "partner.admin.payrunCanceled": "Esecuzione pagamenti annullata."
+  "partner.admin.payrunCanceled": "Esecuzione pagamenti annullata.",
+  "partner.center.tab.renewals": "Rinnovi",
+  "partner.renewal.title": "Opportunità di rinnovo",
+  "partner.renewal.desc": "Segui i lead partner convertiti con piani NaviGen in scadenza o scaduti.",
+  "partner.renewal.expires": "Il piano scade",
+  "partner.renewal.priority": "Priorità",
+  "partner.renewal.complete": "Completa",
+  "partner.renewal.dismiss": "Ignora",
+  "partner.renewal.empty": "Nessuna opportunità di rinnovo al momento.",
+  "partner.renewal.completed": "Attività di rinnovo completata.",
+  "partner.renewal.dismissed": "Attività di rinnovo ignorata.",
+  "partner.admin.renewalRun": "Aggiorna attività rinnovi",
+  "partner.admin.renewalRunDone": "Aggiornamento attività rinnovi completato."
 }

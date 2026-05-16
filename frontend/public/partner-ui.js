@@ -8,6 +8,7 @@ const state = {
   partner: null,
   leads: [],
   commissions: [],
+  renewalTasks: [],
   activeTab: 'overview',
   loading: false,
   message: '',
@@ -114,6 +115,7 @@ function renderPartnerCenter() {
   const tabs = [
     ['overview', text('partner.center.tab.overview', 'Overview')],
     ['leads', text('partner.center.tab.leads', 'Leads')],
+    ['renewals', text('partner.center.tab.renewals', 'Renewals')],
     ['commissions', text('partner.center.tab.commissions', 'Commissions')]
   ];
 
@@ -149,6 +151,7 @@ function renderPartnerCenter() {
       <div class="partner-tabpanel">
         ${state.activeTab === 'overview' ? renderOverviewPanel() : ''}
         ${state.activeTab === 'leads' ? renderLeadsPanel() : ''}
+        ${state.activeTab === 'renewals' ? renderRenewalTasksPanel() : ''}
         ${state.activeTab === 'commissions' ? renderCommissionsPanel() : ''}
       </div>
     </div>
@@ -259,6 +262,41 @@ function renderLeadCard(lead) {
   `;
 }
 
+function renderRenewalTasksPanel() {
+  const tasks = asArray(state.renewalTasks);
+
+  return `
+    <div class="partner-status-card">
+      <strong>${escapeHtml(text('partner.renewal.title', 'Renewal opportunities'))}</strong><br>
+      <small>${escapeHtml(text('partner.renewal.desc', 'Follow up on converted Partner leads with expiring or expired NaviGen Plans.'))}</small>
+    </div>
+    <div class="partner-list">
+      ${tasks.length ? tasks.map((task) => `
+        <article class="partner-lead-card">
+          <div class="partner-card-head">
+            <div>
+              <strong>${escapeHtml(task.title || task.businessName || task.taskId || 'Renewal task')}</strong><br>
+              <small>${escapeHtml(task.detail || '')}</small>
+            </div>
+            <span class="partner-pill partner-pill-${escapeHtml(task.status || 'open')}">${escapeHtml(task.status || 'open')}</span>
+          </div>
+          <div class="partner-card-meta">
+            <span>${escapeHtml(text('partner.renewal.expires', 'Plan expires'))}: ${escapeHtml(formatDate(task.planExpiresAt) || '—')}</span>
+            <span>${escapeHtml(task.planTier || '')} · ${escapeHtml(task.planMode || '')}</span>
+            <span>${escapeHtml(text('partner.renewal.priority', 'Priority'))}: ${escapeHtml(task.priority || 'normal')}</span>
+          </div>
+          <div class="partner-actions-row">
+            <button type="button" class="modal-body-button" data-partner-action="complete-renewal" data-task-id="${escapeHtml(task.taskId || '')}">${escapeHtml(text('partner.renewal.complete', 'Complete'))}</button>
+            <button type="button" class="modal-body-button" data-partner-action="dismiss-renewal" data-task-id="${escapeHtml(task.taskId || '')}">${escapeHtml(text('partner.renewal.dismiss', 'Dismiss'))}</button>
+          </div>
+        </article>
+      `).join('') : `
+        <div class="partner-empty">${escapeHtml(text('partner.renewal.empty', 'No renewal opportunities yet.'))}</div>
+      `}
+    </div>
+  `;
+}
+
 function renderCommissionsPanel() {
   const commissions = asArray(state.commissions);
   return `
@@ -289,7 +327,11 @@ async function loadPartnerWorkspace() {
   state.message = '';
   renderPartnerCenter();
 
-  const started = await api('/api/partner/start', { method: 'POST', body: {} });
+  const session = await api('/api/partner/session');
+  const started = session?.authenticated === true
+    ? session
+    : await api('/api/partner/start', { method: 'POST', body: {} });
+
   state.partner = { ...(started.partner || {}), launch: started.launch || {} };
 
   await refreshPartnerLists();
@@ -298,14 +340,16 @@ async function loadPartnerWorkspace() {
 }
 
 async function refreshPartnerLists() {
-  const [leads, commissions] = await Promise.all([
+  const [leads, commissions, renewalTasks] = await Promise.all([
     api('/api/partner/leads'),
-    api('/api/partner/commissions')
+    api('/api/partner/commissions'),
+    api('/api/partner/renewal-tasks')
   ]);
 
   state.partner = { ...(state.partner || {}), ...(leads.partner || {}), launch: leads.launch || state.partner?.launch || {} };
   state.leads = asArray(leads.items);
   state.commissions = asArray(commissions.items);
+  state.renewalTasks = asArray(renewalTasks.items);
 }
 
 async function handlePartnerCenterAction(action) {
@@ -335,9 +379,19 @@ async function handlePartnerCenterAction(action) {
     }
 
     if (type === 'connect-start') {
+      const email = String(window.prompt(text('partner.connect.emailPrompt', 'Partner payout email for Stripe Connect'), '') || '').trim();
+      const country = String(window.prompt(text('partner.connect.countryPrompt', 'Partner country code for Stripe Connect (for example GB or HU)'), '') || '').trim().toUpperCase();
+
+      if (!/^[A-Z]{2}$/.test(country)) {
+        showToast(text('partner.connect.countryInvalid', 'Use a two-letter country code such as GB or HU.'), 3200);
+        return;
+      }
+
       const connect = await api('/api/partner/connect/start', {
         method: 'POST',
         body: {
+          email,
+          country,
           returnUrl: `${location.origin}/partner/center?connect=return`,
           refreshUrl: `${location.origin}/partner/center?connect=refresh`
         }
@@ -379,6 +433,22 @@ async function handlePartnerCenterAction(action) {
       state.message = text('partner.lead.archived', 'Lead archived.');
       renderPartnerCenter();
     }
+    const taskId = String(action.dataset.taskId || '').trim();
+
+    if (type === 'complete-renewal' && taskId) {
+      await api(`/api/partner/renewal-tasks/${encodeURIComponent(taskId)}/complete`, { method: 'POST', body: {} });
+      await refreshPartnerLists();
+      state.message = text('partner.renewal.completed', 'Renewal task completed.');
+      renderPartnerCenter();
+      return;
+    }
+
+    if (type === 'dismiss-renewal' && taskId) {
+      await api(`/api/partner/renewal-tasks/${encodeURIComponent(taskId)}/dismiss`, { method: 'POST', body: {} });
+      await refreshPartnerLists();
+      state.message = text('partner.renewal.dismissed', 'Renewal task dismissed.');
+      renderPartnerCenter();
+    }    
   } catch (err) {
     showToast(String(err?.message || text('partner.center.error', 'Partner action failed.')), 3200);
   }
@@ -530,6 +600,7 @@ function renderPartnerAdminPlatform() {
 
       <div class="partner-actions-row">
         <button type="button" class="modal-body-button" data-partner-admin-action="refresh">${escapeHtml(text('partner.admin.refresh', 'Refresh partners'))}</button>
+        <button type="button" class="modal-body-button" data-partner-admin-action="renewal-run">${escapeHtml(text('partner.admin.renewalRun', 'Refresh renewal tasks'))}</button>
         <button type="button" class="modal-body-button" data-partner-admin-action="payrun-dry">${escapeHtml(text('partner.admin.payrunDry', 'Dry-run payouts'))}</button>
         <button type="button" class="modal-body-button" data-partner-admin-action="payrun-execute">${escapeHtml(text('partner.admin.payrunExecute', 'Run eligible payouts'))}</button>
         <button type="button" class="modal-body-button" data-partner-admin-action="reset-token">${escapeHtml(text('partner.admin.resetToken', 'Change admin token'))}</button>
@@ -686,6 +757,19 @@ async function handlePartnerAdminAction(action) {
       return;
     }
 
+    if (type === 'renewal-run') {
+      const run = await adminApi('/api/admin/partner-renewal-tasks/run', {
+        method: 'POST',
+        body: {
+          limit: 50
+        }
+      });
+
+      adminState.message = text('partner.admin.renewalRunDone', 'Renewal task refresh completed.') + ` partners=${Number(run.scannedPartners || 0)} converted=${Number(run.scannedConvertedLeads || 0)} tasks=${Number(run.createdOrUpdated || 0)}`;
+      renderPartnerAdminPlatform();
+      return;
+    }
+    
     if (type === 'payrun-dry') {
       const run = await adminApi('/api/admin/partner-commissions/pay-run', {
         method: 'POST',

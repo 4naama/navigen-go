@@ -1,1 +1,1 @@
-This folder contains the built output assets for the worker "navigen-api" generated at 2026-05-15T13:06:24.849Z.
+This folder contains the built output assets for the worker "navigen-api" generated at 2026-05-15T13:30:02.736Z.

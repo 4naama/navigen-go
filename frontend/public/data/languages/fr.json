@@ -1961,5 +1961,17 @@
   "partner.admin.payrunDryDone": "Simulation des paiements terminée.",
   "partner.admin.payrunExecuteDone": "Exécution des paiements terminée.",
   "partner.admin.payrunConfirmPrompt": "Tapez PAY_ELIGIBLE_PARTNER_COMMISSIONS pour exécuter les paiements éligibles",
-  "partner.admin.payrunCanceled": "Exécution des paiements annulée."
+  "partner.admin.payrunCanceled": "Exécution des paiements annulée.",
+  "partner.center.tab.renewals": "Renouvellements",
+  "partner.renewal.title": "Opportunités de renouvellement",
+  "partner.renewal.desc": "Suivez les leads partenaires convertis avec des plans NaviGen expirant ou expirés.",
+  "partner.renewal.expires": "Le plan expire",
+  "partner.renewal.priority": "Priorité",
+  "partner.renewal.complete": "Terminer",
+  "partner.renewal.dismiss": "Ignorer",
+  "partner.renewal.empty": "Aucune opportunité de renouvellement pour le moment.",
+  "partner.renewal.completed": "Tâche de renouvellement terminée.",
+  "partner.renewal.dismissed": "Tâche de renouvellement ignorée.",
+  "partner.admin.renewalRun": "Actualiser les tâches de renouvellement",
+  "partner.admin.renewalRunDone": "Actualisation des tâches de renouvellement terminée."
 }

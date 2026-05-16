@@ -6097,6 +6097,337 @@ async function handleAdminPartnerCommissionPayRun(req, env) {
   );
 }
 __name(handleAdminPartnerCommissionPayRun, "handleAdminPartnerCommissionPayRun");
+var PARTNER_RENEWAL_TASK_WINDOW_DAYS = 7;
+var PARTNER_RENEWAL_TASK_INDEX_LIMIT = 500;
+function partnerRenewalTaskKey(taskId) {
+  return `partner_task:${taskId}`;
+}
+__name(partnerRenewalTaskKey, "partnerRenewalTaskKey");
+function partnerRenewalTasksByPartnerKey(partnerId) {
+  return `partner_tasks_by_partner:${partnerId}`;
+}
+__name(partnerRenewalTasksByPartnerKey, "partnerRenewalTasksByPartnerKey");
+function partnerRenewalTasksByLeadKey(partnerLeadId) {
+  return `partner_tasks_by_lead:${partnerLeadId}`;
+}
+__name(partnerRenewalTasksByLeadKey, "partnerRenewalTasksByLeadKey");
+async function deterministicPartnerRenewalTaskId(input) {
+  const hash = await sha256Hex([
+    input.partnerId,
+    input.partnerLeadId,
+    input.locationULID,
+    input.type,
+    input.planExpiresAt
+  ].join("|"));
+  return `ptask_${hash.slice(0, 32)}`;
+}
+__name(deterministicPartnerRenewalTaskId, "deterministicPartnerRenewalTaskId");
+function normalizePartnerRenewalTaskStatus(value) {
+  const s = String(value || "").trim().toLowerCase();
+  if (s === "open" || s === "completed" || s === "dismissed" || s === "expired") return s;
+  return "";
+}
+__name(normalizePartnerRenewalTaskStatus, "normalizePartnerRenewalTaskStatus");
+function publicPartnerRenewalTask(task) {
+  return {
+    taskId: task.taskId,
+    partnerId: task.partnerId,
+    partnerLeadId: task.partnerLeadId,
+    locationULID: task.locationULID,
+    type: task.type,
+    status: task.status,
+    priority: task.priority,
+    title: task.title,
+    detail: task.detail,
+    businessName: task.businessName,
+    planTier: task.planTier,
+    planMode: task.planMode,
+    planExpiresAt: task.planExpiresAt,
+    dueAt: task.dueAt,
+    createdAt: task.createdAt,
+    updatedAt: task.updatedAt,
+    completedAt: task.completedAt,
+    dismissedAt: task.dismissedAt
+  };
+}
+__name(publicPartnerRenewalTask, "publicPartnerRenewalTask");
+async function readPartnerRenewalTask(env, taskId) {
+  const id = String(taskId || "").trim();
+  if (!id) return null;
+  const task = await env.KV_STATUS.get(partnerRenewalTaskKey(id), { type: "json" });
+  if (!task || typeof task !== "object" || String(task.taskId || "").trim() !== id) return null;
+  return task;
+}
+__name(readPartnerRenewalTask, "readPartnerRenewalTask");
+async function writePartnerRenewalTask(env, task) {
+  await env.KV_STATUS.put(partnerRenewalTaskKey(task.taskId), JSON.stringify(task));
+}
+__name(writePartnerRenewalTask, "writePartnerRenewalTask");
+async function readPartnerRenewalTaskIndex(env, key) {
+  const raw = await env.KV_STATUS.get(key, "text");
+  let rows = [];
+  try {
+    rows = raw ? JSON.parse(raw) : [];
+  } catch {
+    rows = [];
+  }
+  if (!Array.isArray(rows)) rows = [];
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const row of rows) {
+    const taskId = String(row || "").trim();
+    if (!taskId || seen.has(taskId)) continue;
+    seen.add(taskId);
+    out.push(taskId);
+    if (out.length >= PARTNER_RENEWAL_TASK_INDEX_LIMIT) break;
+  }
+  return out;
+}
+__name(readPartnerRenewalTaskIndex, "readPartnerRenewalTaskIndex");
+async function appendPartnerRenewalTaskIndex(env, key, taskId) {
+  const current = await readPartnerRenewalTaskIndex(env, key);
+  const next = [
+    taskId,
+    ...current.filter((value) => value !== taskId)
+  ].slice(0, PARTNER_RENEWAL_TASK_INDEX_LIMIT);
+  await env.KV_STATUS.put(key, JSON.stringify(next));
+}
+__name(appendPartnerRenewalTaskIndex, "appendPartnerRenewalTaskIndex");
+async function listPartnerRenewalTasks(env, partnerId) {
+  const ids = await readPartnerRenewalTaskIndex(env, partnerRenewalTasksByPartnerKey(partnerId));
+  const out = [];
+  for (const taskId of ids) {
+    const task = await readPartnerRenewalTask(env, taskId);
+    if (!task || task.partnerId !== partnerId) continue;
+    out.push(task);
+  }
+  return out;
+}
+__name(listPartnerRenewalTasks, "listPartnerRenewalTasks");
+async function upsertPartnerRenewalTaskForLead(env, lead, plan, ownership) {
+  if (lead.status !== "converted") return null;
+  const locationULID = String(lead.locationULID || "").trim();
+  if (!locationULID) return null;
+  const planExpiresAt = String(ownership?.exclusiveUntil || plan?.expiresAt || "").trim();
+  const expMs = Date.parse(planExpiresAt);
+  if (!Number.isFinite(expMs)) return null;
+  const nowMs = Date.now();
+  const windowMs = PARTNER_RENEWAL_TASK_WINDOW_DAYS * 24 * 60 * 60 * 1e3;
+  const type = expMs <= nowMs ? "plan_expired" : "plan_expiring";
+  if (type === "plan_expiring" && expMs > nowMs + windowMs) {
+    return null;
+  }
+  const taskId = await deterministicPartnerRenewalTaskId({
+    partnerId: lead.partnerId,
+    partnerLeadId: lead.leadId,
+    locationULID,
+    type,
+    planExpiresAt
+  });
+  const existing = await readPartnerRenewalTask(env, taskId);
+  if (existing && (existing.status === "completed" || existing.status === "dismissed")) {
+    return existing;
+  }
+  const nowIso = new Date(nowMs).toISOString();
+  const businessName = String(lead.businessName || locationULID).trim();
+  const planTier = plan?.tier || "unknown";
+  const planMode = plan?.planMode || "managed_presence";
+  const priority = type === "plan_expired" ? "high" : "normal";
+  const title = type === "plan_expired" ? `Renew expired Plan for ${businessName}` : `Renew Plan for ${businessName}`;
+  const detail = type === "plan_expired" ? `The NaviGen Plan expired on ${planExpiresAt}.` : `The NaviGen Plan expires on ${planExpiresAt}.`;
+  const task = {
+    ver: 1,
+    taskId,
+    partnerId: lead.partnerId,
+    partnerLeadId: lead.leadId,
+    locationULID,
+    type,
+    status: "open",
+    priority,
+    title,
+    detail,
+    businessName,
+    planTier,
+    planMode,
+    planExpiresAt,
+    paymentIntentId: String(ownership?.lastEventId || "").trim(),
+    dueAt: nowIso,
+    createdAt: existing?.createdAt || nowIso,
+    updatedAt: nowIso,
+    completedAt: "",
+    dismissedAt: ""
+  };
+  await writePartnerRenewalTask(env, task);
+  await appendPartnerRenewalTaskIndex(env, partnerRenewalTasksByPartnerKey(lead.partnerId), taskId);
+  await appendPartnerRenewalTaskIndex(env, partnerRenewalTasksByLeadKey(lead.leadId), taskId);
+  return task;
+}
+__name(upsertPartnerRenewalTaskForLead, "upsertPartnerRenewalTaskForLead");
+async function ensurePartnerRenewalTasksForPartner(env, partnerId) {
+  const leads = await listPartnerLeadRecords(env, partnerId);
+  let scanned = 0;
+  let createdOrUpdated = 0;
+  for (const lead of leads) {
+    if (lead.status !== "converted") continue;
+    scanned += 1;
+    const locationULID = String(lead.locationULID || "").trim();
+    if (!locationULID) continue;
+    const ownership = await env.KV_STATUS.get(`ownership:${locationULID}`, { type: "json" });
+    if (!ownership || typeof ownership !== "object") continue;
+    const paymentIntentId = String(ownership?.lastEventId || "").trim();
+    const plan = paymentIntentId ? await env.KV_STATUS.get(`plan:${paymentIntentId}`, { type: "json" }) : null;
+    if (!plan || typeof plan !== "object") continue;
+    const task = await upsertPartnerRenewalTaskForLead(env, lead, plan, ownership);
+    if (task) createdOrUpdated += 1;
+  }
+  return { scanned, createdOrUpdated };
+}
+__name(ensurePartnerRenewalTasksForPartner, "ensurePartnerRenewalTasksForPartner");
+async function handlePartnerRenewalTaskList(req, env) {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+  await ensurePartnerRenewalTasksForPartner(env, auth.profile.partnerId);
+  const url = new URL(req.url);
+  const status = normalizePartnerRenewalTaskStatus(url.searchParams.get("status"));
+  let tasks = await listPartnerRenewalTasks(env, auth.profile.partnerId);
+  if (status) {
+    tasks = tasks.filter((task) => task.status === status);
+  }
+  return json(
+    {
+      ok: true,
+      partner: publicPartnerProfile(auth.profile),
+      items: tasks.map(publicPartnerRenewalTask),
+      total: tasks.length,
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerRenewalTaskList, "handlePartnerRenewalTaskList");
+async function handlePartnerRenewalTaskUpdate(req, env, taskId, nextStatus) {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+  const task = await readPartnerRenewalTask(env, taskId);
+  if (!task || task.partnerId !== auth.profile.partnerId) {
+    return json(
+      {
+        error: {
+          code: "partner_renewal_task_not_found",
+          message: "Partner renewal task not found."
+        }
+      },
+      404,
+      partnerNoStoreHeaders()
+    );
+  }
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+  const next = {
+    ...task,
+    status: nextStatus,
+    completedAt: nextStatus === "completed" ? nowIso : task.completedAt,
+    dismissedAt: nextStatus === "dismissed" ? nowIso : task.dismissedAt,
+    updatedAt: nowIso
+  };
+  await writePartnerRenewalTask(env, next);
+  return json(
+    {
+      ok: true,
+      task: publicPartnerRenewalTask(next),
+      partner: publicPartnerProfile(auth.profile),
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerRenewalTaskUpdate, "handlePartnerRenewalTaskUpdate");
+async function handleAdminPartnerRenewalTaskList(req, env) {
+  const authError = adminAuthError(req, env);
+  if (authError) return authError;
+  const url = new URL(req.url);
+  const partnerId = sanitizePartnerLeadString(url.searchParams.get("partnerId"), 100);
+  const status = normalizePartnerRenewalTaskStatus(url.searchParams.get("status"));
+  const limit = Math.max(1, Math.min(100, Math.trunc(Number(url.searchParams.get("limit") || 50) || 50)));
+  let tasks = [];
+  if (partnerId) {
+    await ensurePartnerRenewalTasksForPartner(env, partnerId);
+    tasks = await listPartnerRenewalTasks(env, partnerId);
+  } else {
+    const page = await env.KV_STATUS.list({
+      prefix: "partner_task:",
+      limit: Math.max(limit, 100)
+    });
+    for (const key of page.keys) {
+      const taskId = String(key.name || "").replace(/^partner_task:/, "").trim();
+      if (!taskId.startsWith("ptask_")) continue;
+      const task = await readPartnerRenewalTask(env, taskId);
+      if (!task) continue;
+      tasks.push(task);
+      if (tasks.length >= limit) break;
+    }
+  }
+  if (status) {
+    tasks = tasks.filter((task) => task.status === status);
+  }
+  tasks = tasks.slice(0, limit);
+  return json(
+    {
+      ok: true,
+      items: tasks.map(publicPartnerRenewalTask),
+      total: tasks.length
+    },
+    200,
+    adminNoStoreHeaders()
+  );
+}
+__name(handleAdminPartnerRenewalTaskList, "handleAdminPartnerRenewalTaskList");
+async function handleAdminPartnerRenewalTaskRun(req, env) {
+  const authError = adminAuthError(req, env);
+  if (authError) return authError;
+  const body = await req.json().catch(() => ({}));
+  const partnerId = sanitizePartnerLeadString(body?.partnerId, 100);
+  const limit = Math.max(1, Math.min(100, Math.trunc(Number(body?.limit || 50) || 50)));
+  let partnerIds = [];
+  if (partnerId) {
+    partnerIds = [partnerId];
+  } else {
+    const page = await env.KV_STATUS.list({
+      prefix: "partner:",
+      limit: Math.max(limit, 100)
+    });
+    for (const key of page.keys) {
+      const id = String(key.name || "").replace(/^partner:/, "").trim();
+      if (!id.startsWith("prt_")) continue;
+      partnerIds.push(id);
+      if (partnerIds.length >= limit) break;
+    }
+  }
+  let scannedPartners = 0;
+  let scannedConvertedLeads = 0;
+  let createdOrUpdated = 0;
+  for (const id of partnerIds) {
+    const profile = await readPartnerProfile(env, id);
+    if (!profile) continue;
+    scannedPartners += 1;
+    const result = await ensurePartnerRenewalTasksForPartner(env, profile.partnerId);
+    scannedConvertedLeads += result.scanned;
+    createdOrUpdated += result.createdOrUpdated;
+  }
+  return json(
+    {
+      ok: true,
+      partnerId,
+      scannedPartners,
+      scannedConvertedLeads,
+      createdOrUpdated
+    },
+    200,
+    adminNoStoreHeaders()
+  );
+}
+__name(handleAdminPartnerRenewalTaskRun, "handleAdminPartnerRenewalTaskRun");
 function googleDraftIndexKey(dev, googlePlaceId) {
   return `google_draft:${dev}:${googlePlaceId}`;
 }
@@ -9060,6 +9391,23 @@ var index_default = {
       }
       if (normPath === "/api/admin/partner-commissions/pay-run" && req.method === "POST") {
         return await handleAdminPartnerCommissionPayRun(req, env);
+      }
+      if (normPath === "/api/partner/renewal-tasks" && req.method === "GET") {
+        return await handlePartnerRenewalTaskList(req, env);
+      }
+      const partnerRenewalTaskCompleteMatch = normPath.match(/^\/api\/partner\/renewal-tasks\/([^/]+)\/complete$/);
+      if (partnerRenewalTaskCompleteMatch && req.method === "POST") {
+        return await handlePartnerRenewalTaskUpdate(req, env, decodeURIComponent(partnerRenewalTaskCompleteMatch[1] || ""), "completed");
+      }
+      const partnerRenewalTaskDismissMatch = normPath.match(/^\/api\/partner\/renewal-tasks\/([^/]+)\/dismiss$/);
+      if (partnerRenewalTaskDismissMatch && req.method === "POST") {
+        return await handlePartnerRenewalTaskUpdate(req, env, decodeURIComponent(partnerRenewalTaskDismissMatch[1] || ""), "dismissed");
+      }
+      if (normPath === "/api/admin/partner-renewal-tasks" && req.method === "GET") {
+        return await handleAdminPartnerRenewalTaskList(req, env);
+      }
+      if (normPath === "/api/admin/partner-renewal-tasks/run" && req.method === "POST") {
+        return await handleAdminPartnerRenewalTaskRun(req, env);
       }
       if (normPath === "/api/owner/location-options" && req.method === "GET") {
         const url2 = new URL(req.url);

@@ -1961,5 +1961,17 @@
   "partner.admin.payrunDryDone": "Payout dry-run completed.",
   "partner.admin.payrunExecuteDone": "Payout run completed.",
   "partner.admin.payrunConfirmPrompt": "Type PAY_ELIGIBLE_PARTNER_COMMISSIONS to run eligible payouts",
-  "partner.admin.payrunCanceled": "Payout run canceled."
+  "partner.admin.payrunCanceled": "Payout run canceled.",
+  "partner.center.tab.renewals": "Renewals",
+  "partner.renewal.title": "Renewal opportunities",
+  "partner.renewal.desc": "Follow up on converted Partner leads with expiring or expired NaviGen Plans.",
+  "partner.renewal.expires": "Plan expires",
+  "partner.renewal.priority": "Priority",
+  "partner.renewal.complete": "Complete",
+  "partner.renewal.dismiss": "Dismiss",
+  "partner.renewal.empty": "No renewal opportunities yet.",
+  "partner.renewal.completed": "Renewal task completed.",
+  "partner.renewal.dismissed": "Renewal task dismissed.",
+  "partner.admin.renewalRun": "Refresh renewal tasks",
+  "partner.admin.renewalRunDone": "Renewal task refresh completed."
 }

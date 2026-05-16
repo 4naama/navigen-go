@@ -1961,5 +1961,17 @@
   "partner.admin.payrunDryDone": "Trockendurchlauf der Auszahlungen abgeschlossen.",
   "partner.admin.payrunExecuteDone": "Auszahlungslauf abgeschlossen.",
   "partner.admin.payrunConfirmPrompt": "Geben Sie PAY_ELIGIBLE_PARTNER_COMMISSIONS ein, um berechtigte Auszahlungen auszuführen",
-  "partner.admin.payrunCanceled": "Auszahlungslauf abgebrochen."
+  "partner.admin.payrunCanceled": "Auszahlungslauf abgebrochen.",
+  "partner.center.tab.renewals": "Verlängerungen",
+  "partner.renewal.title": "Verlängerungsmöglichkeiten",
+  "partner.renewal.desc": "Verfolgen Sie konvertierte Partner-Leads mit auslaufenden oder abgelaufenen NaviGen-Plänen.",
+  "partner.renewal.expires": "Plan läuft ab",
+  "partner.renewal.priority": "Priorität",
+  "partner.renewal.complete": "Abschließen",
+  "partner.renewal.dismiss": "Ablehnen",
+  "partner.renewal.empty": "Derzeit keine Verlängerungsmöglichkeiten.",
+  "partner.renewal.completed": "Verlängerungsaufgabe abgeschlossen.",
+  "partner.renewal.dismissed": "Verlängerungsaufgabe verworfen.",
+  "partner.admin.renewalRun": "Verlängerungsaufgaben aktualisieren",
+  "partner.admin.renewalRunDone": "Aktualisierung der Verlängerungsaufgaben abgeschlossen."
 }

@@ -1961,5 +1961,17 @@
   "partner.admin.payrunDryDone": "Тестовий запуск виплат завершено.",
   "partner.admin.payrunExecuteDone": "Виконання виплат завершено.",
   "partner.admin.payrunConfirmPrompt": "Введіть PAY_ELIGIBLE_PARTNER_COMMISSIONS для запуску допустимих виплат",
-  "partner.admin.payrunCanceled": "Виконання виплат скасовано."
+  "partner.admin.payrunCanceled": "Виконання виплат скасовано.",
+  "partner.center.tab.renewals": "Продовження",
+  "partner.renewal.title": "Можливості продовження",
+  "partner.renewal.desc": "Відстежуйте конвертовані партнерські ліди з планами NaviGen, що закінчуються або вже закінчилися.",
+  "partner.renewal.expires": "План закінчується",
+  "partner.renewal.priority": "Пріоритет",
+  "partner.renewal.complete": "Завершити",
+  "partner.renewal.dismiss": "Відхилити",
+  "partner.renewal.empty": "Наразі немає можливостей продовження.",
+  "partner.renewal.completed": "Завдання продовження виконано.",
+  "partner.renewal.dismissed": "Завдання продовження відхилено.",
+  "partner.admin.renewalRun": "Оновити завдання продовження",
+  "partner.admin.renewalRunDone": "Оновлення завдань продовження завершено."
 }

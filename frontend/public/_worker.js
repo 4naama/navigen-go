@@ -439,6 +439,43 @@ export default {
         headers: r.headers
       });
     }
+
+    // /api/partner/* + Partner Admin routes — proxy to API Worker (Partner Center and NaviGen Admin Platform)
+    {
+      const isPartnerApi = url.pathname.startsWith('/api/partner/');
+      const isPartnerAdminApi =
+        url.pathname === '/api/admin/partners' ||
+        url.pathname.startsWith('/api/admin/partners/') ||
+        url.pathname === '/api/admin/partner-commissions' ||
+        url.pathname.startsWith('/api/admin/partner-commissions/') ||
+        url.pathname === '/api/admin/partner-renewal-tasks' ||
+        url.pathname.startsWith('/api/admin/partner-renewal-tasks/');
+
+      if (isPartnerApi || isPartnerAdminApi) {
+        const apiBase = 'https://navigen-api.4naama.workers.dev';
+        const target = new URL(url.pathname + url.search, apiBase);
+
+        const h = new Headers(req.headers);
+        h.set('Accept', 'application/json');
+        h.set('X-NG-Source', 'pages-worker');
+
+        const r = await fetch(target.toString(), {
+          method: req.method,
+          headers: h,
+          body: req.method === 'GET' || req.method === 'HEAD' ? undefined : req.body,
+          redirect: 'manual'
+        });
+
+        const outHeaders = new Headers(r.headers);
+        outHeaders.set('Cache-Control', 'no-store');
+        outHeaders.set('Referrer-Policy', 'no-referrer');
+
+        return new Response(r.body, {
+          status: r.status,
+          headers: outHeaders
+        });
+      }
+    }
     
     // /api/contexts/business-taxonomy — proxy to API Worker (context taxonomy runtime read)
     if (url.pathname === '/api/contexts/business-taxonomy') {
