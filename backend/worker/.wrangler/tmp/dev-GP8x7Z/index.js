@@ -5600,8 +5600,7 @@ async function handleAdminPartnerCommissionList(req, env) {
 __name(handleAdminPartnerCommissionList, "handleAdminPartnerCommissionList");
 function normalizePartnerConnectCountry(value) {
   const raw = String(value || "").trim().toUpperCase();
-  if (/^[A-Z]{2}$/.test(raw)) return raw;
-  return "HU";
+  return /^[A-Z]{2}$/.test(raw) ? raw : "";
 }
 __name(normalizePartnerConnectCountry, "normalizePartnerConnectCountry");
 function normalizePartnerEmail(value) {
@@ -5763,6 +5762,30 @@ async function handlePartnerConnectStart(req, env) {
   const email = normalizePartnerEmail(body?.email);
   let profile = auth.profile;
   let accountId = String(profile.stripeConnectedAccountId || "").trim();
+  if (!accountId && !country) {
+    return json(
+      {
+        error: {
+          code: "partner_connect_country_required",
+          message: "Partner payout country is required before Stripe Connect onboarding."
+        }
+      },
+      400,
+      partnerNoStoreHeaders()
+    );
+  }
+  if (!accountId && !email) {
+    return json(
+      {
+        error: {
+          code: "partner_connect_email_required",
+          message: "Partner payout email is required before Stripe Connect onboarding."
+        }
+      },
+      400,
+      partnerNoStoreHeaders()
+    );
+  }
   if (!accountId) {
     const form = new URLSearchParams();
     form.set("type", "express");

@@ -14525,7 +14525,7 @@ export async function showMyStuffModal(state) {
     ];
 
     // You can expand this list as translations become available.
-    let availableLangs = new Set(['en', 'de', 'fr', 'hu']); // fallback
+    let availableLangs = new Set(['en', 'fr', 'de', 'hu', 'it',	'he',	'uk',	'nl' , 'ro',	'pl',	'cs',	'es']); // fallback
     availableLangs = await fetchTranslatedLangs();
 
     allFlags.forEach((code) => {

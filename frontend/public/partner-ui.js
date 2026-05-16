@@ -163,11 +163,11 @@ function renderOverviewPanel() {
   return `
     <div class="partner-status-card">
       <strong>${escapeHtml(text('partner.center.overview.title', 'Assisted acquisition workspace'))}</strong><br>
-      <small>${escapeHtml(text('partner.center.overview.desc', 'Create Partner leads, prepare drafts, create BO handoff links, and track commission ledger state.'))}</small>
+      <small>${escapeHtml(text('partner.center.overview.desc', 'Create Partner leads, prepare drafts, create Business owner handoff links, and track commission ledger state.'))}</small>
     </div>
     <div class="partner-status-card ${publicLaunch ? 'partner-status-card-success' : 'partner-status-card-warn'}">
       <strong>${escapeHtml(publicLaunch ? text('partner.center.launch.open', 'Partner public launch enabled') : text('partner.center.launch.blocked', 'Partner public launch blocked'))}</strong><br>
-      <small>${escapeHtml(text('partner.center.launch.desc', 'Partner-assisted BO payment remains blocked until production launch gates are open.'))}</small>
+      <small>${escapeHtml(text('partner.center.launch.desc', 'Partner-assisted Business owner Plan payment remains blocked until production launch gates are open.'))}</small>
     </div>
     <div class="partner-actions-row">
       <button type="button" class="modal-body-button" data-partner-action="refresh">${escapeHtml(text('partner.center.refresh', 'Refresh'))}</button>
@@ -206,7 +206,7 @@ function renderLeadsPanel() {
         </div>
         <div class="modal-field">
           <label>${escapeHtml(text('partner.lead.country', 'Country'))}</label>
-          <input class="input" name="country" autocomplete="country-name" value="HU">
+          <input class="input" name="country" autocomplete="country-name" placeholder="DE">
         </div>
         <div class="modal-field">
           <label>${escapeHtml(text('partner.lead.groupKey', 'Group key'))}</label>
@@ -343,7 +343,10 @@ async function refreshPartnerLists() {
   const [leads, commissions, renewalTasks] = await Promise.all([
     api('/api/partner/leads'),
     api('/api/partner/commissions'),
-    api('/api/partner/renewal-tasks')
+    api('/api/partner/renewal-tasks').catch((err) => {
+      if (Number(err?.status || 0) === 404) return { items: [] };
+      throw err;
+    })
   ]);
 
   state.partner = { ...(state.partner || {}), ...(leads.partner || {}), launch: leads.launch || state.partner?.launch || {} };
@@ -379,11 +382,17 @@ async function handlePartnerCenterAction(action) {
     }
 
     if (type === 'connect-start') {
-      const email = String(window.prompt(text('partner.connect.emailPrompt', 'Partner payout email for Stripe Connect'), '') || '').trim();
-      const country = String(window.prompt(text('partner.connect.countryPrompt', 'Partner country code for Stripe Connect (for example GB or HU)'), '') || '').trim().toUpperCase();
+      const email = String(window.prompt(text('partner.connect.emailPrompt', 'Your own Partner payout email for Stripe Connect. Use an email you control; this is not the Business owner email.'), '') || '').trim();
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showToast(text('partner.connect.emailRequired', 'Enter the Partner payout email before opening Stripe Connect.'), 3200);
+        return;
+      }
+
+      const country = String(window.prompt(text('partner.connect.countryPrompt', 'Your legal payout country code for Stripe Connect, such as GB or DE. Use the country where you will receive Partner payouts.'), '') || '').trim().toUpperCase();
 
       if (!/^[A-Z]{2}$/.test(country)) {
-        showToast(text('partner.connect.countryInvalid', 'Use a two-letter country code such as GB or HU.'), 3200);
+        showToast(text('partner.connect.countryInvalid', 'Use a two-letter country code such as GB or DE.'), 3200);
         return;
       }
 
@@ -551,7 +560,7 @@ async function adminApi(path, opts = {}) {
 function ensurePartnerAdminModal() {
   const modal = injectModal({
     id: PARTNER_ADMIN_MODAL_ID,
-    title: text('partner.admin.title', 'NaviGen Admin Platform'),
+    title: text('partner.admin.title', 'Admin platform'),
     layout: 'menu',
     bodyHTML: '<div id="partner-admin-root" class="partner-center"></div>'
   });

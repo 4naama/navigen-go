@@ -942,7 +942,7 @@ function renderNaviGenPartnersGroup() {
         icon: "🛠️",
         titleKey: "root.partner.admin.title",
         descKey: "root.partner.admin.desc",
-        titleFallback: "NaviGen Admin Platform",
+        titleFallback: "Admin platform",
         descFallback: "Inspect Partner status, capacity, attribution, and commission ledger state.",
         onClick: openPartnerAdminPlatformFromShell
       }
@@ -1430,7 +1430,7 @@ async function initEmergencyBlock(countryOverride) {
   const metaCountry =
     document.querySelector('meta[name="cf-country"]')?.content ||   // e.g., injected by CDN/edge
     document.querySelector('meta[name="app-country"]')?.content ||  // your own server meta
-    document.documentElement.getAttribute('data-country') ||        // optional <html data-country="HU">
+    document.documentElement.getAttribute('data-country') ||        // optional <html data-country="DE">
     (() => { try { return new Intl.Locale(document.documentElement.lang || navigator.language).region; } catch { return ''; } })();
 
   const cc = (countryOverride || localStorage.getItem('emg.country') || metaCountry || 'US').toUpperCase();
