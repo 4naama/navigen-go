@@ -36,6 +36,44 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+const PARTNER_PAYOUT_COUNTRY_CODES = 'AT BE BG CA CH CY CZ DE DK EE ES FI FR GB GR HR IE IS IT LI LT LU LV MT NL NO PL PT RO SE SI SK US'.split(' ');
+const PARTNER_PAYOUT_COUNTRY_CODE_SET = new Set(PARTNER_PAYOUT_COUNTRY_CODES);
+
+function partnerCountryName(code) {
+  const value = String(code || '').trim().toUpperCase();
+  try {
+    return new Intl.DisplayNames([document.documentElement.lang || navigator.language || 'en'], { type: 'region' }).of(value) || value;
+  } catch {
+    return value;
+  }
+}
+
+function renderPartnerCountryOptions(datalistId) {
+  const id = String(datalistId || 'partner-country-options').trim();
+  return `
+    <datalist id="${escapeHtml(id)}">
+      ${PARTNER_PAYOUT_COUNTRY_CODES.map((code) => `<option value="${escapeHtml(code)}" label="${escapeHtml(partnerCountryName(code))}"></option>`).join('')}
+    </datalist>
+  `;
+}
+
+function renderPartnerPayoutCountrySelectOptions(selectedValue = '') {
+  const selected = String(selectedValue || '').trim().toUpperCase();
+
+  return [
+    `<option value="">${escapeHtml(text('partner.connect.countryEmpty', 'Select'))}</option>`,
+    ...PARTNER_PAYOUT_COUNTRY_CODES.map((code) => `<option value="${escapeHtml(code)}"${selected === code ? ' selected' : ''}>${escapeHtml(code)}</option>`)
+  ].join('');
+}
+
+function partnerTabLabel(tabId) {
+  const id = String(tabId || 'overview').trim();
+  if (id === 'leads') return text('partner.center.tab.leads', 'Leads');
+  if (id === 'renewals') return text('partner.center.tab.renewals', 'Renewals');
+  if (id === 'commissions') return text('partner.center.tab.commissions', 'Commissions');
+  return text('partner.center.tab.overview', 'Overview');
+}
+
 function formatDate(value) {
   const ms = Date.parse(String(value || ''));
   if (!Number.isFinite(ms)) return '';
@@ -69,7 +107,7 @@ async function api(path, opts = {}) {
 function ensurePartnerCenterModal() {
   const modal = injectModal({
     id: PARTNER_CENTER_MODAL_ID,
-    title: text('partner.center.title', 'NaviGen Partner Center'),
+    title: text('partner.center.title', 'NaviGen partner center'),
     layout: 'menu',
     bodyHTML: '<div id="partner-center-root" class="partner-center"></div>'
   });
@@ -114,39 +152,53 @@ function renderPartnerCenter() {
 
   const partner = state.partner || {};
   const tabs = [
-    ['overview', text('partner.center.tab.overview', 'Overview')],
-    ['leads', text('partner.center.tab.leads', 'Leads')],
-    ['renewals', text('partner.center.tab.renewals', 'Renewals')],
-    ['commissions', text('partner.center.tab.commissions', 'Commissions')]
+    ['overview', partnerTabLabel('overview')],
+    ['leads', partnerTabLabel('leads')],
+    ['renewals', partnerTabLabel('renewals')],
+    ['commissions', partnerTabLabel('commissions')]
   ];
+  const openLeadText = `${Number(partner.openLeadCount || 0)} / ${Number(partner.leadCapacity || 0)}`;
+  const activeTabLabel = partnerTabLabel(state.activeTab);
 
   root.innerHTML = `
     <div class="partner-center-shell">
       ${state.message ? `<div class="partner-status-card partner-status-card-info">${escapeHtml(state.message)}</div>` : ''}
 
-      <div class="partner-summary-grid">
-        <div class="partner-summary-card">
-          <small>${escapeHtml(text('partner.center.partnerId', 'Partner ID'))}</small>
-          <strong>${escapeHtml(partner.partnerId || '—')}</strong>
-        </div>
-        <div class="partner-summary-card">
-          <small>${escapeHtml(text('partner.center.status', 'Status'))}</small>
-          <strong>${escapeHtml(partner.status || '—')}</strong>
-        </div>
-        <div class="partner-summary-card">
-          <small>${escapeHtml(text('partner.center.capacity', 'Open leads'))}</small>
-          <strong>${Number(partner.openLeadCount || 0)} / ${Number(partner.leadCapacity || 0)}</strong>
-        </div>
-        <div class="partner-summary-card">
-          <small>${escapeHtml(text('partner.center.connect', 'Payout identity'))}</small>
-          <strong>${escapeHtml(partner.connectStatus || 'not_started')}</strong>
-        </div>
-      </div>
+      <div class="partner-header-stack">
+        <details class="cm-chip request-section-chip partner-status-chip">
+          <summary class="modal-menu-item cm-chip-face request-section-chip-face">
+            <span class="label cm-chip-face-label request-section-chip-label">
+              <strong class="request-section-chip-title">${escapeHtml(text('partner.center.statusChip.title', 'Partner status'))}</strong>
+              <small class="request-section-chip-summary">${escapeHtml(text('partner.center.capacity', 'Open leads'))} ${openLeadText}</small>
+            </span>
+            <span class="cm-chip-face-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="cm-chip-body">
+            <div class="cm-chip-stack">
+              <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.partnerId', 'Partner ID'))}</span><span class="cm-chip-v">${escapeHtml(partner.partnerId || '—')}</span></div>
+              <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.status', 'Status'))}</span><span class="cm-chip-v">${escapeHtml(partner.status || '—')}</span></div>
+              <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.capacity', 'Open leads'))}</span><span class="cm-chip-v">${openLeadText}</span></div>
+              <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.connect', 'Payout identity'))}</span><span class="cm-chip-v">${escapeHtml(partner.connectStatus || 'not_started')}</span></div>
+            </div>
+          </div>
+        </details>
 
-      <div class="partner-tabbar" role="tablist">
-        ${tabs.map(([id, label]) => `
-          <button type="button" class="partner-tab ${state.activeTab === id ? 'is-active' : ''}" data-partner-action="tab" data-tab="${escapeHtml(id)}">${escapeHtml(label)}</button>
-        `).join('')}
+        <details class="cm-chip request-section-chip partner-section-chip">
+          <summary class="modal-menu-item cm-chip-face request-section-chip-face partner-section-chip-face">
+            <span class="label cm-chip-face-label request-section-chip-label">
+              <strong class="request-section-chip-title">${escapeHtml(activeTabLabel)}</strong>
+              <small class="request-section-chip-summary">${escapeHtml(text('partner.center.sectionPicker.summary', 'Choose Partner Center view'))}</small>
+            </span>
+            <span class="cm-chip-face-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="cm-chip-body partner-section-options">
+            ${tabs.map(([id, label]) => `
+              <button type="button" class="modal-menu-item partner-section-option ${state.activeTab === id ? 'is-active' : ''}" data-partner-action="tab" data-tab="${escapeHtml(id)}">
+                <span class="label"><strong>${escapeHtml(label)}</strong></span>
+              </button>
+            `).join('')}
+          </div>
+        </details>
       </div>
 
       <div class="partner-tabpanel">
@@ -160,21 +212,36 @@ function renderPartnerCenter() {
 }
 
 function renderOverviewPanel() {
-  const publicLaunch = state.partner?.launch?.publicLaunchAllowed === true;
   return `
-    <div class="partner-status-card">
-      <strong>${escapeHtml(text('partner.center.overview.title', 'Assisted acquisition workspace'))}</strong><br>
-      <small>${escapeHtml(text('partner.center.overview.desc', 'Create Partner leads, prepare drafts, create Business owner handoff links, and track commission ledger state.'))}</small>
-    </div>
-    <div class="partner-status-card ${publicLaunch ? 'partner-status-card-success' : 'partner-status-card-warn'}">
-      <strong>${escapeHtml(publicLaunch ? text('partner.center.launch.open', 'Partner public launch enabled') : text('partner.center.launch.blocked', 'Partner public launch blocked'))}</strong><br>
-      <small>${escapeHtml(text('partner.center.launch.desc', 'Partner-assisted Business owner Plan payment remains blocked until production launch gates are open.'))}</small>
-    </div>
-    <div class="partner-actions-row">
-      <button type="button" class="modal-body-button" data-partner-action="refresh">${escapeHtml(text('partner.center.refresh', 'Refresh'))}</button>
-      <button type="button" class="modal-body-button" data-partner-action="connect-status">${escapeHtml(text('partner.connect.refresh', 'Refresh payout identity'))}</button>
-      <button type="button" class="modal-body-button" data-partner-action="connect-start">${escapeHtml(text('partner.connect.start', 'Start payout onboarding'))}</button>
-      <button type="button" class="modal-body-button" data-partner-action="tab" data-tab="leads">${escapeHtml(text('partner.center.createLead', 'Create lead'))}</button>
+    <div class="partner-overview-grid">
+      <button type="button" class="modal-menu-item partner-overview-card" data-partner-action="tab" data-tab="leads">
+        <span class="icon-img" aria-hidden="true">🧾</span>
+        <span class="label">
+          <strong>${escapeHtml(text('partner.overview.leads.title', 'Leads'))}</strong><br>
+          <small>${escapeHtml(text('partner.overview.leads.desc', 'Create and manage Partner leads.'))}</small>
+        </span>
+      </button>
+      <button type="button" class="modal-menu-item partner-overview-card" data-partner-action="connect-start">
+        <span class="icon-img" aria-hidden="true">🏦</span>
+        <span class="label">
+          <strong>${escapeHtml(text('partner.connect.start', 'Start payout onboarding'))}</strong><br>
+          <small>${escapeHtml(text('partner.overview.connect.desc', 'Open Stripe Connect setup.'))}</small>
+        </span>
+      </button>
+      <button type="button" class="modal-menu-item partner-overview-card" data-partner-action="connect-status">
+        <span class="icon-img" aria-hidden="true">✅</span>
+        <span class="label">
+          <strong>${escapeHtml(text('partner.connect.refresh', 'Refresh payout identity'))}</strong><br>
+          <small>${escapeHtml(text('partner.overview.connectStatus.desc', 'Update payout identity status.'))}</small>
+        </span>
+      </button>
+      <button type="button" class="modal-menu-item partner-overview-card" data-partner-action="refresh">
+        <span class="icon-img" aria-hidden="true">🔄</span>
+        <span class="label">
+          <strong>${escapeHtml(text('partner.center.refresh', 'Refresh'))}</strong><br>
+          <small>${escapeHtml(text('partner.overview.refresh.desc', 'Update leads, renewals, and commissions.'))}</small>
+        </span>
+      </button>
     </div>
   `;
 }
@@ -185,21 +252,24 @@ function ensurePartnerConnectSetupModal() {
     title: text('partner.connect.setupTitle', 'Start payout onboarding'),
     layout: 'menu',
     bodyHTML: `
-      <form data-partner-form="connect" class="partner-lead-form">
-        <div class="partner-status-card">
-          <small>${escapeHtml(text('partner.connect.setupDesc', 'Continue opens Stripe Connect onboarding.'))}</small>
+      <form data-partner-form="connect" class="modal-form-stack partner-connect-form">
+        <div class="modal-static-card partner-connect-note">
+          <span class="label">
+            <strong>${escapeHtml(text('partner.connect.setupTitle', 'Start payout onboarding'))}</strong><br>
+            <small>${escapeHtml(text('partner.connect.setupDesc', 'Continue opens Stripe Connect onboarding.'))}</small>
+          </span>
         </div>
-        <div class="modal-form-grid">
-          <div class="modal-field">
-            <label>${escapeHtml(text('partner.connect.emailLabel', 'Payout email'))}</label>
-            <input class="input" name="email" type="email" autocomplete="email" placeholder="${escapeHtml(text('partner.connect.emailPlaceholder', 'name@example.com'))}" required>
-          </div>
-          <div class="modal-field">
-            <label>${escapeHtml(text('partner.connect.countryLabel', 'Payout country code'))}</label>
-            <input class="input" name="country" autocomplete="country" maxlength="2" placeholder="${escapeHtml(text('partner.connect.countryPlaceholder', 'DE'))}" required>
-          </div>
+        <div class="modal-field">
+          <label>${escapeHtml(text('partner.connect.emailLabel', 'Payout email'))} <span class="required-star">*</span></label>
+          <input class="input" name="email" type="email" autocomplete="email" placeholder=" " required>
         </div>
-        <div class="partner-actions-row">
+        <div class="modal-field">
+          <label>${escapeHtml(text('partner.connect.countryLabel', 'Country code'))} <span class="required-star">*</span></label>
+          <select class="input" name="country" required>
+            ${renderPartnerPayoutCountrySelectOptions()}
+          </select>
+        </div>
+        <div class="modal-actions">
           <button type="submit" class="modal-body-button">${escapeHtml(text('partner.connect.continue', 'Continue to Stripe'))}</button>
           <button type="button" class="modal-body-button" data-partner-connect-cancel>${escapeHtml(text('partner.connect.cancel', 'Cancel'))}</button>
         </div>
@@ -225,8 +295,8 @@ function ensurePartnerConnectSetupModal() {
         return;
       }
 
-      if (!/^[A-Z]{2}$/.test(country)) {
-        showToast(text('partner.connect.countryInvalid', 'Provide a two-letter payout country code such as GB or DE.'), 3200);
+      if (!PARTNER_PAYOUT_COUNTRY_CODE_SET.has(country)) {
+        showToast(text('partner.connect.countryRequired', 'Choose payout country code.'), 3200);
         return;
       }
 
@@ -274,7 +344,6 @@ function requestPartnerConnectSetup() {
     modal.addEventListener('partner-connect-cancel', onCancel);
 
     showModal(PARTNER_CONNECT_MODAL_ID);
-
     window.setTimeout(() => {
       modal.querySelector('input[name="email"]')?.focus?.();
     }, 0);
@@ -285,46 +354,84 @@ function renderLeadsPanel() {
   const leads = asArray(state.leads);
 
   return `
-    <form class="partner-lead-form" data-partner-form="lead">
-      <div class="modal-form-grid">
-        <div class="modal-field">
-          <label>${escapeHtml(text('partner.lead.businessName', 'Business name'))}</label>
-          <input class="input" name="businessName" required autocomplete="organization">
+    <form class="partner-lead-form modal-form-stack" data-partner-form="lead">
+      <details class="cm-chip request-section-chip partner-lead-section-chip" open>
+        <summary class="modal-menu-item cm-chip-face request-section-chip-face">
+          <span class="label cm-chip-face-label request-section-chip-label">
+            <strong class="request-section-chip-title">${escapeHtml(text('partner.lead.businessSection.title', 'Business information'))}</strong>
+            <small class="request-section-chip-summary">${escapeHtml(text('partner.lead.businessSection.summary', 'Name and contact route.'))}</small>
+          </span>
+          <span class="request-section-badge-stack">
+            <span class="request-section-badge is-required">${escapeHtml(text('partner.lead.section.required', 'Required'))}</span>
+          </span>
+          <span class="cm-chip-face-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="cm-chip-body">
+          <div class="modal-form-stack">
+            <div class="modal-field">
+              <label>${escapeHtml(text('partner.lead.businessName', 'Business name'))} <span class="required-star">*</span></label>
+              <input class="input" name="businessName" required autocomplete="organization" placeholder=" ">
+            </div>
+            <div class="modal-form-grid">
+              <div class="modal-field">
+                <label>${escapeHtml(text('partner.lead.website', 'Website'))}</label>
+                <input class="input" name="website" autocomplete="url" placeholder=" ">
+              </div>
+              <div class="modal-field">
+                <label>${escapeHtml(text('partner.lead.phone', 'Phone'))}</label>
+                <input class="input" name="phone" autocomplete="tel" placeholder=" ">
+              </div>
+            </div>
+            <div class="modal-field">
+              <label>${escapeHtml(text('partner.lead.address', 'Street address'))}</label>
+              <input class="input" name="address" autocomplete="street-address" placeholder=" ">
+            </div>
+            <div class="modal-form-grid">
+              <div class="modal-field">
+                <label>${escapeHtml(text('partner.lead.city', 'City'))}</label>
+                <input class="input" name="city" autocomplete="address-level2" placeholder=" ">
+              </div>
+              <div class="modal-field">
+                <label>${escapeHtml(text('partner.lead.countryCode', 'Country code'))}</label>
+                <input class="input" name="country" maxlength="2" list="partner-lead-country-options" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder=" ">
+                ${renderPartnerCountryOptions('partner-lead-country-options')}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="modal-field">
-          <label>${escapeHtml(text('partner.lead.website', 'Website'))}</label>
-          <input class="input" name="website" autocomplete="url">
+      </details>
+
+      <details class="cm-chip request-section-chip partner-lead-section-chip">
+        <summary class="modal-menu-item cm-chip-face request-section-chip-face">
+          <span class="label cm-chip-face-label request-section-chip-label">
+            <strong class="request-section-chip-title">${escapeHtml(text('partner.lead.discoverySection.title', 'SEO & discovery'))}</strong>
+            <small class="request-section-chip-summary">${escapeHtml(text('partner.lead.discoverySection.summary', 'Optional discovery hints.'))}</small>
+          </span>
+          <span class="request-section-badge is-optional">${escapeHtml(text('partner.lead.section.optional', 'Optional'))}</span>
+          <span class="cm-chip-face-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="cm-chip-body">
+          <div class="modal-form-stack">
+            <div class="modal-form-grid">
+              <div class="modal-field">
+                <label>${escapeHtml(text('partner.lead.groupKey', 'Group key'))}</label>
+                <input class="input" name="groupKey" placeholder=" ">
+              </div>
+              <div class="modal-field">
+                <label>${escapeHtml(text('partner.lead.subgroupKey', 'Subgroup key'))}</label>
+                <input class="input" name="subgroupKey" placeholder=" ">
+              </div>
+            </div>
+            <div class="modal-field">
+              <label>${escapeHtml(text('partner.lead.contexts', 'Contexts'))}</label>
+              <input class="input" name="contexts" placeholder=" ">
+              <small class="modal-help-text">${escapeHtml(text('partner.lead.contextsHelp', 'Separate multiple context hints with commas.'))}</small>
+            </div>
+          </div>
         </div>
-        <div class="modal-field">
-          <label>${escapeHtml(text('partner.lead.phone', 'Phone'))}</label>
-          <input class="input" name="phone" autocomplete="tel">
-        </div>
-        <div class="modal-field">
-          <label>${escapeHtml(text('partner.lead.address', 'Address'))}</label>
-          <input class="input" name="address" autocomplete="street-address">
-        </div>
-        <div class="modal-field">
-          <label>${escapeHtml(text('partner.lead.city', 'City'))}</label>
-          <input class="input" name="city" autocomplete="address-level2">
-        </div>
-        <div class="modal-field">
-          <label>${escapeHtml(text('partner.lead.country', 'Country'))}</label>
-          <input class="input" name="country" autocomplete="country-name" placeholder="DE">
-        </div>
-        <div class="modal-field">
-          <label>${escapeHtml(text('partner.lead.groupKey', 'Group key'))}</label>
-          <input class="input" name="groupKey" placeholder="food">
-        </div>
-        <div class="modal-field">
-          <label>${escapeHtml(text('partner.lead.subgroupKey', 'Subgroup key'))}</label>
-          <input class="input" name="subgroupKey" placeholder="restaurant">
-        </div>
-      </div>
-      <div class="modal-field">
-        <label>${escapeHtml(text('partner.lead.contexts', 'Contexts'))}</label>
-        <input class="input" name="contexts" placeholder="lunch, qr, local">
-      </div>
-      <div class="partner-actions-row">
+      </details>
+
+      <div class="modal-actions">
         <button type="submit" class="modal-body-button">${escapeHtml(text('partner.lead.create', 'Create lead'))}</button>
       </div>
     </form>
@@ -568,7 +675,7 @@ async function submitPartnerLeadForm(form) {
     phone: String(data.get('phone') || '').trim(),
     address: String(data.get('address') || '').trim(),
     city: String(data.get('city') || '').trim(),
-    country: String(data.get('country') || '').trim(),
+    country: String(data.get('country') || '').trim().toUpperCase(),
     groupKey: String(data.get('groupKey') || '').trim(),
     subgroupKey: String(data.get('subgroupKey') || '').trim(),
     contexts

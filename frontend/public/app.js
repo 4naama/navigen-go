@@ -928,7 +928,7 @@ function renderNaviGenPartnersGroup() {
   renderRootActionGroup({
     groupKey: "root.partner.title",
     defaultTitleKey: "root.partner.title",
-    defaultTitleFallback: "NaviGen Partners",
+    defaultTitleFallback: "NaviGen partners",
     cards: [
       {
         icon: "🤝",

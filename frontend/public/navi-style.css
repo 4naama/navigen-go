@@ -4282,7 +4282,8 @@ select.input[multiple]{
 }
 
 /* Partner Center / Admin Platform UI shell
-   Kept in shared CSS for now; Partner UI logic lives in partner-ui.js. */
+   Partner-facing Center follows the Create Location chip canon.
+   Admin Platform keeps the shared Partner cards until its own UX pass. */
 #partner-center-modal .modal-body-inner,
 #partner-handoff-modal .modal-body-inner{
   min-width:0;
@@ -4290,6 +4291,19 @@ select.input[multiple]{
 
 .partner-center,
 .partner-center-shell{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-width:0;
+}
+
+#partner-center-modal .partner-center-shell{
+  gap:10px;
+}
+
+.partner-header-stack,
+.partner-overview-grid,
+.partner-section-options{
   display:flex;
   flex-direction:column;
   gap:12px;
@@ -4334,7 +4348,175 @@ select.input[multiple]{
   border-color:#bbf7d0;
 }
 
-.partner-tabbar,
+#partner-center-modal .request-section-chip{
+  width:100%;
+  margin-top:0;
+  border:1px solid #d9e4ee;
+  border-radius:14px;
+  background:#fff;
+  overflow:hidden;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+  box-sizing:border-box;
+}
+
+#partner-center-modal .request-section-chip .request-section-chip-face{
+  min-height:58px;
+  padding:12px 14px;
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto auto;
+  align-items:start;
+  gap:10px;
+  background:#eef4fb;
+  border:0;
+  border-bottom:1px solid #d9e4ee;
+  border-radius:0;
+}
+
+#partner-center-modal .request-section-chip[open] .request-section-chip-face{
+  background:#e3efff;
+  border-bottom-color:#bfd3f6;
+}
+
+#partner-center-modal .partner-section-chip .partner-section-chip-face{
+  background:#fffbeb;
+  border-bottom-color:#fbbf24;
+}
+
+#partner-center-modal .partner-section-chip[open] .partner-section-chip-face{
+  background:#fff;
+  border-bottom-color:#d32f2f;
+}
+
+#partner-center-modal .request-section-chip .request-section-chip-label{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:2.4em;
+  overflow:hidden;
+  text-align:left;
+}
+
+#partner-center-modal .request-section-chip .request-section-chip-title{
+  display:block;
+  color:#1f2937;
+  line-height:1.2;
+  font-weight:700;
+  white-space:normal;
+  overflow:hidden;
+}
+
+#partner-center-modal .request-section-chip .request-section-chip-summary{
+  display:block;
+  width:100%;
+  min-width:0;
+  margin-top:4px;
+  color:#64748b;
+  font-size:.85rem;
+  font-weight:400;
+  line-height:1.25;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  opacity:1;
+}
+
+#partner-center-modal .request-section-badge,
+#partner-center-modal .request-section-badge-stack{
+  flex:0 0 auto;
+  align-self:start;
+  margin-top:2px;
+}
+
+#partner-center-modal .request-section-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:.22rem .7rem;
+  border:1px solid transparent;
+  border-radius:999px;
+  font-size:.74rem;
+  font-weight:700;
+  line-height:1.2;
+  white-space:nowrap;
+}
+
+#partner-center-modal .request-section-badge.is-required{
+  background:#fdecec;
+  border-color:#f5c2c7;
+  color:#b42318;
+}
+
+#partner-center-modal .request-section-badge.is-optional{
+  background:#f3f5f7;
+  border-color:#d9dee5;
+  color:#475467;
+}
+
+#partner-center-modal .request-section-chip .cm-chip-face-chevron{
+  align-self:start;
+  margin-left:0;
+  margin-top:2px;
+}
+
+#partner-center-modal .request-section-chip .cm-chip-body{
+  margin:0;
+  padding:14px 16px 16px;
+  border:0;
+  border-radius:0 0 14px 14px;
+  background:#fff;
+  overflow:visible;
+}
+
+#partner-center-modal .partner-section-option{
+  width:100%;
+  min-height:44px;
+  background:#fff;
+  border-color:#e5e7eb;
+  box-shadow:none;
+}
+
+#partner-center-modal .partner-section-option:hover{
+  background:#fff7ed;
+  border-color:#fbbf24;
+  transform:none;
+}
+
+#partner-center-modal .partner-section-option.is-active{
+  background:#fff;
+  border-color:#d32f2f;
+  box-shadow:0 0 0 1px rgba(211,47,47,.12);
+}
+
+#partner-center-modal .partner-overview-card{
+  min-height:68px;
+  align-items:center;
+  background:#edf4fb;
+  border-color:#c8d9ef;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+
+#partner-center-modal .partner-overview-card:hover{
+  background:#e6f1ff;
+  border-color:#9ebcff;
+  transform:translateY(-1px);
+}
+
+#partner-center-modal .partner-overview-card .label{
+  min-width:0;
+  text-align:left;
+}
+
+#partner-center-modal .partner-overview-card .label strong{
+  color:#1f2937;
+  font-weight:700;
+}
+
+#partner-center-modal .partner-overview-card .label small{
+  color:#667085;
+  opacity:1;
+}
+
 .partner-actions-row{
   display:flex;
   flex-wrap:wrap;
@@ -4342,27 +4524,46 @@ select.input[multiple]{
   align-items:center;
 }
 
-.partner-tab{
-  border:1px solid #d9e4ee;
-  border-radius:999px;
-  background:#fff;
-  color:#0f172a;
-  padding:7px 12px;
-  font:inherit;
-  cursor:pointer;
-}
-
-.partner-tab.is-active,
-.partner-tab:hover{
-  background:#e8f0fe;
-  border-color:#7aa7ff;
-}
-
 .partner-lead-form,
 .partner-list{
   display:flex;
   flex-direction:column;
   gap:12px;
+}
+
+#partner-center-modal .partner-lead-form{
+  gap:12px;
+}
+
+#partner-center-modal .partner-lead-form .modal-actions{
+  margin-top:0;
+}
+
+#partner-center-modal .cm-chip-body input.input:not([type="hidden"]),
+#partner-center-modal .cm-chip-body textarea.input,
+#partner-center-modal .cm-chip-body select.input,
+#partner-connect-modal input.input,
+#partner-connect-modal select.input{
+  background:#fffbeb;
+  border-color:#fbbf24;
+}
+
+#partner-center-modal .cm-chip-body input.input:not([type="hidden"]):focus,
+#partner-center-modal .cm-chip-body textarea.input:focus,
+#partner-center-modal .cm-chip-body select.input:focus,
+#partner-connect-modal input.input:focus,
+#partner-connect-modal select.input:focus{
+  border-color:#f59e0b;
+  box-shadow:0 0 0 3px rgba(245,158,11,.16);
+}
+
+#partner-center-modal .cm-chip-body input.input.input-error,
+#partner-center-modal .cm-chip-body textarea.input.input-error,
+#partner-center-modal .cm-chip-body select.input.input-error,
+#partner-connect-modal input.input.input-error,
+#partner-connect-modal select.input.input-error{
+  border-color:#d32f2f;
+  box-shadow:0 0 0 1px rgba(211,47,47,.12);
 }
 
 .partner-card-head{
@@ -4435,6 +4636,14 @@ select.input[multiple]{
   padding:14px;
   color:#475569;
   background:#f8fafc;
+  text-align:left;
+}
+
+#partner-connect-modal .partner-connect-form{
+  gap:12px;
+}
+
+#partner-connect-modal .partner-connect-note{
   text-align:left;
 }
 
