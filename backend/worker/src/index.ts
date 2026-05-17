@@ -1219,8 +1219,10 @@ type PartnerLeadRecord = {
   website: string;
   phone: string;
   address: string;
+  postalCode: string;
   city: string;
   country: string;
+  coord: string;
   groupKey: string;
   subgroupKey: string;
   contexts: string[];
@@ -1343,8 +1345,10 @@ function publicPartnerLead(lead: PartnerLeadRecord): Record<string, unknown> {
     website: lead.website,
     phone: lead.phone,
     address: lead.address,
+    postalCode: (lead as any).postalCode || "",
     city: lead.city,
     country: lead.country,
+    coord: (lead as any).coord || "",
     groupKey: lead.groupKey,
     subgroupKey: lead.subgroupKey,
     contexts: lead.contexts,
@@ -1583,8 +1587,28 @@ async function handlePartnerLeadCreate(req: Request, env: Env): Promise<Response
   const website = sanitizePartnerLeadString(body?.website || body?.officialWebsite || body?.url, 220);
   const phone = sanitizePartnerLeadString(body?.phone || body?.telephone, 80);
   const address = sanitizePartnerLeadString(body?.address || body?.streetAddress || body?.formattedAddress, 300);
+  const postalCode = sanitizePartnerLeadString(body?.postalCode || body?.postcode || body?.zip, 40);
   const city = sanitizePartnerLeadString(body?.city, 120);
   const country = sanitizePartnerLeadString(body?.country, 80);
+  const sourceRaw = sanitizePartnerLeadString(body?.source, 60);
+  const source = sourceRaw === "partner_google_import" ? "partner_google_import" : "partner_manual";
+  let coord = "";
+
+  try {
+    coord = normalizeDraftCoord(body?.coord || body?.coordinates) || "";
+  } catch {
+    return json(
+      {
+        error: {
+          code: "invalid_partner_lead_coord",
+          message: "invalid coordinates"
+        }
+      },
+      400,
+      partnerNoStoreHeaders()
+    );
+  }
+
   const groupKey = sanitizePartnerLeadString(body?.groupKey, 120);
   const subgroupKey = sanitizePartnerLeadString(body?.subgroupKey, 120);
   const contexts = uniquePartnerLeadContexts(body?.contexts);
@@ -1673,8 +1697,10 @@ async function handlePartnerLeadCreate(req: Request, env: Env): Promise<Response
     website,
     phone,
     address,
+    postalCode,
     city,
     country,
+    coord,
     groupKey,
     subgroupKey,
     contexts,
@@ -1683,7 +1709,7 @@ async function handlePartnerLeadCreate(req: Request, env: Env): Promise<Response
     draftSessionId: "",
     locationULID: "",
     reservationStakePaymentIntentId: "",
-    source: "partner_center",
+    source,
     createdAt: nowIso,
     updatedAt: nowIso,
     expiresAt: new Date(nowMs + PARTNER_LEAD_RESERVATION_DAYS * 24 * 60 * 60 * 1000).toISOString()
@@ -2383,8 +2409,16 @@ function partnerLeadDraftBaseFromLead(lead: PartnerLeadRecord): Record<string, a
     name: lead.businessName,
     displayName: lead.businessName,
     address: lead.address,
+    postalCode: (lead as any).postalCode || "",
     city: lead.city,
     country: lead.country,
+    coord: (lead as any).coord || "",
+    contactInformation: {
+      address: lead.address,
+      postalCode: (lead as any).postalCode || "",
+      city: lead.city,
+      countryCode: lead.country
+    },
     website: lead.website,
     officialWebsite: lead.website,
     phone: lead.phone,

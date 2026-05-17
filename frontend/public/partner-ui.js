@@ -11,6 +11,8 @@ const state = {
   commissions: [],
   renewalTasks: [],
   activeTab: 'overview',
+  sectionTouched: false,
+  leadPath: 'manual',
   loading: false,
   message: '',
   handoffUrlByLeadId: new Map()
@@ -66,6 +68,110 @@ function renderPartnerPayoutCountrySelectOptions(selectedValue = '') {
   ].join('');
 }
 
+let partnerStructureCatalogPromise;
+let partnerStructureCatalogRows = [];
+
+function loadPartnerStructureCatalog(force = false) {
+  if (force) {
+    partnerStructureCatalogPromise = null;
+    partnerStructureCatalogRows = [];
+  }
+
+  if (partnerStructureCatalogRows.length && !force) return Promise.resolve(partnerStructureCatalogRows);
+
+  if (!partnerStructureCatalogPromise) {
+    partnerStructureCatalogPromise = fetch('/api/structure/business-categories', {
+      cache: 'no-store',
+      credentials: 'include',
+      headers: { accept: 'application/json' }
+    })
+      .then((res) => (res.ok ? res.json().catch(() => null) : null))
+      .then((payload) => {
+        const rows = Array.isArray(payload?.groups) ? payload.groups : (Array.isArray(payload) ? payload : []);
+        partnerStructureCatalogRows = rows;
+        if (!rows.length) partnerStructureCatalogPromise = null;
+        return rows;
+      })
+      .catch(() => {
+        partnerStructureCatalogPromise = null;
+        return partnerStructureCatalogRows;
+      });
+  }
+
+  return partnerStructureCatalogPromise;
+}
+
+function renderPartnerTabOptions(tabs, selectedTab = '') {
+  const selected = String(selectedTab || 'overview').trim();
+
+  return tabs.map(([id, label]) => {
+    const value = String(id || '').trim();
+    return `<option value="${escapeHtml(value)}"${selected === value ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+  }).join('');
+}
+
+function renderPartnerGroupOptions(structureRows, selectedValue = '') {
+  const selected = String(selectedValue || '').trim();
+
+  return [
+    `<option value="">${escapeHtml(text('partner.lead.group.placeholder', 'Select group'))}</option>`,
+    ...(Array.isArray(structureRows) ? structureRows : []).map((row) => {
+      const groupKey = String(row?.groupKey || '').trim();
+      const groupName = String(row?.groupName || groupKey).trim();
+      return groupKey ? `<option value="${escapeHtml(groupKey)}"${selected === groupKey ? ' selected' : ''}>${escapeHtml(groupName)}</option>` : '';
+    }).filter(Boolean)
+  ].join('');
+}
+
+function renderPartnerSubgroupOptions(structureRows, groupKey, selectedValue = '') {
+  const selected = String(selectedValue || '').trim();
+  const group = (Array.isArray(structureRows) ? structureRows : []).find((row) => String(row?.groupKey || '').trim() === String(groupKey || '').trim());
+  const subgroups = Array.isArray(group?.subgroups) ? group.subgroups : [];
+
+  return [
+    `<option value="">${escapeHtml(text('partner.lead.subgroup.placeholder', 'Select subgroup'))}</option>`,
+    ...subgroups.map((row) => {
+      const key = String(row?.key || '').trim();
+      const name = String(row?.name || key).trim();
+      return key ? `<option value="${escapeHtml(key)}"${selected === key ? ' selected' : ''}>${escapeHtml(name)}</option>` : '';
+    }).filter(Boolean)
+  ].join('');
+}
+
+function partnerLeadSlugPart(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .trim();
+}
+
+function partnerGeneratedLeadContexts(data) {
+  const country = partnerLeadSlugPart(partnerCountryName(data.get('country')) || data.get('country'));
+  const city = partnerLeadSlugPart(data.get('city'));
+  const pairs = [
+    [data.get('groupKey'), data.get('subgroupKey')],
+    [data.get('groupKey2'), data.get('subgroupKey2')],
+    [data.get('groupKey3'), data.get('subgroupKey3')]
+  ];
+
+  const contexts = [];
+
+  pairs.forEach(([groupRaw, subgroupRaw]) => {
+    const group = partnerLeadSlugPart(String(groupRaw || '').replace(/^group\./, 'group-'));
+    const subgroup = partnerLeadSlugPart(String(subgroupRaw || '').replace(/^sub\./, 'sub-'));
+
+    if (!country || !group || !subgroup) return;
+
+    contexts.push(`ctx.country.${country}.${group}.${subgroup}`);
+    if (city) contexts.push(`ctx.city.${country}.${city}.${group}.${subgroup}`);
+  });
+
+  return Array.from(new Set(contexts));
+}
+
 function partnerTabLabel(tabId) {
   const id = String(tabId || 'overview').trim();
   if (id === 'leads') return text('partner.center.tab.leads', 'Leads');
@@ -115,13 +221,22 @@ function ensurePartnerCenterModal() {
   if (!modal.dataset.partnerUiBound) {
     modal.dataset.partnerUiBound = '1';
 
-    modal.addEventListener('click', async (ev) => {
+    modal.addEventListener('change', (ev) => {
       const target = ev.target instanceof Element ? ev.target : null;
-      const action = target?.closest?.('[data-partner-action]');
-      if (!(action instanceof HTMLElement)) return;
 
-      ev.preventDefault();
-      await handlePartnerCenterAction(action);
+      const sectionSelect = target?.closest?.('[data-partner-section-select]');
+      if (sectionSelect instanceof HTMLSelectElement) {
+        state.activeTab = String(sectionSelect.value || 'overview').trim() || 'overview';
+        state.sectionTouched = true;
+        renderPartnerCenter();
+        return;
+      }
+
+      const leadPathSelect = target?.closest?.('[data-partner-lead-path]');
+      if (leadPathSelect instanceof HTMLSelectElement) {
+        state.leadPath = String(leadPathSelect.value || 'manual').trim() === 'google_import' ? 'google_import' : 'manual';
+        renderPartnerCenter();
+      }
     });
 
     modal.addEventListener('submit', async (ev) => {
@@ -183,22 +298,12 @@ function renderPartnerCenter() {
           </div>
         </details>
 
-        <details class="cm-chip request-section-chip partner-section-chip">
-          <summary class="modal-menu-item cm-chip-face request-section-chip-face partner-section-chip-face">
-            <span class="label cm-chip-face-label request-section-chip-label">
-              <strong class="request-section-chip-title">${escapeHtml(activeTabLabel)}</strong>
-              <small class="request-section-chip-summary">${escapeHtml(text('partner.center.sectionPicker.summary', 'Choose Partner Center view'))}</small>
-            </span>
-            <span class="cm-chip-face-chevron" aria-hidden="true"></span>
-          </summary>
-          <div class="cm-chip-body partner-section-options">
-            ${tabs.map(([id, label]) => `
-              <button type="button" class="modal-menu-item partner-section-option ${state.activeTab === id ? 'is-active' : ''}" data-partner-action="tab" data-tab="${escapeHtml(id)}">
-                <span class="label"><strong>${escapeHtml(label)}</strong></span>
-              </button>
-            `).join('')}
-          </div>
-        </details>
+        <div class="partner-section-select-wrap ${state.sectionTouched ? 'is-touched' : 'is-initial'}">
+          <select class="input partner-section-select" data-partner-section-select aria-label="${escapeHtml(text('partner.center.sectionPicker.aria', 'Partner Center view'))}">
+            ${renderPartnerTabOptions(tabs, state.activeTab)}
+          </select>
+          <span class="partner-section-select-chevron" aria-hidden="true"></span>
+        </div>
       </div>
 
       <div class="partner-tabpanel">
@@ -209,6 +314,8 @@ function renderPartnerCenter() {
       </div>
     </div>
   `;
+
+  wirePartnerLeadFormControls(root);
 }
 
 function renderOverviewPanel() {
@@ -352,87 +459,149 @@ function requestPartnerConnectSetup() {
 
 function renderLeadsPanel() {
   const leads = asArray(state.leads);
+  const googlePath = state.leadPath === 'google_import';
 
   return `
     <form class="partner-lead-form modal-form-stack" data-partner-form="lead">
-      <details class="cm-chip request-section-chip partner-lead-section-chip" open>
-        <summary class="modal-menu-item cm-chip-face request-section-chip-face">
-          <span class="label cm-chip-face-label request-section-chip-label">
-            <strong class="request-section-chip-title">${escapeHtml(text('partner.lead.businessSection.title', 'Business information'))}</strong>
-            <small class="request-section-chip-summary">${escapeHtml(text('partner.lead.businessSection.summary', 'Name and contact route.'))}</small>
-          </span>
-          <span class="request-section-badge-stack">
-            <span class="request-section-badge is-required">${escapeHtml(text('partner.lead.section.required', 'Required'))}</span>
-          </span>
-          <span class="cm-chip-face-chevron" aria-hidden="true"></span>
-        </summary>
-        <div class="cm-chip-body">
-          <div class="modal-form-stack">
-            <div class="modal-field">
-              <label>${escapeHtml(text('partner.lead.businessName', 'Business name'))} <span class="required-star">*</span></label>
-              <input class="input" name="businessName" required autocomplete="organization" placeholder=" ">
-            </div>
-            <div class="modal-form-grid">
+      <div class="partner-lead-path-card">
+        <label for="partner-lead-path">${escapeHtml(text('partner.lead.path.label', 'Partner lead path'))}</label>
+        <select id="partner-lead-path" class="input partner-lead-path-select" data-partner-lead-path name="source">
+          <option value="manual"${googlePath ? '' : ' selected'}>${escapeHtml(text('partner.lead.path.manual', 'Manual'))}</option>
+          <option value="google_import"${googlePath ? ' selected' : ''}>${escapeHtml(text('partner.lead.path.google', 'Google import'))}</option>
+        </select>
+      </div>
+
+      <div class="modal-static-card partner-google-import-note ${googlePath ? '' : 'hidden'}" data-partner-google-import-note>
+        <span class="label">
+          <strong>${escapeHtml(text('partner.lead.google.title', 'Google import'))}</strong><br>
+          <small>${escapeHtml(text('partner.lead.google.desc', 'Use only after the Partner-specific Google import bridge is connected.'))}</small>
+        </span>
+      </div>
+
+      <div data-partner-manual-body>
+        <details class="cm-chip request-section-chip partner-lead-section-chip" open>
+          <summary class="modal-menu-item cm-chip-face request-section-chip-face">
+            <span class="label cm-chip-face-label request-section-chip-label">
+              <strong class="request-section-chip-title">${escapeHtml(text('partner.lead.businessSection.title', 'Business information'))}</strong>
+            </span>
+            <span class="request-section-badge-stack">
+              <span class="request-section-badge is-required">${escapeHtml(text('partner.lead.section.required', 'Required'))}</span>
+            </span>
+            <span class="cm-chip-face-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="cm-chip-body">
+            <div class="modal-form-stack">
               <div class="modal-field">
-                <label>${escapeHtml(text('partner.lead.website', 'Website'))}</label>
-                <input class="input" name="website" autocomplete="url" placeholder=" ">
+                <label>${escapeHtml(text('partner.lead.businessName', 'Business name'))} <span class="required-star">*</span></label>
+                <input class="input" name="businessName" required autocomplete="organization" placeholder=" ">
               </div>
+
               <div class="modal-field">
-                <label>${escapeHtml(text('partner.lead.phone', 'Phone'))}</label>
-                <input class="input" name="phone" autocomplete="tel" placeholder=" ">
+                <label>${escapeHtml(text('partner.lead.address', 'Street address'))} <span class="required-star">*</span></label>
+                <input class="input" name="address" required autocomplete="street-address" placeholder=" ">
               </div>
-            </div>
-            <div class="modal-field">
-              <label>${escapeHtml(text('partner.lead.address', 'Street address'))}</label>
-              <input class="input" name="address" autocomplete="street-address" placeholder=" ">
-            </div>
-            <div class="modal-form-grid">
-              <div class="modal-field">
-                <label>${escapeHtml(text('partner.lead.city', 'City'))}</label>
-                <input class="input" name="city" autocomplete="address-level2" placeholder=" ">
+
+              <div class="modal-form-grid">
+                <div class="modal-field">
+                  <label>${escapeHtml(text('partner.lead.postalCode', 'Postal code'))}</label>
+                  <input class="input" name="postalCode" autocomplete="postal-code" placeholder=" ">
+                </div>
+                <div class="modal-field">
+                  <label>${escapeHtml(text('partner.lead.city', 'City'))} <span class="required-star">*</span></label>
+                  <input class="input" name="city" required autocomplete="address-level2" placeholder=" ">
+                </div>
               </div>
+
               <div class="modal-field">
-                <label>${escapeHtml(text('partner.lead.countryCode', 'Country code'))}</label>
-                <input class="input" name="country" maxlength="2" list="partner-lead-country-options" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder=" ">
+                <label>${escapeHtml(text('partner.lead.countryCode', 'Country code'))} <span class="required-star">*</span></label>
+                <input class="input" name="country" maxlength="2" list="partner-lead-country-options" autocomplete="off" autocapitalize="characters" spellcheck="false" required placeholder=" ">
                 ${renderPartnerCountryOptions('partner-lead-country-options')}
               </div>
+
+              <div class="request-surface-card partner-coordinate-card">
+                <label class="modal-checkbox-row">
+                  <input type="checkbox" data-partner-coordinate-toggle>
+                  <span>${escapeHtml(text('partner.lead.hasCoord', 'I have coordinates'))}</span>
+                </label>
+
+                <div class="modal-field hidden request-surface-card-body" data-partner-coordinate-wrap>
+                  <label>${escapeHtml(text('partner.lead.coord', 'Coordinates (lat,lng) — 6 decimals'))}</label>
+                  <input class="input" name="coord" type="text" placeholder="52.527900,13.440200">
+                  <small class="modal-help-text">${escapeHtml(text('partner.lead.coordHelp', 'Copy from Google Maps when available.'))}</small>
+                </div>
+              </div>
+
+              <div class="modal-form-grid">
+                <div class="modal-field">
+                  <label>${escapeHtml(text('partner.lead.website', 'Website'))}</label>
+                  <input class="input" name="website" autocomplete="url" placeholder=" ">
+                </div>
+                <div class="modal-field">
+                  <label>${escapeHtml(text('partner.lead.phone', 'Phone'))}</label>
+                  <input class="input" name="phone" autocomplete="tel" placeholder=" ">
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </details>
+        </details>
 
-      <details class="cm-chip request-section-chip partner-lead-section-chip">
-        <summary class="modal-menu-item cm-chip-face request-section-chip-face">
-          <span class="label cm-chip-face-label request-section-chip-label">
-            <strong class="request-section-chip-title">${escapeHtml(text('partner.lead.discoverySection.title', 'SEO & discovery'))}</strong>
-            <small class="request-section-chip-summary">${escapeHtml(text('partner.lead.discoverySection.summary', 'Optional discovery hints.'))}</small>
-          </span>
-          <span class="request-section-badge is-optional">${escapeHtml(text('partner.lead.section.optional', 'Optional'))}</span>
-          <span class="cm-chip-face-chevron" aria-hidden="true"></span>
-        </summary>
-        <div class="cm-chip-body">
-          <div class="modal-form-stack">
-            <div class="modal-form-grid">
-              <div class="modal-field">
-                <label>${escapeHtml(text('partner.lead.groupKey', 'Group key'))}</label>
-                <input class="input" name="groupKey" placeholder=" ">
+        <details class="cm-chip request-section-chip partner-lead-section-chip">
+          <summary class="modal-menu-item cm-chip-face request-section-chip-face">
+            <span class="label cm-chip-face-label request-section-chip-label">
+              <strong class="request-section-chip-title">${escapeHtml(text('partner.lead.discoverySection.title', 'SEO & discovery'))}</strong>
+              <small class="request-section-chip-summary">${escapeHtml(text('partner.lead.discoverySection.summary', 'Choose how customers may look for this business.'))}</small>
+            </span>
+            <span class="request-section-badge-stack">
+              <span class="request-section-badge is-required">${escapeHtml(text('partner.lead.section.required', 'Required'))}</span>
+            </span>
+            <span class="cm-chip-face-chevron" aria-hidden="true"></span>
+          </summary>
+          <div class="cm-chip-body">
+            <div class="modal-form-stack">
+              <p class="modal-help-text request-discovery-help">${escapeHtml(text('partner.lead.discoveryHelp', 'Choose what the business is. Good choices improve NaviGen search, filters, category pages, and structured profile signals.'))}</p>
+
+              <div class="modal-form-grid">
+                <div class="modal-field">
+                  <label>${escapeHtml(text('partner.lead.discovery.combo1.group', 'Combo 1 group'))} <span class="required-star">*</span></label>
+                  <select class="input" name="groupKey" data-partner-group-select required></select>
+                </div>
+                <div class="modal-field">
+                  <label>${escapeHtml(text('partner.lead.discovery.combo1.subgroup', 'Combo 1 subgroup'))} <span class="required-star">*</span></label>
+                  <select class="input" name="subgroupKey" data-partner-subgroup-select required></select>
+                </div>
               </div>
-              <div class="modal-field">
-                <label>${escapeHtml(text('partner.lead.subgroupKey', 'Subgroup key'))}</label>
-                <input class="input" name="subgroupKey" placeholder=" ">
+
+              <div class="modal-form-grid">
+                <div class="modal-field">
+                  <label>${escapeHtml(text('partner.lead.discovery.combo2.group', 'Combo 2 group'))}</label>
+                  <select class="input" name="groupKey2" data-partner-group-select></select>
+                </div>
+                <div class="modal-field">
+                  <label>${escapeHtml(text('partner.lead.discovery.combo2.subgroup', 'Combo 2 subgroup'))}</label>
+                  <select class="input" name="subgroupKey2" data-partner-subgroup-select></select>
+                </div>
               </div>
-            </div>
-            <div class="modal-field">
-              <label>${escapeHtml(text('partner.lead.contexts', 'Contexts'))}</label>
-              <input class="input" name="contexts" placeholder=" ">
-              <small class="modal-help-text">${escapeHtml(text('partner.lead.contextsHelp', 'Separate multiple context hints with commas.'))}</small>
+
+              <div class="modal-form-grid">
+                <div class="modal-field">
+                  <label>${escapeHtml(text('partner.lead.discovery.combo3.group', 'Combo 3 group'))}</label>
+                  <select class="input" name="groupKey3" data-partner-group-select></select>
+                </div>
+                <div class="modal-field">
+                  <label>${escapeHtml(text('partner.lead.discovery.combo3.subgroup', 'Combo 3 subgroup'))}</label>
+                  <select class="input" name="subgroupKey3" data-partner-subgroup-select></select>
+                </div>
+              </div>
+
+              <input type="hidden" name="contexts">
+              <small class="modal-help-text" data-partner-context-preview>${escapeHtml(text('partner.lead.contexts.generated.empty', 'Generated from country, city, and SEO & discovery choices.'))}</small>
             </div>
           </div>
-        </div>
-      </details>
+        </details>
 
-      <div class="modal-actions">
-        <button type="submit" class="modal-body-button">${escapeHtml(text('partner.lead.create', 'Create lead'))}</button>
+        <div class="modal-actions">
+          <button type="submit" class="modal-body-button">${escapeHtml(text('partner.lead.create', 'Create lead'))}</button>
+        </div>
       </div>
     </form>
 
@@ -442,6 +611,108 @@ function renderLeadsPanel() {
       `}
     </div>
   `;
+}
+
+function wirePartnerLeadFormControls(root) {
+  const form = root?.querySelector?.('[data-partner-form="lead"]');
+  if (!(form instanceof HTMLFormElement) || form.dataset.partnerLeadControlsBound === '1') return;
+
+  form.dataset.partnerLeadControlsBound = '1';
+
+  const manualBody = form.querySelector('[data-partner-manual-body]');
+  const googleNote = form.querySelector('[data-partner-google-import-note]');
+  const submitButton = form.querySelector('button[type="submit"]');
+  const countryInput = form.querySelector('input[name="country"]');
+  const coordToggle = form.querySelector('[data-partner-coordinate-toggle]');
+  const coordWrap = form.querySelector('[data-partner-coordinate-wrap]');
+  const contextsInput = form.querySelector('input[name="contexts"]');
+  const contextPreview = form.querySelector('[data-partner-context-preview]');
+  const groupPairs = [
+    {
+      group: form.querySelector('select[name="groupKey"]'),
+      subgroup: form.querySelector('select[name="subgroupKey"]')
+    },
+    {
+      group: form.querySelector('select[name="groupKey2"]'),
+      subgroup: form.querySelector('select[name="subgroupKey2"]')
+    },
+    {
+      group: form.querySelector('select[name="groupKey3"]'),
+      subgroup: form.querySelector('select[name="subgroupKey3"]')
+    }
+  ];
+
+  const syncPath = () => {
+    const google = state.leadPath === 'google_import';
+    manualBody?.classList.toggle('hidden', google);
+    googleNote?.classList.toggle('hidden', !google);
+    if (submitButton instanceof HTMLButtonElement) submitButton.disabled = google;
+  };
+
+  const syncCoordinate = () => {
+    coordWrap?.classList.toggle('hidden', !(coordToggle instanceof HTMLInputElement && coordToggle.checked));
+  };
+
+  const syncContexts = () => {
+    const data = new FormData(form);
+    const contexts = partnerGeneratedLeadContexts(data);
+    if (contextsInput instanceof HTMLInputElement) contextsInput.value = contexts.join(', ');
+    if (contextPreview instanceof HTMLElement) {
+      contextPreview.textContent = contexts.length
+        ? `${contexts.length} ${text('partner.lead.contexts.generated.count', 'generated routes')}`
+        : text('partner.lead.contexts.generated.empty', 'Generated from country, city, and SEO & discovery choices.');
+    }
+  };
+
+  countryInput?.addEventListener('input', () => {
+    if (countryInput instanceof HTMLInputElement) {
+      countryInput.value = String(countryInput.value || '').replace(/[^a-z]/gi, '').toUpperCase().slice(0, 2);
+    }
+    syncContexts();
+  });
+
+  coordToggle?.addEventListener('change', syncCoordinate);
+
+  [
+    'city',
+    'country',
+    'groupKey',
+    'subgroupKey',
+    'groupKey2',
+    'subgroupKey2',
+    'groupKey3',
+    'subgroupKey3'
+  ].forEach((name) => {
+    form.querySelector(`[name="${name}"]`)?.addEventListener('change', syncContexts);
+    form.querySelector(`[name="${name}"]`)?.addEventListener('input', syncContexts);
+  });
+
+  loadPartnerStructureCatalog().then((structureRows) => {
+    groupPairs.forEach((pair) => {
+      if (!(pair.group instanceof HTMLSelectElement) || !(pair.subgroup instanceof HTMLSelectElement)) return;
+
+      const renderSubgroups = () => {
+        pair.subgroup.innerHTML = renderPartnerSubgroupOptions(structureRows, pair.group.value, pair.subgroup.value);
+        syncContexts();
+      };
+
+      pair.group.innerHTML = renderPartnerGroupOptions(structureRows, pair.group.value);
+      renderSubgroups();
+
+      pair.group.addEventListener('change', () => {
+        pair.subgroup.value = '';
+        renderSubgroups();
+      });
+
+      pair.subgroup.addEventListener('change', syncContexts);
+    });
+
+    syncContexts();
+  });
+
+  syncPath();
+  syncCoordinate();
+  syncContexts();
 }
 
 function renderLeadCard(lead) {
@@ -572,6 +843,7 @@ async function handlePartnerCenterAction(action) {
   try {
     if (type === 'tab') {
       state.activeTab = String(action.dataset.tab || 'overview');
+      state.sectionTouched = true;
       renderPartnerCenter();
       return;
     }
@@ -664,18 +936,30 @@ async function handlePartnerCenterAction(action) {
 
 async function submitPartnerLeadForm(form) {
   const data = new FormData(form);
-  const contexts = String(data.get('contexts') || '')
+
+  if (state.leadPath === 'google_import') {
+    showToast(text('partner.lead.google.blocked', 'Use Partner Google import only after the Partner attribution bridge is connected.'), 3200);
+    return;
+  }
+
+  const generatedContexts = partnerGeneratedLeadContexts(data);
+  const manualContexts = String(data.get('contexts') || '')
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
 
+  const contexts = Array.from(new Set([...generatedContexts, ...manualContexts]));
+
   const payload = {
+    source: 'partner_manual',
     businessName: String(data.get('businessName') || '').trim(),
     website: String(data.get('website') || '').trim(),
     phone: String(data.get('phone') || '').trim(),
     address: String(data.get('address') || '').trim(),
+    postalCode: String(data.get('postalCode') || '').trim(),
     city: String(data.get('city') || '').trim(),
     country: String(data.get('country') || '').trim().toUpperCase(),
+    coord: String(data.get('coord') || '').trim(),
     groupKey: String(data.get('groupKey') || '').trim(),
     subgroupKey: String(data.get('subgroupKey') || '').trim(),
     contexts
