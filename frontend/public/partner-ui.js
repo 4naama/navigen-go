@@ -4,14 +4,15 @@ import { t } from './scripts/i18n.js';
 const PARTNER_CENTER_MODAL_ID = 'partner-center-modal';
 const PARTNER_HANDOFF_MODAL_ID = 'partner-handoff-modal';
 const PARTNER_CONNECT_MODAL_ID = 'partner-connect-modal';
+const PARTNER_LEADS_MODAL_ID = 'partner-leads-modal';
+const PARTNER_RENEWALS_MODAL_ID = 'partner-renewals-modal';
+const PARTNER_COMMISSIONS_MODAL_ID = 'partner-commissions-modal';
 
 const state = {
   partner: null,
   leads: [],
   commissions: [],
   renewalTasks: [],
-  activeTab: 'overview',
-  sectionTouched: false,
   leadPath: 'manual',
   loading: false,
   message: '',
@@ -66,6 +67,18 @@ function renderPartnerPayoutCountrySelectOptions(selectedValue = '') {
     `<option value="">${escapeHtml(text('partner.connect.countryEmpty', 'Select'))}</option>`,
     ...PARTNER_PAYOUT_COUNTRY_CODES.map((code) => `<option value="${escapeHtml(code)}"${selected === code ? ' selected' : ''}>${escapeHtml(code)}</option>`)
   ].join('');
+}
+
+function renderPartnerLauncherCard({ action, icon, title, desc }) {
+  return `
+    <button type="button" class="modal-menu-item partner-launch-card" data-partner-action="${escapeHtml(action)}">
+      <span class="icon-img partner-launch-icon" aria-hidden="true">${escapeHtml(icon)}</span>
+      <span class="label">
+        <strong>${escapeHtml(title)}</strong><br>
+        <small>${escapeHtml(desc)}</small>
+      </span>
+    </button>
+  `;
 }
 
 let partnerStructureCatalogPromise;
@@ -221,21 +234,52 @@ function ensurePartnerCenterModal() {
   if (!modal.dataset.partnerUiBound) {
     modal.dataset.partnerUiBound = '1';
 
+    modal.addEventListener('click', async (ev) => {
+      const target = ev.target instanceof Element ? ev.target : null;
+      const action = target?.closest?.('[data-partner-action]');
+      if (!(action instanceof HTMLElement)) return;
+
+      ev.preventDefault();
+      await handlePartnerCenterAction(action);
+    });
+  }
+
+  return modal;
+}
+
+function renderPartnerOpenSurfaces() {
+  renderPartnerLeadsSurface();
+  renderPartnerRenewalsSurface();
+  renderPartnerCommissionsSurface();
+}
+
+function ensurePartnerLeadsModal() {
+  const modal = injectModal({
+    id: PARTNER_LEADS_MODAL_ID,
+    title: text('partner.center.tab.leads', 'Leads'),
+    layout: 'menu',
+    bodyHTML: '<div id="partner-leads-root" class="partner-center partner-modal-surface"></div>'
+  });
+
+  if (!modal.dataset.partnerLeadsBound) {
+    modal.dataset.partnerLeadsBound = '1';
+
+    modal.addEventListener('click', async (ev) => {
+      const target = ev.target instanceof Element ? ev.target : null;
+      const action = target?.closest?.('[data-partner-action]');
+      if (!(action instanceof HTMLElement)) return;
+
+      ev.preventDefault();
+      await handlePartnerCenterAction(action);
+    });
+
     modal.addEventListener('change', (ev) => {
       const target = ev.target instanceof Element ? ev.target : null;
-
-      const sectionSelect = target?.closest?.('[data-partner-section-select]');
-      if (sectionSelect instanceof HTMLSelectElement) {
-        state.activeTab = String(sectionSelect.value || 'overview').trim() || 'overview';
-        state.sectionTouched = true;
-        renderPartnerCenter();
-        return;
-      }
-
       const leadPathSelect = target?.closest?.('[data-partner-lead-path]');
+
       if (leadPathSelect instanceof HTMLSelectElement) {
         state.leadPath = String(leadPathSelect.value || 'manual').trim() === 'google_import' ? 'google_import' : 'manual';
-        renderPartnerCenter();
+        renderPartnerLeadsSurface();
       }
     });
 
@@ -249,6 +293,81 @@ function ensurePartnerCenterModal() {
   }
 
   return modal;
+}
+
+function renderPartnerLeadsSurface() {
+  const root = document.getElementById('partner-leads-root');
+  if (!root) return;
+
+  root.innerHTML = renderLeadsPanel();
+  wirePartnerLeadFormControls(root);
+}
+
+function showPartnerLeadsSurface() {
+  ensurePartnerLeadsModal();
+  renderPartnerLeadsSurface();
+  showModal(PARTNER_LEADS_MODAL_ID);
+}
+
+function ensurePartnerRenewalsModal() {
+  const modal = injectModal({
+    id: PARTNER_RENEWALS_MODAL_ID,
+    title: text('partner.center.tab.renewals', 'Renewals'),
+    layout: 'menu',
+    bodyHTML: '<div id="partner-renewals-root" class="partner-center partner-modal-surface"></div>'
+  });
+
+  if (!modal.dataset.partnerRenewalsBound) {
+    modal.dataset.partnerRenewalsBound = '1';
+
+    modal.addEventListener('click', async (ev) => {
+      const target = ev.target instanceof Element ? ev.target : null;
+      const action = target?.closest?.('[data-partner-action]');
+      if (!(action instanceof HTMLElement)) return;
+
+      ev.preventDefault();
+      await handlePartnerCenterAction(action);
+    });
+  }
+
+  return modal;
+}
+
+function renderPartnerRenewalsSurface() {
+  const root = document.getElementById('partner-renewals-root');
+  if (!root) return;
+
+  root.innerHTML = renderRenewalTasksPanel();
+}
+
+function showPartnerRenewalsSurface() {
+  ensurePartnerRenewalsModal();
+  renderPartnerRenewalsSurface();
+  showModal(PARTNER_RENEWALS_MODAL_ID);
+}
+
+function ensurePartnerCommissionsModal() {
+  const modal = injectModal({
+    id: PARTNER_COMMISSIONS_MODAL_ID,
+    title: text('partner.center.tab.commissions', 'Commissions'),
+    layout: 'menu',
+    bodyHTML: '<div id="partner-commissions-root" class="partner-center partner-modal-surface"></div>'
+  });
+
+  return modal;
+}
+
+function renderPartnerCommissionsSurface() {
+  const root = document.getElementById('partner-commissions-root');
+  if (!root) return;
+
+  root.innerHTML = renderCommissionsPanel();
+}
+
+function showPartnerCommissionsSurface() {
+  ensurePartnerCommissionsModal();
+  renderPartnerCommissionsSurface();
+  showModal(PARTNER_COMMISSIONS_MODAL_ID);
 }
 
 function renderPartnerCenter() {
@@ -266,14 +385,7 @@ function renderPartnerCenter() {
   }
 
   const partner = state.partner || {};
-  const tabs = [
-    ['overview', partnerTabLabel('overview')],
-    ['leads', partnerTabLabel('leads')],
-    ['renewals', partnerTabLabel('renewals')],
-    ['commissions', partnerTabLabel('commissions')]
-  ];
   const openLeadText = `${Number(partner.openLeadCount || 0)} / ${Number(partner.leadCapacity || 0)}`;
-  const activeTabLabel = partnerTabLabel(state.activeTab);
 
   root.innerHTML = `
     <div class="partner-center-shell">
@@ -290,65 +402,49 @@ function renderPartnerCenter() {
           </summary>
           <div class="cm-chip-body">
             <div class="cm-chip-stack">
-              <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.partnerId', 'Partner ID'))}</span><span class="cm-chip-v">${escapeHtml(partner.partnerId || '—')}</span></div>
+              <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.partnerId', 'Partner ID'))}</span><span class="cm-chip-v partner-status-id-value">${escapeHtml(partner.partnerId || '—')}</span></div>
               <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.status', 'Status'))}</span><span class="cm-chip-v">${escapeHtml(partner.status || '—')}</span></div>
               <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.capacity', 'Open leads'))}</span><span class="cm-chip-v">${openLeadText}</span></div>
               <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.connect', 'Payout identity'))}</span><span class="cm-chip-v">${escapeHtml(partner.connectStatus || 'not_started')}</span></div>
             </div>
           </div>
         </details>
-
-        <div class="partner-section-select-wrap ${state.sectionTouched ? 'is-touched' : 'is-initial'}">
-          <select class="input partner-section-select" data-partner-section-select aria-label="${escapeHtml(text('partner.center.sectionPicker.aria', 'Partner Center view'))}">
-            ${renderPartnerTabOptions(tabs, state.activeTab)}
-          </select>
-          <span class="partner-section-select-chevron" aria-hidden="true"></span>
-        </div>
       </div>
 
-      <div class="partner-tabpanel">
-        ${state.activeTab === 'overview' ? renderOverviewPanel() : ''}
-        ${state.activeTab === 'leads' ? renderLeadsPanel() : ''}
-        ${state.activeTab === 'renewals' ? renderRenewalTasksPanel() : ''}
-        ${state.activeTab === 'commissions' ? renderCommissionsPanel() : ''}
-      </div>
+      ${renderPartnerLauncherPanel()}
     </div>
   `;
 
-  wirePartnerLeadFormControls(root);
+  renderPartnerOpenSurfaces();
 }
 
-function renderOverviewPanel() {
+function renderPartnerLauncherPanel() {
   return `
-    <div class="partner-overview-grid">
-      <button type="button" class="modal-menu-item partner-overview-card" data-partner-action="tab" data-tab="leads">
-        <span class="icon-img" aria-hidden="true">🧾</span>
-        <span class="label">
-          <strong>${escapeHtml(text('partner.overview.leads.title', 'Leads'))}</strong><br>
-          <small>${escapeHtml(text('partner.overview.leads.desc', 'Create and manage Partner leads.'))}</small>
-        </span>
-      </button>
-      <button type="button" class="modal-menu-item partner-overview-card" data-partner-action="connect-start">
-        <span class="icon-img" aria-hidden="true">🏦</span>
-        <span class="label">
-          <strong>${escapeHtml(text('partner.connect.start', 'Start payout onboarding'))}</strong><br>
-          <small>${escapeHtml(text('partner.overview.connect.desc', 'Open Stripe Connect setup.'))}</small>
-        </span>
-      </button>
-      <button type="button" class="modal-menu-item partner-overview-card" data-partner-action="connect-status">
-        <span class="icon-img" aria-hidden="true">✅</span>
-        <span class="label">
-          <strong>${escapeHtml(text('partner.connect.refresh', 'Refresh payout identity'))}</strong><br>
-          <small>${escapeHtml(text('partner.overview.connectStatus.desc', 'Update payout identity status.'))}</small>
-        </span>
-      </button>
-      <button type="button" class="modal-menu-item partner-overview-card" data-partner-action="refresh">
-        <span class="icon-img" aria-hidden="true">🔄</span>
-        <span class="label">
-          <strong>${escapeHtml(text('partner.center.refresh', 'Refresh'))}</strong><br>
-          <small>${escapeHtml(text('partner.overview.refresh.desc', 'Update leads, renewals, and commissions.'))}</small>
-        </span>
-      </button>
+    <div class="partner-launch-grid">
+      ${renderPartnerLauncherCard({
+        action: 'open-leads',
+        icon: '🎯',
+        title: text('partner.center.card.leads.title', 'Leads'),
+        desc: text('partner.center.card.leads.desc', 'Create, import, prepare, and hand off businesses.')
+      })}
+      ${renderPartnerLauncherCard({
+        action: 'connect-start',
+        icon: '💰',
+        title: text('partner.connect.start', 'Start payout onboarding'),
+        desc: text('partner.center.card.connect.desc', 'Connect Stripe payout identity.')
+      })}
+      ${renderPartnerLauncherCard({
+        action: 'open-renewals',
+        icon: '🔄',
+        title: text('partner.center.card.renewals.title', 'Renewals'),
+        desc: text('partner.center.card.renewals.desc', 'Follow up on expiring or expired Partner-assisted Plans.')
+      })}
+      ${renderPartnerLauncherCard({
+        action: 'open-commissions',
+        icon: '💶',
+        title: text('partner.center.card.commissions.title', 'Commissions'),
+        desc: text('partner.center.card.commissions.desc', 'Review pending, eligible, and paid commission ledger entries.')
+      })}
     </div>
   `;
 }
@@ -465,10 +561,13 @@ function renderLeadsPanel() {
     <form class="partner-lead-form modal-form-stack" data-partner-form="lead">
       <div class="partner-lead-path-card">
         <label for="partner-lead-path">${escapeHtml(text('partner.lead.path.label', 'Partner lead path'))}</label>
-        <select id="partner-lead-path" class="input partner-lead-path-select" data-partner-lead-path name="source">
-          <option value="manual"${googlePath ? '' : ' selected'}>${escapeHtml(text('partner.lead.path.manual', 'Manual'))}</option>
-          <option value="google_import"${googlePath ? ' selected' : ''}>${escapeHtml(text('partner.lead.path.google', 'Google import'))}</option>
-        </select>
+        <div class="partner-lead-path-select-wrap">
+          <select id="partner-lead-path" class="input partner-lead-path-select" data-partner-lead-path name="source">
+            <option value="manual"${googlePath ? '' : ' selected'}>${escapeHtml(text('partner.lead.path.manual', 'Manual'))}</option>
+            <option value="google_import"${googlePath ? ' selected' : ''}>${escapeHtml(text('partner.lead.path.google', 'Google import'))}</option>
+          </select>
+          <span class="partner-lead-path-chevron" aria-hidden="true"></span>
+        </div>
       </div>
 
       <div class="modal-static-card partner-google-import-note ${googlePath ? '' : 'hidden'}" data-partner-google-import-note>
@@ -841,10 +940,18 @@ async function handlePartnerCenterAction(action) {
   const leadId = String(action.dataset.leadId || '').trim();
 
   try {
-    if (type === 'tab') {
-      state.activeTab = String(action.dataset.tab || 'overview');
-      state.sectionTouched = true;
-      renderPartnerCenter();
+    if (type === 'open-leads') {
+      showPartnerLeadsSurface();
+      return;
+    }
+
+    if (type === 'open-renewals') {
+      showPartnerRenewalsSurface();
+      return;
+    }
+
+    if (type === 'open-commissions') {
+      showPartnerCommissionsSurface();
       return;
     }
 
@@ -979,11 +1086,25 @@ async function submitPartnerLeadForm(form) {
 export async function openPartnerCenter() {
   ensurePartnerCenterModal();
   showModal(PARTNER_CENTER_MODAL_ID);
-  await loadPartnerWorkspace().catch((err) => {
+
+  try {
+    await loadPartnerWorkspace();
+
+    const params = new URL(location.href).searchParams;
+    const connectReturn = params.get('connect') === 'return' || params.get('connect') === 'refresh';
+
+    if (connectReturn) {
+      const status = await api('/api/partner/connect/status');
+      state.partner = { ...(state.partner || {}), ...(status.partner || {}), launch: status.launch || state.partner?.launch || {} };
+      state.message = text('partner.connect.statusRefreshed', 'Payout identity status refreshed.');
+      history.replaceState({}, document.title, location.pathname + location.hash);
+      renderPartnerCenter();
+    }
+  } catch (err) {
     state.loading = false;
     state.message = String(err?.message || text('partner.center.error', 'Could not open Partner Center.'));
     renderPartnerCenter();
-  });
+  }
 }
 
 const PARTNER_ADMIN_MODAL_ID = 'partner-admin-modal';
