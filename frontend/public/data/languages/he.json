@@ -2021,5 +2021,12 @@
   "partner.lead.discovery.combo2.group": "קבוצת קומבו 2",
   "partner.lead.discovery.combo2.subgroup": "תת-קבוצת קומבו 2",
   "partner.lead.discovery.combo3.group": "קבוצת קומבו 3",
-  "partner.lead.discovery.combo3.subgroup": "תת-קבוצת קומבו 3"
+  "partner.lead.discovery.combo3.subgroup": "תת-קבוצת קומבו 3",
+  "partner.center.card.leads.title": "לידים",
+  "partner.center.card.leads.desc": "צרו, ייבאו, הכינו והעבירו עסקים.",
+  "partner.center.card.connect.desc": "חברו את זהות התשלום של Stripe.",
+  "partner.center.card.renewals.title": "חידושים",
+  "partner.center.card.renewals.desc": "עקבו אחר תוכניות בסיוע שותפים שפגות או פגו.",
+  "partner.center.card.commissions.title": "עמלות",
+  "partner.center.card.commissions.desc": "בדקו רשומות עמלות ממתינות, זכאיות ושולמו."
 }

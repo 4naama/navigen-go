@@ -2021,5 +2021,12 @@
   "partner.lead.discovery.combo2.group": "Комбо-група 2",
   "partner.lead.discovery.combo2.subgroup": "Комбо-підгрупа 2",
   "partner.lead.discovery.combo3.group": "Комбо-група 3",
-  "partner.lead.discovery.combo3.subgroup": "Комбо-підгрупа 3"
+  "partner.lead.discovery.combo3.subgroup": "Комбо-підгрупа 3",
+  "partner.center.card.leads.title": "Ліди",
+  "partner.center.card.leads.desc": "Створюйте, імпортуйте, готуйте та передавайте бізнеси.",
+  "partner.center.card.connect.desc": "Підключіть платіжну ідентичність Stripe.",
+  "partner.center.card.renewals.title": "Продовження",
+  "partner.center.card.renewals.desc": "Відстежуйте партнерські плани, що закінчуються або вже закінчилися.",
+  "partner.center.card.commissions.title": "Комісії",
+  "partner.center.card.commissions.desc": "Переглядайте записи реєстру комісій: очікувані, допустимі та виплачені."
 }

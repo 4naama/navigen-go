@@ -2021,5 +2021,12 @@
   "partner.lead.discovery.combo2.group": "Gruppo combo 2",
   "partner.lead.discovery.combo2.subgroup": "Sottogruppo combo 2",
   "partner.lead.discovery.combo3.group": "Gruppo combo 3",
-  "partner.lead.discovery.combo3.subgroup": "Sottogruppo combo 3"
+  "partner.lead.discovery.combo3.subgroup": "Sottogruppo combo 3",
+  "partner.center.card.leads.title": "Lead",
+  "partner.center.card.leads.desc": "Crea, importa, prepara e trasferisci attività.",
+  "partner.center.card.connect.desc": "Collega l’identità di pagamento Stripe.",
+  "partner.center.card.renewals.title": "Rinnovi",
+  "partner.center.card.renewals.desc": "Segui i piani assistiti dal partner in scadenza o scaduti.",
+  "partner.center.card.commissions.title": "Commissioni",
+  "partner.center.card.commissions.desc": "Esamina le voci del registro commissioni in sospeso, idonee e pagate."
 }

@@ -2021,5 +2021,12 @@
   "partner.lead.discovery.combo2.group": "Combo 2 group",
   "partner.lead.discovery.combo2.subgroup": "Combo 2 subgroup",
   "partner.lead.discovery.combo3.group": "Combo 3 group",
-  "partner.lead.discovery.combo3.subgroup": "Combo 3 subgroup"
+  "partner.lead.discovery.combo3.subgroup": "Combo 3 subgroup",
+  "partner.center.card.leads.title": "Leads",
+  "partner.center.card.leads.desc": "Create, import, prepare, and hand off businesses.",
+  "partner.center.card.connect.desc": "Connect Stripe payout identity.",
+  "partner.center.card.renewals.title": "Renewals",
+  "partner.center.card.renewals.desc": "Follow up on expiring or expired Partner-assisted Plans.",
+  "partner.center.card.commissions.title": "Commissions",
+  "partner.center.card.commissions.desc": "Review pending, eligible, and paid commission ledger entries."
 }

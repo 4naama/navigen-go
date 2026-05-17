@@ -2021,5 +2021,12 @@
   "partner.lead.discovery.combo2.group": "2. kombinációs csoport",
   "partner.lead.discovery.combo2.subgroup": "2. kombinációs alcsoport",
   "partner.lead.discovery.combo3.group": "3. kombinációs csoport",
-  "partner.lead.discovery.combo3.subgroup": "3. kombinációs alcsoport"
+  "partner.lead.discovery.combo3.subgroup": "3. kombinációs alcsoport",
+  "partner.center.card.leads.title": "Leadek",
+  "partner.center.card.leads.desc": "Hozzon létre, importáljon, készítsen elő és adjon át vállalkozásokat.",
+  "partner.center.card.connect.desc": "Csatlakoztassa a Stripe kifizetési azonosítót.",
+  "partner.center.card.renewals.title": "Megújítások",
+  "partner.center.card.renewals.desc": "Kövesse a lejáró vagy lejárt partner által segített csomagokat.",
+  "partner.center.card.commissions.title": "Jutalékok",
+  "partner.center.card.commissions.desc": "Tekintse át a függőben lévő, jogosult és kifizetett jutalékbejegyzéseket."
 }
