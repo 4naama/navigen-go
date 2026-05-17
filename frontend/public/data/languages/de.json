@@ -1976,6 +1976,14 @@
   "partner.admin.renewalRunDone": "Aktualisierung der Verlängerungsaufgaben abgeschlossen.",
   "partner.connect.emailPrompt": "Ihre eigene Partner-Auszahlungs-E-Mail für Stripe Connect. Verwenden Sie eine E-Mail-Adresse, die Sie kontrollieren; dies ist nicht die E-Mail des Geschäftsinhabers.",
   "partner.connect.countryPrompt": "Ihr rechtlicher Ländercode für Stripe Connect-Auszahlungen, z. B. GB oder DE. Verwenden Sie das Land, in dem Sie Partnerauszahlungen erhalten.",
-  "partner.connect.countryInvalid": "Verwenden Sie einen zweibuchstabigen Ländercode wie GB oder DE.",
-  "partner.connect.emailRequired": "Geben Sie die Partner-Auszahlungs-E-Mail ein, bevor Sie Stripe Connect öffnen."
+  "partner.connect.countryInvalid": "Geben Sie einen zweibuchstabigen Auszahlungsländercode wie GB oder DE an.",
+  "partner.connect.emailRequired": "Geben Sie Ihre eigene Auszahlungs-E-Mail für Stripe Connect an.",
+  "partner.connect.setupTitle": "Auszahlungs-Onboarding starten",
+  "partner.connect.setupDesc": "Weiter öffnet das Stripe Connect-Onboarding.",
+  "partner.connect.emailLabel": "Auszahlungs-E-Mail",
+  "partner.connect.emailPlaceholder": "[name@example.com](mailto:name@example.com)",
+  "partner.connect.countryLabel": "Ländercode für Auszahlungen",
+  "partner.connect.countryPlaceholder": "DE",
+  "partner.connect.continue": "Weiter zu Stripe",
+  "partner.connect.cancel": "Abbrechen"
 }

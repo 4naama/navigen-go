@@ -1976,6 +1976,14 @@
   "partner.admin.renewalRunDone": "A megújítási feladatok frissítése befejeződött.",
   "partner.connect.emailPrompt": "Saját partner kifizetési e-mail Stripe Connecthez. Használjon olyan e-mail címet, amelyet Ön kezel; ez nem a vállalkozás tulajdonosának e-mail címe.",
   "partner.connect.countryPrompt": "Az Ön hivatalos országkódja Stripe Connect kifizetésekhez, például GB vagy DE. Használja azt az országot, ahol a partner kifizetéseket fogja fogadni.",
-  "partner.connect.countryInvalid": "Használjon kétbetűs országkódot, például GB vagy DE.",
-  "partner.connect.emailRequired": "Adja meg a partner kifizetési e-mail címet, mielőtt megnyitja a Stripe Connectet."
+  "partner.connect.countryInvalid": "Adjon meg egy kétbetűs kifizetési országkódot, például GB vagy DE.",
+  "partner.connect.emailRequired": "Adja meg saját kifizetési e-mail címét a Stripe Connecthez.",
+  "partner.connect.setupTitle": "Kifizetési onboarding indítása",
+  "partner.connect.setupDesc": "A Folytatás megnyitja a Stripe Connect onboardingot.",
+  "partner.connect.emailLabel": "Kifizetési e-mail",
+  "partner.connect.emailPlaceholder": "[name@example.com](mailto:name@example.com)",
+  "partner.connect.countryLabel": "Kifizetési országkód",
+  "partner.connect.countryPlaceholder": "DE",
+  "partner.connect.continue": "Folytatás a Stripe-ra",
+  "partner.connect.cancel": "Mégse"
 }

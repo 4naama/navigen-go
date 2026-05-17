@@ -3,6 +3,7 @@ import { t } from './scripts/i18n.js';
 
 const PARTNER_CENTER_MODAL_ID = 'partner-center-modal';
 const PARTNER_HANDOFF_MODAL_ID = 'partner-handoff-modal';
+const PARTNER_CONNECT_MODAL_ID = 'partner-connect-modal';
 
 const state = {
   partner: null,
@@ -176,6 +177,108 @@ function renderOverviewPanel() {
       <button type="button" class="modal-body-button" data-partner-action="tab" data-tab="leads">${escapeHtml(text('partner.center.createLead', 'Create lead'))}</button>
     </div>
   `;
+}
+
+function ensurePartnerConnectSetupModal() {
+  const modal = injectModal({
+    id: PARTNER_CONNECT_MODAL_ID,
+    title: text('partner.connect.setupTitle', 'Start payout onboarding'),
+    layout: 'menu',
+    bodyHTML: `
+      <form data-partner-form="connect" class="partner-lead-form">
+        <div class="partner-status-card">
+          <small>${escapeHtml(text('partner.connect.setupDesc', 'Continue opens Stripe Connect onboarding.'))}</small>
+        </div>
+        <div class="modal-form-grid">
+          <div class="modal-field">
+            <label>${escapeHtml(text('partner.connect.emailLabel', 'Payout email'))}</label>
+            <input class="input" name="email" type="email" autocomplete="email" placeholder="${escapeHtml(text('partner.connect.emailPlaceholder', 'name@example.com'))}" required>
+          </div>
+          <div class="modal-field">
+            <label>${escapeHtml(text('partner.connect.countryLabel', 'Payout country code'))}</label>
+            <input class="input" name="country" autocomplete="country" maxlength="2" placeholder="${escapeHtml(text('partner.connect.countryPlaceholder', 'DE'))}" required>
+          </div>
+        </div>
+        <div class="partner-actions-row">
+          <button type="submit" class="modal-body-button">${escapeHtml(text('partner.connect.continue', 'Continue to Stripe'))}</button>
+          <button type="button" class="modal-body-button" data-partner-connect-cancel>${escapeHtml(text('partner.connect.cancel', 'Cancel'))}</button>
+        </div>
+      </form>
+    `
+  });
+
+  if (!modal.dataset.partnerConnectBound) {
+    modal.dataset.partnerConnectBound = '1';
+
+    modal.addEventListener('submit', (ev) => {
+      const form = ev.target instanceof HTMLFormElement ? ev.target : null;
+      if (!form || !form.matches('[data-partner-form="connect"]')) return;
+
+      ev.preventDefault();
+
+      const data = new FormData(form);
+      const email = String(data.get('email') || '').trim();
+      const country = String(data.get('country') || '').trim().toUpperCase();
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showToast(text('partner.connect.emailRequired', 'Provide your own payout email for Stripe Connect.'), 3200);
+        return;
+      }
+
+      if (!/^[A-Z]{2}$/.test(country)) {
+        showToast(text('partner.connect.countryInvalid', 'Provide a two-letter payout country code such as GB or DE.'), 3200);
+        return;
+      }
+
+      modal.dispatchEvent(new CustomEvent('partner-connect-submit', {
+        detail: { email, country }
+      }));
+    });
+
+    modal.addEventListener('click', (ev) => {
+      const target = ev.target instanceof Element ? ev.target : null;
+      if (!target?.closest?.('[data-partner-connect-cancel], .modal-close')) return;
+
+      ev.preventDefault();
+      modal.dispatchEvent(new CustomEvent('partner-connect-cancel'));
+    });
+  }
+
+  return modal;
+}
+
+function requestPartnerConnectSetup() {
+  return new Promise((resolve) => {
+    const modal = ensurePartnerConnectSetupModal();
+    const form = modal.querySelector('[data-partner-form="connect"]');
+    if (form instanceof HTMLFormElement) form.reset();
+
+    const cleanup = () => {
+      modal.removeEventListener('partner-connect-submit', onSubmit);
+      modal.removeEventListener('partner-connect-cancel', onCancel);
+    };
+
+    const onSubmit = (ev) => {
+      cleanup();
+      hideModal(PARTNER_CONNECT_MODAL_ID);
+      resolve(ev.detail || null);
+    };
+
+    const onCancel = () => {
+      cleanup();
+      hideModal(PARTNER_CONNECT_MODAL_ID);
+      resolve(null);
+    };
+
+    modal.addEventListener('partner-connect-submit', onSubmit);
+    modal.addEventListener('partner-connect-cancel', onCancel);
+
+    showModal(PARTNER_CONNECT_MODAL_ID);
+
+    window.setTimeout(() => {
+      modal.querySelector('input[name="email"]')?.focus?.();
+    }, 0);
+  });
 }
 
 function renderLeadsPanel() {
@@ -380,27 +483,16 @@ async function handlePartnerCenterAction(action) {
       renderPartnerCenter();
       return;
     }
-
+    
     if (type === 'connect-start') {
-      const email = String(window.prompt(text('partner.connect.emailPrompt', 'Your own Partner payout email for Stripe Connect. Use an email you control; this is not the Business owner email.'), '') || '').trim();
-
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showToast(text('partner.connect.emailRequired', 'Enter the Partner payout email before opening Stripe Connect.'), 3200);
-        return;
-      }
-
-      const country = String(window.prompt(text('partner.connect.countryPrompt', 'Your legal payout country code for Stripe Connect, such as GB or DE. Use the country where you will receive Partner payouts.'), '') || '').trim().toUpperCase();
-
-      if (!/^[A-Z]{2}$/.test(country)) {
-        showToast(text('partner.connect.countryInvalid', 'Use a two-letter country code such as GB or DE.'), 3200);
-        return;
-      }
+      const setup = await requestPartnerConnectSetup();
+      if (!setup) return;
 
       const connect = await api('/api/partner/connect/start', {
         method: 'POST',
         body: {
-          email,
-          country,
+          email: setup.email,
+          country: setup.country,
           returnUrl: `${location.origin}/partner/center?connect=return`,
           refreshUrl: `${location.origin}/partner/center?connect=refresh`
         }
@@ -411,7 +503,7 @@ async function handlePartnerCenterAction(action) {
 
       location.href = url;
       return;
-    }
+    }    
     
     if (type === 'prepare-draft' && leadId) {
       await api(`/api/partner/leads/${encodeURIComponent(leadId)}/draft`, { method: 'POST', body: { draft: {} } });

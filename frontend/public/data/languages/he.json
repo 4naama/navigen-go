@@ -1976,6 +1976,14 @@
   "partner.admin.renewalRunDone": "רענון משימות החידוש הושלם.",
   "partner.connect.emailPrompt": "כתובת האימייל האישית שלכם לתשלומי שותף ב-Stripe Connect. השתמשו באימייל שבשליטתכם; זו לא כתובת האימייל של בעל העסק.",
   "partner.connect.countryPrompt": "קוד המדינה החוקי שלכם עבור תשלומי Stripe Connect, כגון GB או DE. השתמשו במדינה שבה תקבלו את תשלומי השותף.",
-  "partner.connect.countryInvalid": "השתמשו בקוד מדינה בן שתי אותיות כמו GB או DE.",
-  "partner.connect.emailRequired": "הזינו את אימייל תשלומי השותף לפני פתיחת Stripe Connect."
+  "partner.connect.countryInvalid": "ספקו קוד מדינה בן שתי אותיות עבור תשלומים, כגון GB או DE.",
+  "partner.connect.emailRequired": "ספקו את אימייל התשלום האישי שלכם עבור Stripe Connect.",
+  "partner.connect.setupTitle": "התחלת תהליך קליטת תשלומים",
+  "partner.connect.setupDesc": "המשך פותח את תהליך הקליטה של Stripe Connect.",
+  "partner.connect.emailLabel": "אימייל תשלום",
+  "partner.connect.emailPlaceholder": "[name@example.com](mailto:name@example.com)",
+  "partner.connect.countryLabel": "קוד מדינת תשלום",
+  "partner.connect.countryPlaceholder": "DE",
+  "partner.connect.continue": "המשך ל-Stripe",
+  "partner.connect.cancel": "ביטול"
 }

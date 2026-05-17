@@ -1976,6 +1976,14 @@
   "partner.admin.renewalRunDone": "Aggiornamento attività rinnovi completato.",
   "partner.connect.emailPrompt": "Il tuo indirizzo email personale per i pagamenti partner Stripe Connect. Usa un’email che controlli; non è l’email del titolare dell’attività.",
   "partner.connect.countryPrompt": "Il tuo codice paese legale per i pagamenti Stripe Connect, ad esempio GB o DE. Usa il paese in cui riceverai i pagamenti partner.",
-  "partner.connect.countryInvalid": "Usa un codice paese di due lettere come GB o DE.",
-  "partner.connect.emailRequired": "Inserisci l’email di pagamento partner prima di aprire Stripe Connect."
+  "partner.connect.countryInvalid": "Fornisci un codice paese di pagamento a due lettere come GB o DE.",
+  "partner.connect.emailRequired": "Fornisci il tuo indirizzo email di pagamento per Stripe Connect.",
+  "partner.connect.setupTitle": "Avvia onboarding pagamenti",
+  "partner.connect.setupDesc": "Continua apre l’onboarding Stripe Connect.",
+  "partner.connect.emailLabel": "Email di pagamento",
+  "partner.connect.emailPlaceholder": "[name@example.com](mailto:name@example.com)",
+  "partner.connect.countryLabel": "Codice paese pagamento",
+  "partner.connect.countryPlaceholder": "DE",
+  "partner.connect.continue": "Continua su Stripe",
+  "partner.connect.cancel": "Annulla"
 }

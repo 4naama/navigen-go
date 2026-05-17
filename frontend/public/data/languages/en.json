@@ -1976,6 +1976,14 @@
   "partner.admin.renewalRunDone": "Renewal task refresh completed.",
   "partner.connect.emailPrompt": "Your own Partner payout email for Stripe Connect. Use an email you control; this is not the Business owner email.",
   "partner.connect.countryPrompt": "Your legal payout country code for Stripe Connect, such as GB or DE. Use the country where you will receive Partner payouts.",
-  "partner.connect.countryInvalid": "Use a two-letter country code such as GB or DE.",
-  "partner.connect.emailRequired": "Enter the Partner payout email before opening Stripe Connect."
+  "partner.connect.countryInvalid": "Provide a two-letter payout country code such as GB or DE.",
+  "partner.connect.emailRequired": "Provide your own payout email for Stripe Connect.",
+  "partner.connect.setupTitle": "Start payout onboarding",
+  "partner.connect.setupDesc": "Continue opens Stripe Connect onboarding.",
+  "partner.connect.emailLabel": "Payout email",
+  "partner.connect.emailPlaceholder": "name@example.com",
+  "partner.connect.countryLabel": "Payout country code",
+  "partner.connect.countryPlaceholder": "DE",
+  "partner.connect.continue": "Continue to Stripe",
+  "partner.connect.cancel": "Cancel"
 }
