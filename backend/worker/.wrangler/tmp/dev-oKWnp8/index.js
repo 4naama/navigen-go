@@ -2930,6 +2930,10 @@ function partnerSessionsByPartnerKey(partnerId) {
   return `partner_sessions_by_partner:${partnerId}`;
 }
 __name(partnerSessionsByPartnerKey, "partnerSessionsByPartnerKey");
+function partnerAccessEmailKey(fingerprint) {
+  return `partner_access_email:${fingerprint}`;
+}
+__name(partnerAccessEmailKey, "partnerAccessEmailKey");
 function mintPartnerId() {
   const bytes = new Uint8Array(18);
   crypto.getRandomValues(bytes);
@@ -2973,6 +2977,7 @@ function defaultPartnerProfile(partnerId, nowIso) {
     status: "applicant",
     stripeConnectedAccountId: "",
     connectStatus: "not_started",
+    partnerAccessEmailFingerprint: "",
     leadCapacity: 5,
     freeLeadQuota: 5,
     openLeadCount: 0,
@@ -2984,7 +2989,6 @@ function defaultPartnerProfile(partnerId, nowIso) {
 __name(defaultPartnerProfile, "defaultPartnerProfile");
 function publicPartnerProfile(profile) {
   return {
-    partnerId: profile.partnerId,
     status: profile.status,
     connectStatus: profile.connectStatus,
     leadCapacity: profile.leadCapacity,
@@ -5638,6 +5642,42 @@ function normalizePartnerEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
 }
 __name(normalizePartnerEmail, "normalizePartnerEmail");
+async function partnerAccessEmailFingerprint(env, email) {
+  const normalized = normalizePartnerEmail(email).toLowerCase();
+  if (!normalized) return "";
+  const secret = String(env.JWT_SECRET || "").trim();
+  if (!secret) throw new Error("partner_access_email_secret_missing");
+  return await hmacSha256Hex(secret, `partner_access_email:${normalized}`);
+}
+__name(partnerAccessEmailFingerprint, "partnerAccessEmailFingerprint");
+async function attachPartnerAccessEmailFingerprint(env, profile, email) {
+  const fingerprint = await partnerAccessEmailFingerprint(env, email);
+  if (!fingerprint) return profile;
+  const key = partnerAccessEmailKey(fingerprint);
+  const existing = await env.KV_STATUS.get(key, { type: "json" });
+  const existingPartnerId = String(existing?.partnerId || "").trim();
+  if (existingPartnerId && existingPartnerId !== profile.partnerId) {
+    throw new Error("partner_access_email_already_linked");
+  }
+  const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+  await env.KV_STATUS.put(key, JSON.stringify({
+    ver: 1,
+    partnerId: profile.partnerId,
+    createdAt: String(existing?.createdAt || nowIso),
+    updatedAt: nowIso
+  }));
+  if (String(profile.partnerAccessEmailFingerprint || "") === fingerprint) {
+    return profile;
+  }
+  const next = {
+    ...profile,
+    partnerAccessEmailFingerprint: fingerprint,
+    updatedAt: nowIso
+  };
+  await writePartnerProfile(env, next);
+  return next;
+}
+__name(attachPartnerAccessEmailFingerprint, "attachPartnerAccessEmailFingerprint");
 function partnerConnectReturnUrl(req, body, key) {
   const raw = sanitizePartnerLeadString(body?.[key], 600);
   if (raw) {
@@ -5792,6 +5832,24 @@ async function handlePartnerConnectStart(req, env) {
   const email = normalizePartnerEmail(body?.email);
   let profile = auth.profile;
   let accountId = String(profile.stripeConnectedAccountId || "").trim();
+  if (email) {
+    try {
+      profile = await attachPartnerAccessEmailFingerprint(env, profile, email);
+    } catch (err) {
+      const code = String(err?.message || err || "partner_access_email_mapping_error");
+      return json(
+        {
+          error: {
+            code,
+            message: code === "partner_access_email_already_linked" ? "This Partner access email is already linked to an existing Partner profile." : "Partner access email could not be attached."
+          },
+          partner: publicPartnerProfile(profile)
+        },
+        code === "partner_access_email_already_linked" ? 409 : 500,
+        partnerNoStoreHeaders()
+      );
+    }
+  }
   if (!accountId && !country) {
     return json(
       {
@@ -5935,6 +5993,78 @@ async function handlePartnerConnectStatus(req, env) {
   );
 }
 __name(handlePartnerConnectStatus, "handlePartnerConnectStatus");
+async function handlePartnerConnectLoginLink(req, env) {
+  const auth = await requirePartnerSession(req, env);
+  if (auth instanceof Response) return auth;
+  if (auth.profile.status === "suspended") {
+    return json(
+      {
+        error: {
+          code: "partner_suspended",
+          message: "Partner is suspended."
+        },
+        partner: publicPartnerProfile(auth.profile)
+      },
+      403,
+      partnerNoStoreHeaders()
+    );
+  }
+  const sk = String(env.STRIPE_SECRET_KEY || "").trim();
+  if (!sk) {
+    return json(
+      {
+        error: {
+          code: "misconfigured",
+          message: "STRIPE_SECRET_KEY not set"
+        }
+      },
+      500,
+      partnerNoStoreHeaders()
+    );
+  }
+  const accountId = String(auth.profile.stripeConnectedAccountId || "").trim();
+  if (!accountId) {
+    return json(
+      {
+        error: {
+          code: "partner_connect_account_missing",
+          message: "Stripe payout profile is not linked yet."
+        },
+        partner: publicPartnerProfile(auth.profile)
+      },
+      409,
+      partnerNoStoreHeaders()
+    );
+  }
+  let loginLink = null;
+  try {
+    loginLink = await partnerStripeFormRequest(sk, `/v1/accounts/${encodeURIComponent(accountId)}/login_links`, new URLSearchParams());
+  } catch (err) {
+    return json(
+      {
+        error: {
+          code: "stripe_connect_login_link_error",
+          message: String(err?.message || err || "Stripe Express Dashboard login link creation failed.")
+        },
+        partner: publicPartnerProfile(auth.profile)
+      },
+      502,
+      partnerNoStoreHeaders()
+    );
+  }
+  return json(
+    {
+      ok: true,
+      flow: "partner_connect_dashboard",
+      url: String(loginLink?.url || ""),
+      partner: publicPartnerProfile(auth.profile),
+      launch: partnerLaunchState(env)
+    },
+    200,
+    partnerNoStoreHeaders()
+  );
+}
+__name(handlePartnerConnectLoginLink, "handlePartnerConnectLoginLink");
 async function handlePartnerConnectReturn(req, env) {
   return await handlePartnerConnectStatus(req, env);
 }
@@ -9490,6 +9620,9 @@ var src_default = {
       }
       if (normPath === "/api/partner/connect/status" && req.method === "GET") {
         return await handlePartnerConnectStatus(req, env);
+      }
+      if (normPath === "/api/partner/connect/login-link" && req.method === "POST") {
+        return await handlePartnerConnectLoginLink(req, env);
       }
       if (normPath === "/api/partner/connect/return" && req.method === "GET") {
         return await handlePartnerConnectReturn(req, env);

@@ -81,6 +81,44 @@ function renderPartnerLauncherCard({ action, icon, title, desc }) {
   `;
 }
 
+function partnerPayoutLauncherCard() {
+  const status = String(state.partner?.connectStatus || 'not_started').trim();
+
+  if (status === 'complete') {
+    return {
+      action: 'connect-dashboard',
+      icon: '⚡',
+      title: text('partner.center.card.payoutIdentity.title', 'Payout identity'),
+      desc: text('partner.center.card.payoutIdentity.desc', 'Open Stripe payout platform.')
+    };
+  }
+
+  if (status === 'restricted') {
+    return {
+      action: 'connect-start',
+      icon: '⚡',
+      title: text('partner.center.card.payoutResolve.title', 'Resolve payout issue'),
+      desc: text('partner.center.card.payoutResolve.desc', 'Open Stripe to submit requested payout information.')
+    };
+  }
+
+  if (status === 'pending') {
+    return {
+      action: 'connect-start',
+      icon: '⚡',
+      title: text('partner.center.card.payoutContinue.title', 'Continue payout onboarding'),
+      desc: text('partner.center.card.payoutContinue.desc', 'Finish Stripe payout setup.')
+    };
+  }
+
+  return {
+    action: 'connect-start',
+    icon: '⚡',
+    title: text('partner.center.card.payoutOnboarding.title', 'Payout onboarding'),
+    desc: text('partner.center.card.payoutOnboarding.desc', 'Connect to Stripe payout platform.')
+  };
+}
+
 let partnerStructureCatalogPromise;
 let partnerStructureCatalogRows = [];
 
@@ -395,14 +433,13 @@ function renderPartnerCenter() {
         <details class="cm-chip request-section-chip partner-status-chip">
           <summary class="modal-menu-item cm-chip-face request-section-chip-face">
             <span class="label cm-chip-face-label request-section-chip-label">
-              <strong class="request-section-chip-title">${escapeHtml(text('partner.center.statusChip.title', 'Partner status'))}</strong>
+              <strong class="request-section-chip-title">${escapeHtml(text('partner.center.statusChip.title', '🤝 Partner status'))}</strong>
               <small class="request-section-chip-summary">${escapeHtml(text('partner.center.capacity', 'Open leads'))} ${openLeadText}</small>
             </span>
             <span class="cm-chip-face-chevron" aria-hidden="true"></span>
           </summary>
           <div class="cm-chip-body">
             <div class="cm-chip-stack">
-              <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.partnerId', 'Partner ID'))}</span><span class="cm-chip-v partner-status-id-value">${escapeHtml(partner.partnerId || '—')}</span></div>
               <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.status', 'Status'))}</span><span class="cm-chip-v">${escapeHtml(partner.status || '—')}</span></div>
               <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.capacity', 'Open leads'))}</span><span class="cm-chip-v">${openLeadText}</span></div>
               <div class="cm-chip-row"><span class="cm-chip-k">${escapeHtml(text('partner.center.connect', 'Payout identity'))}</span><span class="cm-chip-v">${escapeHtml(partner.connectStatus || 'not_started')}</span></div>
@@ -419,31 +456,28 @@ function renderPartnerCenter() {
 }
 
 function renderPartnerLauncherPanel() {
+  const payoutCard = partnerPayoutLauncherCard();
+
   return `
     <div class="partner-launch-grid">
       ${renderPartnerLauncherCard({
         action: 'open-leads',
         icon: '🎯',
-        title: text('partner.center.card.leads.title', 'Leads'),
+        title: text('partner.center.card.leads.title', 'Create leads'),
         desc: text('partner.center.card.leads.desc', 'Create, import, prepare, and hand off businesses.')
       })}
-      ${renderPartnerLauncherCard({
-        action: 'connect-start',
-        icon: '💰',
-        title: text('partner.connect.start', 'Start payout onboarding'),
-        desc: text('partner.center.card.connect.desc', 'Connect Stripe payout identity.')
-      })}
+      ${renderPartnerLauncherCard(payoutCard)}
       ${renderPartnerLauncherCard({
         action: 'open-renewals',
         icon: '🔄',
-        title: text('partner.center.card.renewals.title', 'Renewals'),
+        title: text('partner.center.card.renewals.title', 'Renew plans'),
         desc: text('partner.center.card.renewals.desc', 'Follow up on expiring or expired Partner-assisted Plans.')
       })}
       ${renderPartnerLauncherCard({
         action: 'open-commissions',
-        icon: '💶',
-        title: text('partner.center.card.commissions.title', 'Commissions'),
-        desc: text('partner.center.card.commissions.desc', 'Review pending, eligible, and paid commission ledger entries.')
+        icon: '💰',
+        title: text('partner.center.card.commissions.title', 'Get paid'),
+        desc: text('partner.center.card.commissions.desc', 'Review pending, eligible, and paid commissions.')
       })}
     </div>
   `;
@@ -970,18 +1004,36 @@ async function handlePartnerCenterAction(action) {
       return;
     }
     
+    if (type === 'connect-dashboard') {
+      const login = await api('/api/partner/connect/login-link', { method: 'POST', body: {} });
+      const url = String(login?.url || '').trim();
+      if (!url) throw new Error(text('partner.connect.noUrl', 'Stripe Connect did not return a dashboard URL.'));
+
+      location.href = url;
+      return;
+    }
+
     if (type === 'connect-start') {
-      const setup = await requestPartnerConnectSetup();
-      if (!setup) return;
+      const hasPayoutProfile = String(state.partner?.connectStatus || 'not_started') !== 'not_started';
+      let body = {
+        returnUrl: `${location.origin}/partner/center?connect=return`,
+        refreshUrl: `${location.origin}/partner/center?connect=refresh`
+      };
+
+      if (!hasPayoutProfile) {
+        const setup = await requestPartnerConnectSetup();
+        if (!setup) return;
+
+        body = {
+          ...body,
+          email: setup.email,
+          country: setup.country
+        };
+      }
 
       const connect = await api('/api/partner/connect/start', {
         method: 'POST',
-        body: {
-          email: setup.email,
-          country: setup.country,
-          returnUrl: `${location.origin}/partner/center?connect=return`,
-          refreshUrl: `${location.origin}/partner/center?connect=refresh`
-        }
+        body
       });
 
       const url = String(connect?.url || '').trim();
@@ -989,7 +1041,7 @@ async function handlePartnerCenterAction(action) {
 
       location.href = url;
       return;
-    }    
+    }   
     
     if (type === 'prepare-draft' && leadId) {
       await api(`/api/partner/leads/${encodeURIComponent(leadId)}/draft`, { method: 'POST', body: { draft: {} } });
