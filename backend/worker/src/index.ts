@@ -41,6 +41,7 @@ export interface Env {
   KV_MEDIA: KVNamespace;
   DO_MEDIA_TARGET: DurableObjectNamespace;
   JWT_SECRET: string; // set via wrangler secret
+  PARTNER_ACCESS_EMAIL_SECRET?: string; // Partner access email HMAC secret; never expose client-side
   STRIPE_SECRET_KEY: string; // Stripe secret key for creating Checkout Sessions (server-only)
   STRIPE_WEBHOOK_SECRET: string; // Stripe webhook signing secret (whsec_...)
   GOOGLE_PLACES_API_KEY?: string; // Places API New server key; do not expose in frontend JS
@@ -4286,7 +4287,7 @@ async function partnerAccessEmailFingerprint(env: Env, email: string): Promise<s
   const normalized = normalizePartnerEmail(email).toLowerCase();
   if (!normalized) return "";
 
-  const secret = String(env.JWT_SECRET || "").trim();
+  const secret = String(env.PARTNER_ACCESS_EMAIL_SECRET || "").trim();
   if (!secret) throw new Error("partner_access_email_secret_missing");
 
   return await hmacSha256Hex(secret, `partner_access_email:${normalized}`);

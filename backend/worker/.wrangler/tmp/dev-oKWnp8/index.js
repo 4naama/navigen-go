@@ -5645,7 +5645,7 @@ __name(normalizePartnerEmail, "normalizePartnerEmail");
 async function partnerAccessEmailFingerprint(env, email) {
   const normalized = normalizePartnerEmail(email).toLowerCase();
   if (!normalized) return "";
-  const secret = String(env.JWT_SECRET || "").trim();
+  const secret = String(env.PARTNER_ACCESS_EMAIL_SECRET || "").trim();
   if (!secret) throw new Error("partner_access_email_secret_missing");
   return await hmacSha256Hex(secret, `partner_access_email:${normalized}`);
 }

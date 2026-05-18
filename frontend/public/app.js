@@ -874,6 +874,56 @@ async function openPartnerCenterFromShell() {
   }
 }
 
+async function openPartnerStatusFromShell() {
+  try {
+    const { openPartnerStatus } = await openPartnerUiModule();
+    await openPartnerStatus();
+  } catch (err) {
+    console.error('Partner status failed:', err);
+    showToast(returnFlowText('partner.center.error', 'Could not open Partner Center.'), 3200);
+  }
+}
+
+async function openPartnerLeadsFromShell() {
+  try {
+    const { openPartnerLeads } = await openPartnerUiModule();
+    await openPartnerLeads();
+  } catch (err) {
+    console.error('Partner leads failed:', err);
+    showToast(returnFlowText('partner.center.error', 'Could not open Partner Center.'), 3200);
+  }
+}
+
+async function openPartnerPayoutFromShell() {
+  try {
+    const { openPartnerPayout } = await openPartnerUiModule();
+    await openPartnerPayout();
+  } catch (err) {
+    console.error('Partner payout failed:', err);
+    showToast(returnFlowText('partner.center.error', 'Could not open Partner Center.'), 3200);
+  }
+}
+
+async function openPartnerRenewalsFromShell() {
+  try {
+    const { openPartnerRenewals } = await openPartnerUiModule();
+    await openPartnerRenewals();
+  } catch (err) {
+    console.error('Partner renewals failed:', err);
+    showToast(returnFlowText('partner.center.error', 'Could not open Partner Center.'), 3200);
+  }
+}
+
+async function openPartnerCommissionsFromShell() {
+  try {
+    const { openPartnerCommissions } = await openPartnerUiModule();
+    await openPartnerCommissions();
+  } catch (err) {
+    console.error('Partner commissions failed:', err);
+    showToast(returnFlowText('partner.center.error', 'Could not open Partner Center.'), 3200);
+  }
+}
+
 async function openPartnerAdminPlatformFromShell() {
   try {
     const { openPartnerAdminPlatform } = await openPartnerUiModule();
@@ -932,18 +982,50 @@ function renderNaviGenPartnersGroup() {
     cards: [
       {
         icon: "🤝",
-        titleKey: "root.partner.center.title",
-        descKey: "root.partner.center.desc",
-        titleFallback: "Partner Center",
-        descFallback: "Prepare leads, drafts, handoffs, and commission state.",
-        onClick: openPartnerCenterFromShell
+        titleKey: "root.partner.status.title",
+        descKey: "root.partner.status.desc",
+        titleFallback: "Partner status",
+        descFallback: "Open leads, payout state, and Partner standing.",
+        onClick: openPartnerStatusFromShell
+      },
+      {
+        icon: "🎯",
+        titleKey: "root.partner.leads.title",
+        descKey: "root.partner.leads.desc",
+        titleFallback: "Create leads",
+        descFallback: "Create, import, prepare, and hand off businesses.",
+        onClick: openPartnerLeadsFromShell
+      },
+      {
+        icon: "⚡",
+        titleKey: "root.partner.payout.title",
+        descKey: "root.partner.payout.desc",
+        titleFallback: "Payout onboarding",
+        descFallback: "Connect to Stripe payout platform.",
+        onClick: openPartnerPayoutFromShell
+      },
+      {
+        icon: "🔄",
+        titleKey: "root.partner.renewals.title",
+        descKey: "root.partner.renewals.desc",
+        titleFallback: "Renew plans",
+        descFallback: "Follow up on expiring or expired Partner-assisted Plans.",
+        onClick: openPartnerRenewalsFromShell
+      },
+      {
+        icon: "💰",
+        titleKey: "root.partner.commissions.title",
+        descKey: "root.partner.commissions.desc",
+        titleFallback: "Get paid",
+        descFallback: "Review pending, eligible, and paid commissions.",
+        onClick: openPartnerCommissionsFromShell
       },
       {
         icon: "🛠️",
         titleKey: "root.partner.admin.title",
         descKey: "root.partner.admin.desc",
         titleFallback: "Admin platform",
-        descFallback: "Inspect Partner status, capacity, attribution, and commission ledger state.",
+        descFallback: "Internal NaviGen operations.",
         onClick: openPartnerAdminPlatformFromShell
       }
     ]

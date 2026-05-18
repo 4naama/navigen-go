@@ -408,6 +408,32 @@ function showPartnerCommissionsSurface() {
   showModal(PARTNER_COMMISSIONS_MODAL_ID);
 }
 
+function renderPartnerEntryGate() {
+  return `
+    <div class="partner-center-shell">
+      <div class="partner-status-card partner-status-card-info">
+        <strong>${escapeHtml(text('partner.access.title', 'Partner access'))}</strong><br>
+        <small>${escapeHtml(text('partner.access.desc', 'Continue with an existing Partner session or start a new Partner profile.'))}</small>
+      </div>
+
+      <div class="partner-launch-grid">
+        ${renderPartnerLauncherCard({
+          action: 'partner-restore',
+          icon: '🔐',
+          title: text('partner.access.restore.title', 'Existing Partner'),
+          desc: text('partner.access.restore.desc', 'Restore Partner access on this device.')
+        })}
+        ${renderPartnerLauncherCard({
+          action: 'partner-start-new',
+          icon: '🤝',
+          title: text('partner.access.new.title', 'Start new Partner'),
+          desc: text('partner.access.new.desc', 'Create a new Partner profile.')
+        })}
+      </div>
+    </div>
+  `;
+}
+
 function renderPartnerCenter() {
   const root = document.getElementById('partner-center-root');
   if (!root) return;
@@ -419,6 +445,11 @@ function renderPartnerCenter() {
         <small>${escapeHtml(text('partner.center.loading.desc', 'Reading your Partner session and lead workspace.'))}</small>
       </div>
     `;
+    return;
+  }
+
+  if (!state.partner) {
+    root.innerHTML = renderPartnerEntryGate();
     return;
   }
 
@@ -942,11 +973,18 @@ async function loadPartnerWorkspace() {
   renderPartnerCenter();
 
   const session = await api('/api/partner/session');
-  const started = session?.authenticated === true
-    ? session
-    : await api('/api/partner/start', { method: 'POST', body: {} });
 
-  state.partner = { ...(started.partner || {}), launch: started.launch || {} };
+  if (session?.authenticated !== true) {
+    state.partner = null;
+    state.leads = [];
+    state.commissions = [];
+    state.renewalTasks = [];
+    state.loading = false;
+    renderPartnerCenter();
+    return;
+  }
+
+  state.partner = { ...(session.partner || {}), launch: session.launch || {} };
 
   await refreshPartnerLists();
   state.loading = false;
@@ -974,6 +1012,20 @@ async function handlePartnerCenterAction(action) {
   const leadId = String(action.dataset.leadId || '').trim();
 
   try {
+    if (type === 'partner-restore') {
+      showToast(text('partner.access.restore.pending', 'Partner access restore will open after email delivery is connected.'), 3600);
+      return;
+    }
+
+    if (type === 'partner-start-new') {
+      const started = await api('/api/partner/start', { method: 'POST', body: {} });
+      state.partner = { ...(started.partner || {}), launch: started.launch || {} };
+      await refreshPartnerLists();
+      state.message = '';
+      renderPartnerCenter();
+      return;
+    }
+
     if (type === 'open-leads') {
       showPartnerLeadsSurface();
       return;
@@ -1157,6 +1209,38 @@ export async function openPartnerCenter() {
     state.message = String(err?.message || text('partner.center.error', 'Could not open Partner Center.'));
     renderPartnerCenter();
   }
+}
+
+export async function openPartnerStatus() {
+  await openPartnerCenter();
+}
+
+export async function openPartnerLeads() {
+  await openPartnerCenter();
+  if (!state.partner) return;
+  hideModal(PARTNER_CENTER_MODAL_ID);
+  showPartnerLeadsSurface();
+}
+
+export async function openPartnerPayout() {
+  await openPartnerCenter();
+  if (!state.partner) return;
+  const payoutCard = partnerPayoutLauncherCard();
+  await handlePartnerCenterAction({ dataset: { partnerAction: payoutCard.action } });
+}
+
+export async function openPartnerRenewals() {
+  await openPartnerCenter();
+  if (!state.partner) return;
+  hideModal(PARTNER_CENTER_MODAL_ID);
+  showPartnerRenewalsSurface();
+}
+
+export async function openPartnerCommissions() {
+  await openPartnerCenter();
+  if (!state.partner) return;
+  hideModal(PARTNER_CENTER_MODAL_ID);
+  showPartnerCommissionsSurface();
 }
 
 const PARTNER_ADMIN_MODAL_ID = 'partner-admin-modal';
